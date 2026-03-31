@@ -216,7 +216,7 @@ export class ToolManager {
       (botConfig as Record<string, unknown>).mcpServerProfile ??
       (botConfig as Record<string, unknown>).MCP_SERVER_PROFILE;
     if (profileKey) {
-      const profile = getMcpServerProfileByKey(profileKey);
+      const profile = getMcpServerProfileByKey(profileKey as string);
       if (profile) {
         for (const s of profile.mcpServers) {
           names.add(s.name);

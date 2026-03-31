@@ -21,7 +21,7 @@ export class PromptBuilderAdapter implements PromptBuilder {
   buildSystemPrompt(
     botConfig: Record<string, unknown>,
     memories: string[],
-    botName: string,
+    botName: string
   ): string {
     // 1. Construct the base system prompt (same logic as messageHandler's
     //    buildSystemPromptWithBotName).
@@ -41,8 +41,7 @@ export class PromptBuilderAdapter implements PromptBuilder {
     }
 
     const memoryBlock =
-      'Relevant memories from previous conversations:\n' +
-      memories.map((m) => `- ${m}`).join('\n');
+      'Relevant memories from previous conversations:\n' + memories.map((m) => `- ${m}`).join('\n');
 
     return `${systemPrompt}\n\n${memoryBlock}`;
   }

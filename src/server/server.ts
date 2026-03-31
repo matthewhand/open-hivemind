@@ -33,8 +33,8 @@ import importExportRouter from './routes/importExport';
 import mcpRouter from './routes/mcp';
 import onboardingRouter from './routes/onboarding';
 import personasRouter from './routes/personas';
-import sitemapRouter from './routes/sitemap';
 import providersRouter from './routes/providers';
+import sitemapRouter from './routes/sitemap';
 import specsRouter from './routes/specs';
 import webhookEventsRouter from './routes/webhookEvents';
 

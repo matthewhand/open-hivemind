@@ -1,11 +1,10 @@
+import Debug from 'debug';
 import { Router, type Response } from 'express';
 import type { AuthMiddlewareRequest } from '../../../auth/types';
 import type { BotConfig } from '../../../types/config';
 import { HTTP_STATUS } from '../../../types/constants';
-import { ErrorUtils } from '../../../types/errors';
 import { ValidationTestSchema } from '../../../validation/schemas/miscSchema';
 import { validateRequest } from '../../../validation/validateRequest';
-import Debug from 'debug';
 
 const debug = Debug('app:server:routes:validation:core');
 
@@ -220,7 +219,9 @@ export function createCoreRoutes(): Router {
         });
       } catch (error: any) {
         debug('Validation summary failed: %s', error.message);
-        return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Internal server error' });
+        return res
+          .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+          .json({ error: 'Internal server error' });
       }
     }
   );

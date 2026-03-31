@@ -1,8 +1,8 @@
+import Debug from 'debug';
 import { type NextFunction, type Request, type Response } from 'express';
 import { body, validationResult } from 'express-validator';
 import { HTTP_STATUS } from '../../../types/constants';
 import { ErrorUtils } from '../../../types/errors';
-import Debug from 'debug';
 
 const debug = Debug('app:server:routes:validation:middleware');
 

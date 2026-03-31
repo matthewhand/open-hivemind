@@ -1,11 +1,17 @@
+import Debug from 'debug';
 import { Router, type Response } from 'express';
 import { param, query } from 'express-validator';
 import type { AuthMiddlewareRequest } from '../../../auth/types';
 import { HTTP_STATUS } from '../../../types/constants';
 import { ErrorUtils } from '../../../types/errors';
 import { RealTimeValidationService } from '../../services/RealTimeValidationService';
-import { getErrorResponse, handleValidationErrors, validateConfigurationData, validateConfigurationValidation, validateSubscription } from './middleware';
-import Debug from 'debug';
+import {
+  getErrorResponse,
+  handleValidationErrors,
+  validateConfigurationData,
+  validateConfigurationValidation,
+  validateSubscription,
+} from './middleware';
 
 const debug = Debug('app:server:routes:validation:realtime');
 
