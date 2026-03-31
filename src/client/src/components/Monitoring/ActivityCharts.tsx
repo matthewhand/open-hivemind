@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { useWebSocket } from '../../hooks/useWebSocket';
+import { useWebSocket } from '../../contexts/WebSocketContext';
 
 interface PerformanceMetric {
   timestamp: string;
@@ -14,7 +14,7 @@ interface PerformanceMetric {
 }
 
 const ActivityCharts: React.FC = () => {
-  const { metrics } = useWebSocket();
+  const { performanceMetrics: metrics } = useWebSocket();
   const [chartData, setChartData] = useState<any[]>([]);
   const [selectedMetric, setSelectedMetric] = useState<string>('messageRate');
 
