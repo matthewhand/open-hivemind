@@ -8,7 +8,7 @@ import { getLlmProfileByKey, getLlmProfiles } from './llmProfiles';
 import { getMemoryProfileByKey } from './memoryProfiles';
 import { getToolProfileByKey } from './toolProfiles';
 
-const debug = Debug('app:unified-config');
+const debug = Debug('app:config-store');
 
 export interface ProviderProfile {
   key: string;
@@ -19,7 +19,7 @@ export interface ProviderProfile {
 }
 
 /**
- * UnifiedConfigStore — single facade over the 5 existing config systems.
+ * ConfigStore — single facade over the 5 existing config systems.
  *
  * Layered precedence (highest → lowest):
  *   1. Environment variables
@@ -30,14 +30,14 @@ export interface ProviderProfile {
  *
  * This class delegates to existing managers — it does NOT replace them.
  */
-export class UnifiedConfigStore {
-  private static instance: UnifiedConfigStore | null = null;
+export class ConfigStore {
+  private static instance: ConfigStore | null = null;
 
-  static getInstance(): UnifiedConfigStore {
-    if (!UnifiedConfigStore.instance) {
-      UnifiedConfigStore.instance = new UnifiedConfigStore();
+  static getInstance(): ConfigStore {
+    if (!ConfigStore.instance) {
+      ConfigStore.instance = new ConfigStore();
     }
-    return UnifiedConfigStore.instance;
+    return ConfigStore.instance;
   }
 
   private constructor() {}
@@ -256,7 +256,7 @@ export class UnifiedConfigStore {
    * Useful in tests.
    */
   reset(): void {
-    UnifiedConfigStore.instance = null;
-    debug('UnifiedConfigStore reset');
+    ConfigStore.instance = null;
+    debug('ConfigStore reset');
   }
 }

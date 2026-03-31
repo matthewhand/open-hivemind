@@ -108,7 +108,7 @@ const AppRouter: React.FC = () => {
           <Route path="/activity" element={<RouteErrorBoundary pageName="Activity"><StandaloneActivity /></RouteErrorBoundary>} />
         </Route>
 
-        {/* Admin routes (unified interface) - UberLayout handles its own navigation */}
+        {/* Admin routes - UberLayout handles its own navigation */}
         <Route path="/admin" element={
           <ProtectedRoute>
             <UberLayout />

@@ -1,5 +1,5 @@
 /**
- * TDD tests for UnifiedConfigStore — a single layered config facade
+ * TDD tests for ConfigStore — a single layered config facade
  * that consolidates the 5 existing config managers.
  *
  * Layer precedence (highest to lowest):
@@ -88,10 +88,10 @@ import { getToolProfileByKey } from '../../../src/config/toolProfiles';
 
 // We import the module-under-test path so tests fail until the real class exists.
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const modulePath = '../../../src/config/UnifiedConfigStore';
+const modulePath = '../../../src/config/ConfigStore';
 
 // Helper: dynamically import so singleton can be reset between tests.
-function loadStore(): typeof import('../../../src/config/UnifiedConfigStore') {
+function loadStore(): typeof import('../../../src/config/ConfigStore') {
   return require(modulePath);
 }
 
@@ -99,7 +99,7 @@ function loadStore(): typeof import('../../../src/config/UnifiedConfigStore') {
 // Test suite
 // ---------------------------------------------------------------------------
 
-describe('UnifiedConfigStore', () => {
+describe('ConfigStore', () => {
   let originalEnv: NodeJS.ProcessEnv;
 
   beforeEach(() => {
@@ -134,9 +134,9 @@ describe('UnifiedConfigStore', () => {
   // -----------------------------------------------------------------------
   describe('singleton', () => {
     it('should return the same instance from getInstance()', () => {
-      const { UnifiedConfigStore } = loadStore();
-      const a = UnifiedConfigStore.getInstance();
-      const b = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const a = ConfigStore.getInstance();
+      const b = ConfigStore.getInstance();
       expect(a).toBe(b);
     });
   });
@@ -147,8 +147,8 @@ describe('UnifiedConfigStore', () => {
   describe('get()', () => {
     it('should read a value from process.env', () => {
       process.env.MY_TEST_KEY = 'env-value';
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       expect(store.get('MY_TEST_KEY')).toBe('env-value');
     });
@@ -157,8 +157,8 @@ describe('UnifiedConfigStore', () => {
       delete process.env.THEME;
       mockUserConfigStoreInstance.getGeneralSettings.mockReturnValue({ THEME: 'dark' });
 
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       expect(store.get('THEME')).toBe('dark');
     });
@@ -167,8 +167,8 @@ describe('UnifiedConfigStore', () => {
       process.env.THEME = 'light';
       mockUserConfigStoreInstance.getGeneralSettings.mockReturnValue({ THEME: 'dark' });
 
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       expect(store.get('THEME')).toBe('light');
     });
@@ -182,15 +182,15 @@ describe('UnifiedConfigStore', () => {
         config: {},
       });
 
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       expect(store.get('LLM_PROVIDER')).toBe('openai-env');
     });
 
     it('should return undefined when key exists in no layer', () => {
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       expect(store.get('TOTALLY_MISSING')).toBeUndefined();
     });
@@ -202,15 +202,15 @@ describe('UnifiedConfigStore', () => {
   describe('getRequired()', () => {
     it('should return the value when it exists', () => {
       process.env.REQUIRED_KEY = 'present';
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       expect(store.getRequired('REQUIRED_KEY')).toBe('present');
     });
 
     it('should throw when the key is missing from all layers', () => {
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       expect(() => store.getRequired('DOES_NOT_EXIST')).toThrow();
     });
@@ -222,16 +222,16 @@ describe('UnifiedConfigStore', () => {
   describe('getEnv()', () => {
     it('should return the value from process.env', () => {
       process.env.API_KEY = 'abc123';
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       expect(store.getEnv('API_KEY')).toBe('abc123');
     });
 
     it('should return undefined when the env var is not set', () => {
       delete process.env.API_KEY;
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       expect(store.getEnv('API_KEY')).toBeUndefined();
     });
@@ -247,8 +247,8 @@ describe('UnifiedConfigStore', () => {
         locale: 'en-US',
       });
 
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       expect(store.getUserSetting('darkMode')).toBe(true);
       expect(store.getUserSetting('locale')).toBe('en-US');
@@ -257,8 +257,8 @@ describe('UnifiedConfigStore', () => {
     it('should return undefined for a missing user setting', () => {
       mockUserConfigStoreInstance.getGeneralSettings.mockReturnValue({});
 
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       expect(store.getUserSetting('nonexistent')).toBeUndefined();
     });
@@ -268,8 +268,8 @@ describe('UnifiedConfigStore', () => {
     it('should write a single key to UserConfigStore general settings', () => {
       mockUserConfigStoreInstance.getGeneralSettings.mockReturnValue({ existing: 1 });
 
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
       store.setUserSetting('newKey', 'newValue');
 
       expect(mockUserConfigStoreInstance.setGeneralSettings).toHaveBeenCalledWith(
@@ -291,8 +291,8 @@ describe('UnifiedConfigStore', () => {
       };
       mockBotConfigManagerInstance.getBot.mockReturnValue(fakeBotConfig);
 
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       const result = store.getBotConfig('max');
       expect(mockBotConfigManagerInstance.getBot).toHaveBeenCalledWith('max');
@@ -302,8 +302,8 @@ describe('UnifiedConfigStore', () => {
     it('should return an empty object when bot is not found', () => {
       mockBotConfigManagerInstance.getBot.mockReturnValue(undefined);
 
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       const result = store.getBotConfig('nonexistent');
       expect(result).toEqual({});
@@ -323,8 +323,8 @@ describe('UnifiedConfigStore', () => {
       };
       (getLlmProfileByKey as jest.Mock).mockReturnValue(fakeProfile);
 
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       expect(store.getProfile('llm', 'gpt4')).toEqual(fakeProfile);
       expect(getLlmProfileByKey).toHaveBeenCalledWith('gpt4');
@@ -339,8 +339,8 @@ describe('UnifiedConfigStore', () => {
       };
       (getMemoryProfileByKey as jest.Mock).mockReturnValue(fakeProfile);
 
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       expect(store.getProfile('memory', 'redis-mem')).toEqual(fakeProfile);
       expect(getMemoryProfileByKey).toHaveBeenCalledWith('redis-mem');
@@ -355,8 +355,8 @@ describe('UnifiedConfigStore', () => {
       };
       (getToolProfileByKey as jest.Mock).mockReturnValue(fakeProfile);
 
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       expect(store.getProfile('tool', 'web-search')).toEqual(fakeProfile);
       expect(getToolProfileByKey).toHaveBeenCalledWith('web-search');
@@ -365,8 +365,8 @@ describe('UnifiedConfigStore', () => {
     it('should return undefined for a missing profile', () => {
       (getLlmProfileByKey as jest.Mock).mockReturnValue(undefined);
 
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       expect(store.getProfile('llm', 'nonexistent')).toBeUndefined();
     });
@@ -380,8 +380,8 @@ describe('UnifiedConfigStore', () => {
       const settings = { darkMode: true, language: 'en' };
       mockUserConfigStoreInstance.getGeneralSettings.mockReturnValue(settings);
 
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       expect(store.getGeneralSettings()).toEqual(settings);
     });
@@ -389,8 +389,8 @@ describe('UnifiedConfigStore', () => {
     it('should return an empty object when no general settings exist', () => {
       mockUserConfigStoreInstance.getGeneralSettings.mockReturnValue({});
 
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       expect(store.getGeneralSettings()).toEqual({});
     });
@@ -400,8 +400,8 @@ describe('UnifiedConfigStore', () => {
     it('should delegate to UserConfigStore.setGeneralSettings()', () => {
       const newSettings = { darkMode: false, fontSize: 14 };
 
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
       store.setGeneralSettings(newSettings);
 
       expect(mockUserConfigStoreInstance.setGeneralSettings).toHaveBeenCalledWith(newSettings);
@@ -418,8 +418,8 @@ describe('UnifiedConfigStore', () => {
       ];
       mockProviderConfigManagerInstance.getAllProviders.mockReturnValue(fakeProviders);
 
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       expect(store.getProviderConfig('llm')).toEqual(fakeProviders);
       expect(mockProviderConfigManagerInstance.getAllProviders).toHaveBeenCalledWith('llm');
@@ -431,8 +431,8 @@ describe('UnifiedConfigStore', () => {
       ];
       mockProviderConfigManagerInstance.getAllProviders.mockReturnValue(fakeProviders);
 
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       expect(store.getProviderConfig('messenger')).toEqual(fakeProviders);
       expect(mockProviderConfigManagerInstance.getAllProviders).toHaveBeenCalledWith('message');
@@ -441,8 +441,8 @@ describe('UnifiedConfigStore', () => {
     it('should return memory provider instances', () => {
       mockProviderConfigManagerInstance.getAllProviders.mockReturnValue([]);
 
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       expect(store.getProviderConfig('memory')).toEqual([]);
     });
@@ -450,8 +450,8 @@ describe('UnifiedConfigStore', () => {
     it('should return tool provider instances', () => {
       mockProviderConfigManagerInstance.getAllProviders.mockReturnValue([]);
 
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       expect(store.getProviderConfig('tool')).toEqual([]);
     });
@@ -464,8 +464,8 @@ describe('UnifiedConfigStore', () => {
     it('should return "env" for a key found in process.env', () => {
       process.env.SOURCE_TEST = 'from-env';
 
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       expect(store.getSource('SOURCE_TEST')).toBe('env');
     });
@@ -474,15 +474,15 @@ describe('UnifiedConfigStore', () => {
       delete process.env.USER_ONLY;
       mockUserConfigStoreInstance.getGeneralSettings.mockReturnValue({ USER_ONLY: 'val' });
 
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       expect(store.getSource('USER_ONLY')).toBe('user');
     });
 
     it('should return undefined for a key not in any layer', () => {
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       expect(store.getSource('GHOST_KEY')).toBeUndefined();
     });
@@ -496,8 +496,8 @@ describe('UnifiedConfigStore', () => {
       process.env.ENV_KEY = 'x';
       mockUserConfigStoreInstance.getGeneralSettings.mockReturnValue({ USER_KEY: 'y' });
 
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       const sources = store.getAllSources();
       expect(sources.ENV_KEY).toBe('env');
@@ -512,8 +512,8 @@ describe('UnifiedConfigStore', () => {
     it('should re-read config from underlying stores after reload', () => {
       mockUserConfigStoreInstance.getGeneralSettings.mockReturnValue({ color: 'red' });
 
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       expect(store.getUserSetting('color')).toBe('red');
 
@@ -531,10 +531,10 @@ describe('UnifiedConfigStore', () => {
   // -----------------------------------------------------------------------
   describe('reset()', () => {
     it('should clear the singleton so a fresh instance is created', () => {
-      const { UnifiedConfigStore } = loadStore();
-      const first = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const first = ConfigStore.getInstance();
       first.reset();
-      const second = UnifiedConfigStore.getInstance();
+      const second = ConfigStore.getInstance();
 
       expect(second).not.toBe(first);
     });
@@ -546,8 +546,8 @@ describe('UnifiedConfigStore', () => {
   describe('typed get()', () => {
     it('should support generic typing for get<T>()', () => {
       process.env.PORT = '3000';
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       const port = store.get<string>('PORT');
       expect(port).toBe('3000');
@@ -564,8 +564,8 @@ describe('UnifiedConfigStore', () => {
         SECRET_KEY: 'from-user',
       });
 
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       expect(store.get('SECRET_KEY')).toBe('from-secure');
     });
@@ -576,8 +576,8 @@ describe('UnifiedConfigStore', () => {
         SECRET_KEY: 'from-secure',
       });
 
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       expect(store.get('SECRET_KEY')).toBe('from-env');
     });
@@ -588,8 +588,8 @@ describe('UnifiedConfigStore', () => {
         SECRET_KEY: 'from-secure',
       });
 
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       expect(store.getSource('SECRET_KEY')).toBe('secure');
     });
@@ -607,8 +607,8 @@ describe('UnifiedConfigStore', () => {
         PROVIDER_SETTING: 'from-user',
       });
 
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       // Provider layer is above user layer, so provider wins
       expect(store.getSource('PROVIDER_SETTING')).not.toBe('user');
@@ -617,8 +617,8 @@ describe('UnifiedConfigStore', () => {
 
   describe('default layer', () => {
     it('should return a default value when no layer has the key', () => {
-      const { UnifiedConfigStore } = loadStore();
-      const store = UnifiedConfigStore.getInstance();
+      const { ConfigStore } = loadStore();
+      const store = ConfigStore.getInstance();
 
       // get() with no match returns undefined -- defaults are set via the store config
       expect(store.get('NONEXISTENT')).toBeUndefined();

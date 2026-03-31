@@ -1,10 +1,10 @@
-# Open Hivemind Unified Server
+# Open Hivemind Server
 
-This document describes the unified server architecture that combines the bot services and webui into a single process.
+This document describes the server architecture that combines the bot services and webui into a single process.
 
 ## 🎯 Overview
 
-The Open Hivemind Unified Server runs a single process that provides:
+The Open Hivemind Server runs a single process that provides:
 - **Bot Services**: Discord, Slack, and other messenger platform integrations
 - **WebUI**: Modern React-based dashboard for bot management
 - **API**: RESTful API for bot configuration and monitoring
@@ -147,7 +147,7 @@ When the server starts, it provides:
 The server provides detailed startup logging:
 
 ```
-🚀 Starting Open Hivemind Unified Server
+🚀 Starting Open Hivemind Server
 🔧 Configuration { nodeEnv: "development", httpEnabled: true, skipMessengers: false, port: "3028" }
 🤖 Resolved LLM providers { providers: ["OpenAIProvider"] }
 📡 Initializing messenger services
@@ -161,7 +161,7 @@ The server provides detailed startup logging:
 📡 API endpoints available { baseUrl: "http://localhost:3028/api" }
 📱 Frontend assets served from { path: "dist/client/dist" }
 🪝 Webhook service is disabled
-🎉 Open Hivemind Unified Server startup complete!
+🎉 Open Hivemind Server startup complete!
 ```
 
 ## 🔄 Process Management
@@ -192,7 +192,7 @@ The server handles:
 
 ## 🐳 Docker Deployment
 
-The unified server works great with Docker:
+The server works great with Docker:
 
 ```dockerfile
 FROM node:18-alpine
@@ -233,7 +233,7 @@ If you were previously running separate processes for bots and webui:
 
 ## 🚀 Performance
 
-The unified server provides:
+The server provides:
 - **Lower memory usage** than multiple processes
 - **Faster startup** time
 - **Simplified deployment**

@@ -4,7 +4,7 @@ import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { BrowserRouter } from 'react-router-dom';
-import UnifiedDashboard from '../UnifiedDashboard';
+import Dashboard from '../Dashboard';
 import { apiService } from '../../services/api';
 
 
@@ -84,7 +84,7 @@ vi.mock('../BotManagement/CreateBotWizard', () => ({
   CreateBotWizard: () => <div data-testid="create-bot-wizard">Create Bot Wizard</div>,
 }));
 
-describe.skip('UnifiedDashboard', () => {
+describe.skip('Dashboard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Mock HTMLDialogElement methods
@@ -106,7 +106,7 @@ describe.skip('UnifiedDashboard', () => {
 
     render(
       <BrowserRouter>
-        <UnifiedDashboard />
+        <Dashboard />
       </BrowserRouter>
     );
 
@@ -135,7 +135,7 @@ describe.skip('UnifiedDashboard', () => {
 
     render(
       <BrowserRouter>
-        <UnifiedDashboard />
+        <Dashboard />
       </BrowserRouter>
     );
 
@@ -171,7 +171,7 @@ describe.skip('UnifiedDashboard', () => {
 
     render(
       <BrowserRouter>
-        <UnifiedDashboard />
+        <Dashboard />
       </BrowserRouter>
     );
 
@@ -215,7 +215,7 @@ describe.skip('UnifiedDashboard', () => {
 
     render(
       <BrowserRouter>
-        <UnifiedDashboard />
+        <Dashboard />
       </BrowserRouter>
     );
 

@@ -10,7 +10,7 @@ export interface RangeSliderProps {
   /** Step increment */
   step?: number;
   /** Color variant of the slider */
-  variant?: 'primary' | 'secondary' | 'accent';
+  variant?: 'primary' | 'secondary' | 'accent' | 'info' | 'success' | 'warning' | 'error';
   /** Size of the slider */
   size?: 'xs' | 'sm' | 'md' | 'lg';
   /** Whether the slider is disabled */
@@ -25,6 +25,10 @@ export interface RangeSliderProps {
   valueFormatter?: (value: number) => string;
   /** Additional CSS classes */
   className?: string;
+  /** Whether to show tick marks */
+  showMarks?: boolean;
+  /** Custom mark labels (requires showMarks) */
+  marks?: { value: number; label: string }[];
   /** Accessibility label */
   'aria-label'?: string;
   /** ID for the input element */
@@ -44,6 +48,8 @@ export const RangeSlider: React.FC<RangeSliderProps> = ({
   showValue = true,
   valueFormatter = (val) => val.toString(),
   className = '',
+  showMarks = false,
+  marks = [],
   'aria-label': ariaLabel,
   id,
   ...props
@@ -114,7 +120,24 @@ export const RangeSlider: React.FC<RangeSliderProps> = ({
         aria-valuetext={showValue ? valueFormatter(currentValue) : undefined}
         {...props}
       />
-      {!label && showValue && (
+      {showMarks && (
+        <div className="w-full flex justify-between text-xs px-2 mt-1">
+          {marks.length > 0 ? (
+            marks.map((mark, index) => (
+              <span key={index} className={`opacity-70 flex flex-col items-center ${currentValue === mark.value ? `font-bold text-${variant}` : ''}`}>
+                <span>|</span>
+                <span>{mark.label}</span>
+              </span>
+            ))
+          ) : (
+            // Default marks based on min/max and step
+            Array.from({ length: Math.floor((max - min) / step) + 1 }).map((_, index) => (
+              <span key={index}>|</span>
+            ))
+          )}
+        </div>
+      )}
+      {!label && showValue && !showMarks && (
         <div className="text-center mt-2">
           <span className="text-sm opacity-70">{valueFormatter(currentValue)}</span>
         </div>

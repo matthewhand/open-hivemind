@@ -10,6 +10,7 @@ import Input from './DaisyUI/Input';
 import Select from './DaisyUI/Select';
 import { useConfigDiff } from '../hooks/useConfigDiff';
 import { ConfigDiffConfirmDialog } from './ConfigDiffViewer';
+import { useSavedStamp } from '../contexts/SavedStampContext';
 
 interface ToolUsageGuard {
   id: string;
@@ -25,6 +26,7 @@ interface ToolUsageGuard {
 }
 
 const ToolUsageGuardsConfig: React.FC = () => {
+  const { showStamp } = useSavedStamp();
   const [guards, setGuards] = useState<ToolUsageGuard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -151,6 +153,7 @@ const ToolUsageGuardsConfig: React.FC = () => {
         message: `Tool usage guard ${editingGuard ? 'updated' : 'created'} successfully`,
         type: 'success',
       });
+      showStamp();
       handleCloseDialog();
       fetchGuards();
     } catch (err) {

@@ -169,7 +169,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 // app.use(healthRoute); // Removed global mount causing root conflict
 
-// Serve unified dashboard at root
+// Serve dashboard at root
 if (process.env.NODE_ENV !== 'development') {
   app.get('/', async (req: Request, res: Response) => {
     const indexPath = path.join(frontendDistPath, 'index.html');
@@ -200,7 +200,7 @@ if (process.env.NODE_ENV !== 'development') {
   // Global assets static for root-relative asset paths
   app.use('/assets', express.static(frontendAssetsPath));
 
-  // Uber UI (unified dashboard)
+  // Uber UI (dashboard)
   app.use('/uber', express.static(frontendDistPath));
   app.use('/uber/*', (req: Request, res: Response) => {
     res.sendFile(path.join(frontendDistPath, 'index.html'));
@@ -258,7 +258,7 @@ if (!allowAllIPs) {
 // CSRF token endpoint
 app.get('/api/csrf-token', csrfTokenHandler);
 
-// Unified API routes - all on same port, no separation
+// API routes - all on same port, no separation
 app.use('/api/swarm', authenticateToken, swarmRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/config', webuiConfigRouter);
@@ -286,7 +286,7 @@ app.use('/health', healthRoute);
 
 app.use(sitemapRouter); // Sitemap routes at root level
 
-// Legacy route redirects - everything now unified under /
+// Legacy route redirects - everything now under /
 app.use('/webui', (req: Request, res: Response) => res.redirect(301, '/' + req.path));
 app.get('/admin*', (req: Request, res: Response) => {
   res.sendFile(path.join(frontendDistPath, 'index.html'));
@@ -462,8 +462,8 @@ async function main() {
   // Validate critical environment variables before proceeding
   validateRequiredEnvVars();
 
-  // Unified application startup with enhanced diagnostics
-  appLogger.info('🚀 Starting Open Hivemind Unified Server');
+  // Application startup with enhanced diagnostics
+  appLogger.info('🚀 Starting Open Hivemind Server');
 
   // Initialize providers (skip in demo/skip mode)
   if (process.env.SKIP_MESSENGERS !== 'true') {
@@ -780,7 +780,7 @@ async function main() {
   shutdownCoordinator.setupSignalHandlers();
 
   // Startup complete
-  appLogger.info('🎉 Open Hivemind Unified Server startup complete!');
+  appLogger.info('🎉 Open Hivemind Server startup complete!');
 
   // Re-print temp password so it's visible after all startup noise
   const { AuthManager } = await import('./auth/AuthManager');

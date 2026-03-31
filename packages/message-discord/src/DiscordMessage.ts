@@ -19,7 +19,7 @@ const ErrorUtils = {
 /**
  * Discord-specific implementation of the IMessage interface.
  *
- * This class wraps the Discord.js Message object to provide a unified interface
+ * This class wraps the Discord.js Message object to provide a common interface
  * for Discord messages while maintaining compatibility with the IMessage contract.
  * It handles Discord-specific features like mentions, channel topics, and message editing.
  *

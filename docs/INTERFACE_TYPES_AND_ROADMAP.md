@@ -65,7 +65,7 @@ export abstract class IMessage {
 ### 2. IMessengerService (High-level Service Interface)
 **Location**: [`packages/shared-types/src/IMessengerService.ts`](packages/shared-types/src/IMessengerService.ts)
 
-Unified API for messaging operations across platforms.
+Common API for messaging operations across platforms.
 
 ```typescript
 export interface IMessengerService {

@@ -117,9 +117,9 @@
       }
     }
   },
-  "/api/config/unified-sources": {
+  "/api/config/sources": {
     "get": {
-      "summary": "Get config key to source layer mapping via UnifiedConfigStore",
+      "summary": "Get config key to source layer mapping via ConfigStore",
       "tags": [
         "Configuration"
       ],

@@ -8,6 +8,7 @@ import { Bot, Link as LinkIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import Debug from 'debug';
+import { useSavedStamp } from '../../contexts/SavedStampContext';
 const debug = Debug('app:client:components:Settings:SettingsLLM');
 
 interface LLMConfig {
@@ -22,6 +23,7 @@ const SettingsLLM: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [alert, setAlert] = useState<{ type: 'success' | 'error' | 'warning'; message: string } | null>(null);
+    const { showStamp } = useSavedStamp();
 
     const fetchSettingsAndProviders = useCallback(async () => {
         try {
@@ -69,6 +71,7 @@ const SettingsLLM: React.FC = () => {
             });
 
             setAlert({ type: 'success', message: 'LLM settings saved successfully!' });
+            showStamp();
             setTimeout(() => setAlert(null), 5000);
         } catch (err) {
             debug('ERROR:', 'Save failed:', err);

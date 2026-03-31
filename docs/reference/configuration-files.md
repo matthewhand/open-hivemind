@@ -519,7 +519,7 @@ export default defineConfig({
 
 | Target | Purpose |
 |--------|---------|
-| `make start-dev` | Unified development server with ts-node and tsconfig-paths |
+| `make start-dev` | Development server with ts-node and tsconfig-paths |
 | `make start-prod` | Production server with compiled code |
 | `make build` | Full build (frontend + backend) |
 | `make lint` | Run ESLint |

@@ -12,7 +12,6 @@
     "test:coverage": "npx vitest run --coverage"
   },
   "dependencies": {
-    "@babel/preset-react": "^7.28.5",
     "@heroicons/react": "^2.2.0",
     "@playwright/test": "^1.58.2",
     "@tanstack/react-virtual": "^3.13.23",

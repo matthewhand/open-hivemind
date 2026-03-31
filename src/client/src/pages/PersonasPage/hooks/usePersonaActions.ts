@@ -10,7 +10,8 @@ export const usePersonaActions = (
   successToast: (title?: string, message?: string) => void,
   errorToast: (title?: string, message?: string) => void,
   infoToast: (title?: string, message?: string) => void,
-  bulk: any
+  bulk: any,
+  showStamp?: () => void
 ) => {
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -152,6 +153,7 @@ export const usePersonaActions = (
           ? 'Persona updated successfully'
           : 'Persona created successfully'
       );
+      showStamp?.();
     } catch (err: any) {
       errorToast('Save Failed', 'Failed to save persona changes');
       setError('Failed to save persona changes');

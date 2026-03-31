@@ -8,6 +8,7 @@ import Button from '../DaisyUI/Button';
 import { Settings as SettingsIcon, ShieldCheck, Activity } from 'lucide-react';
 import Debug from 'debug';
 import { apiService } from '../../services/api';
+import { useSavedStamp } from '../../contexts/SavedStampContext';
 const debug = Debug('app:client:components:Settings:SettingsGeneral');
 
 interface GeneralConfig {
@@ -46,6 +47,7 @@ const SettingsGeneral: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const { showStamp } = useSavedStamp();
 
   // Generate timezone options dynamically
   const timezoneOptions = useMemo(() => {
@@ -133,6 +135,7 @@ const SettingsGeneral: React.FC = () => {
         'webui.advancedMode': settings.advancedMode,
       });
       setAlert({ type: 'success', message: 'Settings saved successfully!' });
+      showStamp();
       setTimeout(() => setAlert(null), 3000);
     } catch (error) {
       setAlert({ type: 'error', message: 'Failed to save settings. Some settings may require environment variables.' });

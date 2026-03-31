@@ -11,7 +11,8 @@ export const useMCPServerActions = (
   fetchServers: () => Promise<void>,
   setAlert: React.Dispatch<
     React.SetStateAction<{ type: 'success' | 'error'; message: string } | null>
-  >
+  >,
+  showStamp?: () => void
 ) => {
   const handleServerAction = async (serverId: string, action: 'start' | 'stop' | 'restart') => {
     if (action === 'restart') {
@@ -152,6 +153,7 @@ export const useMCPServerActions = (
         type: 'success',
         message: isEditing ? 'Server updated successfully' : 'Server added successfully',
       });
+      showStamp?.();
       setDialogOpen(false);
       await fetchServers();
     } catch (err) {

@@ -9,6 +9,7 @@ import { Shield, Plus, Trash2 } from 'lucide-react';
 import SecureConfigManager from '../SecureConfigManager';
 import Debug from 'debug';
 import { apiService } from '../../services/api';
+import { useSavedStamp } from '../../contexts/SavedStampContext';
 const debug = Debug('app:client:components:Settings:SettingsSecurity');
 
 const SettingsSecurity: React.FC = () => {
@@ -31,6 +32,7 @@ const SettingsSecurity: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+  const { showStamp } = useSavedStamp();
 
   const fetchSettings = useCallback(async () => {
     try {
@@ -88,6 +90,7 @@ const SettingsSecurity: React.FC = () => {
         'rateLimit.windowMs': settings.rateLimitWindow * 1000,
       });
       setAlert({ type: 'success', message: 'Security settings saved!' });
+      showStamp();
       setTimeout(() => setAlert(null), 3000);
     } catch (error) {
       setAlert({ type: 'error', message: 'Failed to save. Some settings require environment variables.' });

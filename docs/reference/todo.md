@@ -235,10 +235,10 @@ Context: The app currently fails to render a website. This checklist captures ro
 4) Dev workflow clarity and port collisions
 - Problem: `dev:frontend` runs Vite on 3028 while backend also defaults to 3028 during dev; can collide.
 - Fix:
-  - Keep unified dev on a single port via backend serving the built frontend.
+  - Keep dev on a single port via backend serving the built frontend.
   - Run isolated UI on a different port (e.g., Vite 5173), clearly documented.
 - Files: `package.json`, `src/client/vite.config.ts`, `README.md`
-- Acceptance: `npm run dev` boots unified server and serves UI without clashes; `npm run dev:frontend` runs standalone UI on a different port.
+- Acceptance: `npm run dev` boots server and serves UI without clashes; `npm run dev:frontend` runs standalone UI on a different port.
 
 5) Ensure initial UI doesn’t break on auth-protected APIs
 - Problem: Several `/webui/*` APIs are behind auth middleware; if frontend makes unauthenticated calls during boot and doesn’t handle 401s, first paint can appear broken.

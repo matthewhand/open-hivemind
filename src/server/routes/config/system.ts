@@ -153,11 +153,11 @@ router.get('/sources', async (req, res) => {
   }
 });
 
-// GET /api/config/unified-sources - Config key → source layer mapping via UnifiedConfigStore
-router.get('/unified-sources', (req, res) => {
+// GET /api/config/sources - Config key → source layer mapping via ConfigStore
+router.get('/sources', (req, res) => {
   try {
-    const { UnifiedConfigStore } = require('../../../config/UnifiedConfigStore');
-    const store = UnifiedConfigStore.getInstance();
+    const { ConfigStore } = require('../../../config/ConfigStore');
+    const store = ConfigStore.getInstance();
     const sources = store.getAllSources();
     const layers: string[] = ['env', 'secure', 'provider', 'user', 'profile', 'default'];
 
@@ -166,15 +166,15 @@ router.get('/unified-sources', (req, res) => {
     const hivemindError = ErrorUtils.toHivemindError(error);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json(ApiResponse.error((hivemindError as any).message, 'UNIFIED_SOURCES_ERROR', 500));
+      .json(ApiResponse.error((hivemindError as any).message, 'CONFIG_SOURCES_ERROR', 500));
   }
 });
 
 // GET /api/config/source/:key - Source layer for a single config key
 router.get('/source/:key', (req, res) => {
   try {
-    const { UnifiedConfigStore } = require('../../../config/UnifiedConfigStore');
-    const store = UnifiedConfigStore.getInstance();
+    const { ConfigStore } = require('../../../config/ConfigStore');
+    const store = ConfigStore.getInstance();
     const { key } = req.params;
     const source = store.getSource(key);
 

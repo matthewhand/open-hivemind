@@ -60,7 +60,7 @@ open-hivemind/
 │   │   ├── HealthChecker.ts      # System health monitoring
 │   │   ├── AlertManager.ts       # Alert management
 │   │   ├── MetricsCollector.ts   # Metrics collection
-│   │   └── MonitoringService.ts  # Unified monitoring service
+│   │   └── MonitoringService.ts  # Monitoring service
 │   ├── scripts/                  # Automation scripts
 │   │   ├── deploy.sh            # Deployment automation
 │   │   ├── backup.sh            # Backup and recovery
