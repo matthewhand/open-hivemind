@@ -6,6 +6,7 @@ import {
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 import Modal from './DaisyUI/Modal';
+import { logger } from '../utils/logger';
 
 interface ToolResult {
   timestamp: string;
@@ -37,7 +38,7 @@ const ToolResultModal: React.FC<ToolResultModalProps> = ({ isOpen, onClose, resu
       setCopiedSection(section);
       setTimeout(() => setCopiedSection(null), 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
+      logger.error('[ToolResultModal] Failed to copy:', err);
     }
   };
 

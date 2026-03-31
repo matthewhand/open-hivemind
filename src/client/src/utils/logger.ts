@@ -6,13 +6,41 @@
 
 const IS_DEV = import.meta.env.DEV;
 
+const formatMessage = (level: string, args: unknown[]) => {
+  const timestamp = new Date().toISOString();
+
+  // Try to extract a component name if the first argument matches the [Component] pattern
+  let component = '';
+  const firstArg = args[0];
+  if (typeof firstArg === 'string') {
+    const match = firstArg.match(/^\[(.*?)\]/);
+    if (match) {
+      component = ` [${match[1]}]`;
+      // We don't remove the prefix from the first arg to keep it simple,
+      // but we add it to the structured prefix. Actually, let's just
+      // use the prefix if it's there.
+    }
+  }
+
+  // If the first argument already has the [Component] pattern, we can just prepend the timestamp and level.
+  // Alternatively, we construct a standard prefix.
+  const prefix = `[${timestamp}] [${level}]`;
+
+  if (typeof firstArg === 'string' && firstArg.startsWith('[')) {
+    // It likely already has a component prefix, so just prepend our metadata
+    return [`${prefix} ${firstArg}`, ...args.slice(1)];
+  }
+
+  return [prefix, ...args];
+};
+
 export const logger = {
   /**
    * Log a debug message. Only shown in development.
    */
   debug: (...args: unknown[]) => {
     if (IS_DEV) {
-      console.debug(...args);
+      console.debug(...formatMessage('DEBUG', args));
     }
   },
 
@@ -21,7 +49,7 @@ export const logger = {
    */
   info: (...args: unknown[]) => {
     if (IS_DEV) {
-      console.info(...args);
+      console.info(...formatMessage('INFO', args));
     }
   },
 
@@ -29,14 +57,14 @@ export const logger = {
    * Log a warning message. Always shown.
    */
   warn: (...args: unknown[]) => {
-    console.warn(...args);
+    console.warn(...formatMessage('WARN', args));
   },
 
   /**
    * Log an error message. Always shown.
    */
   error: (...args: unknown[]) => {
-    console.error(...args);
+    console.error(...formatMessage('ERROR', args));
   },
 
   /**
@@ -45,7 +73,7 @@ export const logger = {
    */
   log: (...args: unknown[]) => {
     if (IS_DEV) {
-      console.log(...args);
+      console.log(...formatMessage('LOG', args));
     }
   },
 };

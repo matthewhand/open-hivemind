@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import useUrlParams from '../../hooks/useUrlParams';
 import { apiService, type Persona as ApiPersona, type Bot } from '../../services/api';
+import { logger } from '../../utils/logger';
 import { useInfoToast, useSuccessToast, useErrorToast } from '../DaisyUI/ToastNotification';
 import { useBulkSelection } from '../../hooks/useBulkSelection';
 import { useDragAndDrop } from '../../hooks/useDragAndDrop';
@@ -66,7 +67,7 @@ export function usePersonasLogic() {
       await fetchPersonas();
     } catch (err: any) {
       setError('Failed to fetch data.');
-      console.error(err);
+      logger.error('[PersonasLogic] Failed to fetch data:', err);
     } finally {
       setLoading(false);
     }

@@ -5,6 +5,8 @@
  * that can be displayed with the EnhancedErrorAlert component.
  */
 
+import { logger } from './logger';
+
 export interface EnhancedAPIError {
   error: string;
   message: string;
@@ -208,7 +210,7 @@ export function useEnhancedErrorHandling() {
     defaultTitle: string = 'Error Occurred'
   ): ActionableErrorDisplay => {
     // Log error for debugging
-    console.error('Error occurred:', error);
+    logger.error('[EnhancedErrorHandling] Error occurred:', error);
 
     return convertAPIErrorToDisplay(error, defaultTitle);
   };
