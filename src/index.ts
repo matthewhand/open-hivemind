@@ -584,8 +584,8 @@ async function main() {
     }
   }
 
-  // ── Optional 5-stage message pipeline (opt-in via USE_PIPELINE=true) ──
-  if (process.env.USE_PIPELINE === 'true') {
+  // ── 5-stage message pipeline (default, disable via USE_LEGACY_HANDLER=true) ──
+  if (process.env.USE_LEGACY_HANDLER !== 'true') {
     const { MessageBus } = await import('@src/events/MessageBus');
     const { createPipeline } = await import('@src/pipeline/createPipeline');
     const { PipelineTracer } = await import('@src/observability/PipelineTracer');
@@ -606,7 +606,7 @@ async function main() {
     const tracer = new PipelineTracer(bus);
     tracer.register();
 
-    appLogger.info('🔀 Pipeline mode enabled (USE_PIPELINE=true)');
+    appLogger.info('🔀 Pipeline mode active (set USE_LEGACY_HANDLER=true to revert)');
   }
 
   const httpEnabled = process.env.HTTP_ENABLED !== 'false';

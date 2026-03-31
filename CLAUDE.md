@@ -14,7 +14,7 @@
 | `HTTP_ENABLED` | `true` | Enable the HTTP server and WebUI |
 | `SKIP_MESSENGERS` | `false` | Skip messenger service initialization |
 | `WEBHOOK_ENABLED` | `false` | Enable the webhook service |
-| `USE_PIPELINE` | `false` | Enable the 5-stage message pipeline (experimental). When `true`, wires `ReceiveStage` through `SendStage` on the `MessageBus` alongside the existing `handleMessage` path. |
+| `USE_LEGACY_HANDLER` | `false` | Revert to the legacy monolithic `handleMessage()` instead of the 5-stage pipeline. The pipeline is the default message processing path. |
 
 ## Screenshot Convention
 

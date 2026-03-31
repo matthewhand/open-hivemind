@@ -131,7 +131,7 @@ export class StartupDiagnostics {
       { key: 'LOW_MEMORY_MODE', description: 'Low memory optimizations' },
       { key: 'SUPPRESS_HEALTH_LOGS', description: 'Health endpoint logging' },
       { key: 'DEBUG', description: 'Debug logging' },
-      { key: 'USE_PIPELINE', description: '5-stage message pipeline' },
+      { key: 'USE_LEGACY_HANDLER', description: 'Revert to legacy handleMessage()' },
     ];
 
     const summary: EnvironmentSummary = {
@@ -476,9 +476,9 @@ export class StartupDiagnostics {
         description: 'Suppress health endpoint logs',
       },
       {
-        key: 'USE_PIPELINE',
+        key: 'USE_LEGACY_HANDLER',
         default: 'false',
-        description: 'Enable 5-stage message pipeline',
+        description: 'Revert to legacy monolithic handleMessage()',
       },
     ];
 
