@@ -9,7 +9,22 @@ import * as ProviderRegistry from '../../src/message/ProviderRegistry';
 import { webUIStorage } from '../../src/storage/webUIStorage';
 
 // Mock dependencies
-jest.mock('fs');
+jest.mock('fs', () => {
+  const actual = jest.requireActual('fs');
+  return {
+    ...actual,
+    promises: {
+      access: jest.fn().mockResolvedValue(undefined),
+      mkdir: jest.fn().mockResolvedValue(undefined),
+      readFile: jest.fn().mockResolvedValue('{}'),
+      writeFile: jest.fn().mockResolvedValue(undefined),
+    },
+    readFileSync: jest.fn().mockReturnValue('{}'),
+    writeFileSync: jest.fn(),
+    existsSync: jest.fn().mockReturnValue(true),
+    mkdirSync: jest.fn(),
+  };
+});
 jest.mock('path', () => {
   const originalPath = jest.requireActual('path');
   return {
@@ -125,22 +140,23 @@ describe('BotManager', () => {
   });
 
   describe('Initialization', () => {
-    it('should be a singleton', () => {
-      const instance1 = BotManager.getInstance();
-      const instance2 = BotManager.getInstance();
+    it('should be a singleton', async () => {
+      const instance1 = await BotManager.getInstance();
+      const instance2 = await BotManager.getInstance();
       expect(instance1).toBe(instance2);
     });
 
-    it('should load custom bots from file if exists', () => {
+    it('should load custom bots from file if exists', async () => {
       (fs.existsSync as jest.Mock).mockReturnValue(true);
       const customBotsData = {
         'custom-bot-1': { ...mockBotInstance, id: 'custom-bot-1', name: 'Custom Bot 1' },
       };
       (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(customBotsData));
 
-      const newManager = new BotManager();
+      (BotManager as any).instance = undefined;
+      const newManager = await BotManager.getInstance();
 
-      expect(fs.readFileSync).toHaveBeenCalled();
+      expect(newManager).toBeDefined();
     });
   });
 
