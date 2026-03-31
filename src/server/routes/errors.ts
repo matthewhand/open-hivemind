@@ -3,10 +3,12 @@ import { HTTP_STATUS } from '../../types/constants';
 import { ErrorFactory } from '../../types/errorClasses';
 import { errorLogger } from '../../utils/errorLogger';
 import { ErrorLogSchema } from '../../validation/schemas/miscSchema';
+import { Logger } from '../../common/logger';
 import { validateRequest } from '../../validation/validateRequest';
 import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
+const routesErrorLogger = Logger.withContext('routes:errors');
 
 // Handle CORS preflight requests
 router.options('*', (req, res) => {
@@ -80,7 +82,7 @@ router.post('/frontend', validateRequest(ErrorLogSchema), async (req: Request, r
       message: 'Error report received and logged',
     });
   } catch (error) {
-    console.error('Failed to process frontend error report:', error);
+    routesErrorLogger.error('Failed to process frontend error report:', error);
 
     // Log the processing error
     await errorLogger.logError(error as Error, {
@@ -107,7 +109,7 @@ router.get('/stats', authenticateToken, async (req: Request, res: Response) => {
     const stats = await errorLogger.getErrorStats();
     return res.json(stats);
   } catch (error) {
-    console.error('Failed to get error stats:', error);
+    routesErrorLogger.error('Failed to get error stats:', error);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json({ error: 'Failed to retrieve error statistics' });
@@ -121,7 +123,7 @@ router.get('/recent', authenticateToken, async (req: Request, res: Response) => 
     const recentErrors = await errorLogger.getRecentErrors(limit);
     return res.json(recentErrors);
   } catch (error) {
-    console.error('Failed to get recent errors:', error);
+    routesErrorLogger.error('Failed to get recent errors:', error);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json({ error: 'Failed to retrieve recent errors' });

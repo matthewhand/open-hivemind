@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
+import { Logger } from '../../common/logger';
 import { redactSensitiveInfo } from '../../common/redactSensitiveInfo';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import llmConfig from '../../config/llmConfig';
@@ -67,6 +68,7 @@ function isPathWithinAllowed(targetPath: string, allowedBasePath: string): boole
 }
 
 const debug = Debug('app:server:routes:config');
+const configLogger = Logger.withContext('routes:config');
 const router = Router();
 
 // Core schemas that are always present
@@ -113,7 +115,7 @@ const loadDynamicConfigs = async () => {
             try {
               newConfig.validate({ allowed: 'warn' });
             } catch (e) {
-              console.warn(`Validation warning for ${name}:`, e);
+              configLogger.warn(`Validation warning for ${name}:`, e);
             }
 
             globalConfigs[name] = newConfig;
@@ -126,7 +128,7 @@ const loadDynamicConfigs = async () => {
       }
     }
   } catch (e) {
-    console.error('Failed to load dynamic configs:', e);
+    configLogger.error('Failed to load dynamic configs:', e);
   }
 };
 
