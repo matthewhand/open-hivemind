@@ -2,6 +2,7 @@ import React from 'react';
 import { GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
 import BotCard from '../../components/BotManagement/BotCard';
 import type { BotConfig } from '../../types/bot';
+import Checkbox from '../../components/DaisyUI/Checkbox';
 
 interface BotListGridProps {
   filteredBots: BotConfig[];
@@ -52,8 +53,7 @@ export const BotListGrid: React.FC<BotListGridProps> = ({
           style={getBotItemStyle(index)}
         >
           <div className="absolute top-2 left-2 z-10 flex items-center gap-1">
-            <input
-              type="checkbox"
+            <Checkbox
               className="checkbox checkbox-sm checkbox-primary"
               checked={bulk.isSelected(bot.id)}
               onChange={(e) => bulk.toggleItem(bot.id, e as any)}

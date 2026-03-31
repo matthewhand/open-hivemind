@@ -7,6 +7,7 @@ import Button from './DaisyUI/Button';
 import { Bot as ApiBot, Persona as ApiPersona } from '../services/api';
 import { useConfigDiff } from '../hooks/useConfigDiff';
 import { ConfigDiffConfirmDialog } from './ConfigDiffViewer';
+import Toggle from './DaisyUI/Toggle';
 
 // Extended Bot type with UI-specific fields
 interface BotConfig extends ApiBot {
@@ -259,15 +260,15 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
 
                             <label className="flex items-center justify-between cursor-pointer p-2 hover:bg-base-200 rounded-md transition-colors">
                                 <span className="text-sm">Access Control</span>
-                                <input type="checkbox" className="toggle toggle-sm toggle-success" disabled checked={!!bot.mcpGuard?.enabled} />
+                                <Toggle className="toggle toggle-sm toggle-success" disabled checked={!!bot.mcpGuard?.enabled} />
                             </label>
                             <label className="flex items-center justify-between cursor-pointer p-2 hover:bg-base-200 rounded-md transition-colors opacity-50">
                                 <span className="text-sm">Rate Limiter</span>
-                                <input type="checkbox" className="toggle toggle-sm" disabled />
+                                <Toggle className="toggle toggle-sm" disabled />
                             </label>
                             <label className="flex items-center justify-between cursor-pointer p-2 hover:bg-base-200 rounded-md transition-colors opacity-50">
                                 <span className="text-sm">Content Filter</span>
-                                <input type="checkbox" className="toggle toggle-sm" disabled />
+                                <Toggle className="toggle toggle-sm" disabled />
                             </label>
                         </div>
 

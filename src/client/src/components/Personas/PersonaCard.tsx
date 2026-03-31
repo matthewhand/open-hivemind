@@ -13,6 +13,7 @@ import Badge from '../DaisyUI/Badge';
 import Button from '../DaisyUI/Button';
 import Card from '../DaisyUI/Card';
 import { Persona } from './usePersonasLogic';
+import Checkbox from '../DaisyUI/Checkbox';
 
 interface PersonaCardProps {
   persona: Persona;
@@ -72,8 +73,7 @@ export const PersonaCard: React.FC<PersonaCardProps> = ({
             >
               <GripVertical className="w-5 h-5" />
             </div>
-            <input
-              type="checkbox"
+            <Checkbox
               className="checkbox checkbox-sm checkbox-primary rounded"
               checked={isSelected}
               onChange={() => onToggleSelection(persona.id)}

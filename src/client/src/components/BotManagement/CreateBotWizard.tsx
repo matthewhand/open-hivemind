@@ -6,6 +6,7 @@ import { useConfigDiff } from '../../hooks/useConfigDiff';
 import { ConfigDiffViewer, ConfigDiffConfirmDialog } from '../ConfigDiffViewer';
 import { apiService } from '../../services/api';
 import Debug from 'debug';
+import Toggle from '../DaisyUI/Toggle';
 const debug = Debug('app:client:components:BotManagement:CreateBotWizard');
 
 interface CreateBotWizardProps {
@@ -462,8 +463,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
 
                             <div className="form-control">
                                 <label className="label cursor-pointer justify-start gap-4">
-                                    <input
-                                        type="checkbox"
+                                    <Toggle
                                         className="toggle toggle-primary"
                                         checked={formData.guards.accessControl}
                                         onChange={e => setFormData({ ...formData, guards: { ...formData.guards, accessControl: e.target.checked } })}
@@ -478,8 +478,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
 
                             <div className="form-control">
                                 <label className="label cursor-pointer justify-start gap-4">
-                                    <input
-                                        type="checkbox"
+                                    <Toggle
                                         className="toggle toggle-primary"
                                         checked={formData.guards.rateLimit}
                                         onChange={e => setFormData({ ...formData, guards: { ...formData.guards, rateLimit: e.target.checked } })}
@@ -494,8 +493,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
 
                             <div className="form-control">
                                 <label className="label cursor-pointer justify-start gap-4">
-                                    <input
-                                        type="checkbox"
+                                    <Toggle
                                         className="toggle toggle-primary"
                                         checked={formData.guards.contentFilter}
                                         onChange={e => setFormData({ ...formData, guards: { ...formData.guards, contentFilter: e.target.checked } })}

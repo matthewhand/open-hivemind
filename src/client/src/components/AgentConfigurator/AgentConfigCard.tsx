@@ -2,6 +2,7 @@ import React from 'react';
 import type { AgentConfigCardProps, GuardState } from './types';
 import type { FieldMetadata } from '../../services/api';
 import type { ProviderInfo } from '../../services/providerService';
+import Toggle from '../DaisyUI/Toggle';
 
 const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
   bot,
@@ -247,8 +248,7 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
             <div className="form-control">
               <label className="label cursor-pointer">
                 <span className="label-text">MCP Tool Guard</span>
-                <input
-                  type="checkbox"
+                <Toggle
                   className={`toggle ${uiState?.mcpGuard?.enabled ? 'toggle-primary' : ''}`}
                   checked={uiState?.mcpGuard?.enabled || false}
                   onChange={(e) => onGuardToggle(bot, e.target.checked)}

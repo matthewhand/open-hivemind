@@ -36,6 +36,7 @@ import { useBulkSelection } from '../hooks/useBulkSelection';
 import BulkActionBar from '../components/BulkActionBar';
 import { useDragAndDrop } from '../hooks/useDragAndDrop';
 import { useIsBelowBreakpoint } from '../hooks/useBreakpoint';
+import Checkbox from '../components/DaisyUI/Checkbox';
 
 const BotsPage: React.FC = () => {
   const [bots, setBots] = useState<BotConfig[]>([]);
@@ -523,8 +524,7 @@ const BotsPage: React.FC = () => {
           ) : (
             <>
               <div className="flex items-center gap-2 mb-2">
-                <input
-                  type="checkbox"
+                <Checkbox
                   className="checkbox checkbox-sm checkbox-primary"
                   checked={bulk.isAllSelected}
                   onChange={() => bulk.toggleAll(filteredBotIds)}
@@ -592,8 +592,7 @@ const BotsPage: React.FC = () => {
                     style={getBotItemStyle(globalIndex)}
                   >
                     <div className="absolute top-2 left-2 z-10 flex items-center gap-1">
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         className="checkbox checkbox-sm checkbox-primary"
                         checked={bulk.isSelected(bot.id)}
                         onChange={(e) => bulk.toggleItem(bot.id, e as any)}
@@ -659,8 +658,7 @@ const BotsPage: React.FC = () => {
                       style={getBotItemStyle(index)}
                     >
                       <div className="absolute top-2 left-2 z-10 flex items-center gap-1">
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           className="checkbox checkbox-sm checkbox-primary"
                           checked={bulk.isSelected(bot.id)}
                           onChange={(e) => bulk.toggleItem(bot.id, e as any)}

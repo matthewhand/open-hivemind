@@ -18,6 +18,7 @@ import useUrlParams from '../hooks/useUrlParams';
 import { useBulkSelection } from '../hooks/useBulkSelection';
 import BulkActionBar from '../components/BulkActionBar';
 import Badge from '../components/DaisyUI/Badge';
+import Checkbox from '../components/DaisyUI/Checkbox';
 
 interface McpGuardConfig {
   enabled: boolean;
@@ -292,8 +293,7 @@ const GuardsPage: React.FC = () => {
       ) : (
         <>
           <div className="flex items-center gap-2 mb-2">
-            <input
-              type="checkbox"
+            <Checkbox
               className="checkbox checkbox-sm checkbox-primary"
               checked={bulk.isAllSelected}
               onChange={() => bulk.toggleAll(filteredProfileIds)}
@@ -335,8 +335,7 @@ const GuardsPage: React.FC = () => {
               <div className="card-body">
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       className="checkbox checkbox-sm checkbox-primary"
                       checked={bulk.isSelected(profile.id)}
                       onChange={(e) => bulk.toggleItem(profile.id, e as any)}
