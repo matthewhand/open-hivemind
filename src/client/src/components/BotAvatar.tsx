@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Bot, User } from 'lucide-react';
 import { SkeletonAvatar } from '../components/DaisyUI/Skeleton';
+import Avatar from './DaisyUI/Avatar';
 
 // Duplicate interface just for props, or import existing if possible
 interface BotData {
@@ -38,10 +39,18 @@ export const BotAvatar: React.FC<{ bot: BotData }> = ({ bot }) => {
     }
 
     return (
-        <div className="avatar placeholder">
-            <div className="bg-primary text-primary-content w-10 rounded-full flex items-center justify-center transition-opacity duration-500 opacity-100">
-                {src ? <img src={src} alt={bot.name} /> : <Bot className="w-6 h-6" />}
-            </div>
-        </div>
+        <Avatar
+            placeholder={!src}
+            src={src || undefined}
+            alt={bot.name}
+            size="md"
+            shape="circle"
+        >
+            {!src && (
+                <div className="bg-primary text-primary-content w-full h-full flex items-center justify-center transition-opacity duration-500 opacity-100">
+                    <Bot className="w-6 h-6" />
+                </div>
+            )}
+        </Avatar>
     );
 };
