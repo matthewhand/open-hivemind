@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronRight, Plus, Minus, ArrowRight } from 'lucide-react';
 import type { DiffEntry } from '../hooks/useConfigDiff';
+import Diff from './DaisyUI/Diff';
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                           */
@@ -70,13 +71,20 @@ const DiffRow: React.FC<{ entry: DiffEntry }> = ({ entry }) => {
           <span className="text-error line-through">{formatValue(entry.oldValue)}</span>
         )}
         {entry.type === 'changed' && (
-          <span>
-            <span className="text-error line-through">{formatValue(entry.oldValue)}</span>
-            {' '}
-            <ArrowRight className="w-3 h-3 inline opacity-50" />
-            {' '}
-            <span className="text-success font-medium">{formatValue(entry.newValue)}</span>
-          </span>
+          <Diff
+            aspectRatio="aspect-auto h-8"
+            className="w-full max-w-sm rounded"
+            item1={
+              <div className="bg-error/20 w-full h-full flex items-center px-2">
+                <span className="text-error font-medium truncate">{formatValue(entry.oldValue)}</span>
+              </div>
+            }
+            item2={
+              <div className="bg-success/20 w-full h-full flex items-center px-2">
+                <span className="text-success font-medium truncate">{formatValue(entry.newValue)}</span>
+              </div>
+            }
+          />
         )}
       </td>
     </tr>
