@@ -34,7 +34,7 @@
     "dev:clean": "rm -rf dist node_modules/.cache",
     "dev:status": "ps aux | grep -E '(node|ts-node)' | grep -v grep",
     "validate": "./node_modules/.bin/concurrently \"npm run lint\" \"npm run test\"",
-    "test": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test node -r dotenv/config node_modules/.bin/jest --runInBand",
+    "test": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test node -r dotenv/config node_modules/jest/bin/jest.js --runInBand",
     "test:coverage": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test node_modules/.bin/jest --coverage --runInBand",
     "test:real": "NODE_ENV=test jest --config jest.real.config.js",
     "test:real:legacy": "./scripts/run-real-tests.sh",
