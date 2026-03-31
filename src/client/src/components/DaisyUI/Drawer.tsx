@@ -43,10 +43,11 @@ export interface DrawerNavItem {
 export interface DrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  navItems: DrawerNavItem[];
+  navItems?: DrawerNavItem[];
   /** @default "sidebar" */
   variant?: 'sidebar' | 'mobile' | 'overlay';
   className?: string;
+  children?: React.ReactNode;
 }
 
 /* ------------------------------------------------------------------ */
@@ -56,9 +57,10 @@ export interface DrawerProps {
 const Drawer: React.FC<DrawerProps> = ({
   isOpen,
   onClose,
-  navItems,
+  navItems = [],
   variant = 'sidebar',
   className = '',
+  children,
 }) => {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const location = useLocation();
@@ -227,11 +229,14 @@ const Drawer: React.FC<DrawerProps> = ({
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 p-2 overflow-y-auto" aria-label="Main menu">
-        <ul className="list-none m-0 p-0">
-          {navItems.map((item) => renderNavItem(item))}
-        </ul>
+      {/* Navigation OR Custom Content */}
+      <nav className="flex-1 overflow-y-auto flex flex-col" aria-label="Main menu">
+        {navItems && navItems.length > 0 && (
+          <ul className="list-none m-0 p-2">
+            {navItems.map((item) => renderNavItem(item))}
+          </ul>
+        )}
+        {children}
       </nav>
 
       {/* Footer */}
