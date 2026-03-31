@@ -11,6 +11,7 @@ import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotif
 import { useMediaQuery } from '../hooks/useBreakpoint';
 import { Alert } from '../components/DaisyUI/Alert';
 import Badge from '../components/DaisyUI/Badge';
+import Dropdown from '../components/DaisyUI/Dropdown';
 
 // Define Bot type based on API response
 interface BotData {
@@ -270,64 +271,65 @@ const ChatPage: React.FC = () => {
                           <span className="text-xs opacity-50 truncate text-left capitalize">{bot.messageProvider}</span>
                           <span className="text-xs opacity-30">•</span>
                           {/* LLM Provider Hot Swap Dropdown */}
-                          <div className="dropdown dropdown-hover dropdown-right flex-1">
-                            <button
-                              className="btn btn-ghost btn-xs px-1 min-h-0 h-auto flex items-center gap-1 text-xs opacity-70 hover:opacity-100 group"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setShowProviderDropdown(showProviderDropdown === bot.id ? null : bot.id);
-                              }}
-                              disabled={swappingProvider === bot.id}
-                              title="Click to change LLM provider"
-                            >
-                              <Cpu className="w-3 h-3" />
-                              {swappingProvider === bot.id ? (
-                                <span className="loading loading-spinner loading-xs" aria-hidden="true" />
-                              ) : (
-                                <>
-                                  <span className="truncate max-w-[80px]">{bot.llmProvider || 'Default'}</span>
-                                  <ChevronDown className="w-3 h-3 opacity-50 group-hover:opacity-100" />
-                                </>
-                              )}
-                            </button>
-                            {showProviderDropdown === bot.id && (
-                              <ul className="dropdown-content menu p-2 shadow-lg bg-base-100 rounded-box w-52 z-50 max-h-60 overflow-y-auto">
-                                <li className="menu-title">
-                                  <span>Switch Provider</span>
-                                </li>
-                                <li>
-                                  <button
-                                    className={`${!bot.llmProvider ? 'active' : ''} btn btn-ghost btn-sm justify-start`}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleSwapProvider(bot.id, '');
-                                    }}
-                                  >
-                                    <Check className={`w-4 h-4 ${!bot.llmProvider ? 'visible' : 'invisible'}`} />
-                                    System Default
-                                  </button>
-                                </li>
-                                <div className="divider my-1"></div>
-                                {llmProviders.map(provider => (
-                                  <li key={provider.key}>
-                                    <button
-                                      className={`${bot.llmProvider === provider.key ? 'active' : ''} btn btn-ghost btn-sm justify-start`}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleSwapProvider(bot.id, provider.key);
-                                      }}
-                                    >
-                                      <Check className={`w-4 h-4 ${bot.llmProvider === provider.key ? 'visible' : 'invisible'}`} />
-                                      <div className="flex flex-col items-start">
-                                        <span className="font-medium">{provider.name}</span>
-                                        <span className="text-xs opacity-50">{provider.provider}</span>
-                                      </div>
-                                    </button>
-                                  </li>
-                                ))}
-                              </ul>
-                            )}
-                          </div>
+                          <Dropdown
+                            className="flex-1"
+                            triggerClassName="btn-ghost btn-xs px-1 min-h-0 h-auto flex items-center gap-1 text-xs opacity-70 hover:opacity-100 group"
+                            contentClassName="shadow-lg bg-base-100 w-52 z-50 max-h-60 overflow-y-auto"
+                            position="right"
+                            size="none"
+                            color="none"
+                            hideArrow={true}
+                            isOpen={showProviderDropdown === bot.id}
+                            onToggle={(isOpen) => setShowProviderDropdown(isOpen ? bot.id : null)}
+                            disabled={swappingProvider === bot.id}
+                            trigger={
+                              <>
+                                <Cpu className="w-3 h-3" />
+                                {swappingProvider === bot.id ? (
+                                  <span className="loading loading-spinner loading-xs" aria-hidden="true" />
+                                ) : (
+                                  <>
+                                    <span className="truncate max-w-[80px]" title="Click to change LLM provider">{bot.llmProvider || 'Default'}</span>
+                                    <ChevronDown className="w-3 h-3 opacity-50 group-hover:opacity-100" />
+                                  </>
+                                )}
+                              </>
+                            }
+                          >
+                            <li className="menu-title">
+                              <span>Switch Provider</span>
+                            </li>
+                            <li>
+                              <button
+                                className={`${!bot.llmProvider ? 'active' : ''} btn btn-ghost btn-sm justify-start`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSwapProvider(bot.id, '');
+                                }}
+                              >
+                                <Check className={`w-4 h-4 ${!bot.llmProvider ? 'visible' : 'invisible'}`} />
+                                System Default
+                              </button>
+                            </li>
+                            <div className="divider my-1"></div>
+                            {llmProviders.map(provider => (
+                              <li key={provider.key}>
+                                <button
+                                  className={`${bot.llmProvider === provider.key ? 'active' : ''} btn btn-ghost btn-sm justify-start`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSwapProvider(bot.id, provider.key);
+                                  }}
+                                >
+                                  <Check className={`w-4 h-4 ${bot.llmProvider === provider.key ? 'visible' : 'invisible'}`} />
+                                  <div className="flex flex-col items-start">
+                                    <span className="font-medium">{provider.name}</span>
+                                    <span className="text-xs opacity-50">{provider.provider}</span>
+                                  </div>
+                                </button>
+                              </li>
+                            ))}
+                          </Dropdown>
                         </div>
                       </div>
                     </button>
