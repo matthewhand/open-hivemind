@@ -38,7 +38,7 @@ export interface LlmInvoker {
     userMessage: string,
     history: IMessage[],
     systemPrompt: string,
-    metadata?: Record<string, any>,
+    metadata?: Record<string, any>
   ): Promise<string>;
 }
 
@@ -57,7 +57,7 @@ export interface LlmInvoker {
 export class InferenceStage {
   constructor(
     private bus: MessageBus,
-    private llmInvoker: LlmInvoker,
+    private llmInvoker: LlmInvoker
   ) {}
 
   /**
@@ -79,22 +79,18 @@ export class InferenceStage {
    * This method is public so it can be called directly in tests or by
    * other pipeline stages that need an imperative (non-event) code path.
    */
-  async process(
-    ctx: MessageContext & { memories: string[]; systemPrompt: string },
-  ): Promise<void> {
+  async process(ctx: MessageContext & { memories: string[]; systemPrompt: string }): Promise<void> {
     try {
       // Extract user message text — prefer getText() when available, fall
       // back to the public `content` property.
       const userMessage =
-        typeof ctx.message.getText === 'function'
-          ? ctx.message.getText()
-          : ctx.message.content;
+        typeof ctx.message.getText === 'function' ? ctx.message.getText() : ctx.message.content;
 
       const responseText = await this.llmInvoker.generateResponse(
         userMessage,
         ctx.history,
         ctx.systemPrompt,
-        ctx.metadata,
+        ctx.metadata
       );
 
       if (!responseText) {
@@ -107,11 +103,7 @@ export class InferenceStage {
       }
 
       await this.bus.emitAsync('message:response', { ...ctx, responseText });
-      debug(
-        'Inference complete: bot=%s responseLength=%d',
-        ctx.botName,
-        responseText.length,
-      );
+      debug('Inference complete: bot=%s responseLength=%d', ctx.botName, responseText.length);
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
       debug('Inference error: %O', error);

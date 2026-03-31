@@ -180,7 +180,9 @@ describe('MemoryManager — concurrent access & edge cases', () => {
       });
 
       const provider = makeProvider({
-        addMemory: jest.fn().mockImplementation(() => storePromise.then(() => ({ id: 'mem-1', content: '' }))),
+        addMemory: jest
+          .fn()
+          .mockImplementation(() => storePromise.then(() => ({ id: 'mem-1', content: '' }))),
         searchMemories: jest.fn().mockResolvedValue({
           results: [{ id: 's1', content: 'instant result', score: 0.9 }],
         }),

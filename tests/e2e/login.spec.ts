@@ -12,7 +12,7 @@ test.describe('Login', () => {
     const errors = setupErrorCollection(page);
     await page.goto('/login');
     await page.waitForLoadState('networkidle');
-    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState('domcontentloaded');
     await page.screenshot({ path: 'test-results/login-01-page.png', fullPage: true });
     await assertNoErrors(errors, 'Login page render');
   });

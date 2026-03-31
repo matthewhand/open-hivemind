@@ -51,7 +51,7 @@ export class ReceiveStage {
   async process(
     message: IMessage,
     history: IMessage[],
-    botConfig: Record<string, unknown>,
+    botConfig: Record<string, unknown>
   ): Promise<MessageContext | null> {
     // 1. Extract and sanitize text
     const rawText = message.getText();
@@ -63,10 +63,7 @@ export class ReceiveStage {
     }
 
     // 2. Resolve identity fields
-    const botName =
-      (botConfig.BOT_NAME as string) ||
-      (botConfig.name as string) ||
-      'hivemind';
+    const botName = (botConfig.BOT_NAME as string) || (botConfig.name as string) || 'hivemind';
     const platform = message.platform || 'unknown';
     const channelId = message.getChannelId();
 
@@ -86,12 +83,7 @@ export class ReceiveStage {
 
     // 5. Emit downstream
     await this.bus.emitAsync('message:validated', ctx);
-    debug(
-      'Message validated: bot=%s platform=%s channel=%s',
-      botName,
-      platform,
-      channelId,
-    );
+    debug('Message validated: bot=%s platform=%s channel=%s', botName, platform, channelId);
 
     return ctx;
   }

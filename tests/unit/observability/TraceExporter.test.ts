@@ -5,23 +5,21 @@
  * TraceExportManager, and the createExporters() factory.
  */
 
-import { promises as fs } from 'fs';
-import { join } from 'path';
-import { tmpdir } from 'os';
 import { randomUUID } from 'crypto';
-
+import { promises as fs } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
+import { MessageBus } from '@src/events/MessageBus';
+import type { MessageContext } from '@src/events/types';
+import { PipelineTracer, type Span, type Trace } from '@src/observability/PipelineTracer';
 import {
   ConsoleExporter,
+  createExporters,
   JsonFileExporter,
   OtlpExporter,
   TraceExportManager,
-  createExporters,
+  type ITraceExporter,
 } from '@src/observability/TraceExporter';
-import type { ITraceExporter } from '@src/observability/TraceExporter';
-import type { Trace, Span } from '@src/observability/PipelineTracer';
-import { PipelineTracer } from '@src/observability/PipelineTracer';
-import { MessageBus } from '@src/events/MessageBus';
-import type { MessageContext } from '@src/events/types';
 import { IMessage } from '@message/interfaces/IMessage';
 
 // ---------------------------------------------------------------------------
@@ -90,18 +88,43 @@ class StubMessage extends IMessage {
     this.timestamp = new Date();
   }
 
-  getMessageId(): string { return this.id; }
-  getText(): string { return this.text; }
-  getTimestamp(): Date { return this.timestamp; }
-  setText(t: string): void { this.text = t; this.content = t; }
-  getChannelId(): string { return this.channelId; }
-  getAuthorId(): string { return 'user-1'; }
-  getChannelTopic(): string | null { return null; }
-  getUserMentions(): string[] { return []; }
-  getChannelUsers(): string[] { return ['user-1']; }
-  mentionsUsers(_userId: string): boolean { return false; }
-  isFromBot(): boolean { return false; }
-  getAuthorName(): string { return 'TestUser'; }
+  getMessageId(): string {
+    return this.id;
+  }
+  getText(): string {
+    return this.text;
+  }
+  getTimestamp(): Date {
+    return this.timestamp;
+  }
+  setText(t: string): void {
+    this.text = t;
+    this.content = t;
+  }
+  getChannelId(): string {
+    return this.channelId;
+  }
+  getAuthorId(): string {
+    return 'user-1';
+  }
+  getChannelTopic(): string | null {
+    return null;
+  }
+  getUserMentions(): string[] {
+    return [];
+  }
+  getChannelUsers(): string[] {
+    return ['user-1'];
+  }
+  mentionsUsers(_userId: string): boolean {
+    return false;
+  }
+  isFromBot(): boolean {
+    return false;
+  }
+  getAuthorName(): string {
+    return 'TestUser';
+  }
 }
 
 function makeCtx(overrides: Partial<MessageContext> = {}): MessageContext {
@@ -347,11 +370,15 @@ describe('TraceExportManager', () => {
     const exported: string[] = [];
 
     const exporter1: ITraceExporter = {
-      export: jest.fn(async (trace) => { exported.push(`e1:${trace.traceId}`); }),
+      export: jest.fn(async (trace) => {
+        exported.push(`e1:${trace.traceId}`);
+      }),
       shutdown: jest.fn(async () => {}),
     };
     const exporter2: ITraceExporter = {
-      export: jest.fn(async (trace) => { exported.push(`e2:${trace.traceId}`); }),
+      export: jest.fn(async (trace) => {
+        exported.push(`e2:${trace.traceId}`);
+      }),
       shutdown: jest.fn(async () => {}),
     };
 
@@ -368,11 +395,15 @@ describe('TraceExportManager', () => {
     const exported: string[] = [];
 
     const failingExporter: ITraceExporter = {
-      export: jest.fn(async () => { throw new Error('export failed'); }),
+      export: jest.fn(async () => {
+        throw new Error('export failed');
+      }),
       shutdown: jest.fn(async () => {}),
     };
     const workingExporter: ITraceExporter = {
-      export: jest.fn(async (trace) => { exported.push(trace.traceId); }),
+      export: jest.fn(async (trace) => {
+        exported.push(trace.traceId);
+      }),
       shutdown: jest.fn(async () => {}),
     };
 
@@ -391,11 +422,15 @@ describe('TraceExportManager', () => {
 
     const exporter1: ITraceExporter = {
       export: jest.fn(async () => {}),
-      shutdown: jest.fn(async () => { shutdownCalls.push('e1'); }),
+      shutdown: jest.fn(async () => {
+        shutdownCalls.push('e1');
+      }),
     };
     const exporter2: ITraceExporter = {
       export: jest.fn(async () => {}),
-      shutdown: jest.fn(async () => { shutdownCalls.push('e2'); }),
+      shutdown: jest.fn(async () => {
+        shutdownCalls.push('e2');
+      }),
     };
 
     const manager = new TraceExportManager([exporter1, exporter2]);
@@ -421,7 +456,9 @@ describe('TraceExportManager', () => {
     const exported: Trace[] = [];
 
     const mockExporter: ITraceExporter = {
-      export: jest.fn(async (trace) => { exported.push(trace); }),
+      export: jest.fn(async (trace) => {
+        exported.push(trace);
+      }),
       shutdown: jest.fn(async () => {}),
     };
 

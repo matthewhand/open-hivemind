@@ -158,10 +158,7 @@ describe('ConfigurationVersionService', () => {
       // First call checks existing versions, second call retrieves the newly created version
       mockDbManager.getBotConfigurationVersions
         .mockResolvedValueOnce([{ version: '1.0.0', botConfigurationId: 1 }])
-        .mockResolvedValueOnce([
-          { version: '1.0.0', botConfigurationId: 1 },
-          createdVersion,
-        ]);
+        .mockResolvedValueOnce([{ version: '1.0.0', botConfigurationId: 1 }, createdVersion]);
 
       const result = await service.createVersion({
         botConfigurationId: 1,

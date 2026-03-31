@@ -9,8 +9,7 @@
 
 import { MessageBus } from '@src/events/MessageBus';
 import type { MessageContext } from '@src/events/types';
-import { SendStage } from '@src/pipeline/SendStage';
-import type { MessageSender, MemoryStorer } from '@src/pipeline/SendStage';
+import { SendStage, type MemoryStorer, type MessageSender } from '@src/pipeline/SendStage';
 import { IMessage } from '@message/interfaces/IMessage';
 
 // ---------------------------------------------------------------------------
@@ -33,18 +32,43 @@ class StubMessage extends IMessage {
     this.timestamp = new Date();
   }
 
-  getMessageId(): string { return this.id; }
-  getText(): string { return this.text; }
-  getTimestamp(): Date { return this.timestamp; }
-  setText(t: string): void { this.text = t; this.content = t; }
-  getChannelId(): string { return this.channelId; }
-  getAuthorId(): string { return 'user-1'; }
-  getChannelTopic(): string | null { return null; }
-  getUserMentions(): string[] { return []; }
-  getChannelUsers(): string[] { return ['user-1']; }
-  mentionsUsers(_userId: string): boolean { return false; }
-  isFromBot(): boolean { return false; }
-  getAuthorName(): string { return 'TestUser'; }
+  getMessageId(): string {
+    return this.id;
+  }
+  getText(): string {
+    return this.text;
+  }
+  getTimestamp(): Date {
+    return this.timestamp;
+  }
+  setText(t: string): void {
+    this.text = t;
+    this.content = t;
+  }
+  getChannelId(): string {
+    return this.channelId;
+  }
+  getAuthorId(): string {
+    return 'user-1';
+  }
+  getChannelTopic(): string | null {
+    return null;
+  }
+  getUserMentions(): string[] {
+    return [];
+  }
+  getChannelUsers(): string[] {
+    return ['user-1'];
+  }
+  mentionsUsers(_userId: string): boolean {
+    return false;
+  }
+  isFromBot(): boolean {
+    return false;
+  }
+  getAuthorName(): string {
+    return 'TestUser';
+  }
 }
 
 type ResponseContext = MessageContext & { responseText: string };
@@ -283,7 +307,7 @@ describe('SendStage', () => {
       expect(sender.sendToChannel).toHaveBeenCalledTimes(1);
       expect(sentListener).toHaveBeenCalledTimes(1);
       expect(sentListener).toHaveBeenCalledWith(
-        expect.objectContaining({ responseText: 'Integrated reply' }),
+        expect.objectContaining({ responseText: 'Integrated reply' })
       );
     });
   });
@@ -305,7 +329,7 @@ describe('SendStage', () => {
         expect.objectContaining({
           error: expect.any(Error),
           stage: 'send',
-        }),
+        })
       );
       expect(errorListener.mock.calls[0][0].error.message).toBe('Network failure');
     });
@@ -336,12 +360,9 @@ describe('SendStage', () => {
       await stage.process(ctx);
       await flushPromises();
 
-      expect(memory.storeMemory).toHaveBeenCalledWith(
-        'MathBot',
-        'What is 2+2?',
-        'user',
-        { channelId: 'ch-math' },
-      );
+      expect(memory.storeMemory).toHaveBeenCalledWith('MathBot', 'What is 2+2?', 'user', {
+        channelId: 'ch-math',
+      });
     });
   });
 
@@ -351,17 +372,18 @@ describe('SendStage', () => {
       const sender = mockSender();
       const memory = mockMemoryStorer();
       const stage = new SendStage(bus, sender, memory);
-      const ctx = makeCtx({ responseText: 'The answer is 4.', botName: 'MathBot', channelId: 'ch-math' });
+      const ctx = makeCtx({
+        responseText: 'The answer is 4.',
+        botName: 'MathBot',
+        channelId: 'ch-math',
+      });
 
       await stage.process(ctx);
       await flushPromises();
 
-      expect(memory.storeMemory).toHaveBeenCalledWith(
-        'MathBot',
-        'The answer is 4.',
-        'assistant',
-        { channelId: 'ch-math' },
-      );
+      expect(memory.storeMemory).toHaveBeenCalledWith('MathBot', 'The answer is 4.', 'assistant', {
+        channelId: 'ch-math',
+      });
     });
   });
 

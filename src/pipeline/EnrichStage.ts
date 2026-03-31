@@ -38,7 +38,11 @@ export interface MemoryRetriever {
  * Builds the system prompt string from bot config, memories, and bot name.
  */
 export interface PromptBuilder {
-  buildSystemPrompt(botConfig: Record<string, unknown>, memories: string[], botName: string): string;
+  buildSystemPrompt(
+    botConfig: Record<string, unknown>,
+    memories: string[],
+    botName: string
+  ): string;
 }
 
 // ---------------------------------------------------------------------------
@@ -57,7 +61,7 @@ export class EnrichStage {
   constructor(
     private bus: MessageBus,
     private memoryRetriever: MemoryRetriever,
-    private promptBuilder: PromptBuilder,
+    private promptBuilder: PromptBuilder
   ) {}
 
   /**
@@ -87,7 +91,11 @@ export class EnrichStage {
 
     // 2. Build system prompt
     try {
-      const systemPrompt = this.promptBuilder.buildSystemPrompt(ctx.botConfig, memories, ctx.botName);
+      const systemPrompt = this.promptBuilder.buildSystemPrompt(
+        ctx.botConfig,
+        memories,
+        ctx.botName
+      );
 
       // 3. Emit enriched context
       await this.bus.emitAsync('message:enriched', { ...ctx, memories, systemPrompt });

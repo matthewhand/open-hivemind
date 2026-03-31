@@ -53,7 +53,7 @@ export interface DecisionStrategy {
 export class DecisionStage {
   constructor(
     private bus: MessageBus,
-    private strategy: DecisionStrategy,
+    private strategy: DecisionStrategy
   ) {}
 
   /**

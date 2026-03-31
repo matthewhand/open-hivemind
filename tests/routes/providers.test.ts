@@ -1,7 +1,7 @@
 import express from 'express';
 import request from 'supertest';
-import providersRouter from '../../src/server/routes/providers';
 import { providerRegistry } from '../../src/registries/ProviderRegistry';
+import providersRouter from '../../src/server/routes/providers';
 
 // Mock the provider registry
 jest.mock('../../src/registries/ProviderRegistry', () => ({
@@ -94,7 +94,9 @@ describe('POST /api/providers/memory/:name/test', () => {
       label: 'Mem0',
       healthCheck: jest.fn().mockResolvedValue({ status: 'ok' }),
       addMemory: jest.fn().mockResolvedValue({ id: 'mem-123', content: 'blue' }),
-      searchMemories: jest.fn().mockResolvedValue({ results: [{ id: 'mem-123', memory: 'blue', score: 0.9 }] }),
+      searchMemories: jest
+        .fn()
+        .mockResolvedValue({ results: [{ id: 'mem-123', memory: 'blue', score: 0.9 }] }),
       getMemory: jest.fn().mockResolvedValue({ id: 'mem-123', content: 'blue' }),
       deleteMemory: jest.fn().mockResolvedValue(undefined),
     };
@@ -115,7 +117,11 @@ describe('POST /api/providers/memory/:name/test', () => {
     expect(res.body.data.summary.failed).toBe(0);
     expect(res.body.data.steps).toHaveLength(5);
     expect(res.body.data.steps.map((s: any) => s.step)).toEqual([
-      'healthCheck', 'addMemory', 'searchMemories', 'getMemory', 'deleteMemory',
+      'healthCheck',
+      'addMemory',
+      'searchMemories',
+      'getMemory',
+      'deleteMemory',
     ]);
     expect(res.body.data.steps.every((s: any) => s.status === 'pass')).toBe(true);
   });
@@ -140,8 +146,8 @@ describe('POST /api/providers/memory/:name/test', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.data.summary.passed).toBe(1);  // healthCheck passes
-    expect(res.body.data.summary.failed).toBe(2);  // add + search fail
+    expect(res.body.data.summary.passed).toBe(1); // healthCheck passes
+    expect(res.body.data.summary.failed).toBe(2); // add + search fail
     expect(res.body.data.summary.skipped).toBe(2); // get + delete skipped (no memoryId)
     expect(res.body.data.steps[1].detail).toContain('LLM API key invalid');
   });

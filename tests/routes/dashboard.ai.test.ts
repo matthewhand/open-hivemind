@@ -27,57 +27,51 @@ const mockAnalyticsServiceInstance = {
     activeBots: 2,
     activeUsers: 10,
   }),
-  getBehaviorPatterns: jest
-    .fn()
-    .mockReturnValue([
-      {
-        id: 'pattern-1',
-        name: 'Test Pattern',
-        description: 'Test',
-        frequency: 0.5,
-        confidence: 0.8,
-        trend: 'stable',
-        segments: [],
-        recommendedWidgets: [],
-        priority: 1,
+  getBehaviorPatterns: jest.fn().mockReturnValue([
+    {
+      id: 'pattern-1',
+      name: 'Test Pattern',
+      description: 'Test',
+      frequency: 0.5,
+      confidence: 0.8,
+      trend: 'stable',
+      segments: [],
+      recommendedWidgets: [],
+      priority: 1,
+    },
+  ]),
+  getUserSegments: jest.fn().mockReturnValue([
+    {
+      id: 'segment-1',
+      name: 'Test Segment',
+      description: 'Test',
+      criteria: {
+        behaviorPatterns: [],
+        usageFrequency: 'daily',
+        featureUsage: [],
+        engagementLevel: 'high',
       },
-    ]),
-  getUserSegments: jest
-    .fn()
-    .mockReturnValue([
-      {
-        id: 'segment-1',
-        name: 'Test Segment',
-        description: 'Test',
-        criteria: {
-          behaviorPatterns: [],
-          usageFrequency: 'daily',
-          featureUsage: [],
-          engagementLevel: 'high',
-        },
-        characteristics: {
-          preferredWidgets: [],
-          optimalLayout: 'grid',
-          themePreference: 'dark',
-          notificationFrequency: 5,
-        },
-        size: 10,
-        confidence: 0.9,
+      characteristics: {
+        preferredWidgets: [],
+        optimalLayout: 'grid',
+        themePreference: 'dark',
+        notificationFrequency: 5,
       },
-    ]),
-  getRecommendations: jest
-    .fn()
-    .mockReturnValue([
-      {
-        id: 'rec-1',
-        type: 'widget',
-        title: 'Test Recommendation',
-        description: 'Test',
-        confidence: 0.9,
-        impact: 'high',
-        reasoning: 'Test reasoning',
-      },
-    ]),
+      size: 10,
+      confidence: 0.9,
+    },
+  ]),
+  getRecommendations: jest.fn().mockReturnValue([
+    {
+      id: 'rec-1',
+      type: 'widget',
+      title: 'Test Recommendation',
+      description: 'Test',
+      confidence: 0.9,
+      impact: 'high',
+      reasoning: 'Test reasoning',
+    },
+  ]),
 };
 
 describe('AI Dashboard Routes', () => {
