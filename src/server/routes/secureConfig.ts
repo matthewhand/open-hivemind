@@ -11,6 +11,8 @@ import {
 import { validateRequest } from '../../validation/validateRequest';
 import { auditMiddleware, logConfigChange, type AuditedRequest } from '../middleware/audit';
 
+import { ApiResponse } from "../../utils/apiResponse";
+
 const debug = Debug('app:SecureConfigRoutes');
 const router = Router();
 const secureConfigManager = SecureConfigManager.getInstance();
@@ -45,17 +47,10 @@ router.get('/', async (req: Request, res: Response) => {
       }
     }
 
-    return res.json({
-      success: true,
-      data: configs,
-      count: configs.length,
-    });
+    return res.json(ApiResponse.success(configs));
   } catch (error: any) {
     debug('Failed to list secure configs:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      error: 'Failed to retrieve configurations',
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to retrieve configurations'));
   }
 });
 
@@ -69,22 +64,13 @@ router.get('/:id', async (req: Request, res: Response) => {
     const config = await secureConfigManager.getConfig(id);
 
     if (!config) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({
-        success: false,
-        error: 'Configuration not found',
-      });
+      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Configuration not found'));
     }
 
-    return res.json({
-      success: true,
-      data: config,
-    });
+    return res.json(ApiResponse.success(config));
   } catch (error: any) {
     debug(`Failed to get secure config ${req.params.id}:`, error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      error: 'Failed to retrieve configuration',
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to retrieve configuration'));
   }
 });
 
@@ -107,10 +93,7 @@ router.post(
           'failure',
           'Missing required fields: id, name, type, data'
         );
-        return res.status(HTTP_STATUS.BAD_REQUEST).json({
-          success: false,
-          error: 'Missing required fields: id, name, type, data',
-        });
+        return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Missing required fields: id, name, type, data'));
       }
 
       const config: Omit<SecureConfig, 'updatedAt' | 'checksum'> = {
@@ -131,11 +114,7 @@ router.post(
         `Created secure configuration ${name} of type ${type}`
       );
 
-      return res.status(HTTP_STATUS.CREATED).json({
-        success: true,
-        message: 'Configuration stored securely',
-        data: { id, name, type },
-      });
+      return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success({ id, name, type }));
     } catch (error: any) {
       debug('Failed to create secure config:', error);
       logConfigChange(
@@ -145,10 +124,7 @@ router.post(
         'failure',
         `Failed to create secure configuration: ${error.message}`
       );
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        error: 'Failed to store configuration',
-      });
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to store configuration'));
     }
   }
 );
@@ -173,20 +149,14 @@ router.put(
           'failure',
           'Missing required fields: name, type, data'
         );
-        return res.status(HTTP_STATUS.BAD_REQUEST).json({
-          success: false,
-          error: 'Missing required fields: name, type, data',
-        });
+        return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Missing required fields: name, type, data'));
       }
 
       // Check if config exists
       const existingConfig = await secureConfigManager.getConfig(id);
       if (!existingConfig) {
         logConfigChange(req, 'UPDATE', `secure-config/${id}`, 'failure', 'Configuration not found');
-        return res.status(HTTP_STATUS.NOT_FOUND).json({
-          success: false,
-          error: 'Configuration not found',
-        });
+        return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Configuration not found'));
       }
 
       const updatedConfig: Omit<SecureConfig, 'updatedAt' | 'checksum'> = {
@@ -211,11 +181,7 @@ router.put(
         }
       );
 
-      return res.json({
-        success: true,
-        message: 'Configuration updated successfully',
-        data: { id, name, type },
-      });
+      return res.json(ApiResponse.success({ id, name, type }));
     } catch (error: any) {
       debug(`Failed to update secure config ${req.params.id}:`, error);
       logConfigChange(
@@ -225,10 +191,7 @@ router.put(
         'failure',
         `Failed to update secure configuration: ${error.message}`
       );
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        error: 'Failed to update configuration',
-      });
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to update configuration'));
     }
   }
 );
@@ -248,10 +211,7 @@ router.delete('/:id', async (req: AuditedRequest, res: Response) => {
       await secureConfigManager.deleteConfig(id);
     } catch {
       logConfigChange(req, 'DELETE', `secure-config/${id}`, 'failure', 'Configuration not found');
-      return res.status(HTTP_STATUS.NOT_FOUND).json({
-        success: false,
-        error: 'Configuration not found',
-      });
+      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Configuration not found'));
     }
 
     logConfigChange(
@@ -265,10 +225,9 @@ router.delete('/:id', async (req: AuditedRequest, res: Response) => {
       }
     );
 
-    return res.json({
-      success: true,
-      message: 'Configuration deleted successfully',
-    });
+    return res.json(ApiResponse.success({
+      message: 'Configuration deleted successfully'
+    }));
   } catch (error: any) {
     debug(`Failed to delete secure config ${req.params.id}:`, error);
     logConfigChange(
@@ -278,10 +237,7 @@ router.delete('/:id', async (req: AuditedRequest, res: Response) => {
       'failure',
       `Failed to delete secure configuration: ${error.message}`
     );
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      error: 'Failed to delete configuration',
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to delete configuration'));
   }
 });
 
@@ -304,11 +260,7 @@ router.post(
         'Created backup of all secure configurations'
       );
 
-      return res.json({
-        success: true,
-        message: 'Backup created successfully',
-        data: { backupId },
-      });
+      return res.json(ApiResponse.success({ backupId }));
     } catch (error: any) {
       debug('Failed to create backup:', error);
       logConfigChange(
@@ -318,10 +270,7 @@ router.post(
         'failure',
         `Failed to create backup: ${error.message}`
       );
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        error: 'Failed to create backup',
-      });
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to create backup'));
     }
   }
 );
@@ -334,17 +283,10 @@ router.get('/backups/list', async (req: Request, res: Response) => {
   try {
     const backups = await secureConfigManager.listBackups();
 
-    return res.json({
-      success: true,
-      data: backups,
-      count: backups.length,
-    });
+    return res.json(ApiResponse.success(backups));
   } catch (error: any) {
     debug('Failed to list backups:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      error: 'Failed to retrieve backups',
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to retrieve backups'));
   }
 });
 
@@ -368,10 +310,9 @@ router.post(
         `Restored secure configurations from backup ${backupId}`
       );
 
-      return res.json({
-        success: true,
-        message: `Successfully restored from backup ${backupId}`,
-      });
+      return res.json(ApiResponse.success({
+        message: `Successfully restored from backup ${backupId}`
+      }));
     } catch (error: any) {
       debug(`Failed to restore backup ${req.params.backupId}:`, error);
       logConfigChange(
@@ -381,10 +322,7 @@ router.post(
         'failure',
         `Failed to restore from backup ${req.params.backupId}: ${error.message}`
       );
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        error: 'Failed to restore from backup',
-      });
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to restore from backup'));
     }
   }
 );

@@ -4,6 +4,8 @@ import { BotManager } from '../../managers/BotManager';
 import { OnboardingStepSchema } from '../../validation/schemas/onboardingSchema';
 import { validateRequest } from '../../validation/validateRequest';
 
+import { ApiResponse } from "../../utils/apiResponse";
+
 const router = Router();
 const logger = createLogger('onboardingRouter');
 

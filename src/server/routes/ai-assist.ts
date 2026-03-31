@@ -11,6 +11,8 @@ import { ErrorUtils } from '../../types/errors';
 import { ChatGenerateSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 
+import { ApiResponse } from "../../utils/apiResponse";
+
 const debug = Debug('app:ai-assist');
 const router = Router();
 

@@ -13,6 +13,8 @@ import {
 } from '../../validation/schemas/personasSchema';
 import { validateRequest } from '../../validation/validateRequest';
 
+import { ApiResponse } from "../../utils/apiResponse";
+
 const router = Router();
 const logger = createLogger('personasRouter');
 
@@ -87,7 +89,9 @@ router.put('/reorder', validateRequest(ReorderSchema), async (req, res) => {
     await fsModule.promises.mkdir(orderDir, { recursive: true });
     await fsModule.promises.writeFile(orderFilePath, JSON.stringify(ids, null, 2));
 
-    return res.json({ success: true, message: 'Persona order updated' });
+    return res.json(ApiResponse.success({
+      message: 'Persona order updated'
+    }));
   } catch (error: unknown) {
     logger.error(
       'Failed to reorder personas',
@@ -231,14 +235,13 @@ router.delete('/bulk', validateRequest(BulkDeletePersonasSchema), async (req, re
       }
     }
 
-    return res.json({
-      success: true,
+    return res.json(ApiResponse.success({
       deleted,
       notFound,
       builtIn,
       failed,
-      botsReverted: botsToRevert.length,
-    });
+      botsReverted: botsToRevert.length
+    }));
   } catch (error: any) {
     logger.error('Bulk delete personas failed', error);
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
@@ -254,11 +257,11 @@ router.delete('/:id', validateRequest(PersonaIdParamSchema), async (req, res) =>
     const manager = await getManager();
     const existingPersona = manager.getPersona(req.params.id);
     if (!existingPersona) {
-      return res.json({ success: true }); // Idempotency: return HTTP_STATUS.OK if already gone
+      return res.json(ApiResponse.success()); // Idempotency: return HTTP_STATUS.OK if already gone
     }
 
     manager.deletePersona(req.params.id);
-    return res.json({ success: true });
+    return res.json(ApiResponse.success());
   } catch (error: any) {
     return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
   }

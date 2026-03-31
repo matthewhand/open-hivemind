@@ -7,6 +7,8 @@ import { HTTP_STATUS } from '../../types/constants';
 import { SpecSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 
+import { ApiResponse } from "../../utils/apiResponse";
+
 const debug = Debug('app:server:routes:specs');
 
 const router = Router();
@@ -45,11 +47,7 @@ router.post('/', validateRequest(SpecSchema), async (req, res) => {
 
     // Validate content field
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        success: false,
-        error: 'Content is required and must be a non-empty string',
-        message: 'Validation failed',
-      });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Content is required and must be a non-empty string'));
     }
     const newSpec: SpecMetadata = { id, topic, tags, author, timestamp, version };
 
@@ -57,7 +55,7 @@ router.post('/', validateRequest(SpecSchema), async (req, res) => {
     if (!validation.success) {
       return res
         .status(HTTP_STATUS.BAD_REQUEST)
-        .json({ success: false, error: 'Invalid spec data', message: 'Validation failed' });
+        .json(ApiResponse.error('Invalid spec data'));
     }
 
     const specDir = path.join(specsDirectory, id, version);
@@ -67,7 +65,7 @@ router.post('/', validateRequest(SpecSchema), async (req, res) => {
     if (!resolvedSpecDir.startsWith(resolvedSpecsDirectory + path.sep)) {
       return res
         .status(HTTP_STATUS.BAD_REQUEST)
-        .json({ success: false, error: 'Invalid spec ID or version: Path traversal detected' });
+        .json(ApiResponse.error('Invalid spec ID or version: Path traversal detected'));
     }
 
     const index = await getSpecsIndex();
@@ -79,27 +77,19 @@ router.post('/', validateRequest(SpecSchema), async (req, res) => {
 
     return res
       .status(HTTP_STATUS.CREATED)
-      .json({ success: true, data: newSpec, message: 'Specification saved successfully' });
+      .json(ApiResponse.success(newSpec));
   } catch (error) {
     debug('ERROR:', 'Failed to save spec:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      error: 'Failed to save specification',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to save specification'));
   }
 });
 
 router.get('/', async (req, res) => {
   try {
     const index = await getSpecsIndex();
-    return res.json({ success: true, data: index });
+    return res.json(ApiResponse.success(index));
   } catch (error) {
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      error: 'Failed to retrieve specifications',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to retrieve specifications'));
   }
 });
 
@@ -109,7 +99,7 @@ router.get('/:id', async (req, res) => {
   if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
     return res
       .status(HTTP_STATUS.BAD_REQUEST)
-      .json({ success: false, error: 'Invalid spec ID format' });
+      .json(ApiResponse.error('Invalid spec ID format'));
   }
 
   const targetPath = path.join(specsDirectory, id);
@@ -122,7 +112,7 @@ router.get('/:id', async (req, res) => {
   ) {
     return res
       .status(HTTP_STATUS.BAD_REQUEST)
-      .json({ success: false, error: 'Invalid spec ID: Path traversal detected' });
+      .json(ApiResponse.error('Invalid spec ID: Path traversal detected'));
   }
 
   try {
@@ -132,19 +122,15 @@ router.get('/:id', async (req, res) => {
     if (!spec) {
       return res
         .status(HTTP_STATUS.NOT_FOUND)
-        .json({ success: false, error: 'Specification not found' });
+        .json(ApiResponse.error('Specification not found'));
     }
 
     const versions = await fs.readdir(targetPath);
     const specWithVersions = { ...spec, versions };
 
-    return res.json({ success: true, data: specWithVersions });
+    return res.json(ApiResponse.success(specWithVersions));
   } catch (error) {
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      error: 'Failed to retrieve specification',
-      message: error instanceof Error ? error.message : String(error),
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to retrieve specification'));
   }
 });
 

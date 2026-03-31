@@ -7,6 +7,8 @@ import { HTTP_STATUS } from '../../types/constants';
 import { AnomalyResolveSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 
+import { ApiResponse } from "../../utils/apiResponse";
+
 const debug = Debug('app:webui:anomaly');
 const router = Router();
 
@@ -93,7 +95,7 @@ router.post(
       const success = await service.resolveAnomaly(req.params.id);
 
       if (success) {
-        res.json({ success: true });
+        res.json(ApiResponse.success());
       } else {
         res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Anomaly not found' });
       }

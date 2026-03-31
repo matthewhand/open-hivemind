@@ -5,6 +5,8 @@ import { HTTP_STATUS } from '../../types/constants';
 import { LogActivitySchema } from '../../validation/schemas/activitySchema';
 import { validateRequest } from '../../validation/validateRequest';
 
+import { ApiResponse } from "../../utils/apiResponse";
+
 const debug = Debug('app:webui:activity');
 const router = Router();
 
@@ -340,7 +342,7 @@ router.post('/log', validateRequest(LogActivitySchema), async (req, res) => {
       status,
     });
 
-    return res.json({ success: true });
+    return res.json(ApiResponse.success());
   } catch (error) {
     debug('Error logging activity:', error);
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to log activity' });

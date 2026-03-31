@@ -8,6 +8,8 @@ import {
 } from '../../validation/schemas/guardsSchema';
 import { validateRequest } from '../../validation/validateRequest';
 
+import { ApiResponse } from "../../utils/apiResponse";
+
 const router = Router();
 const debug = Debug('app:webui:guards');
 
@@ -15,11 +17,7 @@ const debug = Debug('app:webui:guards');
 router.get('/', (req: Request, res: Response) => {
   try {
     const guards = webUIStorage.getGuards();
-    return res.json({
-      success: true,
-      data: { guards },
-      message: 'Guards retrieved successfully',
-    });
+    return res.json(ApiResponse.success({ guards }));
   } catch (error: unknown) {
     debug('ERROR:', 'Error retrieving guards:', error);
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
@@ -87,10 +85,9 @@ router.post(
       // Save the updated guard
       await webUIStorage.saveGuard(accessGuard);
 
-      return res.json({
-        success: true,
-        message: 'Access control saved successfully',
-      });
+      return res.json(ApiResponse.success({
+        message: 'Access control saved successfully'
+      }));
     } catch (error: unknown) {
       debug('Error saving access control:', error);
       return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
@@ -123,10 +120,9 @@ router.post(
 
       await webUIStorage.toggleGuard(id, enabled);
 
-      return res.json({
-        success: true,
-        message: `Guard ${guard.name} ${enabled ? 'enabled' : 'disabled'} successfully`,
-      });
+      return res.json(ApiResponse.success({
+        message: `Guard ${guard.name} ${enabled ? 'enabled' : 'disabled'} successfully`
+      }));
     } catch (error: unknown) {
       debug('Error toggling guard:', error);
       return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({

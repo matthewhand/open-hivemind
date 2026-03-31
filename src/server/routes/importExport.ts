@@ -14,6 +14,8 @@ import {
 import { validateRequest } from '../../validation/validateRequest';
 import { ConfigurationImportExportService } from '../services/ConfigurationImportExportService';
 
+import { ApiResponse } from "../../utils/apiResponse";
+
 type MulterFile = {
   path: string;
   fieldname: string;
@@ -180,11 +182,9 @@ const validateBackupRestore = [
 const handleValidationErrors = (req: Request, res: Response, next: any) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({
-      success: false,
-      message: 'Validation failed',
-      errors: errors.array(),
-    });
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Validation failed', undefined, {
+      errors: errors.array()
+    }));
   }
   return next();
 };
@@ -195,20 +195,11 @@ const handleValidationErrors = (req: Request, res: Response, next: any) => {
 const handleUploadError = (error: any, req: Request, res: Response, next: any) => {
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        success: false,
-        message: 'File too large. Maximum size is 50MB.',
-      });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('File too large. Maximum size is 50MB.'));
     }
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({
-      success: false,
-      message: `File upload error: ${error.message}`,
-    });
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error(`File upload error: ${error.message}`));
   } else if (error) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({
-      success: false,
-      message: error.message,
-    });
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error(error.message));
   }
   return next();
 };
@@ -235,29 +226,17 @@ router.post(
       );
 
       if (result.success) {
-        return res.json({
-          success: true,
-          message: 'Configurations exported successfully',
-          data: {
-            filePath: result.filePath,
-            size: result.size,
-            checksum: result.checksum,
-          },
-        });
+        return res.json(ApiResponse.success({
+          filePath: result.filePath,
+          size: result.size,
+          checksum: result.checksum,
+        }));
       } else {
-        return res.status(HTTP_STATUS.BAD_REQUEST).json({
-          success: false,
-          message: 'Export failed',
-          error: result.error,
-        });
+        return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Export failed'));
       }
     } catch (error) {
       console.error('Error exporting configurations:', error);
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'Failed to export configurations',
-        error: (error as any).message,
-      });
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to export configurations'));
     }
   }
 );
@@ -276,10 +255,7 @@ router.post(
   async (req: AuthMulterRequest, res: Response) => {
     try {
       if (!req.file) {
-        return res.status(HTTP_STATUS.BAD_REQUEST).json({
-          success: false,
-          message: 'No file uploaded',
-        });
+        return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('No file uploaded'));
       }
 
       const importedBy = req.user?.username || 'unknown';
@@ -297,11 +273,13 @@ router.post(
         console.error('Error cleaning up uploaded file:', cleanupError);
       }
 
-      return res.json({
-        success: result.success,
-        message: result.success ? 'Configurations imported successfully' : 'Import failed',
-        data: result,
-      });
+      return res.json(result.success ? ApiResponse.success(result) : ApiResponse.error(
+        result.success ? 'Configurations imported successfully' : 'Import failed',
+        undefined,
+        {
+          data: result
+        }
+      ));
     } catch (error) {
       console.error('Error importing configurations:', error);
 
@@ -314,11 +292,7 @@ router.post(
         }
       }
 
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'Failed to import configurations',
-        error: (error as any).message,
-      });
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to import configurations'));
     }
   }
 );
@@ -353,29 +327,17 @@ router.post(
       );
 
       if (result.success) {
-        return res.json({
-          success: true,
-          message: 'Backup created successfully',
-          data: {
-            filePath: result.filePath,
-            size: result.size,
-            checksum: result.checksum,
-          },
-        });
+        return res.json(ApiResponse.success({
+          filePath: result.filePath,
+          size: result.size,
+          checksum: result.checksum,
+        }));
       } else {
-        return res.status(HTTP_STATUS.BAD_REQUEST).json({
-          success: false,
-          message: 'Backup creation failed',
-          error: result.error,
-        });
+        return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Backup creation failed'));
       }
     } catch (error) {
       console.error('Error creating backup:', error);
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'Failed to create backup',
-        error: (error as any).message,
-      });
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to create backup'));
     }
   }
 );
@@ -387,18 +349,10 @@ router.post(
 router.get('/backups', requireAdmin, async (req: AuthMiddlewareRequest, res: Response) => {
   try {
     const backups = await importExportService.listBackups();
-    return res.json({
-      success: true,
-      data: backups,
-      count: backups.length,
-    });
+    return res.json(ApiResponse.success(backups));
   } catch (error) {
     console.error('Error listing backups:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'Failed to list backups',
-      error: (error as any).message,
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to list backups'));
   }
 });
 
@@ -421,10 +375,7 @@ router.post(
       const backupPath = await importExportService.getBackupFilePath(backupId);
 
       if (!backupPath) {
-        return res.status(HTTP_STATUS.NOT_FOUND).json({
-          success: false,
-          message: 'Backup not found or invalid',
-        });
+        return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Backup not found or invalid'));
       }
 
       const result = await importExportService.restoreFromBackup(
@@ -439,18 +390,16 @@ router.post(
         restoredBy
       );
 
-      return res.json({
-        success: result.success,
-        message: result.success ? 'Backup restored successfully' : 'Backup restoration failed',
-        data: result,
-      });
+      return res.json(result.success ? ApiResponse.success(result) : ApiResponse.error(
+        result.success ? 'Backup restored successfully' : 'Backup restoration failed',
+        undefined,
+        {
+          data: result
+        }
+      ));
     } catch (error) {
       console.error('Error restoring from backup:', error);
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'Failed to restore from backup',
-        error: (error as any).message,
-      });
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to restore from backup'));
     }
   }
 );
@@ -468,23 +417,15 @@ router.delete(
       const success = await importExportService.deleteBackup(backupId);
 
       if (success) {
-        return res.json({
-          success: true,
-          message: 'Backup deleted successfully',
-        });
+        return res.json(ApiResponse.success({
+          message: 'Backup deleted successfully'
+        }));
       } else {
-        return res.status(HTTP_STATUS.NOT_FOUND).json({
-          success: false,
-          message: 'Backup not found',
-        });
+        return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Backup not found'));
       }
     } catch (error) {
       console.error('Error deleting backup:', error);
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'Failed to delete backup',
-        error: (error as any).message,
-      });
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to delete backup'));
     }
   }
 );
@@ -504,10 +445,7 @@ router.get(
       const backupPath = await importExportService.getBackupFilePath(backupId);
 
       if (!backupPath) {
-        return res.status(HTTP_STATUS.NOT_FOUND).json({
-          success: false,
-          message: 'Backup not found or invalid',
-        });
+        return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Backup not found or invalid'));
       }
 
       const backupFileName = path.basename(backupPath);
@@ -516,10 +454,7 @@ router.get(
       try {
         await fs.access(backupPath);
       } catch {
-        return res.status(HTTP_STATUS.NOT_FOUND).json({
-          success: false,
-          message: 'Backup file not found',
-        });
+        return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Backup file not found'));
       }
 
       // Set headers and send file
@@ -528,11 +463,7 @@ router.get(
       return res.sendFile(backupPath);
     } catch (error) {
       console.error('Error downloading backup:', error);
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'Failed to download backup',
-        error: (error as any).message,
-      });
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to download backup'));
     }
   }
 );
@@ -550,10 +481,7 @@ router.post(
   async (req: AuthMulterRequest, res: Response) => {
     try {
       if (!req.file) {
-        return res.status(HTTP_STATUS.BAD_REQUEST).json({
-          success: false,
-          message: 'No file uploaded',
-        });
+        return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('No file uploaded'));
       }
 
       const result = await importExportService.importConfigurations(req.file.path, {
@@ -570,11 +498,7 @@ router.post(
         console.error('Error cleaning up uploaded file:', cleanupError);
       }
 
-      return res.json({
-        success: true,
-        message: 'File validation completed',
-        data: result,
-      });
+      return res.json(ApiResponse.success(result));
     } catch (error) {
       console.error('Error validating file:', error);
 
@@ -587,11 +511,7 @@ router.post(
         }
       }
 
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: 'Failed to validate file',
-        error: (error as any).message,
-      });
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to validate file'));
     }
   }
 );

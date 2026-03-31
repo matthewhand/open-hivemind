@@ -12,6 +12,8 @@ import { ErrorUtils } from '../../types/errors';
 import { ChatGenerateSchema, EmptySchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 
+import { ApiResponse } from "../../utils/apiResponse";
+
 const router = Router();
 
 /**
@@ -114,12 +116,11 @@ router.post('/chat', validateRequest(ChatGenerateSchema), (req, res) => {
       botName
     );
 
-    res.json({
-      success: true,
+    res.json(ApiResponse.success({
       userMessage: userMsg,
       botResponse: botMsg,
-      isDemo: true,
-    });
+      isDemo: true
+    }));
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
@@ -188,10 +189,9 @@ router.post('/reset', validateRequest(EmptySchema), (req, res) => {
     const demoService = container.resolve(DemoModeService);
     demoService.reset();
 
-    res.json({
-      success: true,
-      message: 'Demo mode reset - all conversations cleared',
-    });
+    res.json(ApiResponse.success({
+      message: 'Demo mode reset - all conversations cleared'
+    }));
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
