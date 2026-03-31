@@ -1,6 +1,7 @@
 import React from 'react';
 import {
-  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
   Copy,
   Edit2,
   Eye,
@@ -10,7 +11,6 @@ import {
   User,
 } from 'lucide-react';
 import Badge from '../DaisyUI/Badge';
-import Button from '../DaisyUI/Button';
 import Card from '../DaisyUI/Card';
 import { Persona } from './usePersonasLogic';
 import Checkbox from '../DaisyUI/Checkbox';
@@ -31,13 +31,8 @@ const categoryOptions = [
   { value: 'all', label: 'All Categories' },
   { value: 'general', label: 'General' },
   { value: 'customer_service', label: 'Customer Service' },
-  { value: 'technical_support', label: 'Technical Support' },
-  { value: 'sales', label: 'Sales' },
-  { value: 'marketing', label: 'Marketing' },
-  { value: 'hr', label: 'HR' },
-  { value: 'finance', label: 'Finance' },
-  { value: 'legal', label: 'Legal' },
-  { value: 'operations', label: 'Operations' },
+  { value: 'creative', label: 'Creative' },
+  { value: 'technical', label: 'Technical' },
   { value: 'educational', label: 'Educational' },
   { value: 'entertainment', label: 'Entertainment' },
   { value: 'professional', label: 'Professional' },
@@ -56,48 +51,76 @@ export const PersonaCard: React.FC<PersonaCardProps> = ({
 }) => {
   return (
     <Card
-      key={persona.id}
       className={`border transition-all hover:shadow-md h-full flex flex-col ${
         persona.isEnvLocked
           ? 'border-warning/30 bg-warning/5'
           : 'border-base-200 bg-base-100 hover:border-primary/50'
       } ${isSelected ? 'ring-2 ring-primary border-primary' : ''}`}
     >
-      <div className="card-body p-5">
-        <div className="flex items-start justify-between mb-2">
+      <div className="card-body p-5 flex-1 flex flex-col">
+        <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div
-              {...dragHandleProps}
-              className="cursor-grab hover:bg-base-200 p-1 rounded -ml-2 text-base-content/40 hover:text-base-content"
-              title="Drag to reorder"
-            >
-              <GripVertical className="w-5 h-5" />
-            </div>
-            <Checkbox
-              className="checkbox checkbox-sm checkbox-primary rounded"
-              checked={isSelected}
-              onChange={() => onToggleSelection(persona.id)}
-              aria-label={`Select ${persona.name}`}
-            />
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 text-primary">
+            {dragHandleProps?.isMobile ? (
+              <span className="flex flex-col">
+                <button
+                  className="btn btn-ghost btn-xs btn-square p-0"
+                  onClick={dragHandleProps.onMoveUp}
+                  disabled={dragHandleProps.disabledUp}
+                  aria-label="Move up"
+                >
+                  <ChevronUp className="w-3 h-3" />
+                </button>
+                <button
+                  className="btn btn-ghost btn-xs btn-square p-0"
+                  onClick={dragHandleProps.onMoveDown}
+                  disabled={dragHandleProps.disabledDown}
+                  aria-label="Move down"
+                >
+                  <ChevronDown className="w-3 h-3" />
+                </button>
+              </span>
+            ) : (
+              <span
+                className="cursor-grab active:cursor-grabbing text-base-content/40 hover:text-base-content/70"
+                title="Drag to reorder"
+              >
+                <GripVertical className="w-4 h-4" />
+              </span>
+            )}
+            {!persona.isBuiltIn && (
+              <Checkbox
+                className="checkbox checkbox-sm checkbox-primary"
+                checked={isSelected}
+                onChange={() => onToggleSelection(persona.id)}
+                aria-label={`Select ${persona.name}`}
+              />
+            )}
+            <div className={`p-2 rounded-full flex items-center justify-center w-10 h-10 ${persona.isBuiltIn ? 'bg-primary/10 text-primary' : 'bg-base-200'}`}>
               <User className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-lg flex items-center gap-2">
-                {persona.name}
-                {persona.isEnvLocked && (
-                  <div
-                    className="tooltip tooltip-right normal-case"
-                    data-tip="Configured via environment variable. Cannot be deleted or edited here."
-                  >
-                    <Shield className="w-4 h-4 text-warning" />
-                  </div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-bold text-lg flex items-center gap-2">
+                  {persona.name}
+                  {persona.isEnvLocked && (
+                    <div
+                      className="tooltip tooltip-right normal-case"
+                      data-tip="Configured via environment variable. Cannot be deleted or edited here."
+                    >
+                      <Shield className="w-4 h-4 text-warning" />
+                    </div>
+                  )}
+                </h3>
+                {persona.isBuiltIn && (
+                  <Badge size="small" variant="neutral" style="outline">
+                    Built-in
+                  </Badge>
                 )}
-              </h3>
+              </div>
               <div className="flex items-center gap-2 mt-1">
-                <Badge variant="ghost" size="sm">
+                <span className="text-xs text-base-content/60">
                   {categoryOptions.find((c) => c.value === persona.category)?.label || 'General'}
-                </Badge>
+                </span>
               </div>
             </div>
           </div>
@@ -129,8 +152,8 @@ export const PersonaCard: React.FC<PersonaCardProps> = ({
               <li>
                 <button
                   onClick={() => onEdit(persona)}
-                  disabled={persona.isEnvLocked}
-                  className={persona.isEnvLocked ? 'opacity-50 cursor-not-allowed' : ''}
+                  disabled={persona.isEnvLocked || persona.isBuiltIn}
+                  className={persona.isEnvLocked || persona.isBuiltIn ? 'opacity-50 cursor-not-allowed' : ''}
                 >
                   <Edit2 className="w-4 h-4" /> Edit
                 </button>
@@ -141,51 +164,80 @@ export const PersonaCard: React.FC<PersonaCardProps> = ({
                 </button>
               </li>
               <li>
-                <button
-                  onClick={() => onCopyPrompt(persona.prompt)}
-                >
+                <button onClick={() => onCopyPrompt(persona.systemPrompt)}>
                   <Copy className="w-4 h-4" /> Copy Prompt
                 </button>
               </li>
-              <div className="divider my-1"></div>
-              <li>
-                <button
-                  onClick={() => onDelete(persona)}
-                  disabled={persona.isEnvLocked}
-                  className={`text-error hover:bg-error hover:text-error-content ${
-                    persona.isEnvLocked ? 'opacity-50 cursor-not-allowed text-base-content hover:bg-transparent hover:text-base-content' : ''
-                  }`}
-                >
-                  <Trash2 className="w-4 h-4" /> Delete
-                </button>
-              </li>
+              {!persona.isBuiltIn && (
+                <>
+                  <div className="divider my-1"></div>
+                  <li>
+                    <button
+                      onClick={() => onDelete(persona)}
+                      disabled={persona.isEnvLocked}
+                      className={`text-error hover:bg-error hover:text-error-content ${
+                        persona.isEnvLocked ? 'opacity-50 cursor-not-allowed text-base-content hover:bg-transparent hover:text-base-content' : ''
+                      }`}
+                    >
+                      <Trash2 className="w-4 h-4" /> Delete
+                    </button>
+                  </li>
+                </>
+              )}
             </ul>
           </div>
         </div>
 
-        {persona.description && (
-          <p className="text-sm text-base-content/70 line-clamp-2 mt-2 flex-grow">
-            {persona.description}
-          </p>
-        )}
+        <div className="mb-4 flex-1">
+          {persona.description && (
+            <p className="text-sm text-base-content/70 mb-3 line-clamp-2">
+              {persona.description}
+            </p>
+          )}
 
-        <div className="mt-4 pt-4 border-t border-base-200">
-          <div className="flex flex-col gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-base-content/50">
+          <div className="bg-base-200/50 p-3 rounded-lg mb-3">
+            <div className="flex items-center justify-between mb-1">
+              <h4 className="text-xs font-bold text-base-content/40 uppercase">
+                System Prompt
+              </h4>
+              <div className="flex items-center gap-2">
+                <button
+                  className="btn btn-ghost btn-xs btn-circle text-base-content/40 hover:text-primary"
+                  onClick={() => onCopyPrompt(persona.systemPrompt)}
+                  title="Copy System Prompt"
+                  aria-label="Copy System Prompt"
+                >
+                  <Copy className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+            <p className="text-sm text-base-content/80 line-clamp-3 italic font-mono text-xs">
+              "{persona.systemPrompt}"
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-xs font-medium text-base-content/50 uppercase">
               Assigned Bots ({persona.assignedBotNames.length})
-            </span>
+            </h4>
+          </div>
+
+          {persona.assignedBotNames.length > 0 ? (
             <div className="flex flex-wrap gap-1">
-              {persona.assignedBotNames.length > 0 ? (
-                persona.assignedBotNames.map((name, idx) => (
-                  <Badge key={idx} variant="outline" size="sm" className="bg-base-200/50">
-                    {name}
-                  </Badge>
-                ))
-              ) : (
-                <span className="text-sm text-base-content/40 italic">None</span>
+              {persona.assignedBotNames.slice(0, 3).map((botName) => (
+                <Badge key={botName} variant="secondary" size="small" style="outline">
+                  {botName}
+                </Badge>
+              ))}
+              {persona.assignedBotNames.length > 3 && (
+                <Badge variant="ghost" size="small">
+                  +{persona.assignedBotNames.length - 3} more
+                </Badge>
               )}
             </div>
-          </div>
+          ) : (
+            <span className="text-sm text-base-content/40 italic">None</span>
+          )}
         </div>
       </div>
     </Card>
