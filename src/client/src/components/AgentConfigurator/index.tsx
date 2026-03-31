@@ -547,9 +547,9 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
             {isFetching ? 'Refreshing…' : 'Refresh status'}
           </button>
           <div className="dropdown dropdown-end">
-            <label tabIndex={0} className="btn">
+            <div role="button" tabIndex={0} className="btn" aria-haspopup="true">
               API Spec
-            </label>
+            </div>
             <ul
               tabIndex={0}
               className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52"

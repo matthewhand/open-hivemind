@@ -44,9 +44,9 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
             </div>
           </div>
           <div className="dropdown dropdown-end">
-            <label tabIndex={0} className="btn btn-ghost btn-sm">
+            <div role="button" tabIndex={0} className="btn btn-ghost btn-sm" aria-label="Bot settings" aria-haspopup="true">
               ⚙️
-            </label>
+            </div>
             <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
               <li><a>🔧 Configure</a></li>
               <li><a>📊 View Logs</a></li>
