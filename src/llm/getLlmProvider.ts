@@ -1,7 +1,7 @@
 import Debug from 'debug';
+import { getLlmProfileByKey } from '@src/config/llmProfiles';
 import ProviderConfigManager from '@src/config/ProviderConfigManager';
 import { UserConfigStore } from '@src/config/UserConfigStore';
-import { getLlmProfileByKey } from '@src/config/llmProfiles';
 import { MetricsCollector } from '@src/monitoring/MetricsCollector';
 import { instantiateLlmProvider, loadPlugin } from '@src/plugins/PluginLoader';
 import { SyncProviderRegistry } from '@src/registries/SyncProviderRegistry';
@@ -90,17 +90,23 @@ export async function getLlmProvider(): Promise<ILlmProvider[]> {
         try {
           const mod = await loadPlugin(`llm-${profile.provider.toLowerCase()}`);
           const instance = instantiateLlmProvider(mod, profile.config);
-          debug(`Initialized LLM provider from default chatbot profile: ${profile.name} (${profile.provider})`);
+          debug(
+            `Initialized LLM provider from default chatbot profile: ${profile.name} (${profile.provider})`
+          );
           const wrappedInstance = withTokenCounting(instance, profileId);
           providerCache.set(profileId, { instance: wrappedInstance, configHash });
           llmProviders.push(wrappedInstance);
           activeProviderIds.add(profileId);
         } catch (err) {
-          debug(`Failed to load LLM provider from default chatbot profile '${defaultProfileKey}': ${err}`);
+          debug(
+            `Failed to load LLM provider from default chatbot profile '${defaultProfileKey}': ${err}`
+          );
         }
       }
     } else {
-      debug(`Warning: defaultChatbotProfile '${defaultProfileKey}' not found in LLM profiles, falling through to other providers`);
+      debug(
+        `Warning: defaultChatbotProfile '${defaultProfileKey}' not found in LLM profiles, falling through to other providers`
+      );
     }
   }
 
