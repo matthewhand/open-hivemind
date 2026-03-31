@@ -1,7 +1,10 @@
 import type { SelectHTMLAttributes} from 'react';
-import React, { forwardRef } from 'react';
+import React, { forwardRef, memo } from 'react';
 import classNames from 'classnames';
 
+// ⚡ Bolt Optimization: Added React.memo() to prevent unnecessary re-renders of this core primitive UI component.
+// Select components are heavily used in forms and dashboards that frequently re-render.
+// Wrapping it in memo avoids large DOM recalculation trees for unchanged selects.
 export type SelectOption = {
   label: string;
   value: string | number;
@@ -24,7 +27,7 @@ export interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement
   renderOption?: (option: SelectOption) => React.ReactNode;
 }
 
-const Select = forwardRef<HTMLSelectElement, SelectProps>(
+const Select = memo(forwardRef<HTMLSelectElement, SelectProps>(
   (
     {
       options = [],
@@ -89,7 +92,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
       </div>
     );
   },
-);
+));
 
 Select.displayName = 'Select';
 
