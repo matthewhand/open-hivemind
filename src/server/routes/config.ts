@@ -14,6 +14,7 @@ import { UserConfigStore } from '../../config/UserConfigStore';
 import webhookConfig from '../../config/webhookConfig';
 import { BotManager } from '../../managers/BotManager';
 import { providerRegistry } from '../../registries/ProviderRegistry';
+import { createLogger } from '../../common/StructuredLogger';
 import { HTTP_STATUS } from '../../types/constants';
 import { ErrorUtils } from '../../types/errors';
 import { type IProvider } from '../../types/IProvider';
@@ -68,6 +69,7 @@ function isPathWithinAllowed(targetPath: string, allowedBasePath: string): boole
 
 const debug = Debug('app:server:routes:config');
 const router = Router();
+const logger = createLogger('configRouter');
 
 // Core schemas that are always present
 const coreSchemaSources: Record<string, any> = {
@@ -113,7 +115,7 @@ const loadDynamicConfigs = async () => {
             try {
               newConfig.validate({ allowed: 'warn' });
             } catch (e) {
-              console.warn(`Validation warning for ${name}:`, e);
+              logger.warn(`Validation warning for ${name}:`, e);
             }
 
             globalConfigs[name] = newConfig;
@@ -126,7 +128,7 @@ const loadDynamicConfigs = async () => {
       }
     }
   } catch (e) {
-    console.error('Failed to load dynamic configs:', e);
+    logger.error('Failed to load dynamic configs:', e);
   }
 };
 

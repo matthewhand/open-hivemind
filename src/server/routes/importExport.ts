@@ -13,6 +13,7 @@ import {
 } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { ConfigurationImportExportService } from '../services/ConfigurationImportExportService';
+import { createLogger } from '../../common/StructuredLogger';
 
 type MulterFile = {
   path: string;
@@ -27,6 +28,7 @@ type AuthMulterRequest = AuthMiddlewareRequest & { file?: MulterFile };
 const multer = require('multer');
 
 const router = Router();
+const logger = createLogger('importExportRouter');
 const importExportService = ConfigurationImportExportService.getInstance();
 
 // Configure multer for file uploads
@@ -252,7 +254,7 @@ router.post(
         });
       }
     } catch (error) {
-      console.error('Error exporting configurations:', error);
+      logger.error('Error exporting configurations:', error);
       return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: 'Failed to export configurations',
@@ -294,7 +296,7 @@ router.post(
       try {
         await fs.unlink(req.file.path);
       } catch (cleanupError) {
-        console.error('Error cleaning up uploaded file:', cleanupError);
+        logger.error('Error cleaning up uploaded file:', cleanupError);
       }
 
       return res.json({
@@ -303,14 +305,14 @@ router.post(
         data: result,
       });
     } catch (error) {
-      console.error('Error importing configurations:', error);
+      logger.error('Error importing configurations:', error);
 
       // Clean up uploaded file if it exists
       if (req.file) {
         try {
           await fs.unlink(req.file.path);
         } catch (cleanupError) {
-          console.error('Error cleaning up uploaded file:', cleanupError);
+          logger.error('Error cleaning up uploaded file:', cleanupError);
         }
       }
 
@@ -370,7 +372,7 @@ router.post(
         });
       }
     } catch (error) {
-      console.error('Error creating backup:', error);
+      logger.error('Error creating backup:', error);
       return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: 'Failed to create backup',
@@ -393,7 +395,7 @@ router.get('/backups', requireAdmin, async (req: AuthMiddlewareRequest, res: Res
       count: backups.length,
     });
   } catch (error) {
-    console.error('Error listing backups:', error);
+    logger.error('Error listing backups:', error);
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: 'Failed to list backups',
@@ -445,7 +447,7 @@ router.post(
         data: result,
       });
     } catch (error) {
-      console.error('Error restoring from backup:', error);
+      logger.error('Error restoring from backup:', error);
       return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: 'Failed to restore from backup',
@@ -479,7 +481,7 @@ router.delete(
         });
       }
     } catch (error) {
-      console.error('Error deleting backup:', error);
+      logger.error('Error deleting backup:', error);
       return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: 'Failed to delete backup',
@@ -527,7 +529,7 @@ router.get(
       res.setHeader('Content-Disposition', `attachment; filename="${backupFileName}"`);
       return res.sendFile(backupPath);
     } catch (error) {
-      console.error('Error downloading backup:', error);
+      logger.error('Error downloading backup:', error);
       return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         success: false,
         message: 'Failed to download backup',
@@ -567,7 +569,7 @@ router.post(
       try {
         await fs.unlink(req.file.path);
       } catch (cleanupError) {
-        console.error('Error cleaning up uploaded file:', cleanupError);
+        logger.error('Error cleaning up uploaded file:', cleanupError);
       }
 
       return res.json({
@@ -576,14 +578,14 @@ router.post(
         data: result,
       });
     } catch (error) {
-      console.error('Error validating file:', error);
+      logger.error('Error validating file:', error);
 
       // Clean up uploaded file if it exists
       if (req.file) {
         try {
           await fs.unlink(req.file.path);
         } catch (cleanupError) {
-          console.error('Error cleaning up uploaded file:', cleanupError);
+          logger.error('Error cleaning up uploaded file:', cleanupError);
         }
       }
 
