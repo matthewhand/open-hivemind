@@ -1,41 +1,28 @@
 import Debug from 'debug';
-import { Router, type NextFunction, type Request, type Response } from 'express';
-import { body, param, query, validationResult } from 'express-validator';
-import { requireAdmin } from '../../auth/middleware';
-import type { AuthMiddlewareRequest } from '../../auth/types';
-import type { BotConfig } from '../../types/config';
-import { HTTP_STATUS } from '../../types/constants';
-import { ErrorUtils } from '../../types/errors';
-import { ValidationTestSchema } from '../../validation/schemas/miscSchema';
-import { validateRequest } from '../../validation/validateRequest';
-import { RealTimeValidationService } from '../services/RealTimeValidationService';
+import { Router, type Response } from 'express';
+import { param, query } from 'express-validator';
+import { requireAdmin } from '../../../auth/middleware';
+import type { AuthMiddlewareRequest } from '../../../auth/types';
+import type { BotConfig } from '../../../types/config';
+import { HTTP_STATUS } from '../../../types/constants';
+import { ErrorUtils } from '../../../types/errors';
+import { ValidationTestSchema } from '../../../validation/schemas/miscSchema';
+import { validateRequest } from '../../../validation/validateRequest';
+import { RealTimeValidationService } from '../../services/RealTimeValidationService';
+import { getErrorResponse, handleValidationErrors } from './middleware';
+import realtimeRouter from './realtime';
+import {
+  validateConfigurationData,
+  validateConfigurationValidation,
+  validateProfileCreation,
+  validateRuleCreation,
+} from './schemas';
 
 const debug = Debug('app:server:routes:validation');
 
 const router = Router();
 const validationService = RealTimeValidationService.getInstance();
 
-/**
- * Helper to safely extract error response properties
- */
-function getErrorResponse(error: unknown): {
-  message: string;
-  code: string;
-  timestamp: Date;
-} {
-  const message = ErrorUtils.getMessage(error);
-  const code = ErrorUtils.getCode(error) || 'VALIDATION_ERROR';
-  const timestamp =
-    error && typeof error === 'object' && 'timestamp' in error
-      ? (error.timestamp as Date)
-      : new Date();
-
-  return { message, code, timestamp };
-}
-
-/**
- * Validation middleware for rule creation
- */
 interface BotValidationResult {
   name: string;
   valid: boolean;
@@ -146,158 +133,6 @@ const evaluateBotConfigurations = (
   };
 };
 
-const validateRuleCreation = [
-  body('id')
-    .trim()
-    .notEmpty()
-    .withMessage('Rule ID is required')
-    .matches(/^[a-zA-Z0-9_-]+$/)
-    .withMessage('Rule ID can only contain letters, numbers, underscores, and hyphens'),
-
-  body('name')
-    .trim()
-    .notEmpty()
-    .withMessage('Rule name is required')
-    .isLength({ max: 100 })
-    .withMessage('Rule name must be less than 100 characters'),
-
-  body('description')
-    .trim()
-    .notEmpty()
-    .withMessage('Rule description is required')
-    .isLength({ max: 500 })
-    .withMessage('Description must be less than 500 characters'),
-
-  body('category')
-    .trim()
-    .isIn(['required', 'format', 'business', 'security', 'performance'])
-    .withMessage('Invalid rule category'),
-
-  body('severity').trim().isIn(['error', 'warning', 'info']).withMessage('Invalid rule severity'),
-];
-
-/**
- * Validation middleware for profile creation
- */
-const validateProfileCreation = [
-  body('id')
-    .trim()
-    .notEmpty()
-    .withMessage('Profile ID is required')
-    .matches(/^[a-zA-Z0-9_-]+$/)
-    .withMessage('Profile ID can only contain letters, numbers, underscores, and hyphens'),
-
-  body('name')
-    .trim()
-    .notEmpty()
-    .withMessage('Profile name is required')
-    .isLength({ max: 100 })
-    .withMessage('Profile name must be less than 100 characters'),
-
-  body('description')
-    .trim()
-    .notEmpty()
-    .withMessage('Profile description is required')
-    .isLength({ max: 500 })
-    .withMessage('Description must be less than 500 characters'),
-
-  body('ruleIds')
-    .isArray()
-    .withMessage('Rule IDs must be an array')
-    .custom((value) => {
-      if (!Array.isArray(value)) {
-        return false;
-      }
-      return value.every((id) => typeof id === 'string');
-    })
-    .withMessage('Rule IDs must be an array of strings'),
-
-  body('isDefault').optional().isBoolean().withMessage('isDefault must be a boolean'),
-];
-
-/**
- * Validation middleware for configuration validation
- */
-const validateConfigurationValidation = [
-  body('configId').isInt({ min: 1 }).withMessage('Configuration ID must be a positive integer'),
-
-  body('profileId')
-    .optional()
-    .trim()
-    .isIn(['strict', 'standard', 'quick'])
-    .withMessage('Invalid profile ID'),
-
-  body('clientId')
-    .optional()
-    .trim()
-    .isLength({ max: 100 })
-    .withMessage('Client ID must be less than 100 characters'),
-];
-
-/**
- * Validation middleware for configuration data validation
- */
-const validateConfigurationData = [
-  body('configData').isObject().withMessage('Configuration data must be an object'),
-
-  body('profileId')
-    .optional()
-    .trim()
-    .isIn(['strict', 'standard', 'quick'])
-    .withMessage('Invalid profile ID'),
-];
-
-/**
- * Validation middleware for subscription
- */
-const validateSubscription = [
-  body('configId').isInt({ min: 1 }).withMessage('Configuration ID must be a positive integer'),
-
-  body('clientId')
-    .trim()
-    .notEmpty()
-    .withMessage('Client ID is required')
-    .isLength({ max: 100 })
-    .withMessage('Client ID must be less than 100 characters'),
-
-  body('profileId')
-    .optional()
-    .trim()
-    .isIn(['strict', 'standard', 'quick'])
-    .withMessage('Invalid profile ID'),
-];
-
-/**
- * Error handler middleware
- */
-const handleValidationErrors = (req: Request, res: Response, next: NextFunction) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    const hivemindError = ErrorUtils.toHivemindError(
-      new Error('Validation failed'),
-      'Request validation failed',
-      'VALIDATION_ERROR'
-    );
-
-    debug('ERROR:', 'Validation error:', hivemindError);
-
-    const { message, code, timestamp } = getErrorResponse(hivemindError);
-    const details =
-      hivemindError && typeof hivemindError === 'object' && 'details' in hivemindError
-        ? hivemindError.details
-        : undefined;
-
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({
-      success: false,
-      error: message,
-      code,
-      details,
-      timestamp,
-    });
-  }
-  return next();
-};
-
 /**
  * GET /api/validation
  * Get validation results for current configuration
@@ -305,7 +140,7 @@ const handleValidationErrors = (req: Request, res: Response, next: NextFunction)
 router.get('/api/validation', async (req: AuthMiddlewareRequest, res: Response) => {
   try {
     // Import the BotConfigurationManager to get current configuration
-    const { BotConfigurationManager } = await import('../../config/BotConfigurationManager');
+    const { BotConfigurationManager } = await import('../../../config/BotConfigurationManager');
 
     const configManager = BotConfigurationManager.getInstance();
     const bots = configManager.getAllBots() as Partial<BotConfig>[];
@@ -913,90 +748,6 @@ router.post(
 );
 
 /**
- * POST /api/validation/subscribe
- * Subscribe to real-time validation for a configuration
- */
-router.post(
-  '/api/validation/subscribe',
-  validateSubscription,
-  handleValidationErrors,
-  async (req: AuthMiddlewareRequest, res: Response) => {
-    try {
-      const { configId, clientId, profileId = 'standard' } = req.body;
-
-      const subscription = validationService.subscribe(configId, clientId, profileId);
-
-      return res.json({
-        success: true,
-        message: 'Subscribed to validation successfully',
-        data: subscription,
-      });
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(
-        error,
-        'Failed to subscribe to validation',
-        'VALIDATION_ERROR'
-      );
-
-      debug('ERROR:', 'Error in', 'Subscribe to validation endpoint');
-
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        error: hivemindError.message,
-        code: hivemindError.code,
-        timestamp: hivemindError.timestamp,
-      });
-    }
-  }
-);
-
-/**
- * DELETE /api/validation/unsubscribe/:configId/:clientId
- * Unsubscribe from real-time validation
- */
-router.delete(
-  '/api/validation/unsubscribe/:configId/:clientId',
-  param('configId').isInt({ min: 1 }).withMessage('Configuration ID must be a positive integer'),
-  param('clientId').trim().notEmpty().withMessage('Client ID is required'),
-  handleValidationErrors,
-  async (req: AuthMiddlewareRequest, res: Response) => {
-    try {
-      const { configId, clientId } = req.params;
-      const configIdNum = parseInt(configId);
-
-      const success = validationService.unsubscribe(configIdNum, clientId);
-
-      if (success) {
-        return res.json({
-          success: true,
-          message: 'Unsubscribed from validation successfully',
-        });
-      } else {
-        return res.status(HTTP_STATUS.NOT_FOUND).json({
-          success: false,
-          message: 'Subscription not found',
-        });
-      }
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(
-        error,
-        'Failed to unsubscribe from validation',
-        'VALIDATION_ERROR'
-      );
-
-      debug('ERROR:', 'Error in', 'Unsubscribe from validation endpoint');
-
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        error: hivemindError.message,
-        code: hivemindError.code,
-        timestamp: hivemindError.timestamp,
-      });
-    }
-  }
-);
-
-/**
  * GET /api/validation/history
  * Get validation history
  */
@@ -1073,17 +824,7 @@ router.get('/api/validation/statistics', async (req: AuthMiddlewareRequest, res:
   }
 });
 
-/**
- * WebSocket endpoint for real-time validation updates
- * This would be implemented with a WebSocket library like Socket.io
- */
-router.get('/api/validation/ws', (req: AuthMiddlewareRequest, res: Response) => {
-  // This is a placeholder for WebSocket implementation
-  // In a real implementation, you would set up a WebSocket connection
-  return res.json({
-    success: false,
-    message: 'WebSocket endpoint not implemented yet',
-  });
-});
+// Include realtime validation routes
+router.use(realtimeRouter);
 
 export default router;
