@@ -194,7 +194,6 @@ export class DiscordMessageSender {
         webSocketService?.recordMessageFlow({
           botName: botInfo.botUserName,
           provider: 'discord',
-          llmProvider: botInfo.config?.llmProvider,
           channelId: selectedChannelId,
           userId: '',
           messageType: 'outgoing',

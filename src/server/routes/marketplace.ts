@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
+import { configLimiter } from '@src/middleware/rateLimiter';
 import type { PluginManifest } from '@src/plugins/PluginLoader';
 import {
   installPlugin,
@@ -10,7 +11,6 @@ import {
   updatePlugin,
 } from '@src/plugins/PluginManager';
 import { authenticateToken, requireRole } from '@src/server/middleware/auth';
-import { configLimiter } from '@src/middleware/rateLimiter';
 import { HTTP_STATUS } from '../../types/constants';
 import { EmptySchema, MarketplacePluginNameParamSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
@@ -229,42 +229,48 @@ router.get('/packages/:name', async (req, res) => {
  * Install a community plugin from GitHub URL
  * Body: { repoUrl: string }
  */
-router.post('/install', configLimiter, requireRole('admin'), validateRequest(EmptySchema), async (req, res) => {
-  try {
-    const { repoUrl } = req.body;
+router.post(
+  '/install',
+  configLimiter,
+  requireRole('admin'),
+  validateRequest(EmptySchema),
+  async (req, res) => {
+    try {
+      const { repoUrl } = req.body;
 
-    if (!repoUrl || typeof repoUrl !== 'string') {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'Missing or invalid repoUrl' });
+      if (!repoUrl || typeof repoUrl !== 'string') {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'Missing or invalid repoUrl' });
+      }
+
+      debug('Installing plugin from %s', repoUrl);
+
+      const plugin = await installPlugin(repoUrl);
+
+      // ⚡ Bolt Optimization: Invalidate cache after install
+      invalidateCache();
+
+      return res.status(HTTP_STATUS.CREATED).json({
+        success: true,
+        package: {
+          name: plugin.name,
+          displayName: plugin.manifest.displayName,
+          description: plugin.manifest.description,
+          type: plugin.manifest.type,
+          version: plugin.version,
+          status: 'installed' as const,
+          repoUrl: plugin.repoUrl,
+          installedAt: plugin.installedAt,
+          updatedAt: plugin.updatedAt,
+        },
+      });
+    } catch (err: any) {
+      debug('Install error: %s', err);
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: 'Installation failed', message: err.message });
     }
-
-    debug('Installing plugin from %s', repoUrl);
-
-    const plugin = await installPlugin(repoUrl);
-
-    // ⚡ Bolt Optimization: Invalidate cache after install
-    invalidateCache();
-
-    return res.status(HTTP_STATUS.CREATED).json({
-      success: true,
-      package: {
-        name: plugin.name,
-        displayName: plugin.manifest.displayName,
-        description: plugin.manifest.description,
-        type: plugin.manifest.type,
-        version: plugin.version,
-        status: 'installed' as const,
-        repoUrl: plugin.repoUrl,
-        installedAt: plugin.installedAt,
-        updatedAt: plugin.updatedAt,
-      },
-    });
-  } catch (err: any) {
-    debug('Install error: %s', err);
-    return res
-      .status(HTTP_STATUS.BAD_REQUEST)
-      .json({ error: 'Installation failed', message: err.message });
   }
-});
+);
 
 /**
  * POST /api/marketplace/uninstall/:name

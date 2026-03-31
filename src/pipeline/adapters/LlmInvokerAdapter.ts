@@ -9,9 +9,9 @@
  * @module pipeline/adapters/LlmInvokerAdapter
  */
 
+import { getLlmProviderForBot } from '@src/llm/getLlmProvider';
 import type { LlmInvoker } from '@src/pipeline/InferenceStage';
 import type { IMessage } from '@message/interfaces/IMessage';
-import { getLlmProviderForBot } from '@src/llm/getLlmProvider';
 
 /**
  * Dependencies required by the LlmInvokerAdapter.
@@ -32,7 +32,7 @@ export class LlmInvokerAdapter implements LlmInvoker {
     userMessage: string,
     history: IMessage[],
     systemPrompt: string,
-    metadata?: Record<string, any>,
+    metadata?: Record<string, any>
   ): Promise<string> {
     const provider = await getLlmProviderForBot(this.deps.botConfig);
 

@@ -1,3 +1,5 @@
+import type { PipelineTracer } from './PipelineTracer';
+
 /**
  * Barrel export for the observability module.
  *
@@ -10,8 +12,6 @@
 
 export { PipelineTracer } from './PipelineTracer';
 export type { PipelineStats, Span, Trace } from './PipelineTracer';
-
-import type { PipelineTracer } from './PipelineTracer';
 
 // ---------------------------------------------------------------------------
 // Singleton holder

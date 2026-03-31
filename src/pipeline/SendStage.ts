@@ -15,7 +15,7 @@
  */
 
 import Debug from 'debug';
-import { MessageBus } from '@src/events/MessageBus';
+import { type MessageBus } from '@src/events/MessageBus';
 import type { MessageContext } from '@src/events/types';
 
 const debug = Debug('app:pipeline:send');
@@ -39,7 +39,7 @@ export interface MemoryStorer {
     botName: string,
     text: string,
     role: 'user' | 'assistant',
-    meta?: Record<string, any>,
+    meta?: Record<string, any>
   ): Promise<void>;
 }
 
@@ -63,7 +63,7 @@ export class SendStage {
   constructor(
     private bus: MessageBus,
     private sender: MessageSender,
-    private memoryStorer?: MemoryStorer,
+    private memoryStorer?: MemoryStorer
   ) {}
 
   /**
@@ -105,7 +105,7 @@ export class SendStage {
         'SendStage: sent %d part(s) for bot=%s channel=%s',
         parts.length,
         ctx.botName,
-        ctx.channelId,
+        ctx.channelId
       );
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
@@ -167,25 +167,23 @@ export class SendStage {
    */
   private storeMemories(
     ctx: MessageContext & { responseText: string },
-    trimmedResponse: string,
+    trimmedResponse: string
   ): void {
     const userText =
-      typeof ctx.message.getText === 'function'
-        ? ctx.message.getText()
-        : ctx.message.content;
+      typeof ctx.message.getText === 'function' ? ctx.message.getText() : ctx.message.content;
 
     // Store user message.
-    this.memoryStorer!
-      .storeMemory(ctx.botName, userText, 'user', { channelId: ctx.channelId })
-      .catch((err) => {
-        debug('SendStage: memory store error (user): %O', err);
-      });
+    this.memoryStorer!.storeMemory(ctx.botName, userText, 'user', {
+      channelId: ctx.channelId,
+    }).catch((err) => {
+      debug('SendStage: memory store error (user): %O', err);
+    });
 
     // Store bot response.
-    this.memoryStorer!
-      .storeMemory(ctx.botName, trimmedResponse, 'assistant', { channelId: ctx.channelId })
-      .catch((err) => {
-        debug('SendStage: memory store error (assistant): %O', err);
-      });
+    this.memoryStorer!.storeMemory(ctx.botName, trimmedResponse, 'assistant', {
+      channelId: ctx.channelId,
+    }).catch((err) => {
+      debug('SendStage: memory store error (assistant): %O', err);
+    });
   }
 }

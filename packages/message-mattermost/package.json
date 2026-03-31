@@ -17,6 +17,7 @@
         "@hivemind/shared-types": "workspace:*"
     },
     "devDependencies": {
+        "@types/async-retry": "^1.4.9",
         "@types/debug": "^4.1.12",
         "typescript": "^5.9.2"
     },

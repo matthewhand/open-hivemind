@@ -76,7 +76,9 @@ export class SessionManager {
     await this.sessionStore.invalidateToken(oldToken);
 
     // Get user
-    const user = this.authManager.getUser(payload.userId);
+    const userId = typeof payload === 'string' ? payload : (payload as any).userId;
+    const role = typeof payload === 'string' ? 'user' : (payload as any).role;
+    const user = this.authManager.getUser(userId);
     if (!user) {
       throw new Error('User not found during token rotation');
     }
@@ -85,9 +87,9 @@ export class SessionManager {
     const newToken = this.authManager.generateAccessToken(user);
 
     // Store new session
-    await this.sessionStore.storeSession(payload.userId, newToken, payload.role);
+    await this.sessionStore.storeSession(userId, newToken, role);
 
-    debug('Token rotated for user: %s', payload.userId);
+    debug('Token rotated for user: %s', userId);
     return newToken;
   }
 
