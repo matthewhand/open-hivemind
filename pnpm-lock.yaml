@@ -38,42 +38,15 @@ importers:
       '@heroicons/react':
         specifier: ^2.2.0
         version: 2.2.0(react@19.2.4)
-      '@hivemind/llm-flowise':
-        specifier: workspace:*
-        version: link:packages/llm-flowise
-      '@hivemind/llm-letta':
-        specifier: workspace:*
-        version: link:packages/llm-letta
-      '@hivemind/llm-openai':
-        specifier: workspace:*
-        version: link:packages/llm-openai
-      '@hivemind/llm-openswarm':
-        specifier: workspace:*
-        version: link:packages/llm-openswarm
-      '@hivemind/llm-openwebui':
-        specifier: workspace:*
-        version: link:packages/llm-openwebui
-      '@hivemind/memory-mem0':
-        specifier: workspace:*
-        version: link:packages/memory-mem0
       '@hivemind/memory-mem4ai':
         specifier: workspace:*
         version: link:packages/memory-mem4ai
       '@hivemind/message-discord':
         specifier: workspace:*
         version: link:packages/message-discord
-      '@hivemind/message-mattermost':
-        specifier: workspace:*
-        version: link:packages/message-mattermost
       '@hivemind/message-slack':
         specifier: workspace:*
         version: link:packages/message-slack
-      '@hivemind/shared-types':
-        specifier: workspace:*
-        version: link:packages/shared-types
-      '@hivemind/tool-mcp':
-        specifier: workspace:*
-        version: link:packages/tool-mcp
       '@modelcontextprotocol/sdk':
         specifier: ^1.25.2
         version: 1.28.0(@cfworker/json-schema@4.1.1)(zod@3.25.76)
@@ -597,9 +570,6 @@ importers:
       tsconfig-paths:
         specifier: ^4.2.0
         version: 4.2.0
-      tsx:
-        specifier: ^4.21.0
-        version: 4.21.0
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -17647,7 +17617,7 @@ snapshots:
 
   tsx@4.21.0:
     dependencies:
-      esbuild: 0.27.4
+      esbuild: 0.27.0
       get-tsconfig: 4.13.6
     optionalDependencies:
       fsevents: 2.3.3
