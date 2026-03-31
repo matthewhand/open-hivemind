@@ -8,6 +8,7 @@ import type { MCPProviderConfig, MCPProviderStatus, MCPProviderTestResult, MCPPr
 import MCPProviderManager from '../../../config/MCPProviderManager';
 import { mcpProviderSchema } from '../../provider-configs/schemas/mcp';
 import MCPProviderForm from './MCPProviderForm';
+import FileUpload from '../DaisyUI/FileUpload';
 
 interface MCPProviderManagerProps {
   className?: string;
@@ -37,6 +38,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
   const closeConfirmModal = useCallback(() => setConfirmModal(prev => ({ ...prev, isOpen: false })), []);
   const [isSaving, setIsSaving] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // Form state for create/edit
   const [formData, setFormData] = useState({
@@ -218,8 +220,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
     }
   };
 
-  const handleImportProviders = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleImportProviders = (file: File) => {
     if (!file) { return; }
 
     const reader = new FileReader();
@@ -229,6 +230,7 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
         await manager.importProviders(data);
         await loadProviders();
         successToast('Import Successful', 'Providers imported successfully');
+        setIsImportModalOpen(false);
       } catch (error) {
         /* errorToast below */
         errorToast('Import Failed', 'Failed to import providers: ' + (error instanceof Error ? error.message : String(error)));
@@ -517,16 +519,14 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
               Export
             </Button>
 
-            <label className="btn btn-sm btn-outline">
+            <Button
+              size="sm"
+              variant="secondary" className="btn-outline"
+              onClick={() => setIsImportModalOpen(true)}
+            >
               <FaUpload className="w-3 h-3 mr-1" />
               Import
-              <input
-                type="file"
-                accept=".json"
-                onChange={handleImportProviders}
-                className="hidden"
-              />
-            </label>
+            </Button>
 
             <Button
               size="sm"
@@ -631,6 +631,20 @@ const MCPProviderManagerComponent: React.FC<MCPProviderManagerProps> = ({ classN
           }
         }}
       />
+
+      {/* Import Provider Modal */}
+      <Modal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        title="Import MCP Providers"
+      >
+        <div className="py-4">
+          <FileUpload
+            onFileSelect={handleImportProviders}
+            fileTypes={['application/json']}
+          />
+        </div>
+      </Modal>
 
       <ConfirmModal
         isOpen={confirmModal.isOpen}

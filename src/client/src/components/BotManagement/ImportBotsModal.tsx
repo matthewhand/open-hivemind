@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useCallback, useRef } from 'react';
 import {
-  Upload, FileJson, AlertTriangle, CheckCircle, XCircle,
+  FileJson, AlertTriangle, CheckCircle, XCircle,
   RefreshCw, X, ArrowRight,
 } from 'lucide-react';
 import Modal from '../DaisyUI/Modal';
+import FileUpload from '../DaisyUI/FileUpload';
 
 interface ImportBundle {
   schemaVersion?: number;
@@ -50,8 +51,6 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
   const [parseError, setParseError] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
   const [report, setReport] = useState<ImportReport | null>(null);
-  const [dragOver, setDragOver] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const reset = useCallback(() => {
     setStep('upload');
@@ -60,7 +59,6 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
     setParseError(null);
     setImporting(false);
     setReport(null);
-    setDragOver(false);
   }, []);
 
   const handleClose = useCallback(() => {
@@ -111,24 +109,6 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
     [existingBotNames]
   );
 
-  const handleFileChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) processFile(file);
-    },
-    [processFile]
-  );
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      setDragOver(false);
-      const file = e.dataTransfer.files?.[0];
-      if (file) processFile(file);
-    },
-    [processFile]
-  );
-
   const handleImport = useCallback(async () => {
     if (!bundle) return;
     setImporting(true);
@@ -162,22 +142,12 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
       <div className="space-y-4">
         {step === 'upload' && (
           <>
-            <div
-              className={`border-2 border-dashed rounded-xl p-10 text-center transition-colors cursor-pointer ${
-                dragOver ? 'border-primary bg-primary/5' : 'border-base-300 hover:border-primary/50'
-              }`}
-              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Upload className="w-10 h-10 mx-auto mb-3 text-base-content/40" />
-              <p className="font-semibold mb-1">Drag and drop a .json file here</p>
-              <p className="text-sm text-base-content/60">or click to browse</p>
-              <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleFileChange} />
-            </div>
+            <FileUpload
+              onFileSelect={processFile}
+              fileTypes={['application/json']}
+            />
             {parseError && (
-              <div className="alert alert-error">
+              <div className="alert alert-error mt-4">
                 <XCircle className="w-5 h-5 shrink-0" />
                 <span className="text-sm">{parseError}</span>
               </div>
