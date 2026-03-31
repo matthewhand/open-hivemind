@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Logo from '../Logo';
+import Menu, { MenuItem } from './Menu';
 
 interface NavItem {
   id: string;
@@ -163,29 +164,26 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7"></path>
             </svg>
           </div>
-          <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
-            {navItems.map((item) => (
-              <li key={item.id}>
-                <a href={item.path} className={currentPath === item.path ? 'active' : ''}>
-                  <span className="text-lg">{item.icon}</span>
-                  {item.label}
-                  {item.badge && <div className="badge badge-sm badge-primary">{item.badge}</div>}
-                </a>
-                {item.children && (
-                  <ul className="p-2">
-                    {item.children.map((child) => (
-                      <li key={child.id}>
-                        <a href={child.path} className={currentPath === child.path ? 'active' : ''}>
-                          <span>{child.icon}</span>
-                          {child.label}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </li>
-            ))}
-          </ul>
+          <div tabIndex={0} className="dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+            <Menu
+              size="sm"
+              items={navItems.map(item => ({
+                id: item.id,
+                label: item.label,
+                icon: <span className="text-lg">{item.icon}</span>,
+                badge: item.badge,
+                href: item.path,
+                active: currentPath === item.path || (item.children && item.children.some(c => currentPath === c.path)),
+                children: item.children?.map(child => ({
+                  id: child.id,
+                  label: child.label,
+                  icon: child.icon,
+                  href: child.path,
+                  active: currentPath === child.path
+                }))
+              }))}
+            />
+          </div>
         </div>
 
         {/* Logo and Title */}
@@ -443,15 +441,20 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
               )}
             </div>
           </div>
-          <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
-            <li className="menu-title">{userName}</li>
-            <li><a href="/admin/settings">👤 Profile</a></li>
-            <li><a href="/admin/settings">⚙️ Settings</a></li>
-            <li><a href="https://github.com/open-hivemind/open-hivemind" target="_blank" rel="noopener noreferrer">❓ Help & Support</a></li>
-            <li><a href="https://github.com/open-hivemind/open-hivemind" target="_blank" rel="noopener noreferrer">📚 Documentation</a></li>
-            <li className="divider"></li>
-            <li><a href="/login" className="text-error">🚪 Sign out</a></li>
-          </ul>
+          <div tabIndex={0} className="dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+            <div className="px-4 py-2 text-xs font-semibold text-base-content/50 uppercase tracking-wide">{userName}</div>
+            <Menu
+              size="sm"
+              divided={true}
+              items={[
+                { id: 'profile', label: 'Profile', icon: '👤', href: '/admin/settings' },
+                { id: 'settings', label: 'Settings', icon: '⚙️', href: '/admin/settings' },
+                { id: 'help', label: 'Help & Support', icon: '❓', href: 'https://github.com/open-hivemind/open-hivemind' },
+                { id: 'docs', label: 'Documentation', icon: '📚', href: 'https://github.com/open-hivemind/open-hivemind' },
+                { id: 'signout', label: 'Sign out', icon: '🚪', href: '/login', className: 'text-error mt-2 border-t border-base-200 pt-2' },
+              ]}
+            />
+          </div>
         </div>
       </div>
     </nav>
