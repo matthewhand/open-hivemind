@@ -17,7 +17,6 @@ test.describe('Audit & Governance Screenshots', () => {
 
     // The gap analysis mentions "Governance Audit Log Structured Query"
     // Wait for the audit table to load
-    await page.waitForTimeout(1000);
 
     // Initial state screenshot
     await page.screenshot({ path: 'docs/screenshots/audit-governance-initial.png' });
@@ -29,7 +28,6 @@ test.describe('Audit & Governance Screenshots', () => {
     await page.getByRole('combobox').first().selectOption('CREATE_BOT');
 
     // Wait for UI to update
-    await page.waitForTimeout(500);
 
     // Captured structured query state
     await page.screenshot({ path: 'docs/screenshots/audit-governance-filtered.png' });

@@ -67,7 +67,6 @@ test.describe('Data Boundary Tests', () => {
       );
 
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
 
       const createBtn = page
         .locator('button')
@@ -75,7 +74,6 @@ test.describe('Data Boundary Tests', () => {
         .first();
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
-        await page.waitForTimeout(500);
       }
 
       const modal = page.locator('.modal-box, [role="dialog"]').first();
@@ -94,7 +92,6 @@ test.describe('Data Boundary Tests', () => {
           const isDisabled = await submitBtn.isDisabled();
           if (!isDisabled) {
             await submitBtn.click();
-            await page.waitForTimeout(300);
           }
         }
       }
@@ -126,7 +123,6 @@ test.describe('Data Boundary Tests', () => {
       );
 
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
 
       const createBtn = page
         .locator('button')
@@ -134,11 +130,9 @@ test.describe('Data Boundary Tests', () => {
         .first();
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
-        await page.waitForTimeout(500);
         const modal = page.locator('.modal-box, [role="dialog"]').first();
         if ((await modal.count()) > 0) {
           await modal.locator('input').first().fill('X');
-          await page.waitForTimeout(200);
         }
       }
       expect(page.url()).toContain('/admin');
@@ -172,7 +166,6 @@ test.describe('Data Boundary Tests', () => {
       );
 
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
 
       // Page should load without crashing
       expect(page.url()).toContain('/admin/bots');
@@ -195,7 +188,6 @@ test.describe('Data Boundary Tests', () => {
       );
 
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
 
       const createBtn = page
         .locator('button')
@@ -203,12 +195,10 @@ test.describe('Data Boundary Tests', () => {
         .first();
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
-        await page.waitForTimeout(500);
         const modal = page.locator('.modal-box, [role="dialog"]').first();
         if ((await modal.count()) > 0) {
           await modal.locator('input').first().fill('     ');
           await modal.locator('input').first().blur();
-          await page.waitForTimeout(200);
 
           const submitBtn = modal
             .locator('button')
@@ -219,7 +209,6 @@ test.describe('Data Boundary Tests', () => {
             // Either button is disabled or clicking triggers validation
             if (!isDisabled) {
               await submitBtn.click();
-              await page.waitForTimeout(300);
             }
           }
         }
@@ -253,7 +242,6 @@ test.describe('Data Boundary Tests', () => {
       );
 
       await page.goto('/admin/bots');
-      await page.waitForTimeout(1000);
 
       // Page should load without crashing
       expect(page.url()).toContain('/admin/bots');
@@ -295,7 +283,6 @@ test.describe('Data Boundary Tests', () => {
       );
 
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
 
       expect(page.url()).toContain('/admin/bots');
       const emojiEl = page.getByText('EmojiBot');
@@ -330,7 +317,6 @@ test.describe('Data Boundary Tests', () => {
       );
 
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
 
       // Page should not have horizontal overflow
       const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
@@ -367,7 +353,6 @@ test.describe('Data Boundary Tests', () => {
       });
 
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
 
       const createBtn = page
         .locator('button')
@@ -375,11 +360,9 @@ test.describe('Data Boundary Tests', () => {
         .first();
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
-        await page.waitForTimeout(500);
         const modal = page.locator('.modal-box, [role="dialog"]').first();
         if ((await modal.count()) > 0) {
           await modal.locator('input').first().fill(xssPayload);
-          await page.waitForTimeout(300);
         }
       }
 
@@ -408,7 +391,6 @@ test.describe('Data Boundary Tests', () => {
       );
 
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
 
       const createBtn = page
         .locator('button')
@@ -416,11 +398,9 @@ test.describe('Data Boundary Tests', () => {
         .first();
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
-        await page.waitForTimeout(500);
         const modal = page.locator('.modal-box, [role="dialog"]').first();
         if ((await modal.count()) > 0) {
           await modal.locator('input').first().fill(sqlInjection);
-          await page.waitForTimeout(200);
           // Page should not crash
         }
       }
@@ -447,7 +427,6 @@ test.describe('Data Boundary Tests', () => {
       });
 
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
 
       const createBtn = page
         .locator('button')
@@ -455,11 +434,9 @@ test.describe('Data Boundary Tests', () => {
         .first();
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
-        await page.waitForTimeout(500);
         const modal = page.locator('.modal-box, [role="dialog"]').first();
         if ((await modal.count()) > 0) {
           await modal.locator('input').first().fill(scriptInjection);
-          await page.waitForTimeout(300);
         }
       }
 
@@ -499,7 +476,6 @@ test.describe('Data Boundary Tests', () => {
       );
 
       await page.goto('/admin/personas');
-      await page.waitForTimeout(1000);
 
       // Page should load without crashing
       expect(page.url()).toContain('/admin/personas');
@@ -517,7 +493,6 @@ test.describe('Data Boundary Tests', () => {
       );
 
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
 
       const createBtn = page
         .locator('button')
@@ -525,11 +500,9 @@ test.describe('Data Boundary Tests', () => {
         .first();
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
-        await page.waitForTimeout(500);
         const modal = page.locator('.modal-box, [role="dialog"]').first();
         if ((await modal.count()) > 0) {
           await modal.locator('input').first().fill('Bot\nName\nWith\nNewlines');
-          await page.waitForTimeout(200);
           // Single-line inputs should strip newlines
           const value = await modal.locator('input').first().inputValue();
           expect(value).not.toContain('\n');
@@ -549,7 +522,6 @@ test.describe('Data Boundary Tests', () => {
       );
 
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
 
       const createBtn = page
         .locator('button')
@@ -557,11 +529,9 @@ test.describe('Data Boundary Tests', () => {
         .first();
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
-        await page.waitForTimeout(500);
         const modal = page.locator('.modal-box, [role="dialog"]').first();
         if ((await modal.count()) > 0) {
           await modal.locator('input').first().fill('Bot\tName');
-          await page.waitForTimeout(200);
         }
       }
       expect(page.url()).toContain('/admin');
@@ -579,7 +549,6 @@ test.describe('Data Boundary Tests', () => {
       );
 
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
 
       const createBtn = page
         .locator('button')
@@ -587,11 +556,9 @@ test.describe('Data Boundary Tests', () => {
         .first();
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
-        await page.waitForTimeout(500);
         const modal = page.locator('.modal-box, [role="dialog"]').first();
         if ((await modal.count()) > 0) {
           await modal.locator('input').first().fill('Bot\x00Name');
-          await page.waitForTimeout(200);
         }
       }
       expect(page.url()).toContain('/admin');
@@ -609,7 +576,6 @@ test.describe('Data Boundary Tests', () => {
       );
 
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
 
       const createBtn = page
         .locator('button')
@@ -617,11 +583,9 @@ test.describe('Data Boundary Tests', () => {
         .first();
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
-        await page.waitForTimeout(500);
         const modal = page.locator('.modal-box, [role="dialog"]').first();
         if ((await modal.count()) > 0) {
           await modal.locator('input').first().fill('He said "hello" and it\'s fine');
-          await page.waitForTimeout(200);
           const value = await modal.locator('input').first().inputValue();
           expect(value).toContain('He said');
         }
@@ -646,14 +610,12 @@ test.describe('Data Boundary Tests', () => {
       await page.route('**/api/mcp/servers', (route) => route.fulfill({ status: 200, json: [] }));
 
       await page.goto('/admin/config');
-      await page.waitForTimeout(500);
 
       // Try to find any numeric input field
       const numberInputs = page.locator('input[type="number"]');
       if ((await numberInputs.count()) > 0) {
         for (const portVal of portValues) {
           await numberInputs.first().fill(String(portVal));
-          await page.waitForTimeout(100);
           // Page should not crash for any value
         }
       }
@@ -672,13 +634,11 @@ test.describe('Data Boundary Tests', () => {
       );
 
       await page.goto('/admin/settings');
-      await page.waitForTimeout(500);
 
       const rateInputs = page.locator('input[type="number"]');
       if ((await rateInputs.count()) > 0) {
         for (const val of [0, 1, 999999]) {
           await rateInputs.first().fill(String(val));
-          await page.waitForTimeout(100);
         }
       }
       expect(page.url()).toContain('/admin');
@@ -696,13 +656,11 @@ test.describe('Data Boundary Tests', () => {
       );
 
       await page.goto('/admin/settings');
-      await page.waitForTimeout(500);
 
       const numberInputs = page.locator('input[type="number"]');
       if ((await numberInputs.count()) > 0) {
         for (const val of [0, -1, 999999999]) {
           await numberInputs.first().fill(String(val));
-          await page.waitForTimeout(100);
         }
       }
       expect(page.url()).toContain('/admin');
@@ -717,7 +675,6 @@ test.describe('Data Boundary Tests', () => {
       );
 
       await page.goto('/admin/settings');
-      await page.waitForTimeout(500);
 
       const numberInputs = page.locator('input[type="number"]');
       if ((await numberInputs.count()) > 0) {
@@ -727,7 +684,6 @@ test.describe('Data Boundary Tests', () => {
           el.value = 'NaN';
           el.dispatchEvent(new Event('input', { bubbles: true }));
         });
-        await page.waitForTimeout(100);
         const value = await numberInputs.first().inputValue();
         // The value should either be empty, the previous value, or 'NaN' but the UI should not crash
         expect(typeof value).toBe('string');
@@ -736,7 +692,6 @@ test.describe('Data Boundary Tests', () => {
           el.value = 'Infinity';
           el.dispatchEvent(new Event('input', { bubbles: true }));
         });
-        await page.waitForTimeout(100);
         const value2 = await numberInputs.first().inputValue();
         expect(typeof value2).toBe('string');
       }
@@ -778,12 +733,10 @@ test.describe('Data Boundary Tests', () => {
       );
 
       await page.goto('/admin/activity');
-      await page.waitForTimeout(1000);
 
       const dateInputs = page.locator('input[type="date"], input[type="datetime-local"]');
       if ((await dateInputs.count()) > 0) {
         await dateInputs.first().fill('2099-12-31');
-        await page.waitForTimeout(300);
       }
       expect(page.url()).toContain('/admin');
     });
@@ -800,12 +753,10 @@ test.describe('Data Boundary Tests', () => {
       );
 
       await page.goto('/admin/activity');
-      await page.waitForTimeout(1000);
 
       const dateInputs = page.locator('input[type="date"], input[type="datetime-local"]');
       if ((await dateInputs.count()) > 0) {
         await dateInputs.first().fill('1970-01-01');
-        await page.waitForTimeout(300);
       }
       expect(page.url()).toContain('/admin');
     });
@@ -822,13 +773,11 @@ test.describe('Data Boundary Tests', () => {
       );
 
       await page.goto('/admin/activity');
-      await page.waitForTimeout(1000);
 
       const dateInputs = page.locator('input[type="date"], input[type="datetime-local"]');
       if ((await dateInputs.count()) >= 2) {
         await dateInputs.nth(0).fill('2026-12-31');
         await dateInputs.nth(1).fill('2026-01-01');
-        await page.waitForTimeout(300);
       }
       expect(page.url()).toContain('/admin');
     });
@@ -848,7 +797,6 @@ test.describe('Data Boundary Tests', () => {
       );
 
       await page.goto('/admin/config');
-      await page.waitForTimeout(500);
 
       // Look for API key input fields
       const apiKeyInput = page
@@ -857,7 +805,6 @@ test.describe('Data Boundary Tests', () => {
       if ((await apiKeyInput.count()) > 0) {
         await apiKeyInput.fill('');
         await apiKeyInput.blur();
-        await page.waitForTimeout(200);
       }
       expect(page.url()).toContain('/admin');
     });
@@ -873,14 +820,12 @@ test.describe('Data Boundary Tests', () => {
       );
 
       await page.goto('/admin/config');
-      await page.waitForTimeout(500);
 
       const apiKeyInput = page
         .locator('input[type="password"], input[placeholder*="key" i], input[placeholder*="API" i]')
         .first();
       if ((await apiKeyInput.count()) > 0) {
         await apiKeyInput.fill(longKey);
-        await page.waitForTimeout(200);
         const value = await apiKeyInput.inputValue();
         // Should either accept or truncate, not crash
         expect(value.length).toBeGreaterThan(0);
@@ -899,14 +844,12 @@ test.describe('Data Boundary Tests', () => {
       );
 
       await page.goto('/admin/config');
-      await page.waitForTimeout(500);
 
       const apiKeyInput = page
         .locator('input[type="password"], input[placeholder*="key" i], input[placeholder*="API" i]')
         .first();
       if ((await apiKeyInput.count()) > 0) {
         await apiKeyInput.fill(specialKey);
-        await page.waitForTimeout(200);
       }
       expect(page.url()).toContain('/admin');
     });
@@ -927,7 +870,6 @@ test.describe('Data Boundary Tests', () => {
       await page.route('**/api/mcp/servers', (route) => route.fulfill({ status: 200, json: [] }));
 
       await page.goto('/admin/config');
-      await page.waitForTimeout(500);
 
       const urlInput = page
         .locator('input[type="url"], input[placeholder*="url" i], input[placeholder*="endpoint" i]')
@@ -935,7 +877,6 @@ test.describe('Data Boundary Tests', () => {
       if ((await urlInput.count()) > 0) {
         await urlInput.fill('');
         await urlInput.blur();
-        await page.waitForTimeout(200);
       }
       expect(page.url()).toContain('/admin');
     });
@@ -950,7 +891,6 @@ test.describe('Data Boundary Tests', () => {
       await page.route('**/api/mcp/servers', (route) => route.fulfill({ status: 200, json: [] }));
 
       await page.goto('/admin/config');
-      await page.waitForTimeout(500);
 
       const urlInput = page
         .locator('input[type="url"], input[placeholder*="url" i], input[placeholder*="endpoint" i]')
@@ -958,7 +898,6 @@ test.describe('Data Boundary Tests', () => {
       if ((await urlInput.count()) > 0) {
         await urlInput.fill('not-a-valid-url');
         await urlInput.blur();
-        await page.waitForTimeout(200);
       }
       expect(page.url()).toContain('/admin');
     });
@@ -973,14 +912,12 @@ test.describe('Data Boundary Tests', () => {
       await page.route('**/api/mcp/servers', (route) => route.fulfill({ status: 200, json: [] }));
 
       await page.goto('/admin/config');
-      await page.waitForTimeout(500);
 
       const urlInput = page
         .locator('input[type="url"], input[placeholder*="url" i], input[placeholder*="endpoint" i]')
         .first();
       if ((await urlInput.count()) > 0) {
         await urlInput.fill('http://localhost:3000');
-        await page.waitForTimeout(200);
         const value = await urlInput.inputValue();
         expect(value).toBe('http://localhost:3000');
       }
@@ -997,14 +934,12 @@ test.describe('Data Boundary Tests', () => {
       await page.route('**/api/mcp/servers', (route) => route.fulfill({ status: 200, json: [] }));
 
       await page.goto('/admin/config');
-      await page.waitForTimeout(500);
 
       const urlInput = page
         .locator('input[type="url"], input[placeholder*="url" i], input[placeholder*="endpoint" i]')
         .first();
       if ((await urlInput.count()) > 0) {
         await urlInput.fill('https://api.example.com/v1?key=value&other=test#section');
-        await page.waitForTimeout(200);
         const value = await urlInput.inputValue();
         expect(value).toContain('api.example.com');
       }
@@ -1023,14 +958,12 @@ test.describe('Data Boundary Tests', () => {
       await page.route('**/api/mcp/servers', (route) => route.fulfill({ status: 200, json: [] }));
 
       await page.goto('/admin/config');
-      await page.waitForTimeout(500);
 
       const urlInput = page
         .locator('input[type="url"], input[placeholder*="url" i], input[placeholder*="endpoint" i]')
         .first();
       if ((await urlInput.count()) > 0) {
         await urlInput.fill(longUrl);
-        await page.waitForTimeout(200);
       }
       expect(page.url()).toContain('/admin');
     });
@@ -1045,14 +978,12 @@ test.describe('Data Boundary Tests', () => {
       await page.route('**/api/mcp/servers', (route) => route.fulfill({ status: 200, json: [] }));
 
       await page.goto('/admin/config');
-      await page.waitForTimeout(500);
 
       const urlInput = page
         .locator('input[type="url"], input[placeholder*="url" i], input[placeholder*="endpoint" i]')
         .first();
       if ((await urlInput.count()) > 0) {
         await urlInput.fill('https://\u4F8B\u3048.jp/api');
-        await page.waitForTimeout(200);
       }
       expect(page.url()).toContain('/admin');
     });
@@ -1073,7 +1004,6 @@ test.describe('Data Boundary Tests', () => {
       });
 
       await page.goto('/admin/config');
-      await page.waitForTimeout(500);
 
       const urlInput = page
         .locator('input[type="url"], input[placeholder*="url" i], input[placeholder*="endpoint" i]')
@@ -1081,7 +1011,6 @@ test.describe('Data Boundary Tests', () => {
       if ((await urlInput.count()) > 0) {
         await urlInput.fill('javascript:alert(1)');
         await urlInput.blur();
-        await page.waitForTimeout(300);
       }
 
       expect(alertTriggered).toBe(false);
@@ -1097,7 +1026,6 @@ test.describe('Data Boundary Tests', () => {
       await page.route('**/api/mcp/servers', (route) => route.fulfill({ status: 200, json: [] }));
 
       await page.goto('/admin/config');
-      await page.waitForTimeout(500);
 
       const urlInput = page
         .locator('input[type="url"], input[placeholder*="url" i], input[placeholder*="endpoint" i]')
@@ -1105,7 +1033,6 @@ test.describe('Data Boundary Tests', () => {
       if ((await urlInput.count()) > 0) {
         await urlInput.fill('file:///etc/passwd');
         await urlInput.blur();
-        await page.waitForTimeout(200);
       }
       expect(page.url()).toContain('/admin');
     });
@@ -1149,7 +1076,6 @@ test.describe('Data Boundary Tests', () => {
       });
 
       await page.goto('/admin/personas');
-      await page.waitForTimeout(500);
 
       const createBtn = page
         .locator('button')
@@ -1157,7 +1083,6 @@ test.describe('Data Boundary Tests', () => {
         .first();
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
-        await page.waitForTimeout(500);
 
         const modal = page.locator('.modal-box, [role="dialog"]').first();
         if ((await modal.count()) > 0) {
@@ -1165,19 +1090,15 @@ test.describe('Data Boundary Tests', () => {
           if ((await inputs.count()) > 0) {
             // Test XSS payload
             await inputs.first().fill('<script>alert("xss")</script>');
-            await page.waitForTimeout(100);
 
             // Test SQL injection
             await inputs.first().fill("'; DROP TABLE personas; --");
-            await page.waitForTimeout(100);
 
             // Test unicode
             await inputs.first().fill('\u4F60\u597D\u4E16\u754C');
-            await page.waitForTimeout(100);
 
             // Test emoji
             await inputs.first().fill('\u{1F916}\u{1F525}');
-            await page.waitForTimeout(100);
           }
         }
       }
@@ -1200,7 +1121,6 @@ test.describe('Data Boundary Tests', () => {
       });
 
       await page.goto('/admin/config');
-      await page.waitForTimeout(500);
 
       // Try to find and interact with LLM provider form elements
       const addBtn = page
@@ -1209,7 +1129,6 @@ test.describe('Data Boundary Tests', () => {
         .first();
       if ((await addBtn.count()) > 0) {
         await addBtn.click();
-        await page.waitForTimeout(500);
 
         const modal = page.locator('.modal-box, [role="dialog"]').first();
         if ((await modal.count()) > 0) {
@@ -1217,11 +1136,9 @@ test.describe('Data Boundary Tests', () => {
           if ((await inputs.count()) > 0) {
             // Test very long name
             await inputs.first().fill('P'.repeat(255));
-            await page.waitForTimeout(100);
 
             // Test special characters
             await inputs.first().fill('Provider <with> "special" chars & more');
-            await page.waitForTimeout(100);
           }
         }
       }
@@ -1247,13 +1164,11 @@ test.describe('Data Boundary Tests', () => {
       });
 
       await page.goto('/admin/config');
-      await page.waitForTimeout(500);
 
       // Navigate to MCP section if available
       const mcpTab = page.locator('button, a, [role="tab"]').filter({ hasText: /mcp/i }).first();
       if ((await mcpTab.count()) > 0) {
         await mcpTab.click();
-        await page.waitForTimeout(500);
       }
 
       const addBtn = page
@@ -1262,7 +1177,6 @@ test.describe('Data Boundary Tests', () => {
         .first();
       if ((await addBtn.count()) > 0) {
         await addBtn.click();
-        await page.waitForTimeout(500);
 
         const modal = page.locator('.modal-box, [role="dialog"]').first();
         if ((await modal.count()) > 0) {
@@ -1270,22 +1184,18 @@ test.describe('Data Boundary Tests', () => {
           if ((await inputs.count()) > 0) {
             // Name with special chars
             await inputs.first().fill('MCP <Server> "Test"');
-            await page.waitForTimeout(100);
           }
 
           const urlInput = modal.locator('input[type="url"], input[placeholder*="url" i]').first();
           if ((await urlInput.count()) > 0) {
             // javascript: protocol
             await urlInput.fill('javascript:alert(1)');
-            await page.waitForTimeout(100);
 
             // file:// protocol
             await urlInput.fill('file:///etc/passwd');
-            await page.waitForTimeout(100);
 
             // Valid URL with port
             await urlInput.fill('http://localhost:8080/api/v1');
-            await page.waitForTimeout(100);
           }
         }
       }
@@ -1316,7 +1226,6 @@ test.describe('Data Boundary Tests', () => {
       });
 
       await page.goto('/admin/settings');
-      await page.waitForTimeout(1000);
 
       // Test text inputs with edge cases
       const textInputs = page
@@ -1325,26 +1234,20 @@ test.describe('Data Boundary Tests', () => {
       if ((await textInputs.count()) > 0) {
         // Very long value
         await textInputs.fill('X'.repeat(500));
-        await page.waitForTimeout(100);
 
         // HTML injection
         await textInputs.fill('<b>bold</b><script>alert(1)</script>');
-        await page.waitForTimeout(100);
 
         // Unicode
         await textInputs.fill('\u4F60\u597D\u4E16\u754C \u{1F30D}');
-        await page.waitForTimeout(100);
       }
 
       // Test number inputs with boundaries
       const numberInputs = page.locator('input[type="number"]:visible');
       if ((await numberInputs.count()) > 0) {
         await numberInputs.first().fill('-999999');
-        await page.waitForTimeout(100);
         await numberInputs.first().fill('0');
-        await page.waitForTimeout(100);
         await numberInputs.first().fill('999999999');
-        await page.waitForTimeout(100);
       }
 
       expect(page.url()).toContain('/admin');
@@ -1362,26 +1265,21 @@ test.describe('Data Boundary Tests', () => {
       );
 
       await page.goto('/admin/marketplace');
-      await page.waitForTimeout(500);
 
       // Look for any URL input on the marketplace page
       const urlInput = page.locator('input[type="url"], input[placeholder*="url" i]').first();
       if ((await urlInput.count()) > 0) {
         // javascript: protocol
         await urlInput.fill('javascript:alert(1)');
-        await page.waitForTimeout(100);
 
         // Empty
         await urlInput.fill('');
-        await page.waitForTimeout(100);
 
         // Valid URL
         await urlInput.fill('https://marketplace.example.com/plugin/v1');
-        await page.waitForTimeout(100);
 
         // Very long URL
         await urlInput.fill('https://example.com/' + 'x'.repeat(2000));
-        await page.waitForTimeout(100);
       }
       expect(page.url()).toContain('/admin');
     });

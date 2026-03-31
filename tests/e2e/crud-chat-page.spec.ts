@@ -154,18 +154,15 @@ test.describe('Chat Page CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/chat');
-    await page.waitForTimeout(500);
 
     // Select Support Bot
     const botSelector = page.locator('select:has(option:has-text("Support Bot"))').first();
     if ((await botSelector.count()) > 0) {
       await botSelector.selectOption({ label: 'Support Bot' });
-      await page.waitForTimeout(500);
     } else {
       const botItem = page.getByText('Support Bot').first();
       if ((await botItem.count()) > 0) {
         await botItem.click();
-        await page.waitForTimeout(500);
       }
     }
 
@@ -200,7 +197,6 @@ test.describe('Chat Page CRUD Lifecycle', () => {
     });
 
     await page.goto('/admin/chat');
-    await page.waitForTimeout(500);
 
     // Type and send a message
     const chatInput = page
@@ -210,7 +206,6 @@ test.describe('Chat Page CRUD Lifecycle', () => {
       .first();
     if ((await chatInput.count()) > 0) {
       await chatInput.fill('How do I reset my password?');
-      await page.waitForTimeout(200);
 
       // Press Enter or click Send
       const sendBtn = page
@@ -221,7 +216,6 @@ test.describe('Chat Page CRUD Lifecycle', () => {
       } else {
         await chatInput.press('Enter');
       }
-      await page.waitForTimeout(500);
 
       // Optimistic message should appear in the chat
       const sentMsg = page.getByText('How do I reset my password?').first();
@@ -244,7 +238,6 @@ test.describe('Chat Page CRUD Lifecycle', () => {
     });
 
     await page.goto('/admin/chat');
-    await page.waitForTimeout(500);
 
     const chatInput = page
       .locator(
@@ -253,7 +246,6 @@ test.describe('Chat Page CRUD Lifecycle', () => {
       .first();
     if ((await chatInput.count()) > 0) {
       await chatInput.fill('This will fail');
-      await page.waitForTimeout(200);
 
       const sendBtn = page
         .locator('button:has-text("Send"), button[type="submit"], button[aria-label*="send" i]')
@@ -263,7 +255,6 @@ test.describe('Chat Page CRUD Lifecycle', () => {
       } else {
         await chatInput.press('Enter');
       }
-      await page.waitForTimeout(500);
 
       // Error should be indicated (red text, error toast, retry button)
       await expect(page.locator('body')).toBeVisible();
@@ -300,13 +291,11 @@ test.describe('Chat Page CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/chat');
-    await page.waitForTimeout(500);
 
     // Switch to Sales Bot
     const botSelector = page.locator('select:has(option:has-text("Sales Bot"))').first();
     if ((await botSelector.count()) > 0) {
       await botSelector.selectOption({ label: 'Sales Bot' });
-      await page.waitForTimeout(500);
 
       const salesMsg = page.getByText('Welcome to Sales Bot!').first();
       if ((await salesMsg.count()) > 0) {
@@ -316,7 +305,6 @@ test.describe('Chat Page CRUD Lifecycle', () => {
       const salesBotItem = page.getByText('Sales Bot').first();
       if ((await salesBotItem.count()) > 0) {
         await salesBotItem.click();
-        await page.waitForTimeout(500);
       }
     }
   });
@@ -328,7 +316,6 @@ test.describe('Chat Page CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/chat');
-    await page.waitForTimeout(500);
 
     // Look for LLM provider selector
     const llmSelector = page
@@ -338,7 +325,6 @@ test.describe('Chat Page CRUD Lifecycle', () => {
       .first();
     if ((await llmSelector.count()) > 0) {
       await llmSelector.selectOption({ index: 1 });
-      await page.waitForTimeout(300);
       await expect(page.locator('body')).toBeVisible();
     }
   });
@@ -352,20 +338,17 @@ test.describe('Chat Page CRUD Lifecycle', () => {
     });
 
     await page.goto('/admin/chat');
-    await page.waitForTimeout(500);
 
     // Select a bot first so history gets loaded
     const botItem = page.getByText('Support Bot').first();
     if ((await botItem.count()) > 0) {
       await botItem.click();
-      await page.waitForTimeout(500);
     }
 
     const initialCount = fetchCount;
     const refreshBtn = page.locator('button:has-text("Refresh")').first();
     if ((await refreshBtn.count()) > 0) {
       await refreshBtn.click();
-      await page.waitForTimeout(500);
       if (initialCount > 0) {
         expect(fetchCount).toBeGreaterThan(initialCount);
       }
@@ -379,7 +362,6 @@ test.describe('Chat Page CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/chat');
-    await page.waitForTimeout(500);
 
     await expect(page.locator('body')).toBeVisible();
     const emptyText = page
@@ -399,7 +381,6 @@ test.describe('Chat Page CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/chat');
-    await page.waitForTimeout(500);
 
     await expect(page.locator('body')).toBeVisible();
     // Empty history may show placeholder text
@@ -420,7 +401,6 @@ test.describe('Chat Page CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/chat');
-    await page.waitForTimeout(500);
 
     // Verify messages are visible
     const msgContent = page.getByText('Hello, how can I help you?').first();

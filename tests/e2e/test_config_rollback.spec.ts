@@ -78,7 +78,7 @@ test.describe('Configuration Rollback', () => {
 
     // 3. Open modal and mock rollback action
     await rollbackButton.click();
-    await page.waitForTimeout(500); // Wait for modal animation
+// Wait for modal animation
 
     const modal = page.locator('.modal-box');
     await expect(modal).toBeVisible();

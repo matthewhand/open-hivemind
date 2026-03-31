@@ -288,7 +288,6 @@ test.describe('Accessibility Audit', () => {
     for (const pg of pages) {
       test(`${pg.name} page has a <main> landmark`, async ({ page }) => {
         await page.goto(pg.path);
-        await page.waitForTimeout(500);
 
         const mainLandmark = page.locator('main');
         await expect(mainLandmark.first()).toBeAttached();
@@ -312,12 +311,10 @@ test.describe('Accessibility Audit', () => {
         .first()
         .waitFor({ state: 'attached', timeout: 15000 })
         .catch(() => {});
-      await page.waitForTimeout(500);
 
       const createBtn = page.getByRole('button', { name: /create/i }).first();
       if (await createBtn.isVisible().catch(() => false)) {
         await createBtn.click({ timeout: 5000 }).catch(() => {});
-        await page.waitForTimeout(500);
 
         const dialog = page.locator('[role="dialog"]');
         if (
@@ -339,7 +336,6 @@ test.describe('Accessibility Audit', () => {
 
     test('Alerts have role="alert"', async ({ page }) => {
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
 
       // Check if any visible alerts use correct role
       const alerts = page.locator('[role="alert"], .alert');
@@ -374,7 +370,6 @@ test.describe('Accessibility Audit', () => {
           h1Count = await page.locator('h1').count();
           h2Count = await page.locator('h2').count();
           if (h1Count > 0 || h2Count > 0) break;
-          await page.waitForTimeout(500);
         }
 
         // Most pages should have exactly one h1, but some embedded components
@@ -406,7 +401,6 @@ test.describe('Accessibility Audit', () => {
             });
           });
           if (headingLevels.length > 0) break;
-          await page.waitForTimeout(500);
         }
 
         // Verify no heading levels are skipped.
@@ -434,7 +428,6 @@ test.describe('Accessibility Audit', () => {
 
     test('Page title matches h1 content on bots page', async ({ page }) => {
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
 
       const h1Text = await page.locator('h1').first().textContent();
       const title = await page.title();
@@ -451,7 +444,6 @@ test.describe('Accessibility Audit', () => {
     for (const pg of pages) {
       test(`${pg.name}: all buttons have accessible names`, async ({ page }) => {
         await page.goto(pg.path);
-        await page.waitForTimeout(500);
 
         const buttonsWithoutNames = await page.evaluate(() => {
           const buttons = document.querySelectorAll('button');
@@ -483,7 +475,6 @@ test.describe('Accessibility Audit', () => {
     for (const pg of pages) {
       test(`${pg.name}: all form inputs have associated labels`, async ({ page }) => {
         await page.goto(pg.path);
-        await page.waitForTimeout(500);
 
         const unlabeledInputs = await page.evaluate(() => {
           const inputs = document.querySelectorAll(
@@ -535,7 +526,6 @@ test.describe('Accessibility Audit', () => {
 
     test('All images have alt text', async ({ page }) => {
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
 
       const imagesWithoutAlt = await page.evaluate(() => {
         const images = document.querySelectorAll('img');
@@ -559,7 +549,6 @@ test.describe('Accessibility Audit', () => {
     for (const pg of pages) {
       test(`${pg.name}: icon-only buttons have aria-label`, async ({ page }) => {
         await page.goto(pg.path);
-        await page.waitForTimeout(500);
 
         const iconOnlyIssues = await page.evaluate(() => {
           const buttons = document.querySelectorAll('button');
@@ -597,7 +586,6 @@ test.describe('Accessibility Audit', () => {
     for (const pg of pages) {
       test(`${pg.name}: loading spinners have aria-hidden="true"`, async ({ page }) => {
         await page.goto(pg.path);
-        await page.waitForTimeout(300);
 
         const spinnerIssues = await page.evaluate(() => {
           const spinners = document.querySelectorAll(
@@ -627,7 +615,6 @@ test.describe('Accessibility Audit', () => {
 
     test('Buttons with loading state have aria-busy', async ({ page }) => {
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
 
       const loadingButtonIssues = await page.evaluate(() => {
         const buttons = document.querySelectorAll('button');
@@ -666,12 +653,10 @@ test.describe('Accessibility Audit', () => {
         .first()
         .waitFor({ state: 'attached', timeout: 15000 })
         .catch(() => {});
-      await page.waitForTimeout(500);
 
       const createBtn = page.getByRole('button', { name: /create/i }).first();
       if (await createBtn.isVisible().catch(() => false)) {
         await createBtn.click({ timeout: 5000 }).catch(() => {});
-        await page.waitForTimeout(500);
 
         const focusInfo = await page.evaluate(() => {
           const active = document.activeElement;
@@ -697,17 +682,14 @@ test.describe('Accessibility Audit', () => {
         .first()
         .waitFor({ state: 'attached', timeout: 15000 })
         .catch(() => {});
-      await page.waitForTimeout(500);
 
       const createBtn = page.getByRole('button', { name: /create/i }).first();
       if (await createBtn.isVisible().catch(() => false)) {
         await createBtn.click({ timeout: 5000 }).catch(() => {});
-        await page.waitForTimeout(500);
 
         const modal = page.locator('[role="dialog"], .modal-box').first();
         if (await modal.isVisible().catch(() => false)) {
           await page.keyboard.press('Escape');
-          await page.waitForTimeout(300);
 
           // Focus should return to the create button or nearby element
           const focusedAfterClose = await page.evaluate(() => {
@@ -725,11 +707,9 @@ test.describe('Accessibility Audit', () => {
 
     test('Page navigation moves focus to main content', async ({ page }) => {
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
 
       // Navigate to a different page
       await page.goto('/admin/personas');
-      await page.waitForTimeout(500);
 
       const focusInfo = await page.evaluate(() => {
         const active = document.activeElement;
@@ -747,7 +727,6 @@ test.describe('Accessibility Audit', () => {
 
     test('Skip-to-content link exists if applicable', async ({ page }) => {
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
 
       const skipLink = await page.evaluate(() => {
         const links = document.querySelectorAll(
@@ -771,7 +750,6 @@ test.describe('Accessibility Audit', () => {
   test.describe('Live Regions', () => {
     test('Toast notifications have role="status" or role="alert"', async ({ page }) => {
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
 
       // Check for toast container elements
       const toastInfo = await page.evaluate(() => {
@@ -802,7 +780,6 @@ test.describe('Accessibility Audit', () => {
     test('Error messages use aria-live="assertive"', async ({ page }) => {
       // Trigger a form validation error
       await page.goto('/admin/settings');
-      await page.waitForTimeout(500);
 
       const errorRegions = await page.evaluate(() => {
         const errorElements = document.querySelectorAll(
@@ -828,7 +805,6 @@ test.describe('Accessibility Audit', () => {
 
     test('Success messages use aria-live="polite"', async ({ page }) => {
       await page.goto('/admin/settings');
-      await page.waitForTimeout(500);
 
       const successRegions = await page.evaluate(() => {
         const elements = document.querySelectorAll(
@@ -853,7 +829,6 @@ test.describe('Accessibility Audit', () => {
   test.describe('Color Contrast (approximate)', () => {
     test('Error states use distinct styling', async ({ page }) => {
       await page.goto('/admin/bots');
-      await page.waitForTimeout(500);
 
       const errorStyling = await page.evaluate(() => {
         const errorElements = document.querySelectorAll(
@@ -878,7 +853,6 @@ test.describe('Accessibility Audit', () => {
 
     test('Disabled states are visually different', async ({ page }) => {
       await page.goto('/admin/settings');
-      await page.waitForTimeout(500);
 
       const disabledInfo = await page.evaluate(() => {
         const disabledElements = document.querySelectorAll(
@@ -918,7 +892,6 @@ test.describe('Accessibility Audit', () => {
     for (const pg of pages) {
       test(`${pg.name}: no duplicate IDs on page`, async ({ page }) => {
         await page.goto(pg.path);
-        await page.waitForTimeout(500);
 
         const duplicateIds = await page.evaluate(() => {
           const allElements = document.querySelectorAll('[id]');
@@ -945,7 +918,6 @@ test.describe('Accessibility Audit', () => {
         page,
       }) => {
         await page.goto(pg.path);
-        await page.waitForTimeout(500);
 
         const brokenReferences = await page.evaluate(() => {
           const elements = document.querySelectorAll('[aria-labelledby], [aria-describedby]');
@@ -990,7 +962,6 @@ test.describe('Accessibility Audit', () => {
           .first()
           .waitFor({ state: 'attached', timeout: 15000 })
           .catch(() => {});
-        await page.waitForTimeout(500);
 
         const negativeTabIndex = await page.evaluate(() => {
           const interactives = document.querySelectorAll(
@@ -1052,7 +1023,6 @@ test.describe('Accessibility Audit', () => {
     for (const pg of pages) {
       test(`${pg.name}: links have discernible text`, async ({ page }) => {
         await page.goto(pg.path);
-        await page.waitForTimeout(500);
 
         const linksWithoutText = await page.evaluate(() => {
           const links = document.querySelectorAll('a[href]');

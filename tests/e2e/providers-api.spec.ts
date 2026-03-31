@@ -199,8 +199,7 @@ test.describe('Providers API', () => {
     );
 
     await navigateAndWaitReady(page, '/admin/providers/memory');
-    await page.waitForTimeout(1000);
-
+    await page.waitForLoadState("domcontentloaded");
     await page.screenshot({
       path: 'docs/screenshots/providers-api-memory.png',
       fullPage: true,
@@ -253,8 +252,7 @@ test.describe('Providers API', () => {
     );
 
     await navigateAndWaitReady(page, '/admin/providers/tool');
-    await page.waitForTimeout(1000);
-
+    await page.waitForLoadState("domcontentloaded");
     await page.screenshot({
       path: 'docs/screenshots/providers-api-tool.png',
       fullPage: true,

@@ -46,7 +46,7 @@ test.describe('Bot Activity Screenshots', () => {
     await page.goto('/bots');
 
     // Screenshot
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState("domcontentloaded");
     await page.screenshot({ path: 'docs/screenshots/bots-page.png', fullPage: true });
   });
 });

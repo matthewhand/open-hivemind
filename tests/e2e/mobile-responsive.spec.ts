@@ -124,7 +124,6 @@ test.describe('Mobile Responsive Layout', () => {
   test('hamburger menu appears at iPhone viewport and is clickable', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto('/admin/bots');
-    await page.waitForTimeout(500);
 
     // Hamburger button should be visible on mobile
     const hamburger = page
@@ -135,7 +134,6 @@ test.describe('Mobile Responsive Layout', () => {
     if ((await hamburger.count()) > 0) {
       await expect(hamburger).toBeVisible();
       await hamburger.click();
-      await page.waitForTimeout(300);
 
       // Sidebar / drawer navigation should now be visible
       const nav = page.locator('.drawer-side, nav, aside, [class*="sidebar"]').first();
@@ -146,7 +144,6 @@ test.describe('Mobile Responsive Layout', () => {
   test('hamburger menu appears at iPad viewport', async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto('/admin/bots');
-    await page.waitForTimeout(500);
 
     const hamburger = page
       .locator(
@@ -161,7 +158,6 @@ test.describe('Mobile Responsive Layout', () => {
   test('sidebar navigation works via hamburger menu', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto('/admin/bots');
-    await page.waitForTimeout(500);
 
     const hamburger = page
       .locator(
@@ -170,13 +166,11 @@ test.describe('Mobile Responsive Layout', () => {
       .first();
     if ((await hamburger.count()) > 0) {
       await hamburger.click();
-      await page.waitForTimeout(300);
 
       // Click a nav link to personas
       const personasLink = page.locator('a[href*="personas"], a:has-text("Personas")').first();
       if ((await personasLink.count()) > 0) {
         await personasLink.click();
-        await page.waitForTimeout(500);
         expect(page.url()).toContain('personas');
       }
     }
@@ -203,7 +197,6 @@ test.describe('Mobile Responsive Layout', () => {
     test(`page ${path} renders at mobile viewport with visible heading`, async ({ page }) => {
       await page.setViewportSize({ width: 375, height: 812 });
       await page.goto(path);
-      await page.waitForTimeout(500);
 
       // Page should load without crashing
       await expect(page.locator('body')).toBeVisible();
@@ -220,7 +213,6 @@ test.describe('Mobile Responsive Layout', () => {
     test(`page ${path} has no horizontal overflow on mobile`, async ({ page }) => {
       await page.setViewportSize({ width: 375, height: 812 });
       await page.goto(path);
-      await page.waitForTimeout(500);
 
       // Check that the page doesn't have extreme horizontal overflow
       // Some pages (activity, chat, export) have tables or content that naturally
@@ -235,7 +227,6 @@ test.describe('Mobile Responsive Layout', () => {
   test('bot cards stack vertically on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto('/admin/bots');
-    await page.waitForTimeout(500);
 
     const cards = page.locator('.card, [class*="bot-card"], [class*="BotCard"]');
     const count = await cards.count();
@@ -254,7 +245,6 @@ test.describe('Mobile Responsive Layout', () => {
   test('tables are scrollable on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto('/admin/activity');
-    await page.waitForTimeout(500);
 
     const table = page.locator('table').first();
     if ((await table.count()) > 0) {
@@ -283,12 +273,10 @@ test.describe('Mobile Responsive Layout', () => {
   test('create bot modal is full-width on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto('/admin/bots');
-    await page.waitForTimeout(500);
 
     const createBtn = page.getByRole('button', { name: /create bot/i }).first();
     if ((await createBtn.count()) > 0) {
       await createBtn.click();
-      await page.waitForTimeout(300);
 
       const modal = page.locator('.modal-box, [role="dialog"], dialog.modal[open]').first();
       if ((await modal.count()) > 0) {
@@ -307,7 +295,6 @@ test.describe('Mobile Responsive Layout', () => {
   test('form inputs are full-width on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto('/admin/settings');
-    await page.waitForTimeout(500);
 
     const inputs = page.locator('input:visible, select:visible, textarea:visible');
     const count = await inputs.count();
@@ -325,7 +312,6 @@ test.describe('Mobile Responsive Layout', () => {
   test('mobile nav closes after navigation', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto('/admin/bots');
-    await page.waitForTimeout(500);
 
     const hamburger = page
       .locator(
@@ -334,7 +320,6 @@ test.describe('Mobile Responsive Layout', () => {
       .first();
     if ((await hamburger.count()) > 0) {
       await hamburger.click();
-      await page.waitForTimeout(300);
 
       // Click a nav link
       const link = page
@@ -342,7 +327,6 @@ test.describe('Mobile Responsive Layout', () => {
         .first();
       if ((await link.count()) > 0) {
         await link.click();
-        await page.waitForTimeout(500);
 
         // Drawer overlay should close or sidebar should no longer be visible
         const drawerCheckbox = page.locator('#sidebar-drawer, input.drawer-toggle');
@@ -360,7 +344,6 @@ test.describe('Mobile Responsive Layout', () => {
   test('navigation buttons meet minimum 44px tap target size', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto('/admin/bots');
-    await page.waitForTimeout(500);
 
     const buttons = page.locator('button:visible, a.btn:visible');
     const count = await buttons.count();
@@ -383,7 +366,6 @@ test.describe('Mobile Responsive Layout', () => {
   test('action buttons on bot cards meet tap target size', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto('/admin/bots');
-    await page.waitForTimeout(500);
 
     const cardButtons = page.locator('.card button:visible, [class*="bot-card"] button:visible');
     const count = await cardButtons.count();
@@ -402,7 +384,6 @@ test.describe('Mobile Responsive Layout', () => {
   test('bot cards layout adjusts at iPad viewport', async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto('/admin/bots');
-    await page.waitForTimeout(500);
 
     const cards = page.locator('.card, [class*="bot-card"], [class*="BotCard"]');
     const count = await cards.count();
@@ -419,7 +400,6 @@ test.describe('Mobile Responsive Layout', () => {
   test('settings page is usable at iPad viewport', async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto('/admin/settings');
-    await page.waitForTimeout(500);
 
     // Tabs or sidebar for settings sections should be visible
     const tabs = page.locator('[role="tab"], .tab, [class*="tabs"] a, [class*="tabs"] button');
@@ -460,7 +440,6 @@ test.describe('Mobile Responsive Layout', () => {
 
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto('/admin/guards');
-    await page.waitForTimeout(500);
 
     await expect(page.getByText('Production Guard')).toBeVisible();
   });
@@ -504,7 +483,6 @@ test.describe('Mobile Responsive Layout', () => {
 
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto('/admin/personas');
-    await page.waitForTimeout(500);
 
     await expect(page.getByText('Assistant A')).toBeVisible();
     await expect(page.getByText('Assistant B')).toBeVisible();
@@ -530,7 +508,6 @@ test.describe('Mobile Responsive Layout', () => {
 
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto('/admin/mcp');
-    await page.waitForTimeout(500);
 
     await expect(page.locator('body')).toBeVisible();
   });
@@ -540,7 +517,6 @@ test.describe('Mobile Responsive Layout', () => {
   test('monitoring page renders on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto('/admin/monitoring');
-    await page.waitForTimeout(500);
 
     await expect(page.locator('body')).toBeVisible();
 
@@ -554,7 +530,6 @@ test.describe('Mobile Responsive Layout', () => {
   test('chat page message input is usable on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto('/admin/chat');
-    await page.waitForTimeout(500);
 
     const chatInput = page
       .locator(
@@ -575,7 +550,6 @@ test.describe('Mobile Responsive Layout', () => {
   test('analytics page renders charts within viewport on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto('/admin/analytics');
-    await page.waitForTimeout(500);
 
     await expect(page.locator('body')).toBeVisible();
 
