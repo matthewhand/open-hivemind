@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getAuthHeaders } from '../../../utils/api';
+import { apiService } from '../../../services/api';
 
 export const useMCPServerDelete = (
   bulk: any,

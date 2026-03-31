@@ -5,7 +5,7 @@ import {
   RefreshCw,
   Map as MapIcon,
 } from 'lucide-react';
-import Button from '../components/DaisyUI/Button';
+
 import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
@@ -13,7 +13,7 @@ import { SkeletonList } from '../components/DaisyUI/Skeleton';
 import { SelectOption } from '../components/DaisyUI/Select';
 import { apiService } from '../services/api';
 import Badge from '../components/DaisyUI/Badge';
-import Button from '../components/DaisyUI/Button';
+
 
 interface SitemapUrl {
   url: string;
