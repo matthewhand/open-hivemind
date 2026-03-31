@@ -53,11 +53,13 @@ export const ToolCard: React.FC<ToolCardProps> = ({
                 onToggleFavorite(tool.id);
               }}
               title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              aria-pressed={isFavorite}
             >
               {isFavorite ? (
-                <StarSolidIcon className="w-4 h-4 text-warning" />
+                <StarSolidIcon className="w-4 h-4 text-warning" aria-hidden="true" />
               ) : (
-                <StarOutlineIcon className="w-4 h-4" />
+                <StarOutlineIcon className="w-4 h-4" aria-hidden="true" />
               )}
             </button>
           </div>
@@ -91,11 +93,13 @@ export const ToolCard: React.FC<ToolCardProps> = ({
               className="btn btn-sm btn-ghost btn-circle"
               onClick={() => onToggleFavorite(tool.id)}
               title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              aria-pressed={isFavorite}
             >
               {isFavorite ? (
-                <StarSolidIcon className="w-5 h-5 text-warning" />
+                <StarSolidIcon className="w-5 h-5 text-warning" aria-hidden="true" />
               ) : (
-                <StarOutlineIcon className="w-5 h-5" />
+                <StarOutlineIcon className="w-5 h-5" aria-hidden="true" />
               )}
             </button>
             <div className={`badge ${tool.enabled ? 'badge-success' : 'badge-ghost'}`}>
