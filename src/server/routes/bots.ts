@@ -14,6 +14,7 @@ import { ReorderSchema } from '../../validation/schemas/commonSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { ActivityLogger } from '../services/ActivityLogger';
 import { WebSocketService } from '../services/WebSocketService';
+import { ApiResponse } from "../utils/apiResponse";
 
 const router = Router();
 const logger = createLogger('botsRouter');
@@ -58,13 +59,13 @@ router.get('/', async (req, res) => {
       };
     });
 
-    return res.json(result);
+    return res.json(ApiResponse.success(result));
   } catch (error: unknown) {
     logger.error(
       'Failed to retrieve bots',
       error instanceof Error ? error : new Error(String(error))
     );
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve bots' });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to retrieve bots', String(HTTP_STATUS.INTERNAL_SERVER_ERROR)));
   }
 });
 
@@ -101,13 +102,13 @@ router.put('/reorder', validateRequest(ReorderSchema), async (req, res) => {
     await fsModule.promises.mkdir(orderDir, { recursive: true });
     await fsModule.promises.writeFile(orderFilePath, JSON.stringify(ids, null, 2));
 
-    return res.json({ success: true, message: 'Bot order updated' });
+    return res.json(ApiResponse.success({}));
   } catch (error: unknown) {
     logger.error(
       'Failed to reorder bots',
       error instanceof Error ? error : new Error(String(error))
     );
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to reorder bots' });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to reorder bots', String(HTTP_STATUS.INTERNAL_SERVER_ERROR)));
   }
 });
 
@@ -153,17 +154,17 @@ router.get('/export', async (_req, res) => {
   try {
     const bots = await manager.getAllBots();
     const sanitized = bots.map(sanitizeBotForExport);
-    return res.json({
-      schemaVersion: EXPORT_SCHEMA_VERSION,
-      exportedAt: new Date().toISOString(),
-      bots: sanitized,
-    });
+    return res.json(ApiResponse.success({
+          schemaVersion: EXPORT_SCHEMA_VERSION,
+          exportedAt: new Date().toISOString(),
+          bots: sanitized,
+        }));
   } catch (error: unknown) {
     logger.error(
       'Failed to export bots',
       error instanceof Error ? error : new Error(String(error))
     );
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to export bots' });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to export bots', String(HTTP_STATUS.INTERNAL_SERVER_ERROR)));
   }
 });
 
@@ -192,7 +193,7 @@ router.post('/import', async (req, res) => {
     if (!Array.isArray(incoming) || incoming.length === 0) {
       return res
         .status(HTTP_STATUS.BAD_REQUEST)
-        .json({ error: 'Request body must contain a non-empty "bots" array' });
+        .json(ApiResponse.error('Request body must contain a non-empty "bots" array', String(HTTP_STATUS.BAD_REQUEST)));
     }
 
     const existingBots = await manager.getAllBots();
@@ -234,13 +235,13 @@ router.post('/import', async (req, res) => {
       errors: report.errors.length,
     });
 
-    return res.json({ success: true, report });
+    return res.json(ApiResponse.success({ report }));
   } catch (error: unknown) {
     logger.error(
       'Failed to import bots',
       error instanceof Error ? error : new Error(String(error))
     );
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to import bots' });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to import bots', String(HTTP_STATUS.INTERNAL_SERVER_ERROR)));
   }
 });
 
@@ -267,16 +268,16 @@ router.get('/:id', validateRequest(BotIdParamSchema), async (req, res) => {
     const { id } = req.params;
     const bot = await manager.getBot(id);
     if (!bot) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Bot not found' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Bot not found', String(HTTP_STATUS.NOT_FOUND)));
     }
-    return res.json({ success: true, bot });
+    return res.json(ApiResponse.success({ bot }));
   } catch (error: unknown) {
     logger.error(
       'Failed to retrieve bot',
       error instanceof Error ? error : new Error(String(error)),
       { id: req.params.id }
     );
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve bot' });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to retrieve bot', String(HTTP_STATUS.INTERNAL_SERVER_ERROR)));
   }
 });
 
@@ -308,13 +309,13 @@ router.post('/', validateRequest(CreateBotSchema), async (req, res) => {
     if (existingBot) {
       return res
         .status(HTTP_STATUS.OK)
-        .json({ success: true, message: 'Bot already exists', bot: existingBot });
+        .json(ApiResponse.success({ bot: existingBot }));
     }
 
     const bot = await manager.createBot(request);
-    return res.status(HTTP_STATUS.CREATED).json({ success: true, message: 'Bot created', bot });
+    return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success({ bot }));
   } catch (error: any) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error(error.message, String(HTTP_STATUS.BAD_REQUEST)));
   }
 });
 
@@ -351,12 +352,12 @@ router.put('/:id', validateRequest(UpdateBotSchema), async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
     const bot = await manager.updateBot(id, updates);
-    return res.json({ success: true, message: 'Bot updated', bot });
+    return res.json(ApiResponse.success({ bot }));
   } catch (error: any) {
     const status = error.message.includes(ERROR_CODES.NOT_FOUND)
       ? HTTP_STATUS.NOT_FOUND
       : HTTP_STATUS.BAD_REQUEST;
-    return res.status(status).json({ error: error.message });
+    return res.status(status).json(ApiResponse.error(error.message, String(status)));
   }
 });
 
@@ -382,16 +383,16 @@ router.delete('/:id', validateRequest(BotIdParamSchema), async (req, res) => {
     // Idempotency: return 200/204 even if resource already gone
     const existingBot = await manager.getBot(id);
     if (!existingBot) {
-      return res.json({ success: true, message: 'Bot already deleted or not found' });
+      return res.json(ApiResponse.success({}));
     }
 
     await manager.deleteBot(id);
-    return res.json({ success: true, message: 'Bot deleted' });
+    return res.json(ApiResponse.success({}));
   } catch (error: any) {
     const status = error.message.includes(ERROR_CODES.NOT_FOUND)
       ? HTTP_STATUS.NOT_FOUND
       : HTTP_STATUS.BAD_REQUEST;
-    return res.status(status).json({ error: error.message });
+    return res.status(status).json(ApiResponse.error(error.message, String(status)));
   }
 });
 
@@ -431,18 +432,18 @@ router.post('/:id/clone', validateRequest(CloneBotSchema), async (req, res) => {
     if (existingBot) {
       return res
         .status(HTTP_STATUS.OK)
-        .json({ success: true, message: 'Bot clone already exists', bot: existingBot });
+        .json(ApiResponse.success({ bot: existingBot }));
     }
 
     const newBot = await manager.cloneBot(id, newName);
     return res
       .status(HTTP_STATUS.CREATED)
-      .json({ success: true, message: 'Bot cloned', bot: newBot });
+      .json(ApiResponse.success({ bot: newBot }));
   } catch (error: any) {
     const status = error.message.includes(ERROR_CODES.NOT_FOUND)
       ? HTTP_STATUS.NOT_FOUND
       : HTTP_STATUS.BAD_REQUEST;
-    return res.status(status).json({ error: error.message });
+    return res.status(status).json(ApiResponse.error(error.message, String(status)));
   }
 });
 
@@ -466,12 +467,12 @@ router.post('/:id/start', validateRequest(BotIdParamSchema), async (req, res) =>
   try {
     const { id } = req.params;
     await manager.startBot(id);
-    return res.json({ success: true, message: 'Bot started' });
+    return res.json(ApiResponse.success({}));
   } catch (error: any) {
     const status = error.message.includes(ERROR_CODES.NOT_FOUND)
       ? HTTP_STATUS.NOT_FOUND
       : HTTP_STATUS.BAD_REQUEST;
-    return res.status(status).json({ error: error.message });
+    return res.status(status).json(ApiResponse.error(error.message, String(status)));
   }
 });
 
@@ -495,12 +496,12 @@ router.post('/:id/stop', validateRequest(BotIdParamSchema), async (req, res) => 
   try {
     const { id } = req.params;
     await manager.stopBot(id);
-    return res.json({ success: true, message: 'Bot stopped' });
+    return res.json(ApiResponse.success({}));
   } catch (error: any) {
     const status = error.message.includes(ERROR_CODES.NOT_FOUND)
       ? HTTP_STATUS.NOT_FOUND
       : HTTP_STATUS.BAD_REQUEST;
-    return res.status(status).json({ error: error.message });
+    return res.status(status).json(ApiResponse.error(error.message, String(status)));
   }
 });
 
@@ -536,12 +537,12 @@ router.get('/:id/history', validateRequest(BotHistoryQuerySchema), async (req, r
     const channelId = req.query.channelId as string;
 
     const history = await manager.getBotHistory(id, channelId, limit);
-    return res.json({ success: true, data: { history } });
+    return res.json(ApiResponse.success({ data: { history } }));
   } catch (error: any) {
     const status = error.message.includes(ERROR_CODES.NOT_FOUND)
       ? HTTP_STATUS.NOT_FOUND
       : HTTP_STATUS.BAD_REQUEST;
-    return res.status(status).json({ error: error.message });
+    return res.status(status).json(ApiResponse.error(error.message, String(status)));
   }
 });
 
@@ -583,7 +584,7 @@ router.get('/:id/activity', validateRequest(BotActivityQuerySchema), async (req,
 
     const bot = await manager.getBot(id);
     if (!bot) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Bot not found' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Bot not found', String(HTTP_STATUS.NOT_FOUND)));
     }
 
     const events = await ActivityLogger.getInstance().getEvents({
@@ -606,7 +607,7 @@ router.get('/:id/activity', validateRequest(BotActivityQuerySchema), async (req,
       }))
       .reverse();
 
-    return res.json({ success: true, data: { activity } });
+    return res.json(ApiResponse.success({ data: { activity } }));
   } catch (error: unknown) {
     logger.error(
       'Failed to retrieve bot activity',
@@ -615,7 +616,7 @@ router.get('/:id/activity', validateRequest(BotActivityQuerySchema), async (req,
     );
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: 'Failed to retrieve bot activity' });
+      .json(ApiResponse.error('Failed to retrieve bot activity', String(HTTP_STATUS.INTERNAL_SERVER_ERROR)));
   }
 });
 
@@ -643,17 +644,17 @@ router.get('/:id/export', validateRequest(BotIdParamSchema), async (req, res) =>
     if (!bot) {
       return res
         .status(HTTP_STATUS.NOT_FOUND)
-        .json({ error: 'Bot not found', code: ERROR_CODES.NOT_FOUND });
+        .json(ApiResponse.error('Bot not found', String(HTTP_STATUS.NOT_FOUND), { code: ERROR_CODES.NOT_FOUND }));
     }
     const sanitized = sanitizeBotForExport(bot);
-    return res.json({
-      schemaVersion: EXPORT_SCHEMA_VERSION,
-      exportedAt: new Date().toISOString(),
-      bots: [sanitized],
-    });
+    return res.json(ApiResponse.success({
+          schemaVersion: EXPORT_SCHEMA_VERSION,
+          exportedAt: new Date().toISOString(),
+          bots: [sanitized],
+        }));
   } catch (error: unknown) {
     logger.error('Failed to export bot', error instanceof Error ? error : new Error(String(error)));
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to export bot' });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to export bot', String(HTTP_STATUS.INTERNAL_SERVER_ERROR)));
   }
 });
 
