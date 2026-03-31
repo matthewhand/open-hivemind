@@ -433,17 +433,14 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
         <div className="dropdown dropdown-end">
           <div tabIndex={0} role="button" className="btn btn-ghost btn-circle" aria-label="User menu">
             <Avatar
-              src={userAvatar || undefined}
-              alt="User avatar"
               size="sm"
               shape="circle"
+              src={userAvatar || undefined}
               placeholder={!userAvatar}
+              className="w-8"
+              innerClassName={!userAvatar ? "bg-neutral text-neutral-content rounded-full w-8 text-xs flex items-center justify-center" : "w-8 rounded-full"}
             >
-              {!userAvatar && (
-                <div className="bg-neutral text-neutral-content w-full h-full flex items-center justify-center">
-                  <span className="text-xs">{userName.charAt(0).toUpperCase()}</span>
-                </div>
-              )}
+              {!userAvatar && userName.charAt(0).toUpperCase()}
             </Avatar>
           </div>
           <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">

@@ -40,17 +40,13 @@ export const BotAvatar: React.FC<{ bot: BotData }> = ({ bot }) => {
 
     return (
         <Avatar
-            placeholder={!src}
-            src={src || undefined}
-            alt={bot.name}
             size="md"
             shape="circle"
+            placeholder={!src}
+            src={src || undefined}
+            innerClassName={`w-10 rounded-full flex items-center justify-center transition-opacity duration-500 opacity-100${!src ? ' bg-primary text-primary-content' : ''}`}
         >
-            {!src && (
-                <div className="bg-primary text-primary-content w-full h-full flex items-center justify-center transition-opacity duration-500 opacity-100">
-                    <Bot className="w-6 h-6" />
-                </div>
-            )}
+            {!src && <Bot className="w-6 h-6" />}
         </Avatar>
     );
 };
