@@ -2,6 +2,7 @@ import { Trash2 } from 'lucide-react';
 import React from 'react';
 import BulkActionBar from '../../components/BulkActionBar';
 import { type Persona } from './hooks/usePersonasData';
+import Checkbox from '../../components/DaisyUI/Checkbox';
 
 interface PersonaListProps {
   filteredPersonas: Persona[];
@@ -35,8 +36,7 @@ export const PersonaList: React.FC<PersonaListProps> = ({
   return (
     <>
       <div className="flex items-center gap-2 mb-2">
-        <input
-          type="checkbox"
+        <Checkbox
           className="checkbox checkbox-sm checkbox-primary"
           checked={bulk.isAllSelected}
           onChange={() => bulk.toggleAll(filteredPersonaIds)}

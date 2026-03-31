@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Input from './Input';
 import type { FormField } from './formTypes';
+import Checkbox from './Checkbox';
 
 interface ModalFormProps {
   isOpen: boolean;
@@ -176,8 +177,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
       return (
         <div className="form-control">
           <label className="label cursor-pointer justify-start gap-2">
-            <input
-              type="checkbox"
+            <Checkbox
               className="checkbox"
               checked={formData[field.name] || false}
               onChange={(e) => handleInputChange(field.name, e.target.checked)}

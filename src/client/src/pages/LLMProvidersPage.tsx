@@ -39,6 +39,8 @@ import useUrlParams from '../hooks/useUrlParams';
 import { useApiQuery } from '../hooks/useApiQuery';
 import { useBulkSelection } from '../hooks/useBulkSelection';
 import BulkActionBar from '../components/BulkActionBar';
+import Checkbox from '../components/DaisyUI/Checkbox';
+import Toggle from '../components/DaisyUI/Toggle';
 import { useWebSocket } from '../contexts/WebSocketContext';
 
 type LlmModelType = 'chat' | 'embedding' | 'both';
@@ -442,8 +444,7 @@ const LLMProvidersPage: React.FC = () => {
               When enabled, assign different profiles to summarisation, moderation, and other tasks independently.
             </p>
           </div>
-          <input
-            type="checkbox"
+          <Toggle
             className="toggle toggle-primary"
             checked={perUseCaseEnabled}
             onChange={async (e) => {
@@ -524,8 +525,7 @@ const LLMProvidersPage: React.FC = () => {
       ) : (
         <>
           <div className="flex items-center gap-2 mb-2">
-            <input
-              type="checkbox"
+            <Checkbox
               className="checkbox checkbox-sm checkbox-primary"
               checked={bulk.isAllSelected}
               onChange={() => bulk.toggleAll(filteredProfileKeys)}
@@ -553,8 +553,7 @@ const LLMProvidersPage: React.FC = () => {
               <div className="card-body p-0">
                 <div className="p-4 flex items-center justify-between cursor-pointer" onClick={() => toggleExpand(profile.key)}>
                   <div className="flex items-center gap-4">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       className="checkbox checkbox-sm checkbox-primary"
                       checked={bulk.isSelected(profile.key)}
                       onChange={(e) => { e.stopPropagation(); bulk.toggleItem(profile.key, e as any); }}
