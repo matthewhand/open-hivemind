@@ -9,6 +9,8 @@ interface AvatarProps {
   online?: boolean;
   placeholder?: boolean;
   children?: React.ReactNode;
+  className?: string;
+  innerClassName?: string;
 }
 
 const Avatar: React.FC<AvatarProps> = ({
@@ -19,6 +21,8 @@ const Avatar: React.FC<AvatarProps> = ({
   online,
   placeholder,
   children,
+  className = '',
+  innerClassName = '',
 }) => {
   const sizeClasses = {
     xs: 'w-6 h-6',
@@ -33,18 +37,18 @@ const Avatar: React.FC<AvatarProps> = ({
     square: 'rounded',
   };
 
-  const placeholderClasses = 'bg-neutral-focus text-neutral-content';
+  const defaultPlaceholderClasses = 'bg-neutral-focus text-neutral-content';
 
   return (
     <div
       className={`avatar ${online ? 'online' : ''} ${
         placeholder ? 'placeholder' : ''
-      }`}
+      } ${className}`.trim()}
     >
       <div
-        className={`${sizeClasses[size]} ${shapeClasses[shape]} ${
-          placeholder ? placeholderClasses : ''
-        }`}
+        className={`${sizeClasses[size] || ''} ${shapeClasses[shape] || ''} ${
+          innerClassName ? innerClassName : (placeholder ? defaultPlaceholderClasses : '')
+        }`.trim()}
       >
         {placeholder ? (
           <span>{children}</span>
@@ -64,6 +68,8 @@ Avatar.propTypes = {
   online: PropTypes.bool,
   placeholder: PropTypes.bool,
   children: PropTypes.node,
+  className: PropTypes.string,
+  innerClassName: PropTypes.string,
 };
 
 export default Avatar;
