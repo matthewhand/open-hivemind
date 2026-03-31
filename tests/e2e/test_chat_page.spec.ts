@@ -208,10 +208,9 @@ test.describe('ChatPage Optimistic Message Rollback', () => {
     await page.evaluate(() => window.dispatchEvent(new Event('offline')));
 
     // Check for any offline indicator (text, disabled input, etc.)
-    const offlineText = page.getByText(/offline/i).first();
     const offlinePlaceholder = page.getByPlaceholder(/offline/i).first();
 
-    await expect(offlineText).toBeVisible({ timeout: 10000 });
+    await expect(offlinePlaceholder).toBeVisible({ timeout: 10000 });
 
     // Screenshot offline mode
     await page.screenshot({ path: 'docs/screenshots/chatpage-offline.png' });
