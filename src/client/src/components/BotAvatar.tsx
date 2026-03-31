@@ -44,7 +44,7 @@ export const BotAvatar: React.FC<{ bot: BotData }> = ({ bot }) => {
             shape="circle"
             placeholder={!src}
             src={src || undefined}
-            innerClassName={!src ? "bg-primary text-primary-content w-10 rounded-full flex items-center justify-center transition-opacity duration-500 opacity-100" : "w-10 rounded-full flex items-center justify-center transition-opacity duration-500 opacity-100"}
+            innerClassName={`w-10 rounded-full flex items-center justify-center transition-opacity duration-500 opacity-100${!src ? ' bg-primary text-primary-content' : ''}`}
         >
             {!src && <Bot className="w-6 h-6" />}
         </Avatar>

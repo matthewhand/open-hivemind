@@ -203,11 +203,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       {/* Chat Header */}
       <div className="flex items-center justify-between p-4 border-b border-base-200">
         <div className="flex items-center gap-3">
-          <div className="avatar">
-            <div className="w-8 rounded-full bg-primary">
-              <span className="text-primary-content text-sm">🤖</span>
-            </div>
-          </div>
+          <Avatar size="sm" shape="circle" placeholder innerClassName="bg-primary text-primary-content rounded-full w-8 flex items-center justify-center">
+            <span className="text-sm">🤖</span>
+          </Avatar>
           <div>
             <h3 className="font-semibold">Bot Chat</h3>
             <p className="text-xs text-base-content/60">
