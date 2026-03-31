@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Logo from '../Logo';
+import Avatar from './Avatar';
 
 interface NavItem {
   id: string;
@@ -430,18 +431,20 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
 
         {/* User Menu */}
         <div className="dropdown dropdown-end">
-          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar" aria-label="User menu">
-            <div className="w-8 rounded-full">
-              {userAvatar ? (
-                <img alt="User avatar" src={userAvatar} />
-              ) : (
-                <div className="avatar placeholder">
-                  <div className="bg-neutral text-neutral-content rounded-full w-8">
-                    <span className="text-xs">{userName.charAt(0).toUpperCase()}</span>
-                  </div>
+          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle" aria-label="User menu">
+            <Avatar
+              src={userAvatar || undefined}
+              alt="User avatar"
+              size="sm"
+              shape="circle"
+              placeholder={!userAvatar}
+            >
+              {!userAvatar && (
+                <div className="bg-neutral text-neutral-content w-full h-full flex items-center justify-center">
+                  <span className="text-xs">{userName.charAt(0).toUpperCase()}</span>
                 </div>
               )}
-            </div>
+            </Avatar>
           </div>
           <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
             <li className="menu-title">{userName}</li>
