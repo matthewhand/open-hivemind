@@ -34,7 +34,7 @@ describe('AnalyticsService', () => {
 
     describe('getStats', () => {
         it('returns default stats when no events exist', () => {
-            mockActivityLoggerInstance.getEvents.mockReturnValue([]);
+            mockActivityLoggerInstance.getEvents.mockResolvedValue([]);
             mockBotConfigInstance.getAllBots.mockReturnValue([]);
 
             const stats = analyticsService.getStats();
@@ -80,7 +80,7 @@ describe('AnalyticsService', () => {
                 },
             ];
 
-            mockActivityLoggerInstance.getEvents.mockReturnValue(events);
+            mockActivityLoggerInstance.getEvents.mockResolvedValue(events);
             mockBotConfigInstance.getAllBots.mockReturnValue([{ name: 'bot1' }]);
 
             const stats = analyticsService.getStats();
@@ -95,7 +95,7 @@ describe('AnalyticsService', () => {
 
     describe('getBehaviorPatterns', () => {
         it('returns default patterns when no events exist', () => {
-            mockActivityLoggerInstance.getEvents.mockReturnValue([]);
+            mockActivityLoggerInstance.getEvents.mockResolvedValue([]);
 
             const patterns = analyticsService.getBehaviorPatterns();
 
@@ -128,7 +128,7 @@ describe('AnalyticsService', () => {
                 status: 'success',
             }));
 
-            mockActivityLoggerInstance.getEvents.mockReturnValue(events);
+            mockActivityLoggerInstance.getEvents.mockResolvedValue(events);
 
             const patterns = analyticsService.getBehaviorPatterns();
 
@@ -152,7 +152,7 @@ describe('AnalyticsService', () => {
                 status: i % 3 === 0 ? 'error' : 'success', // ~33% error rate
             }));
 
-            mockActivityLoggerInstance.getEvents.mockReturnValue(events);
+            mockActivityLoggerInstance.getEvents.mockResolvedValue(events);
 
             const patterns = analyticsService.getBehaviorPatterns();
 
@@ -163,7 +163,7 @@ describe('AnalyticsService', () => {
 
     describe('getUserSegments', () => {
         it('returns default segments when no events exist', () => {
-            mockActivityLoggerInstance.getEvents.mockReturnValue([]);
+            mockActivityLoggerInstance.getEvents.mockResolvedValue([]);
 
             const segments = analyticsService.getUserSegments();
 
@@ -231,7 +231,7 @@ describe('AnalyticsService', () => {
                 },
             ];
 
-            mockActivityLoggerInstance.getEvents.mockReturnValue(events);
+            mockActivityLoggerInstance.getEvents.mockResolvedValue(events);
 
             const segments = analyticsService.getUserSegments();
 
@@ -246,7 +246,7 @@ describe('AnalyticsService', () => {
 
     describe('getRecommendations', () => {
         it('returns default recommendations when no events exist', () => {
-            mockActivityLoggerInstance.getEvents.mockReturnValue([]);
+            mockActivityLoggerInstance.getEvents.mockResolvedValue([]);
 
             const recommendations = analyticsService.getRecommendations();
 
@@ -277,7 +277,7 @@ describe('AnalyticsService', () => {
                 status: i % 5 === 0 ? 'error' : 'success', // 20% error rate
             }));
 
-            mockActivityLoggerInstance.getEvents.mockReturnValue(events);
+            mockActivityLoggerInstance.getEvents.mockResolvedValue(events);
 
             const recommendations = analyticsService.getRecommendations();
 
@@ -300,7 +300,7 @@ describe('AnalyticsService', () => {
                 status: 'success',
             }));
 
-            mockActivityLoggerInstance.getEvents.mockReturnValue(events);
+            mockActivityLoggerInstance.getEvents.mockResolvedValue(events);
 
             const recommendations = analyticsService.getRecommendations();
 
@@ -323,7 +323,7 @@ describe('AnalyticsService', () => {
                 processingTime: 3000, // Slow response
             }));
 
-            mockActivityLoggerInstance.getEvents.mockReturnValue(events);
+            mockActivityLoggerInstance.getEvents.mockResolvedValue(events);
 
             const recommendations = analyticsService.getRecommendations();
 
@@ -335,7 +335,7 @@ describe('AnalyticsService', () => {
 
     describe('getTimeSeries', () => {
         it('returns empty array when no events exist', () => {
-            mockActivityLoggerInstance.getEvents.mockReturnValue([]);
+            mockActivityLoggerInstance.getEvents.mockResolvedValue([]);
 
             const timeSeries = analyticsService.getTimeSeries();
 
@@ -357,7 +357,7 @@ describe('AnalyticsService', () => {
                 processingTime: 500 + i * 100,
             }));
 
-            mockActivityLoggerInstance.getEvents.mockReturnValue(events);
+            mockActivityLoggerInstance.getEvents.mockResolvedValue(events);
 
             const timeSeries = analyticsService.getTimeSeries();
 
@@ -408,7 +408,7 @@ describe('AnalyticsService', () => {
                 },
             ];
 
-            mockActivityLoggerInstance.getEvents.mockReturnValue(events);
+            mockActivityLoggerInstance.getEvents.mockResolvedValue(events);
 
             const timeSeries = analyticsService.getTimeSeries();
 
