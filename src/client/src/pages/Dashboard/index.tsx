@@ -3,10 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import Dashboard from '../../components/Dashboard';
 
 import Carousel from '../../components/DaisyUI/Carousel';
+import DashboardWidgetSystem from '../../components/DaisyUI/DashboardWidgetSystem';
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const [checked, setChecked] = useState(false);
+
+  // Track preference for widget vs static layout
+  const [useWidgetLayout, setUseWidgetLayout] = useState(() => {
+    const saved = localStorage.getItem('hivemind-dashboard-layout');
+    return saved === 'widget';
+  });
+
+  // Save preference when it changes
+  useEffect(() => {
+    localStorage.setItem('hivemind-dashboard-layout', useWidgetLayout ? 'widget' : 'static');
+  }, [useWidgetLayout]);
 
   useEffect(() => {
     const checkOnboarding = async () => {
@@ -54,10 +66,30 @@ const DashboardPage: React.FC = () => {
 
   return (
     <div>
-      <div className="mb-8">
-        <Carousel items={carouselItems} autoplay={true} interval={6000} variant="full-width" />
+      <div className="flex justify-end items-center mb-4 px-4 gap-3 bg-base-100/50 p-2 rounded-lg shadow-sm w-fit ml-auto">
+        <span className="text-sm font-medium opacity-80">Static Layout</span>
+        <input
+          type="checkbox"
+          className="toggle toggle-primary"
+          checked={useWidgetLayout}
+          onChange={(e) => setUseWidgetLayout(e.target.checked)}
+          aria-label="Toggle widget dashboard layout"
+        />
+        <span className="text-sm font-medium text-primary">Widgets Layout</span>
       </div>
-      <Dashboard />
+
+      {useWidgetLayout ? (
+        <div className="animate-in fade-in duration-300">
+          <DashboardWidgetSystem />
+        </div>
+      ) : (
+        <div className="animate-in fade-in duration-300">
+          <div className="mb-8">
+            <Carousel items={carouselItems} autoplay={true} interval={6000} variant="full-width" />
+          </div>
+          <Dashboard />
+        </div>
+      )}
     </div>
   );
 };
