@@ -131,7 +131,7 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
 
   const handleBackup = async () => {
     try {
-      const response = await apiService.backupSecureConfigs();
+      const response = await apiService.secureConfigs.backupSecureConfigs();
       showToast(response.message || 'Backup created successfully', 'success');
       setBackupDialogOpen(false);
     } catch {
@@ -145,7 +145,7 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
       return;
     }
     try {
-      const response = await apiService.restoreSecureConfigs(backupFile);
+      const response = await apiService.secureConfigs.restoreSecureConfigs(backupFile);
       showToast(response.message || 'Configuration restored successfully', 'success');
       setRestoreDialogOpen(false);
       setBackupFile('');

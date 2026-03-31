@@ -79,7 +79,7 @@ describe('SystemManagement', () => {
   it('renders system management page', async () => {
     render(<SystemManagement />);
     expect(screen.getByText('System Management')).toBeInTheDocument();
-    await waitFor(() => expect(apiService.getGlobalConfig).toHaveBeenCalled());
+    await waitFor(() => expect(apiService.config.getGlobalConfig).toHaveBeenCalled());
   });
 
   it('handles backup creation with encryption', async () => {
@@ -106,7 +106,7 @@ describe('SystemManagement', () => {
     fireEvent.click(buttons[buttons.length - 1]);
 
     await waitFor(() => {
-      expect(apiService.createSystemBackup).toHaveBeenCalledWith(expect.objectContaining({
+      expect(apiService.importExport.createSystemBackup).toHaveBeenCalledWith(expect.objectContaining({
         encrypt: true,
         encryptionKey: 'password123'
       }));
@@ -121,7 +121,7 @@ describe('SystemManagement', () => {
     fireEvent.click(perfTab);
 
     // Expect API call
-    await waitFor(() => expect(apiService.getApiEndpointsStatus).toHaveBeenCalled());
+    await waitFor(() => expect(apiService.health.getApiEndpointsStatus).toHaveBeenCalled());
 
     // Expect data to be displayed
     await waitFor(() => expect(screen.getByText('Test API')).toBeInTheDocument());
@@ -130,6 +130,6 @@ describe('SystemManagement', () => {
     const clearButton = screen.getByText('Clear System Cache');
     fireEvent.click(clearButton);
 
-    await waitFor(() => expect(apiService.clearCache).toHaveBeenCalled());
+    await waitFor(() => expect(apiService.config.clearCache).toHaveBeenCalled());
   });
 });

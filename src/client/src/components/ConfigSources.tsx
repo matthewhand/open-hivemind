@@ -47,7 +47,7 @@ const ConfigSources: React.FC = () => {
   const fetchConfigSources = async () => {
     try {
       setError(null);
-      const data = await apiService.getConfigSources();
+      const data = await apiService.config.getConfigSources();
       setConfigSources(data);
       setLastRefresh(new Date());
     } catch (err) {

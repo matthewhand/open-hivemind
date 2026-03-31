@@ -39,7 +39,7 @@ const SettingsMessaging: React.FC = () => {
   const fetchSettings = useCallback(async () => {
     try {
       setLoading(true);
-      const data: any = await apiService.getGlobalConfig();
+      const data: any = await apiService.config.getGlobalConfig();
       // Global config wraps message settings under message.values
       // const data = raw?.message?.values ?? raw;
 
@@ -75,7 +75,7 @@ const SettingsMessaging: React.FC = () => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await apiService.updateGlobalConfig({
+      await apiService.config.updateGlobalConfig({
         message: {
           MESSAGE_ONLY_WHEN_SPOKEN_TO: settings.onlyWhenSpokenTo,
           MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED: settings.allowBotToBot,

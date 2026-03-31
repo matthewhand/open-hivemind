@@ -48,7 +48,7 @@ const ActivityMonitor: React.FC = () => {
     setLoading(true);
     try {
       // Fetch initial data via API
-      const result = await apiService.getActivity({
+      const result = await apiService.dashboard.getActivity({
         // We fetch a decent amount to populate the initial view
         // Ideally we'd implement server-side filtering, but for now we'll fetch recent and filter client-side
         // to match the existing WS behavior, or better yet, fetch filtered.

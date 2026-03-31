@@ -46,8 +46,8 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
     try {
       // Refresh the dashboard data by calling the existing API endpoints
       await Promise.all([
-        apiService.getConfig(),
-        apiService.getStatus(),
+        apiService.config.getConfig(),
+        apiService.dashboard.getStatus(),
       ]);
 
       showToast('Dashboard refreshed successfully', 'success');
@@ -70,7 +70,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
     setLoading('clear');
     try {
       // Call the clear cache API endpoint
-      const response = await apiService.clearCache();
+      const response = await apiService.config.clearCache();
       showToast(response.message || 'Cache cleared successfully', 'success');
     } catch (error) {
       showToast(
@@ -85,7 +85,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
   const handleExportConfig = async () => {
     setLoading('export');
     try {
-      const blob = await apiService.exportConfig();
+      const blob = await apiService.config.exportConfig();
 
       // Create download link
       const url = window.URL.createObjectURL(blob);

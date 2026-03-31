@@ -192,10 +192,10 @@ const PersonasPage: React.FC = () => {
         const persona = personas.find(p => p.id === id);
         if (persona) {
           const updates = persona.assignedBotIds.map((botId) =>
-            apiService.updateBot(botId, { persona: 'default', systemInstruction: 'You are a helpful assistant.' })
+            apiService.bots.updateBot(botId, { persona: 'default', systemInstruction: 'You are a helpful assistant.' })
           );
           await Promise.allSettled(updates);
-          await apiService.deletePersona(id);
+          await apiService.personas.deletePersona(id);
         }
       }
       await fetchData();
@@ -247,16 +247,16 @@ const PersonasPage: React.FC = () => {
       };
 
       if (cloningPersonaId) {
-        savedPersona = await apiService.clonePersona(cloningPersonaId, {
+        savedPersona = await apiService.personas.clonePersona(cloningPersonaId, {
           name: personaName,
           description: personaDescription,
           category: personaCategory,
           systemPrompt: personaPrompt,
         });
       } else if (editingPersona) {
-        savedPersona = await apiService.updatePersona(editingPersona.id, personaData);
+        savedPersona = await apiService.personas.updatePersona(editingPersona.id, personaData);
       } else {
-        savedPersona = await apiService.createPersona(personaData);
+        savedPersona = await apiService.personas.createPersona(personaData);
       }
 
       // Handle Bot Assignments
@@ -272,7 +272,7 @@ const PersonasPage: React.FC = () => {
         const bot = botsById.get(botId);
         if (bot && bot.persona !== newPersonaId) {
           updates.push(
-            apiService.updateBot(botId, {
+            apiService.bots.updateBot(botId, {
               persona: newPersonaId,
               systemInstruction: personaPrompt, // Ensure prompt sync
             })
@@ -287,7 +287,7 @@ const PersonasPage: React.FC = () => {
 
         for (const botId of toUnassign) {
           updates.push(
-            apiService.updateBot(botId, {
+            apiService.bots.updateBot(botId, {
               persona: 'default', // Revert to default
               systemInstruction: 'You are a helpful assistant.', // Default prompt
             })
@@ -382,7 +382,7 @@ const PersonasPage: React.FC = () => {
     try {
       // 1. Revert bots
       const updates = deletingPersona.assignedBotIds.map((botId) =>
-        apiService.updateBot(botId, {
+        apiService.bots.updateBot(botId, {
           persona: 'default',
           systemInstruction: 'You are a helpful assistant.',
         })
@@ -390,7 +390,7 @@ const PersonasPage: React.FC = () => {
       await Promise.all(updates);
 
       // 2. Delete persona
-      await apiService.deletePersona(deletingPersona.id);
+      await apiService.personas.deletePersona(deletingPersona.id);
 
       await fetchData();
       setShowDeleteModal(false);

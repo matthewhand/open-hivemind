@@ -94,7 +94,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
         if (!propsPersonas) {
             const fetchPersonas = async () => {
                 try {
-                    const data: any = await apiService.getPersonas();
+                    const data: any = await apiService.personas.getPersonas();
                     setFetchedPersonas(Array.isArray(data) ? data : []);
                 } catch (e) {
                     debug('ERROR:', 'Failed to fetch personas', e);
@@ -107,7 +107,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
         if (!propsLlmProfiles) {
             const fetchLlmProfiles = async () => {
                 try {
-                    const data: any = await apiService.getLlmProfiles();
+                    const data: any = await apiService.config.getLlmProfiles();
                     setFetchedLlmProfiles(data?.llm || data?.profiles?.llm || data?.data || []);
                 } catch (e) {
                     debug('ERROR:', 'Failed to fetch LLM profiles', e);

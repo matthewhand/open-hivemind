@@ -43,7 +43,7 @@ describe('StandaloneActivity', () => {
       { id: '2', botName: 'Bot2', status: 'error', timestamp: new Date().toISOString() },
     ];
 
-    (apiService.getActivity as any).mockResolvedValue({
+    (apiService.dashboard.getActivity as any).mockResolvedValue({
       events: mockEvents,
       filters: {},
       timeline: [],
@@ -58,7 +58,7 @@ describe('StandaloneActivity', () => {
 
     // Wait for API call
     await waitFor(() => {
-      expect(apiService.getActivity).toHaveBeenCalled();
+      expect(apiService.dashboard.getActivity).toHaveBeenCalled();
     });
 
     // Wait for data to be rendered

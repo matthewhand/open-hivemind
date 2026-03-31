@@ -78,7 +78,7 @@ const SettingsGeneral: React.FC = () => {
     try {
       setLoading(true);
       setFetchError(null);
-      const data: any = await apiService.getGlobalConfig();
+      const data: any = await apiService.config.getGlobalConfig();
 
       // Extract relevant settings from user-saved config first, then fall back to defaults
       const userSettings = data._userSettings?.values || {};
@@ -117,7 +117,7 @@ const SettingsGeneral: React.FC = () => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await apiService.updateGlobalConfig({
+      await apiService.config.updateGlobalConfig({
         'app.name': settings.instanceName,
         'app.description': settings.description,
         'app.timezone': settings.timezone,

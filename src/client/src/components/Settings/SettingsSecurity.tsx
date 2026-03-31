@@ -35,7 +35,7 @@ const SettingsSecurity: React.FC = () => {
   const fetchSettings = useCallback(async () => {
     try {
       setLoading(true);
-      const data: any = await apiService.getGlobalConfig();
+      const data: any = await apiService.config.getGlobalConfig();
 
       const config = data.config || {};
       setSettings(prev => ({
@@ -81,7 +81,7 @@ const SettingsSecurity: React.FC = () => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await apiService.updateGlobalConfig({
+      await apiService.config.updateGlobalConfig({
         'auth.enabled': settings.enableAuthentication,
         'rateLimit.enabled': settings.enableRateLimit,
         'rateLimit.maxRequests': settings.rateLimitMax,

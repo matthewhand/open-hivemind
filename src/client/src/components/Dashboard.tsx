@@ -20,8 +20,8 @@ const Dashboard: React.FC = () => {
     try {
       setError(null);
       const [configResult, statusResult] = await Promise.allSettled([
-        apiService.getConfig(),
-        apiService.getStatus(),
+        apiService.config.getConfig(),
+        apiService.dashboard.getStatus(),
       ]);
       const configData = configResult.status === 'fulfilled' ? configResult.value : { bots: [] };
       const statusData = statusResult.status === 'fulfilled' ? statusResult.value : { bots: [] };

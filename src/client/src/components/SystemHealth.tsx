@@ -83,8 +83,8 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
     const fetchData = async () => {
       try {
         const [sysData, apiData] = await Promise.all([
-          apiService.getSystemHealth(),
-          apiService.getApiEndpointsStatus().catch(() => null), // Optional if API monitoring is not enabled
+          apiService.health.getSystemHealth(),
+          apiService.health.getApiEndpointsStatus().catch(() => null), // Optional if API monitoring is not enabled
         ]);
 
         setMetrics(sysData);

@@ -146,7 +146,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
   const fetchStatus = useCallback(async () => {
     setIsStatusLoading(true);
     try {
-      const systemData = await apiService.getStatus();
+      const systemData = await apiService.dashboard.getStatus();
       setSystemMetrics(systemData);
       setLastRefresh(new Date());
       if (onRefresh) onRefresh();
@@ -161,7 +161,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
   const fetchConfig = useCallback(async () => {
     setIsConfigLoading(true);
     try {
-      const configData = await apiService.getConfig();
+      const configData = await apiService.config.getConfig();
       setConfigBots(configData.bots || []);
       setLastRefresh(new Date());
       if (onRefresh) onRefresh();

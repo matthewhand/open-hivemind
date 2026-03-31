@@ -55,7 +55,7 @@ const ExportPage: React.FC = () => {
   const fetchBackups = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await apiService.listSystemBackups();
+      const data = await apiService.importExport.listSystemBackups();
       setBackups(data);
     } catch (err) {
       errorToast('Error', 'Failed to load backups');
@@ -72,7 +72,7 @@ const ExportPage: React.FC = () => {
     if (!newBackupName.trim()) return;
     try {
       setActionLoading('create');
-      await apiService.createSystemBackup({
+      await apiService.importExport.createSystemBackup({
         name: newBackupName,
         description: newBackupDesc,
       });
@@ -98,7 +98,7 @@ const ExportPage: React.FC = () => {
         setConfirmModal(prev => ({ ...prev, isOpen: false }));
         try {
           setActionLoading(id);
-          await apiService.deleteSystemBackup(id);
+          await apiService.importExport.deleteSystemBackup(id);
           successToast('Success', 'Backup deleted successfully');
           fetchBackups();
         } catch (err) {
@@ -120,7 +120,7 @@ const ExportPage: React.FC = () => {
         setConfirmModal(prev => ({ ...prev, isOpen: false }));
         try {
           setActionLoading(id);
-          await apiService.restoreSystemBackup(id, { overwrite: true });
+          await apiService.importExport.restoreSystemBackup(id, { overwrite: true });
           successToast('Success', 'System restored. Reloading...');
           setTimeout(() => window.location.reload(), 2000);
         } catch (err) {
@@ -135,7 +135,7 @@ const ExportPage: React.FC = () => {
   const handleDownloadBackup = async (id: string, name: string) => {
     try {
       setActionLoading(id);
-      const blob = await apiService.downloadSystemBackup(id);
+      const blob = await apiService.importExport.downloadSystemBackup(id);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -155,7 +155,7 @@ const ExportPage: React.FC = () => {
 
   const handleExportConfig = async () => {
     try {
-      const blob = await apiService.exportConfig();
+      const blob = await apiService.config.exportConfig();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

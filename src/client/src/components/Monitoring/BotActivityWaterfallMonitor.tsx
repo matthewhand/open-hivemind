@@ -16,7 +16,7 @@ export const BotActivityWaterfallMonitor: React.FC = () => {
         const fetchActivity = async () => {
             try {
                 setLoading(true);
-                const data = await apiService.getActivity();
+                const data = await apiService.dashboard.getActivity();
 
                 if (!mounted) return;
 

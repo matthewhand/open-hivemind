@@ -93,7 +93,7 @@ const SystemManagement: React.FC = () => {
 
   const fetchApiStatus = useCallback(async () => {
     try {
-      const status = await apiService.getApiEndpointsStatus();
+      const status = await apiService.health.getApiEndpointsStatus();
       setApiStatus(status);
     } catch (error) {
       errorToast('API Status', 'Failed to fetch API status');
@@ -104,8 +104,8 @@ const SystemManagement: React.FC = () => {
     setIsPerformanceLoading(true);
     try {
       const [infoResult, overridesResult] = await Promise.allSettled([
-        apiService.getSystemInfo(),
-        apiService.getEnvOverrides()
+        apiService.admin.getSystemInfo(),
+        apiService.admin.getEnvOverrides()
       ]);
       const info = infoResult.status === 'fulfilled' ? infoResult.value : { systemInfo: {} };
       const overrides = overridesResult.status === 'fulfilled' ? overridesResult.value : { data: { envVars: {} } };
@@ -121,7 +121,7 @@ const SystemManagement: React.FC = () => {
 
   const fetchSystemConfig = useCallback(async () => {
     try {
-      const globalConfig = await apiService.getGlobalConfig();
+      const globalConfig = await apiService.config.getGlobalConfig();
       const userSettings = globalConfig._userSettings?.values || {};
 
       // Merge user settings with defaults
@@ -141,7 +141,7 @@ const SystemManagement: React.FC = () => {
 
   const fetchBackupHistory = useCallback(async () => {
     try {
-      const backupList = await apiService.listSystemBackups();
+      const backupList = await apiService.importExport.listSystemBackups();
       // Map API response to local interface
       const mappedBackups: BackupRecord[] = backupList.map((b: any) => ({
         id: b.id,
@@ -186,7 +186,7 @@ const SystemManagement: React.FC = () => {
       setSystemConfig(updatedConfig);
 
       // Persist to backend (user settings)
-      await apiService.updateGlobalConfig({ [key]: value });
+      await apiService.config.updateGlobalConfig({ [key]: value });
     } catch (error) {
       errorToast('Config Update', 'Failed to update configuration');
     } finally {
@@ -196,7 +196,7 @@ const SystemManagement: React.FC = () => {
 
   const handleAlertAcknowledge = async (alertId: string) => {
     try {
-      await apiService.acknowledgeAlert(alertId);
+      await apiService.dashboard.acknowledgeAlert(alertId);
     } catch (error) {
       errorToast('Alert', 'Failed to acknowledge alert');
     }
@@ -204,7 +204,7 @@ const SystemManagement: React.FC = () => {
 
   const handleAlertResolve = async (alertId: string) => {
     try {
-      await apiService.resolveAlert(alertId);
+      await apiService.dashboard.resolveAlert(alertId);
     } catch (error) {
       errorToast('Alert', 'Failed to resolve alert');
     }
@@ -229,7 +229,7 @@ const SystemManagement: React.FC = () => {
     setShowBackupModal(false);
     setIsCreatingBackup(true);
     try {
-      await apiService.createSystemBackup({
+      await apiService.importExport.createSystemBackup({
         name: `backup-${Date.now()}`,
         description: 'Manual backup from System Management',
         encrypt: useEncryption,
@@ -254,7 +254,7 @@ const SystemManagement: React.FC = () => {
       onConfirm: async () => {
         closeConfirmModal();
         try {
-          await apiService.restoreSystemBackup(backupId);
+          await apiService.importExport.restoreSystemBackup(backupId);
           successToast('System Restored', 'System restored successfully. Reloading...');
           setTimeout(() => window.location.reload(), 2000);
         } catch (error) {
@@ -274,7 +274,7 @@ const SystemManagement: React.FC = () => {
       onConfirm: async () => {
         closeConfirmModal();
         try {
-          await apiService.deleteSystemBackup(backupId);
+          await apiService.importExport.deleteSystemBackup(backupId);
           successToast('Backup Deleted', 'Backup deleted');
           setBackups(prev => prev.filter(backup => backup.id !== backupId));
         } catch (error) {
@@ -294,7 +294,7 @@ const SystemManagement: React.FC = () => {
       onConfirm: async () => {
         closeConfirmModal();
         try {
-          await apiService.clearCache();
+          await apiService.config.clearCache();
           successToast('Cache Cleared', 'Cache cleared successfully');
         } catch (error) {
           errorToast('Cache Error', 'Failed to clear cache: ' + (error as Error).message);

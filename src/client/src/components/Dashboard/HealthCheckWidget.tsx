@@ -71,7 +71,7 @@ const HealthCheckWidget: React.FC<HealthCheckWidgetProps> = ({
   const fetchHealth = useCallback(async () => {
     try {
       setIsRefreshing(true);
-      const data = await apiService.getServiceHealth();
+      const data = await apiService.health.getServiceHealth();
       setServices(data.services || []);
       setLastRefresh(new Date());
       setError(null);
@@ -223,7 +223,6 @@ const HealthCheckWidget: React.FC<HealthCheckWidgetProps> = ({
                     <ChevronDown className="w-4 h-4 text-base-content/40" />
                   )}
                 </button>
-
                 {isExpanded && (
                   <div
                     id={`service-details-${service.name.replace(/\s+/g, '-').toLowerCase()}`}

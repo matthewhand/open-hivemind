@@ -86,9 +86,9 @@ const BotsPage: React.FC = () => {
   // Fetch page-level config (personas, llmProfiles, globalConfig) — NOT bots
   const fetchPageData = useCallback(async (_signal: AbortSignal) => {
     const [globalResult, personasResult, profilesResult] = await Promise.allSettled([
-      apiService.getGlobalConfig(),
-      apiService.getPersonas(),
-      apiService.getLlmProfiles(),
+      apiService.config.getGlobalConfig(),
+      apiService.personas.getPersonas(),
+      apiService.config.getLlmProfiles(),
     ]);
 
     const globalData = globalResult.status === 'fulfilled' ? globalResult.value : {};

@@ -5,9 +5,9 @@ import { apiService } from '../../../services/api';
 export const useBotsPageData = (setError: (err: string | null) => void) => {
   const fetchPageData = useCallback(async (_signal: AbortSignal) => {
     const [globalResult, personasResult, profilesResult] = await Promise.allSettled([
-      apiService.getGlobalConfig(),
-      apiService.getPersonas(),
-      apiService.getLlmProfiles(),
+      apiService.config.getGlobalConfig(),
+      apiService.personas.getPersonas(),
+      apiService.config.getLlmProfiles(),
     ]);
 
     const globalData = globalResult.status === 'fulfilled' ? globalResult.value : {};

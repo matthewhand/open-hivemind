@@ -49,13 +49,13 @@ export const usePersonaActions = (
         const persona = personas.find((p) => p.id === id);
         if (persona) {
           const updates = (persona.assignedBotIds || []).map((botId) =>
-            apiService.updateBot(botId, {
+            apiService.bots.updateBot(botId, {
               persona: 'default',
               systemInstruction: 'You are a helpful assistant.',
             })
           );
           await Promise.allSettled(updates);
-          await apiService.deletePersona(id as any);
+          await apiService.personas.deletePersona(id as any);
         }
       }
       await fetchData();
@@ -96,16 +96,16 @@ export const usePersonaActions = (
       };
 
       if (cloningPersonaId) {
-        savedPersona = await apiService.clonePersona(cloningPersonaId as any, {
+        savedPersona = await apiService.personas.clonePersona(cloningPersonaId as any, {
           name: personaName,
           description: personaDescription,
           category: personaCategory as any,
           systemPrompt: personaPrompt,
         });
       } else if (editingPersona) {
-        savedPersona = await apiService.updatePersona(editingPersona.id as any, personaData as any);
+        savedPersona = await apiService.personas.updatePersona(editingPersona.id as any, personaData as any);
       } else {
-        savedPersona = await apiService.createPersona(personaData as any);
+        savedPersona = await apiService.personas.createPersona(personaData as any);
       }
 
       const newPersonaId = savedPersona.id;
@@ -117,7 +117,7 @@ export const usePersonaActions = (
         const bot = botsById.get(botId);
         if (bot && bot.persona !== newPersonaId) {
           updates.push(
-            apiService.updateBot(botId, {
+            apiService.bots.updateBot(botId, {
               persona: newPersonaId,
               systemInstruction: personaPrompt,
             })
@@ -131,7 +131,7 @@ export const usePersonaActions = (
 
         for (const botId of toUnassign) {
           updates.push(
-            apiService.updateBot(botId, {
+            apiService.bots.updateBot(botId, {
               persona: 'default',
               systemInstruction: 'You are a helpful assistant.',
             })
@@ -227,13 +227,13 @@ export const usePersonaActions = (
     setLoading(true);
     try {
       const updates = (deletingPersona.assignedBotIds || []).map((botId) =>
-        apiService.updateBot(botId, {
+        apiService.bots.updateBot(botId, {
           persona: 'default',
           systemInstruction: 'You are a helpful assistant.',
         })
       );
       await Promise.all(updates);
-      await apiService.deletePersona(deletingPersona.id as any);
+      await apiService.personas.deletePersona(deletingPersona.id as any);
       await fetchData();
       setShowDeleteModal(false);
       setDeletingPersona(null);

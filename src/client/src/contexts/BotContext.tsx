@@ -128,7 +128,7 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         // Optimistic UI update: show STARTING state while API call is in progress
         updateBot(botId, { status: BotStatus.STARTING });
 
-        await apiService.startBot(botId);
+        await apiService.bots.startBot(botId);
 
         updateBot(botId, { status: BotStatus.ACTIVE, lastActive: new Date().toISOString() });
         return true;
@@ -154,7 +154,7 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         // Optimistic UI update: show STOPPING state while API call is in progress
         updateBot(botId, { status: BotStatus.STOPPING });
 
-        await apiService.stopBot(botId);
+        await apiService.bots.stopBot(botId);
 
         updateBot(botId, { status: BotStatus.INACTIVE });
         return true;

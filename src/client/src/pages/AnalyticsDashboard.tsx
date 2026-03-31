@@ -29,7 +29,7 @@ const AnalyticsDashboard: React.FC = () => {
       else if (timeRange === '7d') { from.setDate(now.getDate() - 7); }
       else if (timeRange === '30d') { from.setDate(now.getDate() - 30); }
 
-      const data = await apiService.getActivity({
+      const data = await apiService.dashboard.getActivity({
         from: from.toISOString(),
       });
       setActivityData(data);

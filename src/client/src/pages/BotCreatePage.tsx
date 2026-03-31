@@ -53,8 +53,8 @@ const BotCreatePage: React.FC = () => {
     const fetchData = async () => {
       try {
         const [personasResult, profilesResult] = await Promise.allSettled([
-          apiService.getPersonas(),
-          apiService.getLlmProfiles(),
+          apiService.personas.getPersonas(),
+          apiService.config.getLlmProfiles(),
         ]);
         const personasData = personasResult.status === 'fulfilled' ? personasResult.value : [];
         const profilesData = profilesResult.status === 'fulfilled' ? profilesResult.value : {};
@@ -89,7 +89,7 @@ const BotCreatePage: React.FC = () => {
     setAlert(null);
 
     try {
-      await apiService.createBot({
+      await apiService.bots.createBot({
         name: formData.name,
         description: formData.description,
         messageProvider: formData.platform,

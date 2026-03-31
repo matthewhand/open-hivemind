@@ -27,7 +27,7 @@ const SettingsIntegrations: React.FC = () => {
   const fetchIntegrations = useCallback(async () => {
     try {
       setLoading(true);
-      const data: any = await apiService.getGlobalConfig();
+      const data: any = await apiService.config.getGlobalConfig();
 
       const config = data.config || {};
 

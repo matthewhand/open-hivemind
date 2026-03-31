@@ -50,7 +50,7 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
     try {
       setLoading(true);
       setError(null);
-      const data: any = await apiService.getGlobalConfig();
+      const data: any = await apiService.config.getGlobalConfig();
       if (data && data[section]) {
         setConfig(data[section]);
       } else {
@@ -79,7 +79,7 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
     });
 
     try {
-      await apiService.updateGlobalConfig({ configName: section, updates: valuesToSave });
+      await apiService.config.updateGlobalConfig({ configName: section, updates: valuesToSave });
       setSuccess('Configuration saved successfully');
       await fetchConfig(); // Refresh
       setJsonState({});

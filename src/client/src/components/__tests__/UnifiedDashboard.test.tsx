@@ -95,14 +95,14 @@ describe.skip('UnifiedDashboard', () => {
   });
 
   it('renders "Getting Started" tab by default when no bots are configured', async () => {
-    (apiService.getConfig as any).mockResolvedValue({
+    (apiService.config.getConfig as any).mockResolvedValue({
       bots: [],
       warnings: [],
       environment: 'development',
     });
-    (apiService.getStatus as any).mockResolvedValue({ bots: [], uptime: 0 });
-    (apiService.getPersonas as any).mockResolvedValue([]);
-    (apiService.getLlmProfiles as any).mockResolvedValue({ profiles: { llm: [] } });
+    (apiService.dashboard.getStatus as any).mockResolvedValue({ bots: [], uptime: 0 });
+    (apiService.personas.getPersonas as any).mockResolvedValue([]);
+    (apiService.config.getLlmProfiles as any).mockResolvedValue({ profiles: { llm: [] } });
 
     render(
       <BrowserRouter>
@@ -121,17 +121,17 @@ describe.skip('UnifiedDashboard', () => {
 
   it('renders "Status" tab by default when bots are configured', async () => {
     const mockBots = [{ name: 'TestBot', messageProvider: 'discord', llmProvider: 'openai' }];
-    (apiService.getConfig as any).mockResolvedValue({
+    (apiService.config.getConfig as any).mockResolvedValue({
       bots: mockBots,
       warnings: [],
       environment: 'development',
     });
-    (apiService.getStatus as any).mockResolvedValue({
+    (apiService.dashboard.getStatus as any).mockResolvedValue({
       bots: [{ name: 'TestBot', status: 'active', connected: true }],
       uptime: 100,
     });
-    (apiService.getPersonas as any).mockResolvedValue([]);
-    (apiService.getLlmProfiles as any).mockResolvedValue({ profiles: { llm: [] } });
+    (apiService.personas.getPersonas as any).mockResolvedValue([]);
+    (apiService.config.getLlmProfiles as any).mockResolvedValue({ profiles: { llm: [] } });
 
     render(
       <BrowserRouter>
@@ -160,14 +160,14 @@ describe.skip('UnifiedDashboard', () => {
   });
 
   it('allows switching tabs', async () => {
-    (apiService.getConfig as any).mockResolvedValue({
+    (apiService.config.getConfig as any).mockResolvedValue({
       bots: [],
       warnings: [],
       environment: 'development',
     });
-    (apiService.getStatus as any).mockResolvedValue({ bots: [], uptime: 0 });
-    (apiService.getPersonas as any).mockResolvedValue([]);
-    (apiService.getLlmProfiles as any).mockResolvedValue({ profiles: { llm: [] } });
+    (apiService.dashboard.getStatus as any).mockResolvedValue({ bots: [], uptime: 0 });
+    (apiService.personas.getPersonas as any).mockResolvedValue([]);
+    (apiService.config.getLlmProfiles as any).mockResolvedValue({ profiles: { llm: [] } });
 
     render(
       <BrowserRouter>
@@ -195,14 +195,14 @@ describe.skip('UnifiedDashboard', () => {
       { name: 'Bot1', messageProvider: 'discord', llmProvider: 'openai' },
       { name: 'Bot2', messageProvider: 'slack', llmProvider: 'anthropic' },
     ];
-    (apiService.getConfig as any).mockResolvedValue({
+    (apiService.config.getConfig as any).mockResolvedValue({
       bots: mockBots,
       warnings: [],
       environment: 'development',
     });
 
     // Status mock returns 2 active bots, 1 connected, 150 messages total, 5 errors total
-    (apiService.getStatus as any).mockResolvedValue({
+    (apiService.dashboard.getStatus as any).mockResolvedValue({
       bots: [
         { name: 'Bot1', status: 'active', connected: true, messageCount: 100, errorCount: 2 },
         { name: 'Bot2', status: 'active', connected: false, messageCount: 50, errorCount: 3 },
@@ -210,8 +210,8 @@ describe.skip('UnifiedDashboard', () => {
       ],
       uptime: 100,
     });
-    (apiService.getPersonas as any).mockResolvedValue([]);
-    (apiService.getLlmProfiles as any).mockResolvedValue({ profiles: { llm: [] } });
+    (apiService.personas.getPersonas as any).mockResolvedValue([]);
+    (apiService.config.getLlmProfiles as any).mockResolvedValue({ profiles: { llm: [] } });
 
     render(
       <BrowserRouter>

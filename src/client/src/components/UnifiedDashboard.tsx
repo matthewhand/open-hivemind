@@ -113,8 +113,8 @@ const UnifiedDashboard: React.FC = () => {
       // not only when both are empty (fixes &&-vs-|| logic error).
       if (personas.length === 0 || llmProfiles.length === 0) {
         const [personasResult, profilesResult] = await Promise.allSettled([
-          apiService.getPersonas(),
-          apiService.getLlmProfiles(),
+          apiService.personas.getPersonas(),
+          apiService.config.getLlmProfiles(),
         ]);
         const personasData = personasResult.status === 'fulfilled' ? personasResult.value : [];
         const profilesData = profilesResult.status === 'fulfilled' ? profilesResult.value : {};
@@ -141,8 +141,8 @@ const UnifiedDashboard: React.FC = () => {
       // ⚡ Bolt Optimization: Removed getPersonas() and getLlmProfiles()
       // from this critical path to speed up dashboard rendering.
       const [configResult, statusResult] = await Promise.allSettled([
-        apiService.getConfig(),
-        apiService.getStatus(),
+        apiService.config.getConfig(),
+        apiService.dashboard.getStatus(),
       ]);
       const configData = configResult.status === 'fulfilled' ? configResult.value : { bots: [] };
       const statusData = statusResult.status === 'fulfilled' ? statusResult.value : { bots: [] };

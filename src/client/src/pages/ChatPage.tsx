@@ -103,7 +103,7 @@ const ChatPage: React.FC = () => {
   const fetchHistory = useCallback(async (botId: string) => {
     try {
       setHistoryLoading(true);
-      const history = await apiService.getBotHistory(botId, 50);
+      const history = await apiService.bots.getBotHistory(botId, 50);
 
       // Map history to ChatMessage
       const mappedMessages: ChatMessage[] = history.map((msg: any) => ({
