@@ -1,88 +1,37 @@
-import { useState, useEffect } from 'react';
-import type { Socket } from 'socket.io-client';
-import { io } from 'socket.io-client';
+import { useEffect } from 'react';
+import { useWebSocket as useWebsocketContext } from '../contexts/WebSocketContext';
 import { logger } from '../utils/logger';
 
-interface MessageFlowEvent {
-  id: string;
-  timestamp: string;
-  botName: string;
-  provider: string;
-  llmProvider?: string;
-  channelId: string;
-  userId: string;
-  messageType: 'incoming' | 'outgoing';
-  contentLength: number;
-  processingTime?: number;
-  status: 'success' | 'error' | 'timeout';
-  errorMessage?: string;
+export interface UseWebSocketOptions {
+  topic?: string;
 }
 
-interface PerformanceMetric {
-  timestamp: string;
-  responseTime: number;
-  memoryUsage: number;
-  cpuUsage: number;
-  activeConnections: number;
-  messageRate: number;
-  errorRate: number;
-}
-
-export const useWebSocket = () => {
-  const [socket, setSocket] = useState<Socket | null>(null);
-  const [messages, setMessages] = useState<MessageFlowEvent[]>([]);
-  const [metrics, setMetrics] = useState<PerformanceMetric[]>([]);
-  const [connected, setConnected] = useState(false);
+export const useWebSocket = (options?: UseWebSocketOptions) => {
+  const context = useWebsocketContext();
+  const { subscribe, unsubscribe, isConnected } = context;
 
   useEffect(() => {
-    const newSocket = io('/webui', {
-      reconnection: true,
-      reconnectionAttempts: Infinity,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      randomizationFactor: 0.5,
-    });
-    
-    newSocket.on('connect', () => {
-      logger.info('WebSocket connected');
-      setConnected(true);
-    });
+    if (options?.topic && isConnected) {
+      logger.debug(`Subscribing to topic: ${options.topic}`);
+      subscribe(options.topic);
 
-    newSocket.on('disconnect', (reason) => {
-      logger.info('WebSocket disconnected', { reason });
-      setConnected(false);
-    });
+      return () => {
+        logger.debug(`Unsubscribing from topic: ${options.topic}`);
+        unsubscribe(options.topic!);
+      };
+    }
+  }, [options?.topic, subscribe, unsubscribe, isConnected]);
 
-    newSocket.on('reconnect_attempt', (attempt) => {
-      logger.debug(`WebSocket reconnect attempt ${attempt}`);
-    });
-
-    newSocket.on('reconnect', (attempt) => {
-      logger.info(`WebSocket reconnected after ${attempt} attempts`);
-      setConnected(true);
-    });
-
-    newSocket.on('messageFlowUpdate', (data: MessageFlowEvent[]) => {
-      logger.debug('Received message flow update:', data);
-      setMessages(data);
-    });
-
-    newSocket.on('performanceMetricsUpdate', (data: PerformanceMetric[]) => {
-      logger.debug('Received performance metrics update:', data);
-      setMetrics(data);
-    });
-
-    setSocket(newSocket);
-
-    return () => {
-      newSocket.close();
-    };
-  }, []);
-
+  // Map Context values back to the original interface expected by consumers like ActivityMonitor and ActivityCharts
   return {
-    socket,
-    messages,
-    metrics,
-    connected,
+    socket: context.socket,
+    connected: isConnected,
+
+    // Maintain backwards compatibility with original hook properties
+    messages: context.messageFlow,
+    metrics: context.performanceMetrics,
+
+    // Expose context directly
+    ...context
   };
 };

@@ -14,7 +14,7 @@ interface PerformanceMetric {
 }
 
 const ActivityCharts: React.FC = () => {
-  const { metrics } = useWebSocket();
+  const { metrics } = useWebSocket({ topic: 'performance_metrics' });
   const [chartData, setChartData] = useState<any[]>([]);
   const [selectedMetric, setSelectedMetric] = useState<string>('messageRate');
 

@@ -1,6 +1,16 @@
 import { useState } from 'react';
-import { getAuthHeaders } from '../../../utils/api';
 import { type MCPServer } from './useMCPServerData';
+
+const getAuthHeaders = (): Record<string, string> => {
+  const tokensStr = localStorage.getItem('auth_tokens');
+  if (!tokensStr) return {};
+  try {
+    const tokens = JSON.parse(tokensStr);
+    return { Authorization: `Bearer ${tokens.accessToken}` };
+  } catch (err) {
+    return {};
+  }
+};
 
 export const useMCPServerActions = (
   servers: MCPServer[],

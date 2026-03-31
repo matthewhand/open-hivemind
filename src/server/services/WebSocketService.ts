@@ -201,7 +201,7 @@ export class WebSocketService {
 
     // Broadcast to connected clients
     if (this.io && this.connectedClients > 0) {
-      this.io.emit('message_flow_update', messageEvent);
+      this.io.to('message_flow').emit('message_flow_update', messageEvent);
     }
   }
 
@@ -240,7 +240,7 @@ export class WebSocketService {
 
     // Broadcast to connected clients
     if (this.io && this.connectedClients > 0) {
-      this.io.emit('alert_update', alertEvent);
+      this.io.to('alerts').emit('alert_update', alertEvent);
     }
   }
 
@@ -260,7 +260,7 @@ export class WebSocketService {
 
       // Broadcast to connected clients
       if (this.io && this.connectedClients > 0) {
-        this.io.emit('alert_update', alert);
+        this.io.to('alerts').emit('alert_update', alert);
       }
       return true;
     }
@@ -275,7 +275,7 @@ export class WebSocketService {
 
       // Broadcast to connected clients
       if (this.io && this.connectedClients > 0) {
-        this.io.emit('alert_update', alert);
+        this.io.to('alerts').emit('alert_update', alert);
       }
       return true;
     }
@@ -451,6 +451,23 @@ export class WebSocketService {
 
       socket.on('request_api_endpoints', () => {
         this.sendApiEndpoints(socket);
+      });
+
+      // Topic-based subscriptions
+      socket.on('subscribe', (topic: string | string[]) => {
+        const topics = Array.isArray(topic) ? topic : [topic];
+        topics.forEach(t => {
+          socket.join(t);
+          debug(`Client ${socket.id} subscribed to topic: ${t}`);
+        });
+      });
+
+      socket.on('unsubscribe', (topic: string | string[]) => {
+        const topics = Array.isArray(topic) ? topic : [topic];
+        topics.forEach(t => {
+          socket.leave(t);
+          debug(`Client ${socket.id} unsubscribed from topic: ${t}`);
+        });
       });
 
       socket.on('ack', (data: AckPayload) => {
@@ -671,7 +688,7 @@ export class WebSocketService {
     if (!this.io) {
       return;
     }
-    this.io.emit('bot_status_broadcast', { timestamp: new Date().toISOString() });
+    this.io.to('bot_status').emit('bot_status_broadcast', { timestamp: new Date().toISOString() });
   }
 
   private broadcastSystemMetrics(): void {
@@ -688,7 +705,7 @@ export class WebSocketService {
       return;
     }
     debug('Broadcasting configuration change');
-    this.io.emit('config_changed', { timestamp: new Date().toISOString() });
+    this.io.to('config').emit('config_changed', { timestamp: new Date().toISOString() });
 
     // Send updated data to all clients
     this.io.sockets.sockets.forEach((socket) => {

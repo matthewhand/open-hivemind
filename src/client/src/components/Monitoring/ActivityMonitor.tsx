@@ -10,7 +10,7 @@ import StatsCards from '../DaisyUI/StatsCards';
 import SearchFilterBar from '../SearchFilterBar';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import { apiService, ActivityEvent, ActivityResponse } from '../../services/api';
-import { Clock, Activity, AlertTriangle, MessageSquare, RefreshCw } from 'lucide-react';
+import { Activity, AlertTriangle, MessageSquare, RefreshCw } from 'lucide-react';
 import Debug from 'debug';
 const debug = Debug('app:client:components:Monitoring:ActivityMonitor');
 
@@ -24,7 +24,7 @@ interface FilterOptions {
 }
 
 const ActivityMonitor: React.FC = () => {
-  const { messages: wsMessages } = useWebSocket();
+  const { messages: wsMessages } = useWebSocket({ topic: 'message_flow' });
   const [initialMessages, setInitialMessages] = useState<ActivityEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

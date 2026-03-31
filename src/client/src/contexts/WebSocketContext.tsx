@@ -21,6 +21,8 @@ interface WebSocketContextType {
   botStats: BotStat[];
   connect: () => void;
   disconnect: () => void;
+  subscribe: (topic: string) => void;
+  unsubscribe: (topic: string) => void;
 }
 
 const WebSocketContext = createContext<WebSocketContextType | undefined>(undefined);
@@ -35,6 +37,7 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [alerts, setAlerts] = useState<AlertEvent[]>([]);
   const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetric[]>([]);
   const [botStats, setBotStats] = useState<BotStat[]>([]);
+  const [activeSubscriptions, setActiveSubscriptions] = useState<Set<string>>(new Set());
 
   const connect = () => {
     if (socket?.connected) { return; }
@@ -67,6 +70,12 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
     newSocket.on('connect', () => {
       logger.info('WebSocket connected');
       setIsConnected(true);
+      // Automatically subscribe to global topics needed by the context
+      const globalTopics = ['alerts', 'bot_status', 'config', 'api_status', 'api_health', 'system_metrics', 'bot_stats'];
+      globalTopics.forEach(topic => {
+        newSocket.emit('subscribe', topic);
+        setActiveSubscriptions((prev) => new Set(prev).add(topic));
+      });
     });
 
     newSocket.on('disconnect', (reason) => {
@@ -81,6 +90,10 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
     newSocket.on('reconnect', (attempt) => {
       logger.info(`WebSocket reconnected after ${attempt} attempts`);
       setIsConnected(true);
+      // Re-subscribe to all active topics upon reconnection
+      activeSubscriptions.forEach((topic) => {
+        newSocket.emit('subscribe', topic);
+      });
     });
 
     newSocket.on('reconnect_error', (error) => {
@@ -167,6 +180,32 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
     setSocket(newSocket);
   };
 
+  const subscribe = (topic: string) => {
+    setActiveSubscriptions((prev) => {
+      const newSubs = new Set(prev);
+      if (!newSubs.has(topic)) {
+        newSubs.add(topic);
+        if (socket && socket.connected) {
+          socket.emit('subscribe', topic);
+        }
+      }
+      return newSubs;
+    });
+  };
+
+  const unsubscribe = (topic: string) => {
+    setActiveSubscriptions((prev) => {
+      const newSubs = new Set(prev);
+      if (newSubs.has(topic)) {
+        newSubs.delete(topic);
+        if (socket && socket.connected) {
+          socket.emit('unsubscribe', topic);
+        }
+      }
+      return newSubs;
+    });
+  };
+
   const disconnect = () => {
     if (socket) {
       socket.disconnect();
@@ -190,6 +229,8 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
     botStats,
     connect,
     disconnect,
+    subscribe,
+    unsubscribe,
   };
 
   return (

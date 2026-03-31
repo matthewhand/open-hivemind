@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
+import { render } from '../../test-utils';
 import SystemManagement from '../SystemManagement';
 import { apiService } from '../../services/api';
 import * as WebSocketContext from '../../contexts/WebSocketContext';
@@ -23,6 +24,7 @@ jest.mock('../../services/api', () => ({
 // Mock useWebSocket
 jest.mock('../../contexts/WebSocketContext', () => ({
   useWebSocket: jest.fn(),
+  WebSocketProvider: ({ children }: any) => children,
 }));
 
 // Mock Modal component to avoid JSDOM <dialog> issues
