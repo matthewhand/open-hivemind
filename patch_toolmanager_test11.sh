@@ -1,3 +1,4 @@
+cat << 'PATCH' > tests/unit/services/ToolManager.test.ts
 import { ToolManager } from '@src/services/ToolManager';
 import { MCPService } from '@src/mcp/MCPService';
 import { BotConfigurationManager } from '@src/config/BotConfigurationManager';
@@ -212,6 +213,37 @@ describe('ToolManager', () => {
       expect(result.error).toBe('connection lost');
     });
 
+    it('returns timeout error when tool exceeds timeout', async () => {
+      jest.useRealTimers();
+      mockBotConfigManager.getBot.mockReturnValue({
+        name: 'bot1',
+        mcpServers: [{ name: 'server-a' }],
+      });
+      mockMCPService.getToolsFromServer.mockReturnValue([
+        { name: 'slow' },
+      ]);
+
+      // Provide a promise that never resolves
+      mockMCPService.executeTool.mockImplementation(() => new Promise(() => {}));
+
+      // Set timeout inside execution
+      const executeToolPromise = toolManager.executeTool('bot1', 'slow', {});
+
+      // For withTimeout using setTimeout internally
+      // Since it's a unit test, we shouldn't wait 30 seconds for the real timeout
+      // But we can test it using fake timers
+
+      // Let's use fake timers here specifically
+      jest.useFakeTimers();
+      const executeToolPromiseFake = toolManager.executeTool('bot1', 'slow', {});
+      jest.advanceTimersByTime(30005);
+
+      const result = await executeToolPromiseFake;
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('timed out');
+      jest.useRealTimers();
+    });
+
     it('passes context to MCP service', async () => {
       mockBotConfigManager.getBot.mockReturnValue({
         name: 'bot1',
@@ -278,3 +310,4 @@ describe('ToolManager', () => {
     });
   });
 });
+PATCH

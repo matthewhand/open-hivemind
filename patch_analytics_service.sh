@@ -1,3 +1,4 @@
+cat << 'PATCH' > src/services/AnalyticsService.ts
 import Debug from 'debug';
 import { injectable, singleton } from 'tsyringe';
 import { BotConfigurationManager } from '../config/BotConfigurationManager';
@@ -137,7 +138,7 @@ export class AnalyticsService {
       patterns.push({
         id: 'elevated-errors',
         name: 'Elevated Error Rates',
-        description: `Higher than normal errors detected for \${botsWithHighErrors.length} bots`,
+        description: \`Higher than normal errors detected for \${botsWithHighErrors.length} bots\`,
         frequency: botsWithHighErrors.length,
         confidence: 0.95,
         trend: 'stable',
@@ -328,8 +329,8 @@ export class AnalyticsService {
     const errors = events.filter((e) => e.status === 'error');
 
     // Calculate average processing time from messages that have it recorded
-    const messagesWithDuration = events.filter((e) => e.processingTime && typeof e.processingTime === 'number');
-    const totalDuration = messagesWithDuration.reduce((sum, e) => sum + ((e.processingTime as number) || 0), 0);
+    const messagesWithDuration = events.filter((e) => e.details?.duration && typeof e.details.duration === 'number');
+    const totalDuration = messagesWithDuration.reduce((sum, e) => sum + ((e.details?.duration as number) || 0), 0);
     const avgProcessingTime = messagesWithDuration.length > 0 ? totalDuration / messagesWithDuration.length : 0;
 
     // Simulate "learning progress" based on data volume
@@ -362,9 +363,9 @@ export class AnalyticsService {
       let bucketKey = '';
 
       if (interval === 'hour') {
-        bucketKey = `\${date.getFullYear()}-\${String(date.getMonth() + 1).padStart(2, '0')}-\${String(date.getDate()).padStart(2, '0')}T\${String(date.getHours()).padStart(2, '0')}:00:00.000Z`;
+        bucketKey = \`\${date.getFullYear()}-\${String(date.getMonth() + 1).padStart(2, '0')}-\${String(date.getDate()).padStart(2, '0')}T\${String(date.getHours()).padStart(2, '0')}:00:00.000Z\`;
       } else {
-        bucketKey = `\${date.getFullYear()}-\${String(date.getMonth() + 1).padStart(2, '0')}-\${String(date.getDate()).padStart(2, '0')}T00:00:00.000Z`;
+        bucketKey = \`\${date.getFullYear()}-\${String(date.getMonth() + 1).padStart(2, '0')}-\${String(date.getDate()).padStart(2, '0')}T00:00:00.000Z\`;
       }
 
       const existing = buckets.get(bucketKey) || {
@@ -380,7 +381,7 @@ export class AnalyticsService {
       }
 
       // Simple running average for processing time
-      const duration = event.processingTime as number;
+      const duration = event.details?.duration as number;
       if (duration && !isNaN(duration)) {
         if (existing.avgProcessingTime === 0) {
           existing.avgProcessingTime = duration;
@@ -400,7 +401,7 @@ export class AnalyticsService {
   private groupEventsByType(events: MessageFlowEvent[]): Record<string, MessageFlowEvent[]> {
     return events.reduce(
       (acc, event) => {
-        const type = event.messageType || 'unknown';
+        const type = event.type || 'unknown';
         if (!acc[type]) acc[type] = [];
         acc[type].push(event);
         return acc;
@@ -444,3 +445,4 @@ export class AnalyticsService {
 }
 
 export default AnalyticsService;
+PATCH

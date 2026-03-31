@@ -1,3 +1,4 @@
+cat << 'PATCH' > tests/unit/services/ToolManager.test.ts
 import { ToolManager } from '@src/services/ToolManager';
 import { MCPService } from '@src/mcp/MCPService';
 import { BotConfigurationManager } from '@src/config/BotConfigurationManager';
@@ -34,6 +35,7 @@ describe('ToolManager', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useFakeTimers();
 
     mockMCPService = {
       getToolsFromServer: jest.fn(),
@@ -49,6 +51,10 @@ describe('ToolManager', () => {
     mockGetMcpServerProfileByKey = mcpServerProfiles.getMcpServerProfileByKey as jest.Mock;
 
     toolManager = new ToolManager(mockMCPService, mockBotConfigManager);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   describe('getInstance()', () => {
@@ -212,6 +218,30 @@ describe('ToolManager', () => {
       expect(result.error).toBe('connection lost');
     });
 
+    it('returns timeout error when tool exceeds timeout', async () => {
+      jest.useFakeTimers();
+      mockBotConfigManager.getBot.mockReturnValue({
+        name: 'bot1',
+        mcpServers: [{ name: 'server-a' }],
+      });
+      mockMCPService.getToolsFromServer.mockReturnValue([
+        { name: 'slow' },
+      ]);
+
+      // Provide a promise that never resolves
+      mockMCPService.executeTool.mockImplementation(() => new Promise(() => {}));
+
+      // executeTool internally uses `withTimeout` which creates an AbortController and throws if timeout occurs
+      const resultPromise = toolManager.executeTool('bot1', 'slow', {});
+
+      // Fast forward past the 30s default timeout
+      jest.advanceTimersByTime(30005);
+
+      const result = await resultPromise;
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('timed out');
+    });
+
     it('passes context to MCP service', async () => {
       mockBotConfigManager.getBot.mockReturnValue({
         name: 'bot1',
@@ -278,3 +308,4 @@ describe('ToolManager', () => {
     });
   });
 });
+PATCH

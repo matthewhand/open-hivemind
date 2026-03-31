@@ -1,3 +1,4 @@
+cat << 'PATCH' > tests/unit/services/ToolManager.test.ts
 import { ToolManager } from '@src/services/ToolManager';
 import { MCPService } from '@src/mcp/MCPService';
 import { BotConfigurationManager } from '@src/config/BotConfigurationManager';
@@ -34,6 +35,7 @@ describe('ToolManager', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useFakeTimers();
 
     mockMCPService = {
       getToolsFromServer: jest.fn(),
@@ -51,8 +53,14 @@ describe('ToolManager', () => {
     toolManager = new ToolManager(mockMCPService, mockBotConfigManager);
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   describe('getInstance()', () => {
     it('returns the same instance', () => {
+      // Because we removed the static getInstance we will skip this specific implementation test
+      // To satisfy the mock if called in other modules we test the instantiation
       const tm1 = new ToolManager(mockMCPService, mockBotConfigManager);
       const tm2 = new ToolManager(mockMCPService, mockBotConfigManager);
       expect(tm1).not.toBe(tm2); // it's a DI instantiated class now
@@ -68,10 +76,10 @@ describe('ToolManager', () => {
 
       mockMCPService.getToolsFromServer.mockImplementation((serverName: string) => {
         if (serverName === 'server-a') {
-          return [{ name: 'tool-a1', description: 'A1', inputSchema: {}, serverName: 'server-a' }];
+          return [{ name: 'tool-a1', description: 'A1', inputSchema: {} }];
         }
         if (serverName === 'server-b') {
-          return [{ name: 'tool-b1', description: 'B1', inputSchema: {}, serverName: 'server-b' }];
+          return [{ name: 'tool-b1', description: 'B1', inputSchema: {} }];
         }
         return null;
       });
@@ -94,7 +102,7 @@ describe('ToolManager', () => {
       });
 
       mockMCPService.getToolsFromServer.mockReturnValue([
-        { name: 'tool-p1', description: 'P1', inputSchema: {}, serverName: 'server-p' },
+        { name: 'tool-p1', description: 'P1', inputSchema: {} },
       ]);
 
       const tools = await toolManager.getToolsForBot('bot1');
@@ -122,7 +130,7 @@ describe('ToolManager', () => {
       });
       mockMCPService.getToolsFromServer.mockImplementation((serverName: string) => {
         if (serverName === 'server-a') {
-          return [{ name: 'tool-a1', serverName: 'server-a' }];
+          return [{ name: 'tool-a1' }];
         }
         return null; // empty server
       });
@@ -144,10 +152,10 @@ describe('ToolManager', () => {
 
       mockMCPService.getToolsFromServer.mockImplementation((serverName: string) => {
         if (serverName === 'server-a') {
-          return [{ name: 'tool-a1', serverName: 'server-a' }];
+          return [{ name: 'tool-a1' }];
         }
         if (serverName === 'server-b') {
-          return [{ name: 'tool-b1', serverName: 'server-b' }];
+          return [{ name: 'tool-b1' }];
         }
         return null;
       });
@@ -210,6 +218,30 @@ describe('ToolManager', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('connection lost');
+    });
+
+    it('returns timeout error when tool exceeds timeout', async () => {
+      mockBotConfigManager.getBot.mockReturnValue({
+        name: 'bot1',
+        mcpServers: [{ name: 'server-a' }],
+      });
+      mockMCPService.getToolsFromServer.mockReturnValue([
+        { name: 'slow' },
+      ]);
+
+      // Never resolves. We'll use a mocked withTimeout which will throw.
+      // But we are not mocking withTimeout here directly. So we simulate a slow promise.
+      mockMCPService.executeTool.mockImplementation(() => new Promise(() => {}));
+
+      const resultPromise = toolManager.executeTool('bot1', 'slow', {});
+
+      // Advance timers to trigger the timeout in `withTimeout`.
+      jest.advanceTimersByTime(30005);
+
+      const result = await resultPromise;
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('timed out');
     });
 
     it('passes context to MCP service', async () => {
@@ -278,3 +310,4 @@ describe('ToolManager', () => {
     });
   });
 });
+PATCH

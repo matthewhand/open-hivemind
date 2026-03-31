@@ -1,3 +1,4 @@
+cat << 'PATCH' > tests/unit/services/ToolManager.test.ts
 import { ToolManager } from '@src/services/ToolManager';
 import { MCPService } from '@src/mcp/MCPService';
 import { BotConfigurationManager } from '@src/config/BotConfigurationManager';
@@ -278,3 +279,4 @@ describe('ToolManager', () => {
     });
   });
 });
+PATCH

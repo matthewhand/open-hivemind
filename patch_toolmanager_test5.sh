@@ -1,0 +1,1 @@
+sed -i "s/mockExecuteTool.mockReturnValue(new Promise(() => {}));/mockExecuteTool.mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 60000)));/g" tests/unit/services/ToolManager.test.ts
