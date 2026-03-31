@@ -8,7 +8,9 @@ describe('ToolUsageGuardsManager', () => {
   const testConfigPath = path.join(__dirname, '../../../config/user/test-tool-usage-guards.json');
 
   beforeEach(async () => {
-    manager = ToolUsageGuardsManager.getInstance();
+    // Reset singleton so each test gets a fresh instance
+    (ToolUsageGuardsManager as any).instance = undefined;
+    manager = await ToolUsageGuardsManager.getInstance();
     (manager as any).guardsFilePath = testConfigPath;
     (manager as any).guards.clear();
   });
@@ -23,8 +25,8 @@ describe('ToolUsageGuardsManager', () => {
   });
 
   describe('CRUD Operations', () => {
-    it('should create a new guard', () => {
-      const guard = manager.createGuard({
+    it('should create a new guard', async () => {
+      const guard = await manager.createGuard({
         name: 'Test Guard',
         description: 'Test description',
         toolId: 'test-tool',
@@ -39,8 +41,8 @@ describe('ToolUsageGuardsManager', () => {
       expect(guard.toolId).toBe('test-tool');
     });
 
-    it('should retrieve all guards', () => {
-      manager.createGuard({
+    it('should retrieve all guards', async () => {
+      await manager.createGuard({
         name: 'Guard 1',
         description: 'Test',
         toolId: 'tool-1',
@@ -50,7 +52,7 @@ describe('ToolUsageGuardsManager', () => {
         isActive: true,
       });
 
-      manager.createGuard({
+      await manager.createGuard({
         name: 'Guard 2',
         description: 'Test',
         toolId: 'tool-2',
@@ -64,8 +66,8 @@ describe('ToolUsageGuardsManager', () => {
       expect(guards).toHaveLength(2);
     });
 
-    it('should get guard by ID', () => {
-      const created = manager.createGuard({
+    it('should get guard by ID', async () => {
+      const created = await manager.createGuard({
         name: 'Test Guard',
         description: 'Test',
         toolId: 'test-tool',
@@ -80,8 +82,8 @@ describe('ToolUsageGuardsManager', () => {
       expect(retrieved?.name).toBe('Test Guard');
     });
 
-    it('should update guard', () => {
-      const created = manager.createGuard({
+    it('should update guard', async () => {
+      const created = await manager.createGuard({
         name: 'Original',
         description: 'Test',
         toolId: 'test-tool',
@@ -91,7 +93,7 @@ describe('ToolUsageGuardsManager', () => {
         isActive: true,
       });
 
-      const updated = manager.updateGuard(created.id, {
+      const updated = await manager.updateGuard(created.id, {
         name: 'Updated',
         toolId: 'test-tool',
         guardType: 'owner_only',
@@ -102,8 +104,8 @@ describe('ToolUsageGuardsManager', () => {
       expect(updated?.allowedUsers).toContain('user2');
     });
 
-    it('should delete guard', () => {
-      const created = manager.createGuard({
+    it('should delete guard', async () => {
+      const created = await manager.createGuard({
         name: 'Test Guard',
         description: 'Test',
         toolId: 'test-tool',
@@ -113,13 +115,13 @@ describe('ToolUsageGuardsManager', () => {
         isActive: true,
       });
 
-      const deleted = manager.deleteGuard(created.id);
+      const deleted = await manager.deleteGuard(created.id);
       expect(deleted).toBe(true);
       expect(manager.getGuard(created.id)).toBeUndefined();
     });
 
-    it('should toggle guard active status', () => {
-      const created = manager.createGuard({
+    it('should toggle guard active status', async () => {
+      const created = await manager.createGuard({
         name: 'Test Guard',
         description: 'Test',
         toolId: 'test-tool',
@@ -129,17 +131,17 @@ describe('ToolUsageGuardsManager', () => {
         isActive: true,
       });
 
-      const toggled = manager.toggleGuard(created.id, false);
+      const toggled = await manager.toggleGuard(created.id, false);
       expect(toggled?.isActive).toBe(false);
 
-      const toggledAgain = manager.toggleGuard(created.id, true);
+      const toggledAgain = await manager.toggleGuard(created.id, true);
       expect(toggledAgain?.isActive).toBe(true);
     });
   });
 
   describe('Access Control', () => {
     it('should allow access for owner_only guard type', async () => {
-      manager.createGuard({
+      await manager.createGuard({
         name: 'Owner Guard',
         description: 'Test',
         toolId: 'test-tool',
@@ -155,7 +157,7 @@ describe('ToolUsageGuardsManager', () => {
     });
 
     it('should allow access for user_list guard type', async () => {
-      manager.createGuard({
+      await manager.createGuard({
         name: 'User List Guard',
         description: 'Test',
         toolId: 'test-tool',
@@ -170,7 +172,7 @@ describe('ToolUsageGuardsManager', () => {
     });
 
     it('should allow access for role_based guard type', async () => {
-      manager.createGuard({
+      await manager.createGuard({
         name: 'Role Guard',
         description: 'Test',
         toolId: 'test-tool',
@@ -192,7 +194,7 @@ describe('ToolUsageGuardsManager', () => {
     });
 
     it('should allow access when guard is inactive', async () => {
-      manager.createGuard({
+      await manager.createGuard({
         name: 'Inactive Guard',
         description: 'Test',
         toolId: 'test-tool',
@@ -211,7 +213,7 @@ describe('ToolUsageGuardsManager', () => {
     });
 
     it('should handle multiple guards for same tool (any must pass)', async () => {
-      manager.createGuard({
+      await manager.createGuard({
         name: 'Guard 1',
         description: 'Test',
         toolId: 'test-tool',
@@ -221,7 +223,7 @@ describe('ToolUsageGuardsManager', () => {
         isActive: true,
       });
 
-      manager.createGuard({
+      await manager.createGuard({
         name: 'Guard 2',
         description: 'Test',
         toolId: 'test-tool',
@@ -247,8 +249,8 @@ describe('ToolUsageGuardsManager', () => {
   });
 
   describe('Persistence', () => {
-    it('should save guards to file on create', () => {
-      manager.createGuard({
+    it('should save guards to file on create', async () => {
+      await manager.createGuard({
         name: 'Test Guard',
         description: 'Test',
         toolId: 'test-tool',
@@ -263,9 +265,9 @@ describe('ToolUsageGuardsManager', () => {
       expect(fileExists).toBe(true);
     });
 
-    it('should reload guards from file', () => {
+    it('should reload guards from file', async () => {
       // Create and save a guard (saveGuards is called by createGuard)
-      const created = manager.createGuard({
+      const created = await manager.createGuard({
         name: 'Test Guard',
         description: 'Test',
         toolId: 'test-tool',
@@ -277,7 +279,7 @@ describe('ToolUsageGuardsManager', () => {
 
       // Clear in-memory guards and reload
       (manager as any).guards.clear();
-      (manager as any).loadGuards();
+      await (manager as any).loadGuards();
 
       const loaded = manager.getGuard(created.id);
       expect(loaded).toBeDefined();
@@ -287,7 +289,7 @@ describe('ToolUsageGuardsManager', () => {
 
   describe('Edge Cases', () => {
     it('should handle empty allowed users', async () => {
-      manager.createGuard({
+      await manager.createGuard({
         name: 'Empty Guard',
         description: 'Test',
         toolId: 'test-tool',
@@ -301,7 +303,7 @@ describe('ToolUsageGuardsManager', () => {
     });
 
     it('should handle undefined roles gracefully', async () => {
-      manager.createGuard({
+      await manager.createGuard({
         name: 'Role Guard',
         description: 'Test',
         toolId: 'test-tool',
@@ -317,22 +319,22 @@ describe('ToolUsageGuardsManager', () => {
       expect((await manager.isUserAllowedToUseTool('user1', 'test-tool', [])).allowed).toBe(false);
     });
 
-    it('should return false for non-existent guard ID delete', () => {
-      expect(manager.deleteGuard('non-existent')).toBe(false);
+    it('should return false for non-existent guard ID delete', async () => {
+      expect(await manager.deleteGuard('non-existent')).toBe(false);
     });
 
-    it('should throw for non-existent guard ID update', () => {
-      expect(() =>
+    it('should throw for non-existent guard ID update', async () => {
+      await expect(
         manager.updateGuard('non-existent', {
           name: 'Updated',
           toolId: 'test-tool',
           guardType: 'owner_only',
         })
-      ).toThrow();
+      ).rejects.toThrow();
     });
 
-    it('should throw for non-existent guard ID toggle', () => {
-      expect(() => manager.toggleGuard('non-existent', false)).toThrow();
+    it('should throw for non-existent guard ID toggle', async () => {
+      await expect(manager.toggleGuard('non-existent', false)).rejects.toThrow();
     });
   });
 });

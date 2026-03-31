@@ -212,11 +212,11 @@ describe('IdleResponseManager Integration Tests', () => {
   });
 
   describe('messenger service integration', () => {
-    it('should initialize with test services correctly', () => {
+    it('should initialize with test services correctly', async () => {
       // Reset and initialize with test services
       (IdleResponseManager as any).instance = undefined;
       idleResponseManager = IdleResponseManager.getInstance();
-      idleResponseManager.initialize(['test-service']);
+      await idleResponseManager.initialize(['test-service']);
 
       idleResponseManager.recordInteraction('test-service', 'channel-1', 'msg-1');
       idleResponseManager.recordInteraction('test-service', 'channel-1', 'msg-2');
