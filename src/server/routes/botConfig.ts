@@ -6,6 +6,7 @@ import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import { SecureConfigManager } from '../../config/SecureConfigManager';
 import { UserConfigStore } from '../../config/UserConfigStore';
 import { DatabaseManager } from '../../database/DatabaseManager';
+import { configLimiter } from '../../middleware/rateLimiter';
 import { HTTP_STATUS } from '../../types/constants';
 import { ConfigurationError } from '../../types/errorClasses';
 import { ErrorUtils } from '../../types/errors';
@@ -194,6 +195,7 @@ router.get('/:botId', async (req: Request, res: Response) => {
  */
 router.post(
   '/',
+  configLimiter,
   requireAdmin,
   validateBotConfigCreation,
   sanitizeBotConfig,
@@ -250,6 +252,7 @@ router.post(
  */
 router.put(
   '/:botId',
+  configLimiter,
   requireAdmin,
   validateBotConfigUpdate,
   sanitizeBotConfig,
@@ -372,6 +375,7 @@ router.put(
 
 router.post(
   '/:botId/apply-update',
+  configLimiter,
   requireRole('admin'),
   validateRequest(BotApplyUpdateSchema),
   async (req: AuditedRequest, res: Response) => {
