@@ -7,6 +7,7 @@ import {
   type PersonaCategory,
   type UpdatePersonaRequest,
 } from '../types';
+import { apiService } from '../services/api';
 import Debug from 'debug';
 const debug = Debug('app:client:hooks:usePersonas');
 
@@ -39,11 +40,7 @@ export const usePersonas = (): UsePersonasReturn => {
     const fetchPersonas = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/personas');
-        if (!response.ok) {
-          throw new Error('Failed to fetch personas');
-        }
-        const data = await response.json();
+        const data = await apiService.get<any>('/api/personas');
         const next = Array.isArray(data) ? data : [];
         if (isMounted && next.length > 0) {
           setPersonas(next);

@@ -207,7 +207,7 @@ const GuardsPage: React.FC = () => {
       const ids = Array.from(bulk.selectedIds);
       await Promise.allSettled(
         ids.map(id =>
-          fetch(`${API_BASE}/guard-profiles/${id}`, { method: 'DELETE' })
+          apiService.delete(`${API_BASE}/guard-profiles/${id}`)
         )
       );
       bulk.clearSelection();
@@ -231,11 +231,7 @@ const GuardsPage: React.FC = () => {
         updated.guards.mcpGuard.enabled = enable;
         if (updated.guards.rateLimit) updated.guards.rateLimit.enabled = enable;
         if (updated.guards.contentFilter) updated.guards.contentFilter.enabled = enable;
-        return fetch(`${API_BASE}/guard-profiles/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updated),
-        });
+        return apiService.put(`${API_BASE}/guard-profiles/${id}`, updated);
       });
       await Promise.allSettled(updates);
       bulk.clearSelection();

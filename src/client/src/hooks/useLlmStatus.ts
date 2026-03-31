@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { apiService } from '../services/api';
 
 export interface LlmStatus {
   defaultConfigured: boolean;
@@ -23,15 +24,7 @@ export const useLlmStatus = (): LlmStatusState => {
     try {
       setLoading(true);
       setError(null);
-      const stored = localStorage.getItem('auth_tokens');
-      const accessToken = stored ? (JSON.parse(stored) as { accessToken?: string })?.accessToken : undefined;
-      const response = await fetch('/api/config/llm-status', {
-        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
-      });
-      if (!response.ok) {
-        throw new Error('Failed to load LLM status');
-      }
-      const data = await response.json();
+      const data = await apiService.get<LlmStatus>('/api/config/llm-status');
       setStatus(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load LLM status');

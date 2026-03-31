@@ -11,6 +11,7 @@ import Select from './DaisyUI/Select';
 import { useConfigDiff } from '../hooks/useConfigDiff';
 import { ConfigDiffConfirmDialog } from './ConfigDiffViewer';
 import { useSavedStamp } from '../contexts/SavedStampContext';
+import { apiService } from '../services/api';
 
 interface ToolUsageGuard {
   id: string;
@@ -71,11 +72,7 @@ const ToolUsageGuardsConfig: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch('/api/admin/tool-usage-guards');
-      if (!response.ok) {
-        throw new Error('Failed to fetch tool usage guards');
-      }
-      const data = await response.json();
+      const data: any = await apiService.get('/api/admin/tool-usage-guards');
       setGuards(data.data?.guards || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch tool usage guards');
@@ -134,18 +131,10 @@ const ToolUsageGuardsConfig: React.FC = () => {
         ? `/api/admin/tool-usage-guards/${editingGuard.id}`
         : '/api/admin/tool-usage-guards';
 
-      const method = editingGuard ? 'PUT' : 'POST';
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to ${editingGuard ? 'update' : 'create'} tool usage guard`);
+      if (editingGuard) {
+        await apiService.put(url, formData);
+      } else {
+        await apiService.post(url, formData);
       }
 
       setToast({
@@ -176,13 +165,7 @@ const ToolUsageGuardsConfig: React.FC = () => {
       onConfirm: async () => {
         setConfirmModal(prev => ({ ...prev, isOpen: false }));
         try {
-          const response = await fetch(`/api/admin/tool-usage-guards/${guardId}`, {
-            method: 'DELETE',
-          });
-
-          if (!response.ok) {
-            throw new Error('Failed to delete tool usage guard');
-          }
+          await apiService.delete(`/api/admin/tool-usage-guards/${guardId}`);
 
           setToast({
             show: true,
@@ -203,17 +186,7 @@ const ToolUsageGuardsConfig: React.FC = () => {
 
   const handleToggleActive = async (guardId: string, isActive: boolean) => {
     try {
-      const response = await fetch(`/api/admin/tool-usage-guards/${guardId}/toggle`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ isActive }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update guard status');
-      }
+      await apiService.post(`/api/admin/tool-usage-guards/${guardId}/toggle`, { isActive });
 
       fetchGuards();
     } catch (err) {

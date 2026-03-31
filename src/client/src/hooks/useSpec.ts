@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { SpecDetailResponse } from '../types/spec';
+import { apiService } from '../services/api';
 
 const useSpec = (id: string) => {
   const [spec, setSpec] = useState<SpecDetailResponse | null>(null);
@@ -13,11 +14,7 @@ const useSpec = (id: string) => {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch(`/api/specs/${id}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch spec');
-        }
-        const json = await response.json();
+        const json = await apiService.get<any>(`/api/specs/${id}`);
         if (json.success && json.data) {
           setSpec(json.data);
         } else {

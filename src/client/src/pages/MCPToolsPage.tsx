@@ -65,8 +65,7 @@ const MCPToolsPage: React.FC = () => {
     const tool = tools.find(t => t.id === toolId);
     if (!tool) return;
     try {
-      const res = await fetch(`/api/mcp/tools/${toolId}/toggle`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: !tool.enabled, serverName: tool.serverName, toolName: tool.name }) });
-      if (!res.ok) throw new Error('Failed to update tool');
+      await apiService.post(`/api/mcp/tools/${toolId}/toggle`, { enabled: !tool.enabled, serverName: tool.serverName, toolName: tool.name });
       setTools(prev => prev.map(t => t.id === toolId ? { ...t, enabled: !tool.enabled } : t));
     } catch { setAlert({ type: 'error', message: 'Failed to update tool' }); }
   };
@@ -105,7 +104,7 @@ const MCPToolsPage: React.FC = () => {
 
   const fetchHistory = async () => {
     setLoadingHistory(true);
-    try { const res = await fetch('/api/mcp/tools/history?limit=50'); if (res.ok) setExecutionHistory((await res.json()).data || []); }
+    try { const json: any = await apiService.get('/api/mcp/tools/history?limit=50'); setExecutionHistory(json.data || []); }
     catch { setAlert({ type: 'error', message: 'Failed to load history' }); }
     finally { setLoadingHistory(false); }
   };

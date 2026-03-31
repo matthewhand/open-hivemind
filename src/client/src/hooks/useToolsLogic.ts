@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocalStorage } from './useLocalStorage';
+import { apiService } from '../services/api';
 import Debug from 'debug';
 
 const debug = Debug('app:client:hooks:useToolsLogic');
@@ -71,16 +72,10 @@ export const useToolsLogic = () => {
   useEffect(() => {
     const fetchTools = async () => {
       try {
-        const res = await fetch('/api/mcp/servers');
-        if (!res.ok) {
-          throw new Error('Failed to load tools from server');
-        }
-
-        const json = await res.json();
+        const json: any = await apiService.get('/api/mcp/servers');
         const servers = json.servers || [];
 
-        const prefsRes = await fetch('/api/mcp/tools/preferences');
-        const prefsJson = prefsRes.ok ? await prefsRes.json() : { success: true, data: {} };
+        const prefsJson: any = await apiService.get('/api/mcp/tools/preferences').catch(() => ({ success: true, data: {} }));
         const preferences = prefsJson.data || {};
 
         const allTools: MCPTool[] = [];
@@ -152,21 +147,11 @@ export const useToolsLogic = () => {
 
       const newEnabledState = !tool.enabled;
 
-      const res = await fetch(`/api/mcp/tools/${toolId}/toggle`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          enabled: newEnabledState,
-          serverName: tool.serverName,
-          toolName: tool.name,
-        }),
+      await apiService.post(`/api/mcp/tools/${toolId}/toggle`, {
+        enabled: newEnabledState,
+        serverName: tool.serverName,
+        toolName: tool.name,
       });
-
-      if (!res.ok) {
-        throw new Error('Failed to update tool status on server');
-      }
 
       setTools(prev => prev.map(t =>
         t.id === toolId
@@ -204,13 +189,8 @@ export const useToolsLogic = () => {
   const fetchExecutionHistory = async () => {
     setLoadingHistory(true);
     try {
-      const res = await fetch('/api/mcp/tools/history?limit=50');
-      if (res.ok) {
-        const json = await res.json();
-        setExecutionHistory(json.data || []);
-      } else {
-        setAlert({ type: 'error', message: 'Failed to load execution history' });
-      }
+      const json: any = await apiService.get('/api/mcp/tools/history?limit=50');
+      setExecutionHistory(json.data || []);
     } catch (error) {
       setAlert({ type: 'error', message: 'Failed to load execution history' });
     } finally {

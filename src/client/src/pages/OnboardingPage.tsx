@@ -9,6 +9,7 @@ import Input from '../components/DaisyUI/Input';
 import Button from '../components/DaisyUI/Button';
 import ProgressBar from '../components/DaisyUI/ProgressBar';
 import StepWizard from '../components/DaisyUI/StepWizard';
+import { apiService } from '../services/api';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -414,11 +415,8 @@ const OnboardingPage: React.FC = () => {
   useEffect(() => {
     const fetchProfiles = async () => {
       try {
-        const res = await fetch('/api/config/llm-profiles');
-        if (res.ok) {
-          const data = await res.json();
-          setLlmProfiles(data?.llm || data?.profiles?.llm || data?.data || []);
-        }
+        const data: any = await apiService.get('/api/config/llm-profiles');
+        setLlmProfiles(data?.llm || data?.profiles?.llm || data?.data || []);
       } catch {
         // Non-critical, ignore
       }
@@ -429,11 +427,7 @@ const OnboardingPage: React.FC = () => {
   // Persist step progress to backend
   const syncStep = useCallback(async (s: number) => {
     try {
-      await fetch('/api/onboarding/step', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ step: s }),
-      });
+      await apiService.post('/api/onboarding/step', { step: s });
     } catch {
       // Best-effort, don't block navigation
     }
@@ -460,36 +454,28 @@ const OnboardingPage: React.FC = () => {
     try {
       // Save LLM config if provided
       if (llmProvider && apiKey) {
-        await fetch('/api/config/global', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            configName: llmProvider,
-            updates: {
-              [`${llmProvider}.apiKey`]: apiKey,
-              ...(model ? { [`${llmProvider}.model`]: model } : {}),
-            },
-          }),
+        await apiService.put('/api/config/global', {
+          configName: llmProvider,
+          updates: {
+            [`${llmProvider}.apiKey`]: apiKey,
+            ...(model ? { [`${llmProvider}.model`]: model } : {}),
+          },
         });
       }
 
       // Create bot if name provided
       if (botName.trim()) {
-        await fetch('/api/bots', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: botName,
-            description: persona || 'Created during onboarding',
-            messageProvider: messenger || 'discord',
-            ...(llmProvider ? { llmProvider } : {}),
-            persona: 'default',
-          }),
+        await apiService.post('/api/bots', {
+          name: botName,
+          description: persona || 'Created during onboarding',
+          messageProvider: messenger || 'discord',
+          ...(llmProvider ? { llmProvider } : {}),
+          persona: 'default',
         });
       }
 
       // Mark onboarding complete
-      await fetch('/api/onboarding/complete', { method: 'POST' });
+      await apiService.post('/api/onboarding/complete');
 
       navigate('/admin/overview');
     } catch (err) {
@@ -501,7 +487,7 @@ const OnboardingPage: React.FC = () => {
 
   const handleSkipAll = async () => {
     try {
-      await fetch('/api/onboarding/complete', { method: 'POST' });
+      await apiService.post('/api/onboarding/complete');
     } catch {
       // Best-effort
     }

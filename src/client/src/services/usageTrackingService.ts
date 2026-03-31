@@ -1,3 +1,4 @@
+import { apiService } from './api';
 import Debug from 'debug';
 
 const debug = Debug('app:client:services:usageTrackingService');
@@ -42,11 +43,7 @@ class UsageTrackingService {
 
   async getAllToolMetrics(): Promise<ToolUsageMetrics[]> {
     try {
-      const response = await fetch(`${this.baseUrl}/tools`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch tool metrics');
-      }
-      const data = await response.json();
+      const data = await apiService.get<any>(`${this.baseUrl}/tools`);
       return data.data || [];
     } catch (error) {
       debug('Error fetching tool metrics:', error);
@@ -56,14 +53,7 @@ class UsageTrackingService {
 
   async getToolMetrics(toolId: string): Promise<ToolUsageMetrics | null> {
     try {
-      const response = await fetch(`${this.baseUrl}/tools/${encodeURIComponent(toolId)}`);
-      if (!response.ok) {
-        if (response.status === 404) {
-          return null;
-        }
-        throw new Error('Failed to fetch tool metrics');
-      }
-      const data = await response.json();
+      const data = await apiService.get<any>(`${this.baseUrl}/tools/${encodeURIComponent(toolId)}`);
       return data.data || null;
     } catch (error) {
       debug('Error fetching tool metrics:', error);
@@ -73,11 +63,7 @@ class UsageTrackingService {
 
   async getAllProviderMetrics(): Promise<ProviderUsageMetrics[]> {
     try {
-      const response = await fetch(`${this.baseUrl}/providers`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch provider metrics');
-      }
-      const data = await response.json();
+      const data = await apiService.get<any>(`${this.baseUrl}/providers`);
       return data.data || [];
     } catch (error) {
       debug('Error fetching provider metrics:', error);
@@ -87,14 +73,7 @@ class UsageTrackingService {
 
   async getProviderMetrics(serverName: string): Promise<ProviderUsageMetrics | null> {
     try {
-      const response = await fetch(`${this.baseUrl}/providers/${encodeURIComponent(serverName)}`);
-      if (!response.ok) {
-        if (response.status === 404) {
-          return null;
-        }
-        throw new Error('Failed to fetch provider metrics');
-      }
-      const data = await response.json();
+      const data = await apiService.get<any>(`${this.baseUrl}/providers/${encodeURIComponent(serverName)}`);
       return data.data || null;
     } catch (error) {
       debug('Error fetching provider metrics:', error);
@@ -104,11 +83,7 @@ class UsageTrackingService {
 
   async getProviderToolMetrics(serverName: string): Promise<ToolUsageMetrics[]> {
     try {
-      const response = await fetch(`${this.baseUrl}/providers/${encodeURIComponent(serverName)}/tools`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch provider tool metrics');
-      }
-      const data = await response.json();
+      const data = await apiService.get<any>(`${this.baseUrl}/providers/${encodeURIComponent(serverName)}/tools`);
       return data.data || [];
     } catch (error) {
       debug('Error fetching provider tool metrics:', error);
@@ -118,11 +93,7 @@ class UsageTrackingService {
 
   async getTopTools(limit: number = 10): Promise<ToolUsageMetrics[]> {
     try {
-      const response = await fetch(`${this.baseUrl}/top-tools?limit=${limit}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch top tools');
-      }
-      const data = await response.json();
+      const data = await apiService.get<any>(`${this.baseUrl}/top-tools?limit=${limit}`);
       return data.data || [];
     } catch (error) {
       debug('Error fetching top tools:', error);
@@ -132,11 +103,7 @@ class UsageTrackingService {
 
   async getTopProviders(limit: number = 10): Promise<ProviderUsageMetrics[]> {
     try {
-      const response = await fetch(`${this.baseUrl}/top-providers?limit=${limit}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch top providers');
-      }
-      const data = await response.json();
+      const data = await apiService.get<any>(`${this.baseUrl}/top-providers?limit=${limit}`);
       return data.data || [];
     } catch (error) {
       debug('Error fetching top providers:', error);
@@ -146,11 +113,7 @@ class UsageTrackingService {
 
   async getRecentTools(limit: number = 10): Promise<ToolUsageMetrics[]> {
     try {
-      const response = await fetch(`${this.baseUrl}/recent-tools?limit=${limit}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch recent tools');
-      }
-      const data = await response.json();
+      const data = await apiService.get<any>(`${this.baseUrl}/recent-tools?limit=${limit}`);
       return data.data || [];
     } catch (error) {
       debug('Error fetching recent tools:', error);
@@ -160,11 +123,7 @@ class UsageTrackingService {
 
   async getAggregateStats(): Promise<AggregateStats | null> {
     try {
-      const response = await fetch(`${this.baseUrl}/stats`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch aggregate stats');
-      }
-      const data = await response.json();
+      const data = await apiService.get<any>(`${this.baseUrl}/stats`);
       return data.data || null;
     } catch (error) {
       debug('Error fetching aggregate stats:', error);
@@ -174,12 +133,7 @@ class UsageTrackingService {
 
   async clearAllData(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseUrl}/clear`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) {
-        throw new Error('Failed to clear usage data');
-      }
+      await apiService.delete(`${this.baseUrl}/clear`);
       return true;
     } catch (error) {
       debug('Error clearing usage data:', error);

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { useState, useEffect } from 'react';
+import { apiService } from '../services/api';
 
 // ... existing interface
 interface HealthBadges {
@@ -21,16 +22,16 @@ export const useHealthBadges = (): HealthBadges => {
         const fetchHealthData = async () => {
             try {
                 // Fetch both health and LLM status in parallel
-                const [healthRes, llmRes] = await Promise.allSettled([
-                    fetch('/api/health/detailed'),
-                    fetch('/api/config/llm-status')
-                ]).then(results => results.map(r => r.status === 'fulfilled' ? r.value : { ok: false } as Response));
+                const [healthResult, llmResult] = await Promise.allSettled([
+                    apiService.get<any>('/api/health/detailed'),
+                    apiService.get<any>('/api/config/llm-status')
+                ]);
 
                 let healthState = badges;
 
                 // Process Health
-                if (healthRes.ok) {
-                    const data = await healthRes.json();
+                if (healthResult.status === 'fulfilled') {
+                    const data = healthResult.value;
                     const status = data.status as 'healthy' | 'degraded' | 'unhealthy';
                     let badge: string | null = null;
                     if (status === 'unhealthy') { badge = '!'; }
@@ -40,20 +41,20 @@ export const useHealthBadges = (): HealthBadges => {
                 }
 
                 // Process LLM Config
-                if (llmRes.ok) {
-                    const llmData = await llmRes.json();
+                if (llmResult.status === 'fulfilled') {
+                    const llmData = llmResult.value;
                     // Warning if no default is configured AND no profiles exist (we rely on defaultConfigured flag)
                     // The API returns defaultConfigured true if env var is set.
                     // We also need to check if any profiles exist, but the status endpoint currently returns:
                     // { defaultConfigured, activeProvider, libraryStatus }
-                    // It doesn't explicitly talk about profiles count, but if defaultConfigured is false, 
+                    // It doesn't explicitly talk about profiles count, but if defaultConfigured is false,
                     // and we haven't checked profiles, strictly speaking we might miss if there are *only* profiles but no default.
-                    // However, we can assume for now that if defaultConfigured is false, we should WARN, 
+                    // However, we can assume for now that if defaultConfigured is false, we should WARN,
                     // or ideally we update the endpoint to tell us if "valid configuration exists".
                     // For now, let's just warn if defaultConfigured is false, as that's the minimal safe check.
                     // Update: Better to check if we are truly unconfigured.
                     // Actually, let's fetch profiles count too or update the status endpoint.
-                    // For speed, let's assume defaultConfigured=false is reason enough to warn, 
+                    // For speed, let's assume defaultConfigured=false is reason enough to warn,
                     // OR we can make a lightweight call to /profiles if needed.
                     // Let's stick to: Warn if defaultConfigured is false.
 

@@ -7,6 +7,7 @@ import SettingsMessaging from '../components/Settings/SettingsMessaging';
 import SettingsLLM from '../components/Settings/SettingsLLM';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import { Cog, RotateCcw } from 'lucide-react';
+import { apiService } from '../services/api';
 
 const SystemSettings: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -15,7 +16,7 @@ const SystemSettings: React.FC = () => {
 
   const handleRestartWizard = async () => {
     try {
-      await fetch('/api/onboarding/reset', { method: 'POST' });
+      await apiService.post('/api/onboarding/reset');
     } catch {
       // best-effort
     }
