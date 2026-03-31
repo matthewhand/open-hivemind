@@ -88,10 +88,10 @@ import { getToolProfileByKey } from '../../../src/config/toolProfiles';
 
 // We import the module-under-test path so tests fail until the real class exists.
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const modulePath = '../../../src/config/UnifiedConfigStore';
+const modulePath = '../../../src/config/ConfigStore';
 
 // Helper: dynamically import so singleton can be reset between tests.
-function loadStore(): typeof import('../../../src/config/UnifiedConfigStore') {
+function loadStore(): typeof import('../../../src/config/ConfigStore') {
   return require(modulePath);
 }
 

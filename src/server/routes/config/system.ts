@@ -156,7 +156,7 @@ router.get('/sources', async (req, res) => {
 // GET /api/config/sources - Config key → source layer mapping via ConfigStore
 router.get('/sources', (req, res) => {
   try {
-    const { ConfigStore } = require('../../../config/UnifiedConfigStore');
+    const { ConfigStore } = require('../../../config/ConfigStore');
     const store = ConfigStore.getInstance();
     const sources = store.getAllSources();
     const layers: string[] = ['env', 'secure', 'provider', 'user', 'profile', 'default'];
@@ -173,7 +173,7 @@ router.get('/sources', (req, res) => {
 // GET /api/config/source/:key - Source layer for a single config key
 router.get('/source/:key', (req, res) => {
   try {
-    const { ConfigStore } = require('../../../config/UnifiedConfigStore');
+    const { ConfigStore } = require('../../../config/ConfigStore');
     const store = ConfigStore.getInstance();
     const { key } = req.params;
     const source = store.getSource(key);
