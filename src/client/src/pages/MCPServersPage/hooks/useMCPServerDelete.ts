@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getAuthHeaders } from '../../../utils/api';
+import { apiService } from '../../../services/api';
 
 export const useMCPServerDelete = (
   bulk: any,
@@ -19,10 +19,7 @@ export const useMCPServerDelete = (
     try {
       await Promise.allSettled(
         Array.from(bulk.selectedIds).map((id) =>
-          fetch(`/api/admin/mcp-servers/${encodeURIComponent(id)}`, {
-            method: 'DELETE',
-            headers: getAuthHeaders(),
-          })
+          apiService.delete(`/api/admin/mcp-servers/${encodeURIComponent(String(id))}`)
         )
       );
       bulk.clearSelection();
