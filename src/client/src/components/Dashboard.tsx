@@ -7,6 +7,37 @@ import { SkeletonCard } from './DaisyUI/Skeleton';
 import DashboardBotCard from './DashboardBotCard';
 import QuickActions from './QuickActions';
 
+const getStatusColor = (botStatus: string) => {
+  switch (botStatus.toLowerCase()) {
+    case 'active':
+      return 'success';
+    case 'connecting':
+      return 'warning';
+    case 'inactive':
+    case 'unavailable':
+      return 'error';
+    case 'error':
+      return 'error';
+    default:
+      return 'info';
+  }
+};
+
+const getProviderIcon = (provider: string) => {
+  switch (provider.toLowerCase()) {
+    case 'discord':
+      return '💬';
+    case 'slack':
+      return '📢';
+    case 'telegram':
+      return '✈️';
+    case 'mattermost':
+      return '💼';
+    default:
+      return '🤖';
+  }
+};
+
 const Dashboard: React.FC = () => {
   const [bots, setBots] = useState<Bot[]>([]);
   const [status, setStatus] = useState<StatusResponse | null>(null);
@@ -39,37 +70,6 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
-
-  const getStatusColor = useCallback((botStatus: string) => {
-    switch (botStatus.toLowerCase()) {
-      case 'active':
-        return 'success';
-      case 'connecting':
-        return 'warning';
-      case 'inactive':
-      case 'unavailable':
-        return 'error';
-      case 'error':
-        return 'error';
-      default:
-        return 'info';
-    }
-  }, []);
-
-  const getProviderIcon = useCallback((provider: string) => {
-    switch (provider.toLowerCase()) {
-      case 'discord':
-        return '💬';
-      case 'slack':
-        return '📢';
-      case 'telegram':
-        return '✈️';
-      case 'mattermost':
-        return '💼';
-      default:
-        return '🤖';
-    }
-  }, []);
 
   const handleRatingChange = useCallback((botName: string, rating: number) => {
     setBotRatings((prev) => ({ ...prev, [botName]: rating }));
