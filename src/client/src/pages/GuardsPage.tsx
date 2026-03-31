@@ -14,6 +14,7 @@ import Input from '../components/DaisyUI/Input';
 import Textarea from '../components/DaisyUI/Textarea';
 import Select from '../components/DaisyUI/Select';
 import Toggle from '../components/DaisyUI/Toggle';
+import Radio from '../components/DaisyUI/Radio';
 import useUrlParams from '../hooks/useUrlParams';
 import { useBulkSelection } from '../hooks/useBulkSelection';
 import BulkActionBar from '../components/BulkActionBar';
@@ -574,17 +575,15 @@ const GuardsPage: React.FC = () => {
                   <label className="label"><span className="label-text">Strictness</span></label>
                   <div className="flex gap-4">
                     {['low', 'medium', 'high'].map(level => (
-                      <label key={level} className="label cursor-pointer gap-2">
-                        <input
-                          type="radio"
-                          name="strictness"
-                          className="radio radio-error"
-                          checked={editingProfile.guards.contentFilter?.strictness === level}
-                          onChange={() => updateGuard('contentFilter', { strictness: level })}
-                          disabled={!editingProfile.guards.contentFilter?.enabled}
-                        />
-                        <span className="label-text capitalize">{level}</span>
-                      </label>
+                      <Radio
+                        key={level}
+                        name="strictness"
+                        label={level.charAt(0).toUpperCase() + level.slice(1)}
+                        color="error"
+                        checked={editingProfile.guards.contentFilter?.strictness === level}
+                        onChange={() => updateGuard('contentFilter', { strictness: level })}
+                        disabled={!editingProfile.guards.contentFilter?.enabled}
+                      />
                     ))}
                   </div>
                 </div>
