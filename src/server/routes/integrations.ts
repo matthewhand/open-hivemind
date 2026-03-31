@@ -2,6 +2,7 @@ import Debug from 'debug';
 import { Router } from 'express';
 import ProviderConfigManager from '@src/config/ProviderConfigManager';
 import { authenticateToken, requireRole } from '@src/server/middleware/auth';
+import { configLimiter } from '@src/middleware/rateLimiter';
 import { HTTP_STATUS } from '../../types/constants';
 import {
   CreateIntegrationSchema,
@@ -60,7 +61,7 @@ router.get('/:id', validateRequest(IntegrationIdParamSchema), (req, res) => {
  * POST /api/integrations
  * Create new provider instance
  */
-router.post('/', validateRequest(CreateIntegrationSchema), (req, res) => {
+router.post('/', configLimiter, validateRequest(CreateIntegrationSchema), (req, res) => {
   try {
     const { type, category, name, config, enabled } = req.body;
 
@@ -86,7 +87,7 @@ router.post('/', validateRequest(CreateIntegrationSchema), (req, res) => {
  * PUT /api/integrations/:id
  * Update provider instance
  */
-router.put('/:id', validateRequest(UpdateIntegrationSchema), (req, res) => {
+router.put('/:id', configLimiter, validateRequest(UpdateIntegrationSchema), (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
@@ -113,7 +114,7 @@ router.put('/:id', validateRequest(UpdateIntegrationSchema), (req, res) => {
  * DELETE /api/integrations/:id
  * Delete provider instance
  */
-router.delete('/:id', validateRequest(IntegrationIdParamSchema), (req, res) => {
+router.delete('/:id', configLimiter, validateRequest(IntegrationIdParamSchema), (req, res) => {
   try {
     const success = providerManager.deleteProvider(req.params.id);
     if (!success) {

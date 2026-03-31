@@ -683,12 +683,19 @@ export class WebSocketService {
     });
   }
 
-  public broadcastConfigChange(): void {
+  public broadcastConfigChange(detail?: {
+    type?: string;
+    action?: string;
+    key?: string;
+  }): void {
     if (!this.io) {
       return;
     }
-    debug('Broadcasting configuration change');
-    this.io.emit('config_changed', { timestamp: new Date().toISOString() });
+    debug('Broadcasting configuration change', detail);
+    this.io.emit('config_changed', {
+      timestamp: new Date().toISOString(),
+      ...(detail || {}),
+    });
 
     // Send updated data to all clients
     this.io.sockets.sockets.forEach((socket) => {

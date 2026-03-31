@@ -12,6 +12,13 @@ import { logger } from '../utils/logger';
 
 type BotStat = { name: string; messageCount: number; errorCount: number };
 
+interface ConfigChangedEvent {
+  timestamp: string;
+  type?: string;
+  action?: string;
+  key?: string;
+}
+
 interface WebSocketContextType {
   socket: Socket | null;
   isConnected: boolean;
@@ -19,6 +26,10 @@ interface WebSocketContextType {
   alerts: AlertEvent[];
   performanceMetrics: PerformanceMetric[];
   botStats: BotStat[];
+  /** Monotonically increasing counter that bumps on every config_changed WS event. */
+  configVersion: number;
+  /** Detail from the most recent config_changed event, if any. */
+  lastConfigChange: ConfigChangedEvent | null;
   connect: () => void;
   disconnect: () => void;
 }
@@ -35,6 +46,8 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [alerts, setAlerts] = useState<AlertEvent[]>([]);
   const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetric[]>([]);
   const [botStats, setBotStats] = useState<BotStat[]>([]);
+  const [configVersion, setConfigVersion] = useState(0);
+  const [lastConfigChange, setLastConfigChange] = useState<ConfigChangedEvent | null>(null);
 
   const connect = () => {
     if (socket?.connected) { return; }
@@ -159,6 +172,13 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
       logger.info('System metrics update:', data);
     });
 
+    // Config change notifications
+    newSocket.on('config_changed', (data: ConfigChangedEvent) => {
+      logger.info('Config changed via WebSocket:', data);
+      setConfigVersion((v) => v + 1);
+      setLastConfigChange(data);
+    });
+
     // Error handling
     newSocket.on('error', (error) => {
       logger.error('WebSocket error:', error);
@@ -188,6 +208,8 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
     alerts,
     performanceMetrics,
     botStats,
+    configVersion,
+    lastConfigChange,
     connect,
     disconnect,
   };
