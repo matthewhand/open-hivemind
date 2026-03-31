@@ -117,6 +117,106 @@
       }
     }
   },
+  "/api/config/unified-sources": {
+    "get": {
+      "summary": "Get config key to source layer mapping via UnifiedConfigStore",
+      "tags": [
+        "Configuration"
+      ],
+      "responses": {
+        "200": {
+          "description": "Map of all config keys to their source layers",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "success": {
+                    "type": "boolean"
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "sources": {
+                        "type": "object",
+                        "description": "Map of config key names to their source layer (e.g. env, user, default)",
+                        "additionalProperties": {
+                          "type": "string"
+                        }
+                      },
+                      "layers": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "Ordered list of config layers: env, secure, provider, user, profile, default"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    }
+  },
+  "/api/config/source/{key}": {
+    "get": {
+      "summary": "Get source layer for a single config key",
+      "tags": [
+        "Configuration"
+      ],
+      "parameters": [
+        {
+          "name": "key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "The config key to look up"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Source layer for the key",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "success": {
+                    "type": "boolean"
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "key": {
+                        "type": "string"
+                      },
+                      "source": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Key not found in any config layer"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    }
+  },
   "/webui/api/config/message-profiles": {
     "get": {
       "summary": "List all message profiles",

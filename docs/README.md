@@ -22,6 +22,10 @@ This directory contains all documentation for Open Hivemind, organized by topic.
 - [Maintenance Guide](operations/maintenance.md)
 - [Security Incident Response](operations/security.md)
 
+## API Reference
+- [Pipeline & Config API](api/pipeline-api.md) - Config source introspection, health observability, and pipeline trace endpoints
+- [LLM Models API](api/llm-models-endpoint.md) - LLM provider model listing with pricing and capabilities
+
 ## 📚 Reference & Planning
 - [Package Specifications & Features](reference/package.md)
 - [Project TODOs](reference/todo.md)
