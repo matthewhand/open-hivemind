@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import SystemManagement from '../SystemManagement';
 import { apiService } from '../../services/api';
 import * as WebSocketContext from '../../contexts/WebSocketContext';
+import { render as customRender } from '../../test-utils';
 
 // Mock apiService
 jest.mock('../../services/api', () => ({
@@ -77,13 +78,13 @@ describe('SystemManagement', () => {
   });
 
   it('renders system management page', async () => {
-    render(<SystemManagement />);
+    customRender(<SystemManagement />);
     expect(screen.getByText('System Management')).toBeInTheDocument();
     await waitFor(() => expect(apiService.getGlobalConfig).toHaveBeenCalled());
   });
 
   it('handles backup creation with encryption', async () => {
-    render(<SystemManagement />);
+    customRender(<SystemManagement />);
 
     // Find create backup button
     const createButton = screen.getByRole('button', { name: /Create Backup/i });
@@ -114,7 +115,7 @@ describe('SystemManagement', () => {
   });
 
   it('handles performance tab interactions', async () => {
-    render(<SystemManagement />);
+    customRender(<SystemManagement />);
 
     // Click Performance Tuning tab
     const perfTab = screen.getByText('Performance Tuning');
@@ -129,6 +130,10 @@ describe('SystemManagement', () => {
     // Test clear cache
     const clearButton = screen.getByText('Clear System Cache');
     fireEvent.click(clearButton);
+
+    // Find confirm button in the confirmation modal
+    const confirmButton = await screen.findByRole('button', { name: /Confirm/i });
+    fireEvent.click(confirmButton);
 
     await waitFor(() => expect(apiService.clearCache).toHaveBeenCalled());
   });

@@ -8,6 +8,7 @@ import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import { useSuccessToast, useErrorToast, useWarningToast } from '../components/DaisyUI/ToastNotification';
 import DataTable from '../components/DaisyUI/DataTable';
 import type { RDVColumn, RowAction } from '../components/DaisyUI/DataTable';
+import RangeSlider from '../components/DaisyUI/RangeSlider';
 
 interface SystemConfig {
   refreshInterval: number;
@@ -486,73 +487,61 @@ const SystemManagement: React.FC = () => {
               <div className="space-y-4">
                 <h4 className="text-lg font-semibold">Alert Thresholds</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text">CPU Usage Threshold (%)</span>
-                    </label>
-                    <input
-                      type="number"
-                      className="input input-bordered"
-                      value={systemConfig.alertThresholds.cpu}
-                      onChange={(e) => handleConfigUpdate('alertThresholds', {
-                        ...systemConfig.alertThresholds,
-                        cpu: Number(e.target.value),
-                      })}
-                      min="50"
-                      max="95"
-                    />
-                  </div>
+                  <RangeSlider
+                    label="CPU Usage Threshold (%)"
+                    min={50}
+                    max={95}
+                    step={1}
+                    value={systemConfig.alertThresholds.cpu}
+                    onChange={(value) => handleConfigUpdate('alertThresholds', {
+                      ...systemConfig.alertThresholds,
+                      cpu: value,
+                    })}
+                    variant="warning"
+                    valueFormatter={(val) => `${val}%`}
+                  />
 
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text">Memory Usage Threshold (%)</span>
-                    </label>
-                    <input
-                      type="number"
-                      className="input input-bordered"
-                      value={systemConfig.alertThresholds.memory}
-                      onChange={(e) => handleConfigUpdate('alertThresholds', {
-                        ...systemConfig.alertThresholds,
-                        memory: Number(e.target.value),
-                      })}
-                      min="50"
-                      max="95"
-                    />
-                  </div>
+                  <RangeSlider
+                    label="Memory Usage Threshold (%)"
+                    min={50}
+                    max={95}
+                    step={1}
+                    value={systemConfig.alertThresholds.memory}
+                    onChange={(value) => handleConfigUpdate('alertThresholds', {
+                      ...systemConfig.alertThresholds,
+                      memory: value,
+                    })}
+                    variant="warning"
+                    valueFormatter={(val) => `${val}%`}
+                  />
 
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text">Disk Usage Threshold (%)</span>
-                    </label>
-                    <input
-                      type="number"
-                      className="input input-bordered"
-                      value={systemConfig.alertThresholds.disk}
-                      onChange={(e) => handleConfigUpdate('alertThresholds', {
-                        ...systemConfig.alertThresholds,
-                        disk: Number(e.target.value),
-                      })}
-                      min="50"
-                      max="95"
-                    />
-                  </div>
+                  <RangeSlider
+                    label="Disk Usage Threshold (%)"
+                    min={50}
+                    max={95}
+                    step={1}
+                    value={systemConfig.alertThresholds.disk}
+                    onChange={(value) => handleConfigUpdate('alertThresholds', {
+                      ...systemConfig.alertThresholds,
+                      disk: value,
+                    })}
+                    variant="warning"
+                    valueFormatter={(val) => `${val}%`}
+                  />
 
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text">Response Time Threshold (ms)</span>
-                    </label>
-                    <input
-                      type="number"
-                      className="input input-bordered"
-                      value={systemConfig.alertThresholds.responseTime}
-                      onChange={(e) => handleConfigUpdate('alertThresholds', {
-                        ...systemConfig.alertThresholds,
-                        responseTime: Number(e.target.value),
-                      })}
-                      min="100"
-                      max="5000"
-                    />
-                  </div>
+                  <RangeSlider
+                    label="Response Time Threshold (ms)"
+                    min={100}
+                    max={5000}
+                    step={100}
+                    value={systemConfig.alertThresholds.responseTime}
+                    onChange={(value) => handleConfigUpdate('alertThresholds', {
+                      ...systemConfig.alertThresholds,
+                      responseTime: value,
+                    })}
+                    variant="warning"
+                    valueFormatter={(val) => `${val}ms`}
+                  />
                 </div>
               </div>
             </div>

@@ -2,11 +2,17 @@
 import React, { type ReactElement } from 'react';
 import { render, type RenderOptions } from '@testing-library/react';
 
+import { ToastProvider } from './components/DaisyUI/ToastNotification';
+
 // Custom render function that includes basic providers
 const AllTheProviders: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  return <>{children}</>;
+  return (
+    <ToastProvider>
+      {children}
+    </ToastProvider>
+  );
 };
 
 const customRender = (
