@@ -100,7 +100,9 @@ router.post('/generate', validateRequest(ChatGenerateSchema), async (req, res) =
       const pluginName = `llm-${profile.provider.toLowerCase()}`;
       const mod = await loadPlugin(pluginName);
       instance = instantiateLlmProvider(mod, profile.config);
-      debug(`Initialized LLM provider via plugin for AI Assist: ${profile.provider} (${profile.name})`);
+      debug(
+        `Initialized LLM provider via plugin for AI Assist: ${profile.provider} (${profile.name})`
+      );
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
       debug(`Failed to initialize provider ${profile.name}:`, hivemindError);
