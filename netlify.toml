@@ -1,26 +1,9 @@
 [build]
   command = "npm run build:netlify"
-<<<<<<< HEAD
-  # Only build on main branch to avoid unnecessary builds on feature branches
   ignore = "test \"$BRANCH\" != \"main\""
   functions = "dist/netlify/functions"
   publish = "dist/client"
-=======
-  functions = "dist/netlify/functions"
-  publish = "dist/client"
   ignore = "test \"$BRANCH\" != \"main\""
->>>>>>> 020fe7f2 (fix(ci): fix invalid netlify.toml config duplicate key)
 
 [dev]
   command = "npm run dev"
-
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/server"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200

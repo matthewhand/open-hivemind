@@ -28,8 +28,7 @@ function buildSpec(baseUrl: string) {
     info: {
       title: 'Open-Hivemind WebUI API',
       version: '1.0.0',
-      description:
-        'Endpoints used by the Open-Hivemind WebUI for configuration, monitoring, agents, MCP servers, and authentication.',
+      description: 'Endpoints used by the Open-Hivemind WebUI for configuration, monitoring, agents, MCP servers, and authentication.',
     },
     servers: [
       {
@@ -72,75 +71,6 @@ function buildSpec(baseUrl: string) {
           },
           responses: {
             200: { description: 'Operation result' },
-          },
-        },
-      },
-      '/webui/api/config/llm-profiles': {
-        get: {
-          summary: 'List all LLM profiles',
-          tags: ['Configuration'],
-          responses: {
-            200: { description: 'List of LLM profiles' },
-          },
-        },
-      },
-      '/webui/api/config/llm-profiles/{key}': {
-        put: {
-          summary: 'Update an LLM profile',
-          tags: ['Configuration'],
-          parameters: [pathParam('key', 'LLM profile key')],
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    name: { type: 'string' },
-                    provider: { type: 'string' },
-                  },
-                  required: ['name', 'provider'],
-                },
-              },
-            },
-          },
-          responses: {
-            200: { description: 'Profile updated successfully' },
-            404: { description: 'Profile not found' },
-          },
-        },
-      },
-      '/webui/api/config/message-profiles': {
-        get: {
-          summary: 'List all message profiles',
-          tags: ['Configuration'],
-          responses: {
-            200: { description: 'List of message profiles' },
-          },
-        },
-        post: {
-          summary: 'Create a new message profile',
-          tags: ['Configuration'],
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    key: { type: 'string' },
-                    name: { type: 'string' },
-                    provider: { type: 'string' },
-                  },
-                  required: ['key', 'name', 'provider'],
-                },
-              },
-            },
-          },
-          responses: {
-            201: { description: 'Profile created successfully' },
-            400: { description: 'Invalid request' },
-            409: { description: 'Profile already exists' },
           },
         },
       },

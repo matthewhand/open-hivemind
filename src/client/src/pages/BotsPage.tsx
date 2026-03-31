@@ -54,7 +54,6 @@ const BotsPage: React.FC = () => {
   const [uiError, setUiError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [logFilter, setLogFilter] = useState('');
-  const [previewTab, setPreviewTab] = useState<'activity' | 'chat'>('activity');
 
   // Create Bot State
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -755,114 +754,90 @@ const BotsPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Tabs Navigation */}
-            <div className="tabs tabs-boxed flex-wrap gap-1 mb-4" role="tablist" aria-label="Bot preview sections">
-              <button
-                className={`tab flex-1 ${previewTab === 'activity' ? 'tab-active' : ''}`}
-                onClick={() => setPreviewTab('activity')}
-                role="tab"
-                aria-selected={previewTab === 'activity'}
-                aria-controls="activity-panel"
-                id="activity-tab"
-              >
-                <Activity className="w-4 h-4 mr-2" /> Recent Activity
-              </button>
-              <button
-                className={`tab flex-1 ${previewTab === 'chat' ? 'tab-active' : ''}`}
-                onClick={() => setPreviewTab('chat')}
-                role="tab"
-                aria-selected={previewTab === 'chat'}
-                aria-controls="chat-panel"
-                id="chat-tab"
-              >
-                <MessageSquare className="w-4 h-4 mr-2" /> Chat History
-              </button>
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-semibold flex items-center gap-2">
+                  <Activity className="w-4 h-4" /> Recent Activity
+                </h4>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Filter logs..."
+                    className="input input-xs input-bordered w-32"
+                    value={logFilter}
+                    onChange={(e) => setLogFilter(e.target.value)}
+                  />
+                  <select
+                    className="select select-xs select-bordered"
+                    onChange={(e) => {
+                      const limit = e.target.value;
+                      if (previewBot) {
+                        apiService
+                          .get<any>(`/api/bots/${previewBot.id}/activity?limit=${limit}`)
+                          .then((json) => {
+                            setActivityLogs(json.data?.activity || []);
+                          });
+                      }
+                    }}
+                  >
+                    <option value="20">Last 20</option>
+                    <option value="50">Last 50</option>
+                    <option value="100">Last 100</option>
+                  </select>
+                </div>
+              </div>
+              <div className="bg-base-300 rounded-lg p-4 h-48 overflow-y-auto font-mono text-xs">
+                {activityLogs.length > 0 ? (
+                  activityLogs
+                    .filter(
+                      (log) =>
+                        !logFilter ||
+                        log.action?.toLowerCase().includes(logFilter.toLowerCase()) ||
+                        log.details?.toLowerCase().includes(logFilter.toLowerCase())
+                    )
+                    .map((log) => (
+                      <div
+                        key={log.id}
+                        className="mb-1 border-b border-base-content/5 pb-1 last:border-0"
+                      >
+                        <span className="opacity-50 mr-2">
+                          [{new Date(log.timestamp).toLocaleTimeString()}]
+                        </span>
+                        <span
+                          className={
+                            log.metadata?.type === 'RUNTIME'
+                              ? 'text-info'
+                              : log.action?.includes('ERROR') || log.result === 'failure'
+                                ? 'text-error'
+                                : 'text-base-content'
+                          }
+                        >
+                          <span className="font-bold mr-1">[{log.action}]</span>
+                          {log.details}
+                        </span>
+                      </div>
+                    ))
+                ) : (
+                  <div className="text-center opacity-50 py-12 flex flex-col items-center">
+                    <Activity className="w-8 h-8 mb-2 opacity-20" />
+                    <span>No recent activity found</span>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {previewTab === 'activity' && (
-              <div role="tabpanel" id="activity-panel" aria-labelledby="activity-tab">
-                <div className="flex items-center justify-end mb-3">
-                  <div className="form-control w-full flex items-end">
-                    <div className="join">
-                      <input
-                        type="text"
-                        placeholder="Filter logs..."
-                        className="input input-xs input-bordered join-item w-32"
-                        value={logFilter}
-                        onChange={(e) => setLogFilter(e.target.value)}
-                      />
-                      <select
-                        className="select select-xs select-bordered join-item"
-                        onChange={(e) => {
-                          const limit = e.target.value;
-                          if (previewBot) {
-                            apiService
-                              .get<any>(`/api/bots/${previewBot.id}/activity?limit=${limit}`)
-                              .then((json) => {
-                                setActivityLogs(json.data?.activity || []);
-                              });
-                          }
-                        }}
-                      >
-                        <option value="20">Last 20</option>
-                        <option value="50">Last 50</option>
-                        <option value="100">Last 100</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-base-300 rounded-lg p-4 h-48 overflow-y-auto font-mono text-xs">
-                  {activityLogs.length > 0 ? (
-                    activityLogs
-                      .filter(
-                        (log) =>
-                          !logFilter ||
-                          log.action?.toLowerCase().includes(logFilter.toLowerCase()) ||
-                          log.details?.toLowerCase().includes(logFilter.toLowerCase())
-                      )
-                      .map((log) => (
-                        <div
-                          key={log.id}
-                          className="mb-1 border-b border-base-content/5 pb-1 last:border-0"
-                        >
-                          <span className="opacity-50 mr-2">
-                            [{new Date(log.timestamp).toLocaleTimeString()}]
-                          </span>
-                          <span
-                            className={
-                              log.metadata?.type === 'RUNTIME'
-                                ? 'text-info'
-                                : log.action?.includes('ERROR') || log.result === 'failure'
-                                  ? 'text-error'
-                                  : 'text-base-content'
-                            }
-                          >
-                            <span className="font-bold mr-1">[{log.action}]</span>
-                            {log.details}
-                          </span>
-                        </div>
-                      ))
-                  ) : (
-                    <div className="text-center opacity-50 py-12 flex flex-col items-center">
-                      <Activity className="w-8 h-8 mb-2 opacity-20" />
-                      <span>No recent activity found</span>
-                    </div>
-                  )}
-                </div>
+            <div>
+              <h4 className="font-semibold mb-3 flex items-center gap-2">
+                <MessageSquare className="w-4 h-4" /> Chat History
+              </h4>
+              <div className="bg-base-300 rounded-lg">
+                <BotChatBubbles
+                  messages={chatHistory}
+                  botName={previewBot.name}
+                  loading={chatLoading}
+                />
               </div>
-            )}
-
-            {previewTab === 'chat' && (
-              <div role="tabpanel" id="chat-panel" aria-labelledby="chat-tab">
-                <div className="bg-base-300 rounded-lg">
-                  <BotChatBubbles
-                    messages={chatHistory}
-                    botName={previewBot.name}
-                    loading={chatLoading}
-                  />
-                </div>
-              </div>
-            )}
+            </div>
 
             <div className="flex justify-end gap-2">
               <button className="btn btn-ghost" onClick={() => setPreviewBot(null)}>

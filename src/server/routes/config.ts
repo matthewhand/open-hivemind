@@ -12,7 +12,6 @@ import {
   type GuardrailProfile,
 } from '../../config/guardrailProfiles';
 import llmConfig from '../../config/llmConfig';
-import llmTaskConfig from '../../config/llmTaskConfig';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 import { getLlmProfiles, saveLlmProfiles, type ProviderProfile } from '../../config/llmProfiles';
 import {
@@ -91,7 +90,6 @@ const router = Router();
 const coreSchemaSources: Record<string, any> = {
   message: messageConfig,
   llm: llmConfig,
-  llmTask: llmTaskConfig,
   webhook: webhookConfig,
 };
 
@@ -637,61 +635,5 @@ router.put('/global', validateRequest(ConfigUpdateSchema), async (req, res) => {
 });
 
 // ... (Rest of file)
-
-router.get('/message-profiles', (req, res) => {
-  try {
-    const profiles = getMessageProfiles();
-    return res.json(profiles);
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    return res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
-      code: 'MESSAGE_PROFILES_GET_ERROR',
-    });
-  }
-});
-
-router.post('/message-profiles', (req, res) => {
-  try {
-    const newProfile = req.body;
-
-    if (!newProfile.key || newProfile.key.trim() === '') {
-      return res
-        .status(400)
-        .json({ error: 'Message profile key is required', code: 'INVALID_REQUEST' });
-    }
-    if (!newProfile.name || newProfile.name.trim() === '') {
-      return res
-        .status(400)
-        .json({ error: 'Message profile name is required', code: 'INVALID_REQUEST' });
-    }
-    if (!newProfile.provider || newProfile.provider.trim() === '') {
-      return res
-        .status(400)
-        .json({ error: 'Message profile provider is required', code: 'INVALID_REQUEST' });
-    }
-
-    const profiles = getMessageProfiles();
-
-    // Check if key already exists
-    if (profiles.message.find((p) => p.key === newProfile.key)) {
-      return res.status(409).json({
-        error: `Message profile with key '${newProfile.key}' already exists`,
-        code: 'CONFLICT',
-      });
-    }
-
-    profiles.message.push(newProfile);
-    saveMessageProfiles(profiles);
-
-    return res.status(201).json({ success: true, profile: newProfile });
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    return res.status(hivemindError.statusCode || 500).json({
-      error: hivemindError.message,
-      code: 'MESSAGE_PROFILES_CREATE_ERROR',
-    });
-  }
-});
 
 export default router;
