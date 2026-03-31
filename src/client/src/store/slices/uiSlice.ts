@@ -4,7 +4,7 @@ import Debug from 'debug';
 const debug = Debug('app:client:store:slices:uiSlice');
 
 export interface UIState {
-  theme: 'light' | 'dark' | 'high-contrast' | 'auto';
+  theme: string;
   sidebarCollapsed: boolean;
   notificationsEnabled: boolean;
   soundEnabled: boolean;
@@ -112,9 +112,9 @@ const uiSlice = createSlice({
     },
 
     toggleDarkMode: (state) => {
-      const themes: UIState['theme'][] = ['light', 'dark', 'high-contrast', 'auto'];
+      const themes: string[] = ['light', 'dark', 'high-contrast', 'auto'];
       const currentIndex = themes.indexOf(state.theme);
-      const nextIndex = (currentIndex + 1) % themes.length;
+      const nextIndex = currentIndex !== -1 ? (currentIndex + 1) % themes.length : 1; // Default to dark if unknown theme
       state.theme = themes[nextIndex];
       localStorage.setItem('hivemind-theme', state.theme);
       // data-theme is applied reactively by the useTheme hook

@@ -4,7 +4,7 @@ import { setTheme as setThemeAction, selectTheme } from '../store/slices/uiSlice
 
 const STORAGE_KEY = 'hivemind-theme';
 
-export type ThemeValue = 'light' | 'dark' | 'high-contrast' | 'auto';
+export type ThemeValue = string;
 
 function resolveEffectiveTheme(theme: ThemeValue, systemPreference: 'light' | 'dark'): string {
   if (theme === 'auto') return systemPreference;
@@ -15,7 +15,7 @@ function resolveEffectiveTheme(theme: ThemeValue, systemPreference: 'light' | 'd
  * Central hook for dark-mode persistence with system-preference detection.
  *
  * Provides:
- *  - theme        the raw stored value ('light' | 'dark' | 'high-contrast' | 'auto')
+ *  - theme        the raw stored value
  *  - setTheme     persist a new theme choice
  *  - isDark       whether the *effective* theme is dark (resolves 'auto')
  *  - toggleDark   quick toggle between light and dark
