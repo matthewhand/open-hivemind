@@ -448,4 +448,11 @@ export class MCPService {
 
     return null;
   }
+
+  public getClientCount(): number {
+    return this.clients.size;
+  }
+  public getClientNames(): string[] {
+    return Array.from(this.clients.keys());
+  }
 }

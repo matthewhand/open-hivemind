@@ -37,7 +37,7 @@ import sitemapRouter from '@src/server/routes/sitemap';
 import specsRouter from '@src/server/routes/specs';
 import validationRouter from '@src/server/routes/validation';
 import { RealTimeValidationService } from '@src/server/services/RealTimeValidationService';
-import WebSocketService from '@src/server/services/WebSocketService';
+import { WebSocketService } from '@src/server/services/WebSocketService';
 import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
 import AnomalyDetectionService from '@src/services/AnomalyDetectionService';
 import DemoModeService from '@src/services/DemoModeService';

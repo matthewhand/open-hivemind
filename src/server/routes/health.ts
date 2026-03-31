@@ -14,6 +14,13 @@ import {
 import { validateRequest } from '../../validation/validateRequest';
 import { optionalAuth } from '../middleware/auth';
 
+const withTimeout = <T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> => {
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+  ]);
+};
+
 const router = Router();
 
 // Basic health check
@@ -34,7 +41,10 @@ router.get('/', async (req, res) => {
   try {
     const { ProviderRegistry } = require('../../registries/ProviderRegistry');
     const registry = ProviderRegistry.getInstance();
-    const memProviders: Map<string, { healthCheck(): Promise<{ status: string; details?: Record<string, unknown> }> }> = registry.getMemoryProviders();
+    const memProviders: Map<
+      string,
+      { healthCheck(): Promise<{ status: string; details?: Record<string, unknown> }> }
+    > = registry.getMemoryProviders();
     if (memProviders.size > 0) {
       const providers: Record<string, { status: string; details?: Record<string, unknown> }> = {};
       const entries = Array.from(memProviders.entries());
@@ -50,11 +60,17 @@ router.get('/', async (req, res) => {
             anyMemoryProviderUnhealthy = true;
           }
         } else {
-          providers[name] = { status: 'error', details: { error: result.reason?.message || 'Unknown error' } };
+          providers[name] = {
+            status: 'error',
+            details: { error: result.reason?.message || 'Unknown error' },
+          };
           anyMemoryProviderUnhealthy = true;
         }
       }
-      memoryProvidersStatus = { status: anyMemoryProviderUnhealthy ? 'unhealthy' : 'healthy', providers };
+      memoryProvidersStatus = {
+        status: anyMemoryProviderUnhealthy ? 'unhealthy' : 'healthy',
+        providers,
+      };
     }
   } catch {
     // Registry not available — treat as none configured
@@ -99,7 +115,7 @@ router.get('/', async (req, res) => {
 });
 
 // Detailed health check - requires authentication for full details
-router.get('/detailed', optionalAuth, (req: Request, res: Response) => {
+router.get('/detailed', optionalAuth, async (req: Request, res: Response) => {
   const uptime = process.uptime();
   const memoryUsage = process.memoryUsage();
   const metrics = MetricsCollector.getInstance().getMetrics();
@@ -124,13 +140,152 @@ router.get('/detailed', optionalAuth, (req: Request, res: Response) => {
   const errorStats = errorLogger.getErrorStats();
   const recoveryStats = globalRecoveryManager.getAllStats();
 
+  // ----- NEW SUBSYSTEM HEALTH CHECKS -----
+  // 1. Database Check
+  let dbCheck = { status: 'unhealthy', connection: false, pool: 'unknown' };
+  try {
+    const dbManager = require('../../database/DatabaseManager').DatabaseManager.getInstance();
+    const dbHealthy = await withTimeout((async () => dbManager.isConnected())(), 5000, false);
+    if (dbHealthy) {
+      dbCheck = { status: 'healthy', connection: true, pool: 'active' };
+    } else {
+      dbCheck.status = 'degraded';
+    }
+  } catch {
+    dbCheck.status = 'unhealthy';
+  }
+
+  // 2. Message Providers
+  let messageProvidersCheck: any = { status: 'unhealthy', providers: [] };
+  try {
+    const { ProviderRegistry } = require('../../registries/ProviderRegistry');
+    const registry = ProviderRegistry.getInstance();
+    const result = await withTimeout(
+      (async () => {
+        const msgProviders = registry.getMessageProviders?.() || [];
+        const activeMsg = msgProviders.filter((p: any) => p.status === 'active' || p.connected);
+        return { count: msgProviders.length, active: activeMsg.length, providers: msgProviders };
+      })(),
+      5000,
+      null
+    );
+    if (result) {
+      let msgStatus = 'down';
+      if (result.count > 0) {
+        msgStatus =
+          result.active === result.count ? 'healthy' : result.active > 0 ? 'degraded' : 'unhealthy';
+      }
+      messageProvidersCheck = {
+        status: msgStatus,
+        providers: result.providers.map((p: any) => ({
+          name: p.name,
+          status: p.status || (p.connected ? 'active' : 'inactive'),
+        })),
+      };
+    } else {
+      messageProvidersCheck.status = 'degraded';
+    }
+  } catch {
+    messageProvidersCheck.status = 'unhealthy';
+  }
+
+  // 3. LLM Providers
+  let llmProvidersCheck: any = { status: 'unhealthy', reachable: false, providers: [] };
+  try {
+    const { ProviderRegistry } = require('../../registries/ProviderRegistry');
+    const registry = ProviderRegistry.getInstance();
+    const result = await withTimeout(
+      (async () => {
+        const llmProviders = registry.getLlmProviders?.() || [];
+        const activeLlm = llmProviders.filter((p: any) => p.status === 'active' || p.connected);
+        return { count: llmProviders.length, active: activeLlm.length, providers: llmProviders };
+      })(),
+      5000,
+      null
+    );
+
+    if (result) {
+      let llmStatus = 'down';
+      if (result.count > 0) {
+        llmStatus =
+          result.active === result.count ? 'healthy' : result.active > 0 ? 'degraded' : 'unhealthy';
+      }
+      llmProvidersCheck = {
+        status: llmStatus,
+        reachable: result.active > 0,
+        providers: result.providers.map((p: any) => ({
+          name: p.name,
+          reachable: p.status === 'active' || p.connected,
+        })),
+      };
+    } else {
+      llmProvidersCheck.status = 'degraded';
+    }
+  } catch {
+    llmProvidersCheck.status = 'unhealthy';
+  }
+
+  // 4. MCP Servers
+  let mcpCheck = { status: 'unhealthy', running: 0, stopped: 0 };
+  try {
+    const { MCPService } = require('../../mcp/MCPService');
+    const mcpService = MCPService.getInstance();
+    const clientCount = await withTimeout(
+      (async () => (mcpService.getClientCount ? mcpService.getClientCount() : 0))(),
+      5000,
+      -1
+    );
+    if (clientCount >= 0) {
+      mcpCheck = {
+        status: clientCount > 0 ? 'healthy' : 'degraded',
+        running: clientCount,
+        stopped: 0,
+      };
+    } else {
+      mcpCheck.status = 'degraded';
+    }
+  } catch {
+    mcpCheck.status = 'unhealthy';
+  }
+
+  // 5. WebSocket
+  let wsCheck = { status: 'unhealthy', clientCount: 0 };
+  try {
+    const { WebSocketService } = require('../../server/services/WebSocketService');
+    const wsService = WebSocketService.getInstance();
+    const clients = await withTimeout(
+      (async () => (wsService.getConnectedClientCount ? wsService.getConnectedClientCount() : 0))(),
+      5000,
+      -1
+    );
+    if (clients >= 0) {
+      wsCheck = {
+        status: 'healthy',
+        clientCount: clients,
+      };
+    } else {
+      wsCheck.status = 'degraded';
+    }
+  } catch {
+    wsCheck.status = 'unhealthy';
+  }
+
+  const subsystemChecks = {
+    database: dbCheck,
+    messageProviders: messageProvidersCheck,
+    llmProviders: llmProvidersCheck,
+    mcpServers: mcpCheck,
+    webSocket: wsCheck,
+  };
+
   const healthData = {
     status: healthStatus.status,
     timestamp: new Date().toISOString(),
     checks: {
-      database: { status: 'healthy' },
+      database: { status: dbCheck.status },
       configuration: { status: 'healthy' },
       services: { status: 'healthy' },
+      subsystems: subsystemChecks,
     },
     uptime: uptime,
     memory: {
@@ -177,8 +332,10 @@ router.get('/detailed', optionalAuth, (req: Request, res: Response) => {
           : 0,
       llmUsage: metrics.llmTokenUsage,
     },
+    subsystems: subsystemChecks,
   };
 
+  // Append pipeline tracer stats if the pipeline has been registered
   // Append pipeline tracer stats if the pipeline has been registered
   try {
     const { getActiveTracer } = require('../../observability');
