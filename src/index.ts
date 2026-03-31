@@ -327,9 +327,29 @@ async function startBot(messengerService: any) {
     const idleResponseManager = IdleResponseManager.getInstance();
     await idleResponseManager.initialize();
 
-    messengerService.setMessageHandler((message: any, historyMessages: any[], botConfig: any) =>
-      messageHandlerModule.handleMessage(message, historyMessages, botConfig)
-    );
+    if (process.env.USE_LEGACY_HANDLER !== 'true') {
+      // Pipeline mode: emit onto the MessageBus so the 5-stage pipeline
+      // (Receive → Decision → Enrich → Inference → Send) processes the message.
+      const { MessageBus } = await import('@src/events/MessageBus');
+      const bus = MessageBus.getInstance();
+      messengerService.setMessageHandler(async (message: any, historyMessages: any[], botConfig: any) => {
+        await bus.emitAsync('message:incoming', {
+          message,
+          history: historyMessages,
+          botConfig,
+          botName: String(botConfig.BOT_NAME || botConfig.name || 'hivemind'),
+          platform: message.platform || 'unknown',
+          channelId: message.getChannelId?.() || '',
+          metadata: {},
+        });
+        return ''; // Response is sent by SendStage
+      });
+    } else {
+      // Legacy mode: call handleMessage() directly
+      messengerService.setMessageHandler((message: any, historyMessages: any[], botConfig: any) =>
+        messageHandlerModule.handleMessage(message, historyMessages, botConfig)
+      );
+    }
     indexLog('[DEBUG] Message handler set up successfully.');
 
     // Operator-friendly startup summary (INFO-level).
