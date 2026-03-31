@@ -6,6 +6,7 @@ import Button from '../DaisyUI/Button';
 import { SkeletonList } from '../DaisyUI/Skeleton';
 import { MessageSquare, Bot, Users, Zap, Info } from 'lucide-react';
 import { apiService } from '../../services/api';
+import { useSavedStamp } from '../../contexts/SavedStampContext';
 
 interface MessagingConfig {
   onlyWhenSpokenTo: boolean;
@@ -35,6 +36,7 @@ const SettingsMessaging: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error' | 'warning', message: string } | null>(null);
+  const { showStamp } = useSavedStamp();
 
   const fetchSettings = useCallback(async () => {
     try {
@@ -89,6 +91,7 @@ const SettingsMessaging: React.FC = () => {
         },
       });
       setAlert({ type: 'success', message: 'Messaging settings saved! Restart may be required.' });
+      showStamp();
       setTimeout(() => setAlert(null), 5000);
     } catch {
       setAlert({

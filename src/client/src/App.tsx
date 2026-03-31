@@ -14,6 +14,7 @@ import ScrollToTop from './components/ScrollToTop';
 import { IntegrationProvider } from './components/IntegrationLoader';
 import KeyboardShortcutsProvider from './components/KeyboardShortcutsProvider';
 import { useTheme } from './hooks/useTheme';
+import SavedStampProvider from './contexts/SavedStampContext';
 
 /**
  * Keeps data-theme, localStorage, and system-preference listener in sync.
@@ -33,6 +34,7 @@ function App() {
           <ReduxProvider>
             <ThemeSync>
               <ToastNotification position="bottom-right" maxToasts={5}>
+                <SavedStampProvider>
                 <AuthProvider>
                   <BotProvider>
                     <WebSocketProvider>
@@ -46,6 +48,7 @@ function App() {
                     </WebSocketProvider>
                   </BotProvider>
                 </AuthProvider>
+              </SavedStampProvider>
               </ToastNotification>
             </ThemeSync>
           </ReduxProvider>

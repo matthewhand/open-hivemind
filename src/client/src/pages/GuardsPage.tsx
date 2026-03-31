@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Shield, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle, Save, X, Settings, AlertTriangle, Copy, ToggleLeft } from 'lucide-react';
 import { apiService } from '../services/api';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
+import { useSavedStamp } from '../contexts/SavedStampContext';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import Button from '../components/DaisyUI/Button';
 import PageHeader from '../components/DaisyUI/PageHeader';
@@ -61,6 +62,7 @@ const GuardsPage: React.FC = () => {
 
   const showSuccess = useSuccessToast();
   const showError = useErrorToast();
+  const { showStamp } = useSavedStamp();
 
   const [editingProfile, setEditingProfile] = useState<GuardrailProfile | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
@@ -128,6 +130,7 @@ const GuardsPage: React.FC = () => {
       }
 
       showSuccess(`Profile ${isNew ? 'created' : 'updated'} successfully`);
+      showStamp();
       setEditingProfile(null);
       fetchProfiles();
     } catch (err: any) {

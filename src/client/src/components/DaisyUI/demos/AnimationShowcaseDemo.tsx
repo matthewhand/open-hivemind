@@ -473,7 +473,11 @@ const RubberStampSection: React.FC = () => {
   return (
     <Section title="Custom SVG Animation -- The Rubber Stamp">
       <p className="text-base-content/70 mb-4">
-        An SVG-based stamp that scales in with a satisfying pop. Trigger it with each variant below.
+        An SVG-based stamp that drops from above with gravity, ink-splatter impact, and fade-out.
+        The production <code className="text-sm bg-base-300 px-1 rounded">SavedStamp</code> component
+        is wired into every save action across the app (settings, providers, bots, personas, guards, MCP servers)
+        via the <code className="text-sm bg-base-300 px-1 rounded">useSavedStamp()</code> context hook.
+        Try it below with each variant:
       </p>
 
       <div className="flex flex-wrap items-end gap-3 mb-4">

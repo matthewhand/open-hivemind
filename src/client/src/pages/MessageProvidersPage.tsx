@@ -27,11 +27,13 @@ import {
 import ProviderConfigModal from '../components/ProviderConfiguration/ProviderConfigModal';
 import { apiService } from '../services/api';
 import { getProviderSchema } from '../provider-configs';
+import { useSavedStamp } from '../contexts/SavedStampContext';
 import useUrlParams from '../hooks/useUrlParams';
 
 const MessageProvidersPage: React.FC = () => {
   const { modalState, openAddModal, openEditModal, closeModal } = useModal();
   const errorToast = useErrorToast();
+  const { showStamp } = useSavedStamp();
   const [profiles, setProfiles] = useState<any[]>([]);
   const [expandedProfile, setExpandedProfile] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -120,6 +122,7 @@ const MessageProvidersPage: React.FC = () => {
       }
 
       closeModal();
+      showStamp();
       fetchProfiles();
     } catch (err: any) {
       errorToast('Save Failed', `Failed to save profile: ${err.message}`);
