@@ -3,6 +3,7 @@ import { AuditLogger } from '@src/common/auditLogger';
 import { ErrorHandler } from '@src/common/errors/ErrorHandler';
 import { PerformanceMonitor } from '@src/common/errors/PerformanceMonitor';
 import { getLlmProvider, getLlmProviderForBot } from '@src/llm/getLlmProvider';
+import { SyncProviderRegistry } from '@src/registries/SyncProviderRegistry';
 import { getQuotaManager } from '@src/middleware/quotaMiddleware';
 import { ContentFilterService } from '@src/services/ContentFilterService';
 import { MemoryManager } from '@src/services/MemoryManager';
@@ -151,17 +152,28 @@ export async function handleMessage(
 
         const messageProvider = messageProviders[0];
 
-        // Resolve the LLM provider for this bot. When the bot has an LLM
-        // profile assigned (populating provider-specific config such as
-        // openai.model / openai.apiKey), a dedicated provider instance is
-        // created. Otherwise falls back to the first system-level provider.
+        // Resolve the LLM provider for this bot.
+        // Fast path: use SyncProviderRegistry if initialized (sync, zero I/O).
+        // Fallback: use getLlmProviderForBot() which does async plugin loading.
         let llmProvider;
-        try {
-          llmProvider = await getLlmProviderForBot(botConfig);
-        } catch {
-          logger('ERROR:', 'No LLM provider available');
-          logger('No LLM provider available');
-          return null;
+        const syncRegistry = SyncProviderRegistry.getInstance();
+        if (syncRegistry.isInitialized()) {
+          try {
+            const botNameForRegistry = String(botConfig.name || botConfig.BOT_ID || 'unknown');
+            llmProvider = syncRegistry.getLlmProviderForBot(botNameForRegistry, botConfig);
+          } catch {
+            // Registry has no providers — fall through to legacy
+            llmProvider = undefined;
+          }
+        }
+        if (!llmProvider) {
+          try {
+            llmProvider = await getLlmProviderForBot(botConfig);
+          } catch {
+            logger('ERROR:', 'No LLM provider available');
+            logger('No LLM provider available');
+            return null;
+          }
         }
         const providerType =
           botConfig.messageProvider ||

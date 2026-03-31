@@ -47,6 +47,10 @@ import { getLlmProvider } from '@llm/getLlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 import Logger from '@common/logger';
 import { initProviders } from './initProviders';
+import { SyncProviderRegistry } from '@src/registries/SyncProviderRegistry';
+import { loadLlmProfiles } from '@src/config/llmProfiles';
+import { loadMemoryProfiles } from '@src/config/memoryProfiles';
+import { loadToolProfiles } from '@src/config/toolProfiles';
 import { reloadGlobalConfigs } from './server/routes/config';
 import startupDiagnostics from './utils/startupDiagnostics';
 import 'dotenv/config';
@@ -445,6 +449,37 @@ async function main() {
   if (process.env.SKIP_MESSENGERS !== 'true') {
     await initProviders();
   }
+
+  // Initialize SyncProviderRegistry for fast synchronous lookups in the hot path
+  try {
+    const rawMessageProviders = messageConfig.get('MESSAGE_PROVIDER') as unknown;
+    const messengerTypes = (
+      typeof rawMessageProviders === 'string'
+        ? rawMessageProviders.split(',').map((v: string) => v.trim())
+        : Array.isArray(rawMessageProviders)
+          ? rawMessageProviders
+          : []
+    ) as string[];
+
+    const registry = SyncProviderRegistry.getInstance();
+    const initResult = await registry.initialize({
+      llmProfiles: loadLlmProfiles().llm,
+      memoryProfiles: loadMemoryProfiles().memory,
+      toolProfiles: loadToolProfiles().tool,
+      messengerPlatforms: messengerTypes,
+    });
+    appLogger.info('Provider registry initialized', initResult.loaded);
+    if (initResult.failed.length > 0) {
+      appLogger.warn('Some providers failed to load in registry', {
+        failed: initResult.failed,
+      });
+    }
+  } catch (err) {
+    appLogger.warn('SyncProviderRegistry initialization failed (falling back to legacy loaders)', {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
   // Reload global configs to include provider schemas
   await reloadGlobalConfigs();
 
@@ -547,6 +582,31 @@ async function main() {
         appLogger.error(`Failed to start ${failures.length} messenger bot(s)`, { failures });
       }
     }
+  }
+
+  // ── Optional 5-stage message pipeline (opt-in via USE_PIPELINE=true) ──
+  if (process.env.USE_PIPELINE === 'true') {
+    const { MessageBus } = await import('@src/events/MessageBus');
+    const { createPipeline } = await import('@src/pipeline/createPipeline');
+    const { PipelineTracer } = await import('@src/observability/PipelineTracer');
+
+    const bus = MessageBus.getInstance();
+
+    // Create and register a pipeline instance per messenger service
+    for (const service of messengerServices) {
+      createPipeline(bus, {
+        botConfig: {},
+        messengerService: service,
+        botId: service.botId,
+        defaultChannelId: service.getDefaultChannel?.() ?? undefined,
+      });
+    }
+
+    // Attach tracer for observability
+    const tracer = new PipelineTracer(bus);
+    tracer.register();
+
+    appLogger.info('🔀 Pipeline mode enabled (USE_PIPELINE=true)');
   }
 
   const httpEnabled = process.env.HTTP_ENABLED !== 'false';

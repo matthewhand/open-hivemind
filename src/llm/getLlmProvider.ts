@@ -4,6 +4,7 @@ import { UserConfigStore } from '@src/config/UserConfigStore';
 import { getLlmProfileByKey } from '@src/config/llmProfiles';
 import { MetricsCollector } from '@src/monitoring/MetricsCollector';
 import { instantiateLlmProvider, loadPlugin } from '@src/plugins/PluginLoader';
+import { SyncProviderRegistry } from '@src/registries/SyncProviderRegistry';
 import type { IConfigAccessor } from '@src/types/configAccessor';
 import llmConfig from '@config/llmConfig';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
@@ -55,6 +56,17 @@ function withTokenCounting(provider: ILlmProvider, _instanceId: string): ILlmPro
 }
 
 export async function getLlmProvider(): Promise<ILlmProvider[]> {
+  // Fast path: if SyncProviderRegistry is initialized, use its pre-loaded providers
+  const registry = SyncProviderRegistry.getInstance();
+  if (registry.isInitialized()) {
+    const registryProviders = registry.getLlmProviders();
+    if (registryProviders.length > 0) {
+      debug('Using SyncProviderRegistry fast path (%d providers)', registryProviders.length);
+      return registryProviders;
+    }
+    // Registry initialized but empty — fall through to legacy resolution
+  }
+
   const providerManager = ProviderConfigManager.getInstance();
   const configuredProviders = providerManager.getAllProviders('llm').filter((p) => p.enabled);
 
@@ -218,6 +230,18 @@ export async function getLlmProviderForBot(
   botConfig: Record<string, unknown>
 ): Promise<ILlmProvider> {
   const botName = String(botConfig.name || botConfig.BOT_ID || 'unknown');
+
+  // Fast path: if SyncProviderRegistry is initialized, delegate to it
+  const registry = SyncProviderRegistry.getInstance();
+  if (registry.isInitialized()) {
+    try {
+      const provider = registry.getLlmProviderForBot(botName, botConfig);
+      debug(`Using SyncProviderRegistry fast path for bot "${botName}"`);
+      return provider;
+    } catch {
+      // Registry has no providers — fall through to legacy resolution
+    }
+  }
   const providerType = String(botConfig.llmProvider || botConfig.LLM_PROVIDER || '').toLowerCase();
 
   // Extract the provider-specific config block from the bot config.

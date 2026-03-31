@@ -60,6 +60,18 @@ router.get('/', async (req, res) => {
     // Registry not available — treat as none configured
   }
 
+  // SyncProviderRegistry counts (if initialized)
+  let registryCounts: Record<string, number> | undefined;
+  try {
+    const { SyncProviderRegistry } = require('../../registries/SyncProviderRegistry');
+    const syncRegistry = SyncProviderRegistry.getInstance();
+    if (syncRegistry.isInitialized()) {
+      registryCounts = syncRegistry.getProviderCount();
+    }
+  } catch {
+    // SyncProviderRegistry not available — omit from response
+  }
+
   let status = dbStatus === 'healthy' ? 'healthy' : 'degraded';
   if (status === 'healthy' && anyMemoryProviderUnhealthy) {
     status = 'degraded';
@@ -82,6 +94,7 @@ router.get('/', async (req, res) => {
       processId: process.pid,
     },
     memoryProviders: memoryProvidersStatus,
+    ...(registryCounts ? { providerRegistry: registryCounts } : {}),
   });
 });
 
@@ -165,6 +178,25 @@ router.get('/detailed', optionalAuth, (req: Request, res: Response) => {
       llmUsage: metrics.llmTokenUsage,
     },
   };
+
+  // Append pipeline tracer stats if the pipeline has been registered
+  try {
+    const { getActiveTracer } = require('../../observability');
+    const tracer = getActiveTracer();
+    if (tracer) {
+      const stats = tracer.getStats();
+      const recentTraces = tracer.getCompletedTraces(5);
+      (healthData as any).pipeline = {
+        totalTraces: stats.totalTraces,
+        avgDurationMs: stats.avgDurationMs,
+        stageAvgMs: stats.stageAvgMs,
+        errorRate: stats.errorRate,
+        recentTraces: recentTraces.length,
+      };
+    }
+  } catch {
+    // Pipeline tracer not available — skip
+  }
 
   return res.json(healthData);
 });

@@ -33,6 +33,8 @@ import {
   MemoryStorerAdapter,
 } from '@src/pipeline/adapters';
 
+import { PipelineTracer, setActiveTracer } from '@src/observability';
+
 // ---------------------------------------------------------------------------
 // Pipeline dependencies
 // ---------------------------------------------------------------------------
@@ -98,4 +100,10 @@ export function createPipeline(bus: MessageBus, deps: PipelineDependencies): voi
   enrich.register();
   inference.register();
   send.register();
+
+  // Register the observability tracer and store it as a singleton so
+  // health / diagnostic routes can query pipeline stats.
+  const tracer = new PipelineTracer(bus);
+  tracer.register();
+  setActiveTracer(tracer);
 }
