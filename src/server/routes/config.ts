@@ -3,6 +3,7 @@ import path from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
 import { redactSensitiveInfo } from '../../common/redactSensitiveInfo';
+import { createLogger } from '../../common/StructuredLogger';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import llmConfig from '../../config/llmConfig';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
@@ -14,7 +15,6 @@ import { UserConfigStore } from '../../config/UserConfigStore';
 import webhookConfig from '../../config/webhookConfig';
 import { BotManager } from '../../managers/BotManager';
 import { providerRegistry } from '../../registries/ProviderRegistry';
-import { createLogger } from '../../common/StructuredLogger';
 import { HTTP_STATUS } from '../../types/constants';
 import { ErrorUtils } from '../../types/errors';
 import { type IProvider } from '../../types/IProvider';
@@ -382,7 +382,9 @@ router.get('/source/:key', (req, res) => {
     if (!source) {
       return res
         .status(HTTP_STATUS.NOT_FOUND)
-        .json(ApiResponse.error(`Key '${key}' not found in any config layer`, 'KEY_NOT_FOUND', 404));
+        .json(
+          ApiResponse.error(`Key '${key}' not found in any config layer`, 'KEY_NOT_FOUND', 404)
+        );
     }
 
     return res.json(ApiResponse.success({ key, source }));
@@ -865,12 +867,7 @@ router.get('/memory-profiles', (_req, res) => {
     const hivemindError = ErrorUtils.toHivemindError(error);
     return res
       .status((hivemindError as any).statusCode || 500)
-      .json(
-        ApiResponse.error(
-          (hivemindError as any).message,
-          'MEMORY_PROFILES_GET_ERROR',
-        )
-      );
+      .json(ApiResponse.error((hivemindError as any).message, 'MEMORY_PROFILES_GET_ERROR'));
   }
 });
 
@@ -884,7 +881,7 @@ router.post('/memory-profiles', validateRequest(CreateMemoryProfileSchema), (req
         .json(
           ApiResponse.error(
             `Memory profile with key '${newProfile.key}' already exists`,
-            'CONFLICT',
+            'CONFLICT'
           )
         );
     profiles.memory.push(newProfile);
@@ -894,12 +891,7 @@ router.post('/memory-profiles', validateRequest(CreateMemoryProfileSchema), (req
     const hivemindError = ErrorUtils.toHivemindError(error);
     return res
       .status((hivemindError as any).statusCode || 500)
-      .json(
-        ApiResponse.error(
-          (hivemindError as any).message,
-          'MEMORY_PROFILES_CREATE_ERROR',
-        )
-      );
+      .json(ApiResponse.error((hivemindError as any).message, 'MEMORY_PROFILES_CREATE_ERROR'));
   }
 });
 
@@ -919,12 +911,7 @@ router.put('/memory-profiles/:key', validateRequest(MemoryProfileKeyParamSchema)
     const hivemindError = ErrorUtils.toHivemindError(error);
     return res
       .status((hivemindError as any).statusCode || 500)
-      .json(
-        ApiResponse.error(
-          (hivemindError as any).message,
-          'MEMORY_PROFILES_UPDATE_ERROR',
-        )
-      );
+      .json(ApiResponse.error((hivemindError as any).message, 'MEMORY_PROFILES_UPDATE_ERROR'));
   }
 });
 
@@ -944,12 +931,7 @@ router.delete('/memory-profiles/:key', validateRequest(MemoryProfileKeyParamSche
     const hivemindError = ErrorUtils.toHivemindError(error);
     return res
       .status((hivemindError as any).statusCode || 500)
-      .json(
-        ApiResponse.error(
-          (hivemindError as any).message,
-          'MEMORY_PROFILES_DELETE_ERROR',
-        )
-      );
+      .json(ApiResponse.error((hivemindError as any).message, 'MEMORY_PROFILES_DELETE_ERROR'));
   }
 });
 

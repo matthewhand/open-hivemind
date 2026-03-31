@@ -4,6 +4,7 @@ import { Router, type Request, type Response } from 'express';
 import { body, param, validationResult } from 'express-validator';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest } from '../../auth/types';
+import { createLogger } from '../../common/StructuredLogger';
 import { HTTP_STATUS } from '../../types/constants';
 import {
   BackupCreateSchema,
@@ -13,7 +14,6 @@ import {
 } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { ConfigurationImportExportService } from '../services/ConfigurationImportExportService';
-import { createLogger } from '../../common/StructuredLogger';
 
 type MulterFile = {
   path: string;
