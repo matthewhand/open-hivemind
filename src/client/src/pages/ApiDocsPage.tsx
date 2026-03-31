@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import Mockup from '../components/DaisyUI/Mockup';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -26,6 +27,21 @@ interface ApiDocsResponse {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function generateCurlCommand(route: RouteInfo): string {
+  const isLocalhost = window.location.hostname === 'localhost';
+  const baseUrl = isLocalhost ? `http://localhost:${window.location.port}` : window.location.origin;
+  const url = `${baseUrl}${route.path}`;
+
+  let curl = `curl -X ${route.method} "${url}" \\
+  -H "Content-Type: application/json"`;
+
+  if (['POST', 'PUT', 'PATCH'].includes(route.method)) {
+    curl += ` \\
+  -d '{}'`;
+  }
+  return curl;
+}
 
 const METHOD_COLORS: Record<string, string> = {
   GET: 'badge-success',
@@ -154,9 +170,9 @@ const TryItPanel: React.FC<{ route: RouteInfo }> = ({ route }) => {
         {loading ? 'Sending...' : 'Send Request'}
       </button>
       {response !== null && (
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-semibold">Response</span>
+        <div className="mt-4">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-sm font-semibold">Response Data</span>
             {statusCode !== null && (
               <span
                 className={`badge badge-sm ${statusCode < 400 ? 'badge-success' : 'badge-error'}`}
@@ -165,9 +181,15 @@ const TryItPanel: React.FC<{ route: RouteInfo }> = ({ route }) => {
               </span>
             )}
           </div>
-          <pre className="bg-base-300 p-2 rounded text-xs overflow-x-auto max-h-64 overflow-y-auto whitespace-pre-wrap">
-            {response}
-          </pre>
+          <Mockup
+            type="code"
+            content={
+              <div className="text-xs overflow-x-auto max-h-64 overflow-y-auto whitespace-pre-wrap">
+                {response}
+              </div>
+            }
+            colorScheme="neutral"
+          />
         </div>
       )}
     </div>
@@ -229,6 +251,21 @@ const RouteCard: React.FC<{ route: RouteInfo }> = ({ route }) => {
             <span className="text-xs text-base-content/50 ml-1">application/json</span>
           </div>
         )}
+
+        <div className="mb-4 mt-4">
+          <span className="text-sm font-semibold block mb-2">Example cURL Request</span>
+          <Mockup
+            type="code"
+            content={
+              <div className="text-xs overflow-x-auto whitespace-pre-wrap">
+                {generateCurlCommand(route)}
+              </div>
+            }
+          />
+        </div>
+
+        <div className="divider" />
+        <h4 className="font-semibold text-sm mb-2">Live Testing</h4>
 
         <TryItPanel route={route} />
       </div>

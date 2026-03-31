@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import Input from './Input';
+import Checkbox from './Checkbox';
 
 export interface Step {
   id: string;
@@ -416,8 +417,7 @@ export const BotSetupWizard: React.FC<BotSetupWizardProps> = ({ onComplete, onCa
                 'Scheduled messages',
               ].map(feature => (
                 <label key={feature} className="cursor-pointer">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     className="checkbox checkbox-primary"
                     checked={formData.features.includes(feature)}
                     onChange={(e) => {

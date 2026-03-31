@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useMemo } from 'react';
 import { useIsBelowBreakpoint } from '../../hooks/useBreakpoint';
+import Checkbox from './Checkbox';
+import Toggle from './Toggle';
 
 // ── Column / row types ──────────────────────────────────────────────────────
 
@@ -374,8 +376,7 @@ const DataTable = <T extends Record<string, any>>({
           <div className="form-control mr-4">
             <label className="label cursor-pointer gap-2">
               <span className="label-text text-sm">Infinite Scroll</span>
-              <input
-                type="checkbox"
+              <Toggle
                 className="toggle toggle-sm toggle-primary"
                 checked={isInfiniteScroll}
                 onChange={(e) => setIsInfiniteScroll(e.target.checked)}
@@ -565,8 +566,7 @@ const DataTable = <T extends Record<string, any>>({
               {selectable && (
                 <th>
                   <label>
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       className="checkbox checkbox-sm"
                       checked={selectedRows.size === paginatedData.length && paginatedData.length > 0}
                       onChange={(e) => handleSelectAll(e.target.checked)}
@@ -612,8 +612,7 @@ const DataTable = <T extends Record<string, any>>({
                 {selectable && (
                   <td>
                     <label>
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         className="checkbox checkbox-sm"
                         checked={selectedRows.has((currentPage - 1) * pageSize + index)}
                         onChange={(e) => {

@@ -13,6 +13,7 @@ import {
 } from '../../types/bot';
 import Button from '../DaisyUI/Button';
 import { X as XIcon, RotateCcw } from 'lucide-react';
+import { logger } from '../../utils/logger';
 import { ProviderConfigForm } from '../ProviderConfigForm';
 import type { ProviderConfigSchema } from '../../provider-configs';
 import { getProviderSchema } from '../../provider-configs';
@@ -495,7 +496,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
                     });
                     return true;
                   } catch (err) {
-                    console.error('Test connection failed:', err);
+                    logger.error('Test connection failed:', err);
                     // Fallback: basic validation if endpoint not available
                     const hasRequiredFields = ['apiKey', 'endpoint', 'baseUrl'].some(
                       key => config[key] && config[key].toString().trim() !== ''

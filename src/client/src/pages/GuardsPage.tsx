@@ -14,10 +14,12 @@ import Input from '../components/DaisyUI/Input';
 import Textarea from '../components/DaisyUI/Textarea';
 import Select from '../components/DaisyUI/Select';
 import Toggle from '../components/DaisyUI/Toggle';
+import Radio from '../components/DaisyUI/Radio';
 import useUrlParams from '../hooks/useUrlParams';
 import { useBulkSelection } from '../hooks/useBulkSelection';
 import BulkActionBar from '../components/BulkActionBar';
 import Badge from '../components/DaisyUI/Badge';
+import Checkbox from '../components/DaisyUI/Checkbox';
 
 interface McpGuardConfig {
   enabled: boolean;
@@ -292,8 +294,7 @@ const GuardsPage: React.FC = () => {
       ) : (
         <>
           <div className="flex items-center gap-2 mb-2">
-            <input
-              type="checkbox"
+            <Checkbox
               className="checkbox checkbox-sm checkbox-primary"
               checked={bulk.isAllSelected}
               onChange={() => bulk.toggleAll(filteredProfileIds)}
@@ -335,8 +336,7 @@ const GuardsPage: React.FC = () => {
               <div className="card-body">
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       className="checkbox checkbox-sm checkbox-primary"
                       checked={bulk.isSelected(profile.id)}
                       onChange={(e) => bulk.toggleItem(profile.id, e as any)}
@@ -574,17 +574,15 @@ const GuardsPage: React.FC = () => {
                   <label className="label"><span className="label-text">Strictness</span></label>
                   <div className="flex gap-4">
                     {['low', 'medium', 'high'].map(level => (
-                      <label key={level} className="label cursor-pointer gap-2">
-                        <input
-                          type="radio"
-                          name="strictness"
-                          className="radio radio-error"
-                          checked={editingProfile.guards.contentFilter?.strictness === level}
-                          onChange={() => updateGuard('contentFilter', { strictness: level })}
-                          disabled={!editingProfile.guards.contentFilter?.enabled}
-                        />
-                        <span className="label-text capitalize">{level}</span>
-                      </label>
+                      <Radio
+                        key={level}
+                        name="strictness"
+                        label={level.charAt(0).toUpperCase() + level.slice(1)}
+                        color="error"
+                        checked={editingProfile.guards.contentFilter?.strictness === level}
+                        onChange={() => updateGuard('contentFilter', { strictness: level })}
+                        disabled={!editingProfile.guards.contentFilter?.enabled}
+                      />
                     ))}
                   </div>
                 </div>

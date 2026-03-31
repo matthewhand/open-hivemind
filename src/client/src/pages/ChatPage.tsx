@@ -11,6 +11,7 @@ import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotif
 import { useMediaQuery } from '../hooks/useBreakpoint';
 import { Alert } from '../components/DaisyUI/Alert';
 import Badge from '../components/DaisyUI/Badge';
+import Drawer from '../components/DaisyUI/Drawer';
 import Dropdown from '../components/DaisyUI/Dropdown';
 
 // Define Bot type based on API response
@@ -203,6 +204,102 @@ const ChatPage: React.FC = () => {
     }
   };
 
+  const botListContent = (
+    <>
+      <div className="p-4 font-bold text-sm text-base-content/50 uppercase tracking-wide">
+        Active Bots ({bots.length})
+      </div>
+      <div className="flex-1 overflow-y-auto">
+        {loading && bots.length === 0 ? (
+          <div className="p-4"><SkeletonList items={4} showAvatar /></div>
+        ) : (
+          <ul className="menu w-full p-2 gap-1">
+            {bots.map(bot => (
+              <li key={bot.id} className="relative">
+                <button
+                  className={`${selectedBotId === bot.id ? 'active' : ''} flex items-center gap-3 py-3`}
+                  onClick={() => { setSelectedBotId(bot.id); setSidebarOpen(false); }}
+                >
+                  <div className="relative">
+                    <BotAvatar bot={bot} />
+                    <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-base-100 ${bot.connected ? 'bg-success' : 'bg-base-300'}`} />
+                  </div>
+                  <div className="flex flex-col items-start min-w-0 flex-1">
+                    <span className="font-semibold truncate w-full text-left">{bot.name}</span>
+                    <div className="flex items-center gap-2 w-full">
+                      <span className="text-xs opacity-50 truncate text-left capitalize">{bot.messageProvider}</span>
+                      <span className="text-xs opacity-30">•</span>
+                      {/* LLM Provider Hot Swap Dropdown */}
+                      <Dropdown
+                        className="flex-1"
+                        triggerClassName="btn-ghost btn-xs px-1 min-h-0 h-auto flex items-center gap-1 text-xs opacity-70 hover:opacity-100 group"
+                        contentClassName="shadow-lg bg-base-100 w-52 z-50 max-h-60 overflow-y-auto"
+                        position="right"
+                        size="none"
+                        color="none"
+                        hideArrow={true}
+                        isOpen={showProviderDropdown === bot.id}
+                        onToggle={(isOpen) => setShowProviderDropdown(isOpen ? bot.id : null)}
+                        disabled={swappingProvider === bot.id}
+                        trigger={
+                          <>
+                            <Cpu className="w-3 h-3" />
+                            {swappingProvider === bot.id ? (
+                              <span className="loading loading-spinner loading-xs" aria-hidden="true" />
+                            ) : (
+                              <>
+                                <span className="truncate max-w-[80px]" title="Click to change LLM provider">{bot.llmProvider || 'Default'}</span>
+                                <ChevronDown className="w-3 h-3 opacity-50 group-hover:opacity-100" />
+                              </>
+                            )}
+                          </>
+                        }
+                      >
+                        <li className="menu-title">
+                          <span>Switch Provider</span>
+                        </li>
+                        <li>
+                          <button
+                            className={`${!bot.llmProvider ? 'active' : ''} btn btn-ghost btn-sm justify-start`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSwapProvider(bot.id, '');
+                            }}
+                          >
+                            <Check className={`w-4 h-4 ${!bot.llmProvider ? 'visible' : 'invisible'}`} />
+                            System Default
+                          </button>
+                        </li>
+                        <div className="divider my-1"></div>
+                        {llmProviders.map(provider => (
+                          <li key={provider.key}>
+                            <button
+                              className={`${bot.llmProvider === provider.key ? 'active' : ''} btn btn-ghost btn-sm justify-start`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSwapProvider(bot.id, provider.key);
+                              }}
+                            >
+                              <Check className={`w-4 h-4 ${bot.llmProvider === provider.key ? 'visible' : 'invisible'}`} />
+                              <div className="flex flex-col items-start">
+                                <span className="font-medium">{provider.name}</span>
+                                <span className="text-xs opacity-50">{provider.provider}</span>
+                              </div>
+                            </button>
+                          </li>
+                        ))}
+                      </Dropdown>
+                    </div>
+                  </div>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </>
+  );
+
   return (
     <div className="flex flex-col h-full bg-base-200">
       <div className="p-4 bg-base-100 border-b border-base-300 shadow-sm flex justify-between items-center">
@@ -237,106 +334,28 @@ const ChatPage: React.FC = () => {
       </div>
 
       <div className="flex flex-1 overflow-hidden relative">
-        {/* Mobile sidebar backdrop */}
-        {!isDesktop && sidebarOpen && (
-          <div
-            className="fixed inset-0 bg-black/40 z-30"
-            onClick={() => setSidebarOpen(false)}
-            aria-hidden="true"
-          />
-        )}
-        {/* Sidebar */}
-        <div className={`${isDesktop ? 'relative w-72' : 'fixed top-0 bottom-0 left-0 w-72 z-40 pt-[73px] transition-transform duration-300'} ${!isDesktop && !sidebarOpen ? '-translate-x-full' : 'translate-x-0'} bg-base-100 border-r border-base-300 flex flex-col`}>
-          <div className="p-4 font-bold text-sm text-base-content/50 uppercase tracking-wide">
-            Active Bots ({bots.length})
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            {loading && bots.length === 0 ? (
-              <div className="p-4"><SkeletonList items={4} showAvatar /></div>
-            ) : (
-              <ul className="menu w-full p-2 gap-1">
-                {bots.map(bot => (
-                  <li key={bot.id} className="relative">
-                    <button
-                      className={`${selectedBotId === bot.id ? 'active' : ''} flex items-center gap-3 py-3`}
-                      onClick={() => { setSelectedBotId(bot.id); if (!isDesktop) setSidebarOpen(false); }}
-                    >
-                      <div className="relative">
-                        <BotAvatar bot={bot} />
-                        <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-base-100 ${bot.connected ? 'bg-success' : 'bg-base-300'}`} />
-                      </div>
-                      <div className="flex flex-col items-start min-w-0 flex-1">
-                        <span className="font-semibold truncate w-full text-left">{bot.name}</span>
-                        <div className="flex items-center gap-2 w-full">
-                          <span className="text-xs opacity-50 truncate text-left capitalize">{bot.messageProvider}</span>
-                          <span className="text-xs opacity-30">•</span>
-                          {/* LLM Provider Hot Swap Dropdown */}
-                          <Dropdown
-                            className="flex-1"
-                            triggerClassName="btn-ghost btn-xs px-1 min-h-0 h-auto flex items-center gap-1 text-xs opacity-70 hover:opacity-100 group"
-                            contentClassName="shadow-lg bg-base-100 w-52 z-50 max-h-60 overflow-y-auto"
-                            position="right"
-                            size="none"
-                            color="none"
-                            hideArrow={true}
-                            isOpen={showProviderDropdown === bot.id}
-                            onToggle={(isOpen) => setShowProviderDropdown(isOpen ? bot.id : null)}
-                            disabled={swappingProvider === bot.id}
-                            trigger={
-                              <>
-                                <Cpu className="w-3 h-3" />
-                                {swappingProvider === bot.id ? (
-                                  <span className="loading loading-spinner loading-xs" aria-hidden="true" />
-                                ) : (
-                                  <>
-                                    <span className="truncate max-w-[80px]" title="Click to change LLM provider">{bot.llmProvider || 'Default'}</span>
-                                    <ChevronDown className="w-3 h-3 opacity-50 group-hover:opacity-100" />
-                                  </>
-                                )}
-                              </>
-                            }
-                          >
-                            <li className="menu-title">
-                              <span>Switch Provider</span>
-                            </li>
-                            <li>
-                              <button
-                                className={`${!bot.llmProvider ? 'active' : ''} btn btn-ghost btn-sm justify-start`}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleSwapProvider(bot.id, '');
-                                }}
-                              >
-                                <Check className={`w-4 h-4 ${!bot.llmProvider ? 'visible' : 'invisible'}`} />
-                                System Default
-                              </button>
-                            </li>
-                            <div className="divider my-1"></div>
-                            {llmProviders.map(provider => (
-                              <li key={provider.key}>
-                                <button
-                                  className={`${bot.llmProvider === provider.key ? 'active' : ''} btn btn-ghost btn-sm justify-start`}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleSwapProvider(bot.id, provider.key);
-                                  }}
-                                >
-                                  <Check className={`w-4 h-4 ${bot.llmProvider === provider.key ? 'visible' : 'invisible'}`} />
-                                  <div className="flex flex-col items-start">
-                                    <span className="font-medium">{provider.name}</span>
-                                    <span className="text-xs opacity-50">{provider.provider}</span>
-                                  </div>
-                                </button>
-                              </li>
-                            ))}
-                          </Dropdown>
-                        </div>
-                      </div>
-                    </button>
-                  </li>
-                ))}
-              </ul>
+        {/* Sidebar Mobile Overlay & Container handled by Drawer component */}
+        <div className={isDesktop ? 'relative w-72 flex-shrink-0 border-r border-base-300' : 'fixed inset-0 z-40 pointer-events-none'}>
+          <div className={isDesktop ? 'h-full' : `absolute inset-0 z-50 pointer-events-auto transition-opacity duration-300 ${sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+            {/* Dark Backdrop for Mobile */}
+            {!isDesktop && (
+              <div
+                className="absolute inset-0 bg-black/40"
+                onClick={() => setSidebarOpen(false)}
+                aria-hidden="true"
+              />
             )}
+
+            <div className={`${isDesktop ? 'h-full' : `absolute top-0 bottom-0 left-0 w-72 transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}`}>
+              <Drawer
+                isOpen={isDesktop ? true : sidebarOpen}
+                onClose={() => setSidebarOpen(false)}
+                variant={isDesktop ? "sidebar" : "mobile"}
+                className={isDesktop ? "" : "shadow-xl pt-14"}
+              >
+                {botListContent}
+              </Drawer>
+            </div>
           </div>
         </div>
 
