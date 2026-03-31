@@ -3,7 +3,9 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Shield, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle, Save, X, Settings, AlertTriangle, Copy, ToggleLeft } from 'lucide-react';
 import { apiService } from '../services/api';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
-import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
+import { ConfirmModal } from '../components/DaisyUI/Modal';
+import ModalForm from '../components/DaisyUI/ModalForm';
+import type { FormField } from '../components/DaisyUI/formTypes';
 import Button from '../components/DaisyUI/Button';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
@@ -95,28 +97,35 @@ const GuardsPage: React.FC = () => {
     fetchProfiles();
   }, [fetchProfiles]);
 
-  const handleSaveProfile = async () => {
-    if (!editingProfile) return;
-    if (!editingProfile.name.trim()) {
-      showError('Profile name is required');
-      return;
-    }
-
-    // Clean up arrays before saving
-    const profileToSave = JSON.parse(JSON.stringify(editingProfile));
-    if (profileToSave.guards.mcpGuard.allowedUsers) {
-      profileToSave.guards.mcpGuard.allowedUsers = profileToSave.guards.mcpGuard.allowedUsers.map((s: string) => s.trim()).filter(Boolean);
-    }
-    if (profileToSave.guards.mcpGuard.allowedTools) {
-      profileToSave.guards.mcpGuard.allowedTools = profileToSave.guards.mcpGuard.allowedTools.map((s: string) => s.trim()).filter(Boolean);
-    }
-    if (profileToSave.guards.contentFilter?.blockedTerms) {
-      profileToSave.guards.contentFilter.blockedTerms = profileToSave.guards.contentFilter.blockedTerms.map((s: string) => s.trim()).filter(Boolean);
-    }
-
+  const handleSaveProfile = async (formData: Record<string, any>) => {
     try {
       setSaving(true);
-      const url = isNew ? `${API_BASE}/guard-profiles` : `${API_BASE}/guard-profiles/${editingProfile.id}`;
+
+      const profileToSave: GuardrailProfile = {
+        id: editingProfile?.id || '',
+        name: formData.name.trim(),
+        description: formData.description,
+        guards: {
+          mcpGuard: {
+            enabled: formData.mcpGuardEnabled,
+            type: formData.mcpGuardType,
+            allowedUsers: (formData.mcpGuardAllowedUsers || []).map((s: string) => s.trim()).filter(Boolean),
+            allowedTools: (formData.mcpGuardAllowedTools || []).map((s: string) => s.trim()).filter(Boolean),
+          },
+          rateLimit: {
+            enabled: formData.rateLimitEnabled,
+            maxRequests: formData.rateLimitMaxRequests,
+            windowMs: formData.rateLimitWindowSeconds * 1000,
+          },
+          contentFilter: {
+            enabled: formData.contentFilterEnabled,
+            strictness: formData.contentFilterStrictness,
+            blockedTerms: (formData.contentFilterBlockedTerms || []).map((s: string) => s.trim()).filter(Boolean),
+          },
+        },
+      };
+
+      const url = isNew ? `${API_BASE}/guard-profiles` : `${API_BASE}/guard-profiles/${editingProfile?.id}`;
       const method = isNew ? 'POST' : 'PUT';
 
       if (method === 'POST') {
@@ -134,6 +143,161 @@ const GuardsPage: React.FC = () => {
       setSaving(false);
     }
   };
+
+  const flattenProfile = (profile: GuardrailProfile | null) => {
+    if (!profile) return {};
+    return {
+      name: profile.name,
+      description: profile.description || '',
+      mcpGuardEnabled: profile.guards.mcpGuard?.enabled || false,
+      mcpGuardType: profile.guards.mcpGuard?.type || 'owner',
+      mcpGuardAllowedUsers: profile.guards.mcpGuard?.allowedUsers || [],
+      mcpGuardAllowedTools: profile.guards.mcpGuard?.allowedTools || [],
+      rateLimitEnabled: profile.guards.rateLimit?.enabled || false,
+      rateLimitMaxRequests: profile.guards.rateLimit?.maxRequests || 100,
+      rateLimitWindowSeconds: (profile.guards.rateLimit?.windowMs || 60000) / 1000,
+      contentFilterEnabled: profile.guards.contentFilter?.enabled || false,
+      contentFilterStrictness: profile.guards.contentFilter?.strictness || 'low',
+      contentFilterBlockedTerms: profile.guards.contentFilter?.blockedTerms || [],
+    };
+  };
+
+  const modalFormFields: FormField[] = [
+    {
+      name: 'name',
+      label: 'Profile Name',
+      type: 'text',
+      placeholder: 'e.g. Strict Production',
+      required: true,
+    },
+    {
+      name: 'description',
+      label: 'Description',
+      type: 'textarea',
+      placeholder: 'Describe what this profile enforces...',
+    },
+    {
+      name: 'mcpGuardEnabled',
+      label: 'Enable Access Control',
+      type: 'checkbox',
+    },
+    {
+      name: 'mcpGuardType',
+      label: 'Type',
+      type: 'select',
+      options: [
+        { value: 'owner', label: 'Owner Only' },
+        { value: 'custom', label: 'Custom Allowed Users' },
+      ],
+    },
+    {
+      name: 'mcpGuardAllowedUsers',
+      label: 'Allowed User IDs',
+      type: 'custom',
+      render: ({ value, onChange, disabled }) => (
+        <CommaSeparatedInput
+          id="allowed-users"
+          value={value || []}
+          onChange={onChange}
+          disabled={disabled}
+          validate={item => {
+            if (!/^[a-zA-Z0-9-_]+$/.test(item)) {
+              return "User IDs must contain only letters, numbers, dashes, and underscores.";
+            }
+            return null;
+          }}
+        />
+      ),
+    },
+    {
+      name: 'mcpGuardAllowedTools',
+      label: 'Allowed Tools',
+      type: 'custom',
+      helperText: 'Leave empty to allow all tools (if enabled)',
+      render: ({ value, onChange, disabled }) => (
+        <CommaSeparatedInput
+          id="allowed-tools"
+          placeholder="e.g. calculator, weather"
+          value={value || []}
+          onChange={onChange}
+          disabled={disabled}
+          validate={item => {
+            if (!/^[a-zA-Z0-9-_]+$/.test(item)) {
+              return "Tool names must contain only letters, numbers, dashes, and underscores.";
+            }
+            return null;
+          }}
+        />
+      ),
+    },
+    {
+      name: 'rateLimitEnabled',
+      label: 'Enable Rate Limiter',
+      type: 'checkbox',
+    },
+    {
+      name: 'rateLimitMaxRequests',
+      label: 'Max Requests',
+      type: 'number',
+    },
+    {
+      name: 'rateLimitWindowSeconds',
+      label: 'Window (seconds)',
+      type: 'number',
+    },
+    {
+      name: 'contentFilterEnabled',
+      label: 'Enable Content Filter',
+      type: 'checkbox',
+    },
+    {
+      name: 'contentFilterStrictness',
+      label: 'Strictness',
+      type: 'radio',
+      options: [
+        { value: 'low', label: 'Low' },
+        { value: 'medium', label: 'Medium' },
+        { value: 'high', label: 'High' },
+      ],
+    },
+    {
+      name: 'contentFilterBlockedTerms',
+      label: 'Blocked Terms',
+      type: 'custom',
+      render: ({ value, onChange, disabled }) => (
+        <CommaSeparatedInput
+          id="blocked-terms"
+          placeholder="e.g. secret, password, confidential"
+          value={value || []}
+          onChange={onChange}
+          disabled={disabled}
+        />
+      ),
+    },
+  ];
+
+  const modalFormSteps = [
+    {
+      title: 'General',
+      description: 'Basic profile information',
+      fields: ['name', 'description'],
+    },
+    {
+      title: 'Access Control',
+      description: 'Manage who can use specific tools',
+      fields: ['mcpGuardEnabled', 'mcpGuardType', 'mcpGuardAllowedUsers', 'mcpGuardAllowedTools'],
+    },
+    {
+      title: 'Rate Limit',
+      description: 'Control request frequency',
+      fields: ['rateLimitEnabled', 'rateLimitMaxRequests', 'rateLimitWindowSeconds'],
+    },
+    {
+      title: 'Content Filter',
+      description: 'Block specific terms and control strictness',
+      fields: ['contentFilterEnabled', 'contentFilterStrictness', 'contentFilterBlockedTerms'],
+    },
+  ];
 
   const handleDeleteProfile = (profile: GuardrailProfile) => {
     setDeleteConfirm({ id: profile.id, name: profile.name });
@@ -173,17 +337,6 @@ const GuardsPage: React.FC = () => {
   const handleCreate = () => {
     setEditingProfile(createEmptyProfile());
     setIsNew(true);
-  };
-
-  const updateGuard = (section: 'mcpGuard' | 'rateLimit' | 'contentFilter', updates: any) => {
-    if (!editingProfile) return;
-    setEditingProfile({
-      ...editingProfile,
-      guards: {
-        ...editingProfile.guards,
-        [section]: { ...editingProfile.guards[section], ...updates },
-      },
-    });
   };
 
   const filteredProfiles = profiles.filter(profile =>
@@ -400,209 +553,18 @@ const GuardsPage: React.FC = () => {
 
       {/* Edit Modal */}
       {editingProfile && (
-        <Modal
+        <ModalForm
           isOpen={!!editingProfile}
           onClose={() => setEditingProfile(null)}
           title={isNew ? 'Create Guard Profile' : 'Edit Guard Profile'}
           size="lg"
-          actions={[
-            {
-              label: 'Cancel',
-              onClick: () => setEditingProfile(null),
-              variant: 'ghost',
-            },
-            {
-              label: isNew ? 'Create Profile' : 'Save Changes',
-              onClick: handleSaveProfile,
-              variant: 'primary',
-              loading: saving,
-              disabled: saving || !editingProfile.name.trim(),
-            },
-          ]}
-        >
-          <div className="form-control mb-4">
-            <Input
-              label="Profile Name"
-              type="text"
-              value={editingProfile.name}
-              onChange={e => setEditingProfile({ ...editingProfile, name: e.target.value })}
-              placeholder="e.g. Strict Production"
-            />
-          </div>
-
-          <div className="form-control mb-6">
-            <label className="label"><span className="label-text">Description</span></label>
-            <Textarea
-              className="h-20"
-              value={editingProfile.description || ''}
-              onChange={e => setEditingProfile({ ...editingProfile, description: e.target.value })}
-              placeholder="Describe what this profile enforces..."
-            />
-          </div>
-
-          <div className="divider">Guardrails</div>
-
-          <div className="grid grid-cols-1 gap-6">
-            {/* Access Control */}
-            <div className="collapse collapse-arrow bg-base-200">
-              <input type="checkbox" defaultChecked />
-              <div className="collapse-title text-xl font-medium flex items-center gap-2 pr-12">
-                <Shield className="w-5 h-5" /> Access Control
-                <div className="ml-auto z-10" onClick={e => e.stopPropagation()}>
-                  <Toggle
-                    color="primary"
-                    checked={editingProfile.guards.mcpGuard.enabled}
-                    onChange={e => updateGuard('mcpGuard', { enabled: e.target.checked })}
-                  />
-                </div>
-              </div>
-              <div className="collapse-content bg-base-100 pt-4">
-                <div className="form-control">
-                  <label className="label"><span className="label-text">Type</span></label>
-                  <Select
-                    value={editingProfile.guards.mcpGuard.type}
-                    onChange={e => updateGuard('mcpGuard', { type: e.target.value })}
-                    disabled={!editingProfile.guards.mcpGuard.enabled}
-                    options={[
-                      { value: 'owner', label: 'Owner Only' },
-                      { value: 'custom', label: 'Custom Allowed Users' }
-                    ]}
-                  />
-                </div>
-                {editingProfile.guards.mcpGuard.type === 'custom' && (
-                  <div className="form-control mt-4">
-                    <label className="label" htmlFor="allowed-users"><span className="label-text">Allowed User IDs</span></label>
-                    <CommaSeparatedInput
-                      id="allowed-users"
-                      value={editingProfile.guards.mcpGuard.allowedUsers || []}
-                      onChange={v => updateGuard('mcpGuard', { allowedUsers: v })}
-                      disabled={!editingProfile.guards.mcpGuard.enabled}
-                      validate={item => {
-                        if (!/^[a-zA-Z0-9-_]+$/.test(item)) {
-                          return "User IDs must contain only letters, numbers, dashes, and underscores.";
-                        }
-                        return null;
-                      }}
-                    />
-                  </div>
-                )}
-
-                <div className="form-control mt-4">
-                  <label className="label" htmlFor="allowed-tools"><span className="label-text">Allowed Tools</span></label>
-                  <CommaSeparatedInput
-                    id="allowed-tools"
-                    placeholder="e.g. calculator, weather"
-                    value={editingProfile.guards.mcpGuard.allowedTools || []}
-                    onChange={v => updateGuard('mcpGuard', { allowedTools: v })}
-                    disabled={!editingProfile.guards.mcpGuard.enabled}
-                    validate={item => {
-                      if (!/^[a-zA-Z0-9-_]+$/.test(item)) {
-                        return "Tool names must contain only letters, numbers, dashes, and underscores.";
-                      }
-                      return null;
-                    }}
-                  />
-                  <label className="label"><span className="label-text-alt opacity-70">Leave empty to allow all tools (if enabled)</span></label>
-                </div>
-              </div>
-            </div>
-
-            {/* Rate Limit */}
-            <div className="collapse collapse-arrow bg-base-200">
-              <input type="checkbox" />
-              <div className="collapse-title text-xl font-medium flex items-center gap-2 pr-12">
-                <RefreshCw className="w-5 h-5" /> Rate Limiter
-                <div className="ml-auto z-10" onClick={e => e.stopPropagation()}>
-                  <Toggle
-                    checked={editingProfile.guards.rateLimit?.enabled || false}
-                    onChange={e => updateGuard('rateLimit', { enabled: e.target.checked })}
-                  />
-                </div>
-              </div>
-              <div className="collapse-content bg-base-100 pt-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className={`form-control transition-all duration-200 ${!editingProfile.guards.rateLimit?.enabled ? 'opacity-50 pointer-events-none' : ''}`} aria-disabled={!editingProfile.guards.rateLimit?.enabled}>
-                    <Input
-                      label="Max Requests"
-                      type="number"
-                      value={editingProfile.guards.rateLimit?.maxRequests || 100}
-                      onChange={e => updateGuard('rateLimit', { maxRequests: parseInt(e.target.value) })}
-                      disabled={!editingProfile.guards.rateLimit?.enabled}
-                    />
-                  </div>
-                  <div className={`form-control transition-all duration-200 ${!editingProfile.guards.rateLimit?.enabled ? 'opacity-50 pointer-events-none' : ''}`} aria-disabled={!editingProfile.guards.rateLimit?.enabled}>
-                    <Input
-                      label="Window (seconds)"
-                      type="number"
-                      value={(editingProfile.guards.rateLimit?.windowMs || 60000) / 1000}
-                      onChange={e => {
-                        const seconds = Math.max(1, Math.min(3600, parseInt(e.target.value) || 0));
-                        updateGuard('rateLimit', { windowMs: seconds * 1000 });
-                      }}
-                      disabled={!editingProfile.guards.rateLimit?.enabled}
-                      min={1}
-                      max={3600}
-                      placeholder="60"
-                      helperText={(() => {
-                        const seconds = (editingProfile.guards.rateLimit?.windowMs || 60000) / 1000;
-                        if (seconds < 60) return `${seconds} seconds`;
-                        if (seconds === 60) return '1 minute';
-                        if (seconds < 3600) return `${Math.floor(seconds / 60)} min ${seconds % 60}s`;
-                        return '1 hour';
-                      })()}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Content Filter */}
-            <div className="collapse collapse-arrow bg-base-200">
-              <input type="checkbox" />
-              <div className="collapse-title text-xl font-medium flex items-center gap-2 pr-12">
-                <AlertTriangle className="w-5 h-5" /> Content Filter
-                <div className="ml-auto z-10" onClick={e => e.stopPropagation()}>
-                  <Toggle
-                    color="error"
-                    checked={editingProfile.guards.contentFilter?.enabled || false}
-                    onChange={e => updateGuard('contentFilter', { enabled: e.target.checked })}
-                  />
-                </div>
-              </div>
-              <div className="collapse-content bg-base-100 pt-4">
-                <div className="form-control">
-                  <label className="label"><span className="label-text">Strictness</span></label>
-                  <div className="flex gap-4">
-                    {['low', 'medium', 'high'].map(level => (
-                      <label key={level} className="label cursor-pointer gap-2">
-                        <input
-                          type="radio"
-                          name="strictness"
-                          className="radio radio-error"
-                          checked={editingProfile.guards.contentFilter?.strictness === level}
-                          onChange={() => updateGuard('contentFilter', { strictness: level })}
-                          disabled={!editingProfile.guards.contentFilter?.enabled}
-                        />
-                        <span className="label-text capitalize">{level}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="form-control mt-4">
-                  <label className="label" htmlFor="blocked-terms"><span className="label-text">Blocked Terms</span></label>
-                  <CommaSeparatedInput
-                    id="blocked-terms"
-                    placeholder="e.g. secret, password, confidential"
-                    value={editingProfile.guards.contentFilter?.blockedTerms || []}
-                    onChange={v => updateGuard('contentFilter', { blockedTerms: v })}
-                    disabled={!editingProfile.guards.contentFilter?.enabled}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </Modal>
+          fields={modalFormFields}
+          steps={modalFormSteps}
+          initialData={flattenProfile(editingProfile)}
+          onSubmit={handleSaveProfile}
+          submitText={isNew ? 'Create Profile' : 'Save Changes'}
+          loading={saving}
+        />
       )}
 
       <ConfirmModal

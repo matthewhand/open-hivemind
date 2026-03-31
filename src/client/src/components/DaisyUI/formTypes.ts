@@ -11,7 +11,7 @@ export interface SelectOption {
 export interface FormField {
   name: string;
   label: string;
-  type: 'text' | 'email' | 'password' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'file' | 'url' | 'tel' | 'date' | 'time' | 'datetime-local' | 'key-value';
+  type: 'text' | 'email' | 'password' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'file' | 'url' | 'tel' | 'date' | 'time' | 'datetime-local' | 'key-value' | 'custom';
   placeholder?: string;
   required?: boolean;
   disabled?: boolean;
@@ -30,6 +30,7 @@ export interface FormField {
   autoComplete?: string;
   'aria-describedby'?: string;
   'aria-label'?: string;
+  render?: (props: { value: any; onChange: (value: any) => void; error?: string; disabled?: boolean }) => React.ReactNode;
 }
 
 export interface FormFieldSet {
