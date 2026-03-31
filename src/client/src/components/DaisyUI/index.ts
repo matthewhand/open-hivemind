@@ -22,6 +22,7 @@ export { default as StepWizard } from './StepWizard';
 export { default as Timeline } from './Timeline';
 export { default as ToastNotification } from './ToastNotification';
 export { default as VisualFeedback } from './VisualFeedback';
+export { default as SavedStamp } from './SavedStamp';
 export { default as PageHeader } from './PageHeader';
 export { default as EmptyState } from './EmptyState';
 

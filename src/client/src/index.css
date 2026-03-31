@@ -1167,3 +1167,88 @@ body.robot-ui-enabled .btn-accent {
     animation-duration: 0.01ms !important;
   }
 }
+
+/* ============================================
+   Saved Stamp Animation Keyframes
+   ============================================ */
+
+/* Drop from above with slight rotation - gravity feel */
+@keyframes stampDrop {
+  0% {
+    transform: translateY(-200px) rotate(-2deg);
+    opacity: 0.8;
+  }
+
+  70% {
+    transform: translateY(10px) rotate(-5deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(0) rotate(-5deg);
+    opacity: 1;
+  }
+}
+
+/* Impact bounce - scale up then settle */
+@keyframes stampImpact {
+  0% {
+    transform: scale(1) rotate(-5deg);
+  }
+
+  30% {
+    transform: scale(1.15) rotate(-5deg);
+  }
+
+  60% {
+    transform: scale(0.98) rotate(-5deg);
+  }
+
+  100% {
+    transform: scale(1) rotate(-5deg);
+  }
+}
+
+/* Fade out with slight shrink */
+@keyframes stampFadeOut {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+/* Subtle screen shake on impact */
+@keyframes stampShake {
+  0% {
+    transform: translate(0, 0);
+  }
+
+  15% {
+    transform: translate(-3px, 2px);
+  }
+
+  30% {
+    transform: translate(3px, -2px);
+  }
+
+  45% {
+    transform: translate(-2px, 1px);
+  }
+
+  60% {
+    transform: translate(2px, -1px);
+  }
+
+  75% {
+    transform: translate(-1px, 1px);
+  }
+
+  100% {
+    transform: translate(0, 0);
+  }
+}
