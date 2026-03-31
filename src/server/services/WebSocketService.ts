@@ -683,12 +683,19 @@ export class WebSocketService {
     });
   }
 
-  public broadcastConfigChange(): void {
+  public broadcastConfigChange(detail?: {
+    type?: string;
+    action?: string;
+    key?: string;
+  }): void {
     if (!this.io) {
       return;
     }
-    debug('Broadcasting configuration change');
-    this.io.emit('config_changed', { timestamp: new Date().toISOString() });
+    debug('Broadcasting configuration change', detail);
+    this.io.emit('config_changed', {
+      timestamp: new Date().toISOString(),
+      ...(detail || {}),
+    });
 
     // Send updated data to all clients
     this.io.sockets.sockets.forEach((socket) => {
@@ -998,7 +1005,9 @@ export class WebSocketService {
 
   public shutdown(): void {
     if (this.metricsInterval) {
-      clearInterval(this.metricsInterval);
+      if (typeof clearInterval === 'function') {
+        clearInterval(this.metricsInterval);
+      }
       this.metricsInterval = null;
     }
 
@@ -1030,7 +1039,11 @@ export class WebSocketService {
 
     // Clean up message acknowledgment state
     for (const timer of this.ackTimeoutTimers.values()) {
-      clearTimeout(timer);
+      // Guard against environments where clearTimeout may not be available
+      // (e.g. certain Jest teardown scenarios)
+      if (typeof clearTimeout === 'function') {
+        clearTimeout(timer);
+      }
     }
     this.ackTimeoutTimers.clear();
     this.pendingMessages.clear();

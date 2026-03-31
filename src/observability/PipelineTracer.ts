@@ -80,12 +80,23 @@ function closeSpan(span: Span, status: 'ok' | 'error' = 'ok'): void {
 // PipelineTracer
 // ---------------------------------------------------------------------------
 
+export type TraceCompletedCallback = (trace: Trace) => void;
+
 export class PipelineTracer {
   private activeTraces = new Map<string, Trace>();
   private completedTraces: Trace[] = [];
   private maxCompleted = 100;
+  private traceCompletedCallbacks: TraceCompletedCallback[] = [];
 
   constructor(private bus: MessageBus) {}
+
+  /**
+   * Register a callback to be invoked whenever a trace completes.
+   * Used by TraceExportManager to export traces to external backends.
+   */
+  onTraceCompleted(callback: TraceCompletedCallback): void {
+    this.traceCompletedCallbacks.push(callback);
+  }
 
   /**
    * Subscribe to all pipeline events on the bus.
@@ -310,5 +321,14 @@ export class PipelineTracer {
       trace.totalDurationMs,
       trace.rootSpan.status,
     );
+
+    // Notify registered callbacks (e.g. TraceExportManager)
+    for (const cb of this.traceCompletedCallbacks) {
+      try {
+        cb(trace);
+      } catch (err) {
+        debug('TraceCompleted callback error: %O', err);
+      }
+    }
   }
 }

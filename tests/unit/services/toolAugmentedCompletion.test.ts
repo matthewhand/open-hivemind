@@ -36,6 +36,7 @@ jest.mock('openai', () => ({
 
 // Mock openaiConfig — required by callLLMWithTools.
 jest.mock('@config/openaiConfig', () => ({
+  __esModule: true,
   default: {
     get: jest.fn().mockReturnValue(undefined),
   },

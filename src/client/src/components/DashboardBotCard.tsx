@@ -3,6 +3,7 @@ import Badge from './DaisyUI/Badge';
 import Card from './DaisyUI/Card';
 import Rating from './DaisyUI/Rating';
 import Button from './DaisyUI/Button';
+import Dropdown from './DaisyUI/Dropdown';
 import type { Bot, StatusResponse } from '../services/api';
 
 interface DashboardBotCardProps {
@@ -43,17 +44,19 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
               <p className="text-sm opacity-70">{bot.messageProvider}</p>
             </div>
           </div>
-          <div className="dropdown dropdown-end">
-            <label tabIndex={0} className="btn btn-ghost btn-sm">
-              ⚙️
-            </label>
-            <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
-              <li><a>🔧 Configure</a></li>
-              <li><a>📊 View Logs</a></li>
-              <li><a>🔄 Restart</a></li>
-              <li><a>🔍 Debug</a></li>
-            </ul>
-          </div>
+          <Dropdown
+            trigger="⚙️"
+            position="bottom"
+            className="dropdown-end"
+            size="sm"
+            color="ghost"
+            hideArrow={true}
+          >
+            <li><a>🔧 Configure</a></li>
+            <li><a>📊 View Logs</a></li>
+            <li><a>🔄 Restart</a></li>
+            <li><a>🔍 Debug</a></li>
+          </Dropdown>
         </div>
 
         {/* Status Badges */}

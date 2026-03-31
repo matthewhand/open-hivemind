@@ -12,7 +12,7 @@ This directory contains all documentation for Open Hivemind, organized by topic.
 
 ## 🏗️ Architecture & Core Concepts
 - [Architecture Overview](architecture/overview.md)
-- [Unified Server Architecture](architecture/unified-server.md)
+- [Server Architecture](architecture/unified-server.md)
 - [Development Guide](architecture/development.md)
 
 ## ⚙️ Operations & Deployment
@@ -21,6 +21,10 @@ This directory contains all documentation for Open Hivemind, organized by topic.
 - [Netlify Frontend Deployment](operations/deployment-netlify.md)
 - [Maintenance Guide](operations/maintenance.md)
 - [Security Incident Response](operations/security.md)
+
+## API Reference
+- [Pipeline & Config API](api/pipeline-api.md) - Config source introspection, health observability, and pipeline trace endpoints
+- [LLM Models API](api/llm-models-endpoint.md) - LLM provider model listing with pricing and capabilities
 
 ## 📚 Reference & Planning
 - [Package Specifications & Features](reference/package.md)

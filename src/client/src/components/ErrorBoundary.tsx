@@ -16,7 +16,7 @@ interface ErrorBoundaryState {
 }
 
 /**
- * Unified error boundary used both at the app root and around individual routes.
+ * Error boundary used both at the app root and around individual routes.
  *
  * - Renders a DaisyUI-styled recovery card with Retry and Go Home actions.
  * - When rendered **outside** a `<BrowserRouter>` (e.g. in main.tsx) it falls

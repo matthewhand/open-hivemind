@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import SystemManagement from '../SystemManagement';
 import { apiService } from '../../services/api';
 import * as WebSocketContext from '../../contexts/WebSocketContext';
+import { ToastProvider } from '../../components/DaisyUI/ToastNotification';
 
 // Mock apiService
 jest.mock('../../services/api', () => ({
@@ -27,7 +28,7 @@ jest.mock('../../contexts/WebSocketContext', () => ({
 
 // Mock Modal component to avoid JSDOM <dialog> issues
 jest.mock('../../components/DaisyUI/Modal', () => {
-  return ({ isOpen, children, title, actions }: any) => (
+  const Modal = ({ isOpen, children, title, actions }: any) => (
     isOpen ? (
       <div role="dialog" aria-modal="true">
         <h3>{title}</h3>
@@ -40,6 +41,21 @@ jest.mock('../../components/DaisyUI/Modal', () => {
       </div>
     ) : null
   );
+
+  Modal.ConfirmModal = ({ isOpen, title, message, onConfirm, onClose, confirmText = 'Confirm', cancelText = 'Cancel' }: any) => (
+    isOpen ? (
+      <div role="dialog" aria-modal="true">
+        <h3>{title}</h3>
+        <p>{message}</p>
+        <div className="modal-action">
+          <button onClick={onClose}>{cancelText}</button>
+          <button onClick={onConfirm}>{confirmText}</button>
+        </div>
+      </div>
+    ) : null
+  );
+
+  return Modal;
 });
 
 describe('SystemManagement', () => {
@@ -77,13 +93,13 @@ describe('SystemManagement', () => {
   });
 
   it('renders system management page', async () => {
-    render(<SystemManagement />);
+    render(<ToastProvider><SystemManagement /></ToastProvider>);
     expect(screen.getByText('System Management')).toBeInTheDocument();
     await waitFor(() => expect(apiService.getGlobalConfig).toHaveBeenCalled());
   });
 
   it('handles backup creation with encryption', async () => {
-    render(<SystemManagement />);
+    render(<ToastProvider><SystemManagement /></ToastProvider>);
 
     // Find create backup button
     const createButton = screen.getByRole('button', { name: /Create Backup/i });
@@ -114,7 +130,7 @@ describe('SystemManagement', () => {
   });
 
   it('handles performance tab interactions', async () => {
-    render(<SystemManagement />);
+    render(<ToastProvider><SystemManagement /></ToastProvider>);
 
     // Click Performance Tuning tab
     const perfTab = screen.getByText('Performance Tuning');
@@ -129,6 +145,10 @@ describe('SystemManagement', () => {
     // Test clear cache
     const clearButton = screen.getByText('Clear System Cache');
     fireEvent.click(clearButton);
+
+    // Wait for the confirm modal and click "Confirm"
+    const confirmButton = await screen.findByRole('button', { name: 'Confirm' });
+    fireEvent.click(confirmButton);
 
     await waitFor(() => expect(apiService.clearCache).toHaveBeenCalled());
   });

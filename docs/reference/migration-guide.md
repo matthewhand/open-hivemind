@@ -7,7 +7,7 @@ This guide helps you migrate from legacy single-bot configurations to the new mu
 
 ## Overview
 
-The new system uses a unified `BOTS_*` prefix pattern that works across all platforms (Discord, Slack, Mattermost). This provides:
+The new system uses a `BOTS_*` prefix pattern that works across all platforms (Discord, Slack, Mattermost). This provides:
 
 - ✅ Consistent configuration across all platforms
 - ✅ Support for multiple bot instances

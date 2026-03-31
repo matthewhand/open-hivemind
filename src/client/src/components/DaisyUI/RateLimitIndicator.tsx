@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRateLimit } from '../../hooks/useRateLimit';
+import Countdown from './Countdown';
+import { useInactivity } from '../../hooks/useInactivity';
 
 /**
  * Subtle rate limit indicator for the navbar area.
@@ -11,74 +13,73 @@ import { useRateLimit } from '../../hooks/useRateLimit';
  */
 const RateLimitIndicator: React.FC = () => {
   const { limit, remaining, resetTime, isNearLimit, isExhausted } = useRateLimit();
-  const [countdown, setCountdown] = useState('');
 
   // Calculate the ratio for display logic
   const ratio = limit > 0 ? remaining / limit : 1;
 
-  // Update countdown timer when near limit or exhausted
+  // Setup useInactivity hook
+  const sessionTimeoutMs = 5 * 60_000; // Example: 5 minutes session timeout
+  const { isIdle, lastActive } = useInactivity({ timeoutMs: sessionTimeoutMs });
+  const [showSessionWarning, setShowSessionWarning] = useState(false);
+  const [sessionExpiryTime, setSessionExpiryTime] = useState<number>(Date.now() + sessionTimeoutMs);
+
   useEffect(() => {
-    if (!isNearLimit && !isExhausted) {
-      setCountdown('');
-      return;
-    }
-
-    const updateCountdown = () => {
-      if (!resetTime) {
-        setCountdown('');
-        return;
-      }
+    const checkInterval = setInterval(() => {
       const now = Date.now();
-      const diff = resetTime - now;
-      if (diff <= 0) {
-        setCountdown('resetting...');
-        return;
+      const elapsed = now - lastActive;
+      const warningThreshold = sessionTimeoutMs * 0.8; // 80% of timeout
+
+      if (elapsed >= warningThreshold && elapsed < sessionTimeoutMs) {
+        setShowSessionWarning(true);
+        setSessionExpiryTime(lastActive + sessionTimeoutMs);
+      } else {
+        setShowSessionWarning(false);
       }
-      const minutes = Math.floor(diff / 60000);
-      const seconds = Math.floor((diff % 60000) / 1000);
-      setCountdown(minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`);
-    };
+    }, 1000);
 
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
-    return () => clearInterval(interval);
-  }, [resetTime, isNearLimit, isExhausted]);
+    return () => clearInterval(checkInterval);
+  }, [lastActive, sessionTimeoutMs]);
 
-  // Hidden when > 50% remaining or when no rate limit info has been received yet
-  if (limit === 0 || ratio > 0.5) {
+  // Hidden when > 50% remaining and no session warning
+  if ((limit === 0 || ratio > 0.5) && !showSessionWarning) {
     return null;
   }
 
   const tooltipText = isExhausted
-    ? `Rate limit exhausted (0/${limit}). Resets in ${countdown}`
-    : `API requests: ${remaining}/${limit} remaining. Resets in ${countdown}`;
+    ? `Rate limit exhausted (0/${limit}). Resets soon.`
+    : `API requests: ${remaining}/${limit} remaining.`;
 
-  // Red badge with countdown when < 10%
-  if (isNearLimit || isExhausted) {
-    return (
-      <div className="tooltip tooltip-bottom" data-tip={tooltipText}>
-        <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-error/15 border border-error/30">
-          <div className="w-2 h-2 rounded-full bg-error animate-pulse" />
-          <span className="text-xs font-medium text-error">
-            {remaining}/{limit}
-          </span>
-          {countdown && (
-            <span className="text-xs text-error/70">{countdown}</span>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // Yellow badge when 10-50% remaining
+  // Render UI depending on which warning to show
   return (
-    <div className="tooltip tooltip-bottom" data-tip={tooltipText}>
-      <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-warning/15 border border-warning/30">
-        <div className="w-2 h-2 rounded-full bg-warning" />
-        <span className="text-xs font-medium text-warning">
-          {remaining}/{limit}
-        </span>
-      </div>
+    <div className="flex gap-2">
+      {/* Session Expiry Warning */}
+      {showSessionWarning && (
+        <div className="tooltip tooltip-bottom" data-tip="Session expiring soon due to inactivity">
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-warning/15 border border-warning/30">
+            <span className="text-xs font-medium text-warning mr-1">Session expires in</span>
+            <span className="text-xs text-warning/70">
+              <Countdown targetDate={sessionExpiryTime} size="xs" />
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Rate Limit Indicator */}
+      {!(limit === 0 || ratio > 0.5) && (
+        <div className="tooltip tooltip-bottom" data-tip={tooltipText}>
+          <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border ${(isNearLimit || isExhausted) ? 'bg-error/15 border-error/30' : 'bg-warning/15 border-warning/30'}`}>
+            <div className={`w-2 h-2 rounded-full ${(isNearLimit || isExhausted) ? 'bg-error animate-pulse' : 'bg-warning'}`} />
+            <span className={`text-xs font-medium ${(isNearLimit || isExhausted) ? 'text-error' : 'text-warning'}`}>
+              {remaining}/{limit}
+            </span>
+            {(isNearLimit || isExhausted) && resetTime > 0 && (
+              <span className="text-xs text-error/70">
+                <Countdown targetDate={resetTime} size="xs" />
+              </span>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

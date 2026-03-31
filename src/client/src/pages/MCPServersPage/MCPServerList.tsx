@@ -2,6 +2,7 @@ import React from 'react';
 import { TrashIcon } from '@heroicons/react/24/outline';
 import BulkActionBar from '../../components/BulkActionBar';
 import { MCPServerCard } from './MCPServerCard';
+import Checkbox from '../../components/DaisyUI/Checkbox';
 
 interface MCPServer {
   id: string;
@@ -44,8 +45,7 @@ export const MCPServerList: React.FC<MCPServerListProps> = ({
   return (
     <>
       <div className="flex items-center gap-2 mb-2">
-        <input
-          type="checkbox"
+        <Checkbox
           className="checkbox checkbox-sm checkbox-primary"
           checked={bulk.isAllSelected}
           onChange={() => bulk.toggleAll(filteredServerIds)}

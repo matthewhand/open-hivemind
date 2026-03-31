@@ -9,7 +9,9 @@
  */
 
 export { PipelineTracer } from './PipelineTracer';
-export type { PipelineStats, Span, Trace } from './PipelineTracer';
+export type { PipelineStats, Span, Trace, TraceCompletedCallback } from './PipelineTracer';
+export { TraceExportManager, ConsoleExporter, JsonFileExporter, OtlpExporter, createExporters } from './TraceExporter';
+export type { ITraceExporter } from './TraceExporter';
 
 import type { PipelineTracer } from './PipelineTracer';
 

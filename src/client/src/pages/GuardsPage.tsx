@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Shield, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle, Save, X, Settings, AlertTriangle, Copy, ToggleLeft } from 'lucide-react';
 import { apiService } from '../services/api';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
+import { useSavedStamp } from '../contexts/SavedStampContext';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import Button from '../components/DaisyUI/Button';
 import PageHeader from '../components/DaisyUI/PageHeader';
@@ -14,10 +15,12 @@ import Input from '../components/DaisyUI/Input';
 import Textarea from '../components/DaisyUI/Textarea';
 import Select from '../components/DaisyUI/Select';
 import Toggle from '../components/DaisyUI/Toggle';
+import RangeSlider from '../components/DaisyUI/RangeSlider';
 import useUrlParams from '../hooks/useUrlParams';
 import { useBulkSelection } from '../hooks/useBulkSelection';
 import BulkActionBar from '../components/BulkActionBar';
 import Badge from '../components/DaisyUI/Badge';
+import Checkbox from '../components/DaisyUI/Checkbox';
 
 interface McpGuardConfig {
   enabled: boolean;
@@ -59,6 +62,7 @@ const GuardsPage: React.FC = () => {
 
   const showSuccess = useSuccessToast();
   const showError = useErrorToast();
+  const { showStamp } = useSavedStamp();
 
   const [editingProfile, setEditingProfile] = useState<GuardrailProfile | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
@@ -126,6 +130,7 @@ const GuardsPage: React.FC = () => {
       }
 
       showSuccess(`Profile ${isNew ? 'created' : 'updated'} successfully`);
+      showStamp();
       setEditingProfile(null);
       fetchProfiles();
     } catch (err: any) {
@@ -292,8 +297,7 @@ const GuardsPage: React.FC = () => {
       ) : (
         <>
           <div className="flex items-center gap-2 mb-2">
-            <input
-              type="checkbox"
+            <Checkbox
               className="checkbox checkbox-sm checkbox-primary"
               checked={bulk.isAllSelected}
               onChange={() => bulk.toggleAll(filteredProfileIds)}
@@ -335,8 +339,7 @@ const GuardsPage: React.FC = () => {
               <div className="card-body">
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       className="checkbox checkbox-sm checkbox-primary"
                       checked={bulk.isSelected(profile.id)}
                       onChange={(e) => bulk.toggleItem(profile.id, e as any)}
@@ -522,13 +525,18 @@ const GuardsPage: React.FC = () => {
               <div className="collapse-content bg-base-100 pt-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className={`form-control transition-all duration-200 ${!editingProfile.guards.rateLimit?.enabled ? 'opacity-50 pointer-events-none' : ''}`} aria-disabled={!editingProfile.guards.rateLimit?.enabled}>
-                    <Input
-                      label="Max Requests"
-                      type="number"
-                      value={editingProfile.guards.rateLimit?.maxRequests || 100}
-                      onChange={e => updateGuard('rateLimit', { maxRequests: parseInt(e.target.value) })}
-                      disabled={!editingProfile.guards.rateLimit?.enabled}
-                    />
+                    <div className="pt-2">
+                      <RangeSlider
+                        label="Max Requests"
+                        value={editingProfile.guards.rateLimit?.maxRequests || 100}
+                        onChange={val => updateGuard('rateLimit', { maxRequests: val })}
+                        min={1}
+                        max={1000}
+                        step={1}
+                        disabled={!editingProfile.guards.rateLimit?.enabled}
+                        variant="primary"
+                      />
+                    </div>
                   </div>
                   <div className={`form-control transition-all duration-200 ${!editingProfile.guards.rateLimit?.enabled ? 'opacity-50 pointer-events-none' : ''}`} aria-disabled={!editingProfile.guards.rateLimit?.enabled}>
                     <Input
@@ -570,22 +578,28 @@ const GuardsPage: React.FC = () => {
                 </div>
               </div>
               <div className="collapse-content bg-base-100 pt-4">
-                <div className="form-control">
-                  <label className="label"><span className="label-text">Strictness</span></label>
-                  <div className="flex gap-4">
-                    {['low', 'medium', 'high'].map(level => (
-                      <label key={level} className="label cursor-pointer gap-2">
-                        <input
-                          type="radio"
-                          name="strictness"
-                          className="radio radio-error"
-                          checked={editingProfile.guards.contentFilter?.strictness === level}
-                          onChange={() => updateGuard('contentFilter', { strictness: level })}
-                          disabled={!editingProfile.guards.contentFilter?.enabled}
-                        />
-                        <span className="label-text capitalize">{level}</span>
-                      </label>
-                    ))}
+                <div className="form-control mb-8">
+                  <div className={`pt-2 transition-all duration-200 ${!editingProfile.guards.contentFilter?.enabled ? 'opacity-50 pointer-events-none' : ''}`}>
+                    <RangeSlider
+                      label="Strictness"
+                      value={editingProfile.guards.contentFilter?.strictness === 'high' ? 3 : editingProfile.guards.contentFilter?.strictness === 'medium' ? 2 : 1}
+                      onChange={(val) => {
+                        const level = val === 3 ? 'high' : val === 2 ? 'medium' : 'low';
+                        updateGuard('contentFilter', { strictness: level });
+                      }}
+                      min={1}
+                      max={3}
+                      step={1}
+                      disabled={!editingProfile.guards.contentFilter?.enabled}
+                      variant="error"
+                      showMarks={true}
+                      showValue={false}
+                      marks={[
+                        { value: 1, label: 'Low' },
+                        { value: 2, label: 'Medium' },
+                        { value: 3, label: 'High' }
+                      ]}
+                    />
                   </div>
                 </div>
 

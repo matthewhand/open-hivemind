@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff, Shield } from 'lucide-react';
 import { isAdminBypassEnabled, setAdminBypass, getRedactionConfig, configureRedaction } from '../../utils/redaction';
+import Toggle from '../DaisyUI/Toggle';
 
 /**
  * Debug toggle component for authorized administrators to temporarily
@@ -71,8 +72,7 @@ export const RedactionDebugToggle: React.FC = () => {
                                     {bypassEnabled ? <Eye className="w-4 h-4 text-error" /> : <EyeOff className="w-4 h-4" />}
                                     Reveal PII Data
                                 </span>
-                                <input
-                                    type="checkbox"
+                                <Toggle
                                     className="toggle toggle-warning toggle-sm"
                                     checked={bypassEnabled}
                                     aria-label={bypassEnabled ? "Hide sensitive data" : "Reveal sensitive data"}

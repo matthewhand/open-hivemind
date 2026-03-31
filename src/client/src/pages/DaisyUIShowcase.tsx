@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ButtonsDemo } from '../components/DaisyUI/demos/ButtonsDemo';
+import { AnimationShowcaseDemo } from '../components/DaisyUI/demos/AnimationShowcaseDemo';
 import { InputDemo, SelectDemo, CheckboxDemo, TextareaDemo, FileInputDemo } from '../components/DaisyUI/demos/FormsDemo';
 import {
   BadgeDemo,
@@ -43,7 +44,7 @@ const DaisyUIShowcase: React.FC = () => {
     'toggle', 'radio', 'range', 'modal', 'dropdown', 'tabs', 'tooltip',
     'avatar', 'progress', 'loading', 'table', 'menu', 'collapse',
     'skeleton', 'breadcrumbs', 'textarea', 'file-input', 'steps', 'stat',
-    'chat', 'timeline', 'carousel', 'toast',
+    'chat', 'timeline', 'carousel', 'toast', 'animations',
   ];
 
   return (
@@ -103,6 +104,7 @@ const DaisyUIShowcase: React.FC = () => {
       {activeTab === 'timeline' && <TimelineDemo />}
       {activeTab === 'carousel' && <CarouselDemo />}
       {activeTab === 'toast' && <ToastDemo />}
+      {activeTab === 'animations' && <AnimationShowcaseDemo />}
 
       {/* Modal */}
       {modalOpen && (

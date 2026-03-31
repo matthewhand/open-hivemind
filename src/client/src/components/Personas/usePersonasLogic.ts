@@ -5,6 +5,7 @@ import { useInfoToast, useSuccessToast, useErrorToast } from '../DaisyUI/ToastNo
 import { useBulkSelection } from '../../hooks/useBulkSelection';
 import { useDragAndDrop } from '../../hooks/useDragAndDrop';
 import { useApiQuery } from '../../hooks/useApiQuery';
+import { logger } from '../../utils/logger';
 
 export interface Persona extends ApiPersona {
   assignedBotNames: string[];
@@ -66,7 +67,7 @@ export function usePersonasLogic() {
       await fetchPersonas();
     } catch (err: any) {
       setError('Failed to fetch data.');
-      console.error(err);
+      logger.error(err);
     } finally {
       setLoading(false);
     }

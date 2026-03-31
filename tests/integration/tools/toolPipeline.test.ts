@@ -32,6 +32,7 @@ jest.mock('openai', () => ({
 }));
 
 jest.mock('@config/openaiConfig', () => ({
+  __esModule: true,
   default: {
     get: jest.fn((key: string) => {
       const map: Record<string, any> = {

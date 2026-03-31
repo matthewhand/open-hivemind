@@ -13,7 +13,8 @@ export const useBotActions = (
   setIsCreateModalOpen: (open: boolean) => void,
   setEditingBot: (bot: BotConfig | null) => void,
   bulk: any,
-  setBulkDeleting: (deleting: boolean) => void
+  setBulkDeleting: (deleting: boolean) => void,
+  showStamp?: () => void
 ) => {
   const handleToggleBotStatus = async (bot: BotConfig) => {
     try {
@@ -42,6 +43,7 @@ export const useBotActions = (
         setPreviewBot(updatedBot);
       }
       toastSuccess('Bot updated successfully');
+      showStamp?.();
       setEditingBot(null);
     } catch (err) {
       toastError(err instanceof Error ? err.message : 'Failed to update bot');
@@ -53,6 +55,7 @@ export const useBotActions = (
       const response = await apiService.post<{ data: BotConfig }>('/api/bots', botData);
       setBots((prev) => [...prev, response.data]);
       toastSuccess('Bot created successfully');
+      showStamp?.();
       setIsCreateModalOpen(false);
       fetchBots();
     } catch (err) {

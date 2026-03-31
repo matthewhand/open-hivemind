@@ -1,5 +1,6 @@
 import React from 'react';
 import { ExclamationCircleIcon } from '@heroicons/react/20/solid';
+import Checkbox from '../../components/DaisyUI/Checkbox';
 import {
   ArrowPathIcon,
   PencilIcon,
@@ -47,8 +48,7 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = ({
       <div className="card-body">
         <div className="flex justify-between items-start mb-2">
           <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
+            <Checkbox
               className="checkbox checkbox-sm checkbox-primary"
               checked={bulk.isSelected(server.id)}
               onChange={(e) => bulk.toggleItem(server.id, e as any)}

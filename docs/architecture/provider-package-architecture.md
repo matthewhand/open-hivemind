@@ -55,7 +55,7 @@ The UI **never** has a hardcoded list of provider names. It asks the backend wha
 | Frontend field schemas | ⚠️ Exist but frontend-only | `src/client/src/provider-configs/schemas/` |
 | `ProviderConfigModal` dynamic form | ✅ Done | `src/client/src/components/ProviderConfiguration/ProviderConfigModal.tsx` |
 | `useProviders()` hook | ✅ Done | `src/client/src/hooks/useProviders.ts` |
-| Hardcoded provider lists in UI | ❌ Still present | `AgentConfigurator`, `LlmProfileManager`, `UnifiedDashboard`, `ConfigurationEditor` |
+| Hardcoded provider lists in UI | ❌ Still present | `AgentConfigurator`, `LlmProfileManager`, `Dashboard`, `ConfigurationEditor` |
 
 ## How to add a new LLM provider package
 

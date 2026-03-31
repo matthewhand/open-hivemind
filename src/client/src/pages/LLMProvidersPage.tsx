@@ -39,6 +39,10 @@ import useUrlParams from '../hooks/useUrlParams';
 import { useApiQuery } from '../hooks/useApiQuery';
 import { useBulkSelection } from '../hooks/useBulkSelection';
 import BulkActionBar from '../components/BulkActionBar';
+import Checkbox from '../components/DaisyUI/Checkbox';
+import Toggle from '../components/DaisyUI/Toggle';
+import { useWebSocket } from '../contexts/WebSocketContext';
+import { useSavedStamp } from '../contexts/SavedStampContext';
 
 type LlmModelType = 'chat' | 'embedding' | 'both';
 
@@ -62,6 +66,7 @@ const isEmbeddingCapable = (profile: any): boolean => {
 const LLMProvidersPage: React.FC = () => {
   const { modalState, openAddModal, openEditModal, closeModal } = useModal();
   const errorToast = useErrorToast();
+  const { showStamp } = useSavedStamp();
   const [profiles, setProfiles] = useState<any[]>([]);
   const [defaultStatus, setDefaultStatus] = useState<any>(null);
   const [expandedProfile, setExpandedProfile] = useState<string | null>(null);
@@ -140,6 +145,23 @@ const LLMProvidersPage: React.FC = () => {
     if (profilesError) setError(profilesError.message);
   }, [profilesError]);
 
+  // Auto-refresh when config changes are broadcast via WebSocket
+  const { configVersion, lastConfigChange } = useWebSocket();
+  const configVersionRef = React.useRef(configVersion);
+  useEffect(() => {
+    // Skip the initial mount (configVersion starts at 0)
+    if (configVersionRef.current === configVersion) return;
+    configVersionRef.current = configVersion;
+
+    // Only refetch when relevant config types change
+    const relevantTypes = ['llm-profiles', 'global'];
+    if (lastConfigChange?.type && !relevantTypes.includes(lastConfigChange.type)) return;
+
+    refetchProfiles();
+    refetchStatus();
+    refetchGlobal();
+  }, [configVersion, lastConfigChange, refetchProfiles, refetchStatus, refetchGlobal]);
+
   const fetchProfiles = useCallback(async () => {
     await Promise.all([refetchProfiles(), refetchStatus(), refetchGlobal()]);
   }, [refetchProfiles, refetchStatus, refetchGlobal]);
@@ -205,6 +227,7 @@ const LLMProvidersPage: React.FC = () => {
         await apiService.post('/api/config/llm-profiles', payload);
       }
       closeModal();
+      showStamp();
       fetchProfiles();
     } catch (err: any) { errorToast('Save Failed', `Failed to save: ${err.message}`); }
   };
@@ -424,8 +447,7 @@ const LLMProvidersPage: React.FC = () => {
               When enabled, assign different profiles to summarisation, moderation, and other tasks independently.
             </p>
           </div>
-          <input
-            type="checkbox"
+          <Toggle
             className="toggle toggle-primary"
             checked={perUseCaseEnabled}
             onChange={async (e) => {
@@ -506,8 +528,7 @@ const LLMProvidersPage: React.FC = () => {
       ) : (
         <>
           <div className="flex items-center gap-2 mb-2">
-            <input
-              type="checkbox"
+            <Checkbox
               className="checkbox checkbox-sm checkbox-primary"
               checked={bulk.isAllSelected}
               onChange={() => bulk.toggleAll(filteredProfileKeys)}
@@ -535,8 +556,7 @@ const LLMProvidersPage: React.FC = () => {
               <div className="card-body p-0">
                 <div className="p-4 flex items-center justify-between cursor-pointer" onClick={() => toggleExpand(profile.key)}>
                   <div className="flex items-center gap-4">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       className="checkbox checkbox-sm checkbox-primary"
                       checked={bulk.isSelected(profile.key)}
                       onChange={(e) => { e.stopPropagation(); bulk.toggleItem(profile.key, e as any); }}

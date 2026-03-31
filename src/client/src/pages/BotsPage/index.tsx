@@ -26,6 +26,8 @@ import { useBotPreview } from './hooks/useBotPreview';
 import { useBotsList } from './hooks/useBotsList';
 // Hooks
 import { useBotsPageData } from './hooks/useBotsPageData';
+import Checkbox from '../../components/DaisyUI/Checkbox';
+import { useSavedStamp } from '../../contexts/SavedStampContext';
 
 const BotsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
@@ -46,6 +48,7 @@ const BotsPage: React.FC = () => {
 
   const toastSuccess = useSuccessToast();
   const toastError = useErrorToast();
+  const { showStamp } = useSavedStamp();
   const location = useLocation();
   const isMobile = useIsBelowBreakpoint('md');
 
@@ -115,7 +118,8 @@ const BotsPage: React.FC = () => {
     setIsCreateModalOpen,
     setEditingBot,
     bulk,
-    setBulkDeleting
+    setBulkDeleting,
+    showStamp
   );
 
   const { handleBulkExport, handleExportAll, handleExportSingleBot } = useBotExport(
@@ -197,8 +201,7 @@ const BotsPage: React.FC = () => {
           {!error && filteredBots.length > 0 && (
             <>
               <div className="flex items-center gap-2 mb-2">
-                <input
-                  type="checkbox"
+                <Checkbox
                   className="checkbox checkbox-sm checkbox-primary"
                   checked={bulk.isAllSelected}
                   onChange={() => bulk.toggleAll(filteredBotIds)}

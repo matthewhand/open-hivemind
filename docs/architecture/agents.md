@@ -4,7 +4,7 @@ Navigation: [Docs Index](../README.md) | [Layered Overview](layered-overview.md)
 
 
 ## Overview
-Open-Hivemind implements a revolutionary multi-agent architecture where each bot instance operates as a neuron in a unified digital consciousness. See [PACKAGE.md](../../PACKAGE.md) for technical specifications.
+Open-Hivemind implements a revolutionary multi-agent architecture where each bot instance operates as a neuron in a digital consciousness. See [PACKAGE.md](../../PACKAGE.md) for technical specifications.
 
 ## Multi-Agent Modes
 
@@ -40,13 +40,13 @@ Control who can use MCP tools through configurable guards:
 
 ## Agent Coordination
 
-### Unified Voice
+### Consistent Voice
 All agents respond with consistent naming: `*AgentName*: message`
 
 ### Context Sharing
 - Shared message history (10 messages per channel)
 - Cross-instance state synchronization
-- Unified LLM provider access
+- Shared LLM provider access
 
 ### Instance Management
 - Automatic token validation on startup
