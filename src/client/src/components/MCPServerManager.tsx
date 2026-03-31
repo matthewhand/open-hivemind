@@ -28,7 +28,7 @@ interface MCPTool {
   inputSchema: unknown;
 }
 
-const getAuthHeaders = (): Record<string, string> => {
+export const getAuthHeaders = (): Record<string, string> => {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   try {
     const stored = localStorage.getItem('auth_tokens');
