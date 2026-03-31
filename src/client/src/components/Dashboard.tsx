@@ -6,6 +6,9 @@ import Hero from './DaisyUI/Hero';
 import { SkeletonCard } from './DaisyUI/Skeleton';
 import DashboardBotCard from './DashboardBotCard';
 import QuickActions from './QuickActions';
+import LLMUsageChart from './Dashboard/LLMUsageChart';
+import MessageVolumeChart from './Dashboard/MessageVolumeChart';
+import AgentGrid from './Dashboard/AgentGrid';
 
 const Dashboard: React.FC = () => {
   const [bots, setBots] = useState<Bot[]>([]);
@@ -273,6 +276,18 @@ const Dashboard: React.FC = () => {
               getStatusColor={getStatusColor}
             />
           ))}
+        </div>
+
+        {/* Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <MessageVolumeChart />
+          <LLMUsageChart />
+        </div>
+
+        {/* Agent Grid */}
+        <div className="mb-8">
+          <h3 className="text-xl font-bold mb-4">Agents</h3>
+          <AgentGrid />
         </div>
 
         {/* System Status Footer */}
