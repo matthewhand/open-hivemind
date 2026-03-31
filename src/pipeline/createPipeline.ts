@@ -16,24 +16,21 @@
  */
 
 import type { MessageBus } from '@src/events/MessageBus';
-import type { IMessengerService } from '@message/interfaces/IMessengerService';
-
-import { ReceiveStage } from '@src/pipeline/ReceiveStage';
+import { PipelineTracer, setActiveTracer } from '@src/observability';
+import {
+  DecisionStrategyAdapter,
+  LlmInvokerAdapter,
+  MemoryRetrieverAdapter,
+  MemoryStorerAdapter,
+  MessageSenderAdapter,
+  PromptBuilderAdapter,
+} from '@src/pipeline/adapters';
 import { DecisionStage } from '@src/pipeline/DecisionStage';
 import { EnrichStage } from '@src/pipeline/EnrichStage';
 import { InferenceStage } from '@src/pipeline/InferenceStage';
+import { ReceiveStage } from '@src/pipeline/ReceiveStage';
 import { SendStage } from '@src/pipeline/SendStage';
-
-import {
-  DecisionStrategyAdapter,
-  MemoryRetrieverAdapter,
-  PromptBuilderAdapter,
-  LlmInvokerAdapter,
-  MessageSenderAdapter,
-  MemoryStorerAdapter,
-} from '@src/pipeline/adapters';
-
-import { PipelineTracer, setActiveTracer } from '@src/observability';
+import type { IMessengerService } from '@message/interfaces/IMessengerService';
 
 // ---------------------------------------------------------------------------
 // Pipeline dependencies
@@ -75,24 +72,17 @@ export function createPipeline(bus: MessageBus, deps: PipelineDependencies): voi
     new DecisionStrategyAdapter({
       botId: deps.botId,
       defaultChannelId: deps.defaultChannelId,
-    }),
+    })
   );
 
-  const enrich = new EnrichStage(
-    bus,
-    new MemoryRetrieverAdapter(),
-    new PromptBuilderAdapter(),
-  );
+  const enrich = new EnrichStage(bus, new MemoryRetrieverAdapter(), new PromptBuilderAdapter());
 
-  const inference = new InferenceStage(
-    bus,
-    new LlmInvokerAdapter({ botConfig: deps.botConfig }),
-  );
+  const inference = new InferenceStage(bus, new LlmInvokerAdapter({ botConfig: deps.botConfig }));
 
   const send = new SendStage(
     bus,
     new MessageSenderAdapter({ messengerService: deps.messengerService }),
-    new MemoryStorerAdapter(),
+    new MemoryStorerAdapter()
   );
 
   receive.register();
