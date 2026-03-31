@@ -12,16 +12,16 @@
  */
 
 import Debug from 'debug';
+import type { IMemoryProvider, IMessengerService, IToolProvider } from '@hivemind/shared-types';
 import {
-  loadPlugin,
   instantiateLlmProvider,
   instantiateMemoryProvider,
-  instantiateToolProvider,
   instantiateMessageService,
+  instantiateToolProvider,
+  loadPlugin,
+  type PluginModule,
 } from '@src/plugins/PluginLoader';
-import type { PluginModule } from '@src/plugins/PluginLoader';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
-import type { IMemoryProvider, IMessengerService, IToolProvider } from '@hivemind/shared-types';
 
 const debug = Debug('app:sync-registry');
 
@@ -267,10 +267,7 @@ export class SyncProviderRegistry {
    * @throws Error if the registry is not initialized or no LLM providers
    *         are registered.
    */
-  public getLlmProviderForBot(
-    botName: string,
-    botConfig: Record<string, unknown>
-  ): ILlmProvider {
+  public getLlmProviderForBot(botName: string, botConfig: Record<string, unknown>): ILlmProvider {
     this.assertInitialized();
 
     // Try direct provider key
@@ -297,7 +294,9 @@ export class SyncProviderRegistry {
     }
     const defaultProvider = this.getDefaultLlmProvider();
     if (!defaultProvider) {
-      throw new Error(`No LLM providers are registered — cannot resolve provider for bot "${botName}"`);
+      throw new Error(
+        `No LLM providers are registered — cannot resolve provider for bot "${botName}"`
+      );
     }
     return defaultProvider;
   }
@@ -412,7 +411,12 @@ export class SyncProviderRegistry {
       const asAny = provider as Record<string, unknown>;
       try {
         if (typeof asAny.healthCheck === 'function') {
-          const result = await (asAny.healthCheck as () => Promise<{ status: 'ok' | 'error'; details?: Record<string, unknown> }>)();
+          const result = await (
+            asAny.healthCheck as () => Promise<{
+              status: 'ok' | 'error';
+              details?: Record<string, unknown>;
+            }>
+          )();
           entries.push({ type: 'llm', id, status: result.status, details: result.details });
         } else {
           entries.push({ type: 'llm', id, status: 'unsupported' });
@@ -432,7 +436,12 @@ export class SyncProviderRegistry {
       const asAny = service as Record<string, unknown>;
       try {
         if (typeof asAny.healthCheck === 'function') {
-          const result = await (asAny.healthCheck as () => Promise<{ status: 'ok' | 'error'; details?: Record<string, unknown> }>)();
+          const result = await (
+            asAny.healthCheck as () => Promise<{
+              status: 'ok' | 'error';
+              details?: Record<string, unknown>;
+            }>
+          )();
           entries.push({ type: 'messenger', id, status: result.status, details: result.details });
         } else {
           entries.push({ type: 'messenger', id, status: 'unsupported' });

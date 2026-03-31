@@ -8,6 +8,7 @@
 
 import React from 'react';
 import { clearPersistedState } from './stateVersioning';
+import { logger } from '../utils/logger';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -39,8 +40,8 @@ export class HydrationErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
-    console.error('[HydrationErrorBoundary] Caught hydration error:', error);
-    console.error('[HydrationErrorBoundary] Component stack:', errorInfo.componentStack);
+    logger.error('[HydrationErrorBoundary] Caught hydration error:', error);
+    logger.error('[HydrationErrorBoundary] Component stack:', errorInfo.componentStack);
 
     // Wipe the persisted state so the next render starts fresh.
     clearPersistedState();

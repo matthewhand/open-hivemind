@@ -1,8 +1,8 @@
 import Debug from 'debug';
 import { Router } from 'express';
 import ProviderConfigManager from '@src/config/ProviderConfigManager';
-import { authenticateToken, requireRole } from '@src/server/middleware/auth';
 import { configLimiter } from '@src/middleware/rateLimiter';
+import { authenticateToken, requireRole } from '@src/server/middleware/auth';
 import { HTTP_STATUS } from '../../types/constants';
 import {
   CreateIntegrationSchema,

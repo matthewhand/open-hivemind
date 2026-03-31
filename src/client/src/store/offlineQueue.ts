@@ -6,6 +6,7 @@
  */
 
 import type { Middleware, AnyAction, Dispatch } from '@reduxjs/toolkit';
+import { logger } from '../utils/logger';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -89,7 +90,7 @@ export class OfflineActionQueue {
       try {
         dispatch(action);
       } catch (err) {
-        console.error('[offlineQueue] Failed to replay action:', action.type, err);
+        logger.error('[offlineQueue] Failed to replay action:', action.type, err);
       }
     }
   }
