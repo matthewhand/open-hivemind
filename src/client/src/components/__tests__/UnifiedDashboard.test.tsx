@@ -33,7 +33,6 @@ vi.mock('../DaisyUI', () => ({
   Modal: ({ children, isOpen }: { children: React.ReactNode; isOpen?: boolean }) => (
     isOpen ? <div role="dialog">{children}</div> : null
   ),
-  ProgressBar: () => <div className="progress-bar">Progress</div>,
   StatsCards: (props: any) => (
     <div className="stats-cards" data-testid="stats-cards">
       {JSON.stringify(props.stats)}
