@@ -31,7 +31,10 @@ const RateLimitIndicator: React.FC = () => {
 
       if (elapsed >= warningThreshold && elapsed < sessionTimeoutMs) {
         setShowSessionWarning(true);
-        setSessionExpiryTime(lastActive + sessionTimeoutMs);
+        // Prevent constant state updates if already correct
+        setSessionExpiryTime((prev) =>
+          prev === lastActive + sessionTimeoutMs ? prev : lastActive + sessionTimeoutMs
+        );
       } else {
         setShowSessionWarning(false);
       }
