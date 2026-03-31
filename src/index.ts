@@ -240,7 +240,6 @@ if (process.env.NODE_ENV !== 'development') {
   app.get('/providers/*', serveDevHtml);
 }
 
-
 // ─────────────────────────────────────────────────────────────────────────────
 // IP Filtering Security (when auth is disabled)
 // ─────────────────────────────────────────────────────────────────────────────

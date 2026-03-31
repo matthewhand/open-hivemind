@@ -6,7 +6,6 @@
  */
 
 import 'reflect-metadata';
-import { Lifecycle } from 'tsyringe';
 import Logger from '../common/logger';
 import { BotConfigurationManager } from '../config/BotConfigurationManager';
 // Import implementations
