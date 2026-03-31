@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Bot, MessageSquare, Cpu, User, Shield, ArrowRight, ArrowLeft, Check, AlertCircle, CheckCircle2, RotateCcw } from 'lucide-react';
 import Input from '../DaisyUI/Input';
 import Modal from '../DaisyUI/Modal';
+import Radio from '../DaisyUI/Radio';
 import { useConfigDiff } from '../../hooks/useConfigDiff';
 import { ConfigDiffViewer, ConfigDiffConfirmDialog } from '../ConfigDiffViewer';
 import { apiService } from '../../services/api';
@@ -391,10 +392,9 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                                             <span className="font-bold">Default Assistant</span>
                                             <span className="text-xs opacity-70">Helpful and polite general purpose assistant.</span>
                                         </span>
-                                        <input
-                                            type="radio"
+                                        <Radio
                                             name="persona"
-                                            className="radio radio-primary"
+                                            color="primary"
                                             checked={formData.persona === 'default'}
                                             onChange={() => setFormData({ ...formData, persona: 'default' })}
                                         />
@@ -405,10 +405,9 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                                                 <span className="font-bold">{p.name}</span>
                                                 <span className="text-xs opacity-70">{p.description || 'Custom persona'}</span>
                                             </span>
-                                            <input
-                                                type="radio"
+                                            <Radio
                                                 name="persona"
-                                                className="radio radio-primary"
+                                                color="primary"
                                                 checked={formData.persona === p.id}
                                                 onChange={() => setFormData({ ...formData, persona: p.id })}
                                             />
