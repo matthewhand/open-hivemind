@@ -12,10 +12,12 @@ import {
 } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { ActivityLogger } from '../services/ActivityLogger';
+import { createLogger } from '../../common/StructuredLogger';
 
 type AnnotatedEvent = MessageFlowEvent & { llmProvider: string };
 
 const router = Router();
+const logger = createLogger('dashboardRouter');
 
 // ----------------------------------------------------------------------------
 // AI Dashboard Interfaces & Mock Data
@@ -207,7 +209,7 @@ router.get('/ai/stats', authenticate, requireAdmin, async (req, res) => {
       activeUsers: stats.activeUsers,
     });
   } catch (error) {
-    console.error('AI stats API error:', error);
+    logger.error('AI stats API error:', error);
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to get AI stats' });
   }
 });
@@ -225,7 +227,7 @@ router.get('/ai/segments', authenticate, requireAdmin, async (req, res) => {
 
     res.json(segments);
   } catch (error) {
-    console.error('AI segments API error:', error);
+    logger.error('AI segments API error:', error);
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to get user segments' });
   }
 });
@@ -243,7 +245,7 @@ router.get('/ai/patterns', authenticate, requireAdmin, async (req, res) => {
 
     res.json(patterns);
   } catch (error) {
-    console.error('AI patterns API error:', error);
+    logger.error('AI patterns API error:', error);
     res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json({ error: 'Failed to get behavior patterns' });
@@ -263,7 +265,7 @@ router.get('/ai/recommendations', authenticate, requireAdmin, async (req, res) =
 
     res.json(recommendations);
   } catch (error) {
-    console.error('AI recommendations API error:', error);
+    logger.error('AI recommendations API error:', error);
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to get recommendations' });
   }
 });
@@ -280,7 +282,7 @@ router.post(
       await db.storeAIFeedback({ recommendationId, feedback, metadata });
       res.json({ success: true });
     } catch (error) {
-      console.error('Error storing AI feedback:', error);
+      logger.error('Error storing AI feedback:', error);
       res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to store feedback' });
     }
   }
@@ -318,7 +320,7 @@ router.get('/status', authenticate, requireAdmin, (req, res) => {
     try {
       bots = manager.getAllBots();
     } catch (e) {
-      console.warn('Failed to load bots for status:', e);
+      logger.warn('Failed to load bots for status:', e);
       bots = [];
     }
 
@@ -340,7 +342,7 @@ router.get('/status', authenticate, requireAdmin, (req, res) => {
 
     res.json({ bots: status, uptime: process.uptime() });
   } catch (error) {
-    console.error('Status API error:', error);
+    logger.error('Status API error:', error);
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to get status' });
   }
 });
@@ -436,7 +438,7 @@ router.get('/activity', authenticate, requireAdmin, async (req, res) => {
       agentMetrics,
     });
   } catch (error) {
-    console.error('Activity API error:', error);
+    logger.error('Activity API error:', error);
     res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json({ error: 'Failed to retrieve activity feed' });
@@ -459,7 +461,7 @@ router.post(
         res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: 'Alert not found' });
       }
     } catch (error) {
-      console.error('Acknowledge alert error:', error);
+      logger.error('Acknowledge alert error:', error);
       res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to acknowledge alert' });
     }
   }
@@ -481,7 +483,7 @@ router.post(
         res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: 'Alert not found' });
       }
     } catch (error) {
-      console.error('Resolve alert error:', error);
+      logger.error('Resolve alert error:', error);
       res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to resolve alert' });
     }
   }
