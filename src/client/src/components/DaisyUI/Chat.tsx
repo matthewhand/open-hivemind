@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import Avatar from './Avatar';
 
 export interface ChatMessage {
   id: string;
@@ -109,18 +110,22 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     return (
       <div key={message.id} className={`chat ${isCurrentUser ? 'chat-end' : 'chat-start'} ${isGrouped ? 'mt-1' : 'mt-4'}`}>
         {!isGrouped && (
-          <div className={`chat-image avatar ${!message.sender.avatar ? 'placeholder' : ''}`}>
-            {message.sender.avatar ? (
-              <div className="w-10 rounded-full">
-                <img alt={message.sender.name} src={message.sender.avatar} />
-              </div>
-            ) : (
-              <div className={`bg-${isBot ? 'secondary' : 'primary'} text-${isBot ? 'secondary' : 'primary'}-content rounded-full w-10`}>
-                <span className="text-xl">
-                  {isBot ? '🤖' : (message.sender.name || '?').charAt(0).toUpperCase()}
-                </span>
-              </div>
-            )}
+          <div className="chat-image">
+            <Avatar
+              src={message.sender.avatar}
+              alt={message.sender.name}
+              size="md"
+              shape="circle"
+              placeholder={!message.sender.avatar}
+            >
+              {!message.sender.avatar && (
+                <div className={`bg-${isBot ? 'secondary' : 'primary'} text-${isBot ? 'secondary' : 'primary'}-content w-full h-full flex items-center justify-center`}>
+                  <span className="text-xl">
+                    {isBot ? '🤖' : (message.sender.name || '?').charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
+            </Avatar>
           </div>
         )}
 
@@ -201,11 +206,15 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       {/* Chat Header */}
       <div className="flex items-center justify-between p-4 border-b border-base-200">
         <div className="flex items-center gap-3">
-          <div className="avatar">
-            <div className="w-8 rounded-full bg-primary">
-              <span className="text-primary-content text-sm">🤖</span>
+          <Avatar
+            placeholder
+            size="sm"
+            shape="circle"
+          >
+            <div className="bg-primary text-primary-content w-full h-full flex items-center justify-center">
+              <span className="text-sm">🤖</span>
             </div>
-          </div>
+          </Avatar>
           <div>
             <h3 className="font-semibold">Bot Chat</h3>
             <p className="text-xs text-base-content/60">
@@ -245,10 +254,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             {/* Typing Indicator */}
             {showTypingIndicator && typingUsers.length > 0 && (
               <div className="chat chat-start">
-                <div className="chat-image avatar placeholder">
-                  <div className="bg-secondary text-secondary-content rounded-full w-10">
-                    <span className="text-xl">🤖</span>
-                  </div>
+                <div className="chat-image">
+                  <Avatar
+                    placeholder
+                    size="md"
+                    shape="circle"
+                  >
+                    <div className="bg-secondary text-secondary-content w-full h-full flex items-center justify-center">
+                      <span className="text-xl">🤖</span>
+                    </div>
+                  </Avatar>
                 </div>
                 <div className="chat-bubble chat-bubble-secondary">
                   <span className="loading loading-dots loading-sm" aria-hidden="true"></span>
