@@ -76,7 +76,7 @@ const buildLastActivityLabel = (
   return `${minutes}m ago`;
 };
 
-const UnifiedDashboard: React.FC = () => {
+const Dashboard: React.FC = () => {
   const [bots, setBots] = useState<Bot[]>([]);
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [personas, setPersonas] = useState<any[]>([]);
@@ -717,4 +717,4 @@ const UnifiedDashboard: React.FC = () => {
   );
 };
 
-export default UnifiedDashboard;
+export default Dashboard;

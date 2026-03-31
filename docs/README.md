@@ -12,7 +12,7 @@ This directory contains all documentation for Open Hivemind, organized by topic.
 
 ## 🏗️ Architecture & Core Concepts
 - [Architecture Overview](architecture/overview.md)
-- [Unified Server Architecture](architecture/unified-server.md)
+- [Server Architecture](architecture/unified-server.md)
 - [Development Guide](architecture/development.md)
 
 ## ⚙️ Operations & Deployment

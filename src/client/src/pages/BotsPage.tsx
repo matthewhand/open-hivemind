@@ -129,7 +129,7 @@ const BotsPage: React.FC = () => {
   const llmProfiles = data?.llmProfiles || [];
   const globalConfig = data?.globalConfig || {};
 
-  // Unified loading state: true while either bots or config data is still loading
+  // Combined loading state: true while either bots or config data is still loading
   const loading = botsLoading || configLoading;
 
   // Sync lifecycle error to UI error

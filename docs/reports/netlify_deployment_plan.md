@@ -1,7 +1,7 @@
 # Netlify Deployment Plan for Open Hivemind
 
 ## Overview
-This document outlines the plan to deploy the Open Hivemind application to Netlify. The application uses a unified server architecture where the Express backend serves the React/Vite frontend.
+This document outlines the plan to deploy the Open Hivemind application to Netlify. The application uses a server architecture where the Express backend serves the React/Vite frontend.
 
 ## Implementation Status: ✅ COMPLETED
 

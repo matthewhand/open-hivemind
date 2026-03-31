@@ -186,7 +186,7 @@ export class BotManager extends EventEmitter {
   }
 
   /**
-   * Helper to map a raw configuration object to a unified BotInstance
+   * Helper to map a raw configuration object to a BotInstance
    */
   private mapConfigToBotInstance(bot: any): BotInstance {
     return {

@@ -3,7 +3,7 @@
 Navigation: [Docs Index](../README.md) | [Architecture Overview](../architecture/layered-overview.md) | [Configuration Overview](../configuration/overview.md)
 
 
-Open-Hivemind maintains a unified voice across every messenger by abstracting
+Open-Hivemind maintains a consistent voice across every messenger by abstracting
 platform-specific quirks behind shared services. This guide summarises what is
 available today and how each integration behaves.
 

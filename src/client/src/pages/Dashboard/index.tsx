@@ -47,7 +47,7 @@ const DashboardPage: React.FC = () => {
     {
       image: '',
       title: 'Multi-Platform Support',
-      description: 'Connect to Discord, Slack, Mattermost, and more with unified management.',
+      description: 'Connect to Discord, Slack, Mattermost, and more with centralized management.',
       bgGradient: 'linear-gradient(135deg, #dc2626, #ef4444)',
     },
   ];
