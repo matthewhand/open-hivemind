@@ -4,6 +4,8 @@ import { Router, type Request, type Response } from 'express';
 import { SitemapStream, streamToPromise } from 'sitemap';
 import { HTTP_STATUS } from '../../types/constants';
 
+import { ApiResponse } from "../../utils/apiResponse";
+
 const debug = Debug('app:server:routes:sitemap');
 
 const router = Router();

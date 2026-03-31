@@ -15,6 +15,8 @@ import {
 } from '../../validation/schemas/agentsSchema';
 import { validateRequest } from '../../validation/validateRequest';
 
+import { ApiResponse } from "../../utils/apiResponse";
+
 const debug = Debug('app:webui:agents');
 const router = Router();
 
@@ -270,7 +272,7 @@ router.delete('/:id', validateRequest(AgentIdParamSchema), async (req, res) => {
     await saveJsonConfig(AGENTS_CONFIG_FILE, filteredAgents);
 
     debug(`Deleted agent: ${id}`);
-    return res.json({ success: true });
+    return res.json(ApiResponse.success());
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);
@@ -430,7 +432,7 @@ router.delete('/personas/:key', validateRequest(AgentPersonaKeyParamSchema), asy
     await saveJsonConfig(PERSONAS_CONFIG_FILE, filteredPersonas);
 
     debug(`Deleted persona: ${key}`);
-    return res.json({ success: true });
+    return res.json(ApiResponse.success());
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);

@@ -14,6 +14,8 @@ import { HTTP_STATUS } from '../../types/constants';
 import { EmptySchema, MarketplacePluginNameParamSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 
+import { ApiResponse } from "../../utils/apiResponse";
+
 const debug = Debug('app:marketplace');
 const router = Router();
 
@@ -243,8 +245,7 @@ router.post('/install', requireRole('admin'), validateRequest(EmptySchema), asyn
     // ⚡ Bolt Optimization: Invalidate cache after install
     invalidateCache();
 
-    return res.status(HTTP_STATUS.CREATED).json({
-      success: true,
+    return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success({
       package: {
         name: plugin.name,
         displayName: plugin.manifest.displayName,
@@ -255,8 +256,8 @@ router.post('/install', requireRole('admin'), validateRequest(EmptySchema), asyn
         repoUrl: plugin.repoUrl,
         installedAt: plugin.installedAt,
         updatedAt: plugin.updatedAt,
-      },
-    });
+      }
+    }));
   } catch (err: any) {
     debug('Install error: %s', err);
     return res
@@ -284,7 +285,9 @@ router.post(
       // ⚡ Bolt Optimization: Invalidate cache after uninstall
       invalidateCache();
 
-      return res.json({ success: true, message: `Plugin ${name} uninstalled` });
+      return res.json(ApiResponse.success({
+        message: `Plugin ${name} uninstalled`
+      }));
     } catch (err: any) {
       debug('Uninstall error: %s', err);
       return res
@@ -313,8 +316,7 @@ router.post(
       // ⚡ Bolt Optimization: Invalidate cache after update
       invalidateCache();
 
-      return res.json({
-        success: true,
+      return res.json(ApiResponse.success({
         package: {
           name: plugin.name,
           displayName: plugin.manifest.displayName,
@@ -325,8 +327,8 @@ router.post(
           repoUrl: plugin.repoUrl,
           installedAt: plugin.installedAt,
           updatedAt: plugin.updatedAt,
-        },
-      });
+        }
+      }));
     } catch (err: any) {
       debug('Update error: %s', err);
       return res

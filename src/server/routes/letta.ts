@@ -7,6 +7,8 @@ import { HTTP_STATUS } from '../../types/constants';
 import { ErrorResponses } from '../../utils/errorResponse';
 import { isPrivateIP, isSafeUrl } from '../../utils/ssrfGuard';
 
+import { ApiResponse } from "../../utils/apiResponse";
+
 const debug = Debug('app:server:routes:letta');
 
 const router = Router();

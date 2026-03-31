@@ -6,6 +6,8 @@ import { ErrorLogSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { authenticateToken } from '../middleware/auth';
 
+import { ApiResponse } from "../../utils/apiResponse";
+
 const router = Router();
 
 // Handle CORS preflight requests
@@ -74,11 +76,10 @@ router.post('/frontend', validateRequest(ErrorLogSchema), async (req: Request, r
     });
 
     // Return success response
-    return res.status(HTTP_STATUS.OK).json({
-      success: true,
+    return res.status(HTTP_STATUS.OK).json(ApiResponse.success({
       correlationId: errorReport.correlationId,
-      message: 'Error report received and logged',
-    });
+      message: 'Error report received and logged'
+    }));
   } catch (error) {
     console.error('Failed to process frontend error report:', error);
 

@@ -10,6 +10,8 @@ import {
 } from '../../validation/schemas/integrationsSchema';
 import { validateRequest } from '../../validation/validateRequest';
 
+import { ApiResponse } from "../../utils/apiResponse";
+
 const log = Debug('app:integrationsRouter');
 const router = Router();
 const providerManager = ProviderConfigManager.getInstance();
@@ -120,7 +122,7 @@ router.delete('/:id', validateRequest(IntegrationIdParamSchema), (req, res) => {
       return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Provider not found' });
     }
     log(`Deleted provider: ${req.params.id}`);
-    return res.json({ success: true });
+    return res.json(ApiResponse.success());
   } catch (err: unknown) {
     log('Error deleting integration:', err);
     return res

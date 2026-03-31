@@ -8,6 +8,8 @@ import { validateRequest } from '../../validation/validateRequest';
 import { auditMiddleware, logAdminAction, type AuditedRequest } from '../middleware/audit';
 import { authenticateToken, requirePermission } from '../middleware/auth';
 
+import { ApiResponse } from "../../utils/apiResponse";
+
 const debug = Debug('app:webui:consolidated');
 const router = Router();
 
@@ -66,15 +68,11 @@ router.get('/system-status', async (req, res) => {
       'success',
       'System status retrieved'
     );
-    return res.json({ success: true, data: systemStatus });
+    return res.json(ApiResponse.success(systemStatus));
   } catch (error) {
     debug('Error getting system status:', error);
     logAdminAction(req as AuditedRequest, 'VIEW', 'system-status', 'failure', `Error: ${error}`);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      error: 'Failed to get system status',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to get system status'));
   }
 });
 
@@ -136,16 +134,10 @@ router.get('/providers', async (req, res) => {
       },
     ];
 
-    return res.json({
-      success: true,
-      data: { messageProviders, llmProviders },
-    });
+    return res.json(ApiResponse.success({ messageProviders, llmProviders }));
   } catch (error) {
     debug('Error getting providers:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      error: 'Failed to get providers',
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to get providers'));
   }
 });
 
@@ -182,13 +174,10 @@ router.get('/env-status', async (req, res) => {
       'success',
       'Environment status retrieved'
     );
-    return res.json({ success: true, data: envStatus });
+    return res.json(ApiResponse.success(envStatus));
   } catch (error) {
     debug('Error getting environment status:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      error: 'Failed to get environment status',
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to get environment status'));
   }
 });
 
@@ -198,10 +187,7 @@ router.post('/validate-config', validateRequest(ValidateConfigSchema), async (re
     const { botConfig } = req.body;
 
     if (!botConfig) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        success: false,
-        error: 'Bot configuration is required',
-      });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Bot configuration is required'));
     }
 
     const validation = {
@@ -276,14 +262,11 @@ router.post('/validate-config', validateRequest(ValidateConfigSchema), async (re
       'success',
       `Config validation: ${validation.isValid ? 'valid' : 'invalid'}`
     );
-    return res.json({ success: true, data: validation });
+    return res.json(ApiResponse.success(validation));
   } catch (error) {
     debug('Error validating config:', error);
     logAdminAction(req as AuditedRequest, 'VALIDATE', 'bot-config', 'failure', `Error: ${error}`);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      error: 'Failed to validate configuration',
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to validate configuration'));
   }
 });
 
@@ -347,15 +330,12 @@ router.get('/health', async (req, res) => {
 
     health.status = hasErrors ? 'error' : hasWarnings ? 'warning' : 'healthy';
 
-    return res.json({ success: true, data: health });
+    return res.json(ApiResponse.success(health));
   } catch (error) {
     debug('Error getting health status:', error);
     const { createErrorResponse } = await import('../../utils/errorResponse');
     const errorResponse = createErrorResponse(error as Error, req.path);
-    return res.status(errorResponse.getStatusCode() || 500).json({
-      success: false,
-      ...errorResponse,
-    });
+    return res.status(errorResponse.getStatusCode() || 500).json(ApiResponse.error("An error occurred"));
   }
 });
 
@@ -404,13 +384,10 @@ router.get('/metrics', async (req, res) => {
       debug('Error getting database metrics:', error);
     }
 
-    return res.json({ success: true, data: metrics });
+    return res.json(ApiResponse.success(metrics));
   } catch (error) {
     debug('Error getting metrics:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      error: 'Failed to get metrics',
-    });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to get metrics'));
   }
 });
 
