@@ -39,8 +39,8 @@ router.get('/memory', async (_req: Request, res: Response) => {
 
       results.push({
         name,
-        id: provider.id,
-        label: provider.label,
+        id: (provider as any).id,
+        label: (provider as any).label,
         status,
         details,
       });
@@ -257,8 +257,8 @@ router.get('/tool', async (_req: Request, res: Response) => {
 
       results.push({
         name,
-        id: provider.id,
-        label: provider.label,
+        id: (provider as any).id,
+        label: (provider as any).label,
         status,
         details,
       });

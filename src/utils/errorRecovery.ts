@@ -31,6 +31,12 @@ export interface CircuitBreakerConfig {
   resetTimeout: number;
   monitoringPeriod: number;
   expectedRecoveryTime: number;
+  /** Optional display name for the circuit breaker instance. */
+  name?: string;
+  /** Alias for resetTimeout (milliseconds). */
+  resetTimeoutMs?: number;
+  /** Maximum number of attempts allowed in half-open state. */
+  halfOpenMaxAttempts?: number;
 }
 
 /**

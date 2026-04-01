@@ -66,10 +66,10 @@ export function validateBotConfiguration(bot: Partial<BotConfig>): BotValidation
     }
   }
 
-  if (bot.llmProvider === 'anthropic') {
-    if (!bot.anthropic?.apiKey) {
+  if ((bot.llmProvider as string) === 'anthropic') {
+    if (!(bot as any).anthropic?.apiKey) {
       errors.push('Anthropic API key is required');
-    } else if (!bot.anthropic.apiKey.startsWith('sk-ant-')) {
+    } else if (!(bot as any).anthropic.apiKey.startsWith('sk-ant-')) {
       warnings.push('Anthropic API key should start with "sk-ant-"');
     }
   }

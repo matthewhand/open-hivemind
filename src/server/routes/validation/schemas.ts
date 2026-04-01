@@ -81,9 +81,12 @@ export function createSchemaRoutes(): Router {
         .type('application/json')
         .send(
           JSON.stringify({
-            error: hivemindError.message,
-            code: hivemindError.code,
-            timestamp: hivemindError.timestamp,
+            error: ErrorUtils.getMessage(hivemindError),
+            code: ErrorUtils.getCode(hivemindError) || 'VALIDATION_ERROR',
+            timestamp:
+              hivemindError instanceof Error && 'timestamp' in hivemindError
+                ? (hivemindError as any).timestamp
+                : new Date(),
           })
         );
     }

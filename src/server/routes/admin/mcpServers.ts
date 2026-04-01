@@ -207,14 +207,14 @@ router.delete(
 );
 
 // Get all connected MCP servers
-router.get('/mcp-servers', (req: Request, res: Response) => {
+router.get('/mcp-servers', async (req: Request, res: Response) => {
   try {
     const mcpService = MCPService.getInstance();
     const connectedServers = mcpService.getConnectedServersWithMetadata();
     const trustConfig = getTrustedMcpReposConfig();
 
     // Get stored MCP server configurations
-    const storedMcps = webUIStorage.getMcps();
+    const storedMcps = await webUIStorage.getMcps();
 
     // Enrich connected servers with stored configuration data
     const enrichedServers = connectedServers.map((server) => {
@@ -297,7 +297,7 @@ router.get(
       const isConnected = connectedServers.includes(name);
 
       // Get stored configuration for additional metadata
-      const storedMcps = webUIStorage.getMcps();
+      const storedMcps = await webUIStorage.getMcps();
       const storedConfig = storedMcps.find((mcp: any) => mcp.name === name);
 
       if (!isConnected && !storedConfig) {
@@ -341,7 +341,7 @@ router.post(
       const { name } = req.params;
 
       // Get stored configuration
-      const storedMcps = webUIStorage.getMcps();
+      const storedMcps = await webUIStorage.getMcps();
       const storedConfig = storedMcps.find((mcp: any) => mcp.name === name);
 
       if (!storedConfig) {

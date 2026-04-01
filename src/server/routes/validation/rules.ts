@@ -85,9 +85,12 @@ export function createRuleRoutes(): Router {
 
         return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
           success: false,
-          error: hivemindError.message,
-          code: hivemindError.code,
-          timestamp: hivemindError.timestamp,
+          error: ErrorUtils.getMessage(hivemindError),
+          code: ErrorUtils.getCode(hivemindError) || 'VALIDATION_ERROR',
+          timestamp:
+            hivemindError instanceof Error && 'timestamp' in hivemindError
+              ? (hivemindError as any).timestamp
+              : new Date(),
         });
       }
     }
@@ -144,9 +147,12 @@ export function createRuleRoutes(): Router {
 
         return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
           success: false,
-          error: hivemindError.message,
-          code: hivemindError.code,
-          timestamp: hivemindError.timestamp,
+          error: ErrorUtils.getMessage(hivemindError),
+          code: ErrorUtils.getCode(hivemindError) || 'VALIDATION_ERROR',
+          timestamp:
+            hivemindError instanceof Error && 'timestamp' in hivemindError
+              ? (hivemindError as any).timestamp
+              : new Date(),
         });
       }
     }
@@ -188,9 +194,12 @@ export function createRuleRoutes(): Router {
 
         return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
           success: false,
-          error: hivemindError.message,
-          code: hivemindError.code,
-          timestamp: hivemindError.timestamp,
+          error: ErrorUtils.getMessage(hivemindError),
+          code: ErrorUtils.getCode(hivemindError) || 'VALIDATION_ERROR',
+          timestamp:
+            hivemindError instanceof Error && 'timestamp' in hivemindError
+              ? (hivemindError as any).timestamp
+              : new Date(),
         });
       }
     }
@@ -262,9 +271,12 @@ export function createRuleRoutes(): Router {
 
         return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
           success: false,
-          error: hivemindError.message,
-          code: hivemindError.code,
-          timestamp: hivemindError.timestamp,
+          error: ErrorUtils.getMessage(hivemindError),
+          code: ErrorUtils.getCode(hivemindError) || 'VALIDATION_ERROR',
+          timestamp:
+            hivemindError instanceof Error && 'timestamp' in hivemindError
+              ? (hivemindError as any).timestamp
+              : new Date(),
         });
       }
     }
@@ -329,9 +341,12 @@ export function createRuleRoutes(): Router {
 
         return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
           success: false,
-          error: hivemindError.message,
-          code: hivemindError.code,
-          timestamp: hivemindError.timestamp,
+          error: ErrorUtils.getMessage(hivemindError),
+          code: ErrorUtils.getCode(hivemindError) || 'VALIDATION_ERROR',
+          timestamp:
+            hivemindError instanceof Error && 'timestamp' in hivemindError
+              ? (hivemindError as any).timestamp
+              : new Date(),
         });
       }
     }
@@ -373,9 +388,12 @@ export function createRuleRoutes(): Router {
 
         return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
           success: false,
-          error: hivemindError.message,
-          code: hivemindError.code,
-          timestamp: hivemindError.timestamp,
+          error: ErrorUtils.getMessage(hivemindError),
+          code: ErrorUtils.getCode(hivemindError) || 'VALIDATION_ERROR',
+          timestamp:
+            hivemindError instanceof Error && 'timestamp' in hivemindError
+              ? (hivemindError as any).timestamp
+              : new Date(),
         });
       }
     }

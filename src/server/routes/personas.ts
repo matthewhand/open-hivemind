@@ -183,7 +183,7 @@ router.delete(
     try {
       const manager = await getManager();
       const { ids } = req.body;
-      const botManager = BotManager.getInstance();
+      const botManager = await BotManager.getInstance();
 
       // Validate that all personas exist and are not built-in
       const personasToDelete = [];

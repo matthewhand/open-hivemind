@@ -13,10 +13,7 @@ const debug = Debug('app:runInference');
 const DEFAULT_INFERENCE_TIMEOUT_MS = 30_000;
 
 const circuitBreaker = globalRecoveryManager.getCircuitBreaker('openwebui', {
-  name: 'openwebui',
   failureThreshold: 5,
-  resetTimeoutMs: 30_000,
-  halfOpenMaxAttempts: 3,
 });
 
 export async function generateChatCompletion(

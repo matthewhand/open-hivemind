@@ -114,7 +114,7 @@ router.put(
       }
 
       // Get existing provider to preserve ID and status if needed
-      const providers = webUIStorage.getMessengerProviders();
+      const providers = await webUIStorage.getMessengerProviders();
       const existingProvider = providers.find((p: any) => p.id === id);
 
       // Sanitize sensitive data
@@ -204,7 +204,7 @@ router.post(
       const { id } = req.params;
       const { isActive } = req.body;
 
-      const providers = webUIStorage.getMessengerProviders();
+      const providers = await webUIStorage.getMessengerProviders();
       const provider = providers.find((p: any) => p.id === id);
 
       if (provider) {

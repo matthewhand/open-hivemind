@@ -37,6 +37,8 @@ export interface ProviderProfile {
   provider: string;
   /** Provider-specific configuration forwarded to the factory. */
   config: Record<string, unknown>;
+  /** Allow additional properties from richer profile types. */
+  [extra: string]: unknown;
 }
 
 /** Configuration passed to `initialize()`. */
@@ -408,7 +410,7 @@ export class SyncProviderRegistry {
 
     // LLM providers (no standard healthCheck on ILlmProvider, but check if present)
     for (const [id, provider] of this.llmProviders) {
-      const asAny = provider as Record<string, unknown>;
+      const asAny = provider as unknown as Record<string, unknown>;
       try {
         if (typeof asAny.healthCheck === 'function') {
           const result = await (
@@ -433,7 +435,7 @@ export class SyncProviderRegistry {
 
     // Messenger services (no standard healthCheck, but check if present)
     for (const [id, service] of this.messengerServices) {
-      const asAny = service as Record<string, unknown>;
+      const asAny = service as unknown as Record<string, unknown>;
       try {
         if (typeof asAny.healthCheck === 'function') {
           const result = await (

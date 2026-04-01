@@ -107,9 +107,11 @@ const shutdownCoordinator = ShutdownCoordinator.getInstance();
 const app = express();
 debug('Messenger services are being initialized...');
 
-const healthRoute = healthRouteModule.default || healthRouteModule;
-const messageConfig = messageConfigModule.default || messageConfigModule;
-const webhookConfig = webhookConfigModule.default || webhookConfigModule;
+const healthRoute = (healthRouteModule.default || healthRouteModule) as import('express').Router;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const messageConfig = (messageConfigModule.default || messageConfigModule) as any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const webhookConfig = (webhookConfigModule.default || webhookConfigModule) as any;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -486,9 +488,9 @@ async function main() {
 
     const registry = SyncProviderRegistry.getInstance();
     const initResult = await registry.initialize({
-      llmProfiles: loadLlmProfiles().llm,
-      memoryProfiles: loadMemoryProfiles().memory,
-      toolProfiles: loadToolProfiles().tool,
+      llmProfiles: loadLlmProfiles().llm as any[],
+      memoryProfiles: loadMemoryProfiles().memory as any[],
+      toolProfiles: loadToolProfiles().tool as any[],
       messengerPlatforms: messengerTypes,
     });
     appLogger.info('Provider registry initialized', initResult.loaded);

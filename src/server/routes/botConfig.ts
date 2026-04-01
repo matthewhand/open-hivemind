@@ -25,7 +25,7 @@ import { ApiResponse } from '../utils/apiResponse';
 const debug = Debug('app:BotConfigRoutes');
 const router = Router();
 const botConfigManager = BotConfigurationManager.getInstance();
-const secureConfigManager = SecureConfigManager.getInstance();
+const secureConfigManager = SecureConfigManager.getInstanceSync();
 const userConfigStore = UserConfigStore.getInstance();
 const dbManager = DatabaseManager.getInstance();
 const configValidator = new ConfigurationValidator();

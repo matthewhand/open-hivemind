@@ -124,7 +124,7 @@ router.put(
       const { name, type, config } = req.body;
 
       // Get existing provider to preserve ID and status if needed, or just overwrite
-      const providers = webUIStorage.getLlmProviders();
+      const providers = await webUIStorage.getLlmProviders();
       const existingProvider = providers.find((p: any) => p.id === id);
 
       const updatedProvider = {
@@ -208,7 +208,7 @@ router.post(
       const { id } = req.params;
       const { isActive } = req.body;
 
-      const providers = webUIStorage.getLlmProviders();
+      const providers = await webUIStorage.getLlmProviders();
       const provider = providers.find((p: any) => p.id === id);
 
       if (provider) {

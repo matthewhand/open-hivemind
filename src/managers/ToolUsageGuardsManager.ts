@@ -3,7 +3,7 @@ import { EventEmitter } from 'events';
 import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
-import { ErrorUtils } from '../common/ErrorUtils';
+import { ErrorUtils } from '../types/errors';
 
 const debug = Debug('app:ToolUsageGuardsManager');
 
@@ -164,7 +164,7 @@ export class ToolUsageGuardsManager extends EventEmitter {
   ): Promise<ToolUsageGuard> {
     const existing = this.guards.get(id);
     if (!existing) {
-      throw ErrorUtils.createError(`Tool usage guard with ID ${id} not found`, 'not_found');
+      throw ErrorUtils.createError(`Tool usage guard with ID ${id} not found`, 'validation');
     }
 
     const updated: ToolUsageGuard = {
@@ -200,7 +200,7 @@ export class ToolUsageGuardsManager extends EventEmitter {
   public async toggleGuard(id: string, isActive: boolean): Promise<ToolUsageGuard> {
     const existing = this.guards.get(id);
     if (!existing) {
-      throw ErrorUtils.createError(`Tool usage guard with ID ${id} not found`, 'not_found');
+      throw ErrorUtils.createError(`Tool usage guard with ID ${id} not found`, 'validation');
     }
 
     const updated: ToolUsageGuard = {

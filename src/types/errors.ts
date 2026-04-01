@@ -177,8 +177,7 @@ export type HivemindError =
   | AuthorizationError
   | RateLimitError
   | TimeoutError
-  | Error
-  | unknown;
+  | Error;
 
 /**
  * Error classification result
@@ -198,7 +197,7 @@ export class ErrorUtils {
   /**
    * Safely extract error message from any error type
    */
-  static getMessage(error: HivemindError): string {
+  static getMessage(error: HivemindError | unknown): string {
     if (error instanceof Error) {
       return error.message;
     }
@@ -214,7 +213,7 @@ export class ErrorUtils {
   /**
    * Safely extract error code from any error type
    */
-  static getCode(error: HivemindError): string | undefined {
+  static getCode(error: HivemindError | unknown): string | undefined {
     if (error && typeof error === 'object' && 'code' in error) {
       return String(error.code);
     }
@@ -224,7 +223,7 @@ export class ErrorUtils {
   /**
    * Safely extract status code from any error type
    */
-  static getStatusCode(error: HivemindError): number | undefined {
+  static getStatusCode(error: HivemindError | unknown): number | undefined {
     if (error && typeof error === 'object' && 'statusCode' in error) {
       return Number(error.statusCode);
     }
@@ -237,7 +236,7 @@ export class ErrorUtils {
   /**
    * Check if error is an Axios error
    */
-  static isAxiosError(error: HivemindError): error is AxiosError {
+  static isAxiosError(error: HivemindError | unknown): error is AxiosError {
     return Boolean(
       error && typeof error === 'object' && 'isAxiosError' in error && error.isAxiosError
     );

@@ -136,14 +136,14 @@ export class ConfigurationImportExportService {
           .flat();
 
         exportData.versions = versions;
-        exportData.metadata.versionCount = versions.length;
+        (exportData.metadata as Record<string, unknown>).versionCount = versions.length;
       }
 
       // Include templates if requested
       if (options.includeTemplates) {
         const templates = await this.templateService.getAllTemplates();
         exportData.templates = templates;
-        exportData.metadata.templateCount = templates.length;
+        (exportData.metadata as Record<string, unknown>).templateCount = templates.length;
       }
 
       // Include audit logs if requested
@@ -218,7 +218,7 @@ export class ConfigurationImportExportService {
       let filePath = path.join(this.exportsDir, `${baseFileName}.${options.format}`);
 
       // Get main configuration from SecureConfigManager
-      const secureManager = SecureConfigManager.getInstance();
+      const secureManager = await SecureConfigManager.getInstance();
       const config = await secureManager.getDecryptedMainConfig(env);
 
       if (!config) {
@@ -313,7 +313,7 @@ export class ConfigurationImportExportService {
           const parsedEncrypted = JSON.parse(strData);
           if (parsedEncrypted.iv && parsedEncrypted.authTag && parsedEncrypted.data) {
             // Handle SecureConfigManager encrypted format
-            const secureManager = SecureConfigManager.getInstance();
+            const secureManager = await SecureConfigManager.getInstance();
             const decryptedStr = secureManager.decrypt(strData);
             const importData = JSON.parse(decryptedStr);
 
@@ -361,7 +361,7 @@ export class ConfigurationImportExportService {
       const configToSave = importData.config || importData;
 
       // Save using SecureConfigManager
-      const secureManager = SecureConfigManager.getInstance();
+      const secureManager = await SecureConfigManager.getInstance();
       const encryptedConfig = secureManager.encrypt(JSON.stringify(configToSave));
       const configPath = path.join(secureManager['mainConfigDir'], `${env}.json.enc`);
       await fs.writeFile(configPath, encryptedConfig);

@@ -35,7 +35,7 @@ router.get('/ping', (req, res) => {
 // GET /api/config/bots - List all configured bots with redacted secrets
 router.get('/bots', async (req, res) => {
   try {
-    const botManager = BotManager.getInstance();
+    const botManager = await BotManager.getInstance();
     const bots = await botManager.getAllBots();
     const manager = BotConfigurationManager.getInstance();
 
