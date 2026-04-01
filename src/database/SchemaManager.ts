@@ -2,12 +2,12 @@ import type { Database } from 'sqlite';
 import { injectable, singleton } from 'tsyringe';
 import { Logger } from '@common/logger';
 import type { ConnectionManager } from './ConnectionManager';
-import { ActivitySchemas } from './schemas/ActivitySchemas';
-import { MetricsSchemas } from './schemas/MetricsSchemas';
+import { SchemaRegistry } from './schemas';
 
 @singleton()
 @injectable()
 export class SchemaManager {
+  private schemaRegistry = new SchemaRegistry();
   private connectionManager: ConnectionManager;
 
   constructor(connectionManager: ConnectionManager) {
@@ -20,21 +20,28 @@ export class SchemaManager {
       throw new Error('Database connection not established');
     }
 
-    // Create modular schemas
-    const activitySchemas = new ActivitySchemas();
-    await activitySchemas.ensureTable(db);
-
-    // Create all tables
+    // Create all core tables first to respect foreign keys
     await this.createTables(db);
 
-    const metricsSchemas = new MetricsSchemas();
-    await metricsSchemas.createTables(db);
+    // Ensure tables from modular schemas
+    const schemas = this.schemaRegistry.getSchemas();
+    for (const schema of schemas) {
+      if (schema.ensureTable) {
+        await schema.ensureTable(db);
+      }
+      if (schema.createTables) {
+        await schema.createTables(db);
+      }
+    }
 
     // Create all indexes
     await this.createIndexes(db);
 
-    const metricsSchemasForIndexes = new MetricsSchemas();
-    await metricsSchemasForIndexes.createIndexes(db);
+    for (const schema of schemas) {
+      if (schema.createIndexes) {
+        await schema.createIndexes(db);
+      }
+    }
 
     Logger.info('Database schema initialized successfully');
   }
@@ -148,20 +155,6 @@ export class SchemaManager {
     `
     );
 
-    // User permissions table
-    await this.createTable(
-      db,
-      `
-      CREATE TABLE IF NOT EXISTS user_permissions (
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        permission TEXT NOT NULL,
-        granted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES sessions (user_id) ON DELETE CASCADE
-      )
-    `
-    );
-
     // Bot-to-user mappings table
     await this.createTable(
       db,
@@ -219,23 +212,6 @@ export class SchemaManager {
         status TEXT NOT NULL,
         reason TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE CASCADE
-      )
-    `
-    );
-
-    // Channel routing table
-    await this.createTable(
-      db,
-      `
-      CREATE TABLE IF NOT EXISTS channel_routing (
-        id TEXT PRIMARY KEY,
-        channel_id TEXT NOT NULL,
-        bot_id TEXT NOT NULL,
-        priority INTEGER DEFAULT 0,
-        enabled BOOLEAN DEFAULT 1,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE CASCADE
       )
     `
@@ -338,41 +314,6 @@ export class SchemaManager {
         response TEXT,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE CASCADE
-      )
-    `
-    );
-
-    // Bot rate limiting table
-    await this.createTable(
-      db,
-      `
-      CREATE TABLE IF NOT EXISTS bot_rate_limits (
-        id TEXT PRIMARY KEY,
-        bot_id TEXT NOT NULL,
-        user_id TEXT NOT NULL,
-        requests_count INTEGER DEFAULT 0,
-        reset_time DATETIME,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE CASCADE
-      )
-    `
-    );
-
-    // Bot security events table
-    await this.createTable(
-      db,
-      `
-      CREATE TABLE IF NOT EXISTS bot_security_events (
-        id TEXT PRIMARY KEY,
-        bot_id TEXT,
-        event_type TEXT NOT NULL,
-        severity TEXT DEFAULT 'medium',
-        description TEXT,
-        ip_address TEXT,
-        user_agent TEXT,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE SET NULL
       )
     `
     );
@@ -556,23 +497,6 @@ export class SchemaManager {
         encrypted BOOLEAN DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE CASCADE
-      )
-    `
-    );
-
-    // Bot API keys table
-    await this.createTable(
-      db,
-      `
-      CREATE TABLE IF NOT EXISTS bot_api_keys (
-        id TEXT PRIMARY KEY,
-        bot_id TEXT NOT NULL,
-        api_key TEXT NOT NULL,
-        description TEXT,
-        permissions TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        expires_at DATETIME,
         FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE CASCADE
       )
     `
@@ -824,42 +748,6 @@ export class SchemaManager {
         bot_id TEXT NOT NULL,
         data_type TEXT NOT NULL,
         retention_period_days INTEGER NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE CASCADE
-      )
-    `
-    );
-
-    // Bot privacy compliance table
-    await this.createTable(
-      db,
-      `
-      CREATE TABLE IF NOT EXISTS bot_privacy_compliance (
-        id TEXT PRIMARY KEY,
-        bot_id TEXT NOT NULL,
-        compliance_type TEXT NOT NULL,
-        status TEXT DEFAULT 'pending',
-        details TEXT,
-        completed_at DATETIME,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE CASCADE
-      )
-    `
-    );
-
-    // Bot consent management table
-    await this.createTable(
-      db,
-      `
-      CREATE TABLE IF NOT EXISTS bot_consent_management (
-        id TEXT PRIMARY KEY,
-        bot_id TEXT NOT NULL,
-        user_id TEXT NOT NULL,
-        consent_type TEXT NOT NULL,
-        granted BOOLEAN DEFAULT 0,
-        granted_at DATETIME,
-        revoked_at DATETIME,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE CASCADE
@@ -1151,258 +1039,6 @@ export class SchemaManager {
     `
     );
 
-    // Bot data sources table
-    await this.createTable(
-      db,
-      `
-      CREATE TABLE IF NOT EXISTS bot_data_sources (
-        id TEXT PRIMARY KEY,
-        bot_id TEXT NOT NULL,
-        source_name TEXT NOT NULL,
-        source_type TEXT NOT NULL,
-        connection_config TEXT NOT NULL,
-        status TEXT DEFAULT 'active',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE CASCADE
-      )
-    `
-    );
-
-    // Bot data transformations table
-    await this.createTable(
-      db,
-      `
-      CREATE TABLE IF NOT EXISTS bot_data_transformations (
-        id TEXT PRIMARY KEY,
-        bot_id TEXT NOT NULL,
-        transformation_name TEXT NOT NULL,
-        definition TEXT NOT NULL,
-        enabled BOOLEAN DEFAULT 1,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE CASCADE
-      )
-    `
-    );
-
-    // Bot data validation rules table
-    await this.createTable(
-      db,
-      `
-      CREATE TABLE IF NOT EXISTS bot_data_validation_rules (
-        id TEXT PRIMARY KEY,
-        bot_id TEXT NOT NULL,
-        rule_name TEXT NOT NULL,
-        validation_logic TEXT NOT NULL,
-        error_message TEXT,
-        enabled BOOLEAN DEFAULT 1,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE CASCADE
-      )
-    `
-    );
-
-    // Bot data lineage table
-    await this.createTable(
-      db,
-      `
-      CREATE TABLE IF NOT EXISTS bot_data_lineage (
-        id TEXT PRIMARY KEY,
-        bot_id TEXT NOT NULL,
-        source_table TEXT NOT NULL,
-        target_table TEXT NOT NULL,
-        transformation_id TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE CASCADE,
-        FOREIGN KEY (transformation_id) REFERENCES bot_data_transformations (id) ON DELETE SET NULL
-      )
-    `
-    );
-
-    // Bot data catalog table
-    await this.createTable(
-      db,
-      `
-      CREATE TABLE IF NOT EXISTS bot_data_catalog (
-        id TEXT PRIMARY KEY,
-        bot_id TEXT NOT NULL,
-        table_name TEXT NOT NULL,
-        column_name TEXT NOT NULL,
-        data_type TEXT,
-        description TEXT,
-        tags TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE CASCADE
-      )
-    `
-    );
-
-    // Bot backup schedules table
-    await this.createTable(
-      db,
-      `
-      CREATE TABLE IF NOT EXISTS bot_backup_schedules (
-        id TEXT PRIMARY KEY,
-        bot_id TEXT NOT NULL,
-        schedule_name TEXT NOT NULL,
-        cron_expression TEXT NOT NULL,
-        timezone TEXT DEFAULT 'UTC',
-        enabled BOOLEAN DEFAULT 1,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE CASCADE
-      )
-    `
-    );
-
-    // Bot restore operations table
-    await this.createTable(
-      db,
-      `
-      CREATE TABLE IF NOT EXISTS bot_restore_operations (
-        id TEXT PRIMARY KEY,
-        bot_id TEXT NOT NULL,
-        backup_id TEXT NOT NULL,
-        status TEXT DEFAULT 'pending',
-        started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        completed_at DATETIME,
-        FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE CASCADE
-      )
-    `
-    );
-
-    // Bot data masking rules table
-    await this.createTable(
-      db,
-      `
-      CREATE TABLE IF NOT EXISTS bot_data_masking_rules (
-        id TEXT PRIMARY KEY,
-        bot_id TEXT NOT NULL,
-        table_name TEXT NOT NULL,
-        column_name TEXT NOT NULL,
-        masking_type TEXT NOT NULL,
-        enabled BOOLEAN DEFAULT 1,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE CASCADE
-      )
-    `
-    );
-
-    // Bot data classification table
-    await this.createTable(
-      db,
-      `
-      CREATE TABLE IF NOT EXISTS bot_data_classification (
-        id TEXT PRIMARY KEY,
-        bot_id TEXT NOT NULL,
-        table_name TEXT NOT NULL,
-        column_name TEXT NOT NULL,
-        classification_level TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE CASCADE
-      )
-    `
-    );
-
-    // Bot data export requests table
-    await this.createTable(
-      db,
-      `
-      CREATE TABLE IF NOT EXISTS bot_data_export_requests (
-        id TEXT PRIMARY KEY,
-        bot_id TEXT NOT NULL,
-        user_id TEXT NOT NULL,
-        export_format TEXT NOT NULL,
-        export_config TEXT,
-        status TEXT DEFAULT 'pending',
-        file_path TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        completed_at DATETIME,
-        FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE CASCADE
-      )
-    `
-    );
-
-    // Bot data import requests table
-    await this.createTable(
-      db,
-      `
-      CREATE TABLE IF NOT EXISTS bot_data_import_requests (
-        id TEXT PRIMARY KEY,
-        bot_id TEXT NOT NULL,
-        user_id TEXT NOT NULL,
-        import_format TEXT NOT NULL,
-        import_config TEXT,
-        status TEXT DEFAULT 'pending',
-        file_path TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        completed_at DATETIME,
-        FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE CASCADE
-      )
-    `
-    );
-
-    // Bot data purging schedules table
-    await this.createTable(
-      db,
-      `
-      CREATE TABLE IF NOT EXISTS bot_data_purging_schedules (
-        id TEXT PRIMARY KEY,
-        bot_id TEXT NOT NULL,
-        schedule_name TEXT NOT NULL,
-        cron_expression TEXT NOT NULL,
-        timezone TEXT DEFAULT 'UTC',
-        data_type TEXT NOT NULL,
-        retention_period_days INTEGER NOT NULL,
-        enabled BOOLEAN DEFAULT 1,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE CASCADE
-      )
-    `
-    );
-
-    // Bot data archival configurations table
-    await this.createTable(
-      db,
-      `
-      CREATE TABLE IF NOT EXISTS bot_data_archival_configs (
-        id TEXT PRIMARY KEY,
-        bot_id TEXT NOT NULL,
-        config_name TEXT NOT NULL,
-        archival_criteria TEXT NOT NULL,
-        target_location TEXT NOT NULL,
-        enabled BOOLEAN DEFAULT 1,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE CASCADE
-      )
-    `
-    );
-
-    // Bot data archival operations table
-    await this.createTable(
-      db,
-      `
-      CREATE TABLE IF NOT EXISTS bot_data_archival_operations (
-        id TEXT PRIMARY KEY,
-        bot_id TEXT NOT NULL,
-        config_id TEXT NOT NULL,
-        status TEXT DEFAULT 'pending',
-        records_archived INTEGER DEFAULT 0,
-        started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        completed_at DATETIME,
-        FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE CASCADE,
-        FOREIGN KEY (config_id) REFERENCES bot_data_archival_configs (id) ON DELETE CASCADE
-      )
-    `
-    );
-
     Logger.info('All database tables created successfully');
   }
 
@@ -1444,10 +1080,6 @@ export class SchemaManager {
       'CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id)',
       'CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at)',
 
-      // User permissions indexes
-      'CREATE INDEX IF NOT EXISTS idx_user_permissions_user_id ON user_permissions(user_id)',
-      'CREATE INDEX IF NOT EXISTS idx_user_permissions_permission ON user_permissions(permission)',
-
       // Bot-to-user mappings indexes
       'CREATE INDEX IF NOT EXISTS idx_bot_user_mappings_bot_id ON bot_user_mappings(bot_id)',
       'CREATE INDEX IF NOT EXISTS idx_bot_user_mappings_user_id ON bot_user_mappings(user_id)',
@@ -1463,12 +1095,6 @@ export class SchemaManager {
       'CREATE INDEX IF NOT EXISTS idx_bot_approvals_bot_id ON bot_approvals(bot_id)',
       'CREATE INDEX IF NOT EXISTS idx_bot_approvals_approver_id ON bot_approvals(approver_id)',
       'CREATE INDEX IF NOT EXISTS idx_bot_approvals_status ON bot_approvals(status)',
-
-      // Channel routing indexes
-      'CREATE INDEX IF NOT EXISTS idx_channel_routing_channel_id ON channel_routing(channel_id)',
-      'CREATE INDEX IF NOT EXISTS idx_channel_routing_bot_id ON channel_routing(bot_id)',
-      'CREATE INDEX IF NOT EXISTS idx_channel_routing_priority ON channel_routing(priority)',
-      'CREATE INDEX IF NOT EXISTS idx_channel_routing_enabled ON channel_routing(enabled)',
 
       // Bot scheduling indexes
       'CREATE INDEX IF NOT EXISTS idx_bot_scheduling_bot_id ON bot_scheduling(bot_id)',
@@ -1498,15 +1124,6 @@ export class SchemaManager {
       'CREATE INDEX IF NOT EXISTS idx_bot_conversation_history_bot_id ON bot_conversation_history(bot_id)',
       'CREATE INDEX IF NOT EXISTS idx_bot_conversation_history_user_id ON bot_conversation_history(user_id)',
       'CREATE INDEX IF NOT EXISTS idx_bot_conversation_history_timestamp ON bot_conversation_history(timestamp)',
-
-      // Bot rate limits indexes
-      'CREATE INDEX IF NOT EXISTS idx_bot_rate_limits_bot_id ON bot_rate_limits(bot_id)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_rate_limits_user_id ON bot_rate_limits(user_id)',
-
-      // Bot security events indexes
-      'CREATE INDEX IF NOT EXISTS idx_bot_security_events_bot_id ON bot_security_events(bot_id)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_security_events_event_type ON bot_security_events(event_type)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_security_events_severity ON bot_security_events(severity)',
 
       // Bot webhook configurations indexes
       'CREATE INDEX IF NOT EXISTS idx_bot_webhook_configs_bot_id ON bot_webhook_configs(bot_id)',
@@ -1552,10 +1169,6 @@ export class SchemaManager {
       // Bot environment variables indexes
       'CREATE INDEX IF NOT EXISTS idx_bot_environment_vars_bot_id ON bot_environment_vars(bot_id)',
       'CREATE INDEX IF NOT EXISTS idx_bot_environment_vars_var_name ON bot_environment_vars(var_name)',
-
-      // Bot API keys indexes
-      'CREATE INDEX IF NOT EXISTS idx_bot_api_keys_bot_id ON bot_api_keys(bot_id)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_api_keys_api_key ON bot_api_keys(api_key)',
 
       // Bot workflow definitions indexes
       'CREATE INDEX IF NOT EXISTS idx_bot_workflow_definitions_bot_id ON bot_workflow_definitions(bot_id)',
@@ -1625,15 +1238,6 @@ export class SchemaManager {
       'CREATE INDEX IF NOT EXISTS idx_bot_data_retention_policies_bot_id ON bot_data_retention_policies(bot_id)',
       'CREATE INDEX IF NOT EXISTS idx_bot_data_retention_policies_data_type ON bot_data_retention_policies(data_type)',
 
-      // Bot privacy compliance indexes
-      'CREATE INDEX IF NOT EXISTS idx_bot_privacy_compliance_bot_id ON bot_privacy_compliance(bot_id)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_privacy_compliance_compliance_type ON bot_privacy_compliance(compliance_type)',
-
-      // Bot consent management indexes
-      'CREATE INDEX IF NOT EXISTS idx_bot_consent_management_bot_id ON bot_consent_management(bot_id)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_consent_management_user_id ON bot_consent_management(user_id)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_consent_management_consent_type ON bot_consent_management(consent_type)',
-
       // Bot data portability requests indexes
       'CREATE INDEX IF NOT EXISTS idx_bot_data_portability_requests_bot_id ON bot_data_portability_requests(bot_id)',
       'CREATE INDEX IF NOT EXISTS idx_bot_data_portability_requests_user_id ON bot_data_portability_requests(user_id)',
@@ -1701,71 +1305,6 @@ export class SchemaManager {
       // Bot visualization configurations indexes
       'CREATE INDEX IF NOT EXISTS idx_bot_visualization_configs_bot_id ON bot_visualization_configs(bot_id)',
       'CREATE INDEX IF NOT EXISTS idx_bot_visualization_configs_visualization_name ON bot_visualization_configs(visualization_name)',
-
-      // Bot data sources indexes
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_sources_bot_id ON bot_data_sources(bot_id)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_sources_source_name ON bot_data_sources(source_name)',
-
-      // Bot data transformations indexes
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_transformations_bot_id ON bot_data_transformations(bot_id)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_transformations_transformation_name ON bot_data_transformations(transformation_name)',
-
-      // Bot data validation rules indexes
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_validation_rules_bot_id ON bot_data_validation_rules(bot_id)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_validation_rules_rule_name ON bot_data_validation_rules(rule_name)',
-
-      // Bot data lineage indexes
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_lineage_bot_id ON bot_data_lineage(bot_id)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_lineage_source_table ON bot_data_lineage(source_table)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_lineage_target_table ON bot_data_lineage(target_table)',
-
-      // Bot data catalog indexes
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_catalog_bot_id ON bot_data_catalog(bot_id)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_catalog_table_name ON bot_data_catalog(table_name)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_catalog_column_name ON bot_data_catalog(column_name)',
-
-      // Bot backup schedules indexes
-      'CREATE INDEX IF NOT EXISTS idx_bot_backup_schedules_bot_id ON bot_backup_schedules(bot_id)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_backup_schedules_schedule_name ON bot_backup_schedules(schedule_name)',
-
-      // Bot restore operations indexes
-      'CREATE INDEX IF NOT EXISTS idx_bot_restore_operations_bot_id ON bot_restore_operations(bot_id)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_restore_operations_backup_id ON bot_restore_operations(backup_id)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_restore_operations_status ON bot_restore_operations(status)',
-
-      // Bot data masking rules indexes
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_masking_rules_bot_id ON bot_data_masking_rules(bot_id)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_masking_rules_table_name ON bot_data_masking_rules(table_name)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_masking_rules_column_name ON bot_data_masking_rules(column_name)',
-
-      // Bot data classification indexes
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_classification_bot_id ON bot_data_classification(bot_id)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_classification_table_name ON bot_data_classification(table_name)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_classification_column_name ON bot_data_classification(column_name)',
-
-      // Bot data export requests indexes
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_export_requests_bot_id ON bot_data_export_requests(bot_id)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_export_requests_user_id ON bot_data_export_requests(user_id)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_export_requests_status ON bot_data_export_requests(status)',
-
-      // Bot data import requests indexes
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_import_requests_bot_id ON bot_data_import_requests(bot_id)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_import_requests_user_id ON bot_data_import_requests(user_id)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_import_requests_status ON bot_data_import_requests(status)',
-
-      // Bot data purging schedules indexes
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_purging_schedules_bot_id ON bot_data_purging_schedules(bot_id)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_purging_schedules_schedule_name ON bot_data_purging_schedules(schedule_name)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_purging_schedules_data_type ON bot_data_purging_schedules(data_type)',
-
-      // Bot data archival configurations indexes
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_archival_configs_bot_id ON bot_data_archival_configs(bot_id)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_archival_configs_config_name ON bot_data_archival_configs(config_name)',
-
-      // Bot data archival operations indexes
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_archival_operations_bot_id ON bot_data_archival_operations(bot_id)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_archival_operations_config_id ON bot_data_archival_operations(config_id)',
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_archival_operations_status ON bot_data_archival_operations(status)',
 
       // Bot data archival logs indexes
       'CREATE INDEX IF NOT EXISTS idx_bot_data_archival_logs_bot_id ON bot_data_archival_logs(bot_id)',
