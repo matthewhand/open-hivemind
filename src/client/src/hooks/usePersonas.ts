@@ -35,7 +35,7 @@ export const usePersonas = (): UsePersonasReturn => {
     data: fetchedPersonas,
     isLoading: loading,
     error: queryError,
-    refetch,
+    refetch: _refetch,
   } = useQuery<Persona[]>({
     queryKey: ['personas'],
     queryFn: async () => {

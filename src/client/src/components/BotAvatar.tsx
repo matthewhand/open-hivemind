@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { Bot, User } from 'lucide-react';
 import { SkeletonAvatar } from '../components/DaisyUI/Skeleton';
@@ -21,7 +20,7 @@ interface BotData {
 
 export const BotAvatar: React.FC<{ bot: BotData }> = ({ bot }) => {
     const [loaded, setLoaded] = useState(false);
-    const [src, setSrc] = useState<string | null>(null);
+    const [src, _setSrc] = useState<string | null>(null);
 
     useEffect(() => {
         // Simulate fetching external avatar or check if provider has one

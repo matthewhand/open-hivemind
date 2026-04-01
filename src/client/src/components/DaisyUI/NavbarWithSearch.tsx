@@ -25,7 +25,7 @@ interface NavbarWithSearchProps {
 }
 
 const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
-  title = 'Open-Hivemind',
+  title: _title = 'Open-Hivemind',
   navItems = [],
   onSearch,
   onNotificationClick,
@@ -45,7 +45,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
   const searchInputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
+  const _handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (onSearch && searchQuery.trim()) {
       onSearch(searchQuery.trim());

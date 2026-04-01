@@ -55,8 +55,8 @@ const ActivityPage: React.FC = () => {
 
   // Enhanced error handling with retry logic
   const [retryCount, setRetryCount] = useState(0);
-  const [maxRetries, setMaxRetries] = useState(3);
-  const [retryDelay, setRetryDelay] = useState(1000); // 1 second initial delay
+  const [_maxRetries, setMaxRetries] = useState(3);
+  const [_retryDelay, setRetryDelay] = useState(1000); // 1 second initial delay
 
   // Build activity endpoint URL from filter state
   const activityUrl = useMemo(() => {

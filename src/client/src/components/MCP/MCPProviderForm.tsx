@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { Alert, Button, Card, Input, Select, Textarea, Toggle, InputGroup, FormLabel } from 'react-daisyui';
 import Form from '../DaisyUI/Form';
@@ -53,7 +52,7 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
   });
 
   const [selectedTemplate, setSelectedTemplate] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [_isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     // Convert env object to envVars array

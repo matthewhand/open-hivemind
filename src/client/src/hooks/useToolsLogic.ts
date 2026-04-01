@@ -1,11 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useMemo, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalStorage } from './useLocalStorage';
 import { apiService } from '../services/api';
 import Debug from 'debug';
 
-const debug = Debug('app:client:hooks:useToolsLogic');
+const _debug = Debug('app:client:hooks:useToolsLogic');
 
 export interface MCPTool {
   id: string;
@@ -164,7 +163,7 @@ export const useToolsLogic = () => {
           : t,
       ));
       setAlert({ type: 'success', message: `Tool ${newEnabledState ? 'enabled' : 'disabled'} successfully` });
-    } catch (error) {
+    } catch (_error) {
       setAlert({ type: 'error', message: 'Failed to update tool status' });
     }
   };
@@ -196,7 +195,7 @@ export const useToolsLogic = () => {
     try {
       const json: any = await apiService.get('/api/mcp/tools/history?limit=50');
       setExecutionHistory(json.data || []);
-    } catch (error) {
+    } catch (_error) {
       setAlert({ type: 'error', message: 'Failed to load execution history' });
     } finally {
       setLoadingHistory(false);

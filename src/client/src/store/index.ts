@@ -1,12 +1,19 @@
 /**
  * Store barrel -- re-exports everything consumers need from a single import.
  *
- * The actual store creation, state versioning, and offline queue live in
- * dedicated modules; this file re-exports the public surface.
+ * Plain UI/domain state lives in Zustand stores (uiStore, authStore, etc.).
+ * RTK Query (apiSlice) retains a minimal Redux store for its cache.
  */
 
-export { store, setupStore, offlineQueue } from './store';
+export { store } from './store';
 export type { RootState, AppStore, AppDispatch } from './store';
-export { STATE_VERSION, migrations, migrateState, saveState, loadState, clearPersistedState } from './stateVersioning';
-export { OfflineActionQueue, createOfflineMiddleware } from './offlineQueue';
 export { HydrationErrorBoundary } from './hydrationErrorBoundary';
+
+// Zustand stores
+export { useUIStore } from './uiStore';
+export { useAuthStore } from './authStore';
+export { useDashboardStore } from './dashboardStore';
+export { useConfigStore } from './configStore';
+export { useErrorStore } from './errorStore';
+export { usePerformanceStore } from './performanceStore';
+export { useWebSocketStore } from './websocketStore';

@@ -59,7 +59,7 @@ const ChatPage: React.FC = () => {
     try {
       const data = await apiService.get('/api/admin/llm-profiles');
       setLlmProviders((data as any).data || []);
-    } catch (err) {
+    } catch (_err) {
       showError('Failed to fetch LLM providers');
     }
   }, []);
@@ -76,7 +76,7 @@ const ChatPage: React.FC = () => {
       ));
 
       showSuccess('LLM provider updated successfully');
-    } catch (err) {
+    } catch (_err) {
       showError(err instanceof Error ? err.message : 'Failed to swap provider');
     } finally {
       setSwappingProvider(null);
@@ -130,7 +130,7 @@ const ChatPage: React.FC = () => {
       }));
 
       setMessages(mappedMessages);
-    } catch (err) {
+    } catch (_err) {
       showError('Failed to fetch chat history');
     } finally {
       setHistoryLoading(false);
@@ -194,7 +194,7 @@ const ChatPage: React.FC = () => {
       // Depending on backend, we could fetch history to get actual messages
       // but for this task, the optimistic rollback is the focus.
       await fetchHistory(selectedBotId);
-    } catch (err) {
+    } catch (_err) {
       showError('Failed to send message');
       // Mark optimistic update as failed
       setMessages(prev => prev.map(m =>
@@ -205,7 +205,7 @@ const ChatPage: React.FC = () => {
     }
   };
 
-  const handleRetryMessage = (messageId: string) => {
+  const _handleRetryMessage = (messageId: string) => {
     const messageToRetry = messages.find(m => m.id === messageId);
     if (messageToRetry) {
       handleSendMessage(messageToRetry.content, messageId);

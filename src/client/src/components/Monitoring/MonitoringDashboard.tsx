@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useWebSocket } from '../../contexts/WebSocketContext';
 import Card from '../DaisyUI/Card';

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import axios from 'axios';
 
 export interface Agent {
@@ -30,7 +29,7 @@ export const getAgents = async (): Promise<Agent[]> => {
   try {
     const response = await axios.get('/api/admin/agents');
     return response.data.agents || [];
-  } catch (error) {
+  } catch (_error) {
     // Fallback to old endpoint if new one doesn't exist
     const response = await axios.get('/api/admin/status');
     const { slackInfo, discordInfo } = response.data;

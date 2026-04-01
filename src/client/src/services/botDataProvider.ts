@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import type { Bot, CreateBotRequest } from '../types/bot';
 
 // Mock data for development

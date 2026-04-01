@@ -50,7 +50,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
     }
   }, [value]);
 
-  const pushToHistory = useCallback((newValue: string[]) => {
+  const pushToHistory = useCallback((_newValue: string[]) => {
     const last = historyRef.current[historyRef.current.length - 1];
     if (!last || JSON.stringify(last) !== JSON.stringify(currentValueRef.current)) {
       historyRef.current.push([...currentValueRef.current]);

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useRef } from 'react';
 import { useWebSocket } from '../../contexts/WebSocketContext';
 
@@ -26,7 +25,7 @@ const EventStream: React.FC<EventStreamProps> = ({
   maxEvents = 100,
   showFilters = true,
   autoScroll = true,
-  refreshInterval,
+  refreshInterval: _refreshInterval,
   className = '',
   onEventClick,
 }) => {

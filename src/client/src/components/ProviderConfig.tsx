@@ -61,7 +61,7 @@ const ProviderConfig: React.FC<ProviderConfigProps> = ({
     );
   };
 
-  const renderHelpLink = (url: string, text: string) => (
+  const _renderHelpLink = (url: string, text: string) => (
     <a
       href={url}
       target="_blank"
@@ -682,7 +682,7 @@ const ProviderConfig: React.FC<ProviderConfigProps> = ({
               <div className="space-y-1">
                 {Object.entries(envOverrides)
                   .filter(([key]) => key.startsWith(provider.toUpperCase()))
-                  .map(([key, value]) => (
+                  .map(([key, _value]) => (
                     <div key={key} className="flex items-center gap-2 text-xs">
                       <Lock className="w-3 h-3" />
                       <code className="bg-base-300 px-2 py-1 rounded">{key}</code>

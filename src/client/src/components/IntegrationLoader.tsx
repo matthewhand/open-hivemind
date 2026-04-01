@@ -163,13 +163,13 @@ export class IntegrationLoader {
    */
   private async loadIntegrationManifest(integrationId: string): Promise<IntegrationManifest> {
     if (this.manifestCache.has(integrationId)) {
-      return this.manifestCache.get(integrationId)!;
+      return this.manifestCache.get(integrationId) as IntegrationManifest;
     }
 
     try {
       // Try to import manifest from the integration directory
       // This is a simplified approach - in production you'd want proper file system access
-      const manifestPath = `@integrations/${integrationId}/manifest.json`;
+      const _manifestPath = `@integrations/${integrationId}/manifest.json`;
 
       // Default manifest for integrations without explicit manifests
       const defaultManifest: IntegrationManifest = {
@@ -270,8 +270,8 @@ export class IntegrationLoader {
 
       // Check if the module exports named components
       const componentName = componentPath.split('/').pop();
-      if (componentModule[componentName!] && typeof componentModule[componentName!] === 'function') {
-        return componentModule[componentName!];
+      if (componentName && componentModule[componentName] && typeof componentModule[componentName] === 'function') {
+        return componentModule[componentName];
       }
 
       throw new Error(`No valid component found in ${modulePath}`);

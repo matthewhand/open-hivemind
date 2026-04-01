@@ -70,7 +70,7 @@ export class ApiService {
       this.rateLimitListeners.forEach(listener => {
         try {
           listener(info);
-        } catch (error) {
+        } catch (_error) {
           debug('ERROR:', 'Rate limit listener error', {
             error: error instanceof Error ? error.message : String(error)
           });
@@ -104,7 +104,7 @@ export class ApiService {
         const token = data.token || data.csrfToken || '';
         this.csrfToken = token;
         return token;
-      } catch (error) {
+      } catch (_error) {
         // Silently fail - CSRF may not be required in all environments
         console.debug('CSRF token fetch failed (may not be required):', error);
         return '';

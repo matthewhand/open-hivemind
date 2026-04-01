@@ -1,13 +1,11 @@
 /**
  * Hydration Error Boundary
  *
- * Catches errors caused by corrupted / incompatible persisted Redux state
- * during the initial render. When triggered it clears the persisted state,
- * notifies the user, and re-renders with a fresh store.
+ * Catches render errors that may arise from corrupted cached data.
+ * Notifies the user and re-renders cleanly.
  */
 
 import React from 'react';
-import { clearPersistedState } from './stateVersioning';
 import { logger } from '../utils/logger';
 
 // ---------------------------------------------------------------------------
@@ -40,12 +38,8 @@ export class HydrationErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
-    logger.error('[HydrationErrorBoundary] Caught hydration error:', error);
+    logger.error('[HydrationErrorBoundary] Caught error:', error);
     logger.error('[HydrationErrorBoundary] Component stack:', errorInfo.componentStack);
-
-    // Wipe the persisted state so the next render starts fresh.
-    clearPersistedState();
-
     this.props.onError?.(error, errorInfo);
   }
 
@@ -73,8 +67,7 @@ export class HydrationErrorBoundary extends React.Component<Props, State> {
             Something went wrong
           </h1>
           <p style={{ maxWidth: '40rem', marginBottom: '1.5rem', color: '#666' }}>
-            The application encountered an error while restoring your previous
-            session. Your cached data has been cleared to prevent further issues.
+            The application encountered an unexpected error.
           </p>
           {process.env.NODE_ENV !== 'production' && this.state.error && (
             <pre

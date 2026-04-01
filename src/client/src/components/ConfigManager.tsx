@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
 import Card from './DaisyUI/Card';
 import Badge from './DaisyUI/Badge';
@@ -15,18 +14,14 @@ import {
   TrashIcon,
   MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
-import { useAppSelector } from '../store/hooks';
-import {
-  selectConfig,
-  selectConfigError,
-} from '../store/slices/configSlice';
+import { useConfigStore } from '../store/configStore';
 import { SkeletonPage } from './DaisyUI/Skeleton';
 import Debug from 'debug';
 const debug = Debug('app:client:components:ConfigManager');
 
 const ConfigManager: React.FC = () => {
-  const config = useAppSelector(selectConfig);
-  const configError = useAppSelector(selectConfigError);
+  const config = useConfigStore((s) => s);
+  const configError = useConfigStore((s) => s.error);
   const [selectedEnv, setSelectedEnv] = useState<string>('development');
   const [hasChanges, setHasChanges] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -80,7 +75,7 @@ const ConfigManager: React.FC = () => {
       setHasChanges(false);
       setValidationErrors({});
       showToast('Configuration saved successfully', 'success');
-    } catch (error) {
+    } catch (_error) {
       // showToast below provides feedback
       showToast('Failed to save configuration', 'error');
     }

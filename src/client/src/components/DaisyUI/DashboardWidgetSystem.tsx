@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
 import Debug from 'debug';
 const debug = Debug('app:client:components:DaisyUI:DashboardWidgetSystem');
@@ -40,7 +39,7 @@ interface DashboardWidgetSystemProps {
 }
 
 // Widget Components
-const StatsWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate, onRemove, onConfigure }) => {
+const StatsWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate: _onUpdate, onRemove, onConfigure }) => {
   const stats = widget.data?.stats || [
     { label: 'Active Bots', value: '3', change: '+2' },
     { label: 'Messages', value: '1.2K', change: '+15%' },
@@ -79,8 +78,8 @@ const StatsWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate, onRem
   );
 };
 
-const ChartWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate, onRemove, onConfigure }) => {
-  const data = widget.data?.chartData || [];
+const ChartWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate: _onUpdate, onRemove, onConfigure }) => {
+  const _data = widget.data?.chartData || [];
 
   return (
     <div className="h-full bg-base-100 rounded-lg shadow-lg p-4">
@@ -116,7 +115,7 @@ const ChartWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate, onRem
   );
 };
 
-const ActivityWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate, onRemove, onConfigure }) => {
+const ActivityWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate: _onUpdate, onRemove, onConfigure }) => {
   const activities = widget.data?.activities || [
     { time: '2 min ago', action: 'Bot connected', type: 'success' },
     { time: '5 min ago', action: 'Message processed', type: 'info' },
@@ -158,7 +157,7 @@ const ActivityWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate, on
   );
 };
 
-const QuickActionsWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate, onRemove, onConfigure }) => {
+const QuickActionsWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate: _onUpdate, onRemove, onConfigure }) => {
   const actions = widget.data?.actions || [
     { label: 'Add Bot', icon: '🤖', color: 'btn-primary' },
     { label: 'View Logs', icon: '📋', color: 'btn-secondary' },
@@ -193,7 +192,7 @@ const QuickActionsWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate
   );
 };
 
-const SystemHealthWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate, onRemove, onConfigure }) => {
+const SystemHealthWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate: _onUpdate, onRemove, onConfigure }) => {
   const health = widget.data?.health || {
     cpu: 45,
     memory: 62,

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
+/* eslint-disable react-refresh/only-export-components, no-empty, no-case-declarations */
 import type { ReactNode } from 'react';
 import React, { useState, useEffect, useRef } from 'react';
 import type { FormField, FormFieldSet } from './formTypes';
@@ -234,7 +234,7 @@ export const Form: React.FC<FormProps> = ({
     try {
       setIsSubmitting(true);
       await onSubmit(formData);
-    } catch (error) {
+    } catch (_error) {
       // Error handled by form validation UI
     } finally {
       setIsSubmitting(false);

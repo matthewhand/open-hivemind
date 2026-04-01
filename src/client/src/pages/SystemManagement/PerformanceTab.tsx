@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiService } from '../../services/api';
 import { useErrorToast } from '../../components/DaisyUI/ToastNotification';
@@ -20,7 +20,7 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ onClearCache }) => {
     try {
       const status = await apiService.getApiEndpointsStatus();
       setApiStatus(status);
-    } catch (error) {
+    } catch (_error) {
       errorToast('API Status', 'Failed to fetch API status');
     }
   }, []);
@@ -36,7 +36,7 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ onClearCache }) => {
       const overrides = overridesResult.status === 'fulfilled' ? overridesResult.value : { data: { envVars: {} } };
       setSystemInfo(info.systemInfo);
       setEnvOverrides(overrides.data?.envVars || overrides.envVars);
-    } catch (error) {
+    } catch (_error) {
       errorToast('Performance Data', 'Failed to fetch performance metrics');
     } finally {
       setIsPerformanceLoading(false);

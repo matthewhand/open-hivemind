@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, no-empty, no-case-declarations */
+/* eslint-disable no-empty, no-case-declarations */
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { apiService } from '../services/api';
@@ -57,7 +57,7 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const generateId = () => uuidv4();
 
-  const createBot = useCallback((name: string, description?: string) => {
+  const createBot = useCallback((name: string, _description?: string) => {
     const newBot: BotInstance = {
       id: generateId(),
       name: name || 'New Bot',
@@ -111,7 +111,7 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const startBot = useCallback(
     async (botId: string) => {
-      const previousStatus = bots.find((b) => b.id === botId)?.status;
+      const _previousStatus = bots.find((b) => b.id === botId)?.status;
       try {
         setLoading(true);
         setError(null);
@@ -181,7 +181,7 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addMessageProvider = useCallback(
     (botId: string, type: string, name: string, config: any) => {
       setBots((prev) => {
-        const target = prev.find((b) => b.id === botId);
+        const _target = prev.find((b) => b.id === botId);
 
         return prev.map((bot) => {
           if (bot.id !== botId) {

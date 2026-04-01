@@ -62,7 +62,7 @@ const ExportPage: React.FC = () => {
       setLoading(true);
       const data = await apiService.listSystemBackups();
       setBackups(data);
-    } catch (err) {
+    } catch (_err) {
       errorToast('Error', 'Failed to load backups');
     } finally {
       setLoading(false);
@@ -87,7 +87,7 @@ const ExportPage: React.FC = () => {
       setNewBackupName('');
       setNewBackupDesc('');
       fetchBackups();
-    } catch (err) {
+    } catch (_err) {
       errorToast('Error', err instanceof Error ? err.message : 'Failed to create backup');
       setFeedbackState({ state: 'error', message: err instanceof Error ? err.message : 'Failed to create backup' });
     } finally {
@@ -108,7 +108,7 @@ const ExportPage: React.FC = () => {
           await apiService.deleteSystemBackup(id);
           successToast('Success', 'Backup deleted successfully');
           fetchBackups();
-        } catch (err) {
+        } catch (_err) {
           errorToast('Error', 'Failed to delete backup');
         } finally {
           setActionLoading(null);
@@ -130,7 +130,7 @@ const ExportPage: React.FC = () => {
           await apiService.restoreSystemBackup(id, { overwrite: true });
           successToast('Success', 'System restored. Reloading...');
           setTimeout(() => window.location.reload(), 2000);
-        } catch (err) {
+        } catch (_err) {
           errorToast('Error', 'Failed to restore backup');
         } finally {
           setActionLoading(null);
@@ -151,7 +151,7 @@ const ExportPage: React.FC = () => {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-    } catch (err) {
+    } catch (_err) {
       errorToast('Error', 'Failed to download backup');
     } finally {
       setActionLoading(null);
@@ -172,7 +172,7 @@ const ExportPage: React.FC = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       successToast('Success', `Configuration exported as ${exportFormat.toUpperCase()}`);
-    } catch (err) {
+    } catch (_err) {
       errorToast('Error', 'Failed to export configuration');
     }
   };
@@ -190,7 +190,7 @@ const ExportPage: React.FC = () => {
       document.body.removeChild(a);
 
       successToast('Success', `OpenAPI ${format.toUpperCase()} spec downloaded`);
-    } catch (error) {
+    } catch (_error) {
       errorToast('Error', error instanceof Error ? error.message : 'Failed to download OpenAPI spec');
     }
   };

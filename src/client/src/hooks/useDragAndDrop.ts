@@ -25,13 +25,12 @@ export interface UseDragAndDropReturn<T> {
  */
 export function useDragAndDrop<T>({
   items,
-  idAccessor,
+  idAccessor: _idAccessor,
   onReorder,
 }: UseDragAndDropOptions<T>): UseDragAndDropReturn<T> {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const dragCounter = useRef(0);
+  const _dragCounter = useRef(0);
 
   const isDragging = dragIndex !== null;
 

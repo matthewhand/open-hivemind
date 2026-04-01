@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Alert } from '../DaisyUI/Alert';
 import Badge from '../DaisyUI/Badge';
@@ -81,7 +81,7 @@ const SettingsIntegrations: React.FC = () => {
       ];
 
       setIntegrations(builtIntegrations);
-    } catch (error) {
+    } catch (_error) {
       setAlert({ type: 'error', message: 'Failed to load integrations' });
     } finally {
       setLoading(false);

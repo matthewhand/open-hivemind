@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useMemo } from 'react';
 import type { Persona, PersonaCategory } from '../../types/bot';
 import { DEFAULT_PERSONA } from '../../types/bot';
@@ -33,7 +32,7 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
   onCreatePersona,
   allowCreate = true,
   showUsage = false,
-  placeholder = 'Select a persona...',
+  placeholder: _placeholder = 'Select a persona...',
   size = 'full',
 }) => {
   const [searchQuery, setSearchQuery] = useState('');

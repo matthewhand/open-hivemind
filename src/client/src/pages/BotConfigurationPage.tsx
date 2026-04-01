@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { Settings, Save, RefreshCw, AlertCircle, CheckCircle, History } from 'lucide-react';
@@ -210,7 +209,7 @@ const BotConfigurationPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const successToast = useSuccessToast();
+  const _successToast = useSuccessToast();
   const errorToast = useErrorToast();
   const { showStamp } = useSavedStamp();
 
@@ -224,7 +223,7 @@ const BotConfigurationPage: React.FC = () => {
     try {
       const data: any = await apiService.get('/api/config/hot-reload/rollbacks');
       setRollbacks(data.rollbacks || []);
-    } catch (err) {
+    } catch (_err) {
       errorToast('Rollback Error', 'Failed to fetch rollback snapshots');
     }
   }, []);

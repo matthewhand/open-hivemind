@@ -19,7 +19,7 @@ const RateLimitIndicator: React.FC = () => {
 
   // Setup useInactivity hook
   const sessionTimeoutMs = 5 * 60_000; // Example: 5 minutes session timeout
-  const { isIdle, lastActive } = useInactivity({ timeoutMs: sessionTimeoutMs });
+  const { isIdle: _isIdle, lastActive } = useInactivity({ timeoutMs: sessionTimeoutMs });
   const [showSessionWarning, setShowSessionWarning] = useState(false);
   const [sessionExpiryTime, setSessionExpiryTime] = useState<number>(Date.now() + sessionTimeoutMs);
 

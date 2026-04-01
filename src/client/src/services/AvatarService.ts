@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import type { AvatarService } from '../provider-configs/types';
 import { apiService } from './api';
 import Debug from 'debug';

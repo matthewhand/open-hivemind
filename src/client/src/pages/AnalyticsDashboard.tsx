@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import { apiService, ActivityResponse } from '../services/api';
@@ -33,7 +32,7 @@ const AnalyticsDashboard: React.FC = () => {
         from: from.toISOString(),
       });
       setActivityData(data);
-    } catch (error) {
+    } catch (_error) {
       errorToast('Analytics Error', 'Failed to fetch analytics data');
     } finally {
       setIsLoading(false);

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { setTheme as setThemeAction, selectTheme } from '../store/slices/uiSlice';
+import { useUIStore } from '../store/uiStore';
 
 const STORAGE_KEY = 'hivemind-theme';
 
@@ -21,8 +20,8 @@ function resolveEffectiveTheme(theme: ThemeValue, systemPreference: 'light' | 'd
  *  - toggleDark   quick toggle between light and dark
  */
 export function useTheme() {
-  const dispatch = useAppDispatch();
-  const theme = useAppSelector(selectTheme);
+  const theme = useUIStore((s) => s.theme);
+  const setThemeAction = useUIStore((s) => s.setTheme);
 
   // Track the OS color scheme
   const [systemPreference, setSystemPreference] = useState<'light' | 'dark'>(() =>
@@ -58,20 +57,16 @@ export function useTheme() {
     }
   }, [effectiveTheme, theme]);
 
-  // When in 'auto' mode and OS preference changes, update the attribute reactively
-  // (handled by the effectiveTheme dep above)
-
   const setTheme = useCallback(
     (next: ThemeValue) => {
-      dispatch(setThemeAction(next));
+      setThemeAction(next);
     },
-    [dispatch],
+    [setThemeAction],
   );
 
   const isDark = effectiveTheme === 'dark';
 
   const toggleDark = useCallback(() => {
-    // If currently auto, resolve to opposite of current effective then make it explicit
     const next = isDark ? 'light' : 'dark';
     setTheme(next);
   }, [isDark, setTheme]);

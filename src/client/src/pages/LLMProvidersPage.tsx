@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useModal } from '../hooks/useModal';
 import Card from '../components/DaisyUI/Card';
@@ -90,7 +89,7 @@ const LLMProvidersPage: React.FC = () => {
     isOpen: boolean; title: string; message: string; onConfirm: () => void;
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
-  const queryClient = useQueryClient();
+  const _queryClient = useQueryClient();
 
   // Cached queries for LLM profiles, status, and global config
   const {

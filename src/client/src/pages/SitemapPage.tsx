@@ -38,7 +38,7 @@ const SitemapPage: React.FC = () => {
   const [accessFilter, setAccessFilter] = useState<string>('all');
   const [searchValue, setSearchValue] = useState('');
 
-  const breadcrumbItems = [
+  const _breadcrumbItems = [
     { label: 'Sitemap', href: '/admin/sitemap', isActive: true },
   ];
 

@@ -30,7 +30,7 @@ export const useBotExport = (
       a.click();
       URL.revokeObjectURL(url);
       toastSuccess('Exported all bots');
-    } catch (err) {
+    } catch (_err) {
       toastError('Failed to export bots');
     }
   }, [toastSuccess, toastError]);
@@ -46,7 +46,7 @@ export const useBotExport = (
         a.download = `bot-${bot.name.replace(/\s+/g, '-').toLowerCase()}-export.json`;
         a.click();
         URL.revokeObjectURL(url);
-      } catch (err) {
+      } catch (_err) {
         toastError('Failed to export bot');
       }
     },

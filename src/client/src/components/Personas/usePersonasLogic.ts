@@ -138,7 +138,7 @@ export function usePersonasLogic() {
   const handlePersonaReorder = useCallback(async (reordered: Persona[]) => {
     try {
       setPersonas(reordered);
-    } catch (err) {
+    } catch (_err) {
       errorToast('Failed to update persona order');
       await fetchData();
     }
@@ -194,7 +194,7 @@ export function usePersonasLogic() {
     try {
       await navigator.clipboard.writeText(text);
       successToast('Prompt copied to clipboard');
-    } catch (err) {
+    } catch (_err) {
       errorToast('Failed to copy prompt');
     }
   };

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { useQuery } from '@tanstack/react-query';
 import { apiService } from '../services/api';
 

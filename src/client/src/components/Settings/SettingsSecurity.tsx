@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -98,7 +98,7 @@ const SettingsSecurity: React.FC = () => {
         enableSecurityHeaders: true,
         enableApiKeyAuth: true,
       });
-    } catch (error) {
+    } catch (_error) {
       debug('ERROR:', 'Failed to load security settings:', error);
     } finally {
       setLoading(false);
@@ -128,7 +128,7 @@ const SettingsSecurity: React.FC = () => {
       setAlert({ type: 'success', message: 'Security settings saved!' });
       showStamp();
       setTimeout(() => setAlert(null), 3000);
-    } catch (error) {
+    } catch (_error) {
       setAlert({ type: 'error', message: 'Failed to save. Some settings require environment variables.' });
     } finally {
       setIsSaving(false);

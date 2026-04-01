@@ -30,7 +30,7 @@ const BotCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const { status: llmStatus } = useLlmStatus();
   const defaultLlmConfigured = llmStatus?.defaultConfigured ?? false;
-  const defaultProviderName = llmStatus?.defaultProviders?.[0]?.name;
+  const _defaultProviderName = llmStatus?.defaultProviders?.[0]?.name;
 
   const [formData, setFormData] = useState({
     name: '',
@@ -72,7 +72,7 @@ const BotCreatePage: React.FC = () => {
         setLlmProfiles(profilesData?.llm || profilesData?.profiles?.llm || []);
         const servers = mcpServersData;
         setMcpServers(Array.isArray(servers) ? servers : []);
-      } catch (err) {
+      } catch (_err) {
         // Error shown via alert UI
         setAlert({ type: 'error', message: 'Failed to load configuration data' });
       } finally {
@@ -101,7 +101,7 @@ const BotCreatePage: React.FC = () => {
 
       setAlert({ type: 'success', message: 'Bot created successfully!' });
       setTimeout(() => navigate('/admin/bots'), 1500);
-    } catch (error) {
+    } catch (_error) {
       setAlert({
         type: 'error',
         message: error instanceof Error ? error.message : 'Failed to create bot',

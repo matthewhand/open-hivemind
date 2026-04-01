@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import type { ProviderConfigFormProps, ProviderConfigField } from '../provider-configs/types';
 import Input from './DaisyUI/Input';
@@ -305,7 +304,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             }}
             onValidationSuccess={() => {
               setErrors(prev => {
-                const { [field.name]: removed, ...rest } = prev;
+                const { [field.name]: _removed, ...rest } = prev;
                 return rest;
               });
             }}

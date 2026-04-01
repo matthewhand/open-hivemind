@@ -1,6 +1,5 @@
 import Debug from 'debug';
 const debug = Debug('app:client:provider-configs:types');
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 // Provider-specific configuration types - separate from core bot types
 // This allows for a pluggable architecture where providers can define their own configs
 

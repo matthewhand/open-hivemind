@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -121,7 +121,7 @@ const SettingsGeneral: React.FC = () => {
         healthCheckInterval: userSettings['health.interval'] || config.health?.interval?.value || 60,
         advancedMode: userSettings['webui.advancedMode'] || false,
       });
-    } catch (error) {
+    } catch (_error) {
       setFetchError(error instanceof Error ? error.message : 'An unknown error occurred while fetching settings.');
       setAlert({ type: 'error', message: 'Failed to load settings' });
     } finally {
@@ -154,7 +154,7 @@ const SettingsGeneral: React.FC = () => {
       setAlert({ type: 'success', message: 'Settings saved successfully!' });
       showStamp();
       setTimeout(() => setAlert(null), 3000);
-    } catch (error) {
+    } catch (_error) {
       setAlert({ type: 'error', message: 'Failed to save settings. Some settings may require environment variables.' });
     } finally {
       setIsSaving(false);

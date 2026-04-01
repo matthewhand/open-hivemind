@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useCallback } from 'react';
 
 export interface AccordionItem {
@@ -47,7 +46,7 @@ const Accordion: React.FC<AccordionProps> = ({
         return newSet;
       });
     } else {
-      setOpenItems(prev => {
+      setOpenItems(_prev => {
         const newSet: Set<string> = new Set();
         if (!isOpen) {
           newSet.add(itemId);

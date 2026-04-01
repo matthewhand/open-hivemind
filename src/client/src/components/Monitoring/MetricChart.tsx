@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useRef } from 'react';
 import { Line, Bar, Area, Pie, LineChart, BarChart, AreaChart, PieChart, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
 
@@ -40,7 +39,7 @@ const MetricChart: React.FC<MetricChartProps> = ({
 }) => {
   const [chartData, setChartData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [_error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const formattedData = data.map(item => ({
