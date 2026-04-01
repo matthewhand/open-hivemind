@@ -82,12 +82,14 @@ const ExportPage: React.FC = () => {
         description: newBackupDesc,
       });
       successToast('Success', 'Backup created successfully');
+      setFeedbackState({ state: 'success', message: 'Backup Created Successfully!' });
       setCreateModalOpen(false);
       setNewBackupName('');
       setNewBackupDesc('');
       fetchBackups();
     } catch (err) {
       errorToast('Error', err instanceof Error ? err.message : 'Failed to create backup');
+      setFeedbackState({ state: 'error', message: err instanceof Error ? err.message : 'Failed to create backup' });
     } finally {
       setActionLoading(null);
     }
@@ -511,6 +513,20 @@ const ExportPage: React.FC = () => {
             </Button>
           </div>
         </div>
+      </Modal>
+
+      <Modal
+        isOpen={feedbackState.state !== 'idle'}
+        onClose={() => setFeedbackState({ state: 'idle' })}
+        title=""
+        size="sm"
+      >
+        <VisualFeedback
+          state={feedbackState.state}
+          message={feedbackState.message}
+          onComplete={() => setFeedbackState({ state: 'idle' })}
+          duration={3000}
+        />
       </Modal>
 
       <ConfirmModal
