@@ -264,11 +264,11 @@ export const CommonValidators = {
     .withMessage('Invalid provider type'),
 
   // Boolean field
-  boolean: (field: string) =>
+  boolean: (field: string): ValidationChain =>
     body(field).optional().isBoolean().withMessage(`${field} must be a boolean`).toBoolean(),
 
   // Array of strings
-  stringArray: (field: string) =>
+  stringArray: (field: string): ValidationChain =>
     body(field)
       .optional()
       .isArray()
@@ -284,7 +284,7 @@ export const CommonValidators = {
 /**
  * Validation middleware that checks for errors
  */
-export const validateInput = (req: Request, res: Response, next: NextFunction) => {
+export const validateInput = (req: Request, res: Response, next: NextFunction): void | Response => {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
@@ -309,8 +309,10 @@ export const validateInput = (req: Request, res: Response, next: NextFunction) =
 /**
  * Create validation middleware from array of validation chains
  */
-export function validate(validations: ValidationChain[]) {
-  return async (req: Request, res: Response, next: NextFunction) => {
+export function validate(
+  validations: ValidationChain[]
+): (req: Request, res: Response, next: NextFunction) => Promise<void> {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     // Run all validations
     await Promise.allSettled(validations.map((validation) => validation.run(req)));
 
@@ -322,8 +324,10 @@ export function validate(validations: ValidationChain[]) {
 /**
  * Sanitization middleware for request body
  */
-export const sanitizeRequestBody = (options: SanitizationOptions = {}) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+export const sanitizeRequestBody = (
+  options: SanitizationOptions = {}
+): ((req: Request, res: Response, next: NextFunction) => void) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     if (req.body && typeof req.body === 'object') {
       req.body = sanitizeObject(req.body, {
         trim: true,
@@ -338,8 +342,10 @@ export const sanitizeRequestBody = (options: SanitizationOptions = {}) => {
 /**
  * Sanitization middleware for query parameters
  */
-export const sanitizeQueryParams = (options: SanitizationOptions = {}) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+export const sanitizeQueryParams = (
+  options: SanitizationOptions = {}
+): ((req: Request, res: Response, next: NextFunction) => void) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     if (req.query && typeof req.query === 'object') {
       req.query = sanitizeObject(req.query, {
         trim: true,
@@ -354,8 +360,10 @@ export const sanitizeQueryParams = (options: SanitizationOptions = {}) => {
 /**
  * Sanitization middleware for URL parameters
  */
-export const sanitizeUrlParams = (options: SanitizationOptions = {}) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+export const sanitizeUrlParams = (
+  options: SanitizationOptions = {}
+): ((req: Request, res: Response, next: NextFunction) => void) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     if (req.params && typeof req.params === 'object') {
       req.params = sanitizeObject(req.params, {
         trim: true,
@@ -370,14 +378,20 @@ export const sanitizeUrlParams = (options: SanitizationOptions = {}) => {
 /**
  * Combined sanitization middleware
  */
-export const sanitizeAll = (options: SanitizationOptions = {}) => {
+export const sanitizeAll = (
+  options: SanitizationOptions = {}
+): ((req: Request, res: Response, next: NextFunction) => void)[] => {
   return [sanitizeRequestBody(options), sanitizeQueryParams(options), sanitizeUrlParams(options)];
 };
 
 /**
  * NoSQL injection prevention
  */
-export const preventNoSQLInjection = (req: Request, res: Response, next: NextFunction) => {
+export const preventNoSQLInjection = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void | Response => {
   const checkForInjection = (obj: any): boolean => {
     if (!obj || typeof obj !== 'object') return false;
 
@@ -437,8 +451,10 @@ export const preventNoSQLInjection = (req: Request, res: Response, next: NextFun
 /**
  * Content-Type validation
  */
-export const validateContentType = (allowedTypes: string[] = ['application/json']) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+export const validateContentType = (
+  allowedTypes: string[] = ['application/json']
+): ((req: Request, res: Response, next: NextFunction) => void | Response) => {
+  return (req: Request, res: Response, next: NextFunction): void | Response => {
     // Skip for GET, DELETE, OPTIONS
     if (['GET', 'DELETE', 'OPTIONS'].includes(req.method)) {
       return next();
@@ -471,8 +487,10 @@ export const validateContentType = (allowedTypes: string[] = ['application/json'
 /**
  * Request size limit middleware
  */
-export const limitRequestSize = (maxSizeKB: number = 100) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+export const limitRequestSize = (
+  maxSizeKB: number = 100
+): ((req: Request, res: Response, next: NextFunction) => void | Response) => {
+  return (req: Request, res: Response, next: NextFunction): void | Response => {
     const contentLength = parseInt(req.headers['content-length'] || '0', 10);
     const maxSizeBytes = maxSizeKB * 1024;
 

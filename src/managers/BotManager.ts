@@ -94,14 +94,14 @@ export class BotManager extends EventEmitter {
       // Add custom bots from web UI storage (overwriting configured bots with same ID)
       const customBots = await webUIStorage.getAgents();
       for (const bot of customBots) {
-        botMap.set(bot.id, bot);
+        botMap.set(bot.id, bot as BotInstance);
       }
 
       const botInstances = Array.from(botMap.values());
       debug(`Retrieved ${botInstances.length} bot instances`);
       return botInstances;
     } catch (error: unknown) {
-      debug('Error getting all bots:', ErrorUtils.getMessage(error as any));
+      debug('Error getting all bots:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError('Failed to retrieve bot instances', 'configuration');
     }
   }
@@ -109,7 +109,8 @@ export class BotManager extends EventEmitter {
   /**
    * Helper to map a raw configuration object to a BotInstance
    */
-  private mapConfigToBotInstance(bot: any): BotInstance {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private mapConfigToBotInstance(bot: Record<string, any>): BotInstance {
     return {
       // Use bot name as stable ID - random UUIDs break getBot() lookups
       id: bot.name,
@@ -151,7 +152,7 @@ export class BotManager extends EventEmitter {
       debug(`Bot not found: ${botId}`);
       return null;
     } catch (error: unknown) {
-      debug('Error getting bot:', ErrorUtils.getMessage(error as any));
+      debug('Error getting bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError('Failed to retrieve bot instance', 'configuration');
     }
   }
@@ -196,9 +197,9 @@ export class BotManager extends EventEmitter {
 
       return botInstance;
     } catch (error: unknown) {
-      debug('Error creating bot:', ErrorUtils.getMessage(error as any));
+      debug('Error creating bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError(
-        `Failed to create bot: ${ErrorUtils.getMessage(error as any)}`,
+        `Failed to create bot: ${ErrorUtils.getMessage(error)}`,
         'configuration'
       );
     }
@@ -216,7 +217,7 @@ export class BotManager extends EventEmitter {
 
       // Check if it's a custom bot
       const customBots = await webUIStorage.getAgents();
-      const isCustom = customBots.some((b: any) => b.id === botId);
+      const isCustom = customBots.some((b: Record<string, unknown>) => b.id === botId);
 
       if (isCustom) {
         // Clone as custom bot (existing logic)
@@ -255,9 +256,9 @@ export class BotManager extends EventEmitter {
         return clonedBot;
       }
     } catch (error: unknown) {
-      debug('Error cloning bot:', ErrorUtils.getMessage(error as any));
+      debug('Error cloning bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError(
-        `Failed to clone bot: ${ErrorUtils.getMessage(error as any)}`,
+        `Failed to clone bot: ${ErrorUtils.getMessage(error)}`,
         'configuration'
       );
     }
@@ -310,9 +311,9 @@ export class BotManager extends EventEmitter {
 
       return updatedBot;
     } catch (error: unknown) {
-      debug('Error updating bot:', ErrorUtils.getMessage(error as any));
+      debug('Error updating bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError(
-        `Failed to update bot: ${ErrorUtils.getMessage(error as any)}`,
+        `Failed to update bot: ${ErrorUtils.getMessage(error)}`,
         'configuration'
       );
     }
@@ -330,7 +331,7 @@ export class BotManager extends EventEmitter {
 
       // Check if it's a custom bot
       const customBots = await webUIStorage.getAgents();
-      const isCustom = customBots.some((b: any) => b.id === botId);
+      const isCustom = customBots.some((b: Record<string, unknown>) => b.id === botId);
 
       if (isCustom) {
         // Remove from web UI storage
@@ -343,8 +344,8 @@ export class BotManager extends EventEmitter {
           await this.botConfigManager.deleteBot(botId);
           // Also try to remove secure config if it exists
           await this.secureConfigManager.deleteConfig(`bot_${botId}`);
-        } catch (err: any) {
-          debug(`Failed to delete configured bot ${botId}: ${err.message}`);
+        } catch (err: unknown) {
+          debug(`Failed to delete configured bot ${botId}: ${ErrorUtils.getMessage(err)}`);
           throw err;
         }
       }
@@ -354,9 +355,9 @@ export class BotManager extends EventEmitter {
       // Emit event for real-time updates
       this.emit('botDeleted', bot);
     } catch (error: unknown) {
-      debug('Error deleting bot:', ErrorUtils.getMessage(error as any));
+      debug('Error deleting bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError(
-        `Failed to delete bot: ${ErrorUtils.getMessage(error as any)}`,
+        `Failed to delete bot: ${ErrorUtils.getMessage(error)}`,
         'configuration'
       );
     }
@@ -397,9 +398,9 @@ export class BotManager extends EventEmitter {
 
       return true;
     } catch (error: unknown) {
-      debug('Error starting bot:', ErrorUtils.getMessage(error as any));
+      debug('Error starting bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError(
-        `Failed to start bot: ${ErrorUtils.getMessage(error as any)}`,
+        `Failed to start bot: ${ErrorUtils.getMessage(error)}`,
         'configuration'
       );
     }
@@ -431,8 +432,8 @@ export class BotManager extends EventEmitter {
       // Use integration-agnostic shutdown
       try {
         await shutdownBotProvider(bot);
-      } catch (shutdownError: any) {
-        debug(`Failed to disconnect bot ${bot.name}: ${shutdownError?.message || shutdownError}`);
+      } catch (shutdownError: unknown) {
+        debug(`Failed to disconnect bot ${bot.name}: ${ErrorUtils.getMessage(shutdownError)}`);
       }
 
       // Stop services and connections
@@ -445,9 +446,9 @@ export class BotManager extends EventEmitter {
 
       return true;
     } catch (error: unknown) {
-      debug('Error stopping bot:', ErrorUtils.getMessage(error as any));
+      debug('Error stopping bot:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError(
-        `Failed to stop bot: ${ErrorUtils.getMessage(error as any)}`,
+        `Failed to stop bot: ${ErrorUtils.getMessage(error)}`,
         'configuration'
       );
     }
@@ -470,7 +471,7 @@ export class BotManager extends EventEmitter {
             debug(`Skipping inactive bot: ${bot.name}`);
           }
         } catch (error: unknown) {
-          debug(`Failed to start bot ${bot.name}:`, ErrorUtils.getMessage(error as any));
+          debug(`Failed to start bot ${bot.name}:`, ErrorUtils.getMessage(error));
           this.emit('botError', { botId: bot.id, error });
         }
       });
@@ -482,7 +483,7 @@ export class BotManager extends EventEmitter {
 
       this.emit('allBotsStarted', { total: allBots.length, running: runningBots });
     } catch (error: unknown) {
-      debug('Error starting all bots:', ErrorUtils.getMessage(error as any));
+      debug('Error starting all bots:', ErrorUtils.getMessage(error));
       throw error;
     }
   }
@@ -500,7 +501,7 @@ export class BotManager extends EventEmitter {
           await this.stopBotById(bot.id);
           debug(`Stopped bot: ${bot.name}`);
         } catch (error: unknown) {
-          debug(`Failed to stop bot ${bot.name}:`, ErrorUtils.getMessage(error as any));
+          debug(`Failed to stop bot ${bot.name}:`, ErrorUtils.getMessage(error));
           this.emit('botError', { botId: bot.id, error });
         }
       });
@@ -510,7 +511,7 @@ export class BotManager extends EventEmitter {
       debug('All bots stopped');
       this.emit('allBotsStopped');
     } catch (error: unknown) {
-      debug('Error stopping all bots:', ErrorUtils.getMessage(error as any));
+      debug('Error stopping all bots:', ErrorUtils.getMessage(error));
       throw error;
     }
   }
@@ -518,7 +519,7 @@ export class BotManager extends EventEmitter {
   /**
    * Get chat history for a bot
    */
-  public async getBotHistory(botId: string, channelId?: string, limit = 20): Promise<any[]> {
+  public async getBotHistory(botId: string, channelId?: string, limit = 20): Promise<unknown[]> {
     try {
       const bot = await this.getBot(botId);
       if (!bot) {
@@ -540,8 +541,8 @@ export class BotManager extends EventEmitter {
       }
 
       return [];
-    } catch (error: any) {
-      debug(`Failed to get bot history for ${botId}:`, error.message);
+    } catch (error: unknown) {
+      debug(`Failed to get bot history for ${botId}:`, ErrorUtils.getMessage(error));
       return [];
     }
   }
@@ -577,8 +578,8 @@ export class BotManager extends EventEmitter {
       await this.startBotById(botId);
       debug(`Bot ${botId} restarted successfully`);
       this.emit('botRestarted', { botId });
-    } catch (error: any) {
-      debug(`Failed to restart bot ${botId}:`, ErrorUtils.getMessage(error as any));
+    } catch (error: unknown) {
+      debug(`Failed to restart bot ${botId}:`, ErrorUtils.getMessage(error));
       throw error;
     }
   }

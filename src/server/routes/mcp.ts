@@ -4,7 +4,6 @@ import Debug from 'debug';
 import { Router } from 'express';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import type { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
-import { ApiResponse } from '@src/server/utils/apiResponse';
 import { ErrorUtils } from '@src/types/errors';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import MCPProviderManager from '../../config/MCPProviderManager';
@@ -37,7 +36,7 @@ interface MCPServer {
   tools?: {
     name: string;
     description: string;
-    inputSchema: any;
+    inputSchema: Record<string, unknown>;
   }[];
   lastConnected?: string;
   error?: string;
@@ -60,8 +59,8 @@ const ensureDataDir = async () => {
   try {
     await fs.mkdir(dataDir, { recursive: true });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    debug('Error creating data directory:', hivemindError.message);
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    debug('Error creating data directory:', ErrorUtils.getMessage(hivemindError));
   }
 };
 
@@ -71,8 +70,11 @@ const loadMCPServers = async (): Promise<MCPServer[]> => {
     const data = await fs.readFile(MCP_SERVERS_CONFIG_FILE, 'utf8');
     return JSON.parse(data);
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    debug('MCP servers config file not found, using defaults:', hivemindError.message);
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    debug(
+      'MCP servers config file not found, using defaults:',
+      ErrorUtils.getMessage(hivemindError)
+    );
     return [];
   }
 };
@@ -139,8 +141,8 @@ const connectToMCPServer = async (server: MCPServer): Promise<MCPClient> => {
       throw new Error(`Unsupported MCP server URL scheme: ${server.url}`);
     }
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    debug(`Failed to connect to MCP server ${server.name}:`, hivemindError.message);
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    debug(`Failed to connect to MCP server ${server.name}:`, ErrorUtils.getMessage(hivemindError));
     throw hivemindError;
   }
 };
@@ -155,8 +157,11 @@ const disconnectFromMCPServer = async (serverName: string): Promise<void> => {
       debug(`Disconnected from MCP server: ${serverName}`);
     }
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    debug(`Error disconnecting from MCP server ${serverName}:`, hivemindError.message);
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    debug(
+      `Error disconnecting from MCP server ${serverName}:`,
+      ErrorUtils.getMessage(hivemindError)
+    );
     throw hivemindError;
   }
 };
@@ -175,23 +180,23 @@ router.get('/servers', async (req, res) => {
       tools: connectedClients.get(server.name)?.server.tools || server.tools,
     }));
 
-    return res.json(ApiResponse.success({ servers: updatedServers }));
+    return res.json({ servers: updatedServers });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     debug('Error fetching MCP servers:', {
-      message: hivemindError.message,
-      code: hivemindError.code,
+      message: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError),
       type: errorInfo.type,
       severity: errorInfo.severity,
     });
 
-    return res
-      .status(hivemindError.statusCode || 500)
-      .json(
-        ApiResponse.error(hivemindError.message, hivemindError.code || 'MCP_SERVERS_FETCH_ERROR')
-      );
+    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
+      error: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError) || 'MCP_SERVERS_FETCH_ERROR',
+      timestamp: new Date().toISOString(),
+    });
   }
 });
 
@@ -219,21 +224,23 @@ router.post('/servers', validateRequest(AddMCPServerSchema), async (req, res) =>
     await saveMCPServers(servers);
 
     debug(`Added new MCP server: ${name}`);
-    return res.json(ApiResponse.success({ server: newServer }));
+    return res.json({ server: newServer });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     debug('Error adding MCP server:', {
-      message: hivemindError.message,
-      code: hivemindError.code,
+      message: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError),
       type: errorInfo.type,
       severity: errorInfo.severity,
     });
 
-    return res
-      .status(hivemindError.statusCode || 500)
-      .json(ApiResponse.error(hivemindError.message, hivemindError.code || 'MCP_SERVER_ADD_ERROR'));
+    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
+      error: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError) || 'MCP_SERVER_ADD_ERROR',
+      timestamp: new Date().toISOString(),
+    });
   }
 });
 
@@ -249,13 +256,11 @@ router.post(
       const server = servers.find((s) => s.name === name);
 
       if (!server) {
-        return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('MCP server not found'));
+        return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'MCP server not found' });
       }
 
       if (connectedClients.has(name)) {
-        return res
-          .status(HTTP_STATUS.BAD_REQUEST)
-          .json(ApiResponse.error('MCP server already connected'));
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'MCP server already connected' });
       }
 
       try {
@@ -266,12 +271,10 @@ router.post(
         servers[serverIndex] = mcpClient.server;
         await saveMCPServers(servers);
 
-        return res.json(
-          ApiResponse.success({
-            server: mcpClient.server,
-            message: 'Successfully connected to MCP server',
-          })
-        );
+        return res.json({
+          server: mcpClient.server,
+          message: 'Successfully connected to MCP server',
+        });
       } catch (error) {
         // Update server config with error
         const serverIndex = servers.findIndex((s) => s.name === name);
@@ -284,24 +287,24 @@ router.post(
 
         return res
           .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-          .json(ApiResponse.error(`Failed to connect to MCP server: ${error}`));
+          .json({ error: `Failed to connect to MCP server: ${error}` });
       }
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+      const hivemindError = ErrorUtils.toHivemindError(error);
       const errorInfo = ErrorUtils.classifyError(hivemindError);
 
       debug('Error connecting to MCP server:', {
-        message: hivemindError.message,
-        code: hivemindError.code,
+        message: ErrorUtils.getMessage(hivemindError),
+        code: ErrorUtils.getCode(hivemindError),
         type: errorInfo.type,
         severity: errorInfo.severity,
       });
 
-      return res
-        .status(hivemindError.statusCode || 500)
-        .json(
-          ApiResponse.error(hivemindError.message, hivemindError.code || 'MCP_SERVER_CONNECT_ERROR')
-        );
+      return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
+        error: ErrorUtils.getMessage(hivemindError),
+        code: ErrorUtils.getCode(hivemindError) || 'MCP_SERVER_CONNECT_ERROR',
+        timestamp: new Date().toISOString(),
+      });
     }
   }
 );
@@ -329,28 +332,23 @@ router.post(
         await saveMCPServers(servers);
       }
 
-      return res.json(
-        ApiResponse.success({ message: 'Successfully disconnected from MCP server' })
-      );
+      return res.json({ message: 'Successfully disconnected from MCP server' });
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+      const hivemindError = ErrorUtils.toHivemindError(error);
       const errorInfo = ErrorUtils.classifyError(hivemindError);
 
       debug('Error disconnecting from MCP server:', {
-        message: hivemindError.message,
-        code: hivemindError.code,
+        message: ErrorUtils.getMessage(hivemindError),
+        code: ErrorUtils.getCode(hivemindError),
         type: errorInfo.type,
         severity: errorInfo.severity,
       });
 
-      return res
-        .status(hivemindError.statusCode || 500)
-        .json(
-          ApiResponse.error(
-            hivemindError.message,
-            hivemindError.code || 'MCP_SERVER_DISCONNECT_ERROR'
-          )
-        );
+      return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
+        error: ErrorUtils.getMessage(hivemindError),
+        code: ErrorUtils.getCode(hivemindError) || 'MCP_SERVER_DISCONNECT_ERROR',
+        timestamp: new Date().toISOString(),
+      });
     }
   }
 );
@@ -369,29 +367,29 @@ router.delete('/servers/:name', validateRequest(MCPServerNameParamSchema), async
     const filteredServers = servers.filter((s) => s.name !== name);
 
     if (filteredServers.length === servers.length) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('MCP server not found'));
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'MCP server not found' });
     }
 
     await saveMCPServers(filteredServers);
 
     debug(`Removed MCP server: ${name}`);
-    return res.json(ApiResponse.success());
+    return res.json({ success: true });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     debug('Error removing MCP server:', {
-      message: hivemindError.message,
-      code: hivemindError.code,
+      message: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError),
       type: errorInfo.type,
       severity: errorInfo.severity,
     });
 
-    return res
-      .status(hivemindError.statusCode || 500)
-      .json(
-        ApiResponse.error(hivemindError.message, hivemindError.code || 'MCP_SERVER_REMOVE_ERROR')
-      );
+    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
+      error: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError) || 'MCP_SERVER_REMOVE_ERROR',
+      timestamp: new Date().toISOString(),
+    });
   }
 });
 
@@ -402,7 +400,7 @@ router.get('/servers/:name/tools', validateRequest(MCPServerNameParamSchema), as
 
     const mcpClient = connectedClients.get(name);
     if (!mcpClient) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('MCP server not connected'));
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'MCP server not connected' });
     }
 
     const toolsResponse = await mcpClient.client.listTools();
@@ -412,23 +410,23 @@ router.get('/servers/:name/tools', validateRequest(MCPServerNameParamSchema), as
       inputSchema: tool.inputSchema,
     }));
 
-    return res.json(ApiResponse.success({ tools }));
+    return res.json({ tools });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     debug('Error fetching MCP server tools:', {
-      message: hivemindError.message,
-      code: hivemindError.code,
+      message: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError),
       type: errorInfo.type,
       severity: errorInfo.severity,
     });
 
-    return res
-      .status(hivemindError.statusCode || 500)
-      .json(
-        ApiResponse.error(hivemindError.message, hivemindError.code || 'MCP_SERVER_TOOLS_ERROR')
-      );
+    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
+      error: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError) || 'MCP_SERVER_TOOLS_ERROR',
+      timestamp: new Date().toISOString(),
+    });
   }
 });
 
@@ -440,7 +438,7 @@ router.post('/servers/:name/call-tool', validateRequest(CallMCPToolSchema), asyn
 
     const mcpClient = connectedClients.get(name);
     if (!mcpClient) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('MCP server not connected'));
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'MCP server not connected' });
     }
 
     const result = await mcpClient.client.callTool({
@@ -448,21 +446,23 @@ router.post('/servers/:name/call-tool', validateRequest(CallMCPToolSchema), asyn
       arguments: toolArgs || {},
     });
 
-    return res.json(ApiResponse.success({ result }));
+    return res.json({ result });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     debug('Error calling MCP tool:', {
-      message: hivemindError.message,
-      code: hivemindError.code,
+      message: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError),
       type: errorInfo.type,
       severity: errorInfo.severity,
     });
 
-    return res
-      .status(hivemindError.statusCode || 500)
-      .json(ApiResponse.error(hivemindError.message, hivemindError.code || 'MCP_TOOL_CALL_ERROR'));
+    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
+      error: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError) || 'MCP_TOOL_CALL_ERROR',
+      timestamp: new Date().toISOString(),
+    });
   }
 });
 
@@ -476,26 +476,23 @@ router.get('/connected', async (req, res) => {
       lastConnected: client.server.lastConnected,
     }));
 
-    return res.json(ApiResponse.success({ connected }));
+    return res.json({ connected });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     debug('Error fetching connected MCP servers:', {
-      message: hivemindError.message,
-      code: hivemindError.code,
+      message: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError),
       type: errorInfo.type,
       severity: errorInfo.severity,
     });
 
-    return res
-      .status(hivemindError.statusCode || 500)
-      .json(
-        ApiResponse.error(
-          hivemindError.message,
-          hivemindError.code || 'MCP_CONNECTED_SERVERS_ERROR'
-        )
-      );
+    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
+      error: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError) || 'MCP_CONNECTED_SERVERS_ERROR',
+      timestamp: new Date().toISOString(),
+    });
   }
 });
 
@@ -507,7 +504,7 @@ router.get('/providers', async (req, res) => {
     const providers = mcpProviderManager.getAllProviders();
     const statuses = mcpProviderManager.getAllProviderStatuses();
 
-    const providersWithStatus = providers.map((provider: any) => ({
+    const providersWithStatus = providers.map((provider: MCPProviderConfig) => ({
       ...provider,
       status: statuses[provider.id] || {
         id: provider.id,
@@ -516,23 +513,27 @@ router.get('/providers', async (req, res) => {
       },
     }));
 
-    return res.json(ApiResponse.success(providersWithStatus));
+    return res.json({
+      success: true,
+      data: providersWithStatus,
+    });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     debug('Failed to get MCP providers:', {
-      message: hivemindError.message,
-      code: hivemindError.code,
+      message: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError),
       type: errorInfo.type,
       severity: errorInfo.severity,
     });
 
-    return res
-      .status(hivemindError.statusCode || 500)
-      .json(
-        ApiResponse.error(hivemindError.message, hivemindError.code || 'MCP_PROVIDERS_GET_ERROR')
-      );
+    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
+      success: false,
+      error: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError) || 'MCP_PROVIDERS_GET_ERROR',
+      timestamp: new Date().toISOString(),
+    });
   }
 });
 
@@ -543,33 +544,38 @@ router.get('/providers/:id', validateRequest(MCPProviderIdParamSchema), async (r
     const provider = mcpProviderManager.getProvider(id);
 
     if (!provider) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('MCP provider not found'));
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        success: false,
+        error: 'MCP provider not found',
+      });
     }
 
     const status = mcpProviderManager.getProviderStatus(id);
 
-    return res.json(
-      ApiResponse.success({
+    return res.json({
+      success: true,
+      data: {
         ...provider,
         status,
-      })
-    );
+      },
+    });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     debug('Failed to get MCP provider:', {
-      message: hivemindError.message,
-      code: hivemindError.code,
+      message: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError),
       type: errorInfo.type,
       severity: errorInfo.severity,
     });
 
-    return res
-      .status(hivemindError.statusCode || 500)
-      .json(
-        ApiResponse.error(hivemindError.message, hivemindError.code || 'MCP_PROVIDER_GET_ERROR')
-      );
+    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
+      success: false,
+      error: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError) || 'MCP_PROVIDER_GET_ERROR',
+      timestamp: new Date().toISOString(),
+    });
   }
 });
 
@@ -581,38 +587,48 @@ router.post('/providers', validateRequest(CreateMCPProviderSchema), async (req, 
     // Idempotency check: return existing if it exists by ID
     const existingProvider = mcpProviderManager.getProvider(providerConfig.id);
     if (existingProvider) {
-      return res.status(HTTP_STATUS.OK).json(ApiResponse.success(existingProvider));
+      return res.status(HTTP_STATUS.OK).json({
+        success: true,
+        data: existingProvider,
+        message: 'Provider already exists',
+      });
     }
 
     // Validate configuration
     const validation = mcpProviderManager.validateProviderConfig(providerConfig);
     if (!validation.isValid) {
-      return res
-        .status(HTTP_STATUS.BAD_REQUEST)
-        .json(
-          ApiResponse.error('Invalid MCP provider configuration', undefined, validation.errors)
-        );
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        success: false,
+        error: 'Invalid MCP provider configuration',
+        details: validation.errors,
+      });
     }
 
     await mcpProviderManager.addProvider(providerConfig);
 
-    return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success(providerConfig));
+    return res.status(HTTP_STATUS.CREATED).json({
+      success: true,
+      data: providerConfig,
+      warnings: validation.warnings,
+      suggestions: validation.suggestions,
+    });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     debug('Failed to create MCP provider:', {
-      message: hivemindError.message,
-      code: hivemindError.code,
+      message: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError),
       type: errorInfo.type,
       severity: errorInfo.severity,
     });
 
-    return res
-      .status(hivemindError.statusCode || 500)
-      .json(
-        ApiResponse.error(hivemindError.message, hivemindError.code || 'MCP_PROVIDER_CREATE_ERROR')
-      );
+    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
+      success: false,
+      error: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError) || 'MCP_PROVIDER_CREATE_ERROR',
+      timestamp: new Date().toISOString(),
+    });
   }
 });
 
@@ -625,39 +641,48 @@ router.put('/providers/:id', validateRequest(UpdateMCPProviderSchema), async (re
     // Validate updates
     const existingProvider = mcpProviderManager.getProvider(id);
     if (!existingProvider) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('MCP provider not found'));
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        success: false,
+        error: 'MCP provider not found',
+      });
     }
 
     const updatedConfig = { ...existingProvider, ...updates };
     const validation = mcpProviderManager.validateProviderConfig(updatedConfig);
 
     if (!validation.isValid) {
-      return res
-        .status(HTTP_STATUS.BAD_REQUEST)
-        .json(
-          ApiResponse.error('Invalid MCP provider configuration', undefined, validation.errors)
-        );
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        success: false,
+        error: 'Invalid MCP provider configuration',
+        details: validation.errors,
+      });
     }
 
     await mcpProviderManager.updateProvider(id, updates);
 
-    return res.json(ApiResponse.success(updatedConfig));
+    return res.json({
+      success: true,
+      data: updatedConfig,
+      warnings: validation.warnings,
+      suggestions: validation.suggestions,
+    });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     debug('Failed to update MCP provider:', {
-      message: hivemindError.message,
-      code: hivemindError.code,
+      message: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError),
       type: errorInfo.type,
       severity: errorInfo.severity,
     });
 
-    return res
-      .status(hivemindError.statusCode || 500)
-      .json(
-        ApiResponse.error(hivemindError.message, hivemindError.code || 'MCP_PROVIDER_UPDATE_ERROR')
-      );
+    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
+      success: false,
+      error: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError) || 'MCP_PROVIDER_UPDATE_ERROR',
+      timestamp: new Date().toISOString(),
+    });
   }
 });
 
@@ -668,28 +693,35 @@ router.delete('/providers/:id', validateRequest(MCPProviderIdParamSchema), async
 
     const provider = mcpProviderManager.getProvider(id);
     if (!provider) {
-      return res.status(HTTP_STATUS.OK).json(ApiResponse.success());
+      return res.status(HTTP_STATUS.OK).json({
+        success: true,
+        message: 'MCP provider already deleted or not found',
+      });
     }
 
     await mcpProviderManager.removeProvider(id);
 
-    return res.json(ApiResponse.success());
+    return res.json({
+      success: true,
+      message: 'MCP provider deleted successfully',
+    });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     debug('Failed to delete MCP provider:', {
-      message: hivemindError.message,
-      code: hivemindError.code,
+      message: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError),
       type: errorInfo.type,
       severity: errorInfo.severity,
     });
 
-    return res
-      .status(hivemindError.statusCode || 500)
-      .json(
-        ApiResponse.error(hivemindError.message, hivemindError.code || 'MCP_PROVIDER_DELETE_ERROR')
-      );
+    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
+      success: false,
+      error: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError) || 'MCP_PROVIDER_DELETE_ERROR',
+      timestamp: new Date().toISOString(),
+    });
   }
 });
 
@@ -700,28 +732,35 @@ router.post('/providers/:id/start', validateRequest(MCPProviderIdParamSchema), a
 
     const provider = mcpProviderManager.getProvider(id);
     if (!provider) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('MCP provider not found'));
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        success: false,
+        error: 'MCP provider not found',
+      });
     }
 
     await mcpProviderManager.startProvider(id);
 
-    return res.json(ApiResponse.success());
+    return res.json({
+      success: true,
+      message: 'MCP provider started successfully',
+    });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     debug('Failed to start MCP provider:', {
-      message: hivemindError.message,
-      code: hivemindError.code,
+      message: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError),
       type: errorInfo.type,
       severity: errorInfo.severity,
     });
 
-    return res
-      .status(hivemindError.statusCode || 500)
-      .json(
-        ApiResponse.error(hivemindError.message, hivemindError.code || 'MCP_PROVIDER_START_ERROR')
-      );
+    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
+      success: false,
+      error: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError) || 'MCP_PROVIDER_START_ERROR',
+      timestamp: new Date().toISOString(),
+    });
   }
 });
 
@@ -732,28 +771,35 @@ router.post('/providers/:id/stop', validateRequest(MCPProviderIdParamSchema), as
 
     const provider = mcpProviderManager.getProvider(id);
     if (!provider) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('MCP provider not found'));
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        success: false,
+        error: 'MCP provider not found',
+      });
     }
 
     await mcpProviderManager.stopProvider(id);
 
-    return res.json(ApiResponse.success());
+    return res.json({
+      success: true,
+      message: 'MCP provider stopped successfully',
+    });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     debug('Failed to stop MCP provider:', {
-      message: hivemindError.message,
-      code: hivemindError.code,
+      message: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError),
       type: errorInfo.type,
       severity: errorInfo.severity,
     });
 
-    return res
-      .status(hivemindError.statusCode || 500)
-      .json(
-        ApiResponse.error(hivemindError.message, hivemindError.code || 'MCP_PROVIDER_STOP_ERROR')
-      );
+    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
+      success: false,
+      error: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError) || 'MCP_PROVIDER_STOP_ERROR',
+      timestamp: new Date().toISOString(),
+    });
   }
 });
 
@@ -764,28 +810,35 @@ router.post('/providers/:id/test', validateRequest(MCPProviderIdParamSchema), as
 
     const provider = mcpProviderManager.getProvider(id);
     if (!provider) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('MCP provider not found'));
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        success: false,
+        error: 'MCP provider not found',
+      });
     }
 
     const testResult = await mcpProviderManager.testProvider(id);
 
-    return res.json(ApiResponse.success(testResult));
+    return res.json({
+      success: true,
+      data: testResult,
+    });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     debug('Failed to test MCP provider:', {
-      message: hivemindError.message,
-      code: hivemindError.code,
+      message: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError),
       type: errorInfo.type,
       severity: errorInfo.severity,
     });
 
-    return res
-      .status(hivemindError.statusCode || 500)
-      .json(
-        ApiResponse.error(hivemindError.message, hivemindError.code || 'MCP_PROVIDER_TEST_ERROR')
-      );
+    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
+      success: false,
+      error: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError) || 'MCP_PROVIDER_TEST_ERROR',
+      timestamp: new Date().toISOString(),
+    });
   }
 });
 
@@ -794,26 +847,27 @@ router.get('/providers/templates', async (req, res) => {
   try {
     const templates = mcpProviderManager.getTemplates();
 
-    return res.json(ApiResponse.success(templates));
+    return res.json({
+      success: true,
+      data: templates,
+    });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     debug('Failed to get MCP provider templates:', {
-      message: hivemindError.message,
-      code: hivemindError.code,
+      message: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError),
       type: errorInfo.type,
       severity: errorInfo.severity,
     });
 
-    return res
-      .status(hivemindError.statusCode || 500)
-      .json(
-        ApiResponse.error(
-          hivemindError.message,
-          hivemindError.code || 'MCP_PROVIDER_TEMPLATES_ERROR'
-        )
-      );
+    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
+      success: false,
+      error: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError) || 'MCP_PROVIDER_TEMPLATES_ERROR',
+      timestamp: new Date().toISOString(),
+    });
   }
 });
 
@@ -822,23 +876,27 @@ router.get('/providers/stats', async (req, res) => {
   try {
     const stats = mcpProviderManager.getStats();
 
-    return res.json(ApiResponse.success(stats));
+    return res.json({
+      success: true,
+      data: stats,
+    });
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
+    const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);
 
     debug('Failed to get MCP provider statistics:', {
-      message: hivemindError.message,
-      code: hivemindError.code,
+      message: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError),
       type: errorInfo.type,
       severity: errorInfo.severity,
     });
 
-    return res
-      .status(hivemindError.statusCode || 500)
-      .json(
-        ApiResponse.error(hivemindError.message, hivemindError.code || 'MCP_PROVIDER_STATS_ERROR')
-      );
+    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
+      success: false,
+      error: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError) || 'MCP_PROVIDER_STATS_ERROR',
+      timestamp: new Date().toISOString(),
+    });
   }
 });
 

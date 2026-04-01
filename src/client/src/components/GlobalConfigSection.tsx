@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useForm, Controller } from 'react-hook-form';
 import { Alert } from './DaisyUI/Alert';
 import Button from './DaisyUI/Button';
 import Card from './DaisyUI/Card';
@@ -8,6 +9,7 @@ import Select from './DaisyUI/Select';
 import Toggle from './DaisyUI/Toggle';
 import { Loading } from './DaisyUI/Loading';
 import Textarea from './DaisyUI/Textarea';
+import FormField from './DaisyUI/FormField';
 import Debug from 'debug';
 import { apiService } from '../services/api';
 import { useSavedStamp } from '../contexts/SavedStampContext';
@@ -31,8 +33,10 @@ interface GlobalConfigSectionProps {
   section: string;
 }
 
+type FormValues = Record<string, any>;
+
 const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) => {
-  const [config, setConfig] = useState<ConfigItem | null>(null);
+  const [configSchema, setConfigSchema] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -40,32 +44,48 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
   const [jsonState, setJsonState] = useState<Record<string, string>>({});
   const [testStatus, setTestStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [testing, setTesting] = useState(false);
+  const [hasConfig, setHasConfig] = useState(true);
   const { showStamp } = useSavedStamp();
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    getValues,
+    formState: { errors },
+  } = useForm<FormValues>({
+    defaultValues: {},
+  });
 
   const isMessageProviderSection = ['discord', 'slack', 'mattermost'].includes(section);
 
-  useEffect(() => {
-    fetchConfig();
-  }, [section]);
-
-  const fetchConfig = async () => {
+  const fetchConfig = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       const data: any = await apiService.getGlobalConfig();
       if (data && data[section]) {
-        setConfig(data[section]);
+        const config = data[section];
+        setConfigSchema(config.schema || {});
+        setHasConfig(true);
+        // Reset the form with fetched values
+        reset(config.values || {});
       } else {
-        setConfig(null);
+        setHasConfig(false);
       }
     } catch (err: any) {
       setError(err.message || 'Failed to fetch configuration');
     } finally {
       setLoading(false);
     }
-  };
+  }, [section, reset]);
 
-  const handleSave = async (values: Record<string, any>) => {
+  useEffect(() => {
+    fetchConfig();
+  }, [fetchConfig]);
+
+  const onSubmit = async (values: FormValues) => {
     setSaving(true);
     setSuccess(null);
     setError(null);
@@ -95,13 +115,13 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
   };
 
   const handleTestConnection = async () => {
-    if (!config) { return; }
+    const values = getValues();
     setTesting(true);
     setTestStatus(null);
     try {
       const data: any = await apiService.post('/api/config/message-provider/test', {
         provider: section,
-        config: config.values,
+        config: values,
       });
       if (data.success === false) {
         throw new Error(data.message || data.error || 'Connection test failed');
@@ -116,14 +136,6 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
   };
 
   const renderField = (key: string, value: any, schema: ConfigSchema) => {
-    const handleChange = (newValue: any) => {
-      if (!config) { return; }
-      setConfig({
-        ...config,
-        values: { ...config.values, [key]: newValue },
-      });
-    };
-
     const isReadOnly = key.toUpperCase().includes('KEY') || key.toUpperCase().includes('TOKEN') || key.toUpperCase().includes('SECRET');
 
     let type = 'text';
@@ -131,13 +143,21 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
     else if (typeof value === 'number' || schema.format === 'int' || schema.format === 'Number') { type = 'number'; }
     else if (Array.isArray(value) || schema.format === 'Array') { type = 'array'; }
 
-
     if (type === 'boolean') {
       return (
         <div className="form-control w-full" key={key}>
           <label className="label cursor-pointer justify-start gap-4">
             <span className="label-text font-semibold">{key}</span>
-            <Toggle checked={value} onChange={(e) => handleChange(e.target.checked)} />
+            <Controller
+              name={key}
+              control={control}
+              render={({ field }) => (
+                <Toggle
+                  checked={field.value === true}
+                  onChange={(e) => field.onChange(e.target.checked)}
+                />
+              )}
+            />
             {schema.env && <span className="label-text-alt badge badge-ghost badge-sm">{schema.env}</span>}
           </label>
           {schema.doc && <div className="pl-1"><span className="label-text-alt text-base-content/70">{schema.doc}</span></div>}
@@ -153,8 +173,7 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
             {schema.env && <span className="label-text-alt badge badge-ghost badge-sm">{schema.env}</span>}
           </label>
           <Select
-            value={value}
-            onChange={(e) => handleChange(e.target.value)}
+            {...register(key)}
             options={schema.format.map((opt: string) => ({ value: opt, label: opt }))}
           />
           {schema.doc && <label className="label"><span className="label-text-alt text-base-content/70">{schema.doc}</span></label>}
@@ -168,12 +187,32 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
           <span className="label-text font-semibold">{key}</span>
           {schema.env && <span className="label-text-alt badge badge-ghost badge-sm">{schema.env}</span>}
         </label>
-        <Input
-          type={type === 'number' ? 'number' : 'text'}
-          value={Array.isArray(value) ? value.join(', ') : value}
-          onChange={(e) => handleChange(type === 'number' ? Number(e.target.value) : (type === 'array' ? e.target.value.split(',').map((s: string) => s.trim()) : e.target.value))}
-          placeholder={isReadOnly ? 'Safe to edit (Hidden)' : (type === 'array' ? 'Comma separated values' : '')}
-        />
+        {type === 'number' ? (
+          <Input
+            type="number"
+            {...register(key, { valueAsNumber: true })}
+            placeholder={isReadOnly ? 'Safe to edit (Hidden)' : ''}
+          />
+        ) : type === 'array' ? (
+          <Controller
+            name={key}
+            control={control}
+            render={({ field }) => (
+              <Input
+                type="text"
+                value={Array.isArray(field.value) ? field.value.join(', ') : field.value}
+                onChange={(e) => field.onChange(e.target.value.split(',').map((s: string) => s.trim()))}
+                placeholder="Comma separated values"
+              />
+            )}
+          />
+        ) : (
+          <Input
+            type="text"
+            {...register(key)}
+            placeholder={isReadOnly ? 'Safe to edit (Hidden)' : ''}
+          />
+        )}
         {schema.doc && <label className="label"><span className="label-text-alt text-base-content/70">{schema.doc}</span></label>}
       </div>
     );
@@ -189,78 +228,83 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
   }
 
   if (error) { return <Alert status="error" message={error} />; }
-  if (!config) { return <div className="alert alert-info">Configuration section '{section}' not found in global config.</div>; }
+  if (!hasConfig) { return <div className="alert alert-info">Configuration section '{section}' not found in global config.</div>; }
+
+  const currentValues = getValues();
 
   return (
     <Card className="bg-base-100 shadow-xl border border-base-200">
-      <div className="card-body">
-        <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
-          <div>
-            <h2 className="card-title text-2xl capitalize">{section} Settings</h2>
-            <p className="text-base-content/60 text-sm">Configure global defaults for {section}.</p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {isMessageProviderSection && (
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <div className="card-body">
+          <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
+            <div>
+              <h2 className="card-title text-2xl capitalize">{section} Settings</h2>
+              <p className="text-base-content/60 text-sm">Configure global defaults for {section}.</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {isMessageProviderSection && (
+                <Button
+                  variant="secondary" className="btn-outline"
+                  onClick={handleTestConnection}
+                  loading={testing}
+                  disabled={testing}
+                  type="button"
+                >
+                  Test Connection
+                </Button>
+              )}
               <Button
-                variant="secondary" className="btn-outline"
-                onClick={handleTestConnection}
-                loading={testing}
-                disabled={testing}
+                variant="primary"
+                type="submit"
+                loading={saving}
+                disabled={saving}
               >
-                Test Connection
+                Save Changes
               </Button>
-            )}
-            <Button
-              variant="primary"
-              onClick={() => handleSave(config.values)}
-              loading={saving}
-              disabled={saving}
-            >
-              Save Changes
-            </Button>
+            </div>
+          </div>
+
+          {success && <div className="mb-4"><Alert status="success" message={success} /></div>}
+          {testStatus && (
+            <div className="mb-4">
+              <Alert status={testStatus.type} message={testStatus.message} />
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+            {Object.entries(currentValues).map(([key, value]) => {
+              // Handle objects
+              if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                const currentJsonValue = jsonState[key] !== undefined ? jsonState[key] : JSON.stringify(value, null, 2);
+                let isValid = true;
+                try { JSON.parse(currentJsonValue); } catch { isValid = false; }
+
+                return (
+                  <div className="form-control w-full col-span-2" key={key}>
+                    <label className="label">
+                      <span className="label-text font-semibold">{key}</span>
+                      {configSchema[key]?.env && <span className="label-text-alt badge badge-ghost badge-sm">{configSchema[key].env}</span>}
+                    </label>
+                    <Textarea
+                      className="h-32 font-mono text-sm"
+                      value={currentJsonValue}
+                      onChange={(e) => setJsonState(prev => ({ ...prev, [key]: e.target.value }))}
+                      variant={!isValid ? 'error' : undefined}
+                      bordered
+                    />
+                    <label className="label">
+                      <span className="label-text-alt text-base-content/70">{configSchema[key]?.doc || 'JSON Configuration Object'}</span>
+                      {!isValid && <span className="label-text-alt text-error">Invalid JSON</span>}
+                    </label>
+                  </div>
+                );
+              }
+
+              return renderField(key, value, configSchema[key] || {});
+            })}
           </div>
         </div>
-
-        {success && <div className="mb-4"><Alert status="success" message={success} /></div>}
-        {testStatus && (
-          <div className="mb-4">
-            <Alert status={testStatus.type} message={testStatus.message} />
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-          {Object.entries(config.values).map(([key, value]) => {
-            // Handle objects
-            if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-              const currentValue = jsonState[key] !== undefined ? jsonState[key] : JSON.stringify(value, null, 2);
-              let isValid = true;
-              try { JSON.parse(currentValue); } catch { isValid = false; }
-
-              return (
-                <div className="form-control w-full col-span-2" key={key}>
-                  <label className="label">
-                    <span className="label-text font-semibold">{key}</span>
-                    {config.schema[key]?.env && <span className="label-text-alt badge badge-ghost badge-sm">{config.schema[key].env}</span>}
-                  </label>
-                  <Textarea
-                    className="h-32 font-mono text-sm"
-                    value={currentValue}
-                    onChange={(e) => setJsonState(prev => ({ ...prev, [key]: e.target.value }))}
-                    variant={!isValid ? 'error' : undefined}
-                    bordered
-                  />
-                  <label className="label">
-                    <span className="label-text-alt text-base-content/70">{config.schema[key]?.doc || 'JSON Configuration Object'}</span>
-                    {!isValid && <span className="label-text-alt text-error">Invalid JSON</span>}
-                  </label>
-                </div>
-              );
-            }
-
-            return renderField(key, value, config.schema[key] || {});
-          })}
-        </div>
-      </div>
+      </form>
     </Card>
   );
 };

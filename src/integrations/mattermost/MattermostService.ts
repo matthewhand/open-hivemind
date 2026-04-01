@@ -33,7 +33,8 @@ export class MattermostService extends EventEmitter implements IMessengerService
   private static instance: MattermostService | undefined;
   private clients: Map<string, MattermostClient> = new Map();
   private channels: Map<string, string> = new Map();
-  private botConfigs: Map<string, any> = new Map();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private botConfigs: Map<string, Record<string, any>> = new Map();
   private app?: Application;
 
   // Health tracking
@@ -43,7 +44,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
   private lastActivity: Map<string, Date> = new Map();
 
   // ⚡ Bolt Optimization: Short-lived memory cache for user profiles
-  private userCache: Map<string, { user: any; timestamp: number }> = new Map();
+  private userCache: Map<string, { user: Record<string, unknown>; timestamp: number }> = new Map();
   private readonly USER_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
   // Channel prioritization support hook (delegation gated by MESSAGE_CHANNEL_ROUTER_ENABLED)
@@ -80,7 +81,8 @@ export class MattermostService extends EventEmitter implements IMessengerService
   /**
    * Initialize a single Mattermost bot instance
    */
-  private initializeBotInstance(botConfig: any): void {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private initializeBotInstance(botConfig: Record<string, any>): void {
     const botName = botConfig.name;
 
     if (!botConfig.mattermost?.serverUrl || !botConfig.mattermost?.token) {
@@ -201,23 +203,27 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
           debug(`[${botName}] Sent message to channel ${channelId}`);
           return post.id;
-        } catch (error: any) {
-          debug(`Send message attempt ${attempt} failed: ${error.message}`);
+        } catch (error: unknown) {
+          const errMsg = ErrorUtils.getMessage(error);
+          debug(`Send message attempt ${attempt} failed: ${errMsg}`);
 
           // Don't retry on certain errors
           if (
-            error.message?.includes('channel_not_found') ||
-            error.message?.includes('not_in_channel') ||
-            error.message?.includes('missing_scope')
+            errMsg.includes('channel_not_found') ||
+            errMsg.includes('not_in_channel') ||
+            errMsg.includes('missing_scope')
           ) {
-            const bailError = new ValidationError(error.message, 'channelId', channelId);
+            const bailError = new ValidationError(errMsg, 'channelId', channelId);
             bail(bailError);
             return '';
           }
 
           // Convert error to appropriate Hivemind error type
-          const hivemindError = ErrorUtils.toHivemindError(error) as any;
-          if (hivemindError.type === 'network' || hivemindError.type === 'api') {
+          const hivemindError = ErrorUtils.toHivemindError(error);
+          if (
+            'type' in hivemindError &&
+            (hivemindError.type === 'network' || hivemindError.type === 'api')
+          ) {
             throw hivemindError;
           }
 
@@ -260,7 +266,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
       debug(`Message sent successfully after ${attemptCount} attempts in ${duration}ms`);
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
       const duration = Date.now() - startTime;
       metrics.incrementErrors();
 
@@ -276,7 +282,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
       }
 
       debug(
-        `Message send failed after ${attemptCount} attempts in ${duration}ms: ${error.message}`
+        `Message send failed after ${attemptCount} attempts in ${duration}ms: ${ErrorUtils.getMessage(error)}`
       );
 
       // Record WebSocket monitoring event for failed message
@@ -293,14 +299,14 @@ export class MattermostService extends EventEmitter implements IMessengerService
           messageType: 'outgoing',
           contentLength: text.length,
           status: 'error',
-          errorMessage: error.message,
+          errorMessage: ErrorUtils.getMessage(error),
         });
       } catch (wsError) {
         debug('Failed to record error message flow (non-fatal)', {
           error: wsError instanceof Error ? wsError.message : String(wsError),
           botName,
           channelId,
-          originalError: error.message,
+          originalError: ErrorUtils.getMessage(error),
         });
       }
 
@@ -379,23 +385,27 @@ export class MattermostService extends EventEmitter implements IMessengerService
           const messages: IMessage[] = await Promise.all(messagePromises);
 
           return messages.reverse(); // Most recent first
-        } catch (error: any) {
-          debug(`Fetch messages attempt ${attempt} failed: ${error.message}`);
+        } catch (error: unknown) {
+          const errMsg = ErrorUtils.getMessage(error);
+          debug(`Fetch messages attempt ${attempt} failed: ${errMsg}`);
 
           // Don't retry on certain errors
           if (
-            error.message?.includes('channel_not_found') ||
-            error.message?.includes('not_in_channel') ||
-            error.message?.includes('missing_scope')
+            errMsg.includes('channel_not_found') ||
+            errMsg.includes('not_in_channel') ||
+            errMsg.includes('missing_scope')
           ) {
-            const bailError = new ValidationError(error.message, 'channelId', channelId);
+            const bailError = new ValidationError(errMsg, 'channelId', channelId);
             bail(bailError);
             return [];
           }
 
           // Convert error to appropriate Hivemind error type
-          const hivemindError = ErrorUtils.toHivemindError(error) as any;
-          if (hivemindError.type === 'network' || hivemindError.type === 'api') {
+          const hivemindError = ErrorUtils.toHivemindError(error);
+          if (
+            'type' in hivemindError &&
+            (hivemindError.type === 'network' || hivemindError.type === 'api')
+          ) {
             throw hivemindError;
           }
 
@@ -411,7 +421,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
       debug(`Messages fetched successfully after ${attemptCount} attempts in ${duration}ms`);
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
       const duration = Date.now() - startTime;
       metrics.incrementErrors();
 
@@ -419,13 +429,16 @@ export class MattermostService extends EventEmitter implements IMessengerService
       this.connectionErrors.set(targetBot, (this.connectionErrors.get(targetBot) || 0) + 1);
 
       debug(
-        `Message fetch failed after ${attemptCount} attempts in ${duration}ms: ${error.message}`
+        `Message fetch failed after ${attemptCount} attempts in ${duration}ms: ${ErrorUtils.getMessage(error)}`
       );
       return []; // Return empty array on failure
     }
   }
 
-  public async sendPublicAnnouncement(channelId: string, announcement: any): Promise<void> {
+  public async sendPublicAnnouncement(
+    channelId: string,
+    announcement: string | { message?: string }
+  ): Promise<void> {
     const text =
       typeof announcement === 'string' ? announcement : announcement?.message || 'Announcement';
 
@@ -454,7 +467,8 @@ export class MattermostService extends EventEmitter implements IMessengerService
   }
 
   public getAgentStartupSummaries() {
-    const safePrompt = (cfg: any): string => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const safePrompt = (cfg: Record<string, any>): string => {
       const p =
         cfg?.OPENAI_SYSTEM_PROMPT ??
         cfg?.openai?.systemPrompt ??
@@ -466,7 +480,8 @@ export class MattermostService extends EventEmitter implements IMessengerService
     };
 
     const safeLlm = (
-      cfg: any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      cfg: Record<string, any>
     ): { llmProvider?: string; llmModel?: string; llmEndpoint?: string } => {
       const llmProvider = cfg?.LLM_PROVIDER ?? cfg?.llmProvider ?? cfg?.llm?.provider ?? undefined;
 
@@ -504,6 +519,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
     });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public resolveAgentContext(params: { botConfig: any; agentDisplayName: string }) {
     try {
       const botConfig = params?.botConfig || {};
@@ -602,6 +618,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
    */
   public scoreChannel(channelId: string): number {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const enabled = Boolean((messageConfig as any).get('MESSAGE_CHANNEL_ROUTER_ENABLED'));
       if (!enabled) {
         return 0;
@@ -623,15 +640,16 @@ export class MattermostService extends EventEmitter implements IMessengerService
   /**
    * Get configuration for a specific bot
    */
-  public getBotConfig(botName: string): any {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public getBotConfig(botName: string): Record<string, any> | undefined {
     return this.botConfigs.get(botName);
   }
 
   /**
    * Get structured metrics for the MattermostService
    */
-  public getMetrics(): any {
-    const botMetrics: Record<string, any> = {};
+  public getMetrics(): Record<string, unknown> {
+    const botMetrics: Record<string, unknown> = {};
     for (const [botName, client] of this.clients) {
       botMetrics[botName] = {
         connected: client?.isConnected?.() || false,
@@ -657,7 +675,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
     status: 'healthy' | 'degraded' | 'unhealthy';
     bots: Record<string, any>;
   }> {
-    const botHealth: Record<string, any> = {};
+    const botHealth: Record<string, unknown> = {};
     let overallStatus: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
 
     for (const [botName, client] of this.clients) {
@@ -713,7 +731,8 @@ export class MattermostService extends EventEmitter implements IMessengerService
   public getDelegatedServices(): Array<{
     serviceName: string;
     messengerService: IMessengerService;
-    botConfig: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    botConfig: Record<string, any>;
   }> {
     return Array.from(this.clients.keys()).map((name) => {
       const cfg = this.botConfigs.get(name) || {};
@@ -739,8 +758,10 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
         getMessagesFromChannel: async (channelId: string) => this.getMessagesFromChannel(channelId),
 
-        sendPublicAnnouncement: async (channelId: string, announcement: any) =>
-          this.sendPublicAnnouncement(channelId, announcement),
+        sendPublicAnnouncement: async (
+          channelId: string,
+          announcement: string | { message?: string }
+        ) => this.sendPublicAnnouncement(channelId, announcement),
 
         getChannelTopic: async (channelId: string) => this.getChannelTopic(channelId),
 

@@ -40,6 +40,7 @@ router.get('/bots', async (req, res) => {
     const manager = BotConfigurationManager.getInstance();
 
     // Redact sensitive values before sending to frontend
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const safeBots = bots.map((bot: any) => {
       // Create a merged object that includes top-level props and the config object
       const mergedBot = {
@@ -47,7 +48,7 @@ router.get('/bots', async (req, res) => {
         ...(bot.config || {}),
       };
 
-      const redacted = redactObject(mergedBot as any);
+      const redacted = redactObject(mergedBot);
 
       return {
         ...redacted,
@@ -71,15 +72,15 @@ router.get('/bots', async (req, res) => {
         warnings: manager.getWarnings(),
       })
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     return res
-      .status((hivemindError as any).statusCode || 500)
+      .status(ErrorUtils.getStatusCode(hivemindError) || 500)
       .json(
         ApiResponse.error(
-          (hivemindError as any).message,
+          ErrorUtils.getMessage(hivemindError),
           'CONFIG_BOTS_ERROR',
-          (hivemindError as any).statusCode || 500
+          ErrorUtils.getStatusCode(hivemindError) || 500
         )
       );
   }
@@ -113,12 +114,12 @@ router.get('/sources', async (req, res) => {
           };
           return acc;
         },
-        {} as Record<string, any>
+        {} as Record<string, unknown>
       );
 
     // Detect config files
     const configDir = path.join(process.cwd(), 'config');
-    const configFiles: any[] = [];
+    const configFiles: { name: string; path: string; size: number; modified: Date; type: string }[] = [];
 
     try {
       const files = await fs.promises.readdir(configDir);
@@ -138,18 +139,18 @@ router.get('/sources', async (req, res) => {
 
       const fileStats = await Promise.all(statPromises);
       configFiles.push(...fileStats);
-    } catch (e: any) {
-      if ((e as any).code !== 'ENOENT') {
+    } catch (e: unknown) {
+      if ((e as NodeJS.ErrnoException).code !== 'ENOENT') {
         throw e;
       }
     }
 
     return res.json(ApiResponse.success({ envVars, configFiles, count: configFiles.length }));
-  } catch (error: any) {
+  } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json(ApiResponse.error((hivemindError as any).message, 'CONFIG_SOURCES_ERROR', 500));
+      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'CONFIG_SOURCES_ERROR', 500));
   }
 });
 
@@ -162,11 +163,11 @@ router.get('/sources', (req, res) => {
     const layers: string[] = ['env', 'secure', 'provider', 'user', 'profile', 'default'];
 
     return res.json(ApiResponse.success({ sources, layers }));
-  } catch (error: any) {
+  } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json(ApiResponse.error((hivemindError as any).message, 'CONFIG_SOURCES_ERROR', 500));
+      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'CONFIG_SOURCES_ERROR', 500));
   }
 });
 
@@ -185,18 +186,18 @@ router.get('/source/:key', (req, res) => {
     }
 
     return res.json(ApiResponse.success({ key, source }));
-  } catch (error: any) {
+  } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json(ApiResponse.error((hivemindError as any).message, 'CONFIG_SOURCE_ERROR', 500));
+      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'CONFIG_SOURCE_ERROR', 500));
   }
 });
 
 // GET /api/config/global - Get all global configurations (schema + values)
 router.get('/global', (req, res) => {
   try {
-    const response: Record<string, any> = {};
+    const response: Record<string, unknown> = {};
 
     Object.entries(globalConfigs).forEach(([key, config]) => {
       // Get properties (values)
@@ -235,10 +236,10 @@ router.get('/global', (req, res) => {
         }
       } else {
         // Fallback generic redaction
-        const redactObjectFallback = (obj: any) => {
+        const redactObjectFallback = (obj: Record<string, unknown>) => {
           for (const k in obj) {
             if (typeof obj[k] === 'object' && obj[k] !== null) {
-              redactObjectFallback(obj[k]);
+              redactObjectFallback(obj[k] as Record<string, unknown>);
             } else if (typeof k === 'string') {
               if (isSensitiveKey(k)) {
                 obj[k] = '********';
@@ -267,15 +268,15 @@ router.get('/global', (req, res) => {
     }
 
     return res.json(response);
-  } catch (error: any) {
+  } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     return res
-      .status((hivemindError as any).statusCode || 500)
+      .status(ErrorUtils.getStatusCode(hivemindError) || 500)
       .json(
         ApiResponse.error(
-          (hivemindError as any).message,
-          (hivemindError as any).code || 'CONFIG_GLOBAL_GET_ERROR',
-          (hivemindError as any).statusCode || 500
+          ErrorUtils.getMessage(hivemindError),
+          ErrorUtils.getCode(hivemindError) || 'CONFIG_GLOBAL_GET_ERROR',
+          ErrorUtils.getStatusCode(hivemindError) || 500
         )
       );
   }
@@ -363,7 +364,7 @@ router.put('/global', configLimiter, validateRequest(ConfigUpdateSchema), async 
     }
 
     // Read existing file if not creating new
-    let fileContent: any = {};
+    let fileContent: Record<string, unknown> = {};
     try {
       const data = await fs.promises.readFile(targetPath, 'utf8');
       fileContent = JSON.parse(data);
@@ -393,15 +394,15 @@ router.put('/global', configLimiter, validateRequest(ConfigUpdateSchema), async 
 
     broadcastConfigUpdate('global', 'update', configName);
     return res.json(ApiResponse.success());
-  } catch (error: any) {
+  } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     return res
-      .status((hivemindError as any).statusCode || 500)
+      .status(ErrorUtils.getStatusCode(hivemindError) || 500)
       .json(
         ApiResponse.error(
-          (hivemindError as any).message,
-          (hivemindError as any).code || 'CONFIG_GLOBAL_PUT_ERROR',
-          (hivemindError as any).statusCode || 500
+          ErrorUtils.getMessage(hivemindError),
+          ErrorUtils.getCode(hivemindError) || 'CONFIG_GLOBAL_PUT_ERROR',
+          ErrorUtils.getStatusCode(hivemindError) || 500
         )
       );
   }

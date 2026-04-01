@@ -353,7 +353,7 @@ router.post(
 
       // Validate URL format
       try {
-        new URL(storedConfig.serverUrl);
+        new URL(String(storedConfig.serverUrl));
       } catch {
         return res.status(HTTP_STATUS.BAD_REQUEST).json({
           error: 'Validation error',
@@ -362,7 +362,7 @@ router.post(
       }
 
       // Security Check: SSRF Protection
-      if (!(await isSafeUrl(storedConfig.serverUrl))) {
+      if (!(await isSafeUrl(String(storedConfig.serverUrl)))) {
         return res.status(HTTP_STATUS.FORBIDDEN).json({
           error: 'Security Warning',
           message: 'Target URL is blocked for security reasons (private/local network access).',
@@ -379,9 +379,9 @@ router.post(
 
       // Reconnect
       const tools = await mcpService.connectToServer({
-        name: storedConfig.name,
-        serverUrl: storedConfig.serverUrl,
-        apiKey: storedConfig.apiKey,
+        name: String(storedConfig.name),
+        serverUrl: String(storedConfig.serverUrl),
+        apiKey: String(storedConfig.apiKey || ''),
       });
 
       return res.json({

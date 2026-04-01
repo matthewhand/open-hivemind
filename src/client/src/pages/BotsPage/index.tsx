@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Download, RefreshCw, Trash2 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { CreateBotWizard } from '../../components/BotManagement/CreateBotWizard';
 import ImportBotsModal from '../../components/BotManagement/ImportBotsModal';
 import { BotSettingsModal } from '../../components/BotSettingsModal';
@@ -51,6 +51,7 @@ const BotsPage: React.FC = () => {
   const toastError = useErrorToast();
   const { showStamp } = useSavedStamp();
   const location = useLocation();
+  const navigate = useNavigate();
   const isMobile = useIsBelowBreakpoint('md');
 
   const { personas, llmProfiles, globalConfig, configLoading } = useBotsPageData(setError);
@@ -154,6 +155,8 @@ const BotsPage: React.FC = () => {
         onExportAll={handleExportAll}
         onImportClick={() => setIsImportModalOpen(true)}
         onCreateClick={() => setIsCreateModalOpen(true)}
+        onQuickAddMessage={() => navigate('/admin/providers/message')}
+        onQuickAddLLM={() => navigate('/admin/providers/llm')}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

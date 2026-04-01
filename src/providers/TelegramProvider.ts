@@ -44,19 +44,19 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
   docsUrl = 'https://core.telegram.org/bots/api';
   helpText = 'Create a Telegram bot using BotFather and get the API token.';
 
-  getSchema() {
+  getSchema(): any {
     return telegramConfig.getSchema();
   }
 
-  getConfig() {
+  getConfig(): typeof telegramConfig {
     return telegramConfig;
   }
 
-  getSensitiveKeys() {
+  getSensitiveKeys(): string[] {
     return ['TELEGRAM_BOT_TOKEN'];
   }
 
-  async getStatus() {
+  async getStatus(): Promise<{ ok: boolean; bots: any[]; count: number }> {
     // We read directly from messengers.json (as in reload and addBot)
     // because dynamic bot instances are stored there, rather than in the convict config.
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
@@ -121,16 +121,16 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
     };
   }
 
-  getBotNames() {
+  getBotNames(): string[] {
     return [];
   }
 
-  async getBots() {
+  async getBots(): Promise<any[]> {
     const status = await this.getStatus();
     return status.bots;
   }
 
-  async addBot(config: any) {
+  async addBot(config: any): Promise<void> {
     const { name, token, llm } = config;
 
     // Issue 1: Validate token format before persisting
@@ -203,7 +203,7 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
     debug(`[TelegramProvider] Added bot configuration for ${botName}`);
   }
 
-  async reload() {
+  async reload(): Promise<{ added: number }> {
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const messengersPath = path.join(configDir, 'providers', 'messengers.json');
     let cfg: any;
