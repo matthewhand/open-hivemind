@@ -1,8 +1,9 @@
 import { randomUUID } from 'crypto';
 import os from 'os';
 import Debug from 'debug';
-import type { Server as SocketIOServer } from 'socket.io';
+import type { Server as SocketIOServer, Socket } from 'socket.io';
 import { BotConfigurationManager } from '../../../config/BotConfigurationManager';
+import type { BotConfig } from '../../../types/config';
 import { BotMetricsService } from '../BotMetricsService';
 import { ActivityLogger } from '../ActivityLogger';
 import ApiMonitorService from '../../../services/ApiMonitorService';
@@ -113,7 +114,7 @@ export class BroadcastService {
     }
   }
 
-  private handleApiHealthCheckResult(result: any): void {
+  private handleApiHealthCheckResult(result: { endpointId: string; success: boolean }): void {
     debug(
       `API health check result: ${result.endpointId} - ${result.success ? 'success' : 'failed'}`
     );
@@ -360,7 +361,7 @@ export class BroadcastService {
     }
   }
 
-  public sendBotStatus(socket: any): void {
+  public sendBotStatus(socket: Socket): void {
     try {
       const manager = BotConfigurationManager.getInstance();
       const bots = manager.getAllBots();
@@ -398,7 +399,7 @@ export class BroadcastService {
     }
   }
 
-  public sendSystemMetrics(socket: any, connectedClients: number): void {
+  public sendSystemMetrics(socket: Socket, connectedClients: number): void {
     try {
       const memUsage = process.memoryUsage();
       const metrics = {
@@ -423,7 +424,7 @@ export class BroadcastService {
     }
   }
 
-  public sendConfigValidation(socket: any): void {
+  public sendConfigValidation(socket: Socket): void {
     try {
       const manager = BotConfigurationManager.getInstance();
       const bots = manager.getAllBots();
@@ -445,20 +446,32 @@ export class BroadcastService {
     }
   }
 
-  private findMissingConfigurations(bots: any[]): string[] {
+  private findMissingConfigurations(bots: BotConfig[]): string[] {
     const missing: string[] = [];
 
     bots.forEach((bot) => {
-      if (bot.messageProvider === 'discord' && !bot.discord?.token) {
+      if (
+        bot.messageProvider === 'discord' &&
+        !(bot.discord as { token?: string } | undefined)?.token
+      ) {
         missing.push(`${bot.name}: Missing Discord bot token`);
       }
-      if (bot.messageProvider === 'slack' && !bot.slack?.botToken) {
+      if (
+        bot.messageProvider === 'slack' &&
+        !(bot.slack as { botToken?: string } | undefined)?.botToken
+      ) {
         missing.push(`${bot.name}: Missing Slack bot token`);
       }
-      if (bot.llmProvider === 'openai' && !bot.openai?.apiKey) {
+      if (
+        bot.llmProvider === 'openai' &&
+        !(bot.openai as { apiKey?: string } | undefined)?.apiKey
+      ) {
         missing.push(`${bot.name}: Missing OpenAI API key`);
       }
-      if (bot.llmProvider === 'flowise' && !bot.flowise?.apiKey) {
+      if (
+        bot.llmProvider === 'flowise' &&
+        !(bot.flowise as { apiKey?: string } | undefined)?.apiKey
+      ) {
         missing.push(`${bot.name}: Missing Flowise API key`);
       }
     });
@@ -466,7 +479,7 @@ export class BroadcastService {
     return missing;
   }
 
-  private generateRecommendations(bots: any[]): string[] {
+  private generateRecommendations(bots: BotConfig[]): string[] {
     const recommendations: string[] = [];
 
     if (bots.length === 0) {
@@ -502,7 +515,7 @@ export class BroadcastService {
     });
   }
 
-  public sendMessageFlow(socket: any): void {
+  public sendMessageFlow(socket: Socket): void {
     try {
       const messageFlow = this.getMessageFlow(50);
       socket.emit('message_flow_update', {
@@ -516,7 +529,7 @@ export class BroadcastService {
     }
   }
 
-  public sendAlerts(socket: any): void {
+  public sendAlerts(socket: Socket): void {
     try {
       const alerts = this.getAlerts(20);
       socket.emit('alerts_update', {
@@ -530,7 +543,7 @@ export class BroadcastService {
     }
   }
 
-  public sendPerformanceMetrics(socket: any, connectedClients: number): void {
+  public sendPerformanceMetrics(socket: Socket, connectedClients: number): void {
     try {
       const metrics = this.getPerformanceMetrics(30);
 
@@ -585,7 +598,7 @@ export class BroadcastService {
     }
   }
 
-  public sendMonitoringDashboard(socket: any, connectedClients: number): void {
+  public sendMonitoringDashboard(socket: Socket, connectedClients: number): void {
     try {
       const manager = BotConfigurationManager.getInstance();
       const bots = manager.getAllBots();
@@ -625,7 +638,7 @@ export class BroadcastService {
     }
   }
 
-  public sendApiStatus(socket: any): void {
+  public sendApiStatus(socket: Socket): void {
     try {
       const statuses = this.apiMonitorService.getAllStatuses();
       const overallHealth = this.apiMonitorService.getOverallHealth();
@@ -641,7 +654,7 @@ export class BroadcastService {
     }
   }
 
-  public sendApiEndpoints(socket: any): void {
+  public sendApiEndpoints(socket: Socket): void {
     try {
       const endpoints = this.apiMonitorService.getAllEndpoints();
 

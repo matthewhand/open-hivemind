@@ -15,7 +15,7 @@ interface ValidationRule {
   description: string;
   category: 'required' | 'format' | 'business' | 'security' | 'performance';
   severity: 'error' | 'warning' | 'info';
-  validator: (config: any) => ValidationResult;
+  validator: (config: Record<string, unknown>) => ValidationResult;
 }
 
 interface ValidationResult {
@@ -31,8 +31,8 @@ interface ValidationError {
   ruleId: string;
   message: string;
   field: string;
-  value: any;
-  expected?: any;
+  value: unknown;
+  expected?: unknown;
   suggestions?: string[];
   category: 'required' | 'format' | 'business' | 'security' | 'performance';
 }
@@ -42,7 +42,7 @@ interface ValidationWarning {
   ruleId: string;
   message: string;
   field: string;
-  value: any;
+  value: unknown;
   suggestions?: string[];
   category: 'required' | 'format' | 'business' | 'security' | 'performance';
 }
@@ -52,7 +52,7 @@ interface ValidationInfo {
   ruleId: string;
   message: string;
   field: string;
-  value: any;
+  value: unknown;
   suggestions?: string[];
   category: 'required' | 'format' | 'business' | 'security' | 'performance';
 }
@@ -133,9 +133,9 @@ export class RealTimeValidationService extends EventEmitter {
       description: 'Bot configuration must have a name',
       category: 'required',
       severity: 'error',
-      validator: (config: any) => {
+      validator: (config: Record<string, unknown>) => {
         const errors: ValidationError[] = [];
-        if (!config.name || config.name.trim() === '') {
+        if (!config.name || (config.name as string).trim() === '') {
           errors.push({
             id: 'req-name-1',
             ruleId: 'required-name',
@@ -162,9 +162,9 @@ export class RealTimeValidationService extends EventEmitter {
       description: 'Bot configuration must specify a message provider',
       category: 'required',
       severity: 'error',
-      validator: (config: any) => {
+      validator: (config: Record<string, unknown>) => {
         const errors: ValidationError[] = [];
-        if (!config.messageProvider || config.messageProvider.trim() === '') {
+        if (!config.messageProvider || (config.messageProvider as string).trim() === '') {
           errors.push({
             id: 'req-msg-1',
             ruleId: 'required-message-provider',
@@ -191,9 +191,9 @@ export class RealTimeValidationService extends EventEmitter {
       description: 'Bot configuration must specify an LLM provider',
       category: 'required',
       severity: 'error',
-      validator: (config: any) => {
+      validator: (config: Record<string, unknown>) => {
         const errors: ValidationError[] = [];
-        if (!config.llmProvider || config.llmProvider.trim() === '') {
+        if (!config.llmProvider || (config.llmProvider as string).trim() === '') {
           errors.push({
             id: 'req-llm-1',
             ruleId: 'required-llm-provider',
@@ -221,9 +221,9 @@ export class RealTimeValidationService extends EventEmitter {
       description: 'Bot name must follow naming conventions',
       category: 'format',
       severity: 'error',
-      validator: (config: any) => {
+      validator: (config: Record<string, unknown>) => {
         const errors: ValidationError[] = [];
-        if (config.name && !/^[a-zA-Z0-9_-]{1,100}$/.test(config.name)) {
+        if (config.name && !/^[a-zA-Z0-9_-]{1,100}$/.test(config.name as string)) {
           errors.push({
             id: 'fmt-name-1',
             ruleId: 'format-bot-name',
@@ -253,22 +253,23 @@ export class RealTimeValidationService extends EventEmitter {
       description: 'Discord bot token must be provided when using Discord as message provider',
       category: 'required',
       severity: 'error',
-      validator: (config: any) => {
+      validator: (config: Record<string, unknown>) => {
         const errors: ValidationError[] = [];
         const warnings: ValidationWarning[] = [];
 
         if (config.messageProvider === 'discord') {
-          if (!config.discord || !config.discord.token) {
+          const discord = config.discord as Record<string, unknown> | undefined;
+          if (!discord || !discord.token) {
             errors.push({
               id: 'discord-token-1',
               ruleId: 'discord-token',
               message: 'Discord bot token is required when using Discord as message provider',
               field: 'discord.token',
-              value: config.discord?.token,
+              value: discord?.token,
               suggestions: ['Provide your Discord bot token from the Discord Developer Portal'],
               category: 'required',
             });
-          } else if (!/^[\w-]+\.[\w-]+\.[\w-]+$/.test(config.discord.token)) {
+          } else if (!/^[\w-]+\.[\w-]+\.[\w-]+$/.test(String(discord.token))) {
             warnings.push({
               id: 'discord-token-2',
               ruleId: 'discord-token',
@@ -300,22 +301,23 @@ export class RealTimeValidationService extends EventEmitter {
       description: 'OpenAI API key must be provided when using OpenAI as LLM provider',
       category: 'required',
       severity: 'error',
-      validator: (config: any) => {
+      validator: (config: Record<string, unknown>) => {
         const errors: ValidationError[] = [];
         const warnings: ValidationWarning[] = [];
 
         if (config.llmProvider === 'openai') {
-          if (!config.openai || !config.openai.apiKey) {
+          const openai = config.openai as Record<string, unknown> | undefined;
+          if (!openai || !openai.apiKey) {
             errors.push({
               id: 'openai-key-1',
               ruleId: 'openai-api-key',
               message: 'OpenAI API key is required when using OpenAI as LLM provider',
               field: 'openai.apiKey',
-              value: config.openai?.apiKey,
+              value: openai?.apiKey,
               suggestions: ['Provide your OpenAI API key from the OpenAI dashboard'],
               category: 'required',
             });
-          } else if (!/^sk-[A-Za-z0-9]+$/.test(config.openai.apiKey)) {
+          } else if (!/^sk-[A-Za-z0-9]+$/.test(String(openai.apiKey))) {
             warnings.push({
               id: 'openai-key-2',
               ruleId: 'openai-api-key',
@@ -345,7 +347,7 @@ export class RealTimeValidationService extends EventEmitter {
       description: 'Bot name must be unique across all configurations',
       category: 'business',
       severity: 'error',
-      validator: (_config: any) => {
+      validator: (_config: Record<string, unknown>) => {
         // Uniqueness cannot be verified synchronously; skip for now.
         // A proper async uniqueness check should live in the service layer.
         return {
@@ -365,7 +367,7 @@ export class RealTimeValidationService extends EventEmitter {
       description: 'Configuration should not contain hardcoded secrets or API keys',
       category: 'security',
       severity: 'warning',
-      validator: (config: any) => {
+      validator: (config: Record<string, unknown>) => {
         const warnings: ValidationWarning[] = [];
         const configStr = JSON.stringify(config);
 
@@ -412,11 +414,12 @@ export class RealTimeValidationService extends EventEmitter {
       description: 'Check if selected LLM model is appropriate for the use case',
       category: 'performance',
       severity: 'info',
-      validator: (config: any) => {
+      validator: (config: Record<string, unknown>) => {
         const info: ValidationInfo[] = [];
 
-        if (config.llmProvider === 'openai' && config.openai?.model) {
-          const model = config.openai.model;
+        const openaiCfg = config.openai as Record<string, unknown> | undefined;
+        if (config.llmProvider === 'openai' && openaiCfg?.model) {
+          const model = openaiCfg.model;
 
           if (model === 'gpt-4') {
             info.push({
@@ -647,7 +650,7 @@ export class RealTimeValidationService extends EventEmitter {
         const rule = this.rules.get(ruleId);
         if (rule) {
           try {
-            const result = rule.validator(config);
+            const result = rule.validator(config as unknown as Record<string, unknown>);
             allErrors.push(...result.errors);
             allWarnings.push(...result.warnings);
             allInfo.push(...result.info);
@@ -739,7 +742,7 @@ export class RealTimeValidationService extends EventEmitter {
             {
               id: 'validation-error',
               ruleId: 'system',
-              message: `Validation failed: ${(error as any).message}`,
+              message: `Validation failed: ${error instanceof Error ? error.message : String(error)}`,
               field: 'system',
               value: null,
               category: 'required',
@@ -763,7 +766,10 @@ export class RealTimeValidationService extends EventEmitter {
   /**
    * Validate configuration data directly
    */
-  public validateConfigurationData(configData: any, profileId = 'standard'): ValidationResult {
+  public validateConfigurationData(
+    configData: Record<string, unknown>,
+    profileId = 'standard'
+  ): ValidationResult {
     try {
       // Get validation profile
       const profile = this.profiles.get(profileId);
@@ -832,7 +838,7 @@ export class RealTimeValidationService extends EventEmitter {
           {
             id: 'validation-error',
             ruleId: 'system',
-            message: `Validation failed: ${(error as any).message}`,
+            message: `Validation failed: ${error instanceof Error ? error.message : String(error)}`,
             field: 'system',
             value: null,
             category: 'required',

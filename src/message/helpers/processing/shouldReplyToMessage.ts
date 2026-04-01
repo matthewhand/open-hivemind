@@ -14,7 +14,7 @@ const debug = Debug('app:shouldReplyToMessage');
 export interface ReplyDecision {
   shouldReply: boolean;
   reason: string;
-  meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
 }
 
 export async function shouldReplyToMessage(
@@ -22,9 +22,10 @@ export async function shouldReplyToMessage(
   botId: string,
   platform: 'discord' | 'generic',
   botNameOrNames?: string | string[],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- heterogeneous history messages
   historyMessages?: any[],
   defaultChannelId?: string,
-  botConfig?: Record<string, any>
+  botConfig?: Record<string, unknown>
 ): Promise<ReplyDecision> {
   if (process.env.FORCE_REPLY && process.env.FORCE_REPLY.toLowerCase() === 'true') {
     debug('FORCE_REPLY env var enabled. Forcing reply.');
@@ -55,9 +56,9 @@ export async function shouldReplyToMessage(
 
   const isReplyToBot =
     (typeof message.isReplyToBot === 'function' && Boolean(message.isReplyToBot())) ||
-    (message as any)?.metadata?.replyTo?.userId === botId;
+    message?.metadata?.replyTo?.userId === botId;
 
-  const replyToId = (message as any)?.metadata?.replyTo?.userId;
+  const replyToId = message?.metadata?.replyTo?.userId;
   const isReplyToOther = replyToId && replyToId !== botId;
 
   const isWakeword = wakewords.some(
@@ -173,7 +174,9 @@ export async function shouldReplyToMessage(
   let density: IncomingMessageDensity | null = null;
   try {
     density = IncomingMessageDensity.getInstance();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- runtime duck-typing check
     if (typeof (density as any).recordMessage === 'function') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (density as any).recordMessage(channelId, authorId, isFromBot);
     }
   } catch (error) {

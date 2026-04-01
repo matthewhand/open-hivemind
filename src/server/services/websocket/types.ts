@@ -32,7 +32,7 @@ export interface AlertEvent {
   message: string;
   botName?: string;
   channelId?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   acknowledgedAt?: string;
   resolvedAt?: string;
 }
