@@ -94,13 +94,13 @@ export class ConfigurationImportExportService {
       const baseFileName = fileName || `configurations-export-${timestamp}`;
       let filePath = path.join(this.exportsDir, `${baseFileName}.${options.format}`);
 
-      // ⚡ Bolt Optimization: Use getBotConfigurationsBulk to prevent N+1 queries during export
+      // Get configurations
       const configs = [];
-      const BATCH_SIZE = 50;
-      for (let i = 0; i < configIds.length; i += BATCH_SIZE) {
-        const batch = configIds.slice(i, i + BATCH_SIZE);
-        const bulkConfigs = await this.dbManager.getBotConfigurationsBulk(batch);
-        configs.push(...bulkConfigs);
+      for (const id of configIds) {
+        const config = await this.dbManager.getBotConfiguration(id);
+        if (config) {
+          configs.push(config);
+        }
       }
 
       if (configs.length === 0) {
@@ -544,32 +544,28 @@ export class ConfigurationImportExportService {
           }
         }
 
-        // ⚡ Bolt Optimization: Use getBotConfigurationsBulk with chunking to prevent N+1 queries during version import validation
         const BATCH_SIZE = 50;
         const idsArray = Array.from(uniqueIdsToCheck);
 
         for (let i = 0; i < idsArray.length; i += BATCH_SIZE) {
           const batch = idsArray.slice(i, i + BATCH_SIZE);
-          try {
-            const bulkConfigs = await this.dbManager.getBotConfigurationsBulk(batch);
-            const validBatchIds = new Set(bulkConfigs.map((c: any) => c.id).filter(Boolean));
-
-            for (const id of batch) {
-              if (validBatchIds.has(id)) {
-                validConfigIds.add(id);
-              } else {
-                invalidConfigIds.add(id);
+          await Promise.all(
+            batch.map(async (configId) => {
+              try {
+                const config = await this.dbManager.getBotConfiguration(configId);
+                if (config) {
+                  validConfigIds.add(configId);
+                } else {
+                  invalidConfigIds.add(configId);
+                }
+              } catch (error) {
+                result.warnings?.push(
+                  `Error fetching configuration ${configId}: ${ErrorUtils.getMessage(error)}`
+                );
+                invalidConfigIds.add(configId);
               }
-            }
-          } catch (error) {
-            result.warnings?.push(
-              `Error bulk fetching configurations for version validation batch: ${ErrorUtils.getMessage(error)}`
-            );
-            // Fallback to invalidating this specific batch on failure
-            for (const id of batch) {
-               invalidConfigIds.add(id);
-            }
-          }
+            })
+          );
         }
 
         for (const version of importData.versions) {
