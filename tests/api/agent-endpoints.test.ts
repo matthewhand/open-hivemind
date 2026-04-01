@@ -63,7 +63,7 @@ describe('Agent API Endpoints', () => {
     it('should return an empty list of agents', async () => {
       const response = await request(app).get('/api/agents');
       expect(response.status).toBe(200);
-      expect(response.body.agents).toEqual([]);
+      expect(response.body.data.agents).toEqual([]);
     });
   });
 
@@ -83,8 +83,8 @@ describe('Agent API Endpoints', () => {
       };
       const response = await request(app).post('/api/agents').send(newAgent);
       expect(response.status).toBe(200);
-      expect(response.body.agent).toHaveProperty('id');
-      expect(response.body.agent.name).toBe('Test Agent');
+      expect(response.body.data.agent).toHaveProperty('id');
+      expect(response.body.data.agent.name).toBe('Test Agent');
     });
   });
 
@@ -92,9 +92,9 @@ describe('Agent API Endpoints', () => {
     it('should return default personas when no custom ones are saved', async () => {
       const response = await request(app).get('/api/agents/personas');
       expect(response.status).toBe(200);
-      expect(response.body.personas).toBeInstanceOf(Array);
-      expect(response.body.personas.length).toBeGreaterThan(0);
-      expect(response.body.personas[0]).toHaveProperty('key', 'default');
+      expect(response.body.data.personas).toBeInstanceOf(Array);
+      expect(response.body.data.personas.length).toBeGreaterThan(0);
+      expect(response.body.data.personas[0]).toHaveProperty('key', 'default');
     });
   });
 
@@ -106,8 +106,8 @@ describe('Agent API Endpoints', () => {
       };
       const response = await request(app).post('/api/agents/personas').send(newPersona);
       expect(response.status).toBe(200);
-      expect(response.body.persona).toHaveProperty('key', 'test_persona');
-      expect(response.body.persona.name).toBe('Test Persona');
+      expect(response.body.data.persona).toHaveProperty('key', 'test_persona');
+      expect(response.body.data.persona.name).toBe('Test Persona');
     });
   });
 
@@ -123,14 +123,14 @@ describe('Agent API Endpoints', () => {
         isActive: true,
       };
       const createResponse = await request(app).post('/api/agents').send(newAgent);
-      const agentId = createResponse.body.agent.id;
+      const agentId = createResponse.body.data.agent.id;
 
       // Now, update the agent
       const updates = { name: 'Updated Agent Name' };
       const updateResponse = await request(app).put(`/api/agents/${agentId}`).send(updates);
 
       expect(updateResponse.status).toBe(200);
-      expect(updateResponse.body.agent.name).toBe('Updated Agent Name');
+      expect(updateResponse.body.data.agent.name).toBe('Updated Agent Name');
     });
   });
 
@@ -146,7 +146,7 @@ describe('Agent API Endpoints', () => {
         isActive: true,
       };
       const createResponse = await request(app).post('/api/agents').send(newAgent);
-      const agentId = createResponse.body.agent.id;
+      const agentId = createResponse.body.data.agent.id;
 
       // Now, delete the agent
       const deleteResponse = await request(app).delete(`/api/agents/${agentId}`);
@@ -155,7 +155,7 @@ describe('Agent API Endpoints', () => {
 
       // Verify it's gone
       const getResponse = await request(app).get('/api/agents');
-      expect(getResponse.body.agents.find((a: any) => a.id === agentId)).toBeUndefined();
+      expect(getResponse.body.data.agents.find((a: any) => a.id === agentId)).toBeUndefined();
     });
 
     it('should return 404 when deleting a non-existent agent', async () => {
@@ -178,8 +178,8 @@ describe('Agent API Endpoints', () => {
         .send(updates);
 
       expect(updateResponse.status).toBe(200);
-      expect(updateResponse.body.persona.name).toBe('Updated Persona Name');
-      expect(updateResponse.body.persona.systemPrompt).toBe('Updated prompt.');
+      expect(updateResponse.body.data.persona.name).toBe('Updated Persona Name');
+      expect(updateResponse.body.data.persona.systemPrompt).toBe('Updated prompt.');
     });
   });
 

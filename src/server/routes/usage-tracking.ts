@@ -24,7 +24,12 @@ router.get('/tools', async (req, res) => {
 
     return res
       .status(ErrorUtils.getStatusCode(hivemindError) || 500)
-      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), ErrorUtils.getCode(hivemindError) || 'TOOL_METRICS_ERROR'));
+      .json(
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          ErrorUtils.getCode(hivemindError) || 'TOOL_METRICS_ERROR'
+        )
+      );
   }
 });
 
@@ -48,7 +53,12 @@ router.get('/tools/:toolId', async (req, res) => {
 
     return res
       .status(ErrorUtils.getStatusCode(hivemindError) || 500)
-      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), ErrorUtils.getCode(hivemindError) || 'TOOL_METRICS_ERROR'));
+      .json(
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          ErrorUtils.getCode(hivemindError) || 'TOOL_METRICS_ERROR'
+        )
+      );
   }
 });
 
@@ -67,7 +77,10 @@ router.get('/providers', async (req, res) => {
     return res
       .status(ErrorUtils.getStatusCode(hivemindError) || 500)
       .json(
-        ApiResponse.error(ErrorUtils.getMessage(hivemindError), ErrorUtils.getCode(hivemindError) || 'PROVIDER_METRICS_ERROR')
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          ErrorUtils.getCode(hivemindError) || 'PROVIDER_METRICS_ERROR'
+        )
       );
   }
 });
@@ -95,7 +108,10 @@ router.get('/providers/:serverName', async (req, res) => {
     return res
       .status(ErrorUtils.getStatusCode(hivemindError) || 500)
       .json(
-        ApiResponse.error(ErrorUtils.getMessage(hivemindError), ErrorUtils.getCode(hivemindError) || 'PROVIDER_METRICS_ERROR')
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          ErrorUtils.getCode(hivemindError) || 'PROVIDER_METRICS_ERROR'
+        )
       );
   }
 });
@@ -141,7 +157,12 @@ router.get('/top-tools', async (req, res) => {
 
     return res
       .status(ErrorUtils.getStatusCode(hivemindError) || 500)
-      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), ErrorUtils.getCode(hivemindError) || 'TOP_TOOLS_ERROR'));
+      .json(
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          ErrorUtils.getCode(hivemindError) || 'TOP_TOOLS_ERROR'
+        )
+      );
   }
 });
 
@@ -161,7 +182,12 @@ router.get('/top-providers', async (req, res) => {
 
     return res
       .status(ErrorUtils.getStatusCode(hivemindError) || 500)
-      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), ErrorUtils.getCode(hivemindError) || 'TOP_PROVIDERS_ERROR'));
+      .json(
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          ErrorUtils.getCode(hivemindError) || 'TOP_PROVIDERS_ERROR'
+        )
+      );
   }
 });
 
@@ -181,7 +207,12 @@ router.get('/recent-tools', async (req, res) => {
 
     return res
       .status(ErrorUtils.getStatusCode(hivemindError) || 500)
-      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), ErrorUtils.getCode(hivemindError) || 'RECENT_TOOLS_ERROR'));
+      .json(
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          ErrorUtils.getCode(hivemindError) || 'RECENT_TOOLS_ERROR'
+        )
+      );
   }
 });
 
@@ -201,7 +232,10 @@ router.get('/stats', async (req, res) => {
     return res
       .status(ErrorUtils.getStatusCode(hivemindError) || 500)
       .json(
-        ApiResponse.error(ErrorUtils.getMessage(hivemindError), ErrorUtils.getCode(hivemindError) || 'AGGREGATE_STATS_ERROR')
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          ErrorUtils.getCode(hivemindError) || 'AGGREGATE_STATS_ERROR'
+        )
       );
   }
 });
@@ -221,7 +255,12 @@ router.delete('/clear', async (req, res) => {
 
     return res
       .status(ErrorUtils.getStatusCode(hivemindError) || 500)
-      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), ErrorUtils.getCode(hivemindError) || 'CLEAR_DATA_ERROR'));
+      .json(
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          ErrorUtils.getCode(hivemindError) || 'CLEAR_DATA_ERROR'
+        )
+      );
   }
 });
 

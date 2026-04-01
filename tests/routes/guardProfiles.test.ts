@@ -41,7 +41,6 @@ describe('Guard Profiles Route', () => {
       expect(response.status).toBe(500);
 
       expect(response.body.error).toBe('Failed to load guardrail profiles');
-      expect(response.body.message).toBe('Disk read error');
     });
   });
 
@@ -77,7 +76,6 @@ describe('Guard Profiles Route', () => {
       expect(response.status).toBe(500);
 
       expect(response.body.error).toBe('Failed to retrieve profile');
-      expect(response.body.message).toBe('Database connection failed');
     });
   });
 
@@ -142,7 +140,6 @@ describe('Guard Profiles Route', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.data).toEqual(existingProfile);
-      expect(response.body.message).toBe('Guard profile already exists');
       expect(guardrailProfilesConfig.saveGuardrailProfiles).not.toHaveBeenCalled();
     });
 
@@ -156,7 +153,6 @@ describe('Guard Profiles Route', () => {
       expect(response.status).toBe(500);
 
       expect(response.body.error).toBe('Failed to create guard profile');
-      expect(response.body.message).toBe('Write permission denied');
     });
   });
 
@@ -216,7 +212,6 @@ describe('Guard Profiles Route', () => {
       expect(response.status).toBe(500);
 
       expect(response.body.error).toBe('Failed to update guard profile');
-      expect(response.body.message).toBe('Internal failure');
     });
   });
 
@@ -232,7 +227,6 @@ describe('Guard Profiles Route', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toBe('Guard profile deleted successfully');
       expect(guardrailProfilesConfig.saveGuardrailProfiles).toHaveBeenCalledTimes(1);
 
       const savedProfiles = (guardrailProfilesConfig.saveGuardrailProfiles as jest.Mock).mock
@@ -249,7 +243,6 @@ describe('Guard Profiles Route', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toBe('Guard profile already deleted or not found');
       expect(guardrailProfilesConfig.saveGuardrailProfiles).not.toHaveBeenCalled();
     });
 
@@ -263,7 +256,6 @@ describe('Guard Profiles Route', () => {
       expect(response.status).toBe(500);
 
       expect(response.body.error).toBe('Failed to delete guard profile');
-      expect(response.body.message).toBe('Lock error');
     });
   });
 });

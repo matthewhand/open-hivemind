@@ -50,10 +50,10 @@ describe('Activity API Endpoints', () => {
     it('should return message activity with default filters', async () => {
       const response = await request(app).get('/api/activity/messages');
       expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('messages');
-      expect(response.body).toHaveProperty('total');
-      expect(response.body).toHaveProperty('filter');
-      expect(Array.isArray(response.body.messages)).toBe(true);
+      expect(response.body.data).toHaveProperty('messages');
+      expect(response.body.data).toHaveProperty('total');
+      expect(response.body.data).toHaveProperty('filter');
+      expect(Array.isArray(response.body.data.messages)).toBe(true);
     });
 
     it('should apply query filters', async () => {
@@ -63,9 +63,9 @@ describe('Activity API Endpoints', () => {
         offset: '10',
       });
       expect(response.status).toBe(200);
-      expect(response.body.filter.messageProvider).toBe('discord');
-      expect(response.body.filter.limit).toBe(50);
-      expect(response.body.filter.offset).toBe(10);
+      expect(response.body.data.filter.messageProvider).toBe('discord');
+      expect(response.body.data.filter.limit).toBe(50);
+      expect(response.body.data.filter.offset).toBe(10);
     });
   });
 
@@ -73,9 +73,9 @@ describe('Activity API Endpoints', () => {
     it('should return LLM usage metrics', async () => {
       const response = await request(app).get('/api/activity/llm-usage');
       expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('usage');
-      expect(response.body).toHaveProperty('filter');
-      expect(Array.isArray(response.body.usage)).toBe(true);
+      expect(response.body.data).toHaveProperty('usage');
+      expect(response.body.data).toHaveProperty('filter');
+      expect(Array.isArray(response.body.data.usage)).toBe(true);
     });
 
     it('should apply LLM provider filter', async () => {
@@ -83,7 +83,7 @@ describe('Activity API Endpoints', () => {
         .get('/api/activity/llm-usage')
         .query({ llmProvider: 'openai' });
       expect(response.status).toBe(200);
-      expect(response.body.filter.llmProvider).toBe('openai');
+      expect(response.body.data.filter.llmProvider).toBe('openai');
     });
   });
 
@@ -91,11 +91,11 @@ describe('Activity API Endpoints', () => {
     it('should return activity summary', async () => {
       const response = await request(app).get('/api/activity/summary');
       expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('summary');
-      expect(response.body.summary).toHaveProperty('totalMessages');
-      expect(response.body.summary).toHaveProperty('totalAgents');
-      expect(response.body.summary).toHaveProperty('averageResponseTime');
-      expect(response.body.summary).toHaveProperty('errorRate');
+      expect(response.body.data).toHaveProperty('summary');
+      expect(response.body.data.summary).toHaveProperty('totalMessages');
+      expect(response.body.data.summary).toHaveProperty('totalAgents');
+      expect(response.body.data.summary).toHaveProperty('averageResponseTime');
+      expect(response.body.data.summary).toHaveProperty('errorRate');
     });
   });
 
@@ -103,11 +103,11 @@ describe('Activity API Endpoints', () => {
     it('should return chart data with default parameters', async () => {
       const response = await request(app).get('/api/activity/chart-data');
       expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('messageActivity');
-      expect(response.body).toHaveProperty('llmUsage');
-      expect(response.body).toHaveProperty('interval');
-      expect(Array.isArray(response.body.messageActivity)).toBe(true);
-      expect(Array.isArray(response.body.llmUsage)).toBe(true);
+      expect(response.body.data).toHaveProperty('messageActivity');
+      expect(response.body.data).toHaveProperty('llmUsage');
+      expect(response.body.data).toHaveProperty('interval');
+      expect(Array.isArray(response.body.data.messageActivity)).toBe(true);
+      expect(Array.isArray(response.body.data.llmUsage)).toBe(true);
     });
 
     it('should apply filters and interval', async () => {
@@ -116,8 +116,8 @@ describe('Activity API Endpoints', () => {
         interval: 'day',
       });
       expect(response.status).toBe(200);
-      expect(response.body.interval).toBe('day');
-      expect(response.body.filter.messageProvider).toBe('discord');
+      expect(response.body.data.interval).toBe('day');
+      expect(response.body.data.filter.messageProvider).toBe('discord');
     });
   });
 
@@ -125,11 +125,11 @@ describe('Activity API Endpoints', () => {
     it('should return agent activity statistics', async () => {
       const response = await request(app).get('/api/activity/agents');
       expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('agents');
-      expect(Array.isArray(response.body.agents)).toBe(true);
-      expect(response.body.agents.length).toBeGreaterThan(0);
-      expect(response.body.agents[0]).toHaveProperty('agentId');
-      expect(response.body.agents[0]).toHaveProperty('agentName');
+      expect(response.body.data).toHaveProperty('agents');
+      expect(Array.isArray(response.body.data.agents)).toBe(true);
+      expect(response.body.data.agents.length).toBeGreaterThan(0);
+      expect(response.body.data.agents[0]).toHaveProperty('agentId');
+      expect(response.body.data.agents[0]).toHaveProperty('agentName');
     });
   });
 
@@ -137,11 +137,11 @@ describe('Activity API Endpoints', () => {
     it('should return MCP tool usage statistics', async () => {
       const response = await request(app).get('/api/activity/mcp-tools');
       expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('mcpTools');
-      expect(Array.isArray(response.body.mcpTools)).toBe(true);
-      expect(response.body.mcpTools.length).toBeGreaterThan(0);
-      expect(response.body.mcpTools[0]).toHaveProperty('toolName');
-      expect(response.body.mcpTools[0]).toHaveProperty('serverName');
+      expect(response.body.data).toHaveProperty('mcpTools');
+      expect(Array.isArray(response.body.data.mcpTools)).toBe(true);
+      expect(response.body.data.mcpTools.length).toBeGreaterThan(0);
+      expect(response.body.data.mcpTools[0]).toHaveProperty('toolName');
+      expect(response.body.data.mcpTools[0]).toHaveProperty('serverName');
     });
   });
 

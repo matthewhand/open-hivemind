@@ -53,15 +53,15 @@ describe('Agents Routes', () => {
       mockReadFile.mockResolvedValue(JSON.stringify([sampleAgent]));
       const res = await request(app).get('/agents');
       expect(res.status).toBe(200);
-      expect(res.body.agents).toHaveLength(1);
-      expect(res.body.agents[0].name).toBe('TestBot');
+      expect(res.body.data.agents).toHaveLength(1);
+      expect(res.body.data.agents[0].name).toBe('TestBot');
     });
 
     it('should return empty array when no config file exists', async () => {
       mockReadFile.mockRejectedValue(new Error('ENOENT'));
       const res = await request(app).get('/agents');
       expect(res.status).toBe(200);
-      expect(res.body.agents).toEqual([]);
+      expect(res.body.data.agents).toEqual([]);
     });
   });
 
@@ -79,11 +79,11 @@ describe('Agents Routes', () => {
 
       const res = await request(app).post('/agents').send(newAgent);
       expect(res.status).toBe(200);
-      expect(res.body.agent).toEqual(
+      expect(res.body.data.agent).toEqual(
         expect.objectContaining({ name: 'NewBot', messageProvider: 'slack', llmProvider: 'openai' })
       );
-      expect(res.body.agent.name).toBe('NewBot');
-      expect(res.body.agent.id).toMatch(/^agent_/);
+      expect(res.body.data.agent.name).toBe('NewBot');
+      expect(res.body.data.agent.id).toMatch(/^agent_/);
       expect(mockWriteFile).toHaveBeenCalled();
     });
 
@@ -95,6 +95,7 @@ describe('Agents Routes', () => {
         llmProvider: 'openai',
       });
       expect(res.status).toBe(200);
+      // Idempotency path returns raw { agent } without ApiResponse envelope
       expect(res.body.agent.id).toBe('agent_123');
     });
   });
@@ -104,7 +105,7 @@ describe('Agents Routes', () => {
       mockReadFile.mockResolvedValue(JSON.stringify([sampleAgent]));
       const res = await request(app).put('/agents/agent_123').send({ name: 'UpdatedBot' });
       expect(res.status).toBe(200);
-      expect(res.body.agent.name).toBe('UpdatedBot');
+      expect(res.body.data.agent.name).toBe('UpdatedBot');
     });
 
     it('should return 404 for non-existent agent', async () => {
@@ -136,8 +137,8 @@ describe('Agents Routes', () => {
       mockReadFile.mockRejectedValue(new Error('ENOENT'));
       const res = await request(app).get('/agents/personas');
       expect(res.status).toBe(200);
-      expect(Array.isArray(res.body.personas)).toBe(true);
-      expect(res.body.personas.length).toBeGreaterThan(0);
+      expect(Array.isArray(res.body.data.personas)).toBe(true);
+      expect(res.body.data.personas.length).toBeGreaterThan(0);
     });
   });
 
@@ -154,8 +155,8 @@ describe('Agents Routes', () => {
         .post('/agents/personas')
         .send({ name: 'Custom', systemPrompt: 'Be helpful.' });
       expect(res.status).toBe(200);
-      expect(res.body.persona.key).toBe('custom');
-      expect(res.body.persona.name).toBe('Custom');
+      expect(res.body.data.persona.key).toBe('custom');
+      expect(res.body.data.persona.name).toBe('Custom');
     });
   });
 
