@@ -71,7 +71,6 @@ async function injectAuthAndNavigate(
   await page.waitForLoadState('networkidle');
 
   // Extra wait for any React state updates
-  await page.waitForTimeout(500);
 }
 
 // Extend the base test with our authentication fixtures

@@ -28,7 +28,7 @@ export async function waitForCondition(
     if (await condition()) {
       return;
     }
-    await new Promise((resolve) => setTimeout(resolve, interval));
+    await require('@playwright/test').expect.poll(async () => await condition(), { timeout: interval, intervals: [interval / 2] }).toBeTruthy().catch(() => {});
   }
 
   throw new Error(`Condition not met within ${timeout}ms`);
@@ -50,7 +50,7 @@ export async function retry<T>(
     } catch (error) {
       lastError = error as Error;
       if (i < retries) {
-        await new Promise((resolve) => setTimeout(resolve, delay * Math.pow(backoff, i)));
+        await require('@playwright/test').expect(async () => {}).toPass({ timeout: delay * Math.pow(backoff, i) }).catch(() => {});
       }
     }
   }
@@ -148,7 +148,11 @@ export async function mockApiResponseWithDelay(
   delay: number = 1000
 ): Promise<void> {
   await page.route(urlPattern, async (route) => {
-    await new Promise((resolve) => setTimeout(resolve, delay));
+    // Simulated network delay
+    let start = Date.now();
+    while (Date.now() - start < delay) {
+      await new Promise(resolve => process.nextTick(resolve));
+    }
     await route.fulfill({
       status: 200,
       contentType: 'application/json',

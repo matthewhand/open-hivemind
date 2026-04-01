@@ -51,7 +51,6 @@ test('API Rate Limiting UI', async ({ page }) => {
   await page.goto('/admin/guards');
 
   // Wait a bit just in case
-  await page.waitForTimeout(2000);
 
   // Click edit to open modal
   const editButton = page
@@ -70,7 +69,7 @@ test('API Rate Limiting UI', async ({ page }) => {
 
   // Click on the title to expand
   await rateLimiterTitle.click({ force: true });
-  await page.waitForTimeout(500); // wait for animation
+// wait for animation
 
   // Scroll modal content to bottom
   await page.evaluate(() => {
@@ -78,6 +77,6 @@ test('API Rate Limiting UI', async ({ page }) => {
     if (modal) modal.scrollTop = modal.scrollHeight;
   });
 
-  await page.waitForTimeout(500); // Wait for scroll to settle
+// Wait for scroll to settle
   await editModal.screenshot({ path: 'after-fix.png' });
 });

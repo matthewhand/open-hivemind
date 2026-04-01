@@ -1,7 +1,10 @@
 import Debug from 'debug';
+import { getLlmProfileByKey } from '@src/config/llmProfiles';
 import ProviderConfigManager from '@src/config/ProviderConfigManager';
+import { UserConfigStore } from '@src/config/UserConfigStore';
 import { MetricsCollector } from '@src/monitoring/MetricsCollector';
 import { instantiateLlmProvider, loadPlugin } from '@src/plugins/PluginLoader';
+import { SyncProviderRegistry } from '@src/registries/SyncProviderRegistry';
 import type { IConfigAccessor } from '@src/types/configAccessor';
 import llmConfig from '@config/llmConfig';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
@@ -53,11 +56,59 @@ function withTokenCounting(provider: ILlmProvider, _instanceId: string): ILlmPro
 }
 
 export async function getLlmProvider(): Promise<ILlmProvider[]> {
+  // Fast path: if SyncProviderRegistry is initialized, use its pre-loaded providers
+  const registry = SyncProviderRegistry.getInstance();
+  if (registry.isInitialized()) {
+    const registryProviders = registry.getLlmProviders();
+    if (registryProviders.length > 0) {
+      debug('Using SyncProviderRegistry fast path (%d providers)', registryProviders.length);
+      return registryProviders;
+    }
+    // Registry initialized but empty — fall through to legacy resolution
+  }
+
   const providerManager = ProviderConfigManager.getInstance();
   const configuredProviders = providerManager.getAllProviders('llm').filter((p) => p.enabled);
 
   const activeProviderIds = new Set<string>();
   const llmProviders: ILlmProvider[] = [];
+
+  // Highest priority: defaultChatbotProfile from user config
+  const generalSettings = UserConfigStore.getInstance().getGeneralSettings();
+  const defaultProfileKey = generalSettings.defaultChatbotProfile;
+  if (typeof defaultProfileKey === 'string' && defaultProfileKey.trim() !== '') {
+    const profile = getLlmProfileByKey(defaultProfileKey.trim());
+    if (profile) {
+      const profileId = `profile-${profile.key}`;
+      const configHash = JSON.stringify(profile.config || {});
+      const cached = providerCache.get(profileId);
+
+      if (cached && cached.configHash === configHash) {
+        llmProviders.push(cached.instance);
+        activeProviderIds.add(profileId);
+      } else {
+        try {
+          const mod = await loadPlugin(`llm-${profile.provider.toLowerCase()}`);
+          const instance = instantiateLlmProvider(mod, profile.config);
+          debug(
+            `Initialized LLM provider from default chatbot profile: ${profile.name} (${profile.provider})`
+          );
+          const wrappedInstance = withTokenCounting(instance, profileId);
+          providerCache.set(profileId, { instance: wrappedInstance, configHash });
+          llmProviders.push(wrappedInstance);
+          activeProviderIds.add(profileId);
+        } catch (err) {
+          debug(
+            `Failed to load LLM provider from default chatbot profile '${defaultProfileKey}': ${err}`
+          );
+        }
+      }
+    } else {
+      debug(
+        `Warning: defaultChatbotProfile '${defaultProfileKey}' not found in LLM profiles, falling through to other providers`
+      );
+    }
+  }
 
   if (configuredProviders.length > 0) {
     // New System: Use configured instances
@@ -158,13 +209,83 @@ export async function getLlmProvider(): Promise<ILlmProvider[]> {
     }
   }
 
-  // Prune cache
+  // Prune cache (only prune system-level providers, not bot-specific ones)
   for (const key of providerCache.keys()) {
-    if (!activeProviderIds.has(key)) {
+    if (!activeProviderIds.has(key) && !key.startsWith('bot:')) {
       providerCache.delete(key);
       debug(`Removed stale provider from cache: ${key}`);
     }
   }
 
   return llmProviders;
+}
+
+/**
+ * Resolve an LLM provider for a specific bot configuration.
+ *
+ * When a bot has an `llmProvider` type and provider-specific config
+ * (e.g. `openai`, `flowise`, `openwebui`, `openswarm`) — typically
+ * populated via an LLM profile — this function creates (and caches)
+ * a dedicated provider instance so the bot uses its own model/key
+ * instead of the system default.
+ *
+ * Falls back to the first system-level provider when the bot has no
+ * provider-specific config.
+ */
+export async function getLlmProviderForBot(
+  botConfig: Record<string, unknown>
+): Promise<ILlmProvider> {
+  const botName = String(botConfig.name || botConfig.BOT_ID || 'unknown');
+
+  // Fast path: if SyncProviderRegistry is initialized, delegate to it
+  const registry = SyncProviderRegistry.getInstance();
+  if (registry.isInitialized()) {
+    try {
+      const provider = registry.getLlmProviderForBot(botName, botConfig);
+      debug(`Using SyncProviderRegistry fast path for bot "${botName}"`);
+      return provider;
+    } catch {
+      // Registry has no providers — fall through to legacy resolution
+    }
+  }
+  const providerType = String(botConfig.llmProvider || botConfig.LLM_PROVIDER || '').toLowerCase();
+
+  // Extract the provider-specific config block from the bot config.
+  const providerSpecificConfig =
+    providerType && typeof botConfig[providerType] === 'object' && botConfig[providerType] !== null
+      ? (botConfig[providerType] as Record<string, unknown>)
+      : null;
+
+  // Only create a dedicated instance if there is a provider type AND
+  // provider-specific config (i.e. the profile was applied).
+  if (providerType && providerSpecificConfig) {
+    const configHash = JSON.stringify(providerSpecificConfig);
+    const cacheKey = `bot:${botName}:${providerType}`;
+
+    const cached = providerCache.get(cacheKey);
+    if (cached && cached.configHash === configHash) {
+      debug(`Using cached bot-level LLM provider for "${botName}" (${providerType})`);
+      return cached.instance;
+    }
+
+    try {
+      const mod = await loadPlugin(`llm-${providerType}`);
+      const instance = instantiateLlmProvider(mod, providerSpecificConfig);
+      const wrapped = withTokenCounting(instance, cacheKey);
+      providerCache.set(cacheKey, { instance: wrapped, configHash });
+      debug(`Created bot-level LLM provider for "${botName}" (${providerType})`);
+      return wrapped;
+    } catch (err) {
+      debug(
+        `Failed to create bot-level LLM provider for "${botName}" (${providerType}): ${err}. Falling back to system default.`
+      );
+    }
+  }
+
+  // Fallback: return the first system-level provider.
+  const systemProviders = await getLlmProvider();
+  if (systemProviders.length === 0) {
+    throw new Error('No LLM provider available (system or bot-level)');
+  }
+  return systemProviders[0];
 }

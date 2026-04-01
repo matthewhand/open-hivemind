@@ -1,4 +1,6 @@
 import { Router, type Request, type Response } from 'express';
+import { ApiResponse } from '@src/server/utils/apiResponse';
+import { createLogger } from '../../common/StructuredLogger';
 import { HTTP_STATUS } from '../../types/constants';
 import { ErrorFactory } from '../../types/errorClasses';
 import { errorLogger } from '../../utils/errorLogger';
@@ -7,6 +9,7 @@ import { validateRequest } from '../../validation/validateRequest';
 import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
+const logger = createLogger('errorsRouter');
 
 // Handle CORS preflight requests
 router.options('*', (req, res) => {
@@ -39,10 +42,9 @@ router.post('/frontend', validateRequest(ErrorLogSchema), async (req: Request, r
 
     // Validate required fields
     if (!errorReport.message || !errorReport.correlationId) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        error: 'Invalid error report: missing required fields',
-        required: ['message', 'correlationId'],
-      });
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json(ApiResponse.error('Invalid error report: missing required fields'));
     }
 
     // Set correlation ID in response header
@@ -74,13 +76,9 @@ router.post('/frontend', validateRequest(ErrorLogSchema), async (req: Request, r
     });
 
     // Return success response
-    return res.status(HTTP_STATUS.OK).json({
-      success: true,
-      correlationId: errorReport.correlationId,
-      message: 'Error report received and logged',
-    });
+    return res.status(HTTP_STATUS.OK).json(ApiResponse.success());
   } catch (error) {
-    console.error('Failed to process frontend error report:', error);
+    logger.error('Failed to process frontend error report:', error);
 
     // Log the processing error
     await errorLogger.logError(error as Error, {
@@ -94,10 +92,9 @@ router.post('/frontend', validateRequest(ErrorLogSchema), async (req: Request, r
     const correlationId = (req.headers['x-correlation-id'] as string) || 'unknown';
     res.setHeader('X-Correlation-ID', correlationId);
 
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      error: 'Failed to process error report',
-      correlationId: correlationId,
-    });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(ApiResponse.error('Failed to process error report'));
   }
 });
 
@@ -105,12 +102,12 @@ router.post('/frontend', validateRequest(ErrorLogSchema), async (req: Request, r
 router.get('/stats', authenticateToken, async (req: Request, res: Response) => {
   try {
     const stats = await errorLogger.getErrorStats();
-    return res.json(stats);
+    return res.json(ApiResponse.success(stats));
   } catch (error) {
-    console.error('Failed to get error stats:', error);
+    logger.error('Failed to get error stats:', error);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: 'Failed to retrieve error statistics' });
+      .json(ApiResponse.error('Failed to retrieve error statistics'));
   }
 });
 
@@ -119,12 +116,12 @@ router.get('/recent', authenticateToken, async (req: Request, res: Response) => 
   try {
     const limit = parseInt(req.query.limit as string) || 50;
     const recentErrors = await errorLogger.getRecentErrors(limit);
-    return res.json(recentErrors);
+    return res.json(ApiResponse.success(recentErrors));
   } catch (error) {
-    console.error('Failed to get recent errors:', error);
+    logger.error('Failed to get recent errors:', error);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: 'Failed to retrieve recent errors' });
+      .json(ApiResponse.error('Failed to retrieve recent errors'));
   }
 });
 

@@ -23,7 +23,6 @@ test.describe('Provider Management', () => {
     const tabs = page.locator('[role="tab"], .tab');
     if ((await tabs.count()) > 0) {
       await tabs.first().click();
-      await page.waitForTimeout(500);
     }
     await page.screenshot({ path: 'test-results/provider-02-details.png', fullPage: true });
 

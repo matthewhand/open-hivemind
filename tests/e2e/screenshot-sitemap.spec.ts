@@ -35,7 +35,7 @@ test.describe('Sitemap Screenshots', () => {
     await page.goto('/sitemap');
 
     // Screenshot
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState("domcontentloaded");
     await page.screenshot({ path: 'docs/screenshots/sitemap-page.png', fullPage: true });
   });
 });

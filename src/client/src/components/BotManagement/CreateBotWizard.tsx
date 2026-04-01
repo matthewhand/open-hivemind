@@ -2,10 +2,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Bot, MessageSquare, Cpu, User, Shield, ArrowRight, ArrowLeft, Check, AlertCircle, CheckCircle2, RotateCcw } from 'lucide-react';
 import Input from '../DaisyUI/Input';
 import Modal from '../DaisyUI/Modal';
+import VisualFeedback, { FeedbackState } from '../DaisyUI/VisualFeedback';
+import Radio from '../DaisyUI/Radio';
 import { useConfigDiff } from '../../hooks/useConfigDiff';
 import { ConfigDiffViewer, ConfigDiffConfirmDialog } from '../ConfigDiffViewer';
 import { apiService } from '../../services/api';
 import Debug from 'debug';
+import Toggle from '../DaisyUI/Toggle';
 const debug = Debug('app:client:components:BotManagement:CreateBotWizard');
 
 interface CreateBotWizardProps {
@@ -64,6 +67,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
 
     const [formData, setFormData] = useState(initialFormData);
     const [showDiffConfirm, setShowDiffConfirm] = useState(false);
+    const [feedbackState, setFeedbackState] = useState<{ state: FeedbackState; message?: string }>({ state: 'idle' });
 
     const formDataAsRecord = useMemo(() => formData as unknown as Record<string, unknown>, [formData]);
     const { hasChanges, diff, setOriginalConfig, resetToOriginal } = useConfigDiff(formDataAsRecord);
@@ -174,7 +178,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
 
             if (onSubmit) {
                 await onSubmit(payload);
-                handleSuccess();
+                setFeedbackState({ state: 'success', message: 'Bot created successfully!' });
             } else {
                 await apiService.post('/api/bots', payload);
                 handleSuccess();
@@ -390,10 +394,9 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                                             <span className="font-bold">Default Assistant</span>
                                             <span className="text-xs opacity-70">Helpful and polite general purpose assistant.</span>
                                         </span>
-                                        <input
-                                            type="radio"
+                                        <Radio
                                             name="persona"
-                                            className="radio radio-primary"
+                                            color="primary"
                                             checked={formData.persona === 'default'}
                                             onChange={() => setFormData({ ...formData, persona: 'default' })}
                                         />
@@ -404,10 +407,9 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                                                 <span className="font-bold">{p.name}</span>
                                                 <span className="text-xs opacity-70">{p.description || 'Custom persona'}</span>
                                             </span>
-                                            <input
-                                                type="radio"
+                                            <Radio
                                                 name="persona"
-                                                className="radio radio-primary"
+                                                color="primary"
                                                 checked={formData.persona === p.id}
                                                 onChange={() => setFormData({ ...formData, persona: p.id })}
                                             />
@@ -462,8 +464,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
 
                             <div className="form-control">
                                 <label className="label cursor-pointer justify-start gap-4">
-                                    <input
-                                        type="checkbox"
+                                    <Toggle
                                         className="toggle toggle-primary"
                                         checked={formData.guards.accessControl}
                                         onChange={e => setFormData({ ...formData, guards: { ...formData.guards, accessControl: e.target.checked } })}
@@ -478,8 +479,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
 
                             <div className="form-control">
                                 <label className="label cursor-pointer justify-start gap-4">
-                                    <input
-                                        type="checkbox"
+                                    <Toggle
                                         className="toggle toggle-primary"
                                         checked={formData.guards.rateLimit}
                                         onChange={e => setFormData({ ...formData, guards: { ...formData.guards, rateLimit: e.target.checked } })}
@@ -494,8 +494,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
 
                             <div className="form-control">
                                 <label className="label cursor-pointer justify-start gap-4">
-                                    <input
-                                        type="checkbox"
+                                    <Toggle
                                         className="toggle toggle-primary"
                                         checked={formData.guards.contentFilter}
                                         onChange={e => setFormData({ ...formData, guards: { ...formData.guards, contentFilter: e.target.checked } })}
@@ -556,10 +555,12 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                             </div>
                         </div>
                     )}
+                                    )}
                 </div>
 
                 {/* Footer Actions */}
-                <div className="modal-action mt-6 flex justify-between">
+                {feedbackState.state === 'idle' && (
+                    <div className="modal-action mt-6 flex justify-between">
                     <button className="btn btn-ghost" onClick={step === 1 ? handleCancel : handleBack} disabled={loading} aria-busy={loading}>
                         {step === 1 ? 'Cancel' : <><ArrowLeft className="w-4 h-4" /> Back</>}
                     </button>
@@ -574,6 +575,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                         </button>
                     )}
                 </div>
+                    )}
             </div>
 
         <ConfigDiffConfirmDialog

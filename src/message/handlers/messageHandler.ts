@@ -2,11 +2,13 @@ import Debug from 'debug';
 import { AuditLogger } from '@src/common/auditLogger';
 import { ErrorHandler } from '@src/common/errors/ErrorHandler';
 import { PerformanceMonitor } from '@src/common/errors/PerformanceMonitor';
-import { getLlmProvider } from '@src/llm/getLlmProvider';
+import { getLlmProviderForBot } from '@src/llm/getLlmProvider';
 import { getQuotaManager } from '@src/middleware/quotaMiddleware';
+import { SyncProviderRegistry } from '@src/registries/SyncProviderRegistry';
 import { ContentFilterService } from '@src/services/ContentFilterService';
 import { MemoryManager } from '@src/services/MemoryManager';
 import { toolAugmentedCompletion } from '@src/services/toolAugmentedCompletion';
+import type { ContentFilterConfig } from '@src/types/config';
 import { InputSanitizer } from '@src/utils/InputSanitizer';
 import { generateChatCompletionDirect } from '@integrations/openwebui/directClient';
 import { ChannelDelayManager } from '@message/helpers/handler/ChannelDelayManager';
@@ -33,14 +35,14 @@ import { pipelineEventEmitter, PipelineMetrics } from '../PipelineMetrics';
 import { PipelineMetricsAggregator } from '../PipelineMetricsAggregator';
 import processingLocks from '../processing/processingLocks';
 
-const timingManager = MessageDelayScheduler.getInstance();
+const _timingManager = MessageDelayScheduler.getInstance();
 const idleResponseManager = IdleResponseManager.getInstance();
 const duplicateDetector = DuplicateMessageDetector.getInstance();
-const tokenTracker = TokenTracker.getInstance();
+const _tokenTracker = TokenTracker.getInstance();
 const channelDelayManager = ChannelDelayManager.getInstance();
 const outgoingRateLimiter = OutgoingMessageRateLimiter.getInstance();
-const typingActivity = TypingActivity.getInstance();
-const historyTuner = AdaptiveHistoryTuner.getInstance();
+const _typingActivity = TypingActivity.getInstance();
+const _historyTuner = AdaptiveHistoryTuner.getInstance();
 const contentFilterService = ContentFilterService.getInstance();
 
 /**
@@ -82,23 +84,25 @@ export async function handleMessage(
       const pipelineMetrics = new PipelineMetrics();
       pipelineMetrics.startStage('receive');
       const channelId = message.getChannelId();
-      let resolvedBotId = botConfig.BOT_ID || botConfig.name || 'unknown-bot';
+      let resolvedBotId = String(botConfig.BOT_ID || botConfig.name || 'unknown-bot');
       let delayKey: string | null = null;
       let isLeaderInvocation = false;
       let didLock = false;
-      const activeAgentName = botConfig.MESSAGE_USERNAME_OVERRIDE || botConfig.name || 'Bot';
-      let providerSenderKey = activeAgentName;
+      const activeAgentName = String(
+        botConfig.MESSAGE_USERNAME_OVERRIDE || botConfig.name || 'Bot'
+      );
+      let providerSenderKey: string = activeAgentName;
       let typingInterval: NodeJS.Timeout | null = null;
       let typingTimeout: NodeJS.Timeout | null = null;
       let stopTyping = false;
-      let historyTuneKey: string | null = null;
-      let historyTuneRequestedLimit: number | null = null;
+      let _historyTuneKey: string | null = null;
+      let _historyTuneRequestedLimit: number | null = null;
 
       // Use a per-bot debug namespace so logs are easily attributable in swarm mode.
       const logger = Debug(`app:messageHandler:${activeAgentName}`);
 
       // Helper for random integer (chaos)
-      const randInt = (min: number, max: number): number =>
+      const _randInt = (min: number, max: number): number =>
         Math.floor(Math.random() * (max - min + 1)) + min;
 
       // Log received message
@@ -109,14 +113,14 @@ export async function handleMessage(
         AuditLogger.getInstance().logBotAction(
           userId,
           'UPDATE',
-          botConfig.name || botConfig.BOT_ID || 'unknown-bot',
+          String(botConfig.name || botConfig.BOT_ID || 'unknown-bot'),
           'success',
           `Received message: "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`,
           {
             metadata: {
               type: 'MESSAGE_RECEIVED',
               channelId: channelId,
-              botId: botConfig.BOT_ID || 'unknown-bot',
+              botId: String(botConfig.BOT_ID || 'unknown-bot'),
               content: text,
             },
           }
@@ -142,7 +146,6 @@ export async function handleMessage(
 
         // Get providers safely
         const messageProviders = await getMessengerProvider();
-        const llmProviders = await getLlmProvider();
 
         if (messageProviders.length === 0) {
           logger('ERROR:', 'No message provider available');
@@ -150,25 +153,48 @@ export async function handleMessage(
           return null;
         }
 
-        if (llmProviders.length === 0) {
-          logger('ERROR:', 'No LLM provider available');
-          logger('No LLM provider available');
-          return null;
-        }
-
         const messageProvider = messageProviders[0];
-        const llmProvider = llmProviders[0];
-        const providerType =
+
+        // Resolve the LLM provider for this bot.
+        // Fast path: use SyncProviderRegistry if initialized (sync, zero I/O).
+        // Fallback: use getLlmProviderForBot() which does async plugin loading.
+        let llmProvider;
+        const syncRegistry = SyncProviderRegistry.getInstance();
+        if (syncRegistry.isInitialized()) {
+          try {
+            const botNameForRegistry = String(botConfig.name || botConfig.BOT_ID || 'unknown');
+            llmProvider = syncRegistry.getLlmProviderForBot(botNameForRegistry, botConfig);
+          } catch {
+            // Registry has no providers — fall through to legacy
+            llmProvider = undefined;
+          }
+        }
+        if (!llmProvider) {
+          try {
+            llmProvider = await getLlmProviderForBot(botConfig);
+          } catch {
+            logger('ERROR:', 'No LLM provider available');
+            logger('No LLM provider available');
+            return null;
+          }
+        }
+        const providerType = String(
           botConfig.messageProvider ||
-          botConfig.MESSAGE_PROVIDER ||
-          botConfig.integration ||
-          'generic';
+            botConfig.MESSAGE_PROVIDER ||
+            botConfig.integration ||
+            'generic'
+        );
         const platform = providerType.toLowerCase();
 
         // Delegate platform-specific identity/routing to the integration layer.
+        const mpUnknown = messageProvider as unknown as Record<string, unknown>;
         const resolvedAgentContext =
-          typeof (messageProvider as Record<string, unknown>)?.resolveAgentContext === 'function'
-            ? (messageProvider as Record<string, unknown>).resolveAgentContext({
+          typeof mpUnknown?.resolveAgentContext === 'function'
+            ? (
+                mpUnknown.resolveAgentContext as (
+                  opts: Record<string, unknown>
+                ) => Record<string, unknown> | null
+              )({
                 botConfig,
                 agentDisplayName: activeAgentName,
               })
@@ -191,10 +217,11 @@ export async function handleMessage(
         logger(`Processed message: "${processedMessage}"`);
 
         // Content filter check (bypasses system messages)
-        if (botConfig.contentFilter) {
+        const contentFilter = botConfig.contentFilter as ContentFilterConfig | undefined;
+        if (contentFilter) {
           const filterResult = contentFilterService.checkContent(
             processedMessage,
-            botConfig.contentFilter,
+            contentFilter,
             message.role
           );
 
@@ -202,17 +229,17 @@ export async function handleMessage(
             logger(`Content blocked by filter: ${filterResult.reason}`, filterResult.matchedTerms);
             AuditLogger.getInstance().logBotAction(
               userId,
-              'BLOCK',
-              botConfig.name || botConfig.BOT_ID || 'unknown-bot',
+              'UPDATE',
+              String(botConfig.name || botConfig.BOT_ID || 'unknown-bot'),
               'success',
               `Content blocked: ${filterResult.reason}`,
               {
                 metadata: {
                   type: 'CONTENT_FILTER_BLOCK',
                   channelId: channelId,
-                  botId: botConfig.BOT_ID || 'unknown-bot',
+                  botId: String(botConfig.BOT_ID || 'unknown-bot'),
                   matchedTerms: filterResult.matchedTerms,
-                  strictness: botConfig.contentFilter.strictness,
+                  strictness: contentFilter.strictness,
                 },
               }
             );
@@ -238,7 +265,7 @@ export async function handleMessage(
         let commandProcessed = false;
         if (botConfig.MESSAGE_COMMAND_INLINE) {
           await processCommand(message, async (result: string): Promise<void> => {
-            const authorisedUsers = botConfig.MESSAGE_COMMAND_AUTHORISED_USERS || '';
+            const authorisedUsers = String(botConfig.MESSAGE_COMMAND_AUTHORISED_USERS || '');
             const allowedUsers = authorisedUsers.split(',').map((user: string) => user.trim());
             if (!allowedUsers.includes(userId)) {
               logger('User not authorized:', userId);
@@ -271,7 +298,7 @@ export async function handleMessage(
         // Reply eligibility
 
         // Record interaction for idle response tracking
-        const serviceName = botConfig.MESSAGE_PROVIDER || 'generic';
+        const serviceName = String(botConfig.MESSAGE_PROVIDER || 'generic');
         // Only record non-bot messages as "interactions" to avoid bots (including our own idle replies)
         // continuously rescheduling idle responses.
         if (!message.isFromBot()) {
@@ -284,34 +311,37 @@ export async function handleMessage(
 
         const replyNameCandidates: string[] = Array.from(
           new Set(
-            (resolvedAgentContext?.nameCandidates || [activeAgentName, botConfig?.name])
+            (Array.isArray(resolvedAgentContext?.nameCandidates)
+              ? resolvedAgentContext.nameCandidates
+              : [activeAgentName, botConfig?.name]
+            )
               .filter(Boolean)
               .map((v: unknown) => String(v))
           )
         );
 
         const defaultChannelId =
-          typeof (messageProvider as Record<string, unknown>).getDefaultChannel === 'function'
-            ? (messageProvider as Record<string, unknown>).getDefaultChannel()
+          typeof mpUnknown.getDefaultChannel === 'function'
+            ? (mpUnknown.getDefaultChannel as () => string | undefined)()
             : undefined;
 
         const replyDecision = await shouldReplyToMessage(
           message,
           botId,
-          platform,
+          platform as 'discord' | 'generic',
           replyNameCandidates,
           historyMessages,
           defaultChannelId,
           botConfig
         );
-        const decisionTimestamp = Date.now();
+        const _decisionTimestamp = Date.now();
         pipelineMetrics.endStage('validate', {
           shouldReply: replyDecision.shouldReply,
           reason: replyDecision.reason,
         });
 
         // Safely extract human-readable names for logging
-        const authorName = (() => {
+        const authorName = ((): string => {
           try {
             return (
               (typeof message.getAuthorName === 'function' ? message.getAuthorName() : null) ||
@@ -323,10 +353,11 @@ export async function handleMessage(
             return 'someone';
           }
         })();
-        const channelName = (() => {
+        const channelName = ((): string => {
           try {
             // Try to get channel name from the original message if Discord
-            const orig = (message as unknown as Record<string, unknown>).getOriginalMessage?.();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- duck-typing for Discord message shape
+            const orig = (message as any).getOriginalMessage?.();
             if (orig?.channel?.name) {
               return `#${orig.channel.name}`;
             }
@@ -341,9 +372,9 @@ export async function handleMessage(
           if (replyDecision.reason !== 'Message from self') {
             // Prose explanation at info level with context
             let prose = replyDecision.meta?.prose || replyDecision.reason;
-            prose = await summarizeLogWithLlm(prose);
+            prose = await summarizeLogWithLlm(String(prose));
             console.info(
-              `\u{1F6AB} ${botConfig.name} skips @${authorName} in ${channelName}: ${prose}`
+              `\u{1F6AB} ${String(botConfig.name)} skips @${authorName} in ${channelName}: ${prose}`
             );
           }
           return null;
@@ -362,8 +393,8 @@ export async function handleMessage(
         didLock = true;
 
         // Calculate and apply delays
-        const density = IncomingMessageDensity.getInstance().getDensity(channelId);
-        const isFollowUp =
+        const _density = IncomingMessageDensity.getInstance().getDensity(channelId);
+        const _isFollowUp =
           historyMessages.length > 0 &&
           historyMessages[historyMessages.length - 1].getAuthorId() === botId;
 
@@ -396,7 +427,7 @@ export async function handleMessage(
         let memoryContext = '';
         try {
           const memories = await memoryManager.retrieveRelevantMemories(
-            botConfig.name || resolvedBotId,
+            String(botConfig.name || resolvedBotId),
             processedMessage
           );
           memoryContext = memoryManager.formatMemoriesForPrompt(memories);
@@ -407,8 +438,8 @@ export async function handleMessage(
 
         // Prepare LLM request
         const baseSystemPrompt = buildSystemPromptWithBotName(
-          botConfig.MESSAGE_SYSTEM_PROMPT || '',
-          activeAgentName
+          String(botConfig.MESSAGE_SYSTEM_PROMPT || ''),
+          String(activeAgentName)
         );
         const systemPrompt = memoryContext
           ? `${baseSystemPrompt}\n\n${memoryContext}`
@@ -448,20 +479,21 @@ export async function handleMessage(
         // Generate response
         pipelineMetrics.startStage('llm_inference');
         const startTime = Date.now();
-        let llmResponse: { text: string } | null;
+        let llmResponse: { text: string; usage?: { total_tokens?: number } } | null;
 
         if (botConfig.MESSAGE_LLM_DIRECT) {
-          llmResponse = await generateChatCompletionDirect(
-            botConfig as Record<string, unknown>,
+          const directResult = await generateChatCompletionDirect(
+            botConfig as unknown as Parameters<typeof generateChatCompletionDirect>[0],
             processedMessage,
             trimmedHistory.trimmed,
             systemPrompt
           );
+          llmResponse = typeof directResult === 'string' ? { text: directResult } : directResult;
         } else {
           // Use tool-augmented completion which transparently handles
           // tool calling when the bot has MCP servers configured, and
           // falls back to the standard path when there are no tools.
-          const botNameForTools = botConfig.name || botConfig.BOT_ID || '';
+          const botNameForTools = String(botConfig.name || botConfig.BOT_ID || '');
           const toolResult = await toolAugmentedCompletion({
             botName: botNameForTools,
             llmProvider,
@@ -520,10 +552,10 @@ export async function handleMessage(
         responseText = responseText.replace(/\\n/g, '\n').trim();
 
         // Apply content filter to bot responses (optional, for safety)
-        if (botConfig.contentFilter && botConfig.contentFilter.enabled) {
+        if (contentFilter && contentFilter.enabled) {
           const botFilterResult = contentFilterService.checkContent(
             responseText,
-            botConfig.contentFilter,
+            contentFilter,
             'assistant' // Bot responses are assistant role
           );
 
@@ -534,17 +566,17 @@ export async function handleMessage(
             );
             AuditLogger.getInstance().logBotAction(
               userId,
-              'BLOCK',
-              botConfig.name || botConfig.BOT_ID || 'unknown-bot',
+              'UPDATE',
+              String(botConfig.name || botConfig.BOT_ID || 'unknown-bot'),
               'success',
               `Bot response blocked: ${botFilterResult.reason}`,
               {
                 metadata: {
                   type: 'BOT_RESPONSE_FILTER_BLOCK',
                   channelId: channelId,
-                  botId: botConfig.BOT_ID || 'unknown-bot',
+                  botId: String(botConfig.BOT_ID || 'unknown-bot'),
                   matchedTerms: botFilterResult.matchedTerms,
-                  strictness: botConfig.contentFilter.strictness,
+                  strictness: contentFilter.strictness,
                 },
               }
             );
@@ -566,7 +598,7 @@ export async function handleMessage(
             const finalReplyId = botConfig.MESSAGE_REPLY_IN_THREAD
               ? message.getMessageId()
               : undefined;
-            const sentTs = await messageProvider.sendMessageToChannel(
+            await messageProvider.sendMessageToChannel(
               channelId,
               part,
               providerSenderKey,
@@ -586,7 +618,7 @@ export async function handleMessage(
 
         // Store conversation memories (user message + assistant response)
         pipelineMetrics.startStage('memory_store');
-        const memBotName = botConfig.name || resolvedBotId;
+        const memBotName = String(botConfig.name || resolvedBotId);
         const memMeta = {
           channelId,
           userId: message.getAuthorId(),
@@ -608,7 +640,9 @@ export async function handleMessage(
         const metricsJson = pipelineMetrics.toJSON();
         logger('Pipeline metrics: %O', metricsJson);
         pipelineEventEmitter.emit('pipeline:complete', metricsJson);
-        PipelineMetricsAggregator.getInstance().record(metricsJson as any);
+        PipelineMetricsAggregator.getInstance().record(
+          metricsJson as Parameters<PipelineMetricsAggregator['record']>[0]
+        );
 
         return llmResponse.text;
       } catch (error: unknown) {

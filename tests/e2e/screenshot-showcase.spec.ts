@@ -22,7 +22,6 @@ test.describe('Showcase Screenshots', () => {
     await expect(page.getByText('DaisyUI Component Reference', { exact: true })).toBeVisible();
 
     // Wait slightly for any animations
-    await page.waitForTimeout(1000);
 
     // Take screenshot
     await page.screenshot({ path: 'docs/screenshots/showcase-page.png', fullPage: true });

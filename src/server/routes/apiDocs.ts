@@ -1,4 +1,5 @@
 import { Router, type Request, type Response } from 'express';
+import { ApiResponse } from '@src/server/utils/apiResponse';
 import { HTTP_STATUS } from '../../types/constants';
 import { introspectRoutes } from '../utils/routeIntrospection';
 
@@ -19,19 +20,17 @@ router.get('/', async (req: Request, res: Response) => {
     const app = req.app;
     // ⚡ Bolt Optimization: Use async introspectRoutes to prevent blocking the event loop on I/O.
     const groups = await introspectRoutes(app);
-    return res.json({
-      success: true,
-      data: {
+    return res.json(
+      ApiResponse.success({
         generatedAt: new Date().toISOString(),
         groups,
-      },
-    });
+      })
+    );
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      error: 'Failed to generate API documentation',
-      message,
-    });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(ApiResponse.error('Failed to generate API documentation'));
   }
 });
 

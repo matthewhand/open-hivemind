@@ -9,8 +9,13 @@ import path from 'path';
 // Mock dependencies
 jest.mock('../../../src/config/BotConfigurationManager');
 jest.mock('../../../src/config/UserConfigStore');
-jest.mock('../../../src/server/services/WebSocketService');
-jest.mock('../../../src/types/errors');
+jest.mock('@src/server/services/WebSocketService');
+jest.mock('@src/types/errors');
+jest.mock('../../../src/storage/webUIStorage', () => ({
+  __esModule: true,
+  default: { getInstance: jest.fn().mockReturnValue({}) },
+  WebUIStorage: jest.fn(),
+}));
 jest.mock('fs');
 jest.mock('debug', () => {
   const debugMock = jest.fn();

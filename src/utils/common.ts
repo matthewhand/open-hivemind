@@ -35,12 +35,12 @@ export const permissions = {
   /**
    * Check if a user is allowed (placeholder implementation)
    */
-  isUserAllowed: () => true,
+  isUserAllowed: (): boolean => true,
 
   /**
    * Check if a role is allowed (placeholder implementation)
    */
-  isRoleAllowed: () => true,
+  isRoleAllowed: (): boolean => true,
 };
 
 /**

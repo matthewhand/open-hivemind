@@ -76,7 +76,6 @@ test.describe('Export Page Screenshots', () => {
     await modal.getByLabel('Description (Optional)').fill('Manual backup before changes');
 
     // Wait a bit for UI to settle
-    await page.waitForTimeout(500);
 
     // Screenshot Create Backup Modal
     await page.screenshot({ path: 'docs/screenshots/create-backup-modal.png' });

@@ -2,6 +2,7 @@
 import type { ReactNode } from 'react';
 import React, { useState, useEffect, useRef } from 'react';
 import type { FormField, FormFieldSet } from './formTypes';
+import Checkbox from './Checkbox';
 
 export type { FormField, FormFieldSet } from './formTypes';
 export type { SelectOption } from './formTypes';
@@ -308,9 +309,8 @@ export const Form: React.FC<FormProps> = ({
       return (
         <div className="form-control">
           <label className="label cursor-pointer justify-start gap-2">
-            <input
+            <Checkbox
               {...commonProps}
-              type="checkbox"
               className={`checkbox ${hasError ? 'checkbox-error' : ''}`}
               checked={formData[field.name] || false}
               onChange={(e) => handleInputChange(field.name, e.target.checked)}

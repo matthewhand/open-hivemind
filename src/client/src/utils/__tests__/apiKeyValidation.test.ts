@@ -137,7 +137,7 @@ describe('apiKeyValidation', () => {
       it('should reject empty keys', () => {
         const result = validateApiKey('openai', '');
         expect(result.isValid).toBe(false);
-        expect(result.message).toContain('empty');
+        expect(result.message).toContain('required');
       });
 
       it('should reject null/undefined keys', () => {

@@ -1,71 +1,36 @@
-import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'crypto';
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { createGunzip, createGzip } from 'zlib';
-// @ts-ignore - csv-parse v6 ships its own types but TS can't resolve the /sync subpath
-// @ts-ignore - csv-stringify v6 ships its own types but TS can't resolve the /sync subpath
 import Debug from 'debug';
-import { PathSecurityUtils } from '@src/utils/PathSecurityUtils';
-import { AuditLogger } from '../../common/auditLogger';
 import { SecureConfigManager } from '../../config/SecureConfigManager';
-import { UserConfigStore } from '../../config/UserConfigStore';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { ErrorUtils } from '../../types/errors';
+import {
+  BackupManager,
+  calculateChecksum,
+  compressData,
+  convertToCSV,
+  convertToYAML,
+  decompressData,
+  decryptData,
+  detectFormat,
+  encryptData,
+  generateExportId,
+  parseCSV,
+  parseYAML,
+  type BackupMetadata,
+  type ExportOptions,
+  type ExportResult,
+  type ImportOptions,
+  type ImportResult,
+} from './configImportExport';
 import { ConfigurationTemplateService } from './ConfigurationTemplateService';
 import { ConfigurationValidator } from './ConfigurationValidator';
 import { ConfigurationVersionService } from './ConfigurationVersionService';
 
+// Re-export types so existing imports from this file continue to work
+export type { ExportOptions, ImportOptions, ExportResult, ImportResult, BackupMetadata };
+
 const debug = Debug('app:ConfigurationImportExportService');
-
-export interface ExportOptions {
-  format: 'json' | 'yaml' | 'csv';
-  includeVersions?: boolean;
-  includeAuditLogs?: boolean;
-  includeTemplates?: boolean;
-  compress?: boolean;
-  encrypt?: boolean;
-  encryptionKey?: string;
-}
-
-export interface ImportOptions {
-  format: 'json' | 'yaml' | 'csv';
-  overwrite?: boolean;
-  validateOnly?: boolean;
-  skipValidation?: boolean;
-  decryptionKey?: string;
-}
-
-export interface ExportResult {
-  success: boolean;
-  filePath?: string;
-  size?: number;
-  checksum?: string;
-  error?: string;
-}
-
-export interface ImportResult {
-  success: boolean;
-  importedCount?: number;
-  skippedCount?: number;
-  errorCount?: number;
-  errors?: string[];
-  warnings?: string[];
-}
-
-export interface BackupMetadata {
-  id: string;
-  name: string;
-  description?: string;
-  createdAt: Date;
-  createdBy: string;
-  configCount: number;
-  versionCount: number;
-  templateCount: number;
-  size: number;
-  checksum: string;
-  encrypted: boolean;
-  compressed: boolean;
-}
 
 export class ConfigurationImportExportService {
   private static instance: ConfigurationImportExportService;
@@ -75,6 +40,7 @@ export class ConfigurationImportExportService {
   private versionService: ConfigurationVersionService;
   private exportsDir: string;
   private backupsDir: string;
+  private backupManager: BackupManager;
 
   private constructor() {
     this.dbManager = DatabaseManager.getInstance();
@@ -84,6 +50,14 @@ export class ConfigurationImportExportService {
     this.exportsDir = path.join(process.cwd(), 'config', 'exports');
     this.backupsDir = path.join(process.cwd(), 'config', 'backups');
     this.ensureDirectories();
+
+    this.backupManager = new BackupManager(this.backupsDir, {
+      getAllBotConfigurations: () => this.dbManager.getAllBotConfigurations(),
+      exportConfigurations: (configIds, options, fileName, createdBy) =>
+        this.exportConfigurations(configIds, options, fileName, createdBy),
+      importConfigurations: (filePath, options, importedBy) =>
+        this.importConfigurations(filePath, options, importedBy),
+    });
   }
 
   public static getInstance(): ConfigurationImportExportService {
@@ -139,7 +113,7 @@ export class ConfigurationImportExportService {
       // Prepare export data
       const exportData: Record<string, unknown> = {
         metadata: {
-          id: this.generateExportId(),
+          id: generateExportId(),
           name: baseFileName,
           createdAt: new Date(),
           createdBy,
@@ -162,14 +136,14 @@ export class ConfigurationImportExportService {
           .flat();
 
         exportData.versions = versions;
-        exportData.metadata.versionCount = versions.length;
+        (exportData.metadata as Record<string, unknown>).versionCount = versions.length;
       }
 
       // Include templates if requested
       if (options.includeTemplates) {
         const templates = await this.templateService.getAllTemplates();
         exportData.templates = templates;
-        exportData.metadata.templateCount = templates.length;
+        (exportData.metadata as Record<string, unknown>).templateCount = templates.length;
       }
 
       // Include audit logs if requested
@@ -189,34 +163,20 @@ export class ConfigurationImportExportService {
       }
 
       // Convert to requested format
-      let data: string | Buffer;
-      switch (options.format) {
-        case 'json':
-          data = JSON.stringify(exportData, null, 2);
-          break;
-        case 'yaml':
-          // Simple YAML conversion (in production, use a proper YAML library)
-          data = this.convertToYAML(exportData);
-          break;
-        case 'csv':
-          data = this.convertToCSV(exportData);
-          break;
-        default:
-          throw new Error(`Unsupported export format: ${options.format}`);
-      }
+      let data: string | Buffer = this.convertFormat(exportData, options.format);
 
       // Encrypt if requested
       if (options.encrypt) {
         if (!options.encryptionKey) {
           throw new Error('Encryption key is required for encrypted export');
         }
-        data = await this.encryptData(data, options.encryptionKey);
+        data = await encryptData(data, options.encryptionKey);
         filePath += '.enc';
       }
 
       // Compress if requested
       if (options.compress) {
-        data = await this.compressData(data);
+        data = await compressData(data);
         filePath += '.gz';
       }
 
@@ -224,7 +184,7 @@ export class ConfigurationImportExportService {
       await fs.writeFile(filePath, data);
 
       // Calculate checksum
-      const checksum = this.calculateChecksum(data);
+      const checksum = calculateChecksum(data);
 
       debug(`Exported ${configs.length} configurations to ${filePath}`);
 
@@ -258,7 +218,7 @@ export class ConfigurationImportExportService {
       let filePath = path.join(this.exportsDir, `${baseFileName}.${options.format}`);
 
       // Get main configuration from SecureConfigManager
-      const secureManager = SecureConfigManager.getInstance();
+      const secureManager = await SecureConfigManager.getInstance();
       const config = await secureManager.getDecryptedMainConfig(env);
 
       if (!config) {
@@ -271,7 +231,7 @@ export class ConfigurationImportExportService {
       // Prepare export data
       const exportData: Record<string, unknown> = {
         metadata: {
-          id: this.generateExportId(),
+          id: generateExportId(),
           name: baseFileName,
           createdAt: new Date(),
           createdBy,
@@ -284,33 +244,20 @@ export class ConfigurationImportExportService {
       };
 
       // Convert to requested format
-      let data: string | Buffer;
-      switch (options.format) {
-        case 'json':
-          data = JSON.stringify(exportData, null, 2);
-          break;
-        case 'yaml':
-          data = this.convertToYAML(exportData);
-          break;
-        case 'csv':
-          data = this.convertToCSV(exportData);
-          break;
-        default:
-          throw new Error(`Unsupported export format: ${options.format}`);
-      }
+      let data: string | Buffer = this.convertFormat(exportData, options.format);
 
       // Encrypt if requested
       if (options.encrypt) {
         if (!options.encryptionKey) {
           throw new Error('Encryption key is required for encrypted export');
         }
-        data = await this.encryptData(data, options.encryptionKey);
+        data = await encryptData(data, options.encryptionKey);
         filePath += '.enc';
       }
 
       // Compress if requested
       if (options.compress) {
-        data = await this.compressData(data);
+        data = await compressData(data);
         filePath += '.gz';
       }
 
@@ -318,7 +265,7 @@ export class ConfigurationImportExportService {
       await fs.writeFile(filePath, data);
 
       // Calculate checksum
-      const checksum = this.calculateChecksum(data);
+      const checksum = calculateChecksum(data);
 
       debug(`Exported main configuration for ${env} to ${filePath}`);
 
@@ -356,7 +303,7 @@ export class ConfigurationImportExportService {
 
       // Decompress if needed
       if (filePath.endsWith('.gz')) {
-        data = await this.decompressData(data);
+        data = await decompressData(data);
       }
 
       // Decrypt if needed
@@ -366,7 +313,7 @@ export class ConfigurationImportExportService {
           const parsedEncrypted = JSON.parse(strData);
           if (parsedEncrypted.iv && parsedEncrypted.authTag && parsedEncrypted.data) {
             // Handle SecureConfigManager encrypted format
-            const secureManager = SecureConfigManager.getInstance();
+            const secureManager = await SecureConfigManager.getInstance();
             const decryptedStr = secureManager.decrypt(strData);
             const importData = JSON.parse(decryptedStr);
 
@@ -389,22 +336,22 @@ export class ConfigurationImportExportService {
         if (!options.decryptionKey) {
           throw new Error('Decryption key is required for encrypted import');
         }
-        data = await this.decryptData(data, options.decryptionKey as string);
+        data = await decryptData(data, options.decryptionKey as string);
       }
 
       // Parse data based on format
-      let importData: unknown;
-      const format = this.detectFormat(filePath);
+      let importData: any;
+      const format = detectFormat(filePath);
 
       switch (format) {
         case 'json':
           importData = JSON.parse(data.toString());
           break;
         case 'yaml':
-          importData = this.parseYAML(data.toString());
+          importData = parseYAML(data.toString());
           break;
         case 'csv':
-          importData = this.parseCSV(data.toString());
+          importData = parseCSV(data.toString());
           break;
         default:
           throw new Error(`Unsupported import format: ${format}`);
@@ -414,7 +361,7 @@ export class ConfigurationImportExportService {
       const configToSave = importData.config || importData;
 
       // Save using SecureConfigManager
-      const secureManager = SecureConfigManager.getInstance();
+      const secureManager = await SecureConfigManager.getInstance();
       const encryptedConfig = secureManager.encrypt(JSON.stringify(configToSave));
       const configPath = path.join(secureManager['mainConfigDir'], `${env}.json.enc`);
       await fs.writeFile(configPath, encryptedConfig);
@@ -455,7 +402,7 @@ export class ConfigurationImportExportService {
 
       // Decompress if needed
       if (filePath.endsWith('.gz')) {
-        data = await this.decompressData(data);
+        data = await decompressData(data);
       }
 
       // Decrypt if needed
@@ -463,22 +410,22 @@ export class ConfigurationImportExportService {
         if (!options.decryptionKey) {
           throw new Error('Decryption key is required for encrypted import');
         }
-        data = await this.decryptData(data, options.decryptionKey as string);
+        data = await decryptData(data, options.decryptionKey as string);
       }
 
       // Parse data based on format
-      let importData: unknown;
-      const format = this.detectFormat(filePath);
+      let importData: any;
+      const format = detectFormat(filePath);
 
       switch (format) {
         case 'json':
           importData = JSON.parse(data.toString());
           break;
         case 'yaml':
-          importData = this.parseYAML(data.toString());
+          importData = parseYAML(data.toString());
           break;
         case 'csv':
-          importData = this.parseCSV(data.toString());
+          importData = parseCSV(data.toString());
           break;
         default:
           throw new Error(`Unsupported import format: ${format}`);
@@ -696,18 +643,10 @@ export class ConfigurationImportExportService {
     }
   }
 
+  // ---- Backup delegation ----
+
   /**
    * Create a backup of all configurations.
-   *
-   * Side-effects:
-   * - Enforces a configurable backup retention policy (deletes or cold-stores old backups if count > max).
-   * - Emits an audit log event when an old backup is pruned.
-   *
-   * @param name The name of the backup
-   * @param description Optional description for the backup
-   * @param createdBy User who triggered the backup
-   * @param options Additional export options (format, encryption, etc.)
-   * @returns An ExportResult containing the filePath, size, and checksum on success.
    */
   async createBackup(
     name: string,
@@ -715,133 +654,7 @@ export class ConfigurationImportExportService {
     createdBy?: string,
     options: Partial<ExportOptions> = {}
   ): Promise<ExportResult> {
-    try {
-      // Get all configuration IDs
-      const configs = await this.dbManager.getAllBotConfigurations();
-      const configIds = configs.map((config) => config.id).filter(Boolean) as number[];
-
-      const exportOptions: ExportOptions = {
-        format: 'json',
-        includeVersions: true,
-        includeAuditLogs: true,
-        includeTemplates: true,
-        compress: true,
-        encrypt: false,
-        ...options,
-      };
-
-      const result = await this.exportConfigurations(
-        configIds,
-        exportOptions,
-        `backup-${name}`,
-        createdBy
-      );
-
-      if (result.success && result.filePath) {
-        // Move to backups directory
-        const backupTimestamp = Date.now();
-        const backupPath = this.getSafeBackupPath(name, new Date(backupTimestamp));
-        const backupFileName = path.basename(backupPath);
-        await fs.rename(result.filePath, backupPath);
-
-        // Create metadata file
-        const metadata: BackupMetadata = {
-          id: this.generateBackupId(),
-          name,
-          description,
-          createdAt: new Date(backupTimestamp),
-          createdBy: createdBy || 'unknown',
-          configCount: configIds.length,
-          versionCount: 0, // Will be calculated
-          templateCount: 0, // Will be calculated
-          size: result.size || 0,
-          checksum: result.checksum || '',
-          encrypted: !!exportOptions.encrypt,
-          compressed: !!exportOptions.compress,
-        };
-
-        const metadataPath = path.join(this.backupsDir, `${backupFileName}.meta`);
-        await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
-
-        // Enforce backup retention policy with configurable limits and cold storage
-        try {
-          const generalSettings = UserConfigStore.getInstance().getGeneralSettings();
-          const maxBackups =
-            typeof generalSettings.backupRetentionLimit === 'number'
-              ? generalSettings.backupRetentionLimit
-              : 10;
-          const enableColdStorage = generalSettings.enableColdStorage === true;
-
-          const allBackups = await this.listBackups();
-          if (allBackups.length > maxBackups) {
-            debug(`Enforcing backup retention policy: keeping latest ${maxBackups} backups`);
-
-            const auditLogger = AuditLogger.getInstance();
-
-            // listBackups sorts from newest to oldest
-            const backupsToDelete = allBackups.slice(maxBackups);
-            for (const oldBackup of backupsToDelete) {
-              if (enableColdStorage) {
-                debug(`Archiving old backup to cold storage: ${oldBackup.id} (${oldBackup.name})`);
-                const oldBackupPath = this.getSafeBackupPath(oldBackup.name, oldBackup.createdAt);
-                const oldBackupFileName = path.basename(oldBackupPath);
-                const coldDir = path.join(process.cwd(), 'config', 'backups', 'cold');
-                await fs.mkdir(coldDir, { recursive: true });
-
-                try {
-                  await fs.rename(oldBackupPath, path.join(coldDir, oldBackupFileName));
-                  // delete metadata to drop from active list
-                  await fs.unlink(path.join(this.backupsDir, `${oldBackupFileName}.meta`));
-
-                  auditLogger.logAdminAction(
-                    createdBy || 'system',
-                    'ARCHIVE',
-                    `backup/${oldBackup.id}`,
-                    'success',
-                    `Archived backup ${oldBackup.name} to cold storage due to retention limit`
-                  );
-                } catch (e) {
-                  debug(`Failed to cold store backup ${oldBackup.id}, falling back to delete:`, e);
-                  await this.deleteBackup(oldBackup.id);
-                  auditLogger.logAdminAction(
-                    createdBy || 'system',
-                    'DELETE',
-                    `backup/${oldBackup.id}`,
-                    'success',
-                    `Deleted backup ${oldBackup.name} due to retention limit (cold storage failed)`
-                  );
-                }
-              } else {
-                debug(`Deleting old backup: ${oldBackup.id} (${oldBackup.name})`);
-                await this.deleteBackup(oldBackup.id);
-                auditLogger.logAdminAction(
-                  createdBy || 'system',
-                  'DELETE',
-                  `backup/${oldBackup.id}`,
-                  'success',
-                  `Deleted backup ${oldBackup.name} due to retention limit`
-                );
-              }
-            }
-          }
-        } catch (retentionError) {
-          debug('Error enforcing backup retention:', retentionError);
-        }
-
-        return {
-          ...result,
-          filePath: backupPath,
-        };
-      }
-
-      return result;
-    } catch (error) {
-      debug('Error creating backup:', error);
-      return {
-        success: false,
-        error: ErrorUtils.getMessage(error),
-      };
-    }
+    return this.backupManager.createBackup(name, description, createdBy, options);
   }
 
   /**
@@ -852,344 +665,45 @@ export class ConfigurationImportExportService {
     options: Partial<ImportOptions> = {},
     restoredBy?: string
   ): Promise<ImportResult> {
-    try {
-      const importOptions: ImportOptions = {
-        format: 'json',
-        overwrite: true,
-        validateOnly: false,
-        skipValidation: false,
-        ...options,
-      };
-
-      return this.importConfigurations(backupPath, importOptions, restoredBy);
-    } catch (error) {
-      debug('Error restoring from backup:', error);
-      return {
-        success: false,
-        errors: [ErrorUtils.getMessage(error)],
-      };
-    }
+    return this.backupManager.restoreFromBackup(backupPath, options, restoredBy);
   }
 
   /**
    * List available backups
    */
   async listBackups(): Promise<BackupMetadata[]> {
-    try {
-      const files = await fs.readdir(this.backupsDir);
-      const backups: BackupMetadata[] = [];
-
-      for (const file of files) {
-        if (file.endsWith('.meta')) {
-          try {
-            const metadataPath = path.join(this.backupsDir, file);
-            const data = await fs.readFile(metadataPath, 'utf-8');
-            const metadata = JSON.parse(data);
-
-            // Convert date strings back to Date objects
-            metadata.createdAt = new Date(metadata.createdAt);
-
-            backups.push(metadata);
-          } catch (error) {
-            debug('Error reading backup metadata:', file, error);
-          }
-        }
-      }
-
-      return backups.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-    } catch (error) {
-      debug('Error listing backups:', error);
-      return [];
-    }
+    return this.backupManager.listBackups();
   }
 
   /**
    * Delete a backup
    */
   async deleteBackup(backupId: string): Promise<boolean> {
-    try {
-      const backups = await this.listBackups();
-      const backup = backups.find((b) => b.id === backupId);
-
-      if (!backup) {
-        return false;
-      }
-
-      const backupPath = this.getSafeBackupPath(backup.name, backup.createdAt);
-      const backupFileName = path.basename(backupPath);
-      const metadataPath = path.join(this.backupsDir, `${backupFileName}.meta`);
-
-      await fs.unlink(backupPath);
-      await fs.unlink(metadataPath);
-
-      debug('Deleted backup:', backup.name);
-      return true;
-    } catch (error) {
-      debug('Error deleting backup:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Generate export ID
-   */
-  private generateExportId(): string {
-    return 'export-' + Date.now().toString(36) + '-' + randomBytes(8).toString('hex');
-  }
-
-  /**
-   * Generate backup ID
-   */
-  private generateBackupId(): string {
-    return 'backup-' + Date.now().toString(36) + '-' + randomBytes(8).toString('hex');
-  }
-
-  /**
-   * Get safe backup path and filename.
-   * Ensures the filename is sanitized and the path stays within the backups directory.
-   * Uses PathSecurityUtils for consistent security validation.
-   */
-  private getSafeBackupPath(name: string, createdAt: Date): string {
-    const sanitizedName = PathSecurityUtils.sanitizeFilename(name);
-    const backupFileName = `backup-${sanitizedName}-${createdAt.getTime()}.json.gz`;
-
-    // Use PathSecurityUtils for consistent path validation
-    return PathSecurityUtils.getSafePath(this.backupsDir, backupFileName);
+    return this.backupManager.deleteBackup(backupId);
   }
 
   /**
    * Get the full path for a backup file by ID.
-   * Returns null if backup metadata is not found or path is unsafe.
    */
   public async getBackupFilePath(backupId: string): Promise<string | null> {
-    try {
-      const backups = await this.listBackups();
-      const backup = backups.find((b) => b.id === backupId);
-
-      if (!backup) {
-        return null;
-      }
-
-      return this.getSafeBackupPath(backup.name, backup.createdAt);
-    } catch (error) {
-      debug('Error getting backup file path:', error);
-      return null;
-    }
+    return this.backupManager.getBackupFilePath(backupId);
   }
 
+  // ---- Private helpers (delegating to extracted modules) ----
+
   /**
-   * Detect file format from extension
+   * Convert export data to the requested format.
    */
-  private detectFormat(filePath: string): 'json' | 'yaml' | 'csv' {
-    const ext = filePath.toLowerCase().split('.').pop();
-    switch (ext) {
+  private convertFormat(exportData: Record<string, unknown>, format: string): string {
+    switch (format) {
       case 'json':
-        return 'json';
+        return JSON.stringify(exportData, null, 2);
       case 'yaml':
-      case 'yml':
-        return 'yaml';
+        return convertToYAML(exportData);
       case 'csv':
-        return 'csv';
+        return convertToCSV(exportData);
       default:
-        return 'json'; // Default to JSON
+        throw new Error(`Unsupported export format: ${format}`);
     }
-  }
-
-  /**
-   * Convert data to YAML (simplified implementation)
-   */
-  private convertToYAML(data: any): string {
-    // This is a simplified YAML converter
-    // In production, use a proper YAML library like js-yaml
-    const convert = (obj: any, indent = 0): string => {
-      const spaces = ' '.repeat(indent);
-      let result = '';
-
-      if (typeof obj === 'object' && obj !== null) {
-        if (Array.isArray(obj)) {
-          for (const item of obj) {
-            result += spaces + '- ' + convert(item, indent + 2).trim() + '\n';
-          }
-        } else {
-          for (const [key, value] of Object.entries(obj)) {
-            if (typeof value === 'object' && value !== null) {
-              result += spaces + key + ':\n' + convert(value, indent + 2);
-            } else {
-              result += spaces + key + ': ' + value + '\n';
-            }
-          }
-        }
-      } else {
-        return String(obj);
-      }
-
-      return result;
-    };
-
-    return convert(data);
-  }
-
-  /**
-   * Convert data to CSV (simplified implementation)
-   */
-  private convertToCSV(data: any): string {
-    // This is a simplified CSV converter for configurations
-    // In production, use a proper CSV library
-    if (!data.configurations || !Array.isArray(data.configurations)) {
-      throw new Error('Cannot convert non-configuration data to CSV');
-    }
-
-    const configs = data.configurations;
-    if (configs.length === 0) {
-      return '';
-    }
-
-    // Get headers from first configuration
-    const headers = Object.keys(configs[0]);
-    let csv = headers.join(',') + '\n';
-
-    // Add data rows
-    for (const config of configs) {
-      const row = headers.map((header) => {
-        const value = config[header];
-        // Escape quotes and wrap in quotes if contains comma or quote
-        if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
-          return `"${value.replace(/"/g, '""')}"`;
-        }
-        return value;
-      });
-      csv += row.join(',') + '\n';
-    }
-
-    return csv;
-  }
-
-  /**
-   * Parse YAML (simplified implementation)
-   */
-  private parseYAML(yamlString: string): any {
-    // This is a simplified YAML parser
-    // In production, use a proper YAML library like js-yaml
-    throw new Error('YAML parsing not implemented in this version');
-  }
-
-  /**
-   * Parse CSV (simplified implementation)
-   */
-  private parseCSV(csvString: string): any {
-    // This is a simplified CSV parser
-    // In production, use a proper CSV library
-    const lines = csvString.trim().split('\n');
-    if (lines.length < 2) {
-      throw new Error('Invalid CSV format');
-    }
-
-    const headers = lines[0].split(',');
-    const configurations = [];
-
-    for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',');
-      const config: Record<string, string> = {};
-
-      for (let j = 0; j < headers.length; j++) {
-        const header = headers[j].trim();
-        let value = values[j] || '';
-
-        // Remove quotes if present
-        if (value.startsWith('"') && value.endsWith('"')) {
-          value = value.substring(1, value.length - 1).replace(/""/g, '"');
-        }
-
-        config[header] = value;
-      }
-
-      configurations.push(config);
-    }
-
-    return { configurations };
-  }
-
-  /**
-   * Encrypt data
-   */
-  private async encryptData(data: string | Buffer, key: string): Promise<Buffer> {
-    const algorithm = 'aes-256-gcm';
-    const salt = randomBytes(16);
-    const iv = randomBytes(16);
-
-    // Derive key from password
-    const derivedKey = scryptSync(key, salt, 32);
-
-    const cipher = createCipheriv(algorithm, derivedKey, iv);
-
-    const encrypted = Buffer.concat([cipher.update(data), cipher.final()]);
-
-    const authTag = cipher.getAuthTag();
-
-    // Combine salt, iv, auth tag, and encrypted data
-    return Buffer.concat([salt, iv, authTag, encrypted]);
-  }
-
-  /**
-   * Decrypt data
-   */
-  private async decryptData(encryptedData: Buffer, key: string): Promise<string> {
-    const algorithm = 'aes-256-gcm';
-
-    // Extract components
-    const salt = encryptedData.subarray(0, 16);
-    const iv = encryptedData.subarray(16, 32);
-    const authTag = encryptedData.subarray(32, 48);
-    const data = encryptedData.subarray(48);
-
-    // Derive key from password
-    const derivedKey = scryptSync(key, salt, 32);
-
-    const decipher = createDecipheriv(algorithm, derivedKey, iv);
-    decipher.setAuthTag(authTag);
-
-    const decrypted = Buffer.concat([decipher.update(data), decipher.final()]);
-
-    return decrypted.toString();
-  }
-
-  /**
-   * Compress data
-   */
-  private async compressData(data: string | Buffer): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
-      const chunks: Buffer[] = [];
-      const gzip = createGzip();
-
-      gzip.on('data', (chunk) => chunks.push(chunk));
-      gzip.on('end', () => resolve(Buffer.concat(chunks)));
-      gzip.on('error', reject);
-
-      gzip.end(data);
-    });
-  }
-
-  /**
-   * Decompress data
-   */
-  private async decompressData(compressedData: Buffer): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
-      const chunks: Buffer[] = [];
-      const gunzip = createGunzip();
-
-      gunzip.on('data', (chunk) => chunks.push(chunk));
-      gunzip.on('end', () => resolve(Buffer.concat(chunks)));
-      gunzip.on('error', reject);
-
-      gunzip.end(compressedData);
-    });
-  }
-
-  /**
-   * Calculate checksum
-   */
-  private calculateChecksum(data: string | Buffer): string {
-    const crypto = require('crypto');
-    return crypto.createHash('sha256').update(data).digest('hex');
   }
 }

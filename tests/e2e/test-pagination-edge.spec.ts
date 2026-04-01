@@ -133,17 +133,14 @@ test('DataTable pagination out-of-bounds reset', async ({ page }) => {
   }
 
   await page.setContent(contentHtml);
-  await page.waitForTimeout(1000); // let babel/react render
+// let babel/react render
 
   // Navigate to Page 3
   await page.locator('#next-page').click();
-  await page.waitForTimeout(100);
   await page.locator('#next-page').click();
-  await page.waitForTimeout(100);
 
   // Search for "Admin"
   await page.locator('#search').fill('Admin');
-  await page.waitForTimeout(500);
 
   const prefix = isBefore ? 'before' : 'after';
   const screenshotPath = 'docs/screenshots/pagination-' + prefix + '.png';

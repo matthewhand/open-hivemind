@@ -6,6 +6,7 @@
 
 import { Router } from 'express';
 import { container } from 'tsyringe';
+import { ApiResponse } from '@src/server/utils/apiResponse';
 import DemoModeService from '../../services/DemoModeService';
 import { HTTP_STATUS } from '../../types/constants';
 import { ErrorUtils } from '../../types/errors';
@@ -23,19 +24,20 @@ router.get('/status', (req, res) => {
     const demoService = container.resolve(DemoModeService);
     const status = demoService.getDemoStatus();
 
-    res.json({
-      ...status,
-      message: status.isDemoMode
-        ? 'Running in demo mode - no real credentials configured'
-        : 'Running in production mode with real credentials',
-    });
+    res.json(
+      ApiResponse.success({
+        ...status,
+        message: status.isDemoMode
+          ? 'Running in demo mode - no real credentials configured'
+          : 'Running in production mode with real credentials',
+      })
+    );
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
-    res.status(statusCode).json({
-      error: ErrorUtils.getMessage(hivemindError),
-      code: 'DEMO_STATUS_ERROR',
-    });
+    res
+      .status(statusCode)
+      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DEMO_STATUS_ERROR'));
   }
 });
 
@@ -48,18 +50,19 @@ router.get('/bots', (req, res) => {
     const demoService = container.resolve(DemoModeService);
     const bots = demoService.getDemoBots();
 
-    res.json({
-      bots,
-      count: bots.length,
-      isDemo: demoService.isInDemoMode(),
-    });
+    res.json(
+      ApiResponse.success({
+        bots,
+        count: bots.length,
+        isDemo: demoService.isInDemoMode(),
+      })
+    );
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
-    res.status(statusCode).json({
-      error: ErrorUtils.getMessage(hivemindError),
-      code: 'DEMO_BOTS_ERROR',
-    });
+    res
+      .status(statusCode)
+      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DEMO_BOTS_ERROR'));
   }
 });
 
@@ -72,22 +75,26 @@ router.post('/chat', validateRequest(ChatGenerateSchema), (req, res) => {
     const { message, botName, channelId, userId, userName } = req.body;
 
     if (!message) {
-      res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'message is required' });
+      res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('message is required'));
       return;
     }
 
     if (!botName) {
-      res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'botName is required' });
+      res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('botName is required'));
       return;
     }
 
     const demoService = container.resolve(DemoModeService);
 
     if (!demoService.isInDemoMode()) {
-      res.status(HTTP_STATUS.BAD_REQUEST).json({
-        error: 'Demo mode is not active. Configure credentials to use real services.',
-        code: 'DEMO_MODE_INACTIVE',
-      });
+      res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json(
+          ApiResponse.error(
+            'Demo mode is not active. Configure credentials to use real services.',
+            'DEMO_MODE_INACTIVE'
+          )
+        );
       return;
     }
 
@@ -114,19 +121,20 @@ router.post('/chat', validateRequest(ChatGenerateSchema), (req, res) => {
       botName
     );
 
-    res.json({
-      success: true,
-      userMessage: userMsg,
-      botResponse: botMsg,
-      isDemo: true,
-    });
+    res.json(
+      ApiResponse.success({
+        success: true,
+        userMessage: userMsg,
+        botResponse: botMsg,
+        isDemo: true,
+      })
+    );
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
-    res.status(statusCode).json({
-      error: ErrorUtils.getMessage(hivemindError),
-      code: 'DEMO_CHAT_ERROR',
-    });
+    res
+      .status(statusCode)
+      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DEMO_CHAT_ERROR'));
   }
 });
 
@@ -139,17 +147,18 @@ router.get('/conversations', (req, res) => {
     const demoService = container.resolve(DemoModeService);
     const conversations = demoService.getAllConversations();
 
-    res.json({
-      conversations,
-      count: conversations.length,
-    });
+    res.json(
+      ApiResponse.success({
+        conversations,
+        count: conversations.length,
+      })
+    );
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
-    res.status(statusCode).json({
-      error: ErrorUtils.getMessage(hivemindError),
-      code: 'DEMO_CONVERSATIONS_ERROR',
-    });
+    res
+      .status(statusCode)
+      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DEMO_CONVERSATIONS_ERROR'));
   }
 });
 
@@ -163,19 +172,22 @@ router.get('/conversations/:channelId/:botName', (req, res) => {
     const demoService = container.resolve(DemoModeService);
     const messages = demoService.getConversationHistory(channelId, botName);
 
-    res.json({
-      channelId,
-      botName,
-      messages,
-      count: messages.length,
-    });
+    res.json(
+      ApiResponse.success({
+        channelId,
+        botName,
+        messages,
+        count: messages.length,
+      })
+    );
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
-    res.status(statusCode).json({
-      error: ErrorUtils.getMessage(hivemindError),
-      code: 'DEMO_CONVERSATION_HISTORY_ERROR',
-    });
+    res
+      .status(statusCode)
+      .json(
+        ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DEMO_CONVERSATION_HISTORY_ERROR')
+      );
   }
 });
 
@@ -188,17 +200,13 @@ router.post('/reset', validateRequest(EmptySchema), (req, res) => {
     const demoService = container.resolve(DemoModeService);
     demoService.reset();
 
-    res.json({
-      success: true,
-      message: 'Demo mode reset - all conversations cleared',
-    });
+    res.json(ApiResponse.success());
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
-    res.status(statusCode).json({
-      error: ErrorUtils.getMessage(hivemindError),
-      code: 'DEMO_RESET_ERROR',
-    });
+    res
+      .status(statusCode)
+      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DEMO_RESET_ERROR'));
   }
 });
 
@@ -207,30 +215,35 @@ router.post('/reset', validateRequest(EmptySchema), (req, res) => {
  * Get information about demo mode features
  */
 router.get('/info', (req, res) => {
-  res.json({
-    title: 'Open-Hivemind Demo Mode',
-    description: 'Experience the platform without configuring credentials',
-    features: [
-      'Simulated bot conversations',
-      'Multi-platform demonstration (Discord, Slack)',
-      'WebUI dashboard preview',
-      'Configuration management UI',
-      'Activity monitoring simulation',
-    ],
-    limitations: [
-      'No real AI responses (simulated)',
-      'No actual messenger connections',
-      'Data is not persisted between restarts',
-    ],
-    howToEnable: [
-      'Run without any API keys or tokens configured',
-      'Or set DEMO_MODE=true environment variable',
-    ],
-    howToDisable: [
-      'Configure at least one API key or token',
-      'Or set DEMO_MODE=false environment variable',
-    ],
-  });
+  res.json(
+    ApiResponse.success({
+      title: 'Open-Hivemind Demo Mode',
+      description: 'Experience the platform without configuring credentials',
+      features: [
+        'Simulated bot conversations',
+        'Multi-platform demonstration (Discord, Slack)',
+        'WebUI dashboard preview',
+        'Configuration management UI',
+        'Activity monitoring simulation',
+      ],
+
+      limitations: [
+        'No real AI responses (simulated)',
+        'No actual messenger connections',
+        'Data is not persisted between restarts',
+      ],
+
+      howToEnable: [
+        'Run without any API keys or tokens configured',
+        'Or set DEMO_MODE=true environment variable',
+      ],
+
+      howToDisable: [
+        'Configure at least one API key or token',
+        'Or set DEMO_MODE=false environment variable',
+      ],
+    })
+  );
 });
 
 export default router;

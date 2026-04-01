@@ -14,6 +14,7 @@ import { useLlmStatus } from '../hooks/useLlmStatus';
 import AIAssistButton from '../components/AIAssistButton';
 import { apiService } from '../services/api';
 import Debug from 'debug';
+import Checkbox from '../components/DaisyUI/Checkbox';
 const debug = Debug('app:client:pages:BotCreatePage');
 
 // Ensure we're importing types only or duplicate the config to avoid Vite Rollup module export issues when importing from backend out-of-scope files
@@ -375,8 +376,7 @@ const BotCreatePage: React.FC = () => {
                             className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${isSelected ? 'border-primary bg-primary/5' : 'border-base-200 hover:border-primary/30'
                               }`}
                           >
-                            <input
-                              type="checkbox"
+                            <Checkbox
                               className="checkbox checkbox-primary checkbox-sm mt-0.5"
                               checked={isSelected}
                               onChange={(e) => {

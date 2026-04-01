@@ -30,7 +30,7 @@ test.describe('Guards Page Rate Limit Screenshots', () => {
     });
 
     await page.goto('/admin/guards');
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState("domcontentloaded");
     await page.screenshot({ path: 'docs/screenshots/guards-page.png', fullPage: true });
   });
 });

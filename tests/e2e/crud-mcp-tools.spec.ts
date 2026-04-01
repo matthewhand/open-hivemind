@@ -156,7 +156,6 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/mcp/tools');
-    await page.waitForTimeout(1000);
 
     await expect(page.getByText('web_search').first()).toBeVisible({ timeout: 5000 });
     await expect(page.getByText('file_read').first()).toBeVisible();
@@ -473,7 +472,6 @@ test.describe('MCP Tools CRUD Lifecycle', () => {
     );
 
     await page.goto('/admin/mcp/tools');
-    await page.waitForTimeout(1000);
 
     // Should show empty state
     await page.waitForLoadState('domcontentloaded');

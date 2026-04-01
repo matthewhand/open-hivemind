@@ -220,8 +220,7 @@ test.describe('Health Check', () => {
     );
 
     await navigateAndWaitReady(page, '/admin/monitoring');
-    await page.waitForTimeout(1500);
-
+    await page.waitForLoadState("domcontentloaded");
     await page.screenshot({
       path: 'docs/screenshots/health-dashboard.png',
       fullPage: true,

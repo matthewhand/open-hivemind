@@ -12,7 +12,7 @@ describe('SecureConfigManager rotation logic', () => {
   let manager: SecureConfigManager;
   let mockDebug: jest.Mock;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.clearAllMocks();
 
     // Set up fs mocks
@@ -22,11 +22,13 @@ describe('SecureConfigManager rotation logic', () => {
     jest.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined);
     jest.spyOn(fs.promises, 'access').mockResolvedValue(undefined);
     jest.spyOn(fs.promises, 'readFile').mockResolvedValue('encrypted-data');
+    jest.spyOn(fs.promises, 'mkdir').mockResolvedValue(undefined);
+    jest.spyOn(fs.promises, 'writeFile').mockResolvedValue(undefined);
 
     // Re-initialize manager
     // @ts-ignore
     SecureConfigManager.instance = undefined;
-    manager = SecureConfigManager.getInstance();
+    manager = await SecureConfigManager.getInstance();
 
     // Get the mocked debug instance
     mockDebug = Debug('app:SecureConfigManager') as jest.Mock;

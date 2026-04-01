@@ -95,7 +95,6 @@ test.describe('MCP Servers Page - CRUD Operations', () => {
     await disconnectButton.click();
 
     // Verify success message or that the action completed
-    await page.waitForTimeout(500);
   });
 
   test('should delete a server', async ({ page }) => {
@@ -128,6 +127,5 @@ test.describe('MCP Servers Page - CRUD Operations', () => {
     await deleteButton.click();
 
     // Verify the action completed
-    await page.waitForTimeout(500);
   });
 });

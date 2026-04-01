@@ -9,7 +9,7 @@
  */
 
 import { MemoryManager } from '@src/services/MemoryManager';
-import { getLlmProvider } from '@llm/getLlmProvider';
+import { getLlmProviderForBot } from '@llm/getLlmProvider';
 import { handleMessage } from '@message/handlers/messageHandler';
 import { shouldReplyToMessage } from '@message/helpers/processing/shouldReplyToMessage';
 
@@ -30,6 +30,164 @@ jest.mock('@config/messageConfig', () => ({
   __esModule: true,
   default: { get: jest.fn(() => undefined) },
 }));
+
+// Mock SyncProviderRegistry so the handler falls through to getLlmProviderForBot
+jest.mock('@src/registries/SyncProviderRegistry', () => ({
+  SyncProviderRegistry: {
+    getInstance: jest.fn(() => ({
+      isInitialized: jest.fn(() => false),
+    })),
+  },
+}));
+
+// Mock supporting singletons / services that the handler references at module level
+jest.mock('@src/common/auditLogger', () => ({
+  AuditLogger: {
+    getInstance: jest.fn(() => ({
+      logBotAction: jest.fn(),
+    })),
+  },
+}));
+jest.mock('@src/common/errors/ErrorHandler', () => ({
+  ErrorHandler: { handle: jest.fn() },
+}));
+jest.mock('@src/common/errors/PerformanceMonitor', () => ({
+  PerformanceMonitor: {
+    measureAsync: jest.fn(async (fn: () => Promise<any>) => fn()),
+  },
+}));
+jest.mock('@src/middleware/quotaMiddleware', () => ({
+  getQuotaManager: jest.fn(() => ({
+    checkQuota: jest.fn().mockResolvedValue({ allowed: true, used: {} }),
+    consumeQuota: jest.fn().mockResolvedValue(undefined),
+    consumeTokens: jest.fn().mockResolvedValue(undefined),
+  })),
+}));
+jest.mock('@src/services/ContentFilterService', () => ({
+  ContentFilterService: {
+    getInstance: jest.fn(() => ({
+      checkContent: jest.fn(() => ({ allowed: true })),
+    })),
+  },
+}));
+jest.mock('@src/utils/InputSanitizer', () => ({
+  InputSanitizer: {
+    sanitizeMessage: jest.fn((t: string) => t),
+    validateMessage: jest.fn(() => ({ isValid: true })),
+    stripSurroundingQuotes: jest.fn((t: string) => t),
+  },
+}));
+jest.mock('@message/management/IdleResponseManager', () => ({
+  IdleResponseManager: {
+    getInstance: jest.fn(() => ({
+      recordBotResponse: jest.fn(),
+      recordInteraction: jest.fn(),
+    })),
+  },
+}));
+jest.mock('@message/helpers/handler/MessageDelayScheduler', () => ({
+  __esModule: true,
+  default: {
+    getInstance: jest.fn(() => ({
+      scheduleMessage: jest.fn(),
+    })),
+  },
+}));
+jest.mock('@message/helpers/processing/DuplicateMessageDetector', () => ({
+  __esModule: true,
+  default: {
+    getInstance: jest.fn(() => ({
+      isDuplicate: jest.fn(() => false),
+      recordMessage: jest.fn(),
+    })),
+  },
+}));
+jest.mock('@message/helpers/processing/TokenTracker', () => ({
+  __esModule: true,
+  default: {
+    getInstance: jest.fn(() => ({
+      getResponseProbabilityModifier: jest.fn(() => 1.0),
+      getDelayMultiplier: jest.fn(() => 1.0),
+      getAdjustedMaxTokens: jest.fn(() => 150),
+      recordTokens: jest.fn(),
+      estimateTokens: jest.fn(() => 10),
+    })),
+  },
+}));
+jest.mock('@message/processing/processingLocks', () => ({
+  __esModule: true,
+  default: {
+    isLocked: jest.fn(() => false),
+    lock: jest.fn(),
+    unlock: jest.fn(),
+  },
+}));
+jest.mock('@message/helpers/processing/OutgoingMessageRateLimiter', () => ({
+  __esModule: true,
+  default: {
+    getInstance: jest.fn(() => ({
+      shouldSend: jest.fn(() => true),
+      recordSend: jest.fn(),
+    })),
+  },
+}));
+jest.mock('@message/helpers/processing/TypingActivity', () => ({
+  __esModule: true,
+  default: {
+    getInstance: jest.fn(() => ({
+      start: jest.fn(),
+      stop: jest.fn(),
+    })),
+  },
+}));
+jest.mock('@message/helpers/processing/AdaptiveHistoryTuner', () => ({
+  __esModule: true,
+  default: {
+    getInstance: jest.fn(() => ({
+      getLimit: jest.fn(() => 50),
+      recordOutcome: jest.fn(),
+    })),
+  },
+}));
+jest.mock('@message/helpers/processing/IncomingMessageDensity', () => ({
+  IncomingMessageDensity: {
+    getInstance: jest.fn(() => ({
+      getDensity: jest.fn(() => 0),
+      recordMessage: jest.fn(),
+    })),
+  },
+}));
+jest.mock('@message/helpers/processing/ChannelActivity', () => ({
+  recordBotActivity: jest.fn(),
+}));
+jest.mock('@message/helpers/handler/processCommand', () => ({
+  processCommand: jest.fn(),
+}));
+jest.mock('@message/helpers/logging/LogProseSummarizer', () => ({
+  summarizeLogWithLlm: jest.fn(async (text: string) => text),
+}));
+jest.mock('@message/PipelineMetrics', () => {
+  const mockPipelineMetrics = jest.fn().mockImplementation(() => ({
+    startStage: jest.fn(),
+    endStage: jest.fn(),
+    toJSON: jest.fn(() => ({})),
+  }));
+  return {
+    PipelineMetrics: mockPipelineMetrics,
+    pipelineEventEmitter: { emit: jest.fn(), on: jest.fn() },
+  };
+});
+jest.mock('@message/PipelineMetricsAggregator', () => ({
+  PipelineMetricsAggregator: {
+    getInstance: jest.fn(() => ({
+      record: jest.fn(),
+    })),
+  },
+}));
+jest.mock('@integrations/openwebui/directClient', () => ({
+  generateChatCompletionDirect: jest.fn(),
+}));
+jest.mock('debug', () => () => jest.fn());
 
 // Stub the tool-augmented completion so it delegates straight to the LLM.
 jest.mock('@src/services/toolAugmentedCompletion', () => ({
@@ -80,7 +238,7 @@ jest.mock('@src/services/MemoryManager', () => ({
 // Helpers
 // ---------------------------------------------------------------------------
 
-const mockGetLlmProvider = getLlmProvider as jest.MockedFunction<typeof getLlmProvider>;
+const mockGetLlmProviderForBot = getLlmProviderForBot as jest.MockedFunction<typeof getLlmProviderForBot>;
 const mockGetMessengerProvider = require('@message/management/getMessengerProvider')
   .getMessengerProvider as jest.MockedFunction<any>;
 const mockShouldReply = shouldReplyToMessage as jest.MockedFunction<typeof shouldReplyToMessage>;
@@ -202,8 +360,8 @@ beforeEach(() => {
   mockLlm = createMockLlmProvider();
   mockMessenger = createMockMessengerProvider();
 
-  mockGetLlmProvider.mockReturnValue([mockLlm] as any);
-  mockGetMessengerProvider.mockReturnValue([mockMessenger] as any);
+  mockGetLlmProviderForBot.mockResolvedValue(mockLlm as any);
+  mockGetMessengerProvider.mockResolvedValue([mockMessenger] as any);
 
   mockShouldReply.mockReturnValue({
     shouldReply: true,

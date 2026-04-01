@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useMediaQuery } from '../../hooks/useBreakpoint';
 import { EnhancedDrawer } from './Drawer';
+import HamburgerMenu from './HamburgerMenu';
 import { Menu as MenuIcon, X } from 'lucide-react';
 import DemoModeBanner from '../DemoModeBanner';
 import LlmStatusBanner from '../LlmStatusBanner';
@@ -58,14 +59,10 @@ const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
           <div className="flex items-center gap-2">
             <RateLimitIndicator />
           </div>
-          <button
+          <HamburgerMenu
+            isOpen={isMobileMenuOpen}
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="btn btn-ghost btn-square min-h-[44px] min-w-[44px]"
-            aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
-            aria-expanded={isMobileMenuOpen}
-          >
-            {isMobileMenuOpen ? <X size={24} /> : <MenuIcon size={24} />}
-          </button>
+          />
         </header>
       )}
 

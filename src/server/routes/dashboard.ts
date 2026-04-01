@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import { DatabaseManager } from '@src/database/DatabaseManager';
 import WebSocketService, { type MessageFlowEvent } from '@src/server/services/WebSocketService';
+import { ApiResponse } from '@src/server/utils/apiResponse';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
+import { createLogger } from '../../common/StructuredLogger';
 import { AnalyticsService } from '../../services/AnalyticsService';
 import { HTTP_STATUS } from '../../types/constants';
 import {
@@ -16,6 +18,7 @@ import { ActivityLogger } from '../services/ActivityLogger';
 type AnnotatedEvent = MessageFlowEvent & { llmProvider: string };
 
 const router = Router();
+const logger = createLogger('dashboardRouter');
 
 // ----------------------------------------------------------------------------
 // AI Dashboard Interfaces & Mock Data
@@ -171,7 +174,7 @@ const mockUserSegments: UserSegment[] = [
 // ----------------------------------------------------------------------------
 
 router.get('/ai/config', authenticate, requireAdmin, (req, res) => {
-  res.json(dashboardConfig);
+  res.json(ApiResponse.success(dashboardConfig));
 });
 
 router.post(
@@ -181,7 +184,7 @@ router.post(
   validateRequest(DashboardConfigSchema),
   (req, res) => {
     dashboardConfig = { ...dashboardConfig, ...req.body };
-    res.json(dashboardConfig);
+    res.json(ApiResponse.success(dashboardConfig));
   }
 );
 
@@ -196,19 +199,21 @@ router.get('/ai/stats', authenticate, requireAdmin, async (req, res) => {
       endTime: to || undefined,
     });
 
-    res.json({
-      learningProgress: stats.learningProgress,
-      behaviorPatternsCount: stats.behaviorPatternsCount,
-      userSegmentsCount: stats.userSegmentsCount,
-      totalMessages: stats.totalMessages,
-      totalErrors: stats.totalErrors,
-      avgProcessingTime: stats.avgProcessingTime,
-      activeBots: stats.activeBots,
-      activeUsers: stats.activeUsers,
-    });
+    res.json(
+      ApiResponse.success({
+        learningProgress: stats.learningProgress,
+        behaviorPatternsCount: stats.behaviorPatternsCount,
+        userSegmentsCount: stats.userSegmentsCount,
+        totalMessages: stats.totalMessages,
+        totalErrors: stats.totalErrors,
+        avgProcessingTime: stats.avgProcessingTime,
+        activeBots: stats.activeBots,
+        activeUsers: stats.activeUsers,
+      })
+    );
   } catch (error) {
-    console.error('AI stats API error:', error);
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to get AI stats' });
+    logger.error('AI stats API error:', error);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to get AI stats'));
   }
 });
 
@@ -223,10 +228,12 @@ router.get('/ai/segments', authenticate, requireAdmin, async (req, res) => {
       endTime: to || undefined,
     });
 
-    res.json(segments);
+    res.json(ApiResponse.success(segments));
   } catch (error) {
-    console.error('AI segments API error:', error);
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to get user segments' });
+    logger.error('AI segments API error:', error);
+    res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(ApiResponse.error('Failed to get user segments'));
   }
 });
 
@@ -241,12 +248,12 @@ router.get('/ai/patterns', authenticate, requireAdmin, async (req, res) => {
       endTime: to || undefined,
     });
 
-    res.json(patterns);
+    res.json(ApiResponse.success(patterns));
   } catch (error) {
-    console.error('AI patterns API error:', error);
+    logger.error('AI patterns API error:', error);
     res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: 'Failed to get behavior patterns' });
+      .json(ApiResponse.error('Failed to get behavior patterns'));
   }
 });
 
@@ -261,10 +268,12 @@ router.get('/ai/recommendations', authenticate, requireAdmin, async (req, res) =
       endTime: to || undefined,
     });
 
-    res.json(recommendations);
+    res.json(ApiResponse.success(recommendations));
   } catch (error) {
-    console.error('AI recommendations API error:', error);
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to get recommendations' });
+    logger.error('AI recommendations API error:', error);
+    res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(ApiResponse.error('Failed to get recommendations'));
   }
 });
 
@@ -278,10 +287,12 @@ router.post(
     try {
       const db = DatabaseManager.getInstance();
       await db.storeAIFeedback({ recommendationId, feedback, metadata });
-      res.json({ success: true });
+      res.json(ApiResponse.success());
     } catch (error) {
-      console.error('Error storing AI feedback:', error);
-      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to store feedback' });
+      logger.error('Error storing AI feedback:', error);
+      res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error('Failed to store feedback'));
     }
   }
 );
@@ -318,7 +329,7 @@ router.get('/status', authenticate, requireAdmin, (req, res) => {
     try {
       bots = manager.getAllBots();
     } catch (e) {
-      console.warn('Failed to load bots for status:', e);
+      logger.warn('Failed to load bots for status:', e);
       bots = [];
     }
 
@@ -338,10 +349,10 @@ router.get('/status', authenticate, requireAdmin, (req, res) => {
         errorCount: ws.getBotStats(bot.name).errorCount,
       }));
 
-    res.json({ bots: status, uptime: process.uptime() });
+    res.json(ApiResponse.success({ bots: status, uptime: process.uptime() }));
   } catch (error) {
-    console.error('Status API error:', error);
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to get status' });
+    logger.error('Status API error:', error);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to get status'));
   }
 });
 
@@ -422,24 +433,25 @@ router.get('/activity', authenticate, requireAdmin, async (req, res) => {
       })
       .map((event) => annotateEvent(event, botMap));
 
-    const timeline = buildTimeline(filteredEvents);
-    const agentMetrics = buildAgentMetrics(filteredEvents, ws.getAllBotStats());
+    const { timeline, agentMetrics } = buildTimelineAndMetrics(filteredEvents, ws.getAllBotStats());
 
-    res.json({
-      events: filteredEvents.slice(-200),
-      filters: {
-        agents: Array.from(agents).sort(),
-        messageProviders: Array.from(messageProviders).sort(),
-        llmProviders: Array.from(llmProviders).sort(),
-      },
-      timeline,
-      agentMetrics,
-    });
+    res.json(
+      ApiResponse.success({
+        events: filteredEvents.slice(-200),
+        filters: {
+          agents: Array.from(agents).sort(),
+          messageProviders: Array.from(messageProviders).sort(),
+          llmProviders: Array.from(llmProviders).sort(),
+        },
+        timeline,
+        agentMetrics,
+      })
+    );
   } catch (error) {
-    console.error('Activity API error:', error);
+    logger.error('Activity API error:', error);
     res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: 'Failed to retrieve activity feed' });
+      .json(ApiResponse.error('Failed to retrieve activity feed'));
   }
 });
 
@@ -454,13 +466,15 @@ router.post(
       const ws = WebSocketService.getInstance();
       const success = ws.acknowledgeAlert(id);
       if (success) {
-        res.json({ success: true, message: 'Alert acknowledged' });
+        res.json(ApiResponse.success());
       } else {
-        res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: 'Alert not found' });
+        res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Alert not found'));
       }
     } catch (error) {
-      console.error('Acknowledge alert error:', error);
-      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to acknowledge alert' });
+      logger.error('Acknowledge alert error:', error);
+      res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error('Failed to acknowledge alert'));
     }
   }
 );
@@ -476,13 +490,15 @@ router.post(
       const ws = WebSocketService.getInstance();
       const success = ws.resolveAlert(id);
       if (success) {
-        res.json({ success: true, message: 'Alert resolved' });
+        res.json(ApiResponse.success());
       } else {
-        res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: 'Alert not found' });
+        res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Alert not found'));
       }
     } catch (error) {
-      console.error('Resolve alert error:', error);
-      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to resolve alert' });
+      logger.error('Resolve alert error:', error);
+      res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error('Failed to resolve alert'));
     }
   }
 );
@@ -535,40 +551,22 @@ function annotateEvent(
   };
 }
 
-function buildTimeline(events: AnnotatedEvent[]) {
-  const bucketMs = 60 * 1000; // 1 minute buckets
-  const buckets = new Map<
-    string,
-    { messageProviders: Record<string, number>; llmProviders: Record<string, number> }
-  >();
-
-  events.forEach((event) => {
-    const timestamp = new Date(event.timestamp).getTime();
-    if (Number.isNaN(timestamp)) {
-      return;
-    }
-    const bucketStart = Math.floor(timestamp / bucketMs) * bucketMs;
-    const bucketKey = new Date(bucketStart).toISOString();
-
-    if (!buckets.has(bucketKey)) {
-      buckets.set(bucketKey, { messageProviders: {}, llmProviders: {} });
-    }
-
-    const bucket = buckets.get(bucketKey)!;
-
-    bucket.messageProviders[event.provider] = (bucket.messageProviders[event.provider] || 0) + 1;
-    bucket.llmProviders[event.llmProvider] = (bucket.llmProviders[event.llmProvider] || 0) + 1;
-  });
-
-  return Array.from(buckets.entries())
-    .sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime())
-    .map(([timestamp, data]) => ({ timestamp, ...data }));
-}
-
-function buildAgentMetrics(
+// ⚡ Bolt Optimization: Combined buildTimeline and buildAgentMetrics into a single pass
+// This avoids iterating through thousands of events twice and eliminates O(N) redundant Date parsing
+function buildTimelineAndMetrics(
   events: AnnotatedEvent[],
   botStats: Record<string, { messageCount: number; errors: string[]; errorCount: number }>
 ) {
+  const bucketMs = 60 * 1000; // 1 minute buckets
+  const buckets = new Map<
+    string,
+    {
+      messageProviders: Record<string, number>;
+      llmProviders: Record<string, number>;
+      timestampMs: number;
+    }
+  >();
+
   const metrics = new Map<
     string,
     {
@@ -578,15 +576,34 @@ function buildAgentMetrics(
       events: number;
       errors: number;
       lastActivity: string;
+      lastActivityMs: number;
       totalMessages: number;
       recentErrors: string[];
     }
   >();
 
   events.forEach((event) => {
+    // Single Date parse per event
+    const timestampMs = new Date(event.timestamp).getTime();
+    if (Number.isNaN(timestampMs)) {
+      return;
+    }
+
+    // 1. Build Timeline data
+    const bucketStart = Math.floor(timestampMs / bucketMs) * bucketMs;
+    const bucketKey = new Date(bucketStart).toISOString();
+
+    let bucket = buckets.get(bucketKey);
+    if (!bucket) {
+      bucket = { messageProviders: {}, llmProviders: {}, timestampMs: bucketStart };
+      buckets.set(bucketKey, bucket);
+    }
+    bucket.messageProviders[event.provider] = (bucket.messageProviders[event.provider] || 0) + 1;
+    bucket.llmProviders[event.llmProvider] = (bucket.llmProviders[event.llmProvider] || 0) + 1;
+
+    // 2. Build Agent Metrics data
     const existing = metrics.get(event.botName);
-    const errorsForBot = botStats[event.botName]?.errors ?? [];
-    const totalMessages = botStats[event.botName]?.messageCount ?? 0;
+    const isError = event.status === 'error' || event.status === 'timeout';
 
     if (!existing) {
       metrics.set(event.botName, {
@@ -594,24 +611,40 @@ function buildAgentMetrics(
         messageProvider: event.provider,
         llmProvider: event.llmProvider,
         events: 1,
-        errors: event.status === 'error' || event.status === 'timeout' ? 1 : 0,
+        errors: isError ? 1 : 0,
         lastActivity: event.timestamp,
-        totalMessages,
-        recentErrors: errorsForBot,
+        lastActivityMs: timestampMs,
+        totalMessages: botStats[event.botName]?.messageCount ?? 0,
+        recentErrors: botStats[event.botName]?.errors ?? [],
       });
-      return;
+    } else {
+      existing.events += 1;
+      if (isError) {
+        existing.errors += 1;
+      }
+      if (timestampMs > existing.lastActivityMs) {
+        existing.lastActivity = event.timestamp;
+        existing.lastActivityMs = timestampMs;
+      }
+      existing.totalMessages = botStats[event.botName]?.messageCount ?? 0;
+      existing.recentErrors = botStats[event.botName]?.errors ?? [];
     }
-
-    existing.events += 1;
-    if (event.status === 'error' || event.status === 'timeout') {
-      existing.errors += 1;
-    }
-    if (new Date(event.timestamp).getTime() > new Date(existing.lastActivity).getTime()) {
-      existing.lastActivity = event.timestamp;
-    }
-    existing.totalMessages = totalMessages;
-    existing.recentErrors = errorsForBot;
   });
 
-  return Array.from(metrics.values()).sort((a, b) => b.events - a.events);
+  const timeline = Array.from(buckets.entries())
+    .sort((a, b) => a[1].timestampMs - b[1].timestampMs)
+    .map(([timestamp, data]) => ({
+      timestamp,
+      messageProviders: data.messageProviders,
+      llmProviders: data.llmProviders,
+    }));
+
+  const agentMetrics = Array.from(metrics.values())
+    .map((m) => {
+      const { lastActivityMs: _lastActivityMs, ...rest } = m; // Remove the temporary sorting field
+      return rest;
+    })
+    .sort((a, b) => b.events - a.events);
+
+  return { timeline, agentMetrics };
 }

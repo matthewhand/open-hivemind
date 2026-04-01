@@ -131,6 +131,7 @@ export class StartupDiagnostics {
       { key: 'LOW_MEMORY_MODE', description: 'Low memory optimizations' },
       { key: 'SUPPRESS_HEALTH_LOGS', description: 'Health endpoint logging' },
       { key: 'DEBUG', description: 'Debug logging' },
+      { key: 'USE_LEGACY_HANDLER', description: 'Revert to legacy handleMessage()' },
     ];
 
     const summary: EnvironmentSummary = {
@@ -473,6 +474,11 @@ export class StartupDiagnostics {
         key: 'SUPPRESS_HEALTH_LOGS',
         default: 'true',
         description: 'Suppress health endpoint logs',
+      },
+      {
+        key: 'USE_LEGACY_HANDLER',
+        default: 'false',
+        description: 'Revert to legacy monolithic handleMessage()',
       },
     ];
 

@@ -88,7 +88,7 @@ export class MetricsCollector extends EventEmitter {
   public shutdown(): void {
     this.stopCollection();
     this.removeAllListeners();
-    debug('MetricsCollector shutdown completed');
+    logger.debug('MetricsCollector shutdown completed');
   }
 
   private collectSystemMetrics(): void {
@@ -265,7 +265,7 @@ hivemind_llm_token_usage_total ${m.llmTokenUsage}`;
    * Gracefully shutdown the MetricsCollector.
    * Stops collection and clears all data.
    */
-  shutdown(): void {
+  gracefulShutdown(): void {
     this.stopCollection();
     this.history = [];
     this.removeAllListeners();

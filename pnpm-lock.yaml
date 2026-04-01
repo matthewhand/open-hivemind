@@ -38,15 +38,42 @@ importers:
       '@heroicons/react':
         specifier: ^2.2.0
         version: 2.2.0(react@19.2.4)
+      '@hivemind/llm-flowise':
+        specifier: workspace:*
+        version: link:packages/llm-flowise
+      '@hivemind/llm-letta':
+        specifier: workspace:*
+        version: link:packages/llm-letta
+      '@hivemind/llm-openai':
+        specifier: workspace:*
+        version: link:packages/llm-openai
+      '@hivemind/llm-openswarm':
+        specifier: workspace:*
+        version: link:packages/llm-openswarm
+      '@hivemind/llm-openwebui':
+        specifier: workspace:*
+        version: link:packages/llm-openwebui
+      '@hivemind/memory-mem0':
+        specifier: workspace:*
+        version: link:packages/memory-mem0
       '@hivemind/memory-mem4ai':
         specifier: workspace:*
         version: link:packages/memory-mem4ai
       '@hivemind/message-discord':
         specifier: workspace:*
         version: link:packages/message-discord
+      '@hivemind/message-mattermost':
+        specifier: workspace:*
+        version: link:packages/message-mattermost
       '@hivemind/message-slack':
         specifier: workspace:*
         version: link:packages/message-slack
+      '@hivemind/shared-types':
+        specifier: workspace:*
+        version: link:packages/shared-types
+      '@hivemind/tool-mcp':
+        specifier: workspace:*
+        version: link:packages/tool-mcp
       '@modelcontextprotocol/sdk':
         specifier: ^1.25.2
         version: 1.28.0(@cfworker/json-schema@4.1.1)(zod@3.25.76)
@@ -65,8 +92,14 @@ importers:
       '@slack/webhook':
         specifier: ^7.0.4
         version: 7.0.8(debug@4.4.3)
+      '@tanstack/react-query':
+        specifier: ^5.90.21
+        version: 5.94.5(react@19.2.4)
+      '@tanstack/react-query-devtools':
+        specifier: ^5.90.21
+        version: 5.96.0(@tanstack/react-query@5.94.5(react@19.2.4))(react@19.2.4)
       '@tanstack/react-virtual':
-        specifier: ^3.10.8
+        specifier: ^3.13.23
         version: 3.13.23(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@tryfabric/mack':
         specifier: ^1.2.1
@@ -570,6 +603,9 @@ importers:
       tsconfig-paths:
         specifier: ^4.2.0
         version: 4.2.0
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -812,9 +848,6 @@ importers:
 
   src/client:
     dependencies:
-      '@babel/preset-react':
-        specifier: ^7.28.5
-        version: 7.28.5(@babel/core@7.29.0)
       '@heroicons/react':
         specifier: ^2.2.0
         version: 2.2.0(react@19.2.4)
@@ -824,6 +857,15 @@ importers:
       '@reduxjs/toolkit':
         specifier: ^2.9.0
         version: 2.11.2(react-redux@9.2.0(@types/react@19.2.14)(react@19.2.4)(redux@5.0.1))(react@19.2.4)
+      '@tanstack/react-query':
+        specifier: ^5.90.21
+        version: 5.94.5(react@19.2.4)
+      '@tanstack/react-query-devtools':
+        specifier: ^5.90.21
+        version: 5.96.0(@tanstack/react-query@5.94.5(react@19.2.4))(react@19.2.4)
+      '@tanstack/react-virtual':
+        specifier: ^3.13.23
+        version: 3.13.23(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@types/react-redux':
         specifier: ^7.1.34
         version: 7.1.34
@@ -873,6 +915,9 @@ importers:
         specifier: ^3.3.1
         version: 3.5.0
     devDependencies:
+      '@babel/preset-react':
+        specifier: ^7.28.5
+        version: 7.28.5(@babel/core@7.29.0)
       '@tailwindcss/typography':
         specifier: ^0.5.19
         version: 0.5.19(tailwindcss@4.2.2)
@@ -3374,6 +3419,15 @@ packages:
 
   '@tanstack/query-core@5.94.5':
     resolution: {integrity: sha512-Vx1JJiBURW/wdNGP45afjrqn0LfxYwL7K/bSrQvNRtyLGF1bxQPgUXCpzscG29e+UeFOh9hz1KOVala0N+bZiA==}
+
+  '@tanstack/query-devtools@5.96.0':
+    resolution: {integrity: sha512-MEdO1M/9ItB62OtTqVo8AIj/G6vJemA642N56bw8aIqpXKIj5VG/3xWgh2piw76NmoCIlapxjjWp1MMLmrvKJw==}
+
+  '@tanstack/react-query-devtools@5.96.0':
+    resolution: {integrity: sha512-P0WFX0s3iYii4oZTSCK9T3/PBQ9uY/SVTzcZFbyzCo5ujeIAsqos3HjBWoF/lhJXWVe8UXkjAmgXr3TUD11q2A==}
+    peerDependencies:
+      '@tanstack/react-query': ^5.96.0
+      react: ^18 || ^19
 
   '@tanstack/react-query@5.94.5':
     resolution: {integrity: sha512-1wmrxKFkor+q8l+ygdHmv0Sq5g84Q3p4xvuJ7AdSIAhQQ7udOt+ZSZ19g1Jea3mHqtlTslLGJsmC4vHFgP0P3A==}
@@ -11439,6 +11493,14 @@ snapshots:
 
   '@tanstack/query-core@5.94.5': {}
 
+  '@tanstack/query-devtools@5.96.0': {}
+
+  '@tanstack/react-query-devtools@5.96.0(@tanstack/react-query@5.94.5(react@19.2.4))(react@19.2.4)':
+    dependencies:
+      '@tanstack/query-devtools': 5.96.0
+      '@tanstack/react-query': 5.94.5(react@19.2.4)
+      react: 19.2.4
+
   '@tanstack/react-query@5.94.5(react@19.2.4)':
     dependencies:
       '@tanstack/query-core': 5.94.5
@@ -17617,7 +17679,7 @@ snapshots:
 
   tsx@4.21.0:
     dependencies:
-      esbuild: 0.27.0
+      esbuild: 0.27.4
       get-tsconfig: 4.13.6
     optionalDependencies:
       fsevents: 2.3.3

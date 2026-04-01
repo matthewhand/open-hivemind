@@ -5,6 +5,7 @@ import Button from '../DaisyUI/Button';
 import Input from '../DaisyUI/Input';
 import { Persona } from './usePersonasLogic';
 import type { Bot } from '../../services/api';
+import Checkbox from '../DaisyUI/Checkbox';
 
 interface PersonaModalProps {
   isOpen: boolean;
@@ -175,8 +176,7 @@ export const PersonaModal: React.FC<PersonaModalProps> = ({
                       className={`cursor-pointer label justify-start gap-3 rounded-lg ${isEnvLocked || isViewMode ? 'opacity-50 cursor-not-allowed' : 'hover:bg-base-300'}`}
                       title={isEnvLocked ? 'Persona is locked by environment variable' : ''}
                     >
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         className="checkbox checkbox-sm checkbox-primary"
                         checked={selectedBotIds.includes(bot.id)}
                         onChange={(e) => {

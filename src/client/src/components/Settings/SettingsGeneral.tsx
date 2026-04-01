@@ -1,51 +1,74 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Alert } from '../DaisyUI/Alert';
 import Input from '../DaisyUI/Input';
 import Select from '../DaisyUI/Select';
 import Toggle from '../DaisyUI/Toggle';
 import Button from '../DaisyUI/Button';
+import FormField from '../DaisyUI/FormField';
 import { Settings as SettingsIcon, ShieldCheck, Activity } from 'lucide-react';
 import Debug from 'debug';
 import { apiService } from '../../services/api';
+import { useSavedStamp } from '../../contexts/SavedStampContext';
 const debug = Debug('app:client:components:Settings:SettingsGeneral');
 
-interface GeneralConfig {
-  instanceName: string;
-  description: string;
-  timezone: string;
-  language: string;
-  theme: string;
-  enableNotifications: boolean;
-  enableLogging: boolean;
-  logLevel: string;
-  maxConcurrentBots: number;
-  defaultResponseTimeout: number;
-  enableHealthChecks: boolean;
-  healthCheckInterval: number;
-  advancedMode: boolean;
-}
+const generalSettingsSchema = z.object({
+  instanceName: z.string().min(1, 'Instance name is required').max(100, 'Instance name must be 100 characters or fewer'),
+  description: z.string().max(500, 'Description must be 500 characters or fewer'),
+  timezone: z.string().min(1, 'Timezone is required'),
+  language: z.string().min(1, 'Language is required'),
+  theme: z.enum(['auto', 'light', 'dark']),
+  enableNotifications: z.boolean(),
+  enableLogging: z.boolean(),
+  logLevel: z.enum(['debug', 'info', 'warn', 'error']),
+  maxConcurrentBots: z.coerce.number().int().min(1, 'Must be at least 1').max(100, 'Must be 100 or fewer'),
+  defaultResponseTimeout: z.coerce.number().int().min(1, 'Must be at least 1 second').max(300, 'Must be 300 seconds or fewer'),
+  enableHealthChecks: z.boolean(),
+  healthCheckInterval: z.coerce.number().int().min(10, 'Must be at least 10 seconds').max(3600, 'Must be 3600 seconds or fewer'),
+  advancedMode: z.boolean(),
+});
+
+type GeneralConfig = z.infer<typeof generalSettingsSchema>;
+
+const defaultValues: GeneralConfig = {
+  instanceName: '',
+  description: '',
+  timezone: 'UTC',
+  language: 'en',
+  theme: 'auto',
+  enableNotifications: true,
+  enableLogging: true,
+  logLevel: 'info',
+  maxConcurrentBots: 10,
+  defaultResponseTimeout: 30,
+  enableHealthChecks: true,
+  healthCheckInterval: 60,
+  advancedMode: false,
+};
 
 const SettingsGeneral: React.FC = () => {
-  const [settings, setSettings] = useState<GeneralConfig>({
-    instanceName: '',
-    description: '',
-    timezone: 'UTC',
-    language: 'en',
-    theme: 'auto',
-    enableNotifications: true,
-    enableLogging: true,
-    logLevel: 'info',
-    maxConcurrentBots: 10,
-    defaultResponseTimeout: 30,
-    enableHealthChecks: true,
-    healthCheckInterval: 60,
-    advancedMode: false,
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    watch,
+    formState: { errors },
+  } = useForm<GeneralConfig>({
+    resolver: zodResolver(generalSettingsSchema),
+    defaultValues,
   });
+
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const { showStamp } = useSavedStamp();
+
+  const enableHealthChecks = watch('enableHealthChecks');
 
   // Generate timezone options dynamically
   const timezoneOptions = useMemo(() => {
@@ -83,7 +106,7 @@ const SettingsGeneral: React.FC = () => {
       // Extract relevant settings from user-saved config first, then fall back to defaults
       const userSettings = data._userSettings?.values || {};
       const config = data.config || {};
-      setSettings({
+      reset({
         instanceName: userSettings['app.name'] || config.app?.name?.value || 'Open-Hivemind Instance',
         description: userSettings['app.description'] || config.app?.description?.value || 'Multi-agent AI coordination platform',
         timezone: userSettings['app.timezone'] || config.app?.timezone?.value || 'UTC',
@@ -104,35 +127,32 @@ const SettingsGeneral: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [reset]);
 
   useEffect(() => {
     fetchSettings();
   }, [fetchSettings]);
 
-  const handleChange = (field: string, value: any) => {
-    setSettings(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleSave = async () => {
+  const onSubmit = async (values: GeneralConfig) => {
     setIsSaving(true);
     try {
       await apiService.updateGlobalConfig({
-        'app.name': settings.instanceName,
-        'app.description': settings.description,
-        'app.timezone': settings.timezone,
-        'app.language': settings.language,
-        'webui.theme': settings.theme,
-        'webui.notifications': settings.enableNotifications,
-        'logging.level': settings.logLevel,
-        'logging.enabled': settings.enableLogging,
-        'limits.maxBots': settings.maxConcurrentBots,
-        'limits.timeout': settings.defaultResponseTimeout,
-        'health.enabled': settings.enableHealthChecks,
-        'health.interval': settings.healthCheckInterval,
-        'webui.advancedMode': settings.advancedMode,
+        'app.name': values.instanceName,
+        'app.description': values.description,
+        'app.timezone': values.timezone,
+        'app.language': values.language,
+        'webui.theme': values.theme,
+        'webui.notifications': values.enableNotifications,
+        'logging.level': values.logLevel,
+        'logging.enabled': values.enableLogging,
+        'limits.maxBots': values.maxConcurrentBots,
+        'limits.timeout': values.defaultResponseTimeout,
+        'health.enabled': values.enableHealthChecks,
+        'health.interval': values.healthCheckInterval,
+        'webui.advancedMode': values.advancedMode,
       });
       setAlert({ type: 'success', message: 'Settings saved successfully!' });
+      showStamp();
       setTimeout(() => setAlert(null), 3000);
     } catch (error) {
       setAlert({ type: 'error', message: 'Failed to save settings. Some settings may require environment variables.' });
@@ -189,7 +209,7 @@ const SettingsGeneral: React.FC = () => {
   const commonCardClass = "card bg-base-100 border border-base-300 shadow-sm p-4 h-full";
 
   return (
-    <div className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="flex items-center gap-3 mb-4">
         <SettingsIcon className="w-5 h-5 text-primary" />
         <div>
@@ -214,30 +234,22 @@ const SettingsGeneral: React.FC = () => {
             Instance Information
           </h6>
 
-          <div className="form-control mb-4">
-            <label className="label py-1">
-              <span className="label-text text-sm font-medium">Instance Name</span>
-            </label>
+          <FormField label="Instance Name" error={errors.instanceName} required>
             <Input
-              value={settings.instanceName}
-              onChange={(e) => handleChange('instanceName', e.target.value)}
+              {...register('instanceName')}
               placeholder="Display name for this Open-Hivemind instance"
               size="sm"
             />
-          </div>
+          </FormField>
 
-          <div className="form-control">
-            <label className="label py-1">
-              <span className="label-text text-sm font-medium">Description</span>
-            </label>
+          <FormField label="Description" error={errors.description}>
             <textarea
               className="textarea textarea-bordered textarea-sm w-full"
-              value={settings.description}
-              onChange={(e) => handleChange('description', e.target.value)}
+              {...register('description')}
               placeholder="Brief description of this instance's purpose"
               rows={2}
             />
-          </div>
+          </FormField>
         </div>
 
         {/* Localization */}
@@ -247,25 +259,17 @@ const SettingsGeneral: React.FC = () => {
             Localization & Appearance
           </h6>
 
-          <div className="form-control mb-4">
-            <label className="label py-1">
-              <span className="label-text text-sm font-medium">Timezone</span>
-            </label>
+          <FormField label="Timezone" error={errors.timezone}>
             <Select
-              value={settings.timezone}
-              onChange={(e) => handleChange('timezone', e.target.value)}
+              {...register('timezone')}
               size="sm"
               options={timezoneOptions}
             />
-          </div>
+          </FormField>
 
-          <div className="form-control">
-            <label className="label py-1">
-              <span className="label-text text-sm font-medium">Theme</span>
-            </label>
+          <FormField label="Theme" error={errors.theme}>
             <Select
-              value={settings.theme}
-              onChange={(e) => handleChange('theme', e.target.value)}
+              {...register('theme')}
               size="sm"
               options={[
                 { value: 'auto', label: 'Auto (System)' },
@@ -273,7 +277,7 @@ const SettingsGeneral: React.FC = () => {
                 { value: 'dark', label: 'Dark' },
               ]}
             />
-          </div>
+          </FormField>
         </div>
 
         {/* Logging */}
@@ -283,13 +287,9 @@ const SettingsGeneral: React.FC = () => {
             Logging & Notifications
           </h6>
 
-          <div className="form-control mb-4">
-            <label className="label py-1">
-              <span className="label-text text-sm font-medium">Log Level</span>
-            </label>
+          <FormField label="Log Level" error={errors.logLevel}>
             <Select
-              value={settings.logLevel}
-              onChange={(e) => handleChange('logLevel', e.target.value)}
+              {...register('logLevel')}
               size="sm"
               options={[
                 { value: 'debug', label: 'Debug' },
@@ -298,20 +298,32 @@ const SettingsGeneral: React.FC = () => {
                 { value: 'error', label: 'Error' },
               ]}
             />
-          </div>
+          </FormField>
 
           <div className="space-y-3">
-            <Toggle
-              label="Enable Detailed Logging"
-              checked={settings.enableLogging}
-              onChange={(checked) => handleChange('enableLogging', checked)}
-              size="sm"
+            <Controller
+              name="enableLogging"
+              control={control}
+              render={({ field }) => (
+                <Toggle
+                  label="Enable Detailed Logging"
+                  checked={field.value}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(e.target.checked)}
+                  size="sm"
+                />
+              )}
             />
-            <Toggle
-              label="Enable Desktop Notifications"
-              checked={settings.enableNotifications}
-              onChange={(checked) => handleChange('enableNotifications', checked)}
-              size="sm"
+            <Controller
+              name="enableNotifications"
+              control={control}
+              render={({ field }) => (
+                <Toggle
+                  label="Enable Desktop Notifications"
+                  checked={field.value}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(e.target.checked)}
+                  size="sm"
+                />
+              )}
             />
           </div>
         </div>
@@ -324,55 +336,57 @@ const SettingsGeneral: React.FC = () => {
           </h6>
 
           <div className="grid grid-cols-2 gap-4 mb-4">
-            <div className="form-control">
-              <label className="label py-1">
-                <span className="label-text text-sm font-medium">Max Bots</span>
-              </label>
+            <FormField label="Max Bots" error={errors.maxConcurrentBots}>
               <Input
                 type="number"
-                value={settings.maxConcurrentBots}
-                onChange={(e) => handleChange('maxConcurrentBots', parseInt(e.target.value))}
+                {...register('maxConcurrentBots')}
                 size="sm"
               />
-            </div>
-            <div className="form-control">
-              <label className="label py-1">
-                <span className="label-text text-sm font-medium">Timeout (s)</span>
-              </label>
+            </FormField>
+            <FormField label="Timeout (s)" error={errors.defaultResponseTimeout}>
               <Input
                 type="number"
-                value={settings.defaultResponseTimeout}
-                onChange={(e) => handleChange('defaultResponseTimeout', parseInt(e.target.value))}
+                {...register('defaultResponseTimeout')}
                 size="sm"
               />
-            </div>
+            </FormField>
           </div>
 
           <div className="space-y-3">
-            <Toggle
-              label="Enable Background Health Checks"
-              checked={settings.enableHealthChecks}
-              onChange={(checked) => handleChange('enableHealthChecks', checked)}
-              size="sm"
-            />
-            {settings.enableHealthChecks && (
-              <div className="form-control mt-2 pl-4 border-l-2 border-base-300">
-                <label className="label py-1">
-                  <span className="label-text text-xs font-medium">Interval (seconds)</span>
-                </label>
-                <Input
-                  type="number"
-                  value={settings.healthCheckInterval}
-                  onChange={(e) => handleChange('healthCheckInterval', parseInt(e.target.value))}
-                  size="xs"
+            <Controller
+              name="enableHealthChecks"
+              control={control}
+              render={({ field }) => (
+                <Toggle
+                  label="Enable Background Health Checks"
+                  checked={field.value}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(e.target.checked)}
+                  size="sm"
                 />
+              )}
+            />
+            {enableHealthChecks && (
+              <div className="form-control mt-2 pl-4 border-l-2 border-base-300">
+                <FormField label="Interval (seconds)" error={errors.healthCheckInterval}>
+                  <Input
+                    type="number"
+                    {...register('healthCheckInterval')}
+                    size="xs"
+                  />
+                </FormField>
               </div>
             )}
-            <Toggle
-              label="Advanced Mode (Show all options)"
-              checked={settings.advancedMode}
-              onChange={(checked) => handleChange('advancedMode', checked)}
-              size="sm"
+            <Controller
+              name="advancedMode"
+              control={control}
+              render={({ field }) => (
+                <Toggle
+                  label="Advanced Mode (Show all options)"
+                  checked={field.value}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(e.target.checked)}
+                  size="sm"
+                />
+              )}
             />
           </div>
         </div>
@@ -380,8 +394,8 @@ const SettingsGeneral: React.FC = () => {
 
       <div className="flex justify-end pt-4 border-t border-base-300">
         <Button
+          type="submit"
           variant="primary"
-          onClick={handleSave}
           loading={isSaving}
           className="min-w-[120px]"
         >
@@ -389,7 +403,7 @@ const SettingsGeneral: React.FC = () => {
           Save Settings
         </Button>
       </div>
-    </div>
+    </form>
   );
 };
 

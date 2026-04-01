@@ -1,12 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useForm, Controller, UseFormReturn } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import {
   Rocket, Cpu, Bot, MessageSquare, CheckCircle2,
   ArrowRight, ArrowLeft, SkipForward, Sparkles,
 } from 'lucide-react';
 import Input from '../components/DaisyUI/Input';
 import Button from '../components/DaisyUI/Button';
+import FormField from '../components/DaisyUI/FormField';
+import ProgressBar from '../components/DaisyUI/ProgressBar';
+import StepWizard from '../components/DaisyUI/StepWizard';
+import { apiService } from '../services/api';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -18,6 +25,32 @@ interface LlmProfile {
   provider: string;
   modelType?: string;
 }
+
+// ---------------------------------------------------------------------------
+// Zod schemas (one per form step)
+// ---------------------------------------------------------------------------
+
+const llmStepSchema = z.object({
+  llmProvider: z.string(),
+  apiKey: z.string(),
+  model: z.string(),
+});
+
+type LlmStepValues = z.infer<typeof llmStepSchema>;
+
+const botStepSchema = z.object({
+  botName: z.string(),
+  persona: z.string(),
+});
+
+type BotStepValues = z.infer<typeof botStepSchema>;
+
+const messengerStepSchema = z.object({
+  messenger: z.string(),
+  messengerToken: z.string(),
+});
+
+type MessengerStepValues = z.infer<typeof messengerStepSchema>;
 
 // ---------------------------------------------------------------------------
 // Step content components
@@ -59,35 +92,30 @@ const WelcomeStep: React.FC = () => (
 );
 
 interface ConfigureLlmStepProps {
-  llmProvider: string;
-  apiKey: string;
-  model: string;
+  form: UseFormReturn<LlmStepValues>;
   llmProfiles: LlmProfile[];
-  onChangeLlmProvider: (v: string) => void;
-  onChangeApiKey: (v: string) => void;
-  onChangeModel: (v: string) => void;
 }
 
-const ConfigureLlmStep: React.FC<ConfigureLlmStepProps> = ({
-  llmProvider, apiKey, model, llmProfiles,
-  onChangeLlmProvider, onChangeApiKey, onChangeModel,
-}) => {
-  const providerOptions = [
-    { value: '', label: 'Select a provider...' },
-    { value: 'openai', label: 'OpenAI (GPT-4, GPT-3.5)' },
-    { value: 'anthropic', label: 'Anthropic (Claude)' },
-    { value: 'google', label: 'Google (Gemini)' },
-    { value: 'ollama', label: 'Ollama (Local)' },
-    { value: 'openrouter', label: 'OpenRouter' },
-  ];
+const providerOptions = [
+  { value: '', label: 'Select a provider...' },
+  { value: 'openai', label: 'OpenAI (GPT-4, GPT-3.5)' },
+  { value: 'anthropic', label: 'Anthropic (Claude)' },
+  { value: 'google', label: 'Google (Gemini)' },
+  { value: 'ollama', label: 'Ollama (Local)' },
+  { value: 'openrouter', label: 'OpenRouter' },
+];
 
-  const modelSuggestions: Record<string, string[]> = {
-    openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'],
-    anthropic: ['claude-sonnet-4-20250514', 'claude-3-5-sonnet-20241022', 'claude-3-haiku-20240307'],
-    google: ['gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-1.5-flash'],
-    ollama: ['llama3', 'mistral', 'codellama', 'phi3'],
-    openrouter: ['openai/gpt-4o', 'anthropic/claude-sonnet-4-20250514', 'meta-llama/llama-3-70b'],
-  };
+const modelSuggestions: Record<string, string[]> = {
+  openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'],
+  anthropic: ['claude-sonnet-4-20250514', 'claude-3-5-sonnet-20241022', 'claude-3-haiku-20240307'],
+  google: ['gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-1.5-flash'],
+  ollama: ['llama3', 'mistral', 'codellama', 'phi3'],
+  openrouter: ['openai/gpt-4o', 'anthropic/claude-sonnet-4-20250514', 'meta-llama/llama-3-70b'],
+};
+
+const ConfigureLlmStep: React.FC<ConfigureLlmStepProps> = ({ form, llmProfiles }) => {
+  const { register, control, watch, formState: { errors } } = form;
+  const llmProvider = watch('llmProvider');
 
   return (
     <div className="space-y-6">
@@ -108,138 +136,123 @@ const ConfigureLlmStep: React.FC<ConfigureLlmStepProps> = ({
         </div>
       )}
 
-      <div className="form-control">
-        <label className="label" htmlFor="onboarding-llm-provider">
-          <span className="label-text font-medium">LLM Provider</span>
-        </label>
-        <select
-          id="onboarding-llm-provider"
-          className="select select-bordered w-full"
-          value={llmProvider}
-          onChange={(e) => {
-            onChangeLlmProvider(e.target.value);
-            onChangeModel('');
-          }}
-        >
-          {providerOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
-      </div>
+      <FormField label="LLM Provider" error={errors.llmProvider}>
+        <Controller
+          name="llmProvider"
+          control={control}
+          render={({ field }) => (
+            <select
+              id="onboarding-llm-provider"
+              className="select select-bordered w-full"
+              value={field.value}
+              onChange={(e) => {
+                field.onChange(e.target.value);
+                form.setValue('model', '');
+              }}
+            >
+              {providerOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          )}
+        />
+      </FormField>
 
       {llmProvider && llmProvider !== 'ollama' && (
-        <div className="form-control">
-          <label className="label" htmlFor="onboarding-api-key">
-            <span className="label-text font-medium">API Key</span>
-          </label>
+        <FormField label="API Key" error={errors.apiKey} hint="Your key is stored securely and never leaves this server.">
           <Input
             id="onboarding-api-key"
             type="password"
             placeholder={`Enter your ${llmProvider} API key`}
-            value={apiKey}
-            onChange={(e) => onChangeApiKey(e.target.value)}
+            {...register('apiKey')}
           />
-          <label className="label">
-            <span className="label-text-alt text-base-content/50">
-              Your key is stored securely and never leaves this server.
-            </span>
-          </label>
-        </div>
+        </FormField>
       )}
 
       {llmProvider && (
-        <div className="form-control">
-          <label className="label" htmlFor="onboarding-model">
-            <span className="label-text font-medium">Model</span>
-          </label>
-          <select
-            id="onboarding-model"
-            className="select select-bordered w-full"
-            value={model}
-            onChange={(e) => onChangeModel(e.target.value)}
-          >
-            <option value="">Select a model...</option>
-            {(modelSuggestions[llmProvider] || []).map((m) => (
-              <option key={m} value={m}>{m}</option>
-            ))}
-          </select>
-        </div>
+        <FormField label="Model" error={errors.model}>
+          <Controller
+            name="model"
+            control={control}
+            render={({ field }) => (
+              <select
+                id="onboarding-model"
+                className="select select-bordered w-full"
+                value={field.value}
+                onChange={(e) => field.onChange(e.target.value)}
+              >
+                <option value="">Select a model...</option>
+                {(modelSuggestions[llmProvider] || []).map((m) => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+            )}
+          />
+        </FormField>
       )}
     </div>
   );
 };
 
 interface CreateBotStepProps {
-  botName: string;
-  persona: string;
+  form: UseFormReturn<BotStepValues>;
   llmProvider: string;
-  onChangeBotName: (v: string) => void;
-  onChangePersona: (v: string) => void;
 }
 
-const CreateBotStep: React.FC<CreateBotStepProps> = ({
-  botName, persona, llmProvider, onChangeBotName, onChangePersona,
-}) => (
-  <div className="space-y-6">
-    <div className="text-center mb-4">
-      <h3 className="text-xl font-bold">Create Your First Bot</h3>
-      <p className="text-base-content/70 text-sm">
-        Give your bot a name and personality. You can always change these later.
-      </p>
-    </div>
+const CreateBotStep: React.FC<CreateBotStepProps> = ({ form, llmProvider }) => {
+  const { register, formState: { errors } } = form;
 
-    <div className="form-control">
-      <label className="label" htmlFor="onboarding-bot-name">
-        <span className="label-text font-medium">Bot Name <span className="text-error">*</span></span>
-      </label>
-      <Input
-        id="onboarding-bot-name"
-        placeholder="e.g. HelpBot, CodeAssistant, TeamBot"
-        value={botName}
-        onChange={(e) => onChangeBotName(e.target.value)}
-        autoFocus
-      />
-    </div>
-
-    <div className="form-control">
-      <label className="label" htmlFor="onboarding-persona">
-        <span className="label-text font-medium">Persona / System Prompt</span>
-      </label>
-      <textarea
-        id="onboarding-persona"
-        className="textarea textarea-bordered h-28 w-full"
-        placeholder="You are a helpful assistant that..."
-        value={persona}
-        onChange={(e) => onChangePersona(e.target.value)}
-      />
-      <label className="label">
-        <span className="label-text-alt text-base-content/50">
-          Describe how the bot should behave. Leave blank for a general-purpose assistant.
-        </span>
-      </label>
-    </div>
-
-    {llmProvider && (
-      <div className="alert bg-base-200">
-        <Cpu className="w-5 h-5 text-primary" />
-        <span>
-          This bot will use <strong className="capitalize">{llmProvider}</strong> as its LLM provider (configured in the previous step).
-        </span>
+  return (
+    <div className="space-y-6">
+      <div className="text-center mb-4">
+        <h3 className="text-xl font-bold">Create Your First Bot</h3>
+        <p className="text-base-content/70 text-sm">
+          Give your bot a name and personality. You can always change these later.
+        </p>
       </div>
-    )}
-  </div>
-);
+
+      <FormField label="Bot Name" error={errors.botName} required>
+        <Input
+          id="onboarding-bot-name"
+          placeholder="e.g. HelpBot, CodeAssistant, TeamBot"
+          autoFocus
+          {...register('botName')}
+        />
+      </FormField>
+
+      <FormField
+        label="Persona / System Prompt"
+        error={errors.persona}
+        hint="Describe how the bot should behave. Leave blank for a general-purpose assistant."
+      >
+        <textarea
+          id="onboarding-persona"
+          className="textarea textarea-bordered h-28 w-full"
+          placeholder="You are a helpful assistant that..."
+          {...register('persona')}
+        />
+      </FormField>
+
+      {llmProvider && (
+        <div className="alert bg-base-200">
+          <Cpu className="w-5 h-5 text-primary" />
+          <span>
+            This bot will use <strong className="capitalize">{llmProvider}</strong> as its LLM provider (configured in the previous step).
+          </span>
+        </div>
+      )}
+    </div>
+  );
+};
 
 interface ConnectMessengerStepProps {
-  messenger: string;
-  messengerToken: string;
-  onChangeMessenger: (v: string) => void;
-  onChangeMessengerToken: (v: string) => void;
+  form: UseFormReturn<MessengerStepValues>;
 }
 
-const ConnectMessengerStep: React.FC<ConnectMessengerStepProps> = ({
-  messenger, messengerToken, onChangeMessenger, onChangeMessengerToken,
-}) => {
+const ConnectMessengerStep: React.FC<ConnectMessengerStepProps> = ({ form }) => {
+  const { register, control, watch, formState: { errors } } = form;
+  const messenger = watch('messenger');
+
   const instructions: Record<string, React.ReactNode> = {
     discord: (
       <div className="space-y-2 text-sm">
@@ -277,29 +290,35 @@ const ConnectMessengerStep: React.FC<ConnectMessengerStepProps> = ({
         </p>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
-        {[
-          { id: 'discord', label: 'Discord', color: 'bg-[#5865F2]' },
-          { id: 'slack', label: 'Slack', color: 'bg-[#4A154B]' },
-          { id: 'mattermost', label: 'Mattermost', color: 'bg-[#0058CC]' },
-        ].map((m) => (
-          <button
-            key={m.id}
-            className={`card p-4 text-center cursor-pointer transition-all border-2 ${
-              messenger === m.id
-                ? 'border-primary bg-primary/5 shadow-lg'
-                : 'border-base-300 hover:border-primary/30'
-            }`}
-            onClick={() => onChangeMessenger(m.id)}
-            type="button"
-          >
-            <div className={`w-10 h-10 ${m.color} rounded-lg mx-auto mb-2 flex items-center justify-center`}>
-              <MessageSquare className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-semibold text-sm">{m.label}</span>
-          </button>
-        ))}
-      </div>
+      <Controller
+        name="messenger"
+        control={control}
+        render={({ field }) => (
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { id: 'discord', label: 'Discord', color: 'bg-[#5865F2]' },
+              { id: 'slack', label: 'Slack', color: 'bg-[#4A154B]' },
+              { id: 'mattermost', label: 'Mattermost', color: 'bg-[#0058CC]' },
+            ].map((m) => (
+              <button
+                key={m.id}
+                className={`card p-4 text-center cursor-pointer transition-all border-2 ${
+                  field.value === m.id
+                    ? 'border-primary bg-primary/5 shadow-lg'
+                    : 'border-base-300 hover:border-primary/30'
+                }`}
+                onClick={() => field.onChange(m.id)}
+                type="button"
+              >
+                <div className={`w-10 h-10 ${m.color} rounded-lg mx-auto mb-2 flex items-center justify-center`}>
+                  <MessageSquare className="w-5 h-5 text-white" />
+                </div>
+                <span className="font-semibold text-sm">{m.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      />
 
       {messenger && (
         <>
@@ -308,18 +327,14 @@ const ConnectMessengerStep: React.FC<ConnectMessengerStepProps> = ({
             {instructions[messenger]}
           </div>
 
-          <div className="form-control">
-            <label className="label" htmlFor="onboarding-messenger-token">
-              <span className="label-text font-medium">Bot Token</span>
-            </label>
+          <FormField label="Bot Token" error={errors.messengerToken}>
             <Input
               id="onboarding-messenger-token"
               type="password"
               placeholder={`Paste your ${messenger} bot token`}
-              value={messengerToken}
-              onChange={(e) => onChangeMessengerToken(e.target.value)}
+              {...register('messengerToken')}
             />
-          </div>
+          </FormField>
         </>
       )}
     </div>
@@ -390,19 +405,24 @@ const OnboardingPage: React.FC = () => {
   // Wizard state
   const [step, setStep] = useState(1);
 
-  // Step 2 - LLM
-  const [llmProvider, setLlmProvider] = useState('');
-  const [apiKey, setApiKey] = useState('');
-  const [model, setModel] = useState('');
+  // Per-step react-hook-form instances
+  const llmForm = useForm<LlmStepValues>({
+    resolver: zodResolver(llmStepSchema),
+    defaultValues: { llmProvider: '', apiKey: '', model: '' },
+  });
+
+  const botForm = useForm<BotStepValues>({
+    resolver: zodResolver(botStepSchema),
+    defaultValues: { botName: '', persona: '' },
+  });
+
+  const messengerForm = useForm<MessengerStepValues>({
+    resolver: zodResolver(messengerStepSchema),
+    defaultValues: { messenger: '', messengerToken: '' },
+  });
+
+  // Existing LLM profiles (fetched on mount)
   const [llmProfiles, setLlmProfiles] = useState<LlmProfile[]>([]);
-
-  // Step 3 - Bot
-  const [botName, setBotName] = useState('');
-  const [persona, setPersona] = useState('');
-
-  // Step 4 - Messenger
-  const [messenger, setMessenger] = useState('');
-  const [messengerToken, setMessengerToken] = useState('');
 
   // UI state
   const [saving, setSaving] = useState(false);
@@ -412,11 +432,8 @@ const OnboardingPage: React.FC = () => {
   useEffect(() => {
     const fetchProfiles = async () => {
       try {
-        const res = await fetch('/api/config/llm-profiles');
-        if (res.ok) {
-          const data = await res.json();
-          setLlmProfiles(data?.llm || data?.profiles?.llm || data?.data || []);
-        }
+        const data: any = await apiService.get('/api/config/llm-profiles');
+        setLlmProfiles(data?.llm || data?.profiles?.llm || data?.data || []);
       } catch {
         // Non-critical, ignore
       }
@@ -427,11 +444,7 @@ const OnboardingPage: React.FC = () => {
   // Persist step progress to backend
   const syncStep = useCallback(async (s: number) => {
     try {
-      await fetch('/api/onboarding/step', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ step: s }),
-      });
+      await apiService.post('/api/onboarding/step', { step: s });
     } catch {
       // Best-effort, don't block navigation
     }
@@ -455,39 +468,35 @@ const OnboardingPage: React.FC = () => {
     setSaving(true);
     setError(null);
 
+    const llmValues = llmForm.getValues();
+    const botValues = botForm.getValues();
+    const messengerValues = messengerForm.getValues();
+
     try {
       // Save LLM config if provided
-      if (llmProvider && apiKey) {
-        await fetch('/api/config/global', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            configName: llmProvider,
-            updates: {
-              [`${llmProvider}.apiKey`]: apiKey,
-              ...(model ? { [`${llmProvider}.model`]: model } : {}),
-            },
-          }),
+      if (llmValues.llmProvider && llmValues.apiKey) {
+        await apiService.put('/api/config/global', {
+          configName: llmValues.llmProvider,
+          updates: {
+            [`${llmValues.llmProvider}.apiKey`]: llmValues.apiKey,
+            ...(llmValues.model ? { [`${llmValues.llmProvider}.model`]: llmValues.model } : {}),
+          },
         });
       }
 
       // Create bot if name provided
-      if (botName.trim()) {
-        await fetch('/api/bots', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: botName,
-            description: persona || 'Created during onboarding',
-            messageProvider: messenger || 'discord',
-            ...(llmProvider ? { llmProvider } : {}),
-            persona: 'default',
-          }),
+      if (botValues.botName.trim()) {
+        await apiService.post('/api/bots', {
+          name: botValues.botName,
+          description: botValues.persona || 'Created during onboarding',
+          messageProvider: messengerValues.messenger || 'discord',
+          ...(llmValues.llmProvider ? { llmProvider: llmValues.llmProvider } : {}),
+          persona: 'default',
         });
       }
 
       // Mark onboarding complete
-      await fetch('/api/onboarding/complete', { method: 'POST' });
+      await apiService.post('/api/onboarding/complete');
 
       navigate('/admin/overview');
     } catch (err) {
@@ -499,7 +508,7 @@ const OnboardingPage: React.FC = () => {
 
   const handleSkipAll = async () => {
     try {
-      await fetch('/api/onboarding/complete', { method: 'POST' });
+      await apiService.post('/api/onboarding/complete');
     } catch {
       // Best-effort
     }
@@ -507,6 +516,11 @@ const OnboardingPage: React.FC = () => {
   };
 
   const progressPercent = ((step - 1) / (TOTAL_STEPS - 1)) * 100;
+
+  // Read current values for the summary step
+  const llmProvider = llmForm.watch('llmProvider');
+  const botName = botForm.watch('botName');
+  const messenger = messengerForm.watch('messenger');
 
   return (
     <div className="min-h-screen bg-base-200 flex flex-col">
@@ -528,14 +542,12 @@ const OnboardingPage: React.FC = () => {
 
       {/* Progress bar */}
       <div className="px-6 pt-6 pb-2 max-w-4xl mx-auto w-full">
-        <div className="flex justify-between text-sm text-base-content/60 mb-2">
-          <span>Setup Progress</span>
-          <span>{Math.round(progressPercent)}% Complete</span>
-        </div>
-        <progress
-          className="progress progress-primary w-full"
+        <ProgressBar
           value={progressPercent}
-          max="100"
+          max={100}
+          color="primary"
+          label="Setup Progress"
+          showPercentage={true}
         />
       </div>
 
@@ -573,30 +585,19 @@ const OnboardingPage: React.FC = () => {
             {step === 1 && <WelcomeStep />}
             {step === 2 && (
               <ConfigureLlmStep
-                llmProvider={llmProvider}
-                apiKey={apiKey}
-                model={model}
+                form={llmForm}
                 llmProfiles={llmProfiles}
-                onChangeLlmProvider={setLlmProvider}
-                onChangeApiKey={setApiKey}
-                onChangeModel={setModel}
               />
             )}
             {step === 3 && (
               <CreateBotStep
-                botName={botName}
-                persona={persona}
+                form={botForm}
                 llmProvider={llmProvider}
-                onChangeBotName={setBotName}
-                onChangePersona={setPersona}
               />
             )}
             {step === 4 && (
               <ConnectMessengerStep
-                messenger={messenger}
-                messengerToken={messengerToken}
-                onChangeMessenger={setMessenger}
-                onChangeMessengerToken={setMessengerToken}
+                form={messengerForm}
               />
             )}
             {step === 5 && (

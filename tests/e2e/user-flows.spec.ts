@@ -70,7 +70,6 @@ test.describe('User Flows', () => {
       .first();
     if ((await createBtn.count()) > 0) {
       await createBtn.click();
-      await page.waitForTimeout(500);
 
       // Fill form
       const nameInput = page.locator('input').first();

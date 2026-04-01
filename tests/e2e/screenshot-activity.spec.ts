@@ -129,7 +129,6 @@ test.describe('Activity Page Screenshots', () => {
     await expect(page.getByRole('table')).toBeVisible();
 
     // Wait a bit for filters to populate
-    await page.waitForTimeout(500);
 
     // Take screenshot
     await page.screenshot({ path: 'docs/screenshots/activity-page.png', fullPage: true });

@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { ApiResponse } from '@src/server/utils/apiResponse';
 
 const router = Router();
 
@@ -19,7 +20,7 @@ router.get(['/openapi', '/openapi.json', '/openapi.yaml', '/openapi.yml'], (req,
     return;
   }
 
-  res.json(spec);
+  res.json(ApiResponse.success(spec));
 });
 
 function buildSpec(baseUrl: string) {
@@ -37,6 +38,7 @@ function buildSpec(baseUrl: string) {
         description: 'Current server',
       },
     ],
+
     paths: {
       ...require('../schemas/config.schema.json'),
       ...require('../schemas/monitoring.schema.json'),

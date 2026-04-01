@@ -36,9 +36,13 @@ import { LLM_PROVIDER_CONFIGS } from '../types/bot';
 import ProviderConfigModal from '../components/ProviderConfiguration/ProviderConfigModal';
 import { apiService } from '../services/api';
 import useUrlParams from '../hooks/useUrlParams';
-import { useApiQuery } from '../hooks/useApiQuery';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useBulkSelection } from '../hooks/useBulkSelection';
 import BulkActionBar from '../components/BulkActionBar';
+import Checkbox from '../components/DaisyUI/Checkbox';
+import Toggle from '../components/DaisyUI/Toggle';
+import { useWebSocket } from '../contexts/WebSocketContext';
+import { useSavedStamp } from '../contexts/SavedStampContext';
 
 type LlmModelType = 'chat' | 'embedding' | 'both';
 
@@ -62,6 +66,7 @@ const isEmbeddingCapable = (profile: any): boolean => {
 const LLMProvidersPage: React.FC = () => {
   const { modalState, openAddModal, openEditModal, closeModal } = useModal();
   const errorToast = useErrorToast();
+  const { showStamp } = useSavedStamp();
   const [profiles, setProfiles] = useState<any[]>([]);
   const [defaultStatus, setDefaultStatus] = useState<any>(null);
   const [expandedProfile, setExpandedProfile] = useState<string | null>(null);
@@ -70,6 +75,7 @@ const LLMProvidersPage: React.FC = () => {
   const [defaultChatbotProfile, setDefaultChatbotProfile] = useState<string>('');
   const [defaultEmbeddingProvider, setDefaultEmbeddingProvider] = useState<string>('');
   const [perUseCaseEnabled, setPerUseCaseEnabled] = useState<boolean>(false);
+  const [taskProfiles, setTaskProfiles] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { values: urlParams, setValue: setUrlParam } = useUrlParams({
@@ -84,25 +90,42 @@ const LLMProvidersPage: React.FC = () => {
     isOpen: boolean; title: string; message: string; onConfirm: () => void;
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
+  const queryClient = useQueryClient();
+
   // Cached queries for LLM profiles, status, and global config
   const {
     data: profilesRes,
-    loading: profilesLoading,
+    isLoading: profilesLoading,
     error: profilesError,
     refetch: refetchProfiles,
-  } = useApiQuery<any>('/api/config/llm-profiles', { ttl: 30_000 });
+  } = useQuery<any>({
+    queryKey: ['config', 'llm-profiles'],
+    queryFn: () => apiService.get('/api/config/llm-profiles'),
+    staleTime: 30_000,
+    gcTime: 60_000,
+  });
 
   const {
     data: statusRes,
-    loading: statusLoading,
+    isLoading: statusLoading,
     refetch: refetchStatus,
-  } = useApiQuery<any>('/api/config/llm-status', { ttl: 30_000 });
+  } = useQuery<any>({
+    queryKey: ['config', 'llm-status'],
+    queryFn: () => apiService.get('/api/config/llm-status'),
+    staleTime: 30_000,
+    gcTime: 60_000,
+  });
 
   const {
     data: globalRes,
-    loading: globalLoading,
+    isLoading: globalLoading,
     refetch: refetchGlobal,
-  } = useApiQuery<any>('/api/config/global', { ttl: 30_000 });
+  } = useQuery<any>({
+    queryKey: ['config', 'global'],
+    queryFn: () => apiService.get('/api/config/global'),
+    staleTime: 30_000,
+    gcTime: 60_000,
+  });
 
   // Derive state from cached responses
   useEffect(() => {
@@ -126,6 +149,7 @@ const LLMProvidersPage: React.FC = () => {
       setDefaultChatbotProfile(gs.defaultChatbotProfile || '');
       setDefaultEmbeddingProvider(llmValues.DEFAULT_EMBEDDING_PROVIDER || gs.defaultEmbeddingProfile || '');
       setPerUseCaseEnabled(!!gs.perUseCaseEnabled);
+      setTaskProfiles(gs.taskProfiles || {});
     }
   }, [globalRes]);
 
@@ -137,6 +161,23 @@ const LLMProvidersPage: React.FC = () => {
   useEffect(() => {
     if (profilesError) setError(profilesError.message);
   }, [profilesError]);
+
+  // Auto-refresh when config changes are broadcast via WebSocket
+  const { configVersion, lastConfigChange } = useWebSocket();
+  const configVersionRef = React.useRef(configVersion);
+  useEffect(() => {
+    // Skip the initial mount (configVersion starts at 0)
+    if (configVersionRef.current === configVersion) return;
+    configVersionRef.current = configVersion;
+
+    // Only refetch when relevant config types change
+    const relevantTypes = ['llm-profiles', 'global'];
+    if (lastConfigChange?.type && !relevantTypes.includes(lastConfigChange.type)) return;
+
+    refetchProfiles();
+    refetchStatus();
+    refetchGlobal();
+  }, [configVersion, lastConfigChange, refetchProfiles, refetchStatus, refetchGlobal]);
 
   const fetchProfiles = useCallback(async () => {
     await Promise.all([refetchProfiles(), refetchStatus(), refetchGlobal()]);
@@ -203,6 +244,7 @@ const LLMProvidersPage: React.FC = () => {
         await apiService.post('/api/config/llm-profiles', payload);
       }
       closeModal();
+      showStamp();
       fetchProfiles();
     } catch (err: any) { errorToast('Save Failed', `Failed to save: ${err.message}`); }
   };
@@ -422,8 +464,7 @@ const LLMProvidersPage: React.FC = () => {
               When enabled, assign different profiles to summarisation, moderation, and other tasks independently.
             </p>
           </div>
-          <input
-            type="checkbox"
+          <Toggle
             className="toggle toggle-primary"
             checked={perUseCaseEnabled}
             onChange={async (e) => {
@@ -433,6 +474,37 @@ const LLMProvidersPage: React.FC = () => {
           />
         </div>
       </Card>
+
+      {perUseCaseEnabled && (
+        <Card className="bg-base-100 shadow-sm border border-base-200">
+          <div className="card-body p-5 space-y-3">
+            <h3 className="font-bold text-sm">Task Profile Assignments</h3>
+            <p className="text-xs opacity-60">
+              Assign a profile to each task. Tasks without a profile will use the default provider.
+            </p>
+            {(['semantic', 'summary', 'followup', 'idle'] as const).map((task) => (
+              <div key={task} className="flex items-center gap-3">
+                <label className="w-28 text-sm capitalize">{task}</label>
+                <select
+                  className="select select-bordered select-sm flex-1"
+                  value={taskProfiles[task] || ''}
+                  onChange={async (e) => {
+                    const updated = { ...taskProfiles, [task]: e.target.value || undefined };
+                    if (!e.target.value) delete updated[task];
+                    setTaskProfiles(updated);
+                    await saveGlobal({ taskProfiles: updated }).catch(() => {});
+                  }}
+                >
+                  <option value="">— Default —</option>
+                  {profiles.map((p: any) => (
+                    <option key={p.key} value={p.key}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       <div className="divider">Custom Profiles</div>
 
@@ -473,8 +545,7 @@ const LLMProvidersPage: React.FC = () => {
       ) : (
         <>
           <div className="flex items-center gap-2 mb-2">
-            <input
-              type="checkbox"
+            <Checkbox
               className="checkbox checkbox-sm checkbox-primary"
               checked={bulk.isAllSelected}
               onChange={() => bulk.toggleAll(filteredProfileKeys)}
@@ -502,8 +573,7 @@ const LLMProvidersPage: React.FC = () => {
               <div className="card-body p-0">
                 <div className="p-4 flex items-center justify-between cursor-pointer" onClick={() => toggleExpand(profile.key)}>
                   <div className="flex items-center gap-4">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       className="checkbox checkbox-sm checkbox-primary"
                       checked={bulk.isSelected(profile.key)}
                       onChange={(e) => { e.stopPropagation(); bulk.toggleItem(profile.key, e as any); }}

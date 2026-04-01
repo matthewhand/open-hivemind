@@ -16,15 +16,15 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
     this.mattermostService = mattermostService || MattermostService.getInstance();
   }
 
-  getSchema() {
+  getSchema(): any {
     return mattermostConfig.getSchema();
   }
 
-  getConfig() {
+  getConfig(): typeof mattermostConfig {
     return mattermostConfig;
   }
 
-  getSensitiveKeys() {
+  getSensitiveKeys(): string[] {
     return ['MATTERMOST_TOKEN'];
   }
 
@@ -33,7 +33,7 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
    * Note: This currently simulates connection status and should be updated
    * to perform a real API check in the future.
    */
-  async getStatus() {
+  async getStatus(): Promise<{ ok: boolean; bots: any[]; count: number }> {
     const mattermost = this.mattermostService;
     const botNames = mattermost.getBotNames();
     const bots = botNames.map((name: string) => {
@@ -55,19 +55,19 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
     };
   }
 
-  getBotNames() {
+  getBotNames(): string[] {
     return this.mattermostService.getBotNames();
   }
 
   /**
    * Retrieves the current list of bots.
    */
-  async getBots() {
+  async getBots(): Promise<any[]> {
     const status = await this.getStatus();
     return status.bots;
   }
 
-  async addBot(config: any) {
+  async addBot(config: any): Promise<void> {
     const { name } = config;
 
     // Since MattermostProvider does not fully implement addBot yet, we

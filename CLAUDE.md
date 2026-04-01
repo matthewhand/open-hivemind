@@ -7,6 +7,15 @@
 - Workspace packages (`packages/*`) do not need compiled `dist/` output; `tsx` resolves their source via tsconfig path aliases at runtime.
 - To verify the server starts correctly: `timeout 30 npm run dev` — look for `🎉 Open Hivemind Unified Server startup complete!` in the output.
 
+## Feature Flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `HTTP_ENABLED` | `true` | Enable the HTTP server and WebUI |
+| `SKIP_MESSENGERS` | `false` | Skip messenger service initialization |
+| `WEBHOOK_ENABLED` | `false` | Enable the webhook service |
+| `USE_LEGACY_HANDLER` | `false` | Revert to the legacy monolithic `handleMessage()` instead of the 5-stage pipeline. The pipeline is the default message processing path. |
+
 ## Screenshot Convention
 
 ### Directory roles

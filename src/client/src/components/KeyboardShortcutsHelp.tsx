@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Shortcut } from '../hooks/useKeyboardShortcuts';
+import { Kbd } from './DaisyUI';
 
 interface KeyboardShortcutsHelpProps {
   isOpen: boolean;
@@ -78,7 +79,7 @@ const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
                     {formatKey(s).split(' + ').map((part, i) => (
                       <React.Fragment key={i}>
                         {i > 0 && <span className="text-base-content/40 mx-0.5">+</span>}
-                        <kbd className="kbd kbd-sm">{part}</kbd>
+                        <Kbd size="sm">{part}</Kbd>
                       </React.Fragment>
                     ))}
                   </td>
@@ -90,7 +91,7 @@ const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
 
         {/* Footer */}
         <div className="px-5 py-3 border-t border-base-300 text-xs text-base-content/50 text-center">
-          Press <kbd className="kbd kbd-xs">Esc</kbd> to close
+          Press <Kbd size="xs">Esc</Kbd> to close
         </div>
       </div>
     </div>

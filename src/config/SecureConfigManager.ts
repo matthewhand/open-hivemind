@@ -25,7 +25,7 @@ export class SecureConfigManager {
   private static instance: SecureConfigManager;
   private readonly configDir: string;
   private readonly backupDir: string;
-  private readonly encryptionKey: Buffer;
+  private encryptionKey: Buffer;
   private readonly algorithm = 'aes-256-gcm';
   private readonly keyPath: string;
   private readonly mainConfigDir: string;
@@ -371,7 +371,7 @@ export class SecureConfigManager {
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug('Failed to create backup:', {
         error: hivemindError.message,
-        errorCode: hivemindError.code,
+        errorCode: ErrorUtils.getCode(hivemindError),
         errorType: errorInfo.type,
         severity: errorInfo.severity,
       });
@@ -445,7 +445,7 @@ export class SecureConfigManager {
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug(`Failed to restore backup ${backupId}:`, {
         error: hivemindError.message,
-        errorCode: hivemindError.code,
+        errorCode: ErrorUtils.getCode(hivemindError),
         errorType: errorInfo.type,
         severity: errorInfo.severity,
       });

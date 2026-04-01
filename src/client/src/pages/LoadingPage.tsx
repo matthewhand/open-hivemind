@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
+import ProgressBar from '../components/DaisyUI/ProgressBar';
 
 const LoadingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -42,15 +43,12 @@ const LoadingPage: React.FC = () => {
         <LoadingSpinner size="lg" variant="infinity" />
 
         <div className="w-full">
-          <div className="w-full bg-base-200 rounded-full h-2">
-            <div
-              className="bg-primary h-2 rounded-full transition-all duration-100 ease-out"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <p className="text-sm text-base-content/70 mt-2">
-            {Math.round(progress)}% Complete
-          </p>
+          <ProgressBar
+            value={progress}
+            max={100}
+            color="primary"
+            showPercentage={true}
+          />
         </div>
       </div>
 

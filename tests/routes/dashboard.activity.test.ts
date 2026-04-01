@@ -105,13 +105,14 @@ describe('dashboard activity route', () => {
     const response = await request(app).get('/dashboard/activity');
 
     expect(response.status).toBe(200);
-    expect(response.body.events).toHaveLength(2);
-    expect(response.body.events[0].userId).toBe('******1234');
-    expect(response.body.events[0].channelId).toBe('********C123');
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.events).toHaveLength(2);
+    expect(response.body.data.events[0].userId).toBe('******1234');
+    expect(response.body.data.events[0].channelId).toBe('********C123');
     // Pagination is no longer returned by the dashboard activity route
-    expect(response.body.filters.agents).toEqual(expect.arrayContaining(['AgentA', 'AgentB']));
-    expect(response.body.timeline.length).toBeGreaterThan(0);
-    expect(response.body.agentMetrics).toEqual(
+    expect(response.body.data.filters.agents).toEqual(expect.arrayContaining(['AgentA', 'AgentB']));
+    expect(response.body.data.timeline.length).toBeGreaterThan(0);
+    expect(response.body.data.agentMetrics).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ botName: 'AgentA', events: 1, errors: 0, totalMessages: 5 }),
         expect.objectContaining({ botName: 'AgentB', events: 1, errors: 1, totalMessages: 9 }),
@@ -146,8 +147,9 @@ describe('dashboard activity route', () => {
       .query({ bot: 'AgentA', messageProvider: 'slack', llmProvider: 'openai', from: ts, to: ts });
 
     expect(response.status).toBe(200);
-    expect(response.body.events).toHaveLength(1);
-    expect(response.body.events[0].userId).toBe('*******cret');
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.events).toHaveLength(1);
+    expect(response.body.data.events[0].userId).toBe('*******cret');
 
     // Also verify getEvents was called with correct filter
     expect(mockActivityLoggerInstance.getEvents).toHaveBeenCalledWith(
@@ -186,7 +188,7 @@ describe('dashboard activity route', () => {
 
     expect(response1.status).toBe(200);
     // All 100 events returned (route slices last 200)
-    expect(response1.body.events.length).toBeGreaterThan(0);
+    expect(response1.body.data.events.length).toBeGreaterThan(0);
   });
 
   it('supports offset parameter', async () => {
@@ -215,6 +217,6 @@ describe('dashboard activity route', () => {
 
     expect(response.status).toBe(200);
     // All 50 events returned
-    expect(response.body.events.length).toBeGreaterThan(0);
+    expect(response.body.data.events.length).toBeGreaterThan(0);
   });
 });

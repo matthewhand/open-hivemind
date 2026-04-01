@@ -15,8 +15,8 @@ export interface ConfigurationChange {
   timestamp: string;
   type: 'create' | 'update' | 'delete';
   botName?: string;
-  changes: Record<string, any>;
-  previousConfig?: Record<string, any>;
+  changes: Record<string, unknown>;
+  previousConfig?: Record<string, unknown>;
   userId?: string;
   validated: boolean;
   applied: boolean;
@@ -35,7 +35,7 @@ interface HotReloadResult {
 export class HotReloadManager {
   private static instance: HotReloadManager;
   private changeHistory: ConfigurationChange[] = [];
-  private rollbackSnapshots = new Map<string, Record<string, any>>();
+  private rollbackSnapshots = new Map<string, Record<string, unknown>>();
   private isReloading = false;
   private configWatchers = new Map<string, fs.FSWatcher>();
   private userConfigStore = UserConfigStore.getInstance();
@@ -102,11 +102,11 @@ export class HotReloadManager {
       // For now, just log the detection - full auto-reload would be implemented here
 
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+      const hivemindError = ErrorUtils.toHivemindError(error);
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug('Error detecting configuration changes:', {
         error: hivemindError.message,
-        errorCode: (hivemindError as any).code,
+        errorCode: ErrorUtils.getCode(hivemindError),
         errorType: errorInfo.type,
         severity: errorInfo.severity,
       });
@@ -187,11 +187,11 @@ export class HotReloadManager {
       }
 
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+      const hivemindError = ErrorUtils.toHivemindError(error);
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug('Error applying configuration change:', {
         error: hivemindError.message,
-        errorCode: (hivemindError as any).code,
+        errorCode: ErrorUtils.getCode(hivemindError),
         errorType: errorInfo.type,
         severity: errorInfo.severity,
       });
@@ -258,11 +258,11 @@ export class HotReloadManager {
       };
 
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+      const hivemindError = ErrorUtils.toHivemindError(error);
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug('Validation error:', {
         error: hivemindError.message,
-        errorCode: hivemindError.code,
+        errorCode: ErrorUtils.getCode(hivemindError),
         errorType: errorInfo.type,
         severity: errorInfo.severity,
       });
@@ -285,7 +285,7 @@ export class HotReloadManager {
       } else {
         // Full system snapshot
         const allBots = manager.getAllBots();
-        const snapshot: Record<string, any> = {};
+        const snapshot: Record<string, unknown> = {};
         allBots.forEach(bot => {
           snapshot[bot.name] = { ...bot };
         });
@@ -294,11 +294,11 @@ export class HotReloadManager {
 
       return snapshotId;
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+      const hivemindError = ErrorUtils.toHivemindError(error);
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug('Error creating rollback snapshot:', {
         error: hivemindError.message,
-        errorCode: hivemindError.code,
+        errorCode: ErrorUtils.getCode(hivemindError),
         errorType: errorInfo.type,
         severity: errorInfo.severity,
       });
@@ -351,11 +351,11 @@ export class HotReloadManager {
       };
 
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+      const hivemindError = ErrorUtils.toHivemindError(error);
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug('Error applying configuration changes:', {
         error: hivemindError.message,
-        errorCode: hivemindError.code,
+        errorCode: ErrorUtils.getCode(hivemindError),
         errorType: errorInfo.type,
         severity: errorInfo.severity,
       });
@@ -369,7 +369,7 @@ export class HotReloadManager {
     }
   }
 
-  private async applyBotChange(botName: string, changes: Record<string, any>): Promise<boolean> {
+  private async applyBotChange(botName: string, changes: Record<string, unknown>): Promise<boolean> {
     try {
       debug(`Applying changes to bot '${botName}':`, changes);
 
@@ -428,11 +428,11 @@ export class HotReloadManager {
 
       return true;
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+      const hivemindError = ErrorUtils.toHivemindError(error);
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug(`Error applying changes to bot '${botName}':`, {
         error: hivemindError.message,
-        errorCode: hivemindError.code,
+        errorCode: ErrorUtils.getCode(hivemindError),
         errorType: errorInfo.type,
         severity: errorInfo.severity,
         botName,
@@ -453,7 +453,7 @@ export class HotReloadManager {
       const snapshotEntries = Object.entries(snapshot);
       const restoreResults = await Promise.all(
         snapshotEntries.map(([botName, botConfig]) =>
-          this.applyBotChange(botName, botConfig as Record<string, any>)
+          this.applyBotChange(botName, botConfig as Record<string, unknown>)
         )
       );
 
@@ -471,11 +471,11 @@ export class HotReloadManager {
       debug(`Rolled back to snapshot '${snapshotId}'${failedBots.length > 0 ? ' (partial)' : ' (complete)'}`);
       return true;
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error) as any;
+      const hivemindError = ErrorUtils.toHivemindError(error);
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug('Error during rollback:', {
         error: hivemindError.message,
-        errorCode: hivemindError.code,
+        errorCode: ErrorUtils.getCode(hivemindError),
         errorType: errorInfo.type,
         severity: errorInfo.severity,
         snapshotId,
@@ -499,11 +499,11 @@ export class HotReloadManager {
         watcher.close();
         debug(`Closed file watcher for ${path}`);
       } catch (error: unknown) {
-        const hivemindError = ErrorUtils.toHivemindError(error) as any;
+        const hivemindError = ErrorUtils.toHivemindError(error);
         const errorInfo = ErrorUtils.classifyError(hivemindError);
         debug(`Error closing file watcher for ${path}:`, {
           error: hivemindError.message,
-          errorCode: hivemindError.code,
+          errorCode: ErrorUtils.getCode(hivemindError),
           errorType: errorInfo.type,
           severity: errorInfo.severity,
           path,

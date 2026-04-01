@@ -3,6 +3,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Badge from './Badge';
 import { LoadingSpinner } from './Loading';
 import { Alert } from './Alert';
+import { apiService } from '../../services/api';
+import { logger } from '../../utils/logger';
 
 interface ModelOption {
   id: string;
@@ -56,66 +58,107 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Fetch available models from provider API
+  // Fetch models from the local server catalog endpoint
+  const fetchModelsFromServer = useCallback(async (): Promise<ModelOption[] | null> => {
+    try {
+      const data = await apiService.get<any>(`/api/admin/llm-providers/${encodeURIComponent(providerType)}/models`);
+      if (!data.success || !Array.isArray(data.models)) {return null;}
+      return data.models.map((m: any) => ({
+        id: m.id,
+        name: m.name || m.id,
+        description: m.description,
+        provider: providerType,
+        contextLength: m.contextWindow,
+        pricing: m.pricing,
+      }));
+    } catch {
+      return null;
+    }
+  }, [providerType]);
+
+  // Fetch models directly from the provider API (fallback)
+  const fetchModelsFromProvider = useCallback(async (): Promise<ModelOption[] | null> => {
+    if (!apiKey) {return null;}
+
+    let endpoint = '';
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    switch (providerType) {
+    case 'openai':
+      endpoint = `${baseUrl || 'https://api.openai.com/v1'}/models`;
+      headers['Authorization'] = `Bearer ${apiKey}`;
+      break;
+    case 'anthropic':
+      endpoint = `${baseUrl || 'https://api.anthropic.com/v1'}/models`;
+      headers['x-api-key'] = apiKey;
+      headers['anthropic-version'] = '2023-06-01';
+      headers['anthropic-dangerous-direct-browser-access'] = 'true';
+      break;
+    default:
+      return null;
+    }
+
+    const response = await fetch(endpoint, { headers });
+    if (!response.ok) {return null;}
+    const data = await response.json();
+
+    switch (providerType) {
+    case 'openai':
+      return data.data?.map((model: any) => ({
+        id: model.id,
+        name: model.id,
+        description: `Owned by ${model.owned_by}`,
+        provider: 'openai',
+      })) || [];
+    case 'anthropic':
+      return data.data?.map((model: any) => ({
+        id: model.id,
+        name: model.display_name || model.id,
+        description: model.description || `Anthropic model`,
+        provider: 'anthropic',
+      })) || [];
+    default:
+      return null;
+    }
+  }, [apiKey, baseUrl, providerType]);
+
+  // Fetch available models: try local server catalog first, then provider API
   const fetchModels = useCallback(async () => {
-    if (!apiKey || providerType === 'custom') {return;}
+    if (providerType === 'custom') {return;}
 
     setIsLoading(true);
     setFetchError(null);
 
     try {
-      let endpoint = '';
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
+      // Try the local server catalog first (no API key needed, no CORS issues)
+      let models = await fetchModelsFromServer();
 
-      // Configure endpoint and headers based on provider
-      switch (providerType) {
-      case 'openai':
-        endpoint = `${baseUrl || 'https://api.openai.com/v1'}/models`;
-        headers['Authorization'] = `Bearer ${apiKey}`;
-        break;
-
-      default:
-        setIsLoading(false);
-        return;
+      // Fall back to direct provider API if server catalog unavailable
+      if ((!models || models.length === 0) && apiKey) {
+        models = await fetchModelsFromProvider();
       }
 
-      const response = await fetch(endpoint, { headers });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch models: ${response.statusText}`);
+      if (models && models.length > 0) {
+        setSuggestions(models);
+      } else if (!apiKey) {
+        // No API key and no server models -- not an error, just nothing to show
+        setSuggestions([]);
+      } else {
+        setSuggestions([]);
       }
-
-      const data = await response.json();
-
-      // Transform response data based on provider
-      let models: ModelOption[] = [];
-
-      switch (providerType) {
-      case 'openai':
-        models = data.data?.map((model: any) => ({
-          id: model.id,
-          name: model.id,
-          description: `Owned by ${model.owned_by}`,
-          provider: 'openai',
-        })) || [];
-        break;
-
-      }
-
-      setSuggestions(models);
     } catch (error) {
-      Logger.error('Failed to fetch models:', error);
+      logger.error('Failed to fetch models:', error);
       setFetchError(error instanceof Error ? error.message : 'Failed to fetch models');
     } finally {
       setIsLoading(false);
     }
-  }, [apiKey, baseUrl, providerType]);
+  }, [apiKey, providerType, fetchModelsFromServer, fetchModelsFromProvider]);
 
-  // Fetch models when API key or base URL changes
+  // Fetch models when provider type, API key, or base URL changes
   useEffect(() => {
-    if (apiKey && providerType !== 'custom') {
+    if (providerType !== 'custom') {
       fetchModels();
     }
   }, [apiKey, baseUrl, providerType, fetchModels]);
@@ -260,7 +303,7 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
           )}
 
           {/* Refresh models button */}
-          {apiKey && providerType !== 'custom' && (
+          {providerType !== 'custom' && (
             <button
               type="button"
               onClick={fetchModels}
@@ -352,9 +395,9 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
             ? 'Enter custom model name for third-party provider'
             : suggestions.length > 0
               ? `Found ${suggestions.length} available models`
-              : apiKey
-                ? 'Enter API key to load available models'
-                : 'Enter API key above to load available models'
+              : isLoading
+                ? 'Loading available models...'
+                : 'Type a model name or enter an API key to load models from the provider'
           }
         </span>
       </label>

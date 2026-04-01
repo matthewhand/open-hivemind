@@ -41,12 +41,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
 }) => {
   return (
     <div
-      className={`
-        relative overflow-hidden rounded-2xl p-6 mb-8
-        bg-gradient-to-br ${gradientMap[gradient]}
-        border border-base-300/30
-        ${className}
-      `}
+      className={`relative overflow-hidden rounded-2xl p-6 mb-8 bg-gradient-to-br ${gradientMap[gradient]} border border-base-300/30 ${className}`}
     >
       {/* Background decoration */}
       <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-radial from-primary/5 to-transparent opacity-50 blur-3xl" />
@@ -56,9 +51,9 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           {icon && (
             <div className={`p-3 rounded-xl ${iconBgMap[gradient]} backdrop-blur-sm shadow-sm flex items-center justify-center`}>
               {typeof icon === 'string' ? <span className="text-4xl">{icon}</span> :
-               (typeof icon === 'function' ? React.createElement(icon as any, { className: "w-8 h-8" }) :
-               (typeof icon === 'object' && icon && 'render' in icon) ? React.createElement(icon as any, { className: "w-8 h-8" }) :
-               (React.isValidElement(icon) ? icon : null))}
+                (typeof icon === 'function' ? React.createElement(icon as any, { className: "w-8 h-8" }) :
+                  (typeof icon === 'object' && icon && 'render' in icon) ? React.createElement(icon as any, { className: "w-8 h-8" }) :
+                    (React.isValidElement(icon) ? icon : null))}
             </div>
           )}
           <div>

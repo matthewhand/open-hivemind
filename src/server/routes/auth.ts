@@ -56,11 +56,12 @@ router.post(
       const authResult = await authManager.login(credentials);
 
       return res.json(ApiResponse.success(authResult));
-    } catch (error: any) {
-      debug('Login error:', error.message);
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      debug('Login error:', errMsg);
       return res
         .status(HTTP_STATUS.UNAUTHORIZED)
-        .json(ApiResponse.error(error.message || 'Invalid credentials', undefined, 401));
+        .json(ApiResponse.error(errMsg || 'Invalid credentials', undefined, 401));
     }
   }
 );
@@ -97,18 +98,18 @@ router.post(
   requireAdmin,
   validate(RegisterSchema),
   async (req: Request, res: Response) => {
-    const authReq = req as AuthMiddlewareRequest;
     try {
       const registerData: RegisterData = req.body;
 
       const user = await authManager.register(registerData);
 
       return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success({ user }));
-    } catch (error: any) {
-      debug('Registration error:', error.message);
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      debug('Registration error:', errMsg);
       return res
         .status(HTTP_STATUS.BAD_REQUEST)
-        .json(ApiResponse.error(error.message || 'Failed to register user', undefined, 400));
+        .json(ApiResponse.error(errMsg || 'Failed to register user', undefined, 400));
     }
   }
 );
@@ -145,11 +146,12 @@ router.post(
       const authResult = await authManager.refreshToken(refreshToken);
 
       return res.json(ApiResponse.success(authResult));
-    } catch (error: any) {
-      debug('Token refresh error:', error.message);
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      debug('Token refresh error:', errMsg);
       return res
         .status(HTTP_STATUS.UNAUTHORIZED)
-        .json(ApiResponse.error(error.message || 'Invalid refresh token', undefined, 401));
+        .json(ApiResponse.error(errMsg || 'Invalid refresh token', undefined, 401));
     }
   }
 );
@@ -181,7 +183,6 @@ router.post(
   authenticate,
   validate(LogoutSchema),
   async (req: Request, res: Response) => {
-    const authReq = req as AuthMiddlewareRequest;
     try {
       const { refreshToken } = req.body;
 
@@ -190,8 +191,9 @@ router.post(
       }
 
       return res.json(ApiResponse.success());
-    } catch (error: any) {
-      debug('Logout error:', error.message);
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      debug('Logout error:', errMsg);
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Logout failed', undefined, 500));
@@ -221,13 +223,13 @@ router.post(
     try {
       const { token } = req.body;
       const payload = authManager.verifyAccessToken(token);
-      const user = authManager.getUser((payload as any).userId);
+      const user = authManager.getUser((payload as Record<string, unknown>).userId as string);
       if (!user)
         return res
           .status(HTTP_STATUS.UNAUTHORIZED)
           .json(ApiResponse.error('User not found', undefined, 401));
       return res.json(ApiResponse.success({ user }));
-    } catch (error: any) {
+    } catch (error: unknown) {
       return res
         .status(HTTP_STATUS.UNAUTHORIZED)
         .json(ApiResponse.error('Invalid token', undefined, 401));
@@ -249,7 +251,6 @@ router.put(
   authenticate,
   validate(ChangePasswordSchema),
   async (req: Request, res: Response) => {
-    const authReq = req as AuthMiddlewareRequest;
     try {
       const { currentPassword, newPassword } = req.body;
 
@@ -302,8 +303,9 @@ router.put(
           .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
           .json(ApiResponse.error('Password change failed', undefined, 500));
       }
-    } catch (error: any) {
-      debug('Password change error:', error.message);
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      debug('Password change error:', errMsg);
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Password change failed', undefined, 500));
@@ -315,14 +317,14 @@ router.put(
  * GET /webui/api/auth/users
  * Get all users (admin only)
  */
-router.get('/users', authenticate, requireAdmin, (req: Request, res: Response) => {
-  const authReq = req as AuthMiddlewareRequest;
+router.get('/users', authenticate, requireAdmin, (_req: Request, res: Response) => {
   try {
     const users = authManager.getAllUsers();
 
     return res.json(ApiResponse.success({ users }));
-  } catch (error: any) {
-    debug('Get users error:', error.message);
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    debug('Get users error:', errMsg);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to get users', undefined, 500));
@@ -339,7 +341,6 @@ router.get(
   requireAdmin,
   validate(UserIdParamSchema),
   (req: Request, res: Response) => {
-    const authReq = req as AuthMiddlewareRequest;
     try {
       const { userId } = req.params;
       const user = authManager.getUser(userId);
@@ -351,8 +352,9 @@ router.get(
       }
 
       return res.json(ApiResponse.success({ user }));
-    } catch (error: any) {
-      debug('Get user error:', error.message);
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      debug('Get user error:', errMsg);
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to get user', undefined, 500));
@@ -370,7 +372,6 @@ router.put(
   requireAdmin,
   validate(UserIdParamSchema.merge(UpdateUserSchema)),
   async (req: Request, res: Response) => {
-    const authReq = req as AuthMiddlewareRequest;
     try {
       const { userId } = req.params;
       const updates = req.body;
@@ -388,8 +389,9 @@ router.put(
       }
 
       return res.json(ApiResponse.success({ user: updatedUser }));
-    } catch (error: any) {
-      debug('Update user error:', error.message);
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      debug('Update user error:', errMsg);
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to update user', undefined, 500));
@@ -427,8 +429,9 @@ router.delete(
       }
 
       return res.json(ApiResponse.success());
-    } catch (error: any) {
-      debug('Delete user error:', error.message);
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      debug('Delete user error:', errMsg);
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to delete user', undefined, 500));

@@ -88,7 +88,7 @@ export class MemoryManager {
         return null; // Memory not configured — this is the normal path for most bots.
       }
 
-      return this.resolveProvider(profileKey);
+      return await this.resolveProvider(profileKey);
     } catch (err) {
       debug('Error resolving memory provider for bot "%s": %O', botName, err);
       return null;

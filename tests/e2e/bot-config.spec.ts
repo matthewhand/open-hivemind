@@ -25,7 +25,6 @@ test.describe('Bot Configuration', () => {
     const cards = page.locator('[class*="card"]');
     if ((await cards.count()) > 0) {
       await cards.first().click();
-      await page.waitForTimeout(500);
     }
     await page.screenshot({ path: 'test-results/bot-config-02-details.png', fullPage: true });
 

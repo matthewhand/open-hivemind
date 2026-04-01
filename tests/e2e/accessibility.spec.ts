@@ -24,7 +24,6 @@ test.describe('Accessibility', () => {
     await navigateAndWaitReady(page, '/admin/bots');
 
     await page.keyboard.press('Tab');
-    await page.waitForTimeout(300);
     const focusedElement = await page.evaluateHandle(() => document.activeElement);
     await page.screenshot({ path: 'test-results/a11y-02-keyboard.png', fullPage: true });
 

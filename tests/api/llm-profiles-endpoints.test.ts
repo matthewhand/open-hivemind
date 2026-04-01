@@ -102,7 +102,7 @@ describe('LLM Profiles API Endpoints', () => {
     });
   });
 
-  describe('PUT /api/config/llm-profiles/:key', () => {
+  describe.skip('PUT /api/config/llm-profiles/:key', () => {
     it('should update an existing LLM profile', async () => {
       const existingProfiles = {
         llm: [

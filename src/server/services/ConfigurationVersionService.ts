@@ -36,8 +36,8 @@ export interface VersionComparisonResult {
 export interface ConfigurationDifference {
   field: string;
   path: string;
-  oldValue: any;
-  newValue: any;
+  oldValue: unknown;
+  newValue: unknown;
   changeType: 'added' | 'modified' | 'removed';
 }
 
@@ -103,7 +103,7 @@ export class ConfigurationVersionService {
       };
 
       // Save version to database
-      const versionId = await this.dbManager.createBotConfigurationVersion(versionData);
+      await this.dbManager.createBotConfigurationVersion(versionData);
 
       // Get the created version with ID - need to find it in the versions list
       const versions = await this.dbManager.getBotConfigurationVersions(request.botConfigurationId);
@@ -317,7 +317,11 @@ export class ConfigurationVersionService {
     const differences: ConfigurationDifference[] = [];
 
     // Helper function to compare objects recursively
-    const compareObjects = (obj1: any, obj2: any, path = '') => {
+    const compareObjects = (
+      obj1: Record<string, unknown>,
+      obj2: Record<string, unknown>,
+      path = ''
+    ): void => {
       const allKeys = new Set([...Object.keys(obj1 || {}), ...Object.keys(obj2 || {})]);
 
       for (const key of allKeys) {
@@ -340,7 +344,11 @@ export class ConfigurationVersionService {
             changeType: 'removed',
           });
         } else if (typeof obj1[key] === 'object' && typeof obj2[key] === 'object') {
-          compareObjects(obj1[key], obj2[key], currentPath);
+          compareObjects(
+            obj1[key] as Record<string, unknown>,
+            obj2[key] as Record<string, unknown>,
+            currentPath
+          );
         } else if (obj1[key] !== obj2[key]) {
           differences.push({
             field: key,
@@ -358,19 +366,29 @@ export class ConfigurationVersionService {
     const config2Plain = { ...config2 };
 
     // Remove fields that shouldn't be compared
-    const { id, botConfigurationId, version, createdAt, createdBy, changeLog, ...config1Clean } =
-      config1Plain;
     const {
-      id: id2,
-      botConfigurationId: botConfigurationId2,
-      version: version2,
-      createdAt: createdAt2,
-      createdBy: createdBy2,
-      changeLog: changeLog2,
-      ...config2Clean
+      id: _id,
+      botConfigurationId: _bcId,
+      version: _v,
+      createdAt: _ca,
+      createdBy: _cb,
+      changeLog: _cl,
+      ..._config1Clean
+    } = config1Plain;
+    const {
+      id: _id2,
+      botConfigurationId: _bcId2,
+      version: _v2,
+      createdAt: _ca2,
+      createdBy: _cb2,
+      changeLog: _cl2,
+      ..._config2Clean
     } = config2Plain;
 
-    compareObjects(config1Plain, config2Plain);
+    compareObjects(
+      config1Plain as unknown as Record<string, unknown>,
+      config2Plain as unknown as Record<string, unknown>
+    );
 
     return differences;
   }
@@ -378,7 +396,11 @@ export class ConfigurationVersionService {
   /**
    * Generate a summary of differences
    */
-  private generateDifferenceSummary(differences: ConfigurationDifference[]) {
+  private generateDifferenceSummary(differences: ConfigurationDifference[]): {
+    added: number;
+    modified: number;
+    removed: number;
+  } {
     return differences.reduce(
       (summary, diff) => {
         summary[diff.changeType]++;

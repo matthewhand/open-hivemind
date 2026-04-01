@@ -26,8 +26,18 @@ export type MessageProviderType = typeof MESSAGE_PROVIDER_TYPES[number];
 export const LLM_PROVIDER_TYPES = ['openai', 'anthropic', 'flowise', 'openwebui', 'perplexity', 'replicate', 'n8n', 'openswarm'] as const;
 export type LLMProviderType = typeof LLM_PROVIDER_TYPES[number];
 
-export const PERSONA_CATEGORIES = ['professional', 'creative', 'technical', 'casual', 'educational', 'entertainment'] as const;
-export type PersonaCategory = typeof PERSONA_CATEGORIES[number];
+export const PersonaCategory = {
+  GENERAL: 'general',
+  PROFESSIONAL: 'professional',
+  CREATIVE: 'creative',
+  TECHNICAL: 'technical',
+  CASUAL: 'casual',
+  EDUCATIONAL: 'educational',
+  ENTERTAINMENT: 'entertainment',
+  CUSTOMER_SERVICE: 'customer_service',
+} as const;
+
+export type PersonaCategory = typeof PersonaCategory[keyof typeof PersonaCategory];
 
 export interface MessageProvider {
   id: string;
@@ -50,11 +60,12 @@ export interface Persona {
   id: string;
   name: string;
   description: string;
-  category: PersonaCategory;
+  category: PersonaCategory | string;
   traits: PersonaTrait[];
   systemPrompt: string;
   isBuiltIn?: boolean;
   usageCount?: number;
+  avatarId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -63,6 +74,7 @@ export interface PersonaTrait {
   name: string;
   value: string;
   weight: number;
+  type?: string;
 }
 
 export interface CreatePersonaRequest {
@@ -123,14 +135,15 @@ export interface Bot {
   mcpGuardProfile?: string;
   persona?: string;
   systemInstruction?: string;
-  mcpServers?: string[];
+  mcpServers?: Array<{ name: string; serverUrl?: string }> | string[];
   mcpGuard?: {
     enabled: boolean;
     type: 'owner' | 'custom';
     allowedUserIds?: string[];
   };
-  isActive: boolean;
+  isActive?: boolean;
   envOverrides?: Record<string, any>;
+  metadata?: Record<string, any>;
   discord?: {
     token?: string;
     clientId?: string;
@@ -183,78 +196,25 @@ export interface Bot {
     swarmId?: string;
     team?: string;
   };
-  createdAt: string;
-  updatedAt: string;
+  perplexity?: {
+    apiKey?: string;
+    model?: string;
+  };
+  replicate?: {
+    apiKey?: string;
+    model?: string;
+    version?: string;
+  };
+  n8n?: {
+    apiUrl?: string;
+    apiKey?: string;
+    workflowId?: string;
+  };
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-export interface CreateBotRequest {
-  name: string;
-  messageProvider: string;
-  llmProvider?: string;
-  llmProfile?: string;
-  responseProfile?: string;
-  persona?: string;
-  systemInstruction?: string;
-  mcpServers?: string[];
-  mcpGuard?: {
-    enabled: boolean;
-    type: 'owner' | 'custom';
-    allowedUserIds?: string[];
-  };
-  isActive: boolean;
-  discord?: {
-    token?: string;
-    clientId?: string;
-    guildId?: string;
-    channelId?: string;
-    voiceChannelId?: string;
-  };
-  slack?: {
-    botToken?: string;
-    appToken?: string;
-    signingSecret?: string;
-    teamId?: string;
-    channels?: string[];
-    defaultChannelId?: string;
-    mode?: string;
-  };
-  mattermost?: {
-    url?: string;
-    accessToken?: string;
-    teamId?: string;
-    channelId?: string;
-    channel?: string;
-  };
-  openai?: {
-    apiKey?: string;
-    model?: string;
-    temperature?: number;
-    maxTokens?: number;
-    baseUrl?: string;
-  };
-  anthropic?: {
-    apiKey?: string;
-    model?: string;
-    temperature?: number;
-    maxTokens?: number;
-  };
-  flowise?: {
-    apiKey?: string;
-    apiUrl?: string;
-    chatflowId?: string;
-  };
-  openwebui?: {
-    apiKey?: string;
-    apiUrl?: string;
-    model?: string;
-  };
-  openswarm?: {
-    apiKey?: string;
-    apiUrl?: string;
-    swarmId?: string;
-    team?: string;
-  };
-}
+export type CreateBotRequest = Omit<Bot, 'id' | 'createdAt' | 'updatedAt' | 'metadata'>;
 
 export const MESSAGE_PROVIDER_CONFIGS = {
   slack: {

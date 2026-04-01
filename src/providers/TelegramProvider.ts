@@ -44,34 +44,44 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
   docsUrl = 'https://core.telegram.org/bots/api';
   helpText = 'Create a Telegram bot using BotFather and get the API token.';
 
-  getSchema() {
-    return telegramConfig.getSchema();
+  getSchema(): Record<string, unknown> {
+    return telegramConfig.getSchema() as unknown as Record<string, unknown>;
   }
 
-  getConfig() {
+  getConfig(): typeof telegramConfig {
     return telegramConfig;
   }
 
-  getSensitiveKeys() {
+  getSensitiveKeys(): string[] {
     return ['TELEGRAM_BOT_TOKEN'];
   }
 
-  async getStatus() {
+  async getStatus(): Promise<{
+    ok: boolean;
+    bots: Array<{
+      provider: string;
+      name: string;
+      connected: boolean;
+      status?: Record<string, unknown>;
+    }>;
+    count: number;
+  }> {
     // We read directly from messengers.json (as in reload and addBot)
     // because dynamic bot instances are stored there, rather than in the convict config.
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const messengersPath = path.join(configDir, 'providers', 'messengers.json');
-    let instances: any[] = [];
+    let instances: Array<{ name?: string; token: string; llm?: string }> = [];
     try {
       const content = await fs.promises.readFile(messengersPath, 'utf8');
-      const cfg = JSON.parse(content);
-      instances = cfg.telegram?.instances || [];
-    } catch (e: any) {
+      const cfg = JSON.parse(content) as Record<string, unknown>;
+      const telegramCfg = cfg.telegram as Record<string, unknown> | undefined;
+      instances = (telegramCfg?.instances as typeof instances) || [];
+    } catch {
       // Ignore reading or parsing errors, instances will be empty
     }
 
     const botPromises = await Promise.allSettled(
-      instances.map(async (inst: any) => {
+      instances.map(async (inst) => {
         let connected = false;
         const name = inst.name || 'telegram';
         const reconManager = this.reconManagers.get(name);
@@ -89,9 +99,10 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
               const data = await response.json();
               connected = data.ok === true;
             }
-          } catch (e: any) {
+          } catch (e: unknown) {
+            const message = e instanceof Error ? e.message : String(e);
             debug(
-              `[TelegramProvider] Fetch error for ${maskToken(`bot${inst.token}`)}: ${e.message}`
+              `[TelegramProvider] Fetch error for ${maskToken(`bot${inst.token}`)}: ${message}`
             );
             connected = false;
           }
@@ -101,17 +112,17 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
           provider: 'telegram',
           name,
           connected,
-          status: reconManager
+          status: (reconManager
             ? reconManager.getStatus()
-            : { state: connected ? 'connected' : 'disconnected' },
+            : { state: connected ? 'connected' : 'disconnected' }) as Record<string, unknown>,
         };
       })
     );
 
-    const bots = botPromises.map((r: any) =>
+    const bots = botPromises.map((r) =>
       r.status === 'fulfilled'
         ? r.value
-        : { provider: 'telegram', name: 'unknown', connected: false }
+        : { provider: 'telegram' as const, name: 'unknown', connected: false }
     );
 
     return {
@@ -121,16 +132,18 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
     };
   }
 
-  getBotNames() {
+  getBotNames(): string[] {
     return [];
   }
 
-  async getBots() {
+  async getBots(): Promise<
+    Array<{ provider: string; name: string; connected: boolean; status?: Record<string, unknown> }>
+  > {
     const status = await this.getStatus();
     return status.bots;
   }
 
-  async addBot(config: any) {
+  async addBot(config: { name?: string; token: string; llm?: string }): Promise<void> {
     const { name, token, llm } = config;
 
     // Issue 1: Validate token format before persisting
@@ -139,24 +152,29 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const messengersPath = path.join(configDir, 'providers', 'messengers.json');
 
-    let cfg: any = { telegram: { instances: [] } };
+    let cfg: Record<string, Record<string, unknown>> = { telegram: { instances: [] } };
     try {
       const fileContent = await fs.promises.readFile(messengersPath, 'utf8');
       // Issue 3: Distinguish JSON parse errors from missing-file errors so that
       // corrupted config files are surfaced to administrators rather than silently
       // overwritten with a fresh default.
       try {
-        cfg = JSON.parse(fileContent);
-      } catch (parseErr: any) {
+        cfg = JSON.parse(fileContent) as typeof cfg;
+      } catch (parseErr: unknown) {
+        const parseMessage = parseErr instanceof Error ? parseErr.message : String(parseErr);
         throw new Error(
-          `messengers.json is corrupted and cannot be parsed: ${parseErr.message}. ` +
+          `messengers.json is corrupted and cannot be parsed: ${parseMessage}. ` +
             `Please fix or remove ${messengersPath} before adding a new bot.`
         );
       }
-    } catch (readErr: any) {
+    } catch (readErr: unknown) {
       // Only swallow ENOENT (file not found); re-throw everything else including
       // the JSON parse error wrapped above.
-      if (readErr.code !== 'ENOENT') {
+      const isEnoent =
+        readErr instanceof Error &&
+        'code' in readErr &&
+        (readErr as NodeJS.ErrnoException).code === 'ENOENT';
+      if (!isEnoent) {
         throw readErr;
       }
       // File doesn't exist yet — start with the default empty structure.
@@ -171,7 +189,11 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
     // other OS users cannot read it. Operators should additionally consider using
     // environment variables (TELEGRAM_BOT_TOKEN) or a secrets manager instead of
     // persisting tokens in config files.
-    cfg.telegram.instances.push({ name: name || '', token, llm });
+    (cfg.telegram.instances as Array<{ name: string; token: string; llm?: string }>).push({
+      name: name || '',
+      token,
+      llm,
+    });
 
     // Issue 2: Propagate write errors instead of swallowing them silently.
     // A failed write would leave the in-memory state inconsistent with disk.
@@ -203,31 +225,40 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
     debug(`[TelegramProvider] Added bot configuration for ${botName}`);
   }
 
-  async reload() {
+  async reload(): Promise<{ added: number }> {
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const messengersPath = path.join(configDir, 'providers', 'messengers.json');
-    let cfg: any;
+    let cfg: Record<string, Record<string, unknown>>;
     try {
       const content = await fs.promises.readFile(messengersPath, 'utf8');
       // Issue 3: Surface JSON parse errors during reload so administrators are
       // alerted to corrupted config files rather than silently getting 0 bots.
       try {
-        cfg = JSON.parse(content);
-      } catch (parseErr: any) {
+        cfg = JSON.parse(content) as typeof cfg;
+      } catch (parseErr: unknown) {
+        const parseMessage = parseErr instanceof Error ? parseErr.message : String(parseErr);
         throw new Error(
-          `messengers.json is corrupted and cannot be parsed: ${parseErr.message}. ` +
+          `messengers.json is corrupted and cannot be parsed: ${parseMessage}. ` +
             `Please fix or remove ${messengersPath}.`
         );
       }
-    } catch (readErr: any) {
-      if (readErr.code === 'ENOENT') {
+    } catch (readErr: unknown) {
+      if (
+        readErr instanceof Error &&
+        'code' in readErr &&
+        (readErr as NodeJS.ErrnoException).code === 'ENOENT'
+      ) {
         return { added: 0 };
       }
       throw readErr;
     }
 
     let added = 0;
-    const instances = cfg.telegram?.instances || [];
+    const instances = (cfg.telegram?.instances || []) as Array<{
+      name?: string;
+      token: string;
+      llm?: string;
+    }>;
 
     // Implemented actual runtime reload logic with ReconnectionManager
     for (const inst of instances) {
@@ -265,12 +296,12 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const messengersPath = path.join(configDir, 'providers', 'messengers.json');
 
-    let instances: any[] = [];
+    let instances: Array<{ name?: string; token: string }> = [];
     try {
       const content = await fs.promises.readFile(messengersPath, 'utf8');
-      const cfg = JSON.parse(content);
-      instances = cfg.telegram?.instances || [];
-    } catch (e: any) {
+      const cfg = JSON.parse(content) as Record<string, Record<string, unknown>>;
+      instances = (cfg.telegram?.instances as typeof instances) || [];
+    } catch {
       throw new Error('No Telegram bot instances configured');
     }
 
@@ -298,9 +329,10 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
       }
 
       return data.result.message_id.toString();
-    } catch (error: any) {
-      debug(`[TelegramProvider] Failed to send message: ${error.message}`);
-      throw new Error(`Failed to send Telegram message: ${error.message}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      debug(`[TelegramProvider] Failed to send message: ${message}`);
+      throw new Error(`Failed to send Telegram message: ${message}`);
     }
   }
 
@@ -328,13 +360,13 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
     return await this.sendMessage(channelId, formattedMessage);
   }
 
-  async getClientId(): Promise<string> {
+  getClientId(): string {
     // Return the bot ID from the first configured instance
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const messengersPath = path.join(configDir, 'providers', 'messengers.json');
 
     try {
-      const content = await fs.promises.readFile(messengersPath, 'utf8');
+      const content = fs.readFileSync(messengersPath, 'utf8');
       const cfg = JSON.parse(content);
       const instances = cfg.telegram?.instances || [];
 
@@ -372,15 +404,18 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
 
       if (data.ok && data.result && data.result.length > 0) {
         // Find the creator/owner (status: "creator")
-        const owner = data.result.find((admin: any) => admin.status === 'creator');
+        const owner = data.result.find(
+          (admin: Record<string, unknown>) => admin.status === 'creator'
+        );
         if (owner) {
           return owner.user.id.toString();
         }
         // Fallback to first admin if no explicit owner
         return data.result[0].user.id.toString();
       }
-    } catch (e: any) {
-      debug(`[TelegramProvider] Failed to get forum owner: ${e.message}`);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      debug(`[TelegramProvider] Failed to get forum owner: ${message}`);
     }
 
     return '';
@@ -396,17 +431,17 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const messengersPath = path.join(configDir, 'providers', 'messengers.json');
 
-    let instances: any[] = [];
+    let instances: Array<{ name?: string; token: string }> = [];
     try {
       const content = await fs.promises.readFile(messengersPath, 'utf8');
-      const cfg = JSON.parse(content);
-      instances = cfg.telegram?.instances || [];
-    } catch (e: any) {
+      const cfg = JSON.parse(content) as Record<string, Record<string, unknown>>;
+      instances = (cfg.telegram?.instances as typeof instances) || [];
+    } catch (e: unknown) {
       return {
         status: 'down',
         connected: false,
         details: 'No Telegram bot instances configured',
-        error: e.message,
+        error: e instanceof Error ? e.message : String(e),
       };
     }
 
@@ -420,7 +455,7 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
 
     // Check all instances and aggregate results
     const results = await Promise.allSettled(
-      instances.map(async (inst: any) => {
+      instances.map(async (inst) => {
         const startTime = Date.now();
         try {
           const response = await fetch(`https://api.telegram.org/bot${inst.token}/getMe`, {
@@ -444,11 +479,12 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
               error: data.description || 'Unknown error',
             };
           }
-        } catch (e: any) {
+        } catch (e: unknown) {
           return {
             connected: false,
             name: inst.name || 'telegram',
-            error: e.message || 'Failed to connect to Telegram API',
+            error:
+              (e instanceof Error ? e.message : String(e)) || 'Failed to connect to Telegram API',
           };
         }
       })

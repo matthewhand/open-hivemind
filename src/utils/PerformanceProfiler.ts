@@ -175,7 +175,7 @@ export class PerformanceProfiler {
     let heapStatistics: v8.HeapInfo;
     try {
       heapStatistics = v8.getHeapStatistics();
-    } catch (error) {
+    } catch {
       // Fallback for environments where v8.getHeapStatistics is not available
       heapStatistics = {
         total_heap_size: memoryUsage.heapTotal,
@@ -187,7 +187,7 @@ export class PerformanceProfiler {
         does_zap_garbage: false,
         number_of_native_contexts: 0,
         number_of_detached_contexts: 0,
-      } as any;
+      } as unknown as v8.HeapInfo;
     }
 
     const snapshot: PerformanceSnapshot = {
@@ -231,7 +231,7 @@ export class PerformanceProfiler {
         does_zap_garbage: false,
         number_of_native_contexts: 0,
         number_of_detached_contexts: 0,
-      } as any;
+      } as unknown as v8.HeapInfo;
     }
 
     return {
@@ -290,7 +290,8 @@ export class PerformanceProfiler {
       });
     }
 
-    const profile = this.methodProfiles.get(key)!;
+    const profile = this.methodProfiles.get(key);
+    if (!profile) return;
     profile.executionCount++;
     profile.totalExecutionTime += executionTime;
     profile.averageExecutionTime = profile.totalExecutionTime / profile.executionCount;
@@ -416,7 +417,7 @@ export class PerformanceProfiler {
     cleanedSnapshots = originalSnapshotLength - this.snapshots.length;
 
     // Clean old method profiles
-    const originalProfileCount = this.methodProfiles.size;
+    // Track profile cleanup count
     for (const [key, profile] of this.methodProfiles.entries()) {
       if (profile.lastExecutionTime < cutoffTime) {
         this.methodProfiles.delete(key);
@@ -515,11 +516,12 @@ export class PerformanceProfiler {
 /**
  * Decorator for profiling method execution
  */
-export function Profile(target: any, propertyName: string, descriptor: PropertyDescriptor) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- decorator target is inherently untyped
+export function Profile(target: any, propertyName: string, descriptor: PropertyDescriptor): void {
   const method = descriptor.value;
   const className = target.constructor.name;
 
-  descriptor.value = function (...args: any[]) {
+  descriptor.value = function (...args: unknown[]) {
     const profiler = PerformanceProfiler.getInstance();
     return profiler.profileMethod(propertyName, () => method.apply(this, args), className);
   };
@@ -528,11 +530,16 @@ export function Profile(target: any, propertyName: string, descriptor: PropertyD
 /**
  * Decorator for profiling async method execution
  */
-export function ProfileAsync(target: any, propertyName: string, descriptor: PropertyDescriptor) {
+
+export function ProfileAsync(
+  target: any,
+  propertyName: string,
+  descriptor: PropertyDescriptor
+): void {
   const method = descriptor.value;
   const className = target.constructor.name;
 
-  descriptor.value = async function (...args: any[]) {
+  descriptor.value = async function (...args: unknown[]) {
     const profiler = PerformanceProfiler.getInstance();
     return profiler.profileMethodAsync(propertyName, () => method.apply(this, args), className);
   };

@@ -41,13 +41,13 @@ Mattermost.
 ```
 
 ## Multi-Agent Coordination
-- **Solo mode** – one token, one connection, still benefiting from the unified
+- **Solo mode** – one token, one connection, still benefiting from the shared
   persona and context cache.
 - **Swarm mode** – multiple tokens defined via `DISCORD_BOT_TOKEN` or the
   `BOTS_*` schema spin up auto-numbered instances (`BotName #1`, `BotName #2`, …).
 - **Instance isolation** – each agent keeps its own gateway connection, rate
   limiter, and health checks while sharing configuration via the orchestrator.
-- **Unified voice** – outbound responses are formatted as `*AgentName*: message`
+- **Consistent voice** – outbound responses are formatted as `*AgentName*: message`
   to present a single persona regardless of the responding instance.
 
 ## Context Sharing & Memory

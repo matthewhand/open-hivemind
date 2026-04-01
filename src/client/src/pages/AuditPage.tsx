@@ -19,7 +19,9 @@ import { SkeletonPage } from '../components/DaisyUI/Skeleton';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { Alert } from '../components/DaisyUI/Alert';
 import useUrlParams from '../hooks/useUrlParams';
-import { useApiQuery } from '../hooks/useApiQuery';
+import { useQuery } from '@tanstack/react-query';
+import { apiService } from '../services/api';
+import Diff from '../components/DaisyUI/Diff';
 import Debug from 'debug';
 const debug = Debug('app:client:pages:AuditPage');
 
@@ -105,51 +107,85 @@ function renderJson(value: any): string {
 // Sub-components
 // ---------------------------------------------------------------------------
 
-const ExpandedRow: React.FC<{ event: AuditEvent }> = ({ event }) => (
-  <tr>
-    <td colSpan={6} className="bg-base-200 px-6 py-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-        {event.ipAddress && (
-          <div>
-            <span className="font-semibold">IP Address:</span> {event.ipAddress}
-          </div>
-        )}
-        {event.userAgent && (
-          <div>
-            <span className="font-semibold">User Agent:</span> {event.userAgent}
-          </div>
-        )}
-        <div className="col-span-full">
-          <span className="font-semibold">Details:</span> {event.details}
-        </div>
-        {event.oldValue !== undefined && (
-          <div>
-            <span className="font-semibold">Previous Value:</span>
-            <pre className="mt-1 p-2 bg-base-300 rounded text-xs overflow-auto max-h-48">
-              {renderJson(event.oldValue)}
-            </pre>
-          </div>
-        )}
-        {event.newValue !== undefined && (
-          <div>
-            <span className="font-semibold">New Value:</span>
-            <pre className="mt-1 p-2 bg-base-300 rounded text-xs overflow-auto max-h-48">
-              {renderJson(event.newValue)}
-            </pre>
-          </div>
-        )}
-        {event.metadata && Object.keys(event.metadata).length > 0 && (
+const ExpandedRow: React.FC<{ event: AuditEvent }> = ({ event }) => {
+  const showDiff =
+    event.oldValue !== undefined &&
+    event.newValue !== undefined;
+
+  return (
+    <tr>
+      <td colSpan={6} className="bg-base-200 px-6 py-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          {event.ipAddress && (
+            <div>
+              <span className="font-semibold">IP Address:</span> {event.ipAddress}
+            </div>
+          )}
+          {event.userAgent && (
+            <div>
+              <span className="font-semibold">User Agent:</span> {event.userAgent}
+            </div>
+          )}
           <div className="col-span-full">
-            <span className="font-semibold">Metadata:</span>
-            <pre className="mt-1 p-2 bg-base-300 rounded text-xs overflow-auto max-h-48">
-              {renderJson(event.metadata)}
-            </pre>
+            <span className="font-semibold">Details:</span> {event.details}
           </div>
-        )}
-      </div>
-    </td>
-  </tr>
-);
+
+          {showDiff ? (
+            <div className="col-span-full">
+              <span className="font-semibold mb-2 block">Value Changes (Before / After):</span>
+              <Diff
+                className="rounded border border-base-300 w-full"
+                aspectRatio="aspect-auto min-h-[16rem]"
+                item1={
+                  <div className="bg-error/10 w-full h-full p-4 overflow-auto">
+                    <pre className="text-xs text-error">
+                      {renderJson(event.oldValue)}
+                    </pre>
+                  </div>
+                }
+                item2={
+                  <div className="bg-success/10 w-full h-full p-4 overflow-auto">
+                    <pre className="text-xs text-success">
+                      {renderJson(event.newValue)}
+                    </pre>
+                  </div>
+                }
+              />
+            </div>
+          ) : (
+            <>
+              {event.oldValue !== undefined && (
+                <div>
+                  <span className="font-semibold">Previous Value:</span>
+                  <pre className="mt-1 p-2 bg-base-300 rounded text-xs overflow-auto max-h-48">
+                    {renderJson(event.oldValue)}
+                  </pre>
+                </div>
+              )}
+              {event.newValue !== undefined && (
+                <div>
+                  <span className="font-semibold">New Value:</span>
+                  <pre className="mt-1 p-2 bg-base-300 rounded text-xs overflow-auto max-h-48">
+                    {renderJson(event.newValue)}
+                  </pre>
+                </div>
+              )}
+            </>
+          )}
+
+          {event.metadata && Object.keys(event.metadata).length > 0 && (
+            <div className="col-span-full">
+              <span className="font-semibold">Metadata:</span>
+              <pre className="mt-1 p-2 bg-base-300 rounded text-xs overflow-auto max-h-48">
+                {renderJson(event.metadata)}
+              </pre>
+            </div>
+          )}
+        </div>
+      </td>
+    </tr>
+  );
+};
 
 // ---------------------------------------------------------------------------
 // Main Component
@@ -185,10 +221,15 @@ const AuditPage: React.FC = () => {
 
   const {
     data: result,
-    loading,
+    isLoading: loading,
     error,
     refetch,
-  } = useApiQuery<AuditResponse>(apiUrl, { ttl: 15_000 });
+  } = useQuery<AuditResponse>({
+    queryKey: ['audit', apiUrl],
+    queryFn: () => apiService.get<AuditResponse>(apiUrl),
+    staleTime: 15_000,
+    gcTime: 30_000,
+  });
 
   const events: AuditEvent[] = result?.auditEvents ?? [];
 
@@ -228,10 +269,7 @@ const AuditPage: React.FC = () => {
       if (filters.dateTo) params.append('dateTo', filters.dateTo);
       if (filters.user) params.append('user', filters.user);
 
-      const res = await fetch(`/api/audit/export?${params.toString()}`);
-      if (!res.ok) throw new Error('Export failed');
-
-      const blob = await res.blob();
+      const blob = await apiService.getBlob(`/api/audit/export?${params.toString()}`);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

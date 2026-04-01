@@ -16,6 +16,7 @@ import { useMCPServerData, type MCPServer, type Tool } from './hooks/useMCPServe
 import { useMCPServerDelete } from './hooks/useMCPServerDelete';
 import { MCPServerList } from './MCPServerList';
 import { MCPServerModals } from './MCPServerModals';
+import { useSavedStamp } from '../../contexts/SavedStampContext';
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -48,6 +49,7 @@ const MCPServersPage: React.FC = () => {
   const [viewingServerName, setViewingServerName] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const { showStamp } = useSavedStamp();
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
     title: string;
@@ -82,7 +84,7 @@ const MCPServersPage: React.FC = () => {
   const bulk = useBulkSelection(filteredServerIds);
 
   const { handleServerAction, handleTestConnection, isTesting, handleSaveServer } =
-    useMCPServerActions(servers, setServers, fetchServers, setAlert);
+    useMCPServerActions(servers, setServers, fetchServers, setAlert, showStamp);
   const { handleBulkDeleteServers, handleDeleteServer, bulkDeleting } = useMCPServerDelete(
     bulk,
     fetchServers,

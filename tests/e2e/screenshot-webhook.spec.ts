@@ -48,8 +48,7 @@ test.describe('Webhook Integration Screenshots', () => {
     await page.goto('/admin/integrations/webhook');
 
     // Wait for page to render
-    await page.waitForTimeout(4000);
-
+    await page.waitForLoadState("domcontentloaded");
     await page.screenshot({ path: 'docs/screenshots/webhook-integration.png', fullPage: true });
   });
 });

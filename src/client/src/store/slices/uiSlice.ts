@@ -4,7 +4,7 @@ import Debug from 'debug';
 const debug = Debug('app:client:store:slices:uiSlice');
 
 export interface UIState {
-  theme: 'light' | 'dark' | 'high-contrast' | 'auto';
+  theme: string;
   sidebarCollapsed: boolean;
   notificationsEnabled: boolean;
   soundEnabled: boolean;
@@ -47,11 +47,6 @@ export interface UIState {
     icon?: React.ReactNode;
   }>;
   loadingStates: Record<string, boolean>;
-  breadcrumbs: Array<{
-    label: string;
-    path: string;
-    icon?: string;
-  }>;
   activeSection: string;
   userPreferences: Record<string, unknown>;
   keyboardShortcuts: Record<string, string>;
@@ -86,7 +81,6 @@ const initialState: UIState = {
   toasts: [],
   alerts: [],
   loadingStates: {},
-  breadcrumbs: [],
   activeSection: 'dashboard',
   userPreferences: {},
   keyboardShortcuts: {
@@ -118,9 +112,9 @@ const uiSlice = createSlice({
     },
 
     toggleDarkMode: (state) => {
-      const themes: UIState['theme'][] = ['light', 'dark', 'high-contrast', 'auto'];
+      const themes: string[] = ['light', 'dark', 'high-contrast', 'auto'];
       const currentIndex = themes.indexOf(state.theme);
-      const nextIndex = (currentIndex + 1) % themes.length;
+      const nextIndex = currentIndex !== -1 ? (currentIndex + 1) % themes.length : 1; // Default to dark if unknown theme
       state.theme = themes[nextIndex];
       localStorage.setItem('hivemind-theme', state.theme);
       // data-theme is applied reactively by the useTheme hook
@@ -213,22 +207,6 @@ const uiSlice = createSlice({
     
     clearAllLoading: (state) => {
       state.loadingStates = {};
-    },
-    
-    // Breadcrumbs
-    setBreadcrumbs: (state, action: PayloadAction<UIState['breadcrumbs']>) => {
-      state.breadcrumbs = action.payload;
-    },
-    
-    addBreadcrumb: (state, action: PayloadAction<UIState['breadcrumbs'][0]>) => {
-      const exists = state.breadcrumbs.some(crumb => crumb.path === action.payload.path);
-      if (!exists) {
-        state.breadcrumbs.push(action.payload);
-      }
-    },
-    
-    removeBreadcrumb: (state, action: PayloadAction<string>) => {
-      state.breadcrumbs = state.breadcrumbs.filter(crumb => crumb.path !== action.payload);
     },
     
     // Active section
@@ -413,9 +391,6 @@ export const {
   setLoading,
   clearLoading,
   clearAllLoading,
-  setBreadcrumbs,
-  addBreadcrumb,
-  removeBreadcrumb,
   setActiveSection,
   setUserPreference,
   loadUserPreferences,
@@ -465,7 +440,6 @@ export const selectModals = (state: { ui: UIState }) => state.ui.modals;
 export const selectToasts = (state: { ui: UIState }) => state.ui.toasts;
 export const selectAlerts = (state: { ui: UIState }) => state.ui.alerts;
 export const selectLoadingStates = (state: { ui: UIState }) => state.ui.loadingStates;
-export const selectBreadcrumbs = (state: { ui: UIState }) => state.ui.breadcrumbs;
 export const selectActiveSection = (state: { ui: UIState }) => state.ui.activeSection;
 export const selectUserPreferences = (state: { ui: UIState }) => state.ui.userPreferences;
 export const selectKeyboardShortcuts = (state: { ui: UIState }) => state.ui.keyboardShortcuts;

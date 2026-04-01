@@ -1,4 +1,5 @@
 import { Router, type Request, type Response } from 'express';
+import { ApiResponse } from '@src/server/utils/apiResponse';
 import { ErrorUtils } from '../../../common/ErrorUtils';
 import { HTTP_STATUS } from '../../../types/constants';
 import {
@@ -62,17 +63,12 @@ router.get('/tool-usage-guards', (req: Request, res: Response) => {
       },
     ];
 
-    return res.json({
-      success: true,
-      data: { guards },
-      message: 'Tool usage guards retrieved successfully',
-    });
+    return res.json(ApiResponse.success({ guards }));
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      error: 'Failed to retrieve tool usage guards',
-      message: hivemindError.message || 'An error occurred while retrieving tool usage guards',
-    });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(ApiResponse.error('Failed to retrieve tool usage guards'));
   }
 });
 
@@ -118,17 +114,12 @@ router.post(
         isActive: isActive !== false,
       };
 
-      return res.json({
-        success: true,
-        data: { guard: newGuard },
-        message: 'Tool usage guard created successfully',
-      });
+      return res.json(ApiResponse.success({ guard: newGuard }));
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        error: 'Failed to create tool usage guard',
-        message: hivemindError.message || 'An error occurred while creating tool usage guard',
-      });
+      return res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error('Failed to create tool usage guard'));
     }
   }
 );
@@ -156,17 +147,12 @@ router.put(
         isActive: isActive !== false,
       };
 
-      return res.json({
-        success: true,
-        data: { guard: updatedGuard },
-        message: 'Tool usage guard updated successfully',
-      });
+      return res.json(ApiResponse.success({ guard: updatedGuard }));
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        error: 'Failed to update tool usage guard',
-        message: hivemindError.message || 'An error occurred while updating tool usage guard',
-      });
+      return res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error('Failed to update tool usage guard'));
     }
   }
 );
@@ -198,16 +184,12 @@ router.delete(
       // In a real implementation, this would delete from database
       // For now, just return success
 
-      return res.json({
-        success: true,
-        message: 'Tool usage guard deleted successfully',
-      });
+      return res.json(ApiResponse.success());
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        error: 'Failed to delete tool usage guard',
-        message: hivemindError.message || 'An error occurred while deleting tool usage guard',
-      });
+      return res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error('Failed to delete tool usage guard'));
     }
   }
 );
@@ -225,23 +207,19 @@ router.post(
       // In a real implementation, this would update in database
       // For now, just return success
 
-      return res.json({
-        success: true,
-        message: 'Tool usage guard status updated successfully',
-      });
+      return res.json(ApiResponse.success());
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        error: 'Failed to update guard status',
-        message: hivemindError.message || 'An error occurred while updating guard status',
-      });
+      return res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error('Failed to update guard status'));
     }
   }
 );
 
 // Placeholder for audit log queries
 router.get('/audit-logs', (req, res) => {
-  res.json({ success: true, data: { logs: [] }, message: 'Audit logs placeholder' });
+  res.json(ApiResponse.success({ logs: [] }));
 });
 
 export default router;

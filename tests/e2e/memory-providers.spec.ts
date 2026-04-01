@@ -238,7 +238,6 @@ test.describe('Memory Providers Page', () => {
     await page.getByRole('button', { name: 'Refresh' }).click();
 
     // Wait for the data to reload (call count should increase)
-    await page.waitForTimeout(500);
     expect(callCount).toBeGreaterThan(initialCallCount);
   });
 

@@ -8,7 +8,7 @@ Navigation: [Docs Index](../README.md) | [Installation](installation.md) | [Trou
 
 ### What is Open-Hivemind?
 
-Open-Hivemind is a multi-agent orchestration framework that combines messaging platforms (Discord, Slack, Mattermost) with LLM providers to create AI-powered bots. It provides a unified WebUI for configuration and monitoring.
+Open-Hivemind is a multi-agent orchestration framework that combines messaging platforms (Discord, Slack, Mattermost) with LLM providers to create AI-powered bots. It provides a WebUI for configuration and monitoring.
 
 ### What platforms does Open-Hivemind support?
 

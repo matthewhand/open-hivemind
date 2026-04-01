@@ -131,7 +131,6 @@ test.describe('Marketplace CRUD Lifecycle', () => {
       .first();
     if ((await searchInput.count()) > 0) {
       await searchInput.fill('redis');
-      await page.waitForTimeout(300);
 
       // redis-memory should still be visible
       await expect(page.getByText('redis-memory').first()).toBeVisible();
@@ -150,7 +149,6 @@ test.describe('Marketplace CRUD Lifecycle', () => {
     const llmTab = page.locator('button.tab:has-text("LLM")').first();
     if ((await llmTab.count()) > 0) {
       await llmTab.click();
-      await page.waitForTimeout(300);
 
       // LLM packages should still be visible
       await expect(page.getByText('openai-provider').first()).toBeVisible();
@@ -161,7 +159,6 @@ test.describe('Marketplace CRUD Lifecycle', () => {
     const allTab = page.locator('button.tab:has-text("All")').first();
     if ((await allTab.count()) > 0) {
       await allTab.click();
-      await page.waitForTimeout(300);
     }
   });
 
@@ -196,7 +193,6 @@ test.describe('Marketplace CRUD Lifecycle', () => {
       .first();
     if ((await installBtn.count()) > 0) {
       await installBtn.click();
-      await page.waitForTimeout(500);
 
       const modal = page.locator('.modal-box, [role="dialog"], dialog.modal[open]').first();
       if ((await modal.count()) > 0) {
@@ -207,14 +203,12 @@ test.describe('Marketplace CRUD Lifecycle', () => {
           .first();
         if ((await urlInput.count()) > 0) {
           await urlInput.fill('https://github.com/user/custom-tool');
-          await page.waitForTimeout(200);
 
           const submitBtn = modal
             .locator('button:has-text("Install"), button:has-text("Submit"), button[type="submit"]')
             .first();
           if ((await submitBtn.count()) > 0) {
             await submitBtn.click();
-            await page.waitForTimeout(500);
           }
         }
       }
@@ -234,7 +228,6 @@ test.describe('Marketplace CRUD Lifecycle', () => {
       .first();
     if ((await installBtn.count()) > 0) {
       await installBtn.click();
-      await page.waitForTimeout(500);
 
       const modal = page.locator('.modal-box, [role="dialog"], dialog.modal[open]').first();
       if ((await modal.count()) > 0) {
@@ -278,7 +271,6 @@ test.describe('Marketplace CRUD Lifecycle', () => {
         .first();
       if ((await updateBtn.count()) > 0) {
         await updateBtn.click();
-        await page.waitForTimeout(500);
       }
     }
   });
@@ -313,7 +305,6 @@ test.describe('Marketplace CRUD Lifecycle', () => {
         .first();
       if ((await uninstallBtn.count()) > 0) {
         await uninstallBtn.click();
-        await page.waitForTimeout(500);
       }
     }
   });
@@ -332,7 +323,6 @@ test.describe('Marketplace CRUD Lifecycle', () => {
     const refreshBtn = page.locator('button:has-text("Refresh"), button[title*="Refresh"]').first();
     if ((await refreshBtn.count()) > 0) {
       await refreshBtn.click();
-      await page.waitForTimeout(500);
       expect(fetchCount).toBeGreaterThan(initialCount);
     }
   });
@@ -380,7 +370,6 @@ test.describe('Marketplace CRUD Lifecycle', () => {
       .first();
     if ((await installBtn.count()) > 0) {
       await installBtn.click();
-      await page.waitForTimeout(500);
 
       const modal = page.locator('.modal-box, [role="dialog"], dialog.modal[open]').first();
       if ((await modal.count()) > 0) {
@@ -391,14 +380,12 @@ test.describe('Marketplace CRUD Lifecycle', () => {
           .first();
         if ((await urlInput.count()) > 0) {
           await urlInput.fill('https://github.com/invalid/nonexistent-repo');
-          await page.waitForTimeout(200);
 
           const submitBtn = modal
             .locator('button:has-text("Install"), button:has-text("Submit"), button[type="submit"]')
             .first();
           if ((await submitBtn.count()) > 0) {
             await submitBtn.click();
-            await page.waitForTimeout(500);
 
             // Page should handle the error gracefully
             await expect(page.locator('body')).toBeVisible();
@@ -423,7 +410,6 @@ test.describe('Marketplace CRUD Lifecycle', () => {
       .first();
     if ((await searchInput.count()) > 0) {
       await searchInput.fill('zzz-nonexistent-package-xyz');
-      await page.waitForTimeout(300);
 
       // Should show empty state or no results message
       const emptyText = page

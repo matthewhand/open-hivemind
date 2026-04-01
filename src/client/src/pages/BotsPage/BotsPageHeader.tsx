@@ -1,17 +1,22 @@
 import React from 'react';
 import { Bot, Plus, Download, Upload } from 'lucide-react';
 import PageHeader from '../../components/DaisyUI/PageHeader';
+import QuickAddButton from '../../components/BotManagement/QuickAddButton';
 
 interface BotsPageHeaderProps {
   onExportAll: () => void;
   onImportClick: () => void;
   onCreateClick: () => void;
+  onQuickAddMessage?: () => void;
+  onQuickAddLLM?: () => void;
 }
 
 export const BotsPageHeader: React.FC<BotsPageHeaderProps> = ({
   onExportAll,
   onImportClick,
   onCreateClick,
+  onQuickAddMessage,
+  onQuickAddLLM,
 }) => {
   return (
     <PageHeader
@@ -19,7 +24,13 @@ export const BotsPageHeader: React.FC<BotsPageHeaderProps> = ({
       description="Configure, monitor, and deploy your specialized AI agents."
       icon={<Bot className="w-8 h-8 text-primary" />}
       actions={
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          {onQuickAddMessage && (
+            <QuickAddButton type="message" onClick={onQuickAddMessage} />
+          )}
+          {onQuickAddLLM && (
+            <QuickAddButton type="llm" onClick={onQuickAddLLM} />
+          )}
           <button
             className="btn btn-ghost btn-sm"
             onClick={onExportAll}

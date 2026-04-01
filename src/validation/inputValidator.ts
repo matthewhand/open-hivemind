@@ -12,6 +12,7 @@ import { JSDOM } from 'jsdom';
 
 const debug = Debug('app:inputValidator');
 const window = new JSDOM('').window;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- JSDOM window type incompatibility with DOMPurify
 const dompurify = DOMPurify(window as any);
 
 /**
@@ -103,7 +104,7 @@ export function sanitizeValue(value: string, options: SanitizationOptions = {}):
 /**
  * Recursively sanitize an object
  */
-export function sanitizeObject(obj: any, options: SanitizationOptions = {}): any {
+export function sanitizeObject(obj: unknown, options: SanitizationOptions = {}): unknown {
   if (obj === null || obj === undefined) {
     return obj;
   }
@@ -117,8 +118,8 @@ export function sanitizeObject(obj: any, options: SanitizationOptions = {}): any
   }
 
   if (typeof obj === 'object') {
-    const sanitized: any = {};
-    for (const [key, value] of Object.entries(obj)) {
+    const sanitized: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
       const sanitizedKey = sanitizeValue(key, { ...options, stripHtml: true });
       sanitized[sanitizedKey] = sanitizeObject(value, options);
     }
@@ -230,14 +231,14 @@ export const CommonValidators = {
     .optional()
     .isObject()
     .withMessage('Config must be an object')
-    .custom((value: any) => {
+    .custom((value: Record<string, unknown>) => {
       // Check for prototype pollution attempts
       const dangerousKeys = ['__proto__', 'constructor', 'prototype'];
-      const hasDangerousKey = (obj: any): boolean => {
+      const hasDangerousKey = (obj: unknown): boolean => {
         if (typeof obj !== 'object' || obj === null) return false;
-        for (const key of Object.keys(obj)) {
+        for (const key of Object.keys(obj as Record<string, unknown>)) {
           if (dangerousKeys.includes(key)) return true;
-          if (hasDangerousKey(obj[key])) return true;
+          if (hasDangerousKey((obj as Record<string, unknown>)[key])) return true;
         }
         return false;
       };
@@ -264,16 +265,16 @@ export const CommonValidators = {
     .withMessage('Invalid provider type'),
 
   // Boolean field
-  boolean: (field: string) =>
+  boolean: (field: string): ValidationChain =>
     body(field).optional().isBoolean().withMessage(`${field} must be a boolean`).toBoolean(),
 
   // Array of strings
-  stringArray: (field: string) =>
+  stringArray: (field: string): ValidationChain =>
     body(field)
       .optional()
       .isArray()
       .withMessage(`${field} must be an array`)
-      .custom((arr: any[]) => {
+      .custom((arr: unknown[]) => {
         if (!arr.every((item) => typeof item === 'string')) {
           throw new Error(`${field} must contain only strings`);
         }
@@ -284,15 +285,18 @@ export const CommonValidators = {
 /**
  * Validation middleware that checks for errors
  */
-export const validateInput = (req: Request, res: Response, next: NextFunction) => {
+export const validateInput = (req: Request, res: Response, next: NextFunction): void | Response => {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
-    const errorMessages = errors.array().map((err) => ({
-      field: (err as any).param || (err as any).path || 'unknown',
-      message: err.msg,
-      value: (err as any).value !== undefined ? '[REDACTED]' : undefined,
-    }));
+    const errorMessages = errors.array().map((err) => {
+      const errObj = err as Record<string, unknown>;
+      return {
+        field: (errObj.param as string) || (errObj.path as string) || 'unknown',
+        message: err.msg,
+        value: errObj.value !== undefined ? '[REDACTED]' : undefined,
+      };
+    });
 
     debug('Validation errors:', errorMessages);
 
@@ -309,8 +313,10 @@ export const validateInput = (req: Request, res: Response, next: NextFunction) =
 /**
  * Create validation middleware from array of validation chains
  */
-export function validate(validations: ValidationChain[]) {
-  return async (req: Request, res: Response, next: NextFunction) => {
+export function validate(
+  validations: ValidationChain[]
+): (req: Request, res: Response, next: NextFunction) => Promise<void> {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     // Run all validations
     await Promise.allSettled(validations.map((validation) => validation.run(req)));
 
@@ -322,8 +328,10 @@ export function validate(validations: ValidationChain[]) {
 /**
  * Sanitization middleware for request body
  */
-export const sanitizeRequestBody = (options: SanitizationOptions = {}) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+export const sanitizeRequestBody = (
+  options: SanitizationOptions = {}
+): ((req: Request, res: Response, next: NextFunction) => void) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     if (req.body && typeof req.body === 'object') {
       req.body = sanitizeObject(req.body, {
         trim: true,
@@ -338,14 +346,16 @@ export const sanitizeRequestBody = (options: SanitizationOptions = {}) => {
 /**
  * Sanitization middleware for query parameters
  */
-export const sanitizeQueryParams = (options: SanitizationOptions = {}) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+export const sanitizeQueryParams = (
+  options: SanitizationOptions = {}
+): ((req: Request, res: Response, next: NextFunction) => void) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     if (req.query && typeof req.query === 'object') {
       req.query = sanitizeObject(req.query, {
         trim: true,
         removeNull: true,
         ...options,
-      });
+      }) as typeof req.query;
     }
     return next();
   };
@@ -354,14 +364,16 @@ export const sanitizeQueryParams = (options: SanitizationOptions = {}) => {
 /**
  * Sanitization middleware for URL parameters
  */
-export const sanitizeUrlParams = (options: SanitizationOptions = {}) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+export const sanitizeUrlParams = (
+  options: SanitizationOptions = {}
+): ((req: Request, res: Response, next: NextFunction) => void) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     if (req.params && typeof req.params === 'object') {
       req.params = sanitizeObject(req.params, {
         trim: true,
         removeNull: true,
         ...options,
-      });
+      }) as typeof req.params;
     }
     return next();
   };
@@ -370,15 +382,21 @@ export const sanitizeUrlParams = (options: SanitizationOptions = {}) => {
 /**
  * Combined sanitization middleware
  */
-export const sanitizeAll = (options: SanitizationOptions = {}) => {
+export const sanitizeAll = (
+  options: SanitizationOptions = {}
+): ((req: Request, res: Response, next: NextFunction) => void)[] => {
   return [sanitizeRequestBody(options), sanitizeQueryParams(options), sanitizeUrlParams(options)];
 };
 
 /**
  * NoSQL injection prevention
  */
-export const preventNoSQLInjection = (req: Request, res: Response, next: NextFunction) => {
-  const checkForInjection = (obj: any): boolean => {
+export const preventNoSQLInjection = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void | Response => {
+  const checkForInjection = (obj: unknown): boolean => {
     if (!obj || typeof obj !== 'object') return false;
 
     const dangerousOperators = [
@@ -408,11 +426,14 @@ export const preventNoSQLInjection = (req: Request, res: Response, next: NextFun
       '$natural',
     ];
 
-    for (const key of Object.keys(obj)) {
+    for (const key of Object.keys(obj as Record<string, unknown>)) {
       if (dangerousOperators.includes(key)) {
         return true;
       }
-      if (typeof obj[key] === 'object' && checkForInjection(obj[key])) {
+      if (
+        typeof (obj as Record<string, unknown>)[key] === 'object' &&
+        checkForInjection((obj as Record<string, unknown>)[key])
+      ) {
         return true;
       }
     }
@@ -437,8 +458,10 @@ export const preventNoSQLInjection = (req: Request, res: Response, next: NextFun
 /**
  * Content-Type validation
  */
-export const validateContentType = (allowedTypes: string[] = ['application/json']) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+export const validateContentType = (
+  allowedTypes: string[] = ['application/json']
+): ((req: Request, res: Response, next: NextFunction) => void | Response) => {
+  return (req: Request, res: Response, next: NextFunction): void | Response => {
     // Skip for GET, DELETE, OPTIONS
     if (['GET', 'DELETE', 'OPTIONS'].includes(req.method)) {
       return next();
@@ -471,8 +494,10 @@ export const validateContentType = (allowedTypes: string[] = ['application/json'
 /**
  * Request size limit middleware
  */
-export const limitRequestSize = (maxSizeKB: number = 100) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+export const limitRequestSize = (
+  maxSizeKB: number = 100
+): ((req: Request, res: Response, next: NextFunction) => void | Response) => {
+  return (req: Request, res: Response, next: NextFunction): void | Response => {
     const contentLength = parseInt(req.headers['content-length'] || '0', 10);
     const maxSizeBytes = maxSizeKB * 1024;
 

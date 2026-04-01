@@ -1,10 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
-  Upload, FileJson, AlertTriangle, CheckCircle, XCircle,
+  FileJson, AlertTriangle, CheckCircle, XCircle,
   RefreshCw, X, ArrowRight,
 } from 'lucide-react';
 import Modal from '../DaisyUI/Modal';
+import VisualFeedback, { FeedbackState } from '../DaisyUI/VisualFeedback';
+import FileUpload from '../DaisyUI/FileUpload';
+import { apiService } from '../../services/api';
 
 interface ImportBundle {
   schemaVersion?: number;
@@ -50,8 +53,7 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
   const [parseError, setParseError] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
   const [report, setReport] = useState<ImportReport | null>(null);
-  const [dragOver, setDragOver] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [feedbackState, setFeedbackState] = useState<{ state: FeedbackState; message?: string }>({ state: 'idle' });
 
   const reset = useCallback(() => {
     setStep('upload');
@@ -60,7 +62,7 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
     setParseError(null);
     setImporting(false);
     setReport(null);
-    setDragOver(false);
+    setFeedbackState({ state: 'idle' });
   }, []);
 
   const handleClose = useCallback(() => {
@@ -111,44 +113,18 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
     [existingBotNames]
   );
 
-  const handleFileChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) processFile(file);
-    },
-    [processFile]
-  );
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      setDragOver(false);
-      const file = e.dataTransfer.files?.[0];
-      if (file) processFile(file);
-    },
-    [processFile]
-  );
-
   const handleImport = useCallback(async () => {
     if (!bundle) return;
     setImporting(true);
     try {
-      const resp = await fetch('/api/bots/import', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(bundle),
-      });
-      const data = await resp.json();
-      if (!resp.ok) {
-        setParseError(data.error || 'Import failed');
-        setImporting(false);
-        return;
-      }
+      const data = await apiService.post<any>('/api/bots/import', bundle);
       setReport(data.report);
       setStep('result');
+      setFeedbackState({ state: 'success', message: 'Import Successful!' });
       onImportComplete();
     } catch (err: any) {
       setParseError(err.message || 'Network error during import');
+      setFeedbackState({ state: 'error', message: err.message || 'Network error during import' });
     } finally {
       setImporting(false);
     }
@@ -161,28 +137,18 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
     <Modal isOpen={isOpen} onClose={handleClose} title="Import Bot Configurations" size="lg">
       <div className="space-y-4">
         {step === 'upload' && (
-          <>
-            <div
-              className={`border-2 border-dashed rounded-xl p-10 text-center transition-colors cursor-pointer ${
-                dragOver ? 'border-primary bg-primary/5' : 'border-base-300 hover:border-primary/50'
-              }`}
-              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Upload className="w-10 h-10 mx-auto mb-3 text-base-content/40" />
-              <p className="font-semibold mb-1">Drag and drop a .json file here</p>
-              <p className="text-sm text-base-content/60">or click to browse</p>
-              <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleFileChange} />
-            </div>
+          <div className="py-4">
+            <FileUpload
+              onFileSelect={processFile}
+              fileTypes={['application/json']}
+            />
             {parseError && (
-              <div className="alert alert-error">
+              <div className="alert alert-error mt-4">
                 <XCircle className="w-5 h-5 shrink-0" />
                 <span className="text-sm">{parseError}</span>
               </div>
             )}
-          </>
+          </div>
         )}
 
         {step === 'preview' && bundle && (
@@ -236,6 +202,18 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
 
         {step === 'result' && report && (
           <>
+            {feedbackState.state !== 'idle' ? (
+              <div className="flex justify-center py-8">
+                <VisualFeedback
+                  state={feedbackState.state}
+                  message={feedbackState.message}
+                  onComplete={() => setFeedbackState({ state: 'idle' })}
+                  duration={2000}
+                />
+              </div>
+            ) : (
+            <>
+
             <div className="space-y-3">
               {report.created.length > 0 && (
                 <div className="flex items-start gap-2">
@@ -265,9 +243,11 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
             <div className="flex justify-end pt-2">
               <button className="btn btn-primary btn-sm" onClick={handleClose}>Done</button>
             </div>
+            </>
+            )}
           </>
         )}
-      </div>
+          </div>
     </Modal>
   );
 };

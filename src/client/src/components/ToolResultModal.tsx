@@ -6,6 +6,7 @@ import {
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 import Modal from './DaisyUI/Modal';
+import { logger } from '../utils/logger';
 
 interface ToolResult {
   timestamp: string;
@@ -37,7 +38,7 @@ const ToolResultModal: React.FC<ToolResultModalProps> = ({ isOpen, onClose, resu
       setCopiedSection(section);
       setTimeout(() => setCopiedSection(null), 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
+      logger.error('Failed to copy:', err);
     }
   };
 
@@ -59,23 +60,29 @@ const ToolResultModal: React.FC<ToolResultModalProps> = ({ isOpen, onClose, resu
    *
    * Why needed: Provides syntax highlighting for JSON tool results in the UI
    *
-   * Sanitization: Input is sanitized through JSON.stringify(), which escapes all
-   * HTML special characters (<, >, &, etc.). The only HTML added is from our own
-   * regex replacements which add <span> tags with predefined class names.
+   * Sanitization: Input is sanitized by escaping HTML entities (&, <, >) manually
+   * since JSON.stringify() DOES NOT escape HTML characters. This prevents XSS
+   * from malicious JSON payloads containing HTML tags.
    *
    * Data sources: Tool execution results from MCP servers. While these are external,
-   * they are JSON.stringify'd which prevents any HTML/script injection. The regex
-   * patterns only match JSON tokens (strings, numbers, keywords) and wrap them in
-   * safe <span> elements with DaisyUI classes.
+   * they are JSON.stringify'd and then HTML-escaped which prevents any HTML/script
+   * injection. The regex patterns only match JSON tokens (strings, numbers, keywords)
+   * and wrap them in safe <span> elements with DaisyUI classes.
    *
-   * Risk: LOW - JSON.stringify() acts as the sanitizer, converting any potential
-   * HTML/script content into escaped text before our highlighting regex runs.
+   * Risk: LOW - HTML entities are manually escaped, converting any potential
+   * HTML/script content into safe text before our highlighting regex runs.
    */
   const renderJsonWithHighlighting = (obj: any) => {
     const jsonString = JSON.stringify(obj, null, 2);
 
+    // Escape HTML entities to prevent XSS before applying highlighting
+    const escapedString = jsonString
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
     // Simple syntax highlighting using spans
-    const highlighted = jsonString
+    const highlighted = escapedString
       .replace(/(".*?")/g, '<span class="text-success">$1</span>') // strings
       .replace(/\b(true|false|null)\b/g, '<span class="text-warning">$1</span>') // booleans/null
       .replace(/\b(\d+\.?\d*)\b/g, '<span class="text-info">$1</span>'); // numbers

@@ -14,7 +14,7 @@ export interface Agent {
   envOverrides?: Record<string, { isOverridden: boolean; redactedValue?: string }>;
 }
 
-export interface Persona {
+export interface AgentPersona {
   key: string;
   name: string;
   systemPrompt: string;
@@ -52,16 +52,16 @@ export const deleteAgent = async (id: string): Promise<void> => {
   await axios.delete(`/api/admin/agents/${id}`);
 };
 
-export const getPersonas = async (): Promise<Persona[]> => {
+export const getPersonas = async (): Promise<AgentPersona[]> => {
   const response = await axios.get('/api/admin/agents/personas');
   return response.data.personas || [];
 };
 
-export const createPersona = async (persona: Omit<Persona, 'key'>): Promise<void> => {
+export const createPersona = async (persona: Omit<AgentPersona, 'key'>): Promise<void> => {
   await axios.post('/api/admin/agents/personas', persona);
 };
 
-export const updatePersona = async (key: string, persona: Omit<Persona, 'key'>): Promise<void> => {
+export const updatePersona = async (key: string, persona: Omit<AgentPersona, 'key'>): Promise<void> => {
   await axios.put(`/api/admin/agents/personas/${key}`, persona);
 };
 

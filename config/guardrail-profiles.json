@@ -1,0 +1,13 @@
+[
+  {
+    "id": "test-no-rate-profile",
+    "name": "No Rate Limit Profile",
+    "description": "Profile without rate limit section",
+    "guards": {
+      "mcpGuard": {
+        "enabled": false,
+        "type": "owner"
+      }
+    }
+  }
+]

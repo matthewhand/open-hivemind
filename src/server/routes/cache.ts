@@ -1,5 +1,6 @@
 import Debug from 'debug';
 import { Router } from 'express';
+import { ApiResponse } from '@src/server/utils/apiResponse';
 import { requireAdmin } from '../../auth/middleware';
 import { HTTP_STATUS } from '../../types/constants';
 import { ClearCacheSchema } from '../../validation/schemas/miscSchema';
@@ -30,12 +31,10 @@ router.use(authenticateToken, requireAdmin);
 router.post('/clear', validateRequest(ClearCacheSchema), async (req, res) => {
   try {
     await clearAllSystemCaches();
-    res.json({ success: true, message: 'Cache cleared successfully' });
+    res.json(ApiResponse.success());
   } catch (error) {
     debug('ERROR:', 'Failed to clear cache:', error);
-    res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ success: false, error: 'Failed to clear cache' });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to clear cache'));
   }
 });
 

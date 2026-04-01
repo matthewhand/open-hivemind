@@ -33,6 +33,8 @@ import {
 import { apiService } from '../services/api';
 import { getProviderSchema, getProviderSchemasByType } from '../provider-configs';
 import useUrlParams from '../hooks/useUrlParams';
+import { useWebSocket } from '../contexts/WebSocketContext';
+import { useSavedStamp } from '../contexts/SavedStampContext';
 
 /** Shape returned by GET /api/providers/memory */
 interface ProviderHealth {
@@ -86,6 +88,7 @@ const stepIcon = (status: string) => {
 
 const MemoryProvidersPage: React.FC = () => {
   const errorToast = useErrorToast();
+  const { showStamp } = useSavedStamp();
   const [profiles, setProfiles] = useState<any[]>([]);
   const [expandedProfile, setExpandedProfile] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -148,6 +151,16 @@ const MemoryProvidersPage: React.FC = () => {
   useEffect(() => { fetchProfiles(); }, [fetchProfiles]);
   useEffect(() => { fetchHealth(); }, [fetchHealth]);
 
+  // Auto-refresh when config changes are broadcast via WebSocket
+  const { configVersion, lastConfigChange } = useWebSocket();
+  const configVersionRef = React.useRef(configVersion);
+  useEffect(() => {
+    if (configVersionRef.current === configVersion) return;
+    configVersionRef.current = configVersion;
+    if (lastConfigChange?.type && lastConfigChange.type !== 'memory-profiles') return;
+    fetchProfiles();
+  }, [configVersion, lastConfigChange, fetchProfiles]);
+
   const handleTestProfile = useCallback(async (profileKey: string) => {
     setTestResults(prev => ({ ...prev, [profileKey]: 'loading' }));
     try {
@@ -207,6 +220,7 @@ const MemoryProvidersPage: React.FC = () => {
         }
       } else { await apiService.post('/api/config/memory-profiles', payload); }
       setFormModal({ isOpen: false, isEdit: false, profile: null });
+      showStamp();
       fetchProfiles();
     } catch (err: any) { errorToast('Save Failed', `Failed to save profile: ${err.message}`); }
   };

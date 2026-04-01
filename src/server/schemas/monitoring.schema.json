@@ -1,4 +1,110 @@
 {
+  "/api/health": {
+    "get": {
+      "summary": "Basic health check with provider registry and pipeline stats",
+      "tags": [
+        "Monitoring"
+      ],
+      "responses": {
+        "200": {
+          "description": "Health status payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": ["healthy", "degraded"]
+                  },
+                  "timestamp": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "version": {
+                    "type": "string"
+                  },
+                  "uptime": {
+                    "type": "number"
+                  },
+                  "memory": {
+                    "type": "object",
+                    "properties": {
+                      "used": { "type": "integer", "description": "Heap used in MB" },
+                      "total": { "type": "integer", "description": "Heap total in MB" },
+                      "percentage": { "type": "integer", "description": "Heap usage %" }
+                    }
+                  },
+                  "system": {
+                    "type": "object",
+                    "properties": {
+                      "platform": { "type": "string" },
+                      "nodeVersion": { "type": "string" },
+                      "processId": { "type": "integer" }
+                    }
+                  },
+                  "memoryProviders": {
+                    "type": "object",
+                    "description": "Memory provider health status"
+                  },
+                  "providerRegistry": {
+                    "type": "object",
+                    "description": "Provider counts by type (llm, memory, messenger, tool). Present only when SyncProviderRegistry is initialized.",
+                    "properties": {
+                      "llm": { "type": "integer" },
+                      "memory": { "type": "integer" },
+                      "messenger": { "type": "integer" },
+                      "tool": { "type": "integer" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/health/detailed": {
+    "get": {
+      "summary": "Detailed health check with pipeline trace statistics (requires authentication for full response)",
+      "tags": [
+        "Monitoring"
+      ],
+      "responses": {
+        "200": {
+          "description": "Detailed health data including optional pipeline stats",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": { "type": "string" },
+                  "timestamp": { "type": "string", "format": "date-time" },
+                  "uptime": { "type": "number" },
+                  "pipeline": {
+                    "type": "object",
+                    "description": "Pipeline tracer statistics. Present only when the pipeline tracer is active.",
+                    "properties": {
+                      "totalTraces": { "type": "integer" },
+                      "avgDurationMs": { "type": "number" },
+                      "stageAvgMs": {
+                        "type": "object",
+                        "additionalProperties": { "type": "number" },
+                        "description": "Average duration per pipeline stage in ms"
+                      },
+                      "errorRate": { "type": "number" },
+                      "recentTraces": { "type": "integer" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
   "/dashboard/api/status": {
     "get": {
       "summary": "Get live bot status",

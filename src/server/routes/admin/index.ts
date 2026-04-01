@@ -6,7 +6,14 @@ import agentsRouter from '../agents';
 import guardProfilesRouter from '../guardProfiles';
 import mcpRouter from '../mcp';
 import auditRouter from './audit';
-import systemRouter from './system';
+import backupRouter from './backup';
+import configRouter from './config';
+import llmProvidersRouter from './llmProviders';
+import maintenanceRouter from './maintenance';
+import mcpServersRouter from './mcpServers';
+import messengerProvidersRouter from './messengerProviders';
+import monitoringRouter from './monitoring';
+import systemInfoRouter from './systemInfo';
 import usersRouter from './users';
 
 const router = Router();
@@ -44,7 +51,14 @@ router.use('/guard-profiles', guardProfilesRouter);
 // calls them without the /users, /system, etc. prefixes.
 // We mount them on '/' so paths like /api/admin/llm-providers still work correctly.
 router.use('/', auditRouter);
-router.use('/', systemRouter);
+router.use('/', monitoringRouter);
+router.use('/', backupRouter);
+router.use('/', configRouter);
+router.use('/', llmProvidersRouter);
+router.use('/', maintenanceRouter);
+router.use('/', mcpServersRouter);
+router.use('/', messengerProvidersRouter);
+router.use('/', systemInfoRouter);
 router.use('/', usersRouter);
 
 export default router;

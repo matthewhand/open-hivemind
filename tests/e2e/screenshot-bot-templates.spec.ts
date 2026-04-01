@@ -96,7 +96,6 @@ test.describe('Bot Templates Page Screenshots', () => {
     await page.goto('/admin/bots/templates');
 
     // Wait for the page to load and content to be visible
-    await page.waitForTimeout(2000);
     const templatesHeading = page.getByText('Bot Templates').first();
     const helpfulAssistant = page.locator('h2.card-title').filter({ hasText: 'Helpful Assistant' });
 
@@ -111,7 +110,6 @@ test.describe('Bot Templates Page Screenshots', () => {
     }
 
     // Wait a bit for images/badges to render
-    await page.waitForTimeout(500);
 
     // Take screenshot of the full list
     await page.screenshot({ path: 'docs/screenshots/bot-templates-page.png', fullPage: true });
@@ -119,7 +117,6 @@ test.describe('Bot Templates Page Screenshots', () => {
     // Test Interaction: Search for 'Code'
     const searchInput = page.getByPlaceholder('Search templates...');
     await searchInput.fill('Code');
-    await page.waitForTimeout(300);
 
     await expect(page.locator('h2.card-title').filter({ hasText: 'Code Reviewer' })).toBeVisible();
     await expect(
@@ -128,7 +125,6 @@ test.describe('Bot Templates Page Screenshots', () => {
 
     // Clear search
     await searchInput.clear();
-    await page.waitForTimeout(300);
     await expect(
       page.locator('h2.card-title').filter({ hasText: 'Helpful Assistant' })
     ).toBeVisible();
@@ -138,7 +134,6 @@ test.describe('Bot Templates Page Screenshots', () => {
     await platformSelect.selectOption('discord'); // Use value (which is 'discord' from the data)
 
     // Wait for filter to apply
-    await page.waitForTimeout(300);
 
     // Verify filtering
     await expect(
@@ -148,7 +143,6 @@ test.describe('Bot Templates Page Screenshots', () => {
 
     // Test Interaction: Open Diff Viewer
     await page.locator('button[title="Compare Versions"]').first().click();
-    await page.waitForTimeout(500);
 
     // Verify modal is visible
     await expect(page.getByText('Compare the current template configuration')).toBeVisible();

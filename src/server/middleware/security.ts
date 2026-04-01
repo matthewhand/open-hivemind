@@ -73,6 +73,8 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
     cspDirectives.push(
       "style-src 'self' 'unsafe-inline' http://localhost:* https://fonts.googleapis.com"
     );
+    // Allow blob: workers for Vite HMR in development
+    cspDirectives.push("worker-src 'self' blob:");
   }
 
   res.setHeader('Content-Security-Policy', cspDirectives.join('; '));

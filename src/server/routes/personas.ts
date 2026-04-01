@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import { ApiResponse } from '@src/server/utils/apiResponse';
 import { createLogger } from '../../common/StructuredLogger';
 import { BotManager } from '../../managers/BotManager';
 import { PersonaManager } from '../../managers/PersonaManager';
+import { configLimiter } from '../../middleware/rateLimiter';
 import { ERROR_CODES, HTTP_STATUS } from '../../types/constants';
 import { ReorderSchema } from '../../validation/schemas/commonSchema';
 import {
@@ -63,7 +65,7 @@ router.get('/', async (req, res) => {
   try {
     const manager = await getManager();
     const personas = manager.getAllPersonas();
-    return res.json(personas);
+    return res.json(ApiResponse.success(personas));
   } catch (error: unknown) {
     logger.error(
       'Failed to retrieve personas',
@@ -71,12 +73,12 @@ router.get('/', async (req, res) => {
     );
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: 'Failed to retrieve personas' });
+      .json(ApiResponse.error('Failed to retrieve personas'));
   }
 });
 
 // PUT /api/personas/reorder
-router.put('/reorder', validateRequest(ReorderSchema), async (req, res) => {
+router.put('/reorder', configLimiter, validateRequest(ReorderSchema), async (req, res) => {
   try {
     const { ids } = req.body;
 
@@ -87,7 +89,7 @@ router.put('/reorder', validateRequest(ReorderSchema), async (req, res) => {
     await fsModule.promises.mkdir(orderDir, { recursive: true });
     await fsModule.promises.writeFile(orderFilePath, JSON.stringify(ids, null, 2));
 
-    return res.json({ success: true, message: 'Persona order updated' });
+    return res.json(ApiResponse.success());
   } catch (error: unknown) {
     logger.error(
       'Failed to reorder personas',
@@ -95,7 +97,7 @@ router.put('/reorder', validateRequest(ReorderSchema), async (req, res) => {
     );
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: 'Failed to reorder personas' });
+      .json(ApiResponse.error('Failed to reorder personas'));
   }
 });
 
@@ -105,9 +107,9 @@ router.get('/:id', validateRequest(PersonaIdParamSchema), async (req, res) => {
     const manager = await getManager();
     const persona = manager.getPersona(req.params.id);
     if (!persona) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Persona not found' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Persona not found'));
     }
-    return res.json(persona);
+    return res.json(ApiResponse.success(persona));
   } catch (error: unknown) {
     logger.error(
       'Failed to retrieve persona',
@@ -116,12 +118,12 @@ router.get('/:id', validateRequest(PersonaIdParamSchema), async (req, res) => {
     );
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: 'Failed to retrieve persona' });
+      .json(ApiResponse.error('Failed to retrieve persona'));
   }
 });
 
 // POST /api/personas
-router.post('/', validateRequest(CreatePersonaSchema), async (req, res) => {
+router.post('/', configLimiter, validateRequest(CreatePersonaSchema), async (req, res) => {
   try {
     const manager = await getManager();
     // Idempotency check: see if persona with same name exists
@@ -135,12 +137,12 @@ router.post('/', validateRequest(CreatePersonaSchema), async (req, res) => {
     const newPersona = manager.createPersona(req.body);
     return res.status(HTTP_STATUS.CREATED).json(newPersona);
   } catch (error: any) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error(error.message));
   }
 });
 
 // POST /api/personas/:id/clone
-router.post('/:id/clone', validateRequest(ClonePersonaSchema), async (req, res) => {
+router.post('/:id/clone', configLimiter, validateRequest(ClonePersonaSchema), async (req, res) => {
   try {
     const manager = await getManager();
     if (req.body.name) {
@@ -156,111 +158,108 @@ router.post('/:id/clone', validateRequest(ClonePersonaSchema), async (req, res) 
     return res.status(HTTP_STATUS.CREATED).json(clonedPersona);
   } catch (error: any) {
     if (error.message.includes(ERROR_CODES.NOT_FOUND)) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: error.message });
+      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error(error.message));
     }
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error(error.message));
   }
 });
 
 // PUT /api/personas/:id
-router.put('/:id', validateRequest(UpdatePersonaRouteSchema), async (req, res) => {
+router.put('/:id', configLimiter, validateRequest(UpdatePersonaRouteSchema), async (req, res) => {
   try {
     const manager = await getManager();
     const updatedPersona = manager.updatePersona(req.params.id, req.body);
-    return res.json(updatedPersona);
+    return res.json(ApiResponse.success(updatedPersona));
   } catch (error: any) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error(error.message));
   }
 });
 
 // DELETE /api/personas/bulk
-router.delete('/bulk', validateRequest(BulkDeletePersonasSchema), async (req, res) => {
-  try {
-    const manager = await getManager();
-    const { ids } = req.body;
-    const botManager = BotManager.getInstance();
+router.delete(
+  '/bulk',
+  configLimiter,
+  validateRequest(BulkDeletePersonasSchema),
+  async (req, res) => {
+    try {
+      const manager = await getManager();
+      const { ids } = req.body;
+      const botManager = await BotManager.getInstance();
 
-    // Validate that all personas exist and are not built-in
-    const personasToDelete = [];
-    const notFound = [];
-    const builtIn = [];
+      // Validate that all personas exist and are not built-in
+      const personasToDelete = [];
+      const notFound = [];
+      const builtIn = [];
 
-    for (const id of ids) {
-      const persona = manager.getPersona(id);
-      if (!persona) {
-        notFound.push(id);
-      } else if (persona.isBuiltIn) {
-        builtIn.push(id);
-      } else {
-        personasToDelete.push(persona);
-      }
-    }
-
-    // Check for bots referencing these personas
-    const allBots = await botManager.getAllBots();
-    const personaIdSet = new Set(personasToDelete.map((p) => p.id));
-    const botsToRevert = allBots.filter((bot) => bot.persona && personaIdSet.has(bot.persona));
-
-    // Revert bots to default persona first
-    for (const bot of botsToRevert) {
-      try {
-        await botManager.updateBot(bot.id, {
-          persona: 'default',
-          systemInstruction: 'You are a helpful assistant.',
-        });
-      } catch (error: any) {
-        logger.warn(`Failed to revert bot ${bot.id} to default persona`, error);
-        // Continue with deletion even if bot update fails
-      }
-    }
-
-    // Delete personas atomically
-    const deleted = [];
-    const failed = [];
-
-    for (const persona of personasToDelete) {
-      try {
-        const result = manager.deletePersona(persona.id);
-        if (result) {
-          deleted.push(persona.id);
+      for (const id of ids) {
+        const persona = manager.getPersona(id);
+        if (!persona) {
+          notFound.push(id);
+        } else if (persona.isBuiltIn) {
+          builtIn.push(id);
         } else {
-          failed.push({ id: persona.id, error: 'Delete operation returned false' });
+          personasToDelete.push(persona);
         }
-      } catch (error: any) {
-        failed.push({ id: persona.id, error: error.message });
       }
-    }
 
-    return res.json({
-      success: true,
-      deleted,
-      notFound,
-      builtIn,
-      failed,
-      botsReverted: botsToRevert.length,
-    });
-  } catch (error: any) {
-    logger.error('Bulk delete personas failed', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      error: 'Failed to delete personas',
-      details: error.message,
-    });
+      // Check for bots referencing these personas
+      const allBots = await botManager.getAllBots();
+      const personaIdSet = new Set(personasToDelete.map((p) => p.id));
+      const botsToRevert = allBots.filter((bot) => bot.persona && personaIdSet.has(bot.persona));
+
+      // Revert bots to default persona first
+      for (const bot of botsToRevert) {
+        try {
+          await botManager.updateBot(bot.id, {
+            persona: 'default',
+            systemInstruction: 'You are a helpful assistant.',
+          });
+        } catch (error: any) {
+          logger.warn(`Failed to revert bot ${bot.id} to default persona`, error);
+          // Continue with deletion even if bot update fails
+        }
+      }
+
+      // Delete personas atomically
+      const deleted = [];
+      const failed = [];
+
+      for (const persona of personasToDelete) {
+        try {
+          const result = manager.deletePersona(persona.id);
+          if (result) {
+            deleted.push(persona.id);
+          } else {
+            failed.push({ id: persona.id, error: 'Delete operation returned false' });
+          }
+        } catch (error: any) {
+          failed.push({ id: persona.id, error: error.message });
+        }
+      }
+
+      return res.json(ApiResponse.success());
+    } catch (error: any) {
+      logger.error('Bulk delete personas failed', error);
+      return res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error('Failed to delete personas', undefined, error.message));
+    }
   }
-});
+);
 
 // DELETE /api/personas/:id
-router.delete('/:id', validateRequest(PersonaIdParamSchema), async (req, res) => {
+router.delete('/:id', configLimiter, validateRequest(PersonaIdParamSchema), async (req, res) => {
   try {
     const manager = await getManager();
     const existingPersona = manager.getPersona(req.params.id);
     if (!existingPersona) {
-      return res.json({ success: true }); // Idempotency: return HTTP_STATUS.OK if already gone
+      return res.json(ApiResponse.success()); // Idempotency: return HTTP_STATUS.OK if already gone
     }
 
     manager.deletePersona(req.params.id);
-    return res.json({ success: true });
+    return res.json(ApiResponse.success());
   } catch (error: any) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error(error.message));
   }
 });
 
