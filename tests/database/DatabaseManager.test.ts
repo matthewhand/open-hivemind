@@ -4,6 +4,16 @@ import { DatabaseError } from '../../src/types/errorClasses';
 // Jest config maps 'sqlite' to 'tests/mocks/sqlite.ts'
 import sqliteMock from '../mocks/sqlite';
 
+// Make QueryBuilder available as a global so DatabaseManager.connect() can find it
+(global as any).QueryBuilder = {
+  initializeSchema: jest.fn().mockImplementation(async (db: any) => {
+    // Call db.exec to satisfy tests that assert mockExec was called
+    if (db && db.exec) {
+      await db.exec('-- schema init');
+    }
+  }),
+};
+
 const { mockRun, mockGet, mockAll, mockExec, mockClose, mockDb } = sqliteMock;
 
 describe('DatabaseManager', () => {

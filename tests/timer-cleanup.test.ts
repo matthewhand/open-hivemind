@@ -2,6 +2,28 @@
  * Test suite to verify all timers have proper cleanup
  */
 
+// Mock WebSocketService so that getInstance() does not trigger tsyringe resolution
+jest.mock('../src/server/services/WebSocketService', () => {
+  let metricsInterval: NodeJS.Timeout | null = null;
+  const mockService = {
+    shutdown: jest.fn(() => {
+      if (metricsInterval) {
+        clearInterval(metricsInterval);
+        metricsInterval = null;
+      }
+    }),
+    getInstance: jest.fn(),
+    recordAlert: jest.fn(),
+    recordMessageFlow: jest.fn(),
+  };
+  mockService.getInstance.mockReturnValue(mockService);
+  return {
+    __esModule: true,
+    WebSocketService: { getInstance: mockService.getInstance },
+    default: { getInstance: mockService.getInstance },
+  };
+});
+
 describe('Timer Cleanup Tests', () => {
   beforeEach(() => {
     jest.clearAllTimers();

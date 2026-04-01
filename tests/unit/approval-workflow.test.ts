@@ -7,6 +7,10 @@ import {
   BotConfiguration,
   DatabaseManager,
 } from '../../src/database/DatabaseManager';
+import { QueryBuilder } from '../../src/database/queryBuilder';
+
+// Make QueryBuilder available as a global so DatabaseManager.connect() can find it
+(global as any).QueryBuilder = QueryBuilder;
 
 describe('Approval Workflow', () => {
   let dbManager: DatabaseManager;

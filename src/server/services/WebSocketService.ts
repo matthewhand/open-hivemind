@@ -1,1 +1,7 @@
-export { WebSocketService, default, MessageFlowEvent, PerformanceMetric, AlertEvent } from './websocket';
+export {
+  WebSocketService,
+  default,
+  MessageFlowEvent,
+  PerformanceMetric,
+  AlertEvent,
+} from './websocket';

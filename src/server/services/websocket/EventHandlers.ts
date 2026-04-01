@@ -1,9 +1,9 @@
-import { Server as SocketIOServer } from 'socket.io';
 import Debug from 'debug';
-import { ConnectionManager } from './ConnectionManager';
-import { BroadcastService } from './BroadcastService';
-import type { AckPayload, RequestMissedPayload } from '../../../types/websocket';
+import { type Server as SocketIOServer } from 'socket.io';
 import { injectable, singleton } from 'tsyringe';
+import type { AckPayload, RequestMissedPayload } from '../../../types/websocket';
+import { type BroadcastService } from './BroadcastService';
+import { type ConnectionManager } from './ConnectionManager';
 
 const debug = Debug('app:WebSocketService:EventHandlers');
 
@@ -29,7 +29,10 @@ export class EventHandlers {
       });
 
       socket.on('request_system_metrics', () => {
-        this.broadcastService.sendSystemMetrics(socket, this.connectionManager.getConnectedClients());
+        this.broadcastService.sendSystemMetrics(
+          socket,
+          this.connectionManager.getConnectedClients()
+        );
       });
 
       socket.on('request_config_validation', () => {
@@ -45,11 +48,17 @@ export class EventHandlers {
       });
 
       socket.on('request_performance_metrics', () => {
-        this.broadcastService.sendPerformanceMetrics(socket, this.connectionManager.getConnectedClients());
+        this.broadcastService.sendPerformanceMetrics(
+          socket,
+          this.connectionManager.getConnectedClients()
+        );
       });
 
       socket.on('request_monitoring_dashboard', () => {
-        this.broadcastService.sendMonitoringDashboard(socket, this.connectionManager.getConnectedClients());
+        this.broadcastService.sendMonitoringDashboard(
+          socket,
+          this.connectionManager.getConnectedClients()
+        );
       });
 
       socket.on('request_api_status', () => {
@@ -71,7 +80,9 @@ export class EventHandlers {
 
       socket.on('disconnect', () => {
         this.connectionManager.decrementClients();
-        debug(`Client disconnected. Total clients: ${this.connectionManager.getConnectedClients()}`);
+        debug(
+          `Client disconnected. Total clients: ${this.connectionManager.getConnectedClients()}`
+        );
         socket.removeAllListeners();
       });
     });

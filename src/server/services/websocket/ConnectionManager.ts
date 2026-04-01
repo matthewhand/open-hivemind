@@ -1,7 +1,5 @@
-import { Server as HttpServer } from 'http';
-import { Server as SocketIOServer } from 'socket.io';
+import { type Server as HttpServer } from 'http';
 import Debug from 'debug';
-import os from 'os';
 import { injectable, singleton } from 'tsyringe';
 
 const debug = Debug('app:WebSocketService:ConnectionManager');

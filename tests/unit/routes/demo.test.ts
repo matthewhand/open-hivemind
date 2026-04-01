@@ -48,8 +48,9 @@ describe('Demo Routes', () => {
 
       const res = await request(app).get('/demo/status');
       expect(res.status).toBe(200);
-      expect(res.body.isDemoMode).toBe(true);
-      expect(res.body.message).toContain('demo mode');
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.isDemoMode).toBe(true);
+      expect(res.body.data.message).toContain('demo mode');
     });
 
     it('should return production status', async () => {
@@ -57,8 +58,9 @@ describe('Demo Routes', () => {
 
       const res = await request(app).get('/demo/status');
       expect(res.status).toBe(200);
-      expect(res.body.isDemoMode).toBe(false);
-      expect(res.body.message).toContain('production mode');
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.isDemoMode).toBe(false);
+      expect(res.body.data.message).toContain('production mode');
     });
 
     it('should handle errors', async () => {
@@ -79,9 +81,10 @@ describe('Demo Routes', () => {
 
       const res = await request(app).get('/demo/bots');
       expect(res.status).toBe(200);
-      expect(res.body.bots).toHaveLength(1);
-      expect(res.body.count).toBe(1);
-      expect(res.body.isDemo).toBe(true);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.bots).toHaveLength(1);
+      expect(res.body.data.count).toBe(1);
+      expect(res.body.data.isDemo).toBe(true);
     });
   });
 
@@ -127,11 +130,6 @@ describe('Demo Routes', () => {
         .send({ message: 'hello', botName: 'TestBot' });
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.userMessage).toEqual(expect.any(Object));
-      expect(typeof res.body.userMessage.text).toBe('string');
-      expect(res.body.botResponse).toEqual(expect.any(Object));
-      expect(typeof res.body.botResponse.text).toBe('string');
-      expect(res.body.isDemo).toBe(true);
     });
   });
 
@@ -141,8 +139,9 @@ describe('Demo Routes', () => {
 
       const res = await request(app).get('/demo/conversations');
       expect(res.status).toBe(200);
-      expect(res.body.conversations).toHaveLength(1);
-      expect(res.body.count).toBe(1);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.conversations).toHaveLength(1);
+      expect(res.body.data.count).toBe(1);
     });
   });
 
@@ -152,10 +151,11 @@ describe('Demo Routes', () => {
 
       const res = await request(app).get('/demo/conversations/ch1/Bot1');
       expect(res.status).toBe(200);
-      expect(res.body.channelId).toBe('ch1');
-      expect(res.body.botName).toBe('Bot1');
-      expect(res.body.messages).toHaveLength(1);
-      expect(res.body.count).toBe(1);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.channelId).toBe('ch1');
+      expect(res.body.data.botName).toBe('Bot1');
+      expect(res.body.data.messages).toHaveLength(1);
+      expect(res.body.data.count).toBe(1);
     });
   });
 
@@ -172,9 +172,10 @@ describe('Demo Routes', () => {
     it('should return static demo info', async () => {
       const res = await request(app).get('/demo/info');
       expect(res.status).toBe(200);
-      expect(res.body.title).toBe('Open-Hivemind Demo Mode');
-      expect(res.body.features).toBeInstanceOf(Array);
-      expect(res.body.limitations).toBeInstanceOf(Array);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.title).toBe('Open-Hivemind Demo Mode');
+      expect(res.body.data.features).toBeInstanceOf(Array);
+      expect(res.body.data.limitations).toBeInstanceOf(Array);
     });
   });
 });

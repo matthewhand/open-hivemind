@@ -1,15 +1,12 @@
 import { randomUUID } from 'crypto';
 import os from 'os';
 import Debug from 'debug';
-import type { Server as SocketIOServer, Socket } from 'socket.io';
-import { BotConfigurationManager } from '../../../config/BotConfigurationManager';
-import type { BotConfig } from '../../../types/config';
-import { BotMetricsService } from '../BotMetricsService';
-import { ActivityLogger } from '../ActivityLogger';
-import ApiMonitorService from '../../../services/ApiMonitorService';
-import type { EndpointStatus } from '../../../services/ApiMonitorService';
+import type { Socket, Server as SocketIOServer } from 'socket.io';
 import { injectable, singleton } from 'tsyringe';
-import { ConnectionManager } from './ConnectionManager';
+import { BotConfigurationManager } from '../../../config/BotConfigurationManager';
+import type { EndpointStatus } from '../../../services/ApiMonitorService';
+import type ApiMonitorService from '../../../services/ApiMonitorService';
+import type { BotConfig } from '../../../types/config';
 import {
   DeliveryStatus,
   type AckPayload,
@@ -18,7 +15,10 @@ import {
   type MessageEnvelope,
   type RequestMissedPayload,
 } from '../../../types/websocket';
-import type { MessageFlowEvent, PerformanceMetric, AlertEvent } from './types';
+import { ActivityLogger } from '../ActivityLogger';
+import { BotMetricsService } from '../BotMetricsService';
+import { ConnectionManager } from './ConnectionManager';
+import type { AlertEvent, MessageFlowEvent, PerformanceMetric } from './types';
 
 const debug = Debug('app:WebSocketService:BroadcastService');
 
@@ -251,7 +251,10 @@ export class BroadcastService {
     };
   }
 
-  public getAllBotStats(): Record<string, { messageCount: number; errors: string[]; errorCount: number }> {
+  public getAllBotStats(): Record<
+    string,
+    { messageCount: number; errors: string[]; errorCount: number }
+  > {
     const metricsService = BotMetricsService.getInstance();
     const allMetrics = metricsService.getAllMetrics();
     const out: Record<string, { messageCount: number; errors: string[]; errorCount: number }> = {};

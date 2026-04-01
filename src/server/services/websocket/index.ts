@@ -1,10 +1,8 @@
 import type { Server as HttpServer } from 'http';
 import Debug from 'debug';
-import { ConnectionManager } from './ConnectionManager';
-import { EventHandlers } from './EventHandlers';
-import { BroadcastService } from './BroadcastService';
-import { container, injectable, singleton } from 'tsyringe';
 import type { Server as SocketIOServer } from 'socket.io';
+import { container, injectable, singleton } from 'tsyringe';
+import type ApiMonitorService from '../../../services/ApiMonitorService';
 import type {
   AckPayload,
   DeliveryStats,
@@ -12,8 +10,10 @@ import type {
   MessageEnvelope,
   RequestMissedPayload,
 } from '../../../types/websocket';
-import type { MessageFlowEvent, PerformanceMetric, AlertEvent } from './types';
-import ApiMonitorService from '../../../services/ApiMonitorService';
+import { type BroadcastService } from './BroadcastService';
+import { type ConnectionManager } from './ConnectionManager';
+import { type EventHandlers } from './EventHandlers';
+import type { AlertEvent, MessageFlowEvent, PerformanceMetric } from './types';
 
 const debug = Debug('app:WebSocketService');
 
@@ -125,11 +125,18 @@ export class WebSocketService {
     return this.broadcastService.getErrorRateHistory();
   }
 
-  public getBotStats(botName: string): { messageCount: number; errors: string[]; errorCount: number } {
+  public getBotStats(botName: string): {
+    messageCount: number;
+    errors: string[];
+    errorCount: number;
+  } {
     return this.broadcastService.getBotStats(botName);
   }
 
-  public getAllBotStats(): Record<string, { messageCount: number; errors: string[]; errorCount: number }> {
+  public getAllBotStats(): Record<
+    string,
+    { messageCount: number; errors: string[]; errorCount: number }
+  > {
     return this.broadcastService.getAllBotStats();
   }
 
