@@ -19,7 +19,7 @@ import Input from '../components/DaisyUI/Input';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService, ActivityEvent, ActivityResponse } from '../services/api';
 import useUrlParams from '../hooks/useUrlParams';
-import { useApiQuery } from '../hooks/useApiQuery';
+import { useQuery } from '@tanstack/react-query';
 
 const ActivityPage: React.FC = () => {
   const [data, setData] = useState<ActivityResponse | null>(null);
@@ -73,12 +73,15 @@ const ActivityPage: React.FC = () => {
   // Use cached query with optional polling
   const {
     data: activityResult,
-    loading: activityLoading,
+    isLoading: activityLoading,
     error: activityError,
     refetch: refetchActivity,
-  } = useApiQuery<ActivityResponse>(activityUrl, {
-    ttl: 15_000,
-    pollInterval: autoRefresh ? 5000 : undefined,
+  } = useQuery<ActivityResponse>({
+    queryKey: ['activity', activityUrl],
+    queryFn: () => apiService.get<ActivityResponse>(activityUrl),
+    staleTime: 15_000,
+    gcTime: 30_000,
+    refetchInterval: autoRefresh ? 5000 : undefined,
   });
 
   // Sync into local state

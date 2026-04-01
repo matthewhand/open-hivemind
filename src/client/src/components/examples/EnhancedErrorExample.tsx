@@ -9,6 +9,7 @@
 import React, { useState } from 'react';
 import EnhancedErrorAlert from '../DaisyUI/EnhancedErrorAlert';
 import Button from '../DaisyUI/Button';
+import { apiService } from '../../services/api';
 import { useEnhancedErrorHandling, type ActionableErrorDisplay } from '../../utils/enhancedErrorHandling';
 
 export const EnhancedErrorExample: React.FC = () => {
@@ -24,18 +25,7 @@ export const EnhancedErrorExample: React.FC = () => {
       setError(null);
       setLoading(true);
 
-      const response = await fetch('/api/marketplace/install', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ repoUrl }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw errorData;
-      }
-
-      const data = await response.json();
+      const data = await apiService.post('/api/marketplace/install', { repoUrl });
       console.log('Package installed:', data);
 
       // Show success message
@@ -56,18 +46,7 @@ export const EnhancedErrorExample: React.FC = () => {
       setError(null);
       setLoading(true);
 
-      const response = await fetch('/api/mcp/execute', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ serverName, toolName, arguments: args }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw errorData;
-      }
-
-      const data = await response.json();
+      const data = await apiService.post('/api/mcp/execute', { serverName, toolName, arguments: args });
       console.log('Tool executed:', data);
 
       // Show result
@@ -88,18 +67,7 @@ export const EnhancedErrorExample: React.FC = () => {
       setError(null);
       setLoading(true);
 
-      const response = await fetch(`/api/providers/${providerId}/connect`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw errorData;
-      }
-
-      const data = await response.json();
+      const data = await apiService.post(`/api/providers/${providerId}/connect`, config);
       console.log('Provider connected:', data);
 
       // Show success
@@ -120,17 +88,7 @@ export const EnhancedErrorExample: React.FC = () => {
       setError(null);
       setLoading(true);
 
-      const response = await fetch(`/api/bots/${botId}/start`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw errorData;
-      }
-
-      const data = await response.json();
+      const data = await apiService.post(`/api/bots/${botId}/start`);
       console.log('Bot started:', data);
 
       // Show success

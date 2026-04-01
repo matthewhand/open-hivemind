@@ -35,14 +35,14 @@ import { pipelineEventEmitter, PipelineMetrics } from '../PipelineMetrics';
 import { PipelineMetricsAggregator } from '../PipelineMetricsAggregator';
 import processingLocks from '../processing/processingLocks';
 
-const timingManager = MessageDelayScheduler.getInstance();
+const _timingManager = MessageDelayScheduler.getInstance();
 const idleResponseManager = IdleResponseManager.getInstance();
 const duplicateDetector = DuplicateMessageDetector.getInstance();
-const tokenTracker = TokenTracker.getInstance();
+const _tokenTracker = TokenTracker.getInstance();
 const channelDelayManager = ChannelDelayManager.getInstance();
 const outgoingRateLimiter = OutgoingMessageRateLimiter.getInstance();
-const typingActivity = TypingActivity.getInstance();
-const historyTuner = AdaptiveHistoryTuner.getInstance();
+const _typingActivity = TypingActivity.getInstance();
+const _historyTuner = AdaptiveHistoryTuner.getInstance();
 const contentFilterService = ContentFilterService.getInstance();
 
 /**
@@ -95,14 +95,14 @@ export async function handleMessage(
       let typingInterval: NodeJS.Timeout | null = null;
       let typingTimeout: NodeJS.Timeout | null = null;
       let stopTyping = false;
-      let historyTuneKey: string | null = null;
-      let historyTuneRequestedLimit: number | null = null;
+      let _historyTuneKey: string | null = null;
+      let _historyTuneRequestedLimit: number | null = null;
 
       // Use a per-bot debug namespace so logs are easily attributable in swarm mode.
       const logger = Debug(`app:messageHandler:${activeAgentName}`);
 
       // Helper for random integer (chaos)
-      const randInt = (min: number, max: number): number =>
+      const _randInt = (min: number, max: number): number =>
         Math.floor(Math.random() * (max - min + 1)) + min;
 
       // Log received message
@@ -187,9 +187,14 @@ export async function handleMessage(
         const platform = providerType.toLowerCase();
 
         // Delegate platform-specific identity/routing to the integration layer.
+        const mpUnknown = messageProvider as unknown as Record<string, unknown>;
         const resolvedAgentContext =
-          typeof (messageProvider as any)?.resolveAgentContext === 'function'
-            ? (messageProvider as any).resolveAgentContext({
+          typeof mpUnknown?.resolveAgentContext === 'function'
+            ? (
+                mpUnknown.resolveAgentContext as (
+                  opts: Record<string, unknown>
+                ) => Record<string, unknown> | null
+              )({
                 botConfig,
                 agentDisplayName: activeAgentName,
               })
@@ -306,15 +311,18 @@ export async function handleMessage(
 
         const replyNameCandidates: string[] = Array.from(
           new Set(
-            (resolvedAgentContext?.nameCandidates || [activeAgentName, botConfig?.name])
+            (Array.isArray(resolvedAgentContext?.nameCandidates)
+              ? resolvedAgentContext.nameCandidates
+              : [activeAgentName, botConfig?.name]
+            )
               .filter(Boolean)
               .map((v: unknown) => String(v))
           )
         );
 
         const defaultChannelId =
-          typeof (messageProvider as any).getDefaultChannel === 'function'
-            ? (messageProvider as any).getDefaultChannel()
+          typeof mpUnknown.getDefaultChannel === 'function'
+            ? (mpUnknown.getDefaultChannel as () => string | undefined)()
             : undefined;
 
         const replyDecision = await shouldReplyToMessage(
@@ -326,14 +334,14 @@ export async function handleMessage(
           defaultChannelId,
           botConfig
         );
-        const decisionTimestamp = Date.now();
+        const _decisionTimestamp = Date.now();
         pipelineMetrics.endStage('validate', {
           shouldReply: replyDecision.shouldReply,
           reason: replyDecision.reason,
         });
 
         // Safely extract human-readable names for logging
-        const authorName = (() => {
+        const authorName = ((): string => {
           try {
             return (
               (typeof message.getAuthorName === 'function' ? message.getAuthorName() : null) ||
@@ -345,9 +353,10 @@ export async function handleMessage(
             return 'someone';
           }
         })();
-        const channelName = (() => {
+        const channelName = ((): string => {
           try {
             // Try to get channel name from the original message if Discord
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- duck-typing for Discord message shape
             const orig = (message as any).getOriginalMessage?.();
             if (orig?.channel?.name) {
               return `#${orig.channel.name}`;
@@ -384,8 +393,8 @@ export async function handleMessage(
         didLock = true;
 
         // Calculate and apply delays
-        const density = IncomingMessageDensity.getInstance().getDensity(channelId);
-        const isFollowUp =
+        const _density = IncomingMessageDensity.getInstance().getDensity(channelId);
+        const _isFollowUp =
           historyMessages.length > 0 &&
           historyMessages[historyMessages.length - 1].getAuthorId() === botId;
 
@@ -474,7 +483,7 @@ export async function handleMessage(
 
         if (botConfig.MESSAGE_LLM_DIRECT) {
           const directResult = await generateChatCompletionDirect(
-            botConfig as any,
+            botConfig as unknown as Parameters<typeof generateChatCompletionDirect>[0],
             processedMessage,
             trimmedHistory.trimmed,
             systemPrompt
@@ -589,7 +598,7 @@ export async function handleMessage(
             const finalReplyId = botConfig.MESSAGE_REPLY_IN_THREAD
               ? message.getMessageId()
               : undefined;
-            const sentTs = await messageProvider.sendMessageToChannel(
+            await messageProvider.sendMessageToChannel(
               channelId,
               part,
               providerSenderKey,
@@ -631,7 +640,9 @@ export async function handleMessage(
         const metricsJson = pipelineMetrics.toJSON();
         logger('Pipeline metrics: %O', metricsJson);
         pipelineEventEmitter.emit('pipeline:complete', metricsJson);
-        PipelineMetricsAggregator.getInstance().record(metricsJson as any);
+        PipelineMetricsAggregator.getInstance().record(
+          metricsJson as Parameters<PipelineMetricsAggregator['record']>[0]
+        );
 
         return llmResponse.text;
       } catch (error: unknown) {

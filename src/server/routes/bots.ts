@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { createLogger } from '../../common/StructuredLogger';
-import { BotManager, type CreateBotRequest } from '../../managers/BotManager';
+import { BotManager, type BotInstance, type CreateBotRequest } from '../../managers/BotManager';
 import { ERROR_CODES, HTTP_STATUS } from '../../types/constants';
 import {
   BotActivityQuerySchema,
@@ -121,8 +121,8 @@ router.put('/reorder', validateRequest(ReorderSchema), async (req, res) => {
 
 const EXPORT_SCHEMA_VERSION = 1;
 
-function sanitizeBotForExport(bot: any): any {
-  const { envOverrides, ...rest } = bot;
+function sanitizeBotForExport(bot: Record<string, unknown> | BotInstance): Record<string, unknown> {
+  const { envOverrides: _envOverrides, ...rest } = bot;
   const sensitiveKeys = [
     'token',
     'apikey',
@@ -225,7 +225,7 @@ router.post('/import', async (req, res) => {
           continue;
         }
         // Strip fields that should not be imported directly
-        const { id, status, messageCount, errorCount, ...importData } = bot;
+        const { id: _id, status: _status, messageCount: _mc, errorCount: _ec, ...importData } = bot;
 
         const existing = existingByName.get(bot.name.toLowerCase());
         if (existing) {
@@ -328,10 +328,11 @@ router.post('/', validateRequest(CreateBotSchema), async (req, res) => {
       return res.status(HTTP_STATUS.OK).json(ApiResponse.success());
     }
 
-    const bot = await manager.createBot(request);
+    await manager.createBot(request);
     return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success());
-  } catch (error: any) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error(error.message));
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error(msg));
   }
 });
 
@@ -368,13 +369,14 @@ router.put('/:id', validateRequest(UpdateBotSchema), async (req, res) => {
     const manager = await managerPromise;
     const { id } = req.params;
     const updates = req.body;
-    const bot = await manager.updateBot(id, updates);
+    await manager.updateBot(id, updates);
     return res.json(ApiResponse.success());
-  } catch (error: any) {
-    const status = error.message.includes(ERROR_CODES.NOT_FOUND)
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    const status = msg.includes(ERROR_CODES.NOT_FOUND)
       ? HTTP_STATUS.NOT_FOUND
       : HTTP_STATUS.BAD_REQUEST;
-    return res.status(status).json(ApiResponse.error(error.message));
+    return res.status(status).json(ApiResponse.error(msg));
   }
 });
 
@@ -406,11 +408,12 @@ router.delete('/:id', validateRequest(BotIdParamSchema), async (req, res) => {
 
     await manager.deleteBot(id);
     return res.json(ApiResponse.success());
-  } catch (error: any) {
-    const status = error.message.includes(ERROR_CODES.NOT_FOUND)
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    const status = msg.includes(ERROR_CODES.NOT_FOUND)
       ? HTTP_STATUS.NOT_FOUND
       : HTTP_STATUS.BAD_REQUEST;
-    return res.status(status).json(ApiResponse.error(error.message));
+    return res.status(status).json(ApiResponse.error(msg));
   }
 });
 
@@ -452,13 +455,14 @@ router.post('/:id/clone', validateRequest(CloneBotSchema), async (req, res) => {
       return res.status(HTTP_STATUS.OK).json(ApiResponse.success());
     }
 
-    const newBot = await manager.cloneBot(id, newName);
+    await manager.cloneBot(id, newName);
     return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success());
-  } catch (error: any) {
-    const status = error.message.includes(ERROR_CODES.NOT_FOUND)
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    const status = msg.includes(ERROR_CODES.NOT_FOUND)
       ? HTTP_STATUS.NOT_FOUND
       : HTTP_STATUS.BAD_REQUEST;
-    return res.status(status).json(ApiResponse.error(error.message));
+    return res.status(status).json(ApiResponse.error(msg));
   }
 });
 
@@ -484,11 +488,12 @@ router.post('/:id/start', validateRequest(BotIdParamSchema), async (req, res) =>
     const { id } = req.params;
     await manager.startBot(id);
     return res.json(ApiResponse.success());
-  } catch (error: any) {
-    const status = error.message.includes(ERROR_CODES.NOT_FOUND)
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    const status = msg.includes(ERROR_CODES.NOT_FOUND)
       ? HTTP_STATUS.NOT_FOUND
       : HTTP_STATUS.BAD_REQUEST;
-    return res.status(status).json(ApiResponse.error(error.message));
+    return res.status(status).json(ApiResponse.error(msg));
   }
 });
 
@@ -514,11 +519,12 @@ router.post('/:id/stop', validateRequest(BotIdParamSchema), async (req, res) => 
     const { id } = req.params;
     await manager.stopBot(id);
     return res.json(ApiResponse.success());
-  } catch (error: any) {
-    const status = error.message.includes(ERROR_CODES.NOT_FOUND)
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    const status = msg.includes(ERROR_CODES.NOT_FOUND)
       ? HTTP_STATUS.NOT_FOUND
       : HTTP_STATUS.BAD_REQUEST;
-    return res.status(status).json(ApiResponse.error(error.message));
+    return res.status(status).json(ApiResponse.error(msg));
   }
 });
 
@@ -550,17 +556,17 @@ router.get('/:id/history', validateRequest(BotHistoryQuerySchema), async (req, r
   try {
     const manager = await managerPromise;
     const { id } = req.params;
-    const reqQuery = req.query as any;
-    const limit = Math.min(Math.max(parseInt(reqQuery.limit as string) || 20, 1), 100);
+    const limit = Math.min(Math.max(parseInt(String(req.query.limit || '20')) || 20, 1), 100);
     const channelId = req.query.channelId as string;
 
     const history = await manager.getBotHistory(id, channelId, limit);
     return res.json(ApiResponse.success({ history }));
-  } catch (error: any) {
-    const status = error.message.includes(ERROR_CODES.NOT_FOUND)
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    const status = msg.includes(ERROR_CODES.NOT_FOUND)
       ? HTTP_STATUS.NOT_FOUND
       : HTTP_STATUS.BAD_REQUEST;
-    return res.status(status).json(ApiResponse.error(error.message));
+    return res.status(status).json(ApiResponse.error(msg));
   }
 });
 
@@ -598,8 +604,7 @@ router.get('/:id/activity', validateRequest(BotActivityQuerySchema), async (req,
   try {
     const manager = await managerPromise;
     const { id } = req.params;
-    const reqQuery = req.query as any;
-    const limit = Math.min(Math.max(parseInt(reqQuery.limit as string) || 20, 1), 100);
+    const limit = Math.min(Math.max(parseInt(String(req.query.limit || '20')) || 20, 1), 100);
 
     const bot = await manager.getBot(id);
     if (!bot) {

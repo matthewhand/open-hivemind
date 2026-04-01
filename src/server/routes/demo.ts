@@ -121,7 +121,14 @@ router.post('/chat', validateRequest(ChatGenerateSchema), (req, res) => {
       botName
     );
 
-    res.json(ApiResponse.success());
+    res.json(
+      ApiResponse.success({
+        success: true,
+        userMessage: userMsg,
+        botResponse: botMsg,
+        isDemo: true,
+      })
+    );
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;

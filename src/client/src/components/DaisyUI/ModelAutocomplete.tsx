@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Badge from './Badge';
 import { LoadingSpinner } from './Loading';
 import { Alert } from './Alert';
+import { apiService } from '../../services/api';
 import { logger } from '../../utils/logger';
 
 interface ModelOption {
@@ -60,9 +61,7 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
   // Fetch models from the local server catalog endpoint
   const fetchModelsFromServer = useCallback(async (): Promise<ModelOption[] | null> => {
     try {
-      const response = await fetch(`/api/admin/llm-providers/${encodeURIComponent(providerType)}/models`);
-      if (!response.ok) {return null;}
-      const data = await response.json();
+      const data = await apiService.get<any>(`/api/admin/llm-providers/${encodeURIComponent(providerType)}/models`);
       if (!data.success || !Array.isArray(data.models)) {return null;}
       return data.models.map((m: any) => ({
         id: m.id,

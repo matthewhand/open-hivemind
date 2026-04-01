@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ApiService, buildUrl } from './core';
+import { ApiService } from './core';
 import type { ConfigResponse, ConfigSourcesResponse } from './types';
 
 export function configMixin(api: ApiService) {
@@ -31,20 +31,10 @@ export function configMixin(api: ApiService) {
       });
     },
 
-    async exportConfig(): Promise<Blob> {
-      const headers = api.getAuthHeaders();
-      headers['Accept'] = 'application/json';
-
-      const response = await fetch(buildUrl('/api/config/export'), {
-        method: 'GET',
-        headers,
+    exportConfig(): Promise<Blob> {
+      return api.getBlob('/api/config/export', {
+        headers: { 'Accept': 'application/json' },
       });
-
-      if (!response.ok) {
-        throw new Error(`Export failed: ${response.statusText}`);
-      }
-
-      return response.blob();
     },
   };
 }
