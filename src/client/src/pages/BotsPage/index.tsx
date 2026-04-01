@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Download, RefreshCw, Trash2 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { CreateBotWizard } from '../../components/BotManagement/CreateBotWizard';
 import ImportBotsModal from '../../components/BotManagement/ImportBotsModal';
 import { BotSettingsModal } from '../../components/BotSettingsModal';
@@ -27,6 +28,7 @@ import { useBotsList } from './hooks/useBotsList';
 // Hooks
 import { useBotsPageData } from './hooks/useBotsPageData';
 import Checkbox from '../../components/DaisyUI/Checkbox';
+import { useSavedStamp } from '../../contexts/SavedStampContext';
 
 const BotsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
@@ -41,13 +43,15 @@ const BotsPage: React.FC = () => {
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingBot, setEditingBot] = useState<BotConfig | null>(null);
-  const [  setDeletingBot] = useState<BotConfig | null>(null);
+  const [, setDeletingBot] = useState<BotConfig | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
 
   const toastSuccess = useSuccessToast();
   const toastError = useErrorToast();
+  const { showStamp } = useSavedStamp();
   const location = useLocation();
+  const navigate = useNavigate();
   const isMobile = useIsBelowBreakpoint('md');
 
   const { personas, llmProfiles, globalConfig, configLoading } = useBotsPageData(setError);
@@ -116,7 +120,8 @@ const BotsPage: React.FC = () => {
     setIsCreateModalOpen,
     setEditingBot,
     bulk,
-    setBulkDeleting
+    setBulkDeleting,
+    showStamp
   );
 
   const { handleBulkExport, handleExportAll, handleExportSingleBot } = useBotExport(
@@ -150,6 +155,8 @@ const BotsPage: React.FC = () => {
         onExportAll={handleExportAll}
         onImportClick={() => setIsImportModalOpen(true)}
         onCreateClick={() => setIsCreateModalOpen(true)}
+        onQuickAddMessage={() => navigate('/admin/providers/message')}
+        onQuickAddLLM={() => navigate('/admin/providers/llm')}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

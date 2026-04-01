@@ -1,5 +1,6 @@
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
+import { ApiResponse } from '@src/server/utils/apiResponse';
 import { webUIStorage } from '../../storage/webUIStorage';
 import { HTTP_STATUS } from '../../types/constants';
 import {
@@ -15,17 +16,12 @@ const debug = Debug('app:webui:guards');
 router.get('/', (req: Request, res: Response) => {
   try {
     const guards = webUIStorage.getGuards();
-    return res.json({
-      success: true,
-      data: { guards },
-      message: 'Guards retrieved successfully',
-    });
+    return res.json(ApiResponse.success({ guards }));
   } catch (error: unknown) {
     debug('ERROR:', 'Error retrieving guards:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      error: 'Failed to retrieve guards',
-      message: error.message || 'An error occurred while retrieving guards',
-    });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(ApiResponse.error('Failed to retrieve guards'));
   }
 });
 
@@ -57,24 +53,18 @@ router.post(
       if (accessConfig.ips) {
         for (const ip of accessConfig.ips) {
           if (!validateIpOctets(ip)) {
-            return res.status(HTTP_STATUS.BAD_REQUEST).json({
-              error: 'Validation error',
-              message: 'Invalid IP address or CIDR notation in ips array',
-            });
+            return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Validation error'));
           }
         }
       }
 
       // Get existing guards to find the access-control guard
-      const guards = webUIStorage.getGuards();
+      const guards = await webUIStorage.getGuards();
       const accessGuard = guards.find((g: Record<string, unknown>) => g.id === 'access-control');
 
       if (!accessGuard) {
         // Should not happen if getGuards initializes defaults, but just in case
-        return res.status(HTTP_STATUS.NOT_FOUND).json({
-          error: 'Not found',
-          message: 'Access control guard not found',
-        });
+        return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Not found'));
       }
 
       // Update the config with validated data only
@@ -87,16 +77,12 @@ router.post(
       // Save the updated guard
       await webUIStorage.saveGuard(accessGuard);
 
-      return res.json({
-        success: true,
-        message: 'Access control saved successfully',
-      });
+      return res.json(ApiResponse.success());
     } catch (error: unknown) {
       debug('Error saving access control:', error);
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        error: 'Failed to save access control',
-        message: error.message || 'An error occurred while saving access control',
-      });
+      return res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error('Failed to save access control'));
     }
   }
 );
@@ -111,28 +97,21 @@ router.post(
       const { enabled } = req.body;
 
       // Check if guard exists
-      const guards = webUIStorage.getGuards();
+      const guards = await webUIStorage.getGuards();
       const guard = guards.find((g: Record<string, unknown>) => g.id === id);
 
       if (!guard) {
-        return res.status(HTTP_STATUS.NOT_FOUND).json({
-          error: 'Not found',
-          message: `Guard with ID ${id} not found`,
-        });
+        return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Not found'));
       }
 
       await webUIStorage.toggleGuard(id, enabled);
 
-      return res.json({
-        success: true,
-        message: `Guard ${guard.name} ${enabled ? 'enabled' : 'disabled'} successfully`,
-      });
+      return res.json(ApiResponse.success());
     } catch (error: unknown) {
       debug('Error toggling guard:', error);
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        error: 'Failed to toggle guard',
-        message: error.message || 'An error occurred while toggling guard',
-      });
+      return res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error('Failed to toggle guard'));
     }
   }
 );

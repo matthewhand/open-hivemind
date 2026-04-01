@@ -1,5 +1,6 @@
 import Debug from 'debug';
 import { Router } from 'express';
+import { ApiResponse } from '@src/server/utils/apiResponse';
 import { ErrorUtils } from '@src/types/errors';
 import { HTTP_STATUS } from '../../types/constants';
 import { UsageTrackerService } from '../services/UsageTrackerService';
@@ -16,20 +17,19 @@ const usageTracker = UsageTrackerService.getInstance();
 router.get('/tools', async (req, res) => {
   try {
     const metrics = usageTracker.getAllToolMetrics();
-    return res.json({
-      success: true,
-      data: metrics,
-    });
+    return res.json(ApiResponse.success(metrics));
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     debug('Error fetching tool metrics: %O', hivemindError);
 
-    return res.status(hivemindError.statusCode || 500).json({
-      success: false,
-      error: hivemindError.message,
-      code: hivemindError.code || 'TOOL_METRICS_ERROR',
-      timestamp: new Date().toISOString(),
-    });
+    return res
+      .status(ErrorUtils.getStatusCode(hivemindError) || 500)
+      .json(
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          ErrorUtils.getCode(hivemindError) || 'TOOL_METRICS_ERROR'
+        )
+      );
   }
 });
 
@@ -43,26 +43,22 @@ router.get('/tools/:toolId', async (req, res) => {
     const metrics = usageTracker.getToolMetrics(toolId);
 
     if (!metrics) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({
-        success: false,
-        error: 'Tool metrics not found',
-      });
+      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Tool metrics not found'));
     }
 
-    return res.json({
-      success: true,
-      data: metrics,
-    });
+    return res.json(ApiResponse.success(metrics));
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     debug('Error fetching tool metrics: %O', hivemindError);
 
-    return res.status(hivemindError.statusCode || 500).json({
-      success: false,
-      error: hivemindError.message,
-      code: hivemindError.code || 'TOOL_METRICS_ERROR',
-      timestamp: new Date().toISOString(),
-    });
+    return res
+      .status(ErrorUtils.getStatusCode(hivemindError) || 500)
+      .json(
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          ErrorUtils.getCode(hivemindError) || 'TOOL_METRICS_ERROR'
+        )
+      );
   }
 });
 
@@ -73,20 +69,19 @@ router.get('/tools/:toolId', async (req, res) => {
 router.get('/providers', async (req, res) => {
   try {
     const metrics = usageTracker.getAllProviderMetrics();
-    return res.json({
-      success: true,
-      data: metrics,
-    });
+    return res.json(ApiResponse.success(metrics));
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     debug('Error fetching provider metrics: %O', hivemindError);
 
-    return res.status(hivemindError.statusCode || 500).json({
-      success: false,
-      error: hivemindError.message,
-      code: hivemindError.code || 'PROVIDER_METRICS_ERROR',
-      timestamp: new Date().toISOString(),
-    });
+    return res
+      .status(ErrorUtils.getStatusCode(hivemindError) || 500)
+      .json(
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          ErrorUtils.getCode(hivemindError) || 'PROVIDER_METRICS_ERROR'
+        )
+      );
   }
 });
 
@@ -100,26 +95,24 @@ router.get('/providers/:serverName', async (req, res) => {
     const metrics = usageTracker.getProviderMetrics(serverName);
 
     if (!metrics) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({
-        success: false,
-        error: 'Provider metrics not found',
-      });
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Provider metrics not found'));
     }
 
-    return res.json({
-      success: true,
-      data: metrics,
-    });
+    return res.json(ApiResponse.success(metrics));
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     debug('Error fetching provider metrics: %O', hivemindError);
 
-    return res.status(hivemindError.statusCode || 500).json({
-      success: false,
-      error: hivemindError.message,
-      code: hivemindError.code || 'PROVIDER_METRICS_ERROR',
-      timestamp: new Date().toISOString(),
-    });
+    return res
+      .status(ErrorUtils.getStatusCode(hivemindError) || 500)
+      .json(
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          ErrorUtils.getCode(hivemindError) || 'PROVIDER_METRICS_ERROR'
+        )
+      );
   }
 });
 
@@ -132,20 +125,19 @@ router.get('/providers/:serverName/tools', async (req, res) => {
     const { serverName } = req.params;
     const metrics = usageTracker.getToolMetricsByProvider(serverName);
 
-    return res.json({
-      success: true,
-      data: metrics,
-    });
+    return res.json(ApiResponse.success(metrics));
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     debug('Error fetching provider tool metrics: %O', hivemindError);
 
-    return res.status(hivemindError.statusCode || 500).json({
-      success: false,
-      error: hivemindError.message,
-      code: hivemindError.code || 'PROVIDER_TOOL_METRICS_ERROR',
-      timestamp: new Date().toISOString(),
-    });
+    return res
+      .status(ErrorUtils.getStatusCode(hivemindError) || 500)
+      .json(
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          ErrorUtils.getCode(hivemindError) || 'PROVIDER_TOOL_METRICS_ERROR'
+        )
+      );
   }
 });
 
@@ -158,20 +150,19 @@ router.get('/top-tools', async (req, res) => {
     const limit = parseInt(req.query.limit as string) || 10;
     const metrics = usageTracker.getTopTools(limit);
 
-    return res.json({
-      success: true,
-      data: metrics,
-    });
+    return res.json(ApiResponse.success(metrics));
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     debug('Error fetching top tools: %O', hivemindError);
 
-    return res.status(hivemindError.statusCode || 500).json({
-      success: false,
-      error: hivemindError.message,
-      code: hivemindError.code || 'TOP_TOOLS_ERROR',
-      timestamp: new Date().toISOString(),
-    });
+    return res
+      .status(ErrorUtils.getStatusCode(hivemindError) || 500)
+      .json(
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          ErrorUtils.getCode(hivemindError) || 'TOP_TOOLS_ERROR'
+        )
+      );
   }
 });
 
@@ -184,20 +175,19 @@ router.get('/top-providers', async (req, res) => {
     const limit = parseInt(req.query.limit as string) || 10;
     const metrics = usageTracker.getTopProviders(limit);
 
-    return res.json({
-      success: true,
-      data: metrics,
-    });
+    return res.json(ApiResponse.success(metrics));
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     debug('Error fetching top providers: %O', hivemindError);
 
-    return res.status(hivemindError.statusCode || 500).json({
-      success: false,
-      error: hivemindError.message,
-      code: hivemindError.code || 'TOP_PROVIDERS_ERROR',
-      timestamp: new Date().toISOString(),
-    });
+    return res
+      .status(ErrorUtils.getStatusCode(hivemindError) || 500)
+      .json(
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          ErrorUtils.getCode(hivemindError) || 'TOP_PROVIDERS_ERROR'
+        )
+      );
   }
 });
 
@@ -210,20 +200,19 @@ router.get('/recent-tools', async (req, res) => {
     const limit = parseInt(req.query.limit as string) || 10;
     const metrics = usageTracker.getRecentTools(limit);
 
-    return res.json({
-      success: true,
-      data: metrics,
-    });
+    return res.json(ApiResponse.success(metrics));
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     debug('Error fetching recent tools: %O', hivemindError);
 
-    return res.status(hivemindError.statusCode || 500).json({
-      success: false,
-      error: hivemindError.message,
-      code: hivemindError.code || 'RECENT_TOOLS_ERROR',
-      timestamp: new Date().toISOString(),
-    });
+    return res
+      .status(ErrorUtils.getStatusCode(hivemindError) || 500)
+      .json(
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          ErrorUtils.getCode(hivemindError) || 'RECENT_TOOLS_ERROR'
+        )
+      );
   }
 });
 
@@ -235,20 +224,19 @@ router.get('/stats', async (req, res) => {
   try {
     const stats = usageTracker.getAggregateStats();
 
-    return res.json({
-      success: true,
-      data: stats,
-    });
+    return res.json(ApiResponse.success(stats));
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     debug('Error fetching aggregate stats: %O', hivemindError);
 
-    return res.status(hivemindError.statusCode || 500).json({
-      success: false,
-      error: hivemindError.message,
-      code: hivemindError.code || 'AGGREGATE_STATS_ERROR',
-      timestamp: new Date().toISOString(),
-    });
+    return res
+      .status(ErrorUtils.getStatusCode(hivemindError) || 500)
+      .json(
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          ErrorUtils.getCode(hivemindError) || 'AGGREGATE_STATS_ERROR'
+        )
+      );
   }
 });
 
@@ -260,20 +248,19 @@ router.delete('/clear', async (req, res) => {
   try {
     await usageTracker.clearAllData();
 
-    return res.json({
-      success: true,
-      message: 'All usage data cleared successfully',
-    });
+    return res.json(ApiResponse.success());
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     debug('Error clearing usage data: %O', hivemindError);
 
-    return res.status(hivemindError.statusCode || 500).json({
-      success: false,
-      error: hivemindError.message,
-      code: hivemindError.code || 'CLEAR_DATA_ERROR',
-      timestamp: new Date().toISOString(),
-    });
+    return res
+      .status(ErrorUtils.getStatusCode(hivemindError) || 500)
+      .json(
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          ErrorUtils.getCode(hivemindError) || 'CLEAR_DATA_ERROR'
+        )
+      );
   }
 });
 

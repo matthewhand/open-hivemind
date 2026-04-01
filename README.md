@@ -32,7 +32,7 @@ In a channel with dozens of active bots, chaos could easily ensue. Open-Hivemind
 ![Chat Monitor — real-time view of all bot activity across platforms](docs/screenshots/chat-monitor.png)
 
 *   **Multi-Agent Orchestration**: Deploy coordinated bots across Discord, Slack, and Mattermost from a single dashboard.
-*   **Unified Voice**: Maintain consistent identities across different platforms.
+*   **Consistent Voice**: Maintain consistent identities across different platforms.
 *   **Shared Context**: Bots share a collective memory, allowing for sophisticated interactions.
 *   **WebUI Management**: Easily configure LLMs, personas, and bots via a user-friendly interface—no code required.
 *   **Safety & Compliance**: Built-in guards, rate limiting, and duplicate response suppression ensure stability.

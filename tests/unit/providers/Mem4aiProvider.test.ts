@@ -8,6 +8,7 @@
 import { Mem4aiProvider } from '../../../packages/memory-mem4ai/src/Mem4aiProvider';
 import { Mem4aiApiError } from '../../../packages/memory-mem4ai/src/types';
 import { clearCircuitBreakerRegistry } from '../../../src/common/CircuitBreaker';
+import { resetAllCircuitBreakers as resetMem4aiCircuitBreakers } from '../../../packages/memory-mem4ai/src/CircuitBreaker';
 
 // ---------------------------------------------------------------------------
 // Test helpers
@@ -70,6 +71,7 @@ let fetchMock: jest.Mock;
 
 beforeEach(() => {
   clearCircuitBreakerRegistry();
+  resetMem4aiCircuitBreakers();
   fetchMock = jest.fn();
   global.fetch = fetchMock;
 });

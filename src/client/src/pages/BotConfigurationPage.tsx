@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
+import { useForm, Controller } from 'react-hook-form';
 import { Settings, Save, RefreshCw, AlertCircle, CheckCircle, History } from 'lucide-react';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import Accordion from '../components/DaisyUI/Accordion';
@@ -13,6 +14,7 @@ import Badge from '../components/DaisyUI/Badge';
 import Modal from '../components/DaisyUI/Modal';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import { apiService } from '../services/api';
+import { useSavedStamp } from '../contexts/SavedStampContext';
 
 interface ConfigSchema {
   values: Record<string, any>;
@@ -25,15 +27,192 @@ interface GlobalConfigs {
   [key: string]: ConfigSchema;
 }
 
+type FormValues = Record<string, any>;
+
+// ---------- Per-section form component ----------
+
+interface ConfigSectionFormProps {
+  configName: string;
+  config: ConfigSchema;
+  saving: boolean;
+  onSave: (configName: string, updates: Record<string, any>) => Promise<void>;
+}
+
+const ConfigSectionForm: React.FC<ConfigSectionFormProps> = ({ configName, config, saving, onSave }) => {
+  const values = config?.values || {};
+  const schema = config?.schema?.properties || {};
+
+  const {
+    register,
+    control,
+    handleSubmit,
+    reset,
+    formState: { isDirty },
+  } = useForm<FormValues>({
+    defaultValues: values,
+  });
+
+  // Reset form when config values change (e.g. after save + refetch)
+  useEffect(() => {
+    reset(values);
+  }, [values, reset]);
+
+  const onSubmit = async (formValues: FormValues) => {
+    await onSave(configName, formValues);
+  };
+
+  const renderField = (key: string, fieldSchema: any, value: any) => {
+    const isSensitive = fieldSchema.sensitive === true;
+
+    if (fieldSchema.format === 'boolean' || typeof value === 'boolean') {
+      return (
+        <div key={key} className="form-control mb-4">
+          <label className="label">
+            <span className="label-text font-medium">{key}</span>
+            {isSensitive && <Badge variant="warning" size="small">Sensitive</Badge>}
+          </label>
+          <Controller
+            name={key}
+            control={control}
+            render={({ field }) => (
+              <Toggle
+                color="primary"
+                checked={field.value === true || field.value === 'true'}
+                onChange={(e) => field.onChange(e.target.checked)}
+              />
+            )}
+          />
+          {fieldSchema.doc && (
+            <label className="label">
+              <span className="label-text-alt text-base-content/50">{fieldSchema.doc}</span>
+            </label>
+          )}
+          {fieldSchema.env && (
+            <label className="label py-0">
+              <span className="label-text-alt text-base-content/60 font-mono text-xs">ENV: {fieldSchema.env}</span>
+            </label>
+          )}
+        </div>
+      );
+    }
+
+    if (fieldSchema.enum) {
+      return (
+        <div key={key} className="form-control mb-4">
+          <label className="label">
+            <span className="label-text font-medium">{key}</span>
+            {isSensitive && <Badge variant="warning" size="small">Sensitive</Badge>}
+          </label>
+          <Select
+            className="w-full max-w-xs"
+            {...register(key)}
+            options={[
+              { value: '', label: 'Select...' },
+              ...fieldSchema.enum.map((opt: string) => ({ value: opt, label: opt }))
+            ]}
+          />
+          {fieldSchema.doc && (
+            <label className="label">
+              <span className="label-text-alt text-base-content/50">{fieldSchema.doc}</span>
+            </label>
+          )}
+          {fieldSchema.env && (
+            <label className="label py-0">
+              <span className="label-text-alt text-base-content/60 font-mono text-xs">ENV: {fieldSchema.env}</span>
+            </label>
+          )}
+        </div>
+      );
+    }
+
+    if (typeof value === 'number' || fieldSchema.format === 'int' || fieldSchema.format === 'port') {
+      return (
+        <div key={key} className="form-control mb-4">
+          <label className="label">
+            <span className="label-text font-medium">{key}</span>
+            {isSensitive && <Badge variant="warning" size="small">Sensitive</Badge>}
+          </label>
+          <Input
+            type="number"
+            className="w-full max-w-xs"
+            {...register(key, { valueAsNumber: true })}
+          />
+          {fieldSchema.doc && (
+            <label className="label">
+              <span className="label-text-alt text-base-content/50">{fieldSchema.doc}</span>
+            </label>
+          )}
+          {fieldSchema.env && (
+            <label className="label py-0">
+              <span className="label-text-alt text-base-content/60 font-mono text-xs">ENV: {fieldSchema.env}</span>
+            </label>
+          )}
+        </div>
+      );
+    }
+
+    // Default: text input
+    return (
+      <div key={key} className="form-control mb-4">
+        <label className="label">
+          <span className="label-text font-medium">{key}</span>
+          {isSensitive && <Badge variant="warning" size="small">Sensitive</Badge>}
+        </label>
+        <Input
+          type={isSensitive ? 'password' : 'text'}
+          className="w-full max-w-md"
+          {...register(key)}
+          placeholder={isSensitive ? '••••••••' : ''}
+        />
+        {fieldSchema.doc && (
+          <label className="label">
+            <span className="label-text-alt text-base-content/50">{fieldSchema.doc}</span>
+          </label>
+        )}
+        {fieldSchema.env && (
+          <label className="label py-0">
+            <span className="label-text-alt text-base-content/60 font-mono text-xs">ENV: {fieldSchema.env}</span>
+          </label>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="py-2">
+      {Object.entries(values).map(([key, value]) =>
+        renderField(key, schema[key] || {}, value),
+      )}
+      {isDirty && (
+        <div className="mt-4 pt-4 border-t border-base-200">
+          <Button
+            variant="primary"
+            size="sm"
+            className="gap-2"
+            type="submit"
+            disabled={saving}
+            loading={saving}
+          >
+            {!saving && <Save className="w-4 h-4" />}
+            Save {configName} Configuration
+          </Button>
+        </div>
+      )}
+    </form>
+  );
+};
+
+// ---------- Main page component ----------
+
 const BotConfigurationPage: React.FC = () => {
   const [configs, setConfigs] = useState<GlobalConfigs>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [modifiedConfigs, setModifiedConfigs] = useState<Record<string, Record<string, any>>>({});
   const successToast = useSuccessToast();
   const errorToast = useErrorToast();
+  const { showStamp } = useSavedStamp();
 
   // Rollback state
   const [rollbacks, setRollbacks] = useState<string[]>([]);
@@ -57,7 +236,6 @@ const BotConfigurationPage: React.FC = () => {
 
       const data: any = await apiService.get('/api/config/global');
       setConfigs(data || {});
-      setModifiedConfigs({});
       await fetchRollbacks();
     } catch (err: any) {
       const message = err.message || 'Failed to fetch configuration';
@@ -91,21 +269,7 @@ const BotConfigurationPage: React.FC = () => {
     }
   };
 
-  const updateConfigValue = (configName: string, key: string, value: any) => {
-    setModifiedConfigs(prev => ({
-      ...prev,
-      [configName]: {
-        ...(prev[configName] || {}),
-        [key]: value,
-      },
-    }));
-    setSuccess(null);
-  };
-
-  const saveConfig = async (configName: string) => {
-    const updates = modifiedConfigs[configName];
-    if (!updates || Object.keys(updates).length === 0) return;
-
+  const saveConfig = async (configName: string, updates: Record<string, any>) => {
     try {
       setSaving(true);
       setError(null);
@@ -116,12 +280,7 @@ const BotConfigurationPage: React.FC = () => {
       });
 
       setSuccess(`${configName} configuration saved successfully`);
-      // Clear modified state for this config
-      setModifiedConfigs(prev => {
-        const next = { ...prev };
-        delete next[configName];
-        return next;
-      });
+      showStamp();
 
       // Refresh to get updated values
       await fetchConfigs();
@@ -132,82 +291,11 @@ const BotConfigurationPage: React.FC = () => {
     }
   };
 
-  const hasChanges = (configName: string) => {
-    return !!(modifiedConfigs[configName] && Object.keys(modifiedConfigs[configName]).length > 0);
-  };
-
-  const getCurrentValue = (configName: string, key: string) => {
-    if (modifiedConfigs[configName]?.[key] !== undefined) {
-      return modifiedConfigs[configName][key];
-    }
-    return configs[configName]?.values?.[key];
-  };
-
-  const renderConfigField = (configName: string, key: string, schema: any, value: any) => {
-    const currentValue = getCurrentValue(configName, key);
-    const isSensitive = schema.sensitive === true;
-
-    return (
-      <div key={key} className="form-control mb-4">
-        <label className="label">
-          <span className="label-text font-medium">{key}</span>
-          {isSensitive && <Badge variant="warning" size="small">Sensitive</Badge>}
-        </label>
-
-        {schema.format === 'boolean' || typeof value === 'boolean' ? (
-          <Toggle
-            color="primary"
-            checked={currentValue === true || currentValue === 'true'}
-            onChange={(e) => updateConfigValue(configName, key, e.target.checked)}
-          />
-        ) : schema.enum ? (
-          <Select
-            className="w-full max-w-xs"
-            value={currentValue ?? ''}
-            onChange={(e) => updateConfigValue(configName, key, e.target.value)}
-            options={[
-              { value: '', label: 'Select...' },
-              ...schema.enum.map((opt: string) => ({ value: opt, label: opt }))
-            ]}
-          />
-        ) : typeof value === 'number' || schema.format === 'int' || schema.format === 'port' ? (
-          <Input
-            type="number"
-            className="w-full max-w-xs"
-            value={currentValue ?? ''}
-            onChange={(e) => updateConfigValue(configName, key, parseInt(e.target.value) || 0)}
-          />
-        ) : (
-          <Input
-            type={isSensitive ? 'password' : 'text'}
-            className="w-full max-w-md"
-            value={currentValue ?? ''}
-            placeholder={isSensitive ? '••••••••' : ''}
-            onChange={(e) => updateConfigValue(configName, key, e.target.value)}
-          />
-        )}
-
-        {schema.doc && (
-          <label className="label">
-            <span className="label-text-alt text-base-content/50">{schema.doc}</span>
-          </label>
-        )}
-        {schema.env && (
-          <label className="label py-0">
-            <span className="label-text-alt text-base-content/60 font-mono text-xs">ENV: {schema.env}</span>
-          </label>
-        )}
-      </div>
-    );
-  };
-
   const configNames = Object.keys(configs).sort();
 
   const accordionItems = configNames.map(name => {
     const config = configs[name];
     const values = config?.values || {};
-    const schema = config?.schema?.properties || {};
-    const changed = hasChanges(name);
 
     return {
       id: name,
@@ -215,30 +303,16 @@ const BotConfigurationPage: React.FC = () => {
         <div className="flex items-center gap-3 w-full">
           <span className="capitalize">{name}</span>
           <Badge variant="ghost" size="small">{Object.keys(values).length} settings</Badge>
-          {changed && <Badge variant="warning" size="small">Modified</Badge>}
         </div>
       ),
       content: (
-        <div className="py-2">
-          {Object.entries(values).map(([key, value]) =>
-            renderConfigField(name, key, schema[key] || {}, value),
-          )}
-          {changed && (
-            <div className="mt-4 pt-4 border-t border-base-200">
-              <Button
-                variant="primary"
-                size="sm"
-                className="gap-2"
-                onClick={() => saveConfig(name)}
-                disabled={saving}
-                loading={saving}
-              >
-                {!saving && <Save className="w-4 h-4" />}
-                Save {name} Configuration
-              </Button>
-            </div>
-          )}
-        </div>
+        <ConfigSectionForm
+          key={name}
+          configName={name}
+          config={config}
+          saving={saving}
+          onSave={saveConfig}
+        />
       ),
     };
   });
@@ -355,12 +429,6 @@ const BotConfigurationPage: React.FC = () => {
           <div className="stat-title">Total Settings</div>
           <div className="stat-value">
             {Object.values(configs).reduce((sum, c) => sum + Object.keys(c?.values || {}).length, 0)}
-          </div>
-        </div>
-        <div className="stat">
-          <div className="stat-title">Modified</div>
-          <div className="stat-value text-warning">
-            {Object.keys(modifiedConfigs).filter(k => Object.keys(modifiedConfigs[k]).length > 0).length}
           </div>
         </div>
       </div>

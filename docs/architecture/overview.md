@@ -3,11 +3,11 @@
 ## Revolutionary Multi-Agent Design
 
 ### 🧠 The Hivemind Concept
-Open-Hivemind operates as a **unified digital consciousness** where each bot instance functions as a neuron in a vast, interconnected brain.
+Open-Hivemind operates as a **digital consciousness** where each bot instance functions as a neuron in a vast, interconnected brain.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    UNIFIED HIVEMIND                         │
+│                      HIVEMIND                               │
 ├─────────────────┬─────────────────┬─────────────────────────┤
 │   Discord Bot   │   Slack Bot     │   Mattermost Bot        │
 │   Instance #1   │   Instance #1   │   Instance #1           │
@@ -41,7 +41,7 @@ graph TD
 
 #### 🤖 Agent Layer
 - **BotConfigurationManager**: Multi-instance bot orchestration
-- **MessageHandler**: Unified message processing pipeline
+- **MessageHandler**: Message processing pipeline
 - **ChannelRouter**: Intelligent channel prioritization
 
 #### 🔌 Integration Layer
@@ -85,7 +85,7 @@ graph TD
 
 ### 🎯 Design Principles
 
-1. **Unified Consciousness**: All bots share collective intelligence
+1. **Collective Consciousness**: All bots share collective intelligence
 2. **Platform Agnostic**: Consistent behavior across all platforms
 3. **Fault Tolerant**: Graceful degradation when services fail
 4. **Developer Friendly**: Simple configuration, powerful capabilities

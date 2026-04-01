@@ -30,6 +30,7 @@ import {
   Bot,
 } from 'lucide-react';
 
+import { apiService } from '../services/api';
 import { PROVIDER_CATEGORIES } from '../config/providers';
 import ProviderConfigModal from './ProviderConfiguration/ProviderConfigModal';
 import { LLM_PROVIDER_CONFIGS, LLMProviderType, ProviderModalState } from '../types/bot';
@@ -108,26 +109,22 @@ const IntegrationsPanel: React.FC = () => {
     try {
       setLoading(true);
       const [configResult, botsResult, profilesResult] = await Promise.allSettled([
-        fetch('/api/config/global'),
-        fetch('/api/dashboard/api/status'), // Using status endpoint for bots list
-        fetch('/api/config/llm-profiles'),
+        apiService.get<GlobalConfig>('/api/config/global'),
+        apiService.get<any>('/api/dashboard/api/status'),
+        apiService.get<any>('/api/config/llm-profiles'),
       ]);
-      const configRes = configResult.status === 'fulfilled' ? configResult.value : { ok: false, json: async () => ({}) } as unknown as Response;
-      const botsRes = botsResult.status === 'fulfilled' ? botsResult.value : { ok: false, json: async () => ({ bots: [] }) } as unknown as Response;
-      const profilesRes = profilesResult.status === 'fulfilled' ? profilesResult.value : { ok: false, json: async () => ({ llm: [] }) } as unknown as Response;
 
-      if (!configRes.ok) { throw new Error('Failed to fetch configuration'); }
-      const configData = await configRes.json();
+      if (configResult.status !== 'fulfilled') { throw new Error('Failed to fetch configuration'); }
+      const configData = configResult.value;
       setConfig(configData);
-      setAdvancedMode(configData._userSettings?.values?.['webui.advancedMode'] || false);
+      setAdvancedMode((configData as any)._userSettings?.values?.['webui.advancedMode'] || false);
 
-      if (botsRes.ok) {
-        const botsData = await botsRes.json();
-        setBots(botsData.bots || []);
+      if (botsResult.status === 'fulfilled') {
+        setBots(botsResult.value.bots || []);
       }
 
-      if (profilesRes.ok) {
-        const profilesData = await profilesRes.json();
+      if (profilesResult.status === 'fulfilled') {
+        const profilesData = profilesResult.value;
         setLlmProfiles(profilesData.llm || profilesData.profiles?.llm || []);
       }
     } catch (err: any) {
@@ -159,16 +156,7 @@ const IntegrationsPanel: React.FC = () => {
     setSaving(true);
 
     try {
-      const res = await fetch('/api/config/global', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ configName: selectedConfigName, updates: configValues }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to save configuration');
-      }
+      await apiService.put('/api/config/global', { configName: selectedConfigName, updates: configValues });
 
       await fetchData();
       setIsModalOpen(false);
@@ -190,16 +178,7 @@ const IntegrationsPanel: React.FC = () => {
 
     setSaving(true);
     try {
-      const res = await fetch('/api/config/global', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ configName: finalName, updates: newConfigValues }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to create configuration');
-      }
+      await apiService.put('/api/config/global', { configName: finalName, updates: newConfigValues });
 
       await fetchData();
       setIsAddModalOpen(false);
@@ -225,18 +204,10 @@ const IntegrationsPanel: React.FC = () => {
 
       if (providerModalState.isEdit && providerModalState.provider?.id) {
         // Delete old profile first if name/key changed or just to be safe
-         await fetch(`/api/config/llm-profiles/${providerModalState.provider.id}`, { method: 'DELETE' });
+        await apiService.delete(`/api/config/llm-profiles/${providerModalState.provider.id}`);
       }
 
-      const res = await fetch('/api/config/llm-profiles', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        throw new Error('Failed to save profile');
-      }
+      await apiService.post('/api/config/llm-profiles', payload);
 
       await fetchData();
       setProviderModalState({ ...providerModalState, isOpen: false });
@@ -256,7 +227,7 @@ const IntegrationsPanel: React.FC = () => {
         setConfirmModal(prev => ({ ...prev, isOpen: false }));
         try {
           setSaving(true);
-          await fetch(`/api/config/llm-profiles/${key}`, { method: 'DELETE' });
+          await apiService.delete(`/api/config/llm-profiles/${key}`);
           await fetchData();
         } catch (err: any) {
           errorToast('Delete Failed', `Failed to delete profile: ${err.message}`);

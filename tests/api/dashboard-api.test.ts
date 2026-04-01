@@ -68,14 +68,15 @@ describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
     it('should return valid bot status with all required fields', async () => {
       const response = await request(app).get('/dashboard/status').expect(200);
 
-      expect(response.body).toHaveProperty('bots');
-      expect(response.body).toHaveProperty('uptime');
-      expect(Array.isArray(response.body.bots)).toBe(true);
-      expect(typeof response.body.uptime).toBe('number');
+      expect(response.body).toHaveProperty('success', true);
+      expect(response.body.data).toHaveProperty('bots');
+      expect(response.body.data).toHaveProperty('uptime');
+      expect(Array.isArray(response.body.data.bots)).toBe(true);
+      expect(typeof response.body.data.uptime).toBe('number');
 
       // Validate bot structure
-      if (response.body.bots.length > 0) {
-        const bot = response.body.bots[0];
+      if (response.body.data.bots.length > 0) {
+        const bot = response.body.data.bots[0];
         expect(bot).toHaveProperty('name');
         expect(bot).toHaveProperty('provider');
         expect(bot).toHaveProperty('llmProvider');
@@ -98,7 +99,7 @@ describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
       const response = await request(app).get('/dashboard/status').expect(200);
 
       // Validate status values are valid
-      response.body.bots.forEach((bot: any) => {
+      response.body.data.bots.forEach((bot: any) => {
         expect(['active', 'inactive', 'connecting', 'disconnected', 'error']).toContain(bot.status);
       });
     });
@@ -106,7 +107,7 @@ describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
     it('should return non-negative message and error counts', async () => {
       const response = await request(app).get('/dashboard/status').expect(200);
 
-      response.body.bots.forEach((bot: any) => {
+      response.body.data.bots.forEach((bot: any) => {
         expect(bot.messageCount).toBeGreaterThanOrEqual(0);
         expect(bot.errorCount).toBeGreaterThanOrEqual(0);
       });
@@ -115,8 +116,8 @@ describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
     it('should return reasonable uptime value', async () => {
       const response = await request(app).get('/dashboard/status').expect(200);
 
-      expect(response.body.uptime).toBeGreaterThan(0);
-      expect(response.body.uptime).toBeLessThan(365 * 24 * 3600); // Less than 1 year
+      expect(response.body.data.uptime).toBeGreaterThan(0);
+      expect(response.body.data.uptime).toBeLessThan(365 * 24 * 3600); // Less than 1 year
     });
   });
 
@@ -130,8 +131,8 @@ describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
 
       // The bots array is not empty because the configuration manager loads bots from environment
       // variables. The test should check for the presence of the expected structure instead.
-      expect(Array.isArray(response.body.bots)).toBe(true);
-      expect(response.body.uptime).toBeGreaterThanOrEqual(0);
+      expect(Array.isArray(response.body.data.bots)).toBe(true);
+      expect(response.body.data.uptime).toBeGreaterThanOrEqual(0);
     });
 
     it('should handle bot configuration errors gracefully', async () => {
@@ -155,8 +156,8 @@ describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
       // try { bots = manager.getAllBots(); } catch (e) { console.warn(...); bots = []; }
       // So it catches the error and proceeds with empty bots list!
       expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('bots');
-      expect(response.body.bots).toEqual([]);
+      expect(response.body.data).toHaveProperty('bots');
+      expect(response.body.data.bots).toEqual([]);
     });
 
     it('should handle malformed bot data gracefully', async () => {
@@ -177,7 +178,7 @@ describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
       // by filtering them out, so it returns 200 OK with valid bots only.
       // Updating expectation to match implementation behavior.
       expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('bots');
+      expect(response.body.data).toHaveProperty('bots');
     });
 
     it('should handle concurrent requests without race conditions', async () => {
@@ -189,8 +190,8 @@ describe('Dashboard API Endpoints - COMPLETE TDD SUITE', () => {
 
       responses.forEach((response) => {
         expect(response.status).toBe(200);
-        expect(response.body).toHaveProperty('bots');
-        expect(response.body).toHaveProperty('uptime');
+        expect(response.body.data).toHaveProperty('bots');
+        expect(response.body.data).toHaveProperty('uptime');
       });
     });
 

@@ -1,6 +1,8 @@
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { store } from './store/store';
 import ReduxProvider from './components/ReduxProvider';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -14,6 +16,17 @@ import ScrollToTop from './components/ScrollToTop';
 import { IntegrationProvider } from './components/IntegrationLoader';
 import KeyboardShortcutsProvider from './components/KeyboardShortcutsProvider';
 import { useTheme } from './hooks/useTheme';
+import SavedStampProvider from './contexts/SavedStampContext';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 /**
  * Keeps data-theme, localStorage, and system-preference listener in sync.
@@ -29,27 +42,32 @@ function App() {
   return (
     <ErrorBoundary>
       <HydrationErrorBoundary>
-        <Provider store={store}>
-          <ReduxProvider>
-            <ThemeSync>
-              <ToastNotification position="bottom-right" maxToasts={5}>
-                <AuthProvider>
-                  <BotProvider>
-                    <WebSocketProvider>
-                      <IntegrationProvider>
-                        <BrowserRouter>
-                          <ScrollToTop />
-                          <KeyboardShortcutsProvider />
-                          <AppRouter />
-                        </BrowserRouter>
-                      </IntegrationProvider>
-                    </WebSocketProvider>
-                  </BotProvider>
-                </AuthProvider>
-              </ToastNotification>
-            </ThemeSync>
-          </ReduxProvider>
-        </Provider>
+        <QueryClientProvider client={queryClient}>
+          <Provider store={store}>
+            <ReduxProvider>
+              <ThemeSync>
+                <ToastNotification position="bottom-right" maxToasts={5}>
+                  <SavedStampProvider>
+                  <AuthProvider>
+                    <BotProvider>
+                      <WebSocketProvider>
+                        <IntegrationProvider>
+                          <BrowserRouter>
+                            <ScrollToTop />
+                            <KeyboardShortcutsProvider />
+                            <AppRouter />
+                          </BrowserRouter>
+                        </IntegrationProvider>
+                      </WebSocketProvider>
+                    </BotProvider>
+                  </AuthProvider>
+                </SavedStampProvider>
+                </ToastNotification>
+              </ThemeSync>
+            </ReduxProvider>
+          </Provider>
+          {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
+        </QueryClientProvider>
       </HydrationErrorBoundary>
     </ErrorBoundary>
   );

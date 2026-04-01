@@ -51,6 +51,7 @@ const ToolProvidersPage = lazy(() => import('../pages/ToolProvidersPage'));
 const SpecsPage = lazy(() => import('../pages/SpecsPage'));
 const SpecDetailPage = lazy(() => import('../pages/SpecDetailPage'));
 const AuditPage = lazy(() => import('../pages/AuditPage'));
+const EnterpriseManager = lazy(() => import('../components/EnterpriseManager'));
 const AdminHealthPage = lazy(() => import('../pages/AdminHealthPage'));
 const WebhookEventsPage = lazy(() => import('../pages/WebhookEventsPage'));
 const OnboardingPage = lazy(() => import('../pages/OnboardingPage'));
@@ -108,7 +109,7 @@ const AppRouter: React.FC = () => {
           <Route path="/activity" element={<RouteErrorBoundary pageName="Activity"><StandaloneActivity /></RouteErrorBoundary>} />
         </Route>
 
-        {/* Admin routes (unified interface) - UberLayout handles its own navigation */}
+        {/* Admin routes - UberLayout handles its own navigation */}
         <Route path="/admin" element={
           <ProtectedRoute>
             <UberLayout />
@@ -220,6 +221,7 @@ const AppRouter: React.FC = () => {
           <Route path="specs" element={<RouteErrorBoundary pageName="Specs"><SpecsPage /></RouteErrorBoundary>} />
           <Route path="specs/:id" element={<RouteErrorBoundary pageName="Spec Detail"><SpecDetailPage /></RouteErrorBoundary>} />
           <Route path="audit" element={<RouteErrorBoundary pageName="Audit"><AuditPage /></RouteErrorBoundary>} />
+          <Route path="enterprise" element={<RouteErrorBoundary pageName="Enterprise"><EnterpriseManager /></RouteErrorBoundary>} />
           <Route path="health" element={<RouteErrorBoundary pageName="Health"><AdminHealthPage /></RouteErrorBoundary>} />
 
           <Route path="webhooks" element={<RouteErrorBoundary pageName="Webhook Events"><WebhookEventsPage /></RouteErrorBoundary>} />

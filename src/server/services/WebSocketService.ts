@@ -2,9 +2,10 @@ import { randomUUID } from 'crypto';
 import type { Server as HttpServer } from 'http';
 import os from 'os';
 import Debug from 'debug';
-import { Server as SocketIOServer } from 'socket.io';
+import { Server as SocketIOServer, type Socket } from 'socket.io';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import ApiMonitorService, { type EndpointStatus } from '../../services/ApiMonitorService';
+import type { BotConfig } from '../../types/config';
 import {
   DeliveryStatus,
   type AckPayload,
@@ -54,7 +55,7 @@ export interface AlertEvent {
   message: string;
   botName?: string;
   channelId?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   acknowledgedAt?: string;
   resolvedAt?: string;
 }
@@ -153,7 +154,7 @@ export class WebSocketService {
     }
   }
 
-  private handleApiHealthCheckResult(result: any): void {
+  private handleApiHealthCheckResult(result: { endpointId: string; success: boolean }): void {
     debug(
       `API health check result: ${result.endpointId} - ${result.success ? 'success' : 'failed'}`
     );
@@ -390,13 +391,15 @@ export class WebSocketService {
       this.setupEventHandlers();
       this.startMetricsCollection();
       debug('WebSocket service initialized successfully with CORS enabled');
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      const errStack = error instanceof Error ? error.stack : undefined;
       debug('CRITICAL: Failed to initialize WebSocket service:', {
-        error: error.message,
-        stack: error.stack,
+        error: errMsg,
+        stack: errStack,
         serverProvided: !!server,
       });
-      throw new Error(`WebSocket service initialization failed: ${error.message}`);
+      throw new Error(`WebSocket service initialization failed: ${errMsg}`);
     }
   }
 
@@ -541,7 +544,7 @@ export class WebSocketService {
     }
   }
 
-  private sendBotStatus(socket: any): void {
+  private sendBotStatus(socket: Socket): void {
     try {
       const manager = BotConfigurationManager.getInstance();
       const bots = manager.getAllBots();
@@ -579,7 +582,7 @@ export class WebSocketService {
     }
   }
 
-  private sendSystemMetrics(socket: any): void {
+  private sendSystemMetrics(socket: Socket): void {
     try {
       const memUsage = process.memoryUsage();
       const metrics = {
@@ -604,7 +607,7 @@ export class WebSocketService {
     }
   }
 
-  private sendConfigValidation(socket: any): void {
+  private sendConfigValidation(socket: Socket): void {
     try {
       const manager = BotConfigurationManager.getInstance();
       const bots = manager.getAllBots();
@@ -626,20 +629,32 @@ export class WebSocketService {
     }
   }
 
-  private findMissingConfigurations(bots: any[]): string[] {
+  private findMissingConfigurations(bots: BotConfig[]): string[] {
     const missing: string[] = [];
 
     bots.forEach((bot) => {
-      if (bot.messageProvider === 'discord' && !bot.discord?.token) {
+      if (
+        bot.messageProvider === 'discord' &&
+        !(bot.discord as { token?: string } | undefined)?.token
+      ) {
         missing.push(`${bot.name}: Missing Discord bot token`);
       }
-      if (bot.messageProvider === 'slack' && !bot.slack?.botToken) {
+      if (
+        bot.messageProvider === 'slack' &&
+        !(bot.slack as { botToken?: string } | undefined)?.botToken
+      ) {
         missing.push(`${bot.name}: Missing Slack bot token`);
       }
-      if (bot.llmProvider === 'openai' && !bot.openai?.apiKey) {
+      if (
+        bot.llmProvider === 'openai' &&
+        !(bot.openai as { apiKey?: string } | undefined)?.apiKey
+      ) {
         missing.push(`${bot.name}: Missing OpenAI API key`);
       }
-      if (bot.llmProvider === 'flowise' && !bot.flowise?.apiKey) {
+      if (
+        bot.llmProvider === 'flowise' &&
+        !(bot.flowise as { apiKey?: string } | undefined)?.apiKey
+      ) {
         missing.push(`${bot.name}: Missing Flowise API key`);
       }
     });
@@ -647,7 +662,7 @@ export class WebSocketService {
     return missing;
   }
 
-  private generateRecommendations(bots: any[]): string[] {
+  private generateRecommendations(bots: BotConfig[]): string[] {
     const recommendations: string[] = [];
 
     if (bots.length === 0) {
@@ -683,11 +698,7 @@ export class WebSocketService {
     });
   }
 
-  public broadcastConfigChange(detail?: {
-    type?: string;
-    action?: string;
-    key?: string;
-  }): void {
+  public broadcastConfigChange(detail?: { type?: string; action?: string; key?: string }): void {
     if (!this.io) {
       return;
     }
@@ -704,7 +715,7 @@ export class WebSocketService {
     });
   }
 
-  private sendMessageFlow(socket: any): void {
+  private sendMessageFlow(socket: Socket): void {
     try {
       const messageFlow = this.getMessageFlow(50); // Last 50 messages
       socket.emit('message_flow_update', {
@@ -718,7 +729,7 @@ export class WebSocketService {
     }
   }
 
-  private sendAlerts(socket: any): void {
+  private sendAlerts(socket: Socket): void {
     try {
       const alerts = this.getAlerts(20); // Last 20 alerts
       socket.emit('alerts_update', {
@@ -732,7 +743,7 @@ export class WebSocketService {
     }
   }
 
-  private sendPerformanceMetrics(socket: any): void {
+  private sendPerformanceMetrics(socket: Socket): void {
     try {
       const metrics = this.getPerformanceMetrics(30); // Last 30 data points
 
@@ -790,7 +801,7 @@ export class WebSocketService {
     }
   }
 
-  private sendMonitoringDashboard(socket: any): void {
+  private sendMonitoringDashboard(socket: Socket): void {
     try {
       const manager = BotConfigurationManager.getInstance();
       const bots = manager.getAllBots();
@@ -830,7 +841,7 @@ export class WebSocketService {
     }
   }
 
-  private sendApiStatus(socket: any): void {
+  private sendApiStatus(socket: Socket): void {
     try {
       const statuses = this.apiMonitorService.getAllStatuses();
       const overallHealth = this.apiMonitorService.getOverallHealth();
@@ -846,7 +857,7 @@ export class WebSocketService {
     }
   }
 
-  private sendApiEndpoints(socket: any): void {
+  private sendApiEndpoints(socket: Socket): void {
     try {
       const endpoints = this.apiMonitorService.getAllEndpoints();
 

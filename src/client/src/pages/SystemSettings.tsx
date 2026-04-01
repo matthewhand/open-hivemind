@@ -5,8 +5,11 @@ import SettingsGeneral from '../components/Settings/SettingsGeneral';
 import SettingsSecurity from '../components/Settings/SettingsSecurity';
 import SettingsMessaging from '../components/Settings/SettingsMessaging';
 import SettingsLLM from '../components/Settings/SettingsLLM';
+import SettingsIntegrations from '../components/Settings/SettingsIntegrations';
 import PageHeader from '../components/DaisyUI/PageHeader';
+import HiddenFeatureToggle from '../components/HiddenFeatureToggle';
 import { Cog, RotateCcw } from 'lucide-react';
+import { apiService } from '../services/api';
 
 const SystemSettings: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -15,7 +18,7 @@ const SystemSettings: React.FC = () => {
 
   const handleRestartWizard = async () => {
     try {
-      await fetch('/api/onboarding/reset', { method: 'POST' });
+      await apiService.post('/api/onboarding/reset');
     } catch {
       // best-effort
     }
@@ -27,7 +30,8 @@ const SystemSettings: React.FC = () => {
     { id: 'general', label: 'General', component: <SettingsGeneral /> },
     { id: 'messaging', label: 'Messaging', component: <SettingsMessaging /> },
     { id: 'llm', label: 'LLM', component: <SettingsLLM /> },
-    { id: 'security', label: 'Security', component: <SettingsSecurity /> },
+    { id: 'integrations', label: 'Integrations', component: <SettingsIntegrations /> },
+    { id: 'security', label: 'Security', component: <HiddenFeatureToggle fallback="hide"><SettingsSecurity /></HiddenFeatureToggle> },
   ];
 
   // Determine active tab index, default to 0 (General) if not found or not specified

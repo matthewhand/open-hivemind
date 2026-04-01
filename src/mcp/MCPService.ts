@@ -16,12 +16,13 @@ export interface MCPConfig {
 export interface MCPTool {
   name: string;
   description?: string;
-  inputSchema?: any;
+  inputSchema?: Record<string, unknown>;
   serverName: string;
 }
 
 export class MCPService {
   private static instance: MCPService;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- MCP SDK client type is dynamically loaded
   private clients = new Map<string, any>();
   private tools = new Map<string, MCPTool[]>();
 
@@ -71,7 +72,7 @@ export class MCPService {
       const tools = await client.listTools();
 
       // Add server name to each tool for identification
-      const mcpTools: MCPTool[] = tools.tools.map((tool: any) => ({
+      const mcpTools: MCPTool[] = tools.tools.map((tool: Record<string, unknown>) => ({
         ...tool,
         serverName: config.name,
       }));
@@ -113,12 +114,14 @@ export class MCPService {
       }
 
       const error_enhanced = new Error(enhancedMessage);
-      (error_enhanced as any).suggestions = suggestions;
-      (error_enhanced as any).canRetry =
-        errorMessage.includes('ECONNREFUSED') ||
-        errorMessage.includes('ENOTFOUND') ||
-        errorMessage.includes('timeout');
-      (error_enhanced as any).docsUrl = 'https://docs.open-hivemind.ai/mcp/troubleshooting';
+      Object.assign(error_enhanced, {
+        suggestions,
+        canRetry:
+          errorMessage.includes('ECONNREFUSED') ||
+          errorMessage.includes('ENOTFOUND') ||
+          errorMessage.includes('timeout'),
+        docsUrl: 'https://docs.open-hivemind.ai/mcp/troubleshooting',
+      });
       throw error_enhanced;
     }
   }
@@ -165,7 +168,7 @@ export class MCPService {
       const tools = await client.listTools();
 
       // Add server name to each tool for identification
-      const mcpTools: MCPTool[] = tools.tools.map((tool: any) => ({
+      const mcpTools: MCPTool[] = tools.tools.map((tool: Record<string, unknown>) => ({
         ...tool,
         serverName: config.name,
       }));
@@ -305,7 +308,7 @@ export class MCPService {
   public async executeTool(
     serverName: string,
     toolName: string,
-    arguments_: any,
+    arguments_: Record<string, unknown>,
     context?: {
       botName?: string;
       messageProvider?: string;
@@ -313,7 +316,7 @@ export class MCPService {
       forumOwnerId?: string;
       userId?: string;
     }
-  ): Promise<any> {
+  ): Promise<unknown> {
     try {
       if (context?.botName) {
         await this.assertGuardAllowsExecution(context);
@@ -368,12 +371,13 @@ export class MCPService {
       }
 
       const error_enhanced = new Error(enhancedMessage);
-      (error_enhanced as any).suggestions = suggestions;
-      (error_enhanced as any).canRetry =
-        errorMessage.includes('timeout') || errorMessage.includes('Not connected');
-      (error_enhanced as any).toolName = toolName;
-      (error_enhanced as any).serverName = serverName;
-      (error_enhanced as any).docsUrl = 'https://docs.open-hivemind.ai/tools/troubleshooting';
+      Object.assign(error_enhanced, {
+        suggestions,
+        canRetry: errorMessage.includes('timeout') || errorMessage.includes('Not connected'),
+        toolName,
+        serverName,
+        docsUrl: 'https://docs.open-hivemind.ai/tools/troubleshooting',
+      });
       throw error_enhanced;
     }
   }

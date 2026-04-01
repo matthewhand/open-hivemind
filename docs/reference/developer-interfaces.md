@@ -7,7 +7,7 @@ This document provides a comprehensive overview of all interfaces in the messagi
 ### IMessage (Abstract Base Class)
 **Location:** `src/message/interfaces/IMessage.ts`
 
-The `IMessage` abstract class serves as the foundation for all message types across different platforms. It provides a unified interface for Discord, Slack, and other messaging platforms.
+The `IMessage` abstract class serves as the foundation for all message types across different platforms. It provides a common interface for Discord, Slack, and other messaging platforms.
 
 #### Key Properties
 - `content: string` - The text content of the message

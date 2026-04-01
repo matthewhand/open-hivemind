@@ -4,9 +4,9 @@ Endpoints added as part of the 5-stage pipeline refactor. These provide config s
 
 ## Config Source Introspection
 
-### GET /api/config/unified-sources
+### GET /api/config/sources
 
-Returns a map of all known config keys and the layer each key comes from, as resolved by the `UnifiedConfigStore`.
+Returns a map of all known config keys and the layer each key comes from, as resolved by the `ConfigStore`.
 
 **Response (200):**
 

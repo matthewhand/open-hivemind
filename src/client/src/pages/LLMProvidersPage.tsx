@@ -42,6 +42,7 @@ import BulkActionBar from '../components/BulkActionBar';
 import Checkbox from '../components/DaisyUI/Checkbox';
 import Toggle from '../components/DaisyUI/Toggle';
 import { useWebSocket } from '../contexts/WebSocketContext';
+import { useSavedStamp } from '../contexts/SavedStampContext';
 
 type LlmModelType = 'chat' | 'embedding' | 'both';
 
@@ -65,6 +66,7 @@ const isEmbeddingCapable = (profile: any): boolean => {
 const LLMProvidersPage: React.FC = () => {
   const { modalState, openAddModal, openEditModal, closeModal } = useModal();
   const errorToast = useErrorToast();
+  const { showStamp } = useSavedStamp();
   const [profiles, setProfiles] = useState<any[]>([]);
   const [defaultStatus, setDefaultStatus] = useState<any>(null);
   const [expandedProfile, setExpandedProfile] = useState<string | null>(null);
@@ -225,6 +227,7 @@ const LLMProvidersPage: React.FC = () => {
         await apiService.post('/api/config/llm-profiles', payload);
       }
       closeModal();
+      showStamp();
       fetchProfiles();
     } catch (err: any) { errorToast('Save Failed', `Failed to save: ${err.message}`); }
   };

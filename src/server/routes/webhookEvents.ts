@@ -1,6 +1,7 @@
 import Debug from 'debug';
 import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import { ApiResponse } from '@src/server/utils/apiResponse';
 import { HTTP_STATUS } from '../../types/constants';
 import { WebhookRetrySchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
@@ -109,21 +110,20 @@ router.get('/events', (req, res) => {
     // Strip full payload from list view — clients fetch detail by id
     const items = paged.map(({ payload: _payload, ...rest }) => rest);
 
-    return res.json({
-      success: true,
-      data: {
+    return res.json(
+      ApiResponse.success({
         items,
         total,
         page,
         limit,
         totalPages: Math.ceil(total / limit),
-      },
-    });
+      })
+    );
   } catch (error) {
     debug('Error listing webhook events:', error);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ success: false, error: 'Failed to list webhook events' });
+      .json(ApiResponse.error('Failed to list webhook events'));
   }
 });
 
@@ -133,14 +133,14 @@ router.get('/events/:id', (req, res) => {
   try {
     const event = events.find((e) => e.id === req.params.id);
     if (!event) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, error: 'Event not found' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Event not found'));
     }
-    return res.json({ success: true, data: event });
+    return res.json(ApiResponse.success(event));
   } catch (error) {
     debug('Error fetching webhook event:', error);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ success: false, error: 'Failed to fetch webhook event' });
+      .json(ApiResponse.error('Failed to fetch webhook event'));
   }
 });
 
@@ -150,14 +150,14 @@ router.post('/events/:id/retry', validateRequest(WebhookRetrySchema), async (req
   try {
     const original = events.find((e) => e.id === req.params.id);
     if (!original) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, error: 'Event not found' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Event not found'));
     }
 
     // Only allow retrying failed events
     if (original.statusCode < 400) {
       return res
         .status(HTTP_STATUS.BAD_REQUEST)
-        .json({ success: false, error: 'Only failed events can be retried' });
+        .json(ApiResponse.error('Only failed events can be retried'));
     }
 
     // Record a retry attempt with a simulated 202 Accepted
@@ -173,19 +173,18 @@ router.post('/events/:id/retry', validateRequest(WebhookRetrySchema), async (req
 
     debug('Retried webhook event %s → %s', original.id, retryEvent.id);
 
-    return res.json({
-      success: true,
-      data: {
+    return res.json(
+      ApiResponse.success({
         originalId: original.id,
         retryId: retryEvent.id,
         message: 'Event queued for retry',
-      },
-    });
+      })
+    );
   } catch (error) {
     debug('Error retrying webhook event:', error);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ success: false, error: 'Failed to retry webhook event' });
+      .json(ApiResponse.error('Failed to retry webhook event'));
   }
 });
 

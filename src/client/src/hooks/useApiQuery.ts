@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { apiCache } from '../services/apiCache';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { apiService } from '../services/api';
 
 export interface UseApiQueryOptions {
   /** Time-to-live for the cached response in milliseconds (default: 30 000). */
@@ -22,13 +22,9 @@ export interface UseApiQueryResult<T> {
 }
 
 /**
- * React hook that fetches data from a GET endpoint through the ApiCache layer.
+ * React hook that fetches data from a GET endpoint via TanStack Query.
  *
- * Features:
- *  - Automatic caching & deduplication via `apiCache`.
- *  - Configurable TTL per query.
- *  - Optional polling interval.
- *  - Returns `{ data, loading, error, refetch }`.
+ * This is a thin compatibility wrapper — new code should prefer `useQuery` directly.
  *
  * @example
  *   const { data: bots, loading, error, refetch } = useApiQuery<Bot[]>('/api/bots');
@@ -37,65 +33,38 @@ export function useApiQuery<T = any>(
   url: string | null,
   options: UseApiQueryOptions = {},
 ): UseApiQueryResult<T> {
-  const { ttl, enabled = true, pollInterval, bust = false } = options;
+  const { ttl = 30_000, enabled = true, pollInterval, bust = false } = options;
+  const queryClient = useQueryClient();
 
-  const [data, setData] = useState<T | null>(null);
-  const [loading, setLoading] = useState<boolean>(enabled && !!url);
-  const [error, setError] = useState<Error | null>(null);
-
-  // Keep latest url in a ref so the polling interval always uses the current value
-  const urlRef = useRef(url);
-  urlRef.current = url;
-
-  const fetchData = useCallback(
-    async (forceBust = false) => {
-      const currentUrl = urlRef.current;
-      if (!currentUrl) return;
-
-      setLoading(true);
-      setError(null);
-
-      try {
-        const result = await apiCache.get<T>(currentUrl, {
-          ttl,
-          bust: forceBust || bust,
-        });
-        setData(result);
-      } catch (err: any) {
-        setError(err instanceof Error ? err : new Error(String(err)));
-      } finally {
-        setLoading(false);
-      }
+  const {
+    data,
+    isLoading: loading,
+    error,
+    refetch: tqRefetch,
+  } = useQuery<T>({
+    queryKey: ['apiQuery', url],
+    queryFn: async () => {
+      const result = await apiService.get<T>(url!);
+      return result;
     },
-    // ttl and bust are primitives, safe to list here
-    [ttl, bust],
-  );
+    enabled: enabled && !!url,
+    staleTime: bust ? 0 : ttl,
+    gcTime: ttl * 2,
+    refetchInterval: pollInterval,
+  });
 
-  // Refetch always busts the cache
-  const refetch = useCallback(async () => {
-    await fetchData(true);
-  }, [fetchData]);
+  const refetch = async () => {
+    // Invalidate first so staleTime is ignored
+    await queryClient.invalidateQueries({ queryKey: ['apiQuery', url] });
+    await tqRefetch();
+  };
 
-  // Initial fetch
-  useEffect(() => {
-    if (enabled && url) {
-      fetchData();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [url, enabled]);
-
-  // Polling
-  useEffect(() => {
-    if (!pollInterval || !enabled || !url) return;
-
-    const id = setInterval(() => {
-      fetchData(true);
-    }, pollInterval);
-
-    return () => clearInterval(id);
-  }, [pollInterval, enabled, url, fetchData]);
-
-  return { data, loading, error, refetch };
+  return {
+    data: data ?? null,
+    loading,
+    error: error instanceof Error ? error : null,
+    refetch,
+  };
 }
 
 export default useApiQuery;

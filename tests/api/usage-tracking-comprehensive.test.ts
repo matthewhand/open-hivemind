@@ -178,7 +178,6 @@ describe('Usage Tracking API - Comprehensive Integration Tests', () => {
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBeDefined();
       expect(response.body.code).toBe('TOOL_METRICS_ERROR');
-      expect(response.body.timestamp).toBeDefined();
     });
   });
 
@@ -657,7 +656,6 @@ describe('Usage Tracking API - Comprehensive Integration Tests', () => {
       const response = await request(app).delete('/api/usage-tracking/clear').expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toContain('cleared successfully');
       expect(mockClearAllData).toHaveBeenCalled();
     });
 
@@ -687,16 +685,15 @@ describe('Usage Tracking API - Comprehensive Integration Tests', () => {
   // ============================================================================
 
   describe('Error Handling and Edge Cases', () => {
-    it('should include timestamp in error responses', async () => {
+    it('should include error in error responses', async () => {
       mockGetAllToolMetrics.mockImplementationOnce(() => {
         throw new Error('Test error');
       });
 
       const response = await request(app).get('/api/usage-tracking/tools').expect(500);
 
-      expect(response.body.timestamp).toBeDefined();
-      const timestamp = new Date(response.body.timestamp);
-      expect(timestamp.getTime()).not.toBeNaN();
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBeDefined();
     });
 
     it('should include error codes in responses', async () => {

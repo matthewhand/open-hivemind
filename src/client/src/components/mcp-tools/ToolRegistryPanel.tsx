@@ -4,9 +4,9 @@ import { MCPTool, RecentToolUsage } from './types';
 import {
   WrenchScrewdriverIcon as ToolIcon,
   PlayIcon as RunIcon,
-  MagnifyingGlassIcon as SearchIcon,
   ClockIcon,
 } from '@heroicons/react/24/outline';
+import { ToolFilters } from '../tools/ToolFilters';
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid';
 import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
 import { SkeletonGrid } from '../DaisyUI/Skeleton';
@@ -282,58 +282,18 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
       </div>
 
       {/* Filters and Sort */}
-      <div className="flex flex-wrap gap-4 mb-6">
-        <div className="form-control w-full md:w-auto md:flex-1 max-w-md">
-          <div className="input-group">
-            <div className="relative w-full">
-              <input
-                type="text"
-                placeholder="Search tools..."
-                className="input input-bordered w-full pl-10"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <SearchIcon className="w-5 h-5 absolute left-3 top-3 text-base-content/50" />
-            </div>
-          </div>
-        </div>
-
-        <select
-          className="select select-bordered w-full md:w-auto"
-          value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
-        >
-          <option value="all">All Categories</option>
-          {categories.map(category => (
-            <option key={category} value={category}>
-              {category.charAt(0).toUpperCase() + category.slice(1)}
-            </option>
-          ))}
-        </select>
-
-        <select
-          className="select select-bordered w-full md:w-auto"
-          value={serverFilter}
-          onChange={(e) => setServerFilter(e.target.value)}
-        >
-          <option value="all">All Servers</option>
-          {servers.map(server => (
-            <option key={server.id} value={server.id}>
-              {server.name}
-            </option>
-          ))}
-        </select>
-
-        <select
-          className="select select-bordered w-full md:w-auto"
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-        >
-          <option value="name">Sort: Name (A-Z)</option>
-          <option value="usage">Sort: Usage Count</option>
-          <option value="recent">Sort: Recently Used</option>
-        </select>
-      </div>
+      <ToolFilters
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        categoryFilter={categoryFilter}
+        setCategoryFilter={setCategoryFilter}
+        serverFilter={serverFilter}
+        setServerFilter={setServerFilter}
+        sortBy={sortBy}
+        setSortBy={setSortBy}
+        categories={categories}
+        servers={servers}
+      />
 
       <p className="text-sm text-base-content/70 mb-4">
         Showing {filteredTools.length} of {tools.length} tools

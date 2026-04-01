@@ -55,7 +55,7 @@ export interface ICommonUIElement {
 /**
  * Common message interface that standardizes messages across platforms.
  *
- * This interface provides a unified structure for messages from different
+ * This interface provides a common structure for messages from different
  * messaging platforms, ensuring consistent handling regardless of the source.
  *
  * @interface

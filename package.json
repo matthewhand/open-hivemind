@@ -101,12 +101,15 @@
     "@hivemind/message-slack": "workspace:*",
     "@hivemind/shared-types": "workspace:*",
     "@hivemind/tool-mcp": "workspace:*",
+    "@hookform/resolvers": "^5.2.2",
     "@modelcontextprotocol/sdk": "^1.25.2",
     "@reduxjs/toolkit": "^2.9.0",
     "@slack/rtm-api": "^7.0.2",
     "@slack/socket-mode": "^2.0.3",
     "@slack/web-api": "^7.8.0",
     "@slack/webhook": "^7.0.4",
+    "@tanstack/react-query": "^5.94.5",
+    "@tanstack/react-query-devtools": "^5.96.0",
     "@tanstack/react-virtual": "^3.13.23",
     "@tryfabric/mack": "^1.2.1",
     "@types/commander": "^2.12.5",
@@ -171,6 +174,7 @@
     "react": "^19.1.1",
     "react-admin": "^5.3.0",
     "react-dom": "^19.1.1",
+    "react-hook-form": "^7.54.2",
     "react-markdown": "^10.1.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.8.2",
@@ -192,7 +196,7 @@
     "uuid": "^11.1.0",
     "winston-daily-rotate-file": "^5.0.0",
     "yargs": "^17.7.2",
-    "zod": "^3.24.2",
+    "zod": "^3.25.1",
     "zod-to-json-schema": "3.25.1"
   },
   "devDependencies": {
@@ -281,8 +285,7 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.39.1",
     "vite": "^7.1.2",
-    "wrangler": "^4.34.0",
-    "zod": "^3.25.1"
+    "wrangler": "^4.34.0"
   },
   "overrides": {
     "undici": "7.22.0",

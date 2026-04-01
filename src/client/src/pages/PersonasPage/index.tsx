@@ -12,6 +12,7 @@ import { usePersonaActions } from './hooks/usePersonaActions';
 import { usePersonasData } from './hooks/usePersonasData';
 import { PersonaList } from './PersonaList';
 import { PersonaStats } from './PersonaStats';
+import { useSavedStamp } from '../../contexts/SavedStampContext';
 
 const CATEGORIES = [
   { id: 'all', label: 'All Categories' },
@@ -26,6 +27,7 @@ const PersonasPage: React.FC = () => {
   const successToast = useSuccessToast();
   const errorToast = useErrorToast();
   const infoToast = useInfoToast();
+  const { showStamp } = useSavedStamp();
   const isMobile = useIsBelowBreakpoint('md');
   const [error, setError] = useState<string | null>(null);
 
@@ -59,7 +61,8 @@ const PersonasPage: React.FC = () => {
     successToast,
     errorToast,
     infoToast,
-    bulk
+    bulk,
+    showStamp
   );
 
   const { onDragStart, onDragOver, onDragEnd, onDrop, getItemStyle } = useDragAndDrop({

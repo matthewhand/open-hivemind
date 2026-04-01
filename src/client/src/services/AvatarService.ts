@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import type { AvatarService } from '../provider-configs/types';
+import { apiService } from './api';
 import Debug from 'debug';
 const debug = Debug('app:client:services:AvatarService');
 
@@ -33,21 +34,8 @@ class ProviderAvatarService implements AvatarService {
     try {
       // In a real implementation, this would call your backend service
       // which would use the Discord API to get bot information
-      const response = await fetch('/api/providers/discord/avatar', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ botToken }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return data.avatarUrl;
-      }
-
-      // For demo purposes, return a mock avatar URL
-      return this.generateMockAvatar('discord', botToken);
+      const data = await apiService.post<any>('/api/providers/discord/avatar', { botToken });
+      return data.avatarUrl;
     } catch (error) {
       debug('ERROR:', 'Failed to load Discord avatar:', error);
       return this.generateMockAvatar('discord', botToken);
@@ -61,21 +49,8 @@ class ProviderAvatarService implements AvatarService {
     try {
       // In a real implementation, this would call your backend service
       // which would use the Slack API to get bot information
-      const response = await fetch('/api/providers/slack/avatar', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ botToken }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return data.avatarUrl;
-      }
-
-      // For demo purposes, return a mock avatar URL
-      return this.generateMockAvatar('slack', botToken);
+      const data = await apiService.post<any>('/api/providers/slack/avatar', { botToken });
+      return data.avatarUrl;
     } catch (error) {
       debug('ERROR:', 'Failed to load Slack avatar:', error);
       return this.generateMockAvatar('slack', botToken);
@@ -89,21 +64,8 @@ class ProviderAvatarService implements AvatarService {
     try {
       // In a real implementation, this would call your backend service
       // which would use the Telegram Bot API to get bot information
-      const response = await fetch('/api/providers/telegram/avatar', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ botToken }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return data.avatarUrl;
-      }
-
-      // For demo purposes, return a mock avatar URL
-      return this.generateMockAvatar('telegram', botToken);
+      const data = await apiService.post<any>('/api/providers/telegram/avatar', { botToken });
+      return data.avatarUrl;
     } catch (error) {
       debug('ERROR:', 'Failed to load Telegram avatar:', error);
       return this.generateMockAvatar('telegram', botToken);

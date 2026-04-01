@@ -8,6 +8,7 @@ import Toggle from './DaisyUI/Toggle';
 import Button from './DaisyUI/Button';
 import { Alert } from './DaisyUI/Alert';
 import Badge from './DaisyUI/Badge';
+import ModelAutocomplete from './DaisyUI/ModelAutocomplete';
 import Debug from 'debug';
 import { getApiKeyFormatHint } from '../utils/apiKeyValidation';
 const debug = Debug('app:client:components:ProviderConfigForm');
@@ -285,43 +286,33 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
           />
         );
 
-      case 'model-autocomplete':
-        if (field.component) {
-          const Component = field.component;
-          return (
-            <Component
-              value={typeof value === 'string' ? value : ''}
-              onChange={(newValue: any) => handleFieldChange(field.name, newValue)}
-              apiKey={config.apiKey}
-              baseUrl={config.baseUrl || config.apiUrl || config.endpoint}
-              providerType={(field.componentProps?.providerType || schema.providerType) as any}
-              onValidationError={(error: string) => {
-                // Show validation warnings instead of errors for API keys
-                if (field.name === 'apiKey') {
-                  debug('WARN:', `API Key validation warning: ${error}`);
-                } else {
-                  setErrors(prev => ({ ...prev, [field.name]: error }));
-                }
-              }}
-              onValidationSuccess={() => {
-                setErrors(prev => {
-                  const { [field.name]: removed, ...rest } = prev;
-                  return rest;
-                });
-              }}
-              {...field.componentProps}
-            />
-          );
-        }
+      case 'model-autocomplete': {
+        const Component = field.component || ModelAutocomplete;
         return (
-          <Input
-            type="text"
+          <Component
             value={typeof value === 'string' ? value : ''}
-            onChange={(e) => handleFieldChange(field.name, e.target.value)}
-            placeholder={field.placeholder}
-            className={inputClasses}
+            onChange={(newValue: any) => handleFieldChange(field.name, newValue)}
+            apiKey={config.apiKey}
+            baseUrl={config.baseUrl || config.apiUrl || config.endpoint}
+            providerType={(field.componentProps?.providerType || schema.providerType) as any}
+            onValidationError={(error: string) => {
+              // Show validation warnings instead of errors for API keys
+              if (field.name === 'apiKey') {
+                debug('WARN:', `API Key validation warning: ${error}`);
+              } else {
+                setErrors(prev => ({ ...prev, [field.name]: error }));
+              }
+            }}
+            onValidationSuccess={() => {
+              setErrors(prev => {
+                const { [field.name]: removed, ...rest } = prev;
+                return rest;
+              });
+            }}
+            {...field.componentProps}
           />
         );
+      }
 
       default:
         return (

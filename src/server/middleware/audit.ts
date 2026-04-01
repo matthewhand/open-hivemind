@@ -14,7 +14,7 @@ export interface AuditedRequest extends AuthMiddlewareRequest {
 /**
  * Middleware to extract user information for audit logging
  */
-export const auditMiddleware = (req: AuditedRequest, res: Response, next: NextFunction) => {
+export const auditMiddleware = (req: AuditedRequest, res: Response, next: NextFunction): void => {
   try {
     // Extract user information from various sources
     let user = 'anonymous';
@@ -67,7 +67,7 @@ export const logConfigChange = (
     newValue?: any;
     metadata?: Record<string, any>;
   } = {}
-) => {
+): void => {
   const auditLogger = AuditLogger.getInstance();
   auditLogger.logConfigChange(req.auditUser || 'unknown', action, resource, result, details, {
     ipAddress: req.auditIp,
@@ -90,7 +90,7 @@ export const logBotAction = (
     newValue?: any;
     metadata?: Record<string, any>;
   } = {}
-) => {
+): void => {
   const auditLogger = AuditLogger.getInstance();
   auditLogger.logBotAction(req.auditUser || 'unknown', action, botName, result, details, {
     ipAddress: req.auditIp,
@@ -111,7 +111,7 @@ export const logAdminAction = (
   options: {
     metadata?: Record<string, any>;
   } = {}
-) => {
+): void => {
   const auditLogger = AuditLogger.getInstance();
   auditLogger.logAdminAction(req.auditUser || 'unknown', action, resource, result, details, {
     ipAddress: req.auditIp,

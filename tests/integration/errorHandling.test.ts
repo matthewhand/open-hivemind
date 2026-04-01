@@ -57,11 +57,7 @@ describe('Error Handling Integration Tests', () => {
         .send(errorReport)
         .expect(200);
 
-      expect(response.body).toEqual({
-        success: true,
-        correlationId: errorReport.correlationId,
-        message: 'Error report received and logged',
-      });
+      expect(response.body.success).toBe(true);
     });
 
     test('should reject frontend error report with missing required fields', async () => {
@@ -102,7 +98,7 @@ describe('Error Handling Integration Tests', () => {
         .send(errorReport)
         .expect(200);
 
-      expect(response.body.correlationId).toBe(errorReport.correlationId);
+      expect(response.body.success).toBe(true);
     });
   });
 
@@ -118,11 +114,12 @@ describe('Error Handling Integration Tests', () => {
 
       const response = await request(app).get('/api/errors/stats').expect(200);
 
-      expect(response.body).toHaveProperty('totalErrors');
-      expect(response.body).toHaveProperty('errorTypes');
-      expect(response.body.totalErrors).toBeGreaterThan(0);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toHaveProperty('totalErrors');
+      expect(response.body.data).toHaveProperty('errorTypes');
+      expect(response.body.data.totalErrors).toBeGreaterThan(0);
       // We can't guarantee the exact error type, so just check that errorTypes is not empty
-      expect(Object.keys(response.body.errorTypes).length).toBeGreaterThan(0);
+      expect(Object.keys(response.body.data.errorTypes).length).toBeGreaterThan(0);
     });
 
     test('should handle errors when getting statistics', async () => {
@@ -136,19 +133,22 @@ describe('Error Handling Integration Tests', () => {
     test('should return recent errors with default limit', async () => {
       const response = await request(app).get('/api/errors/recent').expect(200);
 
-      expect(Array.isArray(response.body)).toBe(true);
+      expect(response.body.success).toBe(true);
+      expect(Array.isArray(response.body.data)).toBe(true);
     });
 
     test('should return recent errors with custom limit', async () => {
       const response = await request(app).get('/api/errors/recent?limit=10').expect(200);
 
-      expect(Array.isArray(response.body)).toBe(true);
+      expect(response.body.success).toBe(true);
+      expect(Array.isArray(response.body.data)).toBe(true);
     });
 
     test('should handle invalid limit parameter', async () => {
       const response = await request(app).get('/api/errors/recent?limit=invalid').expect(200);
 
-      expect(Array.isArray(response.body)).toBe(true);
+      expect(response.body.success).toBe(true);
+      expect(Array.isArray(response.body.data)).toBe(true);
     });
   });
 

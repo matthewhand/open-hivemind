@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalStorage } from './useLocalStorage';
+import { apiService } from '../services/api';
 import Debug from 'debug';
 
 const debug = Debug('app:client:hooks:useToolsLogic');
@@ -52,8 +54,6 @@ export interface RecentToolUsage {
 }
 
 export const useToolsLogic = () => {
-  const [tools, setTools] = useState<MCPTool[]>([]);
-  const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
   // LocalStorage-persisted state
@@ -68,55 +68,55 @@ export const useToolsLogic = () => {
   const [executionHistory, setExecutionHistory] = useState<ToolExecutionRecord[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
 
-  useEffect(() => {
-    const fetchTools = async () => {
-      try {
-        const res = await fetch('/api/mcp/servers');
-        if (!res.ok) {
-          throw new Error('Failed to load tools from server');
-        }
+  const queryClient = useQueryClient();
 
-        const json = await res.json();
-        const servers = json.servers || [];
+  const {
+    data: tools = [],
+    isLoading: loading,
+  } = useQuery<MCPTool[]>({
+    queryKey: ['mcp', 'tools', usageCounts, recentlyUsed],
+    queryFn: async () => {
+      const json: any = await apiService.get('/api/mcp/servers');
+      const servers = json.servers || [];
 
-        const prefsRes = await fetch('/api/mcp/tools/preferences');
-        const prefsJson = prefsRes.ok ? await prefsRes.json() : { success: true, data: {} };
-        const preferences = prefsJson.data || {};
+      const prefsJson: any = await apiService.get('/api/mcp/tools/preferences').catch(() => ({ success: true, data: {} }));
+      const preferences = prefsJson.data || {};
 
-        const allTools: MCPTool[] = [];
-        servers.forEach((server: any) => {
-          if (server.tools && Array.isArray(server.tools)) {
-            server.tools.forEach((t: any) => {
-              const toolId = `${server.name}-${t.name}`;
-              const preference = preferences[toolId];
+      const allTools: MCPTool[] = [];
+      servers.forEach((server: any) => {
+        if (server.tools && Array.isArray(server.tools)) {
+          server.tools.forEach((t: any) => {
+            const toolId = `${server.name}-${t.name}`;
+            const preference = preferences[toolId];
 
-              allTools.push({
-                id: toolId,
-                name: t.name,
-                serverId: server.name,
-                serverName: server.name,
-                description: t.description || 'No description available',
-                category: 'utility',
-                inputSchema: t.inputSchema,
-                outputSchema: t.outputSchema || t.output_schema || {},
-                usageCount: usageCounts[toolId] || 0,
-                lastUsed: recentlyUsed.find(r => r.toolId === toolId)?.timestamp,
-                enabled: preference ? preference.enabled : server.connected,
-              });
+            allTools.push({
+              id: toolId,
+              name: t.name,
+              serverId: server.name,
+              serverName: server.name,
+              description: t.description || 'No description available',
+              category: 'utility',
+              inputSchema: t.inputSchema,
+              outputSchema: t.outputSchema || t.output_schema || {},
+              usageCount: usageCounts[toolId] || 0,
+              lastUsed: recentlyUsed.find(r => r.toolId === toolId)?.timestamp,
+              enabled: preference ? preference.enabled : server.connected,
             });
-          }
-        });
+          });
+        }
+      });
 
-        setTools(allTools);
-      } catch (err) {
-        setAlert({ type: 'error', message: 'Failed to load tools from server' });
-      } finally {
-        setLoading(false);
-      }
-    };
+      return allTools;
+    },
+  });
 
-    fetchTools();
-  }, [usageCounts, recentlyUsed]);
+  // Provide setTools via query cache for local mutations
+  const setTools = useCallback((updater: MCPTool[] | ((prev: MCPTool[]) => MCPTool[])) => {
+    queryClient.setQueryData<MCPTool[]>(
+      ['mcp', 'tools', usageCounts, recentlyUsed],
+      (old = []) => typeof updater === 'function' ? updater(old) : updater,
+    );
+  }, [queryClient, usageCounts, recentlyUsed]);
 
   const recentTools = useMemo(() => {
     const recentIds = recentlyUsed.slice(0, 5).map(r => r.toolId);
@@ -152,21 +152,11 @@ export const useToolsLogic = () => {
 
       const newEnabledState = !tool.enabled;
 
-      const res = await fetch(`/api/mcp/tools/${toolId}/toggle`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          enabled: newEnabledState,
-          serverName: tool.serverName,
-          toolName: tool.name,
-        }),
+      await apiService.post(`/api/mcp/tools/${toolId}/toggle`, {
+        enabled: newEnabledState,
+        serverName: tool.serverName,
+        toolName: tool.name,
       });
-
-      if (!res.ok) {
-        throw new Error('Failed to update tool status on server');
-      }
 
       setTools(prev => prev.map(t =>
         t.id === toolId
@@ -199,18 +189,13 @@ export const useToolsLogic = () => {
         ? { ...t, usageCount: newUsageCount, lastUsed: new Date().toISOString() }
         : t,
     ));
-  }, [usageCounts, setUsageCounts, setRecentlyUsed]);
+  }, [usageCounts, setUsageCounts, setRecentlyUsed, setTools]);
 
   const fetchExecutionHistory = async () => {
     setLoadingHistory(true);
     try {
-      const res = await fetch('/api/mcp/tools/history?limit=50');
-      if (res.ok) {
-        const json = await res.json();
-        setExecutionHistory(json.data || []);
-      } else {
-        setAlert({ type: 'error', message: 'Failed to load execution history' });
-      }
+      const json: any = await apiService.get('/api/mcp/tools/history?limit=50');
+      setExecutionHistory(json.data || []);
     } catch (error) {
       setAlert({ type: 'error', message: 'Failed to load execution history' });
     } finally {

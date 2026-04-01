@@ -3,7 +3,7 @@ import type { IMessage } from './IMessage';
 /**
  * High-level interface for messaging services across different platforms.
  *
- * This interface provides a unified API for messaging operations across
+ * This interface provides a common API for messaging operations across
  * different platforms (Discord, Slack, Mattermost, etc.). It abstracts
  * platform-specific details while providing common messaging functionality.
  *

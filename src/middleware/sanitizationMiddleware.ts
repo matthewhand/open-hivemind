@@ -67,17 +67,17 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction) =
     req.body = sanitizeObject(req.body);
   }
   if (req.query && typeof req.query === 'object') {
-    req.query = sanitizeObject(req.query);
+    req.query = sanitizeObject(req.query) as typeof req.query;
   }
   if (req.params && typeof req.params === 'object') {
-    req.params = sanitizeObject(req.params);
+    req.params = sanitizeObject(req.params) as typeof req.params;
   }
   if (req.headers) {
     const sanitizedHeaders: typeof req.headers = {};
     for (const key of Object.keys(req.headers)) {
       const lower = key.toLowerCase();
       if (lower.startsWith('x-') && !SKIP_HEADER_SANITIZATION.has(lower)) {
-        sanitizedHeaders[key] = sanitizeObject(req.headers[key]);
+        sanitizedHeaders[key] = sanitizeObject(req.headers[key]) as string | string[] | undefined;
       } else {
         sanitizedHeaders[key] = req.headers[key];
       }

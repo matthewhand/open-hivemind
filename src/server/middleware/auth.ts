@@ -10,7 +10,7 @@ declare global {
   }
 }
 
-export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
+export const authenticateToken = (req: Request, res: Response, next: NextFunction): void => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
@@ -37,8 +37,10 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
   return next();
 };
 
-export const requirePermission = (permission: string) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+export const requirePermission = (
+  permission: string
+): ((req: Request, res: Response, next: NextFunction) => void) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.user) {
       res.status(401).json({ error: 'Authentication required' });
       return;
@@ -65,8 +67,10 @@ export const requirePermission = (permission: string) => {
   };
 };
 
-export const requireRole = (role: string) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+export const requireRole = (
+  role: string
+): ((req: Request, res: Response, next: NextFunction) => void) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.user) {
       res.status(401).json({ error: 'Authentication required' });
       return;
@@ -85,7 +89,7 @@ export const requireRole = (role: string) => {
   };
 };
 
-export const optionalAuth = (req: Request, res: Response, next: NextFunction) => {
+export const optionalAuth = (req: Request, res: Response, next: NextFunction): void => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 

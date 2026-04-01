@@ -6,12 +6,16 @@ import { createServer } from 'http';
 import path from 'path';
 import type { NextFunction, Request, Response } from 'express';
 import swarmRouter from '@src/admin/swarmRoutes';
+import { loadLlmProfiles } from '@src/config/llmProfiles';
+import { loadMemoryProfiles } from '@src/config/memoryProfiles';
+import { loadToolProfiles } from '@src/config/toolProfiles';
 import { container } from '@src/di/container';
 import { registerServices } from '@src/di/registration';
 import { applyRateLimiting } from '@src/middleware/rateLimiter';
+import { SyncProviderRegistry, type ProviderProfile } from '@src/registries/SyncProviderRegistry';
 import { authenticateToken } from '@src/server/middleware/auth';
-import { ipWhitelist } from '@src/server/middleware/security';
 import { csrfTokenHandler } from '@src/server/middleware/csrf';
+import { ipWhitelist } from '@src/server/middleware/security';
 import adminApiRouter from '@src/server/routes/admin';
 import anomalyRouter from '@src/server/routes/anomaly';
 import authRouter from '@src/server/routes/auth';
@@ -47,10 +51,6 @@ import { getLlmProvider } from '@llm/getLlmProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 import Logger from '@common/logger';
 import { initProviders } from './initProviders';
-import { SyncProviderRegistry } from '@src/registries/SyncProviderRegistry';
-import { loadLlmProfiles } from '@src/config/llmProfiles';
-import { loadMemoryProfiles } from '@src/config/memoryProfiles';
-import { loadToolProfiles } from '@src/config/toolProfiles';
 import { reloadGlobalConfigs } from './server/routes/config';
 import startupDiagnostics from './utils/startupDiagnostics';
 import 'dotenv/config';
@@ -92,6 +92,7 @@ const frontendDistPath = resolveFrontendDistPath();
 const frontendAssetsPath = path.join(frontendDistPath, 'assets');
 
 // Vite Dev Server Instance (only used in dev)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Vite dev server type is dynamic
 let viteServer: any;
 
 // Check if frontend dist exists (async check will be done in main())
@@ -107,9 +108,11 @@ const shutdownCoordinator = ShutdownCoordinator.getInstance();
 const app = express();
 debug('Messenger services are being initialized...');
 
-const healthRoute = healthRouteModule.default || healthRouteModule;
-const messageConfig = messageConfigModule.default || messageConfigModule;
-const webhookConfig = webhookConfigModule.default || webhookConfigModule;
+const healthRoute = (healthRouteModule.default || healthRouteModule) as import('express').Router;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const messageConfig = (messageConfigModule.default || messageConfigModule) as any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const webhookConfig = (webhookConfigModule.default || webhookConfigModule) as any;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -159,7 +162,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   // Security headers
   // SECURITY: See src/server/middleware/security.ts for detailed CSP explanation
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  const workerSrc = process.env.NODE_ENV === 'development' ? "worker-src 'self' blob:;" : "worker-src 'none';";
+  const workerSrc =
+    process.env.NODE_ENV === 'development' ? "worker-src 'self' blob:;" : "worker-src 'none';";
   res.setHeader(
     'Content-Security-Policy',
     `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; connect-src 'self' ws: wss:; font-src 'self' data: https://fonts.gstatic.com; object-src 'none'; frame-ancestors 'none'; ${workerSrc}`
@@ -169,7 +173,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 // app.use(healthRoute); // Removed global mount causing root conflict
 
-// Serve unified dashboard at root
+// Serve dashboard at root
 if (process.env.NODE_ENV !== 'development') {
   app.get('/', async (req: Request, res: Response) => {
     const indexPath = path.join(frontendDistPath, 'index.html');
@@ -200,7 +204,7 @@ if (process.env.NODE_ENV !== 'development') {
   // Global assets static for root-relative asset paths
   app.use('/assets', express.static(frontendAssetsPath));
 
-  // Uber UI (unified dashboard)
+  // Uber UI (dashboard)
   app.use('/uber', express.static(frontendDistPath));
   app.use('/uber/*', (req: Request, res: Response) => {
     res.sendFile(path.join(frontendDistPath, 'index.html'));
@@ -226,10 +230,12 @@ if (process.env.NODE_ENV !== 'development') {
           Expires: '0',
         })
         .end(template);
-    } catch (e: any) {
-      viteServer.ssrFixStacktrace(e);
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        viteServer.ssrFixStacktrace(e);
+      }
       appLogger.error('Vite SSR Error', e);
-      res.status(500).end(e.message);
+      res.status(500).end(e instanceof Error ? e.message : String(e));
     }
   };
 
@@ -258,7 +264,7 @@ if (!allowAllIPs) {
 // CSRF token endpoint
 app.get('/api/csrf-token', csrfTokenHandler);
 
-// Unified API routes - all on same port, no separation
+// API routes - all on same port, no separation
 app.use('/api/swarm', authenticateToken, swarmRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/config', webuiConfigRouter);
@@ -286,7 +292,7 @@ app.use('/health', healthRoute);
 
 app.use(sitemapRouter); // Sitemap routes at root level
 
-// Legacy route redirects - everything now unified under /
+// Legacy route redirects - everything now under /
 app.use('/webui', (req: Request, res: Response) => res.redirect(301, '/' + req.path));
 app.get('/admin*', (req: Request, res: Response) => {
   res.sendFile(path.join(frontendDistPath, 'index.html'));
@@ -332,18 +338,20 @@ async function startBot(messengerService: any) {
       // (Receive → Decision → Enrich → Inference → Send) processes the message.
       const { MessageBus } = await import('@src/events/MessageBus');
       const bus = MessageBus.getInstance();
-      messengerService.setMessageHandler(async (message: any, historyMessages: any[], botConfig: any) => {
-        await bus.emitAsync('message:incoming', {
-          message,
-          history: historyMessages,
-          botConfig,
-          botName: String(botConfig.BOT_NAME || botConfig.name || 'hivemind'),
-          platform: message.platform || 'unknown',
-          channelId: message.getChannelId?.() || '',
-          metadata: {},
-        });
-        return ''; // Response is sent by SendStage
-      });
+      messengerService.setMessageHandler(
+        async (message: any, historyMessages: any[], botConfig: any) => {
+          await bus.emitAsync('message:incoming', {
+            message,
+            history: historyMessages,
+            botConfig,
+            botName: String(botConfig.BOT_NAME || botConfig.name || 'hivemind'),
+            platform: message.platform || 'unknown',
+            channelId: message.getChannelId?.() || '',
+            metadata: {},
+          });
+          return ''; // Response is sent by SendStage
+        }
+      );
     } else {
       // Legacy mode: call handleMessage() directly
       messengerService.setMessageHandler((message: any, historyMessages: any[], botConfig: any) =>
@@ -462,8 +470,8 @@ async function main() {
   // Validate critical environment variables before proceeding
   validateRequiredEnvVars();
 
-  // Unified application startup with enhanced diagnostics
-  appLogger.info('🚀 Starting Open Hivemind Unified Server');
+  // Application startup with enhanced diagnostics
+  appLogger.info('🚀 Starting Open Hivemind Server');
 
   // Initialize providers (skip in demo/skip mode)
   if (process.env.SKIP_MESSENGERS !== 'true') {
@@ -483,9 +491,9 @@ async function main() {
 
     const registry = SyncProviderRegistry.getInstance();
     const initResult = await registry.initialize({
-      llmProfiles: loadLlmProfiles().llm,
-      memoryProfiles: loadMemoryProfiles().memory,
-      toolProfiles: loadToolProfiles().tool,
+      llmProfiles: loadLlmProfiles().llm as unknown as ProviderProfile[],
+      memoryProfiles: loadMemoryProfiles().memory as ProviderProfile[],
+      toolProfiles: loadToolProfiles().tool as unknown as ProviderProfile[],
       messengerPlatforms: messengerTypes,
     });
     appLogger.info('Provider registry initialized', initResult.loaded);
@@ -632,9 +640,7 @@ async function main() {
     const server = createServer(app);
 
     // Register background services for graceful shutdown
-    const rtvs = (RealTimeValidationService as any).getInstance
-      ? (RealTimeValidationService as any).getInstance()
-      : null;
+    const rtvs = RealTimeValidationService.getInstance();
     if (rtvs && typeof rtvs.shutdown === 'function') {
       shutdownCoordinator.registerService({
         name: 'RealTimeValidationService',
@@ -657,16 +663,14 @@ async function main() {
     }
 
     const { ApiMonitorService } = await import('@src/services/ApiMonitorService');
-    const ams = container.resolve(ApiMonitorService) as any;
-    if (ams && typeof ams.shutdown === 'function') {
-      shutdownCoordinator.registerService({
-        name: 'ApiMonitorService',
-        shutdown: () => {
-          appLogger.info('🛑 Healthcheck: Shutting down ApiMonitorService...');
-          ams.shutdown();
-        },
-      });
-    }
+    const ams = container.resolve(ApiMonitorService);
+    shutdownCoordinator.registerService({
+      name: 'ApiMonitorService',
+      shutdown: () => {
+        appLogger.info('🛑 Healthcheck: Shutting down ApiMonitorService...');
+        ams.shutdown();
+      },
+    });
 
     // Register HTTP server with ShutdownCoordinator
     shutdownCoordinator.registerHttpServer(server);
@@ -780,7 +784,7 @@ async function main() {
   shutdownCoordinator.setupSignalHandlers();
 
   // Startup complete
-  appLogger.info('🎉 Open Hivemind Unified Server startup complete!');
+  appLogger.info('🎉 Open Hivemind Server startup complete!');
 
   // Re-print temp password so it's visible after all startup noise
   const { AuthManager } = await import('./auth/AuthManager');

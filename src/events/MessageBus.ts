@@ -171,7 +171,7 @@ export class MessageBus {
    */
   async emitAsync<E extends keyof MessageEvents>(
     event: E,
-    payload: MessageEvents[E],
+    payload: MessageEvents[E]
   ): Promise<void> {
     const entries = this.getEntries(event);
     if (entries.length === 0) return;
@@ -230,7 +230,7 @@ export class MessageBus {
   private addListener<E extends keyof MessageEvents>(
     event: E,
     fn: Listener<E>,
-    once: boolean,
+    once: boolean
   ): void {
     const key = event as string;
     let entries = this.listeners.get(key);
@@ -255,10 +255,7 @@ export class MessageBus {
   /**
    * Remove entries flagged with `once` from the canonical list.
    */
-  private pruneOnce<E extends keyof MessageEvents>(
-    event: E,
-    toRemove: ListenerEntry<E>[],
-  ): void {
+  private pruneOnce<E extends keyof MessageEvents>(event: E, toRemove: ListenerEntry<E>[]): void {
     if (toRemove.length === 0) return;
 
     const entries = this.listeners.get(event as string);

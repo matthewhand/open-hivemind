@@ -26,15 +26,16 @@ router.get('/llm-status', (req, res) => {
   try {
     const status = getLlmDefaultStatus();
     return res.json(status);
-  } catch (error: any) {
+  } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
+    const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
     return res
-      .status((hivemindError as any).statusCode || 500)
+      .status(statusCode)
       .json(
         ApiResponse.error(
-          (hivemindError as any).message,
+          ErrorUtils.getMessage(hivemindError),
           'LLM_STATUS_GET_ERROR',
-          (hivemindError as any).statusCode || 500
+          statusCode
         )
       );
   }
@@ -45,15 +46,16 @@ router.get('/llm-profiles', (req, res) => {
   try {
     const profiles = getLlmProfiles();
     return res.json(profiles);
-  } catch (error: any) {
+  } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
+    const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
     return res
-      .status((hivemindError as any).statusCode || 500)
+      .status(statusCode)
       .json(
         ApiResponse.error(
-          (hivemindError as any).message,
+          ErrorUtils.getMessage(hivemindError),
           'LLM_PROFILES_GET_ERROR',
-          (hivemindError as any).statusCode || 500
+          statusCode
         )
       );
   }
@@ -99,15 +101,16 @@ router.post('/llm-profiles', configLimiter, validateRequest(CreateLlmProfileSche
 
     broadcastConfigUpdate('llm-profiles', 'create', sanitizedProfile.key);
     return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success({ profile: sanitizedProfile }));
-  } catch (error: any) {
+  } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
+    const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
     return res
-      .status((hivemindError as any).statusCode || 500)
+      .status(statusCode)
       .json(
         ApiResponse.error(
-          (hivemindError as any).message,
+          ErrorUtils.getMessage(hivemindError),
           'LLM_PROFILE_CREATE_ERROR',
-          (hivemindError as any).statusCode || 500
+          statusCode
         )
       );
   }
@@ -140,15 +143,16 @@ router.put('/llm-profiles/:key', configLimiter, validateRequest(UpdateLlmProfile
 
     broadcastConfigUpdate('llm-profiles', 'update', updatedProfile.key);
     return res.json(ApiResponse.success({ profile: updatedProfile }));
-  } catch (error: any) {
+  } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
+    const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
     return res
-      .status((hivemindError as any).statusCode || 500)
+      .status(statusCode)
       .json(
         ApiResponse.error(
-          (hivemindError as any).message,
+          ErrorUtils.getMessage(hivemindError),
           'LLM_PROFILE_UPDATE_ERROR',
-          (hivemindError as any).statusCode || 500
+          statusCode
         )
       );
   }
@@ -173,15 +177,16 @@ router.delete('/llm-profiles/:key', configLimiter, validateRequest(LlmProfileKey
 
     broadcastConfigUpdate('llm-profiles', 'delete', deletedProfile.key);
     return res.json(ApiResponse.success({ profile: deletedProfile }));
-  } catch (error: any) {
+  } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
+    const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
     return res
-      .status((hivemindError as any).statusCode || 500)
+      .status(statusCode)
       .json(
         ApiResponse.error(
-          (hivemindError as any).message,
+          ErrorUtils.getMessage(hivemindError),
           'LLM_PROFILE_DELETE_ERROR',
-          (hivemindError as any).statusCode || 500
+          statusCode
         )
       );
   }
@@ -191,15 +196,16 @@ router.get('/message-profiles', (req, res) => {
   try {
     const profiles = getMessageProfiles();
     return res.json(profiles);
-  } catch (error: any) {
+  } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
+    const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
     return res
-      .status((hivemindError as any).statusCode || 500)
+      .status(statusCode)
       .json(
         ApiResponse.error(
-          (hivemindError as any).message,
+          ErrorUtils.getMessage(hivemindError),
           'MESSAGE_PROFILES_GET_ERROR',
-          (hivemindError as any).statusCode || 500
+          statusCode
         )
       );
   }
@@ -229,15 +235,16 @@ router.post('/message-profiles', configLimiter, validateRequest(CreateMessagePro
 
     broadcastConfigUpdate('message-profiles', 'create', newProfile.key);
     return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success({ profile: newProfile }));
-  } catch (error: any) {
+  } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
+    const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
     return res
-      .status((hivemindError as any).statusCode || 500)
+      .status(statusCode)
       .json(
         ApiResponse.error(
-          (hivemindError as any).message,
+          ErrorUtils.getMessage(hivemindError),
           'MESSAGE_PROFILES_CREATE_ERROR',
-          (hivemindError as any).statusCode || 500
+          statusCode
         )
       );
   }
@@ -253,13 +260,14 @@ router.get('/memory-profiles', (_req, res) => {
   try {
     const profiles = memoryProfilesModule.getMemoryProfiles();
     return res.json(ApiResponse.success(profiles));
-  } catch (error: any) {
+  } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
+    const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
     return res
-      .status((hivemindError as any).statusCode || 500)
+      .status(statusCode)
       .json(
         ApiResponse.error(
-          (hivemindError as any).message,
+          ErrorUtils.getMessage(hivemindError),
           'MEMORY_PROFILES_GET_ERROR',
         )
       );
@@ -270,7 +278,7 @@ router.post('/memory-profiles', configLimiter, validateRequest(CreateMemoryProfi
   try {
     const newProfile = req.body;
     const profiles = memoryProfilesModule.getMemoryProfiles();
-    if (profiles.memory.find((p: any) => p.key === newProfile.key))
+    if (profiles.memory.find((p: Record<string, unknown>) => p.key === newProfile.key))
       return res
         .status(HTTP_STATUS.CONFLICT)
         .json(
@@ -283,13 +291,14 @@ router.post('/memory-profiles', configLimiter, validateRequest(CreateMemoryProfi
     memoryProfilesModule.saveMemoryProfiles(profiles);
     broadcastConfigUpdate('memory-profiles', 'create', newProfile.key);
     return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success({ profile: newProfile }));
-  } catch (error: any) {
+  } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
+    const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
     return res
-      .status((hivemindError as any).statusCode || 500)
+      .status(statusCode)
       .json(
         ApiResponse.error(
-          (hivemindError as any).message,
+          ErrorUtils.getMessage(hivemindError),
           'MEMORY_PROFILES_CREATE_ERROR',
         )
       );
@@ -300,7 +309,7 @@ router.put('/memory-profiles/:key', configLimiter, validateRequest(MemoryProfile
   try {
     const { key } = req.params;
     const profiles = memoryProfilesModule.getMemoryProfiles();
-    const index = profiles.memory.findIndex((p: any) => p.key === key);
+    const index = profiles.memory.findIndex((p: Record<string, unknown>) => p.key === key);
     if (index === -1)
       return res
         .status(HTTP_STATUS.NOT_FOUND)
@@ -309,13 +318,14 @@ router.put('/memory-profiles/:key', configLimiter, validateRequest(MemoryProfile
     memoryProfilesModule.saveMemoryProfiles(profiles);
     broadcastConfigUpdate('memory-profiles', 'update', key);
     return res.json(ApiResponse.success({ profile: profiles.memory[index] }));
-  } catch (error: any) {
+  } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
+    const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
     return res
-      .status((hivemindError as any).statusCode || 500)
+      .status(statusCode)
       .json(
         ApiResponse.error(
-          (hivemindError as any).message,
+          ErrorUtils.getMessage(hivemindError),
           'MEMORY_PROFILES_UPDATE_ERROR',
         )
       );
@@ -326,7 +336,7 @@ router.delete('/memory-profiles/:key', configLimiter, validateRequest(MemoryProf
   try {
     const { key } = req.params;
     const profiles = memoryProfilesModule.getMemoryProfiles();
-    const index = profiles.memory.findIndex((p: any) => p.key === key);
+    const index = profiles.memory.findIndex((p: Record<string, unknown>) => p.key === key);
     if (index === -1)
       return res
         .status(HTTP_STATUS.NOT_FOUND)
@@ -335,13 +345,14 @@ router.delete('/memory-profiles/:key', configLimiter, validateRequest(MemoryProf
     memoryProfilesModule.saveMemoryProfiles(profiles);
     broadcastConfigUpdate('memory-profiles', 'delete', key);
     return res.json(ApiResponse.success());
-  } catch (error: any) {
+  } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
+    const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
     return res
-      .status((hivemindError as any).statusCode || 500)
+      .status(statusCode)
       .json(
         ApiResponse.error(
-          (hivemindError as any).message,
+          ErrorUtils.getMessage(hivemindError),
           'MEMORY_PROFILES_DELETE_ERROR',
         )
       );
@@ -354,15 +365,16 @@ router.get('/tool-profiles', (_req, res) => {
   try {
     const profiles = toolProfilesModule.getToolProfiles();
     return res.json(profiles);
-  } catch (error: any) {
+  } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
+    const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
     return res
-      .status((hivemindError as any).statusCode || 500)
+      .status(statusCode)
       .json(
         ApiResponse.error(
-          (hivemindError as any).message,
+          ErrorUtils.getMessage(hivemindError),
           'TOOL_PROFILES_GET_ERROR',
-          (hivemindError as any).statusCode || 500
+          statusCode
         )
       );
   }
@@ -372,7 +384,7 @@ router.post('/tool-profiles', configLimiter, validateRequest(CreateToolProfileSc
   try {
     const newProfile = req.body;
     const profiles = toolProfilesModule.getToolProfiles();
-    if (profiles.tool.find((p: any) => p.key === newProfile.key))
+    if (profiles.tool.find((p: Record<string, unknown>) => p.key === newProfile.key))
       return res
         .status(HTTP_STATUS.CONFLICT)
         .json(
@@ -386,15 +398,16 @@ router.post('/tool-profiles', configLimiter, validateRequest(CreateToolProfileSc
     toolProfilesModule.saveToolProfiles(profiles);
     broadcastConfigUpdate('tool-profiles', 'create', newProfile.key);
     return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success({ profile: newProfile }));
-  } catch (error: any) {
+  } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
+    const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
     return res
-      .status((hivemindError as any).statusCode || 500)
+      .status(statusCode)
       .json(
         ApiResponse.error(
-          (hivemindError as any).message,
+          ErrorUtils.getMessage(hivemindError),
           'TOOL_PROFILES_CREATE_ERROR',
-          (hivemindError as any).statusCode || 500
+          statusCode
         )
       );
   }
@@ -404,7 +417,7 @@ router.put('/tool-profiles/:key', configLimiter, validateRequest(ToolProfileKeyP
   try {
     const { key } = req.params;
     const profiles = toolProfilesModule.getToolProfiles();
-    const index = profiles.tool.findIndex((p: any) => p.key === key);
+    const index = profiles.tool.findIndex((p: Record<string, unknown>) => p.key === key);
     if (index === -1)
       return res
         .status(HTTP_STATUS.NOT_FOUND)
@@ -413,15 +426,16 @@ router.put('/tool-profiles/:key', configLimiter, validateRequest(ToolProfileKeyP
     toolProfilesModule.saveToolProfiles(profiles);
     broadcastConfigUpdate('tool-profiles', 'update', key);
     return res.json(ApiResponse.success({ profile: profiles.tool[index] }));
-  } catch (error: any) {
+  } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
+    const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
     return res
-      .status((hivemindError as any).statusCode || 500)
+      .status(statusCode)
       .json(
         ApiResponse.error(
-          (hivemindError as any).message,
+          ErrorUtils.getMessage(hivemindError),
           'TOOL_PROFILES_UPDATE_ERROR',
-          (hivemindError as any).statusCode || 500
+          statusCode
         )
       );
   }
@@ -431,7 +445,7 @@ router.delete('/tool-profiles/:key', configLimiter, validateRequest(ToolProfileK
   try {
     const { key } = req.params;
     const profiles = toolProfilesModule.getToolProfiles();
-    const index = profiles.tool.findIndex((p: any) => p.key === key);
+    const index = profiles.tool.findIndex((p: Record<string, unknown>) => p.key === key);
     if (index === -1)
       return res
         .status(HTTP_STATUS.NOT_FOUND)
@@ -440,15 +454,16 @@ router.delete('/tool-profiles/:key', configLimiter, validateRequest(ToolProfileK
     toolProfilesModule.saveToolProfiles(profiles);
     broadcastConfigUpdate('tool-profiles', 'delete', key);
     return res.json(ApiResponse.success());
-  } catch (error: any) {
+  } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
+    const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
     return res
-      .status((hivemindError as any).statusCode || 500)
+      .status(statusCode)
       .json(
         ApiResponse.error(
-          (hivemindError as any).message,
+          ErrorUtils.getMessage(hivemindError),
           'TOOL_PROFILES_DELETE_ERROR',
-          (hivemindError as any).statusCode || 500
+          statusCode
         )
       );
   }

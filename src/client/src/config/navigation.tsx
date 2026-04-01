@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import {
-  LayoutDashboard, Bot, Users, Shield,
+  LayoutDashboard, Bot, Users, Shield, Building2,
   Settings, Cog, Activity, Component, MessageSquare, Brain,
   Map, Webhook, FileText,
 } from 'lucide-react';
@@ -113,6 +113,13 @@ export const hivemindNavItems: NavItem[] = [
     label: 'Global Defaults',
     icon: <NavIcon><Settings className="w-4 h-4" /></NavIcon>,
     path: '/admin/configuration',
+    visible: true,
+  },
+  {
+    id: 'enterprise',
+    label: 'Enterprise',
+    icon: <NavIcon><Building2 className="w-4 h-4" /></NavIcon>,
+    path: '/admin/enterprise',
     visible: true,
   },
 

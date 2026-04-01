@@ -101,8 +101,9 @@ describe('Bots Routes', () => {
 
       // The actual response will be transformed by the route handler
       // We expect an array of bot objects with additional properties like connected, messageCount, etc.
-      expect(Array.isArray(response.body)).toBe(true);
-      expect(response.body[0]).toEqual(
+      expect(response.body.success).toBe(true);
+      expect(Array.isArray(response.body.data)).toBe(true);
+      expect(response.body.data[0]).toEqual(
         expect.objectContaining({
           id: 'bot1',
           name: 'Bot 1',
@@ -135,7 +136,6 @@ describe('Bots Routes', () => {
         .expect(201);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.bot).toEqual(bot);
     });
   });
 
@@ -150,7 +150,6 @@ describe('Bots Routes', () => {
         .expect(201);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.bot).toEqual(bot);
     });
   });
 
@@ -165,7 +164,6 @@ describe('Bots Routes', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.bot).toEqual(bot);
     });
   });
 

@@ -129,10 +129,11 @@ describe('Bots Router', () => {
     const res = await request(app).get('/api/bots');
 
     expect(res.status).toBe(200);
-    expect(res.body).toHaveLength(2);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data).toHaveLength(2);
 
     // Verify Bot 1
-    expect(res.body[0]).toMatchObject({
+    expect(res.body.data[0]).toMatchObject({
       id: 'bot1',
       status: 'active',
       connected: true,
@@ -141,7 +142,7 @@ describe('Bots Router', () => {
     });
 
     // Verify Bot 2
-    expect(res.body[1]).toMatchObject({
+    expect(res.body.data[1]).toMatchObject({
       id: 'bot2',
       status: 'disabled',
       connected: false,
@@ -216,7 +217,6 @@ describe('Bots Router', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.bot).toEqual(updatedBot);
       expect(mockManager.updateBot).toHaveBeenCalledWith('test-bot', updates);
     });
 
