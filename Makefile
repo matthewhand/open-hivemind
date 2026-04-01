@@ -162,10 +162,10 @@ audit: sloc deprecated
 	@echo "  • Port confusion (3028 vs 5173)"
 	@echo "  • Separate frontend/backend serving"
 	@echo ""
-	@echo "✅ UNIFIED SOLUTION:"
+	@echo "✅ SOLUTION:"
 	@echo "  • ONE command: 'make start-dev'"
 	@echo "  • ONE port: 3028"
-	@echo "  • ONE process: unified server"
+	@echo "  • ONE process: single server"
 
 # ============================================================================
 # LEGACY TEST COMMANDS (Preserved from original Makefile)

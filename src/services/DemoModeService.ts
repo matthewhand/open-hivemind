@@ -260,7 +260,7 @@ export class DemoModeService {
           '👥 **Personas** - Customize bot personalities\n\n' +
           'Configure your API keys to unlock full functionality!',
         'Open-Hivemind is a powerful multi-agent orchestration framework! Key features:\n\n' +
-          '• Unified bot management across platforms\n' +
+          '• Bot management across platforms\n' +
           '• Flexible LLM provider switching\n' +
           '• Real-time WebUI dashboard\n' +
           '• MCP tool integration\n\n' +

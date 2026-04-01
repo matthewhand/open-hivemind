@@ -198,7 +198,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
 
       debug(`MCP provider test failed: ${provider.name} (${id}) -`, {
         error: hivemindError.message,
-        errorCode: hivemindError.code,
+        errorCode: ErrorUtils.getCode(hivemindError),
         errorType: errorInfo.type,
         severity: errorInfo.severity,
         providerId: id,
@@ -260,7 +260,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
 
       debug(`Failed to start MCP provider: ${provider.name} (${id}) -`, {
         error: hivemindError.message,
-        errorCode: hivemindError.code,
+        errorCode: ErrorUtils.getCode(hivemindError),
         errorType: errorInfo.type,
         severity: errorInfo.severity,
         providerId: id,
@@ -467,7 +467,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug('Failed to import MCP providers:', {
         error: hivemindError.message,
-        errorCode: hivemindError.code,
+        errorCode: ErrorUtils.getCode(hivemindError),
         errorType: errorInfo.type,
         severity: errorInfo.severity,
       });
@@ -866,7 +866,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug(`Health check failed for MCP provider ${providerId}:`, {
         error: hivemindError.message,
-        errorCode: hivemindError.code,
+        errorCode: ErrorUtils.getCode(hivemindError),
         errorType: errorInfo.type,
         severity: errorInfo.severity,
         providerId,

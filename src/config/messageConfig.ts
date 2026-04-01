@@ -176,7 +176,7 @@ convict.addFormat({
 const responseProfileKeySet = new Set(RESPONSE_PROFILE_OVERRIDE_KEYS);
 
 function coerceResponseProfileValue(key: string, value: unknown): number | boolean | undefined {
-  if (!responseProfileKeySet.has(key)) { return undefined; }
+  if (!responseProfileKeySet.has(key as any)) { return undefined; }
   const expectedType = RESPONSE_PROFILE_KEY_TYPES[key as keyof typeof RESPONSE_PROFILE_KEY_TYPES];
 
   if (expectedType === 'number') {

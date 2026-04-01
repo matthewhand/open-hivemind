@@ -80,13 +80,22 @@ jest.mock('@message/management/getMessengerProvider', () => ({
   ]),
 }));
 
+// The handler imports getLlmProviderForBot (not getLlmProvider).
+// getLlmProviderForBot returns a single provider (not an array).
 jest.mock('@src/llm/getLlmProvider', () => ({
-  getLlmProvider: jest.fn().mockResolvedValue([
-    {
-      generateChatCompletion: jest.fn().mockResolvedValue('This is a clean response'),
-      supportsHistory: () => true,
-    },
-  ]),
+  getLlmProviderForBot: jest.fn().mockResolvedValue({
+    generateChatCompletion: jest.fn().mockResolvedValue('This is a clean response'),
+    supportsHistory: () => true,
+  }),
+}));
+
+// Mock SyncProviderRegistry so the handler skips the fast path
+jest.mock('@src/registries/SyncProviderRegistry', () => ({
+  SyncProviderRegistry: {
+    getInstance: jest.fn(() => ({
+      isInitialized: jest.fn(() => false),
+    })),
+  },
 }));
 
 jest.mock('@src/services/toolAugmentedCompletion', () => ({
@@ -125,19 +134,6 @@ jest.mock('@src/services/MemoryManager', () => ({
   },
 }));
 
-// Get references to the mocked provider objects after jest.mock hoisting
-const getMockLlmProvider = () => {
-  const { getLlmProvider } = require('@src/llm/getLlmProvider');
-  // getLlmProvider returns a promise that resolves to [provider]
-  // We need to access the resolved mock provider
-  return getLlmProvider.mock.results?.[0]?.value?.[0] || getLlmProvider();
-};
-
-const getMockMessengerProvider = () => {
-  const { getMessengerProvider } = require('@message/management/getMessengerProvider');
-  return getMessengerProvider.mock.results?.[0]?.value?.[0] || getMessengerProvider();
-};
-
 let mockLlmProvider: any;
 let mockMessengerProvider: any;
 
@@ -146,11 +142,10 @@ describe('Content Filter Integration', () => {
     jest.clearAllMocks();
     process.env.DISABLE_QUOTA = 'true';
     // Re-resolve mock providers after clearAllMocks
-    const { getLlmProvider } = require('@src/llm/getLlmProvider');
+    const { getLlmProviderForBot } = require('@src/llm/getLlmProvider');
     const { getMessengerProvider } = require('@message/management/getMessengerProvider');
-    const [llm] = await getLlmProvider();
+    mockLlmProvider = await getLlmProviderForBot();
     const [messenger] = await getMessengerProvider();
-    mockLlmProvider = llm;
     mockMessengerProvider = messenger;
   });
 

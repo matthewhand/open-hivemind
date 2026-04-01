@@ -9,7 +9,7 @@ This document explains the available startup modes, what code paths they exercis
 
 | Mode | Command | Serves Frontend? | HMR? | Port(s) | Needs Frontend Build? | Notes |
 |------|---------|------------------|------|---------|-----------------------|-------|
-| Unified Dev | `make start-dev` | Yes (if build present or auto-built) | No | 3028 (default) | Auto-builds if missing | Single process (Express + static) |
+| Dev | `make start-dev` | Yes (if build present or auto-built) | No | 3028 (default) | Auto-builds if missing | Single process (Express + static) |
 | Dev w/ HMR | `make start-dev-hmr` | Yes (via Vite) | Yes | 3028 (API) / 5173 (UI) | No (Vite in-memory) | Two processes (backend + Vite) |
 | Production  | `make start-prod` | Yes | No | 3028 (if set) or env PORT | Requires full build | Uses compiled JS + dist assets |
 | Backend Only Dev (deprecated) | `npm run dev:backend` | Only if pre-built | No | 5005 or env PORT | Yes | Redundant; use `make start-dev` |

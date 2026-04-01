@@ -13,6 +13,7 @@ import Card from './DaisyUI/Card';
 import Modal, { ConfirmModal } from './DaisyUI/Modal';
 import DataTable from './DaisyUI/DataTable';
 import type { RDVColumn, RowAction } from './DaisyUI/DataTable';
+import { apiService } from '../services/api';
 
 interface MCPServer {
   name: string;
@@ -27,20 +28,6 @@ interface MCPTool {
   description: string;
   inputSchema: unknown;
 }
-
-const getAuthHeaders = (): Record<string, string> => {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  try {
-    const stored = localStorage.getItem('auth_tokens');
-    if (stored) {
-      const parsed = JSON.parse(stored) as { accessToken?: string };
-      if (parsed.accessToken) headers['Authorization'] = `Bearer ${parsed.accessToken}`;
-    }
-  } catch {
-    /* ignore */
-  }
-  return headers;
-};
 
 const MCPServerManager: React.FC = () => {
   const [servers, setServers] = useState<MCPServer[]>([]);
@@ -62,11 +49,7 @@ const MCPServerManager: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch('/api/admin/mcp-servers', { headers: getAuthHeaders() });
-      if (!response.ok) {
-        throw new Error('Failed to fetch MCP servers');
-      }
-      const data = await response.json();
+      const data: any = await apiService.get('/api/admin/mcp-servers');
 
       const serverList: MCPServer[] = [];
       if (data.servers) {
@@ -107,14 +90,7 @@ const MCPServerManager: React.FC = () => {
 
   const handleConnectServer = async () => {
     try {
-      const response = await fetch('/api/admin/mcp-servers/connect', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(formData),
-      });
-      if (!response.ok) {
-        throw new Error('Failed to connect to MCP server');
-      }
+      await apiService.post('/api/admin/mcp-servers/connect', formData);
       setToastMessage('MCP server connected successfully');
       setToastType('success');
       setConnectDialogOpen(false);
@@ -134,14 +110,7 @@ const MCPServerManager: React.FC = () => {
       onConfirm: async () => {
         setConfirmModal(prev => ({ ...prev, isOpen: false }));
         try {
-          const response = await fetch('/api/admin/mcp-servers/disconnect', {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ name: serverName }),
-          });
-          if (!response.ok) {
-            throw new Error('Failed to disconnect');
-          }
+          await apiService.post('/api/admin/mcp-servers/disconnect', { name: serverName });
           setToastMessage('MCP server disconnected');
           setToastType('success');
           fetchServers();
@@ -156,13 +125,7 @@ const MCPServerManager: React.FC = () => {
   const handleViewTools = async (server: MCPServer) => {
     setSelectedServer(server);
     try {
-      const response = await fetch(`/api/admin/mcp-servers/${server.name}/tools`, {
-        headers: getAuthHeaders(),
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch tools');
-      }
-      const data = await response.json();
+      const data: any = await apiService.get(`/api/admin/mcp-servers/${server.name}/tools`);
       setServerTools(data.tools || []);
       setToolsDialogOpen(true);
     } catch (err) {

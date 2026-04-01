@@ -31,7 +31,7 @@ router.get('/status', async (_req, res) => {
     }
 
     // Auto-detect completion: if bots exist, onboarding is implicitly done
-    const manager = BotManager.getInstance();
+    const manager = await BotManager.getInstance();
     const bots = await manager.getAllBots();
     if (bots.length > 0) {
       onboardingCompleted = true;

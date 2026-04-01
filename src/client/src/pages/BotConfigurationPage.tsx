@@ -13,6 +13,7 @@ import Badge from '../components/DaisyUI/Badge';
 import Modal from '../components/DaisyUI/Modal';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import { apiService } from '../services/api';
+import { useSavedStamp } from '../contexts/SavedStampContext';
 
 interface ConfigSchema {
   values: Record<string, any>;
@@ -34,6 +35,7 @@ const BotConfigurationPage: React.FC = () => {
   const [modifiedConfigs, setModifiedConfigs] = useState<Record<string, Record<string, any>>>({});
   const successToast = useSuccessToast();
   const errorToast = useErrorToast();
+  const { showStamp } = useSavedStamp();
 
   // Rollback state
   const [rollbacks, setRollbacks] = useState<string[]>([]);
@@ -116,6 +118,7 @@ const BotConfigurationPage: React.FC = () => {
       });
 
       setSuccess(`${configName} configuration saved successfully`);
+      showStamp();
       // Clear modified state for this config
       setModifiedConfigs(prev => {
         const next = { ...prev };

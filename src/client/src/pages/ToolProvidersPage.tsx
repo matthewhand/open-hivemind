@@ -27,9 +27,11 @@ import { apiService } from '../services/api';
 import { getProviderSchema, getProviderSchemasByType } from '../provider-configs';
 import useUrlParams from '../hooks/useUrlParams';
 import { useWebSocket } from '../contexts/WebSocketContext';
+import { useSavedStamp } from '../contexts/SavedStampContext';
 
 const ToolProvidersPage: React.FC = () => {
   const errorToast = useErrorToast();
+  const { showStamp } = useSavedStamp();
   const [profiles, setProfiles] = useState<any[]>([]);
   const [expandedProfile, setExpandedProfile] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -122,6 +124,7 @@ const ToolProvidersPage: React.FC = () => {
         }
       } else { await apiService.post('/api/config/tool-profiles', payload); }
       setFormModal({ isOpen: false, isEdit: false, profile: null });
+      showStamp();
       fetchProfiles();
     } catch (err: any) { errorToast('Save Failed', `Failed to save profile: ${err.message}`); }
   };

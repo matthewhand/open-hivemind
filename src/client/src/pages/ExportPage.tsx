@@ -12,11 +12,14 @@ import {
   HardDrive,
   Clock,
   DownloadCloud as DownloadIcon,
-  Archive as ArchiveIcon
+  Archive as ArchiveIcon,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 import Badge from '../components/DaisyUI/Badge';
 import { Alert } from '../components/DaisyUI/Alert';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
+import VisualFeedback from '../components/DaisyUI/VisualFeedback';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import Button from '../components/DaisyUI/Button';
 import Input from '../components/DaisyUI/Input';
@@ -25,6 +28,7 @@ import PageHeader from '../components/DaisyUI/PageHeader';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import StatsCards from '../components/DaisyUI/StatsCards';
 import SearchFilterBar from '../components/SearchFilterBar';
+import VisualFeedback from '../components/DaisyUI/VisualFeedback';
 import { apiService } from '../services/api';
 import DataTable from '../components/DaisyUI/DataTable';
 import type { RDVColumn, RowAction } from '../components/DaisyUI/DataTable';
@@ -47,6 +51,7 @@ const ExportPage: React.FC = () => {
   const [newBackupName, setNewBackupName] = useState('');
   const [newBackupDesc, setNewBackupDesc] = useState('');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [lastActionResult, setLastActionResult] = useState<'success' | 'error' | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean; title: string; message: string; onConfirm: () => void; confirmVariant?: 'primary' | 'error' | 'warning';
@@ -339,6 +344,10 @@ const ExportPage: React.FC = () => {
         icon={Archive}
         gradient="secondary"
       />
+
+      {lastActionResult && (
+        <VisualFeedback type={lastActionResult === 'success' ? 'success' : 'error'} message={lastActionResult === 'success' ? 'Operation completed' : 'Operation failed'} onDismiss={() => setLastActionResult(null)} />
+      )}
 
       <div ref={statsRef} className="relative">
         <button

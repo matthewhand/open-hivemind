@@ -1,4 +1,4 @@
-GET /api/admin/available-provider-types missing — hardcoded provider lists in AgentConfigurator, LlmProfileManager, UnifiedDashboard, ConfigurationEditor instead of calling useProviders()
+GET /api/admin/available-provider-types missing — hardcoded provider lists in AgentConfigurator, LlmProfileManager, Dashboard, ConfigurationEditor instead of calling useProviders()
 WebSocketContext — bot_status_update and system_metrics_update only console.log; not wired to state or exposed via hook
 WebUIStorage — synchronous fs.readFileSync/writeFileSync on every mutation; no write queue; concurrent saves corrupt the JSON file
 WebUIStorage.getGuards() — busy-wait while (guardsInitializationInProgress) is a synchronous spin-lock; will hang the event loop
@@ -9,7 +9,7 @@ OpenAiService — generateChatResponse is a passthrough to generateChatCompletio
 OpenAiService — console.debug (not debug()) on line building chatParams; leaks full message history to stdout in production
 OpenAiService — singleton exported as default OpenAiService.getInstance(); prevents per-bot multi-instance use (each bot needs its own config)
 Provider config sanitisation in admin.ts — API keys truncated to key.substring(0,3)+*** before saving; the real key is never stored, so the provider can never reconnect after a restart
-ConfigurationManager — only holds environment schema; all other configs (openaiConfig, discordConfig, etc.) are separate convict instances with no unified validation pass
+ConfigurationManager — only holds environment schema; all other configs (openaiConfig, discordConfig, etc.) are separate convict instances with no shared validation pass
 messageConfig / openaiConfig / discordConfig — each is a standalone convict file; no shared base schema; env-var naming conventions differ across files
 Grace Window setting — preset buttons committed to SettingsMessaging.tsx but no PR created; setting not persisted to backend or reflected in messageConfig
 MonitoringDashboard — 60 s WS-silence fallback polls all endpoints; no per-endpoint staleness tracking; a single slow endpoint blocks the refresh

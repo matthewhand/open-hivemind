@@ -3,11 +3,11 @@
 Navigation: [Docs Index](../README.md) | [Configuration Overview](overview.md) | [Multi-Bot Setup](multi-bot-setup.md)
 
 
-This guide explains how to configure multiple bot instances for Discord, Slack, and Mattermost using the unified BotConfigurationManager system.
+This guide explains how to configure multiple bot instances for Discord, Slack, and Mattermost using the BotConfigurationManager system.
 
 ## Overview
 
-The system now supports running multiple bot instances across different platforms using a unified configuration approach. Instead of platform-specific environment variables, you can now use the `BOTS_*` prefix pattern for all platforms.
+The system now supports running multiple bot instances across different platforms using a consistent configuration approach. Instead of platform-specific environment variables, you can now use the `BOTS_*` prefix pattern for all platforms.
 
 ## Configuration Pattern
 

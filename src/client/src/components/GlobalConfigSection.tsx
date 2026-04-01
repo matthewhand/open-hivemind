@@ -10,6 +10,7 @@ import { Loading } from './DaisyUI/Loading';
 import Textarea from './DaisyUI/Textarea';
 import Debug from 'debug';
 import { apiService } from '../services/api';
+import { useSavedStamp } from '../contexts/SavedStampContext';
 const debug = Debug('app:client:components:GlobalConfigSection');
 
 interface ConfigSchema {
@@ -39,6 +40,7 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
   const [jsonState, setJsonState] = useState<Record<string, string>>({});
   const [testStatus, setTestStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [testing, setTesting] = useState(false);
+  const { showStamp } = useSavedStamp();
 
   const isMessageProviderSection = ['discord', 'slack', 'mattermost'].includes(section);
 
@@ -81,6 +83,7 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
     try {
       await apiService.updateGlobalConfig({ configName: section, updates: valuesToSave });
       setSuccess('Configuration saved successfully');
+      showStamp();
       await fetchConfig(); // Refresh
       setJsonState({});
     } catch (err: any) {

@@ -351,7 +351,7 @@ export class ErrorLogger {
 
     // Emit structured log for monitoring systems
     if ('emit' in process && typeof process.emit === 'function') {
-      process.emit('hivemind:log', {
+      (process as any).emit('hivemind:log', {
         type: 'error',
         level,
         entry: logEntry,
@@ -404,7 +404,7 @@ export class ErrorLogger {
 
       // Emit alert for monitoring
       if ('emit' in process && typeof process.emit === 'function') {
-        process.emit('hivemind:alert', {
+        (process as any).emit('hivemind:alert', {
           type: 'error_spike',
           errorType,
           count,
@@ -422,7 +422,7 @@ export class ErrorLogger {
       this.debug(`High error rate detected: ${recentErrors} errors in last minute`);
 
       if ('emit' in process && typeof process.emit === 'function') {
-        process.emit('hivemind:alert', {
+        (process as any).emit('hivemind:alert', {
           type: 'high_error_rate',
           count: recentErrors,
           timeframe: '1 minute',

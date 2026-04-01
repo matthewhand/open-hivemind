@@ -77,7 +77,7 @@ export interface BreadcrumbsProps {
 }
 
 /**
- * Unified breadcrumb component.
+ * Breadcrumb component.
  *
  * Auto mode (default, no props): generates breadcrumbs from the current
  * pathname using the route-label map, with a Home root link.

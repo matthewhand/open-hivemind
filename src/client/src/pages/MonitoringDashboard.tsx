@@ -5,6 +5,7 @@ import StatusCard from '../components/Monitoring/StatusCard';
 import MetricChart from '../components/Monitoring/MetricChart';
 import AlertPanel from '../components/Monitoring/AlertPanel';
 import EventStream from '../components/Monitoring/EventStream';
+import PerformanceMonitor from '../components/PerformanceMonitor';
 import Debug from 'debug';
 const debug = Debug('app:client:pages:MonitoringDashboard');
 
@@ -172,6 +173,11 @@ const MonitoringDashboard: React.FC = () => {
           unit="%"
           refreshInterval={refreshInterval}
         />
+      </div>
+
+      {/* Performance Monitor */}
+      <div className="mb-8">
+        <PerformanceMonitor />
       </div>
 
       {/* Alerts and Events */}

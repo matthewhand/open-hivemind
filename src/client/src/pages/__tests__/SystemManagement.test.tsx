@@ -131,6 +131,11 @@ describe('SystemManagement', () => {
     const clearButton = screen.getByText('Clear System Cache');
     fireEvent.click(clearButton);
 
+    // Handle confirmation modal
+    await waitFor(() => expect(screen.getByText('Clear Cache')).toBeInTheDocument());
+    const confirmBtn = screen.getByRole('button', { name: /Confirm/i });
+    fireEvent.click(confirmBtn);
+
     await waitFor(() => expect(apiService.clearCache).toHaveBeenCalled());
   });
 });

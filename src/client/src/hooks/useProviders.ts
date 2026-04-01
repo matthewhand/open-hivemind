@@ -1,36 +1,30 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import { useState, useEffect } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useQueries } from '@tanstack/react-query';
 import { getLlmProviders, getMessengerProviders, type ProviderInfo } from '../services/providerService';
 
 export const useProviders = () => {
-  const [llmProviders, setLlmProviders] = useState<ProviderInfo[]>([]);
-  const [messageProviders, setMessageProviders] = useState<ProviderInfo[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const results = useQueries({
+    queries: [
+      {
+        queryKey: ['providers', 'llm'],
+        queryFn: getLlmProviders,
+        retry: 1,
+      },
+      {
+        queryKey: ['providers', 'messenger'],
+        queryFn: getMessengerProviders,
+        retry: 1,
+      },
+    ],
+  });
 
-  useEffect(() => {
-    const fetchProviders = async () => {
-      try {
-        const [llmResult, messengerResult] = await Promise.allSettled([
-          getLlmProviders(),
-          getMessengerProviders(),
-        ]);
+  const [llmQuery, messengerQuery] = results;
 
-        const llm = llmResult.status === 'fulfilled' ? llmResult.value : [];
-        const messenger = messengerResult.status === 'fulfilled' ? messengerResult.value : [];
-        if (llmResult.status === 'rejected' && messengerResult.status === 'rejected') {
-          throw new Error('Failed to fetch providers');
-        }
-        setLlmProviders(llm);
-        setMessageProviders(messenger);
-      } catch (err) {
-        setError('Failed to fetch providers');
-      }
-      setLoading(false);
-    };
-
-    fetchProviders();
-  }, []);
+  const llmProviders: ProviderInfo[] = llmQuery.data ?? [];
+  const messageProviders: ProviderInfo[] = messengerQuery.data ?? [];
+  const loading = llmQuery.isLoading || messengerQuery.isLoading;
+  const error =
+    llmQuery.error && messengerQuery.error ? 'Failed to fetch providers' : null;
 
   return { llmProviders, messageProviders, loading, error };
 };

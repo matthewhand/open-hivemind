@@ -73,16 +73,16 @@ describe('MemoryManager', () => {
   // === getProviderForBot ===
 
   describe('getProviderForBot()', () => {
-    it('resolves bot config -> memory profile -> provider instance', () => {
+    it('resolves bot config -> memory profile -> provider instance', async () => {
       const mgr = freshManager();
       const provider = makeProvider();
 
       mockGetBot.mockReturnValue({ name: 'bot1', memoryProfile: 'prof1' });
       mockGetMemoryProfileByKey.mockReturnValue({ provider: 'mem0', config: { url: 'http://x' } });
-      mockLoadPlugin.mockReturnValue({ create: jest.fn() });
+      mockLoadPlugin.mockResolvedValue({ create: jest.fn() });
       mockInstantiateMemoryProvider.mockReturnValue(provider);
 
-      const result = mgr.getProviderForBot('bot1');
+      const result = await mgr.getProviderForBot('bot1');
 
       expect(mockGetBot).toHaveBeenCalledWith('bot1');
       expect(mockGetMemoryProfileByKey).toHaveBeenCalledWith('prof1');
@@ -90,59 +90,57 @@ describe('MemoryManager', () => {
       expect(result).toBe(provider);
     });
 
-    it('caches the provider instance — second call does not re-instantiate', () => {
+    it('caches the provider instance — second call does not re-instantiate', async () => {
       const mgr = freshManager();
       const provider = makeProvider();
 
       mockGetBot.mockReturnValue({ name: 'bot1', memoryProfile: 'prof1' });
       mockGetMemoryProfileByKey.mockReturnValue({ provider: 'mem0', config: {} });
-      mockLoadPlugin.mockReturnValue({});
+      mockLoadPlugin.mockResolvedValue({});
       mockInstantiateMemoryProvider.mockReturnValue(provider);
 
-      const first = mgr.getProviderForBot('bot1');
-      const second = mgr.getProviderForBot('bot1');
+      const first = await mgr.getProviderForBot('bot1');
+      const second = await mgr.getProviderForBot('bot1');
 
       expect(first).toBe(second);
       expect(mockInstantiateMemoryProvider).toHaveBeenCalledTimes(1);
     });
 
-    it('returns null when bot has no memoryProfile configured', () => {
+    it('returns null when bot has no memoryProfile configured', async () => {
       const mgr = freshManager();
       mockGetBot.mockReturnValue({ name: 'bot1' });
 
-      expect(mgr.getProviderForBot('bot1')).toBeNull();
+      expect(await mgr.getProviderForBot('bot1')).toBeNull();
     });
 
-    it('returns null when bot config is not found', () => {
+    it('returns null when bot config is not found', async () => {
       const mgr = freshManager();
       mockGetBot.mockReturnValue(undefined);
 
-      expect(mgr.getProviderForBot('unknown')).toBeNull();
+      expect(await mgr.getProviderForBot('unknown')).toBeNull();
     });
 
-    it('returns null and marks profile as failed when profile does not exist', () => {
+    it('returns null and marks profile as failed when profile does not exist', async () => {
       const mgr = freshManager();
       mockGetBot.mockReturnValue({ name: 'bot1', memoryProfile: 'missing' });
       mockGetMemoryProfileByKey.mockReturnValue(undefined);
 
-      expect(mgr.getProviderForBot('bot1')).toBeNull();
+      expect(await mgr.getProviderForBot('bot1')).toBeNull();
       // Second call should skip profile resolution entirely (failedProfiles set).
-      expect(mgr.getProviderForBot('bot1')).toBeNull();
+      expect(await mgr.getProviderForBot('bot1')).toBeNull();
       expect(mockGetMemoryProfileByKey).toHaveBeenCalledTimes(1);
     });
 
-    it('returns null and marks profile failed when plugin instantiation throws', () => {
+    it('returns null and marks profile failed when plugin instantiation throws', async () => {
       const mgr = freshManager();
       mockGetBot.mockReturnValue({ name: 'bot1', memoryProfile: 'prof1' });
       mockGetMemoryProfileByKey.mockReturnValue({ provider: 'bad', config: {} });
-      mockLoadPlugin.mockImplementation(() => {
-        throw new Error('plugin not found');
-      });
+      mockLoadPlugin.mockRejectedValue(new Error('plugin not found'));
 
-      expect(mgr.getProviderForBot('bot1')).toBeNull();
+      expect(await mgr.getProviderForBot('bot1')).toBeNull();
       // Retry is skipped.
       mockLoadPlugin.mockClear();
-      expect(mgr.getProviderForBot('bot1')).toBeNull();
+      expect(await mgr.getProviderForBot('bot1')).toBeNull();
       expect(mockLoadPlugin).not.toHaveBeenCalled();
     });
   });
@@ -155,7 +153,7 @@ describe('MemoryManager', () => {
       const provider = makeProvider();
       mockGetBot.mockReturnValue({ name: 'bot1', memoryProfile: 'prof1' });
       mockGetMemoryProfileByKey.mockReturnValue({ provider: 'mem0', config: {} });
-      mockLoadPlugin.mockReturnValue({});
+      mockLoadPlugin.mockResolvedValue({});
       mockInstantiateMemoryProvider.mockReturnValue(provider);
 
       await mgr.storeConversationMemory('bot1', 'Hello!', 'user', {
@@ -177,7 +175,7 @@ describe('MemoryManager', () => {
       const provider = makeProvider();
       mockGetBot.mockReturnValue({ name: 'bot1', memoryProfile: 'prof1' });
       mockGetMemoryProfileByKey.mockReturnValue({ provider: 'mem0', config: {} });
-      mockLoadPlugin.mockReturnValue({});
+      mockLoadPlugin.mockResolvedValue({});
       mockInstantiateMemoryProvider.mockReturnValue(provider);
 
       await mgr.storeConversationMemory('bot1', 'Sure!', 'assistant');
@@ -200,7 +198,7 @@ describe('MemoryManager', () => {
       });
       mockGetBot.mockReturnValue({ name: 'bot1', memoryProfile: 'prof1' });
       mockGetMemoryProfileByKey.mockReturnValue({ provider: 'mem0', config: {} });
-      mockLoadPlugin.mockReturnValue({});
+      mockLoadPlugin.mockResolvedValue({});
       mockInstantiateMemoryProvider.mockReturnValue(provider);
 
       await expect(mgr.storeConversationMemory('bot1', 'Hi', 'user')).resolves.toBeUndefined();
@@ -222,7 +220,7 @@ describe('MemoryManager', () => {
       });
       mockGetBot.mockReturnValue({ name: 'bot1', memoryProfile: 'prof1' });
       mockGetMemoryProfileByKey.mockReturnValue({ provider: 'mem0', config: {} });
-      mockLoadPlugin.mockReturnValue({});
+      mockLoadPlugin.mockResolvedValue({});
       mockInstantiateMemoryProvider.mockReturnValue(provider);
 
       const results = await mgr.retrieveRelevantMemories('bot1', 'preferences');
@@ -244,7 +242,7 @@ describe('MemoryManager', () => {
       const provider = makeProvider();
       mockGetBot.mockReturnValue({ name: 'bot1', memoryProfile: 'prof1' });
       mockGetMemoryProfileByKey.mockReturnValue({ provider: 'mem0', config: {} });
-      mockLoadPlugin.mockReturnValue({});
+      mockLoadPlugin.mockResolvedValue({});
       mockInstantiateMemoryProvider.mockReturnValue(provider);
 
       await mgr.retrieveRelevantMemories('bot1', 'query', 10);
@@ -267,7 +265,7 @@ describe('MemoryManager', () => {
       });
       mockGetBot.mockReturnValue({ name: 'bot1', memoryProfile: 'prof1' });
       mockGetMemoryProfileByKey.mockReturnValue({ provider: 'mem0', config: {} });
-      mockLoadPlugin.mockReturnValue({});
+      mockLoadPlugin.mockResolvedValue({});
       mockInstantiateMemoryProvider.mockReturnValue(provider);
 
       const results = await mgr.retrieveRelevantMemories('bot1', 'anything');
@@ -306,51 +304,51 @@ describe('MemoryManager', () => {
   // === clearProviderCache ===
 
   describe('clearProviderCache()', () => {
-    it('clears a specific profile', () => {
+    it('clears a specific profile', async () => {
       const mgr = freshManager();
       const provider = makeProvider();
       mockGetBot.mockReturnValue({ name: 'bot1', memoryProfile: 'prof1' });
       mockGetMemoryProfileByKey.mockReturnValue({ provider: 'mem0', config: {} });
-      mockLoadPlugin.mockReturnValue({});
+      mockLoadPlugin.mockResolvedValue({});
       mockInstantiateMemoryProvider.mockReturnValue(provider);
 
-      mgr.getProviderForBot('bot1'); // populate cache
+      await mgr.getProviderForBot('bot1'); // populate cache
       mgr.clearProviderCache('prof1');
 
       // After clearing, next call should re-instantiate.
-      mgr.getProviderForBot('bot1');
+      await mgr.getProviderForBot('bot1');
       expect(mockInstantiateMemoryProvider).toHaveBeenCalledTimes(2);
     });
 
-    it('clears all providers when no key given', () => {
+    it('clears all providers when no key given', async () => {
       const mgr = freshManager();
       const provider = makeProvider();
       mockGetBot.mockReturnValue({ name: 'bot1', memoryProfile: 'prof1' });
       mockGetMemoryProfileByKey.mockReturnValue({ provider: 'mem0', config: {} });
-      mockLoadPlugin.mockReturnValue({});
+      mockLoadPlugin.mockResolvedValue({});
       mockInstantiateMemoryProvider.mockReturnValue(provider);
 
-      mgr.getProviderForBot('bot1');
+      await mgr.getProviderForBot('bot1');
       mgr.clearProviderCache();
-      mgr.getProviderForBot('bot1');
+      await mgr.getProviderForBot('bot1');
       expect(mockInstantiateMemoryProvider).toHaveBeenCalledTimes(2);
     });
 
-    it('clears failed profiles so they can be retried', () => {
+    it('clears failed profiles so they can be retried', async () => {
       const mgr = freshManager();
       mockGetBot.mockReturnValue({ name: 'bot1', memoryProfile: 'bad' });
       mockGetMemoryProfileByKey.mockReturnValue(undefined); // fails
 
-      mgr.getProviderForBot('bot1'); // marks as failed
+      await mgr.getProviderForBot('bot1'); // marks as failed
       mgr.clearProviderCache('bad');
 
       // Now the profile lookup should happen again.
       mockGetMemoryProfileByKey.mockClear();
       mockGetMemoryProfileByKey.mockReturnValue({ provider: 'mem0', config: {} });
-      mockLoadPlugin.mockReturnValue({});
+      mockLoadPlugin.mockResolvedValue({});
       mockInstantiateMemoryProvider.mockReturnValue(makeProvider());
 
-      expect(mgr.getProviderForBot('bot1')).not.toBeNull();
+      expect(await mgr.getProviderForBot('bot1')).not.toBeNull();
       expect(mockGetMemoryProfileByKey).toHaveBeenCalledWith('bad');
     });
   });

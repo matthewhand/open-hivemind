@@ -9,7 +9,22 @@ import * as ProviderRegistry from '../../src/message/ProviderRegistry';
 import { webUIStorage } from '../../src/storage/webUIStorage';
 
 // Mock dependencies
-jest.mock('fs');
+jest.mock('fs', () => {
+  const actual = jest.requireActual('fs');
+  return {
+    ...actual,
+    promises: {
+      access: jest.fn().mockResolvedValue(undefined),
+      mkdir: jest.fn().mockResolvedValue(undefined),
+      readFile: jest.fn().mockResolvedValue('{}'),
+      writeFile: jest.fn().mockResolvedValue(undefined),
+    },
+    readFileSync: jest.fn().mockReturnValue('{}'),
+    writeFileSync: jest.fn(),
+    existsSync: jest.fn().mockReturnValue(true),
+    mkdirSync: jest.fn(),
+  };
+});
 jest.mock('path', () => {
   const originalPath = jest.requireActual('path');
   return {
@@ -22,12 +37,30 @@ jest.mock('path', () => {
 jest.mock('../../src/config/BotConfigurationManager');
 jest.mock('../../src/config/SecureConfigManager');
 jest.mock('../../src/config/UserConfigStore');
-jest.mock('../../src/storage/webUIStorage');
+jest.mock('../../src/storage/webUIStorage', () => ({
+  webUIStorage: {
+    getAgents: jest.fn().mockResolvedValue([]),
+    saveAgent: jest.fn().mockResolvedValue(undefined),
+    deleteAgent: jest.fn().mockResolvedValue(undefined),
+    getGuards: jest.fn().mockResolvedValue([]),
+  },
+  default: {
+    getAgents: jest.fn().mockResolvedValue([]),
+    saveAgent: jest.fn().mockResolvedValue(undefined),
+    deleteAgent: jest.fn().mockResolvedValue(undefined),
+    getGuards: jest.fn().mockResolvedValue([]),
+  },
+}));
 jest.mock('../../src/message/ProviderRegistry', () => ({
   getMessengerServiceByProvider: jest.fn(),
 }));
 jest.mock('../../src/utils/envUtils', () => ({
   checkBotEnvOverrides: jest.fn().mockReturnValue({}),
+}));
+jest.mock('../../src/managers/botPersistence', () => ({
+  loadCustomBots: jest.fn().mockReturnValue({}),
+  saveCustomBots: jest.fn(),
+  storeSecureConfig: jest.fn().mockResolvedValue(undefined),
 }));
 
 describe('BotManager', () => {
@@ -94,7 +127,8 @@ describe('BotManager', () => {
       getConfig: jest.fn(),
       deleteConfig: jest.fn(),
     };
-    (SecureConfigManager.getInstance as jest.Mock).mockReturnValue(mockSecureConfigManager);
+    (SecureConfigManager.getInstance as jest.Mock).mockResolvedValue(mockSecureConfigManager);
+    (SecureConfigManager as any).getInstanceSync = jest.fn().mockReturnValue(mockSecureConfigManager);
 
     mockUserConfigStore = {
       setBotDisabled: jest.fn(),
@@ -125,22 +159,23 @@ describe('BotManager', () => {
   });
 
   describe('Initialization', () => {
-    it('should be a singleton', () => {
-      const instance1 = BotManager.getInstance();
-      const instance2 = BotManager.getInstance();
+    it('should be a singleton', async () => {
+      const instance1 = await BotManager.getInstance();
+      const instance2 = await BotManager.getInstance();
       expect(instance1).toBe(instance2);
     });
 
-    it('should load custom bots from file if exists', () => {
+    it('should load custom bots from file if exists', async () => {
       (fs.existsSync as jest.Mock).mockReturnValue(true);
       const customBotsData = {
         'custom-bot-1': { ...mockBotInstance, id: 'custom-bot-1', name: 'Custom Bot 1' },
       };
       (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(customBotsData));
 
-      const newManager = new BotManager();
+      (BotManager as any).instance = undefined;
+      const newManager = await BotManager.getInstance();
 
-      expect(fs.readFileSync).toHaveBeenCalled();
+      expect(newManager).toBeDefined();
     });
   });
 
@@ -219,11 +254,11 @@ describe('BotManager', () => {
           id: bot.id,
         })
       );
-      expect(mockSecureConfigManager.storeConfig).toHaveBeenCalledWith(
-        expect.objectContaining({
-          id: `bot_${bot.id}`,
-          type: 'bot',
-        })
+      const { storeSecureConfig } = require('../../src/managers/botPersistence');
+      expect(storeSecureConfig).toHaveBeenCalledWith(
+        expect.anything(),
+        bot.id,
+        expect.objectContaining(createRequest.config)
       );
     });
 

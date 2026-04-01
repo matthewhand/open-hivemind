@@ -3,6 +3,7 @@ import {
     X, Save, MessageSquare, Cpu, Info, Edit2, Plus,
     Trash2, Copy, Shield, Eye, Settings
 } from 'lucide-react';
+import Avatar from './DaisyUI/Avatar';
 import Button from './DaisyUI/Button';
 import Dropdown from './DaisyUI/Dropdown';
 import { Bot as ApiBot, Persona as ApiPersona } from '../services/api';
@@ -221,9 +222,7 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                         <div className="form-control w-full">
                             <label className="label">
                                 <span className="label-text flex items-center gap-2">
-                                    <div className="avatar placeholder w-4 h-4">
-                                        <div className="bg-neutral-focus text-neutral-content rounded-full w-4 text-[8px]">P</div>
-                                    </div>
+                                    <Avatar size="xs" placeholder shape="circle" className="w-4 h-4" innerClassName="bg-neutral-focus text-neutral-content rounded-full w-4 text-[8px]">P</Avatar>
                                     Persona
                                     {bot.envOverrides?.persona && (
                                         <div className="tooltip tooltip-right" data-tip="Locked by environment variable">

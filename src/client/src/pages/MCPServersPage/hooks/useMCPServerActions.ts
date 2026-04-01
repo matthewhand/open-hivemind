@@ -1,8 +1,5 @@
 import { useState } from 'react';
-const getAuthHeaders = (): Record<string, string> => {
-  const token = localStorage.getItem('token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
+import { apiService } from '../../../services/api';
 import { type MCPServer } from './useMCPServerData';
 
 export const useMCPServerActions = (
@@ -11,7 +8,8 @@ export const useMCPServerActions = (
   fetchServers: () => Promise<void>,
   setAlert: React.Dispatch<
     React.SetStateAction<{ type: 'success' | 'error'; message: string } | null>
-  >
+  >,
+  showStamp?: () => void
 ) => {
   const handleServerAction = async (serverId: string, action: 'start' | 'stop' | 'restart') => {
     if (action === 'restart') {
@@ -21,26 +19,12 @@ export const useMCPServerActions = (
     }
 
     try {
-      let response;
       if (action === 'stop') {
-        response = await fetch('/api/admin/mcp-servers/disconnect', {
-          method: 'POST',
-          headers: getAuthHeaders(),
-          body: JSON.stringify({ name: serverId }),
-        });
+        await apiService.post('/api/admin/mcp-servers/disconnect', { name: serverId });
       } else {
         const server = servers.find((s) => s.id === serverId);
         if (!server) throw new Error('Server not found');
-        response = await fetch('/api/admin/mcp-servers/connect', {
-          method: 'POST',
-          headers: getAuthHeaders(),
-          body: JSON.stringify({ name: server.name, serverUrl: server.url }),
-        });
-      }
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || `Failed to ${action} server`);
+        await apiService.post('/api/admin/mcp-servers/connect', { name: server.name, serverUrl: server.url });
       }
 
       setAlert({ type: 'success', message: `Server ${action} action completed` });
@@ -71,22 +55,11 @@ export const useMCPServerActions = (
 
     try {
       setIsTesting(true);
-      const response = await fetch('/api/admin/mcp-servers/test', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
-          name: selectedServer.name || 'Test Server',
-          serverUrl: selectedServer.url,
-          apiKey: selectedServer.apiKey,
-        }),
+      const data: any = await apiService.post('/api/admin/mcp-servers/test', {
+        name: selectedServer.name || 'Test Server',
+        serverUrl: selectedServer.url,
+        apiKey: selectedServer.apiKey,
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Connection failed');
-      }
-
-      const data = await response.json();
       const toolCount = data.data?.toolCount || 0;
       const tools = data.data?.tools || [];
 
@@ -126,32 +99,20 @@ export const useMCPServerActions = (
 
     try {
       if (isEditing) {
-        await fetch('/api/admin/mcp-servers/disconnect', {
-          method: 'POST',
-          headers: getAuthHeaders(),
-          body: JSON.stringify({ name: selectedServer.id }),
-        });
+        await apiService.post('/api/admin/mcp-servers/disconnect', { name: selectedServer.id });
       }
 
-      const response = await fetch('/api/admin/mcp-servers/connect', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
-          name: selectedServer.name,
-          serverUrl: selectedServer.url,
-          apiKey: selectedServer.apiKey,
-        }),
+      await apiService.post('/api/admin/mcp-servers/connect', {
+        name: selectedServer.name,
+        serverUrl: selectedServer.url,
+        apiKey: selectedServer.apiKey,
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Failed to connect to server');
-      }
 
       setAlert({
         type: 'success',
         message: isEditing ? 'Server updated successfully' : 'Server added successfully',
       });
+      showStamp?.();
       setDialogOpen(false);
       await fetchServers();
     } catch (err) {
