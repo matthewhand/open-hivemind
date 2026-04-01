@@ -5,7 +5,9 @@ import {
   RefreshCw, X, ArrowRight,
 } from 'lucide-react';
 import Modal from '../DaisyUI/Modal';
+import VisualFeedback, { FeedbackState } from '../DaisyUI/VisualFeedback';
 import FileUpload from '../DaisyUI/FileUpload';
+import { apiService } from '../../services/api';
 
 interface ImportBundle {
   schemaVersion?: number;
@@ -51,6 +53,7 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
   const [parseError, setParseError] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
   const [report, setReport] = useState<ImportReport | null>(null);
+  const [feedbackState, setFeedbackState] = useState<{ state: FeedbackState; message?: string }>({ state: 'idle' });
 
   const reset = useCallback(() => {
     setStep('upload');
@@ -59,6 +62,7 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
     setParseError(null);
     setImporting(false);
     setReport(null);
+    setFeedbackState({ state: 'idle' });
   }, []);
 
   const handleClose = useCallback(() => {
@@ -113,22 +117,14 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
     if (!bundle) return;
     setImporting(true);
     try {
-      const resp = await fetch('/api/bots/import', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(bundle),
-      });
-      const data = await resp.json();
-      if (!resp.ok) {
-        setParseError(data.error || 'Import failed');
-        setImporting(false);
-        return;
-      }
+      const data = await apiService.post<any>('/api/bots/import', bundle);
       setReport(data.report);
       setStep('result');
+      setFeedbackState({ state: 'success', message: 'Import Successful!' });
       onImportComplete();
     } catch (err: any) {
       setParseError(err.message || 'Network error during import');
+      setFeedbackState({ state: 'error', message: err.message || 'Network error during import' });
     } finally {
       setImporting(false);
     }
@@ -206,6 +202,18 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
 
         {step === 'result' && report && (
           <>
+            {feedbackState.state !== 'idle' ? (
+              <div className="flex justify-center py-8">
+                <VisualFeedback
+                  state={feedbackState.state}
+                  message={feedbackState.message}
+                  onComplete={() => setFeedbackState({ state: 'idle' })}
+                  duration={2000}
+                />
+              </div>
+            ) : (
+            <>
+
             <div className="space-y-3">
               {report.created.length > 0 && (
                 <div className="flex items-start gap-2">
@@ -235,9 +243,11 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
             <div className="flex justify-end pt-2">
               <button className="btn btn-primary btn-sm" onClick={handleClose}>Done</button>
             </div>
+            </>
+            )}
           </>
         )}
-      </div>
+          </div>
     </Modal>
   );
 };

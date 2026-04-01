@@ -1,5 +1,6 @@
 import Debug from 'debug';
 import { Router } from 'express';
+import { ApiResponse } from '@src/server/utils/apiResponse';
 import type { AuthMiddlewareRequest } from '../../auth/types';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { AnomalyDetectionService } from '../../services/AnomalyDetectionService';
@@ -32,7 +33,7 @@ router.get('/', async (req: AuthMiddlewareRequest, res) => {
   try {
     const dbManager = DatabaseManager.getInstance();
     if (!dbManager.isConnected()) {
-      res.status(HTTP_STATUS.SERVICE_UNAVAILABLE).json({ error: 'Database not connected' });
+      res.status(HTTP_STATUS.SERVICE_UNAVAILABLE).json(ApiResponse.error('Database not connected'));
       return;
     }
 
@@ -41,16 +42,18 @@ router.get('/', async (req: AuthMiddlewareRequest, res) => {
     const tenantId = req.user?.tenantId;
 
     const anomalies = await dbManager.getActiveAnomalies(tenantId);
-    res.json(anomalies || []);
+    res.json(ApiResponse.success(anomalies || []));
   } catch (error) {
     debug('Error fetching active anomalies:', error);
     // Return 503 for connection-related errors, 500 for other errors
     if (isConnectionError(error)) {
-      res.status(HTTP_STATUS.SERVICE_UNAVAILABLE).json({ error: 'Database connection error' });
+      res
+        .status(HTTP_STATUS.SERVICE_UNAVAILABLE)
+        .json(ApiResponse.error('Database connection error'));
     } else {
       res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json({ error: 'Failed to fetch active anomalies' });
+        .json(ApiResponse.error('Failed to fetch active anomalies'));
     }
   }
 });
@@ -60,23 +63,25 @@ router.get('/history', async (req: AuthMiddlewareRequest, res) => {
   try {
     const dbManager = DatabaseManager.getInstance();
     if (!dbManager.isConnected()) {
-      res.status(HTTP_STATUS.SERVICE_UNAVAILABLE).json({ error: 'Database not connected' });
+      res.status(HTTP_STATUS.SERVICE_UNAVAILABLE).json(ApiResponse.error('Database not connected'));
       return;
     }
 
     const tenantId = req.user?.tenantId;
 
     const anomalies = await dbManager.getAnomalies(tenantId);
-    res.json(anomalies || []);
+    res.json(ApiResponse.success(anomalies || []));
   } catch (error) {
     debug('Error fetching anomaly history:', error);
     // Return 503 for connection-related errors, 500 for other errors
     if (isConnectionError(error)) {
-      res.status(HTTP_STATUS.SERVICE_UNAVAILABLE).json({ error: 'Database connection error' });
+      res
+        .status(HTTP_STATUS.SERVICE_UNAVAILABLE)
+        .json(ApiResponse.error('Database connection error'));
     } else {
       res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json({ error: 'Failed to fetch anomaly history' });
+        .json(ApiResponse.error('Failed to fetch anomaly history'));
     }
   }
 });
@@ -93,13 +98,15 @@ router.post(
       const success = await service.resolveAnomaly(req.params.id);
 
       if (success) {
-        res.json({ success: true });
+        res.json(ApiResponse.success());
       } else {
-        res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Anomaly not found' });
+        res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Anomaly not found'));
       }
     } catch (error) {
       debug('Error resolving anomaly:', error);
-      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to resolve anomaly' });
+      res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error('Failed to resolve anomaly'));
     }
   }
 );

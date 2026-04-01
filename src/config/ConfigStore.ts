@@ -5,8 +5,8 @@ import type { ProviderInstance } from './ProviderConfigManager';
 import { BotConfigurationManager } from './BotConfigurationManager';
 import { SecureConfigManager } from './SecureConfigManager';
 import { getLlmProfileByKey, getLlmProfiles } from './llmProfiles';
-import { getMemoryProfileByKey } from './memoryProfiles';
-import { getToolProfileByKey } from './toolProfiles';
+import { getMemoryProfileByKey, getMemoryProfiles } from './memoryProfiles';
+import { getToolProfileByKey, getToolProfiles } from './toolProfiles';
 
 const debug = Debug('app:config-store');
 
@@ -101,7 +101,7 @@ export class ConfigStore {
     try {
       // ProviderConfigManager uses 'message' not 'messenger'
       const mapped = category === 'messenger' ? 'message' : category;
-      return ProviderConfigManager.getInstance().getAllProviders(mapped);
+      return ProviderConfigManager.getInstance().getAllProviders(mapped as 'message' | 'llm');
     } catch {
       return [];
     }
@@ -170,9 +170,9 @@ export class ConfigStore {
         case 'llm':
           return getLlmProfiles().llm as ProviderProfile[];
         case 'memory':
-          return loadMemoryProfiles().memory as ProviderProfile[];
+          return getMemoryProfiles().memory as ProviderProfile[];
         case 'tool':
-          return loadToolProfiles().tool as ProviderProfile[];
+          return getToolProfiles().tool as ProviderProfile[];
       }
     } catch {
       return [];

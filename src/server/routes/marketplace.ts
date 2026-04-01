@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
+import { configLimiter } from '@src/middleware/rateLimiter';
 import type { PluginManifest } from '@src/plugins/PluginLoader';
 import {
   installPlugin,
@@ -10,7 +11,7 @@ import {
   updatePlugin,
 } from '@src/plugins/PluginManager';
 import { authenticateToken, requireRole } from '@src/server/middleware/auth';
-import { configLimiter } from '@src/middleware/rateLimiter';
+import { ApiResponse } from '@src/server/utils/apiResponse';
 import { HTTP_STATUS } from '../../types/constants';
 import { EmptySchema, MarketplacePluginNameParamSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
@@ -26,7 +27,7 @@ export interface MarketplacePackage {
   name: string;
   displayName: string;
   description: string;
-  type: 'llm' | 'message' | 'memory' | 'tool';
+  type: 'llm' | 'message' | 'memory' | 'tool' | 'bot' | 'guard' | 'persona';
   version: string;
   status: 'built-in' | 'installed' | 'available';
   repoUrl?: string;
@@ -191,12 +192,12 @@ router.get('/packages', async (req, res) => {
     const packages = await getPackages();
     debug('Returning %d packages', packages.length);
 
-    return res.json(packages);
+    return res.json(ApiResponse.success(packages));
   } catch (err: any) {
     debug('Error listing packages: %s', err);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: 'Failed to list packages', message: err.message });
+      .json(ApiResponse.error('Failed to list packages'));
   }
 });
 
@@ -212,15 +213,15 @@ router.get('/packages/:name', async (req, res) => {
     const pkg = packages.find((p) => p.name === name);
 
     if (!pkg) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Package not found' });
+      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Package not found'));
     }
 
-    return res.json(pkg);
+    return res.json(ApiResponse.success(pkg));
   } catch (err: any) {
     debug('Error getting package: %s', err);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: 'Failed to get package', message: err.message });
+      .json(ApiResponse.error('Failed to get package'));
   }
 });
 
@@ -229,42 +230,35 @@ router.get('/packages/:name', async (req, res) => {
  * Install a community plugin from GitHub URL
  * Body: { repoUrl: string }
  */
-router.post('/install', configLimiter, requireRole('admin'), validateRequest(EmptySchema), async (req, res) => {
-  try {
-    const { repoUrl } = req.body;
+router.post(
+  '/install',
+  configLimiter,
+  requireRole('admin'),
+  validateRequest(EmptySchema),
+  async (req, res) => {
+    try {
+      const { repoUrl } = req.body;
 
-    if (!repoUrl || typeof repoUrl !== 'string') {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'Missing or invalid repoUrl' });
+      if (!repoUrl || typeof repoUrl !== 'string') {
+        return res
+          .status(HTTP_STATUS.BAD_REQUEST)
+          .json(ApiResponse.error('Missing or invalid repoUrl'));
+      }
+
+      debug('Installing plugin from %s', repoUrl);
+
+      const plugin = await installPlugin(repoUrl);
+
+      // ⚡ Bolt Optimization: Invalidate cache after install
+      invalidateCache();
+
+      return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success());
+    } catch (err: any) {
+      debug('Install error: %s', err);
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Installation failed'));
     }
-
-    debug('Installing plugin from %s', repoUrl);
-
-    const plugin = await installPlugin(repoUrl);
-
-    // ⚡ Bolt Optimization: Invalidate cache after install
-    invalidateCache();
-
-    return res.status(HTTP_STATUS.CREATED).json({
-      success: true,
-      package: {
-        name: plugin.name,
-        displayName: plugin.manifest.displayName,
-        description: plugin.manifest.description,
-        type: plugin.manifest.type,
-        version: plugin.version,
-        status: 'installed' as const,
-        repoUrl: plugin.repoUrl,
-        installedAt: plugin.installedAt,
-        updatedAt: plugin.updatedAt,
-      },
-    });
-  } catch (err: any) {
-    debug('Install error: %s', err);
-    return res
-      .status(HTTP_STATUS.BAD_REQUEST)
-      .json({ error: 'Installation failed', message: err.message });
   }
-});
+);
 
 /**
  * POST /api/marketplace/uninstall/:name
@@ -286,12 +280,10 @@ router.post(
       // ⚡ Bolt Optimization: Invalidate cache after uninstall
       invalidateCache();
 
-      return res.json({ success: true, message: `Plugin ${name} uninstalled` });
+      return res.json(ApiResponse.success());
     } catch (err: any) {
       debug('Uninstall error: %s', err);
-      return res
-        .status(HTTP_STATUS.BAD_REQUEST)
-        .json({ error: 'Uninstall failed', message: err.message });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Uninstall failed'));
     }
   }
 );
@@ -316,25 +308,10 @@ router.post(
       // ⚡ Bolt Optimization: Invalidate cache after update
       invalidateCache();
 
-      return res.json({
-        success: true,
-        package: {
-          name: plugin.name,
-          displayName: plugin.manifest.displayName,
-          description: plugin.manifest.description,
-          type: plugin.manifest.type,
-          version: plugin.version,
-          status: 'installed' as const,
-          repoUrl: plugin.repoUrl,
-          installedAt: plugin.installedAt,
-          updatedAt: plugin.updatedAt,
-        },
-      });
+      return res.json(ApiResponse.success());
     } catch (err: any) {
       debug('Update error: %s', err);
-      return res
-        .status(HTTP_STATUS.BAD_REQUEST)
-        .json({ error: 'Update failed', message: err.message });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Update failed'));
     }
   }
 );

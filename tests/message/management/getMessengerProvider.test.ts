@@ -37,8 +37,37 @@ jest.mock('@hivemind/message-slack', () => ({
   },
 }));
 
-jest.mock('fs');
-const mockFs = fs as jest.Mocked<typeof fs>;
+jest.mock('@src/plugins/PluginLoader', () => ({
+  loadPlugin: jest.fn(async (name: string) => {
+    if (name === 'message-discord') {
+      return { DiscordService: { getInstance: () => mockDiscordService } };
+    }
+    if (name === 'message-slack') {
+      return { SlackService: { getInstance: () => mockSlackService } };
+    }
+    throw new Error(`Unknown plugin: ${name}`);
+  }),
+  instantiateMessageService: jest.fn((mod: any) => {
+    if (mod?.DiscordService) return mockDiscordService;
+    if (mod?.SlackService) return mockSlackService;
+    return null;
+  }),
+}));
+
+jest.mock('fs', () => {
+  const actual = jest.requireActual('fs');
+  return {
+    ...actual,
+    existsSync: jest.fn(),
+    readFileSync: jest.fn(),
+    promises: {
+      ...actual.promises,
+      readFile: jest.fn(),
+    },
+  };
+});
+
+const mockFsPromises = fs.promises as jest.Mocked<typeof fs.promises>;
 
 describe('getMessengerProvider', () => {
   const originalEnv = process.env;
@@ -48,17 +77,15 @@ describe('getMessengerProvider', () => {
     resetMessengerProviderCache();
     process.env = { ...originalEnv };
 
-    // Default mock for fs.readFileSync
-    mockFs.readFileSync.mockReturnValue(
+    // Default mock for fs.promises.readFile (the source now uses async readFile)
+    mockFsPromises.readFile.mockResolvedValue(
       JSON.stringify({
         providers: [
           { type: 'discord', enabled: true },
           { type: 'slack', enabled: true },
         ],
-      })
+      }) as any
     );
-
-    mockFs.existsSync.mockReturnValue(true);
   });
 
   afterEach(() => {
@@ -66,9 +93,9 @@ describe('getMessengerProvider', () => {
   });
 
   describe('Provider Selection', () => {
-    it('should return DiscordMessageProvider when MESSAGE_PROVIDER is "discord"', () => {
+    it('should return DiscordMessageProvider when MESSAGE_PROVIDER is "discord"', async () => {
       process.env.MESSAGE_PROVIDER = 'discord';
-      const providers = getMessengerProvider();
+      const providers = await getMessengerProvider();
 
       expect(Array.isArray(providers)).toBe(true);
       expect(providers.length).toBeGreaterThan(0);
@@ -78,9 +105,9 @@ describe('getMessengerProvider', () => {
       expect(typeof provider.getClientId).toBe('function');
     });
 
-    it('should return SlackMessageProvider when MESSAGE_PROVIDER is "slack"', () => {
+    it('should return SlackMessageProvider when MESSAGE_PROVIDER is "slack"', async () => {
       process.env.MESSAGE_PROVIDER = 'slack';
-      const providers = getMessengerProvider();
+      const providers = await getMessengerProvider();
 
       expect(Array.isArray(providers)).toBe(true);
       expect(providers.length).toBeGreaterThan(0);
@@ -90,34 +117,34 @@ describe('getMessengerProvider', () => {
       expect(typeof provider.getClientId).toBe('function');
     });
 
-    it('should handle multiple providers when specified', () => {
+    it('should handle multiple providers when specified', async () => {
       process.env.MESSAGE_PROVIDER = 'discord,slack';
-      const providers = getMessengerProvider();
+      const providers = await getMessengerProvider();
 
       expect(Array.isArray(providers)).toBe(true);
       expect(providers.length).toBeGreaterThanOrEqual(1);
     });
 
-    it('should handle unknown provider gracefully', () => {
+    it('should handle unknown provider gracefully', async () => {
       process.env.MESSAGE_PROVIDER = 'unknown-provider';
 
-      expect(() => getMessengerProvider()).not.toThrow();
-      const providers = getMessengerProvider();
+      await expect(getMessengerProvider()).resolves.not.toThrow();
+      const providers = await getMessengerProvider();
       expect(Array.isArray(providers)).toBe(true);
     });
 
-    it('should use default provider when MESSAGE_PROVIDER is not set', () => {
+    it('should use default provider when MESSAGE_PROVIDER is not set', async () => {
       delete process.env.MESSAGE_PROVIDER;
 
-      const providers = getMessengerProvider();
+      const providers = await getMessengerProvider();
       expect(Array.isArray(providers)).toBe(true);
     });
   });
 
   describe('Provider Functionality', () => {
-    it('should return providers with required methods', () => {
+    it('should return providers with required methods', async () => {
       process.env.MESSAGE_PROVIDER = 'discord';
-      const providers = getMessengerProvider();
+      const providers = await getMessengerProvider();
       const provider = providers[0];
 
       // Check required methods exist
@@ -135,7 +162,7 @@ describe('getMessengerProvider', () => {
 
     it('should return functional providers that can send messages', async () => {
       process.env.MESSAGE_PROVIDER = 'discord';
-      const providers = getMessengerProvider();
+      const providers = await getMessengerProvider();
       const provider = providers[0];
 
       const result = await provider.sendMessageToChannel('test-channel', 'test message');
@@ -146,9 +173,9 @@ describe('getMessengerProvider', () => {
       );
     });
 
-    it('should return providers with correct client IDs', () => {
+    it('should return providers with correct client IDs', async () => {
       process.env.MESSAGE_PROVIDER = 'slack';
-      const providers = getMessengerProvider();
+      const providers = await getMessengerProvider();
       const provider = providers[0];
 
       const clientId = provider.getClientId();
@@ -158,86 +185,80 @@ describe('getMessengerProvider', () => {
   });
 
   describe('Configuration Loading', () => {
-    it('should handle missing configuration file gracefully', () => {
-      mockFs.existsSync.mockReturnValue(false);
+    it('should handle missing configuration file gracefully', async () => {
+      mockFsPromises.readFile.mockRejectedValue(
+        Object.assign(new Error('ENOENT'), { code: 'ENOENT' })
+      );
 
-      expect(() => getMessengerProvider()).not.toThrow();
-      const providers = getMessengerProvider();
+      const providers = await getMessengerProvider();
       expect(Array.isArray(providers)).toBe(true);
     });
 
-    it('should handle malformed configuration file', () => {
-      mockFs.readFileSync.mockReturnValue('invalid json');
+    it('should handle malformed configuration file', async () => {
+      mockFsPromises.readFile.mockResolvedValue('invalid json' as any);
 
-      expect(() => getMessengerProvider()).not.toThrow();
-      const providers = getMessengerProvider();
+      const providers = await getMessengerProvider();
       expect(Array.isArray(providers)).toBe(true);
     });
 
-    it('should handle empty configuration file', () => {
-      mockFs.readFileSync.mockReturnValue(JSON.stringify({}));
+    it('should handle empty configuration file', async () => {
+      mockFsPromises.readFile.mockResolvedValue(JSON.stringify({}) as any);
 
-      expect(() => getMessengerProvider()).not.toThrow();
-      const providers = getMessengerProvider();
+      const providers = await getMessengerProvider();
       expect(Array.isArray(providers)).toBe(true);
     });
 
-    it('should handle configuration with disabled providers', () => {
-      mockFs.readFileSync.mockReturnValue(
+    it('should handle configuration with disabled providers', async () => {
+      mockFsPromises.readFile.mockResolvedValue(
         JSON.stringify({
           providers: [
             { type: 'discord', enabled: false },
             { type: 'slack', enabled: true },
           ],
-        })
+        }) as any
       );
 
       process.env.MESSAGE_PROVIDER = 'slack';
-      const providers = getMessengerProvider();
+      const providers = await getMessengerProvider();
       expect(providers.length).toBeGreaterThan(0);
     });
   });
 
   describe('Error Handling', () => {
-    it('should handle service initialization errors gracefully', () => {
-      const { DiscordService } = require('@hivemind/message-discord');
-      DiscordService.getInstance.mockImplementation(() => {
-        throw new Error('Service initialization failed');
-      });
+    it('should handle service initialization errors gracefully', async () => {
+      const { loadPlugin } = require('@src/plugins/PluginLoader');
+      loadPlugin.mockRejectedValue(new Error('Service initialization failed'));
 
       process.env.MESSAGE_PROVIDER = 'discord';
 
-      expect(() => getMessengerProvider()).not.toThrow();
+      await expect(getMessengerProvider()).resolves.not.toThrow();
     });
 
-    it('should handle file system errors gracefully', () => {
-      mockFs.readFileSync.mockImplementation(() => {
-        throw new Error('File read error');
-      });
+    it('should handle file system errors gracefully', async () => {
+      mockFsPromises.readFile.mockRejectedValue(new Error('File read error'));
 
-      expect(() => getMessengerProvider()).not.toThrow();
-      const providers = getMessengerProvider();
+      const providers = await getMessengerProvider();
       expect(Array.isArray(providers)).toBe(true);
     });
   });
 
   describe('Performance and Caching', () => {
-    it('should return providers quickly', () => {
+    it('should return providers quickly', async () => {
       process.env.MESSAGE_PROVIDER = 'discord';
 
       const startTime = Date.now();
-      getMessengerProvider();
+      await getMessengerProvider();
       const endTime = Date.now();
 
       expect(endTime - startTime).toBeLessThan(100); // Should complete quickly
     });
 
-    it('should handle multiple rapid calls efficiently', () => {
+    it('should handle multiple rapid calls efficiently', async () => {
       process.env.MESSAGE_PROVIDER = 'slack';
 
       const startTime = Date.now();
       for (let i = 0; i < 100; i++) {
-        getMessengerProvider();
+        await getMessengerProvider();
       }
       const endTime = Date.now();
 

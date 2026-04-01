@@ -3,14 +3,17 @@ import { apiService } from '../services/api';
 import { useApiQuery } from '../hooks/useApiQuery';
 import ChatInterface, { ChatMessage } from '../components/DaisyUI/Chat';
 import { BotAvatar } from '../components/BotAvatar';
-import { RefreshCw, MessageSquare, Cpu, Check, ChevronDown, Menu as MenuIcon, X, XCircle } from 'lucide-react';
+import BotChatBubbles from '../components/BotChatBubbles';
+import { RefreshCw, MessageSquare, Cpu, Check, ChevronDown, Menu as LucideMenuIcon, X, XCircle } from 'lucide-react';
+import Menu from '../components/DaisyUI/Menu';
+import Indicator from '../components/DaisyUI/Indicator';
+import Badge from '../components/DaisyUI/Badge';
 import Button from '../components/DaisyUI/Button';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { SkeletonList, SkeletonMessageList } from '../components/DaisyUI/Skeleton';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import { useMediaQuery } from '../hooks/useBreakpoint';
 import { Alert } from '../components/DaisyUI/Alert';
-import Badge from '../components/DaisyUI/Badge';
 import Drawer from '../components/DaisyUI/Drawer';
 import Dropdown from '../components/DaisyUI/Dropdown';
 
@@ -204,6 +207,15 @@ const ChatPage: React.FC = () => {
     }
   };
 
+  // Map ChatMessages to BotChatBubbles format for the sidebar preview
+  const bubbleMessages = messages.slice(-5).map(m => ({
+    id: m.id,
+    role: (m.sender?.type === 'bot' || m.sender?.type === 'system' ? (m.sender.type === 'system' ? 'system' as const : 'assistant' as const) : 'user' as const),
+    content: m.content,
+    timestamp: m.timestamp,
+    sender: m.sender?.name,
+  }));
+
   const botListContent = (
     <>
       <div className="p-4 font-bold text-sm text-base-content/50 uppercase tracking-wide">
@@ -220,10 +232,9 @@ const ChatPage: React.FC = () => {
                   className={`${selectedBotId === bot.id ? 'active' : ''} flex items-center gap-3 py-3`}
                   onClick={() => { setSelectedBotId(bot.id); setSidebarOpen(false); }}
                 >
-                  <div className="relative">
+                  <Indicator item={<Badge color={bot.connected ? 'success' : undefined} className="badge-xs p-0 w-3 h-3" />} verticalPosition="bottom" horizontalPosition="end">
                     <BotAvatar bot={bot} />
-                    <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-base-100 ${bot.connected ? 'bg-success' : 'bg-base-300'}`} />
-                  </div>
+                  </Indicator>
                   <div className="flex flex-col items-start min-w-0 flex-1">
                     <span className="font-semibold truncate w-full text-left">{bot.name}</span>
                     <div className="flex items-center gap-2 w-full">
@@ -297,6 +308,18 @@ const ChatPage: React.FC = () => {
           </ul>
         )}
       </div>
+      {selectedBot && (
+        <div className="border-t border-base-300">
+          <div className="p-3 font-bold text-xs text-base-content/50 uppercase tracking-wide">
+            Recent Messages
+          </div>
+          <BotChatBubbles
+            messages={bubbleMessages}
+            botName={selectedBot.name}
+            loading={historyLoading}
+          />
+        </div>
+      )}
     </>
   );
 
@@ -314,7 +337,7 @@ const ChatPage: React.FC = () => {
                 aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
                 aria-expanded={sidebarOpen}
               >
-                {sidebarOpen ? <X className="w-5 h-5" /> : <MenuIcon className="w-5 h-5" />}
+                {sidebarOpen ? <X className="w-5 h-5" /> : <LucideMenuIcon className="w-5 h-5" />}
               </Button>
             </div>
           )}

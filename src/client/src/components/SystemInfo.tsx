@@ -23,6 +23,7 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { useAppSelector } from '../store/hooks';
+import { apiService } from '../services/api';
 import Debug from 'debug';
 const debug = Debug('app:client:components:SystemInfo');
 
@@ -63,17 +64,7 @@ const SystemInfo: React.FC = () => {
     setIsLoading(true);
     try {
       // Call the system action API
-      const response = await fetch(`/api/system/${action}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || `Failed to ${action} system`);
-      }
-
-      const data = await response.json();
+      const data = await apiService.post<any>(`/api/system/${action}`);
       debug(`System ${action} initiated:`, data);
       setLogs(prev => [...prev, `[${new Date().toISOString()}] System ${action} initiated: ${data.message || 'Success'}`]);
     } catch (error) {

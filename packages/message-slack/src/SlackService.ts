@@ -518,7 +518,7 @@ export class SlackService extends EventEmitter implements IMessengerService {
           // Cast to IMessage[] to satisfy typing for LLM provider history input.
           const formattedHistory: IMessage[] = historyMessages as unknown as IMessage[];
           const metadataWithMessages = { ...payload.metadata, messages: payload.messages };
-          const llmProviders = getLlmProvider();
+          const llmProviders = await getLlmProvider();
 
           if (!llmProviders.length) {
             debug(`[${botName}] No LLM providers available`);

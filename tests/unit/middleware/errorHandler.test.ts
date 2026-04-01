@@ -193,10 +193,12 @@ describe('errorHandler middleware', () => {
     let mockExit: jest.SpyInstance;
 
     beforeEach(() => {
+      jest.useFakeTimers();
       mockExit = jest.spyOn(process, 'exit').mockImplementation((() => {}) as any);
     });
 
     afterEach(() => {
+      jest.useRealTimers();
       (MetricsCollector as any).instance = undefined;
       process.env.NODE_ENV = originalEnv;
       mockExit.mockRestore();
@@ -210,7 +212,8 @@ describe('errorHandler middleware', () => {
 
       expect(errorLogger.logError).toHaveBeenCalled();
       expect(MetricsCollector.getInstance().incrementErrors).toHaveBeenCalled();
-      // Logging is now via structured Debug logger, not console.error
+      // The handler now defers exit via setTimeout(5000)
+      jest.advanceTimersByTime(5000);
       expect(mockExit).toHaveBeenCalledWith(1);
     });
 
@@ -228,10 +231,12 @@ describe('errorHandler middleware', () => {
     let mockExit: jest.SpyInstance;
 
     beforeEach(() => {
+      jest.useFakeTimers();
       mockExit = jest.spyOn(process, 'exit').mockImplementation((() => {}) as any);
     });
 
     afterEach(() => {
+      jest.useRealTimers();
       (MetricsCollector as any).instance = undefined;
       process.env.NODE_ENV = originalEnv;
       mockExit.mockRestore();
@@ -249,7 +254,8 @@ describe('errorHandler middleware', () => {
 
       expect(errorLogger.logError).toHaveBeenCalled();
       expect(MetricsCollector.getInstance().incrementErrors).toHaveBeenCalled();
-      // Logging is now via structured Debug logger, not console.error
+      // The handler now defers exit via setTimeout(5000)
+      jest.advanceTimersByTime(5000);
       expect(mockExit).toHaveBeenCalledWith(1);
     });
 

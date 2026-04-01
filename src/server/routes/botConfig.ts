@@ -6,6 +6,7 @@ import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import { SecureConfigManager } from '../../config/SecureConfigManager';
 import { UserConfigStore } from '../../config/UserConfigStore';
 import { DatabaseManager } from '../../database/DatabaseManager';
+import { configLimiter } from '../../middleware/rateLimiter';
 import { HTTP_STATUS } from '../../types/constants';
 import { ConfigurationError } from '../../types/errorClasses';
 import { ErrorUtils } from '../../types/errors';
@@ -20,12 +21,11 @@ import {
 import { BotConfigService } from '../services/BotConfigService';
 import { ConfigurationValidator } from '../services/ConfigurationValidator';
 import { ApiResponse } from '../utils/apiResponse';
-import { configLimiter } from '../../middleware/rateLimiter';
 
 const debug = Debug('app:BotConfigRoutes');
 const router = Router();
 const botConfigManager = BotConfigurationManager.getInstance();
-const secureConfigManager = SecureConfigManager.getInstance();
+const secureConfigManager = SecureConfigManager.getInstanceSync();
 const userConfigStore = UserConfigStore.getInstance();
 const dbManager = DatabaseManager.getInstance();
 const configValidator = new ConfigurationValidator();

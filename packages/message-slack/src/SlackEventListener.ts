@@ -25,7 +25,7 @@ export class SlackEventListener {
       if (event && event.type === 'message' && !event.bot_id) {
         const metadata =
           process.env.INCLUDE_SLACK_METADATA === 'true' ? extractSlackMetadata(event) : {};
-        const llmProvider = getLlmProvider();
+        const llmProvider = await getLlmProvider();
         if (!llmProvider.length) {
           throw ErrorUtils.createError(
             'No LLM providers available',

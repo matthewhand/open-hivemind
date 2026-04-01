@@ -69,7 +69,7 @@ function extractErrorContext(req: Request): ErrorContext {
     ip: req.ip || req.connection?.remoteAddress,
     duration,
     // Sanitize sensitive data
-    body: sanitizeRequestBody(req.body),
+    body: sanitizeRequestBody(req.body) as Record<string, unknown> | undefined,
     params: req.params,
     query: req.query,
   };

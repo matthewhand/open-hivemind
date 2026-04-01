@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Bot, MessageSquare, Cpu, User, Shield, ArrowRight, ArrowLeft, Check, AlertCircle, CheckCircle2, RotateCcw } from 'lucide-react';
 import Input from '../DaisyUI/Input';
 import Modal from '../DaisyUI/Modal';
+import VisualFeedback, { FeedbackState } from '../DaisyUI/VisualFeedback';
 import Radio from '../DaisyUI/Radio';
 import { useConfigDiff } from '../../hooks/useConfigDiff';
 import { ConfigDiffViewer, ConfigDiffConfirmDialog } from '../ConfigDiffViewer';
@@ -66,6 +67,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
 
     const [formData, setFormData] = useState(initialFormData);
     const [showDiffConfirm, setShowDiffConfirm] = useState(false);
+    const [feedbackState, setFeedbackState] = useState<{ state: FeedbackState; message?: string }>({ state: 'idle' });
 
     const formDataAsRecord = useMemo(() => formData as unknown as Record<string, unknown>, [formData]);
     const { hasChanges, diff, setOriginalConfig, resetToOriginal } = useConfigDiff(formDataAsRecord);
@@ -176,7 +178,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
 
             if (onSubmit) {
                 await onSubmit(payload);
-                handleSuccess();
+                setFeedbackState({ state: 'success', message: 'Bot created successfully!' });
             } else {
                 await apiService.post('/api/bots', payload);
                 handleSuccess();
@@ -553,10 +555,12 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                             </div>
                         </div>
                     )}
+                                    )}
                 </div>
 
                 {/* Footer Actions */}
-                <div className="modal-action mt-6 flex justify-between">
+                {feedbackState.state === 'idle' && (
+                    <div className="modal-action mt-6 flex justify-between">
                     <button className="btn btn-ghost" onClick={step === 1 ? handleCancel : handleBack} disabled={loading} aria-busy={loading}>
                         {step === 1 ? 'Cancel' : <><ArrowLeft className="w-4 h-4" /> Back</>}
                     </button>
@@ -571,6 +575,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                         </button>
                     )}
                 </div>
+                    )}
             </div>
 
         <ConfigDiffConfirmDialog

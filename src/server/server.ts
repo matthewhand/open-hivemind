@@ -11,6 +11,7 @@ import { HTTP_STATUS } from '../types/constants';
 // Middleware imports
 import { auditMiddleware } from './middleware/audit';
 import { authenticateToken, optionalAuth } from './middleware/auth';
+import { bodyParserErrorHandler } from './middleware/bodyParser';
 import { csrfProtection, csrfTokenHandler } from './middleware/csrf';
 import { securityHeaders } from './middleware/security';
 import activityRouter from './routes/activity';
@@ -32,8 +33,8 @@ import importExportRouter from './routes/importExport';
 import mcpRouter from './routes/mcp';
 import onboardingRouter from './routes/onboarding';
 import personasRouter from './routes/personas';
-import sitemapRouter from './routes/sitemap';
 import providersRouter from './routes/providers';
+import sitemapRouter from './routes/sitemap';
 import specsRouter from './routes/specs';
 import webhookEventsRouter from './routes/webhookEvents';
 
@@ -135,6 +136,7 @@ export class WebUIServer {
     // Body parsing
     this.app.use(express.json({ limit: '10mb' }));
     this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+    this.app.use(bodyParserErrorHandler);
 
     // CSRF token endpoint - must be before CSRF protection middleware
     this.app.get('/api/csrf-token', csrfTokenHandler);

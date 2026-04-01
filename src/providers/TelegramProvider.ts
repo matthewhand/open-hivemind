@@ -328,13 +328,13 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
     return await this.sendMessage(channelId, formattedMessage);
   }
 
-  async getClientId(): Promise<string> {
+  getClientId(): string {
     // Return the bot ID from the first configured instance
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const messengersPath = path.join(configDir, 'providers', 'messengers.json');
 
     try {
-      const content = await fs.promises.readFile(messengersPath, 'utf8');
+      const content = fs.readFileSync(messengersPath, 'utf8');
       const cfg = JSON.parse(content);
       const instances = cfg.telegram?.instances || [];
 

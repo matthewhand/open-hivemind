@@ -1,5 +1,6 @@
 import Debug from 'debug';
 import { Router } from 'express';
+import { ApiResponse } from '@src/server/utils/apiResponse';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { HTTP_STATUS } from '../../types/constants';
 import { LogActivitySchema } from '../../validation/schemas/activitySchema';
@@ -73,23 +74,27 @@ router.get('/messages', async (req, res) => {
 
     const dbManager = DatabaseManager.getInstance();
     if (!dbManager.isConnected()) {
-      return res.status(HTTP_STATUS.SERVICE_UNAVAILABLE).json({ error: 'Database not connected' });
+      return res
+        .status(HTTP_STATUS.SERVICE_UNAVAILABLE)
+        .json(ApiResponse.error('Database not connected'));
     }
 
     // Mock query - in real implementation, this would query the actual database
     // For now, we'll simulate the response structure
     const messages: MessageActivity[] = [];
 
-    return res.json({
-      messages,
-      total: messages.length,
-      filter,
-    });
+    return res.json(
+      ApiResponse.success({
+        messages,
+        total: messages.length,
+        filter,
+      })
+    );
   } catch (error) {
     debug('Error fetching message activity:', error);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: 'Failed to fetch message activity' });
+      .json(ApiResponse.error('Failed to fetch message activity'));
   }
 });
 
@@ -105,18 +110,20 @@ router.get('/llm-usage', async (req, res) => {
 
     const dbManager = DatabaseManager.getInstance();
     if (!dbManager.isConnected()) {
-      return res.status(HTTP_STATUS.SERVICE_UNAVAILABLE).json({ error: 'Database not connected' });
+      return res
+        .status(HTTP_STATUS.SERVICE_UNAVAILABLE)
+        .json(ApiResponse.error('Database not connected'));
     }
 
     // Mock LLM usage data
     const usage: LLMUsageMetric[] = [];
 
-    return res.json({ usage, filter });
+    return res.json(ApiResponse.success({ usage, filter }));
   } catch (error) {
     debug('Error fetching LLM usage:', error);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: 'Failed to fetch LLM usage' });
+      .json(ApiResponse.error('Failed to fetch LLM usage'));
   }
 });
 
@@ -130,7 +137,9 @@ router.get('/summary', async (req, res) => {
 
     const dbManager = DatabaseManager.getInstance();
     if (!dbManager.isConnected()) {
-      return res.status(HTTP_STATUS.SERVICE_UNAVAILABLE).json({ error: 'Database not connected' });
+      return res
+        .status(HTTP_STATUS.SERVICE_UNAVAILABLE)
+        .json(ApiResponse.error('Database not connected'));
     }
 
     // Get database statistics
@@ -148,12 +157,12 @@ router.get('/summary', async (req, res) => {
       timeRangeEnd: filter.endDate || new Date().toISOString(),
     };
 
-    return res.json({ summary });
+    return res.json(ApiResponse.success({ summary }));
   } catch (error) {
     debug('Error fetching activity summary:', error);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: 'Failed to fetch activity summary' });
+      .json(ApiResponse.error('Failed to fetch activity summary'));
   }
 });
 
@@ -171,7 +180,9 @@ router.get('/chart-data', async (req, res) => {
 
     const dbManager = DatabaseManager.getInstance();
     if (!dbManager.isConnected()) {
-      return res.status(HTTP_STATUS.SERVICE_UNAVAILABLE).json({ error: 'Database not connected' });
+      return res
+        .status(HTTP_STATUS.SERVICE_UNAVAILABLE)
+        .json(ApiResponse.error('Database not connected'));
     }
 
     // Generate mock time-series data
@@ -211,17 +222,19 @@ router.get('/chart-data', async (req, res) => {
       });
     }
 
-    return res.json({
-      messageActivity: messageActivityData,
-      llmUsage: llmUsageData,
-      interval,
-      filter,
-    });
+    return res.json(
+      ApiResponse.success({
+        messageActivity: messageActivityData,
+        llmUsage: llmUsageData,
+        interval,
+        filter,
+      })
+    );
   } catch (error) {
     debug('Error fetching chart data:', error);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: 'Failed to fetch chart data' });
+      .json(ApiResponse.error('Failed to fetch chart data'));
   }
 });
 
@@ -235,7 +248,9 @@ router.get('/agents', async (req, res) => {
 
     const dbManager = DatabaseManager.getInstance();
     if (!dbManager.isConnected()) {
-      return res.status(HTTP_STATUS.SERVICE_UNAVAILABLE).json({ error: 'Database not connected' });
+      return res
+        .status(HTTP_STATUS.SERVICE_UNAVAILABLE)
+        .json(ApiResponse.error('Database not connected'));
     }
 
     // Mock agent activity data
@@ -264,12 +279,12 @@ router.get('/agents', async (req, res) => {
       },
     ];
 
-    return res.json({ agents: agentActivity, filter });
+    return res.json(ApiResponse.success({ agents: agentActivity, filter }));
   } catch (error) {
     debug('Error fetching agent activity:', error);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: 'Failed to fetch agent activity' });
+      .json(ApiResponse.error('Failed to fetch agent activity'));
   }
 });
 
@@ -302,12 +317,12 @@ router.get('/mcp-tools', async (req, res) => {
       },
     ];
 
-    return res.json({ mcpTools: mcpToolUsage, filter });
+    return res.json(ApiResponse.success({ mcpTools: mcpToolUsage, filter }));
   } catch (error) {
     debug('Error fetching MCP tool usage:', error);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: 'Failed to fetch MCP tool usage' });
+      .json(ApiResponse.error('Failed to fetch MCP tool usage'));
   }
 });
 
@@ -328,7 +343,9 @@ router.post('/log', validateRequest(LogActivitySchema), async (req, res) => {
 
     const dbManager = DatabaseManager.getInstance();
     if (!dbManager.isConnected()) {
-      return res.status(HTTP_STATUS.SERVICE_UNAVAILABLE).json({ error: 'Database not connected' });
+      return res
+        .status(HTTP_STATUS.SERVICE_UNAVAILABLE)
+        .json(ApiResponse.error('Database not connected'));
     }
 
     // In a real implementation, this would log to the database
@@ -340,10 +357,12 @@ router.post('/log', validateRequest(LogActivitySchema), async (req, res) => {
       status,
     });
 
-    return res.json({ success: true });
+    return res.json(ApiResponse.success());
   } catch (error) {
     debug('Error logging activity:', error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Failed to log activity' });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(ApiResponse.error('Failed to log activity'));
   }
 });
 
