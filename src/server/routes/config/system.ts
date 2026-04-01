@@ -206,7 +206,7 @@ router.get('/global', (req, res) => {
       // Get schema and deep clone it to avoid mutating the source
       // Native structuredClone throws on convict schemas due to native functions,
       // so we use a fast custom clone that strips them out like JSON.stringify would.
-      const schema = deepCloneSchema(config.getSchema());
+      const schema = deepCloneSchema(config.getSchema()) as Record<string, any>;
 
       // Check for environment variable overrides and mark as locked
       const properties = schema.properties || schema;

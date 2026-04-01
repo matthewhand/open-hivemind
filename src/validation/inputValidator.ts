@@ -12,6 +12,7 @@ import { JSDOM } from 'jsdom';
 
 const debug = Debug('app:inputValidator');
 const window = new JSDOM('').window;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- JSDOM window type incompatibility with DOMPurify
 const dompurify = DOMPurify(window as any);
 
 /**
@@ -103,7 +104,7 @@ export function sanitizeValue(value: string, options: SanitizationOptions = {}):
 /**
  * Recursively sanitize an object
  */
-export function sanitizeObject(obj: any, options: SanitizationOptions = {}): any {
+export function sanitizeObject(obj: unknown, options: SanitizationOptions = {}): unknown {
   if (obj === null || obj === undefined) {
     return obj;
   }
@@ -117,8 +118,8 @@ export function sanitizeObject(obj: any, options: SanitizationOptions = {}): any
   }
 
   if (typeof obj === 'object') {
-    const sanitized: any = {};
-    for (const [key, value] of Object.entries(obj)) {
+    const sanitized: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
       const sanitizedKey = sanitizeValue(key, { ...options, stripHtml: true });
       sanitized[sanitizedKey] = sanitizeObject(value, options);
     }
@@ -230,14 +231,14 @@ export const CommonValidators = {
     .optional()
     .isObject()
     .withMessage('Config must be an object')
-    .custom((value: any) => {
+    .custom((value: Record<string, unknown>) => {
       // Check for prototype pollution attempts
       const dangerousKeys = ['__proto__', 'constructor', 'prototype'];
-      const hasDangerousKey = (obj: any): boolean => {
+      const hasDangerousKey = (obj: unknown): boolean => {
         if (typeof obj !== 'object' || obj === null) return false;
-        for (const key of Object.keys(obj)) {
+        for (const key of Object.keys(obj as Record<string, unknown>)) {
           if (dangerousKeys.includes(key)) return true;
-          if (hasDangerousKey(obj[key])) return true;
+          if (hasDangerousKey((obj as Record<string, unknown>)[key])) return true;
         }
         return false;
       };
@@ -273,7 +274,7 @@ export const CommonValidators = {
       .optional()
       .isArray()
       .withMessage(`${field} must be an array`)
-      .custom((arr: any[]) => {
+      .custom((arr: unknown[]) => {
         if (!arr.every((item) => typeof item === 'string')) {
           throw new Error(`${field} must contain only strings`);
         }
@@ -288,11 +289,14 @@ export const validateInput = (req: Request, res: Response, next: NextFunction): 
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
-    const errorMessages = errors.array().map((err) => ({
-      field: (err as any).param || (err as any).path || 'unknown',
-      message: err.msg,
-      value: (err as any).value !== undefined ? '[REDACTED]' : undefined,
-    }));
+    const errorMessages = errors.array().map((err) => {
+      const errObj = err as Record<string, unknown>;
+      return {
+        field: (errObj.param as string) || (errObj.path as string) || 'unknown',
+        message: err.msg,
+        value: errObj.value !== undefined ? '[REDACTED]' : undefined,
+      };
+    });
 
     debug('Validation errors:', errorMessages);
 
@@ -351,7 +355,7 @@ export const sanitizeQueryParams = (
         trim: true,
         removeNull: true,
         ...options,
-      });
+      }) as typeof req.query;
     }
     return next();
   };
@@ -369,7 +373,7 @@ export const sanitizeUrlParams = (
         trim: true,
         removeNull: true,
         ...options,
-      });
+      }) as typeof req.params;
     }
     return next();
   };
@@ -392,7 +396,7 @@ export const preventNoSQLInjection = (
   res: Response,
   next: NextFunction
 ): void | Response => {
-  const checkForInjection = (obj: any): boolean => {
+  const checkForInjection = (obj: unknown): boolean => {
     if (!obj || typeof obj !== 'object') return false;
 
     const dangerousOperators = [
@@ -422,11 +426,14 @@ export const preventNoSQLInjection = (
       '$natural',
     ];
 
-    for (const key of Object.keys(obj)) {
+    for (const key of Object.keys(obj as Record<string, unknown>)) {
       if (dangerousOperators.includes(key)) {
         return true;
       }
-      if (typeof obj[key] === 'object' && checkForInjection(obj[key])) {
+      if (
+        typeof (obj as Record<string, unknown>)[key] === 'object' &&
+        checkForInjection((obj as Record<string, unknown>)[key])
+      ) {
         return true;
       }
     }

@@ -1,3 +1,4 @@
+import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { ErrorUtils } from '../../../common/ErrorUtils';
 import { DatabaseManager } from '../../../database/DatabaseManager';
@@ -5,6 +6,14 @@ import { HTTP_STATUS } from '../../../types/constants';
 import { isSafeUrl } from '../../../utils/ssrfGuard';
 import { TestConnectionSchema } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
+import {
+  getChatModels,
+  getEmbeddingModels,
+  getModelsForProvider,
+  getSupportedProviders,
+} from '../../data/llmModels';
+
+const debug = Debug('open-hivemind:admin:monitoring');
 
 const router = Router();
 
@@ -40,7 +49,7 @@ router.post(
       }
 
       // Dynamically load and test the provider
-      const { instantiateLlmProvider, loadPlugin } = await import('../../plugins/PluginLoader');
+      const { instantiateLlmProvider, loadPlugin } = await import('../../../plugins/PluginLoader');
 
       let provider;
       try {
