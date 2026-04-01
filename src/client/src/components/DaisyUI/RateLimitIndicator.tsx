@@ -58,7 +58,7 @@ const RateLimitIndicator: React.FC = () => {
           <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-warning/15 border border-warning/30">
             <span className="text-xs font-medium text-warning mr-1">Session expires in</span>
             <span className="text-xs text-warning/70">
-              <Countdown targetDate={sessionExpiryTime} size="xs" />
+              <Countdown targetDate={sessionExpiryTime} size="xs" compact />
             </span>
           </div>
         </div>
@@ -74,7 +74,7 @@ const RateLimitIndicator: React.FC = () => {
             </span>
             {(isNearLimit || isExhausted) && resetTime > 0 && (
               <span className="text-xs text-error/70">
-                <Countdown targetDate={resetTime} size="xs" />
+                <Countdown targetDate={resetTime} size="xs" compact />
               </span>
             )}
           </div>
