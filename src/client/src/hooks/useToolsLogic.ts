@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalStorage } from './useLocalStorage';
 import { apiService } from '../services/api';
 import Debug from 'debug';
@@ -53,8 +54,6 @@ export interface RecentToolUsage {
 }
 
 export const useToolsLogic = () => {
-  const [tools, setTools] = useState<MCPTool[]>([]);
-  const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
   // LocalStorage-persisted state
@@ -69,49 +68,55 @@ export const useToolsLogic = () => {
   const [executionHistory, setExecutionHistory] = useState<ToolExecutionRecord[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
 
-  useEffect(() => {
-    const fetchTools = async () => {
-      try {
-        const json: any = await apiService.get('/api/mcp/servers');
-        const servers = json.servers || [];
+  const queryClient = useQueryClient();
 
-        const prefsJson: any = await apiService.get('/api/mcp/tools/preferences').catch(() => ({ success: true, data: {} }));
-        const preferences = prefsJson.data || {};
+  const {
+    data: tools = [],
+    isLoading: loading,
+  } = useQuery<MCPTool[]>({
+    queryKey: ['mcp', 'tools', usageCounts, recentlyUsed],
+    queryFn: async () => {
+      const json: any = await apiService.get('/api/mcp/servers');
+      const servers = json.servers || [];
 
-        const allTools: MCPTool[] = [];
-        servers.forEach((server: any) => {
-          if (server.tools && Array.isArray(server.tools)) {
-            server.tools.forEach((t: any) => {
-              const toolId = `${server.name}-${t.name}`;
-              const preference = preferences[toolId];
+      const prefsJson: any = await apiService.get('/api/mcp/tools/preferences').catch(() => ({ success: true, data: {} }));
+      const preferences = prefsJson.data || {};
 
-              allTools.push({
-                id: toolId,
-                name: t.name,
-                serverId: server.name,
-                serverName: server.name,
-                description: t.description || 'No description available',
-                category: 'utility',
-                inputSchema: t.inputSchema,
-                outputSchema: t.outputSchema || t.output_schema || {},
-                usageCount: usageCounts[toolId] || 0,
-                lastUsed: recentlyUsed.find(r => r.toolId === toolId)?.timestamp,
-                enabled: preference ? preference.enabled : server.connected,
-              });
+      const allTools: MCPTool[] = [];
+      servers.forEach((server: any) => {
+        if (server.tools && Array.isArray(server.tools)) {
+          server.tools.forEach((t: any) => {
+            const toolId = `${server.name}-${t.name}`;
+            const preference = preferences[toolId];
+
+            allTools.push({
+              id: toolId,
+              name: t.name,
+              serverId: server.name,
+              serverName: server.name,
+              description: t.description || 'No description available',
+              category: 'utility',
+              inputSchema: t.inputSchema,
+              outputSchema: t.outputSchema || t.output_schema || {},
+              usageCount: usageCounts[toolId] || 0,
+              lastUsed: recentlyUsed.find(r => r.toolId === toolId)?.timestamp,
+              enabled: preference ? preference.enabled : server.connected,
             });
-          }
-        });
+          });
+        }
+      });
 
-        setTools(allTools);
-      } catch (err) {
-        setAlert({ type: 'error', message: 'Failed to load tools from server' });
-      } finally {
-        setLoading(false);
-      }
-    };
+      return allTools;
+    },
+  });
 
-    fetchTools();
-  }, [usageCounts, recentlyUsed]);
+  // Provide setTools via query cache for local mutations
+  const setTools = useCallback((updater: MCPTool[] | ((prev: MCPTool[]) => MCPTool[])) => {
+    queryClient.setQueryData<MCPTool[]>(
+      ['mcp', 'tools', usageCounts, recentlyUsed],
+      (old = []) => typeof updater === 'function' ? updater(old) : updater,
+    );
+  }, [queryClient, usageCounts, recentlyUsed]);
 
   const recentTools = useMemo(() => {
     const recentIds = recentlyUsed.slice(0, 5).map(r => r.toolId);
@@ -184,7 +189,7 @@ export const useToolsLogic = () => {
         ? { ...t, usageCount: newUsageCount, lastUsed: new Date().toISOString() }
         : t,
     ));
-  }, [usageCounts, setUsageCounts, setRecentlyUsed]);
+  }, [usageCounts, setUsageCounts, setRecentlyUsed, setTools]);
 
   const fetchExecutionHistory = async () => {
     setLoadingHistory(true);

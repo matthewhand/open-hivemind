@@ -3,6 +3,7 @@ import { apiService } from '../services/api';
 import { useApiQuery } from '../hooks/useApiQuery';
 import ChatInterface, { ChatMessage } from '../components/DaisyUI/Chat';
 import { BotAvatar } from '../components/BotAvatar';
+import BotChatBubbles from '../components/BotChatBubbles';
 import { RefreshCw, MessageSquare, Cpu, Check, ChevronDown, Menu as LucideMenuIcon, X, XCircle } from 'lucide-react';
 import Menu from '../components/DaisyUI/Menu';
 import Indicator from '../components/DaisyUI/Indicator';
@@ -13,7 +14,6 @@ import { SkeletonList, SkeletonMessageList } from '../components/DaisyUI/Skeleto
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import { useMediaQuery } from '../hooks/useBreakpoint';
 import { Alert } from '../components/DaisyUI/Alert';
-import Badge from '../components/DaisyUI/Badge';
 import Drawer from '../components/DaisyUI/Drawer';
 import Dropdown from '../components/DaisyUI/Dropdown';
 
@@ -207,6 +207,15 @@ const ChatPage: React.FC = () => {
     }
   };
 
+  // Map ChatMessages to BotChatBubbles format for the sidebar preview
+  const bubbleMessages = messages.slice(-5).map(m => ({
+    id: m.id,
+    role: (m.sender?.type === 'bot' || m.sender?.type === 'system' ? (m.sender.type === 'system' ? 'system' as const : 'assistant' as const) : 'user' as const),
+    content: m.content,
+    timestamp: m.timestamp,
+    sender: m.sender?.name,
+  }));
+
   const botListContent = (
     <>
       <div className="p-4 font-bold text-sm text-base-content/50 uppercase tracking-wide">
@@ -299,6 +308,18 @@ const ChatPage: React.FC = () => {
           </ul>
         )}
       </div>
+      {selectedBot && (
+        <div className="border-t border-base-300">
+          <div className="p-3 font-bold text-xs text-base-content/50 uppercase tracking-wide">
+            Recent Messages
+          </div>
+          <BotChatBubbles
+            messages={bubbleMessages}
+            botName={selectedBot.name}
+            loading={historyLoading}
+          />
+        </div>
+      )}
     </>
   );
 

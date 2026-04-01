@@ -1,10 +1,10 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import useUrlParams from '../../hooks/useUrlParams';
 import { apiService, type Persona as ApiPersona, type Bot } from '../../services/api';
 import { useInfoToast, useSuccessToast, useErrorToast } from '../DaisyUI/ToastNotification';
 import { useBulkSelection } from '../../hooks/useBulkSelection';
 import { useDragAndDrop } from '../../hooks/useDragAndDrop';
-import { useApiQuery } from '../../hooks/useApiQuery';
 import { logger } from '../../utils/logger';
 
 export interface Persona extends ApiPersona {
@@ -16,11 +16,11 @@ export function usePersonasLogic() {
   const infoToast = useInfoToast();
   const [bots, setBots] = useState<Bot[]>([]);
   const [personas, setPersonas] = useState<Persona[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const successToast = useSuccessToast();
   const errorToast = useErrorToast();
+  const queryClient = useQueryClient();
 
   const { values: urlParams, setValue: setUrlParam } = useUrlParams({
     search: { type: 'string', default: '', debounce: 300 },
@@ -45,47 +45,47 @@ export function usePersonasLogic() {
   const [selectedBotIds, setSelectedBotIds] = useState<string[]>([]);
   const [personaCategory, setPersonaCategory] = useState<ApiPersona['category']>('general');
 
+  // Mutation loading state (for saves/deletes, not initial fetch)
+  const [mutating, setMutating] = useState(false);
+
   const {
     data: configResponse,
-    loading: botsLoading,
+    isLoading: botsLoading,
     error: botsError,
-    execute: fetchBots,
-  } = useApiQuery<any>(apiService.get, ['/api/config/global']);
+  } = useQuery<any>({
+    queryKey: ['personasLogic', 'config'],
+    queryFn: () => apiService.get('/api/config/global'),
+  });
 
   const {
     data: personasResponse,
-    loading: personasLoading,
+    isLoading: personasLoading,
     error: personasError,
-    execute: fetchPersonas,
-  } = useApiQuery<ApiPersona[]>(apiService.get, ['/api/personas']);
+  } = useQuery<ApiPersona[]>({
+    queryKey: ['personasLogic', 'personas'],
+    queryFn: () => apiService.get<ApiPersona[]>('/api/personas'),
+  });
+
+  const loading = botsLoading || personasLoading || mutating;
 
   const fetchData = useCallback(async () => {
     try {
-      setLoading(true);
       setError(null);
-      await fetchBots();
-      await fetchPersonas();
+      await queryClient.invalidateQueries({ queryKey: ['personasLogic'] });
     } catch (err: any) {
       setError('Failed to fetch data.');
       logger.error(err);
-    } finally {
-      setLoading(false);
     }
-  }, [fetchBots, fetchPersonas]);
+  }, [queryClient]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  useEffect(() => {
-    if (botsLoading || personasLoading) {
-      setLoading(true);
-      return;
-    }
+    if (botsLoading || personasLoading) return;
 
     if (botsError || personasError) {
-      setError(botsError?.message || personasError?.message || 'Failed to fetch data');
-      setLoading(false);
+      const msg = (botsError instanceof Error ? botsError.message : null)
+        || (personasError instanceof Error ? personasError.message : null)
+        || 'Failed to fetch data';
+      setError(msg);
       return;
     }
 
@@ -111,7 +111,6 @@ export function usePersonasLogic() {
       };
     });
     setPersonas(mappedPersonas);
-    setLoading(false);
   }, [configResponse, personasResponse, botsLoading, personasLoading, botsError, personasError]);
 
   const bulkSelection = useBulkSelection(personas);
@@ -152,7 +151,7 @@ export function usePersonasLogic() {
   const handleBulkDeletePersonas = async () => {
     if (bulkSelection.selectedIds.size === 0) return;
     try {
-      setLoading(true);
+      setMutating(true);
       const promises = Array.from(bulkSelection.selectedIds).map((id) =>
         apiService.delete(`/api/personas/${id}`)
       );
@@ -164,7 +163,7 @@ export function usePersonasLogic() {
       setError(err.message || 'Failed to delete selected personas');
       errorToast('Failed to delete selected personas');
     } finally {
-      setLoading(false);
+      setMutating(false);
     }
   };
 
@@ -237,7 +236,7 @@ export function usePersonasLogic() {
     }
 
     try {
-      setLoading(true);
+      setMutating(true);
       const payload: Partial<ApiPersona> = {
         name: personaName.trim(),
         description: personaDescription.trim() || undefined,
@@ -266,13 +265,13 @@ export function usePersonasLogic() {
       setError(err.message || 'Failed to save persona');
       errorToast('Failed to save persona');
     } finally {
-      setLoading(false);
+      setMutating(false);
     }
   };
 
   const handleDeletePersona = async (personaId: string) => {
     try {
-      setLoading(true);
+      setMutating(true);
       await apiService.delete(`/api/personas/${personaId}`);
       successToast('Persona deleted successfully');
       setShowDeleteModal(false);
@@ -282,7 +281,7 @@ export function usePersonasLogic() {
       setError(err.message || 'Failed to delete persona');
       errorToast('Failed to delete persona');
     } finally {
-      setLoading(false);
+      setMutating(false);
     }
   };
 

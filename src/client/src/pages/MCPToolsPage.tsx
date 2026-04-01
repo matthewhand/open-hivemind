@@ -8,6 +8,7 @@ import useUrlParams from '../hooks/useUrlParams';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { apiService } from '../services/api';
 import { ToolRegistryPanel, ToolExecutionPanel, MCPTool, ToolExecutionRecord, ToolResult, RecentToolUsage } from '../components/mcp-tools';
+import ToolResultHistory from '../components/ToolResultHistory';
 
 const MCPToolsPage: React.FC = () => {
   const [tools, setTools] = useState<MCPTool[]>([]);
@@ -26,6 +27,7 @@ const MCPToolsPage: React.FC = () => {
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [selectedResult, setSelectedResult] = useState<ToolResult | null>(null);
   const [showResultModal, setShowResultModal] = useState(false);
+  const [recentResults, setRecentResults] = useState<ToolResult[]>([]);
 
   useEffect(() => {
     const fetchTools = async () => {
@@ -90,14 +92,18 @@ const MCPToolsPage: React.FC = () => {
         }
       }
 
-      setSelectedResult({ timestamp: new Date().toISOString(), toolName: tool.name, serverName: tool.serverName, arguments: args, result: json.result, isError: false });
+      const successResult: ToolResult = { timestamp: new Date().toISOString(), toolName: tool.name, serverName: tool.serverName, arguments: args, result: json.result, isError: false };
+      setSelectedResult(successResult);
+      setRecentResults(prev => [successResult, ...prev].slice(0, 20));
       setShowResultModal(true);
       if (validationWarnings.length > 0) setAlert({ type: 'success', message: `Tool executed with schema validation warnings: ${validationWarnings.join(', ')}` });
 
       setUsageCounts(prev => ({ ...prev, [tool.id]: (prev[tool.id] || 0) + 1 }));
       setRecentlyUsed(prev => [{ toolId: tool.id, timestamp: new Date().toISOString(), arguments: args }, ...prev.filter(r => r.toolId !== tool.id)].slice(0, 10));
     } catch (err: any) {
-      setSelectedResult({ timestamp: new Date().toISOString(), toolName: tool.name, serverName: tool.serverName, arguments: args, error: { message: err.message }, isError: true });
+      const errorResult: ToolResult = { timestamp: new Date().toISOString(), toolName: tool.name, serverName: tool.serverName, arguments: args, error: { message: err.message }, isError: true };
+      setSelectedResult(errorResult);
+      setRecentResults(prev => [errorResult, ...prev].slice(0, 20));
       setShowResultModal(true);
     } finally { setIsRunning(false); setSelectedTool(null); }
   };
@@ -129,6 +135,13 @@ const MCPToolsPage: React.FC = () => {
         servers={Array.from(new Set(tools.map(t => ({ id: t.serverId, name: t.serverName }))))}
       />
       <ToolExecutionPanel tool={selectedTool} onClose={() => setSelectedTool(null)} onExecute={handleExecuteTool} isRunning={isRunning} initialArgs={initialArgs} />
+      <div className="mt-8">
+        <ToolResultHistory
+          results={recentResults}
+          onViewResult={(result) => { setSelectedResult(result); setShowResultModal(true); }}
+          onClear={() => setRecentResults([])}
+        />
+      </div>
       {showHistory && (
         <Modal isOpen={showHistory} onClose={() => setShowHistory(false)} title="Tool Execution History" size="xl">
           <div className="space-y-4">
