@@ -1,19 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiService } from '../services/api';
 import { useApiQuery } from '../hooks/useApiQuery';
+import Badge from "../components/DaisyUI/Badge";
 import ChatInterface, { ChatMessage } from '../components/DaisyUI/Chat';
 import { BotAvatar } from '../components/BotAvatar';
 import { RefreshCw, MessageSquare, Cpu, Check, ChevronDown, Menu as LucideMenuIcon, X, XCircle } from 'lucide-react';
 import Menu from '../components/DaisyUI/Menu';
 import Indicator from '../components/DaisyUI/Indicator';
-import Badge from '../components/DaisyUI/Badge';
+
 import Button from '../components/DaisyUI/Button';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { SkeletonList, SkeletonMessageList } from '../components/DaisyUI/Skeleton';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import { useMediaQuery } from '../hooks/useBreakpoint';
 import { Alert } from '../components/DaisyUI/Alert';
-import Badge from '../components/DaisyUI/Badge';
+
 import Drawer from '../components/DaisyUI/Drawer';
 import Dropdown from '../components/DaisyUI/Dropdown';
 

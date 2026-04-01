@@ -312,6 +312,9 @@ View the complete navigation structure of the application.
 *   **Formats**: Download the sitemap in XML (for SEO) or JSON formats.
 
 ### [Specifications](/admin/specs)
+
+![Specifications Page](screenshots/specs-page.png)
+![Specification Details Page](screenshots/specs-detail-page.png)
 Browse and manage persisted specifications and design documents.
 *   **Detailed View**: Read full specifications rendered in Markdown.
 *   **Export**: Download specifications as Markdown, JSON, or YAML.
