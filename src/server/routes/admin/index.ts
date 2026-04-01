@@ -8,8 +8,12 @@ import mcpRouter from '../mcp';
 import auditRouter from './audit';
 import backupRouter from './backup';
 import configRouter from './config';
+import llmProvidersRouter from './llmProviders';
 import maintenanceRouter from './maintenance';
+import mcpServersRouter from './mcpServers';
+import messengerProvidersRouter from './messengerProviders';
 import monitoringRouter from './monitoring';
+import systemInfoRouter from './systemInfo';
 import usersRouter from './users';
 
 const router = Router();
@@ -50,7 +54,11 @@ router.use('/', auditRouter);
 router.use('/', monitoringRouter);
 router.use('/', backupRouter);
 router.use('/', configRouter);
+router.use('/', llmProvidersRouter);
 router.use('/', maintenanceRouter);
+router.use('/', mcpServersRouter);
+router.use('/', messengerProvidersRouter);
+router.use('/', systemInfoRouter);
 router.use('/', usersRouter);
 
 export default router;

@@ -99,6 +99,141 @@ jest.mock('../../../src/message/processing/processingLocks', () => ({
 }));
 jest.mock('debug', () => () => jest.fn());
 
+// Mock SyncProviderRegistry so handler falls through to getLlmProviderForBot
+jest.mock('@src/registries/SyncProviderRegistry', () => ({
+  SyncProviderRegistry: {
+    getInstance: jest.fn(() => ({
+      isInitialized: jest.fn(() => false),
+    })),
+  },
+}));
+
+// Mock PerformanceMonitor to pass through async function
+jest.mock('@src/common/errors/PerformanceMonitor', () => ({
+  PerformanceMonitor: {
+    measureAsync: jest.fn(async (fn: () => Promise<any>) => fn()),
+  },
+}));
+
+// Mock ErrorHandler
+jest.mock('@src/common/errors/ErrorHandler', () => ({
+  ErrorHandler: { handle: jest.fn() },
+}));
+
+// Mock quota middleware
+jest.mock('@src/middleware/quotaMiddleware', () => ({
+  getQuotaManager: jest.fn(() => ({
+    checkQuota: jest.fn().mockResolvedValue({ allowed: true, used: {} }),
+    consumeQuota: jest.fn().mockResolvedValue(undefined),
+    consumeTokens: jest.fn().mockResolvedValue(undefined),
+  })),
+}));
+
+// Mock ContentFilterService
+jest.mock('@src/services/ContentFilterService', () => ({
+  ContentFilterService: {
+    getInstance: jest.fn(() => ({
+      checkContent: jest.fn(() => ({ allowed: true })),
+    })),
+  },
+}));
+
+// Mock MemoryManager
+jest.mock('@src/services/MemoryManager', () => ({
+  MemoryManager: {
+    getInstance: jest.fn(() => ({
+      retrieveRelevantMemories: jest.fn().mockResolvedValue([]),
+      storeConversationMemory: jest.fn().mockResolvedValue(undefined),
+      formatMemoriesForPrompt: jest.fn().mockReturnValue(''),
+    })),
+  },
+}));
+
+// Mock toolAugmentedCompletion to delegate straight to the LLM
+jest.mock('@src/services/toolAugmentedCompletion', () => ({
+  toolAugmentedCompletion: jest.fn(async (opts: any) => {
+    const resp = await opts.llmProvider.generateChatCompletion(
+      opts.userMessage,
+      opts.historyMessages,
+      opts.metadata
+    );
+    return resp;
+  }),
+}));
+
+// Mock additional processing helpers
+jest.mock('@message/helpers/processing/OutgoingMessageRateLimiter', () => ({
+  __esModule: true,
+  default: {
+    getInstance: jest.fn(() => ({
+      shouldSend: jest.fn(() => true),
+      recordSend: jest.fn(),
+    })),
+  },
+}));
+jest.mock('@message/helpers/processing/TypingActivity', () => ({
+  __esModule: true,
+  default: {
+    getInstance: jest.fn(() => ({
+      start: jest.fn(),
+      stop: jest.fn(),
+    })),
+  },
+}));
+jest.mock('@message/helpers/processing/AdaptiveHistoryTuner', () => ({
+  __esModule: true,
+  default: {
+    getInstance: jest.fn(() => ({
+      getLimit: jest.fn(() => 50),
+      recordOutcome: jest.fn(),
+    })),
+  },
+}));
+jest.mock('@message/helpers/processing/IncomingMessageDensity', () => ({
+  IncomingMessageDensity: {
+    getInstance: jest.fn(() => ({
+      getDensity: jest.fn(() => 0),
+      recordMessage: jest.fn(),
+    })),
+  },
+}));
+jest.mock('@message/helpers/processing/ChannelActivity', () => ({
+  recordBotActivity: jest.fn(),
+}));
+jest.mock('@message/helpers/handler/processCommand', () => ({
+  processCommand: jest.fn(),
+}));
+jest.mock('@message/helpers/logging/LogProseSummarizer', () => ({
+  summarizeLogWithLlm: jest.fn(async (text: string) => text),
+}));
+jest.mock('@message/PipelineMetrics', () => {
+  const mockPipelineMetrics = jest.fn().mockImplementation(() => ({
+    startStage: jest.fn(),
+    endStage: jest.fn(),
+    toJSON: jest.fn(() => ({})),
+  }));
+  return {
+    PipelineMetrics: mockPipelineMetrics,
+    pipelineEventEmitter: { emit: jest.fn(), on: jest.fn() },
+  };
+});
+jest.mock('@message/PipelineMetricsAggregator', () => ({
+  PipelineMetricsAggregator: {
+    getInstance: jest.fn(() => ({
+      record: jest.fn(),
+    })),
+  },
+}));
+jest.mock('@integrations/openwebui/directClient', () => ({
+  generateChatCompletionDirect: jest.fn(),
+}));
+jest.mock('@message/helpers/processing/stripBotId', () => ({
+  stripBotId: jest.fn((text: string) => text),
+}));
+jest.mock('@message/helpers/processing/addUserHint', () => ({
+  addUserHintFn: jest.fn((text: string) => text),
+}));
+
 describe('messageHandler Configuration and Features', () => {
   let mockMessage: jest.Mocked<IMessage>;
   let mockMessageProvider: jest.Mocked<IMessageProvider>;
@@ -157,11 +292,12 @@ describe('messageHandler Configuration and Features', () => {
     } as any;
 
     // Setup Provider Mocks return values
-    // getMessengerProvider is now a jest.fn() from the factory
-    (getMessengerProviderModule.getMessengerProvider as jest.Mock).mockReturnValue([
+    // getMessengerProvider is now async
+    (getMessengerProviderModule.getMessengerProvider as jest.Mock).mockResolvedValue([
       mockMessageProvider,
     ]);
-    (getLlmProviderModule.getLlmProvider as jest.Mock).mockReturnValue([mockLlmProvider]);
+    // Handler uses getLlmProviderForBot (async, returns single provider)
+    (getLlmProviderModule.getLlmProviderForBot as jest.Mock).mockResolvedValue(mockLlmProvider);
 
     // Mock Unsolicited Handler default to ALLOW
     (shouldReplyToUnsolicitedMessage as jest.Mock).mockReturnValue(true);

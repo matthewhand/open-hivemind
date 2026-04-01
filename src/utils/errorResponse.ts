@@ -56,7 +56,7 @@ export interface StandardSuccessResponse<T = any> {
 export class ErrorResponseBuilder {
   private response: StandardErrorResponse;
 
-  constructor(error: HivemindError, correlationId?: string) {
+  constructor(error: HivemindError | Record<string, unknown>, correlationId?: string) {
     this.response = {
       success: false,
       error: {
@@ -167,7 +167,7 @@ export class ErrorResponseBuilder {
   /**
    * Extract error type from error object
    */
-  private getErrorType(error: HivemindError): string {
+  private getErrorType(error: HivemindError | Record<string, unknown>): string {
     if (error && typeof error === 'object' && 'type' in error) {
       return String(error.type);
     }
@@ -215,7 +215,7 @@ export class SuccessResponseBuilder<T = any> {
  * Create a standardized error response
  */
 export function createErrorResponse(
-  error: HivemindError,
+  error: HivemindError | Record<string, unknown>,
   correlationId?: string
 ): ErrorResponseBuilder {
   return new ErrorResponseBuilder(error, correlationId);

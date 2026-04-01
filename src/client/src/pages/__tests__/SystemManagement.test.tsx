@@ -28,7 +28,7 @@ jest.mock('../../contexts/WebSocketContext', () => ({
 
 // Mock Modal component to avoid JSDOM <dialog> issues
 jest.mock('../../components/DaisyUI/Modal', () => {
-  const Modal = ({ isOpen, children, title, actions }: any) => (
+  return ({ isOpen, children, title, actions }: any) => (
     isOpen ? (
       <div role="dialog" aria-modal="true">
         <h3>{title}</h3>
@@ -41,21 +41,6 @@ jest.mock('../../components/DaisyUI/Modal', () => {
       </div>
     ) : null
   );
-
-  Modal.ConfirmModal = ({ isOpen, title, message, onConfirm, onClose, confirmText = 'Confirm', cancelText = 'Cancel' }: any) => (
-    isOpen ? (
-      <div role="dialog" aria-modal="true">
-        <h3>{title}</h3>
-        <p>{message}</p>
-        <div className="modal-action">
-          <button onClick={onClose}>{cancelText}</button>
-          <button onClick={onConfirm}>{confirmText}</button>
-        </div>
-      </div>
-    ) : null
-  );
-
-  return Modal;
 });
 
 describe('SystemManagement', () => {
@@ -146,9 +131,10 @@ describe('SystemManagement', () => {
     const clearButton = screen.getByText('Clear System Cache');
     fireEvent.click(clearButton);
 
-    // Wait for the confirm modal and click "Confirm"
-    const confirmButton = await screen.findByRole('button', { name: 'Confirm' });
-    fireEvent.click(confirmButton);
+    // Handle confirmation modal
+    await waitFor(() => expect(screen.getByText('Clear Cache')).toBeInTheDocument());
+    const confirmBtn = screen.getByRole('button', { name: /Confirm/i });
+    fireEvent.click(confirmBtn);
 
     await waitFor(() => expect(apiService.clearCache).toHaveBeenCalled());
   });

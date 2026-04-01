@@ -46,9 +46,11 @@ const RATE_LIMIT_CONFIG = {
 
 // Redis client and store
 
-let redisClient: Record<string, (...args: unknown[]) => unknown> | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let redisClient: any = null;
 
-let RedisStore: (new (opts: Record<string, unknown>) => unknown) | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let RedisStore: (new (opts: Record<string, unknown>) => any) | null = null;
 let redisAvailable = false;
 
 /**
@@ -87,7 +89,7 @@ async function initializeRedis(): Promise<void> {
         connectTimeout: 10000,
       },
       // Disable offline queue to fail fast
-      offline_queue: false,
+      disableOfflineQueue: true,
     });
 
     redisClient.on('error', (err: Error) => {
@@ -184,7 +186,8 @@ const memoryStores = new Map<string, MemoryStoreWithCleanup>();
 /**
  * Create appropriate store based on environment
  */
-function createStore(prefix: string, windowMs: number): unknown {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function createStore(prefix: string, windowMs: number): any {
   if (isProduction && redisAvailable && redisClient && RedisStore) {
     debug(`Creating Redis store for ${prefix}`);
     return new RedisStore({

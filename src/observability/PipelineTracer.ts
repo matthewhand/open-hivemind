@@ -17,9 +17,9 @@
  * @module observability/PipelineTracer
  */
 
-import Debug from 'debug';
 import { randomUUID } from 'crypto';
-import { MessageBus } from '@src/events/MessageBus';
+import Debug from 'debug';
+import { type MessageBus } from '@src/events/MessageBus';
 import type { MessageContext, MessageEvents } from '@src/events/types';
 
 const debug = Debug('app:pipeline-tracer');
@@ -59,7 +59,10 @@ export interface PipelineStats {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function createSpan(name: string, attributes: Record<string, string | number | boolean> = {}): Span {
+function createSpan(
+  name: string,
+  attributes: Record<string, string | number | boolean> = {}
+): Span {
   return {
     id: randomUUID(),
     name,
@@ -319,7 +322,7 @@ export class PipelineTracer {
       'Trace %s completed (%dms, status=%s)',
       trace.traceId,
       trace.totalDurationMs,
-      trace.rootSpan.status,
+      trace.rootSpan.status
     );
 
     // Notify registered callbacks (e.g. TraceExportManager)

@@ -1,5 +1,4 @@
 import { EventEmitter } from 'events';
-import retry from 'async-retry';
 import Debug from 'debug';
 import type { Application } from 'express';
 import BotConfigurationManager from '@src/config/BotConfigurationManager';

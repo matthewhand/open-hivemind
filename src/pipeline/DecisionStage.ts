@@ -18,7 +18,7 @@
  */
 
 import Debug from 'debug';
-import { MessageBus } from '@src/events/MessageBus';
+import { type MessageBus } from '@src/events/MessageBus';
 import type { MessageContext, ReplyDecision } from '@src/events/types';
 
 const debug = Debug('app:pipeline:decision');
@@ -53,7 +53,7 @@ export interface DecisionStrategy {
 export class DecisionStage {
   constructor(
     private bus: MessageBus,
-    private strategy: DecisionStrategy,
+    private strategy: DecisionStrategy
   ) {}
 
   /**

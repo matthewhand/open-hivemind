@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { usePersonas } from '../../hooks/usePersonas';
 import { useProviders } from '../../hooks/useProviders';
 import { getMCPServers } from '../../services/agentService';
+import { apiService } from '../../services/api';
 import type { Bot, StatusResponse } from '../../services/api';
 import type { ProviderInfo } from '../../services/providerService';
 import {
@@ -96,11 +97,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
     let isMounted = true;
     const fetchResponseProfiles = async () => {
       try {
-        const response = await fetch('/api/config/response-profiles');
-        if (!response.ok) {
-          return;
-        }
-        const data = await response.json();
+        const data: any = await apiService.get('/api/config/response-profiles');
         const profiles = Array.isArray(data?.profiles) ? data.profiles : [];
 
         const options = profiles
@@ -130,11 +127,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
     let isMounted = true;
     const fetchGuardrailProfiles = async () => {
       try {
-        const response = await fetch('/api/config/guardrails');
-        if (!response.ok) {
-          return;
-        }
-        const data = await response.json();
+        const data: any = await apiService.get('/api/config/guardrails');
         const profiles = Array.isArray(data?.profiles) ? data.profiles : [];
 
         const options = profiles
@@ -182,11 +175,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
     let isMounted = true;
     const fetchLlmProfiles = async () => {
       try {
-        const response = await fetch('/api/config/llm-profiles');
-        if (!response.ok) {
-          return;
-        }
-        const data = await response.json();
+        const data: any = await apiService.get('/api/config/llm-profiles');
         const llmProfilesList = Array.isArray(data?.llm)
           ? data.llm
           : Array.isArray(data?.profiles?.llm)
@@ -210,11 +199,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
     let isMounted = true;
     const fetchMcpServerProfiles = async () => {
       try {
-        const response = await fetch('/api/config/mcp-server-profiles');
-        if (!response.ok) {
-          return;
-        }
-        const data = await response.json();
+        const data: any = await apiService.get('/api/config/mcp-server-profiles');
         const profiles = Array.isArray(data?.profiles) ? data.profiles : [];
 
         const options = profiles

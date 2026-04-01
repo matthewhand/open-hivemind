@@ -3,6 +3,7 @@ import { DatabaseManager } from '@src/database/DatabaseManager';
 import WebSocketService, { type MessageFlowEvent } from '@src/server/services/WebSocketService';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
+import { createLogger } from '../../common/StructuredLogger';
 import { AnalyticsService } from '../../services/AnalyticsService';
 import { HTTP_STATUS } from '../../types/constants';
 import {
@@ -12,7 +13,6 @@ import {
 } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { ActivityLogger } from '../services/ActivityLogger';
-import { createLogger } from '../../common/StructuredLogger';
 
 type AnnotatedEvent = MessageFlowEvent & { llmProvider: string };
 

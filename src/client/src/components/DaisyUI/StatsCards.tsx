@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations, @typescript-eslint/explicit-module-boundary-types */
 import React, { useEffect, useRef } from 'react';
+import { apiService } from '../../services/api';
 import {
   Bot, MessageCircle, CheckCircle, Clock, Server, Zap,
   HardDrive, AlertTriangle, TrendingUp, TrendingDown, Minus,
@@ -273,8 +274,7 @@ export const useSystemStats = () => {
       try {
         setIsLoading(true);
 
-        const response = await fetch('/api/webui/system-status');
-        const data = await response.json();
+        const data = await apiService.get<any>('/api/webui/system-status');
 
         const mockStats: StatItem[] = [
           {

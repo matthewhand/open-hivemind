@@ -10,10 +10,7 @@ const debug = Debug('app:flowiseSdkClient');
 const DEFAULT_FLOWISE_TIMEOUT_MS = 30_000;
 
 const circuitBreaker = globalRecoveryManager.getCircuitBreaker('flowise-sdk', {
-  name: 'flowise',
   failureThreshold: 5,
-  resetTimeoutMs: 30_000,
-  halfOpenMaxAttempts: 3,
 });
 
 export async function getFlowiseSdkResponse(prompt: string, chatflowId: string): Promise<string> {
