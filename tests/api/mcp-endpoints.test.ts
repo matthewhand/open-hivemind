@@ -79,7 +79,7 @@ describe('MCP API Endpoints', () => {
     it('should return an empty list of MCP servers', async () => {
       const response = await request(app).get('/api/mcp/servers');
       expect(response.status).toBe(200);
-      expect(response.body.servers).toEqual([]);
+      expect(response.body.data.servers).toEqual([]);
     });
   });
 
@@ -92,8 +92,8 @@ describe('MCP API Endpoints', () => {
       };
       const response = await request(app).post('/api/mcp/servers').send(newServer);
       expect(response.status).toBe(200);
-      expect(response.body.server).toHaveProperty('name', 'test-server');
-      expect(response.body.server.connected).toBe(false);
+      expect(response.body.data.server).toHaveProperty('name', 'test-server');
+      expect(response.body.data.server.connected).toBe(false);
     });
 
     it('should return existing server for duplicate names (idempotent)', async () => {
@@ -107,7 +107,7 @@ describe('MCP API Endpoints', () => {
       // Try to create another with the same name - returns existing server
       const response = await request(app).post('/api/mcp/servers').send(newServer);
       expect(response.status).toBe(200);
-      expect(response.body.server).toHaveProperty('name', 'test-server');
+      expect(response.body.data.server).toHaveProperty('name', 'test-server');
     });
   });
 
@@ -123,7 +123,7 @@ describe('MCP API Endpoints', () => {
       // Now connect to it
       const response = await request(app).post('/api/mcp/servers/test-server/connect');
       expect(response.status).toBe(200);
-      expect(response.body.message).toContain('Successfully connected');
+      expect(response.body.data.message).toContain('Successfully connected');
     });
 
     it('should reject connection to non-existent server', async () => {
@@ -146,7 +146,7 @@ describe('MCP API Endpoints', () => {
       // Now disconnect
       const response = await request(app).post('/api/mcp/servers/test-server/disconnect');
       expect(response.status).toBe(200);
-      expect(response.body.message).toContain('Successfully disconnected');
+      expect(response.body.data.message).toContain('Successfully disconnected');
     });
   });
 
@@ -166,7 +166,7 @@ describe('MCP API Endpoints', () => {
 
       // Verify it's gone
       const getResponse = await request(app).get('/api/mcp/servers');
-      expect(getResponse.body.servers.find((s: any) => s.name === 'test-server')).toBeUndefined();
+      expect(getResponse.body.data.servers.find((s: any) => s.name === 'test-server')).toBeUndefined();
     });
   });
 
@@ -183,8 +183,8 @@ describe('MCP API Endpoints', () => {
       // Now get tools
       const response = await request(app).get('/api/mcp/servers/test-server/tools');
       expect(response.status).toBe(200);
-      expect(response.body.tools).toBeInstanceOf(Array);
-      expect(response.body.tools.length).toBeGreaterThan(0);
+      expect(response.body.data.tools).toBeInstanceOf(Array);
+      expect(response.body.data.tools.length).toBeGreaterThan(0);
     });
 
     it('should reject getting tools from disconnected server', async () => {
@@ -198,7 +198,7 @@ describe('MCP API Endpoints', () => {
     it('should return connected MCP servers', async () => {
       const response = await request(app).get('/api/mcp/connected');
       expect(response.status).toBe(200);
-      expect(response.body.connected).toBeInstanceOf(Array);
+      expect(response.body.data.connected).toBeInstanceOf(Array);
     });
   });
 
