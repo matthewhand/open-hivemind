@@ -7,7 +7,7 @@ import Debug from 'debug';
 import * as path from 'path';
 import * as fs from 'fs';
 import { discoverBotNamesFromEnv } from './botDiscovery';
-import { TTLCache } from '../utils/TTLCache';
+import { type TTLCache } from '../utils/TTLCache';
 
 import type { BotConfig } from '@src/types/config';
 

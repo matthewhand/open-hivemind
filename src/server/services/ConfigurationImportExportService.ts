@@ -4,9 +4,6 @@ import Debug from 'debug';
 import { SecureConfigManager } from '../../config/SecureConfigManager';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { ErrorUtils } from '../../types/errors';
-import { ConfigurationTemplateService } from './ConfigurationTemplateService';
-import { ConfigurationValidator } from './ConfigurationValidator';
-import { ConfigurationVersionService } from './ConfigurationVersionService';
 import {
   BackupManager,
   calculateChecksum,
@@ -20,15 +17,15 @@ import {
   generateExportId,
   parseCSV,
   parseYAML,
+  type BackupMetadata,
+  type ExportOptions,
+  type ExportResult,
+  type ImportOptions,
+  type ImportResult,
 } from './configImportExport';
-
-import type {
-  BackupMetadata,
-  ExportOptions,
-  ExportResult,
-  ImportOptions,
-  ImportResult,
-} from './configImportExport';
+import { ConfigurationTemplateService } from './ConfigurationTemplateService';
+import { ConfigurationValidator } from './ConfigurationValidator';
+import { ConfigurationVersionService } from './ConfigurationVersionService';
 
 // Re-export types so existing imports from this file continue to work
 export type { ExportOptions, ImportOptions, ExportResult, ImportResult, BackupMetadata };

@@ -9,8 +9,14 @@ import { PathSecurityUtils } from '@src/utils/PathSecurityUtils';
 import { AuditLogger } from '../../../common/auditLogger';
 import { UserConfigStore } from '../../../config/UserConfigStore';
 import { ErrorUtils } from '../../../types/errors';
-import type { BackupMetadata, ExportOptions, ExportResult, ImportOptions, ImportResult } from './types';
 import { generateBackupId } from './cryptoUtils';
+import type {
+  BackupMetadata,
+  ExportOptions,
+  ExportResult,
+  ImportOptions,
+  ImportResult,
+} from './types';
 
 const debug = Debug('app:ConfigurationImportExportService');
 

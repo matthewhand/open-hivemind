@@ -2,14 +2,14 @@ import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { ErrorUtils } from '../../../common/ErrorUtils';
 import { DatabaseManager } from '../../../database/DatabaseManager';
+import { HTTP_STATUS } from '../../../types/constants';
+import { getRelevantEnvVars } from '../../../utils/envUtils';
 import {
   getChatModels,
   getEmbeddingModels,
   getModelsForProvider,
   getSupportedProviders,
 } from '../../data/llmModels';
-import { HTTP_STATUS } from '../../../types/constants';
-import { getRelevantEnvVars } from '../../../utils/envUtils';
 
 const router = Router();
 const debug = Debug('app:webui:admin:system-info');

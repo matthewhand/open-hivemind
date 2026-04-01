@@ -8,10 +8,10 @@ import Debug from 'debug';
 import * as path from 'path';
 import * as fs from 'fs';
 import { botSchema } from './botSchema';
-import { UserConfigStore } from './UserConfigStore';
+import { type UserConfigStore } from './UserConfigStore';
 import { applyLlmProfile, applyGuardrailProfile, applyMcpServerProfile } from './botProfileHelpers';
 import { ConfigurationError } from '../types/errorClasses';
-import { TTLCache } from '../utils/TTLCache';
+import { type TTLCache } from '../utils/TTLCache';
 
 import type {
   BotConfig,

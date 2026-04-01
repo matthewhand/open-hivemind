@@ -1,4 +1,3 @@
-import type { Database } from 'sqlite';
 import { injectable, singleton } from 'tsyringe';
 import { Logger } from '@common/logger';
 import type { ConnectionManager } from './ConnectionManager';
@@ -9,10 +8,10 @@ import { CoreSchemas } from './schemas/CoreSchemas';
 import { DataManagementSchemas } from './schemas/DataManagementSchemas';
 import { IncidentSchemas } from './schemas/IncidentSchemas';
 import { IntegrationSchemas } from './schemas/IntegrationSchemas';
+import type { ISchemaModule } from './schemas/ISchemaModule';
 import { MetricsSchemas } from './schemas/MetricsSchemas';
 import { OperationsSchemas } from './schemas/OperationsSchemas';
 import { WorkflowSchemas } from './schemas/WorkflowSchemas';
-import type { ISchemaModule } from './schemas/ISchemaModule';
 
 @singleton()
 @injectable()
