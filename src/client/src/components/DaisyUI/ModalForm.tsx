@@ -219,6 +219,16 @@ const ModalForm: React.FC<ModalFormProps> = ({
         />
       );
 
+    case 'custom':
+      if (field.render) {
+        return field.render(
+          formData[field.name],
+          (val: any) => handleInputChange(field.name, val),
+          field
+        );
+      }
+      return null;
+
     default:
       return (
         <Input

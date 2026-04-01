@@ -86,7 +86,7 @@ test.describe('Guards Page', () => {
 
     // We expect a duplicate button. Since we haven't implemented it, we look for a button that might have the copy icon or text.
     // For now, let's assume we'll add a title or aria-label "Duplicate Profile"
-    const duplicateBtn = card.locator('button[title="Duplicate Profile"]');
+    const duplicateBtn = card.locator('button[title="Duplicate Profile"], button[aria-label="Duplicate profile"]');
 
     // This assertion will fail until implemented
     await expect(duplicateBtn).toBeVisible();
@@ -101,7 +101,9 @@ test.describe('Guards Page', () => {
     await expect(nameInput).toHaveValue('Copy of Production Guard');
 
     // Save
-    await modal.getByText('Create Profile').click();
+    await modal.getByRole('button', { name: 'Create Profile' }).click();
+    await page.waitForResponse(resp => resp.url().includes('/api/admin/guard-profiles') && resp.request().method() === 'POST');
+
 
     // Verify POST was called with correct data
     expect(createdProfile).toBeDefined();
