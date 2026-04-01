@@ -123,11 +123,13 @@ describe('ConfigurationImportExportService - Version Caching', () => {
 
     // Setup DB Manager mock specifically for caching tests
     dbManagerMock = {
-      getBotConfiguration: jest.fn().mockImplementation((id) => {
-        if (id === 1 || id === 2) {
-          return Promise.resolve({ id, name: `Config ${id}` });
-        }
-        return Promise.resolve(null);
+      getBotConfigurationsBulk: jest.fn().mockImplementation((ids: number[]) => {
+        return Promise.resolve(ids.map(id => {
+            if (id === 1 || id === 2) {
+                return { id, name: `Config ${id}` };
+            }
+            return null;
+        }).filter(Boolean));
       }),
       createBotConfigurationVersion: jest.fn().mockResolvedValue(1),
     };
@@ -152,14 +154,12 @@ describe('ConfigurationImportExportService - Version Caching', () => {
     });
   });
 
-  test('should cache getBotConfiguration calls when processing versions to prevent N+1 query', async () => {
+  test('should use getBotConfigurationsBulk when processing versions to prevent N+1 query', async () => {
     const result = await service.importConfigurations('/fake/path.json', { format: 'json' });
 
-    // Assert that the db manager was called exactly once per unique botConfigurationId
-    expect(dbManagerMock.getBotConfiguration).toHaveBeenCalledTimes(3);
-    expect(dbManagerMock.getBotConfiguration).toHaveBeenCalledWith(1);
-    expect(dbManagerMock.getBotConfiguration).toHaveBeenCalledWith(2);
-    expect(dbManagerMock.getBotConfiguration).toHaveBeenCalledWith(3);
+    // Assert that the db manager was called using bulk fetch
+    expect(dbManagerMock.getBotConfigurationsBulk).toHaveBeenCalledTimes(1);
+    expect(dbManagerMock.getBotConfigurationsBulk).toHaveBeenCalledWith([1, 2, 3]);
 
     // Valid versions should be created (5 valid versions total)
     expect(dbManagerMock.createBotConfigurationVersion).toHaveBeenCalledTimes(5);
