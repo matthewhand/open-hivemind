@@ -22,7 +22,7 @@ const DashboardPage: React.FC = () => {
   }, [useWidgetLayout]);
 
   useEffect(() => {
-    const checkOnboarding = async () => {
+    const checkOnboarding = async (): Promise<void> => {
       try {
         const data = await apiService.get<any>('/api/onboarding/status');
         if (!data.completed) {
