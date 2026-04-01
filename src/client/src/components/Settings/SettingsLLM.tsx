@@ -1,9 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Alert } from '../DaisyUI/Alert';
 import Button from '../DaisyUI/Button';
 import { SkeletonList } from '../DaisyUI/Skeleton';
 import Select from '../DaisyUI/Select';
+import FormField from '../DaisyUI/FormField';
 import { Bot, Link as LinkIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
@@ -11,14 +15,27 @@ import Debug from 'debug';
 import { useSavedStamp } from '../../contexts/SavedStampContext';
 const debug = Debug('app:client:components:Settings:SettingsLLM');
 
-interface LLMConfig {
-    defaultLlm: string;
-}
+const llmSettingsSchema = z.object({
+    defaultLlm: z.string(),
+});
+
+type LLMConfig = z.infer<typeof llmSettingsSchema>;
+
+const defaultValues: LLMConfig = {
+    defaultLlm: '',
+};
 
 const SettingsLLM: React.FC = () => {
-    const [settings, setSettings] = useState<LLMConfig>({
-        defaultLlm: '',
+    const {
+        register,
+        handleSubmit,
+        reset,
+        formState: { errors },
+    } = useForm<LLMConfig>({
+        resolver: zodResolver(llmSettingsSchema),
+        defaultValues,
     });
+
     const [providers, setProviders] = useState<Array<{ value: string; label: string }>>([]);
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -35,7 +52,7 @@ const SettingsLLM: React.FC = () => {
             const llmData = rawConfig?.llm?.values ?? rawConfig;
 
             const currentDefault = llmData.LLM_PROVIDER || '';
-            setSettings({ defaultLlm: currentDefault });
+            reset({ defaultLlm: currentDefault });
 
             // Fetch available LLM providers from the API
             const providersRes = await axios.get('/api/admin/llm-providers');
@@ -55,18 +72,18 @@ const SettingsLLM: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [reset]);
 
     useEffect(() => {
         fetchSettingsAndProviders();
     }, [fetchSettingsAndProviders]);
 
-    const handleSave = async () => {
+    const onSubmit = async (values: LLMConfig) => {
         setIsSaving(true);
         try {
             await axios.put('/api/config/global', {
                 llm: {
-                    LLM_PROVIDER: settings.defaultLlm,
+                    LLM_PROVIDER: values.defaultLlm,
                 },
             });
 
@@ -93,7 +110,7 @@ const SettingsLLM: React.FC = () => {
     }
 
     return (
-        <div className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="flex items-center gap-3 mb-4">
                 <Bot className="w-5 h-5 text-primary" />
                 <div>
@@ -116,28 +133,20 @@ const SettingsLLM: React.FC = () => {
                     Natural Language Actions
                 </h6>
 
-                <div className="form-control mb-4 max-w-md">
-                    <label className="label">
-                        <span className="label-text font-medium">Default LLM</span>
-                        <span className="label-text-alt text-base-content/60">Used for features like AI summary</span>
-                    </label>
-                    <Select
-                        value={settings.defaultLlm}
-                        onChange={(e) => setSettings({ defaultLlm: e.target.value })}
-                        className="w-full"
-                    >
-                        <option value="">None selected</option>
-                        {providers.map((p) => (
-                            <option key={p.value} value={p.value}>
-                                {p.label}
-                            </option>
-                        ))}
-                    </Select>
-                    <label className="label">
-                        <span className="label-text-alt text-base-content/60">
-                            Select an LLM from your configured providers to act as the default engine.
-                        </span>
-                    </label>
+                <div className="max-w-md mb-4">
+                    <FormField label="Default LLM" error={errors.defaultLlm} hint="Select an LLM from your configured providers to act as the default engine.">
+                        <Select
+                            {...register('defaultLlm')}
+                            className="w-full"
+                        >
+                            <option value="">None selected</option>
+                            {providers.map((p) => (
+                                <option key={p.value} value={p.value}>
+                                    {p.label}
+                                </option>
+                            ))}
+                        </Select>
+                    </FormField>
                 </div>
 
                 <div className="divider"></div>
@@ -153,15 +162,14 @@ const SettingsLLM: React.FC = () => {
 
             <div className="flex justify-end pt-4">
                 <Button
-                    onClick={handleSave}
-                    disabled={isSaving}
+                    type="submit"
                     variant="primary"
                     loading={isSaving}
                 >
                     {isSaving ? 'Saving...' : 'Save Settings'}
                 </Button>
             </div>
-        </div>
+        </form>
     );
 };
 

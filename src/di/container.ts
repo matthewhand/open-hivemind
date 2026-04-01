@@ -28,6 +28,17 @@ export const TOKENS = {
   SecureConfigManager: 'SecureConfigManager',
   UserConfigStore: 'UserConfigStore',
   ProviderConfigManager: 'ProviderConfigManager',
+
+  // Database
+  DatabaseManager: 'DatabaseManager',
+  SchemaManager: 'SchemaManager',
+
+  // Managers
+  BotManager: 'BotManager',
+
+  // Services
+  WebSocketService: 'WebSocketService',
+  RealTimeValidationService: 'RealTimeValidationService',
 } as const;
 
 /**

@@ -59,7 +59,7 @@ router.post(
       }
 
       // Get existing guards to find the access-control guard
-      const guards = webUIStorage.getGuards();
+      const guards = await webUIStorage.getGuards();
       const accessGuard = guards.find((g: Record<string, unknown>) => g.id === 'access-control');
 
       if (!accessGuard) {
@@ -97,7 +97,7 @@ router.post(
       const { enabled } = req.body;
 
       // Check if guard exists
-      const guards = webUIStorage.getGuards();
+      const guards = await webUIStorage.getGuards();
       const guard = guards.find((g: Record<string, unknown>) => g.id === id);
 
       if (!guard) {

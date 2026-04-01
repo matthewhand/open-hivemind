@@ -22,10 +22,10 @@ const router = Router();
  *       200:
  *         description: List of personas
  */
-router.get('/personas', (req: Request, res: Response) => {
+router.get('/personas', async (req: Request, res: Response) => {
   try {
     // Get personas from persistent storage
-    const storedPersonas = webUIStorage.getPersonas();
+    const storedPersonas = await webUIStorage.getPersonas();
 
     // Default personas - in a real implementation, these would be stored in a database
     const defaultPersonas = [

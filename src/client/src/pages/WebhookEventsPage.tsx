@@ -11,6 +11,7 @@ import {
   MessageSquare,
   Hash,
 } from 'lucide-react';
+import { apiService } from '../services/api';
 import Badge from '../components/DaisyUI/Badge';
 import Button from '../components/DaisyUI/Button';
 import Card from '../components/DaisyUI/Card';
@@ -121,11 +122,7 @@ const WebhookEventsPage: React.FC = () => {
       if (startDate) params.set('startDate', new Date(startDate).toISOString());
       if (endDate) params.set('endDate', new Date(endDate).toISOString());
 
-      const resp = await fetch(`/api/webhooks/events?${params.toString()}`, {
-        credentials: 'include',
-      });
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const json: EventsResponse = await resp.json();
+      const json: EventsResponse = await apiService.get(`/api/webhooks/events?${params.toString()}`);
       if (json.success) {
         setEvents(json.data.items);
         setTotalPages(json.data.totalPages);
@@ -160,8 +157,7 @@ const WebhookEventsPage: React.FC = () => {
     setExpandedId(eventId);
     setDetailLoading(true);
     try {
-      const resp = await fetch(`/api/webhooks/events/${eventId}`, { credentials: 'include' });
-      const json = await resp.json();
+      const json: any = await apiService.get(`/api/webhooks/events/${eventId}`);
       if (json.success) {
         setDetailPayload(json.data.payload);
       }
@@ -177,11 +173,7 @@ const WebhookEventsPage: React.FC = () => {
   const handleRetry = useCallback(async (eventId: string) => {
     setRetrying(eventId);
     try {
-      const resp = await fetch(`/api/webhooks/events/${eventId}/retry`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-      const json = await resp.json();
+      const json: any = await apiService.post(`/api/webhooks/events/${eventId}/retry`);
       if (!json.success) throw new Error(json.error);
       // Refresh the list
       fetchEvents(true);

@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { v4 as uuidv4 } from 'uuid';
 import {
   BUILTIN_PERSONAS,
@@ -7,6 +8,7 @@ import {
   type PersonaCategory,
   type UpdatePersonaRequest,
 } from '../types';
+import { apiService } from '../services/api';
 import Debug from 'debug';
 const debug = Debug('app:client:hooks:usePersonas');
 
@@ -26,47 +28,38 @@ interface UsePersonasReturn {
 }
 
 export const usePersonas = (): UsePersonasReturn => {
-  const [personas, setPersonas] = useState<Persona[]>([...BUILTIN_PERSONAS]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [localPersonas, setLocalPersonas] = useState<Persona[]>([]);
+  const [localError, setLocalError] = useState<string | null>(null);
+
+  const {
+    data: fetchedPersonas,
+    isLoading: loading,
+    error: queryError,
+    refetch,
+  } = useQuery<Persona[]>({
+    queryKey: ['personas'],
+    queryFn: async () => {
+      const data = await apiService.get<any>('/api/personas');
+      const next = Array.isArray(data) ? data : [];
+      return next.length > 0 ? next : [...BUILTIN_PERSONAS];
+    },
+    initialData: [...BUILTIN_PERSONAS],
+  });
+
+  // Merge fetched personas with any locally-created ones
+  const personas = localPersonas.length > 0
+    ? [...fetchedPersonas, ...localPersonas]
+    : fetchedPersonas;
+
+  const error = localError || (queryError instanceof Error ? queryError.message : null);
 
   const clearError = useCallback(() => {
-    setError(null);
-  }, []);
-
-  useEffect(() => {
-    let isMounted = true;
-    const fetchPersonas = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch('/api/personas');
-        if (!response.ok) {
-          throw new Error('Failed to fetch personas');
-        }
-        const data = await response.json();
-        const next = Array.isArray(data) ? data : [];
-        if (isMounted && next.length > 0) {
-          setPersonas(next);
-        }
-      } catch {
-        // Keep built-in personas as fallback
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchPersonas();
-    return () => {
-      isMounted = false;
-    };
+    setLocalError(null);
   }, []);
 
   const createPersona = useCallback((request: CreatePersonaRequest): Persona => {
     try {
-      setLoading(true);
-      setError(null);
+      setLocalError(null);
 
       const newPersona: Persona = {
         id: `persona-${Date.now()}-${uuidv4()}`,
@@ -77,26 +70,22 @@ export const usePersonas = (): UsePersonasReturn => {
         updatedAt: new Date().toISOString(),
       };
 
-      setPersonas((prev) => [...prev, newPersona]);
-      setLoading(false);
+      setLocalPersonas((prev) => [...prev, newPersona]);
       return newPersona;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create persona';
-      setError(errorMessage);
-      setLoading(false);
+      setLocalError(errorMessage);
       throw err;
     }
   }, []);
 
   const updatePersona = useCallback((id: string, request: UpdatePersonaRequest): Persona | null => {
     try {
-      setLoading(true);
-      setError(null);
+      setLocalError(null);
 
-      setPersonas((prev) =>
+      setLocalPersonas((prev) =>
         prev.map((persona) => {
           if (persona.id === id) {
-            // Don't allow editing built-in personas' core identity
             if (persona.isBuiltIn && (request.name || request.category)) {
               throw new Error('Cannot modify name or category of built-in personas');
             }
@@ -111,20 +100,17 @@ export const usePersonas = (): UsePersonasReturn => {
         })
       );
 
-      setLoading(false);
       return getPersonaById(id);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update persona';
-      setError(errorMessage);
-      setLoading(false);
+      setLocalError(errorMessage);
       return null;
     }
   }, []);
 
   const deletePersona = useCallback((id: string): boolean => {
     try {
-      setLoading(true);
-      setError(null);
+      setLocalError(null);
 
       const persona = getPersonaById(id);
       if (!persona) {
@@ -135,13 +121,11 @@ export const usePersonas = (): UsePersonasReturn => {
         throw new Error('Cannot delete built-in personas');
       }
 
-      setPersonas((prev) => prev.filter((p) => p.id !== id));
-      setLoading(false);
+      setLocalPersonas((prev) => prev.filter((p) => p.id !== id));
       return true;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete persona';
-      setError(errorMessage);
-      setLoading(false);
+      setLocalError(errorMessage);
       return false;
     }
   }, []);
@@ -178,11 +162,11 @@ export const usePersonas = (): UsePersonasReturn => {
           updatedAt: new Date().toISOString(),
         };
 
-        setPersonas((prev) => [...prev, duplicatedPersona]);
+        setLocalPersonas((prev) => [...prev, duplicatedPersona]);
         return duplicatedPersona;
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to duplicate persona';
-        setError(errorMessage);
+        setLocalError(errorMessage);
         return null;
       }
     },
@@ -197,16 +181,14 @@ export const usePersonas = (): UsePersonasReturn => {
           throw new Error('Persona not found');
         }
 
-        // Increment usage count
-        setPersonas((prev) =>
+        setLocalPersonas((prev) =>
           prev.map((p) => (p.id === personaId ? { ...p, usageCount: p.usageCount + 1 } : p))
         );
 
-        // In a real implementation, this would make an API call to update the bot
         debug(`Assigning persona "${persona.name}" to bot "${botId}"`);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to assign persona to bot';
-        setError(errorMessage);
+        setLocalError(errorMessage);
       }
     },
     [getPersonaById]

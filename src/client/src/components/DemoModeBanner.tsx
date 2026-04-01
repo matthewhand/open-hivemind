@@ -3,6 +3,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { apiService } from '../services/api';
 
 interface DemoStatus {
     isDemoMode: boolean;
@@ -20,11 +21,8 @@ const DemoModeBanner: React.FC = () => {
     useEffect(() => {
         const checkDemoMode = async () => {
             try {
-                const response = await fetch('/api/demo/status');
-                if (response.ok) {
-                    const data = await response.json();
-                    setDemoStatus(data);
-                }
+                const data = await apiService.get<DemoStatus>('/api/demo/status');
+                setDemoStatus(data);
             } catch (error) {
                 console.debug('Could not check demo mode status:', error);
             } finally {

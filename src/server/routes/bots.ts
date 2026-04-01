@@ -18,7 +18,7 @@ import { WebSocketService } from '../services/WebSocketService';
 
 const router = Router();
 const logger = createLogger('botsRouter');
-const manager = BotManager.getInstance();
+const managerPromise = BotManager.getInstance();
 const wsService = WebSocketService.getInstance();
 
 /**
@@ -33,6 +33,7 @@ const wsService = WebSocketService.getInstance();
  */
 router.get('/', async (req, res) => {
   try {
+    const manager = await managerPromise;
     const bots = await manager.getAllBots();
     const statuses = await manager.getBotsStatus();
     const statusMap = new Map(statuses.map((s) => [s.id, s.isRunning]));
@@ -157,6 +158,7 @@ function sanitizeBotForExport(bot: any): any {
  */
 router.get('/export', async (_req, res) => {
   try {
+    const manager = await managerPromise;
     const bots = await manager.getAllBots();
     const sanitized = bots.map(sanitizeBotForExport);
     return res.json(
@@ -198,6 +200,7 @@ router.get('/export', async (_req, res) => {
  */
 router.post('/import', async (req, res) => {
   try {
+    const manager = await managerPromise;
     const { bots: incoming } = req.body;
     if (!Array.isArray(incoming) || incoming.length === 0) {
       return res
@@ -276,6 +279,7 @@ router.post('/import', async (req, res) => {
  */
 router.get('/:id', validateRequest(BotIdParamSchema), async (req, res) => {
   try {
+    const manager = await managerPromise;
     const { id } = req.params;
     const bot = await manager.getBot(id);
     if (!bot) {
@@ -315,6 +319,7 @@ router.get('/:id', validateRequest(BotIdParamSchema), async (req, res) => {
  */
 router.post('/', validateRequest(CreateBotSchema), async (req, res) => {
   try {
+    const manager = await managerPromise;
     const request = req.body as CreateBotRequest;
     // Idempotency check: see if bot with same name exists
     const allBots = await manager.getAllBots();
@@ -360,6 +365,7 @@ router.post('/', validateRequest(CreateBotSchema), async (req, res) => {
  */
 router.put('/:id', validateRequest(UpdateBotSchema), async (req, res) => {
   try {
+    const manager = await managerPromise;
     const { id } = req.params;
     const updates = req.body;
     const bot = await manager.updateBot(id, updates);
@@ -390,6 +396,7 @@ router.put('/:id', validateRequest(UpdateBotSchema), async (req, res) => {
  */
 router.delete('/:id', validateRequest(BotIdParamSchema), async (req, res) => {
   try {
+    const manager = await managerPromise;
     const { id } = req.params;
     // Idempotency: return 200/204 even if resource already gone
     const existingBot = await manager.getBot(id);
@@ -434,6 +441,7 @@ router.delete('/:id', validateRequest(BotIdParamSchema), async (req, res) => {
  */
 router.post('/:id/clone', validateRequest(CloneBotSchema), async (req, res) => {
   try {
+    const manager = await managerPromise;
     const { id } = req.params;
     const { newName } = req.body;
 
@@ -472,6 +480,7 @@ router.post('/:id/clone', validateRequest(CloneBotSchema), async (req, res) => {
  */
 router.post('/:id/start', validateRequest(BotIdParamSchema), async (req, res) => {
   try {
+    const manager = await managerPromise;
     const { id } = req.params;
     await manager.startBot(id);
     return res.json(ApiResponse.success());
@@ -501,6 +510,7 @@ router.post('/:id/start', validateRequest(BotIdParamSchema), async (req, res) =>
  */
 router.post('/:id/stop', validateRequest(BotIdParamSchema), async (req, res) => {
   try {
+    const manager = await managerPromise;
     const { id } = req.params;
     await manager.stopBot(id);
     return res.json(ApiResponse.success());
@@ -538,6 +548,7 @@ router.post('/:id/stop', validateRequest(BotIdParamSchema), async (req, res) => 
  */
 router.get('/:id/history', validateRequest(BotHistoryQuerySchema), async (req, res) => {
   try {
+    const manager = await managerPromise;
     const { id } = req.params;
     const reqQuery = req.query as any;
     const limit = Math.min(Math.max(parseInt(reqQuery.limit as string) || 20, 1), 100);
@@ -585,6 +596,7 @@ function redactString(val: string | undefined): string | undefined {
  */
 router.get('/:id/activity', validateRequest(BotActivityQuerySchema), async (req, res) => {
   try {
+    const manager = await managerPromise;
     const { id } = req.params;
     const reqQuery = req.query as any;
     const limit = Math.min(Math.max(parseInt(reqQuery.limit as string) || 20, 1), 100);
@@ -647,6 +659,7 @@ router.get('/:id/activity', validateRequest(BotActivityQuerySchema), async (req,
  */
 router.get('/:id/export', validateRequest(BotIdParamSchema), async (req, res) => {
   try {
+    const manager = await managerPromise;
     const bot = await manager.getBot(req.params.id);
     if (!bot) {
       return res

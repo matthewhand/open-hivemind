@@ -33,6 +33,7 @@ import Modal, { ConfirmModal } from '../DaisyUI/Modal';
 import Input from '../DaisyUI/Input';
 import Select from '../DaisyUI/Select';
 import ProviderConfig from '../ProviderConfig';
+import { apiService } from '../../services/api';
 
 export interface ProviderItem {
   id: string;
@@ -191,11 +192,7 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(apiEndpoint);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch ${title.toLowerCase()}`);
-      }
-      const data = await response.json();
+      const data: any = await apiService.get(apiEndpoint);
       setProviders(data.providers || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : `Failed to fetch ${title.toLowerCase()}`);
@@ -246,23 +243,16 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
   const handleSaveProvider = async () => {
     try {
       const url = editingProvider ? `${apiEndpoint}/${editingProvider.id}` : apiEndpoint;
+      const body = {
+        name: formData.name || editingProvider?.name,
+        type: formData.type || editingProvider?.type,
+        config: formData,
+      };
 
-      const method = editingProvider ? 'PUT' : 'POST';
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: formData.name || editingProvider?.name,
-          type: formData.type || editingProvider?.type,
-          config: formData,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to ${editingProvider ? 'update' : 'create'} provider`);
+      if (editingProvider) {
+        await apiService.put(url, body);
+      } else {
+        await apiService.post(url, body);
       }
 
       setToast({
@@ -292,13 +282,7 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
       onConfirm: async () => {
         setConfirmModal(prev => ({ ...prev, isOpen: false }));
         try {
-          const response = await fetch(`${apiEndpoint}/${providerId}`, {
-            method: 'DELETE',
-          });
-
-          if (!response.ok) {
-            throw new Error('Failed to delete provider');
-          }
+          await apiService.delete(`${apiEndpoint}/${providerId}`);
 
           setToast({
             show: true,
@@ -319,17 +303,7 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
 
   const handleToggleActive = async (providerId: string, isActive: boolean) => {
     try {
-      const response = await fetch(`${apiEndpoint}/${providerId}/toggle`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ isActive }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update provider status');
-      }
+      await apiService.post(`${apiEndpoint}/${providerId}/toggle`, { isActive });
 
       fetchProviders();
     } catch (err) {

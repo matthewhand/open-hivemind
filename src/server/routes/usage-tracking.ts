@@ -23,8 +23,8 @@ router.get('/tools', async (req, res) => {
     debug('Error fetching tool metrics: %O', hivemindError);
 
     return res
-      .status(hivemindError.statusCode || 500)
-      .json(ApiResponse.error(hivemindError.message, hivemindError.code || 'TOOL_METRICS_ERROR'));
+      .status(ErrorUtils.getStatusCode(hivemindError) || 500)
+      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), ErrorUtils.getCode(hivemindError) || 'TOOL_METRICS_ERROR'));
   }
 });
 
@@ -47,8 +47,8 @@ router.get('/tools/:toolId', async (req, res) => {
     debug('Error fetching tool metrics: %O', hivemindError);
 
     return res
-      .status(hivemindError.statusCode || 500)
-      .json(ApiResponse.error(hivemindError.message, hivemindError.code || 'TOOL_METRICS_ERROR'));
+      .status(ErrorUtils.getStatusCode(hivemindError) || 500)
+      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), ErrorUtils.getCode(hivemindError) || 'TOOL_METRICS_ERROR'));
   }
 });
 
@@ -65,9 +65,9 @@ router.get('/providers', async (req, res) => {
     debug('Error fetching provider metrics: %O', hivemindError);
 
     return res
-      .status(hivemindError.statusCode || 500)
+      .status(ErrorUtils.getStatusCode(hivemindError) || 500)
       .json(
-        ApiResponse.error(hivemindError.message, hivemindError.code || 'PROVIDER_METRICS_ERROR')
+        ApiResponse.error(ErrorUtils.getMessage(hivemindError), ErrorUtils.getCode(hivemindError) || 'PROVIDER_METRICS_ERROR')
       );
   }
 });
@@ -93,9 +93,9 @@ router.get('/providers/:serverName', async (req, res) => {
     debug('Error fetching provider metrics: %O', hivemindError);
 
     return res
-      .status(hivemindError.statusCode || 500)
+      .status(ErrorUtils.getStatusCode(hivemindError) || 500)
       .json(
-        ApiResponse.error(hivemindError.message, hivemindError.code || 'PROVIDER_METRICS_ERROR')
+        ApiResponse.error(ErrorUtils.getMessage(hivemindError), ErrorUtils.getCode(hivemindError) || 'PROVIDER_METRICS_ERROR')
       );
   }
 });
@@ -115,11 +115,11 @@ router.get('/providers/:serverName/tools', async (req, res) => {
     debug('Error fetching provider tool metrics: %O', hivemindError);
 
     return res
-      .status(hivemindError.statusCode || 500)
+      .status(ErrorUtils.getStatusCode(hivemindError) || 500)
       .json(
         ApiResponse.error(
-          hivemindError.message,
-          hivemindError.code || 'PROVIDER_TOOL_METRICS_ERROR'
+          ErrorUtils.getMessage(hivemindError),
+          ErrorUtils.getCode(hivemindError) || 'PROVIDER_TOOL_METRICS_ERROR'
         )
       );
   }
@@ -140,8 +140,8 @@ router.get('/top-tools', async (req, res) => {
     debug('Error fetching top tools: %O', hivemindError);
 
     return res
-      .status(hivemindError.statusCode || 500)
-      .json(ApiResponse.error(hivemindError.message, hivemindError.code || 'TOP_TOOLS_ERROR'));
+      .status(ErrorUtils.getStatusCode(hivemindError) || 500)
+      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), ErrorUtils.getCode(hivemindError) || 'TOP_TOOLS_ERROR'));
   }
 });
 
@@ -160,8 +160,8 @@ router.get('/top-providers', async (req, res) => {
     debug('Error fetching top providers: %O', hivemindError);
 
     return res
-      .status(hivemindError.statusCode || 500)
-      .json(ApiResponse.error(hivemindError.message, hivemindError.code || 'TOP_PROVIDERS_ERROR'));
+      .status(ErrorUtils.getStatusCode(hivemindError) || 500)
+      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), ErrorUtils.getCode(hivemindError) || 'TOP_PROVIDERS_ERROR'));
   }
 });
 
@@ -180,8 +180,8 @@ router.get('/recent-tools', async (req, res) => {
     debug('Error fetching recent tools: %O', hivemindError);
 
     return res
-      .status(hivemindError.statusCode || 500)
-      .json(ApiResponse.error(hivemindError.message, hivemindError.code || 'RECENT_TOOLS_ERROR'));
+      .status(ErrorUtils.getStatusCode(hivemindError) || 500)
+      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), ErrorUtils.getCode(hivemindError) || 'RECENT_TOOLS_ERROR'));
   }
 });
 
@@ -199,9 +199,9 @@ router.get('/stats', async (req, res) => {
     debug('Error fetching aggregate stats: %O', hivemindError);
 
     return res
-      .status(hivemindError.statusCode || 500)
+      .status(ErrorUtils.getStatusCode(hivemindError) || 500)
       .json(
-        ApiResponse.error(hivemindError.message, hivemindError.code || 'AGGREGATE_STATS_ERROR')
+        ApiResponse.error(ErrorUtils.getMessage(hivemindError), ErrorUtils.getCode(hivemindError) || 'AGGREGATE_STATS_ERROR')
       );
   }
 });
@@ -220,8 +220,8 @@ router.delete('/clear', async (req, res) => {
     debug('Error clearing usage data: %O', hivemindError);
 
     return res
-      .status(hivemindError.statusCode || 500)
-      .json(ApiResponse.error(hivemindError.message, hivemindError.code || 'CLEAR_DATA_ERROR'));
+      .status(ErrorUtils.getStatusCode(hivemindError) || 500)
+      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), ErrorUtils.getCode(hivemindError) || 'CLEAR_DATA_ERROR'));
   }
 });
 

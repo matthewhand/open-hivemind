@@ -5,6 +5,7 @@ interface CountdownProps {
   onComplete?: () => void;
   size?: 'xs' | 'sm' | 'md' | 'lg'; // DaisyUI size classes
   className?: string;
+  compact?: boolean; // If true, hides days and hours if they are zero
 }
 
 const Countdown: React.FC<CountdownProps> = ({
@@ -12,6 +13,7 @@ const Countdown: React.FC<CountdownProps> = ({
   onComplete,
   size = 'md',
   className = '',
+  compact = false,
 }) => {
   const calculateTimeLeft = useCallback((): { days: number; hours: number; minutes: number; seconds: number; totalSeconds: number } => {
     const targetTime = typeof targetDate === 'number' ? targetDate : targetDate.getTime();
@@ -23,7 +25,7 @@ const Countdown: React.FC<CountdownProps> = ({
     }
 
     const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((difference % (1000 * 60 * 24)) / (1000 * 60 * 60));
+    const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((difference % (1000 * 60)) / 1000);
 
@@ -74,13 +76,25 @@ const Countdown: React.FC<CountdownProps> = ({
       aria-live="polite"
     >
       {isFinished ? (
-        <span aria-label="Countdown finished">00:00:00:00</span>
+        <span aria-label="Countdown finished">
+          {!compact && <span>00:</span>}
+          {!compact && <span>00:</span>}
+          00:00
+        </span>
       ) : (
         <>
-          <span style={{ '--value': timeLeft.days } as React.CSSProperties} aria-label={`Days remaining: ${timeLeft.days}`}></span>
-          <span className="ml-1">:</span>
-          <span style={{ '--value': timeLeft.hours } as React.CSSProperties} aria-label={`Hours remaining: ${timeLeft.hours}`}></span>
-          <span className="ml-1">:</span>
+          {(!compact || timeLeft.days > 0) && (
+            <>
+              <span style={{ '--value': timeLeft.days } as React.CSSProperties} aria-label={`Days remaining: ${timeLeft.days}`}></span>
+              <span className="ml-1">:</span>
+            </>
+          )}
+          {(!compact || timeLeft.days > 0 || timeLeft.hours > 0) && (
+            <>
+              <span style={{ '--value': timeLeft.hours } as React.CSSProperties} aria-label={`Hours remaining: ${timeLeft.hours}`}></span>
+              <span className="ml-1">:</span>
+            </>
+          )}
           <span style={{ '--value': timeLeft.minutes } as React.CSSProperties} aria-label={`Minutes remaining: ${timeLeft.minutes}`}></span>
           <span className="ml-1">:</span>
           <span style={{ '--value': timeLeft.seconds } as React.CSSProperties} aria-label={`Seconds remaining: ${timeLeft.seconds}`}></span>

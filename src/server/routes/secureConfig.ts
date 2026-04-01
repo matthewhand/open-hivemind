@@ -14,7 +14,7 @@ import { auditMiddleware, logConfigChange, type AuditedRequest } from '../middle
 
 const debug = Debug('app:SecureConfigRoutes');
 const router = Router();
-const secureConfigManager = SecureConfigManager.getInstance();
+const secureConfigManagerPromise = SecureConfigManager.getInstance();
 
 // Apply audit middleware to all secure config routes
 router.use(auditMiddleware);
@@ -25,12 +25,11 @@ router.use(auditMiddleware);
  */
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const configIds = await secureConfigManager.listConfigs();
+    const configIds = await (await secureConfigManagerPromise).listConfigs();
     const configs = [];
 
-    const configPromises = configIds.map((configData) =>
-      secureConfigManager.getConfig(configData.id)
-    );
+    const manager = await secureConfigManagerPromise;
+    const configPromises = configIds.map((configData) => manager.getConfig(configData.id));
     const configResults = await Promise.all(configPromises);
 
     for (const config of configResults) {
@@ -62,7 +61,7 @@ router.get('/', async (req: Request, res: Response) => {
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const config = await secureConfigManager.getConfig(id);
+    const config = await (await secureConfigManagerPromise).getConfig(id);
 
     if (!config) {
       return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Configuration not found'));
@@ -109,7 +108,7 @@ router.post(
         createdAt: new Date().toISOString(),
       };
 
-      await secureConfigManager.storeConfig(config);
+      await (await secureConfigManagerPromise).storeConfig(config);
 
       logConfigChange(
         req,
@@ -162,7 +161,7 @@ router.put(
       }
 
       // Check if config exists
-      const existingConfig = await secureConfigManager.getConfig(id);
+      const existingConfig = await (await secureConfigManagerPromise).getConfig(id);
       if (!existingConfig) {
         logConfigChange(req, 'UPDATE', `secure-config/${id}`, 'failure', 'Configuration not found');
         return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Configuration not found'));
@@ -176,7 +175,7 @@ router.put(
         createdAt: existingConfig.createdAt,
       };
 
-      await secureConfigManager.storeConfig(updatedConfig);
+      await (await secureConfigManagerPromise).storeConfig(updatedConfig);
 
       logConfigChange(
         req,
@@ -216,10 +215,10 @@ router.delete('/:id', async (req: AuditedRequest, res: Response) => {
     const { id } = req.params;
 
     // Get config before deletion for audit logging
-    const configToDelete = await secureConfigManager.getConfig(id);
+    const configToDelete = await (await secureConfigManagerPromise).getConfig(id);
 
     try {
-      await secureConfigManager.deleteConfig(id);
+      await (await secureConfigManagerPromise).deleteConfig(id);
     } catch {
       logConfigChange(req, 'DELETE', `secure-config/${id}`, 'failure', 'Configuration not found');
       return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Configuration not found'));
@@ -261,7 +260,7 @@ router.post(
   validateRequest(ConfigBackupSchema),
   async (req: AuditedRequest, res: Response) => {
     try {
-      const backupId = await secureConfigManager.createBackup();
+      const backupId = await (await secureConfigManagerPromise).createBackup();
 
       logConfigChange(
         req,
@@ -294,7 +293,7 @@ router.post(
  */
 router.get('/backups/list', async (req: Request, res: Response) => {
   try {
-    const backups = await secureConfigManager.listBackups();
+    const backups = await (await secureConfigManagerPromise).listBackups();
 
     return res.json(ApiResponse.success(backups));
   } catch (error: any) {
@@ -315,7 +314,7 @@ router.post(
   async (req: AuditedRequest, res: Response) => {
     try {
       const { backupId } = req.params;
-      await secureConfigManager.restoreBackup(backupId);
+      await (await secureConfigManagerPromise).restoreBackup(backupId);
 
       logConfigChange(
         req,

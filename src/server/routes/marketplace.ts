@@ -27,7 +27,7 @@ export interface MarketplacePackage {
   name: string;
   displayName: string;
   description: string;
-  type: 'llm' | 'message' | 'memory' | 'tool';
+  type: 'llm' | 'message' | 'memory' | 'tool' | 'bot' | 'guard' | 'persona';
   version: string;
   status: 'built-in' | 'installed' | 'available';
   repoUrl?: string;

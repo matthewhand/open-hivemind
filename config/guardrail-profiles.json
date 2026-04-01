@@ -1,62 +1,12 @@
 [
   {
-    "id": "open",
-    "name": "Open",
-    "description": "Allow MCP tools without restrictions",
+    "id": "test-no-rate-profile",
+    "name": "No Rate Limit Profile",
+    "description": "Profile without rate limit section",
     "guards": {
       "mcpGuard": {
         "enabled": false,
         "type": "owner"
-      },
-      "rateLimit": {
-        "enabled": false,
-        "maxRequests": 100,
-        "windowMs": 60000
-      },
-      "contentFilter": {
-        "enabled": false,
-        "strictness": "low"
-      }
-    }
-  },
-  {
-    "id": "owner-only",
-    "name": "Owner Only",
-    "description": "Only the channel owner can use MCP tools",
-    "guards": {
-      "mcpGuard": {
-        "enabled": true,
-        "type": "owner"
-      },
-      "rateLimit": {
-        "enabled": true,
-        "maxRequests": 50,
-        "windowMs": 60000
-      },
-      "contentFilter": {
-        "enabled": true,
-        "strictness": "medium"
-      }
-    }
-  },
-  {
-    "id": "strict",
-    "name": "Strict Protection",
-    "description": "Strict rate limiting and content filtering",
-    "guards": {
-      "mcpGuard": {
-        "enabled": true,
-        "type": "custom",
-        "allowedUsers": []
-      },
-      "rateLimit": {
-        "enabled": true,
-        "maxRequests": 10,
-        "windowMs": 60000
-      },
-      "contentFilter": {
-        "enabled": true,
-        "strictness": "high"
       }
     }
   }

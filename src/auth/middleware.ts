@@ -4,6 +4,13 @@ import { AuthenticationError, AuthorizationError } from '../types/errorClasses';
 import { AuthManager } from './AuthManager';
 import type { AuthMiddlewareRequest, User, UserRole } from './types';
 
+interface TokenPayload {
+  userId: string;
+  role?: string;
+  permissions?: string[];
+  [key: string]: unknown;
+}
+
 const debug = Debug('app:AuthMiddleware');
 
 export class AuthMiddleware {
@@ -93,7 +100,7 @@ export class AuthMiddleware {
       }
 
       const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-      const payload = this.authManager.verifyAccessToken(token);
+      const payload = this.authManager.verifyAccessToken(token) as TokenPayload;
 
       // Get user from token payload
       const user = this.authManager.getUser(payload.userId);
@@ -220,7 +227,7 @@ export class AuthMiddleware {
 
       if (authHeader && authHeader.startsWith('Bearer ')) {
         const token = authHeader.substring(7);
-        const payload = this.authManager.verifyAccessToken(token);
+        const payload = this.authManager.verifyAccessToken(token) as TokenPayload;
         const user = this.authManager.getUser(payload.userId);
 
         if (user) {

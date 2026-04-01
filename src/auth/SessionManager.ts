@@ -3,6 +3,13 @@ import type { NextFunction, Request, Response } from 'express';
 import { AuthManager } from './AuthManager';
 import { SessionStore } from './SessionStore';
 
+interface TokenPayload {
+  userId: string;
+  role?: string;
+  permissions?: string[];
+  [key: string]: unknown;
+}
+
 const debug = Debug('app:SessionManager');
 
 /**
@@ -67,7 +74,7 @@ export class SessionManager {
    * @returns New token
    */
   public async rotateToken(oldToken: string): Promise<string> {
-    const payload = this.authManager.verifyAccessToken(oldToken);
+    const payload = this.authManager.verifyAccessToken(oldToken) as TokenPayload;
     if (!payload) {
       throw new Error('Invalid token');
     }

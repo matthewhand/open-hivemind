@@ -1,76 +1,69 @@
-import React, { useState, useEffect } from 'react';
-import Debug from 'debug';
-const debug = Debug('app:client:components:DaisyUI:VisualFeedback');
+import React, { useEffect, useState } from 'react';
+import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { logger } from '../../utils/logger';
 
-interface Metric {
-  name: string;
-  value: number;
-  unit: string;
+export type FeedbackState = 'idle' | 'loading' | 'success' | 'error';
+
+export interface VisualFeedbackProps {
+  state: FeedbackState;
+  message?: string;
+  onComplete?: () => void;
+  duration?: number;
 }
 
-interface VisualFeedbackProps {
-  metrics: Metric[];
-  initialRating?: number;
-}
-
-const getProgressColor = (value: number) => {
-  if (value > 90) {return 'text-error';}
-  if (value > 70) {return 'text-warning';}
-  return 'text-success';
-};
-
-const VisualFeedback: React.FC<VisualFeedbackProps> = ({ metrics, initialRating = 0 }) => {
-  const [rating, setRating] = useState(initialRating);
-  const [hoverRating, setHoverRating] = useState(0);
+const VisualFeedback: React.FC<VisualFeedbackProps> = ({
+  state,
+  message,
+  onComplete,
+  duration = 2000,
+}) => {
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    // Here you would typically fetch real-time data
-    // For demonstration, we'll just log updates
-    const interval = setInterval(() => {
-      debug('Fetching new metrics data...');
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
+    if (state !== 'idle') {
+      setIsVisible(true);
+    } else {
+      setIsVisible(false);
+    }
+
+    if ((state === 'success' || state === 'error') && duration > 0) {
+      const timer = setTimeout(() => {
+        setIsVisible(false);
+        if (onComplete) onComplete();
+      }, duration);
+      return () => clearTimeout(timer);
+    }
+  }, [state, duration, onComplete]);
+
+  if (!isVisible || state === 'idle') return null;
 
   return (
-    <div className="p-4 bg-base-200 rounded-box shadow-lg">
-      <h2 className="text-2xl font-bold mb-4">System Health & Feedback</h2>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {metrics.map((metric) => (
-          <div key={metric.name} className="flex flex-col items-center p-4 bg-base-100 rounded-box">
-            <div
-              className={`radial-progress ${getProgressColor(metric.value)}`}
-              style={{ '--value': metric.value, '--size': '8rem', '--thickness': '0.5rem' } as React.CSSProperties}
-              role="progressbar"
-            >
-              <span className="text-xl font-bold">{`${metric.value}${metric.unit}`}</span>
-            </div>
-            <p className="mt-2 text-lg font-semibold">{metric.name}</p>
-          </div>
-        ))}
-      </div>
-
-      <div>
-        <h3 className="text-xl font-semibold mb-2">Rate Bot Performance</h3>
-        <div className="rating rating-lg">
-          {[1, 2, 3, 4, 5].map((star) => (
-            <input
-              key={star}
-              type="radio"
-              name="rating-2"
-              className={`mask mask-star-2 ${
-                (hoverRating || rating) >= star ? 'bg-orange-400' : 'bg-base-300'
-              }`}
-              onClick={() => setRating(star)}
-              onMouseEnter={() => setHoverRating(star)}
-              onMouseLeave={() => setHoverRating(0)}
-              checked={rating === star}
-              onChange={() => {}}
-            />
-          ))}
+    <div className="flex flex-col items-center justify-center p-6 space-y-4 animate-in fade-in zoom-in duration-300">
+      {state === 'loading' && (
+        <div className="relative flex items-center justify-center">
+          <Loader2 className="w-16 h-16 text-primary animate-spin" />
+          <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse"></div>
         </div>
-      </div>
+      )}
+      {state === 'success' && (
+        <div className="relative flex items-center justify-center">
+          <CheckCircle className="w-16 h-16 text-success animate-[bounce_1s_ease-in-out]" />
+          <div className="absolute inset-0 bg-success/20 rounded-full blur-xl animate-pulse"></div>
+        </div>
+      )}
+      {state === 'error' && (
+        <div className="relative flex items-center justify-center">
+          <XCircle className="w-16 h-16 text-error animate-[shake_0.5s_ease-in-out]" />
+          <div className="absolute inset-0 bg-error/20 rounded-full blur-xl animate-pulse"></div>
+        </div>
+      )}
+      {message && (
+        <p className={`text-lg font-semibold text-center ${
+          state === 'error' ? 'text-error' : state === 'success' ? 'text-success' : 'text-base-content'
+        }`}>
+          {message}
+        </p>
+      )}
     </div>
   );
 };
