@@ -64,7 +64,12 @@ export async function loadPlugin(name: string): Promise<PluginModule> {
     debug('Loaded built-in plugin: @hivemind/%s', name);
     return mod;
   } catch (e: unknown) {
-    if (e instanceof Error && !e.message?.includes('Cannot find') && (e as any).code !== 'ERR_MODULE_NOT_FOUND') throw e;
+    if (
+      e instanceof Error &&
+      !e.message?.includes('Cannot find') &&
+      (e as any).code !== 'ERR_MODULE_NOT_FOUND'
+    )
+      throw e;
   }
 
   // 2. Try community plugins dir

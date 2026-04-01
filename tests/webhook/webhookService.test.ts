@@ -58,8 +58,8 @@ describe('webhookService', () => {
   });
 
   describe('service initialization', () => {
-    it('should create a new Express app when app is null', () => {
-      webhookService.start(null, messageService, 'test-channel');
+    it('should create a new Express app when app is null', async () => {
+      await webhookService.start(null, messageService, 'test-channel');
 
       expect(mockExpress).toHaveBeenCalledTimes(1);
       expect(mockConfigureWebhookRoutes).toHaveBeenCalledTimes(1);
@@ -71,10 +71,10 @@ describe('webhookService', () => {
       expect(passedChannel).toBe('test-channel');
     });
 
-    it('should reuse provided Express app', () => {
+    it('should reuse provided Express app', async () => {
       const existingApp = express();
 
-      webhookService.start(existingApp, messageService, 'channel-123');
+      await webhookService.start(existingApp, messageService, 'channel-123');
 
       expect(mockConfigureWebhookRoutes).toHaveBeenCalledTimes(1);
       const [passedApp, passedMessageService, passedChannel] =
@@ -84,8 +84,8 @@ describe('webhookService', () => {
       expect(passedChannel).toBe('channel-123');
     });
 
-    it('should handle undefined app parameter', () => {
-      webhookService.start(undefined as any, messageService, 'test-channel');
+    it('should handle undefined app parameter', async () => {
+      await webhookService.start(undefined as any, messageService, 'test-channel');
 
       expect(mockExpress).toHaveBeenCalledTimes(1);
       expect(mockConfigureWebhookRoutes).toHaveBeenCalledTimes(1);
@@ -93,10 +93,10 @@ describe('webhookService', () => {
   });
 
   describe('service configuration', () => {
-    it('should pass correct parameters to route configuration', () => {
+    it('should pass correct parameters to route configuration', async () => {
       const testChannel = 'webhook-channel-456';
 
-      webhookService.start(null, messageService, testChannel);
+      await webhookService.start(null, messageService, testChannel);
 
       expect(mockConfigureWebhookRoutes).toHaveBeenCalledWith(
         expect.any(Object),
@@ -105,12 +105,12 @@ describe('webhookService', () => {
       );
     });
 
-    it('should handle different channel configurations', () => {
+    it('should handle different channel configurations', async () => {
       const channels = ['general', 'webhooks', 'notifications', ''];
 
-      channels.forEach((channel) => {
+      for (const channel of channels) {
         jest.clearAllMocks();
-        webhookService.start(null, messageService, channel);
+        await webhookService.start(null, messageService, channel);
 
         expect(mockConfigureWebhookRoutes).toHaveBeenCalledTimes(1);
         expect(mockConfigureWebhookRoutes).toHaveBeenCalledWith(
@@ -118,17 +118,17 @@ describe('webhookService', () => {
           messageService,
           channel
         );
-      });
+      }
     });
 
-    it('should work with different messenger service implementations', () => {
+    it('should work with different messenger service implementations', async () => {
       const alternativeService = {
         ...messageService,
         sendPublicAnnouncement: jest.fn().mockResolvedValue('alt-response'),
         getClientId: jest.fn().mockReturnValue('alt-client'),
       } as any;
 
-      webhookService.start(null, alternativeService, 'test-channel');
+      await webhookService.start(null, alternativeService, 'test-channel');
 
       expect(mockConfigureWebhookRoutes).toHaveBeenCalledWith(
         expect.any(Object),
@@ -139,30 +139,30 @@ describe('webhookService', () => {
   });
 
   describe('error handling', () => {
-    it('should handle route configuration errors gracefully', () => {
+    it('should handle route configuration errors gracefully', async () => {
       mockConfigureWebhookRoutes.mockImplementation(() => {
         throw new Error('Route configuration failed');
       });
 
-      expect(() => {
-        webhookService.start(null, messageService, 'test-channel');
-      }).toThrow('Route configuration failed');
+      await expect(
+        webhookService.start(null, messageService, 'test-channel')
+      ).rejects.toThrow('Route configuration failed');
     });
 
-    it('should handle express app creation errors', () => {
+    it('should handle express app creation errors', async () => {
       mockExpress.mockImplementation(() => {
         throw new Error('Express app creation failed');
       });
 
-      expect(() => {
-        webhookService.start(null, messageService, 'test-channel');
-      }).toThrow('Express app creation failed');
+      await expect(
+        webhookService.start(null, messageService, 'test-channel')
+      ).rejects.toThrow('Express app creation failed');
     });
 
-    it('should handle null message service', () => {
-      expect(() => {
-        webhookService.start(null, null as any, 'test-channel');
-      }).not.toThrow();
+    it('should handle null message service', async () => {
+      await expect(
+        webhookService.start(null, null as any, 'test-channel')
+      ).resolves.not.toThrow();
 
       expect(mockConfigureWebhookRoutes).toHaveBeenCalledWith(
         expect.any(Object),
@@ -179,30 +179,30 @@ describe('webhookService', () => {
       mockExpress.mockReturnValue(mockApp);
     });
 
-    it('should be callable multiple times', () => {
-      webhookService.start(null, messageService, 'channel-1');
-      webhookService.start(null, messageService, 'channel-2');
-      webhookService.start(null, messageService, 'channel-3');
+    it('should be callable multiple times', async () => {
+      await webhookService.start(null, messageService, 'channel-1');
+      await webhookService.start(null, messageService, 'channel-2');
+      await webhookService.start(null, messageService, 'channel-3');
 
       expect(mockExpress).toHaveBeenCalledTimes(3);
       expect(mockConfigureWebhookRoutes).toHaveBeenCalledTimes(3);
     });
 
-    it('should handle rapid successive calls', () => {
+    it('should handle rapid successive calls', async () => {
       for (let i = 0; i < 10; i++) {
-        webhookService.start(null, messageService, `channel-${i}`);
+        await webhookService.start(null, messageService, `channel-${i}`);
       }
 
       expect(mockExpress).toHaveBeenCalledTimes(10);
       expect(mockConfigureWebhookRoutes).toHaveBeenCalledTimes(10);
     });
 
-    it('should maintain service isolation between calls', () => {
+    it('should maintain service isolation between calls', async () => {
       const service1 = { ...messageService, getClientId: () => 'client-1' } as any;
       const service2 = { ...messageService, getClientId: () => 'client-2' } as any;
 
-      webhookService.start(null, service1, 'channel-1');
-      webhookService.start(null, service2, 'channel-2');
+      await webhookService.start(null, service1, 'channel-1');
+      await webhookService.start(null, service2, 'channel-2');
 
       const calls = mockConfigureWebhookRoutes.mock.calls;
       expect(calls[0][1]).toBe(service1);
@@ -217,12 +217,12 @@ describe('webhookService', () => {
       mockExpress.mockReturnValue(mockApp);
     });
 
-    it('should work with pre-configured Express app', () => {
+    it('should work with pre-configured Express app', async () => {
       const app = express();
       app.use(express.json());
       app.use('/api', express.Router());
 
-      webhookService.start(app, messageService, 'integration-channel');
+      await webhookService.start(app, messageService, 'integration-channel');
 
       expect(mockConfigureWebhookRoutes).toHaveBeenCalledWith(
         app,
@@ -231,7 +231,7 @@ describe('webhookService', () => {
       );
     });
 
-    it('should handle complex messenger service configurations', () => {
+    it('should handle complex messenger service configurations', async () => {
       const complexService = {
         ...messageService,
         sendPublicAnnouncement: jest.fn().mockImplementation(async (channel, message) => {
@@ -242,7 +242,7 @@ describe('webhookService', () => {
         customMethod: jest.fn().mockReturnValue('custom-result'),
       } as any;
 
-      webhookService.start(null, complexService, 'complex-channel');
+      await webhookService.start(null, complexService, 'complex-channel');
 
       expect(mockConfigureWebhookRoutes).toHaveBeenCalledWith(
         expect.any(Object),
@@ -251,10 +251,10 @@ describe('webhookService', () => {
       );
     });
 
-    it('should validate app object structure', () => {
+    it('should validate app object structure', async () => {
       const app = express();
 
-      webhookService.start(app, messageService, 'validation-channel');
+      await webhookService.start(app, messageService, 'validation-channel');
 
       const [passedApp] = mockConfigureWebhookRoutes.mock.calls[0];
       expect(passedApp).toBe(app);

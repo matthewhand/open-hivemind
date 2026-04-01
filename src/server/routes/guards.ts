@@ -24,7 +24,7 @@ router.get('/', (req: Request, res: Response) => {
     debug('ERROR:', 'Error retrieving guards:', error);
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       error: 'Failed to retrieve guards',
-      message: error.message || 'An error occurred while retrieving guards',
+      message: error instanceof Error ? error.message : 'An error occurred while retrieving guards',
     });
   }
 });
@@ -66,7 +66,7 @@ router.post(
       }
 
       // Get existing guards to find the access-control guard
-      const guards = webUIStorage.getGuards();
+      const guards = await webUIStorage.getGuards();
       const accessGuard = guards.find((g: Record<string, unknown>) => g.id === 'access-control');
 
       if (!accessGuard) {
@@ -95,7 +95,8 @@ router.post(
       debug('Error saving access control:', error);
       return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         error: 'Failed to save access control',
-        message: error.message || 'An error occurred while saving access control',
+        message:
+          error instanceof Error ? error.message : 'An error occurred while saving access control',
       });
     }
   }
@@ -111,7 +112,7 @@ router.post(
       const { enabled } = req.body;
 
       // Check if guard exists
-      const guards = webUIStorage.getGuards();
+      const guards = await webUIStorage.getGuards();
       const guard = guards.find((g: Record<string, unknown>) => g.id === id);
 
       if (!guard) {
@@ -131,7 +132,7 @@ router.post(
       debug('Error toggling guard:', error);
       return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         error: 'Failed to toggle guard',
-        message: error.message || 'An error occurred while toggling guard',
+        message: error instanceof Error ? error.message : 'An error occurred while toggling guard',
       });
     }
   }

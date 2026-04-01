@@ -19,6 +19,7 @@ import {
 import SystemHealth from '../SystemHealth';
 import BotStatusCard from '../BotStatusCard';
 import ActivityMonitor from './ActivityMonitor';
+import ActivityCharts from './ActivityCharts';
 import DistributedTraceWaterfall, { TraceSpan } from './DistributedTraceWaterfall';
 import BotActivityWaterfallMonitor from './BotActivityWaterfallMonitor';
 import { apiService } from '../../services/api';
@@ -411,6 +412,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
 
         <TabPanel value={activeTab} index={2}>
           <ActivityMonitor />
+          <ActivityCharts />
         </TabPanel>
 
         <TabPanel value={activeTab} index={3}>

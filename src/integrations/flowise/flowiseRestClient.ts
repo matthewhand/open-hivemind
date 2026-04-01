@@ -12,10 +12,7 @@ const debug = Debug('app:flowiseClient');
 const DEFAULT_FLOWISE_TIMEOUT_MS = 30_000;
 
 const circuitBreaker = globalRecoveryManager.getCircuitBreaker('flowise', {
-  name: 'flowise',
   failureThreshold: 5,
-  resetTimeoutMs: 30_000,
-  halfOpenMaxAttempts: 3,
 });
 
 export async function getFlowiseResponse(channelId: string, question: string): Promise<string> {

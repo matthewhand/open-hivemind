@@ -683,11 +683,7 @@ export class WebSocketService {
     });
   }
 
-  public broadcastConfigChange(detail?: {
-    type?: string;
-    action?: string;
-    key?: string;
-  }): void {
+  public broadcastConfigChange(detail?: { type?: string; action?: string; key?: string }): void {
     if (!this.io) {
       return;
     }

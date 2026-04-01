@@ -272,15 +272,27 @@ export class BotConfigService {
         systemInstruction: updates.systemInstruction ?? existingConfig.systemInstruction,
         mcpServers: updates.mcpServers ?? existingConfig.mcpServers,
         mcpGuard: updates.mcpGuard ? JSON.stringify(updates.mcpGuard) : existingConfig.mcpGuard,
-        discord: updates.discord ? JSON.stringify(updates.discord) : existingConfig.discord,
-        slack: updates.slack ? JSON.stringify(updates.slack) : existingConfig.slack,
-        mattermost: updates.mattermost
+        discord: (updates.discord
+          ? JSON.stringify(updates.discord)
+          : existingConfig.discord) as BotConfig['discord'],
+        slack: (updates.slack
+          ? JSON.stringify(updates.slack)
+          : existingConfig.slack) as BotConfig['slack'],
+        mattermost: (updates.mattermost
           ? JSON.stringify(updates.mattermost)
-          : existingConfig.mattermost,
-        openai: updates.openai ? JSON.stringify(updates.openai) : existingConfig.openai,
-        flowise: updates.flowise ? JSON.stringify(updates.flowise) : existingConfig.flowise,
-        openwebui: updates.openwebui ? JSON.stringify(updates.openwebui) : existingConfig.openwebui,
-        openswarm: updates.openswarm ? JSON.stringify(updates.openswarm) : existingConfig.openswarm,
+          : existingConfig.mattermost) as BotConfig['mattermost'],
+        openai: (updates.openai
+          ? JSON.stringify(updates.openai)
+          : existingConfig.openai) as BotConfig['openai'],
+        flowise: (updates.flowise
+          ? JSON.stringify(updates.flowise)
+          : existingConfig.flowise) as BotConfig['flowise'],
+        openwebui: (updates.openwebui
+          ? JSON.stringify(updates.openwebui)
+          : existingConfig.openwebui) as BotConfig['openwebui'],
+        openswarm: (updates.openswarm
+          ? JSON.stringify(updates.openswarm)
+          : existingConfig.openswarm) as BotConfig['openswarm'],
         isActive: updates.isActive ?? existingConfig.isActive,
         createdAt: existingConfig.createdAt.toISOString(),
         updatedAt: new Date().toISOString(),

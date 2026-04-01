@@ -1,5 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Alert } from '../DaisyUI/Alert';
 import Toggle from '../DaisyUI/Toggle';
 import Button from '../DaisyUI/Button';
@@ -8,44 +11,62 @@ import { MessageSquare, Bot, Users, Zap, Info } from 'lucide-react';
 import { apiService } from '../../services/api';
 import { useSavedStamp } from '../../contexts/SavedStampContext';
 
-interface MessagingConfig {
-  onlyWhenSpokenTo: boolean;
-  allowBotToBot: boolean;
-  unsolicitedAddressed: boolean;
-  unsolicitedUnaddressed: boolean;
-  baseChance: number;
-  graceWindowMs: number;
-  /** Whether the bot injects the user's identity hint when mentioned (MESSAGE_ADD_USER_HINT). */
-  addUserHint: boolean;
-  semanticRelevanceEnabled: boolean;
-  semanticRelevanceBonus: number;
-}
+const messagingSettingsSchema = z.object({
+  onlyWhenSpokenTo: z.boolean(),
+  allowBotToBot: z.boolean(),
+  unsolicitedAddressed: z.boolean(),
+  unsolicitedUnaddressed: z.boolean(),
+  baseChance: z.coerce.number().min(0, 'Must be at least 0').max(100, 'Must be 100 or fewer'),
+  graceWindowMs: z.coerce.number().min(0, 'Must be at least 0').max(600000, 'Must be 600000 or fewer'),
+  addUserHint: z.boolean(),
+  semanticRelevanceEnabled: z.boolean(),
+  semanticRelevanceBonus: z.coerce.number().int().min(1, 'Must be at least 1').max(50, 'Must be 50 or fewer'),
+});
+
+type MessagingConfig = z.infer<typeof messagingSettingsSchema>;
+
+const defaultValues: MessagingConfig = {
+  onlyWhenSpokenTo: true,
+  allowBotToBot: false,
+  unsolicitedAddressed: true,
+  unsolicitedUnaddressed: false,
+  baseChance: 5,
+  graceWindowMs: 300000,
+  addUserHint: false,
+  semanticRelevanceEnabled: true,
+  semanticRelevanceBonus: 10,
+};
 
 const SettingsMessaging: React.FC = () => {
-  const [settings, setSettings] = useState<MessagingConfig>({
-    onlyWhenSpokenTo: true,
-    allowBotToBot: false,
-    unsolicitedAddressed: true,
-    unsolicitedUnaddressed: false,
-    baseChance: 5,
-    graceWindowMs: 300000,
-    addUserHint: false,
-    semanticRelevanceEnabled: true,
-    semanticRelevanceBonus: 10,
+  const {
+    handleSubmit,
+    control,
+    reset,
+    watch,
+    formState: { errors },
+  } = useForm<MessagingConfig>({
+    resolver: zodResolver(messagingSettingsSchema),
+    defaultValues,
   });
+
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error' | 'warning', message: string } | null>(null);
   const { showStamp } = useSavedStamp();
 
+  const onlyWhenSpokenTo = watch('onlyWhenSpokenTo');
+  const allowBotToBot = watch('allowBotToBot');
+  const semanticRelevanceEnabled = watch('semanticRelevanceEnabled');
+  const baseChance = watch('baseChance');
+  const graceWindowMs = watch('graceWindowMs');
+  const semanticRelevanceBonus = watch('semanticRelevanceBonus');
+
   const fetchSettings = useCallback(async () => {
     try {
       setLoading(true);
       const data: any = await apiService.getGlobalConfig();
-      // Global config wraps message settings under message.values
-      // const data = raw?.message?.values ?? raw;
 
-      setSettings({
+      reset({
         onlyWhenSpokenTo: data.MESSAGE_ONLY_WHEN_SPOKEN_TO ?? true,
         allowBotToBot: data.MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED ?? false,
         unsolicitedAddressed: data.MESSAGE_UNSOLICITED_ADDRESSED ?? true,
@@ -64,30 +85,26 @@ const SettingsMessaging: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [reset]);
 
   useEffect(() => {
     fetchSettings();
   }, [fetchSettings]);
 
-  const handleChange = (field: keyof MessagingConfig, value: any) => {
-    setSettings(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleSave = async () => {
+  const onSubmit = async (values: MessagingConfig) => {
     setIsSaving(true);
     try {
       await apiService.updateGlobalConfig({
         message: {
-          MESSAGE_ONLY_WHEN_SPOKEN_TO: settings.onlyWhenSpokenTo,
-          MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED: settings.allowBotToBot,
-          MESSAGE_UNSOLICITED_ADDRESSED: settings.unsolicitedAddressed,
-          MESSAGE_UNSOLICITED_UNADDRESSED: settings.unsolicitedUnaddressed,
-          MESSAGE_UNSOLICITED_BASE_CHANCE: settings.baseChance / 100,
-          MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS: settings.graceWindowMs,
-          MESSAGE_ADD_USER_HINT: settings.addUserHint,
-          MESSAGE_SEMANTIC_RELEVANCE_ENABLED: settings.semanticRelevanceEnabled,
-          MESSAGE_SEMANTIC_RELEVANCE_BONUS: settings.semanticRelevanceBonus,
+          MESSAGE_ONLY_WHEN_SPOKEN_TO: values.onlyWhenSpokenTo,
+          MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED: values.allowBotToBot,
+          MESSAGE_UNSOLICITED_ADDRESSED: values.unsolicitedAddressed,
+          MESSAGE_UNSOLICITED_UNADDRESSED: values.unsolicitedUnaddressed,
+          MESSAGE_UNSOLICITED_BASE_CHANCE: values.baseChance / 100,
+          MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS: values.graceWindowMs,
+          MESSAGE_ADD_USER_HINT: values.addUserHint,
+          MESSAGE_SEMANTIC_RELEVANCE_ENABLED: values.semanticRelevanceEnabled,
+          MESSAGE_SEMANTIC_RELEVANCE_BONUS: values.semanticRelevanceBonus,
         },
       });
       setAlert({ type: 'success', message: 'Messaging settings saved! Restart may be required.' });
@@ -112,7 +129,7 @@ const SettingsMessaging: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="flex items-center gap-3 mb-4">
         <MessageSquare className="w-5 h-5 text-primary" />
         <div>
@@ -145,10 +162,16 @@ const SettingsMessaging: React.FC = () => {
                   Bot only replies when directly mentioned, replied to, or wakeword used
                 </p>
               </div>
-              <Toggle
-                checked={settings.onlyWhenSpokenTo}
-                onChange={(e) => handleChange('onlyWhenSpokenTo', e.target.checked)}
-                color="primary"
+              <Controller
+                name="onlyWhenSpokenTo"
+                control={control}
+                render={({ field }) => (
+                  <Toggle
+                    checked={field.value}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(e.target.checked)}
+                    color="primary"
+                  />
+                )}
               />
             </label>
           </div>
@@ -157,20 +180,26 @@ const SettingsMessaging: React.FC = () => {
             <label className="label py-1">
               <span className="label-text text-sm font-medium">Grace Window</span>
               <span className="badge badge-ghost font-mono text-xs">
-                {settings.graceWindowMs >= 60000
-                  ? `${Math.round(settings.graceWindowMs / 60000)}m`
-                  : `${Math.round(settings.graceWindowMs / 1000)}s`}
+                {graceWindowMs >= 60000
+                  ? `${Math.round(graceWindowMs / 60000)}m`
+                  : `${Math.round(graceWindowMs / 1000)}s`}
               </span>
             </label>
-            <input
-              type="range"
-              min="0"
-              max="600000"
-              step="30000"
-              value={settings.graceWindowMs}
-              onChange={(e) => handleChange('graceWindowMs', parseInt(e.target.value))}
-              className="range range-sm range-primary"
-              disabled={!settings.onlyWhenSpokenTo}
+            <Controller
+              name="graceWindowMs"
+              control={control}
+              render={({ field }) => (
+                <input
+                  type="range"
+                  min="0"
+                  max="600000"
+                  step="30000"
+                  value={field.value}
+                  onChange={(e) => field.onChange(parseInt(e.target.value))}
+                  className="range range-sm range-primary"
+                  disabled={!onlyWhenSpokenTo}
+                />
+              )}
             />
             <p className="text-xs text-base-content/60 mt-1">
               After speaking, bot can reply freely for this duration
@@ -193,15 +222,21 @@ const SettingsMessaging: React.FC = () => {
                   Allow spontaneous replies to other bots (not just direct mentions)
                 </p>
               </div>
-              <Toggle
-                checked={settings.allowBotToBot}
-                onChange={(e) => handleChange('allowBotToBot', e.target.checked)}
-                color="secondary"
+              <Controller
+                name="allowBotToBot"
+                control={control}
+                render={({ field }) => (
+                  <Toggle
+                    checked={field.value}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(e.target.checked)}
+                    color="secondary"
+                  />
+                )}
               />
             </label>
           </div>
 
-          {settings.allowBotToBot && (
+          {allowBotToBot && (
             <div className="alert alert-warning mt-3 py-2">
               <Zap className="w-4 h-4" />
               <span className="text-sm">Collision avoidance is active to prevent bot storms</span>
@@ -224,10 +259,16 @@ const SettingsMessaging: React.FC = () => {
                   Join conversations where others are mentioned
                 </p>
               </div>
-              <Toggle
-                checked={settings.unsolicitedAddressed}
-                onChange={(e) => handleChange('unsolicitedAddressed', e.target.checked)}
-                disabled={settings.onlyWhenSpokenTo}
+              <Controller
+                name="unsolicitedAddressed"
+                control={control}
+                render={({ field }) => (
+                  <Toggle
+                    checked={field.value}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(e.target.checked)}
+                    disabled={onlyWhenSpokenTo}
+                  />
+                )}
               />
             </label>
           </div>
@@ -240,10 +281,16 @@ const SettingsMessaging: React.FC = () => {
                   Spontaneously join unaddressed conversations
                 </p>
               </div>
-              <Toggle
-                checked={settings.unsolicitedUnaddressed}
-                onChange={(e) => handleChange('unsolicitedUnaddressed', e.target.checked)}
-                disabled={settings.onlyWhenSpokenTo}
+              <Controller
+                name="unsolicitedUnaddressed"
+                control={control}
+                render={({ field }) => (
+                  <Toggle
+                    checked={field.value}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(e.target.checked)}
+                    disabled={onlyWhenSpokenTo}
+                  />
+                )}
               />
             </label>
           </div>
@@ -264,10 +311,16 @@ const SettingsMessaging: React.FC = () => {
                   Inject the original user's identity when the bot is mentioned (MESSAGE_ADD_USER_HINT)
                 </p>
               </div>
-              <Toggle
-                checked={settings.addUserHint}
-                onChange={(e) => handleChange('addUserHint', e.target.checked)}
-                color="info"
+              <Controller
+                name="addUserHint"
+                control={control}
+                render={({ field }) => (
+                  <Toggle
+                    checked={field.value}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(e.target.checked)}
+                    color="info"
+                  />
+                )}
               />
             </label>
           </div>
@@ -280,10 +333,16 @@ const SettingsMessaging: React.FC = () => {
                   Enable semantic relevance check using a 1-token LLM call to boost reply chance if the message is on-topic (MESSAGE_SEMANTIC_RELEVANCE_ENABLED)
                 </p>
               </div>
-              <Toggle
-                checked={settings.semanticRelevanceEnabled}
-                onChange={(e) => handleChange('semanticRelevanceEnabled', e.target.checked)}
-                color="info"
+              <Controller
+                name="semanticRelevanceEnabled"
+                control={control}
+                render={({ field }) => (
+                  <Toggle
+                    checked={field.value}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(e.target.checked)}
+                    color="info"
+                  />
+                )}
               />
             </label>
           </div>
@@ -296,22 +355,28 @@ const SettingsMessaging: React.FC = () => {
                   <Info className="w-3.5 h-3.5 text-base-content/50 cursor-help" />
                 </div>
               </span>
-              <span className="badge badge-info font-mono text-xs flex-none">{settings.semanticRelevanceBonus}x</span>
+              <span className="badge badge-info font-mono text-xs flex-none">{semanticRelevanceBonus}x</span>
             </label>
-            <input
-              type="range"
-              min="1"
-              max="50"
-              step="1"
-              value={settings.semanticRelevanceBonus}
-              onChange={(e) => handleChange('semanticRelevanceBonus', parseInt(e.target.value))}
-              className="range range-sm"
-              style={{
-                background: `linear-gradient(to right, oklch(var(--er)) 0%, oklch(var(--su)) 100%)`,
-                WebkitAppearance: 'none',
-                borderRadius: 'var(--rounded-box, 1rem)'
-              }}
-              disabled={!settings.semanticRelevanceEnabled}
+            <Controller
+              name="semanticRelevanceBonus"
+              control={control}
+              render={({ field }) => (
+                <input
+                  type="range"
+                  min="1"
+                  max="50"
+                  step="1"
+                  value={field.value}
+                  onChange={(e) => field.onChange(parseInt(e.target.value))}
+                  className="range range-sm"
+                  style={{
+                    background: `linear-gradient(to right, oklch(var(--er)) 0%, oklch(var(--su)) 100%)`,
+                    WebkitAppearance: 'none',
+                    borderRadius: 'var(--rounded-box, 1rem)'
+                  }}
+                  disabled={!semanticRelevanceEnabled}
+                />
+              )}
             />
             <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
               <span>1x</span>
@@ -339,23 +404,29 @@ const SettingsMessaging: React.FC = () => {
                   <Info className="w-3.5 h-3.5 text-base-content/50 cursor-help" />
                 </div>
               </span>
-              <span className="badge badge-accent font-mono flex-none">{settings.baseChance.toFixed(0)}%</span>
+              <span className="badge badge-accent font-mono flex-none">{baseChance.toFixed(0)}%</span>
             </label>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              step="1"
-              value={settings.baseChance}
-              onChange={(e) => handleChange('baseChance', parseInt(e.target.value))}
-              className="range"
-              style={{
-                background: `linear-gradient(to right, oklch(var(--er)) 0%, oklch(var(--su)) 100%)`,
-                WebkitAppearance: 'none',
-                height: '1.5rem',
-                borderRadius: 'var(--rounded-box, 1rem)'
-              }}
-              disabled={settings.onlyWhenSpokenTo}
+            <Controller
+              name="baseChance"
+              control={control}
+              render={({ field }) => (
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value={field.value}
+                  onChange={(e) => field.onChange(parseInt(e.target.value))}
+                  className="range"
+                  style={{
+                    background: `linear-gradient(to right, oklch(var(--er)) 0%, oklch(var(--su)) 100%)`,
+                    WebkitAppearance: 'none',
+                    height: '1.5rem',
+                    borderRadius: 'var(--rounded-box, 1rem)'
+                  }}
+                  disabled={onlyWhenSpokenTo}
+                />
+              )}
             />
             <div className="w-full flex justify-between text-xs px-2 mt-1 text-base-content/50">
               <span>0%</span>
@@ -381,9 +452,9 @@ const SettingsMessaging: React.FC = () => {
                 rows={2}
               ></textarea>
               <div className="flex justify-between items-center font-mono bg-base-100 p-2 rounded">
-                <span>{settings.baseChance}% × {settings.semanticRelevanceBonus}x</span>
+                <span>{baseChance}% × {semanticRelevanceBonus}x</span>
                 <span className="font-bold text-lg text-primary">
-                  {Math.min(100, settings.baseChance * settings.semanticRelevanceBonus)}%
+                  {Math.min(100, baseChance * semanticRelevanceBonus)}%
                 </span>
               </div>
             </div>
@@ -411,47 +482,47 @@ const SettingsMessaging: React.FC = () => {
                 <tr>
                   <td>Only When Spoken To</td>
                   <td>MESSAGE_ONLY_WHEN_SPOKEN_TO</td>
-                  <td>{settings.onlyWhenSpokenTo ? '✅ true' : '➖ false'}</td>
+                  <td>{onlyWhenSpokenTo ? '\u2705 true' : '\u2796 false'}</td>
                 </tr>
                 <tr>
                   <td>Allow Bot-to-Bot</td>
                   <td>MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED</td>
-                  <td>{settings.allowBotToBot ? '✅ true' : '➖ false'}</td>
+                  <td>{allowBotToBot ? '\u2705 true' : '\u2796 false'}</td>
                 </tr>
                 <tr>
                   <td>Unsolicited Addressed</td>
                   <td>MESSAGE_UNSOLICITED_ADDRESSED</td>
-                  <td>{settings.unsolicitedAddressed ? '✅ true' : '➖ false'}</td>
+                  <td>{watch('unsolicitedAddressed') ? '\u2705 true' : '\u2796 false'}</td>
                 </tr>
                 <tr>
                   <td>Unsolicited Unaddressed</td>
                   <td>MESSAGE_UNSOLICITED_UNADDRESSED</td>
-                  <td>{settings.unsolicitedUnaddressed ? '✅ true' : '➖ false'}</td>
+                  <td>{watch('unsolicitedUnaddressed') ? '\u2705 true' : '\u2796 false'}</td>
                 </tr>
                 <tr>
                   <td>Base Chance</td>
                   <td>MESSAGE_UNSOLICITED_BASE_CHANCE</td>
-                  <td>{(settings.baseChance / 100).toFixed(2)}</td>
+                  <td>{(baseChance / 100).toFixed(2)}</td>
                 </tr>
                 <tr>
                   <td>Grace Window</td>
                   <td>MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS</td>
-                  <td>{settings.graceWindowMs}ms</td>
+                  <td>{graceWindowMs}ms</td>
                 </tr>
                 <tr>
                   <td>Add User Hint</td>
                   <td>MESSAGE_ADD_USER_HINT</td>
-                  <td>{settings.addUserHint ? '✅ true' : '➖ false'}</td>
+                  <td>{watch('addUserHint') ? '\u2705 true' : '\u2796 false'}</td>
                 </tr>
                 <tr>
                   <td>Semantic Relevance</td>
                   <td>MESSAGE_SEMANTIC_RELEVANCE_ENABLED</td>
-                  <td>{settings.semanticRelevanceEnabled ? '✅ true' : '➖ false'}</td>
+                  <td>{semanticRelevanceEnabled ? '\u2705 true' : '\u2796 false'}</td>
                 </tr>
                 <tr>
                   <td>Semantic Relevance Bonus</td>
                   <td>MESSAGE_SEMANTIC_RELEVANCE_BONUS</td>
-                  <td>{settings.semanticRelevanceBonus}</td>
+                  <td>{semanticRelevanceBonus}</td>
                 </tr>
               </tbody>
             </table>
@@ -461,15 +532,14 @@ const SettingsMessaging: React.FC = () => {
 
       <div className="flex justify-end pt-4">
         <Button
-          onClick={handleSave}
-          disabled={isSaving}
+          type="submit"
           variant="primary"
           loading={isSaving}
         >
           {isSaving ? 'Saving...' : 'Save Settings'}
         </Button>
       </div>
-    </div>
+    </form>
   );
 };
 

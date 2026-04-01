@@ -1,6 +1,6 @@
 import path from 'path';
 import { WebSocketService } from '../../services/WebSocketService';
-import { IProvider } from '../../../types/IProvider';
+import { type IProvider } from '../../../types/IProvider';
 import { providerRegistry } from '../../../registries/ProviderRegistry';
 
 export function broadcastConfigUpdate(

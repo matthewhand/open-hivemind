@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Dashboard from '../../components/Dashboard';
+import { apiService } from '../../services/api';
 
 import Carousel from '../../components/DaisyUI/Carousel';
 import DashboardWidgetSystem from '../../components/DaisyUI/DashboardWidgetSystem';
@@ -23,13 +24,10 @@ const DashboardPage: React.FC = () => {
   useEffect(() => {
     const checkOnboarding = async (): Promise<void> => {
       try {
-        const res = await fetch('/api/onboarding/status');
-        if (res.ok) {
-          const data = await res.json();
-          if (!data.completed) {
-            navigate('/onboarding', { replace: true });
-            return;
-          }
+        const data = await apiService.get<any>('/api/onboarding/status');
+        if (!data.completed) {
+          navigate('/onboarding', { replace: true });
+          return;
         }
       } catch {
         // If the endpoint is unavailable, proceed to dashboard normally

@@ -10,9 +10,9 @@
  * @module pipeline/adapters/DecisionStrategyAdapter
  */
 
-import type { DecisionStrategy } from '@src/pipeline/DecisionStage';
 import type { MessageContext, ReplyDecision } from '@src/events/types';
 import { shouldReplyToMessage } from '@src/message/helpers/processing/shouldReplyToMessage';
+import type { DecisionStrategy } from '@src/pipeline/DecisionStage';
 
 /**
  * Dependencies required by the DecisionStrategyAdapter.
@@ -33,17 +33,13 @@ export class DecisionStrategyAdapter implements DecisionStrategy {
 
   async shouldReply(ctx: MessageContext): Promise<ReplyDecision> {
     const botId =
-      this.deps.botId ||
-      (ctx.botConfig.BOT_ID as string) ||
-      (ctx.botConfig.botId as string) ||
-      '';
+      this.deps.botId || (ctx.botConfig.BOT_ID as string) || (ctx.botConfig.botId as string) || '';
 
-    const platform = (ctx.platform === 'discord' ? 'discord' : 'generic') as
-      | 'discord'
-      | 'generic';
+    const platform = (ctx.platform === 'discord' ? 'discord' : 'generic') as 'discord' | 'generic';
 
     const botName = ctx.botName;
-    const defaultChannelId = this.deps.defaultChannelId || (ctx.botConfig.defaultChannelId as string);
+    const defaultChannelId =
+      this.deps.defaultChannelId || (ctx.botConfig.defaultChannelId as string);
 
     const result = await shouldReplyToMessage(
       ctx.message,
@@ -52,7 +48,7 @@ export class DecisionStrategyAdapter implements DecisionStrategy {
       botName,
       ctx.history,
       defaultChannelId,
-      ctx.botConfig as Record<string, any>,
+      ctx.botConfig as Record<string, any>
     );
 
     // The legacy ReplyDecision shape matches the pipeline's ReplyDecision,

@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { apiService } from '../services/api';
 
 export interface LlmStatus {
   defaultConfigured: boolean;
@@ -15,39 +16,26 @@ interface LlmStatusState {
 }
 
 export const useLlmStatus = (): LlmStatusState => {
-  const [status, setStatus] = useState<LlmStatus | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: status = null,
+    isLoading: loading,
+    error: queryError,
+    refetch,
+  } = useQuery<LlmStatus>({
+    queryKey: ['config', 'llm-status'],
+    queryFn: () => apiService.get<LlmStatus>('/api/config/llm-status'),
+  });
 
-  const fetchStatus = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const stored = localStorage.getItem('auth_tokens');
-      const accessToken = stored ? (JSON.parse(stored) as { accessToken?: string })?.accessToken : undefined;
-      const response = await fetch('/api/config/llm-status', {
-        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
-      });
-      if (!response.ok) {
-        throw new Error('Failed to load LLM status');
-      }
-      const data = await response.json();
-      setStatus(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load LLM status');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const error = queryError instanceof Error ? queryError.message : null;
 
-  useEffect(() => {
-    fetchStatus();
-  }, [fetchStatus]);
+  const refresh = async () => {
+    await refetch();
+  };
 
   return {
     status,
     loading,
     error,
-    refresh: fetchStatus,
+    refresh,
   };
 };

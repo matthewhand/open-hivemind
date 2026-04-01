@@ -11,11 +11,10 @@
  * @module observability/TraceExporter
  */
 
-import Debug from 'debug';
 import { promises as fs } from 'fs';
 import { dirname } from 'path';
-import type { Trace, Span } from './PipelineTracer';
-import type { PipelineTracer } from './PipelineTracer';
+import Debug from 'debug';
+import type { PipelineTracer, Span, Trace } from './PipelineTracer';
 
 const debug = Debug('app:trace-export');
 
@@ -144,7 +143,7 @@ export class OtlpExporter implements ITraceExporter {
         debug(
           'OtlpExporter HTTP %d: %s',
           response.status,
-          await response.text().catch(() => '(no body)'),
+          await response.text().catch(() => '(no body)')
         );
       } else {
         debug('Trace %s exported to OTLP endpoint', trace.traceId);
@@ -174,9 +173,7 @@ export class OtlpExporter implements ITraceExporter {
       resourceSpans: [
         {
           resource: {
-            attributes: [
-              { key: 'service.name', value: { stringValue: 'open-hivemind' } },
-            ],
+            attributes: [{ key: 'service.name', value: { stringValue: 'open-hivemind' } }],
           },
           scopeSpans: [
             {
@@ -246,7 +243,7 @@ export class TraceExportManager {
    */
   async exportTrace(trace: Trace): Promise<void> {
     const results = await Promise.allSettled(
-      this.exporters.map((exporter) => exporter.export(trace)),
+      this.exporters.map((exporter) => exporter.export(trace))
     );
 
     for (const result of results) {
@@ -260,9 +257,7 @@ export class TraceExportManager {
    * Shut down all exporters, giving them a chance to flush buffers.
    */
   async shutdown(): Promise<void> {
-    await Promise.allSettled(
-      this.exporters.map((exporter) => exporter.shutdown()),
-    );
+    await Promise.allSettled(this.exporters.map((exporter) => exporter.shutdown()));
     debug('TraceExportManager shut down');
   }
 

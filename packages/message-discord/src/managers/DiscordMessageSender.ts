@@ -194,12 +194,10 @@ export class DiscordMessageSender {
         webSocketService?.recordMessageFlow({
           botName: botInfo.botUserName,
           provider: 'discord',
-          llmProvider: botInfo.config?.llmProvider,
           channelId: selectedChannelId,
           userId: '',
           messageType: 'outgoing',
           contentLength: (text || '').length,
-          processingTime: Date.now() - startTime,
           status: 'success',
         });
       } catch {}

@@ -151,6 +151,10 @@ dist/config/environments/.env.backup
 
 # yarn v2
 *.bak
+*.backup
+*.old
+*.orig
+*.tmp
 .yarn/cache
 .yarn/unplugged
 .yarn/build-state.yml

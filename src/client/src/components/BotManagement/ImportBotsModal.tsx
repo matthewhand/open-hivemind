@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import Modal from '../DaisyUI/Modal';
 import FileUpload from '../DaisyUI/FileUpload';
+import { apiService } from '../../services/api';
 
 interface ImportBundle {
   schemaVersion?: number;
@@ -113,17 +114,7 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
     if (!bundle) return;
     setImporting(true);
     try {
-      const resp = await fetch('/api/bots/import', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(bundle),
-      });
-      const data = await resp.json();
-      if (!resp.ok) {
-        setParseError(data.error || 'Import failed');
-        setImporting(false);
-        return;
-      }
+      const data = await apiService.post<any>('/api/bots/import', bundle);
       setReport(data.report);
       setStep('result');
       onImportComplete();
