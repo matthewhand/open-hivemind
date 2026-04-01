@@ -42,7 +42,7 @@ export function isSensitiveKey(key: string): boolean {
   return SENSITIVE_PATTERNS.some((pattern) => pattern.test(key));
 }
 
-export function redactValue(value: any): string {
+export function redactValue(value: unknown): string {
   if (!value) {
     return '';
   }
@@ -53,9 +53,9 @@ export function redactValue(value: any): string {
   return str.slice(0, 4) + '••••' + str.slice(-4);
 }
 
-export function redactProviderConfig(config: any, provider: IProvider): any {
+export function redactProviderConfig(config: Record<string, unknown>, provider: IProvider): Record<string, unknown> {
   const sensitiveKeys = new Set(provider.getSensitiveKeys());
-  const result: any = {};
+  const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(config)) {
     if (sensitiveKeys.has(key) && value) {
       result[key] = {
@@ -72,19 +72,19 @@ export function redactProviderConfig(config: any, provider: IProvider): any {
   return result;
 }
 
-export function redactObject(obj: any, parentKey = ''): any {
-  const result: any = {};
+export function redactObject(obj: Record<string, unknown>, parentKey = ''): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(obj)) {
     const fullKey = parentKey ? `${parentKey}.${key}` : key;
 
     const provider = providerRegistry.get(key);
     if (provider && value && typeof value === 'object' && !Array.isArray(value)) {
-      result[key] = redactProviderConfig(value as any, provider);
+      result[key] = redactProviderConfig(value as Record<string, unknown>, provider);
       continue;
     }
 
     if (value && typeof value === 'object' && !Array.isArray(value)) {
-      result[key] = redactObject(value as any, fullKey);
+      result[key] = redactObject(value as Record<string, unknown>, fullKey);
     } else if (isSensitiveKey(key) && value) {
       result[key] = {
         isRedacted: true,
@@ -98,12 +98,12 @@ export function redactObject(obj: any, parentKey = ''): any {
   return result;
 }
 
-export const deepCloneSchema = (obj: any): any => {
+export const deepCloneSchema = (obj: unknown): unknown => {
   if (obj === null || typeof obj !== 'object') {
     return obj;
   }
   if (Array.isArray(obj)) {
-    return (obj as unknown[]).map((item: any) => deepCloneSchema(item));
+    return (obj as unknown[]).map((item: unknown) => deepCloneSchema(item));
   }
   return Object.fromEntries(
     Object.entries(obj)
