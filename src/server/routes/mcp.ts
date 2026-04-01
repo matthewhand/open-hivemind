@@ -180,7 +180,7 @@ router.get('/servers', async (req, res) => {
       tools: connectedClients.get(server.name)?.server.tools || server.tools,
     }));
 
-    return res.json({ servers: updatedServers });
+    return res.json({ success: true, data: { servers: updatedServers } });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);
@@ -210,7 +210,7 @@ router.post('/servers', validateRequest(AddMCPServerSchema), async (req, res) =>
     // Check if server already exists
     const existingServer = servers.find((s) => s.name === name);
     if (existingServer) {
-      return res.status(HTTP_STATUS.OK).json({ server: existingServer });
+      return res.status(HTTP_STATUS.OK).json({ success: true, data: { server: existingServer } });
     }
 
     const newServer: MCPServer = {
@@ -224,7 +224,7 @@ router.post('/servers', validateRequest(AddMCPServerSchema), async (req, res) =>
     await saveMCPServers(servers);
 
     debug(`Added new MCP server: ${name}`);
-    return res.json({ server: newServer });
+    return res.json({ success: true, data: { server: newServer } });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);
@@ -271,10 +271,10 @@ router.post(
         servers[serverIndex] = mcpClient.server;
         await saveMCPServers(servers);
 
-        return res.json({
+        return res.json({ success: true, data: {
           server: mcpClient.server,
           message: 'Successfully connected to MCP server',
-        });
+        }});
       } catch (error) {
         // Update server config with error
         const serverIndex = servers.findIndex((s) => s.name === name);
@@ -332,7 +332,7 @@ router.post(
         await saveMCPServers(servers);
       }
 
-      return res.json({ message: 'Successfully disconnected from MCP server' });
+      return res.json({ success: true, data: { message: 'Successfully disconnected from MCP server' } });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
       const errorInfo = ErrorUtils.classifyError(hivemindError);
@@ -373,7 +373,7 @@ router.delete('/servers/:name', validateRequest(MCPServerNameParamSchema), async
     await saveMCPServers(filteredServers);
 
     debug(`Removed MCP server: ${name}`);
-    return res.json({ success: true });
+    return res.json({ success: true, data: { success: true } });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);
@@ -410,7 +410,7 @@ router.get('/servers/:name/tools', validateRequest(MCPServerNameParamSchema), as
       inputSchema: tool.inputSchema,
     }));
 
-    return res.json({ tools });
+    return res.json({ success: true, data: { tools } });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);
@@ -446,7 +446,7 @@ router.post('/servers/:name/call-tool', validateRequest(CallMCPToolSchema), asyn
       arguments: toolArgs || {},
     });
 
-    return res.json({ result });
+    return res.json({ success: true, data: { result } });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);
@@ -476,7 +476,7 @@ router.get('/connected', async (req, res) => {
       lastConnected: client.server.lastConnected,
     }));
 
-    return res.json({ connected });
+    return res.json({ success: true, data: { connected } });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const errorInfo = ErrorUtils.classifyError(hivemindError);
