@@ -13,7 +13,6 @@ import { SkeletonList, SkeletonMessageList } from '../components/DaisyUI/Skeleto
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import { useMediaQuery } from '../hooks/useBreakpoint';
 import { Alert } from '../components/DaisyUI/Alert';
-import Badge from '../components/DaisyUI/Badge';
 import Drawer from '../components/DaisyUI/Drawer';
 import Dropdown from '../components/DaisyUI/Dropdown';
 
