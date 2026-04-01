@@ -89,6 +89,9 @@ jest.mock('../../src/types/errors', () => {
       ...original.ErrorUtils,
       toHivemindError: jest.fn((e) => e),
       classifyError: jest.fn(() => ({ type: 'test' })),
+      getStatusCode: jest.fn((e) => (e as any)?.statusCode || 500),
+      getMessage: jest.fn((e) => (e as any)?.message || 'Internal server error'),
+      getCode: jest.fn((e) => (e as any)?.code || 'INTERNAL_ERROR'),
     },
   };
 });
