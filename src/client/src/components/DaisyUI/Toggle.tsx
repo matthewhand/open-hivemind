@@ -34,6 +34,8 @@ const Toggle: React.FC<ToggleProps> = ({
     <input
       id={toggleId}
       type="checkbox"
+      role="switch"
+      aria-checked={checked ?? false}
       className={toggleClasses}
       checked={checked}
       onChange={onChange}
