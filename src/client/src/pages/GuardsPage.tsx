@@ -5,18 +5,17 @@ import { z } from 'zod';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Shield, RefreshCw, AlertTriangle, Plus, Copy, Trash2, Edit2 } from 'lucide-react';
 import { apiService } from '../services/api';
-import PageHeader from '../components/PageHeader';
+import PageHeader from '../components/DaisyUI/PageHeader';
 import Card from '../components/DaisyUI/Card';
 import Input from '../components/DaisyUI/Input';
 import Button from '../components/DaisyUI/Button';
 import Toggle from '../components/DaisyUI/Toggle';
 import Select from '../components/DaisyUI/Select';
-import ConfirmModal from '../components/DaisyUI/ConfirmModal';
+import { ConfirmModal } from '../components/DaisyUI/Modal';
 import FormField from '../components/DaisyUI/FormField';
 import RangeSlider from '../components/DaisyUI/RangeSlider';
 import { GuardProfile } from '@shared/types/models/security';
-import { useToast } from '../components/ToastProvider';
-import { useSavedStamp } from '../contexts/SavedStampContext';
+import { useToast } from '../components/DaisyUI/ToastNotification';
 
 // ---------------------------------------------------------------------------
 // Zod schema

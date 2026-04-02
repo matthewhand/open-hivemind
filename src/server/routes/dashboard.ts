@@ -433,8 +433,7 @@ router.get('/activity', authenticate, requireAdmin, async (req, res) => {
       })
       .map((event) => annotateEvent(event, botMap));
 
-    const timeline = buildTimeline(filteredEvents);
-    const agentMetrics = buildAgentMetrics(filteredEvents, ws.getAllBotStats());
+    const { timeline, agentMetrics } = buildTimelineAndMetrics(filteredEvents, ws.getAllBotStats());
 
     res.json(
       ApiResponse.success({
@@ -552,40 +551,22 @@ function annotateEvent(
   };
 }
 
-function buildTimeline(events: AnnotatedEvent[]) {
-  const bucketMs = 60 * 1000; // 1 minute buckets
-  const buckets = new Map<
-    string,
-    { messageProviders: Record<string, number>; llmProviders: Record<string, number> }
-  >();
-
-  events.forEach((event) => {
-    const timestamp = new Date(event.timestamp).getTime();
-    if (Number.isNaN(timestamp)) {
-      return;
-    }
-    const bucketStart = Math.floor(timestamp / bucketMs) * bucketMs;
-    const bucketKey = new Date(bucketStart).toISOString();
-
-    if (!buckets.has(bucketKey)) {
-      buckets.set(bucketKey, { messageProviders: {}, llmProviders: {} });
-    }
-
-    const bucket = buckets.get(bucketKey)!;
-
-    bucket.messageProviders[event.provider] = (bucket.messageProviders[event.provider] || 0) + 1;
-    bucket.llmProviders[event.llmProvider] = (bucket.llmProviders[event.llmProvider] || 0) + 1;
-  });
-
-  return Array.from(buckets.entries())
-    .sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime())
-    .map(([timestamp, data]) => ({ timestamp, ...data }));
-}
-
-function buildAgentMetrics(
+// ⚡ Bolt Optimization: Combined buildTimeline and buildAgentMetrics into a single pass
+// This avoids iterating through thousands of events twice and eliminates O(N) redundant Date parsing
+function buildTimelineAndMetrics(
   events: AnnotatedEvent[],
   botStats: Record<string, { messageCount: number; errors: string[]; errorCount: number }>
 ) {
+  const bucketMs = 60 * 1000; // 1 minute buckets
+  const buckets = new Map<
+    string,
+    {
+      messageProviders: Record<string, number>;
+      llmProviders: Record<string, number>;
+      timestampMs: number;
+    }
+  >();
+
   const metrics = new Map<
     string,
     {
@@ -595,15 +576,34 @@ function buildAgentMetrics(
       events: number;
       errors: number;
       lastActivity: string;
+      lastActivityMs: number;
       totalMessages: number;
       recentErrors: string[];
     }
   >();
 
   events.forEach((event) => {
+    // Single Date parse per event
+    const timestampMs = new Date(event.timestamp).getTime();
+    if (Number.isNaN(timestampMs)) {
+      return;
+    }
+
+    // 1. Build Timeline data
+    const bucketStart = Math.floor(timestampMs / bucketMs) * bucketMs;
+    const bucketKey = new Date(bucketStart).toISOString();
+
+    let bucket = buckets.get(bucketKey);
+    if (!bucket) {
+      bucket = { messageProviders: {}, llmProviders: {}, timestampMs: bucketStart };
+      buckets.set(bucketKey, bucket);
+    }
+    bucket.messageProviders[event.provider] = (bucket.messageProviders[event.provider] || 0) + 1;
+    bucket.llmProviders[event.llmProvider] = (bucket.llmProviders[event.llmProvider] || 0) + 1;
+
+    // 2. Build Agent Metrics data
     const existing = metrics.get(event.botName);
-    const errorsForBot = botStats[event.botName]?.errors ?? [];
-    const totalMessages = botStats[event.botName]?.messageCount ?? 0;
+    const isError = event.status === 'error' || event.status === 'timeout';
 
     if (!existing) {
       metrics.set(event.botName, {
@@ -611,24 +611,40 @@ function buildAgentMetrics(
         messageProvider: event.provider,
         llmProvider: event.llmProvider,
         events: 1,
-        errors: event.status === 'error' || event.status === 'timeout' ? 1 : 0,
+        errors: isError ? 1 : 0,
         lastActivity: event.timestamp,
-        totalMessages,
-        recentErrors: errorsForBot,
+        lastActivityMs: timestampMs,
+        totalMessages: botStats[event.botName]?.messageCount ?? 0,
+        recentErrors: botStats[event.botName]?.errors ?? [],
       });
-      return;
+    } else {
+      existing.events += 1;
+      if (isError) {
+        existing.errors += 1;
+      }
+      if (timestampMs > existing.lastActivityMs) {
+        existing.lastActivity = event.timestamp;
+        existing.lastActivityMs = timestampMs;
+      }
+      existing.totalMessages = botStats[event.botName]?.messageCount ?? 0;
+      existing.recentErrors = botStats[event.botName]?.errors ?? [];
     }
-
-    existing.events += 1;
-    if (event.status === 'error' || event.status === 'timeout') {
-      existing.errors += 1;
-    }
-    if (new Date(event.timestamp).getTime() > new Date(existing.lastActivity).getTime()) {
-      existing.lastActivity = event.timestamp;
-    }
-    existing.totalMessages = totalMessages;
-    existing.recentErrors = errorsForBot;
   });
 
-  return Array.from(metrics.values()).sort((a, b) => b.events - a.events);
+  const timeline = Array.from(buckets.entries())
+    .sort((a, b) => a[1].timestampMs - b[1].timestampMs)
+    .map(([timestamp, data]) => ({
+      timestamp,
+      messageProviders: data.messageProviders,
+      llmProviders: data.llmProviders,
+    }));
+
+  const agentMetrics = Array.from(metrics.values())
+    .map((m) => {
+      const { lastActivityMs: _lastActivityMs, ...rest } = m; // Remove the temporary sorting field
+      return rest;
+    })
+    .sort((a, b) => b.events - a.events);
+
+  return { timeline, agentMetrics };
 }

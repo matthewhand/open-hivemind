@@ -16,15 +16,27 @@ export interface BotInstance {
   envOverrides?: Record<string, any>;
 }
 
-export const BotStatus = {
-  ACTIVE: 'active',
-  INACTIVE: 'inactive',
-  ERROR: 'error',
-  STARTING: 'starting',
-  STOPPING: 'stopping'
+export const BOT_STATUSES = ['active', 'inactive', 'error', 'starting', 'stopping'] as const;
+export type BotStatus = typeof BOT_STATUSES[number];
+
+export const MESSAGE_PROVIDER_TYPES = ['discord', 'slack', 'mattermost', 'webhook'] as const;
+export type MessageProviderType = typeof MESSAGE_PROVIDER_TYPES[number];
+
+export const LLM_PROVIDER_TYPES = ['openai', 'anthropic', 'flowise', 'openwebui', 'perplexity', 'replicate', 'n8n', 'openswarm'] as const;
+export type LLMProviderType = typeof LLM_PROVIDER_TYPES[number];
+
+export const PersonaCategory = {
+  GENERAL: 'general',
+  PROFESSIONAL: 'professional',
+  CREATIVE: 'creative',
+  TECHNICAL: 'technical',
+  CASUAL: 'casual',
+  EDUCATIONAL: 'educational',
+  ENTERTAINMENT: 'entertainment',
+  CUSTOMER_SERVICE: 'customer_service',
 } as const;
 
-export type BotStatus = typeof BotStatus[keyof typeof BotStatus];
+export type PersonaCategory = typeof PersonaCategory[keyof typeof PersonaCategory];
 
 export interface MessageProvider {
   id: string;
@@ -43,28 +55,6 @@ export interface LLMProvider {
   enabled: boolean;
 }
 
-export const MessageProviderType = {
-  DISCORD: 'discord',
-  SLACK: 'slack',
-  MATTERMOST: 'mattermost',
-  WEBHOOK: 'webhook',
-} as const;
-
-export type MessageProviderType = typeof MessageProviderType[keyof typeof MessageProviderType];
-
-export const LLMProviderType = {
-  OPENAI: 'openai',
-  ANTHROPIC: 'anthropic',
-  FLOWISE: 'flowise',
-  OPENWEBUI: 'openwebui',
-  PERPLEXITY: 'perplexity',
-  REPLICATE: 'replicate',
-  N8N: 'n8n',
-  OPENSWARM: 'openswarm',
-} as const;
-
-export type LLMProviderType = typeof LLMProviderType[keyof typeof LLMProviderType];
-
 export interface Persona {
   id: string;
   name: string;
@@ -78,19 +68,6 @@ export interface Persona {
   createdAt: string;
   updatedAt: string;
 }
-
-export const PersonaCategory = {
-  GENERAL: 'general',
-  PROFESSIONAL: 'professional',
-  CREATIVE: 'creative',
-  TECHNICAL: 'technical',
-  CASUAL: 'casual',
-  EDUCATIONAL: 'educational',
-  ENTERTAINMENT: 'entertainment',
-  CUSTOMER_SERVICE: 'customer_service',
-} as const;
-
-export type PersonaCategory = typeof PersonaCategory[keyof typeof PersonaCategory];
 
 export interface PersonaTrait {
   name: string;
@@ -240,7 +217,7 @@ export type CreateBotRequest = Omit<Bot, 'id' | 'createdAt' | 'updatedAt' | 'met
 
 export const MESSAGE_PROVIDER_CONFIGS = {
   slack: {
-    type: MessageProviderType.SLACK,
+    type: 'slack' as MessageProviderType,
     displayName: 'Slack',
     description: 'Connect to Slack workspaces',
     icon: '💬',
@@ -251,7 +228,7 @@ export const MESSAGE_PROVIDER_CONFIGS = {
     ],
   },
   discord: {
-    type: MessageProviderType.DISCORD,
+    type: 'discord' as MessageProviderType,
     displayName: 'Discord',
     description: 'Connect to Discord servers',
     icon: '🎮',
@@ -261,7 +238,7 @@ export const MESSAGE_PROVIDER_CONFIGS = {
     ],
   },
   webhook: {
-    type: MessageProviderType.WEBHOOK,
+    type: 'webhook' as MessageProviderType,
     displayName: 'Webhook',
     description: 'Generic webhook integration',
     icon: '🔗',
@@ -271,7 +248,7 @@ export const MESSAGE_PROVIDER_CONFIGS = {
     ],
   },
   mattermost: {
-    type: MessageProviderType.MATTERMOST,
+    type: 'mattermost' as MessageProviderType,
     displayName: 'Mattermost',
     description: 'Connect to Mattermost instances',
     icon: '💻',
@@ -285,7 +262,7 @@ export const MESSAGE_PROVIDER_CONFIGS = {
 
 export const LLM_PROVIDER_CONFIGS = {
   openai: {
-    type: LLMProviderType.OPENAI,
+    type: 'openai' as LLMProviderType,
     displayName: 'OpenAI',
     description: 'GPT models from OpenAI',
     icon: '🤖',
@@ -295,7 +272,7 @@ export const LLM_PROVIDER_CONFIGS = {
     ],
   },
   anthropic: {
-    type: LLMProviderType.ANTHROPIC,
+    type: 'anthropic' as LLMProviderType,
     displayName: 'Anthropic',
     description: 'Claude models from Anthropic',
     icon: '🧠',
@@ -307,7 +284,7 @@ export const LLM_PROVIDER_CONFIGS = {
     ],
   },
   flowise: {
-    type: LLMProviderType.FLOWISE,
+    type: 'flowise' as LLMProviderType,
     displayName: 'Flowise',
     description: 'Visual LLM orchestration',
     icon: '🌊',
@@ -318,7 +295,7 @@ export const LLM_PROVIDER_CONFIGS = {
     ],
   },
   perplexity: {
-    type: LLMProviderType.PERPLEXITY,
+    type: 'perplexity' as LLMProviderType,
     displayName: 'Perplexity',
     description: 'Search-augmented AI models',
     icon: '🔍',
@@ -328,7 +305,7 @@ export const LLM_PROVIDER_CONFIGS = {
     ],
   },
   replicate: {
-    type: LLMProviderType.REPLICATE,
+    type: 'replicate' as LLMProviderType,
     displayName: 'Replicate',
     description: 'Run open-source models',
     icon: '🚀',
@@ -338,7 +315,7 @@ export const LLM_PROVIDER_CONFIGS = {
     ],
   },
   n8n: {
-    type: LLMProviderType.N8N,
+    type: 'n8n' as LLMProviderType,
     displayName: 'n8n',
     description: 'Workflow automation platform',
     icon: '⚡',
@@ -348,7 +325,7 @@ export const LLM_PROVIDER_CONFIGS = {
     ],
   },
   openswarm: {
-    type: LLMProviderType.OPENSWARM,
+    type: 'openswarm' as LLMProviderType,
     displayName: 'OpenSwarm',
     description: 'Multi-agent orchestration',
     icon: '🐝',
@@ -370,7 +347,7 @@ export const DEFAULT_PERSONA: Persona = {
     { name: 'Tone', value: 'Friendly', weight: 1 },
     { name: 'Style', value: 'Professional', weight: 1 },
   ],
-  category: PersonaCategory.PROFESSIONAL,
+  category: 'professional',
   isBuiltIn: true,
   usageCount: 0,
   createdAt: new Date().toISOString(),
@@ -388,7 +365,7 @@ export const BUILTIN_PERSONAS: Persona[] = [
       { name: 'Tone', value: 'Professional', weight: 1 },
       { name: 'Style', value: 'Empathetic', weight: 1 },
     ],
-    category: PersonaCategory.PROFESSIONAL,
+    category: 'professional',
     isBuiltIn: true,
     usageCount: 0,
     createdAt: new Date().toISOString(),
@@ -403,7 +380,7 @@ export const BUILTIN_PERSONAS: Persona[] = [
       { name: 'Tone', value: 'Analytical', weight: 1 },
       { name: 'Style', value: 'Technical', weight: 1 },
     ],
-    category: PersonaCategory.TECHNICAL,
+    category: 'technical',
     isBuiltIn: true,
     usageCount: 0,
     createdAt: new Date().toISOString(),
@@ -418,7 +395,7 @@ export const BUILTIN_PERSONAS: Persona[] = [
       { name: 'Tone', value: 'Creative', weight: 1 },
       { name: 'Style', value: 'Artistic', weight: 1 },
     ],
-    category: PersonaCategory.CREATIVE,
+    category: 'creative',
     isBuiltIn: true,
     usageCount: 0,
     createdAt: new Date().toISOString(),

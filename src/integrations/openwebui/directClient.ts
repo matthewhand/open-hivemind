@@ -2,6 +2,7 @@ import axios from 'axios';
 import Debug from 'debug';
 import type { IMessage } from '@message/interfaces/IMessage';
 import { withTimeout } from '@common/withTimeout';
+import { isSafeUrl } from '../../utils/ssrfGuard';
 
 const debug = Debug('app:openWebUI:direct');
 
@@ -28,6 +29,11 @@ export async function generateChatCompletionDirect(
   if (overrides.authHeader) {
     headers['Authorization'] = overrides.authHeader;
   }
+
+  if (!(await isSafeUrl(baseURL))) {
+    throw new Error('OpenWebUI API URL is not safe to connect to.');
+  }
+
   const client = axios.create({ baseURL, headers });
 
   const messages: { role: string; content: string }[] = [];
