@@ -5,12 +5,6 @@ import { HealthChecker, HealthCheckResult } from '@src/monitoring/HealthChecker'
 describe('AlertManager Performance', () => {
   beforeEach(() => {
     jest.spyOn(console, 'log').mockImplementation(() => {});
-    jest.spyOn(console, 'warn').mockImplementation(() => {});
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-  });
-
-  afterEach(() => {
-    jest.restoreAllMocks();
   });
 
   let alertManager: AlertManager;
@@ -44,7 +38,6 @@ describe('AlertManager Performance', () => {
 
   afterEach(() => {
     alertManager.shutdown();
-    jest.restoreAllMocks();
   });
 
   it('should measure optimized performance of processHealthCheck', async () => {

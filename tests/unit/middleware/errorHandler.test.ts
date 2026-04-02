@@ -56,9 +56,6 @@ describe('errorHandler middleware', () => {
   let mockNext: NextFunction;
 
   beforeEach(() => {
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-    jest.spyOn(console, 'warn').mockImplementation(() => {});
-    jest.spyOn(console, 'error').mockImplementation(() => {});
     (MetricsCollector as any).instance = undefined;
     mockReq = {
       method: 'GET',
