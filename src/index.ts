@@ -12,7 +12,7 @@ import { loadToolProfiles } from '@src/config/toolProfiles';
 import { container } from '@src/di/container';
 import { registerServices } from '@src/di/registration';
 import { applyRateLimiting } from '@src/middleware/rateLimiter';
-import { SyncProviderRegistry, type ProviderProfile } from '@src/registries/SyncProviderRegistry';
+import { SyncProviderRegistry } from '@src/registries/SyncProviderRegistry';
 import { authenticateToken } from '@src/server/middleware/auth';
 import { csrfTokenHandler } from '@src/server/middleware/csrf';
 import { ipWhitelist } from '@src/server/middleware/security';
@@ -92,7 +92,6 @@ const frontendDistPath = resolveFrontendDistPath();
 const frontendAssetsPath = path.join(frontendDistPath, 'assets');
 
 // Vite Dev Server Instance (only used in dev)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Vite dev server type is dynamic
 let viteServer: any;
 
 // Check if frontend dist exists (async check will be done in main())
@@ -230,12 +229,10 @@ if (process.env.NODE_ENV !== 'development') {
           Expires: '0',
         })
         .end(template);
-    } catch (e: unknown) {
-      if (e instanceof Error) {
-        viteServer.ssrFixStacktrace(e);
-      }
+    } catch (e: any) {
+      viteServer.ssrFixStacktrace(e);
       appLogger.error('Vite SSR Error', e);
-      res.status(500).end(e instanceof Error ? e.message : String(e));
+      res.status(500).end(e.message);
     }
   };
 
@@ -491,9 +488,9 @@ async function main() {
 
     const registry = SyncProviderRegistry.getInstance();
     const initResult = await registry.initialize({
-      llmProfiles: loadLlmProfiles().llm as unknown as ProviderProfile[],
-      memoryProfiles: loadMemoryProfiles().memory as ProviderProfile[],
-      toolProfiles: loadToolProfiles().tool as unknown as ProviderProfile[],
+      llmProfiles: loadLlmProfiles().llm as any[],
+      memoryProfiles: loadMemoryProfiles().memory as any[],
+      toolProfiles: loadToolProfiles().tool as any[],
       messengerPlatforms: messengerTypes,
     });
     appLogger.info('Provider registry initialized', initResult.loaded);
@@ -640,7 +637,9 @@ async function main() {
     const server = createServer(app);
 
     // Register background services for graceful shutdown
-    const rtvs = RealTimeValidationService.getInstance();
+    const rtvs = (RealTimeValidationService as any).getInstance
+      ? (RealTimeValidationService as any).getInstance()
+      : null;
     if (rtvs && typeof rtvs.shutdown === 'function') {
       shutdownCoordinator.registerService({
         name: 'RealTimeValidationService',
@@ -663,14 +662,16 @@ async function main() {
     }
 
     const { ApiMonitorService } = await import('@src/services/ApiMonitorService');
-    const ams = container.resolve(ApiMonitorService);
-    shutdownCoordinator.registerService({
-      name: 'ApiMonitorService',
-      shutdown: () => {
-        appLogger.info('🛑 Healthcheck: Shutting down ApiMonitorService...');
-        ams.shutdown();
-      },
-    });
+    const ams = container.resolve(ApiMonitorService) as any;
+    if (ams && typeof ams.shutdown === 'function') {
+      shutdownCoordinator.registerService({
+        name: 'ApiMonitorService',
+        shutdown: () => {
+          appLogger.info('🛑 Healthcheck: Shutting down ApiMonitorService...');
+          ams.shutdown();
+        },
+      });
+    }
 
     // Register HTTP server with ShutdownCoordinator
     shutdownCoordinator.registerHttpServer(server);

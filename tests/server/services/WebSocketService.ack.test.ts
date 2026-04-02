@@ -1,8 +1,5 @@
 import 'reflect-metadata';
 import { WebSocketService } from '../../../src/server/services/WebSocketService';
-import { ConnectionManager } from '../../../src/server/services/websocket/ConnectionManager';
-import { BroadcastService } from '../../../src/server/services/websocket/BroadcastService';
-import { EventHandlers } from '../../../src/server/services/websocket/EventHandlers';
 import { DeliveryStatus } from '../../../src/types/websocket';
 
 // Stub out heavy dependencies so we can unit-test the ack logic in isolation.
@@ -41,16 +38,6 @@ jest.mock('tsyringe', () => ({
   singleton: () => (target: any) => target,
 }));
 
-function createWebSocketService(): WebSocketService {
-  const EventEmitter = require('events');
-  const MockApiMonitor = require('../../../src/services/ApiMonitorService').default;
-  const connMgr = new ConnectionManager();
-  const apiMonitor = new MockApiMonitor();
-  const broadcastService = new BroadcastService(connMgr, apiMonitor);
-  const eventHandlers = new EventHandlers(connMgr, broadcastService);
-  return new WebSocketService(connMgr, broadcastService, eventHandlers);
-}
-
 describe('WebSocketService – message acknowledgment & delivery tracking', () => {
   let service: WebSocketService;
 
@@ -58,7 +45,7 @@ describe('WebSocketService – message acknowledgment & delivery tracking', () =
     jest.useFakeTimers();
     // Reset singleton so each test gets a fresh instance
     (WebSocketService as any).instance = undefined;
-    service = createWebSocketService();
+    service = new WebSocketService();
     // Shorten timeout for tests
     service.configureAck({ messageTimeoutMs: 200, maxRetries: 1 });
   });

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiService } from '../services/api';
-import { useQuery } from '@tanstack/react-query';
+import { useApiQuery } from '../hooks/useApiQuery';
 import ChatInterface, { ChatMessage } from '../components/DaisyUI/Chat';
 import { BotAvatar } from '../components/BotAvatar';
 import BotChatBubbles from '../components/BotChatBubbles';
@@ -87,14 +87,9 @@ const ChatPage: React.FC = () => {
   // Fetch bots via cache layer
   const {
     data: botsData,
-    isLoading: botsLoading,
+    loading: botsLoading,
     refetch: refetchBots,
-  } = useQuery<BotData[]>({
-    queryKey: ['bots'],
-    queryFn: () => apiService.get<BotData[]>('/api/bots'),
-    staleTime: 30_000,
-    gcTime: 60_000,
-  });
+  } = useApiQuery<BotData[]>('/api/bots', { ttl: 30_000 });
 
   useEffect(() => {
     if (botsData) setBots(Array.isArray(botsData) ? botsData : []);

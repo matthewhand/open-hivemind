@@ -49,11 +49,8 @@ const PageHeader: React.FC<PageHeaderProps> = ({
       <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-start gap-4">
           {icon && (
-            <div className={`p-3 rounded-xl ${iconBgMap[gradient]} backdrop-blur-sm shadow-sm flex items-center justify-center`}>
-              {typeof icon === 'string' ? <span className="text-4xl">{icon}</span> :
-                (typeof icon === 'function' ? React.createElement(icon as any, { className: "w-8 h-8" }) :
-                  (typeof icon === 'object' && icon && 'render' in icon) ? React.createElement(icon as any, { className: "w-8 h-8" }) :
-                    (React.isValidElement(icon) ? icon : null))}
+            <div className={`p-3 rounded-xl ${iconBgMap[gradient]} backdrop-blur-sm shadow-sm`}>
+              {React.isValidElement(icon) ? icon : React.createElement(icon as any, { className: "w-8 h-8" })}
             </div>
           )}
           <div>

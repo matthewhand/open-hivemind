@@ -36,7 +36,7 @@ import { LLM_PROVIDER_CONFIGS } from '../types/bot';
 import ProviderConfigModal from '../components/ProviderConfiguration/ProviderConfigModal';
 import { apiService } from '../services/api';
 import useUrlParams from '../hooks/useUrlParams';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useApiQuery } from '../hooks/useApiQuery';
 import { useBulkSelection } from '../hooks/useBulkSelection';
 import BulkActionBar from '../components/BulkActionBar';
 import Checkbox from '../components/DaisyUI/Checkbox';
@@ -90,42 +90,25 @@ const LLMProvidersPage: React.FC = () => {
     isOpen: boolean; title: string; message: string; onConfirm: () => void;
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
-  const queryClient = useQueryClient();
-
   // Cached queries for LLM profiles, status, and global config
   const {
     data: profilesRes,
-    isLoading: profilesLoading,
+    loading: profilesLoading,
     error: profilesError,
     refetch: refetchProfiles,
-  } = useQuery<any>({
-    queryKey: ['config', 'llm-profiles'],
-    queryFn: () => apiService.get('/api/config/llm-profiles'),
-    staleTime: 30_000,
-    gcTime: 60_000,
-  });
+  } = useApiQuery<any>('/api/config/llm-profiles', { ttl: 30_000 });
 
   const {
     data: statusRes,
-    isLoading: statusLoading,
+    loading: statusLoading,
     refetch: refetchStatus,
-  } = useQuery<any>({
-    queryKey: ['config', 'llm-status'],
-    queryFn: () => apiService.get('/api/config/llm-status'),
-    staleTime: 30_000,
-    gcTime: 60_000,
-  });
+  } = useApiQuery<any>('/api/config/llm-status', { ttl: 30_000 });
 
   const {
     data: globalRes,
-    isLoading: globalLoading,
+    loading: globalLoading,
     refetch: refetchGlobal,
-  } = useQuery<any>({
-    queryKey: ['config', 'global'],
-    queryFn: () => apiService.get('/api/config/global'),
-    staleTime: 30_000,
-    gcTime: 60_000,
-  });
+  } = useApiQuery<any>('/api/config/global', { ttl: 30_000 });
 
   // Derive state from cached responses
   useEffect(() => {

@@ -36,9 +36,9 @@ export interface ErrorLogEntry {
     userId?: string;
     requestId?: string;
     duration?: number;
-    body?: unknown;
-    params?: unknown;
-    query?: unknown;
+    body?: any;
+    params?: any;
+    query?: any;
   };
   system: {
     hostname: string;
@@ -77,9 +77,9 @@ export interface ErrorContext {
   userAgent?: string;
   ip?: string;
   duration?: number;
-  body?: unknown;
-  params?: unknown;
-  query?: unknown;
+  body?: any;
+  params?: any;
+  query?: any;
 }
 
 /**
@@ -350,12 +350,13 @@ export class ErrorLogger {
     }
 
     // Emit structured log for monitoring systems
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- custom process event for monitoring
-    (process as any).emit('hivemind:log', {
-      type: 'error',
-      level,
-      entry: logEntry,
-    });
+    if ('emit' in process && typeof process.emit === 'function') {
+      (process as any).emit('hivemind:log', {
+        type: 'error',
+        level,
+        entry: logEntry,
+      });
+    }
   }
 
   /**
@@ -401,13 +402,15 @@ export class ErrorLogger {
     if (count > 10 && count % 10 === 0) {
       this.debug(`Error spike detected for type ${errorType}: ${count} occurrences`);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- custom process event for monitoring
-      (process as any).emit('hivemind:alert', {
-        type: 'error_spike',
-        errorType,
-        count,
-        timestamp: new Date().toISOString(),
-      });
+      // Emit alert for monitoring
+      if ('emit' in process && typeof process.emit === 'function') {
+        (process as any).emit('hivemind:alert', {
+          type: 'error_spike',
+          errorType,
+          count,
+          timestamp: new Date().toISOString(),
+        });
+      }
     }
 
     // Check for repeated errors from same correlation ID
@@ -418,25 +421,21 @@ export class ErrorLogger {
     if (recentErrors > 5) {
       this.debug(`High error rate detected: ${recentErrors} errors in last minute`);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- custom process event for monitoring
-      (process as any).emit('hivemind:alert', {
-        type: 'high_error_rate',
-        count: recentErrors,
-        timeframe: '1 minute',
-        timestamp: new Date().toISOString(),
-      });
+      if ('emit' in process && typeof process.emit === 'function') {
+        (process as any).emit('hivemind:alert', {
+          type: 'high_error_rate',
+          count: recentErrors,
+          timeframe: '1 minute',
+          timestamp: new Date().toISOString(),
+        });
+      }
     }
   }
 
   /**
    * Get error statistics
    */
-  getErrorStats(): {
-    totalErrors: number;
-    errorTypes: Record<string, number>;
-    bySeverity: Record<string, number>;
-    byDate: Record<string, number>;
-  } {
+  getErrorStats(): any {
     // Calculate total errors
     const totalErrors = Array.from(this.errorCounts.values()).reduce(
       (sum, count) => sum + count,
@@ -551,7 +550,6 @@ export function logError(error: HivemindError, context: ErrorContext): void {
 /**
  * Create error context from Express request
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Express request with arbitrary middleware augmentation
 export function createErrorContext(req: any): ErrorContext {
   return {
     correlationId: req.correlationId || req.headers['x-correlation-id'] || 'unknown',
@@ -571,8 +569,7 @@ export function createErrorContext(req: any): ErrorContext {
 /**
  * Error logging middleware
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Express middleware with augmented request
-export function errorLoggingMiddleware(req: any, _res: unknown, next: () => void): void {
+export function errorLoggingMiddleware(req: any, res: any, next: any): void {
   // Add error logger to request object
   req.errorLogger = errorLogger;
   next();

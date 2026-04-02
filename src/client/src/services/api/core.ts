@@ -178,25 +178,6 @@ export class ApiService {
     return response.blob();
   }
 
-  public async getText(endpoint: string, options?: RequestInit): Promise<string> {
-    const url = buildUrl(endpoint);
-    const authHeaders = this.getAuthHeaders();
-
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        ...authHeaders,
-        ...options?.headers,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Text request failed (${response.status}): ${response.statusText}`);
-    }
-
-    return response.text();
-  }
-
   public getAuthHeaders(): Record<string, string> {
     const token = localStorage.getItem('auth_tokens');
     const headers: Record<string, string> = {};

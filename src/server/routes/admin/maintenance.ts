@@ -207,14 +207,14 @@ router.delete(
 );
 
 // Get all connected MCP servers
-router.get('/mcp-servers', async (req: Request, res: Response) => {
+router.get('/mcp-servers', (req: Request, res: Response) => {
   try {
     const mcpService = MCPService.getInstance();
     const connectedServers = mcpService.getConnectedServersWithMetadata();
     const trustConfig = getTrustedMcpReposConfig();
 
     // Get stored MCP server configurations
-    const storedMcps = await webUIStorage.getMcps();
+    const storedMcps = webUIStorage.getMcps();
 
     // Enrich connected servers with stored configuration data
     const enrichedServers = connectedServers.map((server) => {
@@ -297,7 +297,7 @@ router.get(
       const isConnected = connectedServers.includes(name);
 
       // Get stored configuration for additional metadata
-      const storedMcps = await webUIStorage.getMcps();
+      const storedMcps = webUIStorage.getMcps();
       const storedConfig = storedMcps.find((mcp: any) => mcp.name === name);
 
       if (!isConnected && !storedConfig) {
@@ -341,7 +341,7 @@ router.post(
       const { name } = req.params;
 
       // Get stored configuration
-      const storedMcps = await webUIStorage.getMcps();
+      const storedMcps = webUIStorage.getMcps();
       const storedConfig = storedMcps.find((mcp: any) => mcp.name === name);
 
       if (!storedConfig) {
@@ -351,12 +351,9 @@ router.post(
         });
       }
 
-      const serverUrl = storedConfig.serverUrl as string;
-      const apiKey = storedConfig.apiKey as string | undefined;
-
       // Validate URL format
       try {
-        new URL(serverUrl);
+        new URL(storedConfig.serverUrl);
       } catch {
         return res.status(HTTP_STATUS.BAD_REQUEST).json({
           error: 'Validation error',
@@ -365,7 +362,7 @@ router.post(
       }
 
       // Security Check: SSRF Protection
-      if (!(await isSafeUrl(serverUrl))) {
+      if (!(await isSafeUrl(storedConfig.serverUrl))) {
         return res.status(HTTP_STATUS.FORBIDDEN).json({
           error: 'Security Warning',
           message: 'Target URL is blocked for security reasons (private/local network access).',
@@ -383,8 +380,8 @@ router.post(
       // Reconnect
       const tools = await mcpService.connectToServer({
         name: storedConfig.name,
-        serverUrl,
-        apiKey,
+        serverUrl: storedConfig.serverUrl,
+        apiKey: storedConfig.apiKey,
       });
 
       return res.json({

@@ -4,20 +4,16 @@
 
 // Configuration Manager types
 export interface ConfigurationManager {
-  get(key: string): unknown;
-  set(key: string, value: unknown): void;
+  get(key: string): any;
+  set(key: string, value: any): void;
   has(key: string): boolean;
 }
 
 // LLM Provider types
 export interface LLMProvider {
   name: string;
-  generateChatCompletion(
-    message: string,
-    history: unknown[],
-    config?: Record<string, unknown>
-  ): Promise<string>;
-  generateCompletion(message: string, config?: Record<string, unknown>): Promise<string>;
+  generateChatCompletion(message: string, history: any[], config?: any): Promise<string>;
+  generateCompletion(message: string, config?: any): Promise<string>;
 }
 
 export interface LLMResponse {
@@ -27,7 +23,7 @@ export interface LLMResponse {
     completionTokens: number;
     totalTokens: number;
   };
-  metadata?: Record<string, unknown>;
+  metadata?: Record<string, any>;
 }
 
 // Message types
@@ -50,7 +46,7 @@ export interface MessageAttachment {
 // Webhook types
 export interface WebhookPayload {
   event: string;
-  data: unknown;
+  data: any;
   timestamp: string;
   signature?: string;
 }
@@ -73,7 +69,7 @@ export interface MessageRecord {
   content: string;
   timestamp: Date;
   platform: string;
-  metadata?: Record<string, unknown>;
+  metadata?: Record<string, any>;
 }
 
 // Monitoring types
@@ -96,7 +92,7 @@ export interface PerformanceMetric {
 export interface AppError extends Error {
   code: string;
   statusCode: number;
-  details?: Record<string, unknown>;
+  details?: Record<string, any>;
 }
 
 // Validation types
@@ -106,21 +102,21 @@ export interface ValidationResult {
   warnings?: string[];
 }
 
-export interface ValidationRule<T = unknown> {
+export interface ValidationRule<T = any> {
   name: string;
   validate: (value: T) => ValidationResult;
   required?: boolean;
 }
 
 // API Response types
-export interface ApiResponse<T = unknown> {
+export interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
   error?: string;
   timestamp: string;
 }
 
-export interface PaginatedResponse<T = unknown> extends ApiResponse<T[]> {
+export interface PaginatedResponse<T = any> extends ApiResponse<T[]> {
   pagination: {
     page: number;
     limit: number;
@@ -137,13 +133,13 @@ export interface BotConfiguration {
   llmProvider?: string;
   channels?: string[];
   features?: Record<string, boolean>;
-  metadata?: Record<string, unknown>;
+  metadata?: Record<string, any>;
 }
 
 export interface PlatformConfiguration {
   name: string;
   enabled: boolean;
-  config: Record<string, unknown>;
+  config: Record<string, any>;
   credentials?: Record<string, string>;
 }
 

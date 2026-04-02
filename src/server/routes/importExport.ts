@@ -2,7 +2,6 @@ import fs from 'fs/promises';
 import * as path from 'path';
 import { Router, type Request, type Response } from 'express';
 import { body, param, validationResult } from 'express-validator';
-import multer from 'multer';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest } from '../../auth/types';
@@ -28,6 +27,8 @@ type MulterFile = {
 
 type AuthMulterRequest = AuthMiddlewareRequest & { file?: MulterFile };
 
+const multer = require('multer');
+
 const router = Router();
 const logger = createLogger('importExportRouter');
 const importExportService = ConfigurationImportExportService.getInstance();
@@ -38,11 +39,7 @@ const upload = multer({
   limits: {
     fileSize: 50 * 1024 * 1024, // 50MB limit
   },
-  fileFilter: (
-    _req: Express.Request,
-    file: { originalname: string },
-    cb: (error: Error | null, acceptFile?: boolean) => void
-  ) => {
+  fileFilter: (req: any, file: any, cb: any) => {
     const allowedTypes = ['.json', '.yaml', '.yml', '.csv', '.gz', '.enc'];
     const ext = path.extname(file.originalname).toLowerCase();
 
@@ -95,10 +92,7 @@ const validateExportOptions = [
 
   body('encryptionKey')
     .optional()
-    .if(
-      ((_value: string, { req }: { req: Request }) =>
-        (req.body as Record<string, unknown>).encrypt === true) as any
-    )
+    .if((value: any, { req }: any) => req.body.encrypt === true)
     .isLength({ min: 8 })
     .withMessage('Encryption key must be at least 8 characters long'),
 
@@ -156,10 +150,7 @@ const validateBackupCreation = [
 
   body('encryptionKey')
     .optional()
-    .if(
-      ((_value: string, { req }: { req: Request }) =>
-        (req.body as Record<string, unknown>).encrypt === true) as any
-    )
+    .if((value: any, { req }: any) => req.body.encrypt === true)
     .isLength({ min: 8 })
     .withMessage('Encryption key must be at least 8 characters long'),
 ];
@@ -190,7 +181,7 @@ const validateBackupRestore = [
 /**
  * Error handler middleware
  */
-const handleValidationErrors = (req: Request, res: Response, next: (err?: unknown) => void) => {
+const handleValidationErrors = (req: Request, res: Response, next: any) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Validation failed'));
@@ -201,12 +192,7 @@ const handleValidationErrors = (req: Request, res: Response, next: (err?: unknow
 /**
  * Error handling for file uploads
  */
-const handleUploadError = (
-  error: Error | null,
-  req: Request,
-  res: Response,
-  next: (err?: unknown) => void
-) => {
+const handleUploadError = (error: any, req: Request, res: Response, next: any) => {
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
       return res
@@ -259,7 +245,7 @@ router.post(
       logger.error('Error exporting configurations:', error);
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error(error instanceof Error ? error.message : String(error)));
+        .json(ApiResponse.error((error as any).message));
     }
   }
 );
@@ -318,7 +304,7 @@ router.post(
 
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error(error instanceof Error ? error.message : String(error)));
+        .json(ApiResponse.error((error as any).message));
     }
   }
 );
@@ -368,7 +354,7 @@ router.post(
       logger.error('Error creating backup:', error);
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error(error instanceof Error ? error.message : String(error)));
+        .json(ApiResponse.error((error as any).message));
     }
   }
 );
@@ -385,7 +371,7 @@ router.get('/backups', requireAdmin, async (req: AuthMiddlewareRequest, res: Res
     logger.error('Error listing backups:', error);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json(ApiResponse.error(error instanceof Error ? error.message : String(error)));
+      .json(ApiResponse.error((error as any).message));
   }
 });
 
@@ -437,7 +423,7 @@ router.post(
       logger.error('Error restoring from backup:', error);
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error(error instanceof Error ? error.message : String(error)));
+        .json(ApiResponse.error((error as any).message));
     }
   }
 );
@@ -464,7 +450,7 @@ router.delete(
       logger.error('Error deleting backup:', error);
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error(error instanceof Error ? error.message : String(error)));
+        .json(ApiResponse.error((error as any).message));
     }
   }
 );
@@ -506,7 +492,7 @@ router.get(
       logger.error('Error downloading backup:', error);
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error(error instanceof Error ? error.message : String(error)));
+        .json(ApiResponse.error((error as any).message));
     }
   }
 );
@@ -557,7 +543,7 @@ router.post(
 
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error(error instanceof Error ? error.message : String(error)));
+        .json(ApiResponse.error((error as any).message));
     }
   }
 );

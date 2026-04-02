@@ -76,7 +76,7 @@ router.get('/errors', (req: Request, res: Response) => {
     },
     health: {
       status: getErrorHealthStatus(recentErrors),
-      recommendations: getErrorRecommendations(errorStats.errorTypes, recentErrors),
+      recommendations: getErrorRecommendations(errorStats, recentErrors),
     },
   };
 
@@ -111,11 +111,11 @@ router.get('/errors/patterns', (req: Request, res: Response) => {
                 : 0,
           };
         }),
-      spikes: detectErrorSpikes(errorStats.errorTypes),
-      correlations: detectErrorCorrelations(errorStats.errorTypes),
-      anomalies: detectErrorAnomalies(recentErrors, errorStats.errorTypes),
+      spikes: detectErrorSpikes(errorStats),
+      correlations: detectErrorCorrelations(errorStats),
+      anomalies: detectErrorAnomalies(recentErrors, errorStats),
     },
-    recommendations: generatePatternRecommendations(errorStats.errorTypes, recentErrors),
+    recommendations: generatePatternRecommendations(errorStats, recentErrors),
   };
 
   return res.json(patternsData);

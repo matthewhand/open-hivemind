@@ -187,11 +187,11 @@ export class ServerLifecycle {
         resolve(providerProcess);
       });
 
-      providerProcess.on('error', (error: Error) => {
+      providerProcess.on('configuration', (error: any) => {
         reject(error);
       });
 
-      providerProcess.on('close', (code: number | null) => {
+      providerProcess.on('close', (code: any) => {
         if (code !== 0) {
           reject(new Error(`MCP process exited with code ${code}`));
         }

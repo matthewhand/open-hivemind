@@ -1,6 +1,6 @@
 import { Filter, Plus, Users } from 'lucide-react';
 import React, { useState } from 'react';
-import { Alert } from '../../components/DaisyUI/Alert';
+import Alert from '../../components/DaisyUI/Alert';
 import PageHeader from '../../components/DaisyUI/PageHeader';
 import { SkeletonPage } from '../../components/DaisyUI/Skeleton';
 import { useSuccessToast, useErrorToast, useInfoToast } from '../../components/DaisyUI/ToastNotification';

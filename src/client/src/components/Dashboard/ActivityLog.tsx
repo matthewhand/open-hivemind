@@ -42,25 +42,6 @@ const ActivityLog: React.FC = () => {
   const messageTimeline = useMemo(() => buildTimelineSeries(data, 'messageProviders', uniqueMessageProviders), [data, uniqueMessageProviders]);
   const llmTimeline = useMemo(() => buildTimelineSeries(data, 'llmProviders', uniqueLlmProviders), [data, uniqueLlmProviders]);
 
-  // ⚡ Bolt Optimization: Memoize formatting of recent events list to prevent redundant date parsing and map iterations
-  const recentEventsList = useMemo(() => {
-    if (!data?.events?.length) return null;
-    return [...data.events].reverse().map((event, index) => (
-      <li key={event.id}>
-        <div className="py-3">
-          <div className="font-medium">
-            {event.botName} · {event.provider} · {event.llmProvider}
-          </div>
-          <div className="text-sm text-base-content/70 mt-1">
-            {formatTimestamp(event.timestamp)} — {event.messageType} — {event.status}
-            {event.errorMessage ? ` (${event.errorMessage})` : ''}
-          </div>
-        </div>
-        {index < data.events!.length - 1 && <div className="divider my-0" />}
-      </li>
-    ));
-  }, [data?.events]);
-
   return (
     <Card className="mt-6">
       <Card.Body>
@@ -152,9 +133,22 @@ const ActivityLog: React.FC = () => {
             </div>
             <div className="md:col-span-2">
               <h3 className="text-lg font-semibold mb-4">Recent Events</h3>
-              {recentEventsList ? (
+              {data?.events?.length ? (
                 <ul className="menu bg-base-200 w-full rounded-box">
-                  {recentEventsList}
+                  {data.events.slice().reverse().map((event, index) => (
+                    <li key={event.id}>
+                      <div className="py-3">
+                        <div className="font-medium">
+                          {event.botName} · {event.provider} · {event.llmProvider}
+                        </div>
+                        <div className="text-sm text-base-content/70 mt-1">
+                          {formatTimestamp(event.timestamp)} — {event.messageType} — {event.status}
+                          {event.errorMessage ? ` (${event.errorMessage})` : ''}
+                        </div>
+                      </div>
+                      {index < data.events.length - 1 && <div className="divider my-0" />}
+                    </li>
+                  ))}
                 </ul>
               ) : (
                 <p className="text-base-content/70 text-center py-4">

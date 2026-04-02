@@ -42,7 +42,7 @@ export interface CircuitBreakerConfig {
 /**
  * Recovery strategy result
  */
-export interface RecoveryResult<T = unknown> {
+export interface RecoveryResult<T = any> {
   success: boolean;
   result?: T;
   error?: Error;
@@ -305,12 +305,12 @@ export class RetryHandler {
  * Fallback mechanism manager
  */
 export class FallbackManager {
-  private fallbacks = new Map<string, (() => Promise<unknown>)[]>();
+  private fallbacks = new Map<string, (() => Promise<any>)[]>();
 
   /**
    * Register fallback for an operation
    */
-  registerFallback(operationKey: string, fallback: () => Promise<unknown>): void {
+  registerFallback(operationKey: string, fallback: () => Promise<any>): void {
     if (!this.fallbacks.has(operationKey)) {
       this.fallbacks.set(operationKey, []);
     }
@@ -347,7 +347,7 @@ export class FallbackManager {
       for (let i = 0; i < fallbacks.length; i++) {
         try {
           debug(`Attempting fallback ${i + 1}/${fallbacks.length}`);
-          const result = (await fallbacks[i]()) as T;
+          const result = await fallbacks[i]();
 
           debug(`Fallback ${i + 1} succeeded`);
           return {
@@ -378,7 +378,7 @@ export class FallbackManager {
   /**
    * Get registered fallbacks for an operation
    */
-  getFallbacks(operationKey: string): (() => Promise<unknown>)[] {
+  getFallbacks(operationKey: string): (() => Promise<any>)[] {
     return this.fallbacks.get(operationKey) || [];
   }
 
@@ -530,14 +530,14 @@ export class AdaptiveRecoveryManager {
   /**
    * Register fallback for an operation
    */
-  registerFallback(operationKey: string, fallback: () => Promise<unknown>): void {
+  registerFallback(operationKey: string, fallback: () => Promise<any>): void {
     this.getFallbackManager(operationKey).registerFallback(operationKey, fallback);
   }
 
   /**
    * Get circuit breaker stats
    */
-  getCircuitBreakerStats(operationKey: string): ReturnType<CircuitBreaker['getStats']> | null {
+  getCircuitBreakerStats(operationKey: string) {
     const circuitBreaker = this.circuitBreakers.get(operationKey);
     return circuitBreaker ? circuitBreaker.getStats() : null;
   }
@@ -555,14 +555,8 @@ export class AdaptiveRecoveryManager {
   /**
    * Get all recovery stats
    */
-  getAllStats(): Record<
-    string,
-    { circuitBreaker: ReturnType<CircuitBreaker['getStats']>; fallbacks: number }
-  > {
-    const stats: Record<
-      string,
-      { circuitBreaker: ReturnType<CircuitBreaker['getStats']>; fallbacks: number }
-    > = {};
+  getAllStats() {
+    const stats: Record<string, any> = {};
 
     for (const [key, circuitBreaker] of this.circuitBreakers.entries()) {
       stats[key] = {
@@ -607,16 +601,16 @@ export const globalRecoveryManager = new AdaptiveRecoveryManager(
  * Convenience instance for direct access to recovery methods
  */
 export const errorRecovery = {
-  withRetry: (fn: () => Promise<unknown>, config?: Partial<RetryConfig>) =>
+  withRetry: (fn: () => Promise<any>, config?: Partial<RetryConfig>) =>
     globalRecoveryManager.getRetryHandler('default', config).executeWithRetry(fn),
-  withFallback: async (primary: () => Promise<unknown>, fallback: () => Promise<unknown>) => {
+  withFallback: async (primary: () => Promise<any>, fallback: () => Promise<any>) => {
     const fallbackManager = globalRecoveryManager.getFallbackManager('default');
     fallbackManager.registerFallback('default', fallback);
     return fallbackManager.executeWithFallback('default', primary, {});
   },
-  withCircuitBreaker: (fn: () => Promise<unknown>, config?: Partial<CircuitBreakerConfig>) =>
+  withCircuitBreaker: (fn: () => Promise<any>, config?: Partial<CircuitBreakerConfig>) =>
     globalRecoveryManager.getCircuitBreaker('default', config).execute(fn),
-  withTimeout: async (fn: () => Promise<unknown>, timeoutMs: number) => {
+  withTimeout: async (fn: () => Promise<any>, timeoutMs: number) => {
     const startTime = Date.now();
     try {
       const result = await Promise.race([
@@ -665,7 +659,7 @@ export async function executeWithRecovery<T>(
 /**
  * Register a fallback for an operation
  */
-export function registerFallback(operationKey: string, fallback: () => Promise<unknown>): void {
+export function registerFallback(operationKey: string, fallback: () => Promise<any>): void {
   globalRecoveryManager.registerFallback(operationKey, fallback);
 }
 

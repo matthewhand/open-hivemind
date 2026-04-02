@@ -293,7 +293,8 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
   }
 }
 
-// Export singleton instance with manual DI for non-container usage
+
+// Only create a default instance safely after reflecting metadata
 export default new MCPProviderManager(
   new ConfigLoader(),
   new ServerLifecycle(),

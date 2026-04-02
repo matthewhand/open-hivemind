@@ -215,10 +215,9 @@ export class DatabaseManager {
 
   private async createTables(): Promise<void> {
     if (!this.db) throw new DatabaseError('Database not initialized', 'DATABASE_NOT_INITIALIZED');
-    const db = this.db;
 
     // Messages table
-    await db.exec(`
+    await this.db!.exec(`
       CREATE TABLE IF NOT EXISTS messages (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         messageId TEXT NOT NULL,
@@ -234,7 +233,7 @@ export class DatabaseManager {
     `);
 
     // Conversation summaries table
-    await db.exec(`
+    await this.db!.exec(`
       CREATE TABLE IF NOT EXISTS conversation_summaries (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         channelId TEXT NOT NULL,
@@ -248,7 +247,7 @@ export class DatabaseManager {
     `);
 
     // Bot metrics table
-    await db.exec(`
+    await this.db!.exec(`
       CREATE TABLE IF NOT EXISTS bot_metrics (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         botName TEXT NOT NULL,
@@ -264,7 +263,7 @@ export class DatabaseManager {
     `);
 
     // Bot sessions table
-    await db.exec(`
+    await this.db!.exec(`
       CREATE TABLE IF NOT EXISTS bot_sessions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         sessionId TEXT UNIQUE NOT NULL,
@@ -280,7 +279,7 @@ export class DatabaseManager {
     `);
 
     // Bot configurations table
-    await db.exec(`
+    await this.db!.exec(`
       CREATE TABLE IF NOT EXISTS bot_configurations (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT UNIQUE NOT NULL,
@@ -306,7 +305,7 @@ export class DatabaseManager {
     `);
 
     // Bot configuration versions table
-    await db.exec(`
+    await this.db!.exec(`
       CREATE TABLE IF NOT EXISTS bot_configuration_versions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         botConfigurationId INTEGER NOT NULL,
@@ -334,7 +333,7 @@ export class DatabaseManager {
     `);
 
     // Bot configuration audit table
-    await db.exec(`
+    await this.db!.exec(`
       CREATE TABLE IF NOT EXISTS bot_configuration_audit (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         botConfigurationId INTEGER NOT NULL,
@@ -350,7 +349,7 @@ export class DatabaseManager {
     `);
 
     // Tenants table
-    await db.exec(`
+    await this.db!.exec(`
       CREATE TABLE IF NOT EXISTS tenants (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
@@ -367,7 +366,7 @@ export class DatabaseManager {
     `);
 
     // Roles table
-    await db.exec(`
+    await this.db!.exec(`
       CREATE TABLE IF NOT EXISTS roles (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
@@ -383,7 +382,7 @@ export class DatabaseManager {
     `);
 
     // Users table
-    await db.exec(`
+    await this.db!.exec(`
       CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
@@ -400,7 +399,7 @@ export class DatabaseManager {
     `);
 
     // Audits table
-    await db.exec(`
+    await this.db!.exec(`
       CREATE TABLE IF NOT EXISTS audits (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -421,7 +420,7 @@ export class DatabaseManager {
     `);
 
     // Approval requests table
-    await db.exec(`
+    await this.db!.exec(`
       CREATE TABLE IF NOT EXISTS approval_requests (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         resourceType TEXT NOT NULL,
@@ -440,7 +439,7 @@ export class DatabaseManager {
     `);
 
     // Anomalies table
-    await db.exec(`
+    await this.db!.exec(`
       CREATE TABLE IF NOT EXISTS anomalies (
         id TEXT PRIMARY KEY,
         timestamp DATETIME NOT NULL,
@@ -460,7 +459,7 @@ export class DatabaseManager {
     `);
 
     // AI Feedback table
-    await db.exec(`
+    await this.db!.exec(`
       CREATE TABLE IF NOT EXISTS ai_feedback (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         recommendationId TEXT NOT NULL,
@@ -475,78 +474,77 @@ export class DatabaseManager {
 
   private async createIndexes(): Promise<void> {
     if (!this.db) throw new Error('Database not initialized');
-    const db = this.db;
 
-    await db.exec(
+    await this.db!.exec(
       `CREATE INDEX IF NOT EXISTS idx_messages_channel_timestamp ON messages(channelId, timestamp DESC)`
     );
-    await db.exec(
+    await this.db!.exec(
       `CREATE INDEX IF NOT EXISTS idx_messages_author ON messages(authorId, timestamp DESC)`
     );
-    await db.exec(
+    await this.db!.exec(
       `CREATE INDEX IF NOT EXISTS idx_messages_provider ON messages(provider, timestamp DESC)`
     );
-    await db.exec(
+    await this.db!.exec(
       `CREATE INDEX IF NOT EXISTS idx_bot_metrics_bot ON bot_metrics(botName, provider)`
     );
-    await db.exec(
+    await this.db!.exec(
       `CREATE INDEX IF NOT EXISTS idx_bot_sessions_active ON bot_sessions(isActive, channelId)`
     );
 
     // Bot configuration indexes
-    await db.exec(
+    await this.db!.exec(
       `CREATE INDEX IF NOT EXISTS idx_bot_configurations_name ON bot_configurations(name)`
     );
-    await db.exec(
+    await this.db!.exec(
       `CREATE INDEX IF NOT EXISTS idx_bot_configurations_active ON bot_configurations(isActive)`
     );
-    await db.exec(
+    await this.db!.exec(
       `CREATE INDEX IF NOT EXISTS idx_bot_configurations_provider ON bot_configurations(messageProvider, llmProvider)`
     );
-    await db.exec(
+    await this.db!.exec(
       `CREATE INDEX IF NOT EXISTS idx_bot_configurations_updated_at ON bot_configurations(updatedAt DESC)`
     );
-    await db.exec(
+    await this.db!.exec(
       `CREATE INDEX IF NOT EXISTS idx_bot_configuration_versions_config ON bot_configuration_versions(botConfigurationId, version DESC)`
     );
-    await db.exec(
+    await this.db!.exec(
       `CREATE INDEX IF NOT EXISTS idx_bot_configuration_versions_created_at ON bot_configuration_versions(createdAt DESC)`
     );
-    await db.exec(
+    await this.db!.exec(
       `CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_config ON bot_configuration_audit(botConfigurationId, performedAt DESC)`
     );
-    await db.exec(
+    await this.db!.exec(
       `CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_performed_at ON bot_configuration_audit(performedAt DESC)`
     );
 
     // Approval requests indexes
-    await db.exec(
+    await this.db!.exec(
       `CREATE INDEX IF NOT EXISTS idx_approval_requests_resource ON approval_requests(resourceType, resourceId)`
     );
-    await db.exec(
+    await this.db!.exec(
       `CREATE INDEX IF NOT EXISTS idx_approval_requests_status ON approval_requests(status)`
     );
-    await db.exec(
+    await this.db!.exec(
       `CREATE INDEX IF NOT EXISTS idx_approval_requests_requested_by ON approval_requests(requestedBy)`
     );
-    await db.exec(
+    await this.db!.exec(
       `CREATE INDEX IF NOT EXISTS idx_approval_requests_created_at ON approval_requests(createdAt DESC)`
     );
-    await db.exec(
+    await this.db!.exec(
       `CREATE INDEX IF NOT EXISTS idx_approval_requests_tenant ON approval_requests(tenantId)`
     );
 
     // Anomalies indexes
-    await db.exec(
+    await this.db!.exec(
       `CREATE INDEX IF NOT EXISTS idx_anomalies_timestamp ON anomalies(timestamp DESC)`
     );
-    await db.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_metric ON anomalies(metric)`);
-    await db.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_severity ON anomalies(severity)`);
-    await db.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_resolved ON anomalies(resolved)`);
-    await db.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_tenant ON anomalies(tenantId)`);
+    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_metric ON anomalies(metric)`);
+    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_severity ON anomalies(severity)`);
+    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_resolved ON anomalies(resolved)`);
+    await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_tenant ON anomalies(tenantId)`);
 
     // AI Feedback indexes
-    await db.exec(
+    await this.db!.exec(
       `CREATE INDEX IF NOT EXISTS idx_ai_feedback_recommendation ON ai_feedback(recommendationId)`
     );
 
@@ -555,42 +553,49 @@ export class DatabaseManager {
 
   private async migrate(): Promise<void> {
     if (!this.db) throw new Error('Database not initialized');
-    const db = this.db;
 
     try {
       // Add tenantId columns to existing tables
-      await db.exec(`ALTER TABLE bot_configurations ADD COLUMN tenantId TEXT`);
-      await db.exec(`ALTER TABLE bot_configuration_versions ADD COLUMN tenantId TEXT`);
-      await db.exec(`ALTER TABLE bot_configuration_audit ADD COLUMN tenantId TEXT`);
-      await db.exec(`ALTER TABLE messages ADD COLUMN tenantId TEXT`);
-      await db.exec(`ALTER TABLE bot_sessions ADD COLUMN tenantId TEXT`);
-      await db.exec(`ALTER TABLE bot_metrics ADD COLUMN tenantId TEXT`);
+      await this.db!.exec(`ALTER TABLE bot_configurations ADD COLUMN tenantId TEXT`);
+      await this.db!.exec(`ALTER TABLE bot_configuration_versions ADD COLUMN tenantId TEXT`);
+      await this.db!.exec(`ALTER TABLE bot_configuration_audit ADD COLUMN tenantId TEXT`);
+      await this.db!.exec(`ALTER TABLE messages ADD COLUMN tenantId TEXT`);
+      await this.db!.exec(`ALTER TABLE bot_sessions ADD COLUMN tenantId TEXT`);
+      await this.db!.exec(`ALTER TABLE bot_metrics ADD COLUMN tenantId TEXT`);
 
       // Add RBAC enhancements to roles table
-      await db.exec(`ALTER TABLE roles ADD COLUMN description TEXT`);
-      await db.exec(`ALTER TABLE roles ADD COLUMN level INTEGER DEFAULT 0`);
-      await db.exec(`ALTER TABLE roles ADD COLUMN isActive BOOLEAN DEFAULT 1`);
-      await db.exec(`ALTER TABLE roles ADD COLUMN createdAt DATETIME DEFAULT CURRENT_TIMESTAMP`);
-      await db.exec(`ALTER TABLE roles ADD COLUMN updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP`);
+      await this.db!.exec(`ALTER TABLE roles ADD COLUMN description TEXT`);
+      await this.db!.exec(`ALTER TABLE roles ADD COLUMN level INTEGER DEFAULT 0`);
+      await this.db!.exec(`ALTER TABLE roles ADD COLUMN isActive BOOLEAN DEFAULT 1`);
+      await this.db!.exec(
+        `ALTER TABLE roles ADD COLUMN createdAt DATETIME DEFAULT CURRENT_TIMESTAMP`
+      );
+      await this.db!.exec(
+        `ALTER TABLE roles ADD COLUMN updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP`
+      );
 
       // Add indexes for tenantId
-      await db.exec(
+      await this.db!.exec(
         `CREATE INDEX IF NOT EXISTS idx_bot_configurations_tenant ON bot_configurations(tenantId)`
       );
-      await db.exec(`CREATE INDEX IF NOT EXISTS idx_messages_tenant ON messages(tenantId)`);
-      await db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_sessions_tenant ON bot_sessions(tenantId)`);
-      await db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_metrics_tenant ON bot_metrics(tenantId)`);
-      await db.exec(
+      await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_messages_tenant ON messages(tenantId)`);
+      await this.db!.exec(
+        `CREATE INDEX IF NOT EXISTS idx_bot_sessions_tenant ON bot_sessions(tenantId)`
+      );
+      await this.db!.exec(
+        `CREATE INDEX IF NOT EXISTS idx_bot_metrics_tenant ON bot_metrics(tenantId)`
+      );
+      await this.db!.exec(
         `CREATE INDEX IF NOT EXISTS idx_bot_configuration_versions_tenant ON bot_configuration_versions(tenantId)`
       );
-      await db.exec(
+      await this.db!.exec(
         `CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_tenant ON bot_configuration_audit(tenantId)`
       );
-      await db.exec(`CREATE INDEX IF NOT EXISTS idx_roles_tenant ON roles(tenantId)`);
-      await db.exec(`CREATE INDEX IF NOT EXISTS idx_roles_level ON roles(level)`);
-      await db.exec(`CREATE INDEX IF NOT EXISTS idx_users_tenant ON users(tenantId)`);
-      await db.exec(`CREATE INDEX IF NOT EXISTS idx_audits_tenant ON audits(tenantId)`);
-      await db.exec(`CREATE INDEX IF NOT EXISTS idx_audits_user ON audits(userId)`);
+      await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_roles_tenant ON roles(tenantId)`);
+      await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_roles_level ON roles(level)`);
+      await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_users_tenant ON users(tenantId)`);
+      await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_audits_tenant ON audits(tenantId)`);
+      await this.db!.exec(`CREATE INDEX IF NOT EXISTS idx_audits_user ON audits(userId)`);
 
       debug('Database migration completed');
     } catch (error) {

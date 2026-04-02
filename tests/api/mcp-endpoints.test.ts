@@ -217,7 +217,7 @@ describe('MCP API Endpoints', () => {
         .post('/api/mcp/servers/test-server/call-tool')
         .send({ toolName: 'test-tool', arguments: {} });
       expect(response.status).toBe(200);
-      expect(response.body.result).not.toBeUndefined();
+      expect(response.body.data.result).not.toBeUndefined();
     });
 
     it('should reject calling a tool on a disconnected server', async () => {

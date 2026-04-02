@@ -19,8 +19,7 @@ import { SkeletonPage } from '../components/DaisyUI/Skeleton';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { Alert } from '../components/DaisyUI/Alert';
 import useUrlParams from '../hooks/useUrlParams';
-import { useQuery } from '@tanstack/react-query';
-import { apiService } from '../services/api';
+import { useApiQuery } from '../hooks/useApiQuery';
 import Diff from '../components/DaisyUI/Diff';
 import Debug from 'debug';
 const debug = Debug('app:client:pages:AuditPage');
@@ -221,15 +220,10 @@ const AuditPage: React.FC = () => {
 
   const {
     data: result,
-    isLoading: loading,
+    loading,
     error,
     refetch,
-  } = useQuery<AuditResponse>({
-    queryKey: ['audit', apiUrl],
-    queryFn: () => apiService.get<AuditResponse>(apiUrl),
-    staleTime: 15_000,
-    gcTime: 30_000,
-  });
+  } = useApiQuery<AuditResponse>(apiUrl, { ttl: 15_000 });
 
   const events: AuditEvent[] = result?.auditEvents ?? [];
 
@@ -269,7 +263,10 @@ const AuditPage: React.FC = () => {
       if (filters.dateTo) params.append('dateTo', filters.dateTo);
       if (filters.user) params.append('user', filters.user);
 
-      const blob = await apiService.getBlob(`/api/audit/export?${params.toString()}`);
+      const res = await fetch(`/api/audit/export?${params.toString()}`);
+      if (!res.ok) throw new Error('Export failed');
+
+      const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
