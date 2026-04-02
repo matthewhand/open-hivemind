@@ -4,6 +4,7 @@ import { createLogger } from '../../common/StructuredLogger';
 import { BotManager } from '../../managers/BotManager';
 import { EmptyBodySchema, OnboardingStepSchema } from '../../validation/schemas/onboardingSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { asyncErrorHandler } from '../middleware/errorHandler';
 
 const router = Router();
 const logger = createLogger('onboardingRouter');
@@ -24,7 +25,7 @@ let onboardingStep = 1;
  *       200:
  *         description: Onboarding completion status
  */
-router.get('/status', async (_req, res) => {
+router.get('/status', asyncErrorHandler(async (req, res) => {
   try {
     // If already marked complete, return immediately
     if (onboardingCompleted) {

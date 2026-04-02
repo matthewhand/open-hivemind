@@ -8,6 +8,7 @@ import {
   UpdateAccessControlSchema,
 } from '../../validation/schemas/guardsSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { asyncErrorHandler } from '../middleware/errorHandler';
 
 const router = Router();
 const debug = Debug('app:webui:guards');
@@ -45,7 +46,7 @@ const validateIpOctets = (ip: string): boolean => {
 router.post(
   '/',
   validateRequest(UpdateAccessControlSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const accessConfig = req.body;
 
@@ -91,7 +92,7 @@ router.post(
 router.post(
   '/:id/toggle',
   validateRequest(ToggleGuardSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { id } = req.params;
       const { enabled } = req.body;

@@ -23,6 +23,7 @@ import {
   deepCloneSchema,
 } from './utils';
 import { globalConfigs, schemaSources } from './store';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:server:routes:config:system');
 const router = Router();
@@ -33,7 +34,7 @@ router.get('/ping', (req, res) => {
 });
 
 // GET /api/config/bots - List all configured bots with redacted secrets
-router.get('/bots', async (req, res) => {
+router.get('/bots', asyncErrorHandler(async (req, res) => {
   try {
     const botManager = await BotManager.getInstance();
     const bots = await botManager.getAllBots();
@@ -87,7 +88,7 @@ router.get('/bots', async (req, res) => {
 });
 
 // GET /api/config/sources - List all configuration sources
-router.get('/sources', async (req, res) => {
+router.get('/sources', asyncErrorHandler(async (req, res) => {
   try {
     const envVars = Object.keys(process.env)
       .filter(

@@ -10,6 +10,7 @@ import { HTTP_STATUS } from '../../types/constants';
 import { ErrorUtils } from '../../types/errors';
 import { ChatGenerateSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { asyncErrorHandler } from '../middleware/errorHandler';
 
 const debug = Debug('app:ai-assist');
 const router = Router();
@@ -60,7 +61,7 @@ class SimpleMessage extends IMessage {
 const MAX_PROMPT_LENGTH = 32000; // ~8k tokens approximate limit
 const MAX_SYSTEM_PROMPT_LENGTH = 16000;
 
-router.post('/generate', validateRequest(ChatGenerateSchema), async (req, res) => {
+router.post('/generate', validateRequest(ChatGenerateSchema), asyncErrorHandler(async (req, res) => {
   try {
     const { prompt, systemPrompt } = req.body;
     if (!prompt) {

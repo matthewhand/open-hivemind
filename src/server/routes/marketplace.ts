@@ -15,6 +15,7 @@ import { ApiResponse } from '@src/server/utils/apiResponse';
 import { HTTP_STATUS } from '../../types/constants';
 import { EmptySchema, MarketplacePluginNameParamSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { asyncErrorHandler } from '../middleware/errorHandler';
 
 const debug = Debug('app:marketplace');
 const router = Router();
@@ -187,7 +188,7 @@ function invalidateCache(): void {
  * GET /api/marketplace/packages
  * List all available packages (built-in + installed)
  */
-router.get('/packages', async (req, res) => {
+router.get('/packages', asyncErrorHandler(async (req, res) => {
   try {
     const packages = await getPackages();
     debug('Returning %d packages', packages.length);
@@ -205,7 +206,7 @@ router.get('/packages', async (req, res) => {
  * GET /api/marketplace/packages/:name
  * Get single package details
  */
-router.get('/packages/:name', async (req, res) => {
+router.get('/packages/:name', asyncErrorHandler(async (req, res) => {
   try {
     const name = req.params.name;
     const packages = await getPackages();

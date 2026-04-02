@@ -10,6 +10,7 @@ import {
 import { validateRequest } from '../../validation/validateRequest';
 import { BotConfigService } from '../services/BotConfigService';
 import { ConfigurationTemplateService } from '../services/ConfigurationTemplateService';
+import { asyncErrorHandler } from '../middleware/errorHandler';
 
 const router = Router();
 const debug = Debug('app:routes:templates');
@@ -162,7 +163,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.post(
   '/:id/apply',
   validateRequest(ApplyTemplateSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const templateService = ConfigurationTemplateService.getInstance();
       const botConfigService = BotConfigService.getInstance();
@@ -269,7 +270,7 @@ router.post(
  *       200:
  *         description: Created template
  */
-router.post('/', validateRequest(CreateTemplateSchema), async (req: Request, res: Response) => {
+router.post('/', validateRequest(CreateTemplateSchema), asyncErrorHandler(async (req, res) => {
   try {
     const templateService = ConfigurationTemplateService.getInstance();
     const { name, description, category, tags, config } = req.body;
@@ -319,7 +320,7 @@ router.post('/', validateRequest(CreateTemplateSchema), async (req: Request, res
 router.delete(
   '/:id',
   validateRequest(DeleteTemplateSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const templateService = ConfigurationTemplateService.getInstance();
       const { id } = req.params;

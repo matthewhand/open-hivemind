@@ -5,6 +5,7 @@ import { ErrorUtils } from '../../common/ErrorUtils';
 import { loadPlugin } from '../../plugins/PluginLoader';
 import { getPluginSecurityStatus, getSecurityPolicy } from '../../plugins/PluginManager';
 import type { SecurePluginManifest } from '../../plugins/PluginSecurity';
+import { asyncErrorHandler } from '../middleware/errorHandler';
 
 const router = Router();
 const debug = Debug('app:routes:pluginSecurity');
@@ -106,7 +107,7 @@ router.get('/security', (req: Request, res: Response) => {
  *       500:
  *         description: Verification failed
  */
-router.post('/:name/verify', async (req: Request, res: Response) => {
+router.post('/:name/verify', asyncErrorHandler(async (req, res) => {
   try {
     const { name } = req.params;
     debug('Verifying plugin: %s', name);

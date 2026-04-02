@@ -4,6 +4,7 @@ import { ErrorUtils } from '@src/types/errors';
 import { McpToolTestSchema } from '../../validation/schemas/mcpSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { connectedClients, loadMCPServers } from './mcp';
+import { asyncErrorHandler } from '../middleware/errorHandler';
 
 const debug = Debug('app:webui:mcpToolsTesting');
 const router = Router();
@@ -12,7 +13,7 @@ const router = Router();
  * GET /api/admin/mcp-tools/list
  * List all available MCP tools from all connected servers
  */
-router.get('/list', async (req, res) => {
+router.get('/list', asyncErrorHandler(async (req, res) => {
   try {
     // Load MCP servers configuration directly instead of HTTP fetch
     const servers = await loadMCPServers();
@@ -81,7 +82,7 @@ router.get('/list', async (req, res) => {
  *   arguments: Record<string, any>
  * }
  */
-router.post('/test', validateRequest(McpToolTestSchema), async (req, res) => {
+router.post('/test', validateRequest(McpToolTestSchema), asyncErrorHandler(async (req, res) => {
   try {
     const { serverName, toolName, arguments: toolArgs } = req.body;
 

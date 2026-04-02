@@ -7,6 +7,7 @@ import { isSafeUrl } from '../../../utils/ssrfGuard';
 import { TestConnectionSchema } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
 import {
+import { asyncErrorHandler } from '../../middleware/errorHandler';
   getChatModels,
   getEmbeddingModels,
   getModelsForProvider,
@@ -33,7 +34,7 @@ router.post(
   '/providers/test-connection',
   configRateLimit,
   validateRequest(TestConnectionSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { providerType, config } = req.body;
 

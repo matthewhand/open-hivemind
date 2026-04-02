@@ -16,6 +16,7 @@ import {
   UpdateGuardProfileSchema,
 } from '../../validation/schemas/guardProfilesSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const router = Router();
 
@@ -28,7 +29,7 @@ if (!isTestEnv) {
 }
 
 // GET / - List all profiles
-router.get('/', (req: Request, res: Response) => {
+router.get('/', asyncErrorHandler(async (req, res) => {
   try {
     const profiles = loadGuardrailProfiles();
     return res.json(ApiResponse.success(profiles));
@@ -40,7 +41,7 @@ router.get('/', (req: Request, res: Response) => {
 });
 
 // GET /:id - Get a specific profile
-router.get('/:id', validateRequest(GuardProfileIdParamSchema), (req: Request, res: Response) => {
+router.get('/:id', validateRequest(GuardProfileIdParamSchema), asyncErrorHandler(async (req, res) => {
   try {
     const { id } = req.params;
     const profiles = loadGuardrailProfiles();
@@ -82,7 +83,7 @@ interface GuardBody {
 }
 
 // POST / - Create a new profile
-router.post('/', validateRequest(CreateGuardProfileSchema), (req: Request, res: Response) => {
+router.post('/', validateRequest(CreateGuardProfileSchema), asyncErrorHandler(async (req, res) => {
   try {
     const { name, description, guards } = req.body as GuardBody;
 
@@ -150,7 +151,7 @@ router.post('/', validateRequest(CreateGuardProfileSchema), (req: Request, res: 
 });
 
 // PUT /:id - Update a profile
-router.put('/:id', validateRequest(UpdateGuardProfileSchema), (req: Request, res: Response) => {
+router.put('/:id', validateRequest(UpdateGuardProfileSchema), asyncErrorHandler(async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description, guards } = req.body as Partial<GuardBody>;
@@ -210,7 +211,7 @@ router.put('/:id', validateRequest(UpdateGuardProfileSchema), (req: Request, res
 });
 
 // DELETE /:id - Delete a profile
-router.delete('/:id', validateRequest(GuardProfileIdParamSchema), (req: Request, res: Response) => {
+router.delete('/:id', validateRequest(GuardProfileIdParamSchema), asyncErrorHandler(async (req, res) => {
   try {
     const { id } = req.params;
     const profiles = loadGuardrailProfiles();
@@ -234,8 +235,7 @@ router.delete('/:id', validateRequest(GuardProfileIdParamSchema), (req: Request,
 // POST /bulk/delete - Delete multiple profiles atomically
 router.post(
   '/bulk/delete',
-  validateRequest(BulkDeleteGuardProfilesSchema),
-  (req: Request, res: Response) => {
+  validateRequest(BulkDeleteGuardProfilesSchema), asyncErrorHandler(async (req, res) => {
     try {
       const { ids } = req.body as { ids: string[] };
       const profiles = loadGuardrailProfiles();
@@ -264,8 +264,7 @@ router.post(
 // POST /bulk/toggle - Toggle multiple profiles atomically
 router.post(
   '/bulk/toggle',
-  validateRequest(BulkToggleGuardProfilesSchema),
-  (req: Request, res: Response) => {
+  validateRequest(BulkToggleGuardProfilesSchema), asyncErrorHandler(async (req, res) => {
     try {
       const { ids, enabled } = req.body as { ids: string[]; enabled: boolean };
       const profiles = loadGuardrailProfiles();

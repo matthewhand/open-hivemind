@@ -17,6 +17,7 @@ import {
 } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { ConfigurationImportExportService } from '../services/ConfigurationImportExportService';
+import { asyncErrorHandler } from '../middleware/errorHandler';
 
 type MulterFile = {
   path: string;
@@ -232,8 +233,7 @@ router.post(
   requireAdmin,
   validateRequest(ExportConfigSchema),
   validateExportOptions,
-  handleValidationErrors,
-  async (req: AuthMiddlewareRequest, res: Response) => {
+  handleValidationErrors, asyncErrorHandler(async (req, res) => {
     try {
       const createdBy = req.user?.username || 'unknown';
 
@@ -275,8 +275,7 @@ router.post(
   upload.single('file'),
   handleUploadError,
   validateImportOptions,
-  handleValidationErrors,
-  async (req: AuthMulterRequest, res: Response) => {
+  handleValidationErrors, asyncErrorHandler(async (req, res) => {
     try {
       if (!req.file) {
         return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('No file uploaded'));
@@ -333,8 +332,7 @@ router.post(
   requireAdmin,
   validateRequest(BackupCreateSchema),
   validateBackupCreation,
-  handleValidationErrors,
-  async (req: AuthMiddlewareRequest, res: Response) => {
+  handleValidationErrors, asyncErrorHandler(async (req, res) => {
     try {
       const createdBy = req.user?.username || 'unknown';
 
@@ -377,7 +375,7 @@ router.post(
  * GET /api/import-export/backups
  * List all available backups
  */
-router.get('/backups', requireAdmin, async (req: AuthMiddlewareRequest, res: Response) => {
+router.get('/backups', requireAdmin, asyncErrorHandler(async (req, res) => {
   try {
     const backups = await importExportService.listBackups();
     return res.json(ApiResponse.success(backups));
@@ -399,8 +397,7 @@ router.post(
   requireAdmin,
   validateRequest(BackupRestoreSchema),
   validateBackupRestore,
-  handleValidationErrors,
-  async (req: AuthMiddlewareRequest, res: Response) => {
+  handleValidationErrors, asyncErrorHandler(async (req, res) => {
     try {
       const { backupId } = req.params;
       const restoredBy = req.user?.username || 'unknown';
@@ -449,8 +446,7 @@ router.post(
 router.delete(
   '/backups/:backupId',
   configLimiter,
-  requireAdmin,
-  async (req: AuthMiddlewareRequest, res: Response) => {
+  requireAdmin, asyncErrorHandler(async (req, res) => {
     try {
       const { backupId } = req.params;
       const success = await importExportService.deleteBackup(backupId);
@@ -475,8 +471,7 @@ router.delete(
  */
 router.get(
   '/backups/:backupId/download',
-  requireAdmin,
-  async (req: AuthMiddlewareRequest, res: Response) => {
+  requireAdmin, asyncErrorHandler(async (req, res) => {
     try {
       const { backupId } = req.params;
 
@@ -521,8 +516,7 @@ router.post(
   authenticate,
   upload.single('file'),
   validateRequest(ValidateImportSchema),
-  handleUploadError,
-  async (req: AuthMulterRequest, res: Response) => {
+  handleUploadError, asyncErrorHandler(async (req, res) => {
     try {
       if (!req.file) {
         return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('No file uploaded'));

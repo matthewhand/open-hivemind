@@ -1,11 +1,12 @@
 import process from 'process';
 import { Router } from 'express';
 import { HTTP_STATUS } from '../../../types/constants';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const router = Router();
 
 // Basic health check
-router.get('/', async (req, res) => {
+router.get('/', asyncErrorHandler(async (req, res) => {
   const memoryUsage = process.memoryUsage();
   let dbStatus = 'unknown';
   try {

@@ -17,6 +17,7 @@ import {
   VerifyTokenSchema,
 } from '../schemas/auth.schemas';
 import { ApiResponse } from '../utils/apiResponse';
+import { asyncErrorHandler } from '../middleware/errorHandler';
 
 const debug = Debug('app:AuthRoutes');
 const router = Router();
@@ -48,7 +49,7 @@ router.post(
   '/login',
   authRateLimiter,
   validate(LoginSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const credentials: LoginCredentials = req.body;
       // Normal authentication flow
@@ -97,7 +98,7 @@ router.post(
   authenticate,
   requireAdmin,
   validate(RegisterSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const registerData: RegisterData = req.body;
 
@@ -139,7 +140,7 @@ router.post(
   '/refresh',
   authRateLimiter,
   validate(RefreshTokenSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { refreshToken } = req.body;
 
@@ -182,7 +183,7 @@ router.post(
   '/logout',
   authenticate,
   validate(LogoutSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { refreshToken } = req.body;
 
@@ -219,7 +220,7 @@ router.post(
   '/verify',
   authRateLimiter,
   validate(VerifyTokenSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { token } = req.body;
       const payload = authManager.verifyAccessToken(token);
@@ -250,7 +251,7 @@ router.put(
   '/password',
   authenticate,
   validate(ChangePasswordSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { currentPassword, newPassword } = req.body;
 

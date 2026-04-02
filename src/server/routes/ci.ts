@@ -4,12 +4,13 @@ import { ApiResponse } from '@src/server/utils/apiResponse';
 import { HTTP_STATUS } from '../../types/constants';
 import { CIDeploySchema, CIRollbackSchema, EmptySchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:ciRoutes');
 const router = Router();
 
 // Get deployment history
-router.get('/api/deployments', (req, res) => {
+router.get('/api/deployments', asyncErrorHandler(async (req, res) => {
   try {
     // In a real implementation, this would fetch from a database
     // For now, return mock data
@@ -65,7 +66,7 @@ router.get('/api/deployments', (req, res) => {
 });
 
 // Start a new deployment
-router.post('/api/deployments', validateRequest(CIDeploySchema), (req, res) => {
+router.post('/api/deployments', validateRequest(CIDeploySchema), asyncErrorHandler(async (req, res) => {
   try {
     const { name, environment, branch, commitHash } = req.body;
 
@@ -108,7 +109,7 @@ router.post('/api/deployments', validateRequest(CIDeploySchema), (req, res) => {
 });
 
 // Get deployment details
-router.get('/api/deployments/:id', (req, res) => {
+router.get('/api/deployments/:id', asyncErrorHandler(async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -145,7 +146,7 @@ router.get('/api/deployments/:id', (req, res) => {
 });
 
 // Rollback deployment
-router.post('/api/deployments/:id/rollback', validateRequest(CIRollbackSchema), (req, res) => {
+router.post('/api/deployments/:id/rollback', validateRequest(CIRollbackSchema), asyncErrorHandler(async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -161,7 +162,7 @@ router.post('/api/deployments/:id/rollback', validateRequest(CIRollbackSchema), 
 });
 
 // Get configuration drift detections
-router.get('/api/drift', (req, res) => {
+router.get('/api/drift', asyncErrorHandler(async (req, res) => {
   try {
     // In a real implementation, this would check for configuration drift
     // For now, return mock data
@@ -191,7 +192,7 @@ router.get('/api/drift', (req, res) => {
 });
 
 // Validate deployment configuration
-router.post('/api/deployments/validate', validateRequest(EmptySchema), (req, res) => {
+router.post('/api/deployments/validate', validateRequest(EmptySchema), asyncErrorHandler(async (req, res) => {
   try {
     const { environment, configuration } = req.body;
 
@@ -223,7 +224,7 @@ router.post('/api/deployments/validate', validateRequest(EmptySchema), (req, res
 });
 
 // Get CI/CD pipeline status
-router.get('/api/pipeline/status', (req, res) => {
+router.get('/api/pipeline/status', asyncErrorHandler(async (req, res) => {
   try {
     // In a real implementation, this would get pipeline status
     // For now, return mock data
@@ -246,7 +247,7 @@ router.get('/api/pipeline/status', (req, res) => {
 });
 
 // Trigger automated tests
-router.post('/api/tests/run', validateRequest(EmptySchema), (req, res) => {
+router.post('/api/tests/run', validateRequest(EmptySchema), asyncErrorHandler(async (req, res) => {
   try {
     const { type, environment } = req.body;
 
@@ -275,7 +276,7 @@ router.post('/api/tests/run', validateRequest(EmptySchema), (req, res) => {
 });
 
 // Get test results
-router.get('/api/tests/results/:id', (req, res) => {
+router.get('/api/tests/results/:id', asyncErrorHandler(async (req, res) => {
   try {
     const { id } = req.params;
 

@@ -7,6 +7,7 @@ import { HTTP_STATUS } from '../../../types/constants';
 import { ErrorUtils } from '../../../types/errors';
 import { RealTimeValidationService } from '../../services/RealTimeValidationService';
 import {
+import { asyncErrorHandler } from '../../middleware/errorHandler';
   getErrorResponse,
   handleValidationErrors,
   validateProfileCreation,
@@ -23,7 +24,7 @@ export function createRuleRoutes(): Router {
    * GET /api/validation/rules
    * Get all validation rules
    */
-  router.get('/api/validation/rules', async (req: AuthMiddlewareRequest, res: Response) => {
+  router.get('/api/validation/rules', asyncErrorHandler(async (req, res) => {
     try {
       const rules = validationService.getAllRules();
       return res.json({
@@ -57,8 +58,7 @@ export function createRuleRoutes(): Router {
   router.get(
     '/api/validation/rules/:ruleId',
     param('ruleId').trim().notEmpty(),
-    handleValidationErrors,
-    async (req: AuthMiddlewareRequest, res: Response) => {
+    handleValidationErrors, asyncErrorHandler(async (req, res) => {
       try {
         const { ruleId } = req.params;
         const rule = validationService.getRule(ruleId);
@@ -104,8 +104,7 @@ export function createRuleRoutes(): Router {
     '/api/validation/rules',
     requireAdmin,
     validateRuleCreation,
-    handleValidationErrors,
-    async (req: AuthMiddlewareRequest, res: Response) => {
+    handleValidationErrors, asyncErrorHandler(async (req, res) => {
       try {
         // Check if rule already exists
         const existingRule = validationService.getRule(req.body.id);
@@ -166,8 +165,7 @@ export function createRuleRoutes(): Router {
     '/api/validation/rules/:ruleId',
     requireAdmin,
     param('ruleId').trim().notEmpty(),
-    handleValidationErrors,
-    async (req: AuthMiddlewareRequest, res: Response) => {
+    handleValidationErrors, asyncErrorHandler(async (req, res) => {
       try {
         const { ruleId } = req.params;
         const success = validationService.removeRule(ruleId);
@@ -209,7 +207,7 @@ export function createRuleRoutes(): Router {
    * GET /api/validation/profiles
    * Get all validation profiles
    */
-  router.get('/api/validation/profiles', async (req: AuthMiddlewareRequest, res: Response) => {
+  router.get('/api/validation/profiles', asyncErrorHandler(async (req, res) => {
     try {
       const profiles = validationService.getAllProfiles();
       return res.json({
@@ -243,8 +241,7 @@ export function createRuleRoutes(): Router {
   router.get(
     '/api/validation/profiles/:profileId',
     param('profileId').trim().notEmpty(),
-    handleValidationErrors,
-    async (req: AuthMiddlewareRequest, res: Response) => {
+    handleValidationErrors, asyncErrorHandler(async (req, res) => {
       try {
         const { profileId } = req.params;
         const profile = validationService.getProfile(profileId);
@@ -290,8 +287,7 @@ export function createRuleRoutes(): Router {
     '/api/validation/profiles',
     requireAdmin,
     validateProfileCreation,
-    handleValidationErrors,
-    async (req: AuthMiddlewareRequest, res: Response) => {
+    handleValidationErrors, asyncErrorHandler(async (req, res) => {
       try {
         const createdBy = req.user?.username || 'unknown';
 
@@ -360,8 +356,7 @@ export function createRuleRoutes(): Router {
     '/api/validation/profiles/:profileId',
     requireAdmin,
     param('profileId').trim().notEmpty(),
-    handleValidationErrors,
-    async (req: AuthMiddlewareRequest, res: Response) => {
+    handleValidationErrors, asyncErrorHandler(async (req, res) => {
       try {
         const { profileId } = req.params;
         const success = validationService.removeProfile(profileId);
