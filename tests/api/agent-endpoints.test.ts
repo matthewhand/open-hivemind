@@ -25,6 +25,12 @@ const PERSONAS_CONFIG_FILE = join(process.cwd(), 'data', 'personas.json');
 describe('Agent API Endpoints', () => {
   let app: Express;
 
+  beforeEach(() => {
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
   beforeAll(async () => {
     app = express();
     app.use(express.json());
@@ -42,6 +48,7 @@ describe('Agent API Endpoints', () => {
   });
 
   afterEach(async () => {
+    jest.restoreAllMocks();
     // Clear mock function calls after each test
     (authenticate as jest.Mock).mockClear();
     (requireAdmin as jest.Mock).mockClear();
@@ -55,7 +62,7 @@ describe('Agent API Endpoints', () => {
         // File might not exist, that's fine
       }
     } catch (error) {
-      console.error('Error cleaning up test files:', error);
+      // ignore cleanup errors
     }
   });
 
