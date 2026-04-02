@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { createLogger } from '../../common/StructuredLogger';
 import { BotManager } from '../../managers/BotManager';
-import { OnboardingStepSchema } from '../../validation/schemas/onboardingSchema';
+import { EmptyBodySchema, OnboardingStepSchema } from '../../validation/schemas/onboardingSchema';
 import { validateRequest } from '../../validation/validateRequest';
 
 const router = Router();
@@ -59,7 +59,7 @@ router.get('/status', async (_req, res) => {
  *       200:
  *         description: Onboarding marked as completed
  */
-router.post('/complete', (_req, res) => {
+router.post('/complete', validateRequest(EmptyBodySchema), (_req, res) => {
   onboardingCompleted = true;
   onboardingStep = 5;
   logger.info('Onboarding marked as completed');
@@ -76,7 +76,7 @@ router.post('/complete', (_req, res) => {
  *       200:
  *         description: Onboarding reset successfully
  */
-router.post('/reset', (_req, res) => {
+router.post('/reset', validateRequest(EmptyBodySchema), (_req, res) => {
   onboardingCompleted = false;
   onboardingStep = 1;
   logger.info('Onboarding reset');

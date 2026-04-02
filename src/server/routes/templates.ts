@@ -2,6 +2,12 @@ import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import { ErrorUtils } from '../../common/ErrorUtils';
+import {
+  ApplyTemplateSchema,
+  CreateTemplateSchema,
+  DeleteTemplateSchema,
+} from '../../validation/schemas/templatesSchema';
+import { validateRequest } from '../../validation/validateRequest';
 import { BotConfigService } from '../services/BotConfigService';
 import { ConfigurationTemplateService } from '../services/ConfigurationTemplateService';
 
@@ -153,86 +159,92 @@ router.get('/:id', async (req: Request, res: Response) => {
  *       404:
  *         description: Template not found
  */
-router.post('/:id/apply', async (req: Request, res: Response) => {
-  try {
-    const templateService = ConfigurationTemplateService.getInstance();
-    const botConfigService = BotConfigService.getInstance();
-    const { id } = req.params;
-    const { name, description, overrides = {} } = req.body;
+router.post(
+  '/:id/apply',
+  validateRequest(ApplyTemplateSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const templateService = ConfigurationTemplateService.getInstance();
+      const botConfigService = BotConfigService.getInstance();
+      const { id } = req.params;
+      const { name, description, overrides = {} } = req.body;
 
-    if (!name) {
-      return res.status(400).json({
+      if (!name) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing required field',
+          message: 'Bot name is required',
+        });
+      }
+
+      // Get template
+      const template = await templateService.getTemplateById(id);
+      if (!template) {
+        return res.status(404).json({
+          success: false,
+          error: 'Template not found',
+          message: `Template with ID '${id}' does not exist`,
+        });
+      }
+
+      // Validate that overrides don't contain protected fields
+      const protectedFields = ['name', 'description'];
+      const invalidOverrides = Object.keys(overrides).filter((key) =>
+        protectedFields.includes(key)
+      );
+
+      if (invalidOverrides.length > 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid overrides',
+          message: `Cannot override protected fields: ${invalidOverrides.join(', ')}. Use the 'name' and 'description' parameters instead.`,
+        });
+      }
+
+      // Validate and sanitize name
+      const validatedName = String(name).trim();
+      if (!validatedName) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid name',
+          message: 'Bot name cannot be empty',
+        });
+      }
+
+      // Validate and sanitize description
+      const validatedDescription = description ? String(description).trim() : template.description;
+
+      // Create bot configuration from template with validated fields taking precedence
+      // Apply overrides first, then ensure validated fields cannot be overwritten
+      const botConfig = {
+        ...template.config,
+        ...overrides,
+        name: validatedName,
+        description: validatedDescription,
+      };
+
+      // Use BotConfigService to create the bot
+      const newBot = await botConfigService.createBotConfig(botConfig);
+
+      // Increment template usage count
+      await templateService.incrementUsageCount(id);
+
+      return res.json({
+        success: true,
+        data: { bot: newBot },
+        message: 'Bot created from template successfully',
+      });
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      debug('Error applying template:', hivemindError);
+      return res.status(500).json({
         success: false,
-        error: 'Missing required field',
-        message: 'Bot name is required',
+        error: 'Failed to apply template',
+        message: hivemindError.message || 'An error occurred while applying template',
       });
     }
-
-    // Get template
-    const template = await templateService.getTemplateById(id);
-    if (!template) {
-      return res.status(404).json({
-        success: false,
-        error: 'Template not found',
-        message: `Template with ID '${id}' does not exist`,
-      });
-    }
-
-    // Validate that overrides don't contain protected fields
-    const protectedFields = ['name', 'description'];
-    const invalidOverrides = Object.keys(overrides).filter((key) => protectedFields.includes(key));
-
-    if (invalidOverrides.length > 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid overrides',
-        message: `Cannot override protected fields: ${invalidOverrides.join(', ')}. Use the 'name' and 'description' parameters instead.`,
-      });
-    }
-
-    // Validate and sanitize name
-    const validatedName = String(name).trim();
-    if (!validatedName) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid name',
-        message: 'Bot name cannot be empty',
-      });
-    }
-
-    // Validate and sanitize description
-    const validatedDescription = description ? String(description).trim() : template.description;
-
-    // Create bot configuration from template with validated fields taking precedence
-    // Apply overrides first, then ensure validated fields cannot be overwritten
-    const botConfig = {
-      ...template.config,
-      ...overrides,
-      name: validatedName,
-      description: validatedDescription,
-    };
-
-    // Use BotConfigService to create the bot
-    const newBot = await botConfigService.createBotConfig(botConfig);
-
-    // Increment template usage count
-    await templateService.incrementUsageCount(id);
-
-    return res.json({
-      success: true,
-      data: { bot: newBot },
-      message: 'Bot created from template successfully',
-    });
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
-    debug('Error applying template:', hivemindError);
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to apply template',
-      message: hivemindError.message || 'An error occurred while applying template',
-    });
   }
-});
+);
 
 /**
  * @openapi
@@ -257,7 +269,7 @@ router.post('/:id/apply', async (req: Request, res: Response) => {
  *       200:
  *         description: Created template
  */
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', validateRequest(CreateTemplateSchema), async (req: Request, res: Response) => {
   try {
     const templateService = ConfigurationTemplateService.getInstance();
     const { name, description, category, tags, config } = req.body;
@@ -304,35 +316,39 @@ router.post('/', async (req: Request, res: Response) => {
  *       404:
  *         description: Template not found
  */
-router.delete('/:id', async (req: Request, res: Response) => {
-  try {
-    const templateService = ConfigurationTemplateService.getInstance();
-    const { id } = req.params;
+router.delete(
+  '/:id',
+  validateRequest(DeleteTemplateSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const templateService = ConfigurationTemplateService.getInstance();
+      const { id } = req.params;
 
-    await templateService.deleteTemplate(id);
+      await templateService.deleteTemplate(id);
 
-    return res.json({
-      success: true,
-      message: 'Template deleted successfully',
-    });
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
-    debug('Error deleting template:', hivemindError);
+      return res.json({
+        success: true,
+        message: 'Template deleted successfully',
+      });
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      debug('Error deleting template:', hivemindError);
 
-    if (hivemindError.message.includes('not found')) {
-      return res.status(404).json({
+      if (hivemindError.message.includes('not found')) {
+        return res.status(404).json({
+          success: false,
+          error: 'Template not found',
+          message: hivemindError.message,
+        });
+      }
+
+      return res.status(400).json({
         success: false,
-        error: 'Template not found',
-        message: hivemindError.message,
+        error: 'Failed to delete template',
+        message: hivemindError.message || 'An error occurred while deleting template',
       });
     }
-
-    return res.status(400).json({
-      success: false,
-      error: 'Failed to delete template',
-      message: hivemindError.message || 'An error occurred while deleting template',
-    });
   }
-});
+);
 
 export default router;
