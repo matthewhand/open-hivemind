@@ -7,8 +7,6 @@ import express, { Express } from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
 import usageTrackingRouter from '../../src/server/routes/usage-tracking';
-// Get references to mock functions from the mocked module
-import { UsageTrackerService } from '../../src/server/services/UsageTrackerService';
 
 // All mock fns created inline in factory to avoid jest.mock hoisting TDZ issues
 jest.mock('../../src/server/services/UsageTrackerService', () => ({
@@ -28,6 +26,8 @@ jest.mock('../../src/server/services/UsageTrackerService', () => ({
   },
 }));
 
+// Get references to mock functions from the mocked module
+import { UsageTrackerService } from '../../src/server/services/UsageTrackerService';
 const _usageMockInstance = (UsageTrackerService as any).getInstance();
 const mockGetAllToolMetrics = _usageMockInstance.getAllToolMetrics as jest.Mock;
 const mockGetToolMetrics = _usageMockInstance.getToolMetrics as jest.Mock;

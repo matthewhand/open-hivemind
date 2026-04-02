@@ -21,9 +21,7 @@ export class BotConfigRepository {
     this.ensureConnected();
 
     try {
-      const db = this.getDb();
-      if (!db) throw new Error('Database not available');
-
+      const db = this.getDb()!;
       const result = await db.run(
         `
         INSERT INTO bot_configurations (
@@ -96,9 +94,7 @@ export class BotConfigRepository {
     this.ensureConnected();
 
     try {
-      const db = this.getDb();
-      if (!db) throw new Error('Database not available');
-
+      const db = this.getDb()!;
       const row = await db.get('SELECT * FROM bot_configurations WHERE id = ?', [id]);
 
       if (!row) return null;
@@ -121,9 +117,7 @@ export class BotConfigRepository {
     }
 
     try {
-      const db = this.getDb();
-      if (!db) throw new Error('Database not available');
-
+      const db = this.getDb()!;
       const placeholders = ids.map(() => '?').join(',');
       const rows = await db.all(
         `SELECT * FROM bot_configurations WHERE id IN (${placeholders})`,
@@ -141,9 +135,7 @@ export class BotConfigRepository {
     this.ensureConnected();
 
     try {
-      const db = this.getDb();
-      if (!db) throw new Error('Database not available');
-
+      const db = this.getDb()!;
       const row = await db.get('SELECT * FROM bot_configurations WHERE name = ?', [name]);
 
       if (!row) return null;
@@ -159,9 +151,7 @@ export class BotConfigRepository {
     this.ensureConnected();
 
     try {
-      const db = this.getDb();
-      if (!db) throw new Error('Database not available');
-
+      const db = this.getDb()!;
       const rows = await db.all('SELECT * FROM bot_configurations ORDER BY updatedAt DESC');
 
       return rows.map((row) => this.mapRowToBotConfiguration(row));
@@ -183,9 +173,7 @@ export class BotConfigRepository {
     this.ensureConnected();
 
     try {
-      const db = this.getDb();
-      if (!db) throw new Error('Database not available');
-
+      const db = this.getDb()!;
       const configs = await db.all('SELECT * FROM bot_configurations ORDER BY updatedAt DESC');
 
       if (configs.length === 0) {
@@ -218,9 +206,7 @@ export class BotConfigRepository {
     this.ensureConnected();
 
     try {
-      const db = this.getDb();
-      if (!db) throw new Error('Database not available');
-
+      const db = this.getDb()!;
       const updateFields = [];
       const values = [];
 
@@ -316,9 +302,7 @@ export class BotConfigRepository {
     this.ensureConnected();
 
     try {
-      const db = this.getDb();
-      if (!db) throw new Error('Database not available');
-
+      const db = this.getDb()!;
       const result = await db.run('DELETE FROM bot_configurations WHERE id = ?', [id]);
       const deleted = (result.changes ?? 0) > 0;
 
@@ -341,9 +325,7 @@ export class BotConfigRepository {
     this.ensureConnected();
 
     try {
-      const db = this.getDb();
-      if (!db) throw new Error('Database not available');
-
+      const db = this.getDb()!;
       const result = await db.run(
         `
         INSERT INTO bot_configuration_versions (
@@ -418,9 +400,7 @@ export class BotConfigRepository {
     this.ensureConnected();
 
     try {
-      const db = this.getDb();
-      if (!db) throw new Error('Database not available');
-
+      const db = this.getDb()!;
       const rows = await db.all(
         'SELECT * FROM bot_configuration_versions WHERE botConfigurationId = ? ORDER BY version DESC',
         [botConfigurationId]
@@ -446,9 +426,7 @@ export class BotConfigRepository {
     }
 
     try {
-      const db = this.getDb();
-      if (!db) throw new Error('Database not available');
-
+      const db = this.getDb()!;
       const placeholders = botConfigurationIds.map(() => '?').join(',');
       const rows = await db.all(
         `SELECT * FROM bot_configuration_versions WHERE botConfigurationId IN (${placeholders}) ORDER BY botConfigurationId, version DESC`,
@@ -464,7 +442,7 @@ export class BotConfigRepository {
         if (!versionsMap.has(configId)) {
           versionsMap.set(configId, []);
         }
-        versionsMap.get(configId)?.push(version);
+        versionsMap.get(configId)!.push(version);
       });
 
       return versionsMap;
@@ -481,9 +459,7 @@ export class BotConfigRepository {
     this.ensureConnected();
 
     try {
-      const db = this.getDb();
-      if (!db) throw new Error('Database not available');
-
+      const db = this.getDb()!;
       // Check if this is the only version
       const versions = await this.getBotConfigurationVersions(botConfigurationId);
       if (versions.length <= 1) {
@@ -541,9 +517,7 @@ export class BotConfigRepository {
     this.ensureConnected();
 
     try {
-      const db = this.getDb();
-      if (!db) throw new Error('Database not available');
-
+      const db = this.getDb()!;
       const result = await db.run(
         `
         INSERT INTO bot_configuration_audit (
@@ -589,9 +563,7 @@ export class BotConfigRepository {
     this.ensureConnected();
 
     try {
-      const db = this.getDb();
-      if (!db) throw new Error('Database not available');
-
+      const db = this.getDb()!;
       const rows = await db.all(
         'SELECT * FROM bot_configuration_audit WHERE botConfigurationId = ? ORDER BY performedAt DESC',
         [botConfigurationId]
@@ -617,9 +589,7 @@ export class BotConfigRepository {
     }
 
     try {
-      const db = this.getDb();
-      if (!db) throw new Error('Database not available');
-
+      const db = this.getDb()!;
       const placeholders = botConfigurationIds.map(() => '?').join(',');
       const rows = await db.all(
         `SELECT * FROM bot_configuration_audit WHERE botConfigurationId IN (${placeholders}) ORDER BY botConfigurationId, performedAt DESC`,
@@ -635,7 +605,7 @@ export class BotConfigRepository {
         if (!auditMap.has(configId)) {
           auditMap.set(configId, []);
         }
-        auditMap.get(configId)?.push(audit);
+        auditMap.get(configId)!.push(audit);
       });
 
       return auditMap;

@@ -133,7 +133,7 @@ test('DataTable pagination out-of-bounds reset', async ({ page }) => {
   }
 
   await page.setContent(contentHtml);
-  // let babel/react render
+// let babel/react render
 
   // Navigate to Page 3
   await page.locator('#next-page').click();

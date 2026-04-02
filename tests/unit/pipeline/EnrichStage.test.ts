@@ -8,7 +8,8 @@
 
 import { MessageBus } from '@src/events/MessageBus';
 import type { MessageContext, ReplyDecision } from '@src/events/types';
-import { EnrichStage, type MemoryRetriever, type PromptBuilder } from '@src/pipeline/EnrichStage';
+import { EnrichStage } from '@src/pipeline/EnrichStage';
+import type { MemoryRetriever, PromptBuilder } from '@src/pipeline/EnrichStage';
 import { IMessage } from '@message/interfaces/IMessage';
 
 // ---------------------------------------------------------------------------
@@ -31,50 +32,25 @@ class StubMessage extends IMessage {
     this.timestamp = new Date();
   }
 
-  getMessageId(): string {
-    return this.id;
-  }
-  getText(): string {
-    return this.text;
-  }
-  getTimestamp(): Date {
-    return this.timestamp;
-  }
-  setText(t: string): void {
-    this.text = t;
-    this.content = t;
-  }
-  getChannelId(): string {
-    return this.channelId;
-  }
-  getAuthorId(): string {
-    return 'user-1';
-  }
-  getChannelTopic(): string | null {
-    return null;
-  }
-  getUserMentions(): string[] {
-    return [];
-  }
-  getChannelUsers(): string[] {
-    return ['user-1'];
-  }
-  mentionsUsers(_userId: string): boolean {
-    return false;
-  }
-  isFromBot(): boolean {
-    return false;
-  }
-  getAuthorName(): string {
-    return 'TestUser';
-  }
+  getMessageId(): string { return this.id; }
+  getText(): string { return this.text; }
+  getTimestamp(): Date { return this.timestamp; }
+  setText(t: string): void { this.text = t; this.content = t; }
+  getChannelId(): string { return this.channelId; }
+  getAuthorId(): string { return 'user-1'; }
+  getChannelTopic(): string | null { return null; }
+  getUserMentions(): string[] { return []; }
+  getChannelUsers(): string[] { return ['user-1']; }
+  mentionsUsers(_userId: string): boolean { return false; }
+  isFromBot(): boolean { return false; }
+  getAuthorName(): string { return 'TestUser'; }
 }
 
 const defaultDecision: ReplyDecision = { shouldReply: true, reason: 'mentioned' };
 
 function makeAcceptedCtx(
   overrides: Partial<MessageContext> = {},
-  decision: ReplyDecision = defaultDecision
+  decision: ReplyDecision = defaultDecision,
 ): MessageContext & { decision: ReplyDecision } {
   return {
     message: new StubMessage(),
@@ -132,7 +108,7 @@ describe('EnrichStage', () => {
           memories: ['mem1', 'mem2'],
           systemPrompt: 'You are a helpful bot.',
           botName: 'TestBot',
-        })
+        }),
       );
     });
   });
@@ -186,7 +162,11 @@ describe('EnrichStage', () => {
       await stage.process(ctx);
 
       expect(builder.buildSystemPrompt).toHaveBeenCalledTimes(1);
-      expect(builder.buildSystemPrompt).toHaveBeenCalledWith(botConfig, ['m1', 'm2'], 'MyBot');
+      expect(builder.buildSystemPrompt).toHaveBeenCalledWith(
+        botConfig,
+        ['m1', 'm2'],
+        'MyBot',
+      );
     });
   });
 
@@ -223,7 +203,7 @@ describe('EnrichStage', () => {
         expect.objectContaining({
           memories: ['memory'],
           systemPrompt: 'sys prompt',
-        })
+        }),
       );
     });
   });
@@ -251,7 +231,7 @@ describe('EnrichStage', () => {
         expect.objectContaining({
           error: expect.any(Error),
           stage: 'enrich',
-        })
+        }),
       );
       expect(errorListener.mock.calls[0][0].error.message).toBe('template broken');
       expect(enriched).not.toHaveBeenCalled();
@@ -264,11 +244,9 @@ describe('EnrichStage', () => {
       jest.useFakeTimers();
 
       const retriever: MemoryRetriever = {
-        retrieveMemories: jest
-          .fn()
-          .mockImplementation(
-            () => new Promise((resolve) => setTimeout(() => resolve(['late']), 10_000))
-          ),
+        retrieveMemories: jest.fn().mockImplementation(
+          () => new Promise((resolve) => setTimeout(() => resolve(['late']), 10_000)),
+        ),
       };
       const builder = mockPromptBuilder('prompt');
       const stage = new EnrichStage(bus, retriever, builder);
@@ -321,12 +299,9 @@ describe('EnrichStage', () => {
         }),
       };
       const builder: PromptBuilder = {
-        buildSystemPrompt: jest
-          .fn()
-          .mockImplementation(
-            (_cfg: Record<string, unknown>, mems: string[], name: string) =>
-              `prompt for ${name} with ${mems.join(',')}`
-          ),
+        buildSystemPrompt: jest.fn().mockImplementation(
+          (_cfg: Record<string, unknown>, mems: string[], name: string) => `prompt for ${name} with ${mems.join(',')}`,
+        ),
       };
       const stage = new EnrichStage(bus, retriever, builder);
 
@@ -361,7 +336,7 @@ describe('EnrichStage', () => {
       expect(retriever.retrieveMemories).toHaveBeenCalledWith(
         'PhiloBot',
         'What is the meaning of life?',
-        5
+        5,
       );
     });
   });
@@ -391,9 +366,7 @@ describe('EnrichStage', () => {
   describe('does not emit enriched on prompt builder error', () => {
     it('only emits message:error, not message:enriched, on builder failure', async () => {
       const builder: PromptBuilder = {
-        buildSystemPrompt: jest.fn().mockImplementation(() => {
-          throw new Error('fail');
-        }),
+        buildSystemPrompt: jest.fn().mockImplementation(() => { throw new Error('fail'); }),
       };
       const stage = new EnrichStage(bus, mockRetriever(['m']), builder);
 
@@ -453,11 +426,9 @@ describe('EnrichStage', () => {
   describe('fast retrieval does not trigger timeout', () => {
     it('uses actual memories when retrieval is fast', async () => {
       const retriever: MemoryRetriever = {
-        retrieveMemories: jest
-          .fn()
-          .mockImplementation(
-            () => new Promise((resolve) => setTimeout(() => resolve(['fast-mem']), 10))
-          ),
+        retrieveMemories: jest.fn().mockImplementation(
+          () => new Promise((resolve) => setTimeout(() => resolve(['fast-mem']), 10)),
+        ),
       };
       const stage = new EnrichStage(bus, retriever, mockPromptBuilder('p'));
 
@@ -482,7 +453,7 @@ describe('EnrichStage', () => {
       await stage.process(makeAcceptedCtx());
 
       expect(enriched.mock.calls[0][0].systemPrompt).toBe(
-        'You are TestBot. Be helpful and concise.'
+        'You are TestBot. Be helpful and concise.',
       );
     });
   });

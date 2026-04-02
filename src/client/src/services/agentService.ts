@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import axios from 'axios';
 
 export interface Agent {
@@ -13,7 +14,7 @@ export interface Agent {
   envOverrides?: Record<string, { isOverridden: boolean; redactedValue?: string }>;
 }
 
-export interface AgentPersona {
+export interface Persona {
   key: string;
   name: string;
   systemPrompt: string;
@@ -29,7 +30,7 @@ export const getAgents = async (): Promise<Agent[]> => {
   try {
     const response = await axios.get('/api/admin/agents');
     return response.data.agents || [];
-  } catch (_error) {
+  } catch (error) {
     // Fallback to old endpoint if new one doesn't exist
     const response = await axios.get('/api/admin/status');
     const { slackInfo, discordInfo } = response.data;
@@ -51,16 +52,16 @@ export const deleteAgent = async (id: string): Promise<void> => {
   await axios.delete(`/api/admin/agents/${id}`);
 };
 
-export const getPersonas = async (): Promise<AgentPersona[]> => {
+export const getPersonas = async (): Promise<Persona[]> => {
   const response = await axios.get('/api/admin/agents/personas');
   return response.data.personas || [];
 };
 
-export const createPersona = async (persona: Omit<AgentPersona, 'key'>): Promise<void> => {
+export const createPersona = async (persona: Omit<Persona, 'key'>): Promise<void> => {
   await axios.post('/api/admin/agents/personas', persona);
 };
 
-export const updatePersona = async (key: string, persona: Omit<AgentPersona, 'key'>): Promise<void> => {
+export const updatePersona = async (key: string, persona: Omit<Persona, 'key'>): Promise<void> => {
   await axios.put(`/api/admin/agents/personas/${key}`, persona);
 };
 

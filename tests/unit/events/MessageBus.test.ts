@@ -30,43 +30,18 @@ class StubMessage extends IMessage {
     this.timestamp = new Date();
   }
 
-  getMessageId(): string {
-    return this.id;
-  }
-  getText(): string {
-    return this.text;
-  }
-  getTimestamp(): Date {
-    return this.timestamp;
-  }
-  setText(t: string): void {
-    this.text = t;
-    this.content = t;
-  }
-  getChannelId(): string {
-    return this.channelId;
-  }
-  getAuthorId(): string {
-    return 'user-1';
-  }
-  getChannelTopic(): string | null {
-    return null;
-  }
-  getUserMentions(): string[] {
-    return [];
-  }
-  getChannelUsers(): string[] {
-    return ['user-1'];
-  }
-  mentionsUsers(_userId: string): boolean {
-    return false;
-  }
-  isFromBot(): boolean {
-    return false;
-  }
-  getAuthorName(): string {
-    return 'TestUser';
-  }
+  getMessageId(): string { return this.id; }
+  getText(): string { return this.text; }
+  getTimestamp(): Date { return this.timestamp; }
+  setText(t: string): void { this.text = t; this.content = t; }
+  getChannelId(): string { return this.channelId; }
+  getAuthorId(): string { return 'user-1'; }
+  getChannelTopic(): string | null { return null; }
+  getUserMentions(): string[] { return []; }
+  getChannelUsers(): string[] { return ['user-1']; }
+  mentionsUsers(_userId: string): boolean { return false; }
+  isFromBot(): boolean { return false; }
+  getAuthorName(): string { return 'TestUser'; }
 }
 
 function makeCtx(overrides: Partial<MessageContext> = {}): MessageContext {
@@ -142,7 +117,9 @@ describe('MessageBus', () => {
       bus.on('message:accepted', listener);
       bus.emit('message:accepted', { ...makeCtx(), decision });
 
-      expect(listener).toHaveBeenCalledWith(expect.objectContaining({ decision }));
+      expect(listener).toHaveBeenCalledWith(
+        expect.objectContaining({ decision }),
+      );
     });
 
     it('carries reason string on message:skipped', () => {
@@ -150,7 +127,9 @@ describe('MessageBus', () => {
       bus.on('message:skipped', listener);
       bus.emit('message:skipped', { ...makeCtx(), reason: 'off-topic' });
 
-      expect(listener).toHaveBeenCalledWith(expect.objectContaining({ reason: 'off-topic' }));
+      expect(listener).toHaveBeenCalledWith(
+        expect.objectContaining({ reason: 'off-topic' }),
+      );
     });
 
     it('carries error and stage on message:error', () => {
@@ -160,7 +139,7 @@ describe('MessageBus', () => {
       bus.emit('message:error', { ...makeCtx(), error, stage: 'enrichment' });
 
       expect(listener).toHaveBeenCalledWith(
-        expect.objectContaining({ error, stage: 'enrichment' })
+        expect.objectContaining({ error, stage: 'enrichment' }),
       );
     });
 
@@ -178,7 +157,7 @@ describe('MessageBus', () => {
         expect.objectContaining({
           memories: ['mem-1', 'mem-2'],
           systemPrompt: 'You are helpful.',
-        })
+        }),
       );
     });
 
@@ -196,7 +175,7 @@ describe('MessageBus', () => {
         expect.objectContaining({
           responseText: 'Hello there!',
           parts: ['Hello', 'there!'],
-        })
+        }),
       );
     });
   });
@@ -253,9 +232,7 @@ describe('MessageBus', () => {
   // 6. Error isolation
   describe('error isolation', () => {
     it('continues calling remaining listeners when one throws synchronously', () => {
-      const bad = jest.fn(() => {
-        throw new Error('listener blew up');
-      });
+      const bad = jest.fn(() => { throw new Error('listener blew up'); });
       const good = jest.fn();
 
       bus.on('message:incoming', bad);
@@ -267,9 +244,7 @@ describe('MessageBus', () => {
     });
 
     it('continues calling remaining listeners when one rejects (async)', async () => {
-      const bad = jest.fn(async () => {
-        throw new Error('async boom');
-      });
+      const bad = jest.fn(async () => { throw new Error('async boom'); });
       const good = jest.fn();
 
       bus.on('message:incoming', bad);
@@ -284,9 +259,7 @@ describe('MessageBus', () => {
   // 7. Error logging
   describe('error logging', () => {
     it('catches errors from throwing listeners without re-throwing', () => {
-      const bad = jest.fn(() => {
-        throw new Error('kaboom');
-      });
+      const bad = jest.fn(() => { throw new Error('kaboom'); });
       const good = jest.fn();
 
       bus.on('message:validated', bad);
@@ -366,7 +339,9 @@ describe('MessageBus', () => {
     });
 
     it('resolves even when there are no listeners', async () => {
-      await expect(bus.emitAsync('message:incoming', makeCtx())).resolves.toBeUndefined();
+      await expect(
+        bus.emitAsync('message:incoming', makeCtx()),
+      ).resolves.toBeUndefined();
     });
 
     it('does not reject when a listener throws — errors are caught internally', async () => {
@@ -374,7 +349,9 @@ describe('MessageBus', () => {
         throw new Error('async failure');
       });
 
-      await expect(bus.emitAsync('message:incoming', makeCtx())).resolves.toBeUndefined();
+      await expect(
+        bus.emitAsync('message:incoming', makeCtx()),
+      ).resolves.toBeUndefined();
     });
   });
 

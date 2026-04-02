@@ -113,9 +113,7 @@ describe('Health Routes', () => {
         healthCheck: jest.fn().mockResolvedValue({ status: 'ok' }),
       };
       const unhealthyProvider = {
-        healthCheck: jest
-          .fn()
-          .mockResolvedValue({ status: 'error', details: { reason: 'connection refused' } }),
+        healthCheck: jest.fn().mockResolvedValue({ status: 'error', details: { reason: 'connection refused' } }),
       };
       mockGetMemoryProviders.mockReturnValue(
         new Map([

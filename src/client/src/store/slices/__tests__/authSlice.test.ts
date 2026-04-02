@@ -1,187 +1,222 @@
-/**
- * Tests for authStore (Zustand) — migrated from the old Redux authSlice tests.
- */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { useAuthStore } from '../../authStore';
+// Jest provides describe, it, expect, beforeEach as globals
+import authReducer, {
+    loginStart,
+    loginSuccess,
+    loginFailure,
+    logout,
+    refreshTokenStart,
+    refreshTokenSuccess,
+    refreshTokenFailure,
+    clearError,
+    updateUser,
+    selectAuth,
+    selectUser,
+    selectToken,
+    selectIsAuthenticated,
+    selectIsLoading,
+    selectAuthError,
+    selectUserRole,
+    selectUserPermissions,
+    selectHasPermission,
+    selectIsTokenExpired,
+} from '../authSlice';
 
 // Mock localStorage
 const localStorageMock = {
-  getItem: vi.fn(() => null),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
+    getItem: jest.fn(() => null),
+    setItem: jest.fn(),
+    removeItem: jest.fn(),
+    clear: jest.fn(),
 };
 Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 
-const mockUser = {
-  id: '1',
-  username: 'testuser',
-  email: 'test@example.com',
-  role: 'admin' as const,
-  permissions: ['read', 'write', 'admin'],
-  lastLogin: new Date().toISOString(),
-};
-
-beforeEach(() => {
-  vi.clearAllMocks();
-  useAuthStore.setState({
-    user: null,
-    token: null,
-    isAuthenticated: false,
-    isLoading: false,
-    error: null,
-    refreshToken: null,
-    expiresAt: null,
-    currentTenant: null,
-    availableTenants: [],
-  });
-});
-
-describe('authStore', () => {
-  describe('actions', () => {
-    it('should return the initial state', () => {
-      const state = useAuthStore.getState();
-      expect(state.isLoading).toBe(false);
-      expect(state.error).toBe(null);
-    });
-
-    it('should handle loginStart', () => {
-      useAuthStore.getState().loginStart();
-      expect(useAuthStore.getState().isLoading).toBe(true);
-      expect(useAuthStore.getState().error).toBe(null);
-    });
-
-    it('should handle loginSuccess', () => {
-      const payload = {
-        user: mockUser,
-        token: 'test-token',
-        refreshToken: 'refresh-token',
-        expiresAt: Date.now() + 3600000,
-      };
-      useAuthStore.getState().loginSuccess(payload);
-      const state = useAuthStore.getState();
-      expect(state.isLoading).toBe(false);
-      expect(state.isAuthenticated).toBe(true);
-      expect(state.user).toEqual(mockUser);
-      expect(state.token).toBe('test-token');
-      expect(state.refreshToken).toBe('refresh-token');
-      expect(state.error).toBe(null);
-    });
-
-    it('should handle loginFailure', () => {
-      useAuthStore.getState().loginFailure('Invalid credentials');
-      const state = useAuthStore.getState();
-      expect(state.isLoading).toBe(false);
-      expect(state.isAuthenticated).toBe(false);
-      expect(state.error).toBe('Invalid credentials');
-      expect(state.user).toBe(null);
-      expect(state.token).toBe(null);
-    });
-
-    it('should handle logout', () => {
-      useAuthStore.setState({ user: mockUser, token: 'test-token', isAuthenticated: true });
-      useAuthStore.getState().logout();
-      const state = useAuthStore.getState();
-      expect(state.user).toBe(null);
-      expect(state.token).toBe(null);
-      expect(state.isAuthenticated).toBe(false);
-      expect(state.refreshToken).toBe(null);
-    });
-
-    it('should handle refreshTokenStart', () => {
-      useAuthStore.getState().refreshTokenStart();
-      expect(useAuthStore.getState().isLoading).toBe(true);
-    });
-
-    it('should handle refreshTokenSuccess', () => {
-      const payload = {
-        token: 'new-token',
-        refreshToken: 'new-refresh-token',
-        expiresAt: Date.now() + 3600000,
-      };
-      useAuthStore.getState().refreshTokenSuccess(payload);
-      const state = useAuthStore.getState();
-      expect(state.isLoading).toBe(false);
-      expect(state.token).toBe('new-token');
-      expect(state.refreshToken).toBe('new-refresh-token');
-    });
-
-    it('should handle refreshTokenFailure', () => {
-      useAuthStore.setState({ token: 'old-token', refreshToken: 'old-refresh' });
-      useAuthStore.getState().refreshTokenFailure();
-      const state = useAuthStore.getState();
-      expect(state.isLoading).toBe(false);
-      expect(state.token).toBe(null);
-      expect(state.refreshToken).toBe(null);
-    });
-
-    it('should handle clearError', () => {
-      useAuthStore.setState({ error: 'Some error' });
-      useAuthStore.getState().clearError();
-      expect(useAuthStore.getState().error).toBe(null);
-    });
-
-    it('should handle updateUser', () => {
-      useAuthStore.setState({ user: mockUser });
-      useAuthStore.getState().updateUser({ username: 'newname' });
-      expect(useAuthStore.getState().user?.username).toBe('newname');
-    });
-
-    it('should not update user if not logged in', () => {
-      useAuthStore.getState().updateUser({ username: 'newname' });
-      expect(useAuthStore.getState().user).toBe(null);
-    });
-  });
-
-  describe('selectors', () => {
-    beforeEach(() => {
-      useAuthStore.setState({
-        user: mockUser,
-        token: 'token',
-        isAuthenticated: true,
+describe('authSlice', () => {
+    const initialState = {
+        user: null,
+        token: null,
+        isAuthenticated: false,
         isLoading: false,
         error: null,
         refreshToken: null,
         expiresAt: null,
         currentTenant: null,
         availableTenants: [],
-      });
+    };
+
+    const mockUser = {
+        id: '1',
+        username: 'testuser',
+        email: 'test@example.com',
+        role: 'admin' as const,
+        permissions: ['read', 'write', 'admin'],
+        lastLogin: new Date().toISOString(),
+    };
+
+    beforeEach(() => {
+        jest.clearAllMocks();
     });
 
-    it('should return the user', () => {
-      expect(useAuthStore.getState().user).toEqual(mockUser);
+    describe('reducers', () => {
+        it('should return the initial state', () => {
+            expect(authReducer(undefined, { type: 'unknown' })).toMatchObject({
+                isLoading: false,
+                error: null,
+            });
+        });
+
+        it('should handle loginStart', () => {
+            const state = authReducer(initialState, loginStart());
+            expect(state.isLoading).toBe(true);
+            expect(state.error).toBe(null);
+        });
+
+        it('should handle loginSuccess', () => {
+            const payload = {
+                user: mockUser,
+                token: 'test-token',
+                refreshToken: 'refresh-token',
+                expiresAt: Date.now() + 3600000,
+            };
+            const state = authReducer(initialState, loginSuccess(payload));
+
+            expect(state.isLoading).toBe(false);
+            expect(state.isAuthenticated).toBe(true);
+            expect(state.user).toEqual(mockUser);
+            expect(state.token).toBe('test-token');
+            expect(state.refreshToken).toBe('refresh-token');
+            expect(state.error).toBe(null);
+        });
+
+        it('should handle loginFailure', () => {
+            const state = authReducer(initialState, loginFailure('Invalid credentials'));
+
+            expect(state.isLoading).toBe(false);
+            expect(state.isAuthenticated).toBe(false);
+            expect(state.error).toBe('Invalid credentials');
+            expect(state.user).toBe(null);
+            expect(state.token).toBe(null);
+        });
+
+        it('should handle logout', () => {
+            const loggedInState = {
+                ...initialState,
+                user: mockUser,
+                token: 'test-token',
+                isAuthenticated: true,
+            };
+            const state = authReducer(loggedInState, logout());
+
+            expect(state.user).toBe(null);
+            expect(state.token).toBe(null);
+            expect(state.isAuthenticated).toBe(false);
+            expect(state.refreshToken).toBe(null);
+        });
+
+        it('should handle refreshTokenStart', () => {
+            const state = authReducer(initialState, refreshTokenStart());
+            expect(state.isLoading).toBe(true);
+        });
+
+        it('should handle refreshTokenSuccess', () => {
+            const payload = {
+                token: 'new-token',
+                refreshToken: 'new-refresh-token',
+                expiresAt: Date.now() + 3600000,
+            };
+            const state = authReducer(initialState, refreshTokenSuccess(payload));
+
+            expect(state.isLoading).toBe(false);
+            expect(state.token).toBe('new-token');
+            expect(state.refreshToken).toBe('new-refresh-token');
+        });
+
+        it('should handle refreshTokenFailure', () => {
+            const loggedInState = {
+                ...initialState,
+                token: 'old-token',
+                refreshToken: 'old-refresh',
+            };
+            const state = authReducer(loggedInState, refreshTokenFailure());
+
+            expect(state.isLoading).toBe(false);
+            expect(state.token).toBe(null);
+            expect(state.refreshToken).toBe(null);
+        });
+
+        it('should handle clearError', () => {
+            const stateWithError = { ...initialState, error: 'Some error' };
+            const state = authReducer(stateWithError, clearError());
+            expect(state.error).toBe(null);
+        });
+
+        it('should handle updateUser', () => {
+            const loggedInState = { ...initialState, user: mockUser };
+            const state = authReducer(loggedInState, updateUser({ username: 'newname' }));
+            expect(state.user?.username).toBe('newname');
+        });
+
+        it('should not update user if not logged in', () => {
+            const state = authReducer(initialState, updateUser({ username: 'newname' }));
+            expect(state.user).toBe(null);
+        });
     });
 
-    it('should return the token', () => {
-      expect(useAuthStore.getState().token).toBe('token');
-    });
+    describe('selectors', () => {
+        const rootState = { auth: { ...initialState, user: mockUser, token: 'token', isAuthenticated: true } };
 
-    it('should return authentication status', () => {
-      expect(useAuthStore.getState().isAuthenticated).toBe(true);
-    });
+        it('selectAuth should return the auth state', () => {
+            expect(selectAuth(rootState)).toBe(rootState.auth);
+        });
 
-    it('should return user role', () => {
-      expect(useAuthStore.getState().user?.role).toBe('admin');
-    });
+        it('selectUser should return the user', () => {
+            expect(selectUser(rootState)).toEqual(mockUser);
+        });
 
-    it('should return user permissions', () => {
-      expect(useAuthStore.getState().user?.permissions).toEqual(['read', 'write', 'admin']);
-    });
+        it('selectToken should return the token', () => {
+            expect(selectToken(rootState)).toBe('token');
+        });
 
-    it('selectIsTokenExpired should return true when no expiresAt', () => {
-      expect(useAuthStore.getState().expiresAt).toBe(null);
-    });
+        it('selectIsAuthenticated should return authentication status', () => {
+            expect(selectIsAuthenticated(rootState)).toBe(true);
+        });
 
-    it('token should not be expired when expiresAt is in the future', () => {
-      useAuthStore.setState({ expiresAt: Date.now() + 3600000 });
-      const { expiresAt } = useAuthStore.getState();
-      expect(expiresAt !== null && Date.now() < expiresAt).toBe(true);
-    });
+        it('selectIsLoading should return loading status', () => {
+            expect(selectIsLoading(rootState)).toBe(false);
+        });
 
-    it('token should be expired when expiresAt is in the past', () => {
-      useAuthStore.setState({ expiresAt: Date.now() - 1000 });
-      const { expiresAt } = useAuthStore.getState();
-      expect(expiresAt !== null && Date.now() > expiresAt).toBe(true);
+        it('selectAuthError should return error', () => {
+            expect(selectAuthError(rootState)).toBe(null);
+        });
+
+        it('selectUserRole should return user role', () => {
+            expect(selectUserRole(rootState)).toBe('admin');
+        });
+
+        it('selectUserPermissions should return user permissions', () => {
+            expect(selectUserPermissions(rootState)).toEqual(['read', 'write', 'admin']);
+        });
+
+        it('selectHasPermission should check permission correctly', () => {
+            expect(selectHasPermission('read')(rootState)).toBe(true);
+            expect(selectHasPermission('nonexistent')(rootState)).toBe(true); // has admin
+        });
+
+        it('selectIsTokenExpired should return true when no expiresAt', () => {
+            expect(selectIsTokenExpired(rootState)).toBe(true);
+        });
+
+        it('selectIsTokenExpired should return false when token not expired', () => {
+            const stateWithExpiry = {
+                auth: { ...rootState.auth, expiresAt: Date.now() + 3600000 },
+            };
+            expect(selectIsTokenExpired(stateWithExpiry)).toBe(false);
+        });
+
+        it('selectIsTokenExpired should return true when token expired', () => {
+            const stateWithExpiry = {
+                auth: { ...rootState.auth, expiresAt: Date.now() - 1000 },
+            };
+            expect(selectIsTokenExpired(stateWithExpiry)).toBe(true);
+        });
     });
-  });
 });

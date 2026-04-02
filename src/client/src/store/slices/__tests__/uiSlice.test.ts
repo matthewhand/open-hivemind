@@ -1,184 +1,214 @@
-/**
- * Tests for uiStore (Zustand) — migrated from the old Redux uiSlice tests.
- */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { useUIStore } from '../../uiStore';
+// Jest provides describe, it, expect as globals
+import uiReducer, {
+    setTheme,
+    toggleDarkMode,
+    toggleSidebar,
+    setSidebarWidth,
+    openModal,
+    closeModal,
+    closeAllModals,
+    showToast,
+    dismissToast,
+    clearAllToasts,
+    showAlert,
+    dismissAlert,
+    setLoading,
+    clearLoading,
+    setActiveSection,
+    setFeatureFlag,
+    toggleFeatureFlag,
+    setNotificationsEnabled,
+    setSoundEnabled,
+    setAnimationsEnabled,
+    setLanguage,
+    setDensity,
+} from '../uiSlice';
 
-// Reset Zustand store state between tests
-beforeEach(() => {
-  useUIStore.setState({
-    theme: 'auto',
-    sidebarCollapsed: false,
-    notificationsEnabled: true,
-    soundEnabled: false,
-    animationsEnabled: true,
-    language: 'en',
-    density: 'comfortable',
-    autoRefreshEnabled: true,
-    refreshInterval: 5000,
-    showTooltips: true,
-    showKeyboardShortcuts: true,
-    sidebarWidth: 280,
-    modals: [],
-    toasts: [],
-    alerts: [],
-    loadingStates: {},
-    activeSection: 'dashboard',
-    userPreferences: {},
-    featureFlags: {
-      advancedAnalytics: true,
-      realTimeUpdates: true,
-      exportFeatures: true,
-      multiTenant: false,
-      aiInsights: false,
-    },
-  });
-});
+describe('uiSlice', () => {
+    // Get initial state by passing undefined
+    const getInitialState = () => uiReducer(undefined, { type: 'unknown' });
 
-describe('uiStore', () => {
-  describe('theme management', () => {
-    it('should set theme', () => {
-      useUIStore.getState().setTheme('dark');
-      expect(useUIStore.getState().theme).toBe('dark');
+    describe('theme management', () => {
+        it('should set theme', () => {
+            const state = uiReducer(getInitialState(), setTheme('dark'));
+            expect(state.theme).toBe('dark');
+        });
+
+        it('should toggle dark mode from light to dark', () => {
+            let state = uiReducer(getInitialState(), setTheme('light'));
+            state = uiReducer(state, toggleDarkMode());
+            expect(state.theme).toBe('dark');
+        });
+
+        it('should toggle dark mode from dark to high-contrast', () => {
+            let state = uiReducer(getInitialState(), setTheme('dark'));
+            state = uiReducer(state, toggleDarkMode());
+            expect(state.theme).toBe('high-contrast');
+        });
     });
 
-    it('should toggle dark mode from light to dark', () => {
-      useUIStore.getState().setTheme('light');
-      useUIStore.getState().toggleDarkMode();
-      expect(useUIStore.getState().theme).toBe('dark');
+    describe('sidebar management', () => {
+        it('should toggle sidebar', () => {
+            const state = uiReducer(getInitialState(), toggleSidebar());
+            expect(state.sidebarCollapsed).toBe(true);
+        });
+
+        it('should set sidebar width', () => {
+            const state = uiReducer(getInitialState(), setSidebarWidth(300));
+            expect(state.sidebarWidth).toBe(300);
+        });
     });
 
-    it('should toggle dark mode from dark to high-contrast', () => {
-      useUIStore.getState().setTheme('dark');
-      useUIStore.getState().toggleDarkMode();
-      expect(useUIStore.getState().theme).toBe('high-contrast');
-    });
-  });
+    describe('modal management', () => {
+        it('should open modal', () => {
+            const state = uiReducer(getInitialState(), openModal({
+                id: 'test-modal',
+                type: 'default',
+            }));
+            expect(state.modals.some(m => m.id === 'test-modal')).toBe(true);
+        });
 
-  describe('sidebar management', () => {
-    it('should toggle sidebar', () => {
-      useUIStore.getState().toggleSidebar();
-      expect(useUIStore.getState().sidebarCollapsed).toBe(true);
-    });
+        it('should close modal', () => {
+            let state = uiReducer(getInitialState(), openModal({
+                id: 'test-modal',
+                type: 'default',
+            }));
+            state = uiReducer(state, closeModal('test-modal'));
+            expect(state.modals.some(m => m.id === 'test-modal')).toBe(false);
+        });
 
-    it('should set sidebar width', () => {
-      useUIStore.getState().setSidebarWidth(300);
-      expect(useUIStore.getState().sidebarWidth).toBe(300);
-    });
-  });
-
-  describe('modal management', () => {
-    it('should open modal', () => {
-      useUIStore.getState().openModal({ id: 'test-modal', type: 'default' });
-      expect(useUIStore.getState().modals.some((m) => m.id === 'test-modal')).toBe(true);
-    });
-
-    it('should close modal', () => {
-      useUIStore.getState().openModal({ id: 'test-modal', type: 'default' });
-      useUIStore.getState().closeModal('test-modal');
-      expect(useUIStore.getState().modals.some((m) => m.id === 'test-modal')).toBe(false);
-    });
-
-    it('should close all modals', () => {
-      useUIStore.getState().openModal({ id: 'modal-1', type: 'default' });
-      useUIStore.getState().openModal({ id: 'modal-2', type: 'default' });
-      useUIStore.getState().closeAllModals();
-      expect(useUIStore.getState().modals.length).toBe(0);
-    });
-  });
-
-  describe('toast management', () => {
-    it('should show toast', () => {
-      useUIStore.getState().showToast({ message: 'Test toast', type: 'success', duration: 5000, position: 'top-right' });
-      expect(useUIStore.getState().toasts.some((t) => t.message === 'Test toast')).toBe(true);
+        it('should close all modals', () => {
+            let state = uiReducer(getInitialState(), openModal({
+                id: 'modal-1',
+                type: 'default',
+            }));
+            state = uiReducer(state, openModal({
+                id: 'modal-2',
+                type: 'default',
+            }));
+            state = uiReducer(state, closeAllModals());
+            expect(state.modals.length).toBe(0);
+        });
     });
 
-    it('should dismiss toast', () => {
-      useUIStore.getState().showToast({ message: 'Test toast', type: 'success', duration: 5000, position: 'top-right' });
-      const toastId = useUIStore.getState().toasts[0].id;
-      useUIStore.getState().dismissToast(toastId);
-      expect(useUIStore.getState().toasts.length).toBe(0);
+    describe('toast management', () => {
+        it('should show toast', () => {
+            const state = uiReducer(getInitialState(), showToast({
+                message: 'Test toast',
+                type: 'success',
+                duration: 5000,
+                position: 'top-right',
+            }));
+            expect(state.toasts.some(t => t.message === 'Test toast')).toBe(true);
+        });
+
+        it('should dismiss toast', () => {
+            let state = uiReducer(getInitialState(), showToast({
+                message: 'Test toast',
+                type: 'success',
+                duration: 5000,
+                position: 'top-right',
+            }));
+            const toastId = state.toasts[0].id;
+            state = uiReducer(state, dismissToast(toastId));
+            expect(state.toasts.length).toBe(0);
+        });
+
+        it('should clear all toasts', () => {
+            let state = uiReducer(getInitialState(), showToast({
+                message: 'Toast 1',
+                type: 'success',
+                duration: 5000,
+                position: 'top-right',
+            }));
+            state = uiReducer(state, showToast({
+                message: 'Toast 2',
+                type: 'error',
+                duration: 5000,
+                position: 'top-right',
+            }));
+            state = uiReducer(state, clearAllToasts());
+            expect(state.toasts.length).toBe(0);
+        });
     });
 
-    it('should clear all toasts', () => {
-      useUIStore.getState().showToast({ message: 'Toast 1', type: 'success', duration: 5000, position: 'top-right' });
-      useUIStore.getState().showToast({ message: 'Toast 2', type: 'error', duration: 5000, position: 'top-right' });
-      useUIStore.getState().clearAllToasts();
-      expect(useUIStore.getState().toasts.length).toBe(0);
-    });
-  });
+    describe('alert management', () => {
+        it('should show alert', () => {
+            const state = uiReducer(getInitialState(), showAlert({
+                message: 'Test alert',
+                status: 'warning',
+            }));
+            expect(state.alerts.some(a => a.message === 'Test alert')).toBe(true);
+        });
 
-  describe('alert management', () => {
-    it('should show alert', () => {
-      useUIStore.getState().showAlert({ message: 'Test alert', status: 'warning' });
-      expect(useUIStore.getState().alerts.some((a) => a.message === 'Test alert')).toBe(true);
-    });
-
-    it('should dismiss alert', () => {
-      useUIStore.getState().showAlert({ message: 'Test alert', status: 'warning' });
-      const alertId = useUIStore.getState().alerts[0].id;
-      useUIStore.getState().dismissAlert(alertId);
-      expect(useUIStore.getState().alerts.length).toBe(0);
-    });
-  });
-
-  describe('loading states', () => {
-    it('should set loading state', () => {
-      useUIStore.getState().setLoading('bots', true);
-      expect(useUIStore.getState().loadingStates.bots).toBe(true);
+        it('should dismiss alert', () => {
+            let state = uiReducer(getInitialState(), showAlert({
+                message: 'Test alert',
+                status: 'warning',
+            }));
+            const alertId = state.alerts[0].id;
+            state = uiReducer(state, dismissAlert(alertId));
+            expect(state.alerts.length).toBe(0);
+        });
     });
 
-    it('should clear loading state', () => {
-      useUIStore.getState().setLoading('bots', true);
-      useUIStore.getState().clearLoading('bots');
-      expect(useUIStore.getState().loadingStates.bots).toBeUndefined();
-    });
-  });
+    describe('loading states', () => {
+        it('should set loading state', () => {
+            const state = uiReducer(getInitialState(), setLoading({ key: 'bots', isLoading: true }));
+            expect(state.loadingStates.bots).toBe(true);
+        });
 
-  describe('feature flags', () => {
-    it('should set feature flag', () => {
-      useUIStore.getState().setFeatureFlag('aiInsights', true);
-      expect(useUIStore.getState().featureFlags.aiInsights).toBe(true);
-    });
-
-    it('should toggle feature flag', () => {
-      useUIStore.getState().setFeatureFlag('aiInsights', false);
-      useUIStore.getState().toggleFeatureFlag('aiInsights');
-      expect(useUIStore.getState().featureFlags.aiInsights).toBe(true);
-    });
-  });
-
-  describe('UI preferences', () => {
-    it('should set notifications enabled', () => {
-      useUIStore.getState().setNotificationsEnabled(false);
-      expect(useUIStore.getState().notificationsEnabled).toBe(false);
+        it('should clear loading state', () => {
+            let state = uiReducer(getInitialState(), setLoading({ key: 'bots', isLoading: true }));
+            state = uiReducer(state, clearLoading('bots'));
+            expect(state.loadingStates.bots).toBeUndefined();
+        });
     });
 
-    it('should set sound enabled', () => {
-      useUIStore.getState().setSoundEnabled(true);
-      expect(useUIStore.getState().soundEnabled).toBe(true);
+    describe('feature flags', () => {
+        it('should set feature flag', () => {
+            const state = uiReducer(getInitialState(), setFeatureFlag({ key: 'aiInsights', enabled: true }));
+            expect(state.featureFlags.aiInsights).toBe(true);
+        });
+
+        it('should toggle feature flag', () => {
+            let state = uiReducer(getInitialState(), setFeatureFlag({ key: 'aiInsights', enabled: false }));
+            state = uiReducer(state, toggleFeatureFlag('aiInsights'));
+            expect(state.featureFlags.aiInsights).toBe(true);
+        });
     });
 
-    it('should set animations enabled', () => {
-      useUIStore.getState().setAnimationsEnabled(false);
-      expect(useUIStore.getState().animationsEnabled).toBe(false);
+    describe('UI preferences', () => {
+        it('should set notifications enabled', () => {
+            const state = uiReducer(getInitialState(), setNotificationsEnabled(false));
+            expect(state.notificationsEnabled).toBe(false);
+        });
+
+        it('should set sound enabled', () => {
+            const state = uiReducer(getInitialState(), setSoundEnabled(true));
+            expect(state.soundEnabled).toBe(true);
+        });
+
+        it('should set animations enabled', () => {
+            const state = uiReducer(getInitialState(), setAnimationsEnabled(false));
+            expect(state.animationsEnabled).toBe(false);
+        });
+
+        it('should set language', () => {
+            const state = uiReducer(getInitialState(), setLanguage('es'));
+            expect(state.language).toBe('es');
+        });
+
+        it('should set density', () => {
+            const state = uiReducer(getInitialState(), setDensity('compact'));
+            expect(state.density).toBe('compact');
+        });
     });
 
-    it('should set language', () => {
-      useUIStore.getState().setLanguage('es');
-      expect(useUIStore.getState().language).toBe('es');
+    describe('active section', () => {
+        it('should set active section', () => {
+            const state = uiReducer(getInitialState(), setActiveSection('dashboard'));
+            expect(state.activeSection).toBe('dashboard');
+        });
     });
-
-    it('should set density', () => {
-      useUIStore.getState().setDensity('compact');
-      expect(useUIStore.getState().density).toBe('compact');
-    });
-  });
-
-  describe('active section', () => {
-    it('should set active section', () => {
-      useUIStore.getState().setActiveSection('dashboard');
-      expect(useUIStore.getState().activeSection).toBe('dashboard');
-    });
-  });
 });

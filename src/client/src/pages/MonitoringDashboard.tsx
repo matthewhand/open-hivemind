@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import StatusCard from '../components/Monitoring/StatusCard';
@@ -11,7 +12,7 @@ const debug = Debug('app:client:pages:MonitoringDashboard');
 const MonitoringDashboard: React.FC = () => {
   const { isConnected, connect, disconnect, performanceMetrics, alerts } = useWebSocket();
   const [refreshInterval, setRefreshInterval] = useState(5000);
-  const [_isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     connect();

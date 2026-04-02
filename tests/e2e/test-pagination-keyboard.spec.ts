@@ -73,7 +73,7 @@ test('Test pagination keyboard and aria integration', async ({ page }) => {
   `;
 
   await page.setContent(html);
-  // Wait for React
+// Wait for React
 
   // Set focus on the pagination container directly
   await page.locator('#pagination-container').focus();

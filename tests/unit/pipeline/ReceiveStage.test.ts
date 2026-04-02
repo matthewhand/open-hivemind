@@ -9,9 +9,9 @@
  * Every test here should FAIL until the implementation is written.
  */
 
+import { ReceiveStage } from '@src/pipeline/ReceiveStage';
 import { MessageBus } from '@src/events/MessageBus';
 import type { MessageContext } from '@src/events/types';
-import { ReceiveStage } from '@src/pipeline/ReceiveStage';
 import { IMessage } from '@message/interfaces/IMessage';
 
 // ---------------------------------------------------------------------------
@@ -34,43 +34,18 @@ class StubMessage extends IMessage {
     this.timestamp = new Date();
   }
 
-  getMessageId(): string {
-    return this.id;
-  }
-  getText(): string {
-    return this.text;
-  }
-  getTimestamp(): Date {
-    return this.timestamp;
-  }
-  setText(t: string): void {
-    this.text = t;
-    this.content = t;
-  }
-  getChannelId(): string {
-    return this.channelId;
-  }
-  getAuthorId(): string {
-    return 'user-1';
-  }
-  getChannelTopic(): string | null {
-    return null;
-  }
-  getUserMentions(): string[] {
-    return [];
-  }
-  getChannelUsers(): string[] {
-    return ['user-1'];
-  }
-  mentionsUsers(_userId: string): boolean {
-    return false;
-  }
-  isFromBot(): boolean {
-    return false;
-  }
-  getAuthorName(): string {
-    return 'TestUser';
-  }
+  getMessageId(): string { return this.id; }
+  getText(): string { return this.text; }
+  getTimestamp(): Date { return this.timestamp; }
+  setText(t: string): void { this.text = t; this.content = t; }
+  getChannelId(): string { return this.channelId; }
+  getAuthorId(): string { return 'user-1'; }
+  getChannelTopic(): string | null { return null; }
+  getUserMentions(): string[] { return []; }
+  getChannelUsers(): string[] { return ['user-1']; }
+  mentionsUsers(_userId: string): boolean { return false; }
+  isFromBot(): boolean { return false; }
+  getAuthorName(): string { return 'TestUser'; }
 }
 
 // ---------------------------------------------------------------------------

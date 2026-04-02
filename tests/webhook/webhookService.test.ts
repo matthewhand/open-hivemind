@@ -144,9 +144,9 @@ describe('webhookService', () => {
         throw new Error('Route configuration failed');
       });
 
-      await expect(webhookService.start(null, messageService, 'test-channel')).rejects.toThrow(
-        'Route configuration failed'
-      );
+      await expect(
+        webhookService.start(null, messageService, 'test-channel')
+      ).rejects.toThrow('Route configuration failed');
     });
 
     it('should handle express app creation errors', async () => {
@@ -154,13 +154,15 @@ describe('webhookService', () => {
         throw new Error('Express app creation failed');
       });
 
-      await expect(webhookService.start(null, messageService, 'test-channel')).rejects.toThrow(
-        'Express app creation failed'
-      );
+      await expect(
+        webhookService.start(null, messageService, 'test-channel')
+      ).rejects.toThrow('Express app creation failed');
     });
 
     it('should handle null message service', async () => {
-      await expect(webhookService.start(null, null as any, 'test-channel')).resolves.not.toThrow();
+      await expect(
+        webhookService.start(null, null as any, 'test-channel')
+      ).resolves.not.toThrow();
 
       expect(mockConfigureWebhookRoutes).toHaveBeenCalledWith(
         expect.any(Object),

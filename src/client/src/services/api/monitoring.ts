@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ApiService } from './core';
+import { ApiService, buildUrl } from './core';
 import type { ActivityResponse, StatusResponse } from './types';
 
 export function monitoringMixin(api: ApiService) {
@@ -37,12 +37,36 @@ export function monitoringMixin(api: ApiService) {
       return api.request(`/api/dashboard/alerts/${alertId}/resolve`, { method: 'POST' });
     },
 
-    exportActivity(queryString: string): Promise<string> {
-      return api.getText(`/api/dashboard/activity/export?${queryString}`);
+    async exportActivity(queryString: string): Promise<string> {
+      const url = buildUrl(`/api/dashboard/activity/export?${queryString}`);
+      const headers = api.getAuthHeaders();
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Export failed: ${response.statusText}`);
+      }
+
+      return response.text();
     },
 
-    exportAnalytics(queryString: string): Promise<string> {
-      return api.getText(`/api/dashboard/analytics/export?${queryString}`);
+    async exportAnalytics(queryString: string): Promise<string> {
+      const url = buildUrl(`/api/dashboard/analytics/export?${queryString}`);
+      const headers = api.getAuthHeaders();
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Export failed: ${response.statusText}`);
+      }
+
+      return response.text();
     },
 
     // API Endpoint Monitoring

@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useWebSocket } from '../../hooks/useWebSocket';
 
-interface _PerformanceMetric {
+interface PerformanceMetric {
   timestamp: string;
   responseTime: number;
   memoryUsage: number;

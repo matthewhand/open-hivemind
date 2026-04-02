@@ -8,7 +8,8 @@
 
 import { MessageBus } from '@src/events/MessageBus';
 import type { MessageContext } from '@src/events/types';
-import { InferenceStage, type LlmInvoker } from '@src/pipeline/InferenceStage';
+import { InferenceStage } from '@src/pipeline/InferenceStage';
+import type { LlmInvoker } from '@src/pipeline/InferenceStage';
 import { IMessage } from '@message/interfaces/IMessage';
 
 // ---------------------------------------------------------------------------
@@ -31,43 +32,18 @@ class StubMessage extends IMessage {
     this.timestamp = new Date();
   }
 
-  getMessageId(): string {
-    return this.id;
-  }
-  getText(): string {
-    return this.text;
-  }
-  getTimestamp(): Date {
-    return this.timestamp;
-  }
-  setText(t: string): void {
-    this.text = t;
-    this.content = t;
-  }
-  getChannelId(): string {
-    return this.channelId;
-  }
-  getAuthorId(): string {
-    return 'user-1';
-  }
-  getChannelTopic(): string | null {
-    return null;
-  }
-  getUserMentions(): string[] {
-    return [];
-  }
-  getChannelUsers(): string[] {
-    return ['user-1'];
-  }
-  mentionsUsers(_userId: string): boolean {
-    return false;
-  }
-  isFromBot(): boolean {
-    return false;
-  }
-  getAuthorName(): string {
-    return 'TestUser';
-  }
+  getMessageId(): string { return this.id; }
+  getText(): string { return this.text; }
+  getTimestamp(): Date { return this.timestamp; }
+  setText(t: string): void { this.text = t; this.content = t; }
+  getChannelId(): string { return this.channelId; }
+  getAuthorId(): string { return 'user-1'; }
+  getChannelTopic(): string | null { return null; }
+  getUserMentions(): string[] { return []; }
+  getChannelUsers(): string[] { return ['user-1']; }
+  mentionsUsers(_userId: string): boolean { return false; }
+  isFromBot(): boolean { return false; }
+  getAuthorName(): string { return 'TestUser'; }
 }
 
 type EnrichedContext = MessageContext & { memories: string[]; systemPrompt: string };
@@ -135,7 +111,7 @@ describe('InferenceStage', () => {
       await stage.process(ctx);
 
       expect(response).toHaveBeenCalledWith(
-        expect.objectContaining({ responseText: 'The answer is 42.' })
+        expect.objectContaining({ responseText: 'The answer is 42.' }),
       );
     });
   });
@@ -154,7 +130,7 @@ describe('InferenceStage', () => {
 
       expect(skipped).toHaveBeenCalledTimes(1);
       expect(skipped).toHaveBeenCalledWith(
-        expect.objectContaining({ reason: 'empty LLM response' })
+        expect.objectContaining({ reason: 'empty LLM response' }),
       );
     });
 
@@ -190,7 +166,7 @@ describe('InferenceStage', () => {
         expect.objectContaining({
           error: expect.any(Error),
           stage: 'inference',
-        })
+        }),
       );
       expect(errorListener.mock.calls[0][0].error.message).toBe('LLM timeout');
     });
@@ -240,7 +216,7 @@ describe('InferenceStage', () => {
       expect(invoker.generateResponse).toHaveBeenCalledTimes(1);
       expect(response).toHaveBeenCalledTimes(1);
       expect(response).toHaveBeenCalledWith(
-        expect.objectContaining({ responseText: 'Hi from LLM' })
+        expect.objectContaining({ responseText: 'Hi from LLM' }),
       );
     });
 
@@ -256,7 +232,7 @@ describe('InferenceStage', () => {
 
       expect(skipped).toHaveBeenCalledTimes(1);
       expect(skipped).toHaveBeenCalledWith(
-        expect.objectContaining({ reason: 'empty LLM response' })
+        expect.objectContaining({ reason: 'empty LLM response' }),
       );
     });
   });
@@ -275,7 +251,7 @@ describe('InferenceStage', () => {
         'What is 2+2?',
         expect.anything(),
         expect.anything(),
-        expect.anything()
+        expect.anything(),
       );
     });
 
@@ -294,7 +270,7 @@ describe('InferenceStage', () => {
         'fallback content',
         expect.anything(),
         expect.anything(),
-        expect.anything()
+        expect.anything(),
       );
     });
   });
@@ -313,7 +289,7 @@ describe('InferenceStage', () => {
         expect.anything(),
         historyMsgs,
         expect.anything(),
-        expect.anything()
+        expect.anything(),
       );
     });
   });
@@ -331,7 +307,7 @@ describe('InferenceStage', () => {
         expect.anything(),
         expect.anything(),
         'Be concise.',
-        expect.anything()
+        expect.anything(),
       );
     });
   });
@@ -350,7 +326,7 @@ describe('InferenceStage', () => {
         expect.anything(),
         expect.anything(),
         expect.anything(),
-        meta
+        meta,
       );
     });
   });
@@ -513,7 +489,7 @@ describe('InferenceStage', () => {
 
       expect(response).toHaveBeenCalledTimes(1);
       expect(response).toHaveBeenCalledWith(
-        expect.objectContaining({ responseText: 'delayed response' })
+        expect.objectContaining({ responseText: 'delayed response' }),
       );
     });
   });

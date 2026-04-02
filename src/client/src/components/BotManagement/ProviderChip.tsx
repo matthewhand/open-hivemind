@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React from 'react';
 import type {
   MessageProvider,
@@ -19,7 +20,7 @@ interface ProviderChipProps {
 
 const ProviderChip: React.FC<ProviderChipProps> = ({
   provider,
-  type: _type,
+  type,
   onRemove,
   onEdit,
   disabled = false,

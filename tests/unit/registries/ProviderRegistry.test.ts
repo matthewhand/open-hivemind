@@ -44,14 +44,10 @@ describe('ProviderRegistry — memory providers', () => {
   let registry: ProviderRegistry;
 
   beforeEach(() => {
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-    jest.spyOn(console, 'warn').mockImplementation(() => {});
-    jest.spyOn(console, 'error').mockImplementation(() => {});
     registry = createFreshRegistry();
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
     (ProviderRegistry as any).instance = undefined;
   });
 
@@ -117,14 +113,10 @@ describe('ProviderRegistry — tool providers', () => {
   let registry: ProviderRegistry;
 
   beforeEach(() => {
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-    jest.spyOn(console, 'warn').mockImplementation(() => {});
-    jest.spyOn(console, 'error').mockImplementation(() => {});
     registry = createFreshRegistry();
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
     (ProviderRegistry as any).instance = undefined;
   });
 
@@ -187,14 +179,7 @@ describe('ProviderRegistry — tool providers', () => {
 });
 
 describe('ProviderRegistry — singleton behavior', () => {
-  beforeEach(() => {
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-    jest.spyOn(console, 'warn').mockImplementation(() => {});
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-  });
-
   afterEach(() => {
-    jest.restoreAllMocks();
     (ProviderRegistry as any).instance = undefined;
   });
 

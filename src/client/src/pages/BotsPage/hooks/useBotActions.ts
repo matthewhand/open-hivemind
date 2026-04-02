@@ -26,7 +26,7 @@ export const useBotActions = (
 
       await apiService.post(`/api/bots/${bot.id}/toggle`, { status: newStatus });
       toastSuccess(`Bot ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`);
-    } catch (_err) {
+    } catch (err) {
       setBots((prev) => prev.map((b) => (b.id === bot.id ? bot : b)));
       if (previewBot?.id === bot.id) {
         setPreviewBot(bot);
@@ -45,7 +45,7 @@ export const useBotActions = (
       toastSuccess('Bot updated successfully');
       showStamp?.();
       setEditingBot(null);
-    } catch (_err) {
+    } catch (err) {
       toastError(err instanceof Error ? err.message : 'Failed to update bot');
     }
   };
@@ -58,7 +58,7 @@ export const useBotActions = (
       showStamp?.();
       setIsCreateModalOpen(false);
       fetchBots();
-    } catch (_err) {
+    } catch (err) {
       toastError(err instanceof Error ? err.message : 'Failed to create bot');
       throw err;
     }
@@ -89,7 +89,7 @@ export const useBotActions = (
       }
       bulk.clearSelection();
       toastSuccess('Selected bots deleted');
-    } catch (_err) {
+    } catch (err) {
       toastError('Failed to delete some bots');
     } finally {
       setBulkDeleting(false);

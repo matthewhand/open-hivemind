@@ -33,14 +33,6 @@ createIntegrationSuite(slackConfig.name, slackConfig.requiredEnvVars, () => {
   });
 
   describe('Connection', () => {
-    beforeEach(() => {
-      jest.spyOn(console, 'log').mockImplementation(() => {});
-    });
-
-    afterEach(() => {
-      jest.restoreAllMocks();
-    });
-
     it('should have valid bot token format', () => {
       const token = process.env.SLACK_BOT_TOKEN!;
       // Slack bot tokens start with 'xoxb-'

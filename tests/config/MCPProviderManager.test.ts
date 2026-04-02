@@ -2,14 +2,6 @@ import { MCPProviderManager } from '../../src/config/MCPProviderManager';
 import { MCPProviderConfig } from '../../src/types/mcp';
 
 describe('MCPProviderManager Configuration Validation', () => {
-  beforeEach(() => {
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-  });
-
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
   let manager: MCPProviderManager;
 
   beforeEach(() => {

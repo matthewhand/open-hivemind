@@ -1,5 +1,15 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { useUIStore } from '../store/uiStore';
+import { useAppSelector, useAppDispatch } from '../store/hooks';
+import {
+  selectUI,
+  setAnimationsEnabled,
+  setRefreshInterval,
+  setShowKeyboardShortcuts,
+  setShowTooltips,
+  setTheme,
+  toggleAutoRefresh,
+} from '../store/slices/uiSlice';
+import type { UIState } from '../store/slices/uiSlice';
 import { Accordion } from './DaisyUI/Accordion';
 import type { AccordionItem } from './DaisyUI/Accordion';
 import { useConfigDiff } from '../hooks/useConfigDiff';
@@ -8,13 +18,8 @@ import AdvancedThemeSwitcher from './DaisyUI/AdvancedThemeSwitcher';
 import Toggle from './DaisyUI/Toggle';
 
 const Settings: React.FC = () => {
-  const ui = useUIStore((s) => s);
-  const setTheme = useUIStore((s) => s.setTheme);
-  const setAnimationsEnabled = useUIStore((s) => s.setAnimationsEnabled);
-  const setRefreshInterval = useUIStore((s) => s.setRefreshInterval);
-  const setShowKeyboardShortcuts = useUIStore((s) => s.setShowKeyboardShortcuts);
-  const setShowTooltips = useUIStore((s) => s.setShowTooltips);
-  const toggleAutoRefresh = useUIStore((s) => s.toggleAutoRefresh);
+  const dispatch = useAppDispatch();
+  const ui = useAppSelector(selectUI);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -75,11 +80,10 @@ const Settings: React.FC = () => {
             </label>
           </div>
           <div className="mt-4 form-control w-full max-w-xs">
-            <label className="label" htmlFor="refresh-interval">
+            <label className="label">
               <span className="label-text text-base-content/70">Refresh Interval:</span>
             </label>
             <select
-              id="refresh-interval"
               className="select select-bordered select-sm w-full"
               value={ui.refreshInterval}
               onChange={(e) => handleRefreshIntervalChange(Number(e.target.value))}
@@ -107,7 +111,7 @@ const Settings: React.FC = () => {
               <Toggle
                 className="toggle toggle-primary"
                 checked={!ui.animationsEnabled}
-                onChange={(event) => setAnimationsEnabled(!event.target.checked)}
+                onChange={(event) => dispatch(setAnimationsEnabled(!event.target.checked))}
               />
             </label>
           </div>
@@ -117,7 +121,7 @@ const Settings: React.FC = () => {
               <Toggle
                 className="toggle toggle-primary"
                 checked={ui.showTooltips}
-                onChange={(event) => setShowTooltips(event.target.checked)}
+                onChange={(event) => dispatch(setShowTooltips(event.target.checked))}
               />
             </label>
           </div>
@@ -127,7 +131,7 @@ const Settings: React.FC = () => {
               <Toggle
                 className="toggle toggle-primary"
                 checked={ui.showKeyboardShortcuts}
-                onChange={(event) => setShowKeyboardShortcuts(event.target.checked)}
+                onChange={(event) => dispatch(setShowKeyboardShortcuts(event.target.checked))}
               />
             </label>
           </div>
@@ -137,15 +141,15 @@ const Settings: React.FC = () => {
   ];
 
   const handleThemeSelect = (mode: string) => {
-    setTheme(mode);
+    dispatch(setTheme(mode));
   };
 
   const handleAutoRefreshToggle = () => {
-    toggleAutoRefresh();
+    dispatch(toggleAutoRefresh());
   };
 
   const handleRefreshIntervalChange = (interval: number) => {
-    setRefreshInterval(interval);
+    dispatch(setRefreshInterval(interval));
   };
 
   const handleSaveSettings = async () => {

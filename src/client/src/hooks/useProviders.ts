@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQueries } from '@tanstack/react-query';
 import { getLlmProviders, getMessengerProviders, type ProviderInfo } from '../services/providerService';
 

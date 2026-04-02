@@ -20,6 +20,6 @@ test('capture LLM modal', async ({ page }) => {
   await expect(page.locator('.modal-box')).toBeVisible();
 
   // Wait for rendering
-  await page.waitForLoadState('domcontentloaded');
-  await page.screenshot({ path: './test-results/llm-modal.png' });
+  await page.waitForLoadState("domcontentloaded");
+    await page.screenshot({ path: './test-results/llm-modal.png' });
 });

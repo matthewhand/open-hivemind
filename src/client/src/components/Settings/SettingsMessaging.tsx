@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -43,7 +43,7 @@ const SettingsMessaging: React.FC = () => {
     control,
     reset,
     watch,
-    formState: { errors: _errors },
+    formState: { errors },
   } = useForm<MessagingConfig>({
     resolver: zodResolver(messagingSettingsSchema),
     defaultValues,

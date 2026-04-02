@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
 import Card from './DaisyUI/Card';
 import Input from './DaisyUI/Input';
@@ -41,7 +42,7 @@ const Login: React.FC = () => {
       } else {
         setError('Invalid username or password');
       }
-    } catch (_err) {
+    } catch (err) {
       setError('An unexpected error occurred');
     } finally {
       setIsLoading(false);

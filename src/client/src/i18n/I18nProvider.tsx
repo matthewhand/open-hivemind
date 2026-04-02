@@ -1,4 +1,4 @@
-/* eslint-disable react-refresh/only-export-components, no-empty, no-case-declarations */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import React, { createContext, useContext, useState } from 'react';
 import Card from '../components/DaisyUI/Card';
 import Badge from '../components/DaisyUI/Badge';

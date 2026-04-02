@@ -293,14 +293,6 @@ beforeEach(() => {
 });
 
 describe('COMPREHENSIVE SECURITY & AUTHENTICATION TESTS - PHASE 4', () => {
-  beforeEach(() => {
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-  });
-
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
   // ============================================================================
   // AUTHENTICATION MECHANISM TESTS - COMPLETE COVERAGE
   // ============================================================================

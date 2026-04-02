@@ -3,10 +3,20 @@ import Debug from 'debug';
 import type { IMessage } from '@src/message/interfaces/IMessage';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import { getCircuitBreaker } from '@common/CircuitBreaker';
-import { isSafeUrl } from '../../utils/ssrfGuard';
 import openWebUIConfig from './openWebUIConfig';
 
 const debug = Debug('app:openWebUIProvider');
+
+const openWebUIClient = axios.create({
+  baseURL: openWebUIConfig.get('apiUrl'),
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: 'Bearer ollama',
+  },
+  timeout: 15000,
+});
+
+const model = openWebUIConfig.get('model');
 
 const circuitBreaker = getCircuitBreaker({
   name: 'openwebui',
@@ -34,21 +44,6 @@ export const openWebUIProvider: ILlmProvider = {
 
     return circuitBreaker.execute(async () => {
       try {
-        const apiUrl = openWebUIConfig.get('apiUrl');
-        if (!(await isSafeUrl(apiUrl))) {
-          throw new Error('OpenWebUI API URL is not safe to connect to.');
-        }
-
-        const model = openWebUIConfig.get('model');
-        const openWebUIClient = axios.create({
-          baseURL: apiUrl,
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: 'Bearer ollama',
-          },
-          timeout: 15000,
-        });
-
         const response = await openWebUIClient.post('/chat/completions', {
           model,
           messages,
@@ -66,21 +61,6 @@ export const openWebUIProvider: ILlmProvider = {
 
     return circuitBreaker.execute(async () => {
       try {
-        const apiUrl = openWebUIConfig.get('apiUrl');
-        if (!(await isSafeUrl(apiUrl))) {
-          throw new Error('OpenWebUI API URL is not safe to connect to.');
-        }
-
-        const model = openWebUIConfig.get('model');
-        const openWebUIClient = axios.create({
-          baseURL: apiUrl,
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: 'Bearer ollama',
-          },
-          timeout: 15000,
-        });
-
         const response = await openWebUIClient.post('/completions', {
           model,
           prompt,

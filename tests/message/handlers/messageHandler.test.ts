@@ -49,9 +49,7 @@ jest.mock('@message/helpers/handler/ChannelDelayManager', () => ({
   },
 }));
 
-const mockGetLlmProviderForBot = getLlmProviderForBot as jest.MockedFunction<
-  typeof getLlmProviderForBot
->;
+const mockGetLlmProviderForBot = getLlmProviderForBot as jest.MockedFunction<typeof getLlmProviderForBot>;
 const mockGetMessengerProvider = require('@message/management/getMessengerProvider')
   .getMessengerProvider as jest.MockedFunction<any>;
 const mockStripBotId = stripBotId as jest.MockedFunction<typeof stripBotId>;

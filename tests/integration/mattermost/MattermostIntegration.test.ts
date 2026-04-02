@@ -24,14 +24,6 @@ createIntegrationSuite(mattermostConfig.name, mattermostConfig.requiredEnvVars, 
   });
 
   describe('Connection', () => {
-    beforeEach(() => {
-      jest.spyOn(console, 'log').mockImplementation(() => {});
-    });
-
-    afterEach(() => {
-      jest.restoreAllMocks();
-    });
-
     it('should have valid Mattermost URL', () => {
       const url = process.env.MATTERMOST_URL!;
       expect(() => new URL(url)).not.toThrow();

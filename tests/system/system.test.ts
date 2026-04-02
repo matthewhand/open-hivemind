@@ -18,14 +18,6 @@ const describeOrSkip = describe;
  * when RUN_SYSTEM_TESTS=true is set in the environment.
  */
 describe('System Integration Tests', () => {
-  beforeEach(() => {
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-  });
-
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
   let messengerService: any;
   let llmProviders: any[];
   const testStartTime = new Date();

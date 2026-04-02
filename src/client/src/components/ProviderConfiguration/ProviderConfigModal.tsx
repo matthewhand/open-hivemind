@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useMemo } from 'react';
 import type {
   ProviderModalState,
@@ -114,7 +115,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
 
         const models = config?.openai?.values?.OPENAI_EMBEDDING_MODELS;
         setOpenAiEmbeddingModels(Array.isArray(models) ? models.filter((value): value is string => typeof value === 'string' && value.trim() !== '') : []);
-      } catch (_error) {
+      } catch (error) {
         if (isActive) {
           setOpenAiEmbeddingModels([]);
         }
@@ -355,7 +356,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   // Safe config access: if selectedType mismatch, fallback to first in list
   const config = (configs as any)[selectedType] || (configs as any)[providerTypes[0]];
   const currentSchema = getCurrentSchema();
-  const _allFields = config?.fields || [];
+  const allFields = config?.fields || [];
 
   return (
     <div className="modal modal-open">

@@ -530,7 +530,6 @@ const EnterpriseManager: React.FC = () => {
                       className="input input-sm input-bordered"
                       value={auditSearchTerm}
                       onChange={(e) => setAuditSearchTerm(e.target.value)}
-                      aria-label="Search audit events by user or resource"
                     />
                   </div>
                 </div>
@@ -538,7 +537,6 @@ const EnterpriseManager: React.FC = () => {
                   className="select select-sm select-bordered"
                   value={auditActionFilter}
                   onChange={(e) => setAuditActionFilter(e.target.value)}
-                  aria-label="Filter by action"
                 >
                   <option value="all">All Actions</option>
                   {uniqueActions.map((action) => (
@@ -551,7 +549,6 @@ const EnterpriseManager: React.FC = () => {
                   className="select select-sm select-bordered"
                   value={auditResultFilter}
                   onChange={(e) => setAuditResultFilter(e.target.value)}
-                  aria-label="Filter by result"
                 >
                   <option value="all">All Results</option>
                   <option value="success">Success</option>
@@ -705,24 +702,24 @@ const EnterpriseManager: React.FC = () => {
       )}
 
       {/* Tabs */}
-      <div className="tabs tabs-boxed mb-6 bg-base-200 p-1" role="tablist" aria-label="Enterprise Manager sections">
-        <a className={`tab ${activeTab === 0 ? 'tab-active' : ''}`} onClick={() => setActiveTab(0)} role="tab" aria-selected={activeTab === 0}>
+      <div className="tabs tabs-boxed mb-6 bg-base-200 p-1">
+        <a className={`tab ${activeTab === 0 ? 'tab-active' : ''}`} onClick={() => setActiveTab(0)}>
           <ShieldCheck className="w-4 h-4 mr-2" />
           Security & Compliance
         </a>
-        <a className={`tab ${activeTab === 1 ? 'tab-active' : ''}`} onClick={() => setActiveTab(1)} role="tab" aria-selected={activeTab === 1}>
+        <a className={`tab ${activeTab === 1 ? 'tab-active' : ''}`} onClick={() => setActiveTab(1)}>
           <Cloud className="w-4 h-4 mr-2" />
           Multi-Cloud
         </a>
-        <a className={`tab ${activeTab === 2 ? 'tab-active' : ''}`} onClick={() => setActiveTab(2)} role="tab" aria-selected={activeTab === 2}>
+        <a className={`tab ${activeTab === 2 ? 'tab-active' : ''}`} onClick={() => setActiveTab(2)}>
           <Puzzle className="w-4 h-4 mr-2" />
           Integrations
         </a>
-        <a className={`tab ${activeTab === 3 ? 'tab-active' : ''}`} onClick={() => setActiveTab(3)} role="tab" aria-selected={activeTab === 3}>
+        <a className={`tab ${activeTab === 3 ? 'tab-active' : ''}`} onClick={() => setActiveTab(3)}>
           <Scale className="w-4 h-4 mr-2" />
           Audit & Governance
         </a>
-        <a className={`tab ${activeTab === 4 ? 'tab-active' : ''}`} onClick={() => setActiveTab(4)} role="tab" aria-selected={activeTab === 4}>
+        <a className={`tab ${activeTab === 4 ? 'tab-active' : ''}`} onClick={() => setActiveTab(4)}>
           <BarChart3 className="w-4 h-4 mr-2" />
           Performance
         </a>
@@ -732,13 +729,9 @@ const EnterpriseManager: React.FC = () => {
       {renderTabContent()}
 
       {/* Add Integration Dialog */}
-      <dialog
-        className={`modal ${addIntegrationDialog ? 'modal-open' : ''}`}
-        aria-modal="true"
-        aria-labelledby="add-integration-dialog-title"
-      >
+      <dialog className={`modal ${addIntegrationDialog ? 'modal-open' : ''}`}>
         <div className="modal-box">
-          <h3 id="add-integration-dialog-title" className="font-bold text-lg mb-4">Add Integration</h3>
+          <h3 className="font-bold text-lg mb-4">Add Integration</h3>
           <div className="form-control w-full mb-4">
             <label htmlFor="integration-name" className="label">
               <span className="label-text">Integration Name</span>
@@ -801,18 +794,14 @@ const EnterpriseManager: React.FC = () => {
           </div>
         </div>
         <form method="dialog" className="modal-backdrop">
-          <button onClick={() => setAddIntegrationDialog(false)} aria-label="Close add integration dialog">close</button>
+          <button onClick={() => setAddIntegrationDialog(false)}>close</button>
         </form>
       </dialog>
 
       {/* Add Cloud Provider Dialog */}
-      <dialog
-        className={`modal ${addCloudProviderDialog ? 'modal-open' : ''}`}
-        aria-modal="true"
-        aria-labelledby="add-cloud-provider-dialog-title"
-      >
+      <dialog className={`modal ${addCloudProviderDialog ? 'modal-open' : ''}`}>
         <div className="modal-box">
-          <h3 id="add-cloud-provider-dialog-title" className="font-bold text-lg mb-4">Add Cloud Provider</h3>
+          <h3 className="font-bold text-lg mb-4">Add Cloud Provider</h3>
           <div className="form-control w-full mb-4">
             <label htmlFor="cloud-provider-name" className="label">
               <span className="label-text">Provider Name</span>
@@ -870,7 +859,7 @@ const EnterpriseManager: React.FC = () => {
           </div>
         </div>
         <form method="dialog" className="modal-backdrop">
-          <button onClick={() => setAddCloudProviderDialog(false)} aria-label="Close add cloud provider dialog">close</button>
+          <button onClick={() => setAddCloudProviderDialog(false)}>close</button>
         </form>
       </dialog>
     </div>

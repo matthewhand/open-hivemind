@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiService } from '../services/api';
-import { useQuery } from '@tanstack/react-query';
+import { useApiQuery } from '../hooks/useApiQuery';
 import ChatInterface, { ChatMessage } from '../components/DaisyUI/Chat';
 import { BotAvatar } from '../components/BotAvatar';
 import BotChatBubbles from '../components/BotChatBubbles';
@@ -59,7 +59,7 @@ const ChatPage: React.FC = () => {
     try {
       const data = await apiService.get('/api/admin/llm-profiles');
       setLlmProviders((data as any).data || []);
-    } catch (_err) {
+    } catch (err) {
       showError('Failed to fetch LLM providers');
     }
   }, []);
@@ -76,7 +76,7 @@ const ChatPage: React.FC = () => {
       ));
 
       showSuccess('LLM provider updated successfully');
-    } catch (_err) {
+    } catch (err) {
       showError(err instanceof Error ? err.message : 'Failed to swap provider');
     } finally {
       setSwappingProvider(null);
@@ -87,14 +87,9 @@ const ChatPage: React.FC = () => {
   // Fetch bots via cache layer
   const {
     data: botsData,
-    isLoading: botsLoading,
+    loading: botsLoading,
     refetch: refetchBots,
-  } = useQuery<BotData[]>({
-    queryKey: ['bots'],
-    queryFn: () => apiService.get<BotData[]>('/api/bots'),
-    staleTime: 30_000,
-    gcTime: 60_000,
-  });
+  } = useApiQuery<BotData[]>('/api/bots', { ttl: 30_000 });
 
   useEffect(() => {
     if (botsData) setBots(Array.isArray(botsData) ? botsData : []);
@@ -130,7 +125,7 @@ const ChatPage: React.FC = () => {
       }));
 
       setMessages(mappedMessages);
-    } catch (_err) {
+    } catch (err) {
       showError('Failed to fetch chat history');
     } finally {
       setHistoryLoading(false);
@@ -194,7 +189,7 @@ const ChatPage: React.FC = () => {
       // Depending on backend, we could fetch history to get actual messages
       // but for this task, the optimistic rollback is the focus.
       await fetchHistory(selectedBotId);
-    } catch (_err) {
+    } catch (err) {
       showError('Failed to send message');
       // Mark optimistic update as failed
       setMessages(prev => prev.map(m =>
@@ -205,7 +200,7 @@ const ChatPage: React.FC = () => {
     }
   };
 
-  const _handleRetryMessage = (messageId: string) => {
+  const handleRetryMessage = (messageId: string) => {
     const messageToRetry = messages.find(m => m.id === messageId);
     if (messageToRetry) {
       handleSendMessage(messageToRetry.content, messageId);

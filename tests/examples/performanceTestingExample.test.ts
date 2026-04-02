@@ -11,14 +11,6 @@ import {
 
 // Example 1: Basic performance test with statistical analysis
 describe('Performance Testing Examples', () => {
-  beforeEach(() => {
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-  });
-
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
   it('should demonstrate statistical performance analysis', async () => {
     const result = await runPerformanceTest(
       'Simple config access',

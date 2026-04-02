@@ -555,7 +555,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                             </div>
                         </div>
                     )}
-
+                                    )}
                 </div>
 
                 {/* Footer Actions */}

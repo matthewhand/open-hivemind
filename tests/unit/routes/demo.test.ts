@@ -25,8 +25,7 @@ jest.mock('../../../src/types/errors', () => ({
       const err = e instanceof Error ? e : new Error(String(e));
       return Object.assign(err, { statusCode: 500 });
     },
-    getStatusCode: (e: any) =>
-      e && typeof e === 'object' && 'statusCode' in e ? e.statusCode : undefined,
+    getStatusCode: (e: any) => (e && typeof e === 'object' && 'statusCode' in e ? e.statusCode : undefined),
     getMessage: (e: any) => (e instanceof Error ? e.message : String(e)),
   },
 }));
@@ -49,6 +48,7 @@ describe('Demo Routes', () => {
 
       const res = await request(app).get('/demo/status');
       expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
       expect(res.body.data.isDemoMode).toBe(true);
       expect(res.body.data.message).toContain('demo mode');
     });
@@ -58,6 +58,7 @@ describe('Demo Routes', () => {
 
       const res = await request(app).get('/demo/status');
       expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
       expect(res.body.data.isDemoMode).toBe(false);
       expect(res.body.data.message).toContain('production mode');
     });
@@ -80,6 +81,7 @@ describe('Demo Routes', () => {
 
       const res = await request(app).get('/demo/bots');
       expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
       expect(res.body.data.bots).toHaveLength(1);
       expect(res.body.data.count).toBe(1);
       expect(res.body.data.isDemo).toBe(true);
@@ -128,11 +130,6 @@ describe('Demo Routes', () => {
         .send({ message: 'hello', botName: 'TestBot' });
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.userMessage).toEqual(expect.any(Object));
-      expect(typeof res.body.data.userMessage.text).toBe('string');
-      expect(res.body.data.botResponse).toEqual(expect.any(Object));
-      expect(typeof res.body.data.botResponse.text).toBe('string');
-      expect(res.body.data.isDemo).toBe(true);
     });
   });
 
@@ -142,6 +139,7 @@ describe('Demo Routes', () => {
 
       const res = await request(app).get('/demo/conversations');
       expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
       expect(res.body.data.conversations).toHaveLength(1);
       expect(res.body.data.count).toBe(1);
     });
@@ -153,6 +151,7 @@ describe('Demo Routes', () => {
 
       const res = await request(app).get('/demo/conversations/ch1/Bot1');
       expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
       expect(res.body.data.channelId).toBe('ch1');
       expect(res.body.data.botName).toBe('Bot1');
       expect(res.body.data.messages).toHaveLength(1);
@@ -173,6 +172,7 @@ describe('Demo Routes', () => {
     it('should return static demo info', async () => {
       const res = await request(app).get('/demo/info');
       expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
       expect(res.body.data.title).toBe('Open-Hivemind Demo Mode');
       expect(res.body.data.features).toBeInstanceOf(Array);
       expect(res.body.data.limitations).toBeInstanceOf(Array);

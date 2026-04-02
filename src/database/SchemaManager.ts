@@ -11,7 +11,6 @@ import { IntegrationSchemas } from './schemas/IntegrationSchemas';
 import type { ISchemaModule } from './schemas/ISchemaModule';
 import { MetricsSchemas } from './schemas/MetricsSchemas';
 import { OperationsSchemas } from './schemas/OperationsSchemas';
-import { SecuritySchemas } from './schemas/SecuritySchemas';
 import { WorkflowSchemas } from './schemas/WorkflowSchemas';
 
 @singleton()
@@ -43,7 +42,6 @@ export class SchemaManager {
       new ComplianceSchemas(),
       new IncidentSchemas(),
       new DataManagementSchemas(),
-      new SecuritySchemas(),
       new MetricsSchemas(),
     ];
 

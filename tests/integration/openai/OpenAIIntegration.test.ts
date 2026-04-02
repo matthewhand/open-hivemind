@@ -30,14 +30,6 @@ createIntegrationSuite(openaiConfig.name, openaiConfig.requiredEnvVars, () => {
   });
 
   describe('Connection', () => {
-    beforeEach(() => {
-      jest.spyOn(console, 'log').mockImplementation(() => {});
-    });
-
-    afterEach(() => {
-      jest.restoreAllMocks();
-    });
-
     it('should have valid API key format', () => {
       if (!canRunTests) {
         expect(true).toBe(true); // Skip assertion

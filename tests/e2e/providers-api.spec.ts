@@ -1,10 +1,5 @@
 import { expect, test } from '@playwright/test';
-import {
-  assertNoErrors,
-  navigateAndWaitReady,
-  setupAuth,
-  setupTestWithErrorDetection,
-} from './test-utils';
+import { assertNoErrors, navigateAndWaitReady, setupAuth, setupTestWithErrorDetection } from './test-utils';
 
 /**
  * Providers API E2E Tests
@@ -83,9 +78,10 @@ test.describe('Providers API', () => {
     }
 
     const providerName = list.providers[0].name;
-    const testRes = await request.post(`${baseURL}/api/providers/memory/${providerName}/test`, {
-      data: { userId: 'playwright-e2e' },
-    });
+    const testRes = await request.post(
+      `${baseURL}/api/providers/memory/${providerName}/test`,
+      { data: { userId: 'playwright-e2e' } }
+    );
 
     // The test endpoint might fail if the provider isn't fully configured,
     // but the response structure should still be valid
@@ -113,7 +109,10 @@ test.describe('Providers API', () => {
     }
   });
 
-  test('POST /api/providers/memory/nonexistent/test returns 404', async ({ request, baseURL }) => {
+  test('POST /api/providers/memory/nonexistent/test returns 404', async ({
+    request,
+    baseURL,
+  }) => {
     const res = await request.post(
       `${baseURL}/api/providers/memory/nonexistent-provider-xyz/test`,
       { data: { userId: 'playwright-e2e' } }
@@ -166,7 +165,9 @@ test.describe('Providers API', () => {
         },
       })
     );
-    await page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} }));
+    await page.route('**/api/config/global', (route) =>
+      route.fulfill({ status: 200, json: {} })
+    );
     await page.route('**/api/providers/memory', (route) =>
       route.fulfill({
         status: 200,
@@ -198,7 +199,7 @@ test.describe('Providers API', () => {
     );
 
     await navigateAndWaitReady(page, '/admin/providers/memory');
-    await page.waitForLoadState('domcontentloaded');
+    await page.waitForLoadState("domcontentloaded");
     await page.screenshot({
       path: 'docs/screenshots/providers-api-memory.png',
       fullPage: true,
@@ -228,7 +229,9 @@ test.describe('Providers API', () => {
         },
       })
     );
-    await page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} }));
+    await page.route('**/api/config/global', (route) =>
+      route.fulfill({ status: 200, json: {} })
+    );
     await page.route('**/api/providers/tool', (route) =>
       route.fulfill({
         status: 200,
@@ -249,7 +252,7 @@ test.describe('Providers API', () => {
     );
 
     await navigateAndWaitReady(page, '/admin/providers/tool');
-    await page.waitForLoadState('domcontentloaded');
+    await page.waitForLoadState("domcontentloaded");
     await page.screenshot({
       path: 'docs/screenshots/providers-api-tool.png',
       fullPage: true,

@@ -56,14 +56,6 @@ const mockGetAllProviders = jest.fn();
 });
 
 describe('Benchmark getLlmProvider', () => {
-  beforeEach(() => {
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-  });
-
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
   it('runs benchmark', async () => {
     const configProviders = [
       {

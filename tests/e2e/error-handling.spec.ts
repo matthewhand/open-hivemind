@@ -13,8 +13,8 @@ test.describe('Error Handling & Edge Cases', () => {
       const errors = await setupTestWithErrorDetection(page);
       await page.goto('/admin/nonexistent-page');
       await page.waitForLoadState('domcontentloaded');
-      await page.waitForLoadState('domcontentloaded');
-      await expect(page.locator('body')).toBeVisible();
+      await page.waitForLoadState("domcontentloaded");
+    await expect(page.locator('body')).toBeVisible();
       await page.screenshot({ path: 'test-results/error-01-404.png', fullPage: true });
 
       await assertNoErrors(errors, '404 page handling');
@@ -24,16 +24,16 @@ test.describe('Error Handling & Edge Cases', () => {
       const errors = await setupTestWithErrorDetection(page);
       await page.goto('/admin/bots/invalid-bot-id-12345');
       await page.waitForLoadState('domcontentloaded');
-      await page.waitForLoadState('domcontentloaded');
-      await page.screenshot({ path: 'test-results/error-02-invalid-id.png', fullPage: true });
+      await page.waitForLoadState("domcontentloaded");
+    await page.screenshot({ path: 'test-results/error-02-invalid-id.png', fullPage: true });
       await assertNoErrors(errors, 'Invalid bot ID handling');
     });
 
     test('recovers from navigation error', async ({ page }) => {
       const errors = await setupTestWithErrorDetection(page);
       await page.goto('/admin/invalid');
-      await page.waitForLoadState('domcontentloaded');
-      await page.goto('/admin/overview');
+      await page.waitForLoadState("domcontentloaded");
+    await page.goto('/admin/overview');
       await page.waitForLoadState('domcontentloaded');
 
       expect(page.url()).toContain('/admin');
@@ -80,8 +80,8 @@ test.describe('Error Handling & Edge Cases', () => {
         .first();
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
-        await page.waitForLoadState('domcontentloaded');
-        await page.keyboard.press('Escape');
+        await page.waitForLoadState("domcontentloaded");
+    await page.keyboard.press('Escape');
       }
 
       await page.screenshot({ path: 'test-results/error-12-modal-esc.png', fullPage: true });

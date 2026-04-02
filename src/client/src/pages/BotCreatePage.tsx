@@ -17,7 +17,6 @@ import Debug from 'debug';
 import Checkbox from '../components/DaisyUI/Checkbox';
 const debug = Debug('app:client:pages:BotCreatePage');
 
-// Ensure we're importing types only or duplicate the config to avoid Vite Rollup module export issues when importing from backend out-of-scope files
 const CONFIG_LIMITS = {
   SYSTEM_INSTRUCTION_MAX_LENGTH: 5000,
   SYSTEM_INSTRUCTION_WARNING_LENGTH: 2000,
@@ -25,13 +24,13 @@ const CONFIG_LIMITS = {
   BOT_NAME_MIN_LENGTH: 2,
   BOT_NAME_MAX_LENGTH: 50,
   PROFILE_NAME_MAX_LENGTH: 100,
-} as const;
+};
 
 const BotCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const { status: llmStatus } = useLlmStatus();
   const defaultLlmConfigured = llmStatus?.defaultConfigured ?? false;
-  const _defaultProviderName = llmStatus?.defaultProviders?.[0]?.name;
+  const defaultProviderName = llmStatus?.defaultProviders?.[0]?.name;
 
   const [formData, setFormData] = useState({
     name: '',
@@ -73,7 +72,7 @@ const BotCreatePage: React.FC = () => {
         setLlmProfiles(profilesData?.llm || profilesData?.profiles?.llm || []);
         const servers = mcpServersData;
         setMcpServers(Array.isArray(servers) ? servers : []);
-      } catch (_err) {
+      } catch (err) {
         // Error shown via alert UI
         setAlert({ type: 'error', message: 'Failed to load configuration data' });
       } finally {
@@ -102,7 +101,7 @@ const BotCreatePage: React.FC = () => {
 
       setAlert({ type: 'success', message: 'Bot created successfully!' });
       setTimeout(() => navigate('/admin/bots'), 1500);
-    } catch (_error) {
+    } catch (error) {
       setAlert({
         type: 'error',
         message: error instanceof Error ? error.message : 'Failed to create bot',

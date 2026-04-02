@@ -1,4 +1,4 @@
-/* eslint-disable react-refresh/only-export-components, no-empty, no-case-declarations */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import Debug from 'debug';

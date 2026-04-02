@@ -22,13 +22,13 @@ import {
   PlayIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
-import { useDashboardStore } from '../store/dashboardStore';
+import { useAppSelector } from '../store/hooks';
 import { apiService } from '../services/api';
 import Debug from 'debug';
 const debug = Debug('app:client:components:SystemInfo');
 
 const SystemInfo: React.FC = () => {
-  const dashboard = useDashboardStore((s) => s);
+  const dashboard = useAppSelector(state => state.dashboard);
   const {
     systemStatus,
     lastUpdated,

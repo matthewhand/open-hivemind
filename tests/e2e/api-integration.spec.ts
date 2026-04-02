@@ -31,7 +31,7 @@ test.describe('API Integration', () => {
     const errors = await setupTestWithErrorDetection(page);
     await navigateAndWaitReady(page, '/admin/bots');
 
-    await page.waitForLoadState('domcontentloaded');
+    await page.waitForLoadState("domcontentloaded");
     await page.screenshot({ path: 'test-results/api-02-data-load.png', fullPage: true });
 
     await assertNoErrors(errors, 'API data loading');

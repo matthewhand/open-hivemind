@@ -39,7 +39,7 @@ test.describe('Health Check', () => {
       const body = await res.json();
 
       // The response should be an array of service objects or have a services property
-      const services = Array.isArray(body) ? body : (body.services ?? []);
+      const services = Array.isArray(body) ? body : body.services ?? [];
       expect(Array.isArray(services)).toBe(true);
 
       // Validate service entry structure
@@ -53,8 +53,9 @@ test.describe('Health Check', () => {
       }
 
       // Verify that a memory-related service is present
-      const memoryService = services.find((s: { name: string }) =>
-        s.name.toLowerCase().includes('memory')
+      const memoryService = services.find(
+        (s: { name: string }) =>
+          s.name.toLowerCase().includes('memory')
       );
       // Memory Provider service should be listed
       expect(memoryService).toBeDefined();
@@ -196,7 +197,9 @@ test.describe('Health Check', () => {
         },
       })
     );
-    await page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} }));
+    await page.route('**/api/config/global', (route) =>
+      route.fulfill({ status: 200, json: {} })
+    );
     await page.route('**/api/dashboard/status', (route) =>
       route.fulfill({ status: 200, json: { bots: [], uptime: 86400 } })
     );
@@ -212,10 +215,12 @@ test.describe('Health Check', () => {
     await page.route('**/api/demo/status', (route) =>
       route.fulfill({ status: 200, json: { active: false } })
     );
-    await page.route('**/api/bots', (route) => route.fulfill({ status: 200, json: [] }));
+    await page.route('**/api/bots', (route) =>
+      route.fulfill({ status: 200, json: [] })
+    );
 
     await navigateAndWaitReady(page, '/admin/monitoring');
-    await page.waitForLoadState('domcontentloaded');
+    await page.waitForLoadState("domcontentloaded");
     await page.screenshot({
       path: 'docs/screenshots/health-dashboard.png',
       fullPage: true,

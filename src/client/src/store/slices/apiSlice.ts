@@ -1,4 +1,5 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import type { RootState } from '../../store';
 import type {
   Bot,
   ConfigResponse,
@@ -38,9 +39,9 @@ export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery: fetchBaseQuery({
     baseUrl,
-    prepareHeaders: (headers) => {
-      // Read auth token directly from localStorage (no Redux store dependency)
-      const token = localStorage.getItem('token');
+    prepareHeaders: (headers, { getState }) => {
+      const state = getState() as RootState;
+      const token = state.auth?.token;
       if (token) {
         headers.set('authorization', `Bearer ${token}`);
       }

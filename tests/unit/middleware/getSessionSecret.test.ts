@@ -2,18 +2,18 @@ import { getSessionSecret } from '../../../src/middleware/sessionMiddleware';
 
 describe('getSessionSecret', () => {
   const originalEnv = process.env;
+  let originalWarn: typeof console.warn;
 
   beforeEach(() => {
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-    jest.spyOn(console, 'warn').mockImplementation(() => {});
-    jest.spyOn(console, 'error').mockImplementation(() => {});
     jest.resetModules();
     process.env = { ...originalEnv };
+    originalWarn = console.warn;
+    console.warn = jest.fn();
   });
 
   afterEach(() => {
     process.env = originalEnv;
-    jest.restoreAllMocks();
+    console.warn = originalWarn;
   });
 
   it('throws an error if SESSION_SECRET is not set', () => {

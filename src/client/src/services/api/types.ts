@@ -1,8 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-// Re-export canonical Persona and Bot from types/bot.ts
-export type { Persona, Bot } from '../../types/bot';
-
 export interface FieldMetadata {
   source: 'env' | 'user' | 'default';
   locked: boolean;
@@ -89,6 +86,19 @@ export interface N8nConfig {
   workflowId?: string;
 }
 
+export interface Persona {
+  id: string;
+  name: string;
+  description: string;
+  category: 'general' | 'customer_service' | 'creative' | 'technical' | 'educational' | 'entertainment' | 'professional';
+  traits: Array<{ name: string; value: string; weight?: number; type?: string }>;
+  systemPrompt: string;
+  isBuiltIn?: boolean;
+  usageCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Union type for all provider configs
 export type ProviderConfig =
   | DiscordConfig
@@ -101,6 +111,34 @@ export type ProviderConfig =
   | PerplexityConfig
   | ReplicateConfig
   | N8nConfig;
+
+export interface Bot {
+  name: string;
+  messageProvider: string;
+  llmProvider: string;
+  llmProfile?: string;
+  responseProfile?: string;
+  mcpGuardProfile?: string;
+  persona?: string;
+  systemInstruction?: string;
+  mcpServers?: Array<{ name: string; serverUrl?: string }> | string[];
+  mcpGuard?: {
+    enabled: boolean;
+    type: 'owner' | 'custom';
+    allowedUserIds?: string[];
+  };
+  discord?: DiscordConfig;
+  slack?: SlackConfig;
+  mattermost?: MattermostConfig;
+  openai?: OpenAIConfig;
+  flowise?: FlowiseConfig;
+  openwebui?: OpenWebUIConfig;
+  openswarm?: OpenSwarmConfig;
+  perplexity?: PerplexityConfig;
+  replicate?: ReplicateConfig;
+  n8n?: N8nConfig;
+  metadata?: BotMetadata;
+}
 
 export interface ConfigResponse {
   bots: Bot[];

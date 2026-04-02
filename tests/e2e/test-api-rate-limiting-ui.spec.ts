@@ -69,7 +69,7 @@ test('API Rate Limiting UI', async ({ page }) => {
 
   // Click on the title to expand
   await rateLimiterTitle.click({ force: true });
-  // wait for animation
+// wait for animation
 
   // Scroll modal content to bottom
   await page.evaluate(() => {
@@ -77,6 +77,6 @@ test('API Rate Limiting UI', async ({ page }) => {
     if (modal) modal.scrollTop = modal.scrollHeight;
   });
 
-  // Wait for scroll to settle
+// Wait for scroll to settle
   await editModal.screenshot({ path: 'after-fix.png' });
 });

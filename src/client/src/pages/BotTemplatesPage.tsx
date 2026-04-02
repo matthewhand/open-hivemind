@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -63,7 +64,7 @@ const BotTemplatesPage: React.FC = () => {
       }));
 
       setTemplates(templatesArray);
-    } catch (_error) {
+    } catch (error) {
       // Silent: empty state shown
     } finally {
       setLoading(false);
@@ -103,7 +104,7 @@ const BotTemplatesPage: React.FC = () => {
       await navigator.clipboard.writeText(templateJson);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (_err) {
+    } catch (err) {
       // Clipboard may not be available
     }
   };

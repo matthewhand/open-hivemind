@@ -70,7 +70,7 @@ export class ApiService {
       this.rateLimitListeners.forEach(listener => {
         try {
           listener(info);
-        } catch (_error) {
+        } catch (error) {
           debug('ERROR:', 'Rate limit listener error', {
             error: error instanceof Error ? error.message : String(error)
           });
@@ -104,7 +104,7 @@ export class ApiService {
         const token = data.token || data.csrfToken || '';
         this.csrfToken = token;
         return token;
-      } catch (_error) {
+      } catch (error) {
         // Silently fail - CSRF may not be required in all environments
         console.debug('CSRF token fetch failed (may not be required):', error);
         return '';
@@ -176,25 +176,6 @@ export class ApiService {
     }
 
     return response.blob();
-  }
-
-  public async getText(endpoint: string, options?: RequestInit): Promise<string> {
-    const url = buildUrl(endpoint);
-    const authHeaders = this.getAuthHeaders();
-
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        ...authHeaders,
-        ...options?.headers,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Text request failed (${response.status}): ${response.statusText}`);
-    }
-
-    return response.text();
   }
 
   public getAuthHeaders(): Record<string, string> {

@@ -25,10 +25,7 @@ jest.mock('../../../../src/database/DatabaseManager', () => ({
 jest.mock('../../../../src/server/services/ConfigurationValidator', () => ({
   ConfigurationValidator: jest.fn().mockImplementation(() => ({
     validateBotConfig: jest.fn().mockReturnValue({
-      isValid: true,
-      errors: [],
-      warnings: [],
-      suggestions: [],
+      isValid: true, errors: [], warnings: [], suggestions: [],
     }),
   })),
 }));

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { Alert } from './DaisyUI/Alert';
@@ -26,7 +27,7 @@ interface ConfigItem {
   schema: Record<string, any>;
 }
 
-type _GlobalConfig = Record<string, ConfigItem>;
+type GlobalConfig = Record<string, ConfigItem>;
 
 interface GlobalConfigSectionProps {
   section: string;
@@ -52,7 +53,7 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
     control,
     reset,
     getValues,
-    formState: { errors: _errors },
+    formState: { errors },
   } = useForm<FormValues>({
     defaultValues: {},
   });
@@ -94,7 +95,7 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
     Object.entries(jsonState).forEach(([key, jsonStr]) => {
       try {
         valuesToSave[key] = JSON.parse(jsonStr);
-      } catch (_e) {
+      } catch (e) {
         debug('WARN:', `Skipping invalid JSON for ${section}.${key}`);
       }
     });

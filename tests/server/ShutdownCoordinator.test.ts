@@ -38,10 +38,6 @@ const createMockService = (name: string): IShutdownable & { name: string } => ({
 });
 
 describe('ShutdownCoordinator', () => {
-  beforeEach(() => {
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-  });
-
   let coordinator: ShutdownCoordinator;
   let exitProcessSpy: jest.SpyInstance;
   const originalEnv = process.env;

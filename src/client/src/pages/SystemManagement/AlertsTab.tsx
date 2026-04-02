@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import AlertPanel from '../../components/Monitoring/AlertPanel';
 import { apiService } from '../../services/api';
@@ -10,7 +10,7 @@ const AlertsTab: React.FC = () => {
   const handleAlertAcknowledge = async (alertId: string) => {
     try {
       await apiService.acknowledgeAlert(alertId);
-    } catch (_error) {
+    } catch (error) {
       errorToast('Alert', 'Failed to acknowledge alert');
     }
   };
@@ -18,7 +18,7 @@ const AlertsTab: React.FC = () => {
   const handleAlertResolve = async (alertId: string) => {
     try {
       await apiService.resolveAlert(alertId);
-    } catch (_error) {
+    } catch (error) {
       errorToast('Alert', 'Failed to resolve alert');
     }
   };

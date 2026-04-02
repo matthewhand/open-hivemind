@@ -19,7 +19,7 @@ import Input from '../components/DaisyUI/Input';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService, ActivityEvent, ActivityResponse } from '../services/api';
 import useUrlParams from '../hooks/useUrlParams';
-import { useQuery } from '@tanstack/react-query';
+import { useApiQuery } from '../hooks/useApiQuery';
 
 const ActivityPage: React.FC = () => {
   const [data, setData] = useState<ActivityResponse | null>(null);
@@ -55,8 +55,8 @@ const ActivityPage: React.FC = () => {
 
   // Enhanced error handling with retry logic
   const [retryCount, setRetryCount] = useState(0);
-  const [_maxRetries, setMaxRetries] = useState(3);
-  const [_retryDelay, setRetryDelay] = useState(1000); // 1 second initial delay
+  const [maxRetries, setMaxRetries] = useState(3);
+  const [retryDelay, setRetryDelay] = useState(1000); // 1 second initial delay
 
   // Build activity endpoint URL from filter state
   const activityUrl = useMemo(() => {
@@ -73,15 +73,12 @@ const ActivityPage: React.FC = () => {
   // Use cached query with optional polling
   const {
     data: activityResult,
-    isLoading: activityLoading,
+    loading: activityLoading,
     error: activityError,
     refetch: refetchActivity,
-  } = useQuery<ActivityResponse>({
-    queryKey: ['activity', activityUrl],
-    queryFn: () => apiService.get<ActivityResponse>(activityUrl),
-    staleTime: 15_000,
-    gcTime: 30_000,
-    refetchInterval: autoRefresh ? 5000 : undefined,
+  } = useApiQuery<ActivityResponse>(activityUrl, {
+    ttl: 15_000,
+    pollInterval: autoRefresh ? 5000 : undefined,
   });
 
   // Sync into local state

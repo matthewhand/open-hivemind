@@ -1,4 +1,4 @@
-/* eslint-disable react-refresh/only-export-components, no-empty, no-case-declarations, @typescript-eslint/explicit-module-boundary-types */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations, @typescript-eslint/explicit-module-boundary-types */
 import React, { useEffect, useRef } from 'react';
 import { apiService } from '../../services/api';
 import {
@@ -352,7 +352,7 @@ export const useSystemStats = () => {
 
         setStats(mockStats);
         setError(null);
-      } catch (_err) {
+      } catch (err) {
         setError('Failed to fetch system stats');
         // Silent: stats show loading state
       } finally {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import Input from './Input';
 import type { FormField } from './formTypes';
@@ -131,7 +132,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
       setIsSubmitting(true);
       await onSubmit(formData);
       onClose();
-    } catch (_error) {
+    } catch (error) {
       // Error handled by form validation UI
     } finally {
       setIsSubmitting(false);

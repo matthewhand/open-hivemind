@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ApiService } from './core';
+import { ApiService, buildUrl } from './core';
 
 export function adminMixin(api: ApiService) {
   return {
@@ -49,8 +49,20 @@ export function adminMixin(api: ApiService) {
       });
     },
 
-    downloadSystemBackup(backupId: string): Promise<Blob> {
-      return api.getBlob(`/api/import-export/backups/${backupId}/download`);
+    async downloadSystemBackup(backupId: string): Promise<Blob> {
+      const url = buildUrl(`/api/import-export/backups/${backupId}/download`);
+      const headers = api.getAuthHeaders();
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Download failed: ${response.statusText}`);
+      }
+
+      return response.blob();
     },
   };
 }

@@ -1,5 +1,6 @@
 import Debug from 'debug';
 const debug = Debug('app:client:provider-configs:types');
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 // Provider-specific configuration types - separate from core bot types
 // This allows for a pluggable architecture where providers can define their own configs
 
@@ -66,7 +67,7 @@ export interface ProviderConfigFormProps {
   schema: ProviderConfigSchema;
   initialConfig?: Record<string, any>;
   onConfigChange: (config: Record<string, any>) => void;
-  onTestConnection?: (config: Record<string, any>, signal?: AbortSignal) => Promise<boolean>;
+  onTestConnection?: (config: Record<string, any>) => Promise<boolean>;
   onAvatarLoad?: (config: Record<string, any>) => Promise<string | null>;
   externalErrors?: Record<string, string>;
 }

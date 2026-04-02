@@ -7,10 +7,6 @@ const REAL_MATTERMOST_CHANNEL = process.env.REAL_MATTERMOST_CHANNEL;
 jest.unmock('@src/config/BotConfigurationManager');
 
 describe('Mattermost Real Integration', () => {
-  beforeEach(() => {
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-  });
-
   let service: MattermostService;
 
   beforeAll(() => {

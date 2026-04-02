@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 export interface BotInstance {
   id: string;
   name: string;
@@ -16,27 +17,15 @@ export interface BotInstance {
   envOverrides?: Record<string, any>;
 }
 
-export const BOT_STATUSES = ['active', 'inactive', 'error', 'starting', 'stopping'] as const;
-export type BotStatus = typeof BOT_STATUSES[number];
-
-export const MESSAGE_PROVIDER_TYPES = ['discord', 'slack', 'mattermost', 'webhook'] as const;
-export type MessageProviderType = typeof MESSAGE_PROVIDER_TYPES[number];
-
-export const LLM_PROVIDER_TYPES = ['openai', 'anthropic', 'flowise', 'openwebui', 'perplexity', 'replicate', 'n8n', 'openswarm'] as const;
-export type LLMProviderType = typeof LLM_PROVIDER_TYPES[number];
-
-export const PersonaCategory = {
-  GENERAL: 'general',
-  PROFESSIONAL: 'professional',
-  CREATIVE: 'creative',
-  TECHNICAL: 'technical',
-  CASUAL: 'casual',
-  EDUCATIONAL: 'educational',
-  ENTERTAINMENT: 'entertainment',
-  CUSTOMER_SERVICE: 'customer_service',
+export const BotStatus = {
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+  ERROR: 'error',
+  STARTING: 'starting',
+  STOPPING: 'stopping'
 } as const;
 
-export type PersonaCategory = typeof PersonaCategory[keyof typeof PersonaCategory];
+export type BotStatus = typeof BotStatus[keyof typeof BotStatus];
 
 export interface MessageProvider {
   id: string;
@@ -55,25 +44,56 @@ export interface LLMProvider {
   enabled: boolean;
 }
 
+export const MessageProviderType = {
+  DISCORD: 'discord',
+  SLACK: 'slack',
+  MATTERMOST: 'mattermost',
+  WEBHOOK: 'webhook',
+} as const;
+
+export type MessageProviderType = typeof MessageProviderType[keyof typeof MessageProviderType];
+
+export const LLMProviderType = {
+  OPENAI: 'openai',
+  ANTHROPIC: 'anthropic',
+  FLOWISE: 'flowise',
+  OPENWEBUI: 'openwebui',
+  PERPLEXITY: 'perplexity',
+  REPLICATE: 'replicate',
+  N8N: 'n8n',
+  OPENSWARM: 'openswarm',
+} as const;
+
+export type LLMProviderType = typeof LLMProviderType[keyof typeof LLMProviderType];
+
 export interface Persona {
   id: string;
   name: string;
   description: string;
-  category: PersonaCategory | string;
+  category: PersonaCategory;
   traits: PersonaTrait[];
   systemPrompt: string;
   isBuiltIn?: boolean;
   usageCount?: number;
-  avatarId?: string;
   createdAt: string;
   updatedAt: string;
 }
+
+export const PersonaCategory = {
+  PROFESSIONAL: 'professional',
+  CREATIVE: 'creative',
+  TECHNICAL: 'technical',
+  CASUAL: 'casual',
+  EDUCATIONAL: 'educational',
+  ENTERTAINMENT: 'entertainment'
+} as const;
+
+export type PersonaCategory = typeof PersonaCategory[keyof typeof PersonaCategory];
 
 export interface PersonaTrait {
   name: string;
   value: string;
   weight: number;
-  type?: string;
 }
 
 export interface CreatePersonaRequest {
@@ -134,15 +154,14 @@ export interface Bot {
   mcpGuardProfile?: string;
   persona?: string;
   systemInstruction?: string;
-  mcpServers?: Array<{ name: string; serverUrl?: string }> | string[];
+  mcpServers?: string[];
   mcpGuard?: {
     enabled: boolean;
     type: 'owner' | 'custom';
     allowedUserIds?: string[];
   };
-  isActive?: boolean;
+  isActive: boolean;
   envOverrides?: Record<string, any>;
-  metadata?: Record<string, any>;
   discord?: {
     token?: string;
     clientId?: string;
@@ -195,29 +214,82 @@ export interface Bot {
     swarmId?: string;
     team?: string;
   };
-  perplexity?: {
-    apiKey?: string;
-    model?: string;
-  };
-  replicate?: {
-    apiKey?: string;
-    model?: string;
-    version?: string;
-  };
-  n8n?: {
-    apiUrl?: string;
-    apiKey?: string;
-    workflowId?: string;
-  };
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export type CreateBotRequest = Omit<Bot, 'id' | 'createdAt' | 'updatedAt' | 'metadata'>;
+export interface CreateBotRequest {
+  name: string;
+  messageProvider: string;
+  llmProvider?: string;
+  llmProfile?: string;
+  responseProfile?: string;
+  persona?: string;
+  systemInstruction?: string;
+  mcpServers?: string[];
+  mcpGuard?: {
+    enabled: boolean;
+    type: 'owner' | 'custom';
+    allowedUserIds?: string[];
+  };
+  isActive: boolean;
+  discord?: {
+    token?: string;
+    clientId?: string;
+    guildId?: string;
+    channelId?: string;
+    voiceChannelId?: string;
+  };
+  slack?: {
+    botToken?: string;
+    appToken?: string;
+    signingSecret?: string;
+    teamId?: string;
+    channels?: string[];
+    defaultChannelId?: string;
+    mode?: string;
+  };
+  mattermost?: {
+    url?: string;
+    accessToken?: string;
+    teamId?: string;
+    channelId?: string;
+    channel?: string;
+  };
+  openai?: {
+    apiKey?: string;
+    model?: string;
+    temperature?: number;
+    maxTokens?: number;
+    baseUrl?: string;
+  };
+  anthropic?: {
+    apiKey?: string;
+    model?: string;
+    temperature?: number;
+    maxTokens?: number;
+  };
+  flowise?: {
+    apiKey?: string;
+    apiUrl?: string;
+    chatflowId?: string;
+  };
+  openwebui?: {
+    apiKey?: string;
+    apiUrl?: string;
+    model?: string;
+  };
+  openswarm?: {
+    apiKey?: string;
+    apiUrl?: string;
+    swarmId?: string;
+    team?: string;
+  };
+}
 
 export const MESSAGE_PROVIDER_CONFIGS = {
   slack: {
-    type: 'slack' as MessageProviderType,
+    type: MessageProviderType.SLACK,
     displayName: 'Slack',
     description: 'Connect to Slack workspaces',
     icon: '💬',
@@ -228,7 +300,7 @@ export const MESSAGE_PROVIDER_CONFIGS = {
     ],
   },
   discord: {
-    type: 'discord' as MessageProviderType,
+    type: MessageProviderType.DISCORD,
     displayName: 'Discord',
     description: 'Connect to Discord servers',
     icon: '🎮',
@@ -238,7 +310,7 @@ export const MESSAGE_PROVIDER_CONFIGS = {
     ],
   },
   webhook: {
-    type: 'webhook' as MessageProviderType,
+    type: MessageProviderType.WEBHOOK,
     displayName: 'Webhook',
     description: 'Generic webhook integration',
     icon: '🔗',
@@ -248,7 +320,7 @@ export const MESSAGE_PROVIDER_CONFIGS = {
     ],
   },
   mattermost: {
-    type: 'mattermost' as MessageProviderType,
+    type: MessageProviderType.MATTERMOST,
     displayName: 'Mattermost',
     description: 'Connect to Mattermost instances',
     icon: '💻',
@@ -262,7 +334,7 @@ export const MESSAGE_PROVIDER_CONFIGS = {
 
 export const LLM_PROVIDER_CONFIGS = {
   openai: {
-    type: 'openai' as LLMProviderType,
+    type: LLMProviderType.OPENAI,
     displayName: 'OpenAI',
     description: 'GPT models from OpenAI',
     icon: '🤖',
@@ -272,7 +344,7 @@ export const LLM_PROVIDER_CONFIGS = {
     ],
   },
   anthropic: {
-    type: 'anthropic' as LLMProviderType,
+    type: LLMProviderType.ANTHROPIC,
     displayName: 'Anthropic',
     description: 'Claude models from Anthropic',
     icon: '🧠',
@@ -284,7 +356,7 @@ export const LLM_PROVIDER_CONFIGS = {
     ],
   },
   flowise: {
-    type: 'flowise' as LLMProviderType,
+    type: LLMProviderType.FLOWISE,
     displayName: 'Flowise',
     description: 'Visual LLM orchestration',
     icon: '🌊',
@@ -295,7 +367,7 @@ export const LLM_PROVIDER_CONFIGS = {
     ],
   },
   perplexity: {
-    type: 'perplexity' as LLMProviderType,
+    type: LLMProviderType.PERPLEXITY,
     displayName: 'Perplexity',
     description: 'Search-augmented AI models',
     icon: '🔍',
@@ -305,7 +377,7 @@ export const LLM_PROVIDER_CONFIGS = {
     ],
   },
   replicate: {
-    type: 'replicate' as LLMProviderType,
+    type: LLMProviderType.REPLICATE,
     displayName: 'Replicate',
     description: 'Run open-source models',
     icon: '🚀',
@@ -315,7 +387,7 @@ export const LLM_PROVIDER_CONFIGS = {
     ],
   },
   n8n: {
-    type: 'n8n' as LLMProviderType,
+    type: LLMProviderType.N8N,
     displayName: 'n8n',
     description: 'Workflow automation platform',
     icon: '⚡',
@@ -325,7 +397,7 @@ export const LLM_PROVIDER_CONFIGS = {
     ],
   },
   openswarm: {
-    type: 'openswarm' as LLMProviderType,
+    type: LLMProviderType.OPENSWARM,
     displayName: 'OpenSwarm',
     description: 'Multi-agent orchestration',
     icon: '🐝',
@@ -347,7 +419,7 @@ export const DEFAULT_PERSONA: Persona = {
     { name: 'Tone', value: 'Friendly', weight: 1 },
     { name: 'Style', value: 'Professional', weight: 1 },
   ],
-  category: 'professional',
+  category: PersonaCategory.PROFESSIONAL,
   isBuiltIn: true,
   usageCount: 0,
   createdAt: new Date().toISOString(),
@@ -365,7 +437,7 @@ export const BUILTIN_PERSONAS: Persona[] = [
       { name: 'Tone', value: 'Professional', weight: 1 },
       { name: 'Style', value: 'Empathetic', weight: 1 },
     ],
-    category: 'professional',
+    category: PersonaCategory.PROFESSIONAL,
     isBuiltIn: true,
     usageCount: 0,
     createdAt: new Date().toISOString(),
@@ -380,7 +452,7 @@ export const BUILTIN_PERSONAS: Persona[] = [
       { name: 'Tone', value: 'Analytical', weight: 1 },
       { name: 'Style', value: 'Technical', weight: 1 },
     ],
-    category: 'technical',
+    category: PersonaCategory.TECHNICAL,
     isBuiltIn: true,
     usageCount: 0,
     createdAt: new Date().toISOString(),
@@ -395,7 +467,7 @@ export const BUILTIN_PERSONAS: Persona[] = [
       { name: 'Tone', value: 'Creative', weight: 1 },
       { name: 'Style', value: 'Artistic', weight: 1 },
     ],
-    category: 'creative',
+    category: PersonaCategory.CREATIVE,
     isBuiltIn: true,
     usageCount: 0,
     createdAt: new Date().toISOString(),

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import Card from '../DaisyUI/Card';
 import Badge from '../DaisyUI/Badge';
@@ -13,7 +14,7 @@ import { Clock, Activity, AlertTriangle, MessageSquare, RefreshCw } from 'lucide
 import Debug from 'debug';
 const debug = Debug('app:client:components:Monitoring:ActivityMonitor');
 
-interface _FilterOptions {
+interface FilterOptions {
   agent?: string;
   provider?: string;
   startDate?: string;
@@ -26,7 +27,7 @@ const ActivityMonitor: React.FC = () => {
   const { messages: wsMessages } = useWebSocket();
   const [initialMessages, setInitialMessages] = useState<ActivityEvent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [_error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Filter State
   const [searchQuery, setSearchQuery] = useState('');

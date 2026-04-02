@@ -128,9 +128,7 @@ describe('BotManager', () => {
       deleteConfig: jest.fn(),
     };
     (SecureConfigManager.getInstance as jest.Mock).mockResolvedValue(mockSecureConfigManager);
-    (SecureConfigManager as any).getInstanceSync = jest
-      .fn()
-      .mockReturnValue(mockSecureConfigManager);
+    (SecureConfigManager as any).getInstanceSync = jest.fn().mockReturnValue(mockSecureConfigManager);
 
     mockUserConfigStore = {
       setBotDisabled: jest.fn(),

@@ -17,7 +17,7 @@ import {
 } from '../../../types/websocket';
 import { ActivityLogger } from '../ActivityLogger';
 import { BotMetricsService } from '../BotMetricsService';
-import { type ConnectionManager } from './ConnectionManager';
+import { ConnectionManager } from './ConnectionManager';
 import type { AlertEvent, MessageFlowEvent, PerformanceMetric } from './types';
 
 const debug = Debug('app:WebSocketService:BroadcastService');

@@ -37,7 +37,7 @@ export const Rating: React.FC<RatingProps> = ({
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledBy,
   name,
-  ..._props
+  ...props
 }) => {
   const [hoverValue, setHoverValue] = useState<number | null>(null);
   const generatedId = React.useId();

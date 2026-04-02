@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { assertNoErrors, setupAuth, setupErrorCollection } from './test-utils';
+import { setupAuth, setupErrorCollection, assertNoErrors } from './test-utils';
 
 /**
  * Memory Providers Page E2E Tests
@@ -56,7 +56,9 @@ test.describe('Memory Providers Page', () => {
           },
         })
       ),
-      page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} })),
+      page.route('**/api/config/global', (route) =>
+        route.fulfill({ status: 200, json: {} })
+      ),
       page.route('**/api/admin/guard-profiles', (route) =>
         route.fulfill({ status: 200, json: [] })
       ),
@@ -69,7 +71,9 @@ test.describe('Memory Providers Page', () => {
       page.route('**/api/health', (route) =>
         route.fulfill({ status: 200, json: { status: 'ok' } })
       ),
-      page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } })),
+      page.route('**/api/config', (route) =>
+        route.fulfill({ status: 200, json: { bots: [] } })
+      ),
     ]);
   }
 

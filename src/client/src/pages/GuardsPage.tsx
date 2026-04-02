@@ -1,20 +1,19 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Shield, RefreshCw, AlertTriangle, Plus, Copy, Trash2, Edit2 } from 'lucide-react';
-import PageHeader from '../components/PageHeader';
+import PageHeader from '../components/DaisyUI/PageHeader';
 import Card from '../components/DaisyUI/Card';
 import Input from '../components/DaisyUI/Input';
 import Button from '../components/DaisyUI/Button';
 import Toggle from '../components/DaisyUI/Toggle';
 import Select from '../components/DaisyUI/Select';
 import Textarea from '../components/DaisyUI/Textarea';
-import ConfirmModal from '../components/DaisyUI/ConfirmModal';
+import { ConfirmModal } from '../components/DaisyUI/Modal';
 import ModalForm from '../components/DaisyUI/ModalForm';
 import { FormField } from '../components/DaisyUI/formTypes';
 import RangeSlider from '../components/DaisyUI/RangeSlider';
 import { GuardProfile } from '@shared/types/models/security';
-import { useToast } from '../components/ToastProvider';
-import { apiService } from '../services/api';
+import { useToast } from '../components/DaisyUI/ToastNotification';
 
 // Custom comma-separated input component
 const CommaSeparatedInput = ({
@@ -123,7 +122,9 @@ const GuardsPage: React.FC = () => {
   const { data: response, isLoading } = useQuery<{ data: GuardProfile[] }>({
     queryKey: ['guardProfiles'],
     queryFn: async () => {
-      return apiService.get<{ data: GuardProfile[] }>('/api/admin/guard-profiles');
+      const res = await fetch('/api/admin/guard-profiles');
+      if (!res.ok) throw new Error('Failed to fetch guard profiles');
+      return res.json();
     }
   });
 
@@ -131,7 +132,13 @@ const GuardsPage: React.FC = () => {
 
   const createMutation = useMutation({
     mutationFn: async (profile: Partial<GuardProfile>) => {
-      return apiService.post('/api/admin/guard-profiles', profile);
+      const res = await fetch('/api/admin/guard-profiles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profile)
+      });
+      if (!res.ok) throw new Error('Failed to create profile');
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['guardProfiles'] });
@@ -145,7 +152,13 @@ const GuardsPage: React.FC = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, profile }: { id: string, profile: Partial<GuardProfile> }) => {
-      return apiService.put(`/api/admin/guard-profiles/${id}`, profile);
+      const res = await fetch(`/api/admin/guard-profiles/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profile)
+      });
+      if (!res.ok) throw new Error('Failed to update profile');
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['guardProfiles'] });
@@ -159,7 +172,9 @@ const GuardsPage: React.FC = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      return apiService.delete(`/api/admin/guard-profiles/${id}`);
+      const res = await fetch(`/api/admin/guard-profiles/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete profile');
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['guardProfiles'] });

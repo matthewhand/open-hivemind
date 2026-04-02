@@ -12,20 +12,6 @@ import type {
   IMessengerService,
   IToolProvider,
 } from '@hivemind/shared-types';
-import {
-  instantiateLlmProvider,
-  instantiateMemoryProvider,
-  instantiateMessageService,
-  instantiateToolProvider,
-  loadPlugin,
-} from '@src/plugins/PluginLoader';
-// The module under test — does not exist yet (TDD).
-// The import path matches the interface spec in the ticket.
-import {
-  SyncProviderRegistry,
-  type InitResult,
-  type RegistryConfig,
-} from '@src/registries/SyncProviderRegistry';
 
 // ---------------------------------------------------------------------------
 // Mock the plugin loader — prevents real I/O during tests
@@ -38,6 +24,22 @@ jest.mock('@src/plugins/PluginLoader', () => ({
   instantiateToolProvider: jest.fn(),
   instantiateMessageService: jest.fn(),
 }));
+
+import {
+  loadPlugin,
+  instantiateLlmProvider,
+  instantiateMemoryProvider,
+  instantiateToolProvider,
+  instantiateMessageService,
+} from '@src/plugins/PluginLoader';
+
+// The module under test — does not exist yet (TDD).
+// The import path matches the interface spec in the ticket.
+import {
+  SyncProviderRegistry,
+  type RegistryConfig,
+  type InitResult,
+} from '@src/registries/SyncProviderRegistry';
 
 // ---------------------------------------------------------------------------
 // Mock factories
@@ -586,7 +588,9 @@ describe('SyncProviderRegistry', () => {
     test('throws when no LLM providers are registered at all', async () => {
       await SyncProviderRegistry.getInstance().initialize(makeConfig());
 
-      expect(() => SyncProviderRegistry.getInstance().getLlmProviderForBot('mybot', {})).toThrow();
+      expect(() =>
+        SyncProviderRegistry.getInstance().getLlmProviderForBot('mybot', {})
+      ).toThrow();
     });
   });
 
@@ -708,7 +712,9 @@ describe('SyncProviderRegistry', () => {
     });
 
     test('getLlmProviderForBot throws before init', () => {
-      expect(() => SyncProviderRegistry.getInstance().getLlmProviderForBot('bot', {})).toThrow();
+      expect(() =>
+        SyncProviderRegistry.getInstance().getLlmProviderForBot('bot', {})
+      ).toThrow();
     });
 
     test('getHealthStatus rejects before init', async () => {

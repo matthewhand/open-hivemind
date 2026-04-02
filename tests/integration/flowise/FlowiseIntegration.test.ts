@@ -24,14 +24,6 @@ createIntegrationSuite(flowiseConfig.name, flowiseConfig.requiredEnvVars, () => 
   });
 
   describe('Connection', () => {
-    beforeEach(() => {
-      jest.spyOn(console, 'log').mockImplementation(() => {});
-    });
-
-    afterEach(() => {
-      jest.restoreAllMocks();
-    });
-
     it('should have valid endpoint URL', () => {
       const endpoint = process.env.FLOWISE_API_ENDPOINT!;
       expect(() => new URL(endpoint)).not.toThrow();

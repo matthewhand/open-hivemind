@@ -10,7 +10,7 @@ jest.mock('debug', () => () => jest.fn());
 
 jest.mock('axios');
 jest.mock('../../../src/utils/ssrfGuard', () => ({
-  isSafeUrl: jest.fn().mockResolvedValue(true),
+  isSafeUrl: jest.fn().mockResolvedValue(true)
 }));
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 

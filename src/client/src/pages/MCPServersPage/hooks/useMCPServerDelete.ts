@@ -25,7 +25,7 @@ export const useMCPServerDelete = (
       bulk.clearSelection();
       setAlert({ type: 'success', message: 'Selected servers deleted' });
       await fetchServers();
-    } catch (_err) {
+    } catch (err) {
       setAlert({ type: 'error', message: 'Failed to delete some servers' });
     } finally {
       setBulkDeleting(false);
@@ -44,7 +44,7 @@ export const useMCPServerDelete = (
           await apiService.delete(`/api/admin/mcp-servers/${encodeURIComponent(serverId)}`);
           setAlert({ type: 'success', message: 'Server deleted successfully' });
           await fetchServers();
-        } catch (_err) {
+        } catch (err) {
           setAlert({
             type: 'error',
             message: err instanceof Error ? err.message : 'Failed to delete server',

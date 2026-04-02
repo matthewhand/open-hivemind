@@ -14,8 +14,8 @@ export interface AuditLogEntry {
   userId?: string;
   ip: string;
   userAgent: string;
-  before?: unknown;
-  after?: unknown;
+  before?: any;
+  after?: any;
   status: 'success' | 'failure';
   errorMessage?: string;
 }
@@ -99,20 +99,16 @@ class AuditLoggerService {
     let results = this.logs;
 
     if (filters.startTime) {
-      const startTime = filters.startTime;
-      results = results.filter((log) => log.timestamp >= startTime);
+      results = results.filter((log) => log.timestamp >= filters.startTime!);
     }
     if (filters.endTime) {
-      const endTime = filters.endTime;
-      results = results.filter((log) => log.timestamp <= endTime);
+      results = results.filter((log) => log.timestamp <= filters.endTime!);
     }
     if (filters.actions && filters.actions.length > 0) {
-      const actions = filters.actions;
-      results = results.filter((log) => actions.includes(log.action));
+      results = results.filter((log) => filters.actions!.includes(log.action));
     }
     if (filters.resources && filters.resources.length > 0) {
-      const resources = filters.resources;
-      results = results.filter((log) => resources.includes(log.resource));
+      results = results.filter((log) => filters.resources!.includes(log.resource));
     }
     if (filters.status) {
       results = results.filter((log) => log.status === filters.status);
@@ -181,20 +177,16 @@ export const auditLogger = new AuditLoggerService();
  * Middleware factory for route-specific audit logging
  * Wraps response to capture status and log the operation
  */
-export const auditMiddleware = (
-  action: string,
-  resource: string
-): ((req: Request, res: Response, next: NextFunction) => void) => {
-  return (req: Request, res: Response, next: NextFunction): void => {
+export const auditMiddleware = (action: string, resource: string) => {
+  return (req: Request, res: Response, next: NextFunction) => {
     const originalSend = res.send;
     const startTime = Date.now();
 
-    res.send = function (data: unknown): Response {
+    res.send = function (data: any): Response {
       // Only log once
       if (!(res as ResponseWithAuditFlag)._auditLogged) {
         (res as ResponseWithAuditFlag)._auditLogged = true;
 
-        const dataObj = data as Record<string, unknown> | undefined;
         const entry: Omit<AuditLogEntry, 'timestamp'> = {
           action,
           resource,
@@ -210,10 +202,7 @@ export const auditMiddleware = (
             'unknown',
           userAgent: req.get('user-agent') || 'unknown',
           status: res.statusCode < 400 ? 'success' : 'failure',
-          errorMessage:
-            res.statusCode >= 400
-              ? String(dataObj?.error || dataObj?.message || '') || undefined
-              : undefined,
+          errorMessage: res.statusCode >= 400 ? data?.error || data?.message : undefined,
         };
 
         auditLogger.log(entry);
@@ -233,11 +222,11 @@ export const auditMiddleware = (
 export const auditMiddlewareWithChanges = (
   action: string,
   resource: string,
-  getBeforeValue?: (req: Request) => Promise<unknown> | unknown
-): ((req: Request, res: Response, next: NextFunction) => Promise<void>) => {
+  getBeforeValue?: (req: Request) => Promise<any> | any
+) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     const originalSend = res.send;
-    let beforeValue: unknown = undefined;
+    let beforeValue: any = undefined;
 
     // Capture before value if getter provided
     if (getBeforeValue) {
@@ -248,11 +237,10 @@ export const auditMiddlewareWithChanges = (
       }
     }
 
-    res.send = function (data: unknown): Response {
+    res.send = function (data: any): Response {
       if (!(res as ResponseWithAuditFlag)._auditLogged) {
         (res as ResponseWithAuditFlag)._auditLogged = true;
 
-        const dataObj = data as Record<string, unknown> | undefined;
         const entry: Omit<AuditLogEntry, 'timestamp'> = {
           action,
           resource,
@@ -269,14 +257,9 @@ export const auditMiddlewareWithChanges = (
           userAgent: req.get('user-agent') || 'unknown',
           before: beforeValue,
           after:
-            res.statusCode < 400
-              ? dataObj?.bot || dataObj?.user || dataObj?.profile || data
-              : undefined,
+            res.statusCode < 400 ? data?.bot || data?.user || data?.profile || data : undefined,
           status: res.statusCode < 400 ? 'success' : 'failure',
-          errorMessage:
-            res.statusCode >= 400
-              ? String(dataObj?.error || dataObj?.message || '') || undefined
-              : undefined,
+          errorMessage: res.statusCode >= 400 ? data?.error || data?.message : undefined,
         };
 
         auditLogger.log(entry);
@@ -300,8 +283,8 @@ export const logAuditEvent = (
   status: 'success' | 'failure',
   options: {
     resourceId?: string;
-    before?: unknown;
-    after?: unknown;
+    before?: any;
+    after?: any;
     errorMessage?: string;
   } = {}
 ): void => {

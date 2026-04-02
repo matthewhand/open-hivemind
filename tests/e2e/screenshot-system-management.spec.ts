@@ -213,11 +213,11 @@ test.describe('System Management Page Screenshots', () => {
     // Click "Clear System Cache" (first click to trigger the 404 failure)
     page.on('dialog', (dialog) => dialog.accept());
     await page.getByText('Clear System Cache').click();
-    // Wait for the alert
+// Wait for the alert
 
     // The second click should succeed
     await page.getByText('Clear System Cache').click();
-    // Wait for the success alert
+// Wait for the success alert
 
     // Take screenshot after clear cache
     await page.screenshot({ path: 'docs/screenshots/system-management-after.png', fullPage: true });

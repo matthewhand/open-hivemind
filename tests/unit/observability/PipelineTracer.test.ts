@@ -9,9 +9,10 @@
  * Every test here should FAIL until the implementation is written.
  */
 
+import { PipelineTracer } from '@src/observability/PipelineTracer';
+import type { Span, Trace } from '@src/observability/PipelineTracer';
 import { MessageBus } from '@src/events/MessageBus';
 import type { MessageContext } from '@src/events/types';
-import { PipelineTracer, type Span, type Trace } from '@src/observability/PipelineTracer';
 import { IMessage } from '@message/interfaces/IMessage';
 
 // ---------------------------------------------------------------------------
@@ -34,43 +35,18 @@ class StubMessage extends IMessage {
     this.timestamp = new Date();
   }
 
-  getMessageId(): string {
-    return this.id;
-  }
-  getText(): string {
-    return this.text;
-  }
-  getTimestamp(): Date {
-    return this.timestamp;
-  }
-  setText(t: string): void {
-    this.text = t;
-    this.content = t;
-  }
-  getChannelId(): string {
-    return this.channelId;
-  }
-  getAuthorId(): string {
-    return 'user-1';
-  }
-  getChannelTopic(): string | null {
-    return null;
-  }
-  getUserMentions(): string[] {
-    return [];
-  }
-  getChannelUsers(): string[] {
-    return ['user-1'];
-  }
-  mentionsUsers(_userId: string): boolean {
-    return false;
-  }
-  isFromBot(): boolean {
-    return false;
-  }
-  getAuthorName(): string {
-    return 'TestUser';
-  }
+  getMessageId(): string { return this.id; }
+  getText(): string { return this.text; }
+  getTimestamp(): Date { return this.timestamp; }
+  setText(t: string): void { this.text = t; this.content = t; }
+  getChannelId(): string { return this.channelId; }
+  getAuthorId(): string { return 'user-1'; }
+  getChannelTopic(): string | null { return null; }
+  getUserMentions(): string[] { return []; }
+  getChannelUsers(): string[] { return ['user-1']; }
+  mentionsUsers(_userId: string): boolean { return false; }
+  isFromBot(): boolean { return false; }
+  getAuthorName(): string { return 'TestUser'; }
 }
 
 function makeCtx(overrides: Partial<MessageContext> = {}): MessageContext {
@@ -523,7 +499,9 @@ describe('PipelineTracer', () => {
     expect(receiveA!.endTime).toBeDefined();
 
     // B should not yet have a completed receive span
-    const receiveB = traceB!.spans.find((s) => s.name === 'receive' && s.endTime !== undefined);
+    const receiveB = traceB!.spans.find(
+      (s) => s.name === 'receive' && s.endTime !== undefined,
+    );
     expect(receiveB).toBeUndefined();
   });
 
@@ -732,7 +710,9 @@ describe('PipelineTracer', () => {
     // The root span should be marked as error
     expect(trace.rootSpan.status).toBe('error');
     // At least one child span should have error attributes
-    const errorSpan = trace.spans.find((s) => s.attributes['error.message'] !== undefined);
+    const errorSpan = trace.spans.find(
+      (s) => s.attributes['error.message'] !== undefined
+    );
     if (errorSpan) {
       expect(errorSpan.attributes['error.message']).toBe('something broke');
     } else {
