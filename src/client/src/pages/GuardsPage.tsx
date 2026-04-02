@@ -13,7 +13,7 @@ import ModalForm from '../components/DaisyUI/ModalForm';
 import { FormField } from '../components/DaisyUI/formTypes';
 import RangeSlider from '../components/DaisyUI/RangeSlider';
 import { GuardProfile } from '@shared/types/models/security';
-import { useToast } from '../components/ToastProvider';
+import { useToast } from '../components/DaisyUI/ToastNotification';
 import { apiService } from '../services/api';
 
 // Custom comma-separated input component
@@ -135,11 +135,11 @@ const GuardsPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['guardProfiles'] });
-      addToast('Profile created successfully', 'success');
+      addToast({ type: 'success', message: 'Profile created successfully' });
       setEditingProfile(null);
     },
     onError: (error) => {
-      addToast(error instanceof Error ? error.message : 'Failed to create profile', 'error');
+      addToast({ type: 'error', message: error instanceof Error ? error.message : 'Failed to create profile' });
     }
   });
 
@@ -149,11 +149,11 @@ const GuardsPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['guardProfiles'] });
-      addToast('Profile updated successfully', 'success');
+      addToast({ type: 'success', message: 'Profile updated successfully' });
       setEditingProfile(null);
     },
     onError: (error) => {
-      addToast(error instanceof Error ? error.message : 'Failed to update profile', 'error');
+      addToast({ type: 'error', message: error instanceof Error ? error.message : 'Failed to update profile' });
     }
   });
 
@@ -163,11 +163,11 @@ const GuardsPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['guardProfiles'] });
-      addToast('Profile deleted successfully', 'success');
+      addToast({ type: 'success', message: 'Profile deleted successfully' });
       setDeleteConfirm(null);
     },
     onError: (error) => {
-      addToast(error instanceof Error ? error.message : 'Failed to delete profile', 'error');
+      addToast({ type: 'error', message: error instanceof Error ? error.message : 'Failed to delete profile' });
       setDeleteConfirm(null);
     }
   });
