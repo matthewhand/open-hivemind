@@ -37,6 +37,12 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     const context = this.props.pageName ?? 'Unknown';
     debug('ERROR:', `[ErrorBoundary] Error in "${context}":`, error, errorInfo);
+
+    // Attempt to extract the object causing the crash from the react error info
+    if (error.message.includes('Objects are not valid as a React child')) {
+       console.error("REACT CRASH DETAILS: Check component stack below for the culprit!");
+       console.error(errorInfo.componentStack);
+    }
   }
 
   /** Reset component state so the children re-mount (soft retry). */
