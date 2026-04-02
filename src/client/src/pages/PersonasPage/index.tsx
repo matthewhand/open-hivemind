@@ -43,6 +43,7 @@ const PersonasPage: React.FC = () => {
     filteredPersonas,
     filteredPersonaIds,
     loading: dataLoading,
+    setPersonas,
   } = usePersonasData();
 
   const bulk = useBulkSelection(filteredPersonaIds);
@@ -55,7 +56,7 @@ const PersonasPage: React.FC = () => {
     openEditModal,
   } = usePersonaActions(
     personas,
-    setPersonas as any,
+    setPersonas,
     bots,
     fetchData,
     successToast,

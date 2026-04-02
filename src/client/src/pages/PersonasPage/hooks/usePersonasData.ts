@@ -110,5 +110,6 @@ export const usePersonasData = () => {
     setSelectedCategory,
     filteredPersonas,
     filteredPersonaIds,
+    setPersonas,
   };
 };
