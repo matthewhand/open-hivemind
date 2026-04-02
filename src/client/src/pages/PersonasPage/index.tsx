@@ -43,6 +43,7 @@ const PersonasPage: React.FC = () => {
     filteredPersonas,
     filteredPersonaIds,
     loading: dataLoading,
+    setPersonas,
   } = usePersonasData();
 
   const bulk = useBulkSelection(filteredPersonaIds);
