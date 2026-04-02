@@ -34,9 +34,11 @@ const Toggle: React.FC<ToggleProps> = ({
     <input
       id={toggleId}
       type="checkbox"
+      role="switch"
       className={toggleClasses}
       checked={checked}
       onChange={onChange}
+      aria-checked={checked ? 'true' : 'false'}
       aria-label={!label ? (props['aria-label'] || 'Toggle') : undefined}
       {...props}
     />
