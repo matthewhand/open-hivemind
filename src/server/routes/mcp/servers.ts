@@ -2,6 +2,7 @@ import Debug from 'debug';
 import { Router } from 'express';
 import { ErrorUtils } from '@src/types/errors';
 import { HTTP_STATUS } from '../../../types/constants';
+import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import {
   AddMCPServerSchema,
   CallMCPToolSchema,
@@ -19,7 +20,7 @@ import {
 
 const debug = Debug('app:webui:mcp:servers');
 const router = Router();
-router.get('/servers', async (req, res) => {
+router.get('/servers', asyncErrorHandler(async (req, res) => {
   try {
     const servers = await loadMCPServers();
 
@@ -51,7 +52,7 @@ router.get('/servers', async (req, res) => {
 });
 
 // POST /api/mcp/servers - Add new MCP server
-router.post('/servers', validateRequest(AddMCPServerSchema), async (req, res) => {
+router.post('/servers', validateRequest(AddMCPServerSchema), asyncErrorHandler(async (req, res) => {
   try {
     const { name, url, apiKey } = req.body;
 
@@ -210,7 +211,7 @@ router.post(
 );
 
 // DELETE /api/mcp/servers/:name - Remove MCP server
-router.delete('/servers/:name', validateRequest(MCPServerNameParamSchema), async (req, res) => {
+router.delete('/servers/:name', validateRequest(MCPServerNameParamSchema), asyncErrorHandler(async (req, res) => {
   try {
     const { name } = req.params;
 
@@ -250,7 +251,7 @@ router.delete('/servers/:name', validateRequest(MCPServerNameParamSchema), async
 });
 
 // GET /api/mcp/servers/:name/tools - Get tools from MCP server
-router.get('/servers/:name/tools', validateRequest(MCPServerNameParamSchema), async (req, res) => {
+router.get('/servers/:name/tools', validateRequest(MCPServerNameParamSchema), asyncErrorHandler(async (req, res) => {
   try {
     const { name } = req.params;
 
@@ -287,7 +288,7 @@ router.get('/servers/:name/tools', validateRequest(MCPServerNameParamSchema), as
 });
 
 // POST /api/mcp/servers/:name/call-tool - Call a tool on MCP server
-router.post('/servers/:name/call-tool', validateRequest(CallMCPToolSchema), async (req, res) => {
+router.post('/servers/:name/call-tool', validateRequest(CallMCPToolSchema), asyncErrorHandler(async (req, res) => {
   try {
     const { name } = req.params;
     const { toolName, arguments: toolArgs } = req.body;
@@ -323,7 +324,7 @@ router.post('/servers/:name/call-tool', validateRequest(CallMCPToolSchema), asyn
 });
 
 // GET /api/mcp/connected - Get all connected MCP servers
-router.get('/connected', async (req, res) => {
+router.get('/connected', asyncErrorHandler(async (req, res) => {
   try {
     const connected = Array.from(connectedClients.values()).map((client) => ({
       name: client.server.name,

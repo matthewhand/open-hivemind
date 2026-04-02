@@ -3,6 +3,7 @@ import { Router } from 'express';
 import { ErrorUtils } from '@src/types/errors';
 import MCPProviderManager from '../../../config/MCPProviderManager';
 import { HTTP_STATUS } from '../../../types/constants';
+import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import type { MCPProviderConfig } from '../../../types/mcp';
 import {
   CreateMCPProviderSchema,
@@ -14,7 +15,7 @@ import { validateRequest } from '../../../validation/validateRequest';
 const debug = Debug('app:webui:mcp:providers');
 const router = Router();
 const mcpProviderManager = MCPProviderManager;
-router.get('/providers', async (req, res) => {
+router.get('/providers', asyncErrorHandler(async (req, res) => {
   try {
     const providers = mcpProviderManager.getAllProviders();
     const statuses = mcpProviderManager.getAllProviderStatuses();
@@ -53,7 +54,7 @@ router.get('/providers', async (req, res) => {
 });
 
 // GET /api/mcp/providers/:id - Get MCP provider by ID
-router.get('/providers/:id', validateRequest(MCPProviderIdParamSchema), async (req, res) => {
+router.get('/providers/:id', validateRequest(MCPProviderIdParamSchema), asyncErrorHandler(async (req, res) => {
   try {
     const { id } = req.params;
     const provider = mcpProviderManager.getProvider(id);
@@ -95,7 +96,7 @@ router.get('/providers/:id', validateRequest(MCPProviderIdParamSchema), async (r
 });
 
 // POST /api/mcp/providers - Create new MCP provider
-router.post('/providers', validateRequest(CreateMCPProviderSchema), async (req, res) => {
+router.post('/providers', validateRequest(CreateMCPProviderSchema), asyncErrorHandler(async (req, res) => {
   try {
     const providerConfig: MCPProviderConfig = req.body;
 
@@ -148,7 +149,7 @@ router.post('/providers', validateRequest(CreateMCPProviderSchema), async (req, 
 });
 
 // PUT /api/mcp/providers/:id - Update MCP provider
-router.put('/providers/:id', validateRequest(UpdateMCPProviderSchema), async (req, res) => {
+router.put('/providers/:id', validateRequest(UpdateMCPProviderSchema), asyncErrorHandler(async (req, res) => {
   try {
     const { id } = req.params;
     const updates: Partial<MCPProviderConfig> = req.body;
@@ -202,7 +203,7 @@ router.put('/providers/:id', validateRequest(UpdateMCPProviderSchema), async (re
 });
 
 // DELETE /api/mcp/providers/:id - Delete MCP provider
-router.delete('/providers/:id', validateRequest(MCPProviderIdParamSchema), async (req, res) => {
+router.delete('/providers/:id', validateRequest(MCPProviderIdParamSchema), asyncErrorHandler(async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -241,7 +242,7 @@ router.delete('/providers/:id', validateRequest(MCPProviderIdParamSchema), async
 });
 
 // POST /api/mcp/providers/:id/start - Start MCP provider
-router.post('/providers/:id/start', validateRequest(MCPProviderIdParamSchema), async (req, res) => {
+router.post('/providers/:id/start', validateRequest(MCPProviderIdParamSchema), asyncErrorHandler(async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -280,7 +281,7 @@ router.post('/providers/:id/start', validateRequest(MCPProviderIdParamSchema), a
 });
 
 // POST /api/mcp/providers/:id/stop - Stop MCP provider
-router.post('/providers/:id/stop', validateRequest(MCPProviderIdParamSchema), async (req, res) => {
+router.post('/providers/:id/stop', validateRequest(MCPProviderIdParamSchema), asyncErrorHandler(async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -319,7 +320,7 @@ router.post('/providers/:id/stop', validateRequest(MCPProviderIdParamSchema), as
 });
 
 // POST /api/mcp/providers/:id/test - Test MCP provider
-router.post('/providers/:id/test', validateRequest(MCPProviderIdParamSchema), async (req, res) => {
+router.post('/providers/:id/test', validateRequest(MCPProviderIdParamSchema), asyncErrorHandler(async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -358,7 +359,7 @@ router.post('/providers/:id/test', validateRequest(MCPProviderIdParamSchema), as
 });
 
 // GET /api/mcp/providers/templates - Get MCP provider templates
-router.get('/providers/templates', async (req, res) => {
+router.get('/providers/templates', asyncErrorHandler(async (req, res) => {
   try {
     const templates = mcpProviderManager.getTemplates();
 
@@ -387,7 +388,7 @@ router.get('/providers/templates', async (req, res) => {
 });
 
 // GET /api/mcp/providers/stats - Get MCP provider statistics
-router.get('/providers/stats', async (req, res) => {
+router.get('/providers/stats', asyncErrorHandler(async (req, res) => {
   try {
     const stats = mcpProviderManager.getStats();
 
