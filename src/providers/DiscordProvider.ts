@@ -105,9 +105,31 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
     const ds = this.discordService;
     const instanceCfg = { name: name || '', token, llm };
     if (ds.addBot) {
-      const reconManager = new ReconnectionManager(`discord-${name}`, async () => {
-        await ds.addBot(instanceCfg);
-      });
+      const reconManager = new ReconnectionManager(
+        `discord-${name}`,
+        async () => {
+          await ds.addBot(instanceCfg);
+        },
+        {
+          healthCheckFn: async () => {
+            try {
+              // ds.getAllBots might not be completely stable if ds fails
+              const bots = (ds.getAllBots?.() || []) as IBotInfo[];
+              const bot = bots.find(
+                (b) => b?.botUserName === name || b?.config?.name === name || b?.config?.name === ''
+              );
+              if (!bot) return false;
+              // Check if the client is ready
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const client = bot?.client as any;
+              return client?.isReady?.() === true;
+            } catch (err) {
+              return false;
+            }
+          },
+          healthCheckIntervalMs: 30000,
+        }
+      );
       this.reconManagers.set(name || '', reconManager);
 
       // Start the bot connection with reconnection management
@@ -139,9 +161,27 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
         const name = inst.name || '';
         const instanceCfg = { name, token: inst.token, llm: inst.llm };
         if (ds.addBot) {
-          const reconManager = new ReconnectionManager(`discord-${name}`, async () => {
-            await ds.addBot(instanceCfg);
-          });
+          const reconManager = new ReconnectionManager(
+            `discord-${name}`,
+            async () => {
+              await ds.addBot(instanceCfg);
+            },
+            {
+              healthCheckFn: async () => {
+                try {
+                  const bots = (ds.getAllBots?.() || []) as IBotInfo[];
+                  const bot = bots.find((b) => b?.config?.discord?.token === inst.token);
+                  if (!bot) return false;
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  const client = bot?.client as any;
+                  return client?.isReady?.() === true;
+                } catch (err) {
+                  return false;
+                }
+              },
+              healthCheckIntervalMs: 30000,
+            }
+          );
           this.reconManagers.set(name, reconManager);
           reconManager.start().catch((err) => {
             debug(`Failed to start Discord bot ${name} on reload: ${err.message}`);
