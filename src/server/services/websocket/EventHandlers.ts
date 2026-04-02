@@ -1,9 +1,9 @@
 import Debug from 'debug';
 import { type Server as SocketIOServer } from 'socket.io';
-import { injectable, singleton } from 'tsyringe';
+import { inject, injectable, singleton } from 'tsyringe';
 import type { AckPayload, RequestMissedPayload } from '../../../types/websocket';
-import { type BroadcastService } from './BroadcastService';
-import { type ConnectionManager } from './ConnectionManager';
+import { BroadcastService } from './BroadcastService';
+import { ConnectionManager } from './ConnectionManager';
 
 const debug = Debug('app:WebSocketService:EventHandlers');
 
@@ -11,9 +11,9 @@ const debug = Debug('app:WebSocketService:EventHandlers');
 @injectable()
 export class EventHandlers {
   constructor(
-    private connectionManager: ConnectionManager,
-    private broadcastService: BroadcastService
-  ) {}
+    @inject(ConnectionManager) private connectionManager: ConnectionManager,
+    @inject(BroadcastService) private broadcastService: BroadcastService
+  ) { }
 
   public setup(io: SocketIOServer): void {
     io.on('connection', (socket) => {

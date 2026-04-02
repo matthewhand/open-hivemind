@@ -2,10 +2,10 @@ import { randomUUID } from 'crypto';
 import os from 'os';
 import Debug from 'debug';
 import type { Socket, Server as SocketIOServer } from 'socket.io';
-import { injectable, singleton } from 'tsyringe';
+import { inject, injectable, singleton } from 'tsyringe';
 import { BotConfigurationManager } from '../../../config/BotConfigurationManager';
 import type { EndpointStatus } from '../../../services/ApiMonitorService';
-import type ApiMonitorService from '../../../services/ApiMonitorService';
+import ApiMonitorService from '../../../services/ApiMonitorService';
 import type { BotConfig } from '../../../types/config';
 import {
   DeliveryStatus,
@@ -17,7 +17,7 @@ import {
 } from '../../../types/websocket';
 import { ActivityLogger } from '../ActivityLogger';
 import { BotMetricsService } from '../BotMetricsService';
-import { type ConnectionManager } from './ConnectionManager';
+import { ConnectionManager } from './ConnectionManager';
 import type { AlertEvent, MessageFlowEvent, PerformanceMetric } from './types';
 
 const debug = Debug('app:WebSocketService:BroadcastService');
@@ -49,8 +49,8 @@ export class BroadcastService {
   };
 
   constructor(
-    private connectionManager: ConnectionManager,
-    private apiMonitorService: ApiMonitorService
+    @inject(ConnectionManager) private connectionManager: ConnectionManager,
+    @inject(ApiMonitorService) private apiMonitorService: ApiMonitorService
   ) {
     this.setupApiMonitoring();
   }

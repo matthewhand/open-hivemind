@@ -33,7 +33,8 @@ import {
 import { apiService } from '../services/api';
 import { PROVIDER_CATEGORIES } from '../config/providers';
 import ProviderConfigModal from './ProviderConfiguration/ProviderConfigModal';
-import { LLM_PROVIDER_CONFIGS, LLMProviderType, ProviderModalState } from '../types/bot';
+import { LLM_PROVIDER_CONFIGS } from '../types/bot';
+import type { LLMProviderType, ProviderModalState } from '../types/bot';
 
 interface ConfigSchema {
   doc?: string;
@@ -99,7 +100,7 @@ const IntegrationsPanel: React.FC = () => {
   // Confirm modal state
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean; title: string; message: string; onConfirm: () => void;
-  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => { } });
 
   useEffect(() => {
     fetchData();
@@ -404,31 +405,31 @@ const IntegrationsPanel: React.FC = () => {
             </div>
             <div className="collapse-content">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                 {/* Only allow editing existing config values, but filter for advanced */}
-                 <div className="flex items-center justify-between mb-2 col-span-full">
-                    <h3 className="font-bold text-sm">Default Configuration</h3>
-                    <Button variant="ghost" size="sm" className="btn-xs" aria-label="Edit global LLM configuration" onClick={() => openEditModal('llm')}>
-                      <PencilSquareIcon className="w-3 h-3 mr-1" /> Edit Globals
-                    </Button>
-                 </div>
+                {/* Only allow editing existing config values, but filter for advanced */}
+                <div className="flex items-center justify-between mb-2 col-span-full">
+                  <h3 className="font-bold text-sm">Default Configuration</h3>
+                  <Button variant="ghost" size="sm" className="btn-xs" aria-label="Edit global LLM configuration" onClick={() => openEditModal('llm')}>
+                    <PencilSquareIcon className="w-3 h-3 mr-1" /> Edit Globals
+                  </Button>
+                </div>
 
-                 {Object.entries(llmConfig.values).map(([key, value]) => {
-                   const isAdvanced = key.includes('PARALLEL') || key.includes('EXECUTION');
-                   if (isAdvanced && !advancedMode) return null;
+                {Object.entries(llmConfig.values).map(([key, value]) => {
+                  const isAdvanced = key.includes('PARALLEL') || key.includes('EXECUTION');
+                  if (isAdvanced && !advancedMode) return null;
 
-                   return (
-                     <div key={key} className="flex justify-between items-center p-2 bg-base-100 rounded border border-base-200">
-                       <span className="text-xs font-mono opacity-70">{key}</span>
-                       <span className="font-bold text-sm">{String(value)}</span>
-                     </div>
-                   );
-                 })}
+                  return (
+                    <div key={key} className="flex justify-between items-center p-2 bg-base-100 rounded border border-base-200">
+                      <span className="text-xs font-mono opacity-70">{key}</span>
+                      <span className="font-bold text-sm">{String(value)}</span>
+                    </div>
+                  );
+                })}
 
-                 {!advancedMode && (
-                   <div className="col-span-full text-center text-xs opacity-50 italic">
-                     Enable "Advanced Mode" in System Settings to see more options.
-                   </div>
-                 )}
+                {!advancedMode && (
+                  <div className="col-span-full text-center text-xs opacity-50 italic">
+                    Enable "Advanced Mode" in System Settings to see more options.
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -571,11 +572,11 @@ const IntegrationsPanel: React.FC = () => {
               })}
             </div>
           )}
-           {!advancedMode && selectedConfigName === 'llm' && (
-             <div className="text-center text-xs opacity-50 italic mt-2">
-               Some settings are hidden. Enable "Advanced Mode" in System Settings to see them.
-             </div>
-           )}
+          {!advancedMode && selectedConfigName === 'llm' && (
+            <div className="text-center text-xs opacity-50 italic mt-2">
+              Some settings are hidden. Enable "Advanced Mode" in System Settings to see them.
+            </div>
+          )}
         </div>
         <div className="modal-action border-t border-base-200 pt-4 mt-4">
           <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>

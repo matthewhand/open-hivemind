@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Shield, RefreshCw, AlertTriangle, Plus, Copy, Trash2, Edit2 } from 'lucide-react';
-import PageHeader from '../components/PageHeader';
+import PageHeader from '../components/DaisyUI/PageHeader';
 import Card from '../components/DaisyUI/Card';
 import Input from '../components/DaisyUI/Input';
 import Button from '../components/DaisyUI/Button';
