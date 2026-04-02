@@ -1,19 +1,22 @@
-import { MCPProviderManager } from '../../src/config/MCPProviderManager';
+import { MCPProviderManager } from '../../src/config/mcp';
 import { MCPProviderConfig } from '../../src/types/mcp';
 
 describe('MCPProviderManager Configuration Validation', () => {
-  beforeEach(() => {
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-  });
-
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
   let manager: MCPProviderManager;
 
   beforeEach(() => {
-    manager = new MCPProviderManager();
+    // Tests currently instantiate it directly, so we need to inject dummy dependencies
+    // or properly mock the tsyringe container.
+    // Based on index.ts, we provide dummy instances for tests:
+    const { ConfigLoader } = require('../../src/config/mcp/configLoader');
+    const { ServerLifecycle } = require('../../src/config/mcp/serverLifecycle');
+    const { ToolRegistry } = require('../../src/config/mcp/toolRegistry');
+
+    manager = new MCPProviderManager(
+      new ConfigLoader(),
+      new ServerLifecycle(),
+      new ToolRegistry()
+    );
   });
 
   it('should validate valid provider configuration', () => {

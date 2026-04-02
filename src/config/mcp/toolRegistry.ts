@@ -3,6 +3,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { ErrorUtils } from '@src/types/errors';
 import type { MCPProviderConfig, MCPProviderTemplate } from '../../types/mcp';
 
+import { injectable } from 'tsyringe';
+
+@injectable()
 export class ToolRegistry {
   public async executeProviderTest(
     provider: MCPProviderConfig,

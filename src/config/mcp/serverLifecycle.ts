@@ -7,15 +7,21 @@ import { type EventEmitter } from 'events';
 
 const debug = Debug('app:MCPProviderManager:ServerLifecycle');
 
+import { injectable } from 'tsyringe';
+
+@injectable()
 export class ServerLifecycle {
   private processes = new Map<string, ChildProcess>();
   private statuses = new Map<string, MCPProviderStatus>();
   private healthCheckIntervals = new Map<string, NodeJS.Timeout>();
 
-  constructor(
-    private providers: Map<string, MCPProviderConfig>,
-    private emitter: EventEmitter
-  ) {}
+  private providers!: Map<string, MCPProviderConfig>;
+  private emitter!: EventEmitter;
+
+  public initialize(providers: Map<string, MCPProviderConfig>, emitter: EventEmitter): void {
+    this.providers = providers;
+    this.emitter = emitter;
+  }
 
   public getStatuses(): Map<string, MCPProviderStatus> {
     return this.statuses;
