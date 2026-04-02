@@ -8,7 +8,7 @@ import Button from '../components/DaisyUI/Button';
 import Toggle from '../components/DaisyUI/Toggle';
 import Select from '../components/DaisyUI/Select';
 import Textarea from '../components/DaisyUI/Textarea';
-import ConfirmModal from '../components/DaisyUI/ConfirmModal';
+import { ConfirmModal } from '../components/DaisyUI/Modal';
 import ModalForm from '../components/DaisyUI/ModalForm';
 import { FormField } from '../components/DaisyUI/formTypes';
 import RangeSlider from '../components/DaisyUI/RangeSlider';

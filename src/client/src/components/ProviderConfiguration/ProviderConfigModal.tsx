@@ -4,9 +4,11 @@ import type {
   ProviderTypeConfig,
   FieldConfig,
 } from '../../types/bot';
-import {
+import type {
   MessageProviderType,
   LLMProviderType,
+} from '../../types/bot';
+import {
   MESSAGE_PROVIDER_CONFIGS,
   LLM_PROVIDER_CONFIGS,
 } from '../../types/bot';
@@ -39,7 +41,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   };
 
   const [selectedType, setSelectedType] = useState<MessageProviderType | LLMProviderType>(
-    modalState.providerType === 'message' ? MessageProviderType.DISCORD : LLMProviderType.OPENAI,
+    modalState.providerType === 'message' ? 'discord' : 'openai',
   );
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -68,12 +70,12 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
       } else {
         // Add mode: start with empty form
         const defaultType = modalState.providerType === 'message'
-          ? MessageProviderType.DISCORD
-          : LLMProviderType.OPENAI;
+          ? 'discord'
+          : 'openai';
 
         const isCurrentTypeValid = modalState.providerType === 'message'
-          ? Object.values(MessageProviderType).includes(selectedType as MessageProviderType)
-          : Object.values(LLMProviderType).includes(selectedType as LLMProviderType);
+          ? Object.keys(MESSAGE_PROVIDER_CONFIGS).includes(selectedType as string)
+          : Object.keys(LLM_PROVIDER_CONFIGS).includes(selectedType as string);
 
         let newType = selectedType;
         if (!isCurrentTypeValid) {
@@ -97,7 +99,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     if (modalState.isOpen && Object.keys(formData).length > 0) {
       setOriginalConfig(formData as Record<string, unknown>);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modalState.isOpen]);
 
   useEffect(() => {
@@ -131,7 +133,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   useEffect(() => {
     if (
       modalState.providerType !== 'llm' ||
-      selectedType !== LLMProviderType.OPENAI ||
+      selectedType !== 'openai' ||
       (formData.modelType || 'chat') !== 'embedding' ||
       openAiEmbeddingModels.length === 0
     ) {
@@ -181,7 +183,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
 
     if (
       modalState.providerType !== 'llm' ||
-      selectedType !== LLMProviderType.OPENAI ||
+      selectedType !== 'openai' ||
       (formData.modelType || 'chat') !== 'embedding' ||
       openAiEmbeddingModels.length === 0
     ) {
@@ -467,7 +469,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
           )}
 
           {modalState.providerType === 'llm' &&
-            selectedType === LLMProviderType.OPENAI &&
+            selectedType === 'openai' &&
             (formData.modelType || 'chat') === 'embedding' &&
             openAiEmbeddingModels.length > 0 && (
               <div className="alert alert-info mb-4 text-sm">
@@ -548,7 +550,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
           diff={diff}
           onConfirm={() => {
             setShowDiffConfirm(false);
-            const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
+            const syntheticEvent = { preventDefault: () => { } } as React.FormEvent;
             handleSubmit(syntheticEvent);
           }}
           onCancel={() => setShowDiffConfirm(false)}
