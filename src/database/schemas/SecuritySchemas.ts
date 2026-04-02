@@ -230,19 +230,6 @@ export class SecuritySchemas implements ISchemaModule {
     );
   }
 
-  getTableNames(): string[] {
-    return [
-      'user_permissions',
-      'bot_rate_limits',
-      'bot_security_events',
-      'bot_api_keys',
-      'bot_privacy_compliance',
-      'bot_consent_management',
-      'bot_data_masking_rules',
-      'bot_data_classification',
-    ];
-  }
-
   private async createTable(db: Database, sql: string): Promise<void> {
     try {
       await db.run(sql);
