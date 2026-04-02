@@ -3,6 +3,8 @@ import { Router } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { ErrorUtils } from '@src/types/errors';
 import { HTTP_STATUS } from '../../types/constants';
+import { EmptyBodySchema } from '../../validation/schemas/usageTrackingSchema';
+import { validateRequest } from '../../validation/validateRequest';
 import { UsageTrackerService } from '../services/UsageTrackerService';
 
 const debug = Debug('app:webui:usage-tracking');
@@ -244,7 +246,7 @@ router.get('/stats', async (req, res) => {
  * DELETE /api/usage-tracking/clear
  * Clear all usage data
  */
-router.delete('/clear', async (req, res) => {
+router.delete('/clear', validateRequest(EmptyBodySchema), async (req, res) => {
   try {
     await usageTracker.clearAllData();
 
