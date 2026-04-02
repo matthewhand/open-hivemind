@@ -38,7 +38,6 @@ function validateTelegramToken(token: string): void {
 
 export class TelegramProvider implements IMessageProvider<TelegramConfig> {
   private reconManagers: Map<string, ReconnectionManager> = new Map();
-  private cachedClientId: string | null = null;
   id = 'telegram';
   label = 'Telegram';
   type = 'messenger' as const;
@@ -147,9 +146,6 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
   async addBot(config: { name?: string; token: string; llm?: string }): Promise<void> {
     const { name, token, llm } = config;
 
-    // Invalidate cached client ID when a new bot is added
-    this.cachedClientId = null;
-
     // Issue 1: Validate token format before persisting
     validateTelegramToken(token);
 
@@ -230,9 +226,6 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
   }
 
   async reload(): Promise<{ added: number }> {
-    // Invalidate cached client ID on reload
-    this.cachedClientId = null;
-
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const messengersPath = path.join(configDir, 'providers', 'messengers.json');
     let cfg: Record<string, Record<string, unknown>>;
@@ -368,17 +361,9 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
   }
 
   getClientId(): string {
-    // ⚡ Bolt Optimization: Cache the client ID to avoid repeated synchronous
-    // fs.readFileSync calls during hot paths (e.g., message handling).
-    if (this.cachedClientId) {
-      return this.cachedClientId;
-    }
-
     // Return the bot ID from the first configured instance
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const messengersPath = path.join(configDir, 'providers', 'messengers.json');
-
-    let resolvedId = 'telegram';
 
     try {
       const content = fs.readFileSync(messengersPath, 'utf8');
@@ -387,14 +372,14 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
 
       if (instances.length > 0 && instances[0].token) {
         // Extract bot ID from token (format: <bot_id>:<token>)
-        resolvedId = instances[0].token.split(':')[0];
+        const botId = instances[0].token.split(':')[0];
+        return botId;
       }
     } catch (e) {
       // Fallback to generic ID if config cannot be read
     }
 
-    this.cachedClientId = resolvedId;
-    return resolvedId;
+    return 'telegram';
   }
 
   async getForumOwner(forumId: string): Promise<string> {
