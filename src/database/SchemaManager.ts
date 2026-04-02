@@ -9,7 +9,9 @@ import { DataManagementSchemas } from './schemas/DataManagementSchemas';
 import { IncidentSchemas } from './schemas/IncidentSchemas';
 import { IntegrationSchemas } from './schemas/IntegrationSchemas';
 import type { ISchemaModule } from './schemas/ISchemaModule';
+import { LoggingSchemas } from './schemas/LoggingSchemas';
 import { MetricsSchemas } from './schemas/MetricsSchemas';
+import { MonitoringSchemas } from './schemas/MonitoringSchemas';
 import { OperationsSchemas } from './schemas/OperationsSchemas';
 import { SecuritySchemas } from './schemas/SecuritySchemas';
 import { WorkflowSchemas } from './schemas/WorkflowSchemas';
@@ -29,12 +31,9 @@ export class SchemaManager {
       throw new Error('Database connection not established');
     }
 
-    // Create modular schemas
-    const activitySchemas = new ActivitySchemas();
-    await activitySchemas.ensureTable(db);
-
     // All schema modules that follow the createTables/createIndexes pattern
     const schemaModules: ISchemaModule[] = [
+      new ActivitySchemas(),
       new CoreSchemas(),
       new OperationsSchemas(),
       new IntegrationSchemas(),
@@ -45,6 +44,8 @@ export class SchemaManager {
       new DataManagementSchemas(),
       new SecuritySchemas(),
       new MetricsSchemas(),
+      new LoggingSchemas(),
+      new MonitoringSchemas(),
     ];
 
     // Create all tables
