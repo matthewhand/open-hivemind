@@ -104,8 +104,8 @@ describe('Hot Reload API Endpoints - COMPLETE TDD SUITE', () => {
         .expect(400);
 
       expect(response.body).toHaveProperty('error', 'Validation failed');
-      expect(response.body).toHaveProperty('issues');
-      expect(response.body.issues).toEqual(
+      expect(response.body).toHaveProperty('details');
+      expect(response.body.details).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             message: expect.stringContaining('At least one change is required'),

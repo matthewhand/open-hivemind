@@ -245,7 +245,7 @@ describe('MCP API Endpoints', () => {
         .send({ arguments: {} });
       expect(response.status).toBe(400);
       expect(response.body.error).toBe('Validation failed');
-      expect(Array.isArray(response.body.issues)).toBe(true);
+      expect(Array.isArray(response.body.details)).toBe(true);
     });
   });
 });
