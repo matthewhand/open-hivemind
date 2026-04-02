@@ -64,6 +64,10 @@ describe.skip('SecureConfigManager', () => {
   });
 
   describe('Basic functionality', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+  });
+
     test('should be a singleton', () => {
       const instance1 = SecureConfigManager.getInstance();
       const instance2 = SecureConfigManager.getInstance();

@@ -1,6 +1,16 @@
 import { ErrorClassification, ErrorUtils } from '../../src/common/ErrorUtils';
 
 describe('ErrorUtils', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   describe('toHivemindError', () => {
     it('should convert an Error instance', () => {
       const err = new Error('test error');

@@ -24,6 +24,14 @@ createIntegrationSuite(openwebuiConfig.name, openwebuiConfig.requiredEnvVars, ()
   });
 
   describe('Connection', () => {
+    beforeEach(() => {
+      jest.spyOn(console, 'log').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
     it('should have valid base URL', () => {
       const url = process.env.OPENWEBUI_BASE_URL!;
       expect(() => new URL(url)).not.toThrow();

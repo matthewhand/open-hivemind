@@ -50,6 +50,14 @@ jest.mock('../../src/server/ShutdownCoordinator', () => ({
 }));
 
 describe('Bots Router', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   let app: express.Application;
   let mockManager: any;
   let mockWsService: any;

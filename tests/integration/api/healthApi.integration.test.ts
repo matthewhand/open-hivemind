@@ -10,7 +10,14 @@ import { DatabaseManager } from '../../../src/database/DatabaseManager';
 import { getWebUIServer } from '../../../src/server/server';
 
 describe('Health API Integration Tests', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
   afterEach(() => {
+    jest.restoreAllMocks();
     (ConfigurationManager as any).instance = undefined;
   });
 

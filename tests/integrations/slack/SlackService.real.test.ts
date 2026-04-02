@@ -5,6 +5,12 @@ const REAL_SLACK_CHANNEL = process.env.REAL_SLACK_CHANNEL;
 const REAL_SLACK_SIGNING_SECRET = process.env.REAL_SLACK_SIGNING_SECRET;
 
 describe('Slack Real Integration', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
   let service: SlackService;
 
   beforeAll(() => {
@@ -33,6 +39,7 @@ describe('Slack Real Integration', () => {
       await service.shutdown();
       (SlackService as any).instance = undefined;
     }
+    jest.restoreAllMocks();
   });
 
   it('should connect to real Slack', async () => {

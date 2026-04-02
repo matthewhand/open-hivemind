@@ -48,6 +48,12 @@ const MCP_SERVERS_CONFIG_FILE = join(process.cwd(), 'data', 'mcp-servers.json');
 describe('MCP API Endpoints', () => {
   let app: Express;
 
+  beforeEach(() => {
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
   beforeAll(async () => {
     app = express();
     app.use(express.json());
@@ -64,6 +70,7 @@ describe('MCP API Endpoints', () => {
   });
 
   afterEach(async () => {
+    jest.restoreAllMocks();
     // Clear mock function calls after each test
     (authenticate as jest.Mock).mockClear();
     (requireAdmin as jest.Mock).mockClear();
@@ -71,7 +78,7 @@ describe('MCP API Endpoints', () => {
     try {
       await fs.writeFile(MCP_SERVERS_CONFIG_FILE, '[]', 'utf8');
     } catch (error) {
-      console.error('Error cleaning up test files:', error);
+      // ignore cleanup errors
     }
   });
 
