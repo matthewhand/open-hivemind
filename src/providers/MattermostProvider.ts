@@ -75,10 +75,17 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
     // When addBot is fully implemented, this manager should be initialized
     // and its `start` method called.
 
-    const reconManager = new ReconnectionManager(`mattermost-${name || 'unnamed'}`, async () => {
-      // Implementation for Mattermost connection goes here
-      throw new Error('Method not implemented.');
-    });
+    const reconManager = new ReconnectionManager(
+      `mattermost-${name || 'unnamed'}`,
+      async () => {
+        // Implementation for Mattermost connection goes here
+        throw new Error('Method not implemented.');
+      },
+      {
+        healthCheckFn: async () => false,
+        healthCheckIntervalMs: 30000,
+      }
+    );
     this.reconManagers.set(name || 'unnamed', reconManager);
 
     // This will immediately fail until the underlying implementation is written,
@@ -179,24 +186,47 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
       if (!nm || !existing.has(nm)) {
         const nameToUse = nm || `MattermostBot${Date.now()}`;
 
-        const reconManager = new ReconnectionManager(`mattermost-${nameToUse}`, async () => {
-          // Initialize bot instance
-          const botConfig = {
-            name: nameToUse,
-            messageProvider: 'mattermost',
-            mattermost: {
-              serverUrl: inst.serverUrl,
-              token: inst.token,
-              channel: inst.channel || 'town-square',
-              userId: inst.userId || '',
-              username: inst.username || '',
-            },
-            llmProvider: inst.llm,
-          };
+        const reconManager = new ReconnectionManager(
+          `mattermost-${nameToUse}`,
+          async () => {
+            // Initialize bot instance
+            const botConfig = {
+              name: nameToUse,
+              messageProvider: 'mattermost',
+              mattermost: {
+                serverUrl: inst.serverUrl,
+                token: inst.token,
+                channel: inst.channel || 'town-square',
+                userId: inst.userId || '',
+                username: inst.username || '',
+              },
+              llmProvider: inst.llm,
+            };
 
-          // Re-initialize the service with the new bot
-          await mattermost.initialize();
-        });
+            // Re-initialize the service with the new bot
+            await mattermost.initialize();
+          },
+          {
+            healthCheckFn: async () => {
+              try {
+                if (!inst.serverUrl || !inst.token) return false;
+
+                const response = await fetch(`${inst.serverUrl}/api/v4/users/me`, {
+                  method: 'GET',
+                  headers: {
+                    Authorization: `Bearer ${inst.token}`,
+                    'Content-Type': 'application/json',
+                  },
+                });
+
+                return response.ok;
+              } catch (err) {
+                return false;
+              }
+            },
+            healthCheckIntervalMs: 30000,
+          }
+        );
 
         this.reconManagers.set(nameToUse, reconManager);
         reconManager.start().catch((err) => {

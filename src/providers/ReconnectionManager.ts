@@ -9,6 +9,8 @@ export interface ReconnectionConfig {
   maxDelayMs?: number;
   maxRetries?: number;
   jitter?: boolean;
+  healthCheckFn?: () => Promise<boolean>;
+  healthCheckIntervalMs?: number;
 }
 
 export interface ReconnectionStatus {
@@ -24,10 +26,12 @@ export class ReconnectionManager {
   private attempts = 0;
   private config: Required<ReconnectionConfig>;
   private reconnectTimer?: NodeJS.Timeout;
+  private healthCheckTimer?: NodeJS.Timeout;
   private lastError?: Error;
   private lastAttemptAt?: Date;
   private nextAttemptAt?: Date;
   private stopped = false;
+  private readonly healthCheckFn?: () => Promise<boolean>;
 
   constructor(
     private readonly providerId: string,
@@ -39,7 +43,10 @@ export class ReconnectionManager {
       maxDelayMs: config?.maxDelayMs ?? 60000,
       maxRetries: config?.maxRetries ?? 10,
       jitter: config?.jitter ?? true,
+      healthCheckFn: config?.healthCheckFn,
+      healthCheckIntervalMs: config?.healthCheckIntervalMs ?? 30000, // default 30s
     };
+    this.healthCheckFn = config?.healthCheckFn;
   }
 
   public async start(): Promise<void> {
@@ -59,6 +66,10 @@ export class ReconnectionManager {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = undefined;
     }
+    if (this.healthCheckTimer) {
+      clearInterval(this.healthCheckTimer);
+      this.healthCheckTimer = undefined;
+    }
     this.state = 'disconnected';
     this.attempts = 0;
     this.nextAttemptAt = undefined;
@@ -75,9 +86,15 @@ export class ReconnectionManager {
     this.lastError = undefined;
     this.nextAttemptAt = undefined;
     debug(`[${this.providerId}] ReconnectionManager registered connected state`);
+
+    this.startHealthCheck();
   }
 
   public onDisconnected(error?: Error): void {
+    if (this.healthCheckTimer) {
+      clearInterval(this.healthCheckTimer);
+      this.healthCheckTimer = undefined;
+    }
     if (this.state === 'reconnecting' || this.stopped) return;
 
     this.state = 'disconnected';
@@ -123,6 +140,39 @@ export class ReconnectionManager {
 
       this.scheduleNextAttempt();
     }
+  }
+
+  private startHealthCheck(): void {
+    if (!this.healthCheckFn || this.stopped || this.state !== 'connected') {
+      return;
+    }
+
+    if (this.healthCheckTimer) {
+      clearInterval(this.healthCheckTimer);
+    }
+
+    this.healthCheckTimer = setInterval(async () => {
+      if (this.stopped || this.state !== 'connected') {
+        if (this.healthCheckTimer) {
+          clearInterval(this.healthCheckTimer);
+          this.healthCheckTimer = undefined;
+        }
+        return;
+      }
+
+      try {
+        const isHealthy = await this.healthCheckFn!();
+        if (!isHealthy && !this.stopped && this.state === 'connected') {
+          debug(`[${this.providerId}] Health check returned false, triggering disconnect`);
+          this.onDisconnected(new Error('Health check failed'));
+        }
+      } catch (error: any) {
+        if (!this.stopped && this.state === 'connected') {
+          debug(`[${this.providerId}] Health check threw error: ${error.message}`);
+          this.onDisconnected(error instanceof Error ? error : new Error(String(error)));
+        }
+      }
+    }, this.config.healthCheckIntervalMs);
   }
 
   private scheduleNextAttempt(): void {
