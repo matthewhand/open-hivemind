@@ -5,7 +5,7 @@ import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest, LoginCredentials, RegisterData } from '../../auth/types';
 import { authRateLimiter } from '../../middleware/rateLimiter';
 import { HTTP_STATUS } from '../../types/constants';
-import { validate } from '../middleware/validate';
+import { validateRequest as validate } from '../../validation/validateRequest';
 import {
   ChangePasswordSchema,
   LoginSchema,

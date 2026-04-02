@@ -57,7 +57,7 @@ describe('Auth Routes Zod Validation', () => {
       expect(response.body).toHaveProperty('error', 'Validation failed');
       expect(response.body).toHaveProperty('code', 'VALIDATION_ERROR');
       // The issue message can be "Required" if no custom message for required was provided in zod string
-      expect(response.body.data[0]).toHaveProperty('message');
+      expect(response.body.details[0]).toHaveProperty('message');
     });
   });
 
