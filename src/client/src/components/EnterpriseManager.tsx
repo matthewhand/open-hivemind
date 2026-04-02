@@ -794,7 +794,7 @@ const EnterpriseManager: React.FC = () => {
           </div>
         </div>
         <form method="dialog" className="modal-backdrop">
-          <button onClick={() => setAddIntegrationDialog(false)}>close</button>
+          <button onClick={() => setAddIntegrationDialog(false)} aria-label="Close add integration dialog">close</button>
         </form>
       </dialog>
 
@@ -859,7 +859,7 @@ const EnterpriseManager: React.FC = () => {
           </div>
         </div>
         <form method="dialog" className="modal-backdrop">
-          <button onClick={() => setAddCloudProviderDialog(false)}>close</button>
+          <button onClick={() => setAddCloudProviderDialog(false)} aria-label="Close add cloud provider dialog">close</button>
         </form>
       </dialog>
     </div>
