@@ -6,3 +6,4 @@ export { personasMixin } from './personas';
 export { secureConfigsMixin } from './secure-configs';
 export { monitoringMixin } from './monitoring';
 export { adminMixin } from './admin';
+export { authMixin } from './auth';

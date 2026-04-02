@@ -2,6 +2,7 @@
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import Debug from 'debug';
+import { apiService } from '../services/api';
 const debug = Debug('app:client:contexts:AuthContext');
 
 export interface User {
@@ -30,11 +31,6 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-const rawBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
-const API_BASE_URL = rawBaseUrl?.replace(/\/$/, '');
-
-const buildUrl = (path: string): string => (API_BASE_URL ? `${API_BASE_URL}${path}` : path);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -114,12 +110,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Check for serverless mode
     const checkServerless = async () => {
       try {
-        const res = await fetch('/health');
-        if (res.ok) {
-          const data = await res.json();
-          if (data.platform === 'vercel-serverless' || data.platform === 'serverless') {
-            setIsServerless(true);
-          }
+        const data = await apiService.auth.checkHealth();
+        if (data && (data.platform === 'vercel-serverless' || data.platform === 'serverless')) {
+          setIsServerless(true);
         }
       } catch {
         // Assume not serverless or backend down
@@ -131,21 +124,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
       // In serverless mode, this calls the serverless function which checks env vars
-      const response = await fetch(buildUrl('/api/auth/login'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      });
+      const data = await apiService.auth.login(username, password);
 
-      if (!response.ok) {
-        throw new Error('Login failed');
-      }
-
-      const data = await response.json();
-
-      if (data.success) {
+      if (data && data.success) {
         const { accessToken, refreshToken, expiresIn } = data.data;
         const authTokens: AuthTokens = {
           accessToken,
@@ -197,21 +178,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     try {
-      const response = await fetch(buildUrl('/api/auth/refresh'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ refreshToken: tokens.refreshToken }),
-      });
+      const data = await apiService.auth.refresh(tokens.refreshToken);
 
-      if (!response.ok) {
-        throw new Error('Token refresh failed');
-      }
-
-      const data = await response.json();
-
-      if (data.success) {
+      if (data && data.success) {
         const newTokens: AuthTokens = {
           accessToken: data.data.accessToken,
           refreshToken: data.data.refreshToken,
@@ -245,21 +214,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     try {
-      const response = await fetch(buildUrl('/api/auth/verify'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ token }),
-      });
+      const data = await apiService.auth.verify(token);
 
-      if (!response.ok) {
-        throw new Error('Token verification failed');
-      }
-
-      const data = await response.json();
-
-      if (data.success) {
+      if (data && data.success) {
         return data.user;
       }
 

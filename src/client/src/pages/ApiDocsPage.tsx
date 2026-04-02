@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Mockup from '../components/DaisyUI/Mockup';
+import { apiService } from '../services/api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -62,9 +63,8 @@ function getCsrfToken(): string | null {
 
 async function fetchCsrfToken(): Promise<string> {
   try {
-    const res = await fetch('/api/csrf-token', { credentials: 'include' });
-    if (res.ok) {
-      const data = await res.json();
+    const data: any = await apiService.get('/api/csrf-token', { credentials: 'include' });
+    if (data) {
       return data.csrfToken || data.token || '';
     }
   } catch {
@@ -120,28 +120,62 @@ const TryItPanel: React.FC<{ route: RouteInfo }> = ({ route }) => {
         headers['x-csrf-token'] = csrfToken;
       }
 
-      const options: RequestInit = {
-        method: route.method,
-        headers,
-        credentials: 'include',
-      };
-
+      let parsedBody: any;
       if (['POST', 'PUT', 'PATCH'].includes(route.method)) {
-        options.body = requestBody;
+        try {
+          parsedBody = JSON.parse(requestBody);
+        } catch {
+          parsedBody = requestBody; // fallback to string if invalid JSON
+        }
       }
 
       // Replace path params with placeholder values for the request
       const url = route.path.replace(/:(\w+)/g, '_$1_');
-      const res = await fetch(url, options);
-      setStatusCode(res.status);
-      const text = await res.text();
-      try {
-        const json = JSON.parse(text);
-        setResponse(JSON.stringify(json, null, 2));
-      } catch {
-        setResponse(text);
+
+      // Use apiService which handles status parsing internally
+      const options: RequestInit = {
+        headers,
+        credentials: 'include',
+      };
+
+      let res: any;
+      switch (route.method) {
+        case 'POST':
+          res = await apiService.post(url, parsedBody, options);
+          break;
+        case 'PUT':
+          res = await apiService.put(url, parsedBody, options);
+          break;
+        case 'PATCH':
+          res = await apiService.patch(url, parsedBody, options);
+          break;
+        case 'DELETE':
+          res = await apiService.delete(url, options);
+          break;
+        case 'GET':
+        default:
+          res = await apiService.get(url, options);
+          break;
       }
+
+      // Since apiService throws on non-2xx, if we reach here it is success (e.g. 200).
+      // We assume 200 for successful responses from apiService for display.
+      setStatusCode(200);
+      setResponse(JSON.stringify(res, null, 2));
     } catch (err: any) {
+      if (err.status) {
+         setStatusCode(err.status);
+      } else if (err.message && err.message.includes('failed (')) {
+         // Try to extract status from ApiService error message: "API request failed (404): ..."
+         const match = err.message.match(/failed \((\d+)\)/);
+         if (match) {
+           setStatusCode(parseInt(match[1], 10));
+         } else {
+           setStatusCode(500); // generic error status
+         }
+      } else {
+         setStatusCode(500);
+      }
       setResponse(`Error: ${err.message}`);
     } finally {
       setLoading(false);
@@ -285,9 +319,7 @@ const ApiDocsPage: React.FC = () => {
   useEffect(() => {
     const loadDocs = async () => {
       try {
-        const res = await fetch('/api/docs', { credentials: 'include' });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data: ApiDocsResponse = await res.json();
+        const data: ApiDocsResponse = await apiService.get('/api/docs', { credentials: 'include' });
         setGroups(data.data.groups);
         if (data.data.groups.length > 0) {
           setActivePrefix(data.data.groups[0].prefix);

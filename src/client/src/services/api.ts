@@ -15,6 +15,7 @@ import { personasMixin } from './api/personas';
 import { secureConfigsMixin } from './api/secure-configs';
 import { monitoringMixin } from './api/monitoring';
 import { adminMixin } from './api/admin';
+import { authMixin } from './api/auth';
 
 // Re-export every public type so consumers don't need to change imports
 export type {
@@ -60,4 +61,5 @@ export const apiService = Object.assign(
   secureConfigsMixin(core),
   monitoringMixin(core),
   adminMixin(core),
+  authMixin(core),
 );
