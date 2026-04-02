@@ -112,10 +112,11 @@ export const PersonaModal: React.FC<PersonaModalProps> = ({
         />
 
         <div className="form-control w-full">
-          <label className="label">
+          <label className="label" htmlFor="persona-category">
             <span className="label-text font-medium">Category</span>
           </label>
           <select
+            id="persona-category"
             className={`select select-bordered w-full ${!!isEnvLocked || isViewMode ? 'select-disabled bg-base-200' : ''}`}
             value={personaCategory}
             onChange={(e) => setPersonaCategory(e.target.value as any)}
@@ -139,13 +140,14 @@ export const PersonaModal: React.FC<PersonaModalProps> = ({
         />
 
         <div className="form-control">
-          <label className="label">
+          <label className="label" htmlFor="persona-system-prompt">
             <span className="label-text font-medium">
               System Prompt <span className="text-error">*</span>
             </span>
             <span className="label-text-alt text-base-content/60">Markdown supported</span>
           </label>
           <textarea
+            id="persona-system-prompt"
             className={`textarea textarea-bordered h-48 font-mono text-sm leading-relaxed ${!!isEnvLocked || isViewMode ? 'textarea-disabled bg-base-200' : ''}`}
             value={personaPrompt}
             onChange={(e) => setPersonaPrompt(e.target.value)}

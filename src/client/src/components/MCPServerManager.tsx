@@ -228,10 +228,11 @@ const MCPServerManager: React.FC = () => {
       >
         <div className="space-y-4">
           <div className="form-control">
-            <label className="label">
+            <label className="label" htmlFor="mcp-server-name">
               <span className="label-text">Server Name</span>
             </label>
             <input
+              id="mcp-server-name"
               type="text"
               className="input input-bordered"
               value={formData.name}
@@ -240,10 +241,11 @@ const MCPServerManager: React.FC = () => {
             />
           </div>
           <div className="form-control">
-            <label className="label">
+            <label className="label" htmlFor="mcp-server-url">
               <span className="label-text">Server URL</span>
             </label>
             <input
+              id="mcp-server-url"
               type="text"
               className="input input-bordered"
               value={formData.serverUrl}
@@ -255,10 +257,11 @@ const MCPServerManager: React.FC = () => {
             </label>
           </div>
           <div className="form-control">
-            <label className="label">
+            <label className="label" htmlFor="mcp-server-apikey">
               <span className="label-text">API Key (Optional)</span>
             </label>
             <input
+              id="mcp-server-apikey"
               type="password"
               className="input input-bordered"
               value={formData.apiKey}
