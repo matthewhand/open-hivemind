@@ -3,6 +3,9 @@ import { Server as SocketIOServer } from 'socket.io';
 import { BotConfigurationManager } from '../../../../src/config/BotConfigurationManager';
 import { ActivityLogger } from '../../../../src/server/services/ActivityLogger';
 import { BotMetricsService } from '../../../../src/server/services/BotMetricsService';
+import { BroadcastService } from '../../../../src/server/services/websocket/BroadcastService';
+import { ConnectionManager } from '../../../../src/server/services/websocket/ConnectionManager';
+import { EventHandlers } from '../../../../src/server/services/websocket/EventHandlers';
 import { WebSocketService } from '../../../../src/server/services/WebSocketService';
 import ApiMonitorService from '../../../../src/services/ApiMonitorService';
 
@@ -25,10 +28,6 @@ jest.mock('../../../../src/services/ApiMonitorService', () => {
 });
 jest.mock('../../../../src/server/services/ActivityLogger');
 jest.mock('../../../../src/server/services/BotMetricsService');
-
-import { ConnectionManager } from '../../../../src/server/services/websocket/ConnectionManager';
-import { BroadcastService } from '../../../../src/server/services/websocket/BroadcastService';
-import { EventHandlers } from '../../../../src/server/services/websocket/EventHandlers';
 
 describe('WebSocketService', () => {
   let service: WebSocketService;

@@ -1,7 +1,7 @@
-import { expect, test } from '@playwright/test';
-import { navigateAndWaitReady, setupTestWithErrorDetection, setupAuth } from './test-utils';
-import * as path from 'path';
 import * as fs from 'fs';
+import * as path from 'path';
+import { expect, test } from '@playwright/test';
+import { navigateAndWaitReady, setupAuth, setupTestWithErrorDetection } from './test-utils';
 
 test.describe('Import/Export Configuration Page', () => {
   test.beforeEach(async ({ page }) => {

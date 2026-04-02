@@ -106,13 +106,13 @@ router.get('/security', (req: Request, res: Response) => {
  *       500:
  *         description: Verification failed
  */
-router.post('/:name/verify', (req: Request, res: Response) => {
+router.post('/:name/verify', async (req: Request, res: Response) => {
   try {
     const { name } = req.params;
     debug('Verifying plugin: %s', name);
 
     // Load the plugin to get its manifest
-    const mod = loadPlugin(name);
+    const mod = await loadPlugin(name);
     const manifest = mod.manifest as SecurePluginManifest;
 
     if (!manifest) {
@@ -211,6 +211,7 @@ router.post('/:name/trust', (req: Request, res: Response) => {
           policy.grantCapability(name, cap as any);
         } catch (err) {
           debug('Failed to grant capability %s to %s: %s', cap, name, err);
+          throw err;
         }
       }
     }

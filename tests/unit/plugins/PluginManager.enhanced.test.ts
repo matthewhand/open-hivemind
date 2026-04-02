@@ -3,14 +3,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { loadPlugin, PLUGINS_DIR } from '@src/plugins/PluginLoader';
 import {
+  getPluginSecurityStatus,
+  getSecurityPolicy,
   installPlugin,
   listInstalledPlugins,
   PluginValidationError,
+  setSecurityPolicy,
   uninstallPlugin,
   updatePlugin,
-  getSecurityPolicy,
-  setSecurityPolicy,
-  getPluginSecurityStatus,
 } from '@src/plugins/PluginManager';
 import { PluginSecurityPolicy } from '@src/plugins/PluginSecurity';
 
@@ -110,7 +110,9 @@ describe('PluginManager - Enhanced Tests', () => {
     });
 
     it('should reject URL with spaces in path', async () => {
-      await expect(installPlugin('https://github.com/user/repo name')).rejects.toThrow(PluginValidationError);
+      await expect(installPlugin('https://github.com/user/repo name')).rejects.toThrow(
+        PluginValidationError
+      );
     });
 
     it('should reject URL with malformed URI sequences', async () => {
@@ -118,14 +120,18 @@ describe('PluginManager - Enhanced Tests', () => {
     });
 
     it('should reject URLs with argument injection in href', async () => {
-      await expect(installPlugin('https://github.com/repo?--upload-pack=evil')).rejects.toThrow(PluginValidationError);
+      await expect(installPlugin('https://github.com/repo?--upload-pack=evil')).rejects.toThrow(
+        PluginValidationError
+      );
     });
 
     it('should reject URLs with shell metacharacters', async () => {
       const dangerousChars = [';', '&', '|', '`', '$', '(', ')'];
 
       for (const char of dangerousChars) {
-        await expect(installPlugin(`https://host${char}name.com/repo`)).rejects.toThrow(PluginValidationError);
+        await expect(installPlugin(`https://host${char}name.com/repo`)).rejects.toThrow(
+          PluginValidationError
+        );
       }
     });
 
@@ -134,7 +140,9 @@ describe('PluginManager - Enhanced Tests', () => {
     });
 
     it('should reject ssh:// protocol', async () => {
-      await expect(installPlugin('ssh://git@github.com/user/repo')).rejects.toThrow(PluginValidationError);
+      await expect(installPlugin('ssh://git@github.com/user/repo')).rejects.toThrow(
+        PluginValidationError
+      );
     });
 
     it('should accept valid https URL', async () => {
@@ -250,7 +258,9 @@ describe('PluginManager - Enhanced Tests', () => {
         throw new Error('Repository not found');
       });
 
-      await expect(installPlugin('https://github.com/user/nonexistent')).rejects.toThrow('Repository not found');
+      await expect(installPlugin('https://github.com/user/nonexistent')).rejects.toThrow(
+        'Repository not found'
+      );
     });
 
     it('should handle pnpm install failure', async () => {
@@ -259,7 +269,9 @@ describe('PluginManager - Enhanced Tests', () => {
         throw new Error('Package not found');
       });
 
-      await expect(installPlugin('https://github.com/user/llm-bad-deps')).rejects.toThrow('Package not found');
+      await expect(installPlugin('https://github.com/user/llm-bad-deps')).rejects.toThrow(
+        'Package not found'
+      );
     });
   });
 
@@ -268,15 +280,17 @@ describe('PluginManager - Enhanced Tests', () => {
       mockAccess.mockResolvedValue(undefined);
       mockReadFile.mockImplementation((filePath: string) => {
         if (String(filePath).endsWith('registry.json')) {
-          return Promise.resolve(JSON.stringify([
-            {
-              name: 'llm-myprovider',
-              repoUrl: 'https://github.com/user/llm-myprovider',
-              installedAt: '2026-01-01',
-              updatedAt: '2026-01-01',
-              version: '1.0.0',
-            },
-          ]));
+          return Promise.resolve(
+            JSON.stringify([
+              {
+                name: 'llm-myprovider',
+                repoUrl: 'https://github.com/user/llm-myprovider',
+                installedAt: '2026-01-01',
+                updatedAt: '2026-01-01',
+                version: '1.0.0',
+              },
+            ])
+          );
         }
         return Promise.resolve(JSON.stringify({ name: 'llm-myprovider', version: '1.0.0' }));
       });
@@ -328,15 +342,17 @@ describe('PluginManager - Enhanced Tests', () => {
       mockAccess.mockResolvedValue(undefined);
       mockReadFile.mockImplementation((filePath: string) => {
         if (String(filePath).endsWith('registry.json')) {
-          return Promise.resolve(JSON.stringify([
-            {
-              name: 'llm-myprovider',
-              repoUrl: 'https://github.com/user/llm-myprovider',
-              installedAt: '2026-01-01',
-              updatedAt: '2026-01-01',
-              version: '1.0.0',
-            },
-          ]));
+          return Promise.resolve(
+            JSON.stringify([
+              {
+                name: 'llm-myprovider',
+                repoUrl: 'https://github.com/user/llm-myprovider',
+                installedAt: '2026-01-01',
+                updatedAt: '2026-01-01',
+                version: '1.0.0',
+              },
+            ])
+          );
         }
         return Promise.resolve(JSON.stringify({ name: 'llm-myprovider', version: '2.0.0' }));
       });
@@ -461,9 +477,7 @@ describe('PluginManager - Enhanced Tests', () => {
 
     it('should handle plugins not in registry', async () => {
       mockAccess.mockResolvedValue(undefined);
-      mockReaddir.mockResolvedValue([
-        { name: 'llm-myprovider', isDirectory: () => true },
-      ] as any);
+      mockReaddir.mockResolvedValue([{ name: 'llm-myprovider', isDirectory: () => true }] as any);
       mockReadFile.mockImplementation((filePath: string) => {
         if (String(filePath).endsWith('registry.json')) return Promise.resolve(JSON.stringify([]));
         return Promise.resolve(JSON.stringify({ name: 'llm-myprovider', version: '1.0.0' }));
@@ -477,20 +491,20 @@ describe('PluginManager - Enhanced Tests', () => {
 
     it('should merge registry data with filesystem data', async () => {
       mockAccess.mockResolvedValue(undefined);
-      mockReaddir.mockResolvedValue([
-        { name: 'llm-myprovider', isDirectory: () => true },
-      ] as any);
+      mockReaddir.mockResolvedValue([{ name: 'llm-myprovider', isDirectory: () => true }] as any);
       mockReadFile.mockImplementation((filePath: string) => {
         if (String(filePath).endsWith('registry.json')) {
-          return Promise.resolve(JSON.stringify([
-            {
-              name: 'llm-myprovider',
-              repoUrl: 'https://github.com/user/llm-myprovider',
-              installedAt: '2026-01-01',
-              updatedAt: '2026-01-02',
-              version: '0.9.0',
-            },
-          ]));
+          return Promise.resolve(
+            JSON.stringify([
+              {
+                name: 'llm-myprovider',
+                repoUrl: 'https://github.com/user/llm-myprovider',
+                installedAt: '2026-01-01',
+                updatedAt: '2026-01-02',
+                version: '0.9.0',
+              },
+            ])
+          );
         }
         return Promise.resolve(JSON.stringify({ name: 'llm-myprovider', version: '1.0.0' }));
       });
@@ -545,9 +559,7 @@ describe('PluginManager - Enhanced Tests', () => {
     });
 
     it('should get plugin security status', () => {
-      const mockStatus = [
-        { pluginName: 'llm-test', trusted: true, violations: [] },
-      ];
+      const mockStatus = [{ pluginName: 'llm-test', trusted: true, violations: [] }];
       mockSecurityPolicy.getAllSecurityStatus.mockReturnValue(mockStatus as any);
 
       const status = getPluginSecurityStatus();
@@ -564,7 +576,9 @@ describe('PluginManager - Enhanced Tests', () => {
         create: jest.fn(),
       });
 
-      await expect(installPlugin('https://github.com/user/llm-bad')).rejects.toThrow(PluginValidationError);
+      await expect(installPlugin('https://github.com/user/llm-bad')).rejects.toThrow(
+        PluginValidationError
+      );
     });
 
     it('should reject manifest with non-string displayName', async () => {
@@ -573,7 +587,9 @@ describe('PluginManager - Enhanced Tests', () => {
         create: jest.fn(),
       });
 
-      await expect(installPlugin('https://github.com/user/llm-bad')).rejects.toThrow(PluginValidationError);
+      await expect(installPlugin('https://github.com/user/llm-bad')).rejects.toThrow(
+        PluginValidationError
+      );
     });
 
     it('should reject manifest without description', async () => {
@@ -582,7 +598,9 @@ describe('PluginManager - Enhanced Tests', () => {
         create: jest.fn(),
       });
 
-      await expect(installPlugin('https://github.com/user/llm-bad')).rejects.toThrow(PluginValidationError);
+      await expect(installPlugin('https://github.com/user/llm-bad')).rejects.toThrow(
+        PluginValidationError
+      );
     });
 
     it('should reject manifest with non-string description', async () => {
@@ -591,7 +609,9 @@ describe('PluginManager - Enhanced Tests', () => {
         create: jest.fn(),
       });
 
-      await expect(installPlugin('https://github.com/user/llm-bad')).rejects.toThrow(PluginValidationError);
+      await expect(installPlugin('https://github.com/user/llm-bad')).rejects.toThrow(
+        PluginValidationError
+      );
     });
 
     it('should reject manifest without type', async () => {
@@ -600,7 +620,9 @@ describe('PluginManager - Enhanced Tests', () => {
         create: jest.fn(),
       });
 
-      await expect(installPlugin('https://github.com/user/llm-bad')).rejects.toThrow(PluginValidationError);
+      await expect(installPlugin('https://github.com/user/llm-bad')).rejects.toThrow(
+        PluginValidationError
+      );
     });
 
     it('should reject invalid type prefixes', async () => {
@@ -614,7 +636,9 @@ describe('PluginManager - Enhanced Tests', () => {
           return Promise.resolve(JSON.stringify([]));
         });
 
-        await expect(installPlugin(`https://github.com/user/${prefix}-test`)).rejects.toThrow(PluginValidationError);
+        await expect(installPlugin(`https://github.com/user/${prefix}-test`)).rejects.toThrow(
+          PluginValidationError
+        );
       }
     });
 

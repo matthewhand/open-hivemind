@@ -1,7 +1,7 @@
-import request from 'supertest';
-import express, { type Express } from 'express';
 import fs from 'fs/promises';
 import path from 'path';
+import express, { type Express } from 'express';
+import request from 'supertest';
 import importExportRouter from '../../../../src/server/routes/importExport';
 import { ConfigurationImportExportService } from '../../../../src/server/services/ConfigurationImportExportService';
 
@@ -81,11 +81,9 @@ describe('Import/Export Routes', () => {
     });
 
     it('should validate configIds is required', async () => {
-      const response = await request(app)
-        .post('/api/import-export/export')
-        .send({
-          format: 'json',
-        });
+      const response = await request(app).post('/api/import-export/export').send({
+        format: 'json',
+      });
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -193,9 +191,7 @@ describe('Import/Export Routes', () => {
     });
 
     it('should return 400 when no file is uploaded', async () => {
-      const response = await request(app)
-        .post('/api/import-export/import')
-        .send({});
+      const response = await request(app).post('/api/import-export/import').send({});
 
       expect(response.status).toBe(400);
       expect(response.body.message).toBe('No file uploaded');
@@ -278,12 +274,10 @@ describe('Import/Export Routes', () => {
         checksum: 'def456',
       });
 
-      const response = await request(app)
-        .post('/api/import-export/backup')
-        .send({
-          name: 'daily-backup',
-          description: 'Daily automated backup',
-        });
+      const response = await request(app).post('/api/import-export/backup').send({
+        name: 'daily-backup',
+        description: 'Daily automated backup',
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -303,22 +297,18 @@ describe('Import/Export Routes', () => {
     });
 
     it('should validate backup name is required', async () => {
-      const response = await request(app)
-        .post('/api/import-export/backup')
-        .send({
-          description: 'No name provided',
-        });
+      const response = await request(app).post('/api/import-export/backup').send({
+        description: 'No name provided',
+      });
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
     });
 
     it('should validate backup name format', async () => {
-      const response = await request(app)
-        .post('/api/import-export/backup')
-        .send({
-          name: 'invalid name!@#',
-        });
+      const response = await request(app).post('/api/import-export/backup').send({
+        name: 'invalid name!@#',
+      });
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -353,11 +343,9 @@ describe('Import/Export Routes', () => {
         error: 'Backup failed',
       });
 
-      const response = await request(app)
-        .post('/api/import-export/backup')
-        .send({
-          name: 'test-backup',
-        });
+      const response = await request(app).post('/api/import-export/backup').send({
+        name: 'test-backup',
+      });
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -371,13 +359,11 @@ describe('Import/Export Routes', () => {
         checksum: 'xyz789',
       });
 
-      const response = await request(app)
-        .post('/api/import-export/backup')
-        .send({
-          name: 'secure-backup',
-          encrypt: true,
-          encryptionKey: 'strongpassword123',
-        });
+      const response = await request(app).post('/api/import-export/backup').send({
+        name: 'secure-backup',
+        encrypt: true,
+        encryptionKey: 'strongpassword123',
+      });
 
       expect(response.status).toBe(200);
       expect(mockService.createBackup).toHaveBeenCalledWith(
@@ -421,8 +407,7 @@ describe('Import/Export Routes', () => {
 
       mockService.listBackups.mockResolvedValue(mockBackups as any);
 
-      const response = await request(app)
-        .get('/api/import-export/backups');
+      const response = await request(app).get('/api/import-export/backups');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -433,8 +418,7 @@ describe('Import/Export Routes', () => {
     it('should return empty array when no backups exist', async () => {
       mockService.listBackups.mockResolvedValue([]);
 
-      const response = await request(app)
-        .get('/api/import-export/backups');
+      const response = await request(app).get('/api/import-export/backups');
 
       expect(response.status).toBe(200);
       expect(response.body.data).toEqual([]);
@@ -444,8 +428,7 @@ describe('Import/Export Routes', () => {
     it('should handle list errors', async () => {
       mockService.listBackups.mockRejectedValue(new Error('File system error'));
 
-      const response = await request(app)
-        .get('/api/import-export/backups');
+      const response = await request(app).get('/api/import-export/backups');
 
       expect(response.status).toBe(500);
       expect(response.body.success).toBe(false);
@@ -546,8 +529,7 @@ describe('Import/Export Routes', () => {
     it('should delete backup successfully', async () => {
       mockService.deleteBackup.mockResolvedValue(true);
 
-      const response = await request(app)
-        .delete('/api/import-export/backups/backup-123');
+      const response = await request(app).delete('/api/import-export/backups/backup-123');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -557,8 +539,7 @@ describe('Import/Export Routes', () => {
     it('should return 404 when backup not found', async () => {
       mockService.deleteBackup.mockResolvedValue(false);
 
-      const response = await request(app)
-        .delete('/api/import-export/backups/non-existent');
+      const response = await request(app).delete('/api/import-export/backups/non-existent');
 
       expect(response.status).toBe(404);
       expect(response.body.message).toBe('Backup not found');
@@ -567,8 +548,7 @@ describe('Import/Export Routes', () => {
     it('should handle delete errors', async () => {
       mockService.deleteBackup.mockRejectedValue(new Error('Delete failed'));
 
-      const response = await request(app)
-        .delete('/api/import-export/backups/backup-123');
+      const response = await request(app).delete('/api/import-export/backups/backup-123');
 
       expect(response.status).toBe(500);
       expect(response.body.success).toBe(false);
@@ -581,8 +561,7 @@ describe('Import/Export Routes', () => {
       mockService.getBackupFilePath.mockResolvedValue(mockBackupPath);
       (fs.access as jest.Mock).mockResolvedValue(undefined);
 
-      const response = await request(app)
-        .get('/api/import-export/backups/backup-123/download');
+      const response = await request(app).get('/api/import-export/backups/backup-123/download');
 
       expect(response.status).toBe(200);
       expect(mockService.getBackupFilePath).toHaveBeenCalledWith('backup-123');
@@ -591,8 +570,7 @@ describe('Import/Export Routes', () => {
     it('should return 404 when backup not found', async () => {
       mockService.getBackupFilePath.mockResolvedValue(null);
 
-      const response = await request(app)
-        .get('/api/import-export/backups/non-existent/download');
+      const response = await request(app).get('/api/import-export/backups/non-existent/download');
 
       expect(response.status).toBe(404);
       expect(response.body.message).toBe('Backup not found or invalid');
@@ -602,8 +580,7 @@ describe('Import/Export Routes', () => {
       mockService.getBackupFilePath.mockResolvedValue('/path/to/backup.json.gz');
       (fs.access as jest.Mock).mockRejectedValue(new Error('ENOENT'));
 
-      const response = await request(app)
-        .get('/api/import-export/backups/backup-123/download');
+      const response = await request(app).get('/api/import-export/backups/backup-123/download');
 
       expect(response.status).toBe(404);
       expect(response.body.message).toBe('Backup file not found');
@@ -652,9 +629,7 @@ describe('Import/Export Routes', () => {
     });
 
     it('should return 400 when no file uploaded', async () => {
-      const response = await request(app)
-        .post('/api/import-export/validate')
-        .send({});
+      const response = await request(app).post('/api/import-export/validate').send({});
 
       expect(response.status).toBe(400);
       expect(response.body.message).toBe('No file uploaded');

@@ -1,9 +1,9 @@
-import request from 'supertest';
 import express from 'express';
+import request from 'supertest';
 import dashboardRouter from '@src/server/routes/dashboard';
-import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { ActivityLogger } from '@src/server/services/ActivityLogger';
 import WebSocketService from '@src/server/services/WebSocketService';
+import { BotConfigurationManager } from '@config/BotConfigurationManager';
 
 // Mock dependencies
 jest.mock('@config/BotConfigurationManager');
@@ -200,13 +200,13 @@ describe('Activity Filtering and Export', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.events).toHaveLength(2);
-      expect(response.body.events.every((e: any) => e.botName.toLowerCase().includes('support'))).toBe(true);
+      expect(
+        response.body.events.every((e: any) => e.botName.toLowerCase().includes('support'))
+      ).toBe(true);
     });
 
     it('should filter by search query (user)', async () => {
-      const response = await request(app)
-        .get('/api/dashboard/activity')
-        .query({ search: 'user1' });
+      const response = await request(app).get('/api/dashboard/activity').query({ search: 'user1' });
 
       expect(response.status).toBe(200);
       expect(response.body.events).toHaveLength(1);
@@ -223,12 +223,10 @@ describe('Activity Filtering and Export', () => {
     });
 
     it('should filter by date range', async () => {
-      const response = await request(app)
-        .get('/api/dashboard/activity')
-        .query({
-          from: '2026-03-30T11:30:00.000Z',
-          to: '2026-03-30T12:30:00.000Z',
-        });
+      const response = await request(app).get('/api/dashboard/activity').query({
+        from: '2026-03-30T11:30:00.000Z',
+        to: '2026-03-30T12:30:00.000Z',
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.events).toHaveLength(1);
@@ -236,13 +234,11 @@ describe('Activity Filtering and Export', () => {
     });
 
     it('should combine multiple filters', async () => {
-      const response = await request(app)
-        .get('/api/dashboard/activity')
-        .query({
-          bot: 'SupportBot',
-          severity: 'error',
-          search: 'connection',
-        });
+      const response = await request(app).get('/api/dashboard/activity').query({
+        bot: 'SupportBot',
+        severity: 'error',
+        search: 'connection',
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.events).toHaveLength(1);
@@ -259,13 +255,15 @@ describe('Activity Filtering and Export', () => {
         .expect(200)
         .expect('Content-Type', /text\/csv/);
 
-      expect(response.header['content-disposition']).toMatch(/^attachment; filename=activity_export_/);
+      expect(response.header['content-disposition']).toMatch(
+        /^attachment; filename=activity_export_/
+      );
       expect(response.text).toContain('Timestamp,Bot Name,Message Provider');
       expect(response.text).toContain('SupportBot');
       expect(response.text).toContain('SalesBot');
 
       // Count CSV rows (header + 4 data rows)
-      const rows = response.text.split('\n').filter(r => r.trim());
+      const rows = response.text.split('\n').filter((r) => r.trim());
       expect(rows.length).toBe(5); // 1 header + 4 events
     });
 
@@ -276,7 +274,7 @@ describe('Activity Filtering and Export', () => {
         .expect(200)
         .expect('Content-Type', /text\/csv/);
 
-      const rows = response.text.split('\n').filter(r => r.trim());
+      const rows = response.text.split('\n').filter((r) => r.trim());
       expect(rows.length).toBe(3); // 1 header + 2 events
 
       expect(response.text).toContain('SupportBot');
@@ -284,9 +282,7 @@ describe('Activity Filtering and Export', () => {
     });
 
     it('should include all required CSV columns', async () => {
-      const response = await request(app)
-        .get('/api/dashboard/activity/export')
-        .expect(200);
+      const response = await request(app).get('/api/dashboard/activity/export').expect(200);
 
       const headers = response.text.split('\n')[0];
       expect(headers).toContain('Timestamp');
@@ -322,9 +318,7 @@ describe('Activity Filtering and Export', () => {
       };
       (ActivityLogger.getInstance as jest.Mock).mockReturnValue(mockLoggerWithQuotes);
 
-      const response = await request(app)
-        .get('/api/dashboard/activity/export')
-        .expect(200);
+      const response = await request(app).get('/api/dashboard/activity/export').expect(200);
 
       // CSV should escape quotes by doubling them
       expect(response.text).toContain('""Invalid input""');
@@ -339,7 +333,7 @@ describe('Activity Filtering and Export', () => {
         })
         .expect(200);
 
-      const rows = response.text.split('\n').filter(r => r.trim());
+      const rows = response.text.split('\n').filter((r) => r.trim());
       expect(rows.length).toBe(2); // 1 header + 1 event
     });
 
@@ -349,7 +343,7 @@ describe('Activity Filtering and Export', () => {
         .query({ severity: 'error' })
         .expect(200);
 
-      const rows = response.text.split('\n').filter(r => r.trim());
+      const rows = response.text.split('\n').filter((r) => r.trim());
       expect(rows.length).toBe(2); // 1 header + 1 error event
       expect(response.text).toContain('"error"');
     });
@@ -360,7 +354,7 @@ describe('Activity Filtering and Export', () => {
         .query({ search: 'connection' })
         .expect(200);
 
-      const rows = response.text.split('\n').filter(r => r.trim());
+      const rows = response.text.split('\n').filter((r) => r.trim());
       expect(rows.length).toBe(2); // 1 header + 1 matching event
       expect(response.text).toContain('Connection failed');
     });
@@ -396,18 +390,16 @@ describe('Activity Filtering and Export', () => {
 
       expect(errorResponse.status).toBe(200);
       expect(errorResponse.body.events.length).toBeGreaterThan(0);
-      expect(errorResponse.body.events.every((e: any) =>
-        e.status === 'error' || e.status === 'timeout'
-      )).toBe(true);
+      expect(
+        errorResponse.body.events.every((e: any) => e.status === 'error' || e.status === 'timeout')
+      ).toBe(true);
 
       const messageResponse = await request(app)
         .get('/api/dashboard/activity')
         .query({ activityType: 'message' });
 
       expect(messageResponse.status).toBe(200);
-      expect(messageResponse.body.events.every((e: any) =>
-        e.status === 'success'
-      )).toBe(true);
+      expect(messageResponse.body.events.every((e: any) => e.status === 'success')).toBe(true);
     });
   });
 

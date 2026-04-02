@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { navigateAndWaitReady, setupTestWithErrorDetection, setupAuth } from './test-utils';
+import { navigateAndWaitReady, setupAuth, setupTestWithErrorDetection } from './test-utils';
 
 test.describe('Plugin Security Dashboard', () => {
   test.beforeEach(async ({ page }) => {
@@ -193,7 +193,9 @@ test.describe('Plugin Security Dashboard', () => {
     await page.waitForTimeout(2000);
 
     // Verify capability badges are present
-    const capabilityBadges = page.locator('.badge:has-text("network"), .badge:has-text("llm"), .badge:has-text("database")');
+    const capabilityBadges = page.locator(
+      '.badge:has-text("network"), .badge:has-text("llm"), .badge:has-text("database")'
+    );
     const badgeCount = await capabilityBadges.count();
     expect(badgeCount).toBeGreaterThan(0);
 
@@ -225,7 +227,9 @@ test.describe('Plugin Security Dashboard', () => {
     expect(reverifyCount).toBeGreaterThan(0);
 
     // Verify Trust/Revoke buttons exist
-    const trustButtons = page.locator('button:has-text("Trust Plugin"), button:has-text("Revoke Trust")');
+    const trustButtons = page.locator(
+      'button:has-text("Trust Plugin"), button:has-text("Revoke Trust")'
+    );
     const trustCount = await trustButtons.count();
     expect(trustCount).toBeGreaterThan(0);
   });

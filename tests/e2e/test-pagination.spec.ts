@@ -201,8 +201,8 @@ test('Test pagination visual regressions', async ({ page }) => {
 
   // Set focus on an ellipsis button to trigger group-focus CSS state
   await page.locator('#hover-focus-test #next-ellipsis').focus();
-  await page.waitForLoadState("domcontentloaded");
-    await page.screenshot({
+  await page.waitForLoadState('domcontentloaded');
+  await page.screenshot({
     path: 'docs/screenshots/pagination-after-accessible.png',
     fullPage: true,
   });

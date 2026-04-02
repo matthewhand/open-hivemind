@@ -1,8 +1,8 @@
-import request from 'supertest';
 import express, { type Express } from 'express';
+import request from 'supertest';
 import templatesRouter from '../../src/server/routes/templates';
-import { ConfigurationTemplateService } from '../../src/server/services/ConfigurationTemplateService';
 import { BotConfigService } from '../../src/server/services/BotConfigService';
+import { ConfigurationTemplateService } from '../../src/server/services/ConfigurationTemplateService';
 
 jest.mock('../../src/server/services/ConfigurationTemplateService');
 jest.mock('../../src/server/services/BotConfigService');
@@ -78,9 +78,7 @@ describe('Templates API - Comprehensive Tests', () => {
     it('should filter templates by category', async () => {
       mockTemplateService.getAllTemplates.mockResolvedValue([mockTemplates[0]]);
 
-      const response = await request(app)
-        .get('/api/admin/templates?category=discord')
-        .expect(200);
+      const response = await request(app).get('/api/admin/templates?category=discord').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(mockTemplateService.getAllTemplates).toHaveBeenCalledWith({
@@ -91,9 +89,7 @@ describe('Templates API - Comprehensive Tests', () => {
     it('should search templates', async () => {
       mockTemplateService.getAllTemplates.mockResolvedValue([mockTemplates[0]]);
 
-      const response = await request(app)
-        .get('/api/admin/templates?search=discord')
-        .expect(200);
+      const response = await request(app).get('/api/admin/templates?search=discord').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(mockTemplateService.getAllTemplates).toHaveBeenCalledWith({
@@ -185,9 +181,7 @@ describe('Templates API - Comprehensive Tests', () => {
     it('should get template by id', async () => {
       mockTemplateService.getTemplateById.mockResolvedValue(mockTemplates[0] as any);
 
-      const response = await request(app)
-        .get('/api/admin/templates/discord-basic')
-        .expect(200);
+      const response = await request(app).get('/api/admin/templates/discord-basic').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.template.name).toBe('Discord Basic Bot');
@@ -223,9 +217,7 @@ describe('Templates API - Comprehensive Tests', () => {
     it('should delete custom template', async () => {
       mockTemplateService.deleteTemplate.mockResolvedValue(true);
 
-      const response = await request(app)
-        .delete('/api/admin/templates/custom-123')
-        .expect(200);
+      const response = await request(app).delete('/api/admin/templates/custom-123').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(mockTemplateService.deleteTemplate).toHaveBeenCalledWith('custom-123');
@@ -236,9 +228,7 @@ describe('Templates API - Comprehensive Tests', () => {
         new Error('Cannot delete built-in templates')
       );
 
-      const response = await request(app)
-        .delete('/api/admin/templates/discord-basic')
-        .expect(400);
+      const response = await request(app).delete('/api/admin/templates/discord-basic').expect(400);
 
       expect(response.body.success).toBe(false);
     });
@@ -258,9 +248,7 @@ describe('Templates API - Comprehensive Tests', () => {
 
     it('should handle bot creation errors', async () => {
       mockTemplateService.getTemplateById.mockResolvedValue(mockTemplates[0] as any);
-      mockBotConfigService.createBotConfig.mockRejectedValue(
-        new Error('Invalid configuration')
-      );
+      mockBotConfigService.createBotConfig.mockRejectedValue(new Error('Invalid configuration'));
 
       const response = await request(app)
         .post('/api/admin/templates/discord-basic/apply')

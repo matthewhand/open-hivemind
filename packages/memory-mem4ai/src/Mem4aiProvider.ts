@@ -5,10 +5,7 @@ import type {
   MemoryScopeOptions,
   MemorySearchResult,
 } from '@hivemind/shared-types';
-import {
-  getCircuitBreaker,
-  type CircuitBreaker as CircuitBreakerType,
-} from './CircuitBreaker';
+import { getCircuitBreaker, type CircuitBreaker as CircuitBreakerType } from './CircuitBreaker';
 import {
   Mem4aiApiError,
   type Mem4aiAddResponse,

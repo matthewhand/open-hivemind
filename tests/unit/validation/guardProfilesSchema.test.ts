@@ -1,9 +1,9 @@
-import { describe, it, expect } from '@jest/globals';
+import { describe, expect, it } from '@jest/globals';
 import {
   CreateGuardProfileSchema,
-  UpdateGuardProfileSchema,
-  TestGuardProfileSchema,
   GuardProfileIdParamSchema,
+  TestGuardProfileSchema,
+  UpdateGuardProfileSchema,
 } from '../../../src/validation/schemas/guardProfilesSchema';
 
 describe('guardProfilesSchema', () => {
@@ -55,7 +55,9 @@ describe('guardProfilesSchema', () => {
       const result = CreateGuardProfileSchema.safeParse(invalidProfile);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain('letters, numbers, dashes, and underscores');
+        expect(result.error.errors[0].message).toContain(
+          'letters, numbers, dashes, and underscores'
+        );
       }
     });
 
@@ -76,7 +78,9 @@ describe('guardProfilesSchema', () => {
       const result = CreateGuardProfileSchema.safeParse(invalidProfile);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain('letters, numbers, dashes, and underscores');
+        expect(result.error.errors[0].message).toContain(
+          'letters, numbers, dashes, and underscores'
+        );
       }
     });
 

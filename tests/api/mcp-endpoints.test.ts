@@ -173,7 +173,9 @@ describe('MCP API Endpoints', () => {
 
       // Verify it's gone
       const getResponse = await request(app).get('/api/mcp/servers');
-      expect(getResponse.body.data.servers.find((s: any) => s.name === 'test-server')).toBeUndefined();
+      expect(
+        getResponse.body.data.servers.find((s: any) => s.name === 'test-server')
+      ).toBeUndefined();
     });
   });
 

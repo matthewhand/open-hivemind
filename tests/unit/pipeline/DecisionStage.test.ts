@@ -11,8 +11,7 @@
 
 import { MessageBus } from '@src/events/MessageBus';
 import type { MessageContext, ReplyDecision } from '@src/events/types';
-import { DecisionStage } from '@src/pipeline/DecisionStage';
-import type { DecisionStrategy } from '@src/pipeline/DecisionStage';
+import { DecisionStage, type DecisionStrategy } from '@src/pipeline/DecisionStage';
 import { IMessage } from '@message/interfaces/IMessage';
 
 // ---------------------------------------------------------------------------
@@ -35,18 +34,43 @@ class StubMessage extends IMessage {
     this.timestamp = new Date();
   }
 
-  getMessageId(): string { return this.id; }
-  getText(): string { return this.text; }
-  getTimestamp(): Date { return this.timestamp; }
-  setText(t: string): void { this.text = t; this.content = t; }
-  getChannelId(): string { return this.channelId; }
-  getAuthorId(): string { return 'user-1'; }
-  getChannelTopic(): string | null { return null; }
-  getUserMentions(): string[] { return []; }
-  getChannelUsers(): string[] { return ['user-1']; }
-  mentionsUsers(_userId: string): boolean { return false; }
-  isFromBot(): boolean { return false; }
-  getAuthorName(): string { return 'TestUser'; }
+  getMessageId(): string {
+    return this.id;
+  }
+  getText(): string {
+    return this.text;
+  }
+  getTimestamp(): Date {
+    return this.timestamp;
+  }
+  setText(t: string): void {
+    this.text = t;
+    this.content = t;
+  }
+  getChannelId(): string {
+    return this.channelId;
+  }
+  getAuthorId(): string {
+    return 'user-1';
+  }
+  getChannelTopic(): string | null {
+    return null;
+  }
+  getUserMentions(): string[] {
+    return [];
+  }
+  getChannelUsers(): string[] {
+    return ['user-1'];
+  }
+  mentionsUsers(_userId: string): boolean {
+    return false;
+  }
+  isFromBot(): boolean {
+    return false;
+  }
+  getAuthorName(): string {
+    return 'TestUser';
+  }
 }
 
 function makeCtx(overrides: Partial<MessageContext> = {}): MessageContext {
@@ -147,7 +171,7 @@ describe('DecisionStage', () => {
           platform: ctx.platform,
           channelId: ctx.channelId,
           decision,
-        }),
+        })
       );
     });
   });
@@ -170,7 +194,7 @@ describe('DecisionStage', () => {
           message: ctx.message,
           botName: ctx.botName,
           reason: 'bot message',
-        }),
+        })
       );
     });
   });
@@ -244,9 +268,7 @@ describe('DecisionStage', () => {
       await bus.emitAsync('message:validated', makeCtx());
 
       expect(skipped).toHaveBeenCalledTimes(1);
-      expect(skipped).toHaveBeenCalledWith(
-        expect.objectContaining({ reason: 'ignored' }),
-      );
+      expect(skipped).toHaveBeenCalledWith(expect.objectContaining({ reason: 'ignored' }));
     });
   });
 
@@ -292,7 +314,7 @@ describe('DecisionStage', () => {
         expect.objectContaining({
           error: expect.any(Error),
           stage: 'decision',
-        }),
+        })
       );
       expect(errorListener.mock.calls[0][0].error.message).toBe('strategy exploded');
     });

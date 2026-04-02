@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import { Router } from 'express';
 import { ErrorUtils } from '@src/types/errors';
-import { loadMCPServers, connectedClients } from './mcp';
+import { connectedClients, loadMCPServers } from './mcp';
 
 const debug = Debug('app:webui:mcpToolsTesting');
 const router = Router();

@@ -1,8 +1,8 @@
-import request from 'supertest';
 import express from 'express';
-import pluginSecurityRouter from '../../../../src/server/routes/pluginSecurity';
-import * as PluginManager from '../../../../src/plugins/PluginManager';
+import request from 'supertest';
 import * as PluginLoader from '../../../../src/plugins/PluginLoader';
+import * as PluginManager from '../../../../src/plugins/PluginManager';
+import pluginSecurityRouter from '../../../../src/server/routes/pluginSecurity';
 
 // Mock the modules
 jest.mock('../../../../src/plugins/PluginManager');
@@ -126,7 +126,8 @@ describe('Plugin Security Routes', () => {
   describe('POST /api/admin/plugins/:name/trust', () => {
     it('should grant trust and capabilities to a plugin', async () => {
       const mockPolicy = {
-        getPluginSecurityStatus: jest.fn()
+        getPluginSecurityStatus: jest
+          .fn()
           .mockReturnValueOnce({
             pluginName: 'test-plugin',
             trustLevel: 'untrusted',
@@ -162,7 +163,8 @@ describe('Plugin Security Routes', () => {
 
     it('should revoke trust and capabilities from a plugin', async () => {
       const mockPolicy = {
-        getPluginSecurityStatus: jest.fn()
+        getPluginSecurityStatus: jest
+          .fn()
           .mockReturnValueOnce({
             pluginName: 'test-plugin',
             trustLevel: 'trusted',
