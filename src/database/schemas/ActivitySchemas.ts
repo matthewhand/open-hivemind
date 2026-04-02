@@ -120,6 +120,10 @@ export class ActivitySchemas implements ISchemaModule {
     );
   }
 
+  getTableNames(): string[] {
+    return ['activity_logs', 'message_logs', 'bot_audit_logs', 'bot_error_logs'];
+  }
+
   private async createTable(db: Database, sql: string): Promise<void> {
     try {
       await db.run(sql);
