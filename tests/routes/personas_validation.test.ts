@@ -13,10 +13,6 @@ jest.mock('../../src/managers/PersonaManager', () => ({
 }));
 
 describe('Security: Persona Validation', () => {
-  beforeEach(() => {
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-  });
-
   afterEach(() => {
     jest.restoreAllMocks();
   });

@@ -13,9 +13,6 @@ describe('AuthManager Security Fix', () => {
   let authManager: AuthManager;
   const originalEnv = process.env;
   beforeEach(() => {
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-    jest.spyOn(console, 'warn').mockImplementation(() => {});
-    jest.spyOn(console, 'error').mockImplementation(() => {});
     jest.resetModules();
     process.env = { ...originalEnv };
     (AuthManager as any).instance = null;

@@ -24,10 +24,6 @@ createIntegrationSuite(mattermostConfig.name, mattermostConfig.requiredEnvVars, 
   });
 
   describe('Connection', () => {
-    beforeEach(() => {
-      jest.spyOn(console, 'log').mockImplementation(() => {});
-    });
-
     afterEach(() => {
       jest.restoreAllMocks();
     });
