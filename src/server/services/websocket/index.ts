@@ -1,7 +1,7 @@
 import type { Server as HttpServer } from 'http';
 import Debug from 'debug';
 import type { Server as SocketIOServer } from 'socket.io';
-import { container, injectable, singleton } from 'tsyringe';
+import { container, inject, injectable, singleton } from 'tsyringe';
 import type ApiMonitorService from '../../../services/ApiMonitorService';
 import type {
   AckPayload,
@@ -10,9 +10,9 @@ import type {
   MessageEnvelope,
   RequestMissedPayload,
 } from '../../../types/websocket';
-import { type BroadcastService } from './BroadcastService';
-import { type ConnectionManager } from './ConnectionManager';
-import { type EventHandlers } from './EventHandlers';
+import { BroadcastService } from './BroadcastService';
+import { ConnectionManager } from './ConnectionManager';
+import { EventHandlers } from './EventHandlers';
 import type { AlertEvent, MessageFlowEvent, PerformanceMetric } from './types';
 
 const debug = Debug('app:WebSocketService');
@@ -26,10 +26,10 @@ export class WebSocketService {
   private metricsInterval: NodeJS.Timeout | null = null;
 
   constructor(
-    private connectionManager: ConnectionManager,
-    private broadcastService: BroadcastService,
-    private eventHandlers: EventHandlers
-  ) {}
+    @inject(ConnectionManager) private connectionManager: ConnectionManager,
+    @inject(BroadcastService) private broadcastService: BroadcastService,
+    @inject(EventHandlers) private eventHandlers: EventHandlers
+  ) { }
 
   // We explicitly declare io to allow tests to mock it via (service as any).io
   private get io(): SocketIOServer | null {

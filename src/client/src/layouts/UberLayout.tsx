@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import ResponsiveNavigation from '../components/DaisyUI/ResponsiveNavigation';
-import { AutoBreadcrumbs } from '../components/DaisyUI/Breadcrumbs';
+
 import { hivemindNavItems, NavItem } from '../config/navigation';
 import { useHealthBadges } from '../hooks/useHealthBadges';
 
@@ -27,7 +27,7 @@ const UberLayout: React.FC = () => {
   return (
     <ResponsiveNavigation navItems={navItemsWithBadges}>
       <div key={location.pathname}>
-        <AutoBreadcrumbs className="mb-2 px-2 text-sm" />
+
         <Outlet />
       </div>
     </ResponsiveNavigation>
