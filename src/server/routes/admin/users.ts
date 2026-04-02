@@ -9,7 +9,7 @@ import {
   UpdatePersonaSchema,
 } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
+import { asyncErrorHandler } from '../../../middleware/errorHandler';
 
 const router = Router();
 
@@ -57,7 +57,7 @@ router.get('/personas', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to retrieve personas'));
   }
-});
+}));
 
 /**
  * @openapi

@@ -8,7 +8,7 @@ import { ValidateConfigSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { auditMiddleware, logAdminAction, type AuditedRequest } from '../middleware/audit';
 import { authenticateToken, requirePermission } from '../middleware/auth';
-import { asyncErrorHandler } from '../middleware/errorHandler';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:webui:consolidated');
 const router = Router();
@@ -278,7 +278,7 @@ router.post('/validate-config', validateRequest(ValidateConfigSchema), asyncErro
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to validate configuration'));
   }
-});
+}));
 
 // GET /api/webui/health - Comprehensive health check
 router.get('/health', async (req, res) => {

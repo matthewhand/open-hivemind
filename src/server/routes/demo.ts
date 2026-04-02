@@ -40,7 +40,7 @@ router.get('/status', asyncErrorHandler(async (req, res) => {
       .status(statusCode)
       .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DEMO_STATUS_ERROR'));
   }
-});
+}));
 
 /**
  * GET /api/demo/bots
@@ -65,7 +65,7 @@ router.get('/bots', asyncErrorHandler(async (req, res) => {
       .status(statusCode)
       .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DEMO_BOTS_ERROR'));
   }
-});
+}));
 
 /**
  * POST /api/demo/chat
@@ -137,7 +137,7 @@ router.post('/chat', validateRequest(ChatGenerateSchema), asyncErrorHandler(asyn
       .status(statusCode)
       .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DEMO_CHAT_ERROR'));
   }
-});
+}));
 
 /**
  * GET /api/demo/conversations
@@ -161,7 +161,7 @@ router.get('/conversations', asyncErrorHandler(async (req, res) => {
       .status(statusCode)
       .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DEMO_CONVERSATIONS_ERROR'));
   }
-});
+}));
 
 /**
  * GET /api/demo/conversations/:channelId/:botName
@@ -190,7 +190,7 @@ router.get('/conversations/:channelId/:botName', asyncErrorHandler(async (req, r
         ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DEMO_CONVERSATION_HISTORY_ERROR')
       );
   }
-});
+}));
 
 /**
  * POST /api/demo/reset
@@ -209,7 +209,7 @@ router.post('/reset', validateRequest(EmptySchema), asyncErrorHandler(async (req
       .status(statusCode)
       .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DEMO_RESET_ERROR'));
   }
-});
+}));
 
 /**
  * GET /api/demo/info
@@ -245,6 +245,6 @@ router.get('/info', asyncErrorHandler(async (req, res) => {
       ],
     })
   );
-});
+}));
 
 export default router;

@@ -7,7 +7,7 @@ import { ClearCacheSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { authenticateToken } from '../middleware/auth';
 import { clearAllSystemCaches } from '../utils/cacheManager'; // We'll implement this
-import { asyncErrorHandler } from '../middleware/errorHandler';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:server:routes:cache');
 
@@ -37,6 +37,6 @@ router.post('/clear', validateRequest(ClearCacheSchema), asyncErrorHandler(async
     debug('ERROR:', 'Failed to clear cache:', error);
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to clear cache'));
   }
-});
+}));
 
 export default router;

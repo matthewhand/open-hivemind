@@ -6,7 +6,7 @@ import { HTTP_STATUS } from '../../types/constants';
 import { EmptyBodySchema } from '../../validation/schemas/usageTrackingSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { UsageTrackerService } from '../services/UsageTrackerService';
-import { asyncErrorHandler } from '../middleware/errorHandler';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:webui:usage-tracking');
 const router = Router();
@@ -34,7 +34,7 @@ router.get('/tools', asyncErrorHandler(async (req, res) => {
         )
       );
   }
-});
+}));
 
 /**
  * GET /api/usage-tracking/tools/:toolId
@@ -63,7 +63,7 @@ router.get('/tools/:toolId', asyncErrorHandler(async (req, res) => {
         )
       );
   }
-});
+}));
 
 /**
  * GET /api/usage-tracking/providers
@@ -86,7 +86,7 @@ router.get('/providers', asyncErrorHandler(async (req, res) => {
         )
       );
   }
-});
+}));
 
 /**
  * GET /api/usage-tracking/providers/:serverName
@@ -117,7 +117,7 @@ router.get('/providers/:serverName', asyncErrorHandler(async (req, res) => {
         )
       );
   }
-});
+}));
 
 /**
  * GET /api/usage-tracking/providers/:serverName/tools
@@ -142,7 +142,7 @@ router.get('/providers/:serverName/tools', asyncErrorHandler(async (req, res) =>
         )
       );
   }
-});
+}));
 
 /**
  * GET /api/usage-tracking/top-tools
@@ -167,7 +167,7 @@ router.get('/top-tools', asyncErrorHandler(async (req, res) => {
         )
       );
   }
-});
+}));
 
 /**
  * GET /api/usage-tracking/top-providers
@@ -192,7 +192,7 @@ router.get('/top-providers', asyncErrorHandler(async (req, res) => {
         )
       );
   }
-});
+}));
 
 /**
  * GET /api/usage-tracking/recent-tools
@@ -217,7 +217,7 @@ router.get('/recent-tools', asyncErrorHandler(async (req, res) => {
         )
       );
   }
-});
+}));
 
 /**
  * GET /api/usage-tracking/stats
@@ -241,7 +241,7 @@ router.get('/stats', asyncErrorHandler(async (req, res) => {
         )
       );
   }
-});
+}));
 
 /**
  * DELETE /api/usage-tracking/clear
@@ -265,6 +265,6 @@ router.delete('/clear', validateRequest(EmptyBodySchema), asyncErrorHandler(asyn
         )
       );
   }
-});
+}));
 
 export default router;

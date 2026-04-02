@@ -74,7 +74,7 @@ router.get('/', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json({ error: 'Failed to retrieve personas' });
   }
-});
+}));
 
 // PUT /api/personas/reorder
 router.put('/reorder', validateRequest(ReorderSchema), asyncErrorHandler(async (req, res) => {
@@ -98,7 +98,7 @@ router.put('/reorder', validateRequest(ReorderSchema), asyncErrorHandler(async (
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json({ error: 'Failed to reorder personas' });
   }
-});
+}));
 
 // GET /api/personas/:id
 router.get('/:id', validateRequest(PersonaIdParamSchema), asyncErrorHandler(async (req, res) => {
@@ -119,7 +119,7 @@ router.get('/:id', validateRequest(PersonaIdParamSchema), asyncErrorHandler(asyn
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json({ error: 'Failed to retrieve persona' });
   }
-});
+}));
 
 // POST /api/personas
 router.post('/', validateRequest(CreatePersonaSchema), asyncErrorHandler(async (req, res) => {
@@ -138,7 +138,7 @@ router.post('/', validateRequest(CreatePersonaSchema), asyncErrorHandler(async (
   } catch (error: any) {
     return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
   }
-});
+}));
 
 // POST /api/personas/:id/clone
 router.post('/:id/clone', validateRequest(ClonePersonaSchema), asyncErrorHandler(async (req, res) => {
@@ -161,7 +161,7 @@ router.post('/:id/clone', validateRequest(ClonePersonaSchema), asyncErrorHandler
     }
     return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
   }
-});
+}));
 
 // PUT /api/personas/:id
 router.put('/:id', validateRequest(UpdatePersonaRouteSchema), asyncErrorHandler(async (req, res) => {
@@ -172,7 +172,7 @@ router.put('/:id', validateRequest(UpdatePersonaRouteSchema), asyncErrorHandler(
   } catch (error: any) {
     return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
   }
-});
+}));
 
 // DELETE /api/personas/bulk
 router.delete('/bulk', validateRequest(BulkDeletePersonasSchema), asyncErrorHandler(async (req, res) => {
@@ -247,7 +247,7 @@ router.delete('/bulk', validateRequest(BulkDeletePersonasSchema), asyncErrorHand
       details: error.message,
     });
   }
-});
+}));
 
 // DELETE /api/personas/:id
 router.delete('/:id', validateRequest(PersonaIdParamSchema), asyncErrorHandler(async (req, res) => {
@@ -263,6 +263,6 @@ router.delete('/:id', validateRequest(PersonaIdParamSchema), asyncErrorHandler(a
   } catch (error: any) {
     return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
   }
-});
+}));
 
 export default router;

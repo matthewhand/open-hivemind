@@ -8,7 +8,7 @@ import {
   UpdateAccessControlSchema,
 } from '../../validation/schemas/guardsSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { asyncErrorHandler } from '../middleware/errorHandler';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const router = Router();
 const debug = Debug('app:webui:guards');
@@ -85,7 +85,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to save access control'));
     }
-  }
+  })
 );
 
 // POST /:id/toggle - Toggle guard enabled status
@@ -114,7 +114,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to toggle guard'));
     }
-  }
+  })
 );
 
 export default router;

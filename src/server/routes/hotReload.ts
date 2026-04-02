@@ -9,7 +9,7 @@ import {
   SnapshotIdParamSchema,
 } from '../../validation/schemas/hotReloadSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { asyncErrorHandler } from '../middleware/errorHandler';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:hotReloadRoutes');
 const router = Router();
@@ -43,7 +43,7 @@ router.post('/api/config/hot-reload', validateRequest(HotReloadChangeSchema), as
         )
       );
   }
-});
+}));
 
 router.get('/api/config/hot-reload/history', (req, res) => {
   try {

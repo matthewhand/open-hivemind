@@ -15,7 +15,7 @@ import { ReorderSchema } from '../../validation/schemas/commonSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { ActivityLogger } from '../services/ActivityLogger';
 import { WebSocketService } from '../services/WebSocketService';
-import { asyncErrorHandler } from '../middleware/errorHandler';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const router = Router();
 const logger = createLogger('botsRouter');
@@ -71,7 +71,7 @@ router.get('/', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to retrieve bots'));
   }
-});
+}));
 
 /**
  * @openapi
@@ -116,7 +116,7 @@ router.put('/reorder', validateRequest(ReorderSchema), asyncErrorHandler(async (
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to reorder bots'));
   }
-});
+}));
 
 // ── Export / Import ─────────────────────────────────────────────────────
 
@@ -258,7 +258,7 @@ router.post('/import', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to import bots'));
   }
-});
+}));
 
 /**
  * @openapi
@@ -297,7 +297,7 @@ router.get('/:id', validateRequest(BotIdParamSchema), asyncErrorHandler(async (r
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to retrieve bot'));
   }
-});
+}));
 
 /**
  * @openapi
@@ -335,7 +335,7 @@ router.post('/', validateRequest(CreateBotSchema), asyncErrorHandler(async (req,
     const msg = error instanceof Error ? error.message : String(error);
     return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error(msg));
   }
-});
+}));
 
 /**
  * @openapi
@@ -379,7 +379,7 @@ router.put('/:id', validateRequest(UpdateBotSchema), asyncErrorHandler(async (re
       : HTTP_STATUS.BAD_REQUEST;
     return res.status(status).json(ApiResponse.error(msg));
   }
-});
+}));
 
 /**
  * @openapi
@@ -416,7 +416,7 @@ router.delete('/:id', validateRequest(BotIdParamSchema), asyncErrorHandler(async
       : HTTP_STATUS.BAD_REQUEST;
     return res.status(status).json(ApiResponse.error(msg));
   }
-});
+}));
 
 /**
  * @openapi
@@ -465,7 +465,7 @@ router.post('/:id/clone', validateRequest(CloneBotSchema), asyncErrorHandler(asy
       : HTTP_STATUS.BAD_REQUEST;
     return res.status(status).json(ApiResponse.error(msg));
   }
-});
+}));
 
 /**
  * @openapi
@@ -496,7 +496,7 @@ router.post('/:id/start', validateRequest(BotIdParamSchema), asyncErrorHandler(a
       : HTTP_STATUS.BAD_REQUEST;
     return res.status(status).json(ApiResponse.error(msg));
   }
-});
+}));
 
 /**
  * @openapi
@@ -527,7 +527,7 @@ router.post('/:id/stop', validateRequest(BotIdParamSchema), asyncErrorHandler(as
       : HTTP_STATUS.BAD_REQUEST;
     return res.status(status).json(ApiResponse.error(msg));
   }
-});
+}));
 
 /**
  * @openapi
@@ -569,7 +569,7 @@ router.get('/:id/history', validateRequest(BotHistoryQuerySchema), asyncErrorHan
       : HTTP_STATUS.BAD_REQUEST;
     return res.status(status).json(ApiResponse.error(msg));
   }
-});
+}));
 
 /**
  * Redacts a string by fully masking short strings and partially masking longer ones.
@@ -643,7 +643,7 @@ router.get('/:id/activity', validateRequest(BotActivityQuerySchema), asyncErrorH
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to retrieve bot activity'));
   }
-});
+}));
 
 /**
  * @openapi
@@ -686,6 +686,6 @@ router.get('/:id/export', validateRequest(BotIdParamSchema), asyncErrorHandler(a
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to export bot'));
   }
-});
+}));
 
 export default router;

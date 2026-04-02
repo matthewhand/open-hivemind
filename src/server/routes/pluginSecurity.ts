@@ -5,7 +5,7 @@ import { ErrorUtils } from '../../common/ErrorUtils';
 import { loadPlugin } from '../../plugins/PluginLoader';
 import { getPluginSecurityStatus, getSecurityPolicy } from '../../plugins/PluginManager';
 import type { SecurePluginManifest } from '../../plugins/PluginSecurity';
-import { asyncErrorHandler } from '../middleware/errorHandler';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const router = Router();
 const debug = Debug('app:routes:pluginSecurity');
@@ -144,7 +144,7 @@ router.post('/:name/verify', asyncErrorHandler(async (req, res) => {
       message: hivemindError.message || 'An error occurred while verifying the plugin',
     });
   }
-});
+}));
 
 /**
  * @openapi

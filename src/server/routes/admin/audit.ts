@@ -71,7 +71,7 @@ router.get('/tool-usage-guards', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to retrieve tool usage guards'));
   }
-});
+}));
 
 /**
  * @openapi
@@ -121,7 +121,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to create tool usage guard'));
     }
-  }
+  })
 );
 
 // PUT /tool-usage-guards/:id - Update an existing tool usage guard
@@ -153,7 +153,7 @@ router.put(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to update tool usage guard'));
     }
-  }
+  })
 );
 
 /**
@@ -189,7 +189,7 @@ router.delete(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to delete tool usage guard'));
     }
-  }
+  })
 );
 
 // POST /tool-usage-guards/:id/toggle - Toggle tool usage guard active status
@@ -211,12 +211,12 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to update guard status'));
     }
-  }
+  })
 );
 
 // Placeholder for audit log queries
 router.get('/audit-logs', asyncErrorHandler(async (req, res) => {
   res.json(ApiResponse.success({ logs: [] }));
-});
+}));
 
 export default router;

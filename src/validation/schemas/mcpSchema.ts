@@ -7,11 +7,3 @@ export const McpToolTestSchema = z.object({
     arguments: z.record(z.any()).optional(),
   }),
 });
-
-export const McpToolTestSchema = z.object({
-  body: z.object({
-    serverName: z.string().min(1, { message: 'Server name is required' }),
-    toolName: z.string().min(1, { message: 'Tool name is required' }),
-    arguments: z.record(z.any()).optional(),
-  }),
-});

@@ -14,7 +14,7 @@ import {
 import { validateRequest } from '../../../validation/validateRequest';
 import { optionalAuth } from '../../middleware/auth';
 import { calculateErrorRate, calculateHealthStatus } from './helpers';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
+import { asyncErrorHandler } from '../../../middleware/errorHandler';
 
 const router = Router();
 
@@ -260,7 +260,7 @@ router.get('/detailed/services', optionalAuth, asyncErrorHandler(async (req, res
   }
 
   return res.json({ services });
-});
+}));
 
 // API endpoints monitoring
 router.get('/api-endpoints', (req, res) => {

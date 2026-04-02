@@ -17,7 +17,7 @@ import {
 } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { ConfigurationImportExportService } from '../services/ConfigurationImportExportService';
-import { asyncErrorHandler } from '../middleware/errorHandler';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 type MulterFile = {
   path: string;
@@ -261,7 +261,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error(error instanceof Error ? error.message : String(error)));
     }
-  }
+  })
 );
 
 /**
@@ -319,7 +319,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error(error instanceof Error ? error.message : String(error)));
     }
-  }
+  })
 );
 
 /**
@@ -368,7 +368,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error(error instanceof Error ? error.message : String(error)));
     }
-  }
+  })
 );
 
 /**
@@ -385,7 +385,7 @@ router.get('/backups', requireAdmin, asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error(error instanceof Error ? error.message : String(error)));
   }
-});
+}));
 
 /**
  * POST /api/import-export/backups/:backupId/restore
@@ -436,7 +436,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error(error instanceof Error ? error.message : String(error)));
     }
-  }
+  })
 );
 
 /**
@@ -462,7 +462,7 @@ router.delete(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error(error instanceof Error ? error.message : String(error)));
     }
-  }
+  })
 );
 
 /**
@@ -503,7 +503,7 @@ router.get(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error(error instanceof Error ? error.message : String(error)));
     }
-  }
+  })
 );
 
 /**
@@ -553,7 +553,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error(error instanceof Error ? error.message : String(error)));
     }
-  }
+  })
 );
 
 export default router;

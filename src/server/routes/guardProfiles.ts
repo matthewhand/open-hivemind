@@ -38,7 +38,7 @@ router.get('/', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to load guardrail profiles'));
   }
-});
+}));
 
 // GET /:id - Get a specific profile
 router.get('/:id', validateRequest(GuardProfileIdParamSchema), asyncErrorHandler(async (req, res) => {
@@ -57,7 +57,7 @@ router.get('/:id', validateRequest(GuardProfileIdParamSchema), asyncErrorHandler
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to retrieve profile'));
   }
-});
+}));
 
 interface GuardBody {
   name: string;
@@ -148,7 +148,7 @@ router.post('/', validateRequest(CreateGuardProfileSchema), asyncErrorHandler(as
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to create guard profile'));
   }
-});
+}));
 
 // PUT /:id - Update a profile
 router.put('/:id', validateRequest(UpdateGuardProfileSchema), asyncErrorHandler(async (req, res) => {
@@ -208,7 +208,7 @@ router.put('/:id', validateRequest(UpdateGuardProfileSchema), asyncErrorHandler(
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to update guard profile'));
   }
-});
+}));
 
 // DELETE /:id - Delete a profile
 router.delete('/:id', validateRequest(GuardProfileIdParamSchema), asyncErrorHandler(async (req, res) => {
@@ -230,7 +230,7 @@ router.delete('/:id', validateRequest(GuardProfileIdParamSchema), asyncErrorHand
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to delete guard profile'));
   }
-});
+}));
 
 // POST /bulk/delete - Delete multiple profiles atomically
 router.post(
@@ -258,7 +258,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to delete guard profiles'));
     }
-  }
+  })
 );
 
 // POST /bulk/toggle - Toggle multiple profiles atomically
@@ -309,7 +309,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to toggle guard profiles'));
     }
-  }
+  })
 );
 
 export default router;

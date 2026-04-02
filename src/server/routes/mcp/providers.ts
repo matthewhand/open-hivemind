@@ -51,7 +51,7 @@ router.get('/providers', asyncErrorHandler(async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   }
-});
+}));
 
 // GET /api/mcp/providers/:id - Get MCP provider by ID
 router.get('/providers/:id', validateRequest(MCPProviderIdParamSchema), asyncErrorHandler(async (req, res) => {
@@ -93,7 +93,7 @@ router.get('/providers/:id', validateRequest(MCPProviderIdParamSchema), asyncErr
       timestamp: new Date().toISOString(),
     });
   }
-});
+}));
 
 // POST /api/mcp/providers - Create new MCP provider
 router.post('/providers', validateRequest(CreateMCPProviderSchema), asyncErrorHandler(async (req, res) => {
@@ -146,7 +146,7 @@ router.post('/providers', validateRequest(CreateMCPProviderSchema), asyncErrorHa
       timestamp: new Date().toISOString(),
     });
   }
-});
+}));
 
 // PUT /api/mcp/providers/:id - Update MCP provider
 router.put('/providers/:id', validateRequest(UpdateMCPProviderSchema), asyncErrorHandler(async (req, res) => {
@@ -200,7 +200,7 @@ router.put('/providers/:id', validateRequest(UpdateMCPProviderSchema), asyncErro
       timestamp: new Date().toISOString(),
     });
   }
-});
+}));
 
 // DELETE /api/mcp/providers/:id - Delete MCP provider
 router.delete('/providers/:id', validateRequest(MCPProviderIdParamSchema), asyncErrorHandler(async (req, res) => {
@@ -239,7 +239,7 @@ router.delete('/providers/:id', validateRequest(MCPProviderIdParamSchema), async
       timestamp: new Date().toISOString(),
     });
   }
-});
+}));
 
 // POST /api/mcp/providers/:id/start - Start MCP provider
 router.post('/providers/:id/start', validateRequest(MCPProviderIdParamSchema), asyncErrorHandler(async (req, res) => {
@@ -278,7 +278,7 @@ router.post('/providers/:id/start', validateRequest(MCPProviderIdParamSchema), a
       timestamp: new Date().toISOString(),
     });
   }
-});
+}));
 
 // POST /api/mcp/providers/:id/stop - Stop MCP provider
 router.post('/providers/:id/stop', validateRequest(MCPProviderIdParamSchema), asyncErrorHandler(async (req, res) => {
@@ -317,7 +317,7 @@ router.post('/providers/:id/stop', validateRequest(MCPProviderIdParamSchema), as
       timestamp: new Date().toISOString(),
     });
   }
-});
+}));
 
 // POST /api/mcp/providers/:id/test - Test MCP provider
 router.post('/providers/:id/test', validateRequest(MCPProviderIdParamSchema), asyncErrorHandler(async (req, res) => {
@@ -356,7 +356,7 @@ router.post('/providers/:id/test', validateRequest(MCPProviderIdParamSchema), as
       timestamp: new Date().toISOString(),
     });
   }
-});
+}));
 
 // GET /api/mcp/providers/templates - Get MCP provider templates
 router.get('/providers/templates', asyncErrorHandler(async (req, res) => {
@@ -385,7 +385,7 @@ router.get('/providers/templates', asyncErrorHandler(async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   }
-});
+}));
 
 // GET /api/mcp/providers/stats - Get MCP provider statistics
 router.get('/providers/stats', asyncErrorHandler(async (req, res) => {
@@ -414,6 +414,6 @@ router.get('/providers/stats', asyncErrorHandler(async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   }
-});
+}));
 
 export default router;

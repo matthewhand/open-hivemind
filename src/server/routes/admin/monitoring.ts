@@ -6,8 +6,8 @@ import { HTTP_STATUS } from '../../../types/constants';
 import { isSafeUrl } from '../../../utils/ssrfGuard';
 import { TestConnectionSchema } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
+import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import {
-import { asyncErrorHandler } from '../../middleware/errorHandler';
   getChatModels,
   getEmbeddingModels,
   getModelsForProvider,
@@ -258,7 +258,7 @@ router.post(
         message: hivemindError.message || 'An error occurred while testing connection',
       });
     }
-  }
+  })
 );
 
 // GET /providers - Get available providers

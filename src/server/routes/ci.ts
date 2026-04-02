@@ -63,7 +63,7 @@ router.get('/api/deployments', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
   }
-});
+}));
 
 // Start a new deployment
 router.post('/api/deployments', validateRequest(CIDeploySchema), asyncErrorHandler(async (req, res) => {
@@ -106,7 +106,7 @@ router.post('/api/deployments', validateRequest(CIDeploySchema), asyncErrorHandl
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
   }
-});
+}));
 
 // Get deployment details
 router.get('/api/deployments/:id', asyncErrorHandler(async (req, res) => {
@@ -143,7 +143,7 @@ router.get('/api/deployments/:id', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
   }
-});
+}));
 
 // Rollback deployment
 router.post('/api/deployments/:id/rollback', validateRequest(CIRollbackSchema), asyncErrorHandler(async (req, res) => {
@@ -159,7 +159,7 @@ router.post('/api/deployments/:id/rollback', validateRequest(CIRollbackSchema), 
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
   }
-});
+}));
 
 // Get configuration drift detections
 router.get('/api/drift', asyncErrorHandler(async (req, res) => {
@@ -189,7 +189,7 @@ router.get('/api/drift', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
   }
-});
+}));
 
 // Validate deployment configuration
 router.post('/api/deployments/validate', validateRequest(EmptySchema), asyncErrorHandler(async (req, res) => {
@@ -221,7 +221,7 @@ router.post('/api/deployments/validate', validateRequest(EmptySchema), asyncErro
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
   }
-});
+}));
 
 // Get CI/CD pipeline status
 router.get('/api/pipeline/status', asyncErrorHandler(async (req, res) => {
@@ -244,7 +244,7 @@ router.get('/api/pipeline/status', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
   }
-});
+}));
 
 // Trigger automated tests
 router.post('/api/tests/run', validateRequest(EmptySchema), asyncErrorHandler(async (req, res) => {
@@ -273,7 +273,7 @@ router.post('/api/tests/run', validateRequest(EmptySchema), asyncErrorHandler(as
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
   }
-});
+}));
 
 // Get test results
 router.get('/api/tests/results/:id', asyncErrorHandler(async (req, res) => {
@@ -319,6 +319,6 @@ router.get('/api/tests/results/:id', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
   }
-});
+}));
 
 export default router;

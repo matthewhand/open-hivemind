@@ -14,7 +14,7 @@ import {
   UpdateMessengerProviderSchema,
 } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
+import { asyncErrorHandler } from '../../../middleware/errorHandler';
 
 const router = Router();
 
@@ -111,7 +111,7 @@ router.post(
         message: hivemindError.message || 'An error occurred while creating LLM provider',
       });
     }
-  }
+  })
 );
 
 // PUT /llm-providers/:id - Update an existing LLM provider
@@ -153,7 +153,7 @@ router.put(
         message: hivemindError.message || 'An error occurred while updating LLM provider',
       });
     }
-  }
+  })
 );
 
 /**
@@ -196,7 +196,7 @@ router.delete(
         message: hivemindError.message || 'An error occurred while deleting LLM provider',
       });
     }
-  }
+  })
 );
 
 // POST /llm-providers/:id/toggle - Toggle LLM provider active status
@@ -235,7 +235,7 @@ router.post(
         message: hivemindError.message || 'An error occurred while updating provider status',
       });
     }
-  }
+  })
 );
 
 // GET /messenger-providers - Get all messenger providers
@@ -319,7 +319,7 @@ router.post(
         message: hivemindError.message || 'An error occurred while creating messenger provider',
       });
     }
-  }
+  })
 );
 
 // PUT /messenger-providers/:id - Update an existing messenger provider
@@ -378,7 +378,7 @@ router.put(
         message: hivemindError.message || 'An error occurred while updating messenger provider',
       });
     }
-  }
+  })
 );
 
 /**
@@ -418,7 +418,7 @@ router.delete(
         message: hivemindError.message || 'An error occurred while deleting messenger provider',
       });
     }
-  }
+  })
 );
 
 // POST /messenger-providers/:id/toggle - Toggle messenger provider active status
@@ -454,7 +454,7 @@ router.post(
         message: hivemindError.message || 'An error occurred while updating provider status',
       });
     }
-  }
+  })
 );
 
 // Get environment variable overrides

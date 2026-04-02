@@ -9,7 +9,7 @@ import {
   PerformanceOptimizeSchema,
 } from '../../validation/schemas/enterpriseSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { asyncErrorHandler } from '../middleware/errorHandler';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:enterpriseRoutes');
 const router = Router();
@@ -230,7 +230,7 @@ router.get('/api/audit', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
   }
-});
+}));
 
 // Export audit events as CSV (no pagination cap)
 router.get('/api/audit/export', asyncErrorHandler(async (req, res) => {
@@ -291,7 +291,7 @@ router.get('/api/audit/export', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
   }
-});
+}));
 
 // Get performance metrics
 router.get('/api/performance', (req, res) => {

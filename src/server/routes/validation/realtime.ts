@@ -5,8 +5,8 @@ import type { AuthMiddlewareRequest } from '../../../auth/types';
 import { HTTP_STATUS } from '../../../types/constants';
 import { ErrorUtils } from '../../../types/errors';
 import { RealTimeValidationService } from '../../services/RealTimeValidationService';
+import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import {
-import { asyncErrorHandler } from '../../middleware/errorHandler';
   getErrorResponse,
   handleValidationErrors,
   validateConfigurationData,
@@ -46,7 +46,7 @@ export function createRealtimeRoutes(): Router {
           error: ErrorUtils.getMessage(error as any),
         });
       }
-    }
+    })
   );
 
   /**
@@ -86,7 +86,7 @@ export function createRealtimeRoutes(): Router {
               : new Date(),
         });
       }
-    }
+    })
   );
 
   /**
@@ -126,7 +126,7 @@ export function createRealtimeRoutes(): Router {
               : new Date(),
         });
       }
-    }
+    })
   );
 
   /**
@@ -256,7 +256,7 @@ export function createRealtimeRoutes(): Router {
         timestamp,
       });
     }
-  });
+  }));
 
   return router;
 }

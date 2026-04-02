@@ -4,7 +4,7 @@ import { ErrorUtils } from '@src/types/errors';
 import { McpToolTestSchema } from '../../validation/schemas/mcpSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { connectedClients, loadMCPServers } from './mcp';
-import { asyncErrorHandler } from '../middleware/errorHandler';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:webui:mcpToolsTesting');
 const router = Router();
@@ -69,7 +69,7 @@ router.get('/list', asyncErrorHandler(async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   }
-});
+}));
 
 /**
  * POST /api/admin/mcp-tools/test
@@ -141,6 +141,6 @@ router.post('/test', validateRequest(McpToolTestSchema), asyncErrorHandler(async
       timestamp: new Date().toISOString(),
     });
   }
-});
+}));
 
 export default router;

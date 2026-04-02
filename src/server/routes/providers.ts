@@ -3,7 +3,7 @@ import { Router, type Request, type Response } from 'express';
 import { providerRegistry } from '../../registries/ProviderRegistry';
 import { HTTP_STATUS } from '../../types/constants';
 import { ApiResponse } from '../utils/apiResponse';
-import { asyncErrorHandler } from '../middleware/errorHandler';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:providers-route');
 const router = Router();
@@ -55,7 +55,7 @@ router.get('/memory', asyncErrorHandler(async (req, res) => {
       })
     );
   }
-});
+}));
 
 /**
  * POST /api/providers/memory/:name/test
@@ -220,7 +220,7 @@ router.post('/memory/:name/test', asyncErrorHandler(async (req, res) => {
       })
     );
   }
-});
+}));
 
 /**
  * GET /api/providers/tool
@@ -273,6 +273,6 @@ router.get('/tool', asyncErrorHandler(async (req, res) => {
       })
     );
   }
-});
+}));
 
 export default router;

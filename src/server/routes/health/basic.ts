@@ -1,7 +1,7 @@
 import process from 'process';
 import { Router } from 'express';
 import { HTTP_STATUS } from '../../../types/constants';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
+import { asyncErrorHandler } from '../../../middleware/errorHandler';
 
 const router = Router();
 
@@ -94,7 +94,7 @@ router.get('/', asyncErrorHandler(async (req, res) => {
     memoryProviders: memoryProvidersStatus,
     ...(registryCounts ? { providerRegistry: registryCounts } : {}),
   });
-});
+}));
 
 // Readiness probe
 router.get('/ready', (req, res) => {

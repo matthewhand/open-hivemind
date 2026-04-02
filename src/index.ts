@@ -299,6 +299,28 @@ app.get('/admin*', (req: Request, res: Response) => {
 });
 
 // React Router catch-all handler (must be AFTER all API routes)
+// Serve index.html for all non-API, non-asset routes so React Router handles them
+app.get('*', (req: Request, res: Response, next: NextFunction) => {
+  // Skip API routes and static assets
+  if (req.path.startsWith('/api') || req.path.startsWith('/health') || req.path.includes('.')) {
+    return next();
+  }
+  if (process.env.NODE_ENV === 'development' && viteServer) {
+    // In dev mode, serve through Vite's HTML transform
+    const url = req.originalUrl;
+    fs.promises.readFile(path.join(process.cwd(), 'src/client/index.html'), 'utf-8')
+      .then((template) => viteServer.transformIndexHtml(url, template))
+      .then((html) => {
+        res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
+      })
+      .catch((e: unknown) => {
+        if (e instanceof Error) viteServer.ssrFixStacktrace(e);
+        next(e);
+      });
+  } else {
+    res.sendFile(path.join(frontendDistPath, 'index.html'));
+  }
+});
 
 // Vite Proxy Middleware for Development (Must be before 404 handler)
 app.use((req: Request, res: Response, next: NextFunction) => {

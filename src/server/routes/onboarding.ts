@@ -4,7 +4,7 @@ import { createLogger } from '../../common/StructuredLogger';
 import { BotManager } from '../../managers/BotManager';
 import { EmptyBodySchema, OnboardingStepSchema } from '../../validation/schemas/onboardingSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { asyncErrorHandler } from '../middleware/errorHandler';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const router = Router();
 const logger = createLogger('onboardingRouter');
@@ -48,7 +48,7 @@ router.get('/status', asyncErrorHandler(async (req, res) => {
     );
     return res.json(ApiResponse.success({ completed: false, step: 1 }));
   }
-});
+}));
 
 /**
  * @openapi

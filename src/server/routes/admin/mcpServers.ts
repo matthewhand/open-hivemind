@@ -13,7 +13,7 @@ import {
   ServerNameParamSchema,
 } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
+import { asyncErrorHandler } from '../../../middleware/errorHandler';
 
 const router = Router();
 
@@ -84,7 +84,7 @@ router.post(
         message: hivemindError.message || 'An error occurred while connecting to MCP server',
       });
     }
-  }
+  })
 );
 
 // Connect to an MCP server
@@ -143,7 +143,7 @@ router.post(
         message: hivemindError.message || 'An error occurred while connecting to MCP server',
       });
     }
-  }
+  })
 );
 
 // Disconnect from an MCP server
@@ -176,7 +176,7 @@ router.post(
         message: hivemindError.message || 'An error occurred while disconnecting from MCP server',
       });
     }
-  }
+  })
 );
 
 // Delete an MCP server
@@ -204,7 +204,7 @@ router.delete(
         message: hivemindError.message || 'An error occurred while deleting MCP server',
       });
     }
-  }
+  })
 );
 
 // Get all connected MCP servers
@@ -329,7 +329,7 @@ router.get(
         message: hivemindError.message || 'An error occurred while retrieving server status',
       });
     }
-  }
+  })
 );
 
 // Restart an MCP server (disconnect and reconnect)
@@ -400,7 +400,7 @@ router.post(
         message: hivemindError.message || 'An error occurred while restarting MCP server',
       });
     }
-  }
+  })
 );
 
 // Bulk disconnect multiple servers
@@ -455,7 +455,7 @@ router.post(
         message: hivemindError.message || 'An error occurred while disconnecting servers',
       });
     }
-  }
+  })
 );
 
 export default router;

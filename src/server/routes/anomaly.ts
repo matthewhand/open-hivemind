@@ -7,7 +7,7 @@ import { AnomalyDetectionService } from '../../services/AnomalyDetectionService'
 import { HTTP_STATUS } from '../../types/constants';
 import { AnomalyResolveSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { asyncErrorHandler } from '../middleware/errorHandler';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:webui:anomaly');
 const router = Router();
@@ -109,7 +109,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to resolve anomaly'));
     }
-  }
+  })
 );
 
 export default router;

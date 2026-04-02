@@ -9,7 +9,7 @@ import {
   UpdateMessengerProviderSchema,
 } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
+import { asyncErrorHandler } from '../../../middleware/errorHandler';
 
 const router = Router();
 
@@ -94,7 +94,7 @@ router.post(
         message: hivemindError.message || 'An error occurred while creating messenger provider',
       });
     }
-  }
+  })
 );
 
 // PUT /messenger-providers/:id - Update an existing messenger provider
@@ -153,7 +153,7 @@ router.put(
         message: hivemindError.message || 'An error occurred while updating messenger provider',
       });
     }
-  }
+  })
 );
 
 /**
@@ -193,7 +193,7 @@ router.delete(
         message: hivemindError.message || 'An error occurred while deleting messenger provider',
       });
     }
-  }
+  })
 );
 
 // POST /messenger-providers/:id/toggle - Toggle messenger provider active status
@@ -229,7 +229,7 @@ router.post(
         message: hivemindError.message || 'An error occurred while updating provider status',
       });
     }
-  }
+  })
 );
 
 export default router;

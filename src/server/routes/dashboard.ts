@@ -14,7 +14,7 @@ import {
 } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { ActivityLogger } from '../services/ActivityLogger';
-import { asyncErrorHandler } from '../middleware/errorHandler';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 type AnnotatedEvent = MessageFlowEvent & { llmProvider: string };
 
@@ -295,7 +295,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to store feedback'));
     }
-  }
+  })
 );
 
 // Root route removed - dashboard is now served from public/index.html

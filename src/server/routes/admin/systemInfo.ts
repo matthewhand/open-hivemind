@@ -4,8 +4,8 @@ import { ErrorUtils } from '../../../common/ErrorUtils';
 import { DatabaseManager } from '../../../database/DatabaseManager';
 import { HTTP_STATUS } from '../../../types/constants';
 import { getRelevantEnvVars } from '../../../utils/envUtils';
+import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import {
-import { asyncErrorHandler } from '../../middleware/errorHandler';
   getChatModels,
   getEmbeddingModels,
   getModelsForProvider,
@@ -134,7 +134,7 @@ router.get('/system-info', asyncErrorHandler(async (req, res) => {
       message: hivemindError.message || 'An error occurred while fetching system info',
     });
   }
-});
+}));
 
 /**
  * @openapi

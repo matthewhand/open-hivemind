@@ -49,7 +49,7 @@ router.get('/servers', asyncErrorHandler(async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   }
-});
+}));
 
 // POST /api/mcp/servers - Add new MCP server
 router.post('/servers', validateRequest(AddMCPServerSchema), asyncErrorHandler(async (req, res) => {
@@ -93,7 +93,7 @@ router.post('/servers', validateRequest(AddMCPServerSchema), asyncErrorHandler(a
       timestamp: new Date().toISOString(),
     });
   }
-});
+}));
 
 // POST /api/mcp/servers/:name/connect - Connect to MCP server
 router.post(
@@ -248,7 +248,7 @@ router.delete('/servers/:name', validateRequest(MCPServerNameParamSchema), async
       timestamp: new Date().toISOString(),
     });
   }
-});
+}));
 
 // GET /api/mcp/servers/:name/tools - Get tools from MCP server
 router.get('/servers/:name/tools', validateRequest(MCPServerNameParamSchema), asyncErrorHandler(async (req, res) => {
@@ -285,7 +285,7 @@ router.get('/servers/:name/tools', validateRequest(MCPServerNameParamSchema), as
       timestamp: new Date().toISOString(),
     });
   }
-});
+}));
 
 // POST /api/mcp/servers/:name/call-tool - Call a tool on MCP server
 router.post('/servers/:name/call-tool', validateRequest(CallMCPToolSchema), asyncErrorHandler(async (req, res) => {
@@ -321,7 +321,7 @@ router.post('/servers/:name/call-tool', validateRequest(CallMCPToolSchema), asyn
       timestamp: new Date().toISOString(),
     });
   }
-});
+}));
 
 // GET /api/mcp/connected - Get all connected MCP servers
 router.get('/connected', asyncErrorHandler(async (req, res) => {
@@ -351,7 +351,7 @@ router.get('/connected', asyncErrorHandler(async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   }
-});
+}));
 
 // === MCP Provider Manager Endpoints ===
 

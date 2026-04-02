@@ -10,7 +10,7 @@ import { HTTP_STATUS } from '../../types/constants';
 import { ErrorUtils } from '../../types/errors';
 import { ChatGenerateSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { asyncErrorHandler } from '../middleware/errorHandler';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:ai-assist');
 const router = Router();
@@ -156,6 +156,6 @@ router.post('/generate', validateRequest(ChatGenerateSchema), asyncErrorHandler(
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to generate response'));
   }
-});
+}));
 
 export default router;

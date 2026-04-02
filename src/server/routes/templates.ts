@@ -10,7 +10,7 @@ import {
 import { validateRequest } from '../../validation/validateRequest';
 import { BotConfigService } from '../services/BotConfigService';
 import { ConfigurationTemplateService } from '../services/ConfigurationTemplateService';
-import { asyncErrorHandler } from '../middleware/errorHandler';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const router = Router();
 const debug = Debug('app:routes:templates');
@@ -244,7 +244,7 @@ router.post(
         message: hivemindError.message || 'An error occurred while applying template',
       });
     }
-  }
+  })
 );
 
 /**
@@ -297,7 +297,7 @@ router.post('/', validateRequest(CreateTemplateSchema), asyncErrorHandler(async 
       message: hivemindError.message || 'An error occurred while creating template',
     });
   }
-});
+}));
 
 /**
  * @openapi
@@ -349,7 +349,7 @@ router.delete(
         message: hivemindError.message || 'An error occurred while deleting template',
       });
     }
-  }
+  })
 );
 
 export default router;

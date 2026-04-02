@@ -17,7 +17,7 @@ import {
   VerifyTokenSchema,
 } from '../schemas/auth.schemas';
 import { ApiResponse } from '../utils/apiResponse';
-import { asyncErrorHandler } from '../middleware/errorHandler';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:AuthRoutes');
 const router = Router();
@@ -64,7 +64,7 @@ router.post(
         .status(HTTP_STATUS.UNAUTHORIZED)
         .json(ApiResponse.error(errMsg || 'Invalid credentials', undefined, 401));
     }
-  }
+  })
 );
 
 /**
@@ -112,7 +112,7 @@ router.post(
         .status(HTTP_STATUS.BAD_REQUEST)
         .json(ApiResponse.error(errMsg || 'Failed to register user', undefined, 400));
     }
-  }
+  })
 );
 
 /**
@@ -154,7 +154,7 @@ router.post(
         .status(HTTP_STATUS.UNAUTHORIZED)
         .json(ApiResponse.error(errMsg || 'Invalid refresh token', undefined, 401));
     }
-  }
+  })
 );
 
 /**
@@ -199,7 +199,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Logout failed', undefined, 500));
     }
-  }
+  })
 );
 
 /**
@@ -235,7 +235,7 @@ router.post(
         .status(HTTP_STATUS.UNAUTHORIZED)
         .json(ApiResponse.error('Invalid token', undefined, 401));
     }
-  }
+  })
 );
 
 router.get('/me', authenticate, (req: Request, res: Response) => {
@@ -311,7 +311,7 @@ router.put(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Password change failed', undefined, 500));
     }
-  }
+  })
 );
 
 /**

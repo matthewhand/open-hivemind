@@ -21,7 +21,7 @@ import {
 import { BotConfigService } from '../services/BotConfigService';
 import { ConfigurationValidator } from '../services/ConfigurationValidator';
 import { ApiResponse } from '../utils/apiResponse';
-import { asyncErrorHandler } from '../middleware/errorHandler';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:BotConfigRoutes');
 const router = Router();
@@ -78,7 +78,7 @@ router.get('/', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to get bot configurations', undefined, 500));
   }
-});
+}));
 
 /**
  * GET /webui/api/bot-config/templates
@@ -147,7 +147,7 @@ router.get('/templates', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to fetch templates', undefined, 500));
   }
-});
+}));
 
 /**
  * GET /webui/api/bot-config/:botId
@@ -188,7 +188,7 @@ router.get('/:botId', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to get bot configuration', undefined, 500));
   }
-});
+}));
 
 /**
  * POST /webui/api/bot-config
@@ -243,7 +243,7 @@ router.post(
         .status(HTTP_STATUS.BAD_REQUEST)
         .json(ApiResponse.error('Failed to create bot configuration', undefined, 400));
     }
-  }
+  })
 );
 
 /**
@@ -369,7 +369,7 @@ router.put(
         .status(HTTP_STATUS.BAD_REQUEST)
         .json(ApiResponse.error('Failed to update bot configuration', undefined, 400));
     }
-  }
+  })
 );
 
 router.post(
@@ -541,7 +541,7 @@ router.post(
         .status(HTTP_STATUS.BAD_REQUEST)
         .json(ApiResponse.error('Failed to apply bot configuration update', undefined, 400));
     }
-  }
+  })
 );
 
 export default router;

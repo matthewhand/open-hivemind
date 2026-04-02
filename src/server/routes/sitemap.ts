@@ -4,7 +4,7 @@ import { Router, type Request, type Response } from 'express';
 import { SitemapStream, streamToPromise } from 'sitemap';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { HTTP_STATUS } from '../../types/constants';
-import { asyncErrorHandler } from '../middleware/errorHandler';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:server:routes:sitemap');
 
@@ -415,7 +415,7 @@ router.get('/sitemap.xml', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to generate sitemap'));
   }
-});
+}));
 
 // Generate JSON sitemap for API consumption
 router.get('/sitemap.json', (req: Request, res: Response) => {

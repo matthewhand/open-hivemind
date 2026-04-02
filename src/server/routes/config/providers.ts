@@ -40,7 +40,7 @@ router.get('/llm-status', asyncErrorHandler(async (req, res) => {
         )
       );
   }
-});
+}));
 
 // GET /api/config/llm-profiles - List all LLM profiles
 router.get('/llm-profiles', asyncErrorHandler(async (req, res) => {
@@ -60,7 +60,7 @@ router.get('/llm-profiles', asyncErrorHandler(async (req, res) => {
         )
       );
   }
-});
+}));
 
 router.post('/llm-profiles', configLimiter, validateRequest(CreateLlmProfileSchema), asyncErrorHandler(async (req, res) => {
   try {
@@ -115,7 +115,7 @@ router.post('/llm-profiles', configLimiter, validateRequest(CreateLlmProfileSche
         )
       );
   }
-});
+}));
 
 // PUT /api/config/llm-profiles/:key - Update an LLM profile
 router.put('/llm-profiles/:key', configLimiter, validateRequest(UpdateLlmProfileSchema), asyncErrorHandler(async (req, res) => {
@@ -157,7 +157,7 @@ router.put('/llm-profiles/:key', configLimiter, validateRequest(UpdateLlmProfile
         )
       );
   }
-});
+}));
 
 router.delete('/llm-profiles/:key', configLimiter, validateRequest(LlmProfileKeyParamSchema), asyncErrorHandler(async (req, res) => {
   try {
@@ -191,7 +191,7 @@ router.delete('/llm-profiles/:key', configLimiter, validateRequest(LlmProfileKey
         )
       );
   }
-});
+}));
 
 router.get('/message-profiles', asyncErrorHandler(async (req, res) => {
   try {
@@ -210,7 +210,7 @@ router.get('/message-profiles', asyncErrorHandler(async (req, res) => {
         )
       );
   }
-});
+}));
 
 router.post('/message-profiles', configLimiter, validateRequest(CreateMessageProfileSchema), asyncErrorHandler(async (req, res) => {
   try {
@@ -249,7 +249,7 @@ router.post('/message-profiles', configLimiter, validateRequest(CreateMessagePro
         )
       );
   }
-});
+}));
 
 // -- Memory Profiles CRUD --
 
@@ -273,7 +273,7 @@ router.get('/memory-profiles', asyncErrorHandler(async (req, res) => {
         )
       );
   }
-});
+}));
 
 router.post('/memory-profiles', configLimiter, validateRequest(CreateMemoryProfileSchema), asyncErrorHandler(async (req, res) => {
   try {
@@ -304,7 +304,7 @@ router.post('/memory-profiles', configLimiter, validateRequest(CreateMemoryProfi
         )
       );
   }
-});
+}));
 
 router.put('/memory-profiles/:key', configLimiter, validateRequest(MemoryProfileKeyParamSchema), asyncErrorHandler(async (req, res) => {
   try {
@@ -331,7 +331,7 @@ router.put('/memory-profiles/:key', configLimiter, validateRequest(MemoryProfile
         )
       );
   }
-});
+}));
 
 router.delete('/memory-profiles/:key', configLimiter, validateRequest(MemoryProfileKeyParamSchema), asyncErrorHandler(async (req, res) => {
   try {
@@ -358,7 +358,7 @@ router.delete('/memory-profiles/:key', configLimiter, validateRequest(MemoryProf
         )
       );
   }
-});
+}));
 
 // -- Tool Profiles CRUD --
 
@@ -379,7 +379,7 @@ router.get('/tool-profiles', asyncErrorHandler(async (req, res) => {
         )
       );
   }
-});
+}));
 
 router.post('/tool-profiles', configLimiter, validateRequest(CreateToolProfileSchema), asyncErrorHandler(async (req, res) => {
   try {
@@ -412,7 +412,7 @@ router.post('/tool-profiles', configLimiter, validateRequest(CreateToolProfileSc
         )
       );
   }
-});
+}));
 
 router.put('/tool-profiles/:key', configLimiter, validateRequest(ToolProfileKeyParamSchema), asyncErrorHandler(async (req, res) => {
   try {
@@ -440,7 +440,7 @@ router.put('/tool-profiles/:key', configLimiter, validateRequest(ToolProfileKeyP
         )
       );
   }
-});
+}));
 
 router.delete('/tool-profiles/:key', configLimiter, validateRequest(ToolProfileKeyParamSchema), asyncErrorHandler(async (req, res) => {
   try {
@@ -468,6 +468,6 @@ router.delete('/tool-profiles/:key', configLimiter, validateRequest(ToolProfileK
         )
       );
   }
-});
+}));
 
 export default router;

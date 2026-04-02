@@ -7,7 +7,7 @@ import { ApiResponse } from '@src/server/utils/apiResponse';
 import { HTTP_STATUS } from '../../types/constants';
 import { ErrorResponses } from '../../utils/errorResponse';
 import { isPrivateIP, isSafeUrl } from '../../utils/ssrfGuard';
-import { asyncErrorHandler } from '../middleware/errorHandler';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:server:routes:letta');
 
@@ -113,7 +113,7 @@ router.get('/agents', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ErrorResponses.internalServerError(message).build());
   }
-});
+}));
 
 /**
  * GET /api/letta/agents/:id - Get a specific agent details
@@ -154,6 +154,6 @@ router.get('/agents/:id', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ErrorResponses.internalServerError(message).build());
   }
-});
+}));
 
 export default router;

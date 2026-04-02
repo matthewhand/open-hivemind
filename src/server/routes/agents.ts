@@ -15,7 +15,7 @@ import {
   UpdateAgentSchema,
 } from '../../validation/schemas/agentsSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { asyncErrorHandler } from '../middleware/errorHandler';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:webui:agents');
 const router = Router();
@@ -177,7 +177,7 @@ router.get('/', asyncErrorHandler(async (req, res) => {
         )
       );
   }
-});
+}));
 
 // POST /api/agents - Create new agent
 router.post('/', validateRequest(CreateAgentSchema), asyncErrorHandler(async (req, res) => {
@@ -224,7 +224,7 @@ router.post('/', validateRequest(CreateAgentSchema), asyncErrorHandler(async (re
         )
       );
   }
-});
+}));
 
 // PUT /api/agents/:id - Update agent
 router.put('/:id', validateRequest(UpdateAgentSchema), asyncErrorHandler(async (req, res) => {
@@ -264,7 +264,7 @@ router.put('/:id', validateRequest(UpdateAgentSchema), asyncErrorHandler(async (
         )
       );
   }
-});
+}));
 
 // DELETE /api/agents/:id - Delete agent
 router.delete('/:id', validateRequest(AgentIdParamSchema), asyncErrorHandler(async (req, res) => {
@@ -302,7 +302,7 @@ router.delete('/:id', validateRequest(AgentIdParamSchema), asyncErrorHandler(asy
         )
       );
   }
-});
+}));
 
 // GET /api/agents/personas - Get all personas
 router.get('/personas', asyncErrorHandler(async (req, res) => {
@@ -349,7 +349,7 @@ router.get('/personas', asyncErrorHandler(async (req, res) => {
         )
       );
   }
-});
+}));
 
 // POST /api/agents/personas - Create new persona
 router.post('/personas', validateRequest(CreateAgentPersonaSchema), asyncErrorHandler(async (req, res) => {
@@ -392,7 +392,7 @@ router.post('/personas', validateRequest(CreateAgentPersonaSchema), asyncErrorHa
         )
       );
   }
-});
+}));
 
 // PUT /api/agents/personas/:key - Update persona
 router.put('/personas/:key', validateRequest(UpdateAgentPersonaSchema), asyncErrorHandler(async (req, res) => {
@@ -432,7 +432,7 @@ router.put('/personas/:key', validateRequest(UpdateAgentPersonaSchema), asyncErr
         )
       );
   }
-});
+}));
 
 // DELETE /api/agents/personas/:key - Delete persona
 router.delete('/personas/:key', validateRequest(AgentPersonaKeyParamSchema), asyncErrorHandler(async (req, res) => {
@@ -476,6 +476,6 @@ router.delete('/personas/:key', validateRequest(AgentPersonaKeyParamSchema), asy
         )
       );
   }
-});
+}));
 
 export default router;

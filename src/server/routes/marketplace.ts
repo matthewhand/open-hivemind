@@ -15,7 +15,7 @@ import { ApiResponse } from '@src/server/utils/apiResponse';
 import { HTTP_STATUS } from '../../types/constants';
 import { EmptySchema, MarketplacePluginNameParamSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { asyncErrorHandler } from '../middleware/errorHandler';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:marketplace');
 const router = Router();
@@ -200,7 +200,7 @@ router.get('/packages', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to list packages'));
   }
-});
+}));
 
 /**
  * GET /api/marketplace/packages/:name
@@ -224,7 +224,7 @@ router.get('/packages/:name', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to get package'));
   }
-});
+}));
 
 /**
  * POST /api/marketplace/install

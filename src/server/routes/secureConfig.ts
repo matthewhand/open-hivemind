@@ -11,7 +11,7 @@ import {
 } from '../../validation/schemas/secureConfigSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { auditMiddleware, logConfigChange, type AuditedRequest } from '../middleware/audit';
-import { asyncErrorHandler } from '../middleware/errorHandler';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:SecureConfigRoutes');
 const router = Router();
@@ -133,7 +133,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to store configuration'));
     }
-  }
+  })
 );
 
 /**
@@ -204,7 +204,7 @@ router.put(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to update configuration'));
     }
-  }
+  })
 );
 
 /**
@@ -285,7 +285,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to create backup'));
     }
-  }
+  })
 );
 
 /**
@@ -339,7 +339,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to restore from backup'));
     }
-  }
+  })
 );
 
 export default router;

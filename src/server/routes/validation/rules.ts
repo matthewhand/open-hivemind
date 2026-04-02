@@ -6,8 +6,8 @@ import type { AuthMiddlewareRequest } from '../../../auth/types';
 import { HTTP_STATUS } from '../../../types/constants';
 import { ErrorUtils } from '../../../types/errors';
 import { RealTimeValidationService } from '../../services/RealTimeValidationService';
+import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import {
-import { asyncErrorHandler } from '../../middleware/errorHandler';
   getErrorResponse,
   handleValidationErrors,
   validateProfileCreation,
@@ -49,7 +49,7 @@ export function createRuleRoutes(): Router {
         timestamp,
       });
     }
-  });
+  }));
 
   /**
    * GET /api/validation/rules/:ruleId
@@ -93,7 +93,7 @@ export function createRuleRoutes(): Router {
               : new Date(),
         });
       }
-    }
+    })
   );
 
   /**
@@ -154,7 +154,7 @@ export function createRuleRoutes(): Router {
               : new Date(),
         });
       }
-    }
+    })
   );
 
   /**
@@ -200,7 +200,7 @@ export function createRuleRoutes(): Router {
               : new Date(),
         });
       }
-    }
+    })
   );
 
   /**
@@ -232,7 +232,7 @@ export function createRuleRoutes(): Router {
         timestamp,
       });
     }
-  });
+  }));
 
   /**
    * GET /api/validation/profiles/:profileId
@@ -276,7 +276,7 @@ export function createRuleRoutes(): Router {
               : new Date(),
         });
       }
-    }
+    })
   );
 
   /**
@@ -345,7 +345,7 @@ export function createRuleRoutes(): Router {
               : new Date(),
         });
       }
-    }
+    })
   );
 
   /**
@@ -391,7 +391,7 @@ export function createRuleRoutes(): Router {
               : new Date(),
         });
       }
-    }
+    })
   );
 
   return router;

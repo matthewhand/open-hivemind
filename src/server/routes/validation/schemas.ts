@@ -91,7 +91,7 @@ export function createSchemaRoutes(): Router {
           })
         );
     }
-  });
+  }));
 
   return router;
 }

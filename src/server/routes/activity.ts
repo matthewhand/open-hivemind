@@ -5,7 +5,7 @@ import { DatabaseManager } from '../../database/DatabaseManager';
 import { HTTP_STATUS } from '../../types/constants';
 import { LogActivitySchema } from '../../validation/schemas/activitySchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { asyncErrorHandler } from '../middleware/errorHandler';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:webui:activity');
 const router = Router();
@@ -126,7 +126,7 @@ router.get('/llm-usage', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to fetch LLM usage'));
   }
-});
+}));
 
 // GET /api/activity/summary - Get activity summary
 router.get('/summary', asyncErrorHandler(async (req, res) => {
@@ -165,7 +165,7 @@ router.get('/summary', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to fetch activity summary'));
   }
-});
+}));
 
 // GET /api/activity/chart-data - Get time-series data for charts
 router.get('/chart-data', asyncErrorHandler(async (req, res) => {
@@ -237,7 +237,7 @@ router.get('/chart-data', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to fetch chart data'));
   }
-});
+}));
 
 // GET /api/activity/agents - Get agent activity statistics
 router.get('/agents', asyncErrorHandler(async (req, res) => {
@@ -287,7 +287,7 @@ router.get('/agents', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to fetch agent activity'));
   }
-});
+}));
 
 // GET /api/activity/mcp-tools - Get MCP tool usage statistics
 router.get('/mcp-tools', asyncErrorHandler(async (req, res) => {
@@ -325,7 +325,7 @@ router.get('/mcp-tools', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to fetch MCP tool usage'));
   }
-});
+}));
 
 // POST /api/activity/log - Log a new activity event (for internal use)
 router.post('/log', validateRequest(LogActivitySchema), asyncErrorHandler(async (req, res) => {
@@ -365,6 +365,6 @@ router.post('/log', validateRequest(LogActivitySchema), asyncErrorHandler(async 
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to log activity'));
   }
-});
+}));
 
 export default router;

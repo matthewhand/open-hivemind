@@ -14,7 +14,7 @@ import {
   UpdateLlmProviderSchema,
 } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
+import { asyncErrorHandler } from '../../../middleware/errorHandler';
 
 const router = Router();
 const debug = Debug('app:webui:admin:llm-providers');
@@ -112,7 +112,7 @@ router.post(
         message: hivemindError.message || 'An error occurred while creating LLM provider',
       });
     }
-  }
+  })
 );
 
 // PUT /llm-providers/:id - Update an existing LLM provider
@@ -154,7 +154,7 @@ router.put(
         message: hivemindError.message || 'An error occurred while updating LLM provider',
       });
     }
-  }
+  })
 );
 
 /**
@@ -197,7 +197,7 @@ router.delete(
         message: hivemindError.message || 'An error occurred while deleting LLM provider',
       });
     }
-  }
+  })
 );
 
 // POST /llm-providers/:id/toggle - Toggle LLM provider active status
@@ -236,7 +236,7 @@ router.post(
         message: hivemindError.message || 'An error occurred while updating provider status',
       });
     }
-  }
+  })
 );
 
 // POST /providers/test-connection - Test connection to an LLM provider
@@ -468,7 +468,7 @@ router.post(
         message: hivemindError.message || 'An error occurred while testing connection',
       });
     }
-  }
+  })
 );
 
 export default router;
