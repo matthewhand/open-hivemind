@@ -1,6 +1,6 @@
 import { Filter, Plus, Users } from 'lucide-react';
 import React, { useState } from 'react';
-import { Alert } from '../../components/DaisyUI/Alert';
+import Alert from '../../components/DaisyUI/Alert';
 import PageHeader from '../../components/DaisyUI/PageHeader';
 import { SkeletonPage } from '../../components/DaisyUI/Skeleton';
 import { useSuccessToast, useErrorToast, useInfoToast } from '../../components/DaisyUI/ToastNotification';
@@ -12,7 +12,6 @@ import { usePersonaActions } from './hooks/usePersonaActions';
 import { usePersonasData } from './hooks/usePersonasData';
 import { PersonaList } from './PersonaList';
 import { PersonaStats } from './PersonaStats';
-import { useSavedStamp } from '../../contexts/SavedStampContext';
 
 const CATEGORIES = [
   { id: 'all', label: 'All Categories' },
@@ -27,7 +26,6 @@ const PersonasPage: React.FC = () => {
   const successToast = useSuccessToast();
   const errorToast = useErrorToast();
   const infoToast = useInfoToast();
-  const { showStamp } = useSavedStamp();
   const isMobile = useIsBelowBreakpoint('md');
   const [error, setError] = useState<string | null>(null);
 
@@ -43,6 +41,7 @@ const PersonasPage: React.FC = () => {
     filteredPersonas,
     filteredPersonaIds,
     loading: dataLoading,
+    setPersonas,
   } = usePersonasData();
 
   const bulk = useBulkSelection(filteredPersonaIds);
@@ -61,8 +60,7 @@ const PersonasPage: React.FC = () => {
     successToast,
     errorToast,
     infoToast,
-    bulk,
-    showStamp
+    bulk
   );
 
   const { onDragStart, onDragOver, onDragEnd, onDrop, getItemStyle } = useDragAndDrop({
