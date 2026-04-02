@@ -1,9 +1,9 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { ConfigurationImportExportService } from '../../src/server/services/ConfigurationImportExportService';
-import { DatabaseManager } from '../../src/database/DatabaseManager';
-import { UserConfigStore } from '../../src/config/UserConfigStore';
 import { AuditLogger } from '../../src/common/auditLogger';
+import { UserConfigStore } from '../../src/config/UserConfigStore';
+import { DatabaseManager } from '../../src/database/DatabaseManager';
+import { ConfigurationImportExportService } from '../../src/server/services/ConfigurationImportExportService';
 
 // Mock dependencies
 jest.mock('../../src/database/DatabaseManager');
@@ -351,11 +351,7 @@ describe('Import/Export Integration Tests', () => {
     });
 
     it('should validate backup metadata', async () => {
-      const backupResult = await service.createBackup(
-        'metadata-test',
-        'Testing metadata',
-        'admin'
-      );
+      const backupResult = await service.createBackup('metadata-test', 'Testing metadata', 'admin');
 
       expect(backupResult.success).toBe(true);
 
@@ -466,11 +462,7 @@ describe('Import/Export Integration Tests', () => {
     });
 
     it('should handle restore of non-existent backup', async () => {
-      const result = await service.restoreFromBackup(
-        '/nonexistent/backup.json.gz',
-        {},
-        'admin'
-      );
+      const result = await service.restoreFromBackup('/nonexistent/backup.json.gz', {}, 'admin');
 
       expect(result.success).toBe(false);
     });

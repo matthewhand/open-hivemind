@@ -148,8 +148,8 @@ test.describe('Personas Management', () => {
       const cards = page.locator('[class*="card"]');
       if ((await cards.count()) > 0) {
         await cards.first().click();
-        await page.waitForLoadState("domcontentloaded");
-    await page.screenshot({ path: 'test-results/personas-07-details.png', fullPage: true });
+        await page.waitForLoadState('domcontentloaded');
+        await page.screenshot({ path: 'test-results/personas-07-details.png', fullPage: true });
       }
 
       await assertNoErrors(errors, 'Persona details view');

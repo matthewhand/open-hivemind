@@ -25,7 +25,8 @@ jest.mock('../../../src/types/errors', () => ({
       const err = e instanceof Error ? e : new Error(String(e));
       return Object.assign(err, { statusCode: 500 });
     },
-    getStatusCode: (e: any) => (e && typeof e === 'object' && 'statusCode' in e ? e.statusCode : undefined),
+    getStatusCode: (e: any) =>
+      e && typeof e === 'object' && 'statusCode' in e ? e.statusCode : undefined,
     getMessage: (e: any) => (e instanceof Error ? e.message : String(e)),
   },
 }));

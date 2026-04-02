@@ -5,10 +5,10 @@
  * request construction, response handling, retries, and edge cases.
  */
 
+import { resetAllCircuitBreakers as resetMem4aiCircuitBreakers } from '../../../packages/memory-mem4ai/src/CircuitBreaker';
 import { Mem4aiProvider } from '../../../packages/memory-mem4ai/src/Mem4aiProvider';
 import { Mem4aiApiError } from '../../../packages/memory-mem4ai/src/types';
 import { clearCircuitBreakerRegistry } from '../../../src/common/CircuitBreaker';
-import { resetAllCircuitBreakers as resetMem4aiCircuitBreakers } from '../../../packages/memory-mem4ai/src/CircuitBreaker';
 
 // ---------------------------------------------------------------------------
 // Test helpers

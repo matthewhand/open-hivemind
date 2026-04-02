@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
-import request from 'supertest';
 import express, { type Express } from 'express';
+import request from 'supertest';
+import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import guardProfilesRouter from '../../src/server/routes/guardProfiles';
 
 describe('Guard Profiles Test Endpoint', () => {

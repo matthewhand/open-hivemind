@@ -180,9 +180,7 @@ router.post('/:id/apply', async (req: Request, res: Response) => {
 
     // Validate that overrides don't contain protected fields
     const protectedFields = ['name', 'description'];
-    const invalidOverrides = Object.keys(overrides).filter((key) =>
-      protectedFields.includes(key)
-    );
+    const invalidOverrides = Object.keys(overrides).filter((key) => protectedFields.includes(key));
 
     if (invalidOverrides.length > 0) {
       return res.status(400).json({

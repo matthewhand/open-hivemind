@@ -159,7 +159,8 @@ test.describe('Real-Time Validation Screenshot', () => {
         response.result.errors.push({
           id: 'fmt-name-1',
           ruleId: 'format-bot-name',
-          message: 'Bot name must be 1-100 characters and contain only letters, numbers, underscores, and hyphens',
+          message:
+            'Bot name must be 1-100 characters and contain only letters, numbers, underscores, and hyphens',
           field: 'name',
           value: configData.name,
           expected: '^[a-zA-Z0-9_-]{1,100}$',
@@ -245,7 +246,10 @@ test.describe('Real-Time Validation Screenshot', () => {
     await expect(page.getByText(/Bot name must be.*alphanumeric/i)).toBeVisible({ timeout: 2000 });
 
     // Take screenshot showing invalid state
-    await page.screenshot({ path: 'docs/screenshots/realtime-validation-error.png', fullPage: true });
+    await page.screenshot({
+      path: 'docs/screenshots/realtime-validation-error.png',
+      fullPage: true,
+    });
 
     // Clear and type a duplicate name
     await nameInput.fill('existing-bot');
@@ -258,11 +262,17 @@ test.describe('Real-Time Validation Screenshot', () => {
     await nameInput.fill('my-new-bot');
 
     // Select message provider
-    const messageProviderSelect = page.locator('select').filter({ hasText: /Select Provider/i }).first();
+    const messageProviderSelect = page
+      .locator('select')
+      .filter({ hasText: /Select Provider/i })
+      .first();
     await messageProviderSelect.selectOption('discord');
 
     // Select LLM provider
-    const llmProviderSelect = page.locator('select').filter({ has: page.locator('option', { hasText: /System Default/i }) }).first();
+    const llmProviderSelect = page
+      .locator('select')
+      .filter({ has: page.locator('option', { hasText: /System Default/i }) })
+      .first();
     await llmProviderSelect.selectOption('gpt-4-turbo');
 
     // Wait for validation
@@ -274,7 +284,10 @@ test.describe('Real-Time Validation Screenshot', () => {
     await expect(validState).toBeVisible({ timeout: 2000 });
 
     // Take screenshot showing valid state
-    await page.screenshot({ path: 'docs/screenshots/realtime-validation-valid.png', fullPage: true });
+    await page.screenshot({
+      path: 'docs/screenshots/realtime-validation-valid.png',
+      fullPage: true,
+    });
 
     // Now add some config with a warning (hardcoded API key)
     // We need to add a custom field for this - let's simulate by using description with special marker
@@ -288,7 +301,10 @@ test.describe('Real-Time Validation Screenshot', () => {
     await expect(page.getByText(/hardcoded secret/i)).toBeVisible({ timeout: 2000 });
 
     // Take screenshot showing warning state
-    await page.screenshot({ path: 'docs/screenshots/realtime-validation-warning.png', fullPage: true });
+    await page.screenshot({
+      path: 'docs/screenshots/realtime-validation-warning.png',
+      fullPage: true,
+    });
 
     // Verify debouncing worked (should have made fewer calls than keystrokes)
     expect(validationCallCount).toBeGreaterThan(0);
@@ -361,6 +377,9 @@ test.describe('Real-Time Validation Screenshot', () => {
     await expect(page.getByText(/Bot name is required/i)).toBeVisible({ timeout: 2000 });
 
     // Take comprehensive screenshot
-    await page.screenshot({ path: 'docs/screenshots/realtime-validation-comprehensive.png', fullPage: true });
+    await page.screenshot({
+      path: 'docs/screenshots/realtime-validation-comprehensive.png',
+      fullPage: true,
+    });
   });
 });

@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import { renderHook, act } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { useRealTimeValidation } from '../../../src/client/src/hooks/useRealTimeValidation';
 import { apiService } from '../../../src/client/src/services/api';
 
@@ -32,9 +32,7 @@ describe('useRealTimeValidation', () => {
   it('should not call API when disabled', () => {
     const mockPost = apiService.post as jest.MockedFunction<typeof apiService.post>;
 
-    renderHook(() =>
-      useRealTimeValidation({ name: 'test' }, { enabled: false })
-    );
+    renderHook(() => useRealTimeValidation({ name: 'test' }, { enabled: false }));
 
     expect(mockPost).not.toHaveBeenCalled();
   });
@@ -70,7 +68,7 @@ describe('useRealTimeValidation', () => {
     // Trigger validation by changing data
     await act(async () => {
       rerender({ data: { name: 'x' } });
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     });
 
     expect(result.current.errors).toHaveLength(1);
@@ -96,7 +94,7 @@ describe('useRealTimeValidation', () => {
 
     await act(async () => {
       rerender({ data: { name: 'test2' } });
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     });
 
     expect(mockPost).toHaveBeenCalledWith(
@@ -119,7 +117,7 @@ describe('useRealTimeValidation', () => {
 
     await act(async () => {
       rerender({ data: { name: 'test2' } });
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     });
 
     // Should not crash

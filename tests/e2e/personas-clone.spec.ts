@@ -144,8 +144,8 @@ test.describe('Personas Cloning', () => {
       await saveButton.click();
 
       // Capture screenshot of loading button while it processes
-      await page.waitForLoadState("domcontentloaded");
-    await saveButton.screenshot({ path: 'docs/screenshots/button-loading-real-app.png' });
+      await page.waitForLoadState('domcontentloaded');
+      await saveButton.screenshot({ path: 'docs/screenshots/button-loading-real-app.png' });
 
       // Check for errors if modal doesn't close quickly
       try {

@@ -145,7 +145,7 @@ export class SecuritySchemas implements ISchemaModule {
       db,
       'CREATE INDEX IF NOT EXISTS idx_user_permissions_user_id ON user_permissions(user_id)'
     );
-        await this.createIndex(
+    await this.createIndex(
       db,
       'CREATE INDEX IF NOT EXISTS idx_user_permissions_permission ON user_permissions(permission)'
     );
@@ -154,7 +154,7 @@ export class SecuritySchemas implements ISchemaModule {
       db,
       'CREATE INDEX IF NOT EXISTS idx_bot_rate_limits_bot_id ON bot_rate_limits(bot_id)'
     );
-        await this.createIndex(
+    await this.createIndex(
       db,
       'CREATE INDEX IF NOT EXISTS idx_bot_rate_limits_user_id ON bot_rate_limits(user_id)'
     );
@@ -163,11 +163,11 @@ export class SecuritySchemas implements ISchemaModule {
       db,
       'CREATE INDEX IF NOT EXISTS idx_bot_security_events_bot_id ON bot_security_events(bot_id)'
     );
-        await this.createIndex(
+    await this.createIndex(
       db,
       'CREATE INDEX IF NOT EXISTS idx_bot_security_events_event_type ON bot_security_events(event_type)'
     );
-        await this.createIndex(
+    await this.createIndex(
       db,
       'CREATE INDEX IF NOT EXISTS idx_bot_security_events_severity ON bot_security_events(severity)'
     );
@@ -176,7 +176,7 @@ export class SecuritySchemas implements ISchemaModule {
       db,
       'CREATE INDEX IF NOT EXISTS idx_bot_api_keys_bot_id ON bot_api_keys(bot_id)'
     );
-        await this.createIndex(
+    await this.createIndex(
       db,
       'CREATE INDEX IF NOT EXISTS idx_bot_api_keys_api_key ON bot_api_keys(api_key)'
     );
@@ -185,7 +185,7 @@ export class SecuritySchemas implements ISchemaModule {
       db,
       'CREATE INDEX IF NOT EXISTS idx_bot_privacy_compliance_bot_id ON bot_privacy_compliance(bot_id)'
     );
-        await this.createIndex(
+    await this.createIndex(
       db,
       'CREATE INDEX IF NOT EXISTS idx_bot_privacy_compliance_compliance_type ON bot_privacy_compliance(compliance_type)'
     );
@@ -194,11 +194,11 @@ export class SecuritySchemas implements ISchemaModule {
       db,
       'CREATE INDEX IF NOT EXISTS idx_bot_consent_management_bot_id ON bot_consent_management(bot_id)'
     );
-        await this.createIndex(
+    await this.createIndex(
       db,
       'CREATE INDEX IF NOT EXISTS idx_bot_consent_management_user_id ON bot_consent_management(user_id)'
     );
-        await this.createIndex(
+    await this.createIndex(
       db,
       'CREATE INDEX IF NOT EXISTS idx_bot_consent_management_consent_type ON bot_consent_management(consent_type)'
     );
@@ -207,11 +207,11 @@ export class SecuritySchemas implements ISchemaModule {
       db,
       'CREATE INDEX IF NOT EXISTS idx_bot_data_masking_rules_bot_id ON bot_data_masking_rules(bot_id)'
     );
-        await this.createIndex(
+    await this.createIndex(
       db,
       'CREATE INDEX IF NOT EXISTS idx_bot_data_masking_rules_table_name ON bot_data_masking_rules(table_name)'
     );
-        await this.createIndex(
+    await this.createIndex(
       db,
       'CREATE INDEX IF NOT EXISTS idx_bot_data_masking_rules_column_name ON bot_data_masking_rules(column_name)'
     );
@@ -220,11 +220,11 @@ export class SecuritySchemas implements ISchemaModule {
       db,
       'CREATE INDEX IF NOT EXISTS idx_bot_data_classification_bot_id ON bot_data_classification(bot_id)'
     );
-        await this.createIndex(
+    await this.createIndex(
       db,
       'CREATE INDEX IF NOT EXISTS idx_bot_data_classification_table_name ON bot_data_classification(table_name)'
     );
-        await this.createIndex(
+    await this.createIndex(
       db,
       'CREATE INDEX IF NOT EXISTS idx_bot_data_classification_column_name ON bot_data_classification(column_name)'
     );
@@ -239,7 +239,7 @@ export class SecuritySchemas implements ISchemaModule {
       'bot_privacy_compliance',
       'bot_consent_management',
       'bot_data_masking_rules',
-      'bot_data_classification'
+      'bot_data_classification',
     ];
   }
 

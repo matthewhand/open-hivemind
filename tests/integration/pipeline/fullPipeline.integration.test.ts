@@ -9,20 +9,20 @@
 
 import { MessageBus } from '@src/events/MessageBus';
 import type { MessageContext, MessageEvents } from '@src/events/types';
+import { PipelineTracer } from '@src/observability/PipelineTracer';
 import {
-  ReceiveStage,
   DecisionStage,
   EnrichStage,
   InferenceStage,
+  ReceiveStage,
   SendStage,
   type DecisionStrategy,
-  type MemoryRetriever,
-  type PromptBuilder,
   type LlmInvoker,
-  type MessageSender,
+  type MemoryRetriever,
   type MemoryStorer,
+  type MessageSender,
+  type PromptBuilder,
 } from '@src/pipeline';
-import { PipelineTracer } from '@src/observability/PipelineTracer';
 import { IMessage } from '@message/interfaces/IMessage';
 
 // ---------------------------------------------------------------------------
@@ -44,18 +44,43 @@ class StubMessage extends IMessage {
     this.timestamp = new Date();
   }
 
-  getMessageId(): string { return this.id; }
-  getText(): string { return this.text; }
-  getTimestamp(): Date { return this.timestamp; }
-  setText(t: string): void { this.text = t; this.content = t; }
-  getChannelId(): string { return this.channelId; }
-  getAuthorId(): string { return 'user-1'; }
-  getChannelTopic(): string | null { return null; }
-  getUserMentions(): string[] { return []; }
-  getChannelUsers(): string[] { return ['user-1']; }
-  mentionsUsers(_userId: string): boolean { return false; }
-  isFromBot(): boolean { return false; }
-  getAuthorName(): string { return 'IntegrationUser'; }
+  getMessageId(): string {
+    return this.id;
+  }
+  getText(): string {
+    return this.text;
+  }
+  getTimestamp(): Date {
+    return this.timestamp;
+  }
+  setText(t: string): void {
+    this.text = t;
+    this.content = t;
+  }
+  getChannelId(): string {
+    return this.channelId;
+  }
+  getAuthorId(): string {
+    return 'user-1';
+  }
+  getChannelTopic(): string | null {
+    return null;
+  }
+  getUserMentions(): string[] {
+    return [];
+  }
+  getChannelUsers(): string[] {
+    return ['user-1'];
+  }
+  mentionsUsers(_userId: string): boolean {
+    return false;
+  }
+  isFromBot(): boolean {
+    return false;
+  }
+  getAuthorName(): string {
+    return 'IntegrationUser';
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -71,7 +96,9 @@ function createDecisionStrategy(shouldReply = true): DecisionStrategy {
   };
 }
 
-function createMemoryRetriever(memories: string[] = ['You previously discussed testing.']): MemoryRetriever {
+function createMemoryRetriever(
+  memories: string[] = ['You previously discussed testing.']
+): MemoryRetriever {
   return {
     retrieveMemories: jest.fn().mockResolvedValue(memories),
   };
@@ -89,23 +116,48 @@ function createLlmInvoker(response = 'This is the LLM response.'): LlmInvoker {
   };
 }
 
-function createMessageSender(): MessageSender & { calls: Array<{ channelId: string; text: string; senderName?: string }> } {
+function createMessageSender(): MessageSender & {
+  calls: Array<{ channelId: string; text: string; senderName?: string }>;
+} {
   const calls: Array<{ channelId: string; text: string; senderName?: string }> = [];
   return {
     calls,
-    sendToChannel: jest.fn().mockImplementation(async (channelId: string, text: string, senderName?: string) => {
-      calls.push({ channelId, text, senderName });
-    }),
+    sendToChannel: jest
+      .fn()
+      .mockImplementation(async (channelId: string, text: string, senderName?: string) => {
+        calls.push({ channelId, text, senderName });
+      }),
   };
 }
 
-function createMemoryStorer(): MemoryStorer & { stored: Array<{ botName: string; text: string; role: 'user' | 'assistant'; meta?: Record<string, any> }> } {
-  const stored: Array<{ botName: string; text: string; role: 'user' | 'assistant'; meta?: Record<string, any> }> = [];
+function createMemoryStorer(): MemoryStorer & {
+  stored: Array<{
+    botName: string;
+    text: string;
+    role: 'user' | 'assistant';
+    meta?: Record<string, any>;
+  }>;
+} {
+  const stored: Array<{
+    botName: string;
+    text: string;
+    role: 'user' | 'assistant';
+    meta?: Record<string, any>;
+  }> = [];
   return {
     stored,
-    storeMemory: jest.fn().mockImplementation(async (botName: string, text: string, role: 'user' | 'assistant', meta?: Record<string, any>) => {
-      stored.push({ botName, text, role, meta });
-    }),
+    storeMemory: jest
+      .fn()
+      .mockImplementation(
+        async (
+          botName: string,
+          text: string,
+          role: 'user' | 'assistant',
+          meta?: Record<string, any>
+        ) => {
+          stored.push({ botName, text, role, meta });
+        }
+      ),
   };
 }
 
@@ -142,7 +194,14 @@ function buildAndRegisterPipeline(bus: MessageBus, deps: PipelineDeps) {
 // Event collector
 // ---------------------------------------------------------------------------
 
-type TrackedEventName = 'validated' | 'accepted' | 'skipped' | 'enriched' | 'response' | 'sent' | 'error';
+type TrackedEventName =
+  | 'validated'
+  | 'accepted'
+  | 'skipped'
+  | 'enriched'
+  | 'response'
+  | 'sent'
+  | 'error';
 
 function collectEvents(bus: MessageBus): Record<TrackedEventName, any[]> {
   const events: Record<string, any[]> = {};
@@ -279,7 +338,7 @@ describe('Full 5-stage pipeline integration', () => {
         'question',
         expect.any(Array),
         'Custom system prompt.',
-        expect.any(Object),
+        expect.any(Object)
       );
     });
   });

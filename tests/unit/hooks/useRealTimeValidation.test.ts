@@ -107,17 +107,23 @@ describe('useRealTimeValidation', () => {
     jest.advanceTimersByTime(100);
 
     // Should be validating
-    await waitFor(() => {
-      expect(result.current.isValidating).toBe(true);
-    }, { timeout: 1000 });
+    await waitFor(
+      () => {
+        expect(result.current.isValidating).toBe(true);
+      },
+      { timeout: 1000 }
+    );
 
     // Fast-forward validation time
     jest.advanceTimersByTime(50);
 
     // Should no longer be validating
-    await waitFor(() => {
-      expect(result.current.isValidating).toBe(false);
-    }, { timeout: 1000 });
+    await waitFor(
+      () => {
+        expect(result.current.isValidating).toBe(false);
+      },
+      { timeout: 1000 }
+    );
   });
 
   it('should return validation errors', async () => {
@@ -143,9 +149,7 @@ describe('useRealTimeValidation', () => {
       },
     });
 
-    const { result } = renderHook(() =>
-      useRealTimeValidation({ name: '' }, { debounceMs: 100 })
-    );
+    const { result } = renderHook(() => useRealTimeValidation({ name: '' }, { debounceMs: 100 }));
 
     // Fast-forward past debounce
     jest.advanceTimersByTime(100);

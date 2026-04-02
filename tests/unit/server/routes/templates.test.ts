@@ -1,8 +1,8 @@
-import request from 'supertest';
 import express, { type Express } from 'express';
+import request from 'supertest';
 import templatesRouter from '../../../../src/server/routes/templates';
-import { ConfigurationTemplateService } from '../../../../src/server/services/ConfigurationTemplateService';
 import { BotConfigService } from '../../../../src/server/services/BotConfigService';
+import { ConfigurationTemplateService } from '../../../../src/server/services/ConfigurationTemplateService';
 
 jest.mock('../../../../src/server/services/ConfigurationTemplateService');
 jest.mock('../../../../src/server/services/BotConfigService');
@@ -72,9 +72,7 @@ describe('Templates Routes', () => {
       const templates = [mockTemplate];
       mockTemplateService.getAllTemplates.mockResolvedValue(templates);
 
-      const response = await request(app)
-        .get('/api/admin/templates?category=general')
-        .expect(200);
+      const response = await request(app).get('/api/admin/templates?category=general').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(mockTemplateService.getAllTemplates).toHaveBeenCalledWith({
@@ -86,9 +84,7 @@ describe('Templates Routes', () => {
       const templates = [mockTemplate];
       mockTemplateService.getAllTemplates.mockResolvedValue(templates);
 
-      const response = await request(app)
-        .get('/api/admin/templates?search=test')
-        .expect(200);
+      const response = await request(app).get('/api/admin/templates?search=test').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(mockTemplateService.getAllTemplates).toHaveBeenCalledWith({
@@ -100,9 +96,7 @@ describe('Templates Routes', () => {
       const templates = [mockTemplate];
       mockTemplateService.getAllTemplates.mockResolvedValue(templates);
 
-      const response = await request(app)
-        .get('/api/admin/templates?tags=test,example')
-        .expect(200);
+      const response = await request(app).get('/api/admin/templates?tags=test,example').expect(200);
 
       expect(response.body.success).toBe(true);
       expect(mockTemplateService.getAllTemplates).toHaveBeenCalledWith({
@@ -111,9 +105,7 @@ describe('Templates Routes', () => {
     });
 
     it('should handle errors gracefully', async () => {
-      mockTemplateService.getAllTemplates.mockRejectedValue(
-        new Error('Database error')
-      );
+      mockTemplateService.getAllTemplates.mockRejectedValue(new Error('Database error'));
 
       const response = await request(app).get('/api/admin/templates').expect(500);
 
@@ -126,9 +118,7 @@ describe('Templates Routes', () => {
     it('should return a template by id', async () => {
       mockTemplateService.getTemplateById.mockResolvedValue(mockTemplate);
 
-      const response = await request(app)
-        .get('/api/admin/templates/test-template-id')
-        .expect(200);
+      const response = await request(app).get('/api/admin/templates/test-template-id').expect(200);
 
       expect(response.body).toEqual({
         success: true,
@@ -141,22 +131,16 @@ describe('Templates Routes', () => {
     it('should return 404 if template not found', async () => {
       mockTemplateService.getTemplateById.mockResolvedValue(null);
 
-      const response = await request(app)
-        .get('/api/admin/templates/non-existent')
-        .expect(404);
+      const response = await request(app).get('/api/admin/templates/non-existent').expect(404);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Template not found');
     });
 
     it('should handle errors gracefully', async () => {
-      mockTemplateService.getTemplateById.mockRejectedValue(
-        new Error('Database error')
-      );
+      mockTemplateService.getTemplateById.mockRejectedValue(new Error('Database error'));
 
-      const response = await request(app)
-        .get('/api/admin/templates/test-template-id')
-        .expect(500);
+      const response = await request(app).get('/api/admin/templates/test-template-id').expect(500);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Failed to retrieve template');
@@ -257,9 +241,7 @@ describe('Templates Routes', () => {
 
     it('should handle errors gracefully', async () => {
       mockTemplateService.getTemplateById.mockResolvedValue(mockTemplate);
-      mockBotConfigService.createBotConfig.mockRejectedValue(
-        new Error('Failed to create bot')
-      );
+      mockBotConfigService.createBotConfig.mockRejectedValue(new Error('Failed to create bot'));
 
       const response = await request(app)
         .post('/api/admin/templates/test-template-id/apply')
@@ -302,9 +284,7 @@ describe('Templates Routes', () => {
     });
 
     it('should handle errors gracefully', async () => {
-      mockTemplateService.createTemplate.mockRejectedValue(
-        new Error('Template already exists')
-      );
+      mockTemplateService.createTemplate.mockRejectedValue(new Error('Template already exists'));
 
       const response = await request(app)
         .post('/api/admin/templates')
@@ -341,9 +321,7 @@ describe('Templates Routes', () => {
         new Error("Template with ID 'non-existent' not found")
       );
 
-      const response = await request(app)
-        .delete('/api/admin/templates/non-existent')
-        .expect(404);
+      const response = await request(app).delete('/api/admin/templates/non-existent').expect(404);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Template not found');
@@ -354,9 +332,7 @@ describe('Templates Routes', () => {
         new Error('Cannot delete built-in templates')
       );
 
-      const response = await request(app)
-        .delete('/api/admin/templates/discord-basic')
-        .expect(400);
+      const response = await request(app).delete('/api/admin/templates/discord-basic').expect(400);
 
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Failed to delete template');

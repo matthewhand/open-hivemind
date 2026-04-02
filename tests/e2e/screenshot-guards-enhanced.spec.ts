@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { authenticateAsAdmin, waitForApiResponse } from './helpers';
 
 test.describe('Enhanced Guards Configuration UI', () => {
@@ -64,7 +64,11 @@ test.describe('Enhanced Guards Configuration UI', () => {
 
     // Enable Rate Limiter
     await page.locator('.collapse').nth(1).click();
-    const rateLimitToggle = page.locator('.collapse').nth(1).locator('input[type="checkbox"]').nth(1);
+    const rateLimitToggle = page
+      .locator('.collapse')
+      .nth(1)
+      .locator('input[type="checkbox"]')
+      .nth(1);
     if (!(await rateLimitToggle.isChecked())) {
       await rateLimitToggle.click();
     }
@@ -97,7 +101,9 @@ test.describe('Enhanced Guards Configuration UI', () => {
 
     // Expand Rate Limiter section
     await page.locator('.collapse').nth(1).click();
-    await expect(page.getByText('Limits the number of requests within a time window')).toBeVisible();
+    await expect(
+      page.getByText('Limits the number of requests within a time window')
+    ).toBeVisible();
 
     // Expand Content Filter section
     await page.locator('.collapse').nth(2).click();
@@ -141,7 +147,11 @@ test.describe('Enhanced Guards Configuration UI', () => {
 
     // Enable Rate Limiter
     await page.locator('.collapse').nth(1).click();
-    const rateLimitToggle = page.locator('.collapse').nth(1).locator('input[type="checkbox"]').nth(1);
+    const rateLimitToggle = page
+      .locator('.collapse')
+      .nth(1)
+      .locator('input[type="checkbox"]')
+      .nth(1);
     if (!(await rateLimitToggle.isChecked())) {
       await rateLimitToggle.click();
     }

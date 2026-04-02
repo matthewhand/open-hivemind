@@ -130,7 +130,9 @@ describe('ConfigurationValidator', () => {
       // When no LLM provider and no default, result should either be invalid
       // or have a suggestion about using the default provider
       const hasLlmError = result.errors.some((e) => e.includes('LLM provider'));
-      const hasLlmSuggestion = result.suggestions.some((s) => s.includes('LLM') || s.includes('default'));
+      const hasLlmSuggestion = result.suggestions.some(
+        (s) => s.includes('LLM') || s.includes('default')
+      );
       expect(hasLlmError || hasLlmSuggestion).toBe(true);
     });
   });

@@ -93,8 +93,9 @@ describe('ConfigurationTemplateService - Enhanced Security Tests', () => {
     });
 
     test('should validate template configuration on create', async () => {
-      const mockValidator = (ConfigurationValidator as jest.MockedClass<typeof ConfigurationValidator>)
-        .mock.instances[0] as any;
+      const mockValidator = (
+        ConfigurationValidator as jest.MockedClass<typeof ConfigurationValidator>
+      ).mock.instances[0] as any;
 
       mockValidator.validateBotConfig.mockReturnValueOnce({
         isValid: false,
@@ -127,8 +128,9 @@ describe('ConfigurationTemplateService - Enhanced Security Tests', () => {
         },
       });
 
-      const mockValidator = (ConfigurationValidator as jest.MockedClass<typeof ConfigurationValidator>)
-        .mock.instances[0] as any;
+      const mockValidator = (
+        ConfigurationValidator as jest.MockedClass<typeof ConfigurationValidator>
+      ).mock.instances[0] as any;
 
       mockValidator.validateBotConfig.mockReturnValueOnce({
         isValid: false,
@@ -376,7 +378,11 @@ describe('ConfigurationTemplateService - Enhanced Security Tests', () => {
         },
       });
 
-      const duplicate = await service.duplicateTemplate(original.id, 'Duplicated Template', 'user2');
+      const duplicate = await service.duplicateTemplate(
+        original.id,
+        'Duplicated Template',
+        'user2'
+      );
 
       expect(duplicate.name).toBe('Duplicated Template');
       expect(duplicate.description).toContain('(Copy)');
@@ -495,9 +501,9 @@ describe('ConfigurationTemplateService - Enhanced Security Tests', () => {
     });
 
     test('should throw error when duplicating non-existent template', async () => {
-      await expect(
-        service.duplicateTemplate('nonexistent', 'New Name', 'user')
-      ).rejects.toThrow("Template with ID 'nonexistent' not found");
+      await expect(service.duplicateTemplate('nonexistent', 'New Name', 'user')).rejects.toThrow(
+        "Template with ID 'nonexistent' not found"
+      );
     });
 
     test('should throw error when exporting non-existent template', async () => {

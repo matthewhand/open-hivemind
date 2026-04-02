@@ -1,6 +1,6 @@
 import fs from 'fs';
-import path from 'path';
 import os from 'os';
+import path from 'path';
 import { WebUIStorage } from '../../../src/storage/webUIStorage';
 
 describe('WebUIStorage', () => {
@@ -15,10 +15,10 @@ describe('WebUIStorage', () => {
 
     // Create a temporary directory for testing
     testConfigDir = fs.mkdtempSync(path.join(os.tmpdir(), 'webui-storage-test-'));
-    
+
     // Change to temp directory for test
     process.chdir(testConfigDir);
-    
+
     // Create config/user directory structure
     fs.mkdirSync(path.join(testConfigDir, 'config', 'user'), { recursive: true });
     testConfigFile = path.join(testConfigDir, 'config', 'user', 'webui-config.json');
@@ -29,7 +29,7 @@ describe('WebUIStorage', () => {
   afterEach(() => {
     // Restore original cwd
     process.chdir(originalCwd);
-    
+
     // Clean up test directory
     if (fs.existsSync(testConfigDir)) {
       fs.rmSync(testConfigDir, { recursive: true, force: true });
@@ -216,7 +216,14 @@ describe('WebUIStorage', () => {
 
     it('should return existing guards if they exist', async () => {
       const mockGuards = [
-        { id: 'custom-guard', name: 'Custom Guard', enabled: true, config: {}, type: 'custom', description: 'Test' },
+        {
+          id: 'custom-guard',
+          name: 'Custom Guard',
+          enabled: true,
+          config: {},
+          type: 'custom',
+          description: 'Test',
+        },
       ];
 
       const mockConfig = {
@@ -264,7 +271,14 @@ describe('WebUIStorage', () => {
 
     it('should merge default guards with existing guards', async () => {
       const mockGuards = [
-        { id: 'access-control', name: 'Custom Access Control', enabled: false, config: {}, type: 'access', description: 'Custom' },
+        {
+          id: 'access-control',
+          name: 'Custom Access Control',
+          enabled: false,
+          config: {},
+          type: 'access',
+          description: 'Custom',
+        },
       ];
 
       const mockConfig = {
@@ -420,11 +434,11 @@ describe('WebUIStorage', () => {
               name: 'Test',
               enabled: true,
               config: {},
-            }),
-          ),
+            })
+          )
         ),
         ...Array.from({ length: 5 }, () =>
-          Promise.resolve().then(() => storage.toggleGuard('access-control', false)),
+          Promise.resolve().then(() => storage.toggleGuard('access-control', false))
         ),
       ];
 

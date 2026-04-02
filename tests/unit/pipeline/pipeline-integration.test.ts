@@ -9,17 +9,17 @@
 import { MessageBus } from '@src/events/MessageBus';
 import type { MessageContext } from '@src/events/types';
 import {
-  ReceiveStage,
   DecisionStage,
   EnrichStage,
   InferenceStage,
+  ReceiveStage,
   SendStage,
   type DecisionStrategy,
-  type MemoryRetriever,
-  type PromptBuilder,
   type LlmInvoker,
-  type MessageSender,
+  type MemoryRetriever,
   type MemoryStorer,
+  type MessageSender,
+  type PromptBuilder,
 } from '@src/pipeline';
 import { IMessage } from '@message/interfaces/IMessage';
 
@@ -42,18 +42,43 @@ class StubMessage extends IMessage {
     this.timestamp = new Date();
   }
 
-  getMessageId(): string { return this.id; }
-  getText(): string { return this.text; }
-  getTimestamp(): Date { return this.timestamp; }
-  setText(t: string): void { this.text = t; this.content = t; }
-  getChannelId(): string { return this.channelId; }
-  getAuthorId(): string { return 'user-1'; }
-  getChannelTopic(): string | null { return null; }
-  getUserMentions(): string[] { return []; }
-  getChannelUsers(): string[] { return ['user-1']; }
-  mentionsUsers(_userId: string): boolean { return false; }
-  isFromBot(): boolean { return false; }
-  getAuthorName(): string { return 'TestUser'; }
+  getMessageId(): string {
+    return this.id;
+  }
+  getText(): string {
+    return this.text;
+  }
+  getTimestamp(): Date {
+    return this.timestamp;
+  }
+  setText(t: string): void {
+    this.text = t;
+    this.content = t;
+  }
+  getChannelId(): string {
+    return this.channelId;
+  }
+  getAuthorId(): string {
+    return 'user-1';
+  }
+  getChannelTopic(): string | null {
+    return null;
+  }
+  getUserMentions(): string[] {
+    return [];
+  }
+  getChannelUsers(): string[] {
+    return ['user-1'];
+  }
+  mentionsUsers(_userId: string): boolean {
+    return false;
+  }
+  isFromBot(): boolean {
+    return false;
+  }
+  getAuthorName(): string {
+    return 'TestUser';
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -89,9 +114,9 @@ function mockLlmInvoker(response = 'LLM says hi'): LlmInvoker {
 
 function mockSender(parts?: string[]): MessageSender {
   return {
-    sendToChannel: jest.fn().mockImplementation(async (_ch: string, text: string) =>
-      parts ?? [text],
-    ),
+    sendToChannel: jest
+      .fn()
+      .mockImplementation(async (_ch: string, text: string) => parts ?? [text]),
   };
 }
 
