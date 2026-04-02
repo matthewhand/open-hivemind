@@ -80,10 +80,11 @@ const Settings: React.FC = () => {
             </label>
           </div>
           <div className="mt-4 form-control w-full max-w-xs">
-            <label className="label">
+            <label className="label" htmlFor="refresh-interval">
               <span className="label-text text-base-content/70">Refresh Interval:</span>
             </label>
             <select
+              id="refresh-interval"
               className="select select-bordered select-sm w-full"
               value={ui.refreshInterval}
               onChange={(e) => handleRefreshIntervalChange(Number(e.target.value))}
