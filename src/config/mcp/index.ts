@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import { EventEmitter } from 'events';
 import { v4 as uuidv4 } from 'uuid';
-import { injectable, singleton } from 'tsyringe';
+import { injectable, singleton, inject } from 'tsyringe';
 import { ErrorUtils } from '@src/types/errors';
 import type {
   MCPProviderConfig,
@@ -24,15 +24,13 @@ const debug = Debug('app:MCPProviderManager');
 export class MCPProviderManager extends EventEmitter implements IMCPProviderManager {
   private providers = new Map<string, MCPProviderConfig>();
 
-  private configLoader: ConfigLoader;
-  private serverLifecycle: ServerLifecycle;
-  private toolRegistry: ToolRegistry;
-
-  constructor() {
+  constructor(
+    @inject(ConfigLoader) private configLoader: ConfigLoader,
+    @inject(ServerLifecycle) private serverLifecycle: ServerLifecycle,
+    @inject(ToolRegistry) private toolRegistry: ToolRegistry
+  ) {
     super();
-    this.configLoader = new ConfigLoader();
-    this.serverLifecycle = new ServerLifecycle(this.providers, this);
-    this.toolRegistry = new ToolRegistry();
+    this.serverLifecycle.initialize(this.providers, this);
     debug('MCP Provider Manager initialized');
   }
 
@@ -295,5 +293,9 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
   }
 }
 
-// Export singleton instance
-export default new MCPProviderManager();
+// Export singleton instance with manual DI for non-container usage
+export default new MCPProviderManager(
+  new ConfigLoader(),
+  new ServerLifecycle(),
+  new ToolRegistry()
+);

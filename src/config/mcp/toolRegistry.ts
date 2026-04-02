@@ -3,6 +3,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { ErrorUtils } from '@src/types/errors';
 import type { MCPProviderConfig, MCPProviderTemplate } from '../../types/mcp';
 
+import { injectable } from 'tsyringe';
+
+@injectable()
 export class ToolRegistry {
   public async executeProviderTest(
     provider: MCPProviderConfig,
@@ -27,15 +30,15 @@ export class ToolRegistry {
       let output = '';
       let errorOutput = '';
 
-      mcpProcess.stdout?.on('data', (data: any) => {
+      mcpProcess.stdout?.on('data', (data: Buffer) => {
         output += data.toString();
       });
 
-      mcpProcess.stderr?.on('data', (data: any) => {
+      mcpProcess.stderr?.on('data', (data: Buffer) => {
         errorOutput += data.toString();
       });
 
-      mcpProcess.on('close', (code: any) => {
+      mcpProcess.on('close', (code: number | null) => {
         if (code === 0) {
           // Try to extract version and capabilities from output
           const version = this.extractVersion(output);
@@ -55,7 +58,7 @@ export class ToolRegistry {
         }
       });
 
-      mcpProcess.on('configuration', (error: any) => {
+      mcpProcess.on('error', (error: Error) => {
         resolve({
           success: false,
           error: error.message,

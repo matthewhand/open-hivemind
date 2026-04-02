@@ -1,6 +1,9 @@
 import { isMCPProviderType } from '../../types/mcp';
 import type { MCPProviderConfig, MCPProviderValidationResult } from '../../types/mcp';
 
+import { injectable } from 'tsyringe';
+
+@injectable()
 export class ConfigLoader {
   validateProviderConfig(config: Partial<MCPProviderConfig>): MCPProviderValidationResult {
     const errors: string[] = [];
