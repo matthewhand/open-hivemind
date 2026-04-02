@@ -123,10 +123,38 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((slack as any).addBot) {
-      const reconManager = new ReconnectionManager(`slack-${name}`, async () => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (slack as any).addBot(instanceCfg);
-      });
+      const reconManager = new ReconnectionManager(
+        `slack-${name}`,
+        async () => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (slack as any).addBot(instanceCfg);
+        },
+        {
+          healthCheckFn: async () => {
+            try {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const cfg: Record<string, any> =
+                (slack.getBotConfig(name) as Record<string, any>) || {};
+              const token = cfg?.slack?.botToken || botToken;
+              if (!token) return false;
+
+              const response = await fetch('https://slack.com/api/auth.test', {
+                method: 'POST',
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  'Content-Type': 'application/json',
+                },
+              });
+
+              const data = await response.json();
+              return data.ok === true;
+            } catch (err) {
+              return false;
+            }
+          },
+          healthCheckIntervalMs: 30000,
+        }
+      );
       this.reconManagers.set(name, reconManager);
 
       // Start the bot connection with reconnection management
@@ -170,10 +198,35 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
         };
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if ((slack as any).addBot) {
-          const reconManager = new ReconnectionManager(`slack-${nameToUse}`, async () => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await (slack as any).addBot(instanceCfg);
-          });
+          const reconManager = new ReconnectionManager(
+            `slack-${nameToUse}`,
+            async () => {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              await (slack as any).addBot(instanceCfg);
+            },
+            {
+              healthCheckFn: async () => {
+                try {
+                  const token = inst.token;
+                  if (!token) return false;
+
+                  const response = await fetch('https://slack.com/api/auth.test', {
+                    method: 'POST',
+                    headers: {
+                      Authorization: `Bearer ${token}`,
+                      'Content-Type': 'application/json',
+                    },
+                  });
+
+                  const data = await response.json();
+                  return data.ok === true;
+                } catch (err) {
+                  return false;
+                }
+              },
+              healthCheckIntervalMs: 30000,
+            }
+          );
           this.reconManagers.set(nameToUse, reconManager);
           reconManager.start().catch((err) => {
             debug(`Failed to start Slack bot ${nameToUse} on reload: ${err.message}`);

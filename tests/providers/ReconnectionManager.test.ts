@@ -112,6 +112,67 @@ describe('ReconnectionManager', () => {
     expect(connectFn).toHaveBeenCalledTimes(1); // should not be called again
   });
 
+  it('should trigger onDisconnected if health check fails', async () => {
+    let healthCheckResult = true;
+    const healthCheckFn = jest.fn().mockImplementation(async () => healthCheckResult);
+    const connectFn = jest.fn().mockResolvedValue(undefined);
+
+    const manager = new ReconnectionManager('test', connectFn, {
+      healthCheckFn,
+      healthCheckIntervalMs: 1000,
+      initialDelayMs: 100,
+    });
+
+    await manager.start();
+    expect(manager.getStatus().state).toBe('connected');
+
+    // Fast-forward to trigger the first health check
+    jest.advanceTimersByTime(1000);
+    await Promise.resolve(); // Allow the promise inside setInterval to run
+    expect(healthCheckFn).toHaveBeenCalledTimes(1);
+    expect(manager.getStatus().state).toBe('connected');
+
+    // Make health check fail
+    healthCheckResult = false;
+    jest.advanceTimersByTime(1000);
+    await Promise.resolve(); // Let the interval callback execute
+    await Promise.resolve(); // Let onDisconnected execute
+
+    // Should disconnect and go into reconnecting state
+    expect(manager.getStatus().state).toBe('connected'); // Wait, since it auto-reconnects, it might have reconnected already.
+    // Let's verify it called connectFn again
+    expect(connectFn).toHaveBeenCalledTimes(2);
+  });
+
+  it('should trigger onDisconnected if health check throws an error', async () => {
+    const healthCheckFn = jest
+      .fn()
+      .mockResolvedValueOnce(true)
+      .mockRejectedValueOnce(new Error('Network offline'));
+
+    const connectFn = jest.fn().mockResolvedValue(undefined);
+
+    const manager = new ReconnectionManager('test', connectFn, {
+      healthCheckFn,
+      healthCheckIntervalMs: 1000,
+      initialDelayMs: 100,
+    });
+
+    await manager.start();
+    expect(manager.getStatus().state).toBe('connected');
+
+    // First check (success)
+    jest.advanceTimersByTime(1000);
+    await Promise.resolve();
+
+    // Second check (throws error)
+    jest.advanceTimersByTime(1000);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(connectFn).toHaveBeenCalledTimes(2);
+  });
+
   it('should not reconnect on onDisconnected if already reconnecting', () => {
     // Return a promise that never resolves so it stays in "reconnecting" state forever
     // We don't need async/await for this test if we handle it properly

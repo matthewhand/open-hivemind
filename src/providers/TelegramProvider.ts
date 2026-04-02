@@ -205,18 +205,35 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
 
     // We can also initialize ReconnectionManager when a new bot is added dynamically
     const botName = name || 'unnamed';
-    const reconManager = new ReconnectionManager(`telegram-${botName}`, async () => {
-      // Here we simulate telegram bot connection logic which checks /getMe
-      const url = `https://api.telegram.org/bot${token}/getMe`;
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Telegram API returned HTTP ${response.status} for ${maskToken(url)}`);
+    const reconManager = new ReconnectionManager(
+      `telegram-${botName}`,
+      async () => {
+        // Here we simulate telegram bot connection logic which checks /getMe
+        const url = `https://api.telegram.org/bot${token}/getMe`;
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Telegram API returned HTTP ${response.status} for ${maskToken(url)}`);
+        }
+        const data = await response.json();
+        if (!data.ok) {
+          throw new Error('Telegram token validation failed during reconnection');
+        }
+      },
+      {
+        healthCheckFn: async () => {
+          try {
+            const url = `https://api.telegram.org/bot${token}/getMe`;
+            const response = await fetch(url);
+            if (!response.ok) return false;
+            const data = await response.json();
+            return data.ok === true;
+          } catch (err) {
+            return false;
+          }
+        },
+        healthCheckIntervalMs: 30000,
       }
-      const data = await response.json();
-      if (!data.ok) {
-        throw new Error('Telegram token validation failed during reconnection');
-      }
-    });
+    );
     this.reconManagers.set(botName, reconManager);
     reconManager.start().catch((err) => {
       debug(`Failed to start Telegram bot ${botName}: ${err.message}`);
@@ -270,17 +287,34 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
         existingManager.stop();
       }
 
-      const reconManager = new ReconnectionManager(`telegram-${name}`, async () => {
-        const url = `https://api.telegram.org/bot${inst.token}/getMe`;
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(`Telegram API returned HTTP ${response.status} for ${maskToken(url)}`);
+      const reconManager = new ReconnectionManager(
+        `telegram-${name}`,
+        async () => {
+          const url = `https://api.telegram.org/bot${inst.token}/getMe`;
+          const response = await fetch(url);
+          if (!response.ok) {
+            throw new Error(`Telegram API returned HTTP ${response.status} for ${maskToken(url)}`);
+          }
+          const data = await response.json();
+          if (!data.ok) {
+            throw new Error(`Telegram connection failed for ${name}`);
+          }
+        },
+        {
+          healthCheckFn: async () => {
+            try {
+              const url = `https://api.telegram.org/bot${inst.token}/getMe`;
+              const response = await fetch(url);
+              if (!response.ok) return false;
+              const data = await response.json();
+              return data.ok === true;
+            } catch (err) {
+              return false;
+            }
+          },
+          healthCheckIntervalMs: 30000,
         }
-        const data = await response.json();
-        if (!data.ok) {
-          throw new Error(`Telegram connection failed for ${name}`);
-        }
-      });
+      );
       this.reconManagers.set(name, reconManager);
       reconManager.start().catch((err) => {
         debug(`Failed to start Telegram bot ${name} on reload: ${err.message}`);
