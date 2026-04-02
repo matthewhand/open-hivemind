@@ -15,6 +15,7 @@ import {
   UpdateAgentSchema,
 } from '../../validation/schemas/agentsSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { asyncErrorHandler } from '../middleware/errorHandler';
 
 const debug = Debug('app:webui:agents');
 const router = Router();
@@ -131,7 +132,7 @@ const getEnvOverrides = (): Record<string, { isOverridden: boolean; redactedValu
 // Routes
 
 // GET /api/agents - Get all agents
-router.get('/', async (req, res) => {
+router.get('/', asyncErrorHandler(async (req, res) => {
   try {
     const agents = await loadJsonConfig<AgentConfig[]>(AGENTS_CONFIG_FILE, []);
     const envOverrides = getEnvOverrides();
@@ -179,7 +180,7 @@ router.get('/', async (req, res) => {
 });
 
 // POST /api/agents - Create new agent
-router.post('/', validateRequest(CreateAgentSchema), async (req, res) => {
+router.post('/', validateRequest(CreateAgentSchema), asyncErrorHandler(async (req, res) => {
   try {
     const agentData: Omit<AgentConfig, 'id' | 'createdAt' | 'updatedAt'> = req.body;
 
@@ -226,7 +227,7 @@ router.post('/', validateRequest(CreateAgentSchema), async (req, res) => {
 });
 
 // PUT /api/agents/:id - Update agent
-router.put('/:id', validateRequest(UpdateAgentSchema), async (req, res) => {
+router.put('/:id', validateRequest(UpdateAgentSchema), asyncErrorHandler(async (req, res) => {
   try {
     const { id } = req.params;
     const updates: Partial<AgentConfig> = req.body;
@@ -266,7 +267,7 @@ router.put('/:id', validateRequest(UpdateAgentSchema), async (req, res) => {
 });
 
 // DELETE /api/agents/:id - Delete agent
-router.delete('/:id', validateRequest(AgentIdParamSchema), async (req, res) => {
+router.delete('/:id', validateRequest(AgentIdParamSchema), asyncErrorHandler(async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -304,7 +305,7 @@ router.delete('/:id', validateRequest(AgentIdParamSchema), async (req, res) => {
 });
 
 // GET /api/agents/personas - Get all personas
-router.get('/personas', async (req, res) => {
+router.get('/personas', asyncErrorHandler(async (req, res) => {
   try {
     const personas = await loadJsonConfig<Persona[]>(PERSONAS_CONFIG_FILE, [
       {
@@ -351,7 +352,7 @@ router.get('/personas', async (req, res) => {
 });
 
 // POST /api/agents/personas - Create new persona
-router.post('/personas', validateRequest(CreateAgentPersonaSchema), async (req, res) => {
+router.post('/personas', validateRequest(CreateAgentPersonaSchema), asyncErrorHandler(async (req, res) => {
   try {
     const { name, systemPrompt } = req.body;
 
@@ -394,7 +395,7 @@ router.post('/personas', validateRequest(CreateAgentPersonaSchema), async (req, 
 });
 
 // PUT /api/agents/personas/:key - Update persona
-router.put('/personas/:key', validateRequest(UpdateAgentPersonaSchema), async (req, res) => {
+router.put('/personas/:key', validateRequest(UpdateAgentPersonaSchema), asyncErrorHandler(async (req, res) => {
   try {
     const { key } = req.params;
     const { name, systemPrompt } = req.body;
@@ -434,7 +435,7 @@ router.put('/personas/:key', validateRequest(UpdateAgentPersonaSchema), async (r
 });
 
 // DELETE /api/agents/personas/:key - Delete persona
-router.delete('/personas/:key', validateRequest(AgentPersonaKeyParamSchema), async (req, res) => {
+router.delete('/personas/:key', validateRequest(AgentPersonaKeyParamSchema), asyncErrorHandler(async (req, res) => {
   try {
     const { key } = req.params;
 

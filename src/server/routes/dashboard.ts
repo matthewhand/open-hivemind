@@ -14,6 +14,7 @@ import {
 } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { ActivityLogger } from '../services/ActivityLogger';
+import { asyncErrorHandler } from '../middleware/errorHandler';
 
 type AnnotatedEvent = MessageFlowEvent & { llmProvider: string };
 
@@ -282,7 +283,7 @@ router.post(
   authenticate,
   requireAdmin,
   validateRequest(DashboardFeedbackSchema),
-  async (req, res) => {
+  asyncErrorHandler(async (req, res) => {
     const { recommendationId, feedback, metadata } = req.body;
     try {
       const db = DatabaseManager.getInstance();

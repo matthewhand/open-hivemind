@@ -7,6 +7,7 @@ import { ClearCacheSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { authenticateToken } from '../middleware/auth';
 import { clearAllSystemCaches } from '../utils/cacheManager'; // We'll implement this
+import { asyncErrorHandler } from '../middleware/errorHandler';
 
 const debug = Debug('app:server:routes:cache');
 
@@ -28,7 +29,7 @@ router.use(authenticateToken, requireAdmin);
  *       200:
  *         description: Cache cleared successfully
  */
-router.post('/clear', validateRequest(ClearCacheSchema), async (req, res) => {
+router.post('/clear', validateRequest(ClearCacheSchema), asyncErrorHandler(async (req, res) => {
   try {
     await clearAllSystemCaches();
     res.json(ApiResponse.success());

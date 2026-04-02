@@ -9,6 +9,7 @@ import {
   UpdatePersonaSchema,
 } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const router = Router();
 
@@ -22,7 +23,7 @@ const router = Router();
  *       200:
  *         description: List of personas
  */
-router.get('/personas', async (req: Request, res: Response) => {
+router.get('/personas', asyncErrorHandler(async (req, res) => {
   try {
     // Get personas from persistent storage
     const storedPersonas = await webUIStorage.getPersonas();

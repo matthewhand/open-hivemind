@@ -11,6 +11,7 @@ import {
 } from '../../validation/schemas/secureConfigSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { auditMiddleware, logConfigChange, type AuditedRequest } from '../middleware/audit';
+import { asyncErrorHandler } from '../middleware/errorHandler';
 
 const debug = Debug('app:SecureConfigRoutes');
 const router = Router();
@@ -83,7 +84,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.post(
   '/',
   validateRequest(CreateSecureConfigSchema),
-  async (req: AuditedRequest, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { id, name, type, data } = req.body;
 
@@ -142,7 +143,7 @@ router.post(
 router.put(
   '/:id',
   validateRequest(UpdateSecureConfigSchema),
-  async (req: AuditedRequest, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { id } = req.params;
       const { name, type, data } = req.body;
@@ -258,7 +259,7 @@ router.delete('/:id', async (req: AuditedRequest, res: Response) => {
 router.post(
   '/backup',
   validateRequest(ConfigBackupSchema),
-  async (req: AuditedRequest, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const backupId = await (await secureConfigManagerPromise).createBackup();
 
@@ -311,7 +312,7 @@ router.get('/backups/list', async (req: Request, res: Response) => {
 router.post(
   '/restore/:backupId',
   validateRequest(BackupIdParamSchema),
-  async (req: AuditedRequest, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { backupId } = req.params;
       await (await secureConfigManagerPromise).restoreBackup(backupId);

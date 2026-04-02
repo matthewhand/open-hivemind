@@ -15,6 +15,7 @@ import { ReorderSchema } from '../../validation/schemas/commonSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { ActivityLogger } from '../services/ActivityLogger';
 import { WebSocketService } from '../services/WebSocketService';
+import { asyncErrorHandler } from '../middleware/errorHandler';
 
 const router = Router();
 const logger = createLogger('botsRouter');
@@ -31,7 +32,7 @@ const wsService = WebSocketService.getInstance();
  *       200:
  *         description: List of bots
  */
-router.get('/', async (req, res) => {
+router.get('/', asyncErrorHandler(async (req, res) => {
   try {
     const manager = await managerPromise;
     const bots = await manager.getAllBots();
@@ -94,7 +95,7 @@ router.get('/', async (req, res) => {
  *       200:
  *         description: Bots reordered
  */
-router.put('/reorder', validateRequest(ReorderSchema), async (req, res) => {
+router.put('/reorder', validateRequest(ReorderSchema), asyncErrorHandler(async (req, res) => {
   try {
     const { ids } = req.body;
 
@@ -198,7 +199,7 @@ router.get('/export', async (_req, res) => {
  *       200:
  *         description: Import report
  */
-router.post('/import', async (req, res) => {
+router.post('/import', asyncErrorHandler(async (req, res) => {
   try {
     const manager = await managerPromise;
     const { bots: incoming } = req.body;
@@ -277,7 +278,7 @@ router.post('/import', async (req, res) => {
  *       404:
  *         description: Bot not found
  */
-router.get('/:id', validateRequest(BotIdParamSchema), async (req, res) => {
+router.get('/:id', validateRequest(BotIdParamSchema), asyncErrorHandler(async (req, res) => {
   try {
     const manager = await managerPromise;
     const { id } = req.params;
@@ -317,7 +318,7 @@ router.get('/:id', validateRequest(BotIdParamSchema), async (req, res) => {
  *       201:
  *         description: Bot created
  */
-router.post('/', validateRequest(CreateBotSchema), async (req, res) => {
+router.post('/', validateRequest(CreateBotSchema), asyncErrorHandler(async (req, res) => {
   try {
     const manager = await managerPromise;
     const request = req.body as CreateBotRequest;
@@ -364,7 +365,7 @@ router.post('/', validateRequest(CreateBotSchema), async (req, res) => {
  *       200:
  *         description: Bot updated
  */
-router.put('/:id', validateRequest(UpdateBotSchema), async (req, res) => {
+router.put('/:id', validateRequest(UpdateBotSchema), asyncErrorHandler(async (req, res) => {
   try {
     const manager = await managerPromise;
     const { id } = req.params;
@@ -396,7 +397,7 @@ router.put('/:id', validateRequest(UpdateBotSchema), async (req, res) => {
  *       200:
  *         description: Bot deleted
  */
-router.delete('/:id', validateRequest(BotIdParamSchema), async (req, res) => {
+router.delete('/:id', validateRequest(BotIdParamSchema), asyncErrorHandler(async (req, res) => {
   try {
     const manager = await managerPromise;
     const { id } = req.params;
@@ -442,7 +443,7 @@ router.delete('/:id', validateRequest(BotIdParamSchema), async (req, res) => {
  *       201:
  *         description: Bot cloned
  */
-router.post('/:id/clone', validateRequest(CloneBotSchema), async (req, res) => {
+router.post('/:id/clone', validateRequest(CloneBotSchema), asyncErrorHandler(async (req, res) => {
   try {
     const manager = await managerPromise;
     const { id } = req.params;
@@ -482,7 +483,7 @@ router.post('/:id/clone', validateRequest(CloneBotSchema), async (req, res) => {
  *       200:
  *         description: Bot started
  */
-router.post('/:id/start', validateRequest(BotIdParamSchema), async (req, res) => {
+router.post('/:id/start', validateRequest(BotIdParamSchema), asyncErrorHandler(async (req, res) => {
   try {
     const manager = await managerPromise;
     const { id } = req.params;
@@ -513,7 +514,7 @@ router.post('/:id/start', validateRequest(BotIdParamSchema), async (req, res) =>
  *       200:
  *         description: Bot stopped
  */
-router.post('/:id/stop', validateRequest(BotIdParamSchema), async (req, res) => {
+router.post('/:id/stop', validateRequest(BotIdParamSchema), asyncErrorHandler(async (req, res) => {
   try {
     const manager = await managerPromise;
     const { id } = req.params;
@@ -552,7 +553,7 @@ router.post('/:id/stop', validateRequest(BotIdParamSchema), async (req, res) => 
  *       200:
  *         description: Bot history
  */
-router.get('/:id/history', validateRequest(BotHistoryQuerySchema), async (req, res) => {
+router.get('/:id/history', validateRequest(BotHistoryQuerySchema), asyncErrorHandler(async (req, res) => {
   try {
     const manager = await managerPromise;
     const { id } = req.params;
@@ -600,7 +601,7 @@ function redactString(val: string | undefined): string | undefined {
  *       200:
  *         description: Bot activity
  */
-router.get('/:id/activity', validateRequest(BotActivityQuerySchema), async (req, res) => {
+router.get('/:id/activity', validateRequest(BotActivityQuerySchema), asyncErrorHandler(async (req, res) => {
   try {
     const manager = await managerPromise;
     const { id } = req.params;
@@ -662,7 +663,7 @@ router.get('/:id/activity', validateRequest(BotActivityQuerySchema), async (req,
  *       404:
  *         description: Bot not found
  */
-router.get('/:id/export', validateRequest(BotIdParamSchema), async (req, res) => {
+router.get('/:id/export', validateRequest(BotIdParamSchema), asyncErrorHandler(async (req, res) => {
   try {
     const manager = await managerPromise;
     const bot = await manager.getBot(req.params.id);

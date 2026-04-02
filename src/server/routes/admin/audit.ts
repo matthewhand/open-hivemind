@@ -9,6 +9,7 @@ import {
   UpdateToolUsageGuardSchema,
 } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
+import { asyncErrorHandler } from '../../../middleware/errorHandler';
 
 const router = Router();
 
@@ -33,7 +34,7 @@ const configRateLimit = isTestEnv
  *       200:
  *         description: List of tool usage guards
  */
-router.get('/tool-usage-guards', (req: Request, res: Response) => {
+router.get('/tool-usage-guards', asyncErrorHandler(async (req, res) => {
   try {
     // Mock data for tool usage guards
     const guards = [
@@ -96,8 +97,7 @@ router.get('/tool-usage-guards', (req: Request, res: Response) => {
 router.post(
   '/tool-usage-guards',
   configRateLimit,
-  validateRequest(ToolUsageGuardSchema),
-  (req: Request, res: Response) => {
+  validateRequest(ToolUsageGuardSchema), asyncErrorHandler(async (req, res) => {
     try {
       const { name, description, toolId, guardType, allowedUsers, allowedRoles, isActive } =
         req.body;
@@ -128,8 +128,7 @@ router.post(
 router.put(
   '/tool-usage-guards/:id',
   configRateLimit,
-  validateRequest(UpdateToolUsageGuardSchema),
-  (req: Request, res: Response) => {
+  validateRequest(UpdateToolUsageGuardSchema), asyncErrorHandler(async (req, res) => {
     try {
       const { id } = req.params;
       const { name, description, toolId, guardType, allowedUsers, allowedRoles, isActive } =
@@ -176,8 +175,7 @@ router.put(
 router.delete(
   '/tool-usage-guards/:id',
   configRateLimit,
-  validateRequest(ToggleIdParamSchema),
-  (req: Request, res: Response) => {
+  validateRequest(ToggleIdParamSchema), asyncErrorHandler(async (req, res) => {
     try {
       const { id } = req.params;
 
@@ -198,8 +196,7 @@ router.delete(
 router.post(
   '/tool-usage-guards/:id/toggle',
   configRateLimit,
-  validateRequest(ToggleProviderSchema),
-  (req: Request, res: Response) => {
+  validateRequest(ToggleProviderSchema), asyncErrorHandler(async (req, res) => {
     try {
       const { id } = req.params;
       const { isActive } = req.body;
@@ -218,7 +215,7 @@ router.post(
 );
 
 // Placeholder for audit log queries
-router.get('/audit-logs', (req, res) => {
+router.get('/audit-logs', asyncErrorHandler(async (req, res) => {
   res.json(ApiResponse.success({ logs: [] }));
 });
 

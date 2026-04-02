@@ -5,6 +5,7 @@ import { DatabaseManager } from '../../../database/DatabaseManager';
 import { HTTP_STATUS } from '../../../types/constants';
 import { getRelevantEnvVars } from '../../../utils/envUtils';
 import {
+import { asyncErrorHandler } from '../../middleware/errorHandler';
   getChatModels,
   getEmbeddingModels,
   getModelsForProvider,
@@ -107,7 +108,7 @@ router.get('/providers', (req: Request, res: Response) => {
 });
 
 // GET /system-info - Get system information
-router.get('/system-info', async (req: Request, res: Response) => {
+router.get('/system-info', asyncErrorHandler(async (req, res) => {
   try {
     const dbManager = DatabaseManager.getInstance();
 

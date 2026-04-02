@@ -14,6 +14,7 @@ import {
   UpdateMessengerProviderSchema,
 } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const router = Router();
 
@@ -71,7 +72,7 @@ router.post(
   '/llm-providers',
   configRateLimit,
   validateRequest(LlmProviderSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { name, type, config } = req.body;
 
@@ -117,7 +118,7 @@ router.post(
 router.put(
   '/llm-providers/:id',
   validateRequest(UpdateLlmProviderSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { id } = req.params;
       const { name, type, config } = req.body;
@@ -174,7 +175,7 @@ router.put(
 router.delete(
   '/llm-providers/:id',
   validateRequest(ToggleIdParamSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { id } = req.params;
 
@@ -202,7 +203,7 @@ router.delete(
 router.post(
   '/llm-providers/:id/toggle',
   validateRequest(ToggleProviderSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { id } = req.params;
       const { isActive } = req.body;
@@ -279,7 +280,7 @@ router.get('/messenger-providers', (req: Request, res: Response) => {
 router.post(
   '/messenger-providers',
   validateRequest(MessengerProviderSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { name, type, config } = req.body;
 
@@ -325,7 +326,7 @@ router.post(
 router.put(
   '/messenger-providers/:id',
   validateRequest(UpdateMessengerProviderSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { id } = req.params;
       const { name, type, config } = req.body;
@@ -399,7 +400,7 @@ router.put(
 router.delete(
   '/messenger-providers/:id',
   validateRequest(ToggleIdParamSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { id } = req.params;
 
@@ -424,7 +425,7 @@ router.delete(
 router.post(
   '/messenger-providers/:id/toggle',
   validateRequest(ToggleProviderSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { id } = req.params;
       const { isActive } = req.body;

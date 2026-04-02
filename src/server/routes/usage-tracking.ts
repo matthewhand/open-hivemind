@@ -6,6 +6,7 @@ import { HTTP_STATUS } from '../../types/constants';
 import { EmptyBodySchema } from '../../validation/schemas/usageTrackingSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { UsageTrackerService } from '../services/UsageTrackerService';
+import { asyncErrorHandler } from '../middleware/errorHandler';
 
 const debug = Debug('app:webui:usage-tracking');
 const router = Router();
@@ -16,7 +17,7 @@ const usageTracker = UsageTrackerService.getInstance();
  * GET /api/usage-tracking/tools
  * Get usage metrics for all tools
  */
-router.get('/tools', async (req, res) => {
+router.get('/tools', asyncErrorHandler(async (req, res) => {
   try {
     const metrics = usageTracker.getAllToolMetrics();
     return res.json(ApiResponse.success(metrics));
@@ -39,7 +40,7 @@ router.get('/tools', async (req, res) => {
  * GET /api/usage-tracking/tools/:toolId
  * Get usage metrics for a specific tool
  */
-router.get('/tools/:toolId', async (req, res) => {
+router.get('/tools/:toolId', asyncErrorHandler(async (req, res) => {
   try {
     const { toolId } = req.params;
     const metrics = usageTracker.getToolMetrics(toolId);
@@ -68,7 +69,7 @@ router.get('/tools/:toolId', async (req, res) => {
  * GET /api/usage-tracking/providers
  * Get usage metrics for all providers
  */
-router.get('/providers', async (req, res) => {
+router.get('/providers', asyncErrorHandler(async (req, res) => {
   try {
     const metrics = usageTracker.getAllProviderMetrics();
     return res.json(ApiResponse.success(metrics));
@@ -91,7 +92,7 @@ router.get('/providers', async (req, res) => {
  * GET /api/usage-tracking/providers/:serverName
  * Get usage metrics for a specific provider
  */
-router.get('/providers/:serverName', async (req, res) => {
+router.get('/providers/:serverName', asyncErrorHandler(async (req, res) => {
   try {
     const { serverName } = req.params;
     const metrics = usageTracker.getProviderMetrics(serverName);
@@ -122,7 +123,7 @@ router.get('/providers/:serverName', async (req, res) => {
  * GET /api/usage-tracking/providers/:serverName/tools
  * Get usage metrics for tools from a specific provider
  */
-router.get('/providers/:serverName/tools', async (req, res) => {
+router.get('/providers/:serverName/tools', asyncErrorHandler(async (req, res) => {
   try {
     const { serverName } = req.params;
     const metrics = usageTracker.getToolMetricsByProvider(serverName);
@@ -147,7 +148,7 @@ router.get('/providers/:serverName/tools', async (req, res) => {
  * GET /api/usage-tracking/top-tools
  * Get top N most used tools
  */
-router.get('/top-tools', async (req, res) => {
+router.get('/top-tools', asyncErrorHandler(async (req, res) => {
   try {
     const limit = parseInt(req.query.limit as string) || 10;
     const metrics = usageTracker.getTopTools(limit);
@@ -172,7 +173,7 @@ router.get('/top-tools', async (req, res) => {
  * GET /api/usage-tracking/top-providers
  * Get top N most used providers
  */
-router.get('/top-providers', async (req, res) => {
+router.get('/top-providers', asyncErrorHandler(async (req, res) => {
   try {
     const limit = parseInt(req.query.limit as string) || 10;
     const metrics = usageTracker.getTopProviders(limit);
@@ -197,7 +198,7 @@ router.get('/top-providers', async (req, res) => {
  * GET /api/usage-tracking/recent-tools
  * Get recently used tools
  */
-router.get('/recent-tools', async (req, res) => {
+router.get('/recent-tools', asyncErrorHandler(async (req, res) => {
   try {
     const limit = parseInt(req.query.limit as string) || 10;
     const metrics = usageTracker.getRecentTools(limit);
@@ -222,7 +223,7 @@ router.get('/recent-tools', async (req, res) => {
  * GET /api/usage-tracking/stats
  * Get aggregate statistics
  */
-router.get('/stats', async (req, res) => {
+router.get('/stats', asyncErrorHandler(async (req, res) => {
   try {
     const stats = usageTracker.getAggregateStats();
 
@@ -246,7 +247,7 @@ router.get('/stats', async (req, res) => {
  * DELETE /api/usage-tracking/clear
  * Clear all usage data
  */
-router.delete('/clear', validateRequest(EmptyBodySchema), async (req, res) => {
+router.delete('/clear', validateRequest(EmptyBodySchema), asyncErrorHandler(async (req, res) => {
   try {
     await usageTracker.clearAllData();
 

@@ -4,6 +4,7 @@ import { Router, type Request, type Response } from 'express';
 import { SitemapStream, streamToPromise } from 'sitemap';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { HTTP_STATUS } from '../../types/constants';
+import { asyncErrorHandler } from '../middleware/errorHandler';
 
 const debug = Debug('app:server:routes:sitemap');
 
@@ -378,7 +379,7 @@ const getRouteDefinitions = (): SitemapUrl[] => {
 };
 
 // Generate XML sitemap
-router.get('/sitemap.xml', async (req: Request, res: Response) => {
+router.get('/sitemap.xml', asyncErrorHandler(async (req, res) => {
   try {
     const routes = getRouteDefinitions();
     const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;

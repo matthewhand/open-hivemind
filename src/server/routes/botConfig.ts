@@ -21,6 +21,7 @@ import {
 import { BotConfigService } from '../services/BotConfigService';
 import { ConfigurationValidator } from '../services/ConfigurationValidator';
 import { ApiResponse } from '../utils/apiResponse';
+import { asyncErrorHandler } from '../middleware/errorHandler';
 
 const debug = Debug('app:BotConfigRoutes');
 const router = Router();
@@ -37,7 +38,7 @@ router.use(authenticate, auditMiddleware);
  * GET /webui/api/bot-config
  * Get all bot configurations with full details
  */
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', asyncErrorHandler(async (req, res) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
     const botConfigService = BotConfigService.getInstance();
@@ -83,7 +84,7 @@ router.get('/', async (req: Request, res: Response) => {
  * GET /webui/api/bot-config/templates
  * Get bot configuration templates
  */
-router.get('/templates', async (req: Request, res: Response) => {
+router.get('/templates', asyncErrorHandler(async (req, res) => {
   try {
     const authReq = req as AuthMiddlewareRequest;
     const templates = {
@@ -152,7 +153,7 @@ router.get('/templates', async (req: Request, res: Response) => {
  * GET /webui/api/bot-config/:botId
  * Get a specific bot configuration
  */
-router.get('/:botId', async (req: Request, res: Response) => {
+router.get('/:botId', asyncErrorHandler(async (req, res) => {
   const authReq = req as AuthMiddlewareRequest;
   try {
     const { botId } = req.params;
@@ -198,8 +199,7 @@ router.post(
   configLimiter,
   requireAdmin,
   validateBotConfigCreation,
-  sanitizeBotConfig,
-  async (req: AuditedRequest, res: Response) => {
+  sanitizeBotConfig, asyncErrorHandler(async (req, res) => {
     const authReq = req as AuthMiddlewareRequest;
     try {
       const configData = req.body;
@@ -255,8 +255,7 @@ router.put(
   configLimiter,
   requireAdmin,
   validateBotConfigUpdate,
-  sanitizeBotConfig,
-  async (req: AuditedRequest, res: Response) => {
+  sanitizeBotConfig, asyncErrorHandler(async (req, res) => {
     const authReq = req as AuthMiddlewareRequest;
     try {
       const { botId } = req.params;
@@ -377,8 +376,7 @@ router.post(
   '/:botId/apply-update',
   configLimiter,
   requireRole('admin'),
-  validateRequest(BotApplyUpdateSchema),
-  async (req: AuditedRequest, res: Response) => {
+  validateRequest(BotApplyUpdateSchema), asyncErrorHandler(async (req, res) => {
     const { botId } = req.params;
     const { approvalId } = req.body;
 

@@ -13,6 +13,7 @@ import {
   ServerNameParamSchema,
 } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const router = Router();
 
@@ -32,7 +33,7 @@ router.post(
   '/mcp-servers/test',
   configRateLimit,
   validateRequest(McpServerTestSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { serverUrl, apiKey, name } = req.body;
 
@@ -91,7 +92,7 @@ router.post(
   '/mcp-servers/connect',
   configRateLimit,
   validateRequest(McpServerConnectSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { serverUrl, apiKey, name } = req.body;
 
@@ -149,7 +150,7 @@ router.post(
 router.post(
   '/mcp-servers/disconnect',
   validateRequest(McpServerDisconnectSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { name } = req.body;
 
@@ -182,7 +183,7 @@ router.post(
 router.delete(
   '/mcp-servers/:name',
   validateRequest(ServerNameParamSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { name } = req.params;
 
@@ -287,7 +288,7 @@ router.get(
 router.get(
   '/mcp-servers/:name/status',
   validateRequest(ServerNameParamSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { name } = req.params;
 
@@ -336,7 +337,7 @@ router.post(
   '/mcp-servers/:name/restart',
   configRateLimit,
   validateRequest(ServerNameParamSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { name } = req.params;
 
@@ -406,7 +407,7 @@ router.post(
 router.post(
   '/mcp-servers/bulk-disconnect',
   validateRequest(McpServerBulkDisconnectSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { names } = req.body;
 

@@ -18,11 +18,12 @@ import { validateRequest } from '../../../validation/validateRequest';
 import { ApiResponse } from '../../utils/apiResponse';
 import { configLimiter } from '../../../middleware/rateLimiter';
 import { broadcastConfigUpdate } from './utils';
+import { asyncErrorHandler } from '../../../middleware/errorHandler';
 
 const router = Router();
 
 // GET /api/config/llm-status - Get LLM configuration status
-router.get('/llm-status', (req, res) => {
+router.get('/llm-status', asyncErrorHandler(async (req, res) => {
   try {
     const status = getLlmDefaultStatus();
     return res.json(status);
@@ -42,7 +43,7 @@ router.get('/llm-status', (req, res) => {
 });
 
 // GET /api/config/llm-profiles - List all LLM profiles
-router.get('/llm-profiles', (req, res) => {
+router.get('/llm-profiles', asyncErrorHandler(async (req, res) => {
   try {
     const profiles = getLlmProfiles();
     return res.json(profiles);
@@ -61,7 +62,7 @@ router.get('/llm-profiles', (req, res) => {
   }
 });
 
-router.post('/llm-profiles', configLimiter, validateRequest(CreateLlmProfileSchema), (req, res) => {
+router.post('/llm-profiles', configLimiter, validateRequest(CreateLlmProfileSchema), asyncErrorHandler(async (req, res) => {
   try {
     const newProfile = req.body;
 
@@ -117,7 +118,7 @@ router.post('/llm-profiles', configLimiter, validateRequest(CreateLlmProfileSche
 });
 
 // PUT /api/config/llm-profiles/:key - Update an LLM profile
-router.put('/llm-profiles/:key', configLimiter, validateRequest(UpdateLlmProfileSchema), (req, res) => {
+router.put('/llm-profiles/:key', configLimiter, validateRequest(UpdateLlmProfileSchema), asyncErrorHandler(async (req, res) => {
   try {
     const { key } = req.params;
     const updates = req.body;
@@ -158,7 +159,7 @@ router.put('/llm-profiles/:key', configLimiter, validateRequest(UpdateLlmProfile
   }
 });
 
-router.delete('/llm-profiles/:key', configLimiter, validateRequest(LlmProfileKeyParamSchema), (req, res) => {
+router.delete('/llm-profiles/:key', configLimiter, validateRequest(LlmProfileKeyParamSchema), asyncErrorHandler(async (req, res) => {
   try {
     const { key } = req.params;
     const profiles = getLlmProfiles();
@@ -192,7 +193,7 @@ router.delete('/llm-profiles/:key', configLimiter, validateRequest(LlmProfileKey
   }
 });
 
-router.get('/message-profiles', (req, res) => {
+router.get('/message-profiles', asyncErrorHandler(async (req, res) => {
   try {
     const profiles = getMessageProfiles();
     return res.json(profiles);
@@ -211,7 +212,7 @@ router.get('/message-profiles', (req, res) => {
   }
 });
 
-router.post('/message-profiles', configLimiter, validateRequest(CreateMessageProfileSchema), (req, res) => {
+router.post('/message-profiles', configLimiter, validateRequest(CreateMessageProfileSchema), asyncErrorHandler(async (req, res) => {
   try {
     const newProfile = req.body;
 
@@ -256,7 +257,7 @@ const memoryProfilesModule = require('../../../config/memoryProfiles');
 
 const toolProfilesModule = require('../../../config/toolProfiles');
 
-router.get('/memory-profiles', (_req, res) => {
+router.get('/memory-profiles', asyncErrorHandler(async (req, res) => {
   try {
     const profiles = memoryProfilesModule.getMemoryProfiles();
     return res.json(ApiResponse.success(profiles));
@@ -274,7 +275,7 @@ router.get('/memory-profiles', (_req, res) => {
   }
 });
 
-router.post('/memory-profiles', configLimiter, validateRequest(CreateMemoryProfileSchema), (req, res) => {
+router.post('/memory-profiles', configLimiter, validateRequest(CreateMemoryProfileSchema), asyncErrorHandler(async (req, res) => {
   try {
     const newProfile = req.body;
     const profiles = memoryProfilesModule.getMemoryProfiles();
@@ -305,7 +306,7 @@ router.post('/memory-profiles', configLimiter, validateRequest(CreateMemoryProfi
   }
 });
 
-router.put('/memory-profiles/:key', configLimiter, validateRequest(MemoryProfileKeyParamSchema), (req, res) => {
+router.put('/memory-profiles/:key', configLimiter, validateRequest(MemoryProfileKeyParamSchema), asyncErrorHandler(async (req, res) => {
   try {
     const { key } = req.params;
     const profiles = memoryProfilesModule.getMemoryProfiles();
@@ -332,7 +333,7 @@ router.put('/memory-profiles/:key', configLimiter, validateRequest(MemoryProfile
   }
 });
 
-router.delete('/memory-profiles/:key', configLimiter, validateRequest(MemoryProfileKeyParamSchema), (req, res) => {
+router.delete('/memory-profiles/:key', configLimiter, validateRequest(MemoryProfileKeyParamSchema), asyncErrorHandler(async (req, res) => {
   try {
     const { key } = req.params;
     const profiles = memoryProfilesModule.getMemoryProfiles();
@@ -361,7 +362,7 @@ router.delete('/memory-profiles/:key', configLimiter, validateRequest(MemoryProf
 
 // -- Tool Profiles CRUD --
 
-router.get('/tool-profiles', (_req, res) => {
+router.get('/tool-profiles', asyncErrorHandler(async (req, res) => {
   try {
     const profiles = toolProfilesModule.getToolProfiles();
     return res.json(profiles);
@@ -380,7 +381,7 @@ router.get('/tool-profiles', (_req, res) => {
   }
 });
 
-router.post('/tool-profiles', configLimiter, validateRequest(CreateToolProfileSchema), (req, res) => {
+router.post('/tool-profiles', configLimiter, validateRequest(CreateToolProfileSchema), asyncErrorHandler(async (req, res) => {
   try {
     const newProfile = req.body;
     const profiles = toolProfilesModule.getToolProfiles();
@@ -413,7 +414,7 @@ router.post('/tool-profiles', configLimiter, validateRequest(CreateToolProfileSc
   }
 });
 
-router.put('/tool-profiles/:key', configLimiter, validateRequest(ToolProfileKeyParamSchema), (req, res) => {
+router.put('/tool-profiles/:key', configLimiter, validateRequest(ToolProfileKeyParamSchema), asyncErrorHandler(async (req, res) => {
   try {
     const { key } = req.params;
     const profiles = toolProfilesModule.getToolProfiles();
@@ -441,7 +442,7 @@ router.put('/tool-profiles/:key', configLimiter, validateRequest(ToolProfileKeyP
   }
 });
 
-router.delete('/tool-profiles/:key', configLimiter, validateRequest(ToolProfileKeyParamSchema), (req, res) => {
+router.delete('/tool-profiles/:key', configLimiter, validateRequest(ToolProfileKeyParamSchema), asyncErrorHandler(async (req, res) => {
   try {
     const { key } = req.params;
     const profiles = toolProfilesModule.getToolProfiles();

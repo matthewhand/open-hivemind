@@ -12,6 +12,7 @@ import { HTTP_STATUS } from '../../types/constants';
 import { ErrorUtils } from '../../types/errors';
 import { ChatGenerateSchema, EmptySchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const router = Router();
 
@@ -19,7 +20,7 @@ const router = Router();
  * GET /api/demo/status
  * Get demo mode status
  */
-router.get('/status', (req, res) => {
+router.get('/status', asyncErrorHandler(async (req, res) => {
   try {
     const demoService = container.resolve(DemoModeService);
     const status = demoService.getDemoStatus();
@@ -45,7 +46,7 @@ router.get('/status', (req, res) => {
  * GET /api/demo/bots
  * Get demo bots
  */
-router.get('/bots', (req, res) => {
+router.get('/bots', asyncErrorHandler(async (req, res) => {
   try {
     const demoService = container.resolve(DemoModeService);
     const bots = demoService.getDemoBots();
@@ -70,7 +71,7 @@ router.get('/bots', (req, res) => {
  * POST /api/demo/chat
  * Send a message to a demo bot and get a simulated response
  */
-router.post('/chat', validateRequest(ChatGenerateSchema), (req, res) => {
+router.post('/chat', validateRequest(ChatGenerateSchema), asyncErrorHandler(async (req, res) => {
   try {
     const { message, botName, channelId, userId, userName } = req.body;
 
@@ -142,7 +143,7 @@ router.post('/chat', validateRequest(ChatGenerateSchema), (req, res) => {
  * GET /api/demo/conversations
  * Get all demo conversations
  */
-router.get('/conversations', (req, res) => {
+router.get('/conversations', asyncErrorHandler(async (req, res) => {
   try {
     const demoService = container.resolve(DemoModeService);
     const conversations = demoService.getAllConversations();
@@ -166,7 +167,7 @@ router.get('/conversations', (req, res) => {
  * GET /api/demo/conversations/:channelId/:botName
  * Get conversation history for a specific channel and bot
  */
-router.get('/conversations/:channelId/:botName', (req, res) => {
+router.get('/conversations/:channelId/:botName', asyncErrorHandler(async (req, res) => {
   try {
     const { channelId, botName } = req.params;
     const demoService = container.resolve(DemoModeService);
@@ -195,7 +196,7 @@ router.get('/conversations/:channelId/:botName', (req, res) => {
  * POST /api/demo/reset
  * Reset demo mode (clear all conversations)
  */
-router.post('/reset', validateRequest(EmptySchema), (req, res) => {
+router.post('/reset', validateRequest(EmptySchema), asyncErrorHandler(async (req, res) => {
   try {
     const demoService = container.resolve(DemoModeService);
     demoService.reset();
@@ -214,7 +215,7 @@ router.post('/reset', validateRequest(EmptySchema), (req, res) => {
  * GET /api/demo/info
  * Get information about demo mode features
  */
-router.get('/info', (req, res) => {
+router.get('/info', asyncErrorHandler(async (req, res) => {
   res.json(
     ApiResponse.success({
       title: 'Open-Hivemind Demo Mode',

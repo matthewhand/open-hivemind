@@ -5,6 +5,7 @@ import type { BotConfig } from '../../../types/config';
 import { HTTP_STATUS } from '../../../types/constants';
 import { ValidationTestSchema } from '../../../validation/schemas/miscSchema';
 import { validateRequest } from '../../../validation/validateRequest';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:server:routes:validation:core');
 
@@ -178,7 +179,7 @@ export function createCoreRoutes(): Router {
   router.post(
     '/api/validation/test',
     validateRequest(ValidationTestSchema),
-    async (req: AuthMiddlewareRequest, res: Response) => {
+    asyncErrorHandler(async (req, res) => {
       try {
         const { config } = req.body ?? {};
 

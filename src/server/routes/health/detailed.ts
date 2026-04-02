@@ -14,6 +14,7 @@ import {
 import { validateRequest } from '../../../validation/validateRequest';
 import { optionalAuth } from '../../middleware/auth';
 import { calculateErrorRate, calculateHealthStatus } from './helpers';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const router = Router();
 
@@ -121,7 +122,7 @@ router.get('/detailed', optionalAuth, (req: Request, res: Response) => {
 });
 
 // Service-level health check endpoint for the health check widget
-router.get('/detailed/services', optionalAuth, async (_req: Request, res: Response) => {
+router.get('/detailed/services', optionalAuth, asyncErrorHandler(async (req, res) => {
   const services: Array<{
     name: string;
     status: 'healthy' | 'degraded' | 'down';
