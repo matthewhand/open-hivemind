@@ -23,6 +23,14 @@ createIntegrationSuite(discordConfig.name, discordConfig.requiredEnvVars, () => 
   });
 
   describe('Connection', () => {
+    beforeEach(() => {
+      jest.spyOn(console, 'log').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
     it('should have valid bot token format', () => {
       const token = process.env.DISCORD_BOT_TOKEN!;
       // Discord bot tokens are base64-like strings with dots

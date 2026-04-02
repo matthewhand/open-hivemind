@@ -3,6 +3,10 @@ import { AlertManager, NotificationChannel } from '@src/monitoring/AlertManager'
 import { HealthChecker, HealthCheckResult } from '@src/monitoring/HealthChecker';
 
 describe('AlertManager Performance', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+  });
+
   let alertManager: AlertManager;
   let mockHealthChecker: jest.Mocked<HealthChecker>;
   let mockNotificationChannel: NotificationChannel;

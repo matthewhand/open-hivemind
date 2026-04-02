@@ -47,6 +47,14 @@ app.use('/api/admin', adminRouter);
 
 describe('Admin Routes I/O Performance', () => {
   beforeEach(() => {
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  beforeEach(() => {
     jest.clearAllMocks();
     // Register mock slack provider
     providerRegistry.register({

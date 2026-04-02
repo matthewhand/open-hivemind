@@ -28,6 +28,14 @@ createIntegrationSuite(lettaConfig.name, lettaConfig.requiredEnvVars, () => {
   });
 
   describe('Connection', () => {
+    beforeEach(() => {
+      jest.spyOn(console, 'log').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
     it('should have valid API key set', () => {
       const key = process.env.LETTA_API_KEY!;
       expect(key.length).toBeGreaterThan(0);
