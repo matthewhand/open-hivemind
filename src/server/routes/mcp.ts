@@ -7,6 +7,7 @@ import type { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdi
 import { ErrorUtils } from '@src/types/errors';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import MCPProviderManager from '../../config/MCPProviderManager';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { HTTP_STATUS } from '../../types/constants';
 import type { MCPProviderConfig } from '../../types/mcp';
 import {
