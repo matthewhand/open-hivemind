@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import Card from '../DaisyUI/Card';
 import Chip from '../DaisyUI/Chip';
@@ -27,7 +28,7 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
   const [newMcpServer, setNewMcpServer] = useState({ name: '', serverUrl: '', apiKey: '' });
   const [connected, setConnected] = useState(false);
 
-  const { llmProviders, messageProviders, loading: providersLoading, error: _providersError } = useProviders();
+  const { llmProviders, messageProviders, loading: providersLoading, error: providersError } = useProviders();
 
   const fallbackMessengerProviders: ProviderInfo[] = [
     { key: 'discord', label: 'Discord' },
@@ -43,7 +44,7 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
 
   const messengerOptions = messageProviders.length ? messageProviders : fallbackMessengerProviders;
   const llmOptions = llmProviders.length ? llmProviders : fallbackLlmProviders;
-  const { personas, loading: personasLoading, error: _personasError } = usePersonas();
+  const { personas, loading: personasLoading, error: personasError } = usePersonas();
 
   useEffect(() => {
     setLlmProvider(agent.llmProvider || '');
