@@ -230,17 +230,22 @@ router.post(
  *       401:
  *         description: Unauthorized
  */
-router.post('/verify', authRateLimiter, validateRequest(VerifyTokenSchema), async (req: Request, res: Response) => {
-  try {
-    const { token } = req.body;
-    const payload = authManager.verifyAccessToken(token);
-    const user = authManager.getUser(payload.userId);
-    if (!user) return res.status(401).json({ success: false, error: 'User not found' });
-    return res.json({ success: true, user });
-  } catch (error: any) {
-    return res.status(401).json({ success: false, error: 'Invalid token' });
+router.post(
+  '/verify',
+  authRateLimiter,
+  validateRequest(VerifyTokenSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const { token } = req.body;
+      const payload = authManager.verifyAccessToken(token);
+      const user = authManager.getUser(payload.userId);
+      if (!user) return res.status(401).json({ success: false, error: 'User not found' });
+      return res.json({ success: true, user });
+    } catch (error: any) {
+      return res.status(401).json({ success: false, error: 'Invalid token' });
+    }
   }
-});
+);
 
 router.get('/me', authenticate, (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;

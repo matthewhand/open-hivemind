@@ -1,10 +1,11 @@
 import fs from 'fs';
 import path from 'path';
+import Debug from 'debug';
 import { Discord, type DiscordService } from '@hivemind/message-discord';
 import discordConfig, { type DiscordConfig } from '../config/discordConfig';
 import type { IBotInfo } from '../types/botInfo';
 import { type IMessageProvider } from '../types/IProvider';
-import Debug from 'debug';
+
 const debug = Debug('app:providers:DiscordProvider');
 
 export class DiscordProvider implements IMessageProvider<DiscordConfig> {

@@ -1,17 +1,18 @@
+import Debug from 'debug';
 import { Router } from 'express';
 import { DatabaseManager } from '@src/database/DatabaseManager';
 import WebSocketService, { type MessageFlowEvent } from '@src/server/services/WebSocketService';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import { AnalyticsService } from '../../services/AnalyticsService';
-import { ActivityLogger } from '../services/ActivityLogger';
-import Debug from 'debug';
-import { validateRequest } from '../../validation/validateRequest';
 import {
-  UpdateDashboardConfigSchema,
-  SubmitAIFeedbackSchema,
   AlertIdParamSchema,
+  SubmitAIFeedbackSchema,
+  UpdateDashboardConfigSchema,
 } from '../../validation/schemas/dashboardSchema';
+import { validateRequest } from '../../validation/validateRequest';
+import { ActivityLogger } from '../services/ActivityLogger';
+
 const debug = Debug('app:server:routes:dashboard');
 
 type AnnotatedEvent = MessageFlowEvent & { llmProvider: string };
@@ -175,10 +176,16 @@ router.get('/ai/config', authenticate, requireAdmin, (req, res) => {
   res.json(dashboardConfig);
 });
 
-router.post('/ai/config', authenticate, requireAdmin, validateRequest(UpdateDashboardConfigSchema), (req, res) => {
-  dashboardConfig = { ...dashboardConfig, ...req.body };
-  res.json(dashboardConfig);
-});
+router.post(
+  '/ai/config',
+  authenticate,
+  requireAdmin,
+  validateRequest(UpdateDashboardConfigSchema),
+  (req, res) => {
+    dashboardConfig = { ...dashboardConfig, ...req.body };
+    res.json(dashboardConfig);
+  }
+);
 
 router.get('/ai/stats', authenticate, requireAdmin, async (req, res) => {
   try {
@@ -261,17 +268,23 @@ router.get('/ai/recommendations', authenticate, requireAdmin, async (req, res) =
   }
 });
 
-router.post('/ai/feedback', authenticate, requireAdmin, validateRequest(SubmitAIFeedbackSchema), async (req, res) => {
-  const { recommendationId, feedback, metadata } = req.body;
-  try {
-    const db = DatabaseManager.getInstance();
-    await db.storeAIFeedback({ recommendationId, feedback, metadata });
-    res.json({ success: true });
-  } catch (error) {
-    debug('ERROR:', 'Error storing AI feedback:', error);
-    res.status(500).json({ error: 'Failed to store feedback' });
+router.post(
+  '/ai/feedback',
+  authenticate,
+  requireAdmin,
+  validateRequest(SubmitAIFeedbackSchema),
+  async (req, res) => {
+    const { recommendationId, feedback, metadata } = req.body;
+    try {
+      const db = DatabaseManager.getInstance();
+      await db.storeAIFeedback({ recommendationId, feedback, metadata });
+      res.json({ success: true });
+    } catch (error) {
+      debug('ERROR:', 'Error storing AI feedback:', error);
+      res.status(500).json({ error: 'Failed to store feedback' });
+    }
   }
-});
+);
 
 // Root route removed - dashboard is now served from public/index.html
 // This file only contains API endpoints
@@ -428,37 +441,49 @@ router.get('/activity', authenticate, requireAdmin, async (req, res) => {
   }
 });
 
-router.post('/alerts/:id/acknowledge', authenticate, requireAdmin, validateRequest(AlertIdParamSchema), (req, res) => {
-  try {
-    const { id } = req.params;
-    const ws = WebSocketService.getInstance();
-    const success = ws.acknowledgeAlert(id);
-    if (success) {
-      res.json({ success: true, message: 'Alert acknowledged' });
-    } else {
-      res.status(404).json({ success: false, message: 'Alert not found' });
+router.post(
+  '/alerts/:id/acknowledge',
+  authenticate,
+  requireAdmin,
+  validateRequest(AlertIdParamSchema),
+  (req, res) => {
+    try {
+      const { id } = req.params;
+      const ws = WebSocketService.getInstance();
+      const success = ws.acknowledgeAlert(id);
+      if (success) {
+        res.json({ success: true, message: 'Alert acknowledged' });
+      } else {
+        res.status(404).json({ success: false, message: 'Alert not found' });
+      }
+    } catch (error) {
+      debug('ERROR:', 'Acknowledge alert error:', error);
+      res.status(500).json({ error: 'Failed to acknowledge alert' });
     }
-  } catch (error) {
-    debug('ERROR:', 'Acknowledge alert error:', error);
-    res.status(500).json({ error: 'Failed to acknowledge alert' });
   }
-});
+);
 
-router.post('/alerts/:id/resolve', authenticate, requireAdmin, validateRequest(AlertIdParamSchema), (req, res) => {
-  try {
-    const { id } = req.params;
-    const ws = WebSocketService.getInstance();
-    const success = ws.resolveAlert(id);
-    if (success) {
-      res.json({ success: true, message: 'Alert resolved' });
-    } else {
-      res.status(404).json({ success: false, message: 'Alert not found' });
+router.post(
+  '/alerts/:id/resolve',
+  authenticate,
+  requireAdmin,
+  validateRequest(AlertIdParamSchema),
+  (req, res) => {
+    try {
+      const { id } = req.params;
+      const ws = WebSocketService.getInstance();
+      const success = ws.resolveAlert(id);
+      if (success) {
+        res.json({ success: true, message: 'Alert resolved' });
+      } else {
+        res.status(404).json({ success: false, message: 'Alert not found' });
+      }
+    } catch (error) {
+      debug('ERROR:', 'Resolve alert error:', error);
+      res.status(500).json({ error: 'Failed to resolve alert' });
     }
-  } catch (error) {
-    debug('ERROR:', 'Resolve alert error:', error);
-    res.status(500).json({ error: 'Failed to resolve alert' });
   }
-});
+);
 
 export default router;
 

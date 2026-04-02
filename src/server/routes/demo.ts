@@ -8,8 +8,8 @@ import { Router } from 'express';
 import { container } from 'tsyringe';
 import DemoModeService from '../../services/DemoModeService';
 import { ErrorUtils } from '../../types/errors';
-import { validateRequest } from '../../validation/validateRequest';
 import { DemoChatSchema } from '../../validation/schemas/demoSchema';
+import { validateRequest } from '../../validation/validateRequest';
 
 const router = Router();
 

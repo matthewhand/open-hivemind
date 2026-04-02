@@ -150,11 +150,7 @@ export class QuotaManager {
    * Consume request quota (1 request against minute/hour/day counters).
    * Optionally also consume a token amount.
    */
-  async consumeQuota(
-    entityId: string,
-    entityType: EntityType,
-    amount: number = 1
-  ): Promise<void> {
+  async consumeQuota(entityId: string, entityType: EntityType, amount: number = 1): Promise<void> {
     const prefix = `${entityType}:${entityId}`;
 
     await Promise.all([
@@ -169,11 +165,7 @@ export class QuotaManager {
   /**
    * Consume token quota separately (called after inference completes).
    */
-  async consumeTokens(
-    entityId: string,
-    entityType: EntityType,
-    tokens: number
-  ): Promise<void> {
+  async consumeTokens(entityId: string, entityType: EntityType, tokens: number): Promise<void> {
     const prefix = `${entityType}:${entityId}`;
     await this.store.increment(`${prefix}:tok:${windowKey('day')}`, TTL_DAY, tokens);
     debug(`Consumed ${tokens} token(s) for ${entityType}:${entityId}`);

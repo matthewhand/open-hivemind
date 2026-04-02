@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
+
 const debug = Debug('app:storage:webUIStorage');
 
 /**

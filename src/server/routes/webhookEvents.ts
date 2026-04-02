@@ -1,8 +1,8 @@
 import Debug from 'debug';
 import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { validateRequest } from '../../validation/validateRequest';
 import { RetryWebhookEventSchema } from '../../validation/schemas/webhookEventsSchema';
+import { validateRequest } from '../../validation/validateRequest';
 
 const debug = Debug('app:webui:webhook-events');
 const router = Router();

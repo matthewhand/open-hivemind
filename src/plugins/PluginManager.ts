@@ -2,8 +2,12 @@ import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
-import { loadPlugin, loadPluginWithSecurity, PLUGINS_DIR, type PluginManifest } from './PluginLoader';
-import { PluginSecurityPolicy, type PluginSecurityStatus, type SecurePluginManifest } from './PluginSecurity';
+import { loadPlugin, PLUGINS_DIR, type PluginManifest } from './PluginLoader';
+import {
+  PluginSecurityPolicy,
+  type PluginSecurityStatus,
+  type SecurePluginManifest,
+} from './PluginSecurity';
 
 const debug = Debug('app:pluginManager');
 
@@ -406,7 +410,8 @@ export async function listInstalledPlugins(): Promise<PluginInfo[]> {
 // Plugin security policy singleton
 // ---------------------------------------------------------------------------
 
-const PLUGIN_SIGNING_KEY = process.env.HIVEMIND_PLUGIN_SIGNING_KEY ?? 'hivemind-default-signing-key';
+const PLUGIN_SIGNING_KEY =
+  process.env.HIVEMIND_PLUGIN_SIGNING_KEY ?? 'hivemind-default-signing-key';
 
 let _securityPolicy: PluginSecurityPolicy | undefined;
 

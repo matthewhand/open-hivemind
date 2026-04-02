@@ -1,6 +1,6 @@
 import Debug from 'debug';
 import type { Database } from 'sqlite';
-import type { BotConfiguration, BotConfigurationVersion, BotConfigurationAudit } from './types';
+import type { BotConfiguration, BotConfigurationAudit, BotConfigurationVersion } from './types';
 
 const debug = Debug('app:BotConfigRepository');
 
@@ -238,9 +238,7 @@ export class BotConfigRepository {
 
     try {
       const db = this.getDb()!;
-      const configs = await db.all(
-        'SELECT * FROM bot_configurations ORDER BY updatedAt DESC'
-      );
+      const configs = await db.all('SELECT * FROM bot_configurations ORDER BY updatedAt DESC');
 
       if (configs.length === 0) {
         return [];
@@ -367,10 +365,7 @@ export class BotConfigRepository {
 
       values.push(id);
 
-      await db.run(
-        `UPDATE bot_configurations SET ${updateFields.join(', ')} WHERE id = ?`,
-        values
-      );
+      await db.run(`UPDATE bot_configurations SET ${updateFields.join(', ')} WHERE id = ?`, values);
 
       debug(`Bot configuration updated: ${id}`);
     } catch (error) {

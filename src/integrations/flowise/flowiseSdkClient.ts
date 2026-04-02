@@ -24,18 +24,19 @@ export async function getFlowiseSdkResponse(prompt: string, chatflowId: string):
     return await circuitBreaker.execute(async () => {
       debug('Sending request to Flowise SDK API with prompt:', prompt);
       const completion = await withTimeout(
-        () => client.createPrediction({
-          chatflowId,
-          question: prompt,
-          overrideConfig: {
-            credentials: {
-              DefaultKey: apiKey,
+        () =>
+          client.createPrediction({
+            chatflowId,
+            question: prompt,
+            overrideConfig: {
+              credentials: {
+                DefaultKey: apiKey,
+              },
             },
-          },
-          streaming: false,
-        }),
+            streaming: false,
+          }),
         DEFAULT_FLOWISE_TIMEOUT_MS,
-        'Flowise SDK prediction',
+        'Flowise SDK prediction'
       );
 
       if (completion.text) {

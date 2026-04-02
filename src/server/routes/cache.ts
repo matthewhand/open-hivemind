@@ -1,8 +1,9 @@
+import Debug from 'debug';
 import { Router } from 'express';
 import { requireAdmin } from '../../auth/middleware';
 import { authenticateToken } from '../middleware/auth';
 import { clearAllSystemCaches } from '../utils/cacheManager'; // We'll implement this
-import Debug from 'debug';
+
 const debug = Debug('app:server:routes:cache');
 
 const router = Router();

@@ -2,8 +2,8 @@ import axios from 'axios';
 import Debug from 'debug';
 import type { IMessage } from '@src/message/interfaces/IMessage';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
-import openWebUIConfig from './openWebUIConfig';
 import { getCircuitBreaker } from '@common/CircuitBreaker';
+import openWebUIConfig from './openWebUIConfig';
 
 const debug = Debug('app:openWebUIProvider');
 

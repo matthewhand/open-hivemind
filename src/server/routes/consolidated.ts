@@ -2,10 +2,10 @@ import Debug from 'debug';
 import { Router } from 'express';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import { DatabaseManager } from '../../database/DatabaseManager';
+import { ValidateConfigBodySchema } from '../../validation/schemas/consolidatedSchema';
+import { validateRequest } from '../../validation/validateRequest';
 import { auditMiddleware, logAdminAction, type AuditedRequest } from '../middleware/audit';
 import { authenticateToken, requirePermission } from '../middleware/auth';
-import { validateRequest } from '../../validation/validateRequest';
-import { ValidateConfigBodySchema } from '../../validation/schemas/consolidatedSchema';
 
 const debug = Debug('app:webui:consolidated');
 const router = Router();

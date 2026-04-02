@@ -1,9 +1,10 @@
 import fs from 'fs';
 import path from 'path';
+import Debug from 'debug';
 import { SlackService } from '@hivemind/message-slack';
 import slackConfig, { type SlackConfig } from '../config/slackConfig';
 import { type IMessageProvider } from '../types/IProvider';
-import Debug from 'debug';
+
 const debug = Debug('app:providers:SlackProvider');
 
 export class SlackProvider implements IMessageProvider<SlackConfig> {

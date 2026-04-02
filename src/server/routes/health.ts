@@ -6,13 +6,13 @@ import ApiMonitorService from '../../services/ApiMonitorService';
 import { HEALTH_THRESHOLDS, HTTP_STATUS } from '../../types/constants';
 import { ErrorLogger } from '../../utils/errorLogger';
 import { globalRecoveryManager } from '../../utils/errorRecovery';
-import { optionalAuth } from '../middleware/auth';
-import { validateRequest } from '../../validation/validateRequest';
 import {
   CreateApiEndpointSchema,
-  UpdateApiEndpointSchema,
   DeleteApiEndpointSchema,
+  UpdateApiEndpointSchema,
 } from '../../validation/schemas/healthSchema';
+import { validateRequest } from '../../validation/validateRequest';
+import { optionalAuth } from '../middleware/auth';
 
 const router = Router();
 
