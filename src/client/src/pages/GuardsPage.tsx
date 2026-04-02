@@ -2,19 +2,19 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Shield, RefreshCw, AlertTriangle, Plus, Copy, Trash2, Edit2 } from 'lucide-react';
 import { apiService } from '../services/api';
-import PageHeader from '../components/PageHeader';
+import PageHeader from '../components/DaisyUI/PageHeader';
 import Card from '../components/DaisyUI/Card';
 import Input from '../components/DaisyUI/Input';
 import Button from '../components/DaisyUI/Button';
 import Toggle from '../components/DaisyUI/Toggle';
 import Select from '../components/DaisyUI/Select';
 import Textarea from '../components/DaisyUI/Textarea';
-import ConfirmModal from '../components/DaisyUI/ConfirmModal';
+import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import ModalForm from '../components/DaisyUI/ModalForm';
 import { FormField } from '../components/DaisyUI/formTypes';
 import RangeSlider from '../components/DaisyUI/RangeSlider';
 import { GuardProfile } from '@shared/types/models/security';
-import { useToast } from '../components/ToastProvider';
+import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 
 // Custom comma-separated input component
 const CommaSeparatedInput = ({
@@ -115,7 +115,8 @@ const defaultNewProfile: Omit<GuardProfile, 'id' | 'createdAt' | 'updatedAt'> = 
 };
 
 const GuardsPage: React.FC = () => {
-  const { addToast } = useToast();
+  const successToast = useSuccessToast();
+  const errorToast = useErrorToast();
   const queryClient = useQueryClient();
   const [editingProfile, setEditingProfile] = useState<Partial<GuardProfile> | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<GuardProfile | null>(null);
@@ -135,11 +136,11 @@ const GuardsPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['guard-profiles'] });
-      addToast('Profile created successfully', 'success');
+      successToast('Success', 'Profile created successfully');
       setEditingProfile(null);
     },
     onError: (error) => {
-      addToast(error instanceof Error ? error.message : 'Failed to create profile', 'error');
+      errorToast('Error', error instanceof Error ? error.message : 'Failed to create profile');
     }
   });
 
@@ -149,11 +150,11 @@ const GuardsPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['guard-profiles'] });
-      addToast('Profile updated successfully', 'success');
+      successToast('Success', 'Profile updated successfully');
       setEditingProfile(null);
     },
     onError: (error) => {
-      addToast(error instanceof Error ? error.message : 'Failed to update profile', 'error');
+      errorToast('Error', error instanceof Error ? error.message : 'Failed to update profile');
     }
   });
 
@@ -163,11 +164,11 @@ const GuardsPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['guard-profiles'] });
-      addToast('Profile deleted successfully', 'success');
+      successToast('Success', 'Profile deleted successfully');
       setDeleteConfirm(null);
     },
     onError: (error) => {
-      addToast(error instanceof Error ? error.message : 'Failed to delete profile', 'error');
+      errorToast('Error', error instanceof Error ? error.message : 'Failed to delete profile');
       setDeleteConfirm(null);
     }
   });
