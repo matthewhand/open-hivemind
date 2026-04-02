@@ -3,7 +3,7 @@ import { Logger } from '@common/logger';
 import { type ISchemaModule } from './ISchemaModule';
 
 export class ActivitySchemas implements ISchemaModule {
-  async ensureTable(db: Database): Promise<void> {
+  async createTables(db: Database): Promise<void> {
     await this.createTable(
       db,
       `
@@ -64,8 +64,9 @@ export class ActivitySchemas implements ISchemaModule {
       )
     `
     );
+  }
 
-    // Indexes
+  async createIndexes(db: Database): Promise<void> {
     await this.createIndex(
       db,
       'CREATE INDEX IF NOT EXISTS idx_activity_logs_bot_id ON activity_logs(bot_id)'
