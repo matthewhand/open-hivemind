@@ -3,9 +3,6 @@ import { ToolRegistry } from '../../src/config/mcp/toolRegistry';
 import type { MCPProviderConfig } from '../../src/types/mcp';
 
 beforeEach(() => {
-  jest.spyOn(console, 'log').mockImplementation(() => {});
-  jest.spyOn(console, 'warn').mockImplementation(() => {});
-  jest.spyOn(console, 'error').mockImplementation(() => {});
 });
 
 afterEach(() => {

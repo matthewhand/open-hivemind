@@ -23,10 +23,6 @@ createIntegrationSuite(discordConfig.name, discordConfig.requiredEnvVars, () => 
   });
 
   describe('Connection', () => {
-    beforeEach(() => {
-      jest.spyOn(console, 'log').mockImplementation(() => {});
-    });
-
     afterEach(() => {
       jest.restoreAllMocks();
     });

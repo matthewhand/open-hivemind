@@ -24,10 +24,6 @@ createIntegrationSuite(openwebuiConfig.name, openwebuiConfig.requiredEnvVars, ()
   });
 
   describe('Connection', () => {
-    beforeEach(() => {
-      jest.spyOn(console, 'log').mockImplementation(() => {});
-    });
-
     afterEach(() => {
       jest.restoreAllMocks();
     });

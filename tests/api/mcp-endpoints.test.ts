@@ -48,12 +48,6 @@ const MCP_SERVERS_CONFIG_FILE = join(process.cwd(), 'data', 'mcp-servers.json');
 describe('MCP API Endpoints', () => {
   let app: Express;
 
-  beforeEach(() => {
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-    jest.spyOn(console, 'warn').mockImplementation(() => {});
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-  });
-
   beforeAll(async () => {
     app = express();
     app.use(express.json());

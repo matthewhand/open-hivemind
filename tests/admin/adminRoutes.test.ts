@@ -46,10 +46,6 @@ app.use(express.json());
 app.use('/api/admin', adminRouter);
 
 describe('Admin Routes I/O Performance', () => {
-  beforeEach(() => {
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-  });
-
   afterEach(() => {
     jest.restoreAllMocks();
   });

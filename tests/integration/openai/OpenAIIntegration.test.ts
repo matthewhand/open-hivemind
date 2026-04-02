@@ -30,10 +30,6 @@ createIntegrationSuite(openaiConfig.name, openaiConfig.requiredEnvVars, () => {
   });
 
   describe('Connection', () => {
-    beforeEach(() => {
-      jest.spyOn(console, 'log').mockImplementation(() => {});
-    });
-
     afterEach(() => {
       jest.restoreAllMocks();
     });

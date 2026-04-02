@@ -26,9 +26,6 @@ import { useToolExecution } from '../../../../../src/client/src/pages/MCPToolsPa
 import { useToolRegistry } from '../../../../../src/client/src/pages/MCPToolsPage/hooks/useToolRegistry';
 
 beforeEach(() => {
-  jest.spyOn(console, 'log').mockImplementation(() => {});
-  jest.spyOn(console, 'warn').mockImplementation(() => {});
-  jest.spyOn(console, 'error').mockImplementation(() => {});
   jest.clearAllMocks();
 });
 

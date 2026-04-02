@@ -51,22 +51,16 @@ beforeAll((done) => {
     const validationService = RealTimeValidationService.getInstance();
     RealTimeValidationService.prototype.setupEventHandlers = originalSetupEventHandlers;
 
-    console.log('Test environment initialized');
     done();
   } catch (error) {
-    console.log('Services not available, proceeding with basic setup');
     done();
   }
 });
 
 afterAll((done) => {
   if (server) {
-    server.close(() => {
-      console.log('Test server closed');
-      done();
-    });
+    server.close(() => done());
   } else {
-    console.log('Test environment cleaned up');
     done();
   }
 });
