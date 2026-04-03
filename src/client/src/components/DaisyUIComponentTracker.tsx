@@ -8,6 +8,7 @@ import Card from './DaisyUI/Card';
 import { Progress } from './DaisyUI/Loading';
 import { Alert } from './DaisyUI/Alert';
 import Modal from './DaisyUI/Modal';
+import Tabs from './DaisyUI/Tabs';
 
 interface Props {
   isOpen?: boolean;
@@ -95,38 +96,18 @@ const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) =>
           </div>
 
           {/* Tabs */}
-          <div className="tabs tabs-boxed w-full">
-            <button
-              className={`tab ${selectedCategory === 'overview' ? 'tab-active' : ''}`}
-              onClick={() => setSelectedCategory('overview')}
-            >
-              Overview
-            </button>
-            <button
-              className={`tab ${selectedCategory === 'used' ? 'tab-active' : ''}`}
-              onClick={() => setSelectedCategory('used')}
-            >
-              Used Components ({stats.usedComponents})
-            </button>
-            <button
-              className={`tab ${selectedCategory === 'unused' ? 'tab-active' : ''}`}
-              onClick={() => setSelectedCategory('unused')}
-            >
-              Unused ({stats.unusedComponents.length})
-            </button>
-            <button
-              className={`tab ${selectedCategory === 'suggestions' ? 'tab-active' : ''}`}
-              onClick={() => setSelectedCategory('suggestions')}
-            >
-              Suggestions ({suggestions.length})
-            </button>
-            <button
-              className={`tab ${selectedCategory === 'categories' ? 'tab-active' : ''}`}
-              onClick={() => setSelectedCategory('categories')}
-            >
-              By Category
-            </button>
-          </div>
+          <Tabs
+            tabs={[
+              { key: 'overview', label: 'Overview' },
+              { key: 'used', label: `Used Components (${stats.usedComponents})` },
+              { key: 'unused', label: `Unused (${stats.unusedComponents.length})` },
+              { key: 'suggestions', label: `Suggestions (${suggestions.length})` },
+              { key: 'categories', label: 'By Category' },
+            ]}
+            activeTab={selectedCategory}
+            onChange={setSelectedCategory}
+            className="w-full"
+          />
 
           {/* Tab Content */}
           <div className="mt-6">

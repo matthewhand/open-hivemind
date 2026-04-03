@@ -5,6 +5,7 @@ import Card from '../components/DaisyUI/Card';
 import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
 import Button from '../components/DaisyUI/Button';
 import Badge from '../components/DaisyUI/Badge';
+import Tabs from '../components/DaisyUI/Tabs';
 
 import {
   Store as StoreIcon,
@@ -62,6 +63,14 @@ const TYPE_COLORS = {
   memory: 'accent',
   tool: 'info',
 } as const;
+
+// Static Tailwind class mappings (dynamic construction like `text-${color}` is not JIT-safe)
+const TYPE_COLOR_CLASSES: Record<string, { text: string; bg: string }> = {
+  secondary: { text: 'text-secondary', bg: 'bg-secondary/10' },
+  primary: { text: 'text-primary', bg: 'bg-primary/10' },
+  accent: { text: 'text-accent', bg: 'bg-accent/10' },
+  info: { text: 'text-info', bg: 'bg-info/10' },
+};
 
 const STATUS_BADGES = {
   'built-in': { label: 'Built-in', color: 'neutral' as const },
@@ -273,17 +282,14 @@ const MarketplacePage: React.FC = () => {
         </div>
 
         {/* Type Filter Tabs */}
-        <div className="tabs tabs-boxed">
-          {(['all', 'llm', 'message', 'memory', 'tool'] as FilterType[]).map((t) => (
-            <button
-              key={t}
-              className={`tab ${filter === t ? 'tab-active' : ''}`}
-              onClick={() => setFilter(t)}
-            >
-              {t === 'all' ? 'All' : t.toUpperCase()}
-            </button>
-          ))}
-        </div>
+        <Tabs
+          tabs={(['all', 'llm', 'message', 'memory', 'tool'] as FilterType[]).map((t) => ({
+            key: t,
+            label: t === 'all' ? 'All' : t.toUpperCase(),
+          }))}
+          activeTab={filter}
+          onChange={(key) => setFilter(key as FilterType)}
+        />
       </div>
 
       {/* Loading State */}
@@ -340,8 +346,8 @@ const MarketplacePage: React.FC = () => {
                 <Card.Body className="p-4">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <div className={`p-2 rounded-lg bg-${color}/10`}>
-                        <Icon className={`w-5 h-5 text-${color}`} />
+                      <div className={`p-2 rounded-lg ${TYPE_COLOR_CLASSES[color]?.bg ?? ''}`}>
+                        <Icon className={`w-5 h-5 ${TYPE_COLOR_CLASSES[color]?.text ?? ''}`} />
                       </div>
                       <div>
                         <h3 className="font-semibold">{pkg.displayName}</h3>

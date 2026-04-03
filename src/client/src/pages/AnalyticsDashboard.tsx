@@ -195,7 +195,7 @@ const AnalyticsDashboard: React.FC = () => {
                   key: 'successRate' as any,
                   title: 'Success %',
                   render: (value: string) => (
-                    <span className={`text-${parseFloat(value) > 98 ? 'success' : 'warning'}`}>
+                    <span className={parseFloat(value) > 98 ? 'text-success' : 'text-warning'}>
                       {value}%
                     </span>
                   ),

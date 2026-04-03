@@ -214,7 +214,7 @@ const WebhookEventsPage: React.FC = () => {
       />
 
       {error && (
-        <Alert type="error" title="Error" dismissible onDismiss={() => setError(null)}>
+        <Alert status="error" message="Error" onClose={() => setError(null)}>
           {error}
         </Alert>
       )}

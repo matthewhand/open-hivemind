@@ -7,6 +7,7 @@ import SettingsMessaging from '../components/Settings/SettingsMessaging';
 import SettingsLLM from '../components/Settings/SettingsLLM';
 import SettingsIntegrations from '../components/Settings/SettingsIntegrations';
 import PageHeader from '../components/DaisyUI/PageHeader';
+import Tabs from '../components/DaisyUI/Tabs';
 import HiddenFeatureToggle from '../components/HiddenFeatureToggle';
 import { Cog, RotateCcw } from 'lucide-react';
 import { apiService } from '../services/api';
@@ -64,17 +65,12 @@ const SystemSettings: React.FC = () => {
 
       <div className="card bg-base-100 shadow-xl">
         <div className="card-body">
-          <div className="tabs tabs-boxed mb-6">
-            {tabs.map((tab) => (
-              <a
-                key={tab.id}
-                className={`tab ${activeTabId === tab.id ? 'tab-active' : ''}`}
-                onClick={() => handleTabChange(tab.id)}
-              >
-                {tab.label}
-              </a>
-            ))}
-          </div>
+          <Tabs
+            tabs={tabs.map((tab) => ({ key: tab.id, label: tab.label }))}
+            activeTab={activeTabId}
+            onChange={handleTabChange}
+            className="mb-6"
+          />
 
           <div className="mt-4">
             {tabs[activeIndex].component}

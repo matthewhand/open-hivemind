@@ -67,6 +67,17 @@ const TYPE_FEATURES: Record<string, string[]> = {
   ],
 };
 
+// Static Tailwind class mappings (dynamic construction like `text-${color}` is not JIT-safe)
+const colorClasses: Record<string, { text: string; bg: string }> = {
+  primary: { text: 'text-primary', bg: 'bg-primary/10' },
+  secondary: { text: 'text-secondary', bg: 'bg-secondary/10' },
+  accent: { text: 'text-accent', bg: 'bg-accent/10' },
+  info: { text: 'text-info', bg: 'bg-info/10' },
+  success: { text: 'text-success', bg: 'bg-success/10' },
+  warning: { text: 'text-warning', bg: 'bg-warning/10' },
+  error: { text: 'text-error', bg: 'bg-error/10' },
+};
+
 const ProvidersPage: React.FC = () => {
   const navigate = useNavigate();
 
@@ -111,7 +122,7 @@ const ProvidersPage: React.FC = () => {
               {/* Header */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-4">
-                  <div className={`text-${category.color} p-3 rounded-lg bg-${category.color}/10`}>
+                  <div className={`${colorClasses[category.color]?.text ?? ''} p-3 rounded-lg ${colorClasses[category.color]?.bg ?? ''}`}>
                     {category.icon}
                   </div>
                   <div>

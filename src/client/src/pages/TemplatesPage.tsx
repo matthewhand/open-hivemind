@@ -7,6 +7,7 @@ import {
 import { useErrorToast, useSuccessToast } from '../components/DaisyUI/ToastNotification';
 import { usePageLifecycle } from '../hooks/usePageLifecycle';
 import PageHeader from '../components/DaisyUI/PageHeader';
+import Tabs from '../components/DaisyUI/Tabs';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { SkeletonPage } from '../components/DaisyUI/Skeleton';
@@ -218,29 +219,29 @@ const TemplatesPage: React.FC = () => {
       />
 
       {/* Category Tabs */}
-      <div className="tabs tabs-boxed bg-base-200 p-2 overflow-x-auto flex-nowrap">
-        {CATEGORIES.map((category) => {
+      <Tabs
+        tabs={CATEGORIES.map((category) => {
           const Icon = category.icon;
           const count =
             category.value === 'all'
               ? templates.length
               : templates.filter((t) => t.category === category.value).length;
 
-          return (
-            <button
-              key={category.value}
-              className={`tab gap-2 whitespace-nowrap ${
-                selectedCategory === category.value ? 'tab-active' : ''
-              }`}
-              onClick={() => setSelectedCategory(category.value)}
-            >
-              <Icon className="w-4 h-4" />
-              {category.label}
-              <span className="badge badge-sm">{count}</span>
-            </button>
-          );
+          return {
+            key: category.value,
+            label: (
+              <span className="flex items-center gap-2 whitespace-nowrap">
+                {category.label}
+                <span className="badge badge-sm">{count}</span>
+              </span>
+            ),
+            icon: <Icon className="w-4 h-4" />,
+          };
         })}
-      </div>
+        activeTab={selectedCategory}
+        onChange={setSelectedCategory}
+        className="bg-base-200 p-2 overflow-x-auto flex-nowrap"
+      />
 
       {/* Search Bar */}
       <SearchFilterBar
