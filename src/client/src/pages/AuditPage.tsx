@@ -437,7 +437,7 @@ const AuditPage: React.FC = () => {
 
       {/* Error */}
       {error && (
-        <Alert type="error">
+        <Alert status="error">
           Failed to load audit events: {error.message}
         </Alert>
       )}
