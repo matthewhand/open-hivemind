@@ -6,6 +6,8 @@ import { Alert } from '../DaisyUI/Alert';
 import Button from '../DaisyUI/Button';
 import PageHeader from '../DaisyUI/PageHeader';
 import StatsCards from '../DaisyUI/StatsCards';
+import Tabs from '../DaisyUI/Tabs';
+import type { TabItem } from '../DaisyUI/Tabs';
 import {
   Activity,
   RotateCcw,
@@ -105,8 +107,8 @@ interface BotWithStatus extends Bot {
 
 interface TabPanelProps {
   children?: React.ReactNode;
-  index: number;
-  value: number;
+  index: string;
+  value: string;
 }
 
 const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => (
@@ -124,7 +126,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
   refreshInterval: initialRefreshInterval = 30000,
   onRefresh,
 }) => {
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState('health');
   const [isStatusLoading, setIsStatusLoading] = useState(false);
   const [isConfigLoading, setIsConfigLoading] = useState(false);
   const [systemMetrics, setSystemMetrics] = useState<StatusResponse | null>(null);
@@ -139,7 +141,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
   const lastStatusUpdate = useRef<number>(0);
   const lastConfigUpdate = useRef<number>(0);
 
-  const handleTabChange = (newValue: number) => {
+  const handleTabChange = (newValue: string) => {
     setActiveTab(newValue);
   };
 
@@ -282,11 +284,11 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
 
   const overallStatus = getOverallHealthStatus();
 
-  const tabs = [
-    { icon: <Heart className="w-5 h-5" />, label: 'Infrastructure Health' },
-    { icon: <Cpu className="w-5 h-5" />, label: 'Bot Status' },
-    { icon: <Clock className="w-5 h-5" />, label: 'Activity Monitor' },
-    { icon: <Activity className="w-5 h-5" />, label: 'Distributed Tracing' },
+  const monitoringTabs: TabItem[] = [
+    { key: 'health', label: 'Infrastructure Health', icon: <Heart className="w-5 h-5" /> },
+    { key: 'bots', label: 'Bot Status', icon: <Cpu className="w-5 h-5" /> },
+    { key: 'activity', label: 'Activity Monitor', icon: <Clock className="w-5 h-5" /> },
+    { key: 'tracing', label: 'Distributed Tracing', icon: <Activity className="w-5 h-5" /> },
   ];
 
   const stats = [
@@ -370,28 +372,22 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
 
       {/* Tab Navigation */}
       <div className="bg-base-200 border-b border-base-300 rounded-t-lg">
-        <div role="tablist" className="tabs tabs-boxed bg-transparent">
-          {tabs.map((tab, index) => (
-            <a
-              key={index}
-              role="tab"
-              className={`tab gap-2 ${activeTab === index ? 'tab-active' : ''}`}
-              onClick={() => handleTabChange(index)}
-            >
-              {tab.icon}
-              {tab.label}
-            </a>
-          ))}
-        </div>
+        <Tabs
+          tabs={monitoringTabs}
+          activeTab={activeTab}
+          onChange={handleTabChange}
+          variant="boxed"
+          className="bg-transparent"
+        />
       </div>
 
       {/* Tab Content */}
       <div className="bg-base-100 rounded-b-lg border border-t-0 border-base-200">
-        <TabPanel value={activeTab} index={0}>
+        <TabPanel value={activeTab} index="health">
           <SystemHealth refreshInterval={refreshInterval} />
         </TabPanel>
 
-        <TabPanel value={activeTab} index={1}>
+        <TabPanel value={activeTab} index="bots">
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             {bots.map((bot) => (
               <BotStatusCard
@@ -409,12 +405,12 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
           </div>
         </TabPanel>
 
-        <TabPanel value={activeTab} index={2}>
+        <TabPanel value={activeTab} index="activity">
           <ActivityMonitor />
           <ActivityCharts />
         </TabPanel>
 
-        <TabPanel value={activeTab} index={3}>
+        <TabPanel value={activeTab} index="tracing">
           <DistributedTraceWaterfall traceId="trace-req-8f9d3b2a" spans={mockSpans} className="h-[600px] shadow-lg rounded-xl" />
         </TabPanel>
       </div>

@@ -13,8 +13,19 @@ import {
   Scale,
   ShieldCheck,
 } from 'lucide-react';
+import Modal from './DaisyUI/Modal';
+import Tabs from './DaisyUI/Tabs';
+import type { TabItem } from './DaisyUI/Tabs';
 import DataTable from './DaisyUI/DataTable';
 import type { RDVColumn } from './DaisyUI/DataTable';
+
+const enterpriseTabs: TabItem[] = [
+  { key: 'security', label: 'Security & Compliance', icon: <ShieldCheck className="w-4 h-4" /> },
+  { key: 'cloud', label: 'Multi-Cloud', icon: <Cloud className="w-4 h-4" /> },
+  { key: 'integrations', label: 'Integrations', icon: <Puzzle className="w-4 h-4" /> },
+  { key: 'audit', label: 'Audit & Governance', icon: <Scale className="w-4 h-4" /> },
+  { key: 'performance', label: 'Performance', icon: <BarChart3 className="w-4 h-4" /> },
+];
 
 interface ComplianceRule {
   id: string;
@@ -72,7 +83,7 @@ interface PerformanceMetric {
 }
 
 const EnterpriseManager: React.FC = () => {
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState('security');
   const [complianceRules, setComplianceRules] = useState<ComplianceRule[]>([]);
   const [cloudProviders, setCloudProviders] = useState<CloudProvider[]>([]);
   const [integrations, setIntegrations] = useState<Integration[]>([]);
@@ -388,7 +399,7 @@ const EnterpriseManager: React.FC = () => {
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 0: // Security & Compliance
+      case 'security': // Security & Compliance
         return (
           <div>
             <h2 className="text-xl font-semibold mb-4">Compliance Rules</h2>
@@ -427,7 +438,7 @@ const EnterpriseManager: React.FC = () => {
           </div>
         );
 
-      case 1: // Multi-Cloud
+      case 'cloud': // Multi-Cloud
         return (
           <div>
             <div className="flex justify-between items-center mb-4">
@@ -472,7 +483,7 @@ const EnterpriseManager: React.FC = () => {
           </div>
         );
 
-      case 2: // Integrations
+      case 'integrations': // Integrations
         return (
           <div>
             <div className="flex justify-between items-center mb-4">
@@ -516,7 +527,7 @@ const EnterpriseManager: React.FC = () => {
           </div>
         );
 
-      case 3: // Audit & Governance
+      case 'audit': // Audit & Governance
         return (
           <div>
             <div className="flex justify-between items-center mb-4">
@@ -622,7 +633,7 @@ const EnterpriseManager: React.FC = () => {
           </div>
         );
 
-      case 4: // Performance Optimization
+      case 'performance': // Performance Optimization
         return (
           <div>
             <h2 className="text-xl font-semibold mb-4">Performance Metrics</h2>
@@ -705,40 +716,27 @@ const EnterpriseManager: React.FC = () => {
       )}
 
       {/* Tabs */}
-      <div className="tabs tabs-boxed mb-6 bg-base-200 p-1" role="tablist" aria-label="Enterprise Manager sections">
-        <a className={`tab ${activeTab === 0 ? 'tab-active' : ''}`} onClick={() => setActiveTab(0)} role="tab" aria-selected={activeTab === 0}>
-          <ShieldCheck className="w-4 h-4 mr-2" />
-          Security & Compliance
-        </a>
-        <a className={`tab ${activeTab === 1 ? 'tab-active' : ''}`} onClick={() => setActiveTab(1)} role="tab" aria-selected={activeTab === 1}>
-          <Cloud className="w-4 h-4 mr-2" />
-          Multi-Cloud
-        </a>
-        <a className={`tab ${activeTab === 2 ? 'tab-active' : ''}`} onClick={() => setActiveTab(2)} role="tab" aria-selected={activeTab === 2}>
-          <Puzzle className="w-4 h-4 mr-2" />
-          Integrations
-        </a>
-        <a className={`tab ${activeTab === 3 ? 'tab-active' : ''}`} onClick={() => setActiveTab(3)} role="tab" aria-selected={activeTab === 3}>
-          <Scale className="w-4 h-4 mr-2" />
-          Audit & Governance
-        </a>
-        <a className={`tab ${activeTab === 4 ? 'tab-active' : ''}`} onClick={() => setActiveTab(4)} role="tab" aria-selected={activeTab === 4}>
-          <BarChart3 className="w-4 h-4 mr-2" />
-          Performance
-        </a>
-      </div>
+      <Tabs
+        tabs={enterpriseTabs}
+        activeTab={activeTab}
+        onChange={setActiveTab}
+        variant="boxed"
+        className="mb-6"
+      />
 
       {/* Tab Content */}
       {renderTabContent()}
 
       {/* Add Integration Dialog */}
-      <dialog
-        className={`modal ${addIntegrationDialog ? 'modal-open' : ''}`}
-        aria-modal="true"
-        aria-labelledby="add-integration-dialog-title"
+      <Modal
+        isOpen={addIntegrationDialog}
+        onClose={() => setAddIntegrationDialog(false)}
+        title="Add Integration"
+        actions={[
+          { label: 'Cancel', onClick: () => setAddIntegrationDialog(false), variant: 'ghost' },
+          { label: loading ? 'Adding...' : 'Add Integration', onClick: handleAddIntegration, variant: 'primary', disabled: loading || !integrationForm.name.trim() || !integrationForm.provider.trim(), loading },
+        ]}
       >
-        <div className="modal-box">
-          <h3 id="add-integration-dialog-title" className="font-bold text-lg mb-4">Add Integration</h3>
           <div className="form-control w-full mb-4">
             <label htmlFor="integration-name" className="label">
               <span className="label-text">Integration Name</span>
@@ -787,32 +785,18 @@ const EnterpriseManager: React.FC = () => {
               }
             />
           </div>
-          <div className="modal-action">
-            <button className="btn" onClick={() => setAddIntegrationDialog(false)}>
-              Cancel
-            </button>
-            <button
-              className="btn btn-primary"
-              onClick={handleAddIntegration}
-              disabled={loading || !integrationForm.name.trim() || !integrationForm.provider.trim()}
-            >
-              {loading ? 'Adding...' : 'Add Integration'}
-            </button>
-          </div>
-        </div>
-        <form method="dialog" className="modal-backdrop">
-          <button onClick={() => setAddIntegrationDialog(false)} aria-label="Close add integration dialog">close</button>
-        </form>
-      </dialog>
+      </Modal>
 
       {/* Add Cloud Provider Dialog */}
-      <dialog
-        className={`modal ${addCloudProviderDialog ? 'modal-open' : ''}`}
-        aria-modal="true"
-        aria-labelledby="add-cloud-provider-dialog-title"
+      <Modal
+        isOpen={addCloudProviderDialog}
+        onClose={() => setAddCloudProviderDialog(false)}
+        title="Add Cloud Provider"
+        actions={[
+          { label: 'Cancel', onClick: () => setAddCloudProviderDialog(false), variant: 'ghost' },
+          { label: loading ? 'Adding...' : 'Add Provider', onClick: handleAddCloudProvider, variant: 'primary', disabled: loading || !cloudForm.name.trim() || !cloudForm.region.trim(), loading },
+        ]}
       >
-        <div className="modal-box">
-          <h3 id="add-cloud-provider-dialog-title" className="font-bold text-lg mb-4">Add Cloud Provider</h3>
           <div className="form-control w-full mb-4">
             <label htmlFor="cloud-provider-name" className="label">
               <span className="label-text">Provider Name</span>
@@ -856,23 +840,7 @@ const EnterpriseManager: React.FC = () => {
               onChange={(e) => setCloudForm((prev) => ({ ...prev, region: e.target.value }))}
             />
           </div>
-          <div className="modal-action">
-            <button className="btn" onClick={() => setAddCloudProviderDialog(false)}>
-              Cancel
-            </button>
-            <button
-              className="btn btn-primary"
-              onClick={handleAddCloudProvider}
-              disabled={loading || !cloudForm.name.trim() || !cloudForm.region.trim()}
-            >
-              {loading ? 'Adding...' : 'Add Provider'}
-            </button>
-          </div>
-        </div>
-        <form method="dialog" className="modal-backdrop">
-          <button onClick={() => setAddCloudProviderDialog(false)} aria-label="Close add cloud provider dialog">close</button>
-        </form>
-      </dialog>
+      </Modal>
     </div>
   );
 };

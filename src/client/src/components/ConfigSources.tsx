@@ -5,6 +5,8 @@ import Badge from './DaisyUI/Badge';
 import Button from './DaisyUI/Button';
 import { SkeletonList } from './DaisyUI/Skeleton';
 import Modal from './DaisyUI/Modal';
+import Tabs from './DaisyUI/Tabs';
+import type { TabItem } from './DaisyUI/Tabs';
 import Accordion from './DaisyUI/Accordion';
 import { Alert } from './DaisyUI/Alert';
 import DataTable from './DaisyUI/DataTable';
@@ -21,8 +23,8 @@ import type { ConfigSourcesResponse } from '../services/api';
 
 interface TabPanelProps {
   children?: React.ReactNode;
-  index: number;
-  value: number;
+  index: string;
+  value: string;
 }
 
 const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => (
@@ -31,8 +33,14 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => (
   </div>
 );
 
+const configSourceTabs: TabItem[] = [
+  { key: 'env', label: 'Environment Variables' },
+  { key: 'files', label: 'Config Files' },
+  { key: 'overrides', label: 'Overrides' },
+];
+
 const ConfigSources: React.FC = () => {
-  const [tabValue, setTabValue] = useState(0);
+  const [tabValue, setTabValue] = useState('env');
   const [configSources, setConfigSources] = useState<ConfigSourcesResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -236,28 +244,15 @@ const ConfigSources: React.FC = () => {
         </p>
 
         {/* DaisyUI Tabs */}
-        <div className="tabs tabs-boxed mb-4">
-          <button
-            className={`tab ${tabValue === 0 ? 'tab-active' : ''}`}
-            onClick={() => setTabValue(0)}
-          >
-            Environment Variables
-          </button>
-          <button
-            className={`tab ${tabValue === 1 ? 'tab-active' : ''}`}
-            onClick={() => setTabValue(1)}
-          >
-            Config Files
-          </button>
-          <button
-            className={`tab ${tabValue === 2 ? 'tab-active' : ''}`}
-            onClick={() => setTabValue(2)}
-          >
-            Overrides
-          </button>
-        </div>
+        <Tabs
+          tabs={configSourceTabs}
+          activeTab={tabValue}
+          onChange={setTabValue}
+          variant="boxed"
+          className="mb-4"
+        />
 
-        <TabPanel value={tabValue} index={0}>
+        <TabPanel value={tabValue} index="env">
           {envVarData.length > 0 ? (
             <DataTable columns={envVarColumns} data={envVarData} />
           ) : (
@@ -265,7 +260,7 @@ const ConfigSources: React.FC = () => {
           )}
         </TabPanel>
 
-        <TabPanel value={tabValue} index={1}>
+        <TabPanel value={tabValue} index="files">
           {configFileData.length > 0 ? (
             <DataTable columns={configFileColumns} data={configFileData} />
           ) : (
@@ -273,7 +268,7 @@ const ConfigSources: React.FC = () => {
           )}
         </TabPanel>
 
-        <TabPanel value={tabValue} index={2}>
+        <TabPanel value={tabValue} index="overrides">
           {overrideData.length > 0 ? (
             <DataTable columns={overrideColumns} data={overrideData} />
           ) : (

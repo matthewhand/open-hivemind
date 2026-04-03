@@ -4,6 +4,7 @@ import {
 } from 'lucide-react';
 import type { BotConfig } from '../../types/bot';
 import Button from '../../components/DaisyUI/Button';
+import Tabs from '../../components/DaisyUI/Tabs';
 import ConfigurationValidation from '../../components/ConfigurationValidation';
 
 interface BotPreviewSidebarProps {
@@ -133,33 +134,18 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
           </div>
 
           {/* Tabs Navigation */}
-          <div className="tabs tabs-boxed bg-base-200/50 p-1 flex-nowrap" role="tablist">
-            <button
-              className={`tab tab-sm flex-1 gap-2 ${
-                previewTab === 'activity' ? 'tab-active' : ''
-              }`}
-              onClick={() => setPreviewTab('activity')}
-              role="tab"
-            >
-              <Activity className="w-3 h-3" />{' '}
-              <span className="text-[10px] uppercase font-bold">Activity</span>
-            </button>
-            <button
-              className={`tab tab-sm flex-1 gap-2 ${previewTab === 'chat' ? 'tab-active' : ''}`}
-              onClick={() => setPreviewTab('chat')}
-              role="tab"
-            >
-              <MessageSquare className="w-3 h-3" />{' '}
-              <span className="text-[10px] uppercase font-bold">Chat</span>
-            </button>
-            <button
-              className={`tab tab-sm flex-1 gap-2 ${previewTab === 'validation' ? 'tab-active' : ''}`}
-              onClick={() => setPreviewTab('validation')}
-              role="tab"
-            >
-              <ShieldCheck className="w-3 h-3" /> <span className="text-[10px] uppercase font-bold">Validation</span>
-            </button>
-          </div>
+          <Tabs
+            tabs={[
+              { key: 'activity', label: <span className="text-[10px] uppercase font-bold">Activity</span>, icon: <Activity className="w-3 h-3" /> },
+              { key: 'chat', label: <span className="text-[10px] uppercase font-bold">Chat</span>, icon: <MessageSquare className="w-3 h-3" /> },
+              { key: 'validation', label: <span className="text-[10px] uppercase font-bold">Validation</span>, icon: <ShieldCheck className="w-3 h-3" /> },
+            ]}
+            activeTab={previewTab}
+            onChange={(key) => setPreviewTab(key as 'activity' | 'chat' | 'validation')}
+            variant="boxed"
+            size="sm"
+            className="flex-nowrap"
+          />
 
           {/* Activity Log Panel */}
           {previewTab === 'activity' && (
