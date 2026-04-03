@@ -5,6 +5,7 @@ import {
   XCircleIcon,
   EyeIcon,
 } from '@heroicons/react/24/outline';
+import Button from './DaisyUI/Button';
 
 interface ToolResult {
   timestamp: string;
@@ -45,9 +46,9 @@ const ToolResultHistory: React.FC<ToolResultHistoryProps> = ({
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-bold">Recent Executions</h3>
         {onClear && (
-          <button className="btn btn-sm btn-ghost" onClick={onClear}>
+          <Button variant="ghost" size="sm" onClick={onClear}>
             Clear History
-          </button>
+          </Button>
         )}
       </div>
 

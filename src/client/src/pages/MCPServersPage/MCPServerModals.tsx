@@ -1,5 +1,6 @@
 import React from 'react';
 import { CheckCircle, AlertCircle, Wrench } from 'lucide-react';
+import Button from '../../components/DaisyUI/Button';
 import Modal, { ConfirmModal } from '../../components/DaisyUI/Modal';
 import ModalForm from '../../components/DaisyUI/ModalForm';
 
@@ -109,9 +110,9 @@ export const MCPServerModals: React.FC<MCPServerModalsProps> = ({
           )}
         </div>
         <div className="modal-action">
-          <button className="btn" onClick={() => setToolsModalOpen(false)}>
+          <Button variant="primary" onClick={() => setToolsModalOpen(false)}>
             Close
-          </button>
+          </Button>
         </div>
       </Modal>
 
@@ -201,11 +202,12 @@ export const MCPServerModals: React.FC<MCPServerModalsProps> = ({
         </div>
 
         <div className="modal-action">
-          <button className="btn btn-ghost" onClick={() => setDialogOpen(false)}>
+          <Button variant="ghost" onClick={() => setDialogOpen(false)}>
             Cancel
-          </button>
-          <button
-            className="btn btn-outline"
+          </Button>
+          <Button
+            variant="primary"
+            buttonStyle="outline"
             onClick={handleTestConnection}
             disabled={isTesting || !selectedServer?.url}
           >
@@ -214,10 +216,10 @@ export const MCPServerModals: React.FC<MCPServerModalsProps> = ({
             ) : (
               'Test'
             )}
-          </button>
-          <button className="btn btn-primary" onClick={handleSaveServer}>
+          </Button>
+          <Button variant="primary" onClick={handleSaveServer}>
             Save
-          </button>
+          </Button>
         </div>
       </Modal>
 

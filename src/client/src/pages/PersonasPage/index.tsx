@@ -1,6 +1,7 @@
 import { Filter, Plus, Users } from 'lucide-react';
 import React, { useState } from 'react';
 import { Alert } from '../../components/DaisyUI/Alert';
+import Button from '../../components/DaisyUI/Button';
 import PageHeader from '../../components/DaisyUI/PageHeader';
 import { SkeletonPage } from '../../components/DaisyUI/Skeleton';
 import { useSuccessToast, useErrorToast, useInfoToast } from '../../components/DaisyUI/ToastNotification';
@@ -82,9 +83,9 @@ const PersonasPage: React.FC = () => {
         description="Create and manage specialized identities for your AI agents."
         icon={<Users className="w-8 h-8 text-primary" />}
         actions={
-          <button className="btn btn-primary" onClick={openCreateModal}>
+          <Button variant="primary" onClick={openCreateModal}>
             <Plus className="w-4 h-4 mr-2" /> Create Persona
-          </button>
+          </Button>
         }
       />
 
@@ -100,9 +101,9 @@ const PersonasPage: React.FC = () => {
             <div className="flex gap-2">
               <div className="join">
                 <div className="tooltip" data-tip="Filter by Category">
-                  <button className="btn btn-square btn-sm join-item pointer-events-none">
+                  <Button variant="primary" size="sm" className="btn-square join-item pointer-events-none">
                     <Filter className="w-4 h-4" />
-                  </button>
+                  </Button>
                 </div>
                 <select
                   className="select select-sm select-bordered join-item"

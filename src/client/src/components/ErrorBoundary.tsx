@@ -1,5 +1,6 @@
 import React from 'react';
 import Debug from 'debug';
+import Button from './DaisyUI/Button';
 const debug = Debug('app:client:components:ErrorBoundary');
 
 interface ErrorBoundaryProps {
@@ -106,9 +107,9 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
                 </div>
               )}
               <div className="card-actions mt-6 gap-3">
-                <button className="btn btn-primary" onClick={this.handleRetry}>
+                <Button variant="primary" onClick={this.handleRetry}>
                   Retry
-                </button>
+                </Button>
                 {this.renderHomeLink()}
               </div>
             </div>

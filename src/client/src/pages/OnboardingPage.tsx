@@ -13,6 +13,7 @@ import Button from '../components/DaisyUI/Button';
 import FormField from '../components/DaisyUI/FormField';
 import ProgressBar from '../components/DaisyUI/ProgressBar';
 import StepWizard from '../components/DaisyUI/StepWizard';
+import { Alert } from '../components/DaisyUI/Alert';
 import { apiService } from '../services/api';
 
 // ---------------------------------------------------------------------------
@@ -127,13 +128,13 @@ const ConfigureLlmStep: React.FC<ConfigureLlmStepProps> = ({ form, llmProfiles }
       </div>
 
       {llmProfiles.length > 0 && (
-        <div className="alert alert-info">
+        <Alert status="info">
           <Cpu className="w-5 h-5" />
           <span>
             You have {llmProfiles.length} LLM profile(s) already configured.
             You can skip this step if you want to use existing profiles.
           </span>
-        </div>
+        </Alert>
       )}
 
       <FormField label="LLM Provider" error={errors.llmProvider}>
@@ -576,10 +577,9 @@ const OnboardingPage: React.FC = () => {
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body min-h-[400px]">
             {error && (
-              <div className="alert alert-error mb-4">
+              <Alert status="error" className="mb-4" onClose={() => setError(null)}>
                 <span>{error}</span>
-                <button className="btn btn-ghost btn-xs" onClick={() => setError(null)}>Dismiss</button>
-              </div>
+              </Alert>
             )}
 
             {step === 1 && <WelcomeStep />}

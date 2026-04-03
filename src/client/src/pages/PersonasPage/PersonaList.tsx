@@ -1,6 +1,7 @@
 import { Trash2 } from 'lucide-react';
 import React from 'react';
 import BulkActionBar from '../../components/BulkActionBar';
+import Button from '../../components/DaisyUI/Button';
 import { type Persona } from './hooks/usePersonasData';
 
 interface PersonaListProps {
@@ -74,9 +75,9 @@ export const PersonaList: React.FC<PersonaListProps> = ({
               <div className="card-body p-4 sm:p-5">
                 <h3 className="card-title text-lg font-bold">{persona.name}</h3>
                 <p className="text-sm text-base-content/70 line-clamp-2">{persona.description}</p>
-                <button className="btn btn-primary btn-sm" onClick={() => openEditModal(persona)}>
+                <Button variant="primary" size="sm" onClick={() => openEditModal(persona)}>
                   Edit
-                </button>
+                </Button>
               </div>
             </div>
           </div>
