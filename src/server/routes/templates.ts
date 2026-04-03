@@ -2,6 +2,7 @@ import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import { ErrorUtils } from '../../common/ErrorUtils';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 import {
   ApplyTemplateSchema,
   CreateTemplateSchema,
@@ -10,7 +11,6 @@ import {
 import { validateRequest } from '../../validation/validateRequest';
 import { BotConfigService } from '../services/BotConfigService';
 import { ConfigurationTemplateService } from '../services/ConfigurationTemplateService';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const router = Router();
 const debug = Debug('app:routes:templates');
@@ -270,34 +270,38 @@ router.post(
  *       200:
  *         description: Created template
  */
-router.post('/', validateRequest(CreateTemplateSchema), asyncErrorHandler(async (req, res) => {
-  try {
-    const templateService = ConfigurationTemplateService.getInstance();
-    const { name, description, category, tags, config } = req.body;
+router.post(
+  '/',
+  validateRequest(CreateTemplateSchema),
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const templateService = ConfigurationTemplateService.getInstance();
+      const { name, description, category, tags, config } = req.body;
 
-    const template = await templateService.createTemplate({
-      name,
-      description,
-      category,
-      tags: tags || [],
-      config,
-    });
+      const template = await templateService.createTemplate({
+        name,
+        description,
+        category,
+        tags: tags || [],
+        config,
+      });
 
-    return res.json({
-      success: true,
-      data: { template },
-      message: 'Template created successfully',
-    });
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
-    debug('Error creating template:', hivemindError);
-    return res.status(400).json({
-      success: false,
-      error: 'Failed to create template',
-      message: hivemindError.message || 'An error occurred while creating template',
-    });
-  }
-}));
+      return res.json({
+        success: true,
+        data: { template },
+        message: 'Template created successfully',
+      });
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      debug('Error creating template:', hivemindError);
+      return res.status(400).json({
+        success: false,
+        error: 'Failed to create template',
+        message: hivemindError.message || 'An error occurred while creating template',
+      });
+    }
+  })
+);
 
 /**
  * @openapi
