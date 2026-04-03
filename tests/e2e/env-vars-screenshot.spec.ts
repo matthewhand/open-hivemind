@@ -32,5 +32,5 @@ test('Verify environment variable completeness in env sample', async ({ page }) 
     await firstMatch.scrollIntoViewIfNeeded();
   }
 
-  await page.screenshot({ path: 'docs/screenshots/env-sample-completeness.png', fullPage: false });
+  await page.screenshot({ path: 'docs/screenshots/env-sample-completeness.png', fullPage: true });
 });
