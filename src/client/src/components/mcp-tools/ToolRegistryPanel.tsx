@@ -10,6 +10,7 @@ import { ToolFilters } from '../tools/ToolFilters';
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid';
 import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
 import { SkeletonGrid } from '../DaisyUI/Skeleton';
+import Tabs from '../DaisyUI/Tabs';
 
 interface ToolRegistryPanelProps {
   tools: MCPTool[];
@@ -260,26 +261,17 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
       )}
 
       {/* Filter Tabs */}
-      <div className="tabs tabs-boxed mb-4 bg-base-200">
-        <button
-          className={`tab ${viewFilter === 'all' ? 'tab-active' : ''}`}
-          onClick={() => setViewFilter('all')}
-        >
-          All Tools
-        </button>
-        <button
-          className={`tab ${viewFilter === 'favorites' ? 'tab-active' : ''}`}
-          onClick={() => setViewFilter('favorites')}
-        >
-          Favorites {favorites.length > 0 && `(${favorites.length})`}
-        </button>
-        <button
-          className={`tab ${viewFilter === 'recent' ? 'tab-active' : ''}`}
-          onClick={() => setViewFilter('recent')}
-        >
-          Recently Used {recentTools.length > 0 && `(${recentTools.length})`}
-        </button>
-      </div>
+      <Tabs
+        tabs={[
+          { key: 'all', label: 'All Tools' },
+          { key: 'favorites', label: `Favorites${favorites.length > 0 ? ` (${favorites.length})` : ''}` },
+          { key: 'recent', label: `Recently Used${recentTools.length > 0 ? ` (${recentTools.length})` : ''}` },
+        ]}
+        activeTab={viewFilter}
+        onChange={setViewFilter}
+        variant="boxed"
+        className="mb-4"
+      />
 
       {/* Filters and Sort */}
       <ToolFilters

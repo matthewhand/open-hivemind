@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import Button from '../components/DaisyUI/Button';
+import React, { useState, useMemo } from 'react';
+import Modal from '../components/DaisyUI/Modal';
+import Tabs from '../components/DaisyUI/Tabs';
+import type { TabItem } from '../components/DaisyUI/Tabs';
 import { ButtonsDemo } from '../components/DaisyUI/demos/ButtonsDemo';
 import { AnimationShowcaseDemo } from '../components/DaisyUI/demos/AnimationShowcaseDemo';
 import { InputDemo, SelectDemo, CheckboxDemo, TextareaDemo, FileInputDemo } from '../components/DaisyUI/demos/FormsDemo';
@@ -48,6 +50,12 @@ const DaisyUIShowcase: React.FC = () => {
     'chat', 'timeline', 'carousel', 'toast', 'animations',
   ];
 
+  const componentTabs: TabItem[] = useMemo(() =>
+    components.map(comp => ({
+      key: comp,
+      label: comp.charAt(0).toUpperCase() + comp.slice(1),
+    })), []);
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -62,17 +70,13 @@ const DaisyUIShowcase: React.FC = () => {
       </div>
 
       {/* Component Navigation */}
-      <div className="tabs tabs-boxed mb-6 flex-wrap">
-        {components.map(comp => (
-          <button
-            key={comp}
-            className={`tab ${activeTab === comp ? 'tab-active' : ''}`}
-            onClick={() => setActiveTab(comp)}
-          >
-            {comp.charAt(0).toUpperCase() + comp.slice(1)}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        tabs={componentTabs}
+        activeTab={activeTab}
+        onChange={setActiveTab}
+        variant="boxed"
+        className="mb-6 flex-wrap"
+      />
 
       {/* Component Demos */}
       {activeTab === 'button' && <ButtonsDemo />}
@@ -108,20 +112,14 @@ const DaisyUIShowcase: React.FC = () => {
       {activeTab === 'animations' && <AnimationShowcaseDemo />}
 
       {/* Modal */}
-      {modalOpen && (
-        <dialog className="modal modal-open">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg">Hello!</h3>
-            <p className="py-4">This is a DaisyUI modal dialog.</p>
-            <div className="modal-action">
-              <Button variant="primary" onClick={() => setModalOpen(false)}>Close</Button>
-            </div>
-          </div>
-          <form method="dialog" className="modal-backdrop" onClick={() => setModalOpen(false)}>
-            <button>close</button>
-          </form>
-        </dialog>
-      )}
+      <Modal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title="Hello!"
+        actions={[{ label: 'Close', onClick: () => setModalOpen(false), variant: 'primary' }]}
+      >
+        <p className="py-4">This is a DaisyUI modal dialog.</p>
+      </Modal>
     </div>
   );
 };
