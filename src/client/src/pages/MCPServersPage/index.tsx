@@ -156,7 +156,7 @@ const MCPServersPage: React.FC = () => {
       )}
       {!error && showTrustIndicator && cautionRepositories.length > 0 && (
         <div className="mb-6">
-          <Alert type="warning" title="Security Notice" className="items-start">
+          <Alert status="warning" message="Security Notice" className="items-start">
             <div className="space-y-2">
               <p className="font-medium">
                 Some repositories are marked for caution before production use.

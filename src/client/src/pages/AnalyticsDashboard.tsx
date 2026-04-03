@@ -117,7 +117,7 @@ const AnalyticsDashboard: React.FC = () => {
             <h1 className="text-4xl font-bold mb-2 flex items-center gap-3">
               Analytics Dashboard
             </h1>
-            <p className="text-lg text-neutral-content/70">
+            <p className="text-lg text-base-content/70">
               Usage metrics, user engagement, and performance analytics.
             </p>
           </div>
@@ -196,14 +196,14 @@ const AnalyticsDashboard: React.FC = () => {
                   key: 'successRate' as any,
                   title: 'Success %',
                   render: (value: string) => (
-                    <span className={`text-${parseFloat(value) > 98 ? 'success' : 'warning'}`}>
+                    <span className={parseFloat(value) > 98 ? 'text-success' : 'text-warning'}>
                       {value}%
                     </span>
                   ),
                 },
               ]}
               rowKey={(bot: any) => bot.name}
-              emptyState={<p className="text-center text-neutral-content/50 py-4">No bot activity found</p>}
+              emptyState={<p className="text-center text-base-content/50 py-4">No bot activity found</p>}
             />
           </div>
         </div>
@@ -226,7 +226,7 @@ const AnalyticsDashboard: React.FC = () => {
                       <span className="text-xs opacity-70">
                         {event.messageType === 'incoming' ? `User: ${redactString(event.userId)}` : 'Response sent'}
                       </span>
-                      <span className="text-xs text-neutral-content/60">
+                      <span className="text-xs text-base-content/60">
                         {new Date(event.timestamp).toLocaleTimeString()}
                       </span>
                     </div>
@@ -234,7 +234,7 @@ const AnalyticsDashboard: React.FC = () => {
                 </div>
               ))}
               {validMessageFlow.length === 0 && (
-                <p className="text-center text-neutral-content/50 py-4">No recent activity</p>
+                <p className="text-center text-base-content/50 py-4">No recent activity</p>
               )}
             </div>
           </div>

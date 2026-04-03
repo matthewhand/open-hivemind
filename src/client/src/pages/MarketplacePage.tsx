@@ -61,6 +61,14 @@ const TYPE_COLORS = {
   tool: 'info',
 } as const;
 
+// Static Tailwind class mappings (dynamic construction like `text-${color}` is not JIT-safe)
+const TYPE_COLOR_CLASSES: Record<string, { text: string; bg: string }> = {
+  secondary: { text: 'text-secondary', bg: 'bg-secondary/10' },
+  primary: { text: 'text-primary', bg: 'bg-primary/10' },
+  accent: { text: 'text-accent', bg: 'bg-accent/10' },
+  info: { text: 'text-info', bg: 'bg-info/10' },
+};
+
 const STATUS_BADGES = {
   'built-in': { label: 'Built-in', color: 'neutral' as const },
   'installed': { label: 'Installed', color: 'success' as const },
@@ -342,8 +350,8 @@ const MarketplacePage: React.FC = () => {
                 <Card.Body className="p-4">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <div className={`p-2 rounded-lg bg-${color}/10`}>
-                        <Icon className={`w-5 h-5 text-${color}`} />
+                      <div className={`p-2 rounded-lg ${TYPE_COLOR_CLASSES[color]?.bg ?? ''}`}>
+                        <Icon className={`w-5 h-5 ${TYPE_COLOR_CLASSES[color]?.text ?? ''}`} />
                       </div>
                       <div>
                         <h3 className="font-semibold">{pkg.displayName}</h3>
