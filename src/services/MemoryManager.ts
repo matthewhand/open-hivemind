@@ -98,7 +98,7 @@ export class MemoryManager {
   /**
    * Resolve (and cache) a memory provider from a profile key.
    */
-  private resolveProvider(profileKey: string): IMemoryProvider | null {
+  private async resolveProvider(profileKey: string): Promise<IMemoryProvider | null> {
     // Return cached provider.
     if (this.providers.has(profileKey)) {
       return this.providers.get(profileKey)!;
