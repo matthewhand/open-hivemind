@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Line, Bar, Area, Pie, LineChart, BarChart, AreaChart, PieChart, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
+import { Alert } from '../DaisyUI/Alert';
 
 export interface MetricData {
   timestamp: string;
@@ -182,12 +183,7 @@ const MetricChart: React.FC<MetricChartProps> = ({
         </div>
 
         {error && (
-          <div className="alert alert-error mb-4">
-            <svg className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>{error}</span>
-          </div>
+          <Alert status="error" className="mb-4" message={error} />
         )}
 
         <div className="w-full overflow-x-auto">

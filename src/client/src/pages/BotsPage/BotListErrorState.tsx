@@ -1,6 +1,7 @@
 import React from 'react';
 import { AlertCircle, RefreshCw, AlertTriangle, Bot } from 'lucide-react';
 import EmptyState from '../../components/DaisyUI/EmptyState';
+import { Alert } from '../../components/DaisyUI/Alert';
 
 interface BotListErrorStateProps {
   error: string | null;
@@ -21,11 +22,11 @@ export const BotListErrorState: React.FC<BotListErrorStateProps> = ({
 }) => {
   if (error && botsCount > 0) {
     return (
-      <div className="alert alert-error shadow-sm mb-4">
+      <Alert status="error" className="shadow-sm mb-4">
         <AlertCircle className="w-5 h-5" />
         <span>{error}</span>
         <button className="btn btn-ghost btn-xs" onClick={fetchBots}>Try Again</button>
-      </div>
+      </Alert>
     );
   }
 

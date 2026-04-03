@@ -149,10 +149,10 @@ const MCPServersPage: React.FC = () => {
         </SearchFilterBar>
       </div>
       {error && (
-        <div className="alert alert-error mb-6">
+        <Alert status="error" className="mb-6">
           <ShieldAlert className="w-6 h-6" />
           <span>{error}</span>
-        </div>
+        </Alert>
       )}
       {!error && showTrustIndicator && cautionRepositories.length > 0 && (
         <div className="mb-6">

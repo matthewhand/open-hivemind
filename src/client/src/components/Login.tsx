@@ -56,10 +56,10 @@ const Login: React.FC = () => {
           <h2 className="text-xl text-center mb-6">Sign In</h2>
 
           {isServerless && (
-            <div className="alert alert-warning mb-6 text-sm py-2">
+            <Alert status="warning" className="mb-6 text-sm py-2">
               <ExclamationTriangleIcon className="w-5 h-5 flex-shrink-0" />
               <span>Serverless Mode: Use ADMIN_PASSWORD or check logs for generated credentials.</span>
-            </div>
+            </Alert>
           )}
 
           <div aria-live="assertive" aria-atomic="true">

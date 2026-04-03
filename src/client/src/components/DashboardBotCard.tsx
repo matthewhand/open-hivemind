@@ -3,6 +3,7 @@ import Badge from './DaisyUI/Badge';
 import Card from './DaisyUI/Card';
 import Rating from './DaisyUI/Rating';
 import Button from './DaisyUI/Button';
+import { Alert } from './DaisyUI/Alert';
 import Dropdown from './DaisyUI/Dropdown';
 import type { Bot, StatusResponse } from '../services/api';
 
@@ -92,9 +93,7 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
         </div>
 
         {errorCount > 0 && (
-          <div className="alert alert-error mb-4">
-            <span>⚠️ {errorCount} errors detected</span>
-          </div>
+          <Alert status="error" className="mb-4" message={`${errorCount} errors detected`} />
         )}
 
         {/* Rating */}

@@ -3,6 +3,7 @@ import { Download, Upload, FileJson, AlertCircle, CheckCircle, X, Settings, Lock
 import PageHeader from '../components/DaisyUI/PageHeader';
 import FileUpload from '../components/DaisyUI/FileUpload';
 import Modal from '../components/DaisyUI/Modal';
+import { Alert } from '../components/DaisyUI/Alert';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import { apiService } from '../services/api';
 import { useQuery } from '@tanstack/react-query';
@@ -475,7 +476,7 @@ const ImportExportPage: React.FC = () => {
                 )}
 
                 {importResult && (
-                  <div className="alert alert-info mt-4">
+                  <Alert status="info" className="mt-4">
                     <FileJson className="w-5 h-5" />
                     <div className="flex-1">
                       <h4 className="font-bold">Import Results</h4>
@@ -505,7 +506,7 @@ const ImportExportPage: React.FC = () => {
                         )}
                       </div>
                     </div>
-                  </div>
+                  </Alert>
                 )}
               </div>
             )}
@@ -536,10 +537,10 @@ const ImportExportPage: React.FC = () => {
                 <span className="loading loading-spinner loading-lg"></span>
               </div>
             ) : bots.length === 0 ? (
-              <div className="alert alert-info">
+              <Alert status="info">
                 <AlertCircle className="w-5 h-5" />
                 <span>No configurations available to export</span>
-              </div>
+              </Alert>
             ) : (
               bots.map((bot: any) => (
                 <div

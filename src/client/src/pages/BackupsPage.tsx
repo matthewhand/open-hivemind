@@ -25,6 +25,7 @@ import { apiService } from '../services/api';
 import DataTable from '../components/DaisyUI/DataTable';
 import type { RDVColumn, RowAction } from '../components/DaisyUI/DataTable';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
+import { Alert } from '../components/DaisyUI/Alert';
 
 interface BackupMetadata {
   id: string;
@@ -514,7 +515,7 @@ const BackupsPage: React.FC = () => {
                 required={encryptBackup}
                 disabled={actionLoading === 'create'}
               />
-              <div className="alert alert-warning text-xs">
+              <Alert status="warning" className="text-xs">
                 <AlertTriangle className="w-4 h-4" />
                 <span>Store this key securely. You'll need it to restore this backup.</span>
               </div>
@@ -556,7 +557,7 @@ const BackupsPage: React.FC = () => {
       >
         {selectedBackupForRestore && (
           <div className="space-y-4">
-            <div className="alert alert-warning">
+            <Alert status="warning">
               <AlertTriangle className="w-5 h-5" />
               <div>
                 <p className="font-bold">Warning</p>

@@ -14,6 +14,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import DataTable from './DaisyUI/DataTable';
+import { Alert } from './DaisyUI/Alert';
 import type { RDVColumn } from './DaisyUI/DataTable';
 
 interface ComplianceRule {
@@ -412,10 +413,10 @@ const EnterpriseManager: React.FC = () => {
                     </div>
                     <p className="text-sm mb-2">{rule.description}</p>
                     {rule.remediation && (
-                      <div className="alert alert-warning text-sm py-2">
+                      <Alert status="warning" className="text-sm py-2">
                         <AlertTriangle className="w-4 h-4" />
                         <span>{rule.remediation}</span>
-                      </div>
+                      </Alert>
                     )}
                     <div className="text-xs text-base-content/50 mt-2">
                       Last checked: {new Date(rule.lastChecked).toLocaleString()}
@@ -677,31 +678,17 @@ const EnterpriseManager: React.FC = () => {
 
       {/* Alerts */}
       {error && (
-        <div className="alert alert-error mb-4">
+        <Alert status="error" className="mb-4" onClose={() => setError(null)}>
           <AlertCircle className="w-6 h-6" />
           <span>{error}</span>
-          <button
-            onClick={() => setError(null)}
-            className="btn btn-sm btn-ghost"
-            aria-label="Close error message"
-          >
-            ✕
-          </button>
-        </div>
+        </Alert>
       )}
 
       {success && (
-        <div className="alert alert-success mb-4">
+        <Alert status="success" className="mb-4" onClose={() => setSuccess(null)}>
           <CheckCircle2 className="w-6 h-6" />
           <span>{success}</span>
-          <button
-            onClick={() => setSuccess(null)}
-            className="btn btn-sm btn-ghost"
-            aria-label="Close success message"
-          >
-            ✕
-          </button>
-        </div>
+        </Alert>
       )}
 
       {/* Tabs */}

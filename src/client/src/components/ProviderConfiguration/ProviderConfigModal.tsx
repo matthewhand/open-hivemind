@@ -472,11 +472,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
             selectedType === 'openai' &&
             (formData.modelType || 'chat') === 'embedding' &&
             openAiEmbeddingModels.length > 0 && (
-              <div className="alert alert-info mb-4 text-sm">
-                <span>
-                  Select an embedding-capable OpenAI provider first, then choose one of the configured embedding models.
-                </span>
-              </div>
+              <Alert status="info" className="mb-4 text-sm" message="Select an embedding-capable OpenAI provider first, then choose one of the configured embedding models." />
             )}
 
           {/* Provider-specific fields */}

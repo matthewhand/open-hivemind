@@ -199,16 +199,9 @@ const Dashboard: React.FC = () => {
       {/* Toast Notification */}
       {showToast && (
         <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">
-          <div className="alert alert-success">
+          <Alert status="success" onClose={() => setShowToast(false)}>
             <span>{toastMessage}</span>
-            <button
-              className="btn btn-sm btn-ghost"
-              onClick={() => setShowToast(false)}
-              aria-label="Close notification"
-            >
-              ✕
-            </button>
-          </div>
+          </Alert>
         </div>
       )}
 

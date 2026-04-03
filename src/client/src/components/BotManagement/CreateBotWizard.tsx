@@ -6,6 +6,7 @@ import Modal from '../DaisyUI/Modal';
 import Radio from '../DaisyUI/Radio';
 import { useConfigDiff } from '../../hooks/useConfigDiff';
 import { ConfigDiffViewer, ConfigDiffConfirmDialog } from '../ConfigDiffViewer';
+import { Alert } from '../DaisyUI/Alert';
 import { apiService } from '../../services/api';
 import Debug from 'debug';
 import Toggle from '../DaisyUI/Toggle';
@@ -220,7 +221,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
         const { errors } = validateStep(stepNum);
         if (errors.length === 0) return null;
         return (
-            <div className="alert alert-warning mt-4 shadow-lg">
+            <Alert status="warning" className="mt-4 shadow-lg">
                 <AlertCircle className="w-5 h-5" />
                 <div className="flex flex-col">
                     <span className="font-semibold">Please fix the following before continuing:</span>
@@ -230,7 +231,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                         ))}
                     </ul>
                 </div>
-            </div>
+            </Alert>
         );
     };
 
@@ -496,9 +497,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
         <Modal isOpen={isOpen} onClose={handleCancel} title="Create New Bot" size="lg">
             <div className="flex flex-col h-full max-h-[70vh]">
                 {error && (
-                    <div className="alert alert-error mb-4">
-                        <span>{error}</span>
-                    </div>
+                    <Alert status="error" className="mb-4" message={error} />
                 )}
 
                 <div className="flex-1 overflow-y-auto px-1 pb-16">

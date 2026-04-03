@@ -1,6 +1,7 @@
 import React from 'react';
 import { MCPTool } from './types';
 import { CodeBracketIcon, ListBulletIcon } from '@heroicons/react/24/outline';
+import { Alert } from '../DaisyUI/Alert';
 import Toggle from '../DaisyUI/Toggle';
 
 interface ToolConfigPanelProps {
@@ -38,9 +39,7 @@ const ToolConfigPanel: React.FC<ToolConfigPanelProps> = ({
   const renderFormFields = () => {
     if (!tool.inputSchema || !tool.inputSchema.properties || Object.keys(tool.inputSchema.properties).length === 0) {
       return (
-        <div className="alert alert-info shadow-sm text-sm">
-          No arguments required or schema not available.
-        </div>
+        <Alert status="info" className="shadow-sm text-sm" message="No arguments required or schema not available." />
       );
     }
 

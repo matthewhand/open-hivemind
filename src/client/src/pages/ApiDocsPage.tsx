@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Mockup from '../components/DaisyUI/Mockup';
+import { Alert } from '../components/DaisyUI/Alert';
 import { apiService } from '../services/api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -382,9 +383,7 @@ const ApiDocsPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="alert alert-error m-4">
-        <span>Failed to load API documentation: {error}</span>
-      </div>
+      <Alert status="error" className="m-4" message={`Failed to load API documentation: ${error}`} />
     );
   }
 
