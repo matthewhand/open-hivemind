@@ -15,6 +15,9 @@ import {
 } from 'lucide-react';
 import Button from './DaisyUI/Button';
 import { Alert } from './DaisyUI/Alert';
+import Modal from './DaisyUI/Modal';
+import Tabs from './DaisyUI/Tabs';
+import type { TabItem } from './DaisyUI/Tabs';
 import DataTable from './DaisyUI/DataTable';
 import type { RDVColumn } from './DaisyUI/DataTable';
 
@@ -73,8 +76,16 @@ interface PerformanceMetric {
   status: 'normal' | 'warning' | 'critical';
 }
 
+const enterpriseTabs: TabItem[] = [
+  { key: 'security', label: 'Security & Compliance', icon: <ShieldCheck className="w-4 h-4" /> },
+  { key: 'cloud', label: 'Multi-Cloud', icon: <Cloud className="w-4 h-4" /> },
+  { key: 'integrations', label: 'Integrations', icon: <Puzzle className="w-4 h-4" /> },
+  { key: 'audit', label: 'Audit & Governance', icon: <Scale className="w-4 h-4" /> },
+  { key: 'performance', label: 'Performance', icon: <BarChart3 className="w-4 h-4" /> },
+];
+
 const EnterpriseManager: React.FC = () => {
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState('security');
   const [complianceRules, setComplianceRules] = useState<ComplianceRule[]>([]);
   const [cloudProviders, setCloudProviders] = useState<CloudProvider[]>([]);
   const [integrations, setIntegrations] = useState<Integration[]>([]);
@@ -390,7 +401,7 @@ const EnterpriseManager: React.FC = () => {
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 0: // Security & Compliance
+      case 'security': // Security & Compliance
         return (
           <div>
             <h2 className="text-xl font-semibold mb-4">Compliance Rules</h2>
@@ -429,7 +440,7 @@ const EnterpriseManager: React.FC = () => {
           </div>
         );
 
-      case 1: // Multi-Cloud
+      case 'cloud': // Multi-Cloud
         return (
           <div>
             <div className="flex justify-between items-center mb-4">
@@ -475,7 +486,7 @@ const EnterpriseManager: React.FC = () => {
           </div>
         );
 
-      case 2: // Integrations
+      case 'integrations': // Integrations
         return (
           <div>
             <div className="flex justify-between items-center mb-4">
@@ -520,7 +531,7 @@ const EnterpriseManager: React.FC = () => {
           </div>
         );
 
-      case 3: // Audit & Governance
+      case 'audit': // Audit & Governance
         return (
           <div>
             <div className="flex justify-between items-center mb-4">
