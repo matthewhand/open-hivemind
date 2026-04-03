@@ -1,6 +1,6 @@
 import { Filter, Plus, Users } from 'lucide-react';
 import React, { useState } from 'react';
-import Alert from '../../components/DaisyUI/Alert';
+import { Alert } from '../../components/DaisyUI/Alert';
 import PageHeader from '../../components/DaisyUI/PageHeader';
 import { SkeletonPage } from '../../components/DaisyUI/Skeleton';
 import { useSuccessToast, useErrorToast, useInfoToast } from '../../components/DaisyUI/ToastNotification';
@@ -75,7 +75,7 @@ const PersonasPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {displayError && <Alert type="error" message={displayError} onClose={() => setError(null)} />}
+      {displayError && <Alert status="error" message={displayError} onClose={() => setError(null)} />}
 
       <PageHeader
         title="Persona Management"

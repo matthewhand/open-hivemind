@@ -5,7 +5,7 @@ import FileUpload from '../components/DaisyUI/FileUpload';
 import Modal from '../components/DaisyUI/Modal';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import { apiService } from '../services/api';
-import { useApiQuery } from '../hooks/useApiQuery';
+import { useQuery } from '@tanstack/react-query';
 
 interface ExportOptions {
   configIds: number[];
@@ -60,10 +60,11 @@ const ImportExportPage: React.FC = () => {
   const [importResult, setImportResult] = useState<any>(null);
 
   // Fetch available configurations
-  const { data: botsData, isLoading: botsLoading } = useApiQuery(
-    ['bots'],
-    () => apiService.getBots()
-  );
+  const { data: botsData, isLoading: botsLoading } = useQuery({
+    queryKey: ['bots'],
+    queryFn: () => apiService.getBots(),
+    staleTime: 30_000,
+  });
   const bots = botsData || [];
 
   const handleExport = useCallback(async () => {
