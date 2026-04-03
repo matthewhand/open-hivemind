@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React from 'react';
 import { Check, MessageSquare, Bot, User, Clock } from 'lucide-react';
+import { Alert } from './DaisyUI/Alert';
 
 export const BotChatTimeline: React.FC = () => {
     return (
@@ -24,7 +25,7 @@ export const BotChatTimeline: React.FC = () => {
                         <div className="flex items-center gap-2 font-bold opacity-70 text-xs uppercase tracking-wider mb-1">
                             <Clock className="w-3 h-3" /> 10:42:16 AM
                         </div>
-                        <div className="alert alert-info py-2 px-3 text-sm">
+                        <Alert status="info" className="py-2 px-3 text-sm">
                             <Check className="w-4 h-4" /> Message received and processed
                         </div>
                     </div>

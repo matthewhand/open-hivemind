@@ -13,6 +13,7 @@ import { SkeletonList } from '../components/DaisyUI/Skeleton';
 import { SelectOption } from '../components/DaisyUI/Select';
 import { apiService } from '../services/api';
 import Badge from '../components/DaisyUI/Badge';
+import { Alert } from '../components/DaisyUI/Alert';
 
 interface SitemapUrl {
   url: string;
@@ -145,10 +146,10 @@ const SitemapPage: React.FC = () => {
           description="Complete navigation structure and page hierarchy"
           icon={MapIcon}
         />
-        <div className="alert alert-error">
+        <Alert status="error">
           <span>Error loading sitemap: {error}</span>
           <Button variant="ghost" size="sm" onClick={fetchSitemap}>Retry</Button>
-        </div>
+        </Alert>
       </div>
     );
   }

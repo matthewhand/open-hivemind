@@ -227,7 +227,7 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
   }
 
   if (error) { return <Alert status="error" message={error} />; }
-  if (!hasConfig) { return <div className="alert alert-info">Configuration section '{section}' not found in global config.</div>; }
+  if (!hasConfig) { return <Alert status="info" message={`Configuration section '${section}' not found in global config.`} />; }
 
   const currentValues = getValues();
 

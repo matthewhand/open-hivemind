@@ -209,13 +209,7 @@ const SettingsIntegrations: React.FC = () => {
         </div>
       ))}
 
-      <div className="alert alert-info">
-        <div>
-          <span className="text-sm">
-            Integration credentials are configured via environment variables or the Advanced Config tab.
-          </span>
-        </div>
-      </div>
+      <Alert status="info" message="Integration credentials are configured via environment variables or the Advanced Config tab." />
     </div>
   );
 };

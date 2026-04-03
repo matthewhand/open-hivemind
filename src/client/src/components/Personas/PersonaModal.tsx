@@ -6,6 +6,7 @@ import Input from '../DaisyUI/Input';
 import { Persona } from './usePersonasLogic';
 import type { Bot } from '../../services/api';
 import Checkbox from '../DaisyUI/Checkbox';
+import { Alert } from '../DaisyUI/Alert';
 
 interface PersonaModalProps {
   isOpen: boolean;
@@ -85,19 +86,19 @@ export const PersonaModal: React.FC<PersonaModalProps> = ({
     >
       <div className="space-y-4">
         {isEnvLocked && !isViewMode && (
-          <div className="alert alert-warning shadow-sm">
+          <Alert status="warning" className="shadow-sm">
             <Shield className="w-5 h-5" />
             <span>
               This persona is locked by an environment variable. You cannot edit it here.
             </span>
-          </div>
+          </Alert>
         )}
 
         {isViewMode && (
-          <div className="alert alert-info shadow-sm mb-4">
+          <Alert status="info" className="shadow-sm mb-4">
             <Info className="w-5 h-5" />
             <span>Viewing persona details. Edit to make changes.</span>
-          </div>
+          </Alert>
         )}
 
         <Input

@@ -5,6 +5,7 @@ import type { AccordionItem } from './DaisyUI/Accordion';
 import { useConfigDiff } from '../hooks/useConfigDiff';
 import { ConfigDiffViewer, ConfigDiffConfirmDialog } from './ConfigDiffViewer';
 import AdvancedThemeSwitcher from './DaisyUI/AdvancedThemeSwitcher';
+import { Alert } from './DaisyUI/Alert';
 import Toggle from './DaisyUI/Toggle';
 
 const Settings: React.FC = () => {
@@ -180,9 +181,7 @@ const Settings: React.FC = () => {
       </h1>
 
       {saveStatus === 'saved' && (
-        <div className="alert alert-success mb-6">
-          <span>Settings saved successfully!</span>
-        </div>
+        <Alert status="success" className="mb-6" message="Settings saved successfully!" />
       )}
 
       <Accordion items={accordionItems} allowMultiple defaultOpenItems={['appearance']} />

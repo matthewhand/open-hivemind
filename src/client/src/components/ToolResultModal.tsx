@@ -6,6 +6,7 @@ import {
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 import Modal from './DaisyUI/Modal';
+import { Alert } from './DaisyUI/Alert';
 import { logger } from '../utils/logger';
 
 interface ToolResult {
@@ -203,7 +204,7 @@ const ToolResultModal: React.FC<ToolResultModalProps> = ({ isOpen, onClose, resu
                 )}
               </button>
             </div>
-            <div className="alert alert-error">
+            <Alert status="error">
               <ExclamationTriangleIcon className="w-5 h-5 shrink-0" />
               <div className="flex-1">
                 <div className="font-semibold">{result.error?.message}</div>

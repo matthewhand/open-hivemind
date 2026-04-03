@@ -12,6 +12,7 @@ import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { SkeletonPage } from '../components/DaisyUI/Skeleton';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
+import { Alert } from '../components/DaisyUI/Alert';
 import { apiService } from '../services/api';
 import { ErrorService } from '../services/ErrorService';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -432,12 +433,12 @@ const TemplatesPage: React.FC = () => {
         title="Apply Template"
       >
         <div className="space-y-4">
-          <div className="alert alert-info">
+          <Alert status="info">
             <AlertCircle className="w-5 h-5" />
             <span className="text-sm">
               Creating a bot from template: <strong>{selectedTemplate?.name}</strong>
             </span>
-          </div>
+          </Alert>
 
           <div className="form-control">
             <label className="label">

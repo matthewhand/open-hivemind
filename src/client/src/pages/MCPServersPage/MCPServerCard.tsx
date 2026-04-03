@@ -1,5 +1,6 @@
 import React from 'react';
 import Checkbox from '../../components/DaisyUI/Checkbox';
+import { Alert } from '../../components/DaisyUI/Alert';
 import {
   AlertCircle,
   RefreshCw,
@@ -65,10 +66,10 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = ({
         </p>
 
         {server.status === 'error' && server.error && (
-          <div className="alert alert-error text-xs py-2 px-3 mb-3">
+          <Alert status="error" className="text-xs py-2 px-3 mb-3">
             <AlertCircle className="w-4 h-4" />
             <span>{server.error}</span>
-          </div>
+          </Alert>
         )}
 
         <div className="text-sm space-y-1 mb-4 bg-base-200/50 p-3 rounded-lg">

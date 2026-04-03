@@ -24,6 +24,7 @@ import {
   Edit as EditIcon,
   Plus as PlusIcon,
 } from 'lucide-react';
+import { Alert } from '../DaisyUI/Alert';
 import ProviderList from './ProviderList';
 import PersonaChip from './PersonaChip';
 import PersonaSelector from './PersonaSelector';
@@ -202,9 +203,9 @@ const BotCard: React.FC<BotCardProps> = ({
               </p>
             )}
             {bot.error && (
-              <div className="alert alert-error py-2 mt-2">
+              <Alert status="error" className="py-2 mt-2">
                 <span className="text-xs">{bot.error}</span>
-              </div>
+              </Alert>
             )}
           </div>
 
@@ -400,9 +401,9 @@ const BotCard: React.FC<BotCardProps> = ({
 
         {/* Warning for missing providers */}
         {!hasProviders && (
-          <div className="alert alert-warning py-3 mt-4">
+          <Alert status="warning" className="py-3 mt-4">
             <span className="text-xs">
-              ⚠️ This bot has no providers configured. Add message and LLM providers before starting.
+              This bot has no providers configured. Add message and LLM providers before starting.
             </span>
           </div>
         )}

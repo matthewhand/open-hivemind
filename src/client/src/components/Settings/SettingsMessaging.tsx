@@ -237,10 +237,10 @@ const SettingsMessaging: React.FC = () => {
           </div>
 
           {allowBotToBot && (
-            <div className="alert alert-warning mt-3 py-2">
+            <Alert status="warning" className="mt-3 py-2">
               <Zap className="w-4 h-4" />
               <span className="text-sm">Collision avoidance is active to prevent bot storms</span>
-            </div>
+            </Alert>
           )}
         </div>
 

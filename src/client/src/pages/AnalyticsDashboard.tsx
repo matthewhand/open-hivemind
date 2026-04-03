@@ -8,6 +8,7 @@ import DataTable from '../components/DaisyUI/DataTable';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import Button from '../components/DaisyUI/Button';
 import { BarChart3, RefreshCw } from 'lucide-react';
+import { Alert } from '../components/DaisyUI/Alert';
 import { useErrorToast } from '../components/DaisyUI/ToastNotification';
 
 const AnalyticsDashboard: React.FC = () => {
@@ -108,10 +109,7 @@ const AnalyticsDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-base-200 p-6">
       {/* WIP Banner */}
-      <div role="alert" className="alert alert-info mb-6">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        <span>This feature is in preview mode. Historical data availability may be limited as we improve our data retention capabilities.</span>
-      </div>
+      <Alert status="info" className="mb-6" message="This feature is in preview mode. Historical data availability may be limited as we improve our data retention capabilities." />
 
       {/* Header */}
       <PageHeader

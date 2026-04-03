@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import { ConfirmModal } from '../components/DaisyUI/Modal';
+import { Alert } from '../components/DaisyUI/Alert';
 import { apiService } from '../services/api';
 
 // ---------------------------------------------------------------------------
@@ -259,13 +260,13 @@ const MarketplacePage: React.FC = () => {
 
       {/* Error State */}
       {error && (
-        <div className="alert alert-error mb-4">
+        <Alert status="error" className="mb-4">
           <AlertIcon className="w-5 h-5" />
           <span>{error}</span>
           <Button variant="ghost" size="xs" onClick={fetchPackages}>
             Retry
           </Button>
-        </div>
+        </Alert>
       )}
 
       {/* Search and Filters */}

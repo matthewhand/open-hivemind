@@ -357,10 +357,10 @@ const LLMProvidersPage: React.FC = () => {
               </div>
             ))}
             {(!defaultStatus?.providers?.length) && (
-              <div className="alert alert-warning text-xs p-2">
+              <Alert status="warning" className="text-xs p-2">
                 <WarningIcon className="w-4 h-4" />
                 <span>No default provider in .env. Bots without a profile will fail.</span>
-              </div>
+              </Alert>
             )}
           </div>
         </Card>
