@@ -13,8 +13,12 @@ import {
   Scale,
   ShieldCheck,
 } from 'lucide-react';
-import DataTable from './DaisyUI/DataTable';
+import Button from './DaisyUI/Button';
 import { Alert } from './DaisyUI/Alert';
+import Modal from './DaisyUI/Modal';
+import Tabs from './DaisyUI/Tabs';
+import type { TabItem } from './DaisyUI/Tabs';
+import DataTable from './DaisyUI/DataTable';
 import type { RDVColumn } from './DaisyUI/DataTable';
 
 interface ComplianceRule {
@@ -72,8 +76,16 @@ interface PerformanceMetric {
   status: 'normal' | 'warning' | 'critical';
 }
 
+const enterpriseTabs: TabItem[] = [
+  { key: 'security', label: 'Security & Compliance', icon: <ShieldCheck className="w-4 h-4" /> },
+  { key: 'cloud', label: 'Multi-Cloud', icon: <Cloud className="w-4 h-4" /> },
+  { key: 'integrations', label: 'Integrations', icon: <Puzzle className="w-4 h-4" /> },
+  { key: 'audit', label: 'Audit & Governance', icon: <Scale className="w-4 h-4" /> },
+  { key: 'performance', label: 'Performance', icon: <BarChart3 className="w-4 h-4" /> },
+];
+
 const EnterpriseManager: React.FC = () => {
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState('security');
   const [complianceRules, setComplianceRules] = useState<ComplianceRule[]>([]);
   const [cloudProviders, setCloudProviders] = useState<CloudProvider[]>([]);
   const [integrations, setIntegrations] = useState<Integration[]>([]);
@@ -389,7 +401,7 @@ const EnterpriseManager: React.FC = () => {
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 0: // Security & Compliance
+      case 'security': // Security & Compliance
         return (
           <div>
             <h2 className="text-xl font-semibold mb-4">Compliance Rules</h2>
@@ -428,20 +440,21 @@ const EnterpriseManager: React.FC = () => {
           </div>
         );
 
-      case 1: // Multi-Cloud
+      case 'cloud': // Multi-Cloud
         return (
           <div>
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">Cloud Providers</h2>
-              <button
-                className="btn btn-primary btn-sm"
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={() => setAddCloudProviderDialog(true)}
                 disabled={loading} aria-busy={loading}
                 aria-label="Add a new cloud provider"
               >
                 <Plus className="w-4 h-4 mr-1" />
                 Add Provider
-              </button>
+              </Button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {cloudProviders.map((provider) => (
@@ -473,20 +486,21 @@ const EnterpriseManager: React.FC = () => {
           </div>
         );
 
-      case 2: // Integrations
+      case 'integrations': // Integrations
         return (
           <div>
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">Enterprise Integrations</h2>
-              <button
-                className="btn btn-primary btn-sm"
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={() => setAddIntegrationDialog(true)}
                 disabled={loading} aria-busy={loading}
                 aria-label="Add a new enterprise integration"
               >
                 <Plus className="w-4 h-4 mr-1" />
                 Add Integration
-              </button>
+              </Button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {integrations.map((integration) => (
@@ -507,8 +521,8 @@ const EnterpriseManager: React.FC = () => {
                       Last sync: {new Date(integration.lastSync).toLocaleString()}
                     </p>
                     <div className="card-actions justify-end">
-                      <button className="btn btn-xs btn-outline" aria-label={`Configure ${integration.name}`}>Configure</button>
-                      <button className="btn btn-xs btn-outline" aria-label={`Test ${integration.name}`}>Test</button>
+                      <Button variant="primary" buttonStyle="outline" size="xs" aria-label={`Configure ${integration.name}`}>Configure</Button>
+                      <Button variant="primary" buttonStyle="outline" size="xs" aria-label={`Test ${integration.name}`}>Test</Button>
                     </div>
                   </div>
                 </div>
@@ -517,7 +531,7 @@ const EnterpriseManager: React.FC = () => {
           </div>
         );
 
-      case 3: // Audit & Governance
+      case 'audit': // Audit & Governance
         return (
           <div>
             <div className="flex justify-between items-center mb-4">
@@ -559,8 +573,10 @@ const EnterpriseManager: React.FC = () => {
                   <option value="failure">Failure</option>
                   <option value="warning">Warning</option>
                 </select>
-                <button
-                  className="btn btn-sm btn-outline"
+                <Button
+                  variant="primary"
+                  buttonStyle="outline"
+                  size="sm"
                   onClick={() => {
                     setAuditSearchTerm('');
                     setAuditActionFilter('all');
@@ -572,7 +588,7 @@ const EnterpriseManager: React.FC = () => {
                   aria-label="Clear audit filters"
                 >
                   <Filter className="w-4 h-4 mr-1" /> Clear Filters
-                </button>
+                </Button>
               </div>
             </div>
             <div className="bg-base-100 rounded-box shadow">
@@ -652,7 +668,7 @@ const EnterpriseManager: React.FC = () => {
                       {metric.trend === 'stable' && <span>→</span>}
                     </div>
                     <div className="card-actions justify-end">
-                      <button className="btn btn-sm btn-outline" aria-label={`Optimize ${metric.name}`}>Optimize</button>
+                      <Button variant="primary" buttonStyle="outline" size="sm" aria-label={`Optimize ${metric.name}`}>Optimize</Button>
                     </div>
                   </div>
                 </div>
@@ -670,10 +686,10 @@ const EnterpriseManager: React.FC = () => {
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Enterprise Manager</h1>
-        <button className="btn btn-outline" onClick={loadEnterpriseData} disabled={loading} aria-busy={loading} aria-label="Refresh enterprise data">
+        <Button variant="primary" buttonStyle="outline" onClick={loadEnterpriseData} disabled={loading} aria-busy={loading} aria-label="Refresh enterprise data">
           <RefreshCw className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : ''}`} />
           Refresh
-        </button>
+        </Button>
       </div>
 
       {/* Alerts */}
@@ -775,16 +791,16 @@ const EnterpriseManager: React.FC = () => {
             />
           </div>
           <div className="modal-action">
-            <button className="btn" onClick={() => setAddIntegrationDialog(false)}>
+            <Button variant="primary" buttonStyle="outline" onClick={() => setAddIntegrationDialog(false)}>
               Cancel
-            </button>
-            <button
-              className="btn btn-primary"
+            </Button>
+            <Button
+              variant="primary"
               onClick={handleAddIntegration}
               disabled={loading || !integrationForm.name.trim() || !integrationForm.provider.trim()}
             >
               {loading ? 'Adding...' : 'Add Integration'}
-            </button>
+            </Button>
           </div>
         </div>
         <form method="dialog" className="modal-backdrop">
@@ -844,16 +860,16 @@ const EnterpriseManager: React.FC = () => {
             />
           </div>
           <div className="modal-action">
-            <button className="btn" onClick={() => setAddCloudProviderDialog(false)}>
+            <Button variant="primary" buttonStyle="outline" onClick={() => setAddCloudProviderDialog(false)}>
               Cancel
-            </button>
-            <button
-              className="btn btn-primary"
+            </Button>
+            <Button
+              variant="primary"
               onClick={handleAddCloudProvider}
               disabled={loading || !cloudForm.name.trim() || !cloudForm.region.trim()}
             >
               {loading ? 'Adding...' : 'Add Provider'}
-            </button>
+            </Button>
           </div>
         </div>
         <form method="dialog" className="modal-backdrop">

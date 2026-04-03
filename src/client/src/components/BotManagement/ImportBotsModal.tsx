@@ -4,6 +4,7 @@ import {
   FileJson, AlertTriangle, CheckCircle, XCircle,
   RefreshCw, X, ArrowRight,
 } from 'lucide-react';
+import Button from '../DaisyUI/Button';
 import Modal from '../DaisyUI/Modal';
 import { Alert } from '../DaisyUI/Alert';
 import VisualFeedback, { FeedbackState } from '../DaisyUI/VisualFeedback';
@@ -163,7 +164,7 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
               <Alert status="warning" className="py-2">
                 <AlertTriangle className="w-4 h-4 shrink-0" />
                 <span className="text-sm">{conflictCount} bot{conflictCount !== 1 ? 's' : ''} already exist and will be <strong>updated</strong>.</span>
-              </div>
+              </Alert>
             )}
             <div className="overflow-x-auto max-h-60 rounded-lg border border-base-200">
               <table className="table table-xs table-zebra w-full">
@@ -192,11 +193,11 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
               <Alert status="error"><XCircle className="w-5 h-5 shrink-0" /><span className="text-sm">{parseError}</span></Alert>
             )}
             <div className="flex gap-2 justify-end pt-2">
-              <button className="btn btn-ghost btn-sm" onClick={reset}><X className="w-4 h-4 mr-1" /> Cancel</button>
-              <button className="btn btn-primary btn-sm" onClick={handleImport} disabled={importing}>
+              <Button variant="ghost" size="sm" onClick={reset}><X className="w-4 h-4 mr-1" /> Cancel</Button>
+              <Button variant="primary" size="sm" onClick={handleImport} disabled={importing}>
                 {importing ? <RefreshCw className="w-4 h-4 mr-1 animate-spin" /> : <ArrowRight className="w-4 h-4 mr-1" />}
                 {importing ? 'Importing...' : 'Confirm Import'}
-              </button>
+              </Button>
             </div>
           </>
         )}
@@ -242,7 +243,7 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
               )}
             </div>
             <div className="flex justify-end pt-2">
-              <button className="btn btn-primary btn-sm" onClick={handleClose}>Done</button>
+              <Button variant="primary" size="sm" onClick={handleClose}>Done</Button>
             </div>
             </>
             )}

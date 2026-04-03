@@ -13,6 +13,9 @@ import {
   LLM_PROVIDER_CONFIGS,
 } from '../../types/bot';
 import Button from '../DaisyUI/Button';
+import Modal from '../DaisyUI/Modal';
+import Tabs from '../DaisyUI/Tabs';
+import type { TabItem } from '../DaisyUI/Tabs';
 import { X as XIcon, RotateCcw } from 'lucide-react';
 import { logger } from '../../utils/logger';
 import { ProviderConfigForm } from '../ProviderConfigForm';
@@ -359,22 +362,23 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   const currentSchema = getCurrentSchema();
   const _allFields = config?.fields || [];
 
+  const messageProviderTabs: TabItem[] = providerTypes.map(type => {
+    const typeConfig = (configs as any)[type];
+    return {
+      key: type,
+      label: typeConfig.displayName || typeConfig.name,
+      icon: <span>{typeof typeConfig.icon === 'string' ? typeConfig.icon : '\u2022'}</span>,
+    };
+  });
+
   return (
-    <div className="modal modal-open">
-      <div className="modal-box max-w-2xl">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-bold">
-            {modalState.isEdit ? 'Edit' : 'Add'} {modalState.providerType === 'message' ? 'Message' : 'LLM'} Provider
-          </h3>
-          <button
-            className="btn btn-sm btn-circle btn-ghost"
-            aria-label="Close modal"
-            onClick={onClose}
-          >
-            <XIcon className="w-4 h-4" />
-          </button>
-        </div>
+    <Modal
+      isOpen={modalState.isOpen}
+      onClose={onClose}
+      title={`${modalState.isEdit ? 'Edit' : 'Add'} ${modalState.providerType === 'message' ? 'Message' : 'LLM'} Provider`}
+      size="lg"
+      showCloseButton
+    >
 
         {modalState.providerType === 'llm' ? (
           <div className="form-control mb-6">
@@ -398,30 +402,14 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
             </select>
           </div>
         ) : (
-          <div
-            className="tabs tabs-boxed mb-6 flex-wrap gap-1"
-            role="tablist"
-            aria-label="Message provider types"
-          >
-            {providerTypes.map(type => {
-              const typeConfig = (configs as any)[type];
-              const isActive = selectedType === type;
-              return (
-                <button
-                  key={type}
-                  type="button"
-                  className={`tab tab-sm flex items-center gap-2 ${isActive ? 'tab-active' : ''}`}
-                  onClick={() => setSelectedType(type as MessageProviderType | LLMProviderType)}
-                  role="tab"
-                  aria-selected={isActive}
-                  aria-label={`Select ${typeConfig.displayName || typeConfig.name}`}
-                >
-                  <span>{typeof typeConfig.icon === 'string' ? typeConfig.icon : '•'}</span>
-                  {typeConfig.displayName || typeConfig.name}
-                </button>
-              );
-            })}
-          </div>
+          <Tabs
+            tabs={messageProviderTabs}
+            activeTab={selectedType}
+            onChange={(key) => setSelectedType(key as MessageProviderType | LLMProviderType)}
+            variant="boxed"
+            size="sm"
+            className="mb-6 flex-wrap gap-1"
+          />
         )}
 
         {/* Form */}
@@ -552,8 +540,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
           onCancel={() => setShowDiffConfirm(false)}
           title="Confirm Provider Changes"
         />
-      </div>
-    </div>
+    </Modal>
   );
 };
 

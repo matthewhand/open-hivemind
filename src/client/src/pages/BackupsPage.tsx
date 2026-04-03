@@ -518,7 +518,7 @@ const BackupsPage: React.FC = () => {
               <Alert status="warning" className="text-xs">
                 <AlertTriangle className="w-4 h-4" />
                 <span>Store this key securely. You'll need it to restore this backup.</span>
-              </div>
+              </Alert>
             </div>
           )}
         </div>
@@ -565,7 +565,7 @@ const BackupsPage: React.FC = () => {
                   Restoring will replace current configurations. This action cannot be undone.
                 </p>
               </div>
-            </div>
+            </Alert>
 
             <div className="bg-base-200 p-4 rounded-lg space-y-2">
               <h4 className="font-bold">Backup Details</h4>

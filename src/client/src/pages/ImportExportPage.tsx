@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { Download, Upload, FileJson, AlertCircle, CheckCircle, X, Settings, Lock, Unlock, Package } from 'lucide-react';
+import Button from '../components/DaisyUI/Button';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import FileUpload from '../components/DaisyUI/FileUpload';
 import Modal from '../components/DaisyUI/Modal';
@@ -523,12 +524,12 @@ const ImportExportPage: React.FC = () => {
       >
         <div className="space-y-4">
           <div className="flex gap-2">
-            <button className="btn btn-sm btn-outline" onClick={selectAllBots}>
+            <Button variant="primary" buttonStyle="outline" size="sm" onClick={selectAllBots}>
               Select All
-            </button>
-            <button className="btn btn-sm btn-outline" onClick={deselectAllBots}>
+            </Button>
+            <Button variant="primary" buttonStyle="outline" size="sm" onClick={deselectAllBots}>
               Deselect All
-            </button>
+            </Button>
           </div>
 
           <div className="max-h-96 overflow-y-auto space-y-2">

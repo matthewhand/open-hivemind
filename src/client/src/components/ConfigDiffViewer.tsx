@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { ChevronDown, ChevronRight, Plus, Minus, ArrowRight } from 'lucide-react';
 import type { DiffEntry } from '../hooks/useConfigDiff';
 import Diff from './DaisyUI/Diff';
+import Modal from './DaisyUI/Modal';
+import type { ModalAction } from './DaisyUI/Modal';
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                           */
@@ -231,42 +233,19 @@ export const ConfigDiffConfirmDialog: React.FC<ConfigDiffConfirmDialogProps> = (
   title = 'Confirm Changes',
   loading = false,
 }) => {
-  if (!isOpen) return null;
+  const actions: ModalAction[] = [
+    { label: 'Cancel', onClick: onCancel, variant: 'ghost', disabled: loading },
+    { label: loading ? 'Saving...' : 'Confirm & Save', onClick: onConfirm, variant: 'primary', loading, disabled: loading },
+  ];
 
   return (
-    <dialog className="modal modal-open">
-      <div className="modal-box max-w-2xl">
-        <h3 className="font-bold text-lg mb-2">{title}</h3>
+    <Modal isOpen={isOpen} onClose={onCancel} title={title} size="lg" actions={actions}>
         <p className="text-sm opacity-70 mb-4">
           You are about to change the following settings:
         </p>
 
         <ConfigDiffViewer diff={diff} mode="grouped" maxHeight="20rem" />
-
-        <div className="modal-action">
-          <button
-            type="button"
-            className="btn btn-ghost"
-            onClick={onCancel}
-            disabled={loading}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={onConfirm}
-            disabled={loading}
-          >
-            {loading ? <span className="loading loading-spinner loading-sm" /> : null}
-            {loading ? 'Saving...' : 'Confirm & Save'}
-          </button>
-        </div>
-      </div>
-      <form method="dialog" className="modal-backdrop">
-        <button type="button" onClick={onCancel}>close</button>
-      </form>
-    </dialog>
+    </Modal>
   );
 };
 

@@ -5,6 +5,7 @@ import Card from '../components/DaisyUI/Card';
 import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
 import Button from '../components/DaisyUI/Button';
 import Badge from '../components/DaisyUI/Badge';
+import Modal from '../components/DaisyUI/Modal';
 import Tabs from '../components/DaisyUI/Tabs';
 
 import {
@@ -531,11 +532,16 @@ const MarketplacePage: React.FC = () => {
       )}
 
       {/* Install from URL Modal */}
-      {installModalOpen && (
-        <dialog className="modal modal-open">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg mb-4">Install Package from GitHub</h3>
-
+      <Modal
+        isOpen={installModalOpen}
+        onClose={() => { setInstallModalOpen(false); setGithubUrl(''); }}
+        title="Install Package from GitHub"
+        size="md"
+        actions={[
+          { label: 'Cancel', onClick: () => { setInstallModalOpen(false); setGithubUrl(''); }, variant: 'ghost' },
+          { label: 'Install', onClick: handleInstallFromUrl, variant: 'primary', disabled: !githubUrl.trim() || actionInProgress === 'install-url', loading: actionInProgress === 'install-url' },
+        ]}
+      >
             <div className="form-control w-full">
               <label className="label">
                 <span className="label-text">GitHub Repository URL</span>
@@ -553,42 +559,7 @@ const MarketplacePage: React.FC = () => {
                 </span>
               </label>
             </div>
-
-            <div className="modal-action">
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  setInstallModalOpen(false);
-                  setGithubUrl('');
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                onClick={handleInstallFromUrl}
-                disabled={!githubUrl.trim() || actionInProgress === 'install-url'}
-              >
-                {actionInProgress === 'install-url' ? (
-                  <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>
-                ) : (
-                  <>
-                    <GitHubIcon className="w-4 h-4 mr-1" />
-                    Install
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-          <div
-            className="modal-backdrop"
-            onClick={() => {
-              setInstallModalOpen(false);
-              setGithubUrl('');
-            }}
-          ></div>
-        </dialog>
-      )}
+      </Modal>
 
       <ConfirmModal
         isOpen={confirmModal.isOpen}

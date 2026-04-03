@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Bot, MessageSquare, Cpu, User, Shield, Check, AlertCircle } from 'lucide-react';
+import Button from '../DaisyUI/Button';
 import Input from '../DaisyUI/Input';
 import StepWizard, { Step } from '../DaisyUI/StepWizard';
 import Modal from '../DaisyUI/Modal';
@@ -276,9 +277,9 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                                     <option value="slack">Slack</option>
                                     <option value="mattermost">Mattermost</option>
                                 </select>
-                                <button className="btn btn-square btn-outline">
+                                <Button variant="primary" buttonStyle="outline" className="btn-square">
                                     +
-                                </button>
+                                </Button>
                             </div>
                         </div>
 
@@ -353,10 +354,10 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
 
                     <div className="divider">Or</div>
 
-                    <button className="btn btn-outline w-full gap-2">
+                    <Button variant="primary" buttonStyle="outline" className="w-full gap-2">
                         <User className="w-4 h-4" />
                         Create New Persona
-                    </button>
+                    </Button>
                 {renderValidationSummary(2)}
                 </div>
             )

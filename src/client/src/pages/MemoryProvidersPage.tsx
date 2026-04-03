@@ -8,7 +8,7 @@ import StatsCards from '../components/DaisyUI/StatsCards';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { SkeletonTableLayout } from '../components/DaisyUI/Skeleton';
 import SearchFilterBar from '../components/SearchFilterBar';
-import { ConfirmModal } from '../components/DaisyUI/Modal';
+import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import { useErrorToast } from '../components/DaisyUI/ToastNotification';
 import {
   Database as MemoryIcon,
@@ -420,10 +420,16 @@ const MemoryProvidersPage: React.FC = () => {
       )}
 
       {/* Create / Edit Profile Modal */}
-      {formModal.isOpen && (
-        <dialog className="modal modal-open">
-          <div className="modal-box max-w-lg">
-            <h3 className="font-bold text-lg mb-4">{formModal.isEdit ? 'Edit Memory Profile' : 'Create Memory Profile'}</h3>
+      <Modal
+        isOpen={formModal.isOpen}
+        onClose={() => setFormModal({ isOpen: false, isEdit: false, profile: null })}
+        title={formModal.isEdit ? 'Edit Memory Profile' : 'Create Memory Profile'}
+        size="md"
+        actions={[
+          { label: 'Cancel', onClick: () => setFormModal({ isOpen: false, isEdit: false, profile: null }), variant: 'ghost' },
+          { label: formModal.isEdit ? 'Update' : 'Create', onClick: handleFormSubmit, variant: 'primary', disabled: !formData.name.trim() },
+        ]}
+      >
             <div className="form-control w-full mb-3">
               <label className="label" htmlFor="memory-profile-name"><span className="label-text">Profile Name</span></label>
               <input id="memory-profile-name" type="text" className="input input-bordered w-full" placeholder="My Memory Provider" value={formData.name} onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))} />
@@ -447,14 +453,7 @@ const MemoryProvidersPage: React.FC = () => {
                 {field.description && <label className="label"><span className="label-text-alt opacity-60">{field.description}</span></label>}
               </div>
             ))}
-            <div className="modal-action">
-              <Button variant="ghost" onClick={() => setFormModal({ isOpen: false, isEdit: false, profile: null })}>Cancel</Button>
-              <Button variant="primary" onClick={handleFormSubmit} disabled={!formData.name.trim()}>{formModal.isEdit ? 'Update' : 'Create'}</Button>
-            </div>
-          </div>
-          <form method="dialog" className="modal-backdrop"><button onClick={() => setFormModal({ isOpen: false, isEdit: false, profile: null })}>close</button></form>
-        </dialog>
-      )}
+      </Modal>
 
       <ConfirmModal isOpen={confirmModal.isOpen} onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))} title={confirmModal.title} message={confirmModal.message} onConfirm={confirmModal.onConfirm} confirmVariant="error" confirmText="Delete" cancelText="Cancel" />
     </div>
