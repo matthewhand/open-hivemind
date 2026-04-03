@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Button from '../components/DaisyUI/Button';
 import { ButtonsDemo } from '../components/DaisyUI/demos/ButtonsDemo';
 import { AnimationShowcaseDemo } from '../components/DaisyUI/demos/AnimationShowcaseDemo';
 import { InputDemo, SelectDemo, CheckboxDemo, TextareaDemo, FileInputDemo } from '../components/DaisyUI/demos/FormsDemo';
@@ -113,7 +114,7 @@ const DaisyUIShowcase: React.FC = () => {
             <h3 className="font-bold text-lg">Hello!</h3>
             <p className="py-4">This is a DaisyUI modal dialog.</p>
             <div className="modal-action">
-              <button className="btn" onClick={() => setModalOpen(false)}>Close</button>
+              <Button variant="primary" onClick={() => setModalOpen(false)}>Close</Button>
             </div>
           </div>
           <form method="dialog" className="modal-backdrop" onClick={() => setModalOpen(false)}>

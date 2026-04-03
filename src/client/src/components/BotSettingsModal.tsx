@@ -6,6 +6,7 @@ import {
 import Avatar from './DaisyUI/Avatar';
 import Button from './DaisyUI/Button';
 import Dropdown from './DaisyUI/Dropdown';
+import Modal from './DaisyUI/Modal';
 import { Bot as ApiBot, Persona as ApiPersona } from '../services/api';
 import { useConfigDiff } from '../hooks/useConfigDiff';
 import { ConfigDiffConfirmDialog } from './ConfigDiffViewer';
@@ -88,20 +89,12 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
     const isEnvProtected = bot.envOverrides && Object.keys(bot.envOverrides).length > 0;
 
     return (
-        <dialog className="modal modal-open" onClose={onClose}>
-            <div className="modal-box w-11/12 max-w-4xl bg-base-100">
-                <form method="dialog">
-                    <div className="tooltip tooltip-left absolute right-2 top-2" data-tip="Close settings">
-                        <Button variant="ghost" size="sm" onClick={onClose} className="btn-circle" aria-label="Close settings">✕</Button>
-                    </div>
-                </form>
-
-                <div className="flex items-center gap-3 mb-6 border-b border-base-300 pb-4">
+        <Modal isOpen={isOpen} onClose={onClose} title={bot.name} size="xl" showCloseButton>
+                <div className="flex items-center gap-3 mb-6 border-b border-base-300 pb-4 -mt-4">
                     <div className="p-3 bg-primary/10 rounded-xl text-primary">
                         <Settings className="w-6 h-6" />
                     </div>
                     <div>
-                        <h3 className="font-bold text-2xl">{bot.name}</h3>
                         <p className="text-sm opacity-60 font-mono">{bot.id}</p>
                     </div>
                     {isEnvProtected && (
@@ -340,10 +333,6 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                     onCancel={() => { setShowDiffConfirm(false); setPendingChange(null); }}
                     title="Confirm Configuration Change"
                 />
-            </div>
-            <form method="dialog" className="modal-backdrop">
-                <button onClick={onClose}>close</button>
-            </form>
-        </dialog>
+        </Modal>
     );
 };
