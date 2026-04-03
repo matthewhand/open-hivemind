@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Logo from '../Logo';
 import Avatar from './Avatar';
+import Menu from './Menu';
 
 interface NavItem {
   id: string;
@@ -164,29 +165,27 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7"></path>
             </svg>
           </div>
-          <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
-            {navItems.map((item) => (
-              <li key={item.id}>
-                <a href={item.path} className={currentPath === item.path ? 'active' : ''}>
-                  <span className="text-lg">{item.icon}</span>
-                  {item.label}
-                  {item.badge && <div className="badge badge-sm badge-primary">{item.badge}</div>}
-                </a>
-                {item.children && (
-                  <ul className="p-2">
-                    {item.children.map((child) => (
-                      <li key={child.id}>
-                        <a href={child.path} className={currentPath === child.path ? 'active' : ''}>
-                          <span>{child.icon}</span>
-                          {child.label}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </li>
-            ))}
-          </ul>
+          <div tabIndex={0} className="dropdown-content mt-3 z-[1] shadow bg-base-100 rounded-box w-52 p-0">
+            <Menu
+              size="sm"
+              className="w-full bg-base-100 rounded-box p-2"
+              items={navItems.map(item => ({
+                id: item.id,
+                label: item.label,
+                icon: <span className="text-lg" aria-hidden="true">{item.icon}</span>,
+                href: item.path,
+                badge: item.badge,
+                active: currentPath === item.path,
+                children: item.children?.map(child => ({
+                  id: child.id,
+                  label: child.label,
+                  icon: <span aria-hidden="true">{child.icon}</span>,
+                  href: child.path,
+                  active: currentPath === child.path
+                }))
+              }))}
+            />
+          </div>
         </div>
 
         {/* Logo and Title */}
@@ -443,15 +442,21 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
               {!userAvatar && userName.charAt(0).toUpperCase()}
             </Avatar>
           </div>
-          <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
-            <li className="menu-title">{userName}</li>
-            <li><a href="/admin/settings">👤 Profile</a></li>
-            <li><a href="/admin/settings">⚙️ Settings</a></li>
-            <li><a href="https://github.com/open-hivemind/open-hivemind" target="_blank" rel="noopener noreferrer">❓ Help & Support</a></li>
-            <li><a href="https://github.com/open-hivemind/open-hivemind" target="_blank" rel="noopener noreferrer">📚 Documentation</a></li>
-            <li className="divider"></li>
-            <li><a href="/login" className="text-error">🚪 Sign out</a></li>
-          </ul>
+          <div tabIndex={0} className="dropdown-content mt-3 z-[1] shadow bg-base-100 rounded-box w-52 p-0">
+            <Menu
+              size="sm"
+              className="w-full bg-base-100 rounded-box p-2"
+              items={[
+                { id: 'user-title', label: userName, className: 'menu-title pointer-events-none' },
+                { id: 'profile', label: 'Profile', icon: '👤', href: '/admin/settings' },
+                { id: 'settings', label: 'Settings', icon: '⚙️', href: '/admin/settings' },
+                { id: 'help', label: 'Help & Support', icon: '❓', href: 'https://github.com/open-hivemind/open-hivemind' },
+                { id: 'docs', label: 'Documentation', icon: '📚', href: 'https://github.com/open-hivemind/open-hivemind' },
+                { id: 'divider', label: '', className: 'divider my-0 py-0 h-1' },
+                { id: 'signout', label: 'Sign out', icon: '🚪', href: '/login', className: 'text-error' }
+              ]}
+            />
+          </div>
         </div>
       </div>
     </nav>
