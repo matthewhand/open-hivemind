@@ -4,8 +4,7 @@ import Debug from 'debug';
 import type { Socket, Server as SocketIOServer } from 'socket.io';
 import { inject, injectable, singleton } from 'tsyringe';
 import { BotConfigurationManager } from '../../../config/BotConfigurationManager';
-import type { EndpointStatus } from '../../../services/ApiMonitorService';
-import ApiMonitorService from '../../../services/ApiMonitorService';
+import ApiMonitorService, { type EndpointStatus } from '../../../services/ApiMonitorService';
 import type { BotConfig } from '../../../types/config';
 import {
   DeliveryStatus,
