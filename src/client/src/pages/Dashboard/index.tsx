@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Dashboard from '../../components/Dashboard';
 import { apiService } from '../../services/api';
-
+import Toggle from '../../components/DaisyUI/Toggle';
 import Carousel from '../../components/DaisyUI/Carousel';
 import DashboardWidgetSystem from '../../components/DaisyUI/DashboardWidgetSystem';
 
@@ -66,9 +66,8 @@ const DashboardPage: React.FC = () => {
     <div>
       <div className="flex justify-end items-center mb-4 px-4 gap-3 bg-base-100/50 p-2 rounded-lg shadow-sm w-fit ml-auto">
         <span className="text-sm font-medium opacity-80">Static Layout</span>
-        <input
-          type="checkbox"
-          className="toggle toggle-primary"
+        <Toggle
+          color="primary"
           checked={useWidgetLayout}
           onChange={(e) => setUseWidgetLayout(e.target.checked)}
           aria-label="Toggle widget dashboard layout"

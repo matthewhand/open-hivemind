@@ -310,7 +310,7 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
               <label className="label cursor-pointer">
                 <span className="label-text">Enable MCP Tool Usage Guard</span>
                 <Toggle
-                  className="toggle toggle-primary"
+                  color="primary"
                   checked={mcpGuard.enabled}
                   onChange={(e) => handleMcpGuardChange('enabled', e.target.checked)}
                 />

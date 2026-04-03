@@ -68,7 +68,7 @@ const Settings: React.FC = () => {
             <label className="label cursor-pointer justify-start gap-4">
               <span className="label-text">Auto Refresh</span>
               <Toggle
-                className="toggle toggle-primary"
+                color="primary"
                 checked={ui.autoRefreshEnabled}
                 onChange={handleAutoRefreshToggle}
               />
@@ -105,7 +105,7 @@ const Settings: React.FC = () => {
             <label className="label cursor-pointer justify-start gap-4">
               <span className="label-text">Reduced Motion</span>
               <Toggle
-                className="toggle toggle-primary"
+                color="primary"
                 checked={!ui.animationsEnabled}
                 onChange={(event) => setAnimationsEnabled(!event.target.checked)}
               />
@@ -115,7 +115,7 @@ const Settings: React.FC = () => {
             <label className="label cursor-pointer justify-start gap-4">
               <span className="label-text">Show Tooltips</span>
               <Toggle
-                className="toggle toggle-primary"
+                color="primary"
                 checked={ui.showTooltips}
                 onChange={(event) => setShowTooltips(event.target.checked)}
               />
@@ -125,7 +125,7 @@ const Settings: React.FC = () => {
             <label className="label cursor-pointer justify-start gap-4">
               <span className="label-text">Keyboard Shortcuts Overlay</span>
               <Toggle
-                className="toggle toggle-primary"
+                color="primary"
                 checked={ui.showKeyboardShortcuts}
                 onChange={(event) => setShowKeyboardShortcuts(event.target.checked)}
               />
