@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import Button from '../DaisyUI/Button';
 import { useWebSocket } from '../../contexts/WebSocketContext';
 
 export interface Event {
@@ -212,12 +213,12 @@ const EventStream: React.FC<EventStreamProps> = ({
             >
               {isPaused ? '▶️ Resume' : '⏸️ Pause'}
             </button>
-            <button className="btn btn-sm btn-ghost" onClick={clearEvents}>
+            <Button variant="ghost" size="sm" onClick={clearEvents}>
               🗑️ Clear
-            </button>
-            <button className="btn btn-sm btn-ghost" onClick={exportEvents}>
+            </Button>
+            <Button variant="ghost" size="sm" onClick={exportEvents}>
               📥 Export
-            </button>
+            </Button>
           </div>
         </div>
 

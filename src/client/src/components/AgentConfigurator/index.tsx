@@ -12,6 +12,7 @@ import {
   useGetStatusQuery,
 } from '../../store/slices/apiSlice';
 import { LoadingSpinner } from '../DaisyUI/Loading';
+import { Alert } from '../DaisyUI/Alert';
 import AgentConfigCard from './AgentConfigCard';
 import type { BotUIState, GuardInputState, GuardState } from './types';
 
@@ -300,7 +301,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
   }
 
   if (configError) {
-    return <div className="alert alert-error">Failed to load configuration</div>;
+    return <Alert status="error" message="Failed to load configuration" />;
   }
 
   function handleSelectionChange<K extends keyof BotUIState>(
@@ -550,48 +551,25 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
         </div>
 
         {feedback && (
-          <div className={`alert alert-${feedback.type} shadow-lg mb-4`}>
-            <div>
-              <span>{feedback.message}</span>
-              <button
-                className="btn btn-ghost btn-sm"
-                onClick={() => setFeedback(null)}
-                aria-label="Close feedback"
-              >
-                ✕
-              </button>
-            </div>
-          </div>
+          <Alert status={feedback.type} className="shadow-lg mb-4" onClose={() => setFeedback(null)}>
+            <span>{feedback.message}</span>
+          </Alert>
         )}
 
         {providersError && (
-          <div className="alert alert-warning shadow-lg mb-4">
-            <div>
-              <span>{providersError}</span>
-            </div>
-          </div>
+          <Alert status="warning" className="shadow-lg mb-4" message={providersError} />
         )}
 
         {mcpError && (
-          <div className="alert alert-warning shadow-lg mb-4">
-            <div>
-              <span>{mcpError}</span>
-            </div>
-          </div>
+          <Alert status="warning" className="shadow-lg mb-4" message={mcpError} />
         )}
 
         {statusError && (
-          <div className="alert alert-warning shadow-lg mb-4">
-            <div>
-              <span>Unable to load live status updates right now. Try refreshing in a moment.</span>
-            </div>
-          </div>
+          <Alert status="warning" className="shadow-lg mb-4" message="Unable to load live status updates right now. Try refreshing in a moment." />
         )}
 
         {bots.length === 0 ? (
-          <div className="alert alert-info">
-            No agents detected. Create a bot configuration to get started.
-          </div>
+          <Alert status="info" message="No agents detected. Create a bot configuration to get started." />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {bots.map((bot) => {

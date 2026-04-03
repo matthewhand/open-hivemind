@@ -232,10 +232,10 @@ const MCPToolsTestingPage: React.FC = () => {
   const renderToolSchema = () => {
     if (!selectedTool || !selectedTool.inputSchema) {
       return (
-        <div className="alert alert-info shadow-sm">
+        <Alert status="info" className="shadow-sm">
           <InformationCircleIcon className="w-5 h-5" />
           <span>No input schema available for this tool.</span>
-        </div>
+        </Alert>
       );
     }
 
@@ -260,10 +260,10 @@ const MCPToolsTestingPage: React.FC = () => {
   const renderParameterForm = () => {
     if (!selectedTool || !selectedTool.inputSchema) {
       return (
-        <div className="alert alert-info shadow-sm">
+        <Alert status="info" className="shadow-sm">
           <InformationCircleIcon className="w-5 h-5" />
           <span>This tool does not require any parameters.</span>
-        </div>
+        </Alert>
       );
     }
 
@@ -271,10 +271,10 @@ const MCPToolsTestingPage: React.FC = () => {
 
     if (Object.keys(properties).length === 0) {
       return (
-        <div className="alert alert-info shadow-sm">
+        <Alert status="info" className="shadow-sm">
           <InformationCircleIcon className="w-5 h-5" />
           <span>This tool does not require any parameters.</span>
-        </div>
+        </Alert>
       );
     }
 
@@ -329,13 +329,13 @@ const MCPToolsTestingPage: React.FC = () => {
         )}
 
         {!testResult.success && testResult.error && (
-          <div className="alert alert-error shadow-sm">
+          <Alert status="error" className="shadow-sm">
             <XCircleIcon className="w-5 h-5" />
             <div>
               <div className="font-bold">Error</div>
               <div className="text-sm">{testResult.error}</div>
             </div>
-          </div>
+          </Alert>
         )}
 
         <div className="text-xs text-base-content/50">
@@ -383,10 +383,10 @@ const MCPToolsTestingPage: React.FC = () => {
               </h2>
 
               {tools.length === 0 ? (
-                <div className="alert alert-warning">
+                <Alert status="warning">
                   <InformationCircleIcon className="w-5 h-5" />
                   <span>No tools available. Connect MCP servers first.</span>
-                </div>
+                </Alert>
               ) : (
                 <div className="space-y-2">
                   {tools.map((tool) => (

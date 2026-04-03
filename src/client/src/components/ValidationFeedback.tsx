@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertCircle, AlertTriangle, CheckCircle, Loader } from 'lucide-react';
+import { Alert } from './DaisyUI/Alert';
 import type { ValidationError, ValidationWarning } from '../hooks/useRealTimeValidation';
 
 export interface ValidationFeedbackProps {
@@ -117,7 +118,7 @@ export const ValidationFeedback: React.FC<ValidationFeedbackProps> = ({
   return (
     <div className="space-y-2">
       {filteredErrors.map((error, idx) => (
-        <div key={`error-${idx}`} className="alert alert-error shadow-sm">
+        <Alert key={`error-${idx}`} status="error" className="shadow-sm">
           <AlertCircle className="w-5 h-5 flex-shrink-0" />
           <div className="flex-1">
             <div className="font-semibold">{error.message}</div>
@@ -129,11 +130,11 @@ export const ValidationFeedback: React.FC<ValidationFeedbackProps> = ({
               </ul>
             )}
           </div>
-        </div>
+        </Alert>
       ))}
 
       {filteredWarnings.map((warning, idx) => (
-        <div key={`warning-${idx}`} className="alert alert-warning shadow-sm">
+        <Alert key={`warning-${idx}`} status="warning" className="shadow-sm">
           <AlertTriangle className="w-5 h-5 flex-shrink-0" />
           <div className="flex-1">
             <div className="font-semibold">{warning.message}</div>
@@ -145,14 +146,14 @@ export const ValidationFeedback: React.FC<ValidationFeedbackProps> = ({
               </ul>
             )}
           </div>
-        </div>
+        </Alert>
       ))}
 
       {showSuccess && (
-        <div className="alert alert-success shadow-sm">
+        <Alert status="success" className="shadow-sm">
           <CheckCircle className="w-5 h-5" />
           <span>Configuration is valid</span>
-        </div>
+        </Alert>
       )}
     </div>
   );

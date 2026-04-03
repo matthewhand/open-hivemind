@@ -5,6 +5,7 @@ import Button from '../components/DaisyUI/Button';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import Tabs from '../components/DaisyUI/Tabs';
 import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
+import { Alert } from '../components/DaisyUI/Alert';
 import {
   Shield,
   ShieldAlert,
@@ -261,24 +262,17 @@ const PluginSecurityPage: React.FC = () => {
 
       {/* Messages */}
       {error && (
-        <div className="alert alert-error mb-4">
+        <Alert status="error" className="mb-4">
           <AlertTriangle className="w-5 h-5" />
           <span>{error}</span>
-        </div>
+        </Alert>
       )}
 
       {successMessage && (
-        <div className="alert alert-success mb-4">
+        <Alert status="success" className="mb-4" onClose={() => setSuccessMessage(null)}>
           <CheckCircle className="w-5 h-5" />
           <span>{successMessage}</span>
-          <button
-            className="btn btn-sm btn-ghost"
-            onClick={() => setSuccessMessage(null)}
-            aria-label="Dismiss success message"
-          >
-            <XCircle className="w-4 h-4" />
-          </button>
-        </div>
+        </Alert>
       )}
 
       {/* Plugin List */}
