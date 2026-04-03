@@ -20,14 +20,14 @@
  * @author Open-Hivemind Performance Test Suite
  */
 
-import express from 'express';
-import request from 'supertest';
 import * as fs from 'fs';
 import * as path from 'path';
+import express from 'express';
+import request from 'supertest';
 import { BotManager } from '../../src/managers/BotManager';
+import activityRouter from '../../src/server/routes/activity';
 import botsRouter from '../../src/server/routes/bots';
 import dashboardRouter from '../../src/server/routes/dashboard';
-import activityRouter from '../../src/server/routes/activity';
 import healthRouter from '../../src/server/routes/health';
 
 // Mock BotManager
@@ -220,7 +220,7 @@ function calculateStatistics(runs: number[]): PerformanceMetrics {
     median: Math.round(sorted[Math.floor(sorted.length / 2)]),
     p95: Math.round(sorted[Math.floor(sorted.length * 0.95)]),
     p99: Math.round(sorted[Math.floor(sorted.length * 0.99)]),
-    runs: sorted.map(v => Math.round(v)),
+    runs: sorted.map((v) => Math.round(v)),
   };
 }
 
@@ -260,11 +260,7 @@ function savePerformanceBaselines() {
     fs.mkdirSync(resultsDir, { recursive: true });
   }
 
-  fs.writeFileSync(
-    baselineFilePath,
-    JSON.stringify(performanceResults, null, 2),
-    'utf-8'
-  );
+  fs.writeFileSync(baselineFilePath, JSON.stringify(performanceResults, null, 2), 'utf-8');
 
   console.log(`\n📊 API Performance baselines saved to: ${baselineFilePath}`);
 }
@@ -285,7 +281,7 @@ function logPerformanceSummary(result: EndpointPerformance) {
 
   if (result.violations.length > 0) {
     console.log(`\n❌ Budget Violations (${result.violations.length}):`);
-    result.violations.forEach(v => console.log(`  - ${v}`));
+    result.violations.forEach((v) => console.log(`  - ${v}`));
     console.log(`\n💡 Recommendations:`);
     console.log(`  - Add database indexes for frequently queried fields`);
     console.log(`  - Implement response caching`);
@@ -389,7 +385,7 @@ describe('API Performance Baseline Tests', () => {
       const mockManager = BotManager.getInstance() as any;
       mockManager.getAllBots.mockResolvedValue(mockBots);
       mockManager.getBotsStatus.mockResolvedValue(
-        mockBots.map(b => ({ id: b.id, isRunning: false }))
+        mockBots.map((b) => ({ id: b.id, isRunning: false }))
       );
 
       const result = await measureEndpointPerformance(
@@ -417,7 +413,7 @@ describe('API Performance Baseline Tests', () => {
       const mockManager = BotManager.getInstance() as any;
       mockManager.getAllBots.mockResolvedValue(mockBots);
       mockManager.getBotsStatus.mockResolvedValue(
-        mockBots.map(b => ({ id: b.id, isRunning: false }))
+        mockBots.map((b) => ({ id: b.id, isRunning: false }))
       );
 
       const result = await measureEndpointPerformance(
@@ -538,8 +534,7 @@ describe('API Performance Baseline Tests', () => {
       };
 
       const result = await measureEndpointPerformance(
-        async () =>
-          await request(app).post('/api/activity/log').send(activityData).expect(200),
+        async () => await request(app).post('/api/activity/log').send(activityData).expect(200),
         '/api/activity/log',
         'POST',
         PERFORMANCE_BUDGETS.POST
@@ -642,6 +637,8 @@ describe('API Performance Baseline Tests', () => {
         if (regressions.length > 0) {
           console.log(`\n⚠️ Performance Regressions Detected (${regressions.length}):`);
           regressions.forEach(r => console.log(`  - ${r}`));
+          regressions.forEach((r) => console.log(`  - ${r}`));
+          console.warn('Performance has regressed compared to baseline!');
         } else {
           console.log(`\n✅ No significant performance regressions detected`);
         }
@@ -675,7 +672,7 @@ describe('API Performance Baseline Tests', () => {
       console.log(`  Completed 50 requests in ${duration}ms`);
       console.log(`  Average per request: ${Math.round(duration / 50)}ms`);
 
-      responses.forEach(response => {
+      responses.forEach((response) => {
         expect(response.status).toBe(200);
       });
 
@@ -698,17 +695,14 @@ describe('API Performance Baseline Tests', () => {
       console.log(`  - DELETE: ${PERFORMANCE_BUDGETS.DELETE}ms`);
       console.log(`  - Health: ${PERFORMANCE_BUDGETS.HEALTH}ms`);
 
-      const totalViolations = performanceResults.reduce(
-        (sum, r) => sum + r.violations.length,
-        0
-      );
+      const totalViolations = performanceResults.reduce((sum, r) => sum + r.violations.length, 0);
 
       if (totalViolations > 0) {
         console.log(`\n❌ Total budget violations: ${totalViolations}`);
         console.log(`\nEndpoints with violations:`);
         performanceResults
-          .filter(r => r.violations.length > 0)
-          .forEach(r => {
+          .filter((r) => r.violations.length > 0)
+          .forEach((r) => {
             console.log(`  - ${r.method} ${r.endpoint}: ${r.violations.length} violation(s)`);
           });
       } else {
@@ -719,7 +713,7 @@ describe('API Performance Baseline Tests', () => {
       const fastest = [...performanceResults]
         .sort((a, b) => a.metrics.median - b.metrics.median)
         .slice(0, 3);
-      fastest.forEach(r => {
+      fastest.forEach((r) => {
         console.log(`  - ${r.method} ${r.endpoint}: ${r.metrics.median}ms`);
       });
 
@@ -727,7 +721,7 @@ describe('API Performance Baseline Tests', () => {
       const slowest = [...performanceResults]
         .sort((a, b) => b.metrics.median - a.metrics.median)
         .slice(0, 3);
-      slowest.forEach(r => {
+      slowest.forEach((r) => {
         console.log(`  - ${r.method} ${r.endpoint}: ${r.metrics.median}ms`);
       });
 

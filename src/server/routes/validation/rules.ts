@@ -2,6 +2,7 @@ import Debug from 'debug';
 import { Router } from 'express';
 import { param } from 'express-validator';
 import { requireAdmin } from '../../../auth/middleware';
+import type { AuthMiddlewareRequest } from '../../../auth/types';
 import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import { HTTP_STATUS } from '../../../types/constants';
 import { ErrorUtils } from '../../../types/errors';
