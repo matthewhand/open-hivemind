@@ -29,7 +29,7 @@ export class WebSocketService {
     @inject(ConnectionManager) private connectionManager: ConnectionManager,
     @inject(BroadcastService) private broadcastService: BroadcastService,
     @inject(EventHandlers) private eventHandlers: EventHandlers
-  ) { }
+  ) {}
 
   // We explicitly declare io to allow tests to mock it via (service as any).io
   private get io(): SocketIOServer | null {
