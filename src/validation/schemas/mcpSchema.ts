@@ -7,3 +7,10 @@ export const McpToolTestSchema = z.object({
     arguments: z.record(z.any()).optional(),
   }),
 });
+
+export const CreateMCPProviderSchema = z.any();
+export const MCPProviderIdParamSchema = z.object({ params: z.object({ id: z.string() }) });
+export const UpdateMCPProviderSchema = z.any();
+export const AddMCPServerSchema = z.any();
+export const CallMCPToolSchema = z.any();
+export const MCPServerNameParamSchema = z.object({ params: z.object({ name: z.string() }) });

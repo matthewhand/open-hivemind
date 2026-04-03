@@ -3,7 +3,7 @@ import { Router } from 'express';
 import { ErrorUtils } from '@src/types/errors';
 import { McpToolTestSchema } from '../../validation/schemas/mcpSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { connectedClients, loadMCPServers } from './mcp';
+import { connectedClients, loadMCPServers } from './mcp/shared';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:webui:mcpToolsTesting');
