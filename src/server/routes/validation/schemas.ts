@@ -10,7 +10,7 @@ const debug = Debug('app:server:routes:validation:schemas');
 export function createSchemaRoutes(): Router {
   const router = Router();
 
-  router.get('/api/validation/schema', asyncErrorHandler(async (req, res) => {
+  router.get('/schema', asyncErrorHandler(async (req, res) => {
     const schema = {
       botConfig: {
         required: ['name', 'messageProvider', 'llmProvider'],

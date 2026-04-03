@@ -16,8 +16,11 @@ import { SyncProviderRegistry, type ProviderProfile } from '@src/registries/Sync
 import { authenticateToken } from '@src/server/middleware/auth';
 import { csrfTokenHandler } from '@src/server/middleware/csrf';
 import { ipWhitelist } from '@src/server/middleware/security';
+import activityRouter from '@src/server/routes/activity';
 import adminApiRouter from '@src/server/routes/admin';
+import agentsRouter from '@src/server/routes/agents';
 import anomalyRouter from '@src/server/routes/anomaly';
+import apiDocsRouter from '@src/server/routes/apiDocs';
 import authRouter from '@src/server/routes/auth';
 import botConfigRouter from '@src/server/routes/botConfig';
 import botsRouter from '@src/server/routes/bots';
@@ -26,20 +29,27 @@ import webuiConfigRouter from '@src/server/routes/config';
 import dashboardRouter from '@src/server/routes/dashboard';
 import demoRouter from '@src/server/routes/demo';
 import enterpriseRouter from '@src/server/routes/enterprise';
+import errorsRouter from '@src/server/routes/errors';
 import guardsRouter from '@src/server/routes/guards';
-// Root health endpoint (for frontend polling)
-
 import hotReloadRouter from '@src/server/routes/hotReload';
 import importExportRouter from '@src/server/routes/importExport';
 import integrationsRouter from '@src/server/routes/integrations';
 import lettaRouter from '@src/server/routes/letta';
 import marketplaceRouter from '@src/server/routes/marketplace';
+import mcpRouter from '@src/server/routes/mcp';
+import mcpToolsRouter from '@src/server/routes/mcpTools';
+import onboardingRouter from '@src/server/routes/onboarding';
 import openapiRouter from '@src/server/routes/openapi';
 import personasRouter from '@src/server/routes/personas';
+import pluginSecurityRouter from '@src/server/routes/pluginSecurity';
 import secureConfigRouter from '@src/server/routes/secureConfig';
 import sitemapRouter from '@src/server/routes/sitemap';
 import specsRouter from '@src/server/routes/specs';
+import templatesRouter from '@src/server/routes/templates';
+import usageTrackingRouter from '@src/server/routes/usageTracking';
 import validationRouter from '@src/server/routes/validation';
+import webhooksRouter from '@src/server/routes/webhooks';
+import webuiRouter from '@src/server/routes/webui';
 import { RealTimeValidationService } from '@src/server/services/RealTimeValidationService';
 import WebSocketService from '@src/server/services/WebSocketService';
 import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
@@ -265,6 +275,8 @@ if (!allowAllIPs) {
 app.get('/api/csrf-token', csrfTokenHandler);
 
 // API routes - all on same port, no separation
+app.use('/api/activity', activityRouter);
+app.use('/api/agents', agentsRouter);
 app.use('/api/swarm', authenticateToken, swarmRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/config', webuiConfigRouter);
@@ -274,6 +286,7 @@ app.use('/api/validation', validationRouter);
 app.use('/api/hot-reload', hotReloadRouter);
 app.use('/api/ci', ciRouter);
 app.use('/api/enterprise', enterpriseRouter);
+app.use('/api/errors', errorsRouter);
 app.use('/api/secure-config', secureConfigRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/admin', adminApiRouter);
@@ -281,11 +294,20 @@ app.use('/api/anomalies', authenticateToken, anomalyRouter);
 app.use('/api/integrations', integrationsRouter);
 app.use('/api/letta', lettaRouter);
 app.use('/api/marketplace', marketplaceRouter);
+app.use('/api/mcp', mcpRouter);
+app.use('/api/mcp-tools', mcpToolsRouter);
 app.use('/api/guards', authenticateToken, guardsRouter);
+app.use('/api/onboarding', onboardingRouter);
+app.use('/api/docs', apiDocsRouter);
 app.use('/api', openapiRouter);
+app.use('/api/pluginSecurity', pluginSecurityRouter);
 app.use('/api/specs', authenticateToken, specsRouter);
 app.use('/api/import-export', authenticateToken, importExportRouter);
 app.use('/api/personas', personasRouter);
+app.use('/api/templates', templatesRouter);
+app.use('/api/usage-tracking', usageTrackingRouter);
+app.use('/api/webhooks', webhooksRouter);
+app.use('/api/webui', webuiRouter);
 app.use('/api/demo', demoRouter); // Demo mode routes
 app.use('/api/health', healthRoute); // Health API endpoints
 app.use('/health', healthRoute);
@@ -488,6 +510,20 @@ async function main() {
 
   // Register DI services before anything resolves from the container
   registerServices();
+
+  // Initialize database connection
+  try {
+    const { DatabaseManager } = await import('./database/DatabaseManager');
+    const dbManager = DatabaseManager.getInstance();
+    const dbPath = process.env.DATABASE_PATH || 'data/hivemind.db';
+    dbManager.configure({ type: 'sqlite', path: dbPath });
+    await dbManager.connect();
+    appLogger.info('Database connected', { path: dbPath });
+  } catch (error) {
+    appLogger.warn('Database initialization failed (persistence features disabled)', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 
   // Validate critical environment variables before proceeding
   validateRequiredEnvVars();

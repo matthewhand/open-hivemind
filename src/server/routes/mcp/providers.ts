@@ -53,6 +53,36 @@ router.get('/providers', asyncErrorHandler(async (req, res) => {
   }
 }));
 
+// GET /api/mcp/providers/templates - Get MCP provider templates
+// NOTE: Must be before /:id to avoid matching 'templates' as an ID
+router.get('/providers/templates', asyncErrorHandler(async (_req, res) => {
+  try {
+    const templates = mcpProviderManager.getTemplates();
+    return res.json({ success: true, data: templates });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
+      success: false, error: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError) || 'MCP_PROVIDER_TEMPLATES_ERROR',
+    });
+  }
+}));
+
+// GET /api/mcp/providers/stats - Get MCP provider statistics
+// NOTE: Must be before /:id to avoid matching 'stats' as an ID
+router.get('/providers/stats', asyncErrorHandler(async (_req, res) => {
+  try {
+    const stats = mcpProviderManager.getStats();
+    return res.json({ success: true, data: stats });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
+      success: false, error: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError) || 'MCP_PROVIDER_STATS_ERROR',
+    });
+  }
+}));
+
 // GET /api/mcp/providers/:id - Get MCP provider by ID
 router.get('/providers/:id', validateRequest(MCPProviderIdParamSchema), asyncErrorHandler(async (req, res) => {
   try {
@@ -353,64 +383,6 @@ router.post('/providers/:id/test', validateRequest(MCPProviderIdParamSchema), as
       success: false,
       error: ErrorUtils.getMessage(hivemindError),
       code: ErrorUtils.getCode(hivemindError) || 'MCP_PROVIDER_TEST_ERROR',
-      timestamp: new Date().toISOString(),
-    });
-  }
-}));
-
-// GET /api/mcp/providers/templates - Get MCP provider templates
-router.get('/providers/templates', asyncErrorHandler(async (req, res) => {
-  try {
-    const templates = mcpProviderManager.getTemplates();
-
-    return res.json({
-      success: true,
-      data: templates,
-    });
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
-    const errorInfo = ErrorUtils.classifyError(hivemindError);
-
-    debug('Failed to get MCP provider templates:', {
-      message: ErrorUtils.getMessage(hivemindError),
-      code: ErrorUtils.getCode(hivemindError),
-      type: errorInfo.type,
-      severity: errorInfo.severity,
-    });
-
-    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
-      success: false,
-      error: ErrorUtils.getMessage(hivemindError),
-      code: ErrorUtils.getCode(hivemindError) || 'MCP_PROVIDER_TEMPLATES_ERROR',
-      timestamp: new Date().toISOString(),
-    });
-  }
-}));
-
-// GET /api/mcp/providers/stats - Get MCP provider statistics
-router.get('/providers/stats', asyncErrorHandler(async (req, res) => {
-  try {
-    const stats = mcpProviderManager.getStats();
-
-    return res.json({
-      success: true,
-      data: stats,
-    });
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
-    const errorInfo = ErrorUtils.classifyError(hivemindError);
-
-    debug('Failed to get MCP provider statistics:', {
-      message: ErrorUtils.getMessage(hivemindError),
-      code: ErrorUtils.getCode(hivemindError),
-      type: errorInfo.type,
-      severity: errorInfo.severity,
-    });
-
-    return res.status(ErrorUtils.getStatusCode(hivemindError) || 500).json({
-      success: false,
-      error: ErrorUtils.getMessage(hivemindError),
-      code: ErrorUtils.getCode(hivemindError) || 'MCP_PROVIDER_STATS_ERROR',
       timestamp: new Date().toISOString(),
     });
   }

@@ -126,7 +126,7 @@ export function createCoreRoutes(): Router {
    * GET /api/validation
    * Get validation results for current configuration
    */
-  router.get('/api/validation', async (req: AuthMiddlewareRequest, res: Response) => {
+  router.get('/', async (req: AuthMiddlewareRequest, res: Response) => {
     try {
       // Import the BotConfigurationManager to get current configuration
       const { BotConfigurationManager } = await import('../../../config/BotConfigurationManager');
@@ -177,7 +177,7 @@ export function createCoreRoutes(): Router {
   });
 
   router.post(
-    '/api/validation/test',
+    '/test',
     validateRequest(ValidationTestSchema),
     asyncErrorHandler(async (req, res) => {
       try {
@@ -231,7 +231,7 @@ export function createCoreRoutes(): Router {
    * WebSocket endpoint for real-time validation updates
    * This would be implemented with a WebSocket library like Socket.io
    */
-  router.get('/api/validation/ws', (req: AuthMiddlewareRequest, res: Response) => {
+  router.get('/ws', (req: AuthMiddlewareRequest, res: Response) => {
     // This is a placeholder for WebSocket implementation
     // In a real implementation, you would set up a WebSocket connection
     return res.json({
