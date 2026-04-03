@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { navigateAndWaitReady, setupAuth, setupTestWithErrorDetection } from './test-utils';
+import { navigateAndWaitReady, setupTestWithErrorDetection, setupAuth } from './test-utils';
 
 /**
  * Comprehensive E2E Tests for Plugin Security Page
@@ -92,7 +92,9 @@ test.describe('Plugin Security - Comprehensive Tests', () => {
         })
       ),
       page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} })),
-      page.route('**/api/config/llm-profiles', (route) => route.fulfill({ status: 200, json: [] })),
+      page.route('**/api/config/llm-profiles', (route) =>
+        route.fulfill({ status: 200, json: [] })
+      ),
       page.route('**/api/admin/guard-profiles', (route) =>
         route.fulfill({ status: 200, json: [] })
       ),
@@ -174,13 +176,7 @@ test.describe('Plugin Security - Comprehensive Tests', () => {
     await page.waitForTimeout(500);
 
     // Verify only trusted plugins are shown (5 total)
-    const trustedPlugins = [
-      'llm-openai',
-      'llm-anthropic',
-      'message-discord',
-      'community-analytics',
-      'community-data-processor',
-    ];
+    const trustedPlugins = ['llm-openai', 'llm-anthropic', 'message-discord', 'community-analytics', 'community-data-processor'];
     for (const name of trustedPlugins) {
       await expect(page.locator(`h3:has-text("${name}")`)).toBeVisible();
     }
@@ -340,21 +336,14 @@ test.describe('Plugin Security - Comprehensive Tests', () => {
           // Update the plugin to trusted
           currentPlugins = currentPlugins.map((p) =>
             p.pluginName === 'community-beta-feature'
-              ? {
-                  ...p,
-                  trustLevel: 'trusted' as const,
-                  grantedCapabilities: ['network'],
-                  deniedCapabilities: [],
-                }
+              ? { ...p, trustLevel: 'trusted' as const, grantedCapabilities: ['network'], deniedCapabilities: [] }
               : p
           );
           await route.fulfill({
             status: 200,
             json: {
               success: true,
-              data: {
-                status: currentPlugins.find((p) => p.pluginName === 'community-beta-feature'),
-              },
+              data: { status: currentPlugins.find(p => p.pluginName === 'community-beta-feature') },
               message: "Plugin 'community-beta-feature' trust settings updated successfully",
             },
           });
@@ -384,9 +373,7 @@ test.describe('Plugin Security - Comprehensive Tests', () => {
     await trustButton.click();
 
     // Handle confirmation modal
-    const confirmModal = page
-      .locator('.modal-box, [role="dialog"]')
-      .filter({ hasText: 'Trust Plugin' });
+    const confirmModal = page.locator('.modal-box, [role="dialog"]').filter({ hasText: 'Trust Plugin' });
     await expect(confirmModal).toBeVisible();
 
     const confirmButton = confirmModal.locator('button:has-text("Confirm")');
@@ -422,19 +409,14 @@ test.describe('Plugin Security - Comprehensive Tests', () => {
           // Update the plugin to untrusted
           currentPlugins = currentPlugins.map((p) =>
             p.pluginName === 'community-analytics'
-              ? {
-                  ...p,
-                  trustLevel: 'untrusted' as const,
-                  grantedCapabilities: [],
-                  deniedCapabilities: ['network', 'database'],
-                }
+              ? { ...p, trustLevel: 'untrusted' as const, grantedCapabilities: [], deniedCapabilities: ['network', 'database'] }
               : p
           );
           await route.fulfill({
             status: 200,
             json: {
               success: true,
-              data: { status: currentPlugins.find((p) => p.pluginName === 'community-analytics') },
+              data: { status: currentPlugins.find(p => p.pluginName === 'community-analytics') },
               message: "Plugin 'community-analytics' trust settings updated successfully",
             },
           });
@@ -461,9 +443,7 @@ test.describe('Plugin Security - Comprehensive Tests', () => {
     await revokeButton.click();
 
     // Handle confirmation modal
-    const confirmModal = page
-      .locator('.modal-box, [role="dialog"]')
-      .filter({ hasText: 'Revoke Trust' });
+    const confirmModal = page.locator('.modal-box, [role="dialog"]').filter({ hasText: 'Revoke Trust' });
     await expect(confirmModal).toBeVisible();
 
     const confirmButton = confirmModal.locator('button:has-text("Confirm")');
@@ -502,10 +482,7 @@ test.describe('Plugin Security - Comprehensive Tests', () => {
           status: 200,
           json: {
             success: true,
-            data: {
-              trustLevel: 'untrusted',
-              status: currentPlugins.find((p) => p.pluginName === 'community-advanced-tools'),
-            },
+            data: { trustLevel: 'untrusted', status: currentPlugins.find(p => p.pluginName === 'community-advanced-tools') },
             message: "Plugin 'community-advanced-tools' verified successfully",
           },
         });
@@ -705,10 +682,7 @@ test.describe('Plugin Security - Comprehensive Tests', () => {
         status: 200,
         json: {
           success: true,
-          data: {
-            trustLevel: 'trusted',
-            status: currentPlugins.find((p) => p.pluginName === 'community-analytics'),
-          },
+          data: { trustLevel: 'trusted', status: currentPlugins.find(p => p.pluginName === 'community-analytics') },
           message: "Plugin 'community-analytics' verified successfully",
         },
       });
@@ -761,9 +735,7 @@ test.describe('Plugin Security - Comprehensive Tests', () => {
     await trustButton.click();
 
     // Confirm modal appears
-    const confirmModal = page
-      .locator('.modal-box, [role="dialog"]')
-      .filter({ hasText: 'Trust Plugin' });
+    const confirmModal = page.locator('.modal-box, [role="dialog"]').filter({ hasText: 'Trust Plugin' });
     await expect(confirmModal).toBeVisible();
 
     // Click Cancel button

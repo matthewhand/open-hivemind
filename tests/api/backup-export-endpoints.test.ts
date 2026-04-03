@@ -8,13 +8,13 @@
  * @since 2026-04-02
  */
 
-import fs from 'fs/promises';
-import path from 'path';
 import express from 'express';
 import request from 'supertest';
-import type { AuthMiddlewareRequest } from '../../src/auth/types';
-import importExportRouter from '../../src/server/routes/importExport';
+import fs from 'fs/promises';
+import path from 'path';
 import { ConfigurationImportExportService } from '../../src/server/services/ConfigurationImportExportService';
+import importExportRouter from '../../src/server/routes/importExport';
+import type { AuthMiddlewareRequest } from '../../src/auth/types';
 
 // Mock dependencies
 jest.mock('fs/promises');

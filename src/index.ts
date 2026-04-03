@@ -308,8 +308,7 @@ app.get('*', (req: Request, res: Response, next: NextFunction) => {
   if (process.env.NODE_ENV === 'development' && viteServer) {
     // In dev mode, serve through Vite's HTML transform
     const url = req.originalUrl;
-    fs.promises
-      .readFile(path.join(process.cwd(), 'src/client/index.html'), 'utf-8')
+    fs.promises.readFile(path.join(process.cwd(), 'src/client/index.html'), 'utf-8')
       .then((template) => viteServer.transformIndexHtml(url, template))
       .then((html) => {
         res.status(200).set({ 'Content-Type': 'text/html' }).end(html);

@@ -1,9 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { act, renderHook } from '@testing-library/react';
-import { useToolExecution } from '../../../../../src/client/src/pages/MCPToolsPage/hooks/useToolExecution';
-import { useToolHistory } from '../../../../../src/client/src/pages/MCPToolsPage/hooks/useToolHistory';
-import { useToolRegistry } from '../../../../../src/client/src/pages/MCPToolsPage/hooks/useToolRegistry';
-import { apiService } from '../../../../../src/client/src/services/api';
+import { renderHook, act } from '@testing-library/react';
 
 jest.mock('../../../../../src/client/src/services/api', () => ({
   apiService: {
@@ -23,6 +19,11 @@ jest.mock('../../../../../src/client/src/hooks/useUrlParams', () => ({
     setValue: jest.fn(),
   })),
 }));
+
+import { apiService } from '../../../../../src/client/src/services/api';
+import { useToolHistory } from '../../../../../src/client/src/pages/MCPToolsPage/hooks/useToolHistory';
+import { useToolExecution } from '../../../../../src/client/src/pages/MCPToolsPage/hooks/useToolExecution';
+import { useToolRegistry } from '../../../../../src/client/src/pages/MCPToolsPage/hooks/useToolRegistry';
 
 beforeEach(() => {
   jest.clearAllMocks();

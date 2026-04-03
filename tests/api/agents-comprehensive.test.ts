@@ -319,7 +319,10 @@ describe('Agents API - Comprehensive Tests', () => {
     });
 
     it('should handle invalid agent ID gracefully', async () => {
-      const response = await request(app).put('/api/agents/').send({ name: 'Test' }).expect(404);
+      const response = await request(app)
+        .put('/api/agents/')
+        .send({ name: 'Test' })
+        .expect(404);
     });
   });
 
@@ -455,7 +458,10 @@ describe('Agents API - Comprehensive Tests', () => {
         systemPrompt: 'You are a test persona.',
       };
 
-      const response = await request(app).post('/api/agents/personas').send(newPersona).expect(200);
+      const response = await request(app)
+        .post('/api/agents/personas')
+        .send(newPersona)
+        .expect(200);
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.persona).toHaveProperty('key', 'test_persona');
@@ -469,7 +475,10 @@ describe('Agents API - Comprehensive Tests', () => {
         systemPrompt: 'A special prompt.',
       };
 
-      const response = await request(app).post('/api/agents/personas').send(newPersona).expect(200);
+      const response = await request(app)
+        .post('/api/agents/personas')
+        .send(newPersona)
+        .expect(200);
 
       // The key generation replaces all non-alphanumeric chars with underscore
       expect(response.body.data.persona.key).toBe('my_special_persona_');

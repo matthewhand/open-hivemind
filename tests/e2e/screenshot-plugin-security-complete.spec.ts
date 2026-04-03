@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { navigateAndWaitReady, setupAuth, setupTestWithErrorDetection } from './test-utils';
+import { navigateAndWaitReady, setupTestWithErrorDetection, setupAuth } from './test-utils';
 
 test.describe('Plugin Security Dashboard - Complete Visual Regression Tests', () => {
   test.beforeEach(async ({ page }) => {
@@ -241,7 +241,9 @@ test.describe('Plugin Security Dashboard - Complete Visual Regression Tests', ()
 
     // Wait for confirm modal to appear
     await expect(page.getByText('Trust Plugin')).toBeVisible();
-    await expect(page.getByText(/Are you sure you want to trust the plugin/)).toBeVisible();
+    await expect(
+      page.getByText(/Are you sure you want to trust the plugin/)
+    ).toBeVisible();
     await page.waitForTimeout(500);
 
     // Screenshot: Trust confirmation modal
@@ -288,7 +290,9 @@ test.describe('Plugin Security Dashboard - Complete Visual Regression Tests', ()
 
     // Wait for confirm modal
     await expect(page.getByText('Revoke Trust')).toBeVisible();
-    await expect(page.getByText(/Are you sure you want to revoke trust/)).toBeVisible();
+    await expect(
+      page.getByText(/Are you sure you want to revoke trust/)
+    ).toBeVisible();
     await page.waitForTimeout(500);
 
     // Screenshot: Revoke trust confirmation modal

@@ -1,11 +1,11 @@
 import Debug from 'debug';
 import { Router, type Response } from 'express';
 import type { AuthMiddlewareRequest } from '../../../auth/types';
-import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import type { BotConfig } from '../../../types/config';
 import { HTTP_STATUS } from '../../../types/constants';
 import { ValidationTestSchema } from '../../../validation/schemas/miscSchema';
 import { validateRequest } from '../../../validation/validateRequest';
+import { asyncErrorHandler } from '../../../middleware/errorHandler';
 
 const debug = Debug('app:server:routes:validation:core');
 

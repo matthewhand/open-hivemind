@@ -2,9 +2,9 @@ import { Router } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { createLogger } from '../../common/StructuredLogger';
 import { BotManager } from '../../managers/BotManager';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { EmptyBodySchema, OnboardingStepSchema } from '../../validation/schemas/onboardingSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const router = Router();
 const logger = createLogger('onboardingRouter');
@@ -25,33 +25,30 @@ let onboardingStep = 1;
  *       200:
  *         description: Onboarding completion status
  */
-router.get(
-  '/status',
-  asyncErrorHandler(async (req, res) => {
-    try {
-      // If already marked complete, return immediately
-      if (onboardingCompleted) {
-        return res.json(ApiResponse.success({ completed: true, step: 5 }));
-      }
-
-      // Auto-detect completion: if bots exist, onboarding is implicitly done
-      const manager = await BotManager.getInstance();
-      const bots = await manager.getAllBots();
-      if (bots.length > 0) {
-        onboardingCompleted = true;
-        return res.json(ApiResponse.success({ completed: true, step: 5 }));
-      }
-
-      return res.json(ApiResponse.success({ completed: false, step: onboardingStep }));
-    } catch (err) {
-      logger.error(
-        'Failed to get onboarding status',
-        err instanceof Error ? err : new Error(String(err))
-      );
-      return res.json(ApiResponse.success({ completed: false, step: 1 }));
+router.get('/status', asyncErrorHandler(async (req, res) => {
+  try {
+    // If already marked complete, return immediately
+    if (onboardingCompleted) {
+      return res.json(ApiResponse.success({ completed: true, step: 5 }));
     }
-  })
-);
+
+    // Auto-detect completion: if bots exist, onboarding is implicitly done
+    const manager = await BotManager.getInstance();
+    const bots = await manager.getAllBots();
+    if (bots.length > 0) {
+      onboardingCompleted = true;
+      return res.json(ApiResponse.success({ completed: true, step: 5 }));
+    }
+
+    return res.json(ApiResponse.success({ completed: false, step: onboardingStep }));
+  } catch (err) {
+    logger.error(
+      'Failed to get onboarding status',
+      err instanceof Error ? err : new Error(String(err))
+    );
+    return res.json(ApiResponse.success({ completed: false, step: 1 }));
+  }
+}));
 
 /**
  * @openapi

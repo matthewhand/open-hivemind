@@ -3,51 +3,47 @@ import { Router } from 'express';
 import { WebSocketService } from '@src/server/services/WebSocketService';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { HotReloadManager, type ConfigurationChange } from '@config/HotReloadManager';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { HTTP_STATUS } from '../../types/constants';
 import {
   HotReloadChangeSchema,
   SnapshotIdParamSchema,
 } from '../../validation/schemas/hotReloadSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:hotReloadRoutes');
 const router = Router();
 
-router.post(
-  '/api/config/hot-reload',
-  validateRequest(HotReloadChangeSchema),
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const changeData: Omit<
-        ConfigurationChange,
-        'id' | 'timestamp' | 'validated' | 'applied' | 'rollbackAvailable'
-      > = req.body;
+router.post('/api/config/hot-reload', validateRequest(HotReloadChangeSchema), asyncErrorHandler(async (req, res) => {
+  try {
+    const changeData: Omit<
+      ConfigurationChange,
+      'id' | 'timestamp' | 'validated' | 'applied' | 'rollbackAvailable'
+    > = req.body;
 
-      if (!changeData.changes || Object.keys(changeData.changes).length === 0) {
-        return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('No changes provided'));
-      }
-
-      const hotReloadManager = HotReloadManager.getInstance();
-      const result = await hotReloadManager.applyConfigurationChange(changeData);
-
-      return res.json(ApiResponse.success(result));
-    } catch (error) {
-      debug('Hot reload API error:', error);
-      return res
-        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(
-          ApiResponse.error(
-            process.env.NODE_ENV === 'production'
-              ? 'An internal error occurred'
-              : error instanceof Error
-                ? error.message
-                : 'Unknown error'
-          )
-        );
+    if (!changeData.changes || Object.keys(changeData.changes).length === 0) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('No changes provided'));
     }
-  })
-);
+
+    const hotReloadManager = HotReloadManager.getInstance();
+    const result = await hotReloadManager.applyConfigurationChange(changeData);
+
+    return res.json(ApiResponse.success(result));
+  } catch (error) {
+    debug('Hot reload API error:', error);
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(
+        ApiResponse.error(
+          process.env.NODE_ENV === 'production'
+            ? 'An internal error occurred'
+            : error instanceof Error
+              ? error.message
+              : 'Unknown error'
+        )
+      );
+  }
+}));
 
 router.get('/api/config/hot-reload/history', (req, res) => {
   try {
