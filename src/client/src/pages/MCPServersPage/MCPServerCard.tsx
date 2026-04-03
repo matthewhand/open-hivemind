@@ -1,14 +1,14 @@
 import React from 'react';
-import { ExclamationCircleIcon } from '@heroicons/react/20/solid';
 import Checkbox from '../../components/DaisyUI/Checkbox';
 import {
-  ArrowPathIcon,
-  PencilIcon,
-  PlayIcon,
-  StopIcon,
-  TrashIcon,
-  WrenchScrewdriverIcon,
-} from '@heroicons/react/24/outline';
+  AlertCircle,
+  RefreshCw,
+  Pencil,
+  Play,
+  Square,
+  Trash2,
+  Wrench,
+} from 'lucide-react';
 
 // Types simplified for this component
 interface MCPServer {
@@ -66,7 +66,7 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = ({
 
         {server.status === 'error' && server.error && (
           <div className="alert alert-error text-xs py-2 px-3 mb-3">
-            <ExclamationCircleIcon className="w-4 h-4" />
+            <AlertCircle className="w-4 h-4" />
             <span>{server.error}</span>
           </div>
         )}
@@ -104,7 +104,7 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = ({
                 aria-label={`Disconnect ${server.name}`}
                 onClick={() => handleServerAction(server.id, 'stop')}
               >
-                <StopIcon className="w-5 h-5" />
+                <Square className="w-5 h-5" />
               </button>
             ) : (
               <button
@@ -118,9 +118,9 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = ({
                 onClick={() => handleServerAction(server.id, 'start')}
               >
                 {server.status === 'error' ? (
-                  <ArrowPathIcon className="w-5 h-5" />
+                  <RefreshCw className="w-5 h-5" />
                 ) : (
-                  <PlayIcon className="w-5 h-5" />
+                  <Play className="w-5 h-5" />
                 )}
               </button>
             )}
@@ -131,7 +131,7 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = ({
                 aria-label={`View Tools for ${server.name}`}
                 onClick={() => handleViewTools(server)}
               >
-                <WrenchScrewdriverIcon className="w-5 h-5" />
+                <Wrench className="w-5 h-5" />
               </button>
             )}
           </div>
@@ -142,7 +142,7 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = ({
               aria-label={`Edit ${server.name}`}
               onClick={() => handleEditServer(server)}
             >
-              <PencilIcon className="w-4 h-4" />
+              <Pencil className="w-4 h-4" />
             </button>
             <button
               className="btn btn-ghost btn-sm btn-circle text-error tooltip hover:bg-error hover:text-error-content"
@@ -150,7 +150,7 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = ({
               aria-label={`Delete ${server.name}`}
               onClick={() => handleDeleteServer(server.id)}
             >
-              <TrashIcon className="w-4 h-4" />
+              <Trash2 className="w-4 h-4" />
             </button>
           </div>
         </div>

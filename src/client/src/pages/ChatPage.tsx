@@ -5,6 +5,7 @@ import ChatInterface, { ChatMessage } from '../components/DaisyUI/Chat';
 import BotChatBubbles from '../components/BotChatBubbles';
 import { RefreshCw, MessageSquare, Menu as LucideMenuIcon, X } from 'lucide-react';
 import Button from '../components/DaisyUI/Button';
+import PageHeader from '../components/DaisyUI/PageHeader';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { SkeletonList, SkeletonMessageList } from '../components/DaisyUI/Skeleton';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
@@ -274,35 +275,34 @@ const ChatPage: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full bg-base-200">
-      <div className="p-4 bg-base-100 border-b border-base-300 shadow-sm flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          {!isDesktop && (
-            <div className="tooltip tooltip-right" data-tip={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="btn-square"
-                aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
-                aria-expanded={sidebarOpen}
-              >
-                {sidebarOpen ? <X className="w-5 h-5" /> : <LucideMenuIcon className="w-5 h-5" />}
+      <div className="p-4 bg-base-100 border-b border-base-300 shadow-sm flex items-center gap-2">
+        {!isDesktop && (
+          <div className="tooltip tooltip-right" data-tip={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="btn-square"
+              aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+              aria-expanded={sidebarOpen}
+            >
+              {sidebarOpen ? <X className="w-5 h-5" /> : <LucideMenuIcon className="w-5 h-5" />}
+            </Button>
+          </div>
+        )}
+        <PageHeader
+          title="Live Chat Monitor"
+          description="Monitor conversations across your bot fleet"
+          icon={MessageSquare}
+          className="flex-1 mb-0 p-0 border-0 bg-transparent rounded-none"
+          actions={
+            <div className="tooltip tooltip-left" data-tip="Refresh">
+              <Button variant="ghost" size="md" onClick={handleRefresh} className="btn-circle" aria-label="Refresh">
+                <RefreshCw className={`w-5 h-5 ${loading || historyLoading ? 'animate-spin' : ''}`} />
               </Button>
             </div>
-          )}
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <MessageSquare className="w-6 h-6 text-primary" />
-              Live Chat Monitor
-            </h1>
-            <p className="text-sm text-base-content/60">Monitor conversations across your bot fleet</p>
-          </div>
-        </div>
-        <div className="tooltip tooltip-left" data-tip="Refresh">
-          <Button variant="ghost" size="md" onClick={handleRefresh} className="btn-circle" aria-label="Refresh">
-            <RefreshCw className={`w-5 h-5 ${loading || historyLoading ? 'animate-spin' : ''}`} />
-          </Button>
-        </div>
+          }
+        />
       </div>
 
       <div className="flex flex-1 overflow-hidden relative">

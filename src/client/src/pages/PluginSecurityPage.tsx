@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Card from '../components/DaisyUI/Card';
 import Badge from '../components/DaisyUI/Badge';
 import Button from '../components/DaisyUI/Button';
+import PageHeader from '../components/DaisyUI/PageHeader';
 import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
 import {
   Shield,
@@ -170,15 +171,12 @@ const PluginSecurityPage: React.FC = () => {
 
   return (
     <div className="container mx-auto p-4 max-w-7xl">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
-          <Shield className="w-8 h-8" />
-          Plugin Security Dashboard
-        </h1>
-        <p className="text-base-content/70">
-          Monitor and manage security settings for all installed plugins
-        </p>
-      </div>
+      <PageHeader
+        title="Plugin Security Dashboard"
+        description="Monitor and manage security settings for all installed plugins"
+        icon={Shield}
+        gradient="warning"
+      />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">

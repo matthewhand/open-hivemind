@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrashIcon } from '@heroicons/react/24/outline';
+import { Trash2 } from 'lucide-react';
 import BulkActionBar from '../../components/BulkActionBar';
 import { MCPServerCard } from './MCPServerCard';
 import Checkbox from '../../components/DaisyUI/Checkbox';
@@ -60,7 +60,7 @@ export const MCPServerList: React.FC<MCPServerListProps> = ({
           {
             key: 'delete',
             label: 'Delete',
-            icon: <TrashIcon className="w-4 h-4" />,
+            icon: <Trash2 className="w-4 h-4" />,
             variant: 'error',
             onClick: handleBulkDeleteServers,
             loading: bulkDeleting,

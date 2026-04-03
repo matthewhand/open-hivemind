@@ -7,7 +7,8 @@ import Badge from '../components/DaisyUI/Badge';
 
 import Pagination from '../components/DaisyUI/Pagination';
 import { SkeletonPage } from '../components/DaisyUI/Skeleton';
-import { MagnifyingGlassIcon, PlusIcon, BookOpenIcon } from '@heroicons/react/24/outline';
+import { Search, Plus, BookOpen } from 'lucide-react';
+import PageHeader from '../components/DaisyUI/PageHeader';
 import useSpecs from '../hooks/useSpecs';
 import useUrlParams from '../hooks/useUrlParams';
 import { useInfoToast } from '../components/DaisyUI/ToastNotification';
@@ -71,15 +72,16 @@ const SpecsPage: React.FC = () => {
 
   return (
     <div className="container mx-auto p-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Specifications</h1>
-        <p className="opacity-70">View, search, and manage persisted specifications</p>
-      </div>
+      <PageHeader
+        title="Specifications"
+        description="View, search, and manage persisted specifications"
+        icon={BookOpen}
+      />
 
       {/* Search and Actions */}
       <div className="flex flex-col md:flex-row gap-4 mb-6">
         <div className="flex-1 relative">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 opacity-50" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 opacity-50" />
           <Input
             className="pl-10"
             placeholder="Search specifications..."
@@ -88,7 +90,7 @@ const SpecsPage: React.FC = () => {
           />
         </div>
         <Button className="btn-primary" onClick={handleNotImplemented}>
-          <PlusIcon className="w-4 h-4 mr-2" />
+          <Plus className="w-4 h-4 mr-2" />
           Add Specification
         </Button>
       </div>
@@ -106,7 +108,7 @@ const SpecsPage: React.FC = () => {
           <Card key={spec.id} className="shadow-lg hover:shadow-xl transition-shadow">
             <div className="card-body">
               <div className="flex items-start justify-between mb-3">
-                <BookOpenIcon className="w-6 h-6 text-primary flex-shrink-0" />
+                <BookOpen className="w-6 h-6 text-primary flex-shrink-0" />
                 <Badge variant="neutral" size="sm">
                   {spec.tags.length} tag{spec.tags.length !== 1 ? 's' : ''}
                 </Badge>
@@ -150,7 +152,7 @@ const SpecsPage: React.FC = () => {
       {/* Empty State */}
       {filteredSpecs.length === 0 && (
         <div className="text-center py-12">
-          <BookOpenIcon className="w-16 h-16 mx-auto text-primary mb-4 opacity-50" />
+          <BookOpen className="w-16 h-16 mx-auto text-primary mb-4 opacity-50" />
           <h3 className="text-xl font-semibold mb-2">No specifications found</h3>
           <p className="opacity-70 mb-4">
             {searchTerm
@@ -158,7 +160,7 @@ const SpecsPage: React.FC = () => {
               : 'Get started by creating your first specification'}
           </p>
           <Button className="btn-primary" onClick={handleNotImplemented}>
-            <PlusIcon className="w-4 h-4 mr-2" />
+            <Plus className="w-4 h-4 mr-2" />
             Create Specification
           </Button>
         </div>

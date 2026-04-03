@@ -7,7 +7,7 @@ import Badge from '../components/DaisyUI/Badge';
 import Dropdown from '../components/DaisyUI/Dropdown';
 
 import { SkeletonList } from '../components/DaisyUI/Skeleton';
-import { ArrowLeftIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
+import { ArrowLeft, Download } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import useSpec from '../hooks/useSpec';
 import { useInfoToast } from '../components/DaisyUI/ToastNotification';
@@ -106,7 +106,7 @@ ${spec.content.replace(/^/gm, '  ')}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-4">
                 <Button size="sm" className="btn-ghost" onClick={() => window.history.back()}>
-                  <ArrowLeftIcon className="w-4 h-4 mr-2" />
+                  <ArrowLeft className="w-4 h-4 mr-2" />
                   Back
                 </Button>
                 <div>
@@ -119,7 +119,7 @@ ${spec.content.replace(/^/gm, '  ')}
               <Dropdown
                 trigger={
                   <Button className="btn-primary">
-                    <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
+                    <Download className="w-4 h-4 mr-2" />
                     Export
                   </Button>
                 }

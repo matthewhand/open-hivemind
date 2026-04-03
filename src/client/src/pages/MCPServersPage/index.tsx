@@ -1,10 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import {
-  PlusIcon,
-  MagnifyingGlassIcon as SearchIcon,
-  ServerIcon,
-} from '@heroicons/react/24/outline';
-import { ShieldExclamationIcon } from '@heroicons/react/24/solid';
+  Plus,
+  Search,
+  Server,
+  ShieldAlert,
+} from 'lucide-react';
+import PageHeader from '../../components/DaisyUI/PageHeader';
 import { Alert } from '../../components/DaisyUI/Alert';
 import EmptyState from '../../components/DaisyUI/EmptyState';
 import { SkeletonGrid } from '../../components/DaisyUI/Skeleton';
@@ -101,33 +102,32 @@ const MCPServersPage: React.FC = () => {
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">MCP Servers</h1>
-          <p className="text-base-content/70">
-            Model Context Protocol servers provide tools and capabilities to your AI agents.
-          </p>
-        </div>
-        <button
-          className="btn btn-primary"
-          onClick={() => {
-            setSelectedServer({
-              id: '',
-              name: '',
-              url: '',
-              status: 'stopped',
-              description: '',
-              toolCount: 0,
-              apiKey: '',
-            });
-            setIsEditing(false);
-            setDialogOpen(true);
-          }}
-        >
-          <PlusIcon className="w-5 h-5 mr-2" />
-          Add Server
-        </button>
-      </div>
+      <PageHeader
+        title="MCP Servers"
+        description="Model Context Protocol servers provide tools and capabilities to your AI agents."
+        icon={Server}
+        actions={
+          <button
+            className="btn btn-primary"
+            onClick={() => {
+              setSelectedServer({
+                id: '',
+                name: '',
+                url: '',
+                status: 'stopped',
+                description: '',
+                toolCount: 0,
+                apiKey: '',
+              });
+              setIsEditing(false);
+              setDialogOpen(true);
+            }}
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Add Server
+          </button>
+        }
+      />
       <div className="mb-6">
         <SearchFilterBar
           searchValue={searchTerm}
@@ -150,7 +150,7 @@ const MCPServersPage: React.FC = () => {
       </div>
       {error && (
         <div className="alert alert-error mb-6">
-          <ShieldExclamationIcon className="w-6 h-6" />
+          <ShieldAlert className="w-6 h-6" />
           <span>{error}</span>
         </div>
       )}
@@ -177,7 +177,7 @@ const MCPServersPage: React.FC = () => {
       )}
       {servers.length === 0 ? (
         <EmptyState
-          icon={ServerIcon as any}
+          icon={Server}
           title="No servers configured"
           description="Connect an MCP server to get started extending your bot's capabilities."
           actionLabel="Add Server"
@@ -198,7 +198,7 @@ const MCPServersPage: React.FC = () => {
         />
       ) : filteredServers.length === 0 ? (
         <EmptyState
-          icon={SearchIcon as any}
+          icon={Search}
           title="No results found"
           description={`No servers match your search for "${searchTerm}".`}
           actionLabel="Clear Search"
