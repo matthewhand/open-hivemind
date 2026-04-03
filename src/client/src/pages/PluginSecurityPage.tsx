@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Card from '../components/DaisyUI/Card';
 import Badge from '../components/DaisyUI/Badge';
 import Button from '../components/DaisyUI/Button';
+import Tabs from '../components/DaisyUI/Tabs';
 import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
 import {
   Shield,
@@ -237,38 +238,17 @@ const PluginSecurityPage: React.FC = () => {
       <Card className="mb-6">
         <div className="flex flex-wrap gap-2 items-center">
           <span className="text-sm font-semibold">Filter by:</span>
-          <div className="tabs tabs-boxed">
-            <button
-              className={`tab ${filter === 'all' ? 'tab-active' : ''}`}
-              onClick={() => setFilter('all')}
-            >
-              All
-            </button>
-            <button
-              className={`tab ${filter === 'trusted' ? 'tab-active' : ''}`}
-              onClick={() => setFilter('trusted')}
-            >
-              Trusted
-            </button>
-            <button
-              className={`tab ${filter === 'untrusted' ? 'tab-active' : ''}`}
-              onClick={() => setFilter('untrusted')}
-            >
-              Untrusted
-            </button>
-            <button
-              className={`tab ${filter === 'built-in' ? 'tab-active' : ''}`}
-              onClick={() => setFilter('built-in')}
-            >
-              Built-in
-            </button>
-            <button
-              className={`tab ${filter === 'verification-failed' ? 'tab-active' : ''}`}
-              onClick={() => setFilter('verification-failed')}
-            >
-              Verification Failed
-            </button>
-          </div>
+          <Tabs
+            tabs={[
+              { key: 'all', label: 'All' },
+              { key: 'trusted', label: 'Trusted' },
+              { key: 'untrusted', label: 'Untrusted' },
+              { key: 'built-in', label: 'Built-in' },
+              { key: 'verification-failed', label: 'Verification Failed' },
+            ]}
+            activeTab={filter}
+            onChange={(key) => setFilter(key as SecurityFilter)}
+          />
           <Button
             size="sm"
             variant="ghost"
