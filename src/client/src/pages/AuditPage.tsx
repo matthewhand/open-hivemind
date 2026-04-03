@@ -309,7 +309,7 @@ const AuditPage: React.FC = () => {
       <PageHeader
         title="Audit Log"
         description="Review all administrative and system events"
-        icon={<Shield className="w-6 h-6" />}
+        icon={Shield}
         gradient="primary"
         actions={
           <div className="flex gap-2">

@@ -11,6 +11,7 @@ import {
   Store as StoreIcon,
   Download as DownloadIcon,
   RefreshCw as UpdateIcon,
+  RefreshCw,
   Trash2 as UninstallIcon,
   Plus as PlusIcon,
   Search as SearchIcon,
@@ -23,6 +24,7 @@ import {
   CheckCircle as CheckIcon,
   X as CloseIcon,
 } from 'lucide-react';
+import PageHeader from '../components/DaisyUI/PageHeader';
 import { ConfirmModal } from '../components/DaisyUI/Modal';
 import { apiService } from '../services/api';
 
@@ -211,36 +213,32 @@ const MarketplacePage: React.FC = () => {
   return (
     <div className="p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <StoreIcon className="w-8 h-8 text-primary" />
-          <div>
-            <h1 className="text-2xl font-bold">Package Marketplace</h1>
-            <p className="text-sm text-base-content/70">
-              Browse, install, and manage provider packages
-            </p>
+      <PageHeader
+        title="Package Marketplace"
+        description="Browse, install, and manage provider packages"
+        icon={StoreIcon}
+        actions={
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={fetchPackages}
+              disabled={loading} aria-busy={loading}
+            >
+              <RefreshCw className={`w-4 h-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setInstallModalOpen(true)}
+            >
+              <PlusIcon className="w-4 h-4 mr-1" />
+              Install from URL
+            </Button>
           </div>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={fetchPackages}
-            disabled={loading} aria-busy={loading}
-          >
-            <RefreshCw className={`w-4 h-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setInstallModalOpen(true)}
-          >
-            <PlusIcon className="w-4 h-4 mr-1" />
-            Install from URL
-          </Button>
-        </div>
-      </div>
+        }
+      />
 
       {/* Alert Messages */}
       {actionMessage && (
@@ -604,8 +602,5 @@ const MarketplacePage: React.FC = () => {
     </div>
   );
 };
-
-// Missing imports
-const RefreshCw = UpdateIcon;
 
 export default MarketplacePage;

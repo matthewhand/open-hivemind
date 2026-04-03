@@ -1,6 +1,5 @@
 import React from 'react';
-import { CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/20/solid';
-import { WrenchScrewdriverIcon } from '@heroicons/react/24/outline';
+import { CheckCircle, AlertCircle, Wrench } from 'lucide-react';
 import Modal, { ConfirmModal } from '../../components/DaisyUI/Modal';
 import ModalForm from '../../components/DaisyUI/ModalForm';
 
@@ -85,7 +84,7 @@ export const MCPServerModals: React.FC<MCPServerModalsProps> = ({
               {viewingTools.map((tool, idx) => (
                 <div key={idx} className="border border-base-200 rounded-lg p-4 bg-base-100">
                   <div className="flex items-center gap-2 mb-2">
-                    <WrenchScrewdriverIcon className="w-4 h-4 text-primary" />
+                    <Wrench className="w-4 h-4 text-primary" />
                     <h3 className="font-bold text-lg">{tool.name}</h3>
                   </div>
                   <p className="text-sm text-base-content/80 mb-2">
@@ -127,9 +126,9 @@ export const MCPServerModals: React.FC<MCPServerModalsProps> = ({
               className={`alert ${alert.type === 'success' ? 'alert-success' : 'alert-error'} mb-4 flex flex-row items-center gap-2`}
             >
               {alert.type === 'success' ? (
-                <CheckCircleIcon className="w-6 h-6" />
+                <CheckCircle className="w-6 h-6" />
               ) : (
-                <ExclamationCircleIcon className="w-6 h-6" />
+                <AlertCircle className="w-6 h-6" />
               )}
               <span>{alert.message}</span>
             </div>

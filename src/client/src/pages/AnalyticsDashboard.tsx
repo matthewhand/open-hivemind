@@ -5,6 +5,9 @@ import MetricChart from '../components/Monitoring/MetricChart';
 import StatusCard from '../components/Monitoring/StatusCard';
 import { redactString } from '../utils/redaction';
 import DataTable from '../components/DaisyUI/DataTable';
+import PageHeader from '../components/DaisyUI/PageHeader';
+import Button from '../components/DaisyUI/Button';
+import { BarChart3, RefreshCw } from 'lucide-react';
 import { useErrorToast } from '../components/DaisyUI/ToastNotification';
 
 const AnalyticsDashboard: React.FC = () => {
@@ -111,16 +114,12 @@ const AnalyticsDashboard: React.FC = () => {
       </div>
 
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-4xl font-bold mb-2 flex items-center gap-3">
-              Analytics Dashboard
-            </h1>
-            <p className="text-lg text-base-content/70">
-              Usage metrics, user engagement, and performance analytics.
-            </p>
-          </div>
+      <PageHeader
+        title="Analytics Dashboard"
+        description="Usage metrics, user engagement, and performance analytics."
+        icon={BarChart3}
+        gradient="secondary"
+        actions={
           <div className="flex gap-4">
             <select
               className="select select-bordered"
@@ -132,16 +131,16 @@ const AnalyticsDashboard: React.FC = () => {
               <option value="7d">Last 7 Days</option>
               <option value="30d">Last 30 Days</option>
             </select>
-            <button
-              className="btn btn-primary"
+            <Button
+              variant="primary"
               onClick={fetchAnalyticsData}
               disabled={isLoading}
             >
-              {isLoading ? <span className="loading loading-spinner loading-sm" aria-hidden="true"></span> : '🔄'} Refresh
-            </button>
+              {isLoading ? <span className="loading loading-spinner loading-sm" aria-hidden="true"></span> : <RefreshCw className="w-4 h-4" />} Refresh
+            </Button>
           </div>
-        </div>
-      </div>
+        }
+      />
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
