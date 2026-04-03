@@ -100,8 +100,8 @@ const PersonasPage: React.FC = () => {
             <div className="flex gap-2">
               <div className="join">
                 <div className="tooltip" data-tip="Filter by Category">
-                  <button className="btn btn-square btn-sm join-item pointer-events-none">
-                    <Filter className="w-4 h-4" />
+                  <button className="btn btn-square btn-sm join-item pointer-events-none" aria-label="Filter by category" tabIndex={-1}>
+                    <Filter className="w-4 h-4" aria-hidden="true" />
                   </button>
                 </div>
                 <select
