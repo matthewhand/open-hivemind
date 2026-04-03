@@ -1,7 +1,7 @@
-import { SchemaRegistry } from '../../../src/database/schemas/index';
-import type { ISchemaModule } from '../../../src/database/schemas/ISchemaModule';
 import { LoggingSchemas } from '../../../src/database/schemas/LoggingSchemas';
 import { MonitoringSchemas } from '../../../src/database/schemas/MonitoringSchemas';
+import { SchemaRegistry } from '../../../src/database/schemas/index';
+import type { ISchemaModule } from '../../../src/database/schemas/ISchemaModule';
 
 describe('LoggingSchemas', () => {
   let schema: LoggingSchemas;

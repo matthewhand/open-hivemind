@@ -13,7 +13,7 @@ export class EventHandlers {
   constructor(
     @inject(ConnectionManager) private connectionManager: ConnectionManager,
     @inject(BroadcastService) private broadcastService: BroadcastService
-  ) {}
+  ) { }
 
   public setup(io: SocketIOServer): void {
     io.on('connection', (socket) => {

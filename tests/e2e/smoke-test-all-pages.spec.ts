@@ -335,16 +335,15 @@ test.describe('Smoke Test - All Pages', () => {
 
         // Check for React error boundaries
         const bodyText = await body.innerText().catch(() => '');
-        if (
-          bodyText.includes('Something went wrong') ||
-          bodyText.includes('Unexpected Application Error')
-        ) {
+        if (bodyText.includes('Something went wrong') ||
+            bodyText.includes('Unexpected Application Error')) {
           throw new Error('React error boundary detected');
         }
 
         const loadTime = Date.now() - startTime;
         results.push({ path, label, status: 'pass', loadTime });
         console.log(`✅ ${label.padEnd(30)} ${loadTime}ms`);
+
       } catch (error) {
         const loadTime = Date.now() - startTime;
         const errorMsg = error instanceof Error ? error.message : String(error);
@@ -354,8 +353,8 @@ test.describe('Smoke Test - All Pages', () => {
     }
 
     // Generate summary report
-    const passed = results.filter((r) => r.status === 'pass').length;
-    const failed = results.filter((r) => r.status === 'fail').length;
+    const passed = results.filter(r => r.status === 'pass').length;
+    const failed = results.filter(r => r.status === 'fail').length;
     const totalLoadTime = results.reduce((sum, r) => sum + r.loadTime, 0);
     const avgLoadTime = Math.round(totalLoadTime / results.length);
 
@@ -370,7 +369,7 @@ test.describe('Smoke Test - All Pages', () => {
     console.log('='.repeat(60));
 
     // List failures if any
-    const failures = results.filter((r) => r.status === 'fail');
+    const failures = results.filter(r => r.status === 'fail');
     if (failures.length > 0) {
       console.log('\n❌ FAILED PAGES:');
       failures.forEach(({ label, path, error }) => {
@@ -381,7 +380,9 @@ test.describe('Smoke Test - All Pages', () => {
     }
 
     // Log slowest pages (top 5)
-    const slowest = [...results].sort((a, b) => b.loadTime - a.loadTime).slice(0, 5);
+    const slowest = [...results]
+      .sort((a, b) => b.loadTime - a.loadTime)
+      .slice(0, 5);
 
     console.log('\n⏱️  SLOWEST PAGES:');
     slowest.forEach(({ label, loadTime }) => {
@@ -449,7 +450,12 @@ test.describe('Smoke Test - All Pages', () => {
     await mockAllApiEndpoints(page);
 
     // Sample a few admin pages
-    const testPaths = ['/admin/overview', '/admin/bots', '/admin/settings', '/dashboard'];
+    const testPaths = [
+      '/admin/overview',
+      '/admin/bots',
+      '/admin/settings',
+      '/dashboard',
+    ];
 
     for (const path of testPaths) {
       await page.goto(path, { waitUntil: 'domcontentloaded', timeout: 5000 });
@@ -472,8 +478,7 @@ test.describe('Smoke Test - All Pages', () => {
     const PERFORMANCE_BUDGET_MS = 5000; // 5 seconds max per page
     const slowPages: Array<{ path: string; time: number }> = [];
 
-    for (const { path, label } of ALL_ROUTES.slice(0, 10)) {
-      // Test first 10 for speed
+    for (const { path, label } of ALL_ROUTES.slice(0, 10)) { // Test first 10 for speed
       const startTime = Date.now();
 
       await page.goto(path, {
@@ -497,7 +502,10 @@ test.describe('Smoke Test - All Pages', () => {
       });
     }
 
-    expect(slowPages.length, `${slowPages.length} page(s) exceeded performance budget`).toBe(0);
+    expect(
+      slowPages.length,
+      `${slowPages.length} page(s) exceeded performance budget`
+    ).toBe(0);
 
     expect(errors.length).toBe(0);
   });
