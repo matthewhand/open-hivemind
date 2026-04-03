@@ -236,7 +236,7 @@ const RouteCard: React.FC<{ route: RouteInfo }> = ({ route }) => {
 
   return (
     <div className="collapse collapse-arrow bg-base-100 border border-base-300 mb-2">
-      <input type="checkbox" checked={expanded} onChange={() => setExpanded(!expanded)} />
+      <input type="checkbox" checked={expanded} onChange={() => setExpanded(!expanded)} aria-label={`Toggle route details for ${route.method} ${route.path}`} />
       <div className="collapse-title flex items-center gap-3 py-2 min-h-0">
         <span className={`badge badge-sm font-mono ${getMethodBadgeClass(route.method)}`}>
           {route.method}

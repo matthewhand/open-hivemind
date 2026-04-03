@@ -93,7 +93,7 @@ export const MCPServerModals: React.FC<MCPServerModalsProps> = ({
                   </p>
                   {tool.inputSchema && (
                     <div className="collapse collapse-arrow bg-base-200">
-                      <input type="checkbox" />
+                      <input type="checkbox" aria-label={`Toggle input schema for ${tool.name}`} />
                       <div className="collapse-title text-xs font-medium uppercase opacity-50">
                         Input Schema
                       </div>

@@ -246,7 +246,7 @@ const GuardsPage: React.FC = () => {
             <div className="grid grid-cols-1 gap-6">
               {/* Access Control */}
               <div className="collapse collapse-arrow bg-base-200">
-                <input type="checkbox" defaultChecked />
+                <input type="checkbox" defaultChecked aria-label="Toggle Access Control" />
                 <div className="collapse-title text-xl font-medium flex items-center gap-2 pr-12">
                   <Shield className="w-5 h-5" /> Access Control
                   <div className="ml-auto z-10" onClick={e => e.stopPropagation()}>
@@ -310,7 +310,7 @@ const GuardsPage: React.FC = () => {
 
               {/* Rate Limit */}
               <div className="collapse collapse-arrow bg-base-200">
-                <input type="checkbox" />
+                <input type="checkbox" aria-label="Toggle Rate Limiter" />
                 <div className="collapse-title text-xl font-medium flex items-center gap-2 pr-12">
                   <RefreshCw className="w-5 h-5" /> Rate Limiter
                   <div className="ml-auto z-10" onClick={e => e.stopPropagation()}>
@@ -364,7 +364,7 @@ const GuardsPage: React.FC = () => {
 
               {/* Content Filter */}
               <div className="collapse collapse-arrow bg-base-200">
-                <input type="checkbox" />
+                <input type="checkbox" aria-label="Toggle Content Filter" />
                 <div className="collapse-title text-xl font-medium flex items-center gap-2 pr-12">
                   <AlertTriangle className="w-5 h-5" /> Content Filter
                   <div className="ml-auto z-10" onClick={e => e.stopPropagation()}>

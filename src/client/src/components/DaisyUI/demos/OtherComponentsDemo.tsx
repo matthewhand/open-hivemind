@@ -628,7 +628,7 @@ export const CollapseDemo: React.FC = () => {
 
       <Section title="Collapse Plus/Minus">
         <div className="collapse collapse-plus bg-base-200">
-          <input type="checkbox" />
+          <input type="checkbox" aria-label="Toggle collapsible content" />
           <div className="collapse-title text-xl font-medium">Click me to show/hide content</div>
           <div className="collapse-content"><p>Hidden content revealed!</p></div>
         </div>

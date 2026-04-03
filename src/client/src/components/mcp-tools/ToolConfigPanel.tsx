@@ -1,6 +1,7 @@
 import React from 'react';
 import { MCPTool } from './types';
 import { CodeBracketIcon, ListBulletIcon } from '@heroicons/react/24/outline';
+import Toggle from '../DaisyUI/Toggle';
 
 interface ToolConfigPanelProps {
   tool: MCPTool;
@@ -60,12 +61,12 @@ const ToolConfigPanel: React.FC<ToolConfigPanelProps> = ({
               </label>
 
               {type === 'boolean' ? (
-                <input
-                  type="checkbox"
-                  className="toggle toggle-primary"
+                <Toggle
+                  color="primary"
                   checked={formArgs[key] || false}
                   onChange={(e) => updateFormArg(key, e.target.checked)}
                   disabled={isRunning}
+                  aria-label={`Toggle ${key}`}
                 />
               ) : type === 'integer' || type === 'number' ? (
                 <input
