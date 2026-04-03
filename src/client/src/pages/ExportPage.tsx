@@ -55,6 +55,7 @@ const ExportPage: React.FC = () => {
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean; title: string; message: string; onConfirm: () => void; confirmVariant?: 'primary' | 'error' | 'warning';
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+  const [feedbackState, setFeedbackState] = useState<{ state: 'idle' | 'success' | 'error'; message?: string }>({ state: 'idle' });
 
   const fetchBackups = useCallback(async () => {
     try {

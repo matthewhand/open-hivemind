@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useApiQuery } from '../../../hooks/useApiQuery';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { apiService } from '../../../services/api';
 import useUrlParams from '../../../hooks/useUrlParams';
 
 export interface Bot {
@@ -39,18 +40,40 @@ export const usePersonasData = () => {
   const selectedCategory = urlParams.category;
   const setSelectedCategory = (v: string) => setUrlParam('category', v);
 
+  const queryClient = useQueryClient();
+
   const {
     data: configResponse,
-    loading: configLoading,
+    isLoading: configLoading,
     error: configError,
-    refetch: refetchConfig,
-  } = useApiQuery<any>('/api/config', { ttl: 30_000 });
+    refetch: tqRefetchConfig,
+  } = useQuery<any>({
+    queryKey: ['apiQuery', '/api/config'],
+    queryFn: () => apiService.get('/api/config'),
+    staleTime: 30_000,
+    gcTime: 60_000,
+  });
   const {
     data: personasResponse,
-    loading: personasLoading,
+    isLoading: personasLoading,
     error: personasError,
-    refetch: refetchPersonas,
-  } = useApiQuery<ApiPersona[]>('/api/personas', { ttl: 30_000 });
+    refetch: tqRefetchPersonas,
+  } = useQuery<ApiPersona[]>({
+    queryKey: ['apiQuery', '/api/personas'],
+    queryFn: () => apiService.get('/api/personas'),
+    staleTime: 30_000,
+    gcTime: 60_000,
+  });
+
+  const refetchConfig = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ['apiQuery', '/api/config'] });
+    await tqRefetchConfig();
+  }, [queryClient, tqRefetchConfig]);
+
+  const refetchPersonas = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ['apiQuery', '/api/personas'] });
+    await tqRefetchPersonas();
+  }, [queryClient, tqRefetchPersonas]);
 
   useEffect(() => {
     const botList = Array.isArray(configResponse?.bots) ? configResponse?.bots : [];

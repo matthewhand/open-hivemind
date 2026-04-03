@@ -96,7 +96,7 @@ const MarketplacePage: React.FC = () => {
     setError(null);
     try {
       const data: any = await apiService.get('/api/marketplace/packages');
-      setPackages(data);
+      setPackages(Array.isArray(data) ? data : []);
     } catch (err: any) {
 
       setError(err.message || 'Failed to load marketplace');

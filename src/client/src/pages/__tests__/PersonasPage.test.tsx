@@ -162,5 +162,26 @@ describe('PersonasPage', () => {
     });
   });
 
-  it.todo('shows error alert when data hook returns error (blocked by Alert default-import bug in PersonasPage)');
+  it('shows error alert when data hook returns error', async () => {
+    (usePersonasData as Mock).mockReturnValue({
+      bots: [],
+      personas: [],
+      loading: false,
+      error: 'Failed to fetch personas',
+      fetchData: mockFetchData,
+      searchQuery: '',
+      setSearchQuery: vi.fn(),
+      selectedCategory: 'all',
+      setSelectedCategory: vi.fn(),
+      filteredPersonas: [],
+      filteredPersonaIds: [],
+      setPersonas: mockSetPersonas,
+    });
+
+    renderWithProviders(<PersonasPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Failed to fetch personas/i)).toBeInTheDocument();
+    });
+  });
 });
