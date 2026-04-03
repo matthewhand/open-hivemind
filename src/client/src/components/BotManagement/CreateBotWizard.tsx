@@ -277,7 +277,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                                     <option value="slack">Slack</option>
                                     <option value="mattermost">Mattermost</option>
                                 </select>
-                                <Button variant="primary" buttonStyle="outline" className="btn-square">
+                                <Button variant="primary" buttonStyle="outline" className="btn-square" aria-label="Add provider">
                                     +
                                 </Button>
                             </div>

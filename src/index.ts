@@ -478,18 +478,7 @@ async function startBot(messengerService: any) {
 }
 
 async function main() {
-  // Check if frontend dist exists
-  try {
-    await fs.promises.access(frontendDistPath);
-    frontendDistExists = true;
-  } catch {
-    frontendLogger.warn('Frontend dist directory not found', { path: frontendDistPath });
-    frontendDistExists = false;
-  }
-
-  // Register DI services before anything resolves from the container
   registerServices();
-
   // Validate critical environment variables before proceeding
   validateRequiredEnvVars();
 
