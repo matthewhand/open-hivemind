@@ -5,6 +5,7 @@ import StatusCard from '../../components/Monitoring/StatusCard';
 import Modal, { ConfirmModal } from '../../components/DaisyUI/Modal';
 import { useSuccessToast, useErrorToast, useWarningToast } from '../../components/DaisyUI/ToastNotification';
 import Checkbox from '../../components/DaisyUI/Checkbox';
+import Tabs from '../../components/DaisyUI/Tabs';
 import AlertsTab from './AlertsTab';
 import ConfigTab from './ConfigTab';
 import BackupsTab from './BackupsTab';
@@ -280,32 +281,17 @@ const SystemManagement: React.FC = () => {
       {/* Management Tabs */}
       <div className="card bg-base-100 shadow-xl">
         <div className="card-body">
-          <div className="tabs tabs-boxed mb-6">
-            <button
-              className={`tab ${activeTab === 'alerts' ? 'tab-active' : ''}`}
-              onClick={() => setActiveTab('alerts')}
-            >
-              Alert Management
-            </button>
-            <button
-              className={`tab ${activeTab === 'config' ? 'tab-active' : ''}`}
-              onClick={() => setActiveTab('config')}
-            >
-              System Configuration
-            </button>
-            <button
-              className={`tab ${activeTab === 'backups' ? 'tab-active' : ''}`}
-              onClick={() => setActiveTab('backups')}
-            >
-              Backup Management
-            </button>
-            <button
-              className={`tab ${activeTab === 'performance' ? 'tab-active' : ''}`}
-              onClick={() => setActiveTab('performance')}
-            >
-              Performance Tuning
-            </button>
-          </div>
+          <Tabs
+            tabs={[
+              { key: 'alerts', label: 'Alert Management' },
+              { key: 'config', label: 'System Configuration' },
+              { key: 'backups', label: 'Backup Management' },
+              { key: 'performance', label: 'Performance Tuning' },
+            ]}
+            activeTab={activeTab}
+            onChange={setActiveTab}
+            className="mb-6"
+          />
 
           {activeTab === 'alerts' && <AlertsTab />}
           {activeTab === 'config' && (

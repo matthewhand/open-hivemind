@@ -5,6 +5,7 @@ import Card from '../components/DaisyUI/Card';
 import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
 import Button from '../components/DaisyUI/Button';
 import Badge from '../components/DaisyUI/Badge';
+import Tabs from '../components/DaisyUI/Tabs';
 
 import {
   Store as StoreIcon,
@@ -275,17 +276,14 @@ const MarketplacePage: React.FC = () => {
         </div>
 
         {/* Type Filter Tabs */}
-        <div className="tabs tabs-boxed">
-          {(['all', 'llm', 'message', 'memory', 'tool'] as FilterType[]).map((t) => (
-            <button
-              key={t}
-              className={`tab ${filter === t ? 'tab-active' : ''}`}
-              onClick={() => setFilter(t)}
-            >
-              {t === 'all' ? 'All' : t.toUpperCase()}
-            </button>
-          ))}
-        </div>
+        <Tabs
+          tabs={(['all', 'llm', 'message', 'memory', 'tool'] as FilterType[]).map((t) => ({
+            key: t,
+            label: t === 'all' ? 'All' : t.toUpperCase(),
+          }))}
+          activeTab={filter}
+          onChange={(key) => setFilter(key as FilterType)}
+        />
       </div>
 
       {/* Loading State */}

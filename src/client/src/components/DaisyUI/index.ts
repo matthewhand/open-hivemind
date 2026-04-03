@@ -18,6 +18,8 @@ export { Skeleton, SkeletonAvatar, SkeletonText, SkeletonCircle, SkeletonRectang
 export { default as Modal } from './Modal';
 export { default as ModalForm } from './ModalForm';
 export { default as StatsCards } from './StatsCards';
+export { default as Tabs } from './Tabs';
+export type { TabItem, TabsProps } from './Tabs';
 export { default as StepWizard } from './StepWizard';
 export { default as Timeline } from './Timeline';
 export { default as ToastNotification } from './ToastNotification';
