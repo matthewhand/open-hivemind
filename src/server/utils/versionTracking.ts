@@ -12,7 +12,7 @@ const GIT_TIMEOUT_MS = 10_000;
 
 /** Allowlist sanitiser — rejects strings containing shell metacharacters. */
 function sanitizeGitArg(value: string, label: string): string {
-  if (!/^[a-zA-Z0-9._/\-]+$/.test(value)) {
+  if (!/^[a-zA-Z0-9._/-]+$/.test(value)) {
     throw new Error(`Invalid characters in ${label}: ${value}`);
   }
   return value;
@@ -110,6 +110,7 @@ export async function fetchLatestVersionFromGit(
           const { stdout: tags } = await execAsync('git tag --sort=-v:refname', {
             cwd: pluginPath,
             encoding: 'utf-8',
+            timeout: GIT_TIMEOUT_MS,
           });
           const latestTag = tags.trim().split('\n')[0];
 
@@ -179,7 +180,8 @@ export async function fetchChangelog(
 
     try {
       // Try to find commits since current version
-      const currentTag = sanitizeGitArg(`v${currentVersion}`, 'version tag');
+      const safeVersion = sanitizeGitArg(currentVersion, 'currentVersion');
+      const currentTag = sanitizeGitArg(`v${safeVersion}`, 'version tag');
       await execAsync(`git rev-parse ${currentTag}`, { cwd: pluginPath, timeout: GIT_TIMEOUT_MS });
       gitCommand = `git log --pretty=format:"%H|%ai|%an|%s" ${currentTag}..origin/HEAD`;
     } catch {
@@ -189,6 +191,7 @@ export async function fetchChangelog(
     const { stdout: output } = await execAsync(gitCommand, {
       cwd: pluginPath,
       encoding: 'utf-8',
+      timeout: GIT_TIMEOUT_MS,
     });
 
     const lines = output
