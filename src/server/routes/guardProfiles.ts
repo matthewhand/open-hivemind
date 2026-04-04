@@ -333,4 +333,133 @@ router.post(
   })
 );
 
+// POST /test - Evaluate guard behavior against synthetic input
+router.post(
+  '/test',
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const { guards = {}, testInput = {} } = (req.body || {}) as {
+        guards?: Record<string, any>;
+        testInput?: Record<string, any>;
+      };
+
+      const results: Array<{ guard: string; enabled: boolean; result: 'allowed' | 'blocked'; reason: string }> = [];
+
+      // 1) Access Control (mcpGuard)
+      if (guards.mcpGuard) {
+        const mcpGuard = guards.mcpGuard;
+        if (!mcpGuard.enabled) {
+          results.push({
+            guard: 'Access Control',
+            enabled: false,
+            result: 'allowed',
+            reason: 'Access control disabled',
+          });
+        } else if (mcpGuard.type === 'owner') {
+          const isOwner = String(testInput.userId || '').toLowerCase() === 'owner';
+          results.push({
+            guard: 'Access Control',
+            enabled: true,
+            result: isOwner ? 'allowed' : 'blocked',
+            reason: isOwner
+              ? 'Owner access granted'
+              : 'Only the owner can access this resource',
+          });
+        } else {
+          const userId = String(testInput.userId || '');
+          const toolName = String(testInput.toolName || '');
+          const allowedUsers = Array.isArray(mcpGuard.allowedUsers) ? mcpGuard.allowedUsers : [];
+          const allowedTools = Array.isArray(mcpGuard.allowedTools) ? mcpGuard.allowedTools : [];
+
+          if (allowedUsers.length > 0 && !allowedUsers.includes(userId)) {
+            results.push({
+              guard: 'Access Control',
+              enabled: true,
+              result: 'blocked',
+              reason: `User '${userId}' is not in the allowed users list`,
+            });
+          } else if (allowedTools.length > 0 && !allowedTools.includes(toolName)) {
+            results.push({
+              guard: 'Access Control',
+              enabled: true,
+              result: 'blocked',
+              reason: `Tool '${toolName}' is not in the allowed tools list`,
+            });
+          } else {
+            results.push({
+              guard: 'Access Control',
+              enabled: true,
+              result: 'allowed',
+              reason: 'Access control checks passed',
+            });
+          }
+        }
+      }
+
+      // 2) Rate Limit
+      if (guards.rateLimit) {
+        const rateLimit = guards.rateLimit;
+        if (!rateLimit.enabled) {
+          results.push({
+            guard: 'Rate Limit',
+            enabled: false,
+            result: 'allowed',
+            reason: 'Rate limiting disabled',
+          });
+        } else {
+          const requestCount = Number(testInput.requestCount || 0);
+          const maxRequests = Number(rateLimit.maxRequests || 100);
+          const blocked = requestCount > maxRequests;
+          results.push({
+            guard: 'Rate Limit',
+            enabled: true,
+            result: blocked ? 'blocked' : 'allowed',
+            reason: blocked
+              ? `Rate limit exceeded: ${requestCount}/${maxRequests}`
+              : `Within rate limit: ${requestCount}/${maxRequests}`,
+          });
+        }
+      }
+
+      // 3) Content Filter
+      if (guards.contentFilter) {
+        const contentFilter = guards.contentFilter;
+        if (!contentFilter.enabled) {
+          results.push({
+            guard: 'Content Filter',
+            enabled: false,
+            result: 'allowed',
+            reason: 'Content filtering disabled',
+          });
+        } else {
+          const content = String(testInput.content || '');
+          const contentLower = content.toLowerCase();
+          const blockedTerms = Array.isArray(contentFilter.blockedTerms)
+            ? contentFilter.blockedTerms.map((t: string) => String(t).toLowerCase())
+            : [];
+          const found = blockedTerms.filter((t: string) => contentLower.includes(t));
+
+          results.push({
+            guard: 'Content Filter',
+            enabled: true,
+            result: found.length > 0 ? 'blocked' : 'allowed',
+            reason:
+              found.length > 0
+                ? `Found blocked terms: ${found.join(', ')}`
+                : 'No blocked terms found',
+          });
+        }
+      }
+
+      const overallResult = results.some((r) => r.result === 'blocked') ? 'blocked' : 'allowed';
+
+      return res.json(ApiResponse.success({ overallResult, results }));
+    } catch (error: unknown) {
+      return res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error('Failed to test guard profile'));
+    }
+  })
+);
+
 export default router;
