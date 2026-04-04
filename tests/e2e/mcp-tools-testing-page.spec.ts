@@ -215,9 +215,9 @@ test.describe('MCP Tools Testing Page', () => {
     await page.goto('/admin/mcp/tools/testing');
 
     // Check for empty state message
-    await expect(
-      page.getByText('No tools available. Connect MCP servers first.')
-    ).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('No tools available. Connect MCP servers first.')).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test('should select a tool and display its information', async ({ page }) => {
@@ -231,10 +231,7 @@ test.describe('MCP Tools Testing Page', () => {
     await expect(page.getByText('calculator').first()).toBeVisible({ timeout: 10000 });
 
     // Click on the calculator tool
-    const calculatorButton = page
-      .locator('button')
-      .filter({ hasText: 'calculator' })
-      .first();
+    const calculatorButton = page.locator('button').filter({ hasText: 'calculator' }).first();
     await calculatorButton.click();
 
     // Verify tool information is displayed
@@ -256,11 +253,7 @@ test.describe('MCP Tools Testing Page', () => {
     await expect(page.getByText('calculator').first()).toBeVisible({ timeout: 10000 });
 
     // Select calculator tool
-    await page
-      .locator('button')
-      .filter({ hasText: 'calculator' })
-      .first()
-      .click();
+    await page.locator('button').filter({ hasText: 'calculator' }).first().click();
 
     // Verify schema is displayed in a code block
     const schemaBlock = page.locator('.mockup-code').first();
@@ -283,11 +276,7 @@ test.describe('MCP Tools Testing Page', () => {
     await expect(page.getByText('calculator').first()).toBeVisible({ timeout: 10000 });
 
     // Select calculator tool
-    await page
-      .locator('button')
-      .filter({ hasText: 'calculator' })
-      .first()
-      .click();
+    await page.locator('button').filter({ hasText: 'calculator' }).first().click();
 
     // Verify form fields are rendered
     await expect(page.locator('input[placeholder*="Enter operation"]')).toBeVisible();
@@ -308,11 +297,7 @@ test.describe('MCP Tools Testing Page', () => {
     await expect(page.getByText('string_formatter').first()).toBeVisible({ timeout: 10000 });
 
     // Select string_formatter tool
-    await page
-      .locator('button')
-      .filter({ hasText: 'string_formatter' })
-      .first()
-      .click();
+    await page.locator('button').filter({ hasText: 'string_formatter' }).first().click();
 
     // Fill in string input
     const textInput = page.locator('input[placeholder*="Enter text"]');
@@ -333,11 +318,7 @@ test.describe('MCP Tools Testing Page', () => {
     await expect(page.getByText('calculator').first()).toBeVisible({ timeout: 10000 });
 
     // Select calculator tool
-    await page
-      .locator('button')
-      .filter({ hasText: 'calculator' })
-      .first()
-      .click();
+    await page.locator('button').filter({ hasText: 'calculator' }).first().click();
 
     // Fill in number inputs
     const numberInputs = page.locator('input[type="number"]');
@@ -359,11 +340,7 @@ test.describe('MCP Tools Testing Page', () => {
     await expect(page.getByText('string_formatter').first()).toBeVisible({ timeout: 10000 });
 
     // Select string_formatter tool (has boolean field)
-    await page
-      .locator('button')
-      .filter({ hasText: 'string_formatter' })
-      .first()
-      .click();
+    await page.locator('button').filter({ hasText: 'string_formatter' }).first().click();
 
     // Find and toggle the boolean field
     const toggle = page.locator('.toggle-primary').first();
@@ -388,11 +365,7 @@ test.describe('MCP Tools Testing Page', () => {
     await expect(page.getByText('array_processor').first()).toBeVisible({ timeout: 10000 });
 
     // Select array_processor tool
-    await page
-      .locator('button')
-      .filter({ hasText: 'array_processor' })
-      .first()
-      .click();
+    await page.locator('button').filter({ hasText: 'array_processor' }).first().click();
 
     // Find the textarea for array input
     const arrayTextarea = page.locator('textarea').first();
@@ -419,11 +392,7 @@ test.describe('MCP Tools Testing Page', () => {
     await expect(page.getByText('calculator').first()).toBeVisible({ timeout: 10000 });
 
     // Select and configure calculator tool
-    await page
-      .locator('button')
-      .filter({ hasText: 'calculator' })
-      .first()
-      .click();
+    await page.locator('button').filter({ hasText: 'calculator' }).first().click();
 
     await page.locator('input[placeholder*="Enter operation"]').fill('add');
     await page.locator('input[type="number"]').first().fill('5');
@@ -464,11 +433,7 @@ test.describe('MCP Tools Testing Page', () => {
     await expect(page.getByText('calculator').first()).toBeVisible({ timeout: 10000 });
 
     // Select and configure calculator tool
-    await page
-      .locator('button')
-      .filter({ hasText: 'calculator' })
-      .first()
-      .click();
+    await page.locator('button').filter({ hasText: 'calculator' }).first().click();
 
     await page.locator('input[placeholder*="Enter operation"]').fill('add');
 
@@ -501,11 +466,7 @@ test.describe('MCP Tools Testing Page', () => {
     await expect(page.getByText('calculator').first()).toBeVisible({ timeout: 10000 });
 
     // Select and configure calculator tool
-    await page
-      .locator('button')
-      .filter({ hasText: 'calculator' })
-      .first()
-      .click();
+    await page.locator('button').filter({ hasText: 'calculator' }).first().click();
 
     await page.locator('input[placeholder*="Enter operation"]').fill('invalid');
 
@@ -537,11 +498,7 @@ test.describe('MCP Tools Testing Page', () => {
     await expect(page.getByText('no_params_tool').first()).toBeVisible({ timeout: 10000 });
 
     // Select no_params_tool
-    await page
-      .locator('button')
-      .filter({ hasText: 'no_params_tool' })
-      .first()
-      .click();
+    await page.locator('button').filter({ hasText: 'no_params_tool' }).first().click();
 
     // Verify message about no parameters
     await expect(page.getByText('This tool does not require any parameters.')).toBeVisible();
@@ -564,28 +521,16 @@ test.describe('MCP Tools Testing Page', () => {
     await expect(page.getByText('calculator').first()).toBeVisible({ timeout: 10000 });
 
     // Select calculator and fill in data
-    await page
-      .locator('button')
-      .filter({ hasText: 'calculator' })
-      .first()
-      .click();
+    await page.locator('button').filter({ hasText: 'calculator' }).first().click();
 
     await page.locator('input[placeholder*="Enter operation"]').fill('add');
     await page.locator('input[type="number"]').first().fill('5');
 
     // Switch to string_formatter
-    await page
-      .locator('button')
-      .filter({ hasText: 'string_formatter' })
-      .first()
-      .click();
+    await page.locator('button').filter({ hasText: 'string_formatter' }).first().click();
 
     // Switch back to calculator
-    await page
-      .locator('button')
-      .filter({ hasText: 'calculator' })
-      .first()
-      .click();
+    await page.locator('button').filter({ hasText: 'calculator' }).first().click();
 
     // Verify form is cleared
     const operationInput = page.locator('input[placeholder*="Enter operation"]');
@@ -606,11 +551,7 @@ test.describe('MCP Tools Testing Page', () => {
     await expect(page.getByText('calculator').first()).toBeVisible({ timeout: 10000 });
 
     // Select calculator, execute, and verify results
-    await page
-      .locator('button')
-      .filter({ hasText: 'calculator' })
-      .first()
-      .click();
+    await page.locator('button').filter({ hasText: 'calculator' }).first().click();
 
     await page.locator('input[placeholder*="Enter operation"]').fill('add');
 
@@ -620,11 +561,7 @@ test.describe('MCP Tools Testing Page', () => {
     await expect(page.getByText('Test Successful')).toBeVisible({ timeout: 10000 });
 
     // Switch to another tool
-    await page
-      .locator('button')
-      .filter({ hasText: 'string_formatter' })
-      .first()
-      .click();
+    await page.locator('button').filter({ hasText: 'string_formatter' }).first().click();
 
     // Verify test results are cleared
     await expect(page.getByText('Test Successful')).not.toBeVisible();
@@ -650,11 +587,7 @@ test.describe('MCP Tools Testing Page', () => {
     await expect(page.getByText('calculator').first()).toBeVisible({ timeout: 10000 });
 
     // Select calculator tool
-    await page
-      .locator('button')
-      .filter({ hasText: 'calculator' })
-      .first()
-      .click();
+    await page.locator('button').filter({ hasText: 'calculator' }).first().click();
 
     const operationInput = page.locator('input[placeholder*="Enter operation"]');
     await operationInput.fill('add');
@@ -690,11 +623,7 @@ test.describe('MCP Tools Testing Page', () => {
     await expect(page.getByText('calculator').first()).toBeVisible({ timeout: 10000 });
 
     // Select and execute calculator
-    await page
-      .locator('button')
-      .filter({ hasText: 'calculator' })
-      .first()
-      .click();
+    await page.locator('button').filter({ hasText: 'calculator' }).first().click();
 
     await page.locator('input[placeholder*="Enter operation"]').fill('add');
 
@@ -726,11 +655,7 @@ test.describe('MCP Tools Testing Page', () => {
     await expect(page.getByText('calculator').first()).toBeVisible({ timeout: 10000 });
 
     // Select calculator tool
-    await page
-      .locator('button')
-      .filter({ hasText: 'calculator' })
-      .first()
-      .click();
+    await page.locator('button').filter({ hasText: 'calculator' }).first().click();
 
     // Verify field descriptions are displayed
     await expect(page.getByText('The mathematical operation to perform')).toBeVisible();
@@ -748,11 +673,7 @@ test.describe('MCP Tools Testing Page', () => {
     await expect(page.getByText('array_processor').first()).toBeVisible({ timeout: 10000 });
 
     // Select array_processor tool
-    await page
-      .locator('button')
-      .filter({ hasText: 'array_processor' })
-      .first()
-      .click();
+    await page.locator('button').filter({ hasText: 'array_processor' }).first().click();
 
     // Fill in invalid JSON
     const arrayTextarea = page.locator('textarea').first();

@@ -65,8 +65,10 @@ async function validatePageLoads(
       const body = page.locator('body');
       const bodyText = await body.innerText().catch(() => '');
 
-      if (bodyText.includes('Something went wrong') ||
-          bodyText.includes('Unexpected Application Error')) {
+      if (
+        bodyText.includes('Something went wrong') ||
+        bodyText.includes('Unexpected Application Error')
+      ) {
         throw new Error('React error boundary detected');
       }
 
@@ -95,7 +97,7 @@ test.describe('Smoke Test - Config Pages', () => {
     await mockAllApiEndpoints(page);
 
     const results = await validatePageLoads(page, [CONFIG_PAGES[0]], errors);
-    const failures = results.filter(r => r.status === 'fail');
+    const failures = results.filter((r) => r.status === 'fail');
 
     expect(failures.length, `Personas failed: ${failures[0]?.error}`).toBe(0);
     expect(errors.length).toBe(0);
@@ -106,7 +108,7 @@ test.describe('Smoke Test - Config Pages', () => {
     await mockAllApiEndpoints(page);
 
     const results = await validatePageLoads(page, [CONFIG_PAGES[1]], errors);
-    const failures = results.filter(r => r.status === 'fail');
+    const failures = results.filter((r) => r.status === 'fail');
 
     expect(failures.length, `MCP servers failed: ${failures[0]?.error}`).toBe(0);
     expect(errors.length).toBe(0);
@@ -117,7 +119,7 @@ test.describe('Smoke Test - Config Pages', () => {
     await mockAllApiEndpoints(page);
 
     const results = await validatePageLoads(page, [CONFIG_PAGES[2]], errors);
-    const failures = results.filter(r => r.status === 'fail');
+    const failures = results.filter((r) => r.status === 'fail');
 
     expect(failures.length, `MCP tools failed: ${failures[0]?.error}`).toBe(0);
     expect(errors.length).toBe(0);
@@ -128,7 +130,7 @@ test.describe('Smoke Test - Config Pages', () => {
     await mockAllApiEndpoints(page);
 
     const results = await validatePageLoads(page, [CONFIG_PAGES[3]], errors);
-    const failures = results.filter(r => r.status === 'fail');
+    const failures = results.filter((r) => r.status === 'fail');
 
     expect(failures.length, `Guards failed: ${failures[0]?.error}`).toBe(0);
     expect(errors.length).toBe(0);
