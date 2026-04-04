@@ -10,6 +10,7 @@ import { Alert } from './DaisyUI/Alert';
 import Modal from './DaisyUI/Modal';
 import Tabs from './DaisyUI/Tabs';
 import { Stat } from './DaisyUI/Stat';
+import Accordion from './DaisyUI/Accordion';
 
 interface Props {
   isOpen?: boolean;
@@ -113,7 +114,7 @@ const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) =>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {Object.entries(stats.categories).map(([category, data]) => (
                     <Card key={category} className="bg-base-200">
-                      <Card.Body className="card-body p-4">
+                      <Card.Body className="p-4">
                         <Card.Title tag="h3" className="text-lg capitalize">{category}</Card.Title>
                         <div className="flex items-center justify-between">
                           <span className="text-sm">{data.used}/{data.total} used</span>
@@ -184,7 +185,7 @@ const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) =>
                 ) : (
                   suggestions.map((suggestion, index) => (
                     <Card key={index} className="bg-base-200">
-                      <Card.Body className="card-body p-4">
+                      <Card.Body className="p-4">
                         <div className="flex items-center justify-between mb-2">
                           <h3 className="font-semibold">{suggestion.component}</h3>
                           <Badge variant="info" size="xs">{suggestion.category}</Badge>
@@ -200,13 +201,11 @@ const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) =>
             {/* Categories Tab */}
             {selectedCategory === 'categories' && (
               <div className="space-y-4">
-                {Object.entries(stats.categories).map(([category, data]) => (
-                  <div key={category} className="collapse collapse-arrow bg-base-200">
-                    <input type="checkbox" defaultChecked={data.used > 0} aria-label={`Toggle category ${category}`} />
-                    <div className="collapse-title text-lg font-medium capitalize">
-                      {category} ({data.used}/{data.total} components)
-                    </div>
-                    <div className="collapse-content">
+                <Accordion
+                  items={Object.entries(stats.categories).map(([category, data]) => ({
+                    id: category,
+                    title: `${category} (${data.used}/${data.total} components)`,
+                    content: (
                       <div className="space-y-2 mt-2">
                         {data.components.length > 0 ? (
                           data.components.map((component) => {
@@ -224,9 +223,12 @@ const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) =>
                           <p className="text-sm text-base-content/60 italic">No components from this category used yet</p>
                         )}
                       </div>
-                    </div>
-                  </div>
-                ))}
+                    ),
+                    className: 'bg-base-200',
+                  }))}
+                  allowMultiple
+                  defaultOpenItems={Object.entries(stats.categories).filter(([_, data]) => data.used > 0).map(([category]) => category)}
+                />
               </div>
             )}
           </div>

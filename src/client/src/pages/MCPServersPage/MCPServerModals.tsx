@@ -2,8 +2,11 @@ import React from 'react';
 import { CheckCircle, AlertCircle, Wrench } from 'lucide-react';
 import Button from '../../components/DaisyUI/Button';
 import Modal, { ConfirmModal } from '../../components/DaisyUI/Modal';
+import Accordion from '../../components/DaisyUI/Accordion';
 import ModalForm from '../../components/DaisyUI/ModalForm';
 import { LoadingSpinner } from '../../components/DaisyUI/Loading';
+import Input from '../../components/DaisyUI/Input';
+import Textarea from '../../components/DaisyUI/Textarea';
 
 interface MCPServer {
   id: string;
@@ -77,6 +80,9 @@ export const MCPServerModals: React.FC<MCPServerModalsProps> = ({
         isOpen={toolsModalOpen}
         onClose={() => setToolsModalOpen(false)}
         title={`Tools provided by ${viewingServerName}`}
+        actions={[
+          { label: 'Close', onClick: () => setToolsModalOpen(false), variant: 'primary' },
+        ]}
       >
         <div className="overflow-y-auto max-h-[60vh]">
           {viewingTools.length === 0 ? (
@@ -93,27 +99,23 @@ export const MCPServerModals: React.FC<MCPServerModalsProps> = ({
                     {tool.description || 'No description provided.'}
                   </p>
                   {tool.inputSchema && (
-                    <div className="collapse collapse-arrow bg-base-200">
-                      <input type="checkbox" aria-label={`Toggle input schema for ${tool.name}`} />
-                      <div className="collapse-title text-xs font-medium uppercase opacity-50">
-                        Input Schema
-                      </div>
-                      <div className="collapse-content">
-                        <pre className="text-xs bg-base-300 p-2 rounded overflow-x-auto">
-                          {JSON.stringify(tool.inputSchema, null, 2)}
-                        </pre>
-                      </div>
-                    </div>
+                    <Accordion
+                      items={[{
+                        id: `schema-${idx}`,
+                        title: 'Input Schema',
+                        content: (
+                          <pre className="text-xs bg-base-300 p-2 rounded overflow-x-auto">
+                            {JSON.stringify(tool.inputSchema, null, 2)}
+                          </pre>
+                        ),
+                      }]}
+                      size="sm"
+                    />
                   )}
                 </div>
               ))}
             </div>
           )}
-        </div>
-        <div className="modal-action">
-          <Button variant="primary" onClick={() => setToolsModalOpen(false)}>
-            Close
-          </Button>
         </div>
       </Modal>
 
@@ -121,6 +123,11 @@ export const MCPServerModals: React.FC<MCPServerModalsProps> = ({
         isOpen={dialogOpen}
         onClose={() => setDialogOpen(false)}
         title={isEditing ? 'Edit MCP Server' : 'Add MCP Server'}
+        actions={[
+          { label: 'Cancel', onClick: () => setDialogOpen(false), variant: 'ghost' },
+          { label: 'Test', onClick: handleTestConnection, variant: 'primary', disabled: isTesting || !selectedServer?.url, loading: isTesting },
+          { label: 'Save', onClick: handleSaveServer, variant: 'primary' },
+        ]}
       >
         <div className="space-y-4">
           {alert && (
@@ -140,10 +147,9 @@ export const MCPServerModals: React.FC<MCPServerModalsProps> = ({
             <label className="label" htmlFor="server-name">
               <span className="label-text">Server Name *</span>
             </label>
-            <input
+            <Input
               id="server-name"
               type="text"
-              className="input input-bordered w-full"
               value={selectedServer?.name || ''}
               onChange={(e) =>
                 setSelectedServer((prev) => (prev ? { ...prev, name: e.target.value } : null))
@@ -156,10 +162,9 @@ export const MCPServerModals: React.FC<MCPServerModalsProps> = ({
             <label className="label" htmlFor="server-url">
               <span className="label-text">Server URL *</span>
             </label>
-            <input
+            <Input
               id="server-url"
               type="text"
-              className="input input-bordered w-full"
               value={selectedServer?.url || ''}
               onChange={(e) =>
                 setSelectedServer((prev) => (prev ? { ...prev, url: e.target.value } : null))
@@ -173,10 +178,9 @@ export const MCPServerModals: React.FC<MCPServerModalsProps> = ({
             <label className="label" htmlFor="server-api-key">
               <span className="label-text">API Key (Optional)</span>
             </label>
-            <input
+            <Input
               id="server-api-key"
               type="password"
-              className="input input-bordered w-full"
               value={selectedServer?.apiKey || ''}
               onChange={(e) =>
                 setSelectedServer((prev) => (prev ? { ...prev, apiKey: e.target.value } : null))
@@ -189,9 +193,9 @@ export const MCPServerModals: React.FC<MCPServerModalsProps> = ({
             <label className="label" htmlFor="server-description">
               <span className="label-text">Description</span>
             </label>
-            <textarea
+            <Textarea
               id="server-description"
-              className="textarea textarea-bordered h-24"
+              className="h-24"
               value={selectedServer?.description || ''}
               onChange={(e) =>
                 setSelectedServer((prev) =>
@@ -202,26 +206,6 @@ export const MCPServerModals: React.FC<MCPServerModalsProps> = ({
           </div>
         </div>
 
-        <div className="modal-action">
-          <Button variant="ghost" onClick={() => setDialogOpen(false)}>
-            Cancel
-          </Button>
-          <Button
-            variant="primary"
-            buttonStyle="outline"
-            onClick={handleTestConnection}
-            disabled={isTesting || !selectedServer?.url}
-          >
-            {isTesting ? (
-              <LoadingSpinner size="xs" />
-            ) : (
-              'Test'
-            )}
-          </Button>
-          <Button variant="primary" onClick={handleSaveServer}>
-            Save
-          </Button>
-        </div>
       </Modal>
 
       <ConfirmModal

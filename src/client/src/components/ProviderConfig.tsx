@@ -2,6 +2,7 @@
 import { CheckCircle, Eye, EyeOff, Info, Key, Lock, Settings, Shield, ExternalLink, HelpCircle } from 'lucide-react';
 import React, { useState } from 'react';
 import { Alert } from './DaisyUI/Alert';
+import Accordion from './DaisyUI/Accordion';
 import { Badge } from './DaisyUI/Badge';
 import Card from './DaisyUI/Card';
 import Input from './DaisyUI/Input';
@@ -619,17 +620,16 @@ const ProviderConfig: React.FC<ProviderConfigProps> = ({
         </Alert>
       )}
 
-      {sections.map((section, sectionIndex) => (
-        <div key={sectionIndex} className="collapse collapse-arrow bg-base-200">
-          <input type="checkbox" defaultChecked aria-label={`Toggle section ${section.title}`} />
-          <div className="collapse-title text-xl font-medium flex items-center gap-2">
-            {section.icon}
-            {section.title}
-          </div>
-          <div className="collapse-content">
+      <Accordion
+        items={sections.map((section, sectionIndex) => ({
+          id: `section-${sectionIndex}`,
+          title: section.title,
+          icon: section.icon,
+          content: (
+            <div>
             {(section as any).helpSection && (
               <Card className="bg-primary/5 border-primary/20 mb-4">
-                <Card.Body className="card-body p-4">
+                <Card.Body className="p-4">
                   <h4 className="font-semibold text-sm flex items-center gap-2 mb-2">
                     <HelpCircle className="w-4 h-4 text-primary" />
                     {(section as any).helpSection.title}
@@ -666,8 +666,12 @@ const ProviderConfig: React.FC<ProviderConfigProps> = ({
               )}
             </div>
           </div>
-        </div>
-      ))}
+          ),
+        }))}
+        allowMultiple
+        defaultOpenItems={sections.map((_, i) => `section-${i}`)}
+        variant="bordered"
+      />
 
       {Object.keys(envOverrides).length > 0 && (
         <Card className="bg-info/10 border-info/20">
