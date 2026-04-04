@@ -4,6 +4,7 @@ import { Alert } from './DaisyUI/Alert';
 import Button from './DaisyUI/Button';
 import Hero from './DaisyUI/Hero';
 import { SkeletonCard } from './DaisyUI/Skeleton';
+import { Stat, Stats } from './DaisyUI/Stat';
 import DashboardBotCard from './DashboardBotCard';
 import QuickActions from './QuickActions';
 import LLMUsageChart from './Dashboard/LLMUsageChart';
@@ -117,23 +118,23 @@ const Dashboard: React.FC = () => {
             <div className="skeleton h-6 w-64 rounded"></div>
 
             {/* Stats Overview Skeleton */}
-            <div className="stats shadow-lg bg-base-100/90 backdrop-blur">
-              <div className="stat place-items-center">
+            <Stats className="shadow-lg bg-base-100/90 backdrop-blur">
+              <Stat className="place-items-center">
                 <div className="skeleton h-6 w-20 rounded mb-2"></div>
                 <div className="skeleton h-8 w-12 rounded mb-2"></div>
                 <div className="skeleton h-4 w-24 rounded"></div>
-              </div>
-              <div className="stat place-items-center">
+              </Stat>
+              <Stat className="place-items-center">
                 <div className="skeleton h-6 w-24 rounded mb-2"></div>
                 <div className="skeleton h-8 w-16 rounded mb-2"></div>
                 <div className="skeleton h-4 w-20 rounded"></div>
-              </div>
-              <div className="stat place-items-center">
+              </Stat>
+              <Stat className="place-items-center">
                 <div className="skeleton h-6 w-20 rounded mb-2"></div>
                 <div className="skeleton h-8 w-14 rounded mb-2"></div>
                 <div className="skeleton h-4 w-28 rounded"></div>
-              </div>
-            </div>
+              </Stat>
+            </Stats>
 
             <div className="skeleton h-12 w-48 rounded"></div>
           </div>
@@ -157,21 +158,21 @@ const Dashboard: React.FC = () => {
           <div className="bg-base-100 rounded-lg shadow p-6">
             <div className="skeleton h-8 w-48 rounded mb-4"></div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="stat">
+              <Stat>
                 <div className="skeleton h-4 w-12 rounded mb-2"></div>
                 <div className="skeleton h-6 w-16 rounded mb-2"></div>
                 <div className="skeleton h-3 w-32 rounded"></div>
-              </div>
-              <div className="stat">
+              </Stat>
+              <Stat>
                 <div className="skeleton h-4 w-16 rounded mb-2"></div>
                 <div className="skeleton h-6 w-12 rounded mb-2"></div>
                 <div className="skeleton h-3 w-28 rounded"></div>
-              </div>
-              <div className="stat">
+              </Stat>
+              <Stat>
                 <div className="skeleton h-4 w-20 rounded mb-2"></div>
                 <div className="skeleton h-6 w-18 rounded mb-2"></div>
                 <div className="skeleton h-3 w-30 rounded"></div>
-              </div>
+              </Stat>
             </div>
           </div>
         </div>
@@ -225,27 +226,11 @@ const Dashboard: React.FC = () => {
           </Button>
 
           {/* Stats Overview */}
-          <div className="stats shadow-lg bg-base-100/90 backdrop-blur">
-            <div className="stat place-items-center">
-              <div className="stat-title">Active Bots</div>
-              <div className="stat-value text-primary text-2xl">{activeBots}</div>
-              <div className="stat-desc">out of {bots.length} total</div>
-            </div>
-            <div className="stat place-items-center">
-              <div className="stat-title">Total Messages</div>
-              <div className="stat-value text-secondary text-2xl">
-                {totalMessages.toLocaleString()}
-              </div>
-              <div className="stat-desc">processed today</div>
-            </div>
-            <div className="stat place-items-center">
-              <div className="stat-title">System Uptime</div>
-              <div className="stat-value text-accent text-2xl">
-                {uptimeHours}h {uptimeMinutes}m
-              </div>
-              <div className="stat-desc">running smoothly</div>
-            </div>
-          </div>
+          <Stats className="shadow-lg bg-base-100/90 backdrop-blur">
+            <Stat className="place-items-center" title="Active Bots" value={activeBots} valueClassName="text-primary text-2xl" description={`out of ${bots.length} total`} />
+            <Stat className="place-items-center" title="Total Messages" value={totalMessages.toLocaleString()} valueClassName="text-secondary text-2xl" description="processed today" />
+            <Stat className="place-items-center" title="System Uptime" value={<>{uptimeHours}h {uptimeMinutes}m</>} valueClassName="text-accent text-2xl" description="running smoothly" />
+          </Stats>
         </div>
       </Hero>
 
@@ -288,23 +273,9 @@ const Dashboard: React.FC = () => {
           <div className="bg-base-100 rounded-lg shadow p-6">
             <h3 className="text-xl font-bold mb-4 flex items-center">🖥️ System Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="stat">
-                <div className="stat-title">Uptime</div>
-                <div className="stat-value text-lg">
-                  {uptimeHours}h {uptimeMinutes}m
-                </div>
-                <div className="stat-desc">System running smoothly</div>
-              </div>
-              <div className="stat">
-                <div className="stat-title">Total Bots</div>
-                <div className="stat-value text-lg">{bots.length}</div>
-                <div className="stat-desc">{activeBots} currently active</div>
-              </div>
-              <div className="stat">
-                <div className="stat-title">Message Volume</div>
-                <div className="stat-value text-lg">{totalMessages.toLocaleString()}</div>
-                <div className="stat-desc">processed successfully</div>
-              </div>
+              <Stat title="Uptime" value={<>{uptimeHours}h {uptimeMinutes}m</>} valueClassName="text-lg" description="System running smoothly" />
+              <Stat title="Total Bots" value={bots.length} valueClassName="text-lg" description={`${activeBots} currently active`} />
+              <Stat title="Message Volume" value={totalMessages.toLocaleString()} valueClassName="text-lg" description="processed successfully" />
             </div>
           </div>
         )}

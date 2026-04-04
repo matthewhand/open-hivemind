@@ -5,6 +5,7 @@ import Rating from './DaisyUI/Rating';
 import Button from './DaisyUI/Button';
 import { Alert } from './DaisyUI/Alert';
 import Dropdown from './DaisyUI/Dropdown';
+import { Stat } from './DaisyUI/Stat';
 import type { Bot, StatusResponse } from '../services/api';
 
 interface DashboardBotCardProps {
@@ -80,16 +81,16 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-2 mb-4">
-          <div className="stat bg-base-200 rounded-lg p-3">
+          <Stat className="bg-base-200 rounded-lg p-3">
             <div className="stat-title text-xs">Messages</div>
             <div className="stat-value text-lg">{messageCount.toLocaleString()}</div>
-          </div>
-          <div className="stat bg-base-200 rounded-lg p-3">
+          </Stat>
+          <Stat className="bg-base-200 rounded-lg p-3">
             <div className="stat-title text-xs">Status</div>
             <div className={`stat-value text-lg ${connected ? 'text-success' : 'text-error'}`}>
               {connected ? '🟢' : '🔴'}
             </div>
-          </div>
+          </Stat>
         </div>
 
         {errorCount > 0 && (

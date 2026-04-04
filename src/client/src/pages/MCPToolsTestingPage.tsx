@@ -12,6 +12,7 @@ import {
 import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
 import { Alert } from '../components/DaisyUI/Alert';
 import Toggle from '../components/DaisyUI/Toggle';
+import Divider from '../components/DaisyUI/Divider';
 import Debug from 'debug';
 
 const debug = Debug('app:client:pages:MCPToolsTestingPage');
@@ -422,7 +423,7 @@ const MCPToolsTestingPage: React.FC = () => {
                   <p className="text-sm text-base-content/70">{selectedTool.description}</p>
                   <div className="badge badge-outline">{selectedTool.serverName}</div>
 
-                  <div className="divider"></div>
+                  <Divider />
 
                   {renderToolSchema()}
                 </div>

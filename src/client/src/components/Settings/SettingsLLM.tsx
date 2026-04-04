@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Alert } from '../DaisyUI/Alert';
 import Button from '../DaisyUI/Button';
+import Divider from '../DaisyUI/Divider';
 import { SkeletonList } from '../DaisyUI/Skeleton';
 import Select from '../DaisyUI/Select';
 import FormField from '../DaisyUI/FormField';
@@ -149,7 +150,7 @@ const SettingsLLM: React.FC = () => {
                     </FormField>
                 </div>
 
-                <div className="divider"></div>
+                <Divider />
 
                 <div className="flex justify-between items-center text-sm">
                     <span className="text-base-content/70">Need to configure more providers?</span>

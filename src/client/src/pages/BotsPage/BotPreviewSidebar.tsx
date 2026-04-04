@@ -6,6 +6,7 @@ import type { BotConfig } from '../../types/bot';
 import Button from '../../components/DaisyUI/Button';
 import Tabs from '../../components/DaisyUI/Tabs';
 import ConfigurationValidation from '../../components/ConfigurationValidation';
+import { Stat, Stats } from '../../components/DaisyUI/Stat';
 
 interface BotPreviewSidebarProps {
   previewBot: BotConfig | null;
@@ -116,12 +117,12 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
             </div>
           </div>
 
-          <div className="stats bg-base-200 w-full shadow-sm">
-            <div className="stat p-3">
+          <Stats className="bg-base-200 w-full shadow-sm">
+            <Stat className="p-3">
               <div className="stat-title text-[10px] uppercase font-bold">Messages</div>
               <div className="stat-value text-xl text-primary">{previewBot.messageCount ?? 0}</div>
-            </div>
-            <div className="stat p-3">
+            </Stat>
+            <Stat className="p-3">
               <div className="stat-title text-[10px] uppercase font-bold">Errors</div>
               <div
                 className={`stat-value text-xl ${
@@ -130,8 +131,8 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
               >
                 {previewBot.errorCount ?? 0}
               </div>
-            </div>
-          </div>
+            </Stat>
+          </Stats>
 
           {/* Tabs Navigation */}
           <Tabs

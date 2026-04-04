@@ -12,6 +12,7 @@ import { Alert } from '../components/DaisyUI/Alert';
 import Badge from '../components/DaisyUI/Badge';
 import Modal from '../components/DaisyUI/Modal';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
+import { Stat, Stats } from '../components/DaisyUI/Stat';
 import { apiService } from '../services/api';
 import { useSavedStamp } from '../contexts/SavedStampContext';
 
@@ -419,18 +420,10 @@ const BotConfigurationPage: React.FC = () => {
       </Modal>
 
       {/* Stats */}
-      <div className="stats stats-horizontal bg-base-200 w-full">
-        <div className="stat">
-          <div className="stat-title">Config Sections</div>
-          <div className="stat-value text-primary">{configNames.length}</div>
-        </div>
-        <div className="stat">
-          <div className="stat-title">Total Settings</div>
-          <div className="stat-value">
-            {Object.values(configs).reduce((sum, c) => sum + Object.keys(c?.values || {}).length, 0)}
-          </div>
-        </div>
-      </div>
+      <Stats horizontal className="bg-base-200 w-full">
+        <Stat title="Config Sections" value={configNames.length} valueClassName="text-primary" />
+        <Stat title="Total Settings" value={Object.values(configs).reduce((sum, c) => sum + Object.keys(c?.values || {}).length, 0)} />
+      </Stats>
 
       {/* Config Accordion */}
       {loading ? (

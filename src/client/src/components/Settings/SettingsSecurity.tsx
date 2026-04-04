@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Alert } from '../DaisyUI/Alert';
 import Button from '../DaisyUI/Button';
+import Divider from '../DaisyUI/Divider';
 import { SkeletonList } from '../DaisyUI/Skeleton';
 import Input from '../DaisyUI/Input';
 import Toggle from '../DaisyUI/Toggle';
@@ -396,7 +397,7 @@ const SettingsSecurity: React.FC = () => {
         </div>
       </form>
 
-      <div className="divider mt-8 mb-6"></div>
+      <Divider className="mt-8 mb-6" />
 
       {/* Secure Configuration Management Section */}
       <div className="mt-8">

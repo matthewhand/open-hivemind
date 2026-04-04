@@ -17,6 +17,7 @@ import Button from '../components/DaisyUI/Button';
 import Input from '../components/DaisyUI/Input';
 import Textarea from '../components/DaisyUI/Textarea';
 import Checkbox from '../components/DaisyUI/Checkbox';
+import Divider from '../components/DaisyUI/Divider';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import StatsCards from '../components/DaisyUI/StatsCards';
@@ -495,7 +496,7 @@ const BackupsPage: React.FC = () => {
             disabled={actionLoading === 'create'}
           />
 
-          <div className="divider">Security Options</div>
+          <Divider>Security Options</Divider>
 
           <Checkbox
             label="Encrypt backup"

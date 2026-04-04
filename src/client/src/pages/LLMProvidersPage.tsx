@@ -33,6 +33,7 @@ import {
 import type { LLMProviderType } from '../types/bot';
 import { LLM_PROVIDER_CONFIGS } from '../types/bot';
 import ProviderConfigModal from '../components/ProviderConfiguration/ProviderConfigModal';
+import Divider from '../components/DaisyUI/Divider';
 import { apiService } from '../services/api';
 import useUrlParams from '../hooks/useUrlParams';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -505,7 +506,7 @@ const LLMProvidersPage: React.FC = () => {
         </Card>
       )}
 
-      <div className="divider">Custom Profiles</div>
+      <Divider>Custom Profiles</Divider>
 
       <SearchFilterBar
         searchValue={searchQuery}
@@ -545,7 +546,8 @@ const LLMProvidersPage: React.FC = () => {
         <>
           <div className="flex items-center gap-2 mb-2">
             <Checkbox
-              className="checkbox checkbox-sm checkbox-primary"
+              variant="primary"
+              size="sm"
               checked={bulk.isAllSelected}
               onChange={() => bulk.toggleAll(filteredProfileKeys)}
               aria-label="Select all profiles"
@@ -573,7 +575,8 @@ const LLMProvidersPage: React.FC = () => {
                 <div className="p-4 flex items-center justify-between cursor-pointer" onClick={() => toggleExpand(profile.key)}>
                   <div className="flex items-center gap-4">
                     <Checkbox
-                      className="checkbox checkbox-sm checkbox-primary"
+                      variant="primary"
+                      size="sm"
                       checked={bulk.isSelected(profile.key)}
                       onChange={(e) => { e.stopPropagation(); bulk.toggleItem(profile.key, e as any); }}
                       onClick={(e) => e.stopPropagation()}

@@ -180,7 +180,8 @@ export const PersonaModal: React.FC<PersonaModalProps> = ({
                       title={isEnvLocked ? 'Persona is locked by environment variable' : ''}
                     >
                       <Checkbox
-                        className="checkbox checkbox-sm checkbox-primary"
+                        variant="primary"
+                        size="sm"
                         checked={selectedBotIds.includes(bot.id)}
                         onChange={(e) => {
                           if (e.target.checked) {

@@ -1,5 +1,6 @@
 import React from 'react';
 import { BotAvatar } from './BotAvatar';
+import Divider from './DaisyUI/Divider';
 import Dropdown from './DaisyUI/Dropdown';
 import Indicator from './DaisyUI/Indicator';
 import Badge from './DaisyUI/Badge';
@@ -88,7 +89,7 @@ export const BotListItem: React.FC<BotListItemProps> = ({
                   System Default
                 </button>
               </li>
-              <div className="divider my-1"></div>
+              <Divider className="my-1" />
               {llmProviders.map(provider => (
                 <li key={provider.key}>
                   <button

@@ -50,7 +50,8 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = ({
         <div className="flex justify-between items-start mb-2">
           <div className="flex items-center gap-2">
             <Checkbox
-              className="checkbox checkbox-sm checkbox-primary"
+              variant="primary"
+              size="sm"
               checked={bulk.isSelected(server.id)}
               onChange={(e) => bulk.toggleItem(server.id, e as any)}
               onClick={(e) => e.stopPropagation()}
