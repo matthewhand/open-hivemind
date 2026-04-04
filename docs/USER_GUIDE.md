@@ -313,6 +313,15 @@ View the complete navigation structure of the application.
 
 ### [Specifications](/admin/specs)
 Browse and manage persisted specifications and design documents.
+
+![Specifications Page](screenshots/specs-page.png)
+
+1. Navigate to **Developer & Tools > Specifications**.
+2. View the listing of existing architectural and design specifications.
+3. Click "View Details" to view a specific document's full contents.
+
+![Specification Detail View](screenshots/specs-detail-page.png)
+
 *   **Detailed View**: Read full specifications rendered in Markdown.
 *   **Export**: Download specifications as Markdown, JSON, or YAML.
 

@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from 'express';
 import { ErrorUtils } from '../../../common/ErrorUtils';
 import { getTrustedMcpReposConfig } from '../../../config/trustedMcpRepos';
 import { MCPService } from '../../../mcp/MCPService';
+import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import { webUIStorage } from '../../../storage/webUIStorage';
 import { HTTP_STATUS } from '../../../types/constants';
 import { isSafeUrl } from '../../../utils/ssrfGuard';
@@ -13,7 +14,6 @@ import {
   ServerNameParamSchema,
 } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
-import { asyncErrorHandler } from '../../../middleware/errorHandler';
 
 const router = Router();
 

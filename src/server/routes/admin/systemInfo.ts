@@ -2,9 +2,9 @@ import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { ErrorUtils } from '../../../common/ErrorUtils';
 import { DatabaseManager } from '../../../database/DatabaseManager';
+import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import { HTTP_STATUS } from '../../../types/constants';
 import { getRelevantEnvVars } from '../../../utils/envUtils';
-import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import {
   getChatModels,
   getEmbeddingModels,
@@ -108,33 +108,36 @@ router.get('/providers', (req: Request, res: Response) => {
 });
 
 // GET /system-info - Get system information
-router.get('/system-info', asyncErrorHandler(async (req, res) => {
-  try {
-    const dbManager = DatabaseManager.getInstance();
+router.get(
+  '/system-info',
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const dbManager = DatabaseManager.getInstance();
 
-    const systemInfo = {
-      uptime: process.uptime(),
-      memory: process.memoryUsage(),
-      nodeVersion: process.version,
-      platform: process.platform,
-      arch: process.arch,
-      pid: process.pid,
-      database: {
-        connected: dbManager.isConnected(),
-        stats: dbManager.isConnected() ? await dbManager.getStats() : null,
-      },
-      environment: process.env.NODE_ENV || 'development',
-    };
+      const systemInfo = {
+        uptime: process.uptime(),
+        memory: process.memoryUsage(),
+        nodeVersion: process.version,
+        platform: process.platform,
+        arch: process.arch,
+        pid: process.pid,
+        database: {
+          connected: dbManager.isConnected(),
+          stats: dbManager.isConnected() ? await dbManager.getStats() : null,
+        },
+        environment: process.env.NODE_ENV || 'development',
+      };
 
-    return res.json({ systemInfo });
-  } catch (error) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      error: 'Failed to fetch system info',
-      message: hivemindError.message || 'An error occurred while fetching system info',
-    });
-  }
-}));
+      return res.json({ systemInfo });
+    } catch (error) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        error: 'Failed to fetch system info',
+        message: hivemindError.message || 'An error occurred while fetching system info',
+      });
+    }
+  })
+);
 
 /**
  * @openapi
