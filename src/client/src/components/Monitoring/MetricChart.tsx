@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Line, Bar, Area, Pie, LineChart, BarChart, AreaChart, PieChart, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
 import { Alert } from '../DaisyUI/Alert';
+import { LoadingSpinner } from '../DaisyUI/Loading';
 
 export interface MetricData {
   timestamp: string;
@@ -171,7 +172,7 @@ const MetricChart: React.FC<MetricChartProps> = ({
           </div>
           <div className="flex flex-col items-end gap-2">
             {isLoading && (
-              <div className="loading loading-spinner loading-sm" aria-hidden="true"></div>
+              <LoadingSpinner size="sm" />
             )}
             <div className={`flex items-center gap-1 ${trendColor}`}>
               {trend === 'up' && <span className="text-lg">↑</span>}

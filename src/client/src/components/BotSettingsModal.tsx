@@ -11,6 +11,8 @@ import { Bot as ApiBot, Persona as ApiPersona } from '../services/api';
 import { useConfigDiff } from '../hooks/useConfigDiff';
 import { ConfigDiffConfirmDialog } from './ConfigDiffViewer';
 import Toggle from './DaisyUI/Toggle';
+import { Badge } from './DaisyUI/Badge';
+import Tooltip from './DaisyUI/Tooltip';
 
 // Extended Bot type with UI-specific fields
 interface BotConfig extends ApiBot {
@@ -98,9 +100,9 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                         <p className="text-sm opacity-60 font-mono">{bot.id}</p>
                     </div>
                     {isEnvProtected && (
-                        <div className="badge badge-warning gap-1 ml-auto">
+                        <Badge variant="warning" className="gap-1 ml-auto">
                             <Shield className="w-3 h-3" /> Env Protected
-                        </div>
+                        </Badge>
                     )}
                 </div>
 
@@ -117,9 +119,9 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                                 <span className="label-text flex items-center gap-2">
                                     <MessageSquare className="w-4 h-4 opacity-70" /> Messenger
                                     {bot.envOverrides?.messageProvider && (
-                                        <div className="tooltip tooltip-right" data-tip="Locked by environment variable">
+                                        <Tooltip content="Locked by environment variable" position="right">
                                             <Shield className="w-3 h-3 text-warning" />
-                                        </div>
+                                        </Tooltip>
                                     )}
                                 </span>
                                 <span className="label-text-alt opacity-60">Communication channel</span>
@@ -161,9 +163,9 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                                 <span className="label-text flex items-center gap-2">
                                     <Cpu className="w-4 h-4 opacity-70" /> LLM Profile
                                     {bot.envOverrides?.llmProvider && (
-                                        <div className="tooltip tooltip-right" data-tip="Locked by environment variable">
+                                        <Tooltip content="Locked by environment variable" position="right">
                                             <Shield className="w-3 h-3 text-warning" />
-                                        </div>
+                                        </Tooltip>
                                     )}
                                 </span>
                                 <span className="label-text-alt opacity-60">Intelligence model</span>
@@ -218,9 +220,9 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                                     <Avatar size="xs" placeholder shape="circle" className="w-4 h-4" innerClassName="bg-neutral-focus text-neutral-content rounded-full w-4 text-[8px]">P</Avatar>
                                     Persona
                                     {bot.envOverrides?.persona && (
-                                        <div className="tooltip tooltip-right" data-tip="Locked by environment variable">
+                                        <Tooltip content="Locked by environment variable" position="right">
                                             <Shield className="w-3 h-3 text-warning" />
-                                        </div>
+                                        </Tooltip>
                                     )}
                                 </span>
                                 <span className="label-text-alt opacity-60">Personality & Instructions</span>
@@ -296,7 +298,19 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                                 <Copy className="w-4 h-4" /> Clone Configuration
                             </Button>
 
-                            <div className={isEnvProtected ? 'tooltip tooltip-top w-full' : 'w-full'} data-tip="Cannot delete: Defined by environment variables">
+                            {isEnvProtected ? (
+                                <Tooltip content="Cannot delete: Defined by environment variables">
+                                    <Button
+                                        variant="ghost"
+                                        buttonStyle="outline"
+                                        className="w-full justify-start gap-3 text-error border-error hover:bg-error/10"
+                                        disabled={isEnvProtected}
+                                        onClick={() => onDelete(bot)}
+                                    >
+                                        <Trash2 className="w-4 h-4" /> Delete Bot
+                                    </Button>
+                                </Tooltip>
+                            ) : (
                                 <Button
                                     variant="ghost"
                                     buttonStyle="outline"
@@ -306,7 +320,7 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                                 >
                                     <Trash2 className="w-4 h-4" /> Delete Bot
                                 </Button>
-                            </div>
+                            )}
                         </div>
 
                     </div>
@@ -315,7 +329,7 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                 <div className="modal-action">
                     {hasChanges && (
                         <div className="mr-auto flex items-center gap-2">
-                            <span className="badge badge-warning badge-sm">{diff.length} unsaved change{diff.length !== 1 ? 's' : ''}</span>
+                            <Badge variant="warning" size="sm">{diff.length} unsaved change{diff.length !== 1 ? 's' : ''}</Badge>
                         </div>
                     )}
                     <Button variant="ghost" onClick={onClose}>Close</Button>

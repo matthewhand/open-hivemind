@@ -538,7 +538,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
             onClick={handleRefresh}
             disabled={isFetching}
           >
-            {isFetching && <span className="loading loading-spinner" aria-hidden="true"></span>}
+            {isFetching && <LoadingSpinner />}
             {isFetching ? 'Refreshing…' : 'Refresh status'}
           </button>
           <div className="dropdown dropdown-end">

@@ -3,6 +3,7 @@ import Badge from '../DaisyUI/Badge';
 import Button from '../DaisyUI/Button';
 import Card from '../DaisyUI/Card';
 import { Activity, Clock, Server, ChevronRight, ChevronDown, ZoomIn, ZoomOut, MoveLeft, MoveRight, X } from 'lucide-react';
+import Tooltip from '../DaisyUI/Tooltip';
 
 export interface TraceSpan {
   id: string;
@@ -224,21 +225,21 @@ export const DistributedTraceWaterfall: React.FC<DistributedTraceWaterfallProps>
 
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1 join">
-               <div className="tooltip" data-tip="Pan left">
+               <Tooltip content="Pan left">
                  <Button variant="ghost" size="xs" onClick={() => setPanOffset(Math.max(0, panOffset - 10 / zoomLevel))} disabled={panOffset <= 0} className="join-item" aria-label="Pan left"><MoveLeft className="w-3 h-3" /></Button>
-               </div>
-               <div className="tooltip" data-tip="Zoom out">
+               </Tooltip>
+               <Tooltip content="Zoom out">
                  <Button variant="ghost" size="xs" onClick={() => setZoomLevel(Math.max(1, zoomLevel - 0.5))} disabled={zoomLevel <= 1} className="join-item" aria-label="Zoom out"><ZoomOut className="w-3 h-3" /></Button>
-               </div>
-               <div className="tooltip" data-tip="Reset view">
+               </Tooltip>
+               <Tooltip content="Reset view">
                  <Button variant="ghost" size="xs" onClick={() => { setZoomLevel(1); setPanOffset(0); }} className="join-item" aria-label="Reset view">1x</Button>
-               </div>
-               <div className="tooltip" data-tip="Zoom in">
+               </Tooltip>
+               <Tooltip content="Zoom in">
                  <Button variant="ghost" size="xs" onClick={() => setZoomLevel(zoomLevel + 0.5)} disabled={zoomLevel >= 5} className="join-item" aria-label="Zoom in"><ZoomIn className="w-3 h-3" /></Button>
-               </div>
-               <div className="tooltip" data-tip="Pan right">
+               </Tooltip>
+               <Tooltip content="Pan right">
                  <Button variant="ghost" size="xs" onClick={() => setPanOffset(Math.min(100 - (100 / zoomLevel), panOffset + 10 / zoomLevel))} disabled={panOffset >= 100 - (100 / zoomLevel)} className="join-item" aria-label="Pan right"><MoveRight className="w-3 h-3" /></Button>
-               </div>
+               </Tooltip>
             </div>
 
             <div className="text-sm text-base-content/70 flex items-center gap-4">
@@ -273,11 +274,11 @@ export const DistributedTraceWaterfall: React.FC<DistributedTraceWaterfallProps>
               <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: getServiceColor(selectedSpan.service) }} />
               <span className="truncate" title={selectedSpan.name}>{selectedSpan.name}</span>
             </h4>
-            <div className="tooltip" data-tip="Close detail">
+            <Tooltip content="Close detail">
               <Button variant="ghost" size="xs" onClick={() => setSelectedSpanId(null)} className="btn-circle" aria-label="Close span detail">
                 <X className="w-4 h-4" />
               </Button>
-            </div>
+            </Tooltip>
           </div>
 
           <div className="p-4 overflow-y-auto flex-1 text-sm space-y-6">

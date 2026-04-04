@@ -10,6 +10,7 @@ import Button from '../../components/DaisyUI/Button';
 import { SkeletonPage } from '../../components/DaisyUI/Skeleton';
 import { useErrorToast, useSuccessToast } from '../../components/DaisyUI/ToastNotification';
 import SearchFilterBar from '../../components/SearchFilterBar';
+import Tooltip from '../../components/DaisyUI/Tooltip';
 import { PROVIDER_CATEGORIES } from '../../config/providers';
 import { useIsBelowBreakpoint } from '../../hooks/useBreakpoint';
 import { useBulkSelection } from '../../hooks/useBulkSelection';
@@ -179,7 +180,7 @@ const BotsPage: React.FC = () => {
                 <option value="active">Active Only</option>
                 <option value="inactive">Inactive Only</option>
               </select>
-              <div className="tooltip" data-tip="Refresh list">
+              <Tooltip content="Refresh list">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -189,7 +190,7 @@ const BotsPage: React.FC = () => {
                 >
                   <RefreshCw className={`w-4 h-4 ${botsLoading ? 'animate-spin' : ''}`} />
                 </Button>
-              </div>
+              </Tooltip>
             </div>
           </SearchFilterBar>
 

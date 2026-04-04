@@ -8,11 +8,13 @@ import { useErrorToast, useSuccessToast } from '../components/DaisyUI/ToastNotif
 import { usePageLifecycle } from '../hooks/usePageLifecycle';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import Tabs from '../components/DaisyUI/Tabs';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { SkeletonPage } from '../components/DaisyUI/Skeleton';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import { Alert } from '../components/DaisyUI/Alert';
+import { Badge } from '../components/DaisyUI/Badge';
 import { apiService } from '../services/api';
 import { ErrorService } from '../services/ErrorService';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -233,7 +235,7 @@ const TemplatesPage: React.FC = () => {
             label: (
               <span className="flex items-center gap-2 whitespace-nowrap">
                 {category.label}
-                <span className="badge badge-sm">{count}</span>
+                <Badge size="sm">{count}</Badge>
               </span>
             ),
             icon: <Icon className="w-4 h-4" />,
@@ -271,7 +273,7 @@ const TemplatesPage: React.FC = () => {
                   className: 'w-5 h-5 text-primary',
                 })}
                 {category} Templates
-                <span className="badge badge-lg">{categoryTemplates.length}</span>
+                <Badge size="lg">{categoryTemplates.length}</Badge>
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -284,7 +286,7 @@ const TemplatesPage: React.FC = () => {
                       <div className="flex items-start justify-between mb-3">
                         <h3 className="card-title text-lg">{template.name}</h3>
                         {template.isBuiltIn && (
-                          <span className="badge badge-primary badge-sm">Built-in</span>
+                          <Badge variant="primary" size="sm">Built-in</Badge>
                         )}
                       </div>
 
@@ -296,15 +298,15 @@ const TemplatesPage: React.FC = () => {
                       {template.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mb-4">
                           {template.tags.slice(0, 3).map((tag, idx) => (
-                            <span key={idx} className="badge badge-ghost badge-sm gap-1">
+                            <Badge key={idx} variant="ghost" size="sm" className="gap-1">
                               <Tag className="w-3 h-3" />
                               {tag}
-                            </span>
+                            </Badge>
                           ))}
                           {template.tags.length > 3 && (
-                            <span className="badge badge-ghost badge-sm">
+                            <Badge variant="ghost" size="sm">
                               +{template.tags.length - 3}
-                            </span>
+                            </Badge>
                           )}
                         </div>
                       )}
@@ -374,16 +376,16 @@ const TemplatesPage: React.FC = () => {
 
             <div>
               <label className="text-xs font-bold uppercase opacity-50 mb-1 block">Category</label>
-              <span className="badge badge-primary capitalize">{selectedTemplate.category}</span>
+              <Badge variant="primary" className="capitalize">{selectedTemplate.category}</Badge>
             </div>
 
             <div>
               <label className="text-xs font-bold uppercase opacity-50 mb-1 block">Tags</label>
               <div className="flex flex-wrap gap-2">
                 {selectedTemplate.tags.map((tag, idx) => (
-                  <span key={idx} className="badge badge-ghost">
+                  <Badge key={idx} variant="ghost">
                     {tag}
-                  </span>
+                  </Badge>
                 ))}
               </div>
             </div>
@@ -488,7 +490,7 @@ const TemplatesPage: React.FC = () => {
             >
               {applyingTemplate ? (
                 <>
-                  <span className="loading loading-spinner loading-sm"></span>
+                  <LoadingSpinner size="sm" />
                   Creating...
                 </>
               ) : (
