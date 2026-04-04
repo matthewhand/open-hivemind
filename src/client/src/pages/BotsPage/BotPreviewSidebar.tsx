@@ -8,6 +8,7 @@ import Tabs from '../../components/DaisyUI/Tabs';
 import ConfigurationValidation from '../../components/ConfigurationValidation';
 import { Stat, Stats } from '../../components/DaisyUI/Stat';
 import Tooltip from '../../components/DaisyUI/Tooltip';
+import Card from '../../components/DaisyUI/Card';
 
 interface BotPreviewSidebarProps {
   previewBot: BotConfig | null;
@@ -54,21 +55,20 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
 
   if (!previewBot) {
     return (
-      <div className="card bg-base-100 shadow-xl border border-dashed border-base-300 h-full min-h-[400px]">
-        <div className="card-body items-center justify-center text-center opacity-40">
+      <Card className="shadow-xl border border-dashed border-base-300 h-full min-h-[400px]">
+        <div className="flex flex-col items-center justify-center text-center opacity-40 h-full">
           <Bot className="w-12 h-12 mb-2" />
           <h3 className="font-bold">Agent Preview</h3>
           <p className="text-xs max-w-[200px]">
             Select an agent from the swarm to view its activity and configuration.
           </p>
         </div>
-      </div>
+      </Card>
     );
   }
 
   return (
-    <div className="card bg-base-100 shadow-xl border border-base-200 sticky top-6 animate-in fade-in slide-in-from-right-4 duration-300">
-      <div className="card-body p-5">
+    <Card className="shadow-xl border border-base-200 sticky top-6 animate-in fade-in slide-in-from-right-4 duration-300">
         <div className="flex justify-between items-start mb-4">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/10">
@@ -262,7 +262,7 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
             </div>
           )}
 
-          <div className="card-actions mt-2 pt-4 border-t border-base-200">
+          <Card.Actions className="mt-2 pt-4 border-t border-base-200">
             <Button
               variant="primary"
               size="sm"
@@ -293,9 +293,8 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
                 {previewBot.status === 'active' ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
               </Button>
             </Tooltip>
-          </div>
+          </Card.Actions>
         </div>
-      </div>
-    </div>
+    </Card>
   );
 };

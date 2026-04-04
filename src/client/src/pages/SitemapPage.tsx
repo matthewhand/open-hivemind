@@ -16,6 +16,7 @@ import Badge from '../components/DaisyUI/Badge';
 import { Stat, Stats } from '../components/DaisyUI/Stat';
 import { Alert } from '../components/DaisyUI/Alert';
 import Tooltip from '../components/DaisyUI/Tooltip';
+import Card from '../components/DaisyUI/Card';
 
 interface SitemapUrl {
   url: string;
@@ -236,8 +237,7 @@ const SitemapPage: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {urls.map((url, idx) => (
-                <div key={`${category}-${url.url}-${idx}`} className="card bg-base-100 shadow-xl h-full border border-base-200">
-                  <div className="card-body p-4">
+                <Card key={`${category}-${url.url}-${idx}`} className="shadow-xl h-full border border-base-200" compact>
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="font-mono text-sm break-all font-bold">
                         {url.url}
@@ -274,8 +274,7 @@ const SitemapPage: React.FC = () => {
                     <div className="text-xs text-base-content/50 mt-auto">
                       Last modified: {new Date(url.lastmod).toLocaleDateString()}
                     </div>
-                  </div>
-                </div>
+                </Card>
               ))}
             </div>
           </div>

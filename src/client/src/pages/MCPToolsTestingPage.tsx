@@ -15,6 +15,7 @@ import { Badge } from '../components/DaisyUI/Badge';
 import Toggle from '../components/DaisyUI/Toggle';
 import Divider from '../components/DaisyUI/Divider';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
+import Card from '../components/DaisyUI/Card';
 import Debug from 'debug';
 
 const debug = Debug('app:client:pages:MCPToolsTestingPage');
@@ -378,12 +379,11 @@ const MCPToolsTestingPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Tool Selection */}
         <div className="lg:col-span-1">
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
-              <h2 className="card-title">
+          <Card className="shadow-xl">
+              <Card.Title>
                 <WrenchScrewdriverIcon className="w-5 h-5" />
                 Available Tools
-              </h2>
+              </Card.Title>
 
               {tools.length === 0 ? (
                 <Alert status="warning">
@@ -410,8 +410,7 @@ const MCPToolsTestingPage: React.FC = () => {
                   ))}
                 </div>
               )}
-            </div>
-          </div>
+          </Card>
         </div>
 
         {/* Right: Tool Details, Form, and Results */}
@@ -419,26 +418,20 @@ const MCPToolsTestingPage: React.FC = () => {
           {selectedTool ? (
             <>
               {/* Tool Information */}
-              <div className="card bg-base-100 shadow-xl">
-                <div className="card-body">
-                  <h2 className="card-title">{selectedTool.name}</h2>
+              <Card className="shadow-xl" title={selectedTool.name}>
                   <p className="text-sm text-base-content/70">{selectedTool.description}</p>
                   <Badge style="outline">{selectedTool.serverName}</Badge>
 
                   <Divider />
 
                   {renderToolSchema()}
-                </div>
-              </div>
+              </Card>
 
               {/* Parameter Form */}
-              <div className="card bg-base-100 shadow-xl">
-                <div className="card-body">
-                  <h2 className="card-title">Test Parameters</h2>
-
+              <Card className="shadow-xl" title="Test Parameters">
                   {renderParameterForm()}
 
-                  <div className="card-actions justify-end mt-4">
+                  <Card.Actions className="mt-4">
                     <button
                       className="btn btn-primary"
                       onClick={handleTestTool}
@@ -456,20 +449,16 @@ const MCPToolsTestingPage: React.FC = () => {
                         </>
                       )}
                     </button>
-                  </div>
-                </div>
-              </div>
+                  </Card.Actions>
+              </Card>
 
               {/* Test Results */}
               {testResult && (
-                <div className="card bg-base-100 shadow-xl">
-                  <div className="card-body">{renderTestResult()}</div>
-                </div>
+                <Card className="shadow-xl">{renderTestResult()}</Card>
               )}
             </>
           ) : (
-            <div className="card bg-base-100 shadow-xl">
-              <div className="card-body">
+            <Card className="shadow-xl">
                 <div className="text-center py-12">
                   <WrenchScrewdriverIcon className="w-16 h-16 mx-auto text-base-content/30 mb-4" />
                   <h3 className="text-lg font-medium text-base-content/70">
@@ -480,8 +469,7 @@ const MCPToolsTestingPage: React.FC = () => {
                     custom parameters
                   </p>
                 </div>
-              </div>
-            </div>
+            </Card>
           )}
         </div>
       </div>

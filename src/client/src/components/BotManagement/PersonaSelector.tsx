@@ -225,8 +225,8 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
 
   // Full size selector
   return (
-    <Card className="bg-base-100 border border-base-300">
-      <div className="card-body p-4">
+    <Card className="border border-base-300">
+      <Card.Body className="card-body p-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-base-content">
@@ -364,7 +364,7 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
             ))
           )}
         </div>
-      </div>
+      </Card.Body>
     </Card>
   );
 };

@@ -110,32 +110,29 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
   if (!configurable) {
     return (
       <Card className="w-full">
-        <div className="card-body">
-          <div className="flex justify-between items-center">
-            <h3 className="card-title text-lg">{agent.name}</h3>
+            <div className="flex justify-between items-center">
+            <Card.Title tag="h3" className="text-lg">{agent.name}</Card.Title>
             <Chip variant="success" size="sm">online</Chip>
           </div>
           <div className="mt-2">
             <p className="text-sm">Provider: {agent.provider}</p>
             {agent.persona && <p className="text-sm">Persona: {agent.persona}</p>}
           </div>
-        </div>
       </Card>
     );
   }
 
   return (
     <Card className={`w-full ${!isConfigured ? 'line-through' : ''} ${hasEnvOverrides ? 'border-2 border-info' : ''}`}>
-      <div className="card-body">
         <div className="flex justify-between items-center">
-          <h3 className="card-title text-lg">
+          <Card.Title tag="h3" className="text-lg">
             {agent.name}
             {hasEnvOverrides && (
               <Tooltip content="This agent has environment variable overrides">
                 <Info className="w-4 h-4 ml-1 text-info" />
               </Tooltip>
             )}
-          </h3>
+          </Card.Title>
           <div className="flex gap-2">
             {isConfigured ? <CheckCircle className="w-5 h-5 text-success" /> : <X className="w-5 h-5 text-error" />}
             {connected ? <CheckCircle className="w-5 h-5 text-success" /> : <X className="w-5 h-5 text-error" />}
@@ -352,7 +349,6 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
             )}
           </div>
         </div>
-      </div>
     </Card>
   );
 };

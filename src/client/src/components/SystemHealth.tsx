@@ -276,8 +276,8 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
           {/* Memory Usage */}
-          <div className="card bg-base-100 border border-base-200">
-            <div className="card-body p-4">
+          <Card className="border border-base-200">
+            <Card.Body className="card-body p-4">
               <div className="flex items-center mb-2">
                 <Bolt className="w-5 h-5 mr-2 text-warning" />
                 <span className="font-medium">Memory Usage</span>
@@ -297,12 +297,12 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
               <span className="text-xs text-base-content/70 mt-1">
                 {formatBytes((metrics?.memory?.used || 0) * 1024 * 1024)} / {formatBytes((metrics?.memory?.total || 0) * 1024 * 1024)}
               </span>
-            </div>
-          </div>
+            </Card.Body>
+          </Card>
 
           {/* Load Average */}
-          <div className="card bg-base-100 border border-base-200">
-            <div className="card-body p-4">
+          <Card className="border border-base-200">
+            <Card.Body className="card-body p-4">
               <div className="flex items-center mb-2">
                 <Cpu className="w-5 h-5 mr-2 text-primary" />
                 <span className="font-medium">Load Average</span>
@@ -320,12 +320,12 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
                   </div>
                 ))}
               </div>
-            </div>
-          </div>
+            </Card.Body>
+          </Card>
 
           {/* Network Status (if available) */}
-          <div className="card bg-base-100 border border-base-200">
-            <div className="card-body p-4">
+          <Card className="border border-base-200">
+            <Card.Body className="card-body p-4">
               <div className="flex items-center mb-2">
                 <Signal className="w-5 h-5 mr-2 text-info" />
                 <span className="font-medium">API Network Status</span>
@@ -346,8 +346,8 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
               <span className="text-xs text-base-content/70 mt-1">
                  Latency check on endpoints
               </span>
-            </div>
-          </div>
+            </Card.Body>
+          </Card>
         </div>
 
         {/* Health Checks List */}

@@ -6,6 +6,7 @@ import {
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid';
 import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
 import type { MCPTool } from '../../hooks/useToolsLogic';
+import Card from '../DaisyUI/Card';
 import { Badge } from '../DaisyUI/Badge';
 
 interface ToolCardProps {
@@ -31,8 +32,8 @@ export const ToolCard: React.FC<ToolCardProps> = ({
 }) => {
   if (compact) {
     return (
-      <div className="card bg-base-100 border border-base-300 hover:shadow-md transition-shadow">
-        <div className="card-body p-4">
+      <Card className="border border-base-300 hover:shadow-md transition-shadow">
+        <Card.Body className="card-body p-4">
           <div className="flex justify-between items-start gap-2">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
@@ -72,20 +73,19 @@ export const ToolCard: React.FC<ToolCardProps> = ({
               Run
             </button>
           </div>
-        </div>
-      </div>
+        </Card.Body>
+      </Card>
     );
   }
 
   return (
-    <div className="card bg-base-100 shadow-xl h-full">
-      <div className="card-body">
+    <Card className="shadow-xl h-full">
         <div className="flex justify-between items-start mb-2">
           <div className="flex items-center gap-2 flex-1">
             <ToolIcon className="w-5 h-5 text-base-content/70" />
-            <h2 className="card-title text-lg">
+            <Card.Title className="text-lg">
               {tool.name}
-            </h2>
+            </Card.Title>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -130,7 +130,7 @@ export const ToolCard: React.FC<ToolCardProps> = ({
           )}
         </div>
 
-        <div className="card-actions justify-between mt-auto">
+        <Card.Actions className="justify-between mt-auto">
           <button
             className={`btn btn-sm ${tool.enabled ? 'btn-error btn-outline' : 'btn-success btn-outline'}`}
             onClick={() => onToggleTool(tool.id)}
@@ -145,8 +145,7 @@ export const ToolCard: React.FC<ToolCardProps> = ({
             <RunIcon className="w-4 h-4 mr-1" />
             Run Tool
           </button>
-        </div>
-      </div>
-    </div>
+        </Card.Actions>
+    </Card>
   );
 };

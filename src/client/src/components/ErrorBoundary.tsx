@@ -1,6 +1,7 @@
 import React from 'react';
 import Debug from 'debug';
 import Button from './DaisyUI/Button';
+import Card from './DaisyUI/Card';
 const debug = Debug('app:client:components:ErrorBoundary');
 
 interface ErrorBoundaryProps {
@@ -92,10 +93,10 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 
       return (
         <div className="flex flex-col items-center justify-center min-h-[60vh] p-8">
-          <div className="card bg-base-100 shadow-xl max-w-lg w-full">
-            <div className="card-body items-center text-center">
+          <Card className="shadow-xl max-w-lg w-full">
+            <Card.Body className="card-body items-center text-center">
               <div className="text-error text-5xl mb-2">!</div>
-              <h2 className="card-title text-error">Something went wrong</h2>
+              <Card.Title className="text-error">Something went wrong</Card.Title>
               <p className="text-base-content/70 mt-2">
                 <strong>{pageName}</strong> encountered an unexpected error.
               </p>
@@ -106,14 +107,14 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
                   </p>
                 </div>
               )}
-              <div className="card-actions mt-6 gap-3">
+              <Card.Actions className="mt-6 gap-3">
                 <Button variant="primary" onClick={this.handleRetry}>
                   Retry
                 </Button>
                 {this.renderHomeLink()}
-              </div>
-            </div>
-          </div>
+              </Card.Actions>
+            </Card.Body>
+          </Card>
         </div>
       );
     }

@@ -29,6 +29,7 @@ import type { RDVColumn, RowAction } from '../components/DaisyUI/DataTable';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import { Alert } from '../components/DaisyUI/Alert';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
+import Card from '../components/DaisyUI/Card';
 
 interface BackupMetadata {
   id: string;
@@ -420,10 +421,9 @@ const BackupsPage: React.FC = () => {
 
       <StatsCards stats={stats} />
 
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body">
+      <Card className="shadow-xl">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-            <h2 className="card-title">System Backups</h2>
+            <Card.Title>System Backups</Card.Title>
             <SearchFilterBar
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
@@ -462,8 +462,7 @@ const BackupsPage: React.FC = () => {
               loading={loading}
             />
           )}
-        </div>
-      </div>
+      </Card>
 
       {/* Create Backup Modal */}
       <Modal

@@ -30,6 +30,7 @@ import StatsCards from '../components/DaisyUI/StatsCards';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService } from '../services/api';
 import DataTable from '../components/DaisyUI/DataTable';
+import Card from '../components/DaisyUI/Card';
 import type { RDVColumn, RowAction } from '../components/DaisyUI/DataTable';
 
 interface Backup {
@@ -361,11 +362,10 @@ const ExportPage: React.FC = () => {
       </div>
 
       {/* System Backups Section */}
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body">
+      <Card className="shadow-xl">
           <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
             <div>
-              <h2 className="card-title text-xl">System Backups</h2>
+              <Card.Title className="text-xl">System Backups</Card.Title>
               <p className="text-sm text-base-content/70">Create and manage full system configuration backups.</p>
             </div>
             <div className="flex items-center gap-2 w-full md:w-auto">
@@ -414,17 +414,15 @@ const ExportPage: React.FC = () => {
               }
             />
           </div>
-        </div>
-      </div>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Configuration Export */}
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <h2 className="card-title flex items-center gap-2">
+        <Card className="shadow-xl">
+            <Card.Title className="flex items-center gap-2">
               <FileText className="w-5 h-5 text-primary" />
               Configuration Export
-            </h2>
+            </Card.Title>
             <p className="text-sm text-base-content/70 mb-4">
               Export the current running configuration. Useful for debugging or manual migration.
             </p>
@@ -440,34 +438,31 @@ const ExportPage: React.FC = () => {
                 <option value="yaml">YAML</option>
               </select>
             </div>
-            <div className="card-actions justify-end mt-auto">
+            <Card.Actions className="mt-auto">
               <Button buttonStyle="outline" onClick={handleExportConfig}>
                 <Download className="w-4 h-4 mr-2" /> Export Config
               </Button>
-            </div>
-          </div>
-        </div>
+            </Card.Actions>
+        </Card>
 
         {/* API Specs */}
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <h2 className="card-title flex items-center gap-2">
+        <Card className="shadow-xl">
+            <Card.Title className="flex items-center gap-2">
               <Code className="w-5 h-5 text-secondary" />
               API Specifications
-            </h2>
+            </Card.Title>
             <p className="text-sm text-base-content/70 mb-4">
               Download the OpenAPI specification for integration and development.
             </p>
-            <div className="card-actions justify-end gap-2 mt-auto">
+            <Card.Actions className="gap-2 mt-auto">
               <Button size="sm" buttonStyle="outline" onClick={() => handleDownloadOpenAPI('json')}>
                 JSON
               </Button>
               <Button size="sm" buttonStyle="outline" onClick={() => handleDownloadOpenAPI('yaml')}>
                 YAML
               </Button>
-            </div>
-          </div>
-        </div>
+            </Card.Actions>
+        </Card>
       </div>
 
       {/* Create Backup Modal */}

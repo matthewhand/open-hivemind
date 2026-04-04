@@ -7,6 +7,7 @@
  */
 
 import React, { useState } from 'react';
+import Card from '../DaisyUI/Card';
 import EnhancedErrorAlert from '../DaisyUI/EnhancedErrorAlert';
 import Button from '../DaisyUI/Button';
 import { apiService } from '../../services/api';
@@ -251,9 +252,8 @@ export const EnhancedErrorExample: React.FC = () => {
       )}
 
       {/* Example Operations */}
-      <div className="card bg-base-200 shadow-xl">
-        <div className="card-body">
-          <h2 className="card-title">Real Operations</h2>
+      <Card className="bg-base-200 shadow-xl">
+          <Card.Title>Real Operations</Card.Title>
           <p className="text-sm text-base-content/70 mb-4">
             These buttons trigger real API calls and demonstrate error handling in action.
           </p>
@@ -291,13 +291,11 @@ export const EnhancedErrorExample: React.FC = () => {
               Start Bot (Will Fail)
             </Button>
           </div>
-        </div>
-      </div>
+      </Card>
 
       {/* Simulated Errors */}
-      <div className="card bg-base-200 shadow-xl">
-        <div className="card-body">
-          <h2 className="card-title">Simulated Error Types</h2>
+      <Card className="bg-base-200 shadow-xl">
+          <Card.Title>Simulated Error Types</Card.Title>
           <p className="text-sm text-base-content/70 mb-4">
             Click these buttons to see different error types and their corresponding messages.
           </p>
@@ -351,13 +349,11 @@ export const EnhancedErrorExample: React.FC = () => {
               Build Error
             </Button>
           </div>
-        </div>
-      </div>
+      </Card>
 
       {/* Documentation */}
-      <div className="card bg-base-200 shadow-xl">
-        <div className="card-body">
-          <h2 className="card-title">Key Features</h2>
+      <Card className="bg-base-200 shadow-xl">
+          <Card.Title>Key Features</Card.Title>
           <ul className="list-disc list-inside space-y-2 text-sm">
             <li><strong>Specific Error Types:</strong> Each error is classified for targeted handling</li>
             <li><strong>Actionable Suggestions:</strong> Users get clear steps to resolve issues</li>
@@ -367,8 +363,7 @@ export const EnhancedErrorExample: React.FC = () => {
             <li><strong>Technical Details:</strong> Collapsible section for debugging information</li>
             <li><strong>Correlation IDs:</strong> Track errors across systems for support</li>
           </ul>
-        </div>
-      </div>
+      </Card>
     </div>
   );
 };

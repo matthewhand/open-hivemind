@@ -6,6 +6,7 @@ import {
   EyeIcon,
 } from '@heroicons/react/24/outline';
 import Button from './DaisyUI/Button';
+import Card from './DaisyUI/Card';
 import { Badge } from './DaisyUI/Badge';
 
 interface ToolResult {
@@ -55,14 +56,14 @@ const ToolResultHistory: React.FC<ToolResultHistoryProps> = ({
 
       <div className="space-y-2">
         {results.map((result, index) => (
-          <div
+          <Card
             key={index}
-            className={`card bg-base-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer ${
+            className={`bg-base-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer ${
               result.isError ? 'border-l-4 border-error' : 'border-l-4 border-success'
             }`}
             onClick={() => onViewResult(result)}
           >
-            <div className="card-body p-4">
+            <Card.Body className="card-body p-4">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3 flex-1">
                   {result.isError ? (
@@ -97,8 +98,8 @@ const ToolResultHistory: React.FC<ToolResultHistoryProps> = ({
                   View
                 </button>
               </div>
-            </div>
-          </div>
+            </Card.Body>
+          </Card>
         ))}
       </div>
     </div>

@@ -15,6 +15,7 @@ import { SkeletonPage } from '../components/DaisyUI/Skeleton';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import { Alert } from '../components/DaisyUI/Alert';
 import { Badge } from '../components/DaisyUI/Badge';
+import Card from '../components/DaisyUI/Card';
 import { apiService } from '../services/api';
 import { ErrorService } from '../services/ErrorService';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -278,13 +279,12 @@ const TemplatesPage: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {categoryTemplates.map((template) => (
-                  <div
+                  <Card
                     key={template.id}
-                    className="card bg-base-100 shadow-lg border border-base-300 hover:shadow-xl transition-shadow"
+                    className="shadow-lg border border-base-300 hover:shadow-xl transition-shadow"
                   >
-                    <div className="card-body p-5">
                       <div className="flex items-start justify-between mb-3">
-                        <h3 className="card-title text-lg">{template.name}</h3>
+                        <Card.Title tag="h3" className="text-lg">{template.name}</Card.Title>
                         {template.isBuiltIn && (
                           <Badge variant="primary" size="sm">Built-in</Badge>
                         )}
@@ -320,7 +320,7 @@ const TemplatesPage: React.FC = () => {
                       </div>
 
                       {/* Actions */}
-                      <div className="card-actions justify-end gap-2">
+                      <Card.Actions className="gap-2">
                         <button
                           className="btn btn-ghost btn-sm btn-square"
                           onClick={() => handlePreviewTemplate(template)}
@@ -346,9 +346,8 @@ const TemplatesPage: React.FC = () => {
                           Apply Template
                           <ChevronRight className="w-4 h-4" />
                         </button>
-                      </div>
-                    </div>
-                  </div>
+                      </Card.Actions>
+                  </Card>
                 ))}
               </div>
             </div>

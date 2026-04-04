@@ -7,6 +7,7 @@ import Toggle from './DaisyUI/Toggle';
 import Button from './DaisyUI/Button';
 import { Alert } from './DaisyUI/Alert';
 import Badge from './DaisyUI/Badge';
+import Card from './DaisyUI/Card';
 import ModelAutocomplete from './DaisyUI/ModelAutocomplete';
 import Debug from 'debug';
 import { getApiKeyFormatHint } from '../utils/apiKeyValidation';
@@ -381,11 +382,11 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
       {/* Form Fields by Group */}
       {Object.entries(groupedFields).map(([groupName, fields]) => (
-        <div key={groupName} className="card bg-base-100 shadow-sm border border-base-200">
-          <div className="card-body p-6">
-            <h3 className="card-title text-lg border-b border-base-200 pb-3 mb-4">
+        <Card key={groupName} className="shadow-sm border border-base-200">
+          <Card.Body className="card-body p-6">
+            <Card.Title tag="h3" className="text-lg border-b border-base-200 pb-3 mb-4">
               {groupName}
-            </h3>
+            </Card.Title>
             <div className="overflow-x-auto">
               <table className="table w-full">
                 <thead>
@@ -424,8 +425,8 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
                 </tbody>
               </table>
             </div>
-          </div>
-        </div>
+          </Card.Body>
+        </Card>
       ))}
 
       {/* Action Buttons */}
