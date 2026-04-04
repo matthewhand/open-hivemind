@@ -3,6 +3,7 @@ import React from 'react';
 import BulkActionBar from '../../components/BulkActionBar';
 import Button from '../../components/DaisyUI/Button';
 import Checkbox from '../../components/DaisyUI/Checkbox';
+import Card from '../../components/DaisyUI/Card';
 import { type Persona } from './hooks/usePersonasData';
 
 interface PersonaListProps {
@@ -72,15 +73,13 @@ export const PersonaList: React.FC<PersonaListProps> = ({
             onDrop={onDrop(index)}
             style={getItemStyle(index)}
           >
-            <div className="card bg-base-100 shadow-sm border border-base-200 h-full hover:shadow-md transition-shadow">
-              <div className="card-body p-4 sm:p-5">
-                <h3 className="card-title text-lg font-bold">{persona.name}</h3>
+            <Card className="shadow-sm border border-base-200 h-full hover:shadow-md transition-shadow">
+                <Card.Title tag="h3" className="text-lg font-bold">{persona.name}</Card.Title>
                 <p className="text-sm text-base-content/70 line-clamp-2">{persona.description}</p>
                 <Button variant="primary" size="sm" onClick={() => openEditModal(persona)}>
                   Edit
                 </Button>
-              </div>
-            </div>
+            </Card>
           </div>
         ))}
       </div>

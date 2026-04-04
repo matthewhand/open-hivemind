@@ -11,6 +11,7 @@ import { BarChart3, RefreshCw } from 'lucide-react';
 import { Alert } from '../components/DaisyUI/Alert';
 import { useErrorToast } from '../components/DaisyUI/ToastNotification';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
+import Card from '../components/DaisyUI/Card';
 
 const AnalyticsDashboard: React.FC = () => {
   const { messageFlow, performanceMetrics } = useWebSocket();
@@ -181,9 +182,7 @@ const AnalyticsDashboard: React.FC = () => {
 
       {/* Detailed Analytics Tables */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <h2 className="card-title mb-4">Bot Performance</h2>
+        <Card className="shadow-xl" title="Bot Performance">
             <DataTable
               data={botStats}
               columns={[
@@ -203,13 +202,10 @@ const AnalyticsDashboard: React.FC = () => {
               rowKey={(bot: any) => bot.name}
               emptyState={<p className="text-center text-base-content/50 py-4">No bot activity found</p>}
             />
-          </div>
-        </div>
+        </Card>
 
         {/* Real-time Event Stream */}
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <h2 className="card-title mb-4">Recent Activity Stream</h2>
+        <Card className="shadow-xl" title="Recent Activity Stream">
             <div className="space-y-2 max-h-64 overflow-y-auto">
               {validMessageFlow.slice(0, 10).map((event, idx) => (
                 <div key={`${event.timestamp}-${idx}`} className="flex items-center gap-3 p-2 rounded bg-base-200">
@@ -235,8 +231,7 @@ const AnalyticsDashboard: React.FC = () => {
                 <p className="text-center text-base-content/50 py-4">No recent activity</p>
               )}
             </div>
-          </div>
-        </div>
+        </Card>
       </div>
     </div>
   );

@@ -629,7 +629,7 @@ const ProviderConfig: React.FC<ProviderConfigProps> = ({
           <div className="collapse-content">
             {(section as any).helpSection && (
               <Card className="bg-primary/5 border-primary/20 mb-4">
-                <div className="card-body p-4">
+                <Card.Body className="card-body p-4">
                   <h4 className="font-semibold text-sm flex items-center gap-2 mb-2">
                     <HelpCircle className="w-4 h-4 text-primary" />
                     {(section as any).helpSection.title}
@@ -648,7 +648,7 @@ const ProviderConfig: React.FC<ProviderConfigProps> = ({
                       </a>
                     ))}
                   </div>
-                </div>
+                </Card.Body>
               </Card>
             )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
@@ -671,11 +671,10 @@ const ProviderConfig: React.FC<ProviderConfigProps> = ({
 
       {Object.keys(envOverrides).length > 0 && (
         <Card className="bg-info/10 border-info/20">
-          <div className="card-body">
-            <h3 className="card-title text-info">
+            <Card.Title tag="h3" className="text-info">
               <Shield className="w-5 h-5" />
               Security Information
-            </h3>
+            </Card.Title>
             <div className="text-sm">
               <p className="mb-2">
                 This provider configuration is partially controlled by environment variables:
@@ -693,7 +692,6 @@ const ProviderConfig: React.FC<ProviderConfigProps> = ({
                   ))}
               </div>
             </div>
-          </div>
         </Card>
       )}
     </div>

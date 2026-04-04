@@ -86,8 +86,8 @@ const SortableProviderCard: React.FC<SortableProviderCardProps> = ({
 
   return (
     <div ref={setNodeRef} style={style}>
-      <Card className="bg-base-100 shadow-xl border border-base-200">
-        <div className="card-body p-4 sm:p-6">
+      <Card className="shadow-xl border border-base-200">
+        <Card.Body className="card-body p-4 sm:p-6">
           <div className="flex justify-between items-start gap-4">
             <div className="flex items-start gap-3">
               <div
@@ -99,7 +99,7 @@ const SortableProviderCard: React.FC<SortableProviderCardProps> = ({
                 <Bars3Icon className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="card-title text-lg m-0 leading-tight">{provider.name}</h3>
+                <Card.Title tag="h3" className="text-lg m-0 leading-tight">{provider.name}</Card.Title>
                 <div className="mt-2">
                   <Badge variant="primary">{provider.type}</Badge>
                 </div>
@@ -145,7 +145,7 @@ const SortableProviderCard: React.FC<SortableProviderCardProps> = ({
               {provider.isActive ? 'Deactivate' : 'Activate'}
             </Button>
           </div>
-        </div>
+        </Card.Body>
       </Card>
     </div>
   );

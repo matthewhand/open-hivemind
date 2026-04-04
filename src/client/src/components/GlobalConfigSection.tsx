@@ -232,12 +232,11 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
   const currentValues = getValues();
 
   return (
-    <Card className="bg-base-100 shadow-xl border border-base-200">
+    <Card className="shadow-xl border border-base-200">
       <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="card-body">
           <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
             <div>
-              <h2 className="card-title text-2xl capitalize">{section} Settings</h2>
+              <Card.Title className="text-2xl capitalize">{section} Settings</Card.Title>
               <p className="text-base-content/60 text-sm">Configure global defaults for {section}.</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -302,7 +301,6 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
               return renderField(key, value, configSchema[key] || {});
             })}
           </div>
-        </div>
       </form>
     </Card>
   );

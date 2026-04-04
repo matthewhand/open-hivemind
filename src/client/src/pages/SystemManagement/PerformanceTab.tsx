@@ -6,6 +6,7 @@ import DataTable from '../../components/DaisyUI/DataTable';
 import Divider from '../../components/DaisyUI/Divider';
 import { Stat, Stats } from '../../components/DaisyUI/Stat';
 import { LoadingSpinner } from '../../components/DaisyUI/Loading';
+import Card from '../../components/DaisyUI/Card';
 
 interface PerformanceTabProps {
   onClearCache: () => void;
@@ -91,63 +92,57 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ onClearCache }) => {
 
       {systemInfo && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="card bg-base-200">
-            <div className="card-body p-4">
-              <h4 className="font-bold mb-2">System Information</h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="opacity-70">Platform:</span>
-                  <span className="font-mono">{systemInfo.platform} ({systemInfo.arch})</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="opacity-70">Node Version:</span>
-                  <span className="font-mono">{systemInfo.nodeVersion}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="opacity-70">Uptime:</span>
-                  <span className="font-mono">{Math.floor(systemInfo.uptime / 60)} minutes</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="opacity-70">Process ID:</span>
-                  <span className="font-mono">{systemInfo.pid}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="opacity-70">Memory Usage:</span>
-                  <span className="font-mono">
-                    {Math.round(systemInfo.memory.rss / 1024 / 1024)} MB (RSS)
-                  </span>
-                </div>
+          <Card bgVariant="ghost" className="bg-base-200" compact>
+            <h4 className="font-bold mb-2">System Information</h4>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="opacity-70">Platform:</span>
+                <span className="font-mono">{systemInfo.platform} ({systemInfo.arch})</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="opacity-70">Node Version:</span>
+                <span className="font-mono">{systemInfo.nodeVersion}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="opacity-70">Uptime:</span>
+                <span className="font-mono">{Math.floor(systemInfo.uptime / 60)} minutes</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="opacity-70">Process ID:</span>
+                <span className="font-mono">{systemInfo.pid}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="opacity-70">Memory Usage:</span>
+                <span className="font-mono">
+                  {Math.round(systemInfo.memory.rss / 1024 / 1024)} MB (RSS)
+                </span>
               </div>
             </div>
-          </div>
+          </Card>
 
-          <div className="card bg-base-200">
-            <div className="card-body p-4">
-              <h4 className="font-bold mb-2">Database Status</h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="opacity-70">Connected:</span>
-                  <span className={systemInfo.database.connected ? 'text-success' : 'text-error'}>
-                    {systemInfo.database.connected ? 'Yes' : 'No'}
-                  </span>
-                </div>
-                {systemInfo.database.stats && (
-                  <>
-                    <div className="flex justify-between">
-                      <span className="opacity-70">Pool Size:</span>
-                      <span className="font-mono">{systemInfo.database.stats.poolSize || 'N/A'}</span>
-                    </div>
-                  </>
-                )}
+          <Card bgVariant="ghost" className="bg-base-200" compact>
+            <h4 className="font-bold mb-2">Database Status</h4>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="opacity-70">Connected:</span>
+                <span className={systemInfo.database.connected ? 'text-success' : 'text-error'}>
+                  {systemInfo.database.connected ? 'Yes' : 'No'}
+                </span>
               </div>
+              {systemInfo.database.stats && (
+                <>
+                  <div className="flex justify-between">
+                    <span className="opacity-70">Pool Size:</span>
+                    <span className="font-mono">{systemInfo.database.stats.poolSize || 'N/A'}</span>
+                  </div>
+                </>
+              )}
             </div>
-          </div>
+          </Card>
         </div>
       )}
 
-      <div className="card bg-base-200">
-        <div className="card-body p-4">
-          <h4 className="card-title text-sm">API Endpoints Status</h4>
+      <Card bgVariant="ghost" className="bg-base-200" compact title="API Endpoints Status">
           <DataTable
             data={apiStatus?.endpoints || []}
             columns={[
@@ -187,8 +182,7 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ onClearCache }) => {
             rowKey={(row: any) => row.id}
             emptyState={<div className="text-center py-4 opacity-50">No endpoint data available</div>}
           />
-        </div>
-      </div>
+      </Card>
 
       <Divider />
 

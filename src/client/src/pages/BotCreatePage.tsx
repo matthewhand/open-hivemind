@@ -13,6 +13,7 @@ import Select from '../components/DaisyUI/Select';
 import { useLlmStatus } from '../hooks/useLlmStatus';
 import AIAssistButton from '../components/AIAssistButton';
 import { apiService } from '../services/api';
+import Card from '../components/DaisyUI/Card';
 import Debug from 'debug';
 import Checkbox from '../components/DaisyUI/Checkbox';
 const debug = Debug('app:client:pages:BotCreatePage');
@@ -147,8 +148,7 @@ const BotCreatePage: React.FC = () => {
         />
       )}
 
-      <div className="card bg-base-100 shadow-xl max-w-4xl mx-auto">
-        <div className="card-body">
+      <Card className="shadow-xl max-w-4xl mx-auto">
           {loading ? (
             <div className="py-6">
               <SkeletonList items={6} />
@@ -427,8 +427,7 @@ const BotCreatePage: React.FC = () => {
               </div>
             </form>
           )}
-        </div>
-      </div>
+      </Card>
     </div>
   );
 };

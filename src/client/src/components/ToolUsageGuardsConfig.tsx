@@ -223,11 +223,10 @@ const ToolUsageGuardsConfig: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {guards.map((guard) => (
-          <Card key={guard.id} className="bg-base-100 shadow-xl">
-            <div className="card-body">
+          <Card key={guard.id} className="shadow-xl">
               <div className="flex justify-between items-start">
                 <div>
-                  <h3 className="card-title">{guard.name}</h3>
+                  <Card.Title tag="h3">{guard.name}</Card.Title>
                   <p className="text-sm text-base-content/70 mt-1">Tool: {guard.toolId}</p>
                   <div className="mt-2">
                     <Badge variant="primary">{guard.guardType}</Badge>
@@ -273,7 +272,6 @@ const ToolUsageGuardsConfig: React.FC = () => {
                   {guard.isActive ? 'Deactivate' : 'Activate'}
                 </Button>
               </div>
-            </div>
           </Card>
         ))}
       </div>

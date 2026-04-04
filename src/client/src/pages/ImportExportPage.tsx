@@ -11,6 +11,7 @@ import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import ProgressBar from '../components/DaisyUI/ProgressBar';
 import { apiService } from '../services/api';
 import { useQuery } from '@tanstack/react-query';
+import Card from '../components/DaisyUI/Card';
 
 interface ExportOptions {
   configIds: number[];
@@ -240,12 +241,11 @@ const ImportExportPage: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         {/* Export Card */}
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <h2 className="card-title text-2xl mb-4">
+        <Card className="shadow-xl">
+            <Card.Title className="text-2xl mb-4">
               <Download className="w-6 h-6" />
               Export Configurations
-            </h2>
+            </Card.Title>
             <p className="text-base-content/70 mb-4">
               Export bot configurations to a file for backup or migration purposes.
             </p>
@@ -346,7 +346,7 @@ const ImportExportPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="card-actions justify-end mt-6">
+            <Card.Actions className="mt-6">
               <button
                 className="btn btn-primary"
                 onClick={() => setShowExportModal(true)}
@@ -355,17 +355,15 @@ const ImportExportPage: React.FC = () => {
                 <Download className="w-4 h-4" />
                 Select Configurations to Export
               </button>
-            </div>
-          </div>
-        </div>
+            </Card.Actions>
+        </Card>
 
         {/* Import Card */}
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <h2 className="card-title text-2xl mb-4">
+        <Card className="shadow-xl">
+            <Card.Title className="text-2xl mb-4">
               <Upload className="w-6 h-6" />
               Import Configurations
-            </h2>
+            </Card.Title>
             <p className="text-base-content/70 mb-4">
               Import bot configurations from a previously exported file.
             </p>
@@ -481,8 +479,7 @@ const ImportExportPage: React.FC = () => {
                 )}
               </div>
             )}
-          </div>
-        </div>
+        </Card>
       </div>
 
       {/* Export Modal - Bot Selection */}
@@ -514,16 +511,16 @@ const ImportExportPage: React.FC = () => {
               </Alert>
             ) : (
               bots.map((bot: any) => (
-                <div
+                <Card
                   key={bot.id}
-                  className={`card border-2 cursor-pointer transition-colors ${
+                  compact
+                  className={`border-2 cursor-pointer transition-colors ${
                     exportOptions.configIds.includes(bot.id)
                       ? 'border-primary bg-primary/5'
                       : 'border-base-300 hover:border-primary/50'
                   }`}
                   onClick={() => toggleBotSelection(bot.id)}
                 >
-                  <div className="card-body p-4">
                     <div className="flex items-center gap-3">
                       <Checkbox
                         variant="primary"
@@ -537,8 +534,7 @@ const ImportExportPage: React.FC = () => {
                         </p>
                       </div>
                     </div>
-                  </div>
-                </div>
+                </Card>
               ))
             )}
           </div>

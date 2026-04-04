@@ -10,6 +10,7 @@ import { useConfigDiff } from '../../hooks/useConfigDiff';
 import { ConfigDiffViewer, ConfigDiffConfirmDialog } from '../ConfigDiffViewer';
 import { Alert } from '../DaisyUI/Alert';
 import { Badge } from '../DaisyUI/Badge';
+import Card from '../DaisyUI/Card';
 import { apiService } from '../../services/api';
 import Debug from 'debug';
 import Toggle from '../DaisyUI/Toggle';
@@ -344,14 +345,14 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                     </div>
 
                     {formData.persona && (
-                        <div className="card bg-base-200">
-                            <div className="card-body p-4">
-                                <h3 className="card-title text-sm opacity-70">Agent Preview</h3>
+                        <Card className="bg-base-200">
+                            <Card.Body className="card-body p-4">
+                                <Card.Title tag="h3" className="text-sm opacity-70">Agent Preview</Card.Title>
                                 <p className="text-sm">
                                     {fetchedPersonas.find(p => p.id === formData.persona)?.description || 'No description available.'}
                                 </p>
-                            </div>
-                        </div>
+                            </Card.Body>
+                        </Card>
                     )}
 
                     <Divider>Or</Divider>

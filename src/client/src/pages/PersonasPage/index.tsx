@@ -7,6 +7,7 @@ import { SkeletonPage } from '../../components/DaisyUI/Skeleton';
 import { useSuccessToast, useErrorToast, useInfoToast } from '../../components/DaisyUI/ToastNotification';
 import SearchFilterBar from '../../components/SearchFilterBar';
 import Tooltip from '../../components/DaisyUI/Tooltip';
+import Card from '../../components/DaisyUI/Card';
 import { useIsBelowBreakpoint } from '../../hooks/useBreakpoint';
 import { useBulkSelection } from '../../hooks/useBulkSelection';
 import { useDragAndDrop } from '../../hooks/useDragAndDrop';
@@ -92,8 +93,7 @@ const PersonasPage: React.FC = () => {
 
       <PersonaStats personas={personas} />
 
-      <div className="card bg-base-100 shadow-xl border border-base-200">
-        <div className="card-body p-4 sm:p-6">
+      <Card className="shadow-xl border border-base-200">
           <SearchFilterBar
             searchValue={searchQuery}
             onSearchChange={setSearchQuery}
@@ -137,8 +137,7 @@ const PersonasPage: React.FC = () => {
               getItemStyle={getItemStyle}
             />
           )}
-        </div>
-      </div>
+      </Card>
     </div>
   );
 };

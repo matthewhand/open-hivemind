@@ -2,6 +2,7 @@ import React from 'react';
 import type { AgentConfigCardProps, GuardState } from './types';
 import type { FieldMetadata } from '../../services/api';
 import type { ProviderInfo } from '../../services/providerService';
+import Card from '../DaisyUI/Card';
 import Divider from '../DaisyUI/Divider';
 import Toggle from '../DaisyUI/Toggle';
 import { LoadingSpinner } from '../DaisyUI/Loading';
@@ -44,8 +45,7 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
   const guardrailProfileActive = Boolean(uiState?.mcpGuardProfile);
 
   return (
-    <div className="card bg-base-100 shadow-xl border border-base-300 h-full">
-      <div className="card-body">
+    <Card className="shadow-xl border border-base-300 h-full">
         {/* Header Section */}
         <div className="flex justify-between items-center mb-4">
           <div>
@@ -60,9 +60,8 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
         </div>
 
         {/* Provider Configuration Section */}
-        <div className="card bg-base-200 shadow-sm mb-4">
-          <div className="card-body">
-            <h3 className="card-title text-lg">Provider Configuration</h3>
+        <Card className="bg-base-200 shadow-sm mb-4">
+          <Card.Title tag="h3" className="text-lg">Provider Configuration</Card.Title>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="form-control">
                 <FieldSelect
@@ -116,13 +115,11 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
                 />
               </div>
             </div>
-          </div>
-        </div>
+        </Card>
 
         {/* Persona & Instructions Section */}
-        <div className="card bg-base-200 shadow-sm mb-4">
-          <div className="card-body">
-            <h3 className="card-title text-lg">Persona & Instructions</h3>
+        <Card className="bg-base-200 shadow-sm mb-4">
+          <Card.Title tag="h3" className="text-lg">Persona & Instructions</Card.Title>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="form-control">
                 <FieldSelect
@@ -152,13 +149,11 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
                 <FieldHelper metadata={metadata.systemInstruction} />
               </div>
             </div>
-          </div>
-        </div>
+        </Card>
 
         {/* Engagement Profile Section */}
-        <div className="card bg-base-200 shadow-sm mb-4">
-          <div className="card-body">
-            <h3 className="card-title text-lg">Engagement Profile</h3>
+        <Card className="bg-base-200 shadow-sm mb-4">
+          <Card.Title tag="h3" className="text-lg">Engagement Profile</Card.Title>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="form-control">
                 <FieldSelect
@@ -177,13 +172,11 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
                 />
               </div>
             </div>
-          </div>
-        </div>
+        </Card>
 
         {/* MCP Configuration Section */}
-        <div className="card bg-base-200 shadow-sm mb-4">
-          <div className="card-body">
-            <h3 className="card-title text-lg">MCP Configuration</h3>
+        <Card className="bg-base-200 shadow-sm mb-4">
+          <Card.Title tag="h3" className="text-lg">MCP Configuration</Card.Title>
 
             <div className="form-control mb-4">
               <FieldSelect
@@ -307,8 +300,7 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
                 )}
               </div>
             )}
-          </div>
-        </div>
+        </Card>
 
         {/* Status Section */}
         <Divider />
@@ -325,8 +317,7 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
             <Badge variant="error">Errors: {status.errorCount}</Badge>
           )}
         </div>
-      </div>
-    </div>
+    </Card>
   );
 };
 

@@ -15,6 +15,7 @@ import ProgressBar from '../components/DaisyUI/ProgressBar';
 import StepWizard from '../components/DaisyUI/StepWizard';
 import { Alert } from '../components/DaisyUI/Alert';
 import { apiService } from '../services/api';
+import Card from '../components/DaisyUI/Card';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -70,21 +71,21 @@ const WelcomeStep: React.FC = () => (
       and connect them to messaging platforms like Discord, Slack, and Mattermost.
     </p>
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto pt-4">
-      <div className="card bg-base-200 p-4 text-center">
+      <Card bgVariant="ghost" className="bg-base-200 text-center" compact>
         <Cpu className="w-8 h-8 mx-auto mb-2 text-primary" />
         <h4 className="font-semibold text-sm">LLM Providers</h4>
         <p className="text-xs text-base-content/60">Connect OpenAI, Anthropic, and more</p>
-      </div>
-      <div className="card bg-base-200 p-4 text-center">
+      </Card>
+      <Card bgVariant="ghost" className="bg-base-200 text-center" compact>
         <Bot className="w-8 h-8 mx-auto mb-2 text-secondary" />
         <h4 className="font-semibold text-sm">AI Bots</h4>
         <p className="text-xs text-base-content/60">Create specialized agents</p>
-      </div>
-      <div className="card bg-base-200 p-4 text-center">
+      </Card>
+      <Card bgVariant="ghost" className="bg-base-200 text-center" compact>
         <MessageSquare className="w-8 h-8 mx-auto mb-2 text-accent" />
         <h4 className="font-semibold text-sm">Messengers</h4>
         <p className="text-xs text-base-content/60">Discord, Slack, Mattermost</p>
-      </div>
+      </Card>
     </div>
     <p className="text-sm text-base-content/50">
       This wizard will guide you through initial setup in just a few minutes.
@@ -323,10 +324,10 @@ const ConnectMessengerStep: React.FC<ConnectMessengerStepProps> = ({ form }) => 
 
       {messenger && (
         <>
-          <div className="card bg-base-200 p-4">
+          <Card bgVariant="ghost" className="bg-base-200" compact>
             <h4 className="font-semibold mb-2 capitalize">Setup Instructions for {messenger}</h4>
             {instructions[messenger]}
-          </div>
+          </Card>
 
           <FormField label="Bot Token" error={errors.messengerToken}>
             <Input
@@ -360,8 +361,7 @@ const DoneStep: React.FC<DoneStepProps> = ({ llmProvider, botName, messenger }) 
       Your Open-Hivemind instance is configured and ready to go.
     </p>
 
-    <div className="card bg-base-200 max-w-md mx-auto">
-      <div className="card-body">
+    <Card bgVariant="ghost" className="bg-base-200 max-w-md mx-auto">
         <h4 className="font-bold mb-3">Configuration Summary</h4>
         <div className="space-y-2 text-left text-sm">
           <div className="flex justify-between">
@@ -377,8 +377,7 @@ const DoneStep: React.FC<DoneStepProps> = ({ llmProvider, botName, messenger }) 
             <span className="font-semibold capitalize">{messenger || 'Skipped'}</span>
           </div>
         </div>
-      </div>
-    </div>
+    </Card>
 
     <p className="text-sm text-base-content/50">
       You can change any of these settings from the admin dashboard at any time.
@@ -574,8 +573,8 @@ const OnboardingPage: React.FC = () => {
 
       {/* Step content */}
       <div className="flex-1 px-6 pb-6 max-w-4xl mx-auto w-full">
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body min-h-[400px]">
+        <Card className="shadow-xl">
+          <div className="min-h-[400px]">
             {error && (
               <Alert status="error" className="mb-4" onClose={() => setError(null)}>
                 <span>{error}</span>
@@ -608,7 +607,7 @@ const OnboardingPage: React.FC = () => {
               />
             )}
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* Navigation buttons */}

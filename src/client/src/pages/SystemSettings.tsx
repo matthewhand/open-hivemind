@@ -8,6 +8,7 @@ import SettingsLLM from '../components/Settings/SettingsLLM';
 import SettingsIntegrations from '../components/Settings/SettingsIntegrations';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import Tabs from '../components/DaisyUI/Tabs';
+import Card from '../components/DaisyUI/Card';
 import HiddenFeatureToggle from '../components/HiddenFeatureToggle';
 import { Cog, RotateCcw } from 'lucide-react';
 import { apiService } from '../services/api';
@@ -63,20 +64,18 @@ const SystemSettings: React.FC = () => {
         </button>
       </div>
 
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body">
-          <Tabs
-            tabs={tabs.map((tab) => ({ key: tab.id, label: tab.label }))}
-            activeTab={activeTabId}
-            onChange={handleTabChange}
-            className="mb-6"
-          />
+      <Card className="shadow-xl">
+        <Tabs
+          tabs={tabs.map((tab) => ({ key: tab.id, label: tab.label }))}
+          activeTab={activeTabId}
+          onChange={handleTabChange}
+          className="mb-6"
+        />
 
-          <div className="mt-4">
-            {tabs[activeIndex].component}
-          </div>
+        <div className="mt-4">
+          {tabs[activeIndex].component}
         </div>
-      </div>
+      </Card>
     </div>
   );
 };

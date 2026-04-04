@@ -98,12 +98,11 @@ const ActivityTimeline: React.FC = () => {
   return (
     <div className="w-full space-y-6">
       <Card className="shadow-lg border-l-4 border-primary">
-        <div className="card-body">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <ClockIcon className="w-8 h-8 text-primary" />
               <div>
-                <h2 className="card-title text-2xl">Activity Timeline</h2>
+                <Card.Title className="text-2xl">Activity Timeline</Card.Title>
                 <p className="text-sm opacity-70">Chronological system events and activities</p>
               </div>
             </div>
@@ -116,44 +115,42 @@ const ActivityTimeline: React.FC = () => {
               </Button>
             </div>
           </div>
-        </div>
       </Card>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="shadow">
-          <div className="card-body text-center">
+          <Card.Body className="text-center">
             <ClockIcon className="w-8 h-8 mx-auto text-primary mb-2" />
             <div className="text-2xl font-bold">{events.length}</div>
             <p className="text-sm opacity-70">Total Events</p>
-          </div>
+          </Card.Body>
         </Card>
         <Card className="shadow">
-          <div className="card-body text-center">
+          <Card.Body className="text-center">
             <UserIcon className="w-8 h-8 mx-auto text-info mb-2" />
             <div className="text-2xl font-bold">{events.filter(e => e.type === 'user').length}</div>
             <p className="text-sm opacity-70">User Actions</p>
-          </div>
+          </Card.Body>
         </Card>
         <Card className="shadow">
-          <div className="card-body text-center">
+          <Card.Body className="text-center">
             <CogIcon className="w-8 h-8 mx-auto text-warning mb-2" />
             <div className="text-2xl font-bold">{events.filter(e => e.type === 'system').length}</div>
             <p className="text-sm opacity-70">System Events</p>
-          </div>
+          </Card.Body>
         </Card>
         <Card className="shadow">
-          <div className="card-body text-center">
+          <Card.Body className="text-center">
             <CheckCircleIcon className="w-8 h-8 mx-auto text-success mb-2" />
             <div className="text-2xl font-bold">{events.filter(e => e.type === 'success').length}</div>
             <p className="text-sm opacity-70">Success Events</p>
-          </div>
+          </Card.Body>
         </Card>
       </div>
 
       {/* Filters */}
       <Card className="shadow">
-        <div className="card-body">
           <div className="flex items-center gap-4">
             <span className="font-semibold">Filter:</span>
             <div className="btn-group">
@@ -195,13 +192,11 @@ const ActivityTimeline: React.FC = () => {
               </Button>
             </div>
           </div>
-        </div>
       </Card>
 
       {/* Timeline */}
       <Card className="shadow-lg">
-        <div className="card-body">
-          <h3 className="card-title text-lg mb-6">Recent Activity</h3>
+          <Card.Title tag="h3" className="text-lg mb-6">Recent Activity</Card.Title>
           <Timeline>
             {filteredEvents.slice(0, 10).map((event) => (
               <Timeline.Item key={event.id}>
@@ -225,13 +220,11 @@ const ActivityTimeline: React.FC = () => {
               </Timeline.Item>
             ))}
           </Timeline>
-        </div>
       </Card>
 
       {/* Summary */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="shadow">
-          <div className="card-body">
             <h3 className="font-bold mb-2">Recent Activity</h3>
             <p className="text-sm opacity-70 mb-1">
               {recentEvents.length} events in last 10 minutes
@@ -242,17 +235,14 @@ const ActivityTimeline: React.FC = () => {
                 style={{ width: `${Math.min((recentEvents.length / 10) * 100, 100)}%` }}
               ></div>
             </div>
-          </div>
         </Card>
         <Card className="shadow">
-          <div className="card-body">
             <h3 className="font-bold mb-2">System Health</h3>
             <div className="flex items-center gap-2">
               <CheckCircleIcon className="w-5 h-5 text-success" />
               <span className="text-sm">All systems operational</span>
             </div>
             <p className="text-xs opacity-70 mt-1">Last check: {new Date().toLocaleTimeString()}</p>
-          </div>
         </Card>
       </div>
 

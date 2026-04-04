@@ -6,6 +6,7 @@ import Modal, { ConfirmModal } from '../../components/DaisyUI/Modal';
 import { useSuccessToast, useErrorToast, useWarningToast } from '../../components/DaisyUI/ToastNotification';
 import Checkbox from '../../components/DaisyUI/Checkbox';
 import Tabs from '../../components/DaisyUI/Tabs';
+import Card from '../../components/DaisyUI/Card';
 import AlertsTab from './AlertsTab';
 import ConfigTab from './ConfigTab';
 import BackupsTab from './BackupsTab';
@@ -280,9 +281,8 @@ const SystemManagement: React.FC = () => {
       </div>
 
       {/* Management Tabs */}
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body">
-          <Tabs
+      <Card className="shadow-xl">
+        <Tabs
             tabs={[
               { key: 'alerts', label: 'Alert Management' },
               { key: 'config', label: 'System Configuration' },
@@ -308,8 +308,7 @@ const SystemManagement: React.FC = () => {
           {activeTab === 'performance' && (
             <PerformanceTab onClearCache={handleClearCache} />
           )}
-        </div>
-      </div>
+      </Card>
 
       {/* Backup Creation Modal */}
       <Modal

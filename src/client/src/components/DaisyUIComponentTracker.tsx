@@ -55,10 +55,9 @@ const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) =>
 
   return (
     <div className={`${isOpen ? 'block' : 'hidden'}`}>
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body">
+      <Card className="shadow-xl">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="card-title text-2xl">📊 DaisyUI Component Tracker</h2>
+            <Card.Title className="text-2xl">📊 DaisyUI Component Tracker</Card.Title>
             {onClose && (
               <Button variant="ghost" size="sm" onClick={onClose}>
                 ✕
@@ -114,8 +113,8 @@ const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) =>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {Object.entries(stats.categories).map(([category, data]) => (
                     <Card key={category} className="bg-base-200">
-                      <div className="card-body p-4">
-                        <h3 className="card-title text-lg capitalize">{category}</h3>
+                      <Card.Body className="card-body p-4">
+                        <Card.Title tag="h3" className="text-lg capitalize">{category}</Card.Title>
                         <div className="flex items-center justify-between">
                           <span className="text-sm">{data.used}/{data.total} used</span>
                           <Badge
@@ -131,7 +130,7 @@ const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) =>
                           size="sm"
                           className="w-full mt-2"
                         />
-                      </div>
+                      </Card.Body>
                     </Card>
                   ))}
                 </div>
@@ -184,15 +183,15 @@ const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) =>
                   </Alert>
                 ) : (
                   suggestions.map((suggestion, index) => (
-                    <div key={index} className="card bg-base-200">
-                      <div className="card-body p-4">
+                    <Card key={index} className="bg-base-200">
+                      <Card.Body className="card-body p-4">
                         <div className="flex items-center justify-between mb-2">
                           <h3 className="font-semibold">{suggestion.component}</h3>
                           <Badge variant="info" size="xs">{suggestion.category}</Badge>
                         </div>
                         <p className="text-sm text-base-content/80">{suggestion.suggestedUse}</p>
-                      </div>
-                    </div>
+                      </Card.Body>
+                    </Card>
                   ))
                 )}
               </div>
@@ -233,7 +232,7 @@ const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) =>
           </div>
 
           {/* Action Buttons */}
-          <div className="card-actions justify-end mt-6">
+          <Card.Actions className="mt-6">
             <Button variant="ghost" onClick={handleClearData}>
               Clear Data
             </Button>
@@ -243,9 +242,8 @@ const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) =>
             <Button onClick={handleExportData}>
               Export Data
             </Button>
-          </div>
-        </div>
-      </div>
+          </Card.Actions>
+      </Card>
     </div>
   );
 };

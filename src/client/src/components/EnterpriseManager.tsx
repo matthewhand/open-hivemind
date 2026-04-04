@@ -16,6 +16,7 @@ import {
 import Button from './DaisyUI/Button';
 import { Alert } from './DaisyUI/Alert';
 import { Badge } from './DaisyUI/Badge';
+import Card from './DaisyUI/Card';
 import Modal from './DaisyUI/Modal';
 import Tabs from './DaisyUI/Tabs';
 import type { TabItem } from './DaisyUI/Tabs';
@@ -408,11 +409,10 @@ const EnterpriseManager: React.FC = () => {
             <h2 className="text-xl font-semibold mb-4">Compliance Rules</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {complianceRules.map((rule) => (
-                <div key={rule.id} className="card bg-base-100 shadow-xl">
-                  <div className="card-body">
+                <Card key={rule.id} className="shadow-xl">
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <h3 className="card-title text-base">{rule.name}</h3>
+                        <Card.Title tag="h3" className="text-base">{rule.name}</Card.Title>
                         <p className="text-sm text-base-content/70">{rule.category}</p>
                       </div>
                       <div className="flex gap-1 flex-wrap justify-end">
@@ -434,8 +434,7 @@ const EnterpriseManager: React.FC = () => {
                     <div className="text-xs text-base-content/50 mt-2">
                       Last checked: {new Date(rule.lastChecked).toLocaleString()}
                     </div>
-                  </div>
-                </div>
+                </Card>
               ))}
             </div>
           </div>
@@ -459,11 +458,10 @@ const EnterpriseManager: React.FC = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {cloudProviders.map((provider) => (
-                <div key={provider.id} className="card bg-base-100 shadow-xl">
-                  <div className="card-body">
+                <Card key={provider.id} className="shadow-xl">
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <h3 className="card-title text-base">{provider.name}</h3>
+                        <Card.Title tag="h3" className="text-base">{provider.name}</Card.Title>
                         <p className="text-sm text-base-content/70">
                           {provider.type.toUpperCase()} • {provider.region}
                         </p>
@@ -480,8 +478,7 @@ const EnterpriseManager: React.FC = () => {
                         </Badge>
                       ))}
                     </div>
-                  </div>
-                </div>
+                </Card>
               ))}
             </div>
           </div>
@@ -505,11 +502,10 @@ const EnterpriseManager: React.FC = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {integrations.map((integration) => (
-                <div key={integration.id} className="card bg-base-100 shadow-xl">
-                  <div className="card-body">
+                <Card key={integration.id} className="shadow-xl">
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <h3 className="card-title text-base">{integration.name}</h3>
+                        <Card.Title tag="h3" className="text-base">{integration.name}</Card.Title>
                         <p className="text-sm text-base-content/70">
                           {integration.provider} • {integration.type}
                         </p>
@@ -521,12 +517,11 @@ const EnterpriseManager: React.FC = () => {
                     <p className="text-sm mb-2">
                       Last sync: {new Date(integration.lastSync).toLocaleString()}
                     </p>
-                    <div className="card-actions justify-end">
+                    <Card.Actions>
                       <Button variant="primary" buttonStyle="outline" size="xs" aria-label={`Configure ${integration.name}`}>Configure</Button>
                       <Button variant="primary" buttonStyle="outline" size="xs" aria-label={`Test ${integration.name}`}>Test</Button>
-                    </div>
-                  </div>
-                </div>
+                    </Card.Actions>
+                </Card>
               ))}
             </div>
           </div>
@@ -646,10 +641,9 @@ const EnterpriseManager: React.FC = () => {
             <h2 className="text-xl font-semibold mb-4">Performance Metrics</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {performanceMetrics.map((metric) => (
-                <div key={metric.id} className="card bg-base-100 shadow-xl">
-                  <div className="card-body">
+                <Card key={metric.id} className="shadow-xl">
                     <div className="flex justify-between items-start mb-2">
-                      <h3 className="card-title text-base">{metric.name}</h3>
+                      <Card.Title tag="h3" className="text-base">{metric.name}</Card.Title>
                       <div className={`badge ${getStatusColor(metric.status)} badge-sm`}>
                         {metric.status}
                       </div>
@@ -668,11 +662,10 @@ const EnterpriseManager: React.FC = () => {
                       {metric.trend === 'down' && <span className="text-success">↘</span>}
                       {metric.trend === 'stable' && <span>→</span>}
                     </div>
-                    <div className="card-actions justify-end">
+                    <Card.Actions>
                       <Button variant="primary" buttonStyle="outline" size="sm" aria-label={`Optimize ${metric.name}`}>Optimize</Button>
-                    </div>
-                  </div>
-                </div>
+                    </Card.Actions>
+                </Card>
               ))}
             </div>
           </div>

@@ -12,6 +12,7 @@ import {
   DEFAULT_PERSONA,
 } from '../../types';
 import Button from '../DaisyUI/Button';
+import Card from '../DaisyUI/Card';
 import Badge from '../DaisyUI/Badge';
 import {
   Play as PlayIcon,
@@ -186,13 +187,13 @@ const BotCard: React.FC<BotCardProps> = ({
   };
 
   return (
-    <div className="card bg-base-100 shadow-xl border border-base-300 hover:shadow-2xl transition-shadow duration-200">
-      <div className="card-body p-6">
+    <Card className="shadow-xl border border-base-300 hover:shadow-2xl transition-shadow duration-200">
+      <Card.Body className="card-body p-6">
         {/* Header */}
         <div className="flex justify-between items-start mb-4">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2 min-w-0">
-              <h2 className="card-title text-lg font-semibold truncate break-all min-w-0" title={bot.name}>{bot.name}</h2>
+              <Card.Title className="text-lg font-semibold truncate break-all min-w-0" title={bot.name}>{bot.name}</Card.Title>
               <Badge variant={getStatusColor(bot.status) as "success" | "ghost" | "error" | "info"} size="sm" className="whitespace-nowrap shrink-0">
                 {getStatusText(bot.status)}
               </Badge>
@@ -417,8 +418,8 @@ const BotCard: React.FC<BotCardProps> = ({
           onClose={handleProviderModalClose}
           onSubmit={handleProviderSubmit}
         />
-      </div>
-    </div>
+      </Card.Body>
+    </Card>
   );
 };
 

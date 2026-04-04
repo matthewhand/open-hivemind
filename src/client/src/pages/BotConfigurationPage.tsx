@@ -13,6 +13,7 @@ import Badge from '../components/DaisyUI/Badge';
 import Modal from '../components/DaisyUI/Modal';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import { Stat, Stats } from '../components/DaisyUI/Stat';
+import Card from '../components/DaisyUI/Card';
 import { apiService } from '../services/api';
 import { useSavedStamp } from '../contexts/SavedStampContext';
 
@@ -429,16 +430,15 @@ const BotConfigurationPage: React.FC = () => {
       {loading ? (
         <SkeletonList items={6} />
       ) : configNames.length === 0 ? (
-        <div className="card bg-base-100 border border-base-300">
-          <div className="card-body text-center py-12">
+        <Card className="border border-base-300">
+          <div className="text-center py-12">
             <Settings className="w-16 h-16 mx-auto text-base-content/30 mb-4" />
             <h3 className="text-lg font-medium text-base-content/60">No configurations found</h3>
             <p className="text-base-content/50">Check that the config endpoint is working</p>
           </div>
-        </div>
+        </Card>
       ) : (
-        <div className="card bg-base-100 border border-base-300">
-          <div className="card-body">
+        <Card className="border border-base-300">
             <Accordion
               items={accordionItems as any}
               allowMultiple={true}
@@ -446,8 +446,7 @@ const BotConfigurationPage: React.FC = () => {
               variant="bordered"
               size="md"
             />
-          </div>
-        </div>
+        </Card>
       )}
     </div>
   );

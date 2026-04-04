@@ -32,7 +32,6 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
 
   return (
     <Card className="shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-      <div className="card-body">
         {/* Card Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
@@ -40,9 +39,9 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
               {getProviderIcon(bot.messageProvider)}
             </div>
             <div>
-              <h2 className="card-title text-lg font-bold">
+              <Card.Title className="text-lg font-bold">
                 {bot.name}
-              </h2>
+              </Card.Title>
               <p className="text-sm opacity-70">{bot.messageProvider}</p>
             </div>
           </div>
@@ -109,15 +108,14 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
         </div>
 
         {/* Action Buttons */}
-        <div className="card-actions justify-between">
+        <Card.Actions className="justify-between">
           <Button variant="ghost" size="sm">
             📊 Analytics
           </Button>
           <Button variant="primary" size="sm">
             💬 Interact
           </Button>
-        </div>
-      </div>
+        </Card.Actions>
     </Card>
   );
 });

@@ -359,8 +359,8 @@ const IntegrationsPanel: React.FC = () => {
               const Icon = (profile.provider && PROVIDER_ICONS[profile.provider]) || Brain;
               const connectedBots = getConnectedBots(profile.key, 'llm');
               return (
-                <Card key={profile.key} className="bg-base-100 shadow-sm hover:shadow-md transition-all border border-base-200 group">
-                  <div className="card-body p-4">
+                <Card key={profile.key} className="shadow-sm hover:shadow-md transition-all border border-base-200 group">
+                  <Card.Body className="card-body p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3 overflow-hidden">
                         <div className="p-2 bg-base-200 rounded-lg text-primary group-hover:bg-primary group-hover:text-primary-content transition-colors flex items-center justify-center">
@@ -390,7 +390,7 @@ const IntegrationsPanel: React.FC = () => {
                         <Bot className="w-3 h-3" /> Used by {connectedBots.length} Bots
                       </p>
                     </div>
-                  </div>
+                  </Card.Body>
                 </Card>
               );
             })}
@@ -489,8 +489,8 @@ const IntegrationsPanel: React.FC = () => {
             const connectedBots = getConnectedBots(key, category);
 
             return (
-              <Card key={key} className="bg-base-100 shadow-sm hover:shadow-md transition-all border border-base-200 group">
-                <div className="card-body p-4">
+              <Card key={key} className="shadow-sm hover:shadow-md transition-all border border-base-200 group">
+                <Card.Body className="card-body p-4">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3 overflow-hidden">
                       <div className="p-2 bg-base-200 rounded-lg text-primary group-hover:bg-primary group-hover:text-primary-content transition-colors flex items-center justify-center">
@@ -524,7 +524,7 @@ const IntegrationsPanel: React.FC = () => {
                       {connectedBots.length > 3 && <Badge size="xs" variant="ghost">+{connectedBots.length - 3}</Badge>}
                     </div>
                   </div>
-                </div>
+                </Card.Body>
               </Card>
             );
           })}

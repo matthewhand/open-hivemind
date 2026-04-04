@@ -11,6 +11,7 @@ import {
   Trash2,
   Wrench,
 } from 'lucide-react';
+import Card from '../../components/DaisyUI/Card';
 
 // Types simplified for this component
 interface MCPServer {
@@ -46,8 +47,7 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = ({
   handleDeleteServer,
 }) => {
   return (
-    <div key={server.id} className="card bg-base-100 shadow-xl h-full border border-base-200">
-      <div className="card-body">
+    <Card key={server.id} className="shadow-xl h-full border border-base-200">
         <div className="flex justify-between items-start mb-2">
           <div className="flex items-center gap-2">
             <Checkbox
@@ -58,7 +58,7 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = ({
               onClick={(e) => e.stopPropagation()}
               aria-label={`Select ${server.name}`}
             />
-            <h2 className="card-title text-lg font-bold">{server.name}</h2>
+            <Card.Title className="text-lg font-bold">{server.name}</Card.Title>
           </div>
           <div className={`badge ${getStatusColor(server.status)}`}>{server.status}</div>
         </div>
@@ -98,7 +98,7 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = ({
           )}
         </div>
 
-        <div className="card-actions justify-between mt-auto pt-4 border-t border-base-200">
+        <Card.Actions className="justify-between mt-auto pt-4 border-t border-base-200">
           <div className="flex gap-1">
             {server.status === 'running' ? (
               <Tooltip content="Disconnect">
@@ -161,8 +161,7 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = ({
               </button>
             </Tooltip>
           </div>
-        </div>
-      </div>
-    </div>
+        </Card.Actions>
+    </Card>
   );
 };
