@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
+import Input from '../../components/DaisyUI/Input';
+import Select from '../../components/DaisyUI/Select';
 import RangeSlider from '../../components/DaisyUI/RangeSlider';
 import type { SystemConfig } from './types';
 
@@ -18,9 +20,8 @@ const ConfigTab: React.FC<ConfigTabProps> = ({ systemConfig, onConfigUpdate }) =
           <label className="label">
             <span className="label-text">Refresh Interval (ms)</span>
           </label>
-          <input
+          <Input
             type="number"
-            className="input input-bordered"
             value={systemConfig.refreshInterval}
             onChange={(e) => onConfigUpdate('refreshInterval', Number(e.target.value))}
             min="1000"
@@ -32,8 +33,8 @@ const ConfigTab: React.FC<ConfigTabProps> = ({ systemConfig, onConfigUpdate }) =
           <label className="label">
             <span className="label-text">Log Level</span>
           </label>
-          <select
-            className="select select-bordered"
+          <Select
+            className="select-bordered"
             value={systemConfig.logLevel}
             onChange={(e) => onConfigUpdate('logLevel', e.target.value)}
           >
@@ -41,16 +42,15 @@ const ConfigTab: React.FC<ConfigTabProps> = ({ systemConfig, onConfigUpdate }) =
             <option value="info">Info</option>
             <option value="warn">Warning</option>
             <option value="error">Error</option>
-          </select>
+          </Select>
         </div>
 
         <div className="form-control">
           <label className="label">
             <span className="label-text">Max Connections</span>
           </label>
-          <input
+          <Input
             type="number"
-            className="input input-bordered"
             value={systemConfig.maxConnections}
             onChange={(e) => onConfigUpdate('maxConnections', Number(e.target.value))}
             min="100"
@@ -62,9 +62,8 @@ const ConfigTab: React.FC<ConfigTabProps> = ({ systemConfig, onConfigUpdate }) =
           <label className="label">
             <span className="label-text">Backup Interval (hours)</span>
           </label>
-          <input
+          <Input
             type="number"
-            className="input input-bordered"
             value={systemConfig.backupInterval / (1000 * 60 * 60)}
             onChange={(e) => onConfigUpdate('backupInterval', Number(e.target.value) * 1000 * 60 * 60)}
             min="1"
@@ -128,9 +127,8 @@ const ConfigTab: React.FC<ConfigTabProps> = ({ systemConfig, onConfigUpdate }) =
             <label className="label">
               <span className="label-text">Response Time Threshold (ms)</span>
             </label>
-            <input
+            <Input
               type="number"
-              className="input input-bordered"
               value={systemConfig.alertThresholds.responseTime}
               onChange={(e) => onConfigUpdate('alertThresholds', {
                 ...systemConfig.alertThresholds,

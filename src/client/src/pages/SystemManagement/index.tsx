@@ -13,6 +13,7 @@ import BackupsTab from './BackupsTab';
 import PerformanceTab from './PerformanceTab';
 import type { SystemConfig, BackupRecord } from './types';
 import { LoadingSpinner } from '../../components/DaisyUI/Loading';
+import Input from '../../components/DaisyUI/Input';
 
 const SystemManagement: React.FC = () => {
   const { alerts, performanceMetrics } = useWebSocket();
@@ -348,10 +349,9 @@ const SystemManagement: React.FC = () => {
               <label className="label">
                 <span className="label-text">Encryption Key (Password)</span>
               </label>
-              <input
+              <Input
                 type="password"
                 placeholder="Enter a strong password"
-                className="input input-bordered w-full"
                 value={encryptionKey}
                 onChange={(e) => setEncryptionKey(e.target.value)}
               />

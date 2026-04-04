@@ -16,6 +16,8 @@ import StepWizard from '../components/DaisyUI/StepWizard';
 import { Alert } from '../components/DaisyUI/Alert';
 import { apiService } from '../services/api';
 import Card from '../components/DaisyUI/Card';
+import Select from '../components/DaisyUI/Select';
+import Textarea from '../components/DaisyUI/Textarea';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -143,9 +145,9 @@ const ConfigureLlmStep: React.FC<ConfigureLlmStepProps> = ({ form, llmProfiles }
           name="llmProvider"
           control={control}
           render={({ field }) => (
-            <select
+            <Select
               id="onboarding-llm-provider"
-              className="select select-bordered w-full"
+              className="select-bordered"
               value={field.value}
               onChange={(e) => {
                 field.onChange(e.target.value);
@@ -155,7 +157,7 @@ const ConfigureLlmStep: React.FC<ConfigureLlmStepProps> = ({ form, llmProfiles }
               {providerOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
-            </select>
+            </Select>
           )}
         />
       </FormField>
@@ -177,9 +179,9 @@ const ConfigureLlmStep: React.FC<ConfigureLlmStepProps> = ({ form, llmProfiles }
             name="model"
             control={control}
             render={({ field }) => (
-              <select
+              <Select
                 id="onboarding-model"
-                className="select select-bordered w-full"
+                className="select-bordered"
                 value={field.value}
                 onChange={(e) => field.onChange(e.target.value)}
               >
@@ -187,7 +189,7 @@ const ConfigureLlmStep: React.FC<ConfigureLlmStepProps> = ({ form, llmProfiles }
                 {(modelSuggestions[llmProvider] || []).map((m) => (
                   <option key={m} value={m}>{m}</option>
                 ))}
-              </select>
+              </Select>
             )}
           />
         </FormField>
@@ -227,9 +229,9 @@ const CreateBotStep: React.FC<CreateBotStepProps> = ({ form, llmProvider }) => {
         error={errors.persona}
         hint="Describe how the bot should behave. Leave blank for a general-purpose assistant."
       >
-        <textarea
+        <Textarea
           id="onboarding-persona"
-          className="textarea textarea-bordered h-28 w-full"
+          className="h-28 w-full"
           placeholder="You are a helpful assistant that..."
           {...register('persona')}
         />

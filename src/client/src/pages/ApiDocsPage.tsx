@@ -6,6 +6,8 @@ import Divider from '../components/DaisyUI/Divider';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import { Badge } from '../components/DaisyUI/Badge';
 import { apiService } from '../services/api';
+import Input from '../components/DaisyUI/Input';
+import Textarea from '../components/DaisyUI/Textarea';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -191,8 +193,9 @@ const TryItPanel: React.FC<{ route: RouteInfo }> = ({ route }) => {
       {['POST', 'PUT', 'PATCH'].includes(route.method) && (
         <div>
           <label className="label label-text text-xs font-semibold">Request Body (JSON)</label>
-          <textarea
-            className="textarea textarea-bordered textarea-sm w-full font-mono text-xs"
+          <Textarea
+            className="font-mono text-xs"
+            size="sm"
             rows={4}
             value={requestBody}
             onChange={(e) => setRequestBody(e.target.value)}
@@ -402,10 +405,10 @@ const ApiDocsPage: React.FC = () => {
           </p>
         </div>
         <div className="form-control w-full sm:w-64">
-          <input
+          <Input
             type="text"
             placeholder="Search endpoints..."
-            className="input input-bordered input-sm w-full"
+            size="sm"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />

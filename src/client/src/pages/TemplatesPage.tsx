@@ -16,6 +16,8 @@ import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import { Alert } from '../components/DaisyUI/Alert';
 import { Badge } from '../components/DaisyUI/Badge';
 import Card from '../components/DaisyUI/Card';
+import Input from '../components/DaisyUI/Input';
+import Textarea from '../components/DaisyUI/Textarea';
 import { apiService } from '../services/api';
 import { ErrorService } from '../services/ErrorService';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -445,9 +447,8 @@ const TemplatesPage: React.FC = () => {
             <label className="label">
               <span className="label-text font-semibold">Bot Name *</span>
             </label>
-            <input
+            <Input
               type="text"
-              className="input input-bordered"
               placeholder="Enter bot name"
               value={botName}
               onChange={(e) => setBotName(e.target.value)}
@@ -459,8 +460,7 @@ const TemplatesPage: React.FC = () => {
             <label className="label">
               <span className="label-text font-semibold">Description</span>
             </label>
-            <textarea
-              className="textarea textarea-bordered"
+            <Textarea
               placeholder="Enter bot description"
               rows={3}
               value={botDescription}

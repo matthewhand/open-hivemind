@@ -30,6 +30,7 @@ import { useBotsList } from './hooks/useBotsList';
 import { useBotsPageData } from './hooks/useBotsPageData';
 import Checkbox from '../../components/DaisyUI/Checkbox';
 import { useSavedStamp } from '../../contexts/SavedStampContext';
+import Select from '../../components/DaisyUI/Select';
 
 const BotsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
@@ -171,15 +172,16 @@ const BotsPage: React.FC = () => {
             searchPlaceholder="Search agents by name or purpose..."
           >
             <div className="flex gap-2">
-              <select
-                className="select select-bordered select-sm"
+              <Select
+                className="select-bordered"
+                size="sm"
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value as any)}
               >
                 <option value="all">All Status</option>
                 <option value="active">Active Only</option>
                 <option value="inactive">Inactive Only</option>
-              </select>
+              </Select>
               <Tooltip content="Refresh list">
                 <Button
                   variant="ghost"

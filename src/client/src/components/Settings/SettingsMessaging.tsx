@@ -15,6 +15,7 @@ import Tooltip from '../DaisyUI/Tooltip';
 import Accordion from '../DaisyUI/Accordion';
 import { apiService } from '../../services/api';
 import { useSavedStamp } from '../../contexts/SavedStampContext';
+import Textarea from '../DaisyUI/Textarea';
 
 const messagingSettingsSchema = z.object({
   onlyWhenSpokenTo: z.boolean(),
@@ -453,11 +454,11 @@ const SettingsMessaging: React.FC = () => {
               <p className="text-base-content/70">
                 Test Current Tuning: Assuming a message matches the semantic topic, the combined chance to reply is shown below.
               </p>
-              <textarea
-                className="textarea textarea-bordered w-full text-xs"
+              <Textarea
+                className="w-full text-xs"
                 placeholder="Type a sample message..."
                 rows={2}
-              ></textarea>
+              />
               <div className="flex justify-between items-center font-mono bg-base-100 p-2 rounded">
                 <span>{baseChance}% × {semanticRelevanceBonus}x</span>
                 <span className="font-bold text-lg text-primary">

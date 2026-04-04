@@ -8,6 +8,7 @@ import AdvancedThemeSwitcher from './DaisyUI/AdvancedThemeSwitcher';
 import { Alert } from './DaisyUI/Alert';
 import Toggle from './DaisyUI/Toggle';
 import { LoadingSpinner } from './DaisyUI/Loading';
+import Select from './DaisyUI/Select';
 
 const Settings: React.FC = () => {
   const ui = useUIStore((s) => s);
@@ -80,9 +81,10 @@ const Settings: React.FC = () => {
             <label className="label" htmlFor="refresh-interval">
               <span className="label-text text-base-content/70">Refresh Interval:</span>
             </label>
-            <select
+            <Select
               id="refresh-interval"
-              className="select select-bordered select-sm w-full"
+              className="select-bordered"
+              size="sm"
               value={ui.refreshInterval}
               onChange={(e) => handleRefreshIntervalChange(Number(e.target.value))}
               disabled={!ui.autoRefreshEnabled}
@@ -92,7 +94,7 @@ const Settings: React.FC = () => {
               <option value={10000}>10 seconds</option>
               <option value={30000}>30 seconds</option>
               <option value={60000}>1 minute</option>
-            </select>
+            </Select>
           </div>
         </div>
       ),

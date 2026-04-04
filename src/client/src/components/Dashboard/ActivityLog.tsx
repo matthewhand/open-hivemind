@@ -7,6 +7,7 @@ import Button from '../DaisyUI/Button';
 import { SkeletonTimeline } from '../DaisyUI/Skeleton';
 import { Loading } from '../DaisyUI/Loading';
 import Select from '../DaisyUI/Select';
+import Input from '../DaisyUI/Input';
 import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
 import { useGetActivityQuery } from '../../store/slices/apiSlice';
@@ -113,9 +114,8 @@ const ActivityLog: React.FC = () => {
             <label className="label">
               <span className="label-text">From</span>
             </label>
-            <input
+            <Input
               type="datetime-local"
-              className="input input-bordered w-full"
               value={filters.from || ''}
               onChange={(event) => setFilters(prev => ({ ...prev, from: event.target.value || undefined }))}
             />
@@ -124,9 +124,8 @@ const ActivityLog: React.FC = () => {
             <label className="label">
               <span className="label-text">To</span>
             </label>
-            <input
+            <Input
               type="datetime-local"
-              className="input input-bordered w-full"
               value={filters.to || ''}
               onChange={(event) => setFilters(prev => ({ ...prev, to: event.target.value || undefined }))}
             />

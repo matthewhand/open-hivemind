@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Card from '../DaisyUI/Card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import Select from '../DaisyUI/Select';
 import { useWebSocket } from '../../hooks/useWebSocket';
 
 interface _PerformanceMetric {
@@ -59,8 +60,8 @@ const ActivityCharts: React.FC = () => {
             <label className="label">
               <span className="label-text">Select Metric</span>
             </label>
-            <select
-              className="select select-bordered w-full"
+            <Select
+              className="select-bordered"
               value={selectedMetric}
               onChange={(e) => setSelectedMetric(e.target.value)}
             >
@@ -70,7 +71,7 @@ const ActivityCharts: React.FC = () => {
               <option value="cpuUsage">CPU Usage</option>
               <option value="activeConnections">Active Connections</option>
               <option value="errorRate">Error Rate</option>
-            </select>
+            </Select>
           </div>
         </div>
 
