@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Alert } from '../DaisyUI/Alert';
 import { Badge } from '../DaisyUI/Badge';
+import Card from '../DaisyUI/Card';
 import Toggle from '../DaisyUI/Toggle';
 import Button from '../DaisyUI/Button';
 import { SkeletonList } from '../DaisyUI/Skeleton';
@@ -150,7 +151,7 @@ const SettingsMessaging: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Response Mode */}
-        <div className="card bg-base-200/50 p-4">
+        <Card className="bg-base-200/50 p-4">
           <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
             <span className="w-2 h-2 bg-primary rounded-full"></span>
             Response Mode
@@ -207,10 +208,10 @@ const SettingsMessaging: React.FC = () => {
               After speaking, bot can reply freely for this duration
             </p>
           </div>
-        </div>
+        </Card>
 
         {/* Bot-to-Bot */}
-        <div className="card bg-base-200/50 p-4">
+        <Card className="bg-base-200/50 p-4">
           <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
             <Bot className="w-4 h-4" />
             Bot-to-Bot Interaction
@@ -244,10 +245,10 @@ const SettingsMessaging: React.FC = () => {
               <span className="text-sm">Collision avoidance is active to prevent bot storms</span>
             </Alert>
           )}
-        </div>
+        </Card>
 
         {/* Unsolicited Replies */}
-        <div className="card bg-base-200/50 p-4">
+        <Card className="bg-base-200/50 p-4">
           <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
             <Users className="w-4 h-4" />
             Unsolicited Replies
@@ -296,10 +297,10 @@ const SettingsMessaging: React.FC = () => {
               />
             </label>
           </div>
-        </div>
+        </Card>
 
         {/* Context & Additions */}
-        <div className="card bg-base-200/50 p-4">
+        <Card className="bg-base-200/50 p-4">
           <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
             <span className="w-2 h-2 bg-info rounded-full"></span>
             Context &amp; Additions
@@ -389,10 +390,10 @@ const SettingsMessaging: React.FC = () => {
               Multiplier to apply when a message is semantically relevant and the bot has posted recently
             </p>
           </div>
-        </div>
+        </Card>
 
         {/* Probability */}
-        <div className="card bg-base-200/50 p-4">
+        <Card className="bg-base-200/50 p-4">
           <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
             <span className="w-2 h-2 bg-accent rounded-full"></span>
             Response Probability
@@ -461,7 +462,7 @@ const SettingsMessaging: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* Environment Variables Reference */}

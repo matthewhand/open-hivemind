@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Alert } from '../DaisyUI/Alert';
 import Button from '../DaisyUI/Button';
+import Card from '../DaisyUI/Card';
 import Divider from '../DaisyUI/Divider';
 import { SkeletonList } from '../DaisyUI/Skeleton';
 import Select from '../DaisyUI/Select';
@@ -129,7 +130,7 @@ const SettingsLLM: React.FC = () => {
                 />
             )}
 
-            <div className="card bg-base-200/50 p-4">
+            <Card className="bg-base-200/50 p-4">
                 <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
                     <span className="w-2 h-2 bg-primary rounded-full"></span>
                     Natural Language Actions
@@ -160,7 +161,7 @@ const SettingsLLM: React.FC = () => {
                         Go to LLM Providers
                     </Link>
                 </div>
-            </div>
+            </Card>
 
             <div className="flex justify-end pt-4">
                 <Button

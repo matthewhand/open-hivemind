@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Card from '../DaisyUI/Card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useWebSocket } from '../../hooks/useWebSocket';
 
@@ -48,8 +49,7 @@ const ActivityCharts: React.FC = () => {
   };
 
   return (
-    <div className="card bg-base-100 shadow-xl mt-6">
-      <div className="card-body">
+    <Card className="shadow-xl mt-6">
         <h2 className="card-title mb-4">
           Activity Charts
         </h2>
@@ -107,8 +107,7 @@ const ActivityCharts: React.FC = () => {
             </LineChart>
           </ResponsiveContainer>
         </div>
-      </div>
-    </div>
+    </Card>
   );
 };
 

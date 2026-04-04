@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
+import Card from '../DaisyUI/Card';
 import { Badge } from '../DaisyUI/Badge';
 
 export interface Alert {
@@ -122,8 +123,7 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
   };
 
   return (
-    <div className={`card bg-base-100 shadow-xl ${className}`}>
-      <div className="card-body">
+    <Card className={`shadow-xl ${className}`}>
         <div className="flex justify-between items-center mb-6">
           <h2 className="card-title">Alerts & Notifications</h2>
           <div className="flex gap-2">
@@ -264,8 +264,7 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
             </button>
           </div>
         )}
-      </div>
-    </div>
+    </Card>
   );
 };
 

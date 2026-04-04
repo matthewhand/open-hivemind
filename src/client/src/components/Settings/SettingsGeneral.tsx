@@ -4,6 +4,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Alert } from '../DaisyUI/Alert';
+import Card from '../DaisyUI/Card';
 import Input from '../DaisyUI/Input';
 import Select from '../DaisyUI/Select';
 import Toggle from '../DaisyUI/Toggle';
@@ -173,7 +174,7 @@ const SettingsGeneral: React.FC = () => {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {[1, 2, 3, 4].map((i, index) => (
-            <div key={i} className="card bg-base-100 border border-base-300 shadow-sm p-4 h-full">
+            <Card key={i} className="bg-base-100 border border-base-300 shadow-sm p-4 h-full">
               <div className="h-6 bg-base-300 rounded w-1/3 mb-4 animate-pulse" style={{ animationDelay: `${index * 150}ms` }}></div>
               <div className="space-y-4">
                 <div>
@@ -185,7 +186,7 @@ const SettingsGeneral: React.FC = () => {
                   <div className="h-24 bg-base-300 rounded w-full animate-pulse" style={{ animationDelay: `${index * 150 + 200}ms` }}></div>
                 </div>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       </div>
@@ -205,8 +206,6 @@ const SettingsGeneral: React.FC = () => {
       </div>
     );
   }
-
-  const commonCardClass = "card bg-base-100 border border-base-300 shadow-sm p-4 h-full";
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -228,7 +227,7 @@ const SettingsGeneral: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Instance Information */}
-        <div className={commonCardClass}>
+        <Card className="bg-base-100 border border-base-300 shadow-sm p-4 h-full">
           <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
             <span className="w-2 h-2 bg-primary rounded-full"></span>
             Instance Information
@@ -250,10 +249,10 @@ const SettingsGeneral: React.FC = () => {
               rows={2}
             />
           </FormField>
-        </div>
+        </Card>
 
         {/* Localization */}
-        <div className={commonCardClass}>
+        <Card className="bg-base-100 border border-base-300 shadow-sm p-4 h-full">
           <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
             <span className="w-2 h-2 bg-secondary rounded-full"></span>
             Localization & Appearance
@@ -278,10 +277,10 @@ const SettingsGeneral: React.FC = () => {
               ]}
             />
           </FormField>
-        </div>
+        </Card>
 
         {/* Logging */}
-        <div className={commonCardClass}>
+        <Card className="bg-base-100 border border-base-300 shadow-sm p-4 h-full">
           <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
             <span className="w-2 h-2 bg-accent rounded-full"></span>
             Logging & Notifications
@@ -326,10 +325,10 @@ const SettingsGeneral: React.FC = () => {
               )}
             />
           </div>
-        </div>
+        </Card>
 
         {/* System Limits */}
-        <div className={commonCardClass}>
+        <Card className="bg-base-100 border border-base-300 shadow-sm p-4 h-full">
           <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
             <span className="w-2 h-2 bg-warning rounded-full"></span>
             System Limits & Health
@@ -389,7 +388,7 @@ const SettingsGeneral: React.FC = () => {
               )}
             />
           </div>
-        </div>
+        </Card>
       </div>
 
       <div className="flex justify-end pt-4 border-t border-base-300">

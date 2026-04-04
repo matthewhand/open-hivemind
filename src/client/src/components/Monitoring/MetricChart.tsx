@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Line, Bar, Area, Pie, LineChart, BarChart, AreaChart, PieChart, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
 import { Alert } from '../DaisyUI/Alert';
+import Card from '../DaisyUI/Card';
 import { LoadingSpinner } from '../DaisyUI/Loading';
 
 export interface MetricData {
@@ -160,8 +161,7 @@ const MetricChart: React.FC<MetricChartProps> = ({
   const trendColor = trend === 'up' ? 'text-success' : trend === 'down' ? 'text-error' : 'text-neutral';
 
   return (
-    <div className={`card bg-base-100 shadow-xl ${className}`}>
-      <div className="card-body">
+    <Card className={`shadow-xl ${className}`}>
         <div className="flex justify-between items-start mb-4">
           <div>
             <h2 className="card-title text-lg">{title}</h2>
@@ -210,8 +210,7 @@ const MetricChart: React.FC<MetricChartProps> = ({
             </div>
           </div>
         )}
-      </div>
-    </div>
+    </Card>
   );
 };
 

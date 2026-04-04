@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import Card from '../DaisyUI/Card';
 import Button from '../DaisyUI/Button';
 import { useWebSocket } from '../../contexts/WebSocketContext';
 
@@ -202,8 +203,7 @@ const EventStream: React.FC<EventStreamProps> = ({
   };
 
   return (
-    <div className={`card bg-base-100 shadow-xl ${className}`}>
-      <div className="card-body">
+    <Card className={`shadow-xl ${className}`}>
         <div className="flex justify-between items-center mb-4">
           <h2 className="card-title">Event Stream</h2>
           <div className="flex gap-2">
@@ -327,8 +327,7 @@ const EventStream: React.FC<EventStreamProps> = ({
             {isPaused && <span className="text-warning">Stream paused</span>}
           </div>
         )}
-      </div>
-    </div>
+    </Card>
   );
 };
 
