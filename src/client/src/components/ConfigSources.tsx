@@ -9,6 +9,8 @@ import Tabs from './DaisyUI/Tabs';
 import type { TabItem } from './DaisyUI/Tabs';
 import Accordion from './DaisyUI/Accordion';
 import { Alert } from './DaisyUI/Alert';
+import Input from './DaisyUI/Input';
+import Textarea from './DaisyUI/Textarea';
 import DataTable from './DaisyUI/DataTable';
 import { Loading } from './DaisyUI/Loading';
 import {
@@ -278,7 +280,9 @@ const ConfigSources: React.FC = () => {
       </Card>
 
       {/* Environment Variable Detail Modal */}
-      <Modal isOpen={dialogOpen} onClose={handleCloseDialog} title="Environment Variable Details">
+      <Modal isOpen={dialogOpen} onClose={handleCloseDialog} title="Environment Variable Details" actions={[
+        { label: 'Close', onClick: handleCloseDialog, variant: 'ghost' },
+      ]}>
         {selectedEnvVar && configSources?.environmentVariables[selectedEnvVar] && (
           <div className="space-y-4">
             <Accordion defaultOpen>
@@ -295,9 +299,8 @@ const ConfigSources: React.FC = () => {
                       <label className="label">
                         <span className="label-text">Key</span>
                       </label>
-                      <input
+                      <Input
                         type="text"
-                        className="input input-bordered"
                         value={selectedEnvVar}
                         readOnly
                       />
@@ -307,8 +310,7 @@ const ConfigSources: React.FC = () => {
                       <label className="label">
                         <span className="label-text">Value</span>
                       </label>
-                      <textarea
-                        className="textarea textarea-bordered"
+                      <Textarea
                         value={configSources.environmentVariables[selectedEnvVar].value || ''}
                         readOnly
                         rows={3}
@@ -320,9 +322,8 @@ const ConfigSources: React.FC = () => {
                         <label className="label">
                           <span className="label-text">Source</span>
                         </label>
-                        <input
+                        <Input
                           type="text"
-                          className="input input-bordered"
                           value={configSources.environmentVariables[selectedEnvVar].source || 'unknown'}
                           readOnly
                         />
@@ -332,9 +333,8 @@ const ConfigSources: React.FC = () => {
                         <label className="label">
                           <span className="label-text">Sensitive</span>
                         </label>
-                        <input
+                        <Input
                           type="text"
-                          className="input input-bordered"
                           value={isSensitiveKey(selectedEnvVar) ? 'Yes' : 'No'}
                           readOnly
                         />
@@ -346,9 +346,6 @@ const ConfigSources: React.FC = () => {
             </Accordion>
           </div>
         )}
-        <div className="modal-action">
-          <Button onClick={handleCloseDialog}>Close</Button>
-        </div>
       </Modal>
     </>
   );

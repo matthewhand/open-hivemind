@@ -31,6 +31,7 @@ import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService } from '../services/api';
 import DataTable from '../components/DaisyUI/DataTable';
 import Card from '../components/DaisyUI/Card';
+import Select from '../components/DaisyUI/Select';
 import type { RDVColumn, RowAction } from '../components/DaisyUI/DataTable';
 
 interface Backup {
@@ -428,15 +429,16 @@ const ExportPage: React.FC = () => {
             </p>
             <div className="flex items-center gap-2 mb-4">
               <label className="text-sm font-medium text-base-content/70">Format:</label>
-              <select
+              <Select
                 value={exportFormat}
                 onChange={(e) => setExportFormat(e.target.value as 'json' | 'csv' | 'yaml')}
-                className="select select-bordered select-sm"
+                className="select-bordered"
+                size="sm"
               >
                 <option value="json">JSON</option>
                 <option value="csv">CSV</option>
                 <option value="yaml">YAML</option>
-              </select>
+              </Select>
             </div>
             <Card.Actions className="mt-auto">
               <Button buttonStyle="outline" onClick={handleExportConfig}>
@@ -471,6 +473,10 @@ const ExportPage: React.FC = () => {
         onClose={() => setCreateModalOpen(false)}
         title="Create System Backup"
         size="sm"
+        actions={[
+          { label: 'Cancel', onClick: () => setCreateModalOpen(false), variant: 'ghost' },
+          { label: 'Create Backup', onClick: handleCreateBackup, variant: 'primary', loading: actionLoading === 'create', disabled: !newBackupName.trim() },
+        ]}
       >
         <div className="space-y-4">
           <div className="form-control w-full">
@@ -495,17 +501,6 @@ const ExportPage: React.FC = () => {
               value={newBackupDesc}
               onChange={(e) => setNewBackupDesc(e.target.value)}
             />
-          </div>
-          <div className="modal-action">
-            <Button variant="ghost" onClick={() => setCreateModalOpen(false)}>Cancel</Button>
-            <Button
-              variant="primary"
-              onClick={handleCreateBackup}
-              loading={actionLoading === 'create'}
-              disabled={!newBackupName.trim()}
-            >
-              Create Backup
-            </Button>
           </div>
         </div>
       </Modal>

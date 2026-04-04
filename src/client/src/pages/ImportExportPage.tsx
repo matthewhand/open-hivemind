@@ -12,6 +12,8 @@ import ProgressBar from '../components/DaisyUI/ProgressBar';
 import { apiService } from '../services/api';
 import { useQuery } from '@tanstack/react-query';
 import Card from '../components/DaisyUI/Card';
+import Input from '../components/DaisyUI/Input';
+import Select from '../components/DaisyUI/Select';
 
 interface ExportOptions {
   configIds: number[];
@@ -255,8 +257,8 @@ const ImportExportPage: React.FC = () => {
                 <label className="label">
                   <span className="label-text font-semibold">Export Format</span>
                 </label>
-                <select
-                  className="select select-bordered w-full"
+                <Select
+                  className="select-bordered"
                   value={exportOptions.format}
                   onChange={(e) =>
                     setExportOptions({ ...exportOptions, format: e.target.value as 'json' | 'yaml' | 'csv' })
@@ -265,7 +267,7 @@ const ImportExportPage: React.FC = () => {
                   <option value="json">JSON</option>
                   <option value="yaml">YAML</option>
                   <option value="csv">CSV</option>
-                </select>
+                </Select>
               </div>
 
               <Checkbox
@@ -318,10 +320,9 @@ const ImportExportPage: React.FC = () => {
                   <label className="label">
                     <span className="label-text font-semibold">Encryption Key</span>
                   </label>
-                  <input
+                  <Input
                     type="password"
                     placeholder="Enter encryption key (min 8 characters)"
-                    className="input input-bordered w-full"
                     value={exportOptions.encryptionKey}
                     onChange={(e) =>
                       setExportOptions({ ...exportOptions, encryptionKey: e.target.value })
@@ -334,10 +335,9 @@ const ImportExportPage: React.FC = () => {
                 <label className="label">
                   <span className="label-text font-semibold">File Name (Optional)</span>
                 </label>
-                <input
+                <Input
                   type="text"
                   placeholder="custom-export-name"
-                  className="input input-bordered w-full"
                   value={exportOptions.fileName}
                   onChange={(e) =>
                     setExportOptions({ ...exportOptions, fileName: e.target.value })
@@ -488,6 +488,10 @@ const ImportExportPage: React.FC = () => {
         onClose={() => setShowExportModal(false)}
         title="Select Configurations to Export"
         size="lg"
+        actions={[
+          { label: 'Cancel', onClick: () => setShowExportModal(false), variant: 'ghost', disabled: isExporting },
+          { label: `Export ${exportOptions.configIds.length} Configuration${exportOptions.configIds.length !== 1 ? 's' : ''}`, onClick: handleExport, variant: 'primary', disabled: exportOptions.configIds.length === 0 || isExporting, loading: isExporting },
+        ]}
       >
         <div className="space-y-4">
           <div className="flex gap-2">
@@ -545,32 +549,6 @@ const ImportExportPage: React.FC = () => {
             </div>
           )}
 
-          <div className="modal-action">
-            <button
-              className="btn btn-ghost"
-              onClick={() => setShowExportModal(false)}
-              disabled={isExporting}
-            >
-              Cancel
-            </button>
-            <button
-              className="btn btn-primary"
-              onClick={handleExport}
-              disabled={exportOptions.configIds.length === 0 || isExporting}
-            >
-              {isExporting ? (
-                <>
-                  <LoadingSpinner size="sm" />
-                  Exporting...
-                </>
-              ) : (
-                <>
-                  <Download className="w-4 h-4" />
-                  Export {exportOptions.configIds.length} Configuration{exportOptions.configIds.length !== 1 ? 's' : ''}
-                </>
-              )}
-            </button>
-          </div>
         </div>
       </Modal>
 
@@ -579,6 +557,10 @@ const ImportExportPage: React.FC = () => {
         isOpen={showImportModal}
         onClose={() => setShowImportModal(false)}
         title="Import Options"
+        actions={[
+          { label: 'Cancel', onClick: () => setShowImportModal(false), variant: 'ghost' },
+          { label: 'Save Options', onClick: () => setShowImportModal(false), variant: 'primary' },
+        ]}
       >
         <div className="space-y-4">
           <Checkbox
@@ -631,10 +613,9 @@ const ImportExportPage: React.FC = () => {
               <label className="label">
                 <span className="label-text font-semibold">Decryption Key</span>
               </label>
-              <input
+              <Input
                 type="password"
                 placeholder="Enter decryption key"
-                className="input input-bordered w-full"
                 value={importOptions.decryptionKey}
                 onChange={(e) =>
                   setImportOptions({ ...importOptions, decryptionKey: e.target.value })
@@ -643,20 +624,6 @@ const ImportExportPage: React.FC = () => {
             </div>
           )}
 
-          <div className="modal-action">
-            <button
-              className="btn btn-ghost"
-              onClick={() => setShowImportModal(false)}
-            >
-              Cancel
-            </button>
-            <button
-              className="btn btn-primary"
-              onClick={() => setShowImportModal(false)}
-            >
-              Save Options
-            </button>
-          </div>
         </div>
       </Modal>
     </div>

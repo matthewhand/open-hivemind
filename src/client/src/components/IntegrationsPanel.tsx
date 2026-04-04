@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
+import Accordion from './DaisyUI/Accordion';
 import { Alert } from './DaisyUI/Alert';
 import Button from './DaisyUI/Button';
 import Card from './DaisyUI/Card';
@@ -360,7 +361,7 @@ const IntegrationsPanel: React.FC = () => {
               const connectedBots = getConnectedBots(profile.key, 'llm');
               return (
                 <Card key={profile.key} className="shadow-sm hover:shadow-md transition-all border border-base-200 group">
-                  <Card.Body className="card-body p-4">
+                  <Card.Body className="p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3 overflow-hidden">
                         <div className="p-2 bg-base-200 rounded-lg text-primary group-hover:bg-primary group-hover:text-primary-content transition-colors flex items-center justify-center">
@@ -399,41 +400,43 @@ const IntegrationsPanel: React.FC = () => {
 
         {/* Global LLM Settings */}
         {llmConfig && (
-          <div className="collapse collapse-arrow bg-base-200/50 border border-base-200">
-            <input type="checkbox" defaultChecked={false} aria-label="Toggle Global Settings" />
-            <div className="collapse-title text-sm font-medium flex items-center gap-2">
-              <Plug className="w-4 h-4" /> Global Settings
-            </div>
-            <div className="collapse-content">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                {/* Only allow editing existing config values, but filter for advanced */}
-                <div className="flex items-center justify-between mb-2 col-span-full">
-                  <h3 className="font-bold text-sm">Default Configuration</h3>
-                  <Button variant="ghost" size="sm" className="btn-xs" aria-label="Edit global LLM configuration" onClick={() => openEditModal('llm')}>
-                    <PencilSquareIcon className="w-3 h-3 mr-1" /> Edit Globals
-                  </Button>
-                </div>
-
-                {Object.entries(llmConfig.values).map(([key, value]) => {
-                  const isAdvanced = key.includes('PARALLEL') || key.includes('EXECUTION');
-                  if (isAdvanced && !advancedMode) return null;
-
-                  return (
-                    <div key={key} className="flex justify-between items-center p-2 bg-base-100 rounded border border-base-200">
-                      <span className="text-xs font-mono opacity-70">{key}</span>
-                      <span className="font-bold text-sm">{String(value)}</span>
-                    </div>
-                  );
-                })}
-
-                {!advancedMode && (
-                  <div className="col-span-full text-center text-xs opacity-50 italic">
-                    Enable "Advanced Mode" in System Settings to see more options.
+          <Accordion
+            items={[{
+              id: 'global-llm-settings',
+              title: 'Global Settings',
+              icon: <Plug className="w-4 h-4" />,
+              content: (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                  <div className="flex items-center justify-between mb-2 col-span-full">
+                    <h3 className="font-bold text-sm">Default Configuration</h3>
+                    <Button variant="ghost" size="sm" className="btn-xs" aria-label="Edit global LLM configuration" onClick={() => openEditModal('llm')}>
+                      <PencilSquareIcon className="w-3 h-3 mr-1" /> Edit Globals
+                    </Button>
                   </div>
-                )}
-              </div>
-            </div>
-          </div>
+
+                  {Object.entries(llmConfig.values).map(([key, value]) => {
+                    const isAdvanced = key.includes('PARALLEL') || key.includes('EXECUTION');
+                    if (isAdvanced && !advancedMode) return null;
+
+                    return (
+                      <div key={key} className="flex justify-between items-center p-2 bg-base-100 rounded border border-base-200">
+                        <span className="text-xs font-mono opacity-70">{key}</span>
+                        <span className="font-bold text-sm">{String(value)}</span>
+                      </div>
+                    );
+                  })}
+
+                  {!advancedMode && (
+                    <div className="col-span-full text-center text-xs opacity-50 italic">
+                      Enable "Advanced Mode" in System Settings to see more options.
+                    </div>
+                  )}
+                </div>
+              ),
+            }]}
+            size="sm"
+            variant="bordered"
+          />
         )}
       </div>
     );
@@ -490,7 +493,7 @@ const IntegrationsPanel: React.FC = () => {
 
             return (
               <Card key={key} className="shadow-sm hover:shadow-md transition-all border border-base-200 group">
-                <Card.Body className="card-body p-4">
+                <Card.Body className="p-4">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3 overflow-hidden">
                       <div className="p-2 bg-base-200 rounded-lg text-primary group-hover:bg-primary group-hover:text-primary-content transition-colors flex items-center justify-center">
@@ -553,6 +556,10 @@ const IntegrationsPanel: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         title={`Configure: ${selectedConfigName}`}
         size="lg"
+        actions={[
+          { label: 'Cancel', onClick: () => setIsModalOpen(false), variant: 'ghost' },
+          { label: 'Save Changes', onClick: handleSave, variant: 'primary', loading: saving, disabled: saving },
+        ]}
       >
         <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-2">
           {selectedConfigName && config && config[selectedConfigName] && (
@@ -579,10 +586,6 @@ const IntegrationsPanel: React.FC = () => {
             </div>
           )}
         </div>
-        <div className="modal-action border-t border-base-200 pt-4 mt-4">
-          <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-          <Button variant="primary" onClick={handleSave} loading={saving} disabled={saving}>Save Changes</Button>
-        </div>
       </Modal>
 
       {/* Create Integration Modal (Message Providers) */}
@@ -591,6 +594,10 @@ const IntegrationsPanel: React.FC = () => {
         onClose={() => setIsAddModalOpen(false)}
         title={`Add ${addCategory === 'llm' ? 'LLM' : 'Message'} Integration`}
         size="lg"
+        actions={[
+          { label: 'Cancel', onClick: () => setIsAddModalOpen(false), variant: 'ghost' },
+          { label: 'Create & Save', onClick: handleCreate, variant: 'primary', disabled: !newIntegrationType || !newIntegrationName || saving, loading: saving },
+        ]}
       >
         <div className="space-y-6 max-h-[70vh] overflow-y-auto px-1">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -652,17 +659,6 @@ const IntegrationsPanel: React.FC = () => {
               </div>
             </div>
           )}
-        </div>
-        <div className="modal-action border-t border-base-200 pt-4 mt-6">
-          <Button variant="ghost" onClick={() => setIsAddModalOpen(false)}>Cancel</Button>
-          <Button
-            variant="primary"
-            onClick={handleCreate}
-            disabled={!newIntegrationType || !newIntegrationName || saving}
-            loading={saving}
-          >
-            Create & Save
-          </Button>
         </div>
       </Modal>
 

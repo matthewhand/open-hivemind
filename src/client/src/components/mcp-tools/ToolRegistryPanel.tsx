@@ -106,7 +106,7 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
     if (compact) {
       return (
         <Card key={tool.id} className="border border-base-300 hover:shadow-md transition-shadow">
-          <Card.Body className="card-body p-4">
+          <Card.Body className="p-4">
             <div className="flex justify-between items-start gap-2">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">

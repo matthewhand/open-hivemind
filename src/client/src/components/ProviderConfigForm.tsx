@@ -383,7 +383,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
       {/* Form Fields by Group */}
       {Object.entries(groupedFields).map(([groupName, fields]) => (
         <Card key={groupName} className="shadow-sm border border-base-200">
-          <Card.Body className="card-body p-6">
+          <Card.Body className="p-6">
             <Card.Title tag="h3" className="text-lg border-b border-base-200 pb-3 mb-4">
               {groupName}
             </Card.Title>

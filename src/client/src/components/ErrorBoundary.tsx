@@ -94,7 +94,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
       return (
         <div className="flex flex-col items-center justify-center min-h-[60vh] p-8">
           <Card className="shadow-xl max-w-lg w-full">
-            <Card.Body className="card-body items-center text-center">
+            <Card.Body className="items-center text-center">
               <div className="text-error text-5xl mb-2">!</div>
               <Card.Title className="text-error">Something went wrong</Card.Title>
               <p className="text-base-content/70 mt-2">

@@ -338,19 +338,15 @@ const ConfigManager: React.FC = () => {
         isOpen={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
         title="Confirm Deletion"
+        actions={[
+          { label: 'Cancel', onClick: () => setDeleteDialogOpen(false), variant: 'ghost' },
+          { label: 'Delete', onClick: confirmDeleteConfig, variant: 'error' },
+        ]}
       >
         <p className="py-4">
           Are you sure you want to delete the configuration "{configToDelete?.name}"?
           This action cannot be undone.
         </p>
-        <div className="modal-action">
-          <Button onClick={() => setDeleteDialogOpen(false)} variant="ghost">
-            Cancel
-          </Button>
-          <Button onClick={confirmDeleteConfig} variant="primary" className="btn-error">
-            Delete
-          </Button>
-        </div>
       </Modal>
 
       {/* Toast notification */}
