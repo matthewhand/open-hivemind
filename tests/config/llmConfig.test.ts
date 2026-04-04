@@ -168,3 +168,24 @@ describe('llmConfig', () => {
     });
   });
 });
+
+describe('llmConfig coerce edge cases', () => {
+  const OLD_ENV = process.env;
+
+  afterEach(() => {
+    process.env = OLD_ENV;
+    jest.resetModules();
+  });
+
+  it('coerces uppercase TRUE/FALSE to booleans', () => {
+    process.env = { ...OLD_ENV, LLM_PARALLEL_EXECUTION: 'TRUE' };
+    jest.resetModules();
+    let config = require('../../src/config/llmConfig').default;
+    expect(typeof config.get('LLM_PARALLEL_EXECUTION')).toBe('boolean');
+
+    process.env = { ...OLD_ENV, LLM_PARALLEL_EXECUTION: 'FALSE' };
+    jest.resetModules();
+    config = require('../../src/config/llmConfig').default;
+    expect(typeof config.get('LLM_PARALLEL_EXECUTION')).toBe('boolean');
+  });
+});
