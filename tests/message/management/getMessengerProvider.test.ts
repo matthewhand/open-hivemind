@@ -266,3 +266,89 @@ describe('getMessengerProvider', () => {
     });
   });
 });
+
+describe('getMessengerProvider additional branch coverage', () => {
+  const originalEnv = process.env;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    resetMessengerProviderCache();
+    process.env = { ...originalEnv };
+    const { loadPlugin, instantiateMessageService } = require('@src/plugins/PluginLoader');
+    loadPlugin.mockImplementation(async (name: string) => {
+      if (name === 'message-discord') {
+        return { DiscordService: { getInstance: () => mockDiscordService } };
+      }
+      if (name === 'message-slack') {
+        return { SlackService: { getInstance: () => mockSlackService } };
+      }
+      throw new Error(`Unknown plugin: ${name}`);
+    });
+    instantiateMessageService.mockImplementation((mod: any) => {
+      if (mod?.DiscordService) {return mockDiscordService;}
+      if (mod?.SlackService) {return mockSlackService;}
+      return null;
+    });
+    mockFsPromises.readFile.mockResolvedValue(
+      JSON.stringify({
+        providers: [{ type: 'discord', enabled: true }],
+      }) as any
+    );
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
+  it('supports array-like provider filter via config fallback', async () => {
+    delete process.env.MESSAGE_PROVIDER;
+    mockFsPromises.readFile.mockResolvedValue(
+      JSON.stringify({
+        MESSAGE_PROVIDER: ['discord', 'slack'],
+        providers: [{ type: 'discord', enabled: true }, { type: 'slack', enabled: true }],
+      }) as any
+    );
+
+    const providers = await getMessengerProvider();
+    expect(Array.isArray(providers)).toBe(true);
+    expect(providers.length).toBeGreaterThan(0);
+  });
+
+  it('does not default to slack when filter is set but no providers match', async () => {
+    process.env.MESSAGE_PROVIDER = 'mattermost';
+    const providers = await getMessengerProvider();
+    expect(providers).toEqual([]);
+  });
+
+  it('falls back to slack sentinel when default slack loader fails', async () => {
+    const { loadPlugin } = require('@src/plugins/PluginLoader');
+    loadPlugin.mockRejectedValue(new Error('plugin load failed'));
+
+    delete process.env.MESSAGE_PROVIDER;
+    mockFsPromises.readFile.mockResolvedValue(JSON.stringify({ providers: [] }) as any);
+
+    const providers = await getMessengerProvider();
+    expect(providers.length).toBe(1);
+    expect(providers[0].provider).toBe('slack');
+    expect(typeof providers[0].sendMessageToChannel).toBe('function');
+  });
+
+  it('resets cache and rereads config after reset', async () => {
+    mockFsPromises.readFile.mockResolvedValueOnce(
+      JSON.stringify({ providers: [{ type: 'discord', enabled: true }] }) as any
+    );
+
+    const first = await getMessengerProvider();
+    expect(first.length).toBeGreaterThan(0);
+
+    mockFsPromises.readFile.mockResolvedValueOnce(
+      JSON.stringify({ providers: [] }) as any
+    );
+
+    resetMessengerProviderCache();
+    const second = await getMessengerProvider();
+    // with empty providers and no env filter, legacy fallback should still return slack
+    expect(second.length).toBe(1);
+    expect(second[0].provider).toBe('slack');
+  });
+});
