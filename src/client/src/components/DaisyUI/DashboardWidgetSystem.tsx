@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Debug from 'debug';
+import Card from './Card';
 const debug = Debug('app:client:components:DaisyUI:DashboardWidgetSystem');
 
 interface Widget {
@@ -47,20 +48,15 @@ const StatsWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate: _onUp
   ];
 
   return (
-    <div className="h-full bg-base-100 rounded-lg shadow-lg p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-bold text-lg">{widget.title}</h3>
-        {isEditing && (
-          <div className="dropdown dropdown-end">
-            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</div>
-            <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-              <li><a onClick={() => onConfigure?.(widget.id)}>⚙️ Configure</a></li>
-              <li><a onClick={() => onRemove?.(widget.id)} className="text-error">🗑️ Remove</a></li>
-            </ul>
-          </div>
-        )}
+    <Card className="h-full" title={widget.title} actions={isEditing ? (
+      <div className="dropdown dropdown-end">
+        <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</div>
+        <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+          <li><a onClick={() => onConfigure?.(widget.id)}>⚙️ Configure</a></li>
+          <li><a onClick={() => onRemove?.(widget.id)} className="text-error">🗑️ Remove</a></li>
+        </ul>
       </div>
-
+    ) : undefined}>
       <div className="grid grid-cols-1 gap-3">
         {stats.map((stat: any, index: number) => (
           <div key={index} className="stat bg-base-200 rounded-lg p-3">
@@ -74,7 +70,7 @@ const StatsWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate: _onUp
           </div>
         ))}
       </div>
-    </div>
+    </Card>
   );
 };
 
@@ -82,20 +78,15 @@ const ChartWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate: _onUp
   const _data = widget.data?.chartData || [];
 
   return (
-    <div className="h-full bg-base-100 rounded-lg shadow-lg p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-bold text-lg">{widget.title}</h3>
-        {isEditing && (
-          <div className="dropdown dropdown-end">
-            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</div>
-            <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-              <li><a onClick={() => onConfigure?.(widget.id)}>⚙️ Configure</a></li>
-              <li><a onClick={() => onRemove?.(widget.id)} className="text-error">🗑️ Remove</a></li>
-            </ul>
-          </div>
-        )}
+    <Card className="h-full" title={widget.title} actions={isEditing ? (
+      <div className="dropdown dropdown-end">
+        <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</div>
+        <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+          <li><a onClick={() => onConfigure?.(widget.id)}>⚙️ Configure</a></li>
+          <li><a onClick={() => onRemove?.(widget.id)} className="text-error">🗑️ Remove</a></li>
+        </ul>
       </div>
-
+    ) : undefined}>
       {/* Simulated Chart */}
       <div className="relative h-32 bg-base-200 rounded-lg flex items-end p-2 gap-1">
         {[65, 45, 78, 52, 89, 67, 43, 91, 72, 55].map((height, index) => (
@@ -111,7 +102,7 @@ const ChartWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate: _onUp
         <div className="text-sm text-base-content/60">Message Activity</div>
         <div className="text-xs text-base-content/40">Last 10 hours</div>
       </div>
-    </div>
+    </Card>
   );
 };
 
@@ -124,20 +115,15 @@ const ActivityWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate: _o
   ];
 
   return (
-    <div className="h-full bg-base-100 rounded-lg shadow-lg p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-bold text-lg">{widget.title}</h3>
-        {isEditing && (
-          <div className="dropdown dropdown-end">
-            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</div>
-            <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-              <li><a onClick={() => onConfigure?.(widget.id)}>⚙️ Configure</a></li>
-              <li><a onClick={() => onRemove?.(widget.id)} className="text-error">🗑️ Remove</a></li>
-            </ul>
-          </div>
-        )}
+    <Card className="h-full" title={widget.title} actions={isEditing ? (
+      <div className="dropdown dropdown-end">
+        <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</div>
+        <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+          <li><a onClick={() => onConfigure?.(widget.id)}>⚙️ Configure</a></li>
+          <li><a onClick={() => onRemove?.(widget.id)} className="text-error">🗑️ Remove</a></li>
+        </ul>
       </div>
-
+    ) : undefined}>
       <div className="space-y-2 max-h-40 overflow-y-auto">
         {activities.map((activity: any, index: number) => (
           <div key={index} className="flex items-center gap-3 p-2 bg-base-200 rounded-lg">
@@ -153,7 +139,7 @@ const ActivityWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate: _o
           </div>
         ))}
       </div>
-    </div>
+    </Card>
   );
 };
 
@@ -166,20 +152,15 @@ const QuickActionsWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate
   ];
 
   return (
-    <div className="h-full bg-base-100 rounded-lg shadow-lg p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-bold text-lg">{widget.title}</h3>
-        {isEditing && (
-          <div className="dropdown dropdown-end">
-            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</div>
-            <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-              <li><a onClick={() => onConfigure?.(widget.id)}>⚙️ Configure</a></li>
-              <li><a onClick={() => onRemove?.(widget.id)} className="text-error">🗑️ Remove</a></li>
-            </ul>
-          </div>
-        )}
+    <Card className="h-full" title={widget.title} actions={isEditing ? (
+      <div className="dropdown dropdown-end">
+        <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</div>
+        <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+          <li><a onClick={() => onConfigure?.(widget.id)}>⚙️ Configure</a></li>
+          <li><a onClick={() => onRemove?.(widget.id)} className="text-error">🗑️ Remove</a></li>
+        </ul>
       </div>
-
+    ) : undefined}>
       <div className="grid grid-cols-2 gap-2">
         {actions.map((action: any, index: number) => (
           <button key={index} className={`btn btn-sm ${action.color} gap-1`}>
@@ -188,7 +169,7 @@ const QuickActionsWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate
           </button>
         ))}
       </div>
-    </div>
+    </Card>
   );
 };
 
@@ -201,20 +182,15 @@ const SystemHealthWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate
   };
 
   return (
-    <div className="h-full bg-base-100 rounded-lg shadow-lg p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-bold text-lg">{widget.title}</h3>
-        {isEditing && (
-          <div className="dropdown dropdown-end">
-            <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</div>
-            <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-              <li><a onClick={() => onConfigure?.(widget.id)}>⚙️ Configure</a></li>
-              <li><a onClick={() => onRemove?.(widget.id)} className="text-error">🗑️ Remove</a></li>
-            </ul>
-          </div>
-        )}
+    <Card className="h-full" title={widget.title} actions={isEditing ? (
+      <div className="dropdown dropdown-end">
+        <div tabIndex={0} role="button" className="btn btn-ghost btn-sm btn-circle" aria-label="Widget options">⋮</div>
+        <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+          <li><a onClick={() => onConfigure?.(widget.id)}>⚙️ Configure</a></li>
+          <li><a onClick={() => onRemove?.(widget.id)} className="text-error">🗑️ Remove</a></li>
+        </ul>
       </div>
-
+    ) : undefined}>
       <div className="space-y-3">
         {Object.entries(health).map(([key, value]) => (
           <div key={key} className="flex items-center gap-3">
@@ -233,7 +209,7 @@ const SystemHealthWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate
           </div>
         ))}
       </div>
-    </div>
+    </Card>
   );
 };
 
@@ -476,26 +452,23 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
 
       {/* Widget Palette */}
       {showWidgetPalette && (
-        <div className="fixed top-20 right-4 z-40 card bg-base-100 shadow-xl w-80">
-          <div className="card-body">
-            <h3 className="card-title">Add Widget</h3>
-            <div className="grid grid-cols-1 gap-2">
-              {widgetTypes.map(type => (
-                <button
-                  key={type.id}
-                  className="btn btn-outline justify-start gap-3"
-                  onClick={() => addWidget(type.id)}
-                >
-                  <span className="text-2xl">{type.icon}</span>
-                  <div className="text-left">
-                    <div className="font-semibold">{type.name}</div>
-                    <div className="text-xs opacity-60">{type.description}</div>
-                  </div>
-                </button>
-              ))}
-            </div>
+        <Card className="fixed top-20 right-4 z-40 w-80" title="Add Widget">
+          <div className="grid grid-cols-1 gap-2">
+            {widgetTypes.map(type => (
+              <button
+                key={type.id}
+                className="btn btn-outline justify-start gap-3"
+                onClick={() => addWidget(type.id)}
+              >
+                <span className="text-2xl">{type.icon}</span>
+                <div className="text-left">
+                  <div className="font-semibold">{type.name}</div>
+                  <div className="text-xs opacity-60">{type.description}</div>
+                </div>
+              </button>
+            ))}
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Dashboard Grid */}

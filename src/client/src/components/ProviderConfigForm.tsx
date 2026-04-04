@@ -477,10 +477,10 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
       )}
 
       {avatarUrl && (
-        <div className="p-3 bg-base-200 border border-base-300 rounded-lg">
+        <Card className="p-3">
           <p className="text-sm text-base-content/80 mb-2">Avatar loaded successfully:</p>
           <img src={avatarUrl} alt="Provider avatar" className="w-12 h-12 rounded-full" />
-        </div>
+        </Card>
       )}
     </div>
   );

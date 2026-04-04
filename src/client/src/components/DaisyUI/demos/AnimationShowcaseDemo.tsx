@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
+import Card from '../Card';
 import { Section } from './Section';
 
 /* ─── helpers ─── */
@@ -301,7 +302,7 @@ const KeyframeCard: React.FC<{ kf: KeyframeDef }> = ({ kf }) => {
   const [key, replay] = useReplay();
 
   return (
-    <div className="border border-base-300 rounded-xl p-4 bg-base-100">
+    <Card className="p-4">
       <div className="flex items-center justify-between mb-3">
         <span className="badge badge-primary font-mono">{kf.name}</span>
         <button className="btn btn-xs btn-ghost" onClick={replay}>

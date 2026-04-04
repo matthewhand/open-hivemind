@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { apiService, type Bot, type StatusResponse } from '../services/api';
 import { Alert } from './DaisyUI/Alert';
 import Button from './DaisyUI/Button';
+import Card from './DaisyUI/Card';
 import Hero from './DaisyUI/Hero';
 import { SkeletonCard } from './DaisyUI/Skeleton';
 import { Stat, Stats } from './DaisyUI/Stat';
@@ -270,14 +271,13 @@ const Dashboard: React.FC = () => {
 
         {/* System Status Footer */}
         {status && (
-          <div className="bg-base-100 rounded-lg shadow p-6">
-            <h3 className="text-xl font-bold mb-4 flex items-center">🖥️ System Information</h3>
+          <Card title="🖥️ System Information">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Stat title="Uptime" value={<>{uptimeHours}h {uptimeMinutes}m</>} valueClassName="text-lg" description="System running smoothly" />
               <Stat title="Total Bots" value={bots.length} valueClassName="text-lg" description={`${activeBots} currently active`} />
               <Stat title="Message Volume" value={totalMessages.toLocaleString()} valueClassName="text-lg" description="processed successfully" />
             </div>
-          </div>
+          </Card>
         )}
       </div>
     </div>

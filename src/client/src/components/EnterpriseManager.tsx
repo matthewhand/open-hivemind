@@ -589,7 +589,7 @@ const EnterpriseManager: React.FC = () => {
                 </Button>
               </div>
             </div>
-            <div className="bg-base-100 rounded-box shadow">
+            <Card>
               <DataTable<AuditEvent>
                 data={filteredAuditEvents}
                 columns={[
@@ -633,7 +633,7 @@ const EnterpriseManager: React.FC = () => {
                   </div>
                 }
               />
-            </div>
+            </Card>
           </div>
         );
 
