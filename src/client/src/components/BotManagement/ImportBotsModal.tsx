@@ -8,6 +8,7 @@ import Button from '../DaisyUI/Button';
 import Modal from '../DaisyUI/Modal';
 import { Alert } from '../DaisyUI/Alert';
 import { Badge } from '../DaisyUI/Badge';
+import SimpleTable from '../DaisyUI/SimpleTable';
 import VisualFeedback, { FeedbackState } from '../DaisyUI/VisualFeedback';
 import FileUpload from '../DaisyUI/FileUpload';
 import { apiService } from '../../services/api';
@@ -168,7 +169,7 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
               </Alert>
             )}
             <div className="overflow-x-auto max-h-60 rounded-lg border border-base-200">
-              <table className="table table-xs table-zebra w-full">
+              <SimpleTable size="xs" zebra className="w-full">
                 <thead><tr><th>Name</th><th>Message Provider</th><th>LLM Provider</th><th>Status</th></tr></thead>
                 <tbody>
                   {conflicts.map((c) => {
@@ -187,7 +188,7 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
                     );
                   })}
                 </tbody>
-              </table>
+              </SimpleTable>
             </div>
             <div className="text-sm text-base-content/70">{newCount} new, {conflictCount} update{conflictCount !== 1 ? 's' : ''}</div>
             {parseError && (

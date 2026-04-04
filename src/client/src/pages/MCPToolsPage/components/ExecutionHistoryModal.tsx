@@ -4,6 +4,7 @@ import Modal from '../../../components/DaisyUI/Modal';
 import Accordion from '../../../components/DaisyUI/Accordion';
 import { LoadingSpinner } from '../../../components/DaisyUI/Loading';
 import { Badge } from '../../../components/DaisyUI/Badge';
+import SimpleTable from '../../../components/DaisyUI/SimpleTable';
 import type { ToolExecutionRecord } from '../types';
 
 interface ExecutionHistoryModalProps {
@@ -19,7 +20,7 @@ const ExecutionHistoryModal: React.FC<ExecutionHistoryModalProps> = ({ isOpen, o
       <div className="space-y-4">
         {loading ? <div className="flex justify-center py-8"><LoadingSpinner size="lg" /></div> : history.length === 0 ? <div className="text-center py-8"><p className="text-base-content/70">No execution history found</p></div> : (
           <div className="overflow-x-auto">
-            <table className="table table-zebra w-full">
+            <SimpleTable zebra className="w-full">
               <thead><tr><th>Status</th><th>Tool</th><th>Server</th><th>Duration</th><th>Executed At</th><th>Details</th></tr></thead>
               <tbody>
                 {history.map((r) => (
@@ -50,7 +51,7 @@ const ExecutionHistoryModal: React.FC<ExecutionHistoryModalProps> = ({ isOpen, o
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </SimpleTable>
           </div>
         )}
         <div className="text-xs text-base-content/60 text-center pt-4">Showing last 50 executions (retention: 1000 max)</div>

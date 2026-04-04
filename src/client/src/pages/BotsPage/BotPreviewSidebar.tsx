@@ -9,6 +9,7 @@ import ConfigurationValidation from '../../components/ConfigurationValidation';
 import { Stat, Stats } from '../../components/DaisyUI/Stat';
 import Tooltip from '../../components/DaisyUI/Tooltip';
 import Card from '../../components/DaisyUI/Card';
+import Join from '../../components/DaisyUI/Join';
 
 interface BotPreviewSidebarProps {
   previewBot: BotConfig | null;
@@ -153,7 +154,7 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
           {previewTab === 'activity' && (
             <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
               <div className="flex items-center justify-end mb-2">
-                <div className="join w-full">
+                <Join className="w-full">
                   <input
                     type="text"
                     placeholder="Filter..."
@@ -174,7 +175,7 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
                     <option value="50">50</option>
                     <option value="100">100</option>
                   </select>
-                </div>
+                </Join>
               </div>
 
               {activityError ? (

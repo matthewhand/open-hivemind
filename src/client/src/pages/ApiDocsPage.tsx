@@ -8,6 +8,7 @@ import { Badge } from '../components/DaisyUI/Badge';
 import { apiService } from '../services/api';
 import Input from '../components/DaisyUI/Input';
 import Textarea from '../components/DaisyUI/Textarea';
+import Accordion from '../components/DaisyUI/Accordion';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -239,23 +240,27 @@ const TryItPanel: React.FC<{ route: RouteInfo }> = ({ route }) => {
 
 /** Single route card with expandable details */
 const RouteCard: React.FC<{ route: RouteInfo }> = ({ route }) => {
-  const [expanded, setExpanded] = useState(false);
-
   return (
-    <div className="collapse collapse-arrow bg-base-100 border border-base-300 mb-2">
-      <input type="checkbox" checked={expanded} onChange={() => setExpanded(!expanded)} aria-label={`Toggle route details for ${route.method} ${route.path}`} />
-      <div className="collapse-title flex items-center gap-3 py-2 min-h-0">
-        <span className={`badge badge-sm font-mono ${getMethodBadgeClass(route.method)}`}>
-          {route.method}
-        </span>
-        <code className="text-sm font-mono flex-1">{route.path}</code>
-        {route.description && (
-          <span className="text-xs text-base-content/60 hidden md:inline truncate max-w-xs">
-            {route.description}
-          </span>
-        )}
-      </div>
-      <div className="collapse-content">
+    <div className="mb-2">
+      <Accordion
+        items={[{
+          id: `route-${route.method}-${route.path}`,
+          className: 'bg-base-100 border border-base-300',
+          title: (
+            <span className="flex items-center gap-3 py-0 min-h-0">
+              <span className={`badge badge-sm font-mono ${getMethodBadgeClass(route.method)}`}>
+                {route.method}
+              </span>
+              <code className="text-sm font-mono flex-1">{route.path}</code>
+              {route.description && (
+                <span className="text-xs text-base-content/60 hidden md:inline truncate max-w-xs">
+                  {route.description}
+                </span>
+              )}
+            </span>
+          ),
+          content: (
+            <div>
         {route.description && <p className="text-sm mb-2">{route.description}</p>}
 
         {route.middleware.length > 0 && (
@@ -309,7 +314,11 @@ const RouteCard: React.FC<{ route: RouteInfo }> = ({ route }) => {
         <h4 className="font-semibold text-sm mb-2">Live Testing</h4>
 
         <TryItPanel route={route} />
-      </div>
+            </div>
+          ),
+        }]}
+        size="sm"
+      />
     </div>
   );
 };

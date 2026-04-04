@@ -8,6 +8,7 @@ import Button from './DaisyUI/Button';
 import { Alert } from './DaisyUI/Alert';
 import Badge from './DaisyUI/Badge';
 import Card from './DaisyUI/Card';
+import SimpleTable from './DaisyUI/SimpleTable';
 import ModelAutocomplete from './DaisyUI/ModelAutocomplete';
 import Debug from 'debug';
 import { getApiKeyFormatHint } from '../utils/apiKeyValidation';
@@ -388,7 +389,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
               {groupName}
             </Card.Title>
             <div className="overflow-x-auto">
-              <table className="table w-full">
+              <SimpleTable className="w-full">
                 <thead>
                   <tr>
                     <th className="w-1/3 text-sm font-semibold text-base-content/70">Setting</th>
@@ -423,7 +424,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </SimpleTable>
             </div>
           </Card.Body>
         </Card>

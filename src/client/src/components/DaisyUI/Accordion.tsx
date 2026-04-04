@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 
 export interface AccordionItem {
   id: string;
-  title: string;
+  title: React.ReactNode;
   content: React.ReactNode;
   icon?: string | React.ReactNode;
   disabled?: boolean;

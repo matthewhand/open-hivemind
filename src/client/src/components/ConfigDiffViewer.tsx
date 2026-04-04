@@ -5,6 +5,7 @@ import Diff from './DaisyUI/Diff';
 import Modal from './DaisyUI/Modal';
 import type { ModalAction } from './DaisyUI/Modal';
 import { Badge } from './DaisyUI/Badge';
+import SimpleTable from './DaisyUI/SimpleTable';
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                           */
@@ -123,13 +124,13 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
         <Badge size="sm" variant="ghost" className="ml-auto">{entries.length} change{entries.length !== 1 ? 's' : ''}</Badge>
       </button>
       {isOpen && (
-        <table className="table table-compact w-full">
+        <SimpleTable compact className="w-full">
           <tbody>
             {entries.map((entry) => (
               <DiffRow key={entry.path} entry={entry} />
             ))}
           </tbody>
-        </table>
+        </SimpleTable>
       )}
     </div>
   );
@@ -172,7 +173,7 @@ export const ConfigDiffViewer: React.FC<ConfigDiffViewerProps> = ({
   if (mode === 'unified') {
     return (
       <div className={`overflow-auto ${className}`} style={{ maxHeight }}>
-        <table className="table table-compact w-full">
+        <SimpleTable compact className="w-full">
           <thead>
             <tr className="text-xs uppercase opacity-60">
               <th className="w-8"></th>
@@ -186,7 +187,7 @@ export const ConfigDiffViewer: React.FC<ConfigDiffViewerProps> = ({
               <DiffRow key={entry.path} entry={entry} />
             ))}
           </tbody>
-        </table>
+        </SimpleTable>
       </div>
     );
   }

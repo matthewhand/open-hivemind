@@ -22,6 +22,8 @@ import Toggle from '../components/DaisyUI/Toggle';
 import { Alert } from '../components/DaisyUI/Alert';
 import Input from '../components/DaisyUI/Input';
 import Select from '../components/DaisyUI/Select';
+import SimpleTable from '../components/DaisyUI/SimpleTable';
+import Join from '../components/DaisyUI/Join';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -309,7 +311,7 @@ const WebhookEventsPage: React.FC = () => {
       ) : (
         <Card>
           <div className="overflow-x-auto">
-            <table className="table table-sm w-full">
+            <SimpleTable size="sm" className="w-full">
               <thead>
                 <tr>
                   <th className="w-8" />
@@ -390,7 +392,7 @@ const WebhookEventsPage: React.FC = () => {
                   </React.Fragment>
                 ))}
               </tbody>
-            </table>
+            </SimpleTable>
           </div>
 
           {/* Pagination */}
@@ -399,7 +401,7 @@ const WebhookEventsPage: React.FC = () => {
               <span className="text-sm text-base-content/60">
                 Page {page} of {totalPages} ({total} total)
               </span>
-              <div className="join">
+              <Join>
                 <Button
                   size="sm"
                   className="join-item"
@@ -416,7 +418,7 @@ const WebhookEventsPage: React.FC = () => {
                 >
                   Next
                 </Button>
-              </div>
+              </Join>
             </div>
           )}
         </Card>
