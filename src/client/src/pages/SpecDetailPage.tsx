@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom';
 import Card from '../components/DaisyUI/Card';
 import Button from '../components/DaisyUI/Button';
 import Badge from '../components/DaisyUI/Badge';
+import Divider from '../components/DaisyUI/Divider';
 import Dropdown from '../components/DaisyUI/Dropdown';
 
 import { SkeletonList } from '../components/DaisyUI/Skeleton';
@@ -142,7 +143,7 @@ ${spec.content.replace(/^/gm, '  ')}
             </div>
 
             {/* Footer */}
-            <div className="divider mt-8"></div>
+            <Divider className="mt-8" />
             <div className="flex justify-between items-center">
               <p className="text-sm opacity-70">
                 Last updated: {new Date(spec.timestamp).toLocaleString()}

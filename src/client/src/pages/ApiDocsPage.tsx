@@ -2,6 +2,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Mockup from '../components/DaisyUI/Mockup';
 import { Alert } from '../components/DaisyUI/Alert';
+import Divider from '../components/DaisyUI/Divider';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import { Badge } from '../components/DaisyUI/Badge';
 import { apiService } from '../services/api';
@@ -301,7 +302,7 @@ const RouteCard: React.FC<{ route: RouteInfo }> = ({ route }) => {
           />
         </div>
 
-        <div className="divider" />
+        <Divider />
         <h4 className="font-semibold text-sm mb-2">Live Testing</h4>
 
         <TryItPanel route={route} />

@@ -7,6 +7,7 @@ import Card from '../DaisyUI/Card';
 import { SkeletonGrid } from '../DaisyUI/Skeleton';
 import Toggle from '../DaisyUI/Toggle';
 import { Puzzle, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { Stat } from '../DaisyUI/Stat';
 import { apiService } from '../../services/api';
 
 interface Integration {
@@ -156,15 +157,15 @@ const SettingsIntegrations: React.FC = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="stat bg-base-200/50 rounded-lg p-3">
+        <Stat className="bg-base-200/50 rounded-lg p-3">
           <div className="stat-title text-xs">Total</div>
           <div className="stat-value text-2xl">{integrations.length}</div>
-        </div>
-        <div className="stat bg-base-200/50 rounded-lg p-3">
+        </Stat>
+        <Stat className="bg-base-200/50 rounded-lg p-3">
           <div className="stat-title text-xs">Connected</div>
           <div className="stat-value text-2xl text-success">{connectedCount}</div>
-        </div>
-        <div className="stat bg-base-200/50 rounded-lg p-3">
+        </Stat>
+        <Stat className="bg-base-200/50 rounded-lg p-3">
           <div className="stat-title text-xs">Configured</div>
           <div className="stat-value text-2xl text-info">{configuredCount}</div>
         </div>

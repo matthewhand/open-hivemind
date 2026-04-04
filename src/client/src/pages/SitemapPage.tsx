@@ -13,6 +13,7 @@ import { SkeletonList } from '../components/DaisyUI/Skeleton';
 import { SelectOption } from '../components/DaisyUI/Select';
 import { apiService } from '../services/api';
 import Badge from '../components/DaisyUI/Badge';
+import { Stat, Stats } from '../components/DaisyUI/Stat';
 import { Alert } from '../components/DaisyUI/Alert';
 import Tooltip from '../components/DaisyUI/Tooltip';
 
@@ -186,24 +187,17 @@ const SitemapPage: React.FC = () => {
 
       {/* Statistics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="stats shadow w-full">
-          <div className="stat">
-            <div className="stat-title">Total Pages</div>
-            <div className="stat-value">{sitemapData?.totalUrls || 0}</div>
-            <div className="stat-desc">Indexed URLs</div>
-          </div>
-        </div>
-        <div className="stats shadow w-full">
-          <div className="stat">
-            <div className="stat-title">Last Generated</div>
-            <div className="stat-value text-lg">
-              {sitemapData ? new Date(sitemapData.generated).toLocaleTimeString() : 'N/A'}
-            </div>
-            <div className="stat-desc">
-              {sitemapData ? new Date(sitemapData.generated).toLocaleDateString() : ''}
-            </div>
-          </div>
-        </div>
+        <Stats className="shadow w-full">
+          <Stat title="Total Pages" value={sitemapData?.totalUrls || 0} description="Indexed URLs" />
+        </Stats>
+        <Stats className="shadow w-full">
+          <Stat
+            title="Last Generated"
+            value={sitemapData ? new Date(sitemapData.generated).toLocaleTimeString() : 'N/A'}
+            valueClassName="text-lg"
+            description={sitemapData ? new Date(sitemapData.generated).toLocaleDateString() : ''}
+          />
+        </Stats>
       </div>
 
       {/* Controls */}

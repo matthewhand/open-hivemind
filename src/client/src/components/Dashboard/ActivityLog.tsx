@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useMemo, useState } from 'react';
 import Card from '../DaisyUI/Card';
+import Divider from '../DaisyUI/Divider';
 import { Alert } from '../DaisyUI/Alert';
 import Button from '../DaisyUI/Button';
 import { SkeletonTimeline } from '../DaisyUI/Skeleton';
@@ -56,7 +57,7 @@ const ActivityLog: React.FC = () => {
             {event.errorMessage ? ` (${event.errorMessage})` : ''}
           </div>
         </div>
-        {index < data.events!.length - 1 && <div className="divider my-0" />}
+        {index < data.events!.length - 1 && <Divider className="my-0" />}
       </li>
     ));
   }, [data?.events]);

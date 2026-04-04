@@ -336,7 +336,7 @@ const SystemManagement: React.FC = () => {
           <div className="form-control">
             <label className="cursor-pointer label justify-start gap-4">
               <Checkbox
-                className="checkbox checkbox-primary"
+                variant="primary"
                 checked={useEncryption}
                 onChange={(e) => setUseEncryption(e.target.checked)}
               />

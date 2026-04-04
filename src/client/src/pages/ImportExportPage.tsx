@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { Download, Upload, FileJson, AlertCircle, CheckCircle, X, Settings, Lock, Unlock, Package } from 'lucide-react';
 import Button from '../components/DaisyUI/Button';
+import Checkbox from '../components/DaisyUI/Checkbox';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import FileUpload from '../components/DaisyUI/FileUpload';
 import Modal from '../components/DaisyUI/Modal';
@@ -267,75 +268,50 @@ const ImportExportPage: React.FC = () => {
                 </select>
               </div>
 
-              <div className="form-control">
-                <label className="label cursor-pointer justify-start gap-3">
-                  <input
-                    type="checkbox"
-                    className="checkbox checkbox-primary"
-                    checked={exportOptions.includeVersions}
-                    onChange={(e) =>
-                      setExportOptions({ ...exportOptions, includeVersions: e.target.checked })
-                    }
-                  />
-                  <span className="label-text">Include Version History</span>
-                </label>
-              </div>
+              <Checkbox
+                variant="primary"
+                label="Include Version History"
+                checked={exportOptions.includeVersions}
+                onChange={(e) =>
+                  setExportOptions({ ...exportOptions, includeVersions: e.target.checked })
+                }
+              />
 
-              <div className="form-control">
-                <label className="label cursor-pointer justify-start gap-3">
-                  <input
-                    type="checkbox"
-                    className="checkbox checkbox-primary"
-                    checked={exportOptions.includeAuditLogs}
-                    onChange={(e) =>
-                      setExportOptions({ ...exportOptions, includeAuditLogs: e.target.checked })
-                    }
-                  />
-                  <span className="label-text">Include Audit Logs</span>
-                </label>
-              </div>
+              <Checkbox
+                variant="primary"
+                label="Include Audit Logs"
+                checked={exportOptions.includeAuditLogs}
+                onChange={(e) =>
+                  setExportOptions({ ...exportOptions, includeAuditLogs: e.target.checked })
+                }
+              />
 
-              <div className="form-control">
-                <label className="label cursor-pointer justify-start gap-3">
-                  <input
-                    type="checkbox"
-                    className="checkbox checkbox-primary"
-                    checked={exportOptions.includeTemplates}
-                    onChange={(e) =>
-                      setExportOptions({ ...exportOptions, includeTemplates: e.target.checked })
-                    }
-                  />
-                  <span className="label-text">Include Templates</span>
-                </label>
-              </div>
+              <Checkbox
+                variant="primary"
+                label="Include Templates"
+                checked={exportOptions.includeTemplates}
+                onChange={(e) =>
+                  setExportOptions({ ...exportOptions, includeTemplates: e.target.checked })
+                }
+              />
 
-              <div className="form-control">
-                <label className="label cursor-pointer justify-start gap-3">
-                  <input
-                    type="checkbox"
-                    className="checkbox checkbox-primary"
-                    checked={exportOptions.compress}
-                    onChange={(e) =>
-                      setExportOptions({ ...exportOptions, compress: e.target.checked })
-                    }
-                  />
-                  <span className="label-text">Compress File (gzip)</span>
-                </label>
-              </div>
+              <Checkbox
+                variant="primary"
+                label="Compress File (gzip)"
+                checked={exportOptions.compress}
+                onChange={(e) =>
+                  setExportOptions({ ...exportOptions, compress: e.target.checked })
+                }
+              />
 
-              <div className="form-control">
-                <label className="label cursor-pointer justify-start gap-3">
-                  <input
-                    type="checkbox"
-                    className="checkbox checkbox-primary"
-                    checked={exportOptions.encrypt}
-                    onChange={(e) =>
-                      setExportOptions({ ...exportOptions, encrypt: e.target.checked })
-                    }
-                  />
-                  <span className="label-text">Encrypt Export</span>
-                </label>
-              </div>
+              <Checkbox
+                variant="primary"
+                label="Encrypt Export"
+                checked={exportOptions.encrypt}
+                onChange={(e) =>
+                  setExportOptions({ ...exportOptions, encrypt: e.target.checked })
+                }
+              />
 
               {exportOptions.encrypt && (
                 <div>
@@ -549,9 +525,8 @@ const ImportExportPage: React.FC = () => {
                 >
                   <div className="card-body p-4">
                     <div className="flex items-center gap-3">
-                      <input
-                        type="checkbox"
-                        className="checkbox checkbox-primary"
+                      <Checkbox
+                        variant="primary"
                         checked={exportOptions.configIds.includes(bot.id)}
                         onChange={() => toggleBotSelection(bot.id)}
                       />
@@ -610,62 +585,50 @@ const ImportExportPage: React.FC = () => {
         title="Import Options"
       >
         <div className="space-y-4">
-          <div className="form-control">
-            <label className="label cursor-pointer justify-start gap-3">
-              <input
-                type="checkbox"
-                className="checkbox checkbox-primary"
-                checked={importOptions.overwrite}
-                onChange={(e) =>
-                  setImportOptions({ ...importOptions, overwrite: e.target.checked })
-                }
-              />
-              <div>
-                <span className="label-text font-semibold">Overwrite Existing Configurations</span>
-                <p className="text-sm text-base-content/70">
-                  Replace existing configurations with imported ones
-                </p>
-              </div>
-            </label>
-          </div>
+          <Checkbox
+            variant="primary"
+            checked={importOptions.overwrite}
+            onChange={(e) =>
+              setImportOptions({ ...importOptions, overwrite: e.target.checked })
+            }
+          >
+            <div>
+              <span className="font-semibold">Overwrite Existing Configurations</span>
+              <p className="text-sm text-base-content/70">
+                Replace existing configurations with imported ones
+              </p>
+            </div>
+          </Checkbox>
 
-          <div className="form-control">
-            <label className="label cursor-pointer justify-start gap-3">
-              <input
-                type="checkbox"
-                className="checkbox checkbox-primary"
-                checked={importOptions.validateOnly}
-                onChange={(e) =>
-                  setImportOptions({ ...importOptions, validateOnly: e.target.checked })
-                }
-              />
-              <div>
-                <span className="label-text font-semibold">Validate Only (Dry Run)</span>
-                <p className="text-sm text-base-content/70">
-                  Check file validity without importing
-                </p>
-              </div>
-            </label>
-          </div>
+          <Checkbox
+            variant="primary"
+            checked={importOptions.validateOnly}
+            onChange={(e) =>
+              setImportOptions({ ...importOptions, validateOnly: e.target.checked })
+            }
+          >
+            <div>
+              <span className="font-semibold">Validate Only (Dry Run)</span>
+              <p className="text-sm text-base-content/70">
+                Check file validity without importing
+              </p>
+            </div>
+          </Checkbox>
 
-          <div className="form-control">
-            <label className="label cursor-pointer justify-start gap-3">
-              <input
-                type="checkbox"
-                className="checkbox checkbox-primary"
-                checked={importOptions.skipValidation}
-                onChange={(e) =>
-                  setImportOptions({ ...importOptions, skipValidation: e.target.checked })
-                }
-              />
-              <div>
-                <span className="label-text font-semibold">Skip Validation</span>
-                <p className="text-sm text-base-content/70">
-                  Import without validating (not recommended)
-                </p>
-              </div>
-            </label>
-          </div>
+          <Checkbox
+            variant="primary"
+            checked={importOptions.skipValidation}
+            onChange={(e) =>
+              setImportOptions({ ...importOptions, skipValidation: e.target.checked })
+            }
+          >
+            <div>
+              <span className="font-semibold">Skip Validation</span>
+              <p className="text-sm text-base-content/70">
+                Import without validating (not recommended)
+              </p>
+            </div>
+          </Checkbox>
 
           {selectedFile?.name.endsWith('.enc') && (
             <div>

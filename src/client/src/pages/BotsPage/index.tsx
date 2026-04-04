@@ -207,7 +207,8 @@ const BotsPage: React.FC = () => {
             <>
               <div className="flex items-center gap-2 mb-2">
                 <Checkbox
-                  className="checkbox checkbox-sm checkbox-primary"
+                  variant="primary"
+                  size="sm"
                   checked={bulk.isAllSelected}
                   onChange={() => bulk.toggleAll(filteredBotIds)}
                   aria-label="Select all bots"

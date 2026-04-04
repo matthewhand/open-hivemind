@@ -9,6 +9,7 @@ import { Progress } from './DaisyUI/Loading';
 import { Alert } from './DaisyUI/Alert';
 import Modal from './DaisyUI/Modal';
 import Tabs from './DaisyUI/Tabs';
+import { Stat } from './DaisyUI/Stat';
 
 interface Props {
   isOpen?: boolean;
@@ -67,18 +68,9 @@ const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) =>
 
           {/* Overview Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="stat">
-              <div className="stat-title">Total Components</div>
-              <div className="stat-value text-primary">{stats.totalComponents}</div>
-            </div>
-            <div className="stat">
-              <div className="stat-title">Used Components</div>
-              <div className="stat-value text-success">{stats.usedComponents}</div>
-            </div>
-            <div className="stat">
-              <div className="stat-title">Usage Rate</div>
-              <div className="stat-value text-info">{usagePercentage}%</div>
-            </div>
+            <Stat title="Total Components" value={stats.totalComponents} valueClassName="text-primary" />
+            <Stat title="Used Components" value={stats.usedComponents} valueClassName="text-success" />
+            <Stat title="Usage Rate" value={`${usagePercentage}%`} valueClassName="text-info" />
           </div>
 
           {/* Progress Bar */}

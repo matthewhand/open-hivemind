@@ -2,6 +2,7 @@ import React from 'react';
 import type { AgentConfigCardProps, GuardState } from './types';
 import type { FieldMetadata } from '../../services/api';
 import type { ProviderInfo } from '../../services/providerService';
+import Divider from '../DaisyUI/Divider';
 import Toggle from '../DaisyUI/Toggle';
 import { LoadingSpinner } from '../DaisyUI/Loading';
 import { Badge } from '../DaisyUI/Badge';
@@ -310,7 +311,7 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
         </div>
 
         {/* Status Section */}
-        <div className="divider"></div>
+        <Divider />
 
         <div className="flex items-center gap-2 flex-wrap">
           {connection.icon}

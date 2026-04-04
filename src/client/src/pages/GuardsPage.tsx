@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Shield, RefreshCw, AlertTriangle, Plus, Copy, Trash2, Edit2 } from 'lucide-react';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import Card from '../components/DaisyUI/Card';
+import Divider from '../components/DaisyUI/Divider';
 import Input from '../components/DaisyUI/Input';
 import Button from '../components/DaisyUI/Button';
 import Toggle from '../components/DaisyUI/Toggle';
@@ -243,7 +244,7 @@ const GuardsPage: React.FC = () => {
 
         return (
           <>
-            <div className="divider">Guardrails</div>
+            <Divider>Guardrails</Divider>
 
             <div className="grid grid-cols-1 gap-6">
               {/* Access Control */}

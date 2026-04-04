@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import Avatar from './DaisyUI/Avatar';
 import Button from './DaisyUI/Button';
+import Divider from './DaisyUI/Divider';
 import Dropdown from './DaisyUI/Dropdown';
 import Modal from './DaisyUI/Modal';
 import { Bot as ApiBot, Persona as ApiPersona } from '../services/api';
@@ -148,7 +149,7 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                                         </a>
                                     </li>
                                 ))}
-                                <div className="divider my-1"></div>
+                                <Divider className="my-1" />
                                 <li>
                                     <a href="/admin/integrations/message" target="_blank" rel="noopener noreferrer" className="flex gap-2 items-center text-primary">
                                         <Plus className="w-4 h-4" /> New Messenger
@@ -193,7 +194,7 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                                         <span className="italic opacity-75">System Default</span>
                                     </a>
                                 </li>
-                                <div className="divider my-1"></div>
+                                <Divider className="my-1" />
                                 {llmProfiles.filter(profile => profile.modelType !== 'embedding').map(profile => (
                                     <li key={profile.key}>
                                         <a onClick={() => { onUpdateConfig(bot, 'llmProvider', profile.key); (document.activeElement as HTMLElement)?.blur(); }} className={bot.llmProvider === profile.key ? 'active' : ''}>
@@ -204,7 +205,7 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                                         </a>
                                     </li>
                                 ))}
-                                <div className="divider my-1"></div>
+                                <Divider className="my-1" />
                                 <li>
                                     <a href="/admin/integrations/llm" target="_blank" rel="noopener noreferrer" className="flex gap-2 items-center text-primary">
                                         <Plus className="w-4 h-4" /> New Profile
@@ -249,7 +250,7 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                                         </a>
                                     </li>
                                 ))}
-                                <div className="divider my-1"></div>
+                                <Divider className="my-1" />
                                 <li>
                                     <a onClick={() => {
                                         const newP = prompt('Enter new persona name:');
