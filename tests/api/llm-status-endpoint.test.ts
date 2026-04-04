@@ -37,15 +37,14 @@ jest.mock('../../src/server/middleware/audit', () => ({
 }));
 
 jest.mock('../../src/types/errors', () => {
-  const original = jest.requireActual('../../src/types/errors');
   return {
-    ...original,
     ErrorUtils: {
-      ...original.ErrorUtils,
       toHivemindError: jest.fn((e) => ({
         message: e.message || 'Unknown Error',
         statusCode: 500,
       })),
+      getMessage: jest.fn((e) => e?.message || 'Unknown Error'),
+      getStatusCode: jest.fn((e) => e?.statusCode || 500),
     },
   };
 });
