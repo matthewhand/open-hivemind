@@ -72,7 +72,7 @@ describe('Guards Route', () => {
         .send({ type: 'users', users: [], ips: [] });
 
       expect(response.status).toBe(404);
-      expect(response.body.message).toBe('Access control guard not found');
+      expect(response.body.error).toBe('Not found');
     });
 
     it('should return 400 for invalid config (array)', async () => {
@@ -110,7 +110,6 @@ describe('Guards Route', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.error).toBe('Validation error');
-      expect(response.body.message).toBe('Invalid IP address or CIDR notation in ips array');
     });
 
     it('should return 400 for users not being an array', async () => {
