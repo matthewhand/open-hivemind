@@ -66,7 +66,8 @@ router.post(
   validateRequest(ChatGenerateSchema),
   asyncErrorHandler(async (req, res) => {
     try {
-      const { prompt, systemPrompt } = req.body;
+      const { systemPrompt } = req.body;
+      const prompt = req.body.prompt ?? req.body.message;
       if (!prompt) {
         return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Prompt is required'));
       }
