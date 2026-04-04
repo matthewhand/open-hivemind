@@ -118,7 +118,6 @@ const ProvidersPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         {providerCategories.map((category) => (
           <Card key={category.type} className="bg-base-100 shadow-xl border border-base-300 hover:shadow-2xl transition-shadow duration-200">
-            <div className="card-body">
               {/* Header */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-4">
@@ -126,7 +125,7 @@ const ProvidersPage: React.FC = () => {
                     {category.icon}
                   </div>
                   <div>
-                    <h2 className="card-title text-2xl">{category.title}</h2>
+                    <Card.Title className="text-2xl">{category.title}</Card.Title>
                     <p className="text-base-content/60 mt-1">{category.description}</p>
                   </div>
                 </div>
@@ -161,7 +160,7 @@ const ProvidersPage: React.FC = () => {
               </div>
 
               {/* Action */}
-              <div className="card-actions justify-end">
+              <Card.Actions>
                 <Button
                   variant={category.color}
                   onClick={category.action}
@@ -171,19 +170,17 @@ const ProvidersPage: React.FC = () => {
                   Configure {category.title.split(' ')[0]}
                   <ArrowIcon className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
-              </div>
-            </div>
+              </Card.Actions>
           </Card>
         ))}
       </div>
 
       {/* Quick Start Guide */}
       <Card className="bg-base-100/50 border border-dashed border-base-300">
-        <div className="card-body">
-          <h2 className="card-title text-xl mb-4">
+          <Card.Title className="text-xl mb-4">
             <ConfigIcon className="w-6 h-6 mr-2" />
             Quick Start Guide
-          </h2>
+          </Card.Title>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center">
@@ -216,7 +213,6 @@ const ProvidersPage: React.FC = () => {
               </p>
             </div>
           </div>
-        </div>
       </Card>
     </div>
   );

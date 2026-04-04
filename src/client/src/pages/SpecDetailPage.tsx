@@ -86,8 +86,8 @@ ${spec.content.replace(/^/gm, '  ')}
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="max-w-md">
-          <div className="card-body text-center">
-            <h2 className="card-title text-error">Error Loading Spec</h2>
+          <div className="text-center">
+            <Card.Title className="text-error">Error Loading Spec</Card.Title>
             <p className="opacity-70">{error || 'Specification not found'}</p>
             <Button className="btn-primary" onClick={() => window.history.back()}>
               Go Back
@@ -102,7 +102,6 @@ ${spec.content.replace(/^/gm, '  ')}
     <div className="container mx-auto p-6 max-w-4xl">
       <div className="mt-6">
         <Card className="shadow-lg">
-          <div className="card-body">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-4">
@@ -157,7 +156,6 @@ ${spec.content.replace(/^/gm, '  ')}
                 </Button>
               </div>
             </div>
-          </div>
         </Card>
       </div>
     </div>

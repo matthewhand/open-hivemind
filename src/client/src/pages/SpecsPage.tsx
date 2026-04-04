@@ -58,8 +58,8 @@ const SpecsPage: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="max-w-md">
-          <div className="card-body text-center">
-            <h2 className="card-title text-error">Error Loading Specifications</h2>
+          <div className="text-center">
+            <Card.Title className="text-error">Error Loading Specifications</Card.Title>
             <p className="opacity-70">{error}</p>
             <Button className="btn-primary" onClick={() => window.location.reload()}>
               Try Again
@@ -106,7 +106,6 @@ const SpecsPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         {paginatedSpecs.map((spec) => (
           <Card key={spec.id} className="shadow-lg hover:shadow-xl transition-shadow">
-            <div className="card-body">
               <div className="flex items-start justify-between mb-3">
                 <BookOpen className="w-6 h-6 text-primary flex-shrink-0" />
                 <Badge variant="neutral" size="sm">
@@ -114,7 +113,7 @@ const SpecsPage: React.FC = () => {
                 </Badge>
               </div>
 
-              <h3 className="card-title text-lg mb-2">{spec.topic}</h3>
+              <Card.Title tag="h3" className="text-lg mb-2">{spec.topic}</Card.Title>
               <p className="text-sm opacity-70 mb-4 line-clamp-3">
                 By {spec.author} • {new Date(spec.timestamp).toLocaleDateString()}
               </p>
@@ -132,12 +131,11 @@ const SpecsPage: React.FC = () => {
                 )}
               </div>
 
-              <div className="card-actions justify-end">
+              <Card.Actions>
                 <Button size="sm" className="btn-ghost" onClick={() => handleViewSpec(spec.id)}>
                   View Details
                 </Button>
-              </div>
-            </div>
+              </Card.Actions>
           </Card>
         ))}
       </div>

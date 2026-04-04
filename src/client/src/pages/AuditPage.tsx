@@ -325,8 +325,7 @@ const AuditPage: React.FC = () => {
       />
 
       {/* Filters */}
-      <Card>
-        <div className="card-body p-4">
+      <Card compact>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
             {/* Free-text search */}
             <div className="relative">
@@ -432,7 +431,6 @@ const AuditPage: React.FC = () => {
               </Button>
             </div>
           )}
-        </div>
       </Card>
 
       {/* Error */}

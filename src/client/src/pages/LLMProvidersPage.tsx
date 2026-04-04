@@ -338,8 +338,7 @@ const LLMProvidersPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
 
         {/* 1. System Default (env-var fallback) */}
-        <Card className={`bg-base-100 shadow-sm border ${defaultStatus?.configured ? 'border-success/20' : 'border-warning/20'}`}>
-          <div className="card-body p-5">
+        <Card compact className={`bg-base-100 shadow-sm border ${defaultStatus?.configured ? 'border-success/20' : 'border-warning/20'}`}>
             <div className="flex items-center justify-between mb-1">
               <h3 className="font-bold flex items-center gap-2">
                 <ConfigIcon className="w-4 h-4" /> System Default
@@ -364,12 +363,10 @@ const LLMProvidersPage: React.FC = () => {
                 <span>No default provider in .env. Bots without a profile will fail.</span>
               </Alert>
             )}
-          </div>
         </Card>
 
         {/* 2. Default Chatbot LLM Profile */}
-        <Card className="bg-base-100 shadow-sm border border-base-200">
-          <div className="card-body p-5">
+        <Card compact className="bg-base-100 shadow-sm border border-base-200">
             <h3 className="font-bold flex items-center gap-2 mb-1">
               <ChatIcon className="w-4 h-4 text-primary" /> Default Chatbot Profile
             </h3>
@@ -392,12 +389,10 @@ const LLMProvidersPage: React.FC = () => {
                 ))}
               </select>
             </div>
-          </div>
         </Card>
 
         {/* 3. WebUI Intelligence */}
-        <Card className="bg-base-100 shadow-sm border border-base-200">
-          <div className="card-body p-5">
+        <Card compact className="bg-base-100 shadow-sm border border-base-200">
             <h3 className="font-bold flex items-center gap-2 mb-1">
               <ZapIcon className="w-4 h-4 text-warning" /> WebUI Intelligence
             </h3>
@@ -420,11 +415,9 @@ const LLMProvidersPage: React.FC = () => {
                 ))}
               </select>
             </div>
-          </div>
         </Card>
 
-        <Card className="bg-base-100 shadow-sm border border-base-200">
-          <div className="card-body p-5">
+        <Card compact className="bg-base-100 shadow-sm border border-base-200">
             <h3 className="font-bold flex items-center gap-2 mb-1">
               <CpuIcon className="w-4 h-4 text-secondary" /> Default Embedding Provider
             </h3>
@@ -447,13 +440,12 @@ const LLMProvidersPage: React.FC = () => {
                 ))}
               </select>
             </div>
-          </div>
         </Card>
       </div>
 
       {/* ── Per-use-case toggle ── */}
-      <Card className="bg-base-100 shadow-sm border border-base-200">
-        <div className="card-body p-5 flex flex-row items-center justify-between">
+      <Card compact className="bg-base-100 shadow-sm border border-base-200">
+        <div className="flex flex-row items-center justify-between">
           <div>
             <h3 className="font-bold flex items-center gap-2">
               {perUseCaseEnabled
@@ -477,8 +469,8 @@ const LLMProvidersPage: React.FC = () => {
       </Card>
 
       {perUseCaseEnabled && (
-        <Card className="bg-base-100 shadow-sm border border-base-200">
-          <div className="card-body p-5 space-y-3">
+        <Card compact className="bg-base-100 shadow-sm border border-base-200">
+          <div className="space-y-3">
             <h3 className="font-bold text-sm">Task Profile Assignments</h3>
             <p className="text-xs opacity-60">
               Assign a profile to each task. Tasks without a profile will use the default provider.
@@ -572,7 +564,7 @@ const LLMProvidersPage: React.FC = () => {
         <div className="grid grid-cols-1 gap-4">
           {filteredProfiles.map((profile) => (
             <Card key={profile.key} className="bg-base-100 shadow-sm border border-base-200 transition-all hover:shadow-md">
-              <div className="card-body p-0">
+              <div>
                 <div className="p-4 flex items-center justify-between cursor-pointer" onClick={() => toggleExpand(profile.key)}>
                   <div className="flex items-center gap-4">
                     <Checkbox
