@@ -37,7 +37,6 @@
       "@integrations/flowise/*": ["packages/llm-flowise/src/*"],
       "@integrations/openwebui/*": ["packages/llm-openwebui/src/*"],
       "@integrations/openswarm/*": ["packages/llm-openswarm/src/*"],
-      "@integrations/*": ["src/integrations/*"],
       "@types/*": ["src/types/*"],
       "@src/integrations/slack/*": ["packages/message-slack/src/*"],
       "@src/integrations/mattermost/*": ["packages/message-mattermost/src/*"],
