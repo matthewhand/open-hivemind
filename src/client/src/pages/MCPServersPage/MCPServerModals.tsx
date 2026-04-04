@@ -3,6 +3,7 @@ import { CheckCircle, AlertCircle, Wrench } from 'lucide-react';
 import Button from '../../components/DaisyUI/Button';
 import Modal, { ConfirmModal } from '../../components/DaisyUI/Modal';
 import ModalForm from '../../components/DaisyUI/ModalForm';
+import { LoadingSpinner } from '../../components/DaisyUI/Loading';
 
 interface MCPServer {
   id: string;
@@ -212,7 +213,7 @@ export const MCPServerModals: React.FC<MCPServerModalsProps> = ({
             disabled={isTesting || !selectedServer?.url}
           >
             {isTesting ? (
-              <span className="loading loading-spinner loading-xs" aria-hidden="true"></span>
+              <LoadingSpinner size="xs" />
             ) : (
               'Test'
             )}

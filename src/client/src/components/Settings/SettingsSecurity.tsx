@@ -4,12 +4,14 @@ import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Alert } from '../DaisyUI/Alert';
+import { Badge } from '../DaisyUI/Badge';
 import Button from '../DaisyUI/Button';
 import { SkeletonList } from '../DaisyUI/Skeleton';
 import Input from '../DaisyUI/Input';
 import Toggle from '../DaisyUI/Toggle';
 import FormField from '../DaisyUI/FormField';
 import { Shield, Plus, Trash2 } from 'lucide-react';
+import Tooltip from '../DaisyUI/Tooltip';
 import SecureConfigManager from '../SecureConfigManager';
 import Debug from 'debug';
 import { apiService } from '../../services/api';
@@ -301,9 +303,9 @@ const SettingsSecurity: React.FC = () => {
 
             <div className="flex flex-wrap gap-2">
               {fields.map((field, index) => (
-                <div key={field.id} className="badge badge-lg gap-2 bg-base-300">
+                <Badge key={field.id} size="lg" className="gap-2 bg-base-300">
                   {field.value}
-                  <div className="tooltip" data-tip={`Remove ${field.value}`}>
+                  <Tooltip content={`Remove ${field.value}`}>
                     <Button
                       type="button"
                       variant="ghost"
@@ -314,8 +316,8 @@ const SettingsSecurity: React.FC = () => {
                     >
                       <Trash2 className="w-3 h-3" />
                     </Button>
-                  </div>
-                </div>
+                  </Tooltip>
+                </Badge>
               ))}
               {fields.length === 0 && (
                 <span className="text-base-content/50 text-sm italic">No origins configured</span>

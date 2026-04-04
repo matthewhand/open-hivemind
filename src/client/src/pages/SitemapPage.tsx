@@ -14,6 +14,7 @@ import { SelectOption } from '../components/DaisyUI/Select';
 import { apiService } from '../services/api';
 import Badge from '../components/DaisyUI/Badge';
 import { Alert } from '../components/DaisyUI/Alert';
+import Tooltip from '../components/DaisyUI/Tooltip';
 
 interface SitemapUrl {
   url: string;
@@ -174,11 +175,11 @@ const SitemapPage: React.FC = () => {
             <Button variant="ghost" onClick={handleDownloadXml} className="gap-2">
               <Download className="w-4 h-4" /> XML
             </Button>
-            <div className="tooltip" data-tip="Refresh">
+            <Tooltip content="Refresh">
               <Button variant="ghost" onClick={fetchSitemap} className="btn-circle" aria-label="Refresh">
                 <RefreshCw className="w-4 h-4" />
               </Button>
-            </div>
+            </Tooltip>
           </div>
         }
       />
@@ -247,7 +248,7 @@ const SitemapPage: React.FC = () => {
                       <h3 className="font-mono text-sm break-all font-bold">
                         {url.url}
                       </h3>
-                      <div className="tooltip" data-tip="Open URL">
+                      <Tooltip content="Open URL">
                         <Button
                           variant="ghost"
                           size="xs"
@@ -257,7 +258,7 @@ const SitemapPage: React.FC = () => {
                         >
                           <ExternalLink className="w-4 h-4" />
                         </Button>
-                      </div>
+                      </Tooltip>
                     </div>
 
                     <p className="text-xs text-base-content/70 mb-3">

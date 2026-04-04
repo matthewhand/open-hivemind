@@ -7,6 +7,8 @@ import Button from '../components/DaisyUI/Button';
 import Badge from '../components/DaisyUI/Badge';
 import Modal from '../components/DaisyUI/Modal';
 import Tabs from '../components/DaisyUI/Tabs';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
+import Tooltip from '../components/DaisyUI/Tooltip';
 
 import {
   Store as StoreIcon,
@@ -251,11 +253,11 @@ const MarketplacePage: React.FC = () => {
             <AlertIcon className="w-5 h-5" />
           )}
           <span>{actionMessage.text}</span>
-          <div className="tooltip" data-tip="Dismiss">
+          <Tooltip content="Dismiss">
             <Button variant="ghost" size="xs" onClick={() => setActionMessage(null)} aria-label="Dismiss">
               <CloseIcon className="w-4 h-4" />
             </Button>
-          </div>        </div>
+          </Tooltip>        </div>
       )}
 
       {/* Error State */}
@@ -382,7 +384,7 @@ const MarketplacePage: React.FC = () => {
                           disabled={isBusy}
                         >
                           {actionInProgress === `update-${pkg.name}` ? (
-                            <span className="loading loading-spinner loading-xs" aria-hidden="true"></span>
+                            <LoadingSpinner size="xs" />
                           ) : (
                             <UpdateIcon className="w-4 h-4" />
                           )}
@@ -395,7 +397,7 @@ const MarketplacePage: React.FC = () => {
                           disabled={isBusy}
                         >
                           {actionInProgress === `uninstall-${pkg.name}` ? (
-                            <span className="loading loading-spinner loading-xs" aria-hidden="true"></span>
+                            <LoadingSpinner size="xs" />
                           ) : (
                             <UninstallIcon className="w-4 h-4 text-error" />
                           )}
@@ -482,7 +484,7 @@ const MarketplacePage: React.FC = () => {
                             disabled={isBusy}
                           >
                             {actionInProgress === `update-${pkg.name}` ? (
-                              <span className="loading loading-spinner loading-xs" aria-hidden="true"></span>
+                              <LoadingSpinner size="xs" />
                             ) : (
                               <UpdateIcon className="w-4 h-4" />
                             )}
@@ -495,7 +497,7 @@ const MarketplacePage: React.FC = () => {
                             disabled={isBusy}
                           >
                             {actionInProgress === `uninstall-${pkg.name}` ? (
-                              <span className="loading loading-spinner loading-xs" aria-hidden="true"></span>
+                              <LoadingSpinner size="xs" />
                             ) : (
                               <UninstallIcon className="w-4 h-4 text-error" />
                             )}

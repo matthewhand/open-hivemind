@@ -3,7 +3,7 @@ import Card from './DaisyUI/Card';
 import Input from './DaisyUI/Input';
 import Button from './DaisyUI/Button';
 import { Alert } from './DaisyUI/Alert';
-import { Loading } from './DaisyUI/Loading';
+import { Loading, LoadingSpinner } from './DaisyUI/Loading';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
@@ -111,7 +111,7 @@ const Login: React.FC = () => {
               className="w-full mt-6"
             >
               {isLoading ? (
-                <><span className="loading loading-spinner loading-sm mr-2" aria-hidden="true"></span> Signing in...</>
+                <><LoadingSpinner size="sm" className="mr-2" /> Signing in...</>
               ) : (
                 'Sign In'
               )}

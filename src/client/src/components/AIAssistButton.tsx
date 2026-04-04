@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { apiService } from '../services/api';
 import { useWarningToast } from './DaisyUI/ToastNotification';
+import { LoadingSpinner } from './DaisyUI/Loading';
+import Tooltip from './DaisyUI/Tooltip';
 
 /**
  * Props for the AIAssistButton component.
@@ -50,10 +52,11 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
   };
 
   return (
-    <div
-      className={`tooltip tooltip-right font-normal normal-case text-sm ${error ? 'tooltip-error' : ''}`}
-      data-tip={error || (loading ? 'Generating...' : label)}
-      aria-live="polite"
+    <Tooltip
+      content={error || (loading ? 'Generating...' : label)}
+      position="right"
+      color={error ? 'error' : undefined}
+      className="font-normal normal-case text-sm"
     >
       <button
         type="button"
@@ -63,12 +66,12 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
         aria-label={loading ? `Generating ${label.replace('Generate ', '')}...` : label}
       >
         {loading ? (
-          <span className="loading loading-spinner loading-xs" aria-hidden="true" />
+          <LoadingSpinner size="xs" />
         ) : (
           <Sparkles className="w-4 h-4" />
         )}
       </button>
-    </div>
+    </Tooltip>
   );
 };
 

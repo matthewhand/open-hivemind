@@ -10,6 +10,7 @@ import Button from '../components/DaisyUI/Button';
 import { BarChart3, RefreshCw } from 'lucide-react';
 import { Alert } from '../components/DaisyUI/Alert';
 import { useErrorToast } from '../components/DaisyUI/ToastNotification';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
 
 const AnalyticsDashboard: React.FC = () => {
   const { messageFlow, performanceMetrics } = useWebSocket();
@@ -134,7 +135,7 @@ const AnalyticsDashboard: React.FC = () => {
               onClick={fetchAnalyticsData}
               disabled={isLoading}
             >
-              {isLoading ? <span className="loading loading-spinner loading-sm" aria-hidden="true"></span> : <RefreshCw className="w-4 h-4" />} Refresh
+              {isLoading ? <LoadingSpinner size="sm" /> : <RefreshCw className="w-4 h-4" />} Refresh
             </Button>
           </div>
         }

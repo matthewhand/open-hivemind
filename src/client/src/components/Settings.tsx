@@ -7,6 +7,7 @@ import { ConfigDiffViewer, ConfigDiffConfirmDialog } from './ConfigDiffViewer';
 import AdvancedThemeSwitcher from './DaisyUI/AdvancedThemeSwitcher';
 import { Alert } from './DaisyUI/Alert';
 import Toggle from './DaisyUI/Toggle';
+import { LoadingSpinner } from './DaisyUI/Loading';
 
 const Settings: React.FC = () => {
   const ui = useUIStore((s) => s);
@@ -200,7 +201,7 @@ const Settings: React.FC = () => {
           disabled={saveStatus === 'saving'}
           aria-label="Save Settings"
         >
-          {saveStatus === 'saving' ? <span className="loading loading-spinner" aria-hidden="true"></span> : null}
+          {saveStatus === 'saving' ? <LoadingSpinner /> : null}
           {saveStatus === 'saving' ? 'Saving...' : 'Save Settings'}
         </button>
         <button

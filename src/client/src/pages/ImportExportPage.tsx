@@ -6,6 +6,8 @@ import FileUpload from '../components/DaisyUI/FileUpload';
 import Modal from '../components/DaisyUI/Modal';
 import { Alert } from '../components/DaisyUI/Alert';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
+import ProgressBar from '../components/DaisyUI/ProgressBar';
 import { apiService } from '../services/api';
 import { useQuery } from '@tanstack/react-query';
 
@@ -450,7 +452,7 @@ const ImportExportPage: React.FC = () => {
                   >
                     {isImporting ? (
                       <>
-                        <span className="loading loading-spinner loading-sm"></span>
+                        <LoadingSpinner size="sm" />
                         Importing...
                       </>
                     ) : (
@@ -464,15 +466,7 @@ const ImportExportPage: React.FC = () => {
 
                 {isImporting && importProgress > 0 && (
                   <div className="mt-4">
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>Import Progress</span>
-                      <span>{importProgress}%</span>
-                    </div>
-                    <progress
-                      className="progress progress-primary w-full"
-                      value={importProgress}
-                      max="100"
-                    ></progress>
+                    <ProgressBar value={importProgress} max={100} color="primary" label="Import Progress" showPercentage />
                   </div>
                 )}
 
@@ -535,7 +529,7 @@ const ImportExportPage: React.FC = () => {
           <div className="max-h-96 overflow-y-auto space-y-2">
             {botsLoading ? (
               <div className="flex justify-center py-8">
-                <span className="loading loading-spinner loading-lg"></span>
+                <LoadingSpinner size="lg" />
               </div>
             ) : bots.length === 0 ? (
               <Alert status="info">
@@ -576,15 +570,7 @@ const ImportExportPage: React.FC = () => {
 
           {isExporting && exportProgress > 0 && (
             <div className="mt-4">
-              <div className="flex justify-between text-sm mb-1">
-                <span>Export Progress</span>
-                <span>{exportProgress}%</span>
-              </div>
-              <progress
-                className="progress progress-primary w-full"
-                value={exportProgress}
-                max="100"
-              ></progress>
+              <ProgressBar value={exportProgress} max={100} color="primary" label="Export Progress" showPercentage />
             </div>
           )}
 
@@ -603,7 +589,7 @@ const ImportExportPage: React.FC = () => {
             >
               {isExporting ? (
                 <>
-                  <span className="loading loading-spinner loading-sm"></span>
+                  <LoadingSpinner size="sm" />
                   Exporting...
                 </>
               ) : (
