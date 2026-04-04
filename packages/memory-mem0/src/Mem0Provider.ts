@@ -1,4 +1,5 @@
 import Debug from 'debug';
+import { isSafeUrl } from '@hivemind/shared-types';
 import type {
   IMemoryProvider,
   MemoryEntry,
@@ -57,6 +58,12 @@ export class Mem0Provider implements IMemoryProvider {
       failureThreshold: config.circuitBreaker?.failureThreshold ?? 5,
       resetTimeoutMs: config.circuitBreaker?.resetTimeoutMs ?? 30_000,
       halfOpenMaxAttempts: config.circuitBreaker?.halfOpenMaxAttempts ?? 3,
+    });
+
+    // Validate baseUrl eagerly — isSafeUrl is async so we schedule a check and
+    // throw on the first request if the URL is unsafe.
+    isSafeUrl(this.baseUrl).then((safe) => {
+      if (!safe) throw new Error(`Mem0Provider: baseUrl is not safe: ${this.baseUrl}`);
     });
 
     debug(

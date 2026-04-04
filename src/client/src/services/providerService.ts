@@ -1,4 +1,8 @@
-import axios from 'axios';
+async function apiFetch<T>(url: string): Promise<T> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
 
 export interface ProviderInfo {
   key: string;
@@ -8,11 +12,11 @@ export interface ProviderInfo {
 }
 
 export const getLlmProviders = async (): Promise<ProviderInfo[]> => {
-  const response = await axios.get('/api/admin/llm-providers');
-  return response.data.providers;
+  const data = await apiFetch<{ providers: ProviderInfo[] }>('/api/admin/llm-providers');
+  return data.providers;
 };
 
 export const getMessengerProviders = async (): Promise<ProviderInfo[]> => {
-  const response = await axios.get('/api/admin/messenger-providers');
-  return response.data.providers;
+  const data = await apiFetch<{ providers: ProviderInfo[] }>('/api/admin/messenger-providers');
+  return data.providers;
 };

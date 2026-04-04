@@ -1,7 +1,6 @@
 import fs from 'fs';
-import axios from 'axios';
 import Debug from 'debug';
-import { isSafeUrl } from '@hivemind/shared-types';
+import { http } from '@hivemind/shared-types';
 import openWebUIConfig from './openWebUIConfig';
 import { getSessionKey } from './sessionManager';
 
@@ -36,14 +35,10 @@ export async function uploadKnowledgeFileOnStartup(): Promise<void> {
     };
 
     const targetUrl = apiUrl + '/v1/files';
-    if (!(await isSafeUrl(targetUrl))) {
-      throw new Error('OpenWebUI API URL is not safe to connect to.');
-    }
-
     const fileData = fs.createReadStream(knowledgeFile);
-    const response = await axios.post(targetUrl, fileData, { headers, timeout: 30000 });
+    const response = await http.post<{ fileId: string }>(targetUrl, fileData, { headers: { Authorization: 'Bearer ' + sessionKey, 'Content-Type': 'multipart/form-data' }, timeout: 30000 });
 
-    knowledgeFileId = response.data.fileId;
+    knowledgeFileId = response.fileId;
     if (!knowledgeFileId) {
       throw new Error('Failed to obtain a valid knowledge file ID from the server.');
     }

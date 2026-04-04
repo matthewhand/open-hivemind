@@ -1,6 +1,5 @@
-import axios from 'axios';
 import Debug from 'debug';
-import { isSafeUrl } from '@hivemind/shared-types';
+import { http } from '@hivemind/shared-types';
 import type { IMessage } from '@message/interfaces/IMessage';
 
 const debug = Debug('app:openWebUI:direct');
@@ -25,7 +24,7 @@ export async function generateChatCompletionDirect(
   if (overrides.authHeader) {
     headers['Authorization'] = overrides.authHeader;
   }
-  const client = axios.create({ baseURL, headers, timeout: 15000 });
+  const client = http.create(baseURL, headers);
 
   const messages: Array<{ role: string; content: string }> = [];
   if (systemPrompt && systemPrompt.trim()) {
@@ -43,23 +42,18 @@ export async function generateChatCompletionDirect(
   messages.push({ role: 'user', content: userMessage });
 
   try {
-    const targetUrl = `${baseURL}/chat/completions`;
-    if (!(await isSafeUrl(targetUrl))) {
-      throw new Error('OpenWebUI API URL is not safe to connect to.');
-    }
-
-    const resp = await client.post('/chat/completions', {
+    const data = await client.post<{ choices: Array<{ message: { content: string } }> }>('/chat/completions', {
       model: overrides.model,
       messages,
     });
-    const text = resp?.data?.choices?.[0]?.message?.content;
+    const text = data?.choices?.[0]?.message?.content;
     if (typeof text === 'string' && text.length > 0) {
       return text;
     }
     debug('No choices[0].message.content; returning empty');
     return '';
-  } catch (e: any) {
-    debug('OpenWebUI direct error', e?.message || e);
+  } catch (e: unknown) {
+    debug('OpenWebUI direct error', e instanceof Error ? e.message : e);
     throw new Error('OpenWebUI direct request failed');
   }
 }

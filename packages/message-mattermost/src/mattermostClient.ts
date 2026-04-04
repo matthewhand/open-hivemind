@@ -1,6 +1,5 @@
-import axios, { type AxiosInstance } from 'axios';
 import { Logger } from '@common/logger';
-import { isSafeUrl } from '@hivemind/shared-types';
+import { http, createHttpClient, isHttpError, type HttpClientInstance } from '@hivemind/shared-types';
 import type { MattermostPost } from './MattermostMessage';
 
 const logger = Logger.withContext('MattermostClient');
@@ -44,7 +43,7 @@ interface Team {
 export default class MattermostClient {
   private serverUrl: string;
   private token: string;
-  private api: AxiosInstance;
+  private api: HttpClientInstance;
   private connected = false;
   private me: User | null = null;
   private teamsCache: { data: Team[]; timestamp: number } | null = null;
@@ -57,27 +56,17 @@ export default class MattermostClient {
     this.serverUrl = options.serverUrl.replace(/\/$/, '');
     this.token = options.token;
 
-    this.api = axios.create({
-      baseURL: `${this.serverUrl}/api/v4`,
-      headers: {
-        Authorization: `Bearer ${this.token}`,
-        'Content-Type': 'application/json',
-      },
-      timeout: 10000,
+    this.api = http.create(`${this.serverUrl}/api/v4`, {
+      Authorization: `Bearer ${this.token}`,
     });
   }
 
   async connect(): Promise<void> {
     try {
-      if (!(await isSafeUrl(this.serverUrl))) {
-        throw new Error('Mattermost API URL is not safe to connect to.');
-      }
-      const response = await this.api.get('/users/me');
-      if (response.status === 200) {
-        this.connected = true;
-        this.me = response.data;
-        logger.info('Connected to Mattermost', { username: response.data.username });
-      }
+      const me = await this.api.get<User>('/users/me');
+      this.connected = true;
+      this.me = me;
+      logger.info('Connected to Mattermost', { username: me.username });
     } catch (error: any) {
       logger.error('Failed to connect to Mattermost', { error: error.message });
       throw new Error(`Mattermost connection failed: ${error.message}`);
@@ -92,14 +81,12 @@ export default class MattermostClient {
     try {
       const channelId = await this.resolveChannelId(options.channel);
 
-      const response = await this.api.post('/posts', {
+      return this.api.post<MattermostPost>('/posts', {
         channel_id: channelId,
         message: options.text,
         root_id: options.root_id,
         file_ids: options.file_ids || [],
       });
-
-      return response.data;
     } catch (error: any) {
       logger.error('Failed to post message', { error: error.message });
       throw error;
@@ -108,12 +95,10 @@ export default class MattermostClient {
 
   async getChannelPosts(channelId: string, page = 0, perPage = 60): Promise<MattermostPost[]> {
     try {
-      const response = await this.api.get(`/channels/${channelId}/posts`, {
+      const data = await this.api.get<{ posts: Record<string, MattermostPost> }>(`/channels/${channelId}/posts`, {
         params: { page, per_page: perPage },
       });
-
-      const posts = response.data.posts;
-      return Object.values(posts) as MattermostPost[];
+      return Object.values(data.posts);
     } catch (error: any) {
       logger.error('Failed to get channel posts', { channelId, error: error.message });
       return [];
@@ -122,8 +107,7 @@ export default class MattermostClient {
 
   async getUser(userId: string): Promise<User | null> {
     try {
-      const response = await this.api.get(`/users/${userId}`);
-      return response.data;
+      return this.api.get<User>(`/users/${userId}`);
     } catch (error) {
       return null;
     }
@@ -131,8 +115,7 @@ export default class MattermostClient {
 
   async getChannel(channelId: string): Promise<Channel | null> {
     try {
-      const response = await this.api.get(`/channels/${channelId}`);
-      return response.data;
+      return this.api.get<Channel>(`/channels/${channelId}`);
     } catch (error) {
       return null;
     }
@@ -149,8 +132,7 @@ export default class MattermostClient {
 
   async getChannelByName(teamId: string, channelName: string): Promise<Channel | null> {
     try {
-      const response = await this.api.get(`/teams/${teamId}/channels/name/${channelName}`);
-      return response.data;
+      return this.api.get<Channel>(`/teams/${teamId}/channels/name/${channelName}`);
     } catch (error) {
       return null;
     }
@@ -178,8 +160,7 @@ export default class MattermostClient {
           teams = this.teamsCache.data;
         } else {
           this.teamsCache = null;
-          const teamsResponse = await this.api.get('/users/me/teams');
-          teams = teamsResponse.data;
+          teams = await this.api.get<Team[]>('/users/me/teams');
           this.teamsCache = { data: teams, timestamp: Date.now() };
         }
 
@@ -244,9 +225,8 @@ export default class MattermostClient {
         channel_id: channelId,
         parent_id: parentId || '',
       });
-    } catch (error: any) {
-      // Suppress errors to avoid noisy logs on unsupported servers
-      logger.debug('Mattermost typing indicator failed', { error: error?.message || error });
+    } catch (error: unknown) {
+      logger.debug('Mattermost typing indicator failed', { error: isHttpError(error) ? error.message : error });
     }
   }
 }

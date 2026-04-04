@@ -1,7 +1,6 @@
-import axios from 'axios';
 import Debug from 'debug';
+import { http, isHttpError } from '../../utils/httpClient';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
-import { isSafeUrl } from '../../utils/ssrfGuard';
 
 const debug = Debug('app:integrations:openswarm:OpenSwarmProvider');
 
@@ -37,26 +36,17 @@ export class OpenSwarmProvider implements ILlmProvider {
         throw new Error('OpenSwarm API URL is not safe to connect to.');
       }
 
-      const response = await axios.post(
+      const data = await http.post<{ choices: Array<{ message: { content: string } }> }>(
         targetUrl,
-        {
-          model: teamName,
-          messages: [...historyMessages, { role: 'user', content: userMessage }],
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          timeout: 15000,
-        }
+        { model: teamName, messages: [...historyMessages, { role: 'user', content: userMessage }] },
+        { headers: { Authorization: `Bearer ${this.apiKey}` }, timeout: 15000 }
       );
 
-      return response.data.choices[0]?.message?.content || 'No response';
+      return data.choices[0]?.message?.content || 'No response';
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      debug('ERROR:', 'OpenSwarm API error:', errorMessage);
-      return `Error: ${errorMessage}`;
+      const msg = isHttpError(error) ? error.message : (error instanceof Error ? error.message : String(error));
+      debug('ERROR:', 'OpenSwarm API error:', msg);
+      return `Error: ${msg}`;
     }
   }
 

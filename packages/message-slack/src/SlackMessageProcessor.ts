@@ -1,5 +1,5 @@
-import axios from 'axios';
 import Debug from 'debug';
+import { http } from '../../../utils/httpClient';
 import type { KnownBlock } from '@slack/web-api';
 import { ConfigurationError, NetworkError, ValidationError } from '@src/types/errorClasses';
 import { ErrorUtils } from '@src/types/errors';
@@ -161,12 +161,11 @@ export class SlackMessageProcessor {
                   };
                   if (!contentInfoAny.content && contentInfoAny.file?.url_private) {
                     try {
-                      const contentResponse = await axios.get(contentInfoAny.file.url_private, {
+                      const content = await http.get<string>(contentInfoAny.file.url_private, {
                         headers: { Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}` },
                         timeout: 15000,
                       });
-                      (channelContent as any).content =
-                        contentResponse.data || 'No content available';
+                      (channelContent as any).content = content || 'No content available';
                       debug(
                         `Fetched content from url_private: ${(channelContent as any).content?.substring(0, 50)}...`
                       );
@@ -186,12 +185,11 @@ export class SlackMessageProcessor {
                   contentInfoAny.file &&
                   ['png', 'jpg', 'jpeg', 'gif'].includes(contentInfoAny.file.filetype || '')
                 ) {
-                  const fileResponse = await axios.get(contentInfoAny.file.url_private!, {
+                  const fileData = await http.get<ArrayBuffer>(contentInfoAny.file.url_private!, {
                     headers: { Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}` },
-                    responseType: 'arraybuffer',
                     timeout: 15000,
                   });
-                  const base64Content = Buffer.from(fileResponse.data).toString('base64');
+                  const base64Content = Buffer.from(fileData as any).toString('base64');
                   channelContent = {
                     ...targetContent,
                     content: `data:${contentInfoAny.file.mimetype};base64,${base64Content}`,

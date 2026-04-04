@@ -10,7 +10,6 @@ import Select from '../DaisyUI/Select';
 import FormField from '../DaisyUI/FormField';
 import { Bot, Link as LinkIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
 import Debug from 'debug';
 import { useSavedStamp } from '../../contexts/SavedStampContext';
 const debug = Debug('app:client:components:Settings:SettingsLLM');
@@ -47,16 +46,18 @@ const SettingsLLM: React.FC = () => {
             setLoading(true);
 
             // Fetch global config to get the default LLM
-            const configRes = await axios.get('/api/config/global');
-            const rawConfig = configRes.data;
+            const configRes = await fetch('/api/config/global');
+            const configData = await configRes.json();
+            const rawConfig = configData;
             const llmData = rawConfig?.llm?.values ?? rawConfig;
 
             const currentDefault = llmData.LLM_PROVIDER || '';
             reset({ defaultLlm: currentDefault });
 
             // Fetch available LLM providers from the API
-            const providersRes = await axios.get('/api/admin/llm-providers');
-            const availableProviders = Array.isArray(providersRes.data?.providers) ? providersRes.data.providers : (Array.isArray(providersRes.data) ? providersRes.data : []);
+            const providersRes = await fetch('/api/admin/llm-providers');
+            const providersData = await providersRes.json();
+            const availableProviders = Array.isArray(providersData?.providers) ? providersData.providers : (Array.isArray(providersData) ? providersData : []);
             const options = availableProviders.map((p: any) => ({
                 value: p.key,
                 label: p.label,
@@ -81,10 +82,10 @@ const SettingsLLM: React.FC = () => {
     const onSubmit = async (values: LLMConfig) => {
         setIsSaving(true);
         try {
-            await axios.put('/api/config/global', {
-                llm: {
-                    LLM_PROVIDER: values.defaultLlm,
-                },
+            await fetch('/api/config/global', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ llm: { LLM_PROVIDER: values.defaultLlm } }),
             });
 
             setAlert({ type: 'success', message: 'LLM settings saved successfully!' });
