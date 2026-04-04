@@ -183,13 +183,13 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
                           />
                           <span className="font-medium text-sm">{persona.name}</span>
                           {persona.isBuiltIn && (
-                            <Badge variant="info" size="xs" className="badge-outline">
+                            <Badge variant="info" size="xs" style="outline">
                               BUILTIN
                             </Badge>
                           )}
                         </div>
                         {showUsage && persona.usageCount > 0 && (
-                          <Badge variant="neutral" size="xs" className="badge-ghost">
+                          <Badge variant="ghost" size="xs">
                             {persona.usageCount}
                           </Badge>
                         )}
@@ -328,12 +328,12 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
                       />
                       <h4 className="font-semibold">{persona.name}</h4>
                       {persona.isBuiltIn && (
-                        <Badge variant="info" size="xs" className="badge-outline">
+                        <Badge variant="info" size="xs" style="outline">
                           BUILTIN
                         </Badge>
                       )}
                       {showUsage && persona.usageCount > 0 && (
-                        <Badge variant="neutral" size="xs" className="badge-ghost">
+                        <Badge variant="ghost" size="xs">
                           {persona.usageCount} uses
                         </Badge>
                       )}
@@ -347,13 +347,13 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
                           key={index}
                           variant="neutral"
                           size="xs"
-                          className="badge-outline"
+                          style="outline"
                         >
                           {trait.name}: {trait.value}
                         </Badge>
                       ))}
                       {persona.traits.length > 3 && (
-                        <Badge variant="neutral" size="xs" className="badge-ghost">
+                        <Badge variant="ghost" size="xs">
                           +{persona.traits.length - 3} more
                         </Badge>
                       )}

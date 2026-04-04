@@ -6,6 +6,7 @@ import {
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 import Modal from './DaisyUI/Modal';
+import Mockup from './DaisyUI/Mockup';
 import { Alert } from './DaisyUI/Alert';
 import { logger } from '../utils/logger';
 
@@ -165,16 +166,9 @@ const ToolResultModal: React.FC<ToolResultModalProps> = ({ isOpen, onClose, resu
               )}
             </button>
           </div>
-          <div className="mockup-code bg-base-300 max-h-48 overflow-auto">
-            <pre className="px-4 py-2">
-              {/* SECURITY: Safe use of dangerouslySetInnerHTML - see renderJsonWithHighlighting() */}
-              <code
-                dangerouslySetInnerHTML={{
-                  __html: renderJsonWithHighlighting(result.arguments),
-                }}
-              />
-            </pre>
-          </div>
+          <Mockup type="code" content={
+            <span dangerouslySetInnerHTML={{ __html: renderJsonWithHighlighting(result.arguments) }} />
+          } className="bg-base-300 max-h-48 overflow-auto" />
         </div>
 
         {/* Result or Error */}
@@ -213,11 +207,7 @@ const ToolResultModal: React.FC<ToolResultModalProps> = ({ isOpen, onClose, resu
                     <summary className="cursor-pointer text-sm opacity-80 hover:opacity-100">
                       Stack Trace
                     </summary>
-                    <div className="mockup-code bg-base-100/10 mt-2 max-h-64 overflow-auto">
-                      <pre className="px-4 py-2 text-xs">
-                        <code>{result.error.stack}</code>
-                      </pre>
-                    </div>
+                    <Mockup type="code" content={result.error.stack} className="bg-base-100/10 mt-2 max-h-64 overflow-auto" />
                   </details>
                 )}
               </div>
@@ -244,16 +234,9 @@ const ToolResultModal: React.FC<ToolResultModalProps> = ({ isOpen, onClose, resu
                 )}
               </button>
             </div>
-            <div className="mockup-code bg-base-300 max-h-96 overflow-auto">
-              <pre className="px-4 py-2">
-                {/* SECURITY: Safe use of dangerouslySetInnerHTML - see renderJsonWithHighlighting() */}
-                <code
-                  dangerouslySetInnerHTML={{
-                    __html: renderJsonWithHighlighting(result.result),
-                  }}
-                />
-              </pre>
-            </div>
+            <Mockup type="code" content={
+              <span dangerouslySetInnerHTML={{ __html: renderJsonWithHighlighting(result.result) }} />
+            } className="bg-base-300 max-h-96 overflow-auto" />
           </div>
         )}
 

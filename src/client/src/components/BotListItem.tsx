@@ -38,7 +38,7 @@ export const BotListItem: React.FC<BotListItemProps> = ({
         aria-current={isSelected ? 'true' : undefined}
       >
         <Indicator
-          item={<Badge color={bot.connected ? 'success' : undefined} className="badge-xs p-0 w-3 h-3" />}
+          item={<Badge color={bot.connected ? 'success' : undefined} size="xs" className="p-0 w-3 h-3" />}
           verticalPosition="bottom"
           horizontalPosition="end"
         >

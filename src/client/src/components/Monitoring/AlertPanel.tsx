@@ -126,7 +126,7 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
   return (
     <Card className={`shadow-xl ${className}`}>
         <div className="flex justify-between items-center mb-6">
-          <h2 className="card-title">Alerts & Notifications</h2>
+          <Card.Title>Alerts & Notifications</Card.Title>
           <div className="flex gap-2">
             <Badge variant="error" className="gap-2">
               {getAlertCountByType('error')} Errors

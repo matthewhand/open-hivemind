@@ -14,6 +14,7 @@ import FormField from '../components/DaisyUI/FormField';
 import ProgressBar from '../components/DaisyUI/ProgressBar';
 import StepWizard from '../components/DaisyUI/StepWizard';
 import { Alert } from '../components/DaisyUI/Alert';
+import { Badge } from '../components/DaisyUI/Badge';
 import { apiService } from '../services/api';
 import Card from '../components/DaisyUI/Card';
 import Select from '../components/DaisyUI/Select';
@@ -270,7 +271,7 @@ const ConnectMessengerStep: React.FC<ConnectMessengerStepProps> = ({ form }) => 
       <div className="space-y-2 text-sm">
         <p>1. Go to <a href="https://api.slack.com/apps" target="_blank" rel="noreferrer" className="link link-primary">Slack API Apps</a></p>
         <p>2. Create a New App from scratch</p>
-        <p>3. Under OAuth &amp; Permissions, add bot scopes: <code className="badge badge-sm">chat:write</code>, <code className="badge badge-sm">channels:read</code>, <code className="badge badge-sm">app_mentions:read</code></p>
+        <p>3. Under OAuth &amp; Permissions, add bot scopes: <Badge size="sm">chat:write</Badge>, <Badge size="sm">channels:read</Badge>, <Badge size="sm">app_mentions:read</Badge></p>
         <p>4. Install to your workspace and copy the Bot User OAuth Token</p>
       </div>
     ),
