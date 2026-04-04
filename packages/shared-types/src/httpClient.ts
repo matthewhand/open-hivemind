@@ -35,18 +35,19 @@ async function request<T>(
   body?: unknown,
   options: RequestOptions = {}
 ): Promise<T> {
-  if (!(await isSafeUrl(url))) {
-    throw new HttpError(0, null, `SSRF protection: URL is not safe to connect to: ${url}`);
-  }
-
   const { headers = {}, params, signal, timeout } = options;
 
+  // Build full URL with params before SSRF check so the check covers the final URL
   let fullUrl = url;
   if (params && Object.keys(params).length > 0) {
     const qs = new URLSearchParams(
       Object.entries(params).map(([k, v]) => [k, String(v)])
     ).toString();
     fullUrl = `${url}?${qs}`;
+  }
+
+  if (!(await isSafeUrl(fullUrl))) {
+    throw new HttpError(0, null, `SSRF protection: URL is not safe to connect to: ${fullUrl}`);
   }
 
   const controller = new AbortController();
@@ -80,7 +81,12 @@ async function request<T>(
 
     if (response.status === 204) return undefined as unknown as T;
 
-    return response.json() as Promise<T>;
+    // Gracefully handle non-JSON responses
+    const contentType = response.headers.get('content-type') ?? '';
+    if (contentType.includes('application/json')) {
+      return response.json() as Promise<T>;
+    }
+    return response.text() as unknown as Promise<T>;
   } finally {
     if (timer) clearTimeout(timer);
   }
@@ -89,6 +95,14 @@ async function request<T>(
 export function createHttpClient(baseURL: string, defaultHeaders: Record<string, string> = {}): HttpClientInstance {
   const base = baseURL.replace(/\/$/, '');
 
+  const resolvePath = (path: string): string => {
+    // Prevent path traversal escaping the base URL (e.g. //evil.com or absolute URLs)
+    if (/^https?:\/\//i.test(path) || path.startsWith('//')) {
+      throw new HttpError(0, null, `SSRF protection: absolute path not allowed in http.create() instance: ${path}`);
+    }
+    return `${base}${path.startsWith('/') ? path : `/${path}`}`;
+  };
+
   const mergeOptions = (options: RequestOptions = {}): RequestOptions => ({
     ...options,
     headers: { ...defaultHeaders, ...options.headers },
@@ -96,13 +110,13 @@ export function createHttpClient(baseURL: string, defaultHeaders: Record<string,
 
   return {
     get: <T>(path: string, options?: RequestOptions) =>
-      request<T>('GET', `${base}${path}`, undefined, mergeOptions(options)),
+      request<T>('GET', resolvePath(path), undefined, mergeOptions(options)),
     post: <T>(path: string, body?: unknown, options?: RequestOptions) =>
-      request<T>('POST', `${base}${path}`, body, mergeOptions(options)),
+      request<T>('POST', resolvePath(path), body, mergeOptions(options)),
     put: <T>(path: string, body?: unknown, options?: RequestOptions) =>
-      request<T>('PUT', `${base}${path}`, body, mergeOptions(options)),
+      request<T>('PUT', resolvePath(path), body, mergeOptions(options)),
     delete: <T>(path: string, options?: RequestOptions) =>
-      request<T>('DELETE', `${base}${path}`, undefined, mergeOptions(options)),
+      request<T>('DELETE', resolvePath(path), undefined, mergeOptions(options)),
   };
 }
 
