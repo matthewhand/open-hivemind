@@ -49,7 +49,6 @@ export function registerServices(): void {
     useValue: SecureConfigManager.getInstance(),
   });
 
-
   logger.warn(
     'UserConfigStore is being registered a second time; this will override the first registration'
   );
