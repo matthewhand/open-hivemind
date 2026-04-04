@@ -206,16 +206,6 @@ const BotCard: React.FC<BotCardProps> = ({
               <Alert status="error" className="py-2 mt-2">
                 <span className="text-xs">{bot.error}</span>
               </Alert>
-              <div
-                className="alert alert-error py-2 mt-2"
-                role="alert"
-                aria-live="assertive"
-                aria-describedby="bot-error-message"
-              >
-                <span className="text-xs" id="bot-error-message">
-                  {bot.error}
-                </span>
-              </div>
             )}
           </div>
 
@@ -414,14 +404,6 @@ const BotCard: React.FC<BotCardProps> = ({
           <Alert status="warning" className="py-3 mt-4">
             <span className="text-xs">
               This bot has no providers configured. Add message and LLM providers before starting.
-          <div
-            className="alert alert-warning py-3 mt-4"
-            role="alert"
-            aria-live="polite"
-            aria-describedby="missing-providers-warning"
-          >
-            <span className="text-xs" id="missing-providers-warning">
-              ⚠️ This bot has no providers configured. Add message and LLM providers before starting.
             </span>
           </Alert>
         )}
