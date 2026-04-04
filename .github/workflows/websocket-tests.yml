@@ -18,11 +18,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
         with:
           version: 10
+
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -40,7 +41,7 @@ jobs:
           echo "=== WebSocket tests currently disabled due to stalling issues ==="
           echo "=== Files renamed to .disabled to prevent CI stalls ==="
           # If we need to test them, run with extreme timeout limits
-          # NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config node_modules/.bin/jest \
+          # NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config ./node_modules/jest/bin/jest.js \
           #   tests/unit/webui/websocket.test.ts.disabled \
           #   --testTimeout=5000 \
           #   --verbose \
@@ -58,11 +59,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
         with:
           version: 10
+
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -76,7 +78,7 @@ jobs:
 
       - name: Run E2E tests
         run: |
-          NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config node_modules/.bin/jest \
+          NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config ./node_modules/jest/bin/jest.js \
             tests/e2e/ \
             --testTimeout=30000 \
             --verbose \
@@ -93,11 +95,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
         with:
           version: 10
+
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -111,7 +114,7 @@ jobs:
 
       - name: Run admin tests
         run: |
-          NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config node_modules/.bin/jest \
+          NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config ./node_modules/jest/bin/jest.js \
             tests/admin/ \
             --testTimeout=15000 \
             --verbose \
