@@ -1,6 +1,7 @@
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { webUIStorage } from '../../storage/webUIStorage';
 import { HTTP_STATUS } from '../../types/constants';
 import {
@@ -8,7 +9,6 @@ import {
   UpdateAccessControlSchema,
 } from '../../validation/schemas/guardsSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const router = Router();
 const debug = Debug('app:webui:guards');

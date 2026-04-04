@@ -423,7 +423,7 @@ const BotCard: React.FC<BotCardProps> = ({
             <span className="text-xs" id="missing-providers-warning">
               ⚠️ This bot has no providers configured. Add message and LLM providers before starting.
             </span>
-          </div>
+          </Alert>
         )}
 
         {/* Provider Configuration Modal */}

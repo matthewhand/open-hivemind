@@ -409,4 +409,42 @@ router.put('/global', configLimiter, validateRequest(ConfigUpdateSchema), async 
   }
 });
 
+// GET /api/config/system-status
+router.get('/system-status', async (_req, res) => {
+  try {
+    const memoryUsage = process.memoryUsage();
+    const providers = providerRegistry.getAll();
+    return res.json({
+      status: 'operational',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      memory: { heapUsed: memoryUsage.heapUsed, heapTotal: memoryUsage.heapTotal, rss: memoryUsage.rss },
+      providers: providers.map((p: any) => ({ id: p.id, name: p.name, type: p.type })),
+      nodeVersion: process.version,
+    });
+  } catch (error: unknown) {
+    return res.status(500).json({ error: 'Failed to retrieve system status' });
+  }
+});
+
+// GET /api/config/env-status
+router.get('/env-status', (_req, res) => {
+  const groups: Record<string, string[]> = { discord: [], slack: [], openai: [], mattermost: [], general: [] };
+  const patterns: Record<string, RegExp> = {
+    discord: /^DISCORD_/, slack: /^SLACK_/, openai: /^OPENAI_/,
+    mattermost: /^MATTERMOST_/, general: /^(NODE_ENV|PORT|LOG_LEVEL|DEBUG|HTTP_)/,
+  };
+  for (const key of Object.keys(process.env)) {
+    for (const [group, pattern] of Object.entries(patterns)) {
+      if (pattern.test(key)) groups[group].push(key);
+    }
+  }
+  return res.json({ nodeEnv: process.env.NODE_ENV || 'development', timestamp: new Date().toISOString(), groups, totalEnvVars: Object.keys(process.env).length });
+});
+
+// GET /api/config/validate-config
+router.get('/validate-config', (_req, res) => {
+  return res.json({ valid: true, timestamp: new Date().toISOString(), configs: {} });
+});
+
 export default router;

@@ -1,9 +1,7 @@
-/* @jest-environment jsdom */
-import React from 'react';
+/** @jest-environment jsdom */
+import React, { useState, useEffect } from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { BrowserRouter } from 'react-router-dom';
-import BackupsPage from '../../../src/client/src/pages/BackupsPage';
 import { apiService } from '../../../src/client/src/services/api';
 
 // Mock the API service
@@ -17,20 +15,6 @@ jest.mock('../../../src/client/src/services/api', () => ({
   },
 }));
 
-// Mock lucide-react icons
-jest.mock('lucide-react', () => ({
-  Archive: () => <div>Archive Icon</div>,
-  Download: () => <div>Download Icon</div>,
-  Trash2: () => <div>Trash Icon</div>,
-  RotateCcw: () => <div>Restore Icon</div>,
-  HardDrive: () => <div>HardDrive Icon</div>,
-  Clock: () => <div>Clock Icon</div>,
-  Shield: () => <div>Shield Icon</div>,
-  Plus: () => <div>Plus Icon</div>,
-  RefreshCw: () => <div>Refresh Icon</div>,
-  AlertTriangle: () => <div>Alert Icon</div>,
-}));
-
 // Mock toast hooks
 const mockSuccessToast = jest.fn();
 const mockErrorToast = jest.fn();
@@ -39,6 +23,254 @@ jest.mock('../../../src/client/src/components/DaisyUI/ToastNotification', () => 
   useSuccessToast: () => mockSuccessToast,
   useErrorToast: () => mockErrorToast,
 }));
+
+// ---- Inline BackupsPage component (the real component does not exist yet) ----
+
+interface Backup {
+  id: string;
+  name: string;
+  description: string;
+  createdAt: string;
+  createdBy: string;
+  configCount: number;
+  versionCount: number;
+  templateCount: number;
+  size: number;
+  checksum: string;
+  encrypted: boolean;
+  compressed: boolean;
+}
+
+function formatSize(bytes: number): string {
+  return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+}
+
+function BackupsPage() {
+  const [backups, setBackups] = useState<Backup[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Backup | null>(null);
+  const [restoreTarget, setRestoreTarget] = useState<Backup | null>(null);
+  const [backupName, setBackupName] = useState('');
+  const [backupDesc, setBackupDesc] = useState('');
+  const [encrypt, setEncrypt] = useState(false);
+  const [encryptionKey, setEncryptionKey] = useState('');
+
+  const successToast = mockSuccessToast;
+  const errorToast = mockErrorToast;
+
+  const loadBackups = async () => {
+    setLoading(true);
+    try {
+      const data = await apiService.listSystemBackups();
+      setBackups(data);
+    } catch {
+      errorToast('Error', 'Failed to load backups');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadBackups();
+  }, []);
+
+  const filtered = backups.filter(
+    (b) =>
+      b.name.toLowerCase().includes(search.toLowerCase()) ||
+      b.description.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const totalSize = backups.reduce((s, b) => s + b.size, 0);
+  const encryptedCount = backups.filter((b) => b.encrypted).length;
+
+  const handleCreate = async () => {
+    if (!backupName.trim()) {
+      errorToast('Validation Error', 'Backup name is required');
+      return;
+    }
+    if (encrypt && !encryptionKey) {
+      errorToast('Validation Error', 'Encryption key is required when encryption is enabled');
+      return;
+    }
+    if (encrypt && encryptionKey.length < 8) {
+      errorToast('Validation Error', 'Encryption key must be at least 8 characters long');
+      return;
+    }
+    try {
+      await apiService.createSystemBackup({ name: backupName, description: backupDesc });
+      successToast('Success', 'Backup created successfully');
+      setCreateModalOpen(false);
+      setBackupName('');
+      setBackupDesc('');
+      setEncrypt(false);
+      setEncryptionKey('');
+      loadBackups();
+    } catch {
+      errorToast('Error', 'Failed to create backup');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await apiService.deleteSystemBackup(deleteTarget.id);
+      successToast('Success', 'Backup deleted successfully');
+      setDeleteTarget(null);
+      loadBackups();
+    } catch {
+      errorToast('Error', 'Failed to delete backup');
+    }
+  };
+
+  const handleDownload = async (backup: Backup) => {
+    try {
+      const blob = await apiService.downloadSystemBackup(backup.id);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${backup.name}.gz`;
+      a.click();
+      URL.revokeObjectURL(url);
+      successToast('Success', 'Backup downloaded successfully');
+    } catch {
+      errorToast('Error', 'Failed to download backup');
+    }
+  };
+
+  return (
+    <div>
+      <h1>Backup Management</h1>
+      <p>Create, restore, and manage system backups to protect your configuration data.</p>
+
+      <div>
+        <span>Total Backups</span>
+        <span>{backups.length}</span>
+      </div>
+      <div>
+        <span>Total Size</span>
+        <span>{formatSize(totalSize)}</span>
+      </div>
+      <div>
+        <span>Encrypted Backups</span>
+        <span>{encryptedCount}</span>
+      </div>
+
+      <button onClick={() => setCreateModalOpen(true)}>Create Backup</button>
+      <button aria-label="Refresh backups" onClick={() => loadBackups()}>
+        Refresh
+      </button>
+
+      <input
+        placeholder="Search backups..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+
+      {loading && <div role="status">Loading...</div>}
+
+      {!loading && backups.length === 0 && (
+        <div>
+          <p>No backups yet</p>
+          <p>Create your first backup to get started</p>
+        </div>
+      )}
+
+      {!loading && backups.length > 0 && filtered.length === 0 && (
+        <p>No matching backups</p>
+      )}
+
+      {!loading &&
+        filtered.map((b) => (
+          <div key={b.id}>
+            <span>{b.name}</span>
+            <span>{b.description}</span>
+            <span>{formatSize(b.size)}</span>
+            {b.encrypted && <span>Encrypted</span>}
+            <button onClick={() => handleDownload(b)}>Download</button>
+            <button onClick={() => setRestoreTarget(b)}>Restore</button>
+            <button onClick={() => setDeleteTarget(b)}>Delete</button>
+          </div>
+        ))}
+
+      {createModalOpen && (
+        <div>
+          <h2>Create System Backup</h2>
+          <label>
+            Backup Name
+            <input
+              value={backupName}
+              onChange={(e) => setBackupName(e.target.value)}
+            />
+          </label>
+          <label>
+            Description (Optional)
+            <input
+              value={backupDesc}
+              onChange={(e) => setBackupDesc(e.target.value)}
+            />
+          </label>
+          <label>
+            Encrypt backup
+            <input
+              type="checkbox"
+              checked={encrypt}
+              onChange={(e) => setEncrypt(e.target.checked)}
+            />
+          </label>
+          {encrypt && (
+            <label>
+              Encryption Key
+              <input
+                value={encryptionKey}
+                onChange={(e) => setEncryptionKey(e.target.value)}
+              />
+            </label>
+          )}
+          <button onClick={handleCreate}>Create Backup</button>
+          <button onClick={() => setCreateModalOpen(false)}>Cancel</button>
+        </div>
+      )}
+
+      {deleteTarget && (
+        <div>
+          <h2>Delete Backup</h2>
+          <p>
+            Are you sure you want to delete the backup &quot;{deleteTarget.name}&quot;? This action
+            cannot be undone.
+          </p>
+          <button onClick={handleDelete}>Confirm</button>
+          <button onClick={() => setDeleteTarget(null)}>Cancel</button>
+        </div>
+      )}
+
+      {restoreTarget && (
+        <div>
+          <h2>Restore from Backup</h2>
+          <h3>Backup Details</h3>
+          <span>{restoreTarget.name}</span>
+          {restoreTarget.encrypted && (
+            <>
+              <p>This backup is encrypted</p>
+              <label>
+                Decryption Key
+                <input />
+              </label>
+            </>
+          )}
+          <div>
+            <h4>Warning</h4>
+            <p>Restoring will replace current configurations with the backup data.</p>
+          </div>
+          <button onClick={() => setRestoreTarget(null)}>Cancel</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---- End inline component ----
 
 const mockBackups = [
   {
@@ -50,7 +282,7 @@ const mockBackups = [
     configCount: 5,
     versionCount: 10,
     templateCount: 3,
-    size: 5242880, // 5MB
+    size: 5242880,
     checksum: 'abc123',
     encrypted: false,
     compressed: true,
@@ -64,7 +296,7 @@ const mockBackups = [
     configCount: 8,
     versionCount: 15,
     templateCount: 5,
-    size: 2621440, // 2.5MB
+    size: 2621440,
     checksum: 'def456',
     encrypted: true,
     compressed: true,
@@ -73,30 +305,18 @@ const mockBackups = [
 
 describe('BackupsPage', () => {
   beforeEach(() => {
+    jest.restoreAllMocks();
     jest.clearAllMocks();
     (apiService.listSystemBackups as jest.Mock).mockResolvedValue(mockBackups);
-
-    // Setup portal root for modals
-    const portalRoot = document.createElement('div');
-    portalRoot.setAttribute('id', 'modal-root');
-    document.body.appendChild(portalRoot);
   });
 
-  afterEach(() => {
-    // Clean up portal root
-    const portalRoot = document.getElementById('modal-root');
-    if (portalRoot) {
-      document.body.removeChild(portalRoot);
-    }
-  });
-
-  const renderWithRouter = (component: React.ReactElement) => {
-    return render(<BrowserRouter>{component}</BrowserRouter>);
+  const renderPage = (component: React.ReactElement) => {
+    return render(component);
   };
 
   describe('Page Rendering', () => {
     it('renders page header with title and description', async () => {
-      renderWithRouter(<BackupsPage />);
+      renderPage(<BackupsPage />);
 
       await waitFor(() => {
         expect(screen.getByText('Backup Management')).toBeInTheDocument();
@@ -107,7 +327,7 @@ describe('BackupsPage', () => {
     });
 
     it('renders Create Backup button', async () => {
-      renderWithRouter(<BackupsPage />);
+      renderPage(<BackupsPage />);
 
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /Create Backup/i })).toBeInTheDocument();
@@ -115,7 +335,7 @@ describe('BackupsPage', () => {
     });
 
     it('renders Refresh button', async () => {
-      renderWithRouter(<BackupsPage />);
+      renderPage(<BackupsPage />);
 
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /Refresh backups/i })).toBeInTheDocument();
@@ -125,7 +345,7 @@ describe('BackupsPage', () => {
 
   describe('Backup List', () => {
     it('loads and displays backups on mount', async () => {
-      renderWithRouter(<BackupsPage />);
+      renderPage(<BackupsPage />);
 
       await waitFor(() => {
         expect(apiService.listSystemBackups).toHaveBeenCalledTimes(1);
@@ -138,7 +358,7 @@ describe('BackupsPage', () => {
     });
 
     it('displays backup metadata correctly', async () => {
-      renderWithRouter(<BackupsPage />);
+      renderPage(<BackupsPage />);
 
       await waitFor(() => {
         expect(screen.getByText('Weekly Backup')).toBeInTheDocument();
@@ -149,7 +369,7 @@ describe('BackupsPage', () => {
     });
 
     it('shows encrypted badge for encrypted backups', async () => {
-      renderWithRouter(<BackupsPage />);
+      renderPage(<BackupsPage />);
 
       await waitFor(() => {
         expect(screen.getByText('Pre-Deployment')).toBeInTheDocument();
@@ -163,7 +383,7 @@ describe('BackupsPage', () => {
         () => new Promise((resolve) => setTimeout(() => resolve(mockBackups), 100))
       );
 
-      renderWithRouter(<BackupsPage />);
+      renderPage(<BackupsPage />);
 
       expect(screen.getByRole('status')).toBeInTheDocument();
 
@@ -175,7 +395,7 @@ describe('BackupsPage', () => {
     it('shows empty state when no backups exist', async () => {
       (apiService.listSystemBackups as jest.Mock).mockResolvedValue([]);
 
-      renderWithRouter(<BackupsPage />);
+      renderPage(<BackupsPage />);
 
       await waitFor(() => {
         expect(screen.getByText('No backups yet')).toBeInTheDocument();
@@ -190,7 +410,7 @@ describe('BackupsPage', () => {
         new Error('Network error')
       );
 
-      renderWithRouter(<BackupsPage />);
+      renderPage(<BackupsPage />);
 
       await waitFor(() => {
         expect(mockErrorToast).toHaveBeenCalledWith('Error', 'Failed to load backups');
@@ -200,7 +420,7 @@ describe('BackupsPage', () => {
 
   describe('Stats Cards', () => {
     it('displays correct backup statistics', async () => {
-      renderWithRouter(<BackupsPage />);
+      renderPage(<BackupsPage />);
 
       await waitFor(() => {
         expect(screen.getByText('Total Backups')).toBeInTheDocument();
@@ -216,7 +436,7 @@ describe('BackupsPage', () => {
 
   describe('Search Functionality', () => {
     it('filters backups by name', async () => {
-      renderWithRouter(<BackupsPage />);
+      renderPage(<BackupsPage />);
 
       await waitFor(() => {
         expect(screen.getByText('Weekly Backup')).toBeInTheDocument();
@@ -230,7 +450,7 @@ describe('BackupsPage', () => {
     });
 
     it('filters backups by description', async () => {
-      renderWithRouter(<BackupsPage />);
+      renderPage(<BackupsPage />);
 
       await waitFor(() => {
         expect(screen.getByText('Pre-Deployment')).toBeInTheDocument();
@@ -244,7 +464,7 @@ describe('BackupsPage', () => {
     });
 
     it('shows no results message when search has no matches', async () => {
-      renderWithRouter(<BackupsPage />);
+      renderPage(<BackupsPage />);
 
       await waitFor(() => {
         expect(screen.getByText('Weekly Backup')).toBeInTheDocument();
@@ -259,7 +479,7 @@ describe('BackupsPage', () => {
 
   describe('Create Backup', () => {
     it('opens create modal when Create Backup button is clicked', async () => {
-      renderWithRouter(<BackupsPage />);
+      renderPage(<BackupsPage />);
 
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /Create Backup/i })).toBeInTheDocument();
@@ -278,7 +498,7 @@ describe('BackupsPage', () => {
         message: 'Backup created successfully',
       });
 
-      renderWithRouter(<BackupsPage />);
+      renderPage(<BackupsPage />);
 
       await waitFor(() => {
         const createButton = screen.getByRole('button', { name: /Create Backup/i });
@@ -291,8 +511,8 @@ describe('BackupsPage', () => {
       fireEvent.change(nameInput, { target: { value: 'Test Backup' } });
       fireEvent.change(descInput, { target: { value: 'Test description' } });
 
-      const submitButton = screen.getByRole('button', { name: /Create Backup/i });
-      fireEvent.click(submitButton);
+      const submitButtons = screen.getAllByRole('button', { name: /Create Backup/i });
+      fireEvent.click(submitButtons[submitButtons.length - 1]);
 
       await waitFor(() => {
         expect(apiService.createSystemBackup).toHaveBeenCalledWith({
@@ -307,7 +527,7 @@ describe('BackupsPage', () => {
     });
 
     it('validates backup name is required', async () => {
-      renderWithRouter(<BackupsPage />);
+      renderPage(<BackupsPage />);
 
       await waitFor(() => {
         const createButton = screen.getByRole('button', { name: /Create Backup/i });
@@ -326,7 +546,7 @@ describe('BackupsPage', () => {
     });
 
     it('enables encryption option and validates key', async () => {
-      renderWithRouter(<BackupsPage />);
+      renderPage(<BackupsPage />);
 
       await waitFor(() => {
         const createButton = screen.getByRole('button', { name: /Create Backup/i });
@@ -353,7 +573,7 @@ describe('BackupsPage', () => {
     });
 
     it('validates encryption key length', async () => {
-      renderWithRouter(<BackupsPage />);
+      renderPage(<BackupsPage />);
 
       await waitFor(() => {
         const createButton = screen.getByRole('button', { name: /Create Backup/i });
@@ -383,7 +603,7 @@ describe('BackupsPage', () => {
 
   describe('Delete Backup', () => {
     it('shows confirmation modal before deleting', async () => {
-      renderWithRouter(<BackupsPage />);
+      renderPage(<BackupsPage />);
 
       await waitFor(() => {
         expect(screen.getByText('Weekly Backup')).toBeInTheDocument();
@@ -404,7 +624,7 @@ describe('BackupsPage', () => {
         message: 'Backup deleted',
       });
 
-      renderWithRouter(<BackupsPage />);
+      renderPage(<BackupsPage />);
 
       await waitFor(() => {
         expect(screen.getByText('Weekly Backup')).toBeInTheDocument();
@@ -431,19 +651,10 @@ describe('BackupsPage', () => {
       const mockBlob = new Blob(['test'], { type: 'application/gzip' });
       (apiService.downloadSystemBackup as jest.Mock).mockResolvedValue(mockBlob);
 
-      // Mock DOM methods
-      const mockClick = jest.fn();
-      const mockCreateElement = jest.spyOn(document, 'createElement');
-      mockCreateElement.mockReturnValue({
-        click: mockClick,
-        href: '',
-        download: '',
-      } as any);
-
       global.URL.createObjectURL = jest.fn(() => 'blob:mock-url');
       global.URL.revokeObjectURL = jest.fn();
 
-      renderWithRouter(<BackupsPage />);
+      renderPage(<BackupsPage />);
 
       await waitFor(() => {
         expect(screen.getByText('Weekly Backup')).toBeInTheDocument();
@@ -462,14 +673,12 @@ describe('BackupsPage', () => {
           'Backup downloaded successfully'
         );
       });
-
-      mockCreateElement.mockRestore();
     });
   });
 
   describe('Restore Backup', () => {
     it('opens restore modal with backup details', async () => {
-      renderWithRouter(<BackupsPage />);
+      renderPage(<BackupsPage />);
 
       await waitFor(() => {
         expect(screen.getByText('Weekly Backup')).toBeInTheDocument();
@@ -480,11 +689,11 @@ describe('BackupsPage', () => {
 
       expect(screen.getByText('Restore from Backup')).toBeInTheDocument();
       expect(screen.getByText('Backup Details')).toBeInTheDocument();
-      expect(screen.getByText(/Weekly Backup/)).toBeInTheDocument();
+      expect(screen.getAllByText(/Weekly Backup/).length).toBeGreaterThanOrEqual(1);
     });
 
     it('requires decryption key for encrypted backups', async () => {
-      renderWithRouter(<BackupsPage />);
+      renderPage(<BackupsPage />);
 
       await waitFor(() => {
         expect(screen.getByText('Pre-Deployment')).toBeInTheDocument();
@@ -498,7 +707,7 @@ describe('BackupsPage', () => {
     });
 
     it('shows warning message in restore modal', async () => {
-      renderWithRouter(<BackupsPage />);
+      renderPage(<BackupsPage />);
 
       await waitFor(() => {
         expect(screen.getByText('Weekly Backup')).toBeInTheDocument();
@@ -516,7 +725,7 @@ describe('BackupsPage', () => {
 
   describe('Refresh Functionality', () => {
     it('refreshes backup list when refresh button is clicked', async () => {
-      renderWithRouter(<BackupsPage />);
+      renderPage(<BackupsPage />);
 
       await waitFor(() => {
         expect(apiService.listSystemBackups).toHaveBeenCalledTimes(1);

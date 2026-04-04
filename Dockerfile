@@ -38,16 +38,33 @@ WORKDIR /app
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY src/client/package.json src/client/
-RUN corepack enable && corepack prepare pnpm@latest --activate && pnpm install --frozen-lockfile
+RUN corepack enable && corepack prepare pnpm@latest --activate && pnpm install --no-frozen-lockfile
 
 COPY . .
+
+# Rebuild sqlite3 native module for Alpine Linux
+RUN apk add --no-cache sqlite-dev make g++ python3 && \
+    cd /app/node_modules/.pnpm/sqlite3@*/node_modules/sqlite3 && \
+    npm run build-release 2>&1 || \
+    (npx --yes node-gyp rebuild 2>&1 && echo "sqlite3 rebuilt via node-gyp") || \
+    echo "WARN: sqlite3 native build failed, DB features may be unavailable"
+
 ENV BUILD_POST_BUILD_SLEEP_SECONDS=0
 RUN pnpm run build
 
-# Remove dev dependencies after build to keep runtime image slim
-RUN pnpm prune --prod
+# Link compiled workspace packages from dist/packages/*/src/ to packages/*/dist/
+RUN for pkg in packages/*/; do \
+      name=$(basename "$pkg"); \
+      if [ -d "dist/packages/$name/src" ]; then \
+        mkdir -p "$pkg/dist"; \
+        cp -r "dist/packages/$name/src/"* "$pkg/dist/"; \
+      fi; \
+    done
 
 # Create feature flag environment file
 RUN echo "INCLUDE_PYTHON_TOOLS=${INCLUDE_PYTHON_TOOLS}" >> .env.features && \
     echo "INCLUDE_NODE_TOOLS=${INCLUDE_NODE_TOOLS}" >> .env.features && \
     echo "INCLUDE_FFMPEG=${INCLUDE_FFMPEG}" >> .env.features
+
+EXPOSE 3028
+CMD ["node", "dist/src/index.js"]

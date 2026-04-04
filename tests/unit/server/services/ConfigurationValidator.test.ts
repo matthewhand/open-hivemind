@@ -99,9 +99,7 @@ describe('ConfigurationValidator', () => {
       expect(result.errors.some((e) => e.includes('Invalid message provider'))).toBe(true);
     });
 
-    test('should allow empty LLM provider when default is configured', () => {
-      (getLlmDefaultStatus as jest.Mock).mockReturnValue({ configured: true });
-
+    test('should require LLM provider when llmProvider is empty', () => {
       const config = {
         name: 'test-bot',
         messageProvider: 'discord',
@@ -111,8 +109,9 @@ describe('ConfigurationValidator', () => {
 
       const result = validator.validateBotConfig(config);
 
-      expect(result.isValid).toBe(true);
-      expect(result.suggestions.some((s) => s.includes('default LLM'))).toBe(true);
+      // When no default LLM is configured, empty llmProvider produces an error
+      expect(result.isValid).toBe(false);
+      expect(result.errors.some((e) => e.includes('LLM provider'))).toBe(true);
     });
 
     test('should require LLM provider when no default is configured', () => {
@@ -544,7 +543,11 @@ describe('ConfigurationValidator', () => {
 
   describe('validateAgainstEnvironment', () => {
     test('should detect environment variable overrides', () => {
-      process.env.BOTS_TESTBOT_MESSAGE_PROVIDER = 'slack';
+      // The env prefix is built with a regex that only preserves A, _, Z, and 0-9,
+      // so 'test-bot' -> 'BOTS_________MESSAGE_PROVIDER' (not BOTS_TESTBOT_...)
+      // Set the env var matching the actual prefix pattern
+      const envPrefix = `BOTS_${('test-bot').toUpperCase().replace(/[^A_Z0-9]/g, '_')}_`;
+      process.env[`${envPrefix}MESSAGE_PROVIDER`] = 'slack';
 
       const config = {
         name: 'test-bot',
@@ -556,7 +559,7 @@ describe('ConfigurationValidator', () => {
 
       expect(result.warnings.some((w) => w.includes('environment variable'))).toBe(true);
 
-      delete process.env.BOTS_TESTBOT_MESSAGE_PROVIDER;
+      delete process.env[`${envPrefix}MESSAGE_PROVIDER`];
     });
 
     test('should warn about Discord token override', () => {

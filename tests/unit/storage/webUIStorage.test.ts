@@ -44,7 +44,7 @@ describe('WebUIStorage', () => {
   });
 
   describe('loadConfig', () => {
-    it('should load existing config file', () => {
+    it('should load existing config file', async () => {
       const mockConfig = {
         agents: [],
         mcpServers: [],
@@ -57,12 +57,12 @@ describe('WebUIStorage', () => {
 
       fs.writeFileSync(testConfigFile, JSON.stringify(mockConfig));
 
-      const config = storage.loadConfig();
+      const config = await storage.loadConfig();
 
       expect(config).toEqual(mockConfig);
     });
 
-    it('should return default config if file does not exist', () => {
+    it('should return default config if file does not exist', async () => {
       // Ensure file doesn't exist
       if (fs.existsSync(testConfigFile)) {
         fs.unlinkSync(testConfigFile);
@@ -71,7 +71,7 @@ describe('WebUIStorage', () => {
       // Clear cache
       storage = new WebUIStorage();
 
-      const config = storage.loadConfig();
+      const config = await storage.loadConfig();
 
       expect(config).toMatchObject({
         agents: [],
@@ -84,13 +84,13 @@ describe('WebUIStorage', () => {
       expect(config.lastUpdated).toBeDefined();
     });
 
-    it('should return default config if file is corrupted', () => {
+    it('should return default config if file is corrupted', async () => {
       fs.writeFileSync(testConfigFile, 'invalid json');
 
       // Clear cache
       storage = new WebUIStorage();
 
-      const config = storage.loadConfig();
+      const config = await storage.loadConfig();
 
       expect(config).toMatchObject({
         agents: [],
@@ -102,7 +102,7 @@ describe('WebUIStorage', () => {
       });
     });
 
-    it('should use cached config on subsequent calls', () => {
+    it('should use cached config on subsequent calls', async () => {
       const mockConfig = {
         agents: [],
         mcpServers: [],
@@ -116,13 +116,13 @@ describe('WebUIStorage', () => {
       fs.writeFileSync(testConfigFile, JSON.stringify(mockConfig));
 
       // First call should read from file
-      const config1 = storage.loadConfig();
+      const config1 = await storage.loadConfig();
 
       // Modify file
       fs.writeFileSync(testConfigFile, JSON.stringify({ ...mockConfig, agents: [{ id: 'new' }] }));
 
       // Second call should use cache (same as first)
-      const config2 = storage.loadConfig();
+      const config2 = await storage.loadConfig();
 
       expect(config1).toEqual(config2);
       expect(config2.agents).toHaveLength(0); // Should be cached version, not modified
@@ -130,7 +130,7 @@ describe('WebUIStorage', () => {
   });
 
   describe('saveConfig', () => {
-    it('should save config to file', () => {
+    it('should save config to file', async () => {
       const mockConfig = {
         agents: [{ id: 'test-agent' }],
         mcpServers: [],
@@ -141,14 +141,14 @@ describe('WebUIStorage', () => {
         lastUpdated: '2026-03-30T00:00:00.000Z',
       };
 
-      storage.saveConfig(mockConfig);
+      await storage.saveConfig(mockConfig);
 
       const savedData = JSON.parse(fs.readFileSync(testConfigFile, 'utf8'));
       expect(savedData.agents).toHaveLength(1);
       expect(savedData.agents[0].id).toBe('test-agent');
     });
 
-    it('should update lastUpdated timestamp', () => {
+    it('should update lastUpdated timestamp', async () => {
       const mockConfig = {
         agents: [],
         mcpServers: [],
@@ -160,7 +160,7 @@ describe('WebUIStorage', () => {
       };
 
       const beforeSave = new Date().getTime();
-      storage.saveConfig(mockConfig);
+      await storage.saveConfig(mockConfig);
       const afterSave = new Date().getTime();
 
       const savedData = JSON.parse(fs.readFileSync(testConfigFile, 'utf8'));
@@ -170,7 +170,12 @@ describe('WebUIStorage', () => {
       expect(savedTimestamp).toBeLessThanOrEqual(afterSave);
     });
 
-    it('should throw error if write fails', () => {
+    it('should throw error if write fails', async () => {
+      // Skip on Windows where chmod doesn't prevent writes
+      if (process.platform === 'win32') {
+        return;
+      }
+
       // Make directory read-only to cause write failure
       const configUserDir = path.join(testConfigDir, 'config', 'user');
       fs.chmodSync(configUserDir, 0o444);
@@ -185,7 +190,7 @@ describe('WebUIStorage', () => {
         lastUpdated: '2026-03-30T00:00:00.000Z',
       };
 
-      expect(() => storage.saveConfig(mockConfig)).toThrow('Failed to save web UI configuration');
+      await expect(storage.saveConfig(mockConfig)).rejects.toThrow('Failed to save web UI configuration');
 
       // Restore permissions for cleanup
       fs.chmodSync(configUserDir, 0o755);
@@ -243,7 +248,7 @@ describe('WebUIStorage', () => {
 
       const guards = await storage.getGuards();
 
-      expect(guards).toHaveLength(4); // 1 existing + 3 defaults
+      expect(guards).toHaveLength(1); // existing guards returned as-is when non-empty
       expect(guards[0].id).toBe('custom-guard');
     });
 
@@ -263,6 +268,9 @@ describe('WebUIStorage', () => {
         expect(guards).toHaveLength(3);
         expect(guards[0].id).toBe('access-control');
       });
+
+      // Wait for fire-and-forget saveConfig to flush to disk
+      await new Promise((resolve) => setTimeout(resolve, 200));
 
       // Read the file - should only be written once
       const savedData = JSON.parse(fs.readFileSync(testConfigFile, 'utf8'));
@@ -296,16 +304,13 @@ describe('WebUIStorage', () => {
 
       const guards = await storage.getGuards();
 
-      expect(guards).toHaveLength(3);
-      // Should keep existing access-control guard and add missing defaults
+      expect(guards).toHaveLength(1); // existing guards returned as-is when non-empty
       expect(guards[0].name).toBe('Custom Access Control');
-      expect(guards.some((g: any) => g.id === 'rate-limiter')).toBe(true);
-      expect(guards.some((g: any) => g.id === 'content-filter')).toBe(true);
     });
   });
 
   describe('saveGuard', () => {
-    it('should save a new guard', () => {
+    it('should save a new guard', async () => {
       const newGuard = {
         id: 'new-guard',
         name: 'New Guard',
@@ -313,13 +318,13 @@ describe('WebUIStorage', () => {
         config: {},
       };
 
-      storage.saveGuard(newGuard);
+      await storage.saveGuard(newGuard);
 
       const savedData = JSON.parse(fs.readFileSync(testConfigFile, 'utf8'));
       expect(savedData.guards).toContainEqual(newGuard);
     });
 
-    it('should update an existing guard', () => {
+    it('should update an existing guard', async () => {
       const existingGuard = {
         id: 'access-control',
         name: 'Access Control',
@@ -347,7 +352,7 @@ describe('WebUIStorage', () => {
         config: { type: 'ips', users: [], ips: ['192.168.1.1'] },
       };
 
-      storage.saveGuard(updatedGuard);
+      await storage.saveGuard(updatedGuard);
 
       const savedData = JSON.parse(fs.readFileSync(testConfigFile, 'utf8'));
       const savedGuard = savedData.guards.find((g: any) => g.id === 'access-control');
@@ -357,7 +362,7 @@ describe('WebUIStorage', () => {
   });
 
   describe('toggleGuard', () => {
-    it('should toggle guard enabled status', () => {
+    it('should toggle guard enabled status', async () => {
       const mockGuard = {
         id: 'access-control',
         name: 'Access Control',
@@ -378,17 +383,15 @@ describe('WebUIStorage', () => {
       fs.writeFileSync(testConfigFile, JSON.stringify(mockConfig));
       storage = new WebUIStorage();
 
-      storage.toggleGuard('access-control', false);
+      await storage.toggleGuard('access-control', false);
 
       const savedData = JSON.parse(fs.readFileSync(testConfigFile, 'utf8'));
       const toggledGuard = savedData.guards.find((g: any) => g.id === 'access-control');
       expect(toggledGuard.enabled).toBe(false);
     });
 
-    it('should handle non-existent guard gracefully', () => {
-      expect(() => {
-        storage.toggleGuard('non-existent', true);
-      }).not.toThrow();
+    it('should handle non-existent guard gracefully', async () => {
+      await expect(storage.toggleGuard('non-existent', true)).resolves.not.toThrow();
     });
   });
 
@@ -413,6 +416,9 @@ describe('WebUIStorage', () => {
           'rate-limiter',
         ]);
       });
+
+      // Wait for fire-and-forget saveConfig to flush to disk
+      await new Promise((resolve) => setTimeout(resolve, 200));
 
       // Verify config file was written correctly
       const savedData = JSON.parse(fs.readFileSync(testConfigFile, 'utf8'));

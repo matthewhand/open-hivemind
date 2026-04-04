@@ -1,13 +1,46 @@
+/** @jest-environment jsdom */
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { BrowserRouter } from 'react-router-dom';
-import TemplatesPage from '../../../../src/client/src/pages/TemplatesPage';
 import { apiService } from '../../../../src/client/src/services/api';
-import * as useApiQueryModule from '../../../../src/client/src/hooks/useApiQuery';
 
 jest.mock('../../../../src/client/src/services/api');
-jest.mock('../../../../src/client/src/hooks/useApiQuery');
+
+const mockSuccessToast = jest.fn();
+const mockErrorToast = jest.fn();
+
+jest.mock('../../../../src/client/src/components/DaisyUI/ToastNotification', () => ({
+  __esModule: true,
+  default: ({ children }: any) => children,
+  useToast: () => ({
+    addToast: jest.fn(),
+    removeToast: jest.fn(),
+    clearAll: jest.fn(),
+    toasts: [],
+  }),
+  useSuccessToast: () => mockSuccessToast,
+  useErrorToast: () => mockErrorToast,
+  useWarningToast: () => jest.fn(),
+  useInfoToast: () => jest.fn(),
+  ToastProvider: ({ children }: any) => children,
+  NotificationCenter: () => null,
+}));
+
+const mockRefetch = jest.fn().mockResolvedValue({ data: { data: { templates: [] } } });
+const mockUseQuery = jest.fn();
+
+jest.mock('@tanstack/react-query', () => ({
+  useQuery: (...args: any[]) => mockUseQuery(...args),
+  useQueryClient: () => ({ invalidateQueries: jest.fn() }),
+  QueryClient: jest.fn(),
+  QueryClientProvider: ({ children }: any) => children,
+}));
+
+jest.mock('../../../../src/client/src/services/ErrorService', () => ({
+  ErrorService: { report: jest.fn() },
+}));
+
 jest.mock('../../../../src/client/src/hooks/usePageLifecycle', () => ({
   usePageLifecycle: jest.fn(() => ({
     data: {},
@@ -16,6 +49,13 @@ jest.mock('../../../../src/client/src/hooks/usePageLifecycle', () => ({
     refetch: jest.fn(),
   })),
 }));
+
+// Need to lazily import the component AFTER all mocks are set up
+let TemplatesPage: any;
+
+beforeAll(async () => {
+  TemplatesPage = (await import('../../../../src/client/src/pages/TemplatesPage')).default;
+});
 
 const mockTemplates = [
   {
@@ -67,14 +107,12 @@ const renderWithRouter = (component: React.ReactElement) => {
 };
 
 describe('TemplatesPage', () => {
-  const mockUseApiQuery = useApiQueryModule.useApiQuery as jest.Mock;
-
   beforeEach(() => {
-    mockUseApiQuery.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: { data: { templates: mockTemplates } },
-      loading: false,
+      isLoading: false,
       error: null,
-      refetch: jest.fn(),
+      refetch: mockRefetch,
     });
   });
 
@@ -159,10 +197,13 @@ describe('TemplatesPage', () => {
     renderWithRouter(<TemplatesPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('discord')).toBeInTheDocument();
-      expect(screen.getByText('basic')).toBeInTheDocument();
-      expect(screen.getByText('slack')).toBeInTheDocument();
+      expect(screen.getByText('Discord Basic Bot')).toBeInTheDocument();
     });
+
+    // Tags are rendered inside badge spans alongside SVG icons
+    const tagBadges = document.querySelectorAll('.badge-ghost');
+    const tagTexts = Array.from(tagBadges).map((el) => el.textContent?.trim());
+    expect(tagTexts).toEqual(expect.arrayContaining(['discord', 'basic', 'slack']));
   });
 
   it('should display usage count', async () => {
@@ -186,7 +227,6 @@ describe('TemplatesPage', () => {
     fireEvent.click(previewButtons[0]);
 
     await waitFor(() => {
-      expect(screen.getByText('Template Preview')).toBeInTheDocument();
       expect(screen.getByText('Configuration')).toBeInTheDocument();
     });
   });
@@ -202,7 +242,7 @@ describe('TemplatesPage', () => {
     fireEvent.click(applyButtons[0]);
 
     await waitFor(() => {
-      expect(screen.getByText('Creating a bot from template:')).toBeInTheDocument();
+      expect(screen.getByText(/Creating a bot from template/)).toBeInTheDocument();
       expect(screen.getByPlaceholderText('Enter bot name')).toBeInTheDocument();
     });
   });
@@ -313,17 +353,17 @@ describe('TemplatesPage', () => {
   });
 
   it('should handle loading state', () => {
-    mockUseApiQuery.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: null,
-      loading: true,
+      isLoading: true,
       error: null,
-      refetch: jest.fn(),
+      refetch: mockRefetch,
     });
 
     renderWithRouter(<TemplatesPage />);
 
-    // Should show skeleton loader
-    expect(document.querySelector('.animate-pulse')).toBeInTheDocument();
+    // Should show skeleton loader (DaisyUI uses 'skeleton' class)
+    expect(document.querySelector('.skeleton')).toBeInTheDocument();
   });
 
   it('should group templates by category', async () => {

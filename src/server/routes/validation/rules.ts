@@ -2,11 +2,10 @@ import Debug from 'debug';
 import { Router } from 'express';
 import { param } from 'express-validator';
 import { requireAdmin } from '../../../auth/middleware';
-import type { AuthMiddlewareRequest } from '../../../auth/types';
+import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import { HTTP_STATUS } from '../../../types/constants';
 import { ErrorUtils } from '../../../types/errors';
 import { RealTimeValidationService } from '../../services/RealTimeValidationService';
-import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import {
   getErrorResponse,
   handleValidationErrors,
@@ -24,41 +23,45 @@ export function createRuleRoutes(): Router {
    * GET /api/validation/rules
    * Get all validation rules
    */
-  router.get('/api/validation/rules', asyncErrorHandler(async (req, res) => {
-    try {
-      const rules = validationService.getAllRules();
-      return res.json({
-        success: true,
-        data: rules,
-        count: rules.length,
-      });
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(
-        error,
-        'Failed to get validation rules',
-        'VALIDATION_ERROR'
-      );
+  router.get(
+    '/rules',
+    asyncErrorHandler(async (req, res) => {
+      try {
+        const rules = validationService.getAllRules();
+        return res.json({
+          success: true,
+          data: rules,
+          count: rules.length,
+        });
+      } catch (error: unknown) {
+        const hivemindError = ErrorUtils.toHivemindError(
+          error,
+          'Failed to get validation rules',
+          'VALIDATION_ERROR'
+        );
 
-      debug('ERROR:', 'Error in', 'Get validation rules endpoint');
+        debug('ERROR:', 'Error in', 'Get validation rules endpoint');
 
-      const { message, code, timestamp } = getErrorResponse(hivemindError);
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        error: message,
-        code,
-        timestamp,
-      });
-    }
-  }));
+        const { message, code, timestamp } = getErrorResponse(hivemindError);
+        return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+          success: false,
+          error: message,
+          code,
+          timestamp,
+        });
+      }
+    })
+  );
 
   /**
    * GET /api/validation/rules/:ruleId
    * Get a specific validation rule
    */
   router.get(
-    '/api/validation/rules/:ruleId',
+    '/rules/:ruleId',
     param('ruleId').trim().notEmpty(),
-    handleValidationErrors, asyncErrorHandler(async (req, res) => {
+    handleValidationErrors,
+    asyncErrorHandler(async (req, res) => {
       try {
         const { ruleId } = req.params;
         const rule = validationService.getRule(ruleId);
@@ -101,10 +104,11 @@ export function createRuleRoutes(): Router {
    * Create a new validation rule
    */
   router.post(
-    '/api/validation/rules',
+    '/rules',
     requireAdmin,
     validateRuleCreation,
-    handleValidationErrors, asyncErrorHandler(async (req, res) => {
+    handleValidationErrors,
+    asyncErrorHandler(async (req, res) => {
       try {
         // Check if rule already exists
         const existingRule = validationService.getRule(req.body.id);
@@ -162,10 +166,11 @@ export function createRuleRoutes(): Router {
    * Delete a validation rule
    */
   router.delete(
-    '/api/validation/rules/:ruleId',
+    '/rules/:ruleId',
     requireAdmin,
     param('ruleId').trim().notEmpty(),
-    handleValidationErrors, asyncErrorHandler(async (req, res) => {
+    handleValidationErrors,
+    asyncErrorHandler(async (req, res) => {
       try {
         const { ruleId } = req.params;
         const success = validationService.removeRule(ruleId);
@@ -207,41 +212,45 @@ export function createRuleRoutes(): Router {
    * GET /api/validation/profiles
    * Get all validation profiles
    */
-  router.get('/api/validation/profiles', asyncErrorHandler(async (req, res) => {
-    try {
-      const profiles = validationService.getAllProfiles();
-      return res.json({
-        success: true,
-        data: profiles,
-        count: profiles.length,
-      });
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(
-        error,
-        'Failed to get validation profiles',
-        'VALIDATION_ERROR'
-      );
+  router.get(
+    '/profiles',
+    asyncErrorHandler(async (req, res) => {
+      try {
+        const profiles = validationService.getAllProfiles();
+        return res.json({
+          success: true,
+          data: profiles,
+          count: profiles.length,
+        });
+      } catch (error: unknown) {
+        const hivemindError = ErrorUtils.toHivemindError(
+          error,
+          'Failed to get validation profiles',
+          'VALIDATION_ERROR'
+        );
 
-      debug('ERROR:', 'Error in', 'Get validation profiles endpoint');
+        debug('ERROR:', 'Error in', 'Get validation profiles endpoint');
 
-      const { message, code, timestamp } = getErrorResponse(hivemindError);
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        error: message,
-        code,
-        timestamp,
-      });
-    }
-  }));
+        const { message, code, timestamp } = getErrorResponse(hivemindError);
+        return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+          success: false,
+          error: message,
+          code,
+          timestamp,
+        });
+      }
+    })
+  );
 
   /**
    * GET /api/validation/profiles/:profileId
    * Get a specific validation profile
    */
   router.get(
-    '/api/validation/profiles/:profileId',
+    '/profiles/:profileId',
     param('profileId').trim().notEmpty(),
-    handleValidationErrors, asyncErrorHandler(async (req, res) => {
+    handleValidationErrors,
+    asyncErrorHandler(async (req, res) => {
       try {
         const { profileId } = req.params;
         const profile = validationService.getProfile(profileId);
@@ -284,10 +293,11 @@ export function createRuleRoutes(): Router {
    * Create a new validation profile
    */
   router.post(
-    '/api/validation/profiles',
+    '/profiles',
     requireAdmin,
     validateProfileCreation,
-    handleValidationErrors, asyncErrorHandler(async (req, res) => {
+    handleValidationErrors,
+    asyncErrorHandler(async (req, res) => {
       try {
         const createdBy = req.user?.username || 'unknown';
 
@@ -353,10 +363,11 @@ export function createRuleRoutes(): Router {
    * Delete a validation profile
    */
   router.delete(
-    '/api/validation/profiles/:profileId',
+    '/profiles/:profileId',
     requireAdmin,
     param('profileId').trim().notEmpty(),
-    handleValidationErrors, asyncErrorHandler(async (req, res) => {
+    handleValidationErrors,
+    asyncErrorHandler(async (req, res) => {
       try {
         const { profileId } = req.params;
         const success = validationService.removeProfile(profileId);

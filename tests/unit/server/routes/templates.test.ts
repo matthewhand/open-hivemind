@@ -222,7 +222,7 @@ describe('Templates Routes', () => {
         .expect(400);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('Missing required field');
+      expect(response.body.error).toBe('Validation failed');
     });
 
     it('should return 404 if template not found', async () => {
@@ -297,7 +297,7 @@ describe('Templates Routes', () => {
         .expect(400);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('Failed to create template');
+      expect(response.body.error).toBe('Validation failed');
     });
   });
 

@@ -27,7 +27,7 @@ export const BotChatTimeline: React.FC = () => {
                         </div>
                         <Alert status="info" className="py-2 px-3 text-sm">
                             <Check className="w-4 h-4" /> Message received and processed
-                        </div>
+                        </Alert>
                     </div>
                 </li>
                 <li className="step step-primary">

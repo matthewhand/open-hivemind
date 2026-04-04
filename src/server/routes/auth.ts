@@ -3,6 +3,7 @@ import { Router, type Request, type Response } from 'express';
 import { AuthManager } from '../../auth/AuthManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest, LoginCredentials, RegisterData } from '../../auth/types';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { authRateLimiter } from '../../middleware/rateLimiter';
 import { HTTP_STATUS } from '../../types/constants';
 import { validateRequest as validate } from '../../validation/validateRequest';
@@ -17,7 +18,6 @@ import {
   VerifyTokenSchema,
 } from '../schemas/auth.schemas';
 import { ApiResponse } from '../utils/apiResponse';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:AuthRoutes');
 const router = Router();
@@ -237,6 +237,29 @@ router.post(
     }
   })
 );
+
+// GET /api/auth/verify - Verify JWT token from Authorization header
+router.get('/verify', authRateLimiter, async (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json(ApiResponse.error('Bearer token required'));
+    }
+    const token = authHeader.slice(7);
+    const payload = authManager.verifyAccessToken(token) as any;
+    const user = authManager.getUser(payload.userId);
+    if (!user) return res.status(401).json(ApiResponse.error('User not found'));
+    return res.json(
+      ApiResponse.success({
+        user,
+        tokenValid: true,
+        expiresAt: payload.exp ? new Date(payload.exp * 1000).toISOString() : null,
+      })
+    );
+  } catch {
+    return res.status(401).json(ApiResponse.error('Invalid or expired token'));
+  }
+});
 
 router.get('/me', authenticate, (req: Request, res: Response) => {
   const authReq = req as AuthMiddlewareRequest;
