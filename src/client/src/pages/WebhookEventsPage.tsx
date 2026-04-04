@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Badge } from '../components/DaisyUI/Badge';
 import {
   Webhook,
   RefreshCw,

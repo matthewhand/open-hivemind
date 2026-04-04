@@ -36,11 +36,8 @@ RUN if [ "$INCLUDE_FFMPEG" = "true" ]; then \
 
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY src/client/package.json src/client/
-RUN corepack enable && corepack prepare pnpm@latest --activate && pnpm install --no-frozen-lockfile
-
 COPY . .
+RUN corepack enable && corepack prepare pnpm@latest --activate && pnpm install --no-frozen-lockfile
 
 # Rebuild sqlite3 native module for Alpine Linux
 RUN apk add --no-cache sqlite-dev make g++ python3 && \
@@ -65,6 +62,9 @@ RUN for pkg in packages/*/; do \
 RUN echo "INCLUDE_PYTHON_TOOLS=${INCLUDE_PYTHON_TOOLS}" >> .env.features && \
     echo "INCLUDE_NODE_TOOLS=${INCLUDE_NODE_TOOLS}" >> .env.features && \
     echo "INCLUDE_FFMPEG=${INCLUDE_FFMPEG}" >> .env.features
+
+# Ensure runtime directories exist (config/ is excluded by .dockerignore)
+RUN mkdir -p config/uploads data logs
 
 EXPOSE 3028
 CMD ["node", "dist/src/index.js"]

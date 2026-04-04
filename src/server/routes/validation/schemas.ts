@@ -10,7 +10,7 @@ export function createSchemaRoutes(): Router {
   const router = Router();
 
   router.get(
-    '/api/validation/schema',
+    '/schema',
     asyncErrorHandler(async (req, res) => {
       const schema = {
         botConfig: {
