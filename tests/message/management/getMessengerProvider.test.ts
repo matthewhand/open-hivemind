@@ -351,4 +351,36 @@ describe('getMessengerProvider additional branch coverage', () => {
     expect(second.length).toBe(1);
     expect(second[0].provider).toBe('slack');
   });
+
+  it('adds provider name when instantiated service omits provider field', async () => {
+    const { instantiateMessageService } = require('@src/plugins/PluginLoader');
+    instantiateMessageService.mockReturnValueOnce({
+      sendMessageToChannel: jest.fn(),
+      getClientId: jest.fn().mockReturnValue('x'),
+    });
+
+    process.env.MESSAGE_PROVIDER = 'discord';
+    const providers = await getMessengerProvider();
+    expect(providers.length).toBe(1);
+    expect(providers[0].provider).toBe('discord');
+  });
+
+  it('returns empty when instantiated service is null for requested provider', async () => {
+    const { instantiateMessageService } = require('@src/plugins/PluginLoader');
+    instantiateMessageService.mockReturnValueOnce(null);
+
+    process.env.MESSAGE_PROVIDER = 'discord';
+    const providers = await getMessengerProvider();
+    expect(providers).toEqual([]);
+  });
+
+  it('uses cached messengers config between calls', async () => {
+    process.env.MESSAGE_PROVIDER = 'discord';
+
+    await getMessengerProvider();
+    await getMessengerProvider();
+
+    // First call reads config, second call should use in-memory cache
+    expect(mockFsPromises.readFile).toHaveBeenCalledTimes(1);
+  });
 });
