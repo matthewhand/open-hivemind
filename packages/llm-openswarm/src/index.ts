@@ -2,6 +2,7 @@ import type { PluginManifest } from '../../../src/plugins/PluginLoader';
 import { OpenSwarmProvider } from './OpenSwarmProvider';
 
 export { OpenSwarmProvider } from './OpenSwarmProvider';
+export { SwarmInstaller } from './SwarmInstaller';
 
 /** Standard factory — preferred entry point for PluginLoader */
 export function create(_config?: any): OpenSwarmProvider {

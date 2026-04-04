@@ -3,7 +3,7 @@ import path from 'path';
 import Debug from 'debug';
 import { loadMemoryProfiles } from './config/memoryProfiles';
 import { loadToolProfiles } from './config/toolProfiles';
-import { SwarmInstaller } from './integrations/openswarm/SwarmInstaller';
+import { SwarmInstaller } from '@integrations/openswarm/SwarmInstaller';
 import {
   instantiateMemoryProvider,
   instantiateToolProvider,

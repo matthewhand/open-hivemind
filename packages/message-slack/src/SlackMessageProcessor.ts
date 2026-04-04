@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { http } from '../../../utils/httpClient';
+import { http } from '@hivemind/shared-types';
 import type { KnownBlock } from '@slack/web-api';
 import { ConfigurationError, NetworkError, ValidationError } from '@src/types/errorClasses';
 import { ErrorUtils } from '@src/types/errors';

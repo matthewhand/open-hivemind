@@ -1,19 +1,46 @@
 import { exec, spawn } from 'child_process';
-import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
-import { Logger } from '@common/logger';
+import Logger from '@common/logger';
+import { type IToolInstaller } from '@src/types/IToolInstaller';
 
 const execAsync = promisify(exec);
-const logger = Logger.withContext('SwarmInstaller');
 
-export class SwarmInstaller {
+export class SwarmInstaller implements IToolInstaller {
+  id = 'openswarm';
+  label = 'OpenSwarm';
+
   private installPath: string;
 
   constructor() {
     this.installPath = path.join(process.cwd(), 'open-swarm');
   }
 
+  // Interface implementations
+  async checkPrerequisites(): Promise<boolean> {
+    return this.checkPython();
+  }
+
+  async checkInstalled(): Promise<boolean> {
+    return this.checkSwarmInstalled();
+  }
+
+  async install(): Promise<{ success: boolean; message: string }> {
+    return this.installSwarm();
+  }
+
+  async start(config?: any): Promise<{ success: boolean; message: string }> {
+    const port = config?.port || 8000;
+    return this.startSwarm(port);
+  }
+
+  getWebUIUrl(): string {
+    return this.getSwarmWebUIUrl();
+  }
+
+  // Original methods
+  // SECURITY: Command injection safe - these methods execute hardcoded commands
+  // with no user input. The commands are static strings with predefined arguments.
   async checkPython(): Promise<boolean> {
     try {
       await execAsync('python3 --version');
@@ -47,7 +74,8 @@ export class SwarmInstaller {
         return { success: true, message: 'OpenSwarm already installed' };
       }
 
-      logger.info('Installing OpenSwarm via pip');
+      Logger.info('Installing OpenSwarm via pip...');
+      // SECURITY: No user input - hardcoded package name
       await execAsync('pip install open-swarm');
 
       return { success: true, message: 'OpenSwarm installed successfully via pip' };
@@ -56,9 +84,10 @@ export class SwarmInstaller {
     }
   }
 
-  async startSwarm(port: number = 8000): Promise<{ success: boolean; message: string }> {
+  async startSwarm(port = 8000): Promise<{ success: boolean; message: string }> {
     try {
-      // Validate port
+      // SECURITY: Port validation prevents command injection
+      // Port is validated as a number and range-checked before use
       const portNum = Number(port);
       if (isNaN(portNum) || portNum < 1 || portNum > 65535) {
         return {
@@ -77,7 +106,8 @@ export class SwarmInstaller {
         };
       }
 
-      // Start swarm API server in background
+      // SECURITY: Using spawn() with argument array (not shell) prevents command injection.
+      // Port is validated as numeric above, so portNum.toString() is safe.
       const child = spawn('swarm-api', ['--port', portNum.toString()], {
         detached: true,
         stdio: 'ignore',
