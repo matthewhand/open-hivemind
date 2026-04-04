@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { Router, Router } from 'express';
+import { Router } from 'express';
 import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import { HTTP_STATUS } from '../../../types/constants';
 import { ErrorUtils } from '../../../types/errors';

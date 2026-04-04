@@ -39,7 +39,16 @@ const ToolConfigPanel: React.FC<ToolConfigPanelProps> = ({
   const renderFormFields = () => {
     if (!tool.inputSchema || !tool.inputSchema.properties || Object.keys(tool.inputSchema.properties).length === 0) {
       return (
-        <Alert status="info" className="shadow-sm text-sm" message="No arguments required or schema not available." />
+        <>
+          <Alert status="info" className="shadow-sm text-sm" message="No arguments required or schema not available." />
+          <div
+            className="alert alert-info shadow-sm text-sm"
+            role="status"
+            aria-live="polite"
+          >
+            No arguments required or schema not available.
+          </div>
+        </>
       );
     }
 
