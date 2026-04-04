@@ -58,4 +58,21 @@ describe('processCommand', () => {
     const result = await processCommand(msg, mockCallback);
     expect(result).toBe(false);
   });
+  it('returns false when callback throws', async () => {
+    const msg = { getText: () => '!help' } as IMessage;
+    const failingCallback = jest.fn().mockRejectedValue(new Error('callback failure'));
+
+    const result = await processCommand(msg, failingCallback);
+
+    expect(result).toBe(false);
+    expect(failingCallback).toHaveBeenCalledWith('Executed command: help');
+  });
+
+  it('treats whitespace-padded non-command text as non-command', async () => {
+    const msg = { getText: () => '   hello world   ' } as IMessage;
+    const result = await processCommand(msg, mockCallback);
+
+    expect(result).toBe(false);
+    expect(mockCallback).not.toHaveBeenCalled();
+  });
 });
