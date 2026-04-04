@@ -448,7 +448,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
             validation: () => validateStep(4).valid,
             content: (
                 <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                    <div className="alert bg-base-200 border-none">
+                    <Alert status="info" className="bg-base-200 border-none">
                         <div className="flex flex-col w-full gap-2">
                             <h3 className="font-bold text-lg">Review Configuration</h3>
                             <Divider className="my-0" />
@@ -489,7 +489,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                                 )}
                             </div>
                         </div>
-                    </div>
+                    </Alert>
                 </div>
             )
         }

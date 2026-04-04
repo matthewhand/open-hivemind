@@ -13,6 +13,8 @@ import {
 } from '../../store/slices/apiSlice';
 import { LoadingSpinner } from '../DaisyUI/Loading';
 import { Alert } from '../DaisyUI/Alert';
+import Dropdown from '../DaisyUI/Dropdown';
+import Hero from '../DaisyUI/Hero';
 import AgentConfigCard from './AgentConfigCard';
 import type { BotUIState, GuardInputState, GuardState } from './types';
 
@@ -302,15 +304,6 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
 
   if (configError) {
     return <Alert status="error" message="Failed to load configuration" />;
-    return (
-      <div
-        className="alert alert-error"
-        role="alert"
-        aria-live="assertive"
-      >
-        Failed to load configuration
-      </div>
-    );
   }
 
   function handleSelectionChange<K extends keyof BotUIState>(
@@ -519,17 +512,13 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
 
   return (
     <div>
-      <div className="hero bg-base-200 py-8">
-        <div className="hero-content text-center">
-          <div className="max-w-md">
-            <h1 className="text-4xl font-bold">{title}</h1>
-            <p className="py-6">
-              Configure messaging, LLM providers, personas, and MCP tooling for each agent. Fields
-              defined via environment variables are locked and displayed for reference.
-            </p>
-          </div>
-        </div>
-      </div>
+      <Hero
+        title={title}
+        subtitle="Configure messaging, LLM providers, personas, and MCP tooling for each agent. Fields defined via environment variables are locked and displayed for reference."
+        minHeight="sm"
+        className="py-8"
+        titleColor="text-base-content"
+      />
 
       <div className="p-4">
         <div className="flex justify-end items-center gap-2 mb-4">
@@ -541,22 +530,21 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
             {isFetching && <LoadingSpinner />}
             {isFetching ? 'Refreshing…' : 'Refresh status'}
           </button>
-          <div className="dropdown dropdown-end">
-            <label tabIndex={0} className="btn">
-              API Spec
-            </label>
-            <ul
-              tabIndex={0}
-              className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52"
-            >
-              <li>
-                <a onClick={() => openApiSpec('json')}>Download JSON</a>
-              </li>
-              <li>
-                <a onClick={() => openApiSpec('yaml')}>Download YAML</a>
-              </li>
-            </ul>
-          </div>
+          <Dropdown
+            trigger="API Spec"
+            position="bottom"
+            color="none"
+            size="md"
+            className="dropdown-end"
+            hideArrow
+          >
+            <li>
+              <a onClick={() => openApiSpec('json')}>Download JSON</a>
+            </li>
+            <li>
+              <a onClick={() => openApiSpec('yaml')}>Download YAML</a>
+            </li>
+          </Dropdown>
         </div>
 
         {feedback && (
@@ -575,62 +563,6 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
 
         {statusError && (
           <Alert status="warning" className="shadow-lg mb-4" message="Unable to load live status updates right now. Try refreshing in a moment." />
-          <div
-            className={`alert alert-${feedback.type} shadow-lg mb-4`}
-            role="alert"
-            aria-live="assertive"
-            aria-describedby="feedback-message"
-          >
-            <div>
-              <span id="feedback-message">{feedback.message}</span>
-              <button
-                className="btn btn-ghost btn-sm"
-                onClick={() => setFeedback(null)}
-                aria-label="Close feedback"
-              >
-                ✕
-              </button>
-            </div>
-          </div>
-        )}
-
-        {providersError && (
-          <div
-            className="alert alert-warning shadow-lg mb-4"
-            role="alert"
-            aria-live="polite"
-            aria-describedby="providers-error"
-          >
-            <div>
-              <span id="providers-error">{providersError}</span>
-            </div>
-          </div>
-        )}
-
-        {mcpError && (
-          <div
-            className="alert alert-warning shadow-lg mb-4"
-            role="alert"
-            aria-live="polite"
-            aria-describedby="mcp-error"
-          >
-            <div>
-              <span id="mcp-error">{mcpError}</span>
-            </div>
-          </div>
-        )}
-
-        {statusError && (
-          <div
-            className="alert alert-warning shadow-lg mb-4"
-            role="alert"
-            aria-live="polite"
-            aria-describedby="status-error"
-          >
-            <div>
-              <span id="status-error">Unable to load live status updates right now. Try refreshing in a moment.</span>
-            </div>
-          </div>
         )}
 
         {bots.length === 0 ? (

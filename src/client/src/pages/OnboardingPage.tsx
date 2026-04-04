@@ -236,12 +236,11 @@ const CreateBotStep: React.FC<CreateBotStepProps> = ({ form, llmProvider }) => {
       </FormField>
 
       {llmProvider && (
-        <div className="alert bg-base-200">
-          <Cpu className="w-5 h-5 text-primary" />
+        <Alert status="info" icon={<Cpu className="w-5 h-5 text-primary" />} className="bg-base-200">
           <span>
             This bot will use <strong className="capitalize">{llmProvider}</strong> as its LLM provider (configured in the previous step).
           </span>
-        </div>
+        </Alert>
       )}
     </div>
   );
