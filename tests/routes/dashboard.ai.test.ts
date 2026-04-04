@@ -116,8 +116,9 @@ describe('AI Dashboard Routes', () => {
   it('GET /api/dashboard/ai/config returns default configuration', async () => {
     const response = await request(app).get('/api/dashboard/ai/config');
     expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty('enabled');
-    expect(response.body).toHaveProperty('learningRate');
+    expect(response.body).toHaveProperty('success', true);
+    expect(response.body).toHaveProperty('data.enabled');
+    expect(response.body).toHaveProperty('data.learningRate');
   });
 
   it('POST /api/dashboard/ai/config updates configuration', async () => {
@@ -125,36 +126,41 @@ describe('AI Dashboard Routes', () => {
     const response = await request(app).post('/api/dashboard/ai/config').send(newConfig);
 
     expect(response.status).toBe(200);
-    expect(response.body.enabled).toBe(false);
-    expect(response.body.learningRate).toBe(0.5);
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.enabled).toBe(false);
+    expect(response.body.data.learningRate).toBe(0.5);
 
     // Verify persistence (in-memory)
     const getResponse = await request(app).get('/api/dashboard/ai/config');
-    expect(getResponse.body.enabled).toBe(false);
+    expect(getResponse.body.data.enabled).toBe(false);
   });
 
   it('GET /api/dashboard/ai/stats returns learning stats', async () => {
     const response = await request(app).get('/api/dashboard/ai/stats');
     expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty('learningProgress');
+    expect(response.body).toHaveProperty('success', true);
+    expect(response.body).toHaveProperty('data.learningProgress');
   });
 
   it('GET /api/dashboard/ai/segments returns user segments', async () => {
     const response = await request(app).get('/api/dashboard/ai/segments');
     expect(response.status).toBe(200);
-    expect(Array.isArray(response.body)).toBe(true);
+    expect(response.body).toHaveProperty('success', true);
+    expect(Array.isArray(response.body.data)).toBe(true);
   });
 
   it('GET /api/dashboard/ai/patterns returns behavior patterns', async () => {
     const response = await request(app).get('/api/dashboard/ai/patterns');
     expect(response.status).toBe(200);
-    expect(Array.isArray(response.body)).toBe(true);
+    expect(response.body).toHaveProperty('success', true);
+    expect(Array.isArray(response.body.data)).toBe(true);
   });
 
   it('GET /api/dashboard/ai/recommendations returns recommendations', async () => {
     const response = await request(app).get('/api/dashboard/ai/recommendations');
     expect(response.status).toBe(200);
-    expect(Array.isArray(response.body)).toBe(true);
+    expect(response.body).toHaveProperty('success', true);
+    expect(Array.isArray(response.body.data)).toBe(true);
   });
 
   it('POST /api/dashboard/ai/feedback accepts feedback', async () => {
