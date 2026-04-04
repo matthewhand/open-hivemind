@@ -364,3 +364,76 @@ describe('WebUI Configuration API - COMPLETE TDD SUITE', () => {
     });
   });
 });
+
+describe('WebUI Configuration API - additional branch coverage', () => {
+  let app: express.Application;
+
+  beforeAll(() => {
+    app = express();
+    app.use(express.json());
+    app.use('/webui', configRouter);
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('redacts sensitive nested keys in /api/config', async () => {
+    jest.spyOn(BotConfigurationManager, 'getInstance').mockReturnValue({
+      getAllBots: jest.fn().mockReturnValue([
+        {
+          name: 'bot1',
+          messageProvider: 'discord',
+          llmProvider: 'openai',
+          discord: { token: 'real-token' },
+          openai: { apiKey: 'real-openai-key' },
+          flowise: { apiKey: 'real-flowise-key' },
+          openwebui: { apiKey: 'real-openwebui-key' },
+          openswarm: { apiKey: 'real-openswarm-key' },
+        },
+      ]),
+    } as any);
+
+    const response = await request(app).get('/webui/api/config').expect(200);
+    expect(response.body.bots[0].discord.token).toBe('***');
+    expect(response.body.bots[0].openai.apiKey).toBe('***');
+    expect(response.body.bots[0].flowise.apiKey).toBe('***');
+    expect(response.body.bots[0].openwebui.apiKey).toBe('***');
+    expect(response.body.bots[0].openswarm.apiKey).toBe('***');
+    expect(response.body.bots[0].provider).toBe('discord');
+    expect(response.body.bots[0].enabled).toBe(true);
+  });
+
+  it('returns 500 when /api/config/sources throws', async () => {
+    const originalDate = global.Date;
+    const mockDate = class extends Date {
+      toISOString(): string {
+        throw new Error('iso failure');
+      }
+    } as any;
+    // @ts-ignore
+    global.Date = mockDate;
+
+    const response = await request(app).get('/webui/api/config/sources').expect(500);
+    expect(response.body).toHaveProperty('error');
+
+    global.Date = originalDate;
+  });
+
+  it('returns 500 when /api/config/backup throws', async () => {
+    jest.spyOn(BotConfigurationManager, 'getInstance').mockImplementation(() => {
+      throw new Error('manager unavailable');
+    });
+
+    const response = await request(app).post('/webui/api/config/backup').expect(500);
+    expect(response.body).toHaveProperty('error');
+  });
+
+  it('returns openapi document shape from /api/openapi', async () => {
+    const response = await request(app).get('/webui/api/openapi').expect(200);
+    expect(response.body).toHaveProperty('openapi', '3.0.0');
+    expect(response.body).toHaveProperty('info');
+    expect(response.body).toHaveProperty('paths');
+    expect(response.body.paths).toHaveProperty('/api/config');
+  });
+});
