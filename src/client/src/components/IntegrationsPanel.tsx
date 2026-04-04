@@ -515,12 +515,12 @@ const IntegrationsPanel: React.FC = () => {
                     <div className="flex flex-wrap gap-1">
                       {connectedBots.length > 0 ? (
                         connectedBots.slice(0, 3).map(b => (
-                          <span key={b.id} className="badge badge-xs badge-ghost border-base-300">{b.name}</span>
+                          <Badge key={b.id} size="xs" variant="ghost" className="border-base-300">{b.name}</Badge>
                         ))
                       ) : (
                         <span className="text-xs text-base-content/30 italic">Not in use</span>
                       )}
-                      {connectedBots.length > 3 && <span className="badge badge-xs badge-ghost">+{connectedBots.length - 3}</span>}
+                      {connectedBots.length > 3 && <Badge size="xs" variant="ghost">+{connectedBots.length - 3}</Badge>}
                     </div>
                   </div>
                 </div>

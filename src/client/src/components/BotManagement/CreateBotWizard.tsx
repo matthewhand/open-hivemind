@@ -8,6 +8,7 @@ import Radio from '../DaisyUI/Radio';
 import { useConfigDiff } from '../../hooks/useConfigDiff';
 import { ConfigDiffViewer, ConfigDiffConfirmDialog } from '../ConfigDiffViewer';
 import { Alert } from '../DaisyUI/Alert';
+import { Badge } from '../DaisyUI/Badge';
 import { apiService } from '../../services/api';
 import Debug from 'debug';
 import Toggle from '../DaisyUI/Toggle';
@@ -477,11 +478,11 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                                 ) : (
                                     <div className="flex flex-wrap gap-2">
                                         {!formData.guards.accessControl && !formData.guards.rateLimit && !formData.guards.contentFilter && (
-                                            <span className="badge badge-ghost">No Guardrails Enabled</span>
+                                            <Badge variant="ghost">No Guardrails Enabled</Badge>
                                         )}
-                                        {formData.guards.accessControl && <span className="badge badge-primary">Access Control</span>}
-                                        {formData.guards.rateLimit && <span className="badge badge-secondary">Rate Limiting</span>}
-                                        {formData.guards.contentFilter && <span className="badge badge-accent">Content Filter</span>}
+                                        {formData.guards.accessControl && <Badge variant="primary">Access Control</Badge>}
+                                        {formData.guards.rateLimit && <Badge variant="secondary">Rate Limiting</Badge>}
+                                        {formData.guards.contentFilter && <Badge variant="accent">Content Filter</Badge>}
                                     </div>
                                 )}
                             </div>

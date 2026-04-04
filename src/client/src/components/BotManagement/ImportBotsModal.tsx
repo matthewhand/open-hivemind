@@ -7,6 +7,7 @@ import {
 import Button from '../DaisyUI/Button';
 import Modal from '../DaisyUI/Modal';
 import { Alert } from '../DaisyUI/Alert';
+import { Badge } from '../DaisyUI/Badge';
 import VisualFeedback, { FeedbackState } from '../DaisyUI/VisualFeedback';
 import FileUpload from '../DaisyUI/FileUpload';
 import { apiService } from '../../services/api';
@@ -158,7 +159,7 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
             <div className="flex items-center gap-3 mb-2">
               <FileJson className="w-5 h-5 text-primary" />
               <span className="font-semibold">{bundle.bots.length} bot{bundle.bots.length !== 1 ? 's' : ''} found</span>
-              {bundle.schemaVersion && <span className="badge badge-ghost badge-sm">schema v{bundle.schemaVersion}</span>}
+              {bundle.schemaVersion && <Badge variant="ghost" size="sm">schema v{bundle.schemaVersion}</Badge>}
             </div>
             {conflictCount > 0 && (
               <Alert status="warning" className="py-2">
@@ -179,8 +180,8 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
                         <td className="text-xs">{bot?.llmProvider || '-'}</td>
                         <td>
                           {c.isConflict
-                            ? <span className="badge badge-warning badge-xs gap-1"><RefreshCw className="w-3 h-3" /> Update</span>
-                            : <span className="badge badge-success badge-xs gap-1"><CheckCircle className="w-3 h-3" /> New</span>}
+                            ? <Badge variant="warning" size="xs" className="gap-1"><RefreshCw className="w-3 h-3" /> Update</Badge>
+                            : <Badge variant="success" size="xs" className="gap-1"><CheckCircle className="w-3 h-3" /> New</Badge>}
                         </td>
                       </tr>
                     );

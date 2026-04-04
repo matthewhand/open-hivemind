@@ -8,9 +8,9 @@ export interface BadgeProps {
    * @default 'neutral'
    * @example 'ghost' - Used for subtle, low-priority status indicators
    */
-  variant?: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | 'neutral' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'error' | 'info' | 'neutral' | 'ghost';
   /** Size of the badge */
-  size?: 'small' | 'normal' | 'large';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'small' | 'normal' | 'large';
   /** Style variant - solid or outline */
   style?: 'solid' | 'outline';
   /** Optional icon to display before the content */
@@ -47,8 +47,13 @@ export const Badge: React.FC<BadgeProps> = React.memo(({
 
   const getSizeClass = () => {
     switch (size) {
+      case 'xs':
       case 'small': return 'badge-xs';
+      case 'sm': return 'badge-sm';
+      case 'lg':
       case 'large': return 'badge-lg';
+      case 'md':
+      case 'normal':
       default: return 'badge-md';
     }
   };

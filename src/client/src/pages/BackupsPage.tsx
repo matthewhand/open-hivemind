@@ -13,6 +13,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
+import { Badge } from '../components/DaisyUI/Badge';
 import Button from '../components/DaisyUI/Button';
 import Input from '../components/DaisyUI/Input';
 import Textarea from '../components/DaisyUI/Textarea';
@@ -258,10 +259,10 @@ const BackupsPage: React.FC = () => {
           <div className="flex flex-col">
             <span className="font-bold">{value}</span>
             {row.encrypted && (
-              <span className="badge badge-xs badge-warning gap-1 mt-1">
+              <Badge size="xs" variant="warning" className="gap-1 mt-1">
                 <Shield className="w-3 h-3" />
                 Encrypted
-              </span>
+              </Badge>
             )}
           </div>
         </div>
@@ -279,7 +280,7 @@ const BackupsPage: React.FC = () => {
     {
       key: 'configCount',
       title: 'Configs',
-      render: (value: number) => <span className="badge badge-primary badge-sm">{value}</span>,
+      render: (value: number) => <Badge variant="primary" size="sm">{value}</Badge>,
     },
     {
       key: 'size',

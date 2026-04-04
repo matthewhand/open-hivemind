@@ -152,7 +152,7 @@ const ProviderChip: React.FC<ProviderChipProps> = ({
       {/* Primary Indicator (for LLM providers) */}
       {showPrimary && isPrimary && (
         <div className="absolute -top-2 -right-2 z-10">
-          <span className="badge badge-primary badge-xs">Primary</span>
+          <Badge variant="primary" size="xs">Primary</Badge>
         </div>
       )}
 

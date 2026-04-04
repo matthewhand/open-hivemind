@@ -1,6 +1,7 @@
 import React from 'react';
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import Modal from '../../../components/DaisyUI/Modal';
+import { Badge } from '../../../components/DaisyUI/Badge';
 import type { ToolExecutionRecord } from '../types';
 
 interface ExecutionHistoryModalProps {
@@ -23,7 +24,7 @@ const ExecutionHistoryModal: React.FC<ExecutionHistoryModalProps> = ({ isOpen, o
                   <tr key={r.id}>
                     <td>{r.status === 'success' ? <div className="flex items-center gap-1 text-success"><CheckCircleIcon className="w-5 h-5" /><span>Success</span></div> : <div className="flex items-center gap-1 text-error"><XCircleIcon className="w-5 h-5" /><span>Error</span></div>}</td>
                     <td><div className="font-medium">{r.toolName}</div></td>
-                    <td><div className="badge badge-outline badge-sm">{r.serverName}</div></td>
+                    <td><Badge size="sm" style="outline">{r.serverName}</Badge></td>
                     <td>{r.duration}ms</td>
                     <td><div className="text-sm">{new Date(r.executedAt).toLocaleString()}</div></td>
                     <td>

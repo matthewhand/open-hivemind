@@ -3,6 +3,7 @@ import type { AgentConfigCardProps, GuardState } from './types';
 import type { FieldMetadata } from '../../services/api';
 import type { ProviderInfo } from '../../services/providerService';
 import Toggle from '../DaisyUI/Toggle';
+import { Badge } from '../DaisyUI/Badge';
 
 const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
   bot,
@@ -316,10 +317,10 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
             Connection: {connection.label}
           </span>
           {typeof status?.messageCount === 'number' && (
-            <div className="badge badge-outline">Messages: {status.messageCount}</div>
+            <Badge style="outline">Messages: {status.messageCount}</Badge>
           )}
           {typeof status?.errorCount === 'number' && status.errorCount > 0 && (
-            <div className="badge badge-error">Errors: {status.errorCount}</div>
+            <Badge variant="error">Errors: {status.errorCount}</Badge>
           )}
         </div>
       </div>

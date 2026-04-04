@@ -1,5 +1,6 @@
 import React from 'react';
 import { Trash2, Download, ToggleLeft, X } from 'lucide-react';
+import { Badge } from './DaisyUI/Badge';
 
 export interface BulkAction {
   key: string;
@@ -30,7 +31,7 @@ const BulkActionBar: React.FC<BulkActionBarProps> = ({
   return (
     <div className="alert alert-info shadow-md flex flex-wrap items-center gap-2" role="toolbar" aria-label={`Bulk actions: ${selectedCount} ${selectedCount === 1 ? 'item' : 'items'} selected`} aria-live="polite">
       <div className="flex items-center gap-2 font-semibold">
-        <span className="badge badge-primary badge-lg">{selectedCount}</span>
+        <Badge variant="primary" size="lg">{selectedCount}</Badge>
         <span>{selectedCount === 1 ? 'item' : 'items'} selected</span>
       </div>
 

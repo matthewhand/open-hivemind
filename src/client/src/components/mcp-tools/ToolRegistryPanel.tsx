@@ -10,6 +10,7 @@ import { ToolFilters } from '../tools/ToolFilters';
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid';
 import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
 import { SkeletonGrid } from '../DaisyUI/Skeleton';
+import { Badge } from '../DaisyUI/Badge';
 import Tabs from '../DaisyUI/Tabs';
 
 interface ToolRegistryPanelProps {
@@ -113,9 +114,9 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
                 </div>
                 <p className="text-xs text-base-content/60 line-clamp-2 mb-2">{tool.description}</p>
                 <div className="flex gap-1 flex-wrap">
-                  <div className="badge badge-xs">{tool.serverName}</div>
+                  <Badge size="xs">{tool.serverName}</Badge>
                   {tool.usageCount > 0 && (
-                    <div className="badge badge-xs badge-ghost">{tool.usageCount}x</div>
+                    <Badge size="xs" variant="ghost">{tool.usageCount}x</Badge>
                   )}
                 </div>
               </div>
@@ -188,11 +189,11 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
             <div className={`badge ${getCategoryColor(tool.category)}`}>
               {tool.category}
             </div>
-            <div className="badge badge-outline">{tool.serverName}</div>
+            <Badge style="outline">{tool.serverName}</Badge>
             {tool.outputSchema && Object.keys(tool.outputSchema).length > 0 && (
-              <div className="badge badge-info badge-outline" title="Has output schema">
+              <Badge variant="info" style="outline">
                 Schema
-              </div>
+              </Badge>
             )}
           </div>
 
@@ -238,7 +239,7 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
           <div className="flex items-center gap-2 mb-3">
             <ClockIcon className="w-5 h-5 text-base-content/70" />
             <h2 className="text-lg font-semibold">Recently Used</h2>
-            <div className="badge badge-ghost">{recentTools.length}</div>
+            <Badge variant="ghost">{recentTools.length}</Badge>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
             {recentTools.map(tool => renderToolCard(tool, true))}
@@ -252,7 +253,7 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
           <div className="flex items-center gap-2 mb-3">
             <StarSolidIcon className="w-5 h-5 text-warning" />
             <h2 className="text-lg font-semibold">Favorites</h2>
-            <div className="badge badge-ghost">{favoriteTools.length}</div>
+            <Badge variant="ghost">{favoriteTools.length}</Badge>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
             {favoriteTools.map(tool => renderToolCard(tool, true))}

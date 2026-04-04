@@ -2,6 +2,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Mockup from '../components/DaisyUI/Mockup';
 import { Alert } from '../components/DaisyUI/Alert';
+import { Badge } from '../components/DaisyUI/Badge';
 import { apiService } from '../services/api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -91,9 +92,9 @@ const GroupSidebar: React.FC<{
           onClick={() => onSelect(group.prefix)}
         >
           <span className="truncate">{group.label}</span>
-          <span className="badge badge-sm badge-ghost">
+          <Badge size="sm" variant="ghost">
             {counts.get(group.prefix) ?? group.routes.length}
-          </span>
+          </Badge>
         </button>
       </li>
     ))}
@@ -257,9 +258,9 @@ const RouteCard: React.FC<{ route: RouteInfo }> = ({ route }) => {
             <span className="text-xs font-semibold">Middleware:</span>
             <div className="flex flex-wrap gap-1 mt-1">
               {route.middleware.map((m, i) => (
-                <span key={i} className="badge badge-xs badge-outline">
+                <Badge key={i} size="xs" style="outline">
                   {m}
-                </span>
+                </Badge>
               ))}
             </div>
           </div>
@@ -270,9 +271,9 @@ const RouteCard: React.FC<{ route: RouteInfo }> = ({ route }) => {
           {route.path.includes(':') ? (
             <div className="flex flex-wrap gap-1 mt-1">
               {(route.path.match(/:(\w+)/g) || []).map((p, i) => (
-                <span key={i} className="badge badge-xs badge-primary badge-outline">
+                <Badge key={i} size="xs" variant="primary" style="outline">
                   {p}
-                </span>
+                </Badge>
               ))}
             </div>
           ) : (
@@ -427,7 +428,7 @@ const ApiDocsPage: React.FC = () => {
             <div>
               <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
                 <code className="text-sm">{activeGroup.prefix}</code>
-                <span className="badge badge-sm">{activeGroup.routes.length} endpoints</span>
+                <Badge size="sm">{activeGroup.routes.length} endpoints</Badge>
               </h2>
               {activeGroup.routes.map((route, i) => (
                 <RouteCard key={`${route.method}-${route.path}-${i}`} route={route} />

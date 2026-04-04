@@ -6,6 +6,7 @@ import {
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid';
 import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
 import type { MCPTool } from '../../hooks/useToolsLogic';
+import { Badge } from '../DaisyUI/Badge';
 
 interface ToolCardProps {
   tool: MCPTool;
@@ -40,9 +41,9 @@ export const ToolCard: React.FC<ToolCardProps> = ({
               </div>
               <p className="text-xs text-base-content/60 line-clamp-2 mb-2">{tool.description}</p>
               <div className="flex gap-1 flex-wrap">
-                <div className="badge badge-xs">{tool.serverName}</div>
+                <Badge size="xs">{tool.serverName}</Badge>
                 {tool.usageCount > 0 && (
-                  <div className="badge badge-xs badge-ghost">{tool.usageCount}x</div>
+                  <Badge size="xs" variant="ghost">{tool.usageCount}x</Badge>
                 )}
               </div>
             </div>
@@ -112,11 +113,11 @@ export const ToolCard: React.FC<ToolCardProps> = ({
           <div className={`badge ${getCategoryColor(tool.category)}`}>
             {tool.category}
           </div>
-          <div className="badge badge-outline">{tool.serverName}</div>
+          <Badge style="outline">{tool.serverName}</Badge>
           {tool.outputSchema && Object.keys(tool.outputSchema).length > 0 && (
-            <div className="badge badge-info badge-outline" title="Has output schema">
+            <Badge variant="info" style="outline">
               Schema
-            </div>
+            </Badge>
           )}
         </div>
 

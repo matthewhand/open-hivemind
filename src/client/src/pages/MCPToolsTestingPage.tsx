@@ -11,6 +11,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
 import { Alert } from '../components/DaisyUI/Alert';
+import { Badge } from '../components/DaisyUI/Badge';
 import Toggle from '../components/DaisyUI/Toggle';
 import Debug from 'debug';
 
@@ -420,7 +421,7 @@ const MCPToolsTestingPage: React.FC = () => {
                 <div className="card-body">
                   <h2 className="card-title">{selectedTool.name}</h2>
                   <p className="text-sm text-base-content/70">{selectedTool.description}</p>
-                  <div className="badge badge-outline">{selectedTool.serverName}</div>
+                  <Badge style="outline">{selectedTool.serverName}</Badge>
 
                   <div className="divider"></div>
 

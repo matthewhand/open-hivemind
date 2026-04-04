@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
+import { Badge } from '../DaisyUI/Badge';
 
 export interface Alert {
   id: string;
@@ -126,15 +127,15 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
         <div className="flex justify-between items-center mb-6">
           <h2 className="card-title">Alerts & Notifications</h2>
           <div className="flex gap-2">
-            <div className="badge badge-error gap-2">
+            <Badge variant="error" className="gap-2">
               {getAlertCountByType('error')} Errors
-            </div>
-            <div className="badge badge-warning gap-2">
+            </Badge>
+            <Badge variant="warning" className="gap-2">
               {getAlertCountByType('warning')} Warnings
-            </div>
-            <div className="badge badge-info gap-2">
+            </Badge>
+            <Badge variant="info" className="gap-2">
               {getAlertCountByType('info')} Info
-            </div>
+            </Badge>
           </div>
         </div>
 
@@ -203,10 +204,10 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
                         <span className="text-xs opacity-70">•</span>
                         <span className="text-xs opacity-70">{formatTimestamp(alert.timestamp)}</span>
                         {alert.acknowledged && (
-                          <span className="badge badge-success badge-xs">Acknowledged</span>
+                          <Badge variant="success" size="xs">Acknowledged</Badge>
                         )}
                         {alert.resolved && (
-                          <span className="badge badge-success badge-xs">Resolved</span>
+                          <Badge variant="success" size="xs">Resolved</Badge>
                         )}
                       </div>
                     </div>

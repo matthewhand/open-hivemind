@@ -4,6 +4,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Alert } from '../DaisyUI/Alert';
+import { Badge } from '../DaisyUI/Badge';
 import Toggle from '../DaisyUI/Toggle';
 import Button from '../DaisyUI/Button';
 import { SkeletonList } from '../DaisyUI/Skeleton';
@@ -179,11 +180,11 @@ const SettingsMessaging: React.FC = () => {
           <div className="form-control">
             <label className="label py-1">
               <span className="label-text text-sm font-medium">Grace Window</span>
-              <span className="badge badge-ghost font-mono text-xs">
+              <Badge variant="ghost" className="font-mono text-xs">
                 {graceWindowMs >= 60000
                   ? `${Math.round(graceWindowMs / 60000)}m`
                   : `${Math.round(graceWindowMs / 1000)}s`}
-              </span>
+              </Badge>
             </label>
             <Controller
               name="graceWindowMs"
@@ -355,7 +356,7 @@ const SettingsMessaging: React.FC = () => {
                   <Info className="w-3.5 h-3.5 text-base-content/50 cursor-help" />
                 </div>
               </span>
-              <span className="badge badge-info font-mono text-xs flex-none">{semanticRelevanceBonus}x</span>
+              <Badge variant="info" className="font-mono text-xs flex-none">{semanticRelevanceBonus}x</Badge>
             </label>
             <Controller
               name="semanticRelevanceBonus"
@@ -404,7 +405,7 @@ const SettingsMessaging: React.FC = () => {
                   <Info className="w-3.5 h-3.5 text-base-content/50 cursor-help" />
                 </div>
               </span>
-              <span className="badge badge-accent font-mono flex-none">{baseChance.toFixed(0)}%</span>
+              <Badge variant="accent" className="font-mono flex-none">{baseChance.toFixed(0)}%</Badge>
             </label>
             <Controller
               name="baseChance"

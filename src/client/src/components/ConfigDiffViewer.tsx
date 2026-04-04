@@ -4,6 +4,7 @@ import type { DiffEntry } from '../hooks/useConfigDiff';
 import Diff from './DaisyUI/Diff';
 import Modal from './DaisyUI/Modal';
 import type { ModalAction } from './DaisyUI/Modal';
+import { Badge } from './DaisyUI/Badge';
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                           */
@@ -119,7 +120,7 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
           <ChevronRight className="w-4 h-4" />
         )}
         <span className="capitalize">{title}</span>
-        <span className="badge badge-sm badge-ghost ml-auto">{entries.length} change{entries.length !== 1 ? 's' : ''}</span>
+        <Badge size="sm" variant="ghost" className="ml-auto">{entries.length} change{entries.length !== 1 ? 's' : ''}</Badge>
       </button>
       {isOpen && (
         <table className="table table-compact w-full">
