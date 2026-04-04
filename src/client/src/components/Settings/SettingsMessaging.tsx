@@ -8,6 +8,7 @@ import { Badge } from '../DaisyUI/Badge';
 import Card from '../DaisyUI/Card';
 import Toggle from '../DaisyUI/Toggle';
 import Button from '../DaisyUI/Button';
+import RangeSlider from '../DaisyUI/RangeSlider';
 import { SkeletonList } from '../DaisyUI/Skeleton';
 import { MessageSquare, Bot, Users, Zap, Info } from 'lucide-react';
 import Tooltip from '../DaisyUI/Tooltip';
@@ -192,15 +193,17 @@ const SettingsMessaging: React.FC = () => {
               name="graceWindowMs"
               control={control}
               render={({ field }) => (
-                <input
-                  type="range"
-                  min="0"
-                  max="600000"
-                  step="30000"
+                <RangeSlider
                   value={field.value}
-                  onChange={(e) => field.onChange(parseInt(e.target.value))}
-                  className="range range-sm range-primary"
+                  min={0}
+                  max={600000}
+                  step={30000}
+                  variant="primary"
+                  size="sm"
                   disabled={!onlyWhenSpokenTo}
+                  onChange={(val) => field.onChange(val)}
+                  showValue={false}
+                  className=""
                 />
               )}
             />

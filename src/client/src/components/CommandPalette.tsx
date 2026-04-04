@@ -4,6 +4,7 @@ import {
   LayoutDashboard, Bot, Users, Shield, Settings, Activity, Component,
   Brain, MessageSquare, Map, Search, CornerDownLeft,
 } from 'lucide-react';
+import Kbd from './DaisyUI/Kbd';
 
 interface PaletteItem {
   id: string;
@@ -133,7 +134,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
             onChange={e => setQuery(e.target.value)}
             aria-label="Command palette search"
           />
-          <kbd className="kbd kbd-sm shrink-0">Esc</kbd>
+          <Kbd size="sm" className="shrink-0">Esc</Kbd>
         </div>
 
         {/* Results list */}
@@ -175,16 +176,16 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
         {/* Footer hint */}
         <div className="flex items-center gap-4 px-4 py-2 border-t border-base-300 text-xs text-base-content/50">
           <span className="flex items-center gap-1">
-            <kbd className="kbd kbd-xs">&#8593;</kbd>
-            <kbd className="kbd kbd-xs">&#8595;</kbd>
+            <Kbd size="xs">&#8593;</Kbd>
+            <Kbd size="xs">&#8595;</Kbd>
             navigate
           </span>
           <span className="flex items-center gap-1">
-            <kbd className="kbd kbd-xs">Enter</kbd>
+            <Kbd size="xs">Enter</Kbd>
             select
           </span>
           <span className="flex items-center gap-1">
-            <kbd className="kbd kbd-xs">Esc</kbd>
+            <Kbd size="xs">Esc</Kbd>
             close
           </span>
         </div>

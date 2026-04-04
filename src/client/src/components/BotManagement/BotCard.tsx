@@ -14,6 +14,7 @@ import {
 import Button from '../DaisyUI/Button';
 import Card from '../DaisyUI/Card';
 import Badge from '../DaisyUI/Badge';
+import Dropdown from '../DaisyUI/Dropdown';
 import {
   Play as PlayIcon,
   Square as StopIcon,
@@ -211,39 +212,37 @@ const BotCard: React.FC<BotCardProps> = ({
           </div>
 
           {/* Dropdown Menu */}
-          <div className="dropdown dropdown-end">
-            <button
-              className="btn btn-sm btn-ghost btn-circle"
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              aria-label="More options"
-              aria-haspopup="true"
-              aria-expanded={isDropdownOpen}
-            >
-              <MoreIcon className="w-4 h-4" aria-hidden="true" />
-            </button>
-            {isDropdownOpen && (
-              <ul className="dropdown-content menu p-2 shadow-lg bg-base-100 rounded-box w-52 z-10" role="menu" aria-label="Bot actions">
-                <li>
-                  <a onClick={handleConfigureBot} className="flex items-center gap-2" role="menuitem">
-                    <SettingsIcon className="w-4 h-4" aria-hidden="true" />
-                    Configure
-                  </a>
-                </li>
-                <li>
-                  <a onClick={handleCloneBot} className="flex items-center gap-2" role="menuitem">
-                    <CloneIcon className="w-4 h-4" aria-hidden="true" />
-                    Clone
-                  </a>
-                </li>
-                <li>
-                  <a onClick={handleDeleteBot} className="flex items-center gap-2 text-error" role="menuitem">
-                    <DeleteIcon className="w-4 h-4" aria-hidden="true" />
-                    Delete
-                  </a>
-                </li>
-              </ul>
-            )}
-          </div>
+          <Dropdown
+            trigger={<MoreIcon className="w-4 h-4" aria-hidden="true" />}
+            position="bottom"
+            color="ghost"
+            size="sm"
+            className="dropdown-end"
+            triggerClassName="btn-circle"
+            contentClassName="shadow-lg w-52 z-10"
+            isOpen={isDropdownOpen}
+            onToggle={(open) => setIsDropdownOpen(open)}
+            hideArrow
+          >
+            <li>
+              <a onClick={handleConfigureBot} className="flex items-center gap-2" role="menuitem">
+                <SettingsIcon className="w-4 h-4" aria-hidden="true" />
+                Configure
+              </a>
+            </li>
+            <li>
+              <a onClick={handleCloneBot} className="flex items-center gap-2" role="menuitem">
+                <CloneIcon className="w-4 h-4" aria-hidden="true" />
+                Clone
+              </a>
+            </li>
+            <li>
+              <a onClick={handleDeleteBot} className="flex items-center gap-2 text-error" role="menuitem">
+                <DeleteIcon className="w-4 h-4" aria-hidden="true" />
+                Delete
+              </a>
+            </li>
+          </Dropdown>
         </div>
 
         {/* Persona Section */}
