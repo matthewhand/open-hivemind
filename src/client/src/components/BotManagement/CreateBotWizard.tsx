@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Bot, MessageSquare, Cpu, User, Shield, Check, AlertCircle } from 'lucide-react';
 import Button from '../DaisyUI/Button';
+import Divider from '../DaisyUI/Divider';
 import Input from '../DaisyUI/Input';
 import StepWizard, { Step } from '../DaisyUI/StepWizard';
 import Modal from '../DaisyUI/Modal';
@@ -353,7 +354,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                         </div>
                     )}
 
-                    <div className="divider">Or</div>
+                    <Divider>Or</Divider>
 
                     <Button variant="primary" buttonStyle="outline" className="w-full gap-2">
                         <User className="w-4 h-4" />
@@ -390,7 +391,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                         </label>
                     </div>
 
-                    <div className="divider">Manual Overrides</div>
+                    <Divider>Manual Overrides</Divider>
 
                     <div className="form-control">
                         <label className="label cursor-pointer justify-start gap-4">
@@ -449,7 +450,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                     <div className="alert bg-base-200 border-none">
                         <div className="flex flex-col w-full gap-2">
                             <h3 className="font-bold text-lg">Review Configuration</h3>
-                            <div className="divider my-0"></div>
+                            <Divider className="my-0" />
                             <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                                 <span className="opacity-70">Bot Name:</span>
                                 <span className="font-semibold">{formData.name}</span>
@@ -467,7 +468,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                                 <span className="font-semibold">{getPersonaName()}</span>
                             </div>
 
-                            <div className="divider my-0"></div>
+                            <Divider className="my-0" />
                             <div className="flex flex-col gap-1">
                                 <span className="opacity-70 text-sm">Guardrails:</span>
                                 {formData.mcpGuardProfile ? (

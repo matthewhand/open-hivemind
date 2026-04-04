@@ -11,6 +11,7 @@ import ConfigTab from './ConfigTab';
 import BackupsTab from './BackupsTab';
 import PerformanceTab from './PerformanceTab';
 import type { SystemConfig, BackupRecord } from './types';
+import { LoadingSpinner } from '../../components/DaisyUI/Loading';
 
 const SystemManagement: React.FC = () => {
   const { alerts, performanceMetrics } = useWebSocket();
@@ -258,7 +259,7 @@ const SystemManagement: React.FC = () => {
               onClick={openBackupModal}
               disabled={isCreatingBackup}
             >
-              {isCreatingBackup ? <span className="loading loading-spinner loading-sm" aria-hidden="true"></span> : '💾'} Create Backup
+              {isCreatingBackup ? <LoadingSpinner size="sm" /> : '💾'} Create Backup
             </button>
           </div>
         </div>
@@ -335,7 +336,7 @@ const SystemManagement: React.FC = () => {
           <div className="form-control">
             <label className="cursor-pointer label justify-start gap-4">
               <Checkbox
-                className="checkbox checkbox-primary"
+                variant="primary"
                 checked={useEncryption}
                 onChange={(e) => setUseEncryption(e.target.checked)}
               />

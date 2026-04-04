@@ -6,6 +6,7 @@ import PageHeader from '../../components/DaisyUI/PageHeader';
 import { SkeletonPage } from '../../components/DaisyUI/Skeleton';
 import { useSuccessToast, useErrorToast, useInfoToast } from '../../components/DaisyUI/ToastNotification';
 import SearchFilterBar from '../../components/SearchFilterBar';
+import Tooltip from '../../components/DaisyUI/Tooltip';
 import { useIsBelowBreakpoint } from '../../hooks/useBreakpoint';
 import { useBulkSelection } from '../../hooks/useBulkSelection';
 import { useDragAndDrop } from '../../hooks/useDragAndDrop';
@@ -100,11 +101,11 @@ const PersonasPage: React.FC = () => {
           >
             <div className="flex gap-2">
               <div className="join">
-                <div className="tooltip" data-tip="Filter by Category">
+                <Tooltip content="Filter by Category">
                   <Button variant="primary" size="sm" className="btn-square join-item pointer-events-none" aria-label="Filter by category" tabIndex={-1}>
                     <Filter className="w-4 h-4" aria-hidden="true" />
                   </Button>
-                </div>
+                </Tooltip>
                 <select
                   className="select select-sm select-bordered join-item"
                   value={selectedCategory}

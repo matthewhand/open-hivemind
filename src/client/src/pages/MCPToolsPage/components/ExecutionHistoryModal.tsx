@@ -1,6 +1,7 @@
 import React from 'react';
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import Modal from '../../../components/DaisyUI/Modal';
+import { LoadingSpinner } from '../../../components/DaisyUI/Loading';
 import { Badge } from '../../../components/DaisyUI/Badge';
 import type { ToolExecutionRecord } from '../types';
 
@@ -15,7 +16,7 @@ const ExecutionHistoryModal: React.FC<ExecutionHistoryModalProps> = ({ isOpen, o
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Tool Execution History" size="xl">
       <div className="space-y-4">
-        {loading ? <div className="flex justify-center py-8"><span className="loading loading-spinner loading-lg"></span></div> : history.length === 0 ? <div className="text-center py-8"><p className="text-base-content/70">No execution history found</p></div> : (
+        {loading ? <div className="flex justify-center py-8"><LoadingSpinner size="lg" /></div> : history.length === 0 ? <div className="text-center py-8"><p className="text-base-content/70">No execution history found</p></div> : (
           <div className="overflow-x-auto">
             <table className="table table-zebra w-full">
               <thead><tr><th>Status</th><th>Tool</th><th>Server</th><th>Duration</th><th>Executed At</th><th>Details</th></tr></thead>

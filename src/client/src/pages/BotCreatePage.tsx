@@ -377,7 +377,9 @@ const BotCreatePage: React.FC = () => {
                               }`}
                           >
                             <Checkbox
-                              className="checkbox checkbox-primary checkbox-sm mt-0.5"
+                              variant="primary"
+                              size="sm"
+                              className="mt-0.5"
                               checked={isSelected}
                               onChange={(e) => {
                                 const serverId = server.id || server.name;

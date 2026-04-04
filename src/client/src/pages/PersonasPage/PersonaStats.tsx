@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { Stat } from '../../components/DaisyUI/Stat';
 import { type Persona } from './hooks/usePersonasData';
 
 interface PersonaStatsProps {
@@ -52,12 +53,16 @@ export const PersonaStats: React.FC<PersonaStatsProps> = ({ personas }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {stats.map((stat) => (
-        <div key={stat.id} className="stat bg-base-100 shadow rounded-box">
-          <div className={`stat-figure ${colorTextClass[stat.color] ?? ''} text-3xl opacity-20`}>{stat.icon}</div>
-          <div className="stat-title text-xs font-bold uppercase opacity-50">{stat.title}</div>
-          <div className={`stat-value ${colorTextClass[stat.color] ?? ''}`}>{stat.value}</div>
-          <div className="stat-desc mt-1 font-medium">{stat.description}</div>
-        </div>
+        <Stat
+          key={stat.id}
+          className="bg-base-100 shadow rounded-box"
+          title={<span className="text-xs font-bold uppercase opacity-50">{stat.title}</span>}
+          value={stat.value}
+          valueClassName={colorTextClass[stat.color] ?? ''}
+          figure={stat.icon}
+          figureClassName={`${colorTextClass[stat.color] ?? ''} text-3xl opacity-20`}
+          description={<span className="mt-1 font-medium">{stat.description}</span>}
+        />
       ))}
     </div>
   );

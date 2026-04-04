@@ -8,6 +8,7 @@ import { useErrorToast, useSuccessToast } from '../components/DaisyUI/ToastNotif
 import { usePageLifecycle } from '../hooks/usePageLifecycle';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import Tabs from '../components/DaisyUI/Tabs';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { SkeletonPage } from '../components/DaisyUI/Skeleton';
@@ -489,7 +490,7 @@ const TemplatesPage: React.FC = () => {
             >
               {applyingTemplate ? (
                 <>
-                  <span className="loading loading-spinner loading-sm"></span>
+                  <LoadingSpinner size="sm" />
                   Creating...
                 </>
               ) : (

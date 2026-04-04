@@ -1,5 +1,6 @@
 import React from 'react';
 import { Trash2, Download, ToggleLeft, X } from 'lucide-react';
+import { LoadingSpinner } from './DaisyUI/Loading';
 import { Badge } from './DaisyUI/Badge';
 
 export interface BulkAction {
@@ -51,7 +52,7 @@ const BulkActionBar: React.FC<BulkActionBarProps> = ({
               aria-busy={action.loading}
             >
               {action.loading ? (
-                <span className="loading loading-spinner loading-xs" aria-hidden="true" />
+                <LoadingSpinner size="xs" />
               ) : (
                 action.icon
               )}

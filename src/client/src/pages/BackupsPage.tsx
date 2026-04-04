@@ -18,6 +18,7 @@ import Button from '../components/DaisyUI/Button';
 import Input from '../components/DaisyUI/Input';
 import Textarea from '../components/DaisyUI/Textarea';
 import Checkbox from '../components/DaisyUI/Checkbox';
+import Divider from '../components/DaisyUI/Divider';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import StatsCards from '../components/DaisyUI/StatsCards';
@@ -27,6 +28,7 @@ import DataTable from '../components/DaisyUI/DataTable';
 import type { RDVColumn, RowAction } from '../components/DaisyUI/DataTable';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import { Alert } from '../components/DaisyUI/Alert';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
 
 interface BackupMetadata {
   id: string;
@@ -432,7 +434,7 @@ const BackupsPage: React.FC = () => {
 
           {loading && backups.length === 0 ? (
             <div className="flex justify-center items-center py-12">
-              <span className="loading loading-spinner loading-lg"></span>
+              <LoadingSpinner size="lg" />
             </div>
           ) : filteredBackups.length === 0 ? (
             <EmptyState
@@ -496,7 +498,7 @@ const BackupsPage: React.FC = () => {
             disabled={actionLoading === 'create'}
           />
 
-          <div className="divider">Security Options</div>
+          <Divider>Security Options</Divider>
 
           <Checkbox
             label="Encrypt backup"

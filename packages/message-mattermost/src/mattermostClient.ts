@@ -1,5 +1,6 @@
 import axios, { type AxiosInstance } from 'axios';
 import { Logger } from '@common/logger';
+import { isSafeUrl } from '@hivemind/shared-types';
 import type { MattermostPost } from './MattermostMessage';
 
 const logger = Logger.withContext('MattermostClient');
@@ -68,6 +69,9 @@ export default class MattermostClient {
 
   async connect(): Promise<void> {
     try {
+      if (!(await isSafeUrl(this.serverUrl))) {
+        throw new Error('Mattermost API URL is not safe to connect to.');
+      }
       const response = await this.api.get('/users/me');
       if (response.status === 200) {
         this.connected = true;

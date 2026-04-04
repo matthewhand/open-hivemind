@@ -103,9 +103,7 @@ describe('templatesSchema', () => {
 
   describe('DeleteTemplateSchema', () => {
     it('accepts valid id param', () => {
-      expect(() =>
-        DeleteTemplateSchema.parse({ params: { id: 'abc' } })
-      ).not.toThrow();
+      expect(() => DeleteTemplateSchema.parse({ params: { id: 'abc' } })).not.toThrow();
     });
 
     it('rejects empty id', () => {

@@ -14,6 +14,7 @@ import React, { useState } from 'react';
 import Card from './DaisyUI/Card';
 import Button from './DaisyUI/Button';
 import Tooltip from './DaisyUI/Tooltip';
+import { LoadingSpinner } from './DaisyUI/Loading';
 import { ConfirmModal } from './DaisyUI/Modal';
 import {
   ArrowDownTrayIcon,
@@ -168,7 +169,7 @@ const SystemInfo: React.FC = () => {
             </div>
             {isLoading && (
               <div className="flex items-center gap-2 mt-4 text-base-content/70">
-                <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>
+                <LoadingSpinner size="sm" />
                 <span className="text-sm">Processing system action...</span>
               </div>
             )}

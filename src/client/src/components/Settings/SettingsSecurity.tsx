@@ -6,11 +6,13 @@ import { z } from 'zod';
 import { Alert } from '../DaisyUI/Alert';
 import { Badge } from '../DaisyUI/Badge';
 import Button from '../DaisyUI/Button';
+import Divider from '../DaisyUI/Divider';
 import { SkeletonList } from '../DaisyUI/Skeleton';
 import Input from '../DaisyUI/Input';
 import Toggle from '../DaisyUI/Toggle';
 import FormField from '../DaisyUI/FormField';
 import { Shield, Plus, Trash2 } from 'lucide-react';
+import Tooltip from '../DaisyUI/Tooltip';
 import SecureConfigManager from '../SecureConfigManager';
 import Debug from 'debug';
 import { apiService } from '../../services/api';
@@ -304,7 +306,7 @@ const SettingsSecurity: React.FC = () => {
               {fields.map((field, index) => (
                 <Badge key={field.id} size="lg" className="gap-2 bg-base-300">
                   {field.value}
-                  <div className="tooltip" data-tip={`Remove ${field.value}`}>
+                  <Tooltip content={`Remove ${field.value}`}>
                     <Button
                       type="button"
                       variant="ghost"
@@ -315,7 +317,7 @@ const SettingsSecurity: React.FC = () => {
                     >
                       <Trash2 className="w-3 h-3" />
                     </Button>
-                  </div>
+                  </Tooltip>
                 </Badge>
               ))}
               {fields.length === 0 && (
@@ -397,7 +399,7 @@ const SettingsSecurity: React.FC = () => {
         </div>
       </form>
 
-      <div className="divider mt-8 mb-6"></div>
+      <Divider className="mt-8 mb-6" />
 
       {/* Secure Configuration Management Section */}
       <div className="mt-8">

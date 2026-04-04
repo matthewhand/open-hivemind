@@ -3,6 +3,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { apiService } from '../../services/api';
 import { useErrorToast } from '../../components/DaisyUI/ToastNotification';
 import DataTable from '../../components/DaisyUI/DataTable';
+import Divider from '../../components/DaisyUI/Divider';
+import { Stat, Stats } from '../../components/DaisyUI/Stat';
+import { LoadingSpinner } from '../../components/DaisyUI/Loading';
 
 interface PerformanceTabProps {
   onClearCache: () => void;
@@ -63,27 +66,16 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ onClearCache }) => {
       </div>
 
       {apiStatus && (
-        <div className="stats shadow w-full">
-          <div className="stat">
-            <div className="stat-title">Overall Status</div>
-            <div className={`stat-value ${apiStatus.overall.status === 'healthy' ? 'text-success' : 'text-error'}`}>
-              {apiStatus.overall.status.toUpperCase()}
-            </div>
-            <div className="stat-desc">{apiStatus.overall.message}</div>
-          </div>
-
-          <div className="stat">
-            <div className="stat-title">Online Endpoints</div>
-            <div className="stat-value">{apiStatus.overall.stats.online}</div>
-            <div className="stat-desc">/ {apiStatus.overall.stats.total} total</div>
-          </div>
-
-          <div className="stat">
-            <div className="stat-title">Error Rate</div>
-            <div className="stat-value text-error">{apiStatus.overall.stats.error}</div>
-            <div className="stat-desc">endpoints reporting errors</div>
-          </div>
-        </div>
+        <Stats className="shadow w-full">
+          <Stat
+            title="Overall Status"
+            value={apiStatus.overall.status.toUpperCase()}
+            valueClassName={apiStatus.overall.status === 'healthy' ? 'text-success' : 'text-error'}
+            description={apiStatus.overall.message}
+          />
+          <Stat title="Online Endpoints" value={apiStatus.overall.stats.online} description={`/ ${apiStatus.overall.stats.total} total`} />
+          <Stat title="Error Rate" value={apiStatus.overall.stats.error} valueClassName="text-error" description="endpoints reporting errors" />
+        </Stats>
       )}
 
       <div className="flex justify-between items-center mt-8">
@@ -93,7 +85,7 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ onClearCache }) => {
           onClick={fetchPerformanceData}
           disabled={isPerformanceLoading}
         >
-          {isPerformanceLoading ? <span className="loading loading-spinner loading-xs" aria-hidden="true"></span> : '🔄 Refresh'}
+          {isPerformanceLoading ? <LoadingSpinner size="xs" /> : '🔄 Refresh'}
         </button>
       </div>
 
@@ -198,7 +190,7 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ onClearCache }) => {
         </div>
       </div>
 
-      <div className="divider"></div>
+      <Divider />
 
       <div>
         <h4 className="font-bold mb-4">Environment Configuration (Read-Only)</h4>

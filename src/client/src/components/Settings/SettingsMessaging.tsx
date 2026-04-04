@@ -9,6 +9,7 @@ import Toggle from '../DaisyUI/Toggle';
 import Button from '../DaisyUI/Button';
 import { SkeletonList } from '../DaisyUI/Skeleton';
 import { MessageSquare, Bot, Users, Zap, Info } from 'lucide-react';
+import Tooltip from '../DaisyUI/Tooltip';
 import { apiService } from '../../services/api';
 import { useSavedStamp } from '../../contexts/SavedStampContext';
 
@@ -352,9 +353,9 @@ const SettingsMessaging: React.FC = () => {
             <label className="label py-1 flex items-center justify-between">
               <span className="label-text text-sm font-medium flex-1 pr-4 flex items-center gap-1">
                 Semantic Relevance Threshold Tuning
-                <div className="tooltip tooltip-right" data-tip="Multiplier applied to base chance if the message context is semantically related to recent conversation history (e.g. 10x means a 5% base chance becomes 50%).">
+                <Tooltip content="Multiplier applied to base chance if the message context is semantically related to recent conversation history (e.g. 10x means a 5% base chance becomes 50%)." position="right">
                   <Info className="w-3.5 h-3.5 text-base-content/50 cursor-help" />
-                </div>
+                </Tooltip>
               </span>
               <Badge variant="info" className="font-mono text-xs flex-none">{semanticRelevanceBonus}x</Badge>
             </label>
@@ -401,9 +402,9 @@ const SettingsMessaging: React.FC = () => {
             <label className="label py-1 flex items-center justify-between">
               <span className="label-text text-sm font-medium flex-1 pr-4 flex items-center gap-1">
                 Base Chance
-                <div className="tooltip tooltip-right" data-tip="The absolute baseline probability (0-100%) the bot will chime in unaddressed, before any multipliers like semantic relevance are applied.">
+                <Tooltip content="The absolute baseline probability (0-100%) the bot will chime in unaddressed, before any multipliers like semantic relevance are applied." position="right">
                   <Info className="w-3.5 h-3.5 text-base-content/50 cursor-help" />
-                </div>
+                </Tooltip>
               </span>
               <Badge variant="accent" className="font-mono flex-none">{baseChance.toFixed(0)}%</Badge>
             </label>

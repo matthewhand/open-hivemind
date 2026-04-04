@@ -13,6 +13,8 @@ import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
 import { Alert } from '../components/DaisyUI/Alert';
 import { Badge } from '../components/DaisyUI/Badge';
 import Toggle from '../components/DaisyUI/Toggle';
+import Divider from '../components/DaisyUI/Divider';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import Debug from 'debug';
 
 const debug = Debug('app:client:pages:MCPToolsTestingPage');
@@ -423,7 +425,7 @@ const MCPToolsTestingPage: React.FC = () => {
                   <p className="text-sm text-base-content/70">{selectedTool.description}</p>
                   <Badge style="outline">{selectedTool.serverName}</Badge>
 
-                  <div className="divider"></div>
+                  <Divider />
 
                   {renderToolSchema()}
                 </div>
@@ -444,7 +446,7 @@ const MCPToolsTestingPage: React.FC = () => {
                     >
                       {testing ? (
                         <>
-                          <span className="loading loading-spinner loading-sm"></span>
+                          <LoadingSpinner size="sm" />
                           Testing...
                         </>
                       ) : (

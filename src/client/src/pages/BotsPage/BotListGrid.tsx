@@ -54,7 +54,8 @@ export const BotListGrid: React.FC<BotListGridProps> = ({
         >
           <div className="absolute top-2 left-2 z-10 flex items-center gap-1">
             <Checkbox
-              className="checkbox checkbox-sm checkbox-primary"
+              variant="primary"
+              size="sm"
               checked={bulk.isSelected(bot.id)}
               onChange={(e) => bulk.toggleItem(bot.id, e as any)}
               onClick={(e) => e.stopPropagation()}

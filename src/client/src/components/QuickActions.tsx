@@ -4,7 +4,7 @@ import Card from './DaisyUI/Card';
 import Button from './DaisyUI/Button';
 import Modal from './DaisyUI/Modal';
 import Input from './DaisyUI/Input';
-import { Loading } from './DaisyUI/Loading';
+import { Loading, LoadingSpinner } from './DaisyUI/Loading';
 import {
   ArrowPathIcon,
   XMarkIcon,
@@ -139,7 +139,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
             className="flex items-center gap-2"
           >
             {isLoading('refresh') ? (
-              <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>
+              <LoadingSpinner size="sm" />
             ) : (
               <ArrowPathIcon className="w-5 h-5" />
             )}
@@ -153,7 +153,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
             className="flex items-center gap-2"
           >
             {isLoading('clear') ? (
-              <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>
+              <LoadingSpinner size="sm" />
             ) : (
               <XMarkIcon className="w-5 h-5" />
             )}
@@ -167,7 +167,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
             className="flex items-center gap-2"
           >
             {isLoading('export') ? (
-              <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>
+              <LoadingSpinner size="sm" />
             ) : (
               <ArrowDownTrayIcon className="w-5 h-5" />
             )}
@@ -210,7 +210,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
             variant="primary"
             disabled={!exportFilename.trim() || isLoading('export')}
           >
-            {isLoading('export') ? <span className="loading loading-spinner loading-sm" aria-hidden="true"></span> : 'Export'}
+            {isLoading('export') ? <LoadingSpinner size="sm" /> : 'Export'}
           </Button>
         </div>
       </Modal>

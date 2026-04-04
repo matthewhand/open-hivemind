@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Shield, RefreshCw, AlertTriangle, Plus, Copy, Trash2, Edit2 } from 'lucide-react';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import Card from '../components/DaisyUI/Card';
+import Divider from '../components/DaisyUI/Divider';
 import Input from '../components/DaisyUI/Input';
 import Button from '../components/DaisyUI/Button';
 import Toggle from '../components/DaisyUI/Toggle';
@@ -15,6 +16,7 @@ import RangeSlider from '../components/DaisyUI/RangeSlider';
 import { Badge } from '../components/DaisyUI/Badge';
 import { GuardProfile } from '@shared/types/models/security';
 import { useToast } from '../components/DaisyUI/ToastNotification';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
 
 // Custom comma-separated input component
 const CommaSeparatedInput = ({
@@ -242,7 +244,7 @@ const GuardsPage: React.FC = () => {
 
         return (
           <>
-            <div className="divider">Guardrails</div>
+            <Divider>Guardrails</Divider>
 
             <div className="grid grid-cols-1 gap-6">
               {/* Access Control */}
@@ -424,7 +426,7 @@ const GuardsPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[50vh]">
-        <span className="loading loading-spinner loading-lg text-primary"></span>
+        <LoadingSpinner size="lg" color="primary" />
       </div>
     );
   }

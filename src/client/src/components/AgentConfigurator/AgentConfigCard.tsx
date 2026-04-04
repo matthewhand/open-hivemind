@@ -2,7 +2,9 @@ import React from 'react';
 import type { AgentConfigCardProps, GuardState } from './types';
 import type { FieldMetadata } from '../../services/api';
 import type { ProviderInfo } from '../../services/providerService';
+import Divider from '../DaisyUI/Divider';
 import Toggle from '../DaisyUI/Toggle';
+import { LoadingSpinner } from '../DaisyUI/Loading';
 import { Badge } from '../DaisyUI/Badge';
 
 const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
@@ -54,7 +56,7 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
               {uiState?.messageProvider || 'No message provider selected'} · {uiState?.llmProvider || 'No LLM selected'}
             </p>
           </div>
-          {pending && <span className="loading loading-spinner loading-md" aria-hidden="true"></span>}
+          {pending && <LoadingSpinner size="md" />}
         </div>
 
         {/* Provider Configuration Section */}
@@ -309,7 +311,7 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
         </div>
 
         {/* Status Section */}
-        <div className="divider"></div>
+        <Divider />
 
         <div className="flex items-center gap-2 flex-wrap">
           {connection.icon}

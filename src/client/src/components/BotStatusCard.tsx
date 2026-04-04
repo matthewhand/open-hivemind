@@ -6,7 +6,7 @@ import Button from './DaisyUI/Button';
 import Modal from './DaisyUI/Modal';
 import Accordion from './DaisyUI/Accordion';
 import { Progress } from './DaisyUI/Loading';
-import { Loading } from './DaisyUI/Loading';
+import { Loading, LoadingSpinner } from './DaisyUI/Loading';
 import {
   RotateCcw,
   Settings,
@@ -373,7 +373,7 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
               onClick={handleRefreshClick}
               disabled={loading} aria-busy={loading}
             >
-              {loading ? <span className="loading loading-spinner loading-xs" aria-hidden="true"></span> : <RotateCcw className="w-4 h-4" />}
+              {loading ? <LoadingSpinner size="xs" /> : <RotateCcw className="w-4 h-4" />}
               Refresh
             </Button>
           </div>

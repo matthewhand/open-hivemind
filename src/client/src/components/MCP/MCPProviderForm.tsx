@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Alert, Button, Card, Input, Select, Textarea, Toggle, InputGroup, FormLabel } from 'react-daisyui';
 import Form from '../DaisyUI/Form';
+import { LoadingSpinner } from '../DaisyUI/Loading';
 import { FaPlus, FaTrash, FaEye, FaEyeSlash, FaExclamationTriangle, FaInfoCircle } from 'react-icons/fa';
 import type { MCPProviderConfig, MCPProviderValidationResult, MCPProviderTemplate } from '../../../types/mcp';
 import { ProviderField } from '../../provider-configs/types';
@@ -608,7 +609,7 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
                 disabled={!validation.isValid || isLoading}
               >
                 {isLoading ? (
-                  <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>
+                  <LoadingSpinner size="sm" />
                 ) : null}
                 {provider ? 'Save Changes' : 'Create Provider'}
               </Button>

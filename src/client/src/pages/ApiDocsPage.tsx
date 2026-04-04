@@ -2,6 +2,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Mockup from '../components/DaisyUI/Mockup';
 import { Alert } from '../components/DaisyUI/Alert';
+import Divider from '../components/DaisyUI/Divider';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import { Badge } from '../components/DaisyUI/Badge';
 import { apiService } from '../services/api';
 
@@ -202,7 +204,7 @@ const TryItPanel: React.FC<{ route: RouteInfo }> = ({ route }) => {
         onClick={send}
         disabled={loading}
       >
-        {loading && <span className="loading loading-spinner" aria-hidden="true"></span>}
+        {loading && <LoadingSpinner />}
         {loading ? 'Sending...' : 'Send Request'}
       </button>
       {response !== null && (
@@ -300,7 +302,7 @@ const RouteCard: React.FC<{ route: RouteInfo }> = ({ route }) => {
           />
         </div>
 
-        <div className="divider" />
+        <Divider />
         <h4 className="font-semibold text-sm mb-2">Live Testing</h4>
 
         <TryItPanel route={route} />
@@ -377,7 +379,7 @@ const ApiDocsPage: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <span className="loading loading-spinner loading-lg" />
+        <LoadingSpinner size="lg" />
       </div>
     );
   }

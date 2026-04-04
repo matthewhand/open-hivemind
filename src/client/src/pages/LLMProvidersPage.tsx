@@ -11,6 +11,7 @@ import { SkeletonTableLayout } from '../components/DaisyUI/Skeleton';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { ConfirmModal } from '../components/DaisyUI/Modal';
 import { useErrorToast } from '../components/DaisyUI/ToastNotification';
+import Tooltip from '../components/DaisyUI/Tooltip';
 import {
   Brain as BrainIcon,
   Plus as AddIcon,
@@ -33,6 +34,7 @@ import {
 import type { LLMProviderType } from '../types/bot';
 import { LLM_PROVIDER_CONFIGS } from '../types/bot';
 import ProviderConfigModal from '../components/ProviderConfiguration/ProviderConfigModal';
+import Divider from '../components/DaisyUI/Divider';
 import { apiService } from '../services/api';
 import useUrlParams from '../hooks/useUrlParams';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -258,11 +260,11 @@ const LLMProvidersPage: React.FC = () => {
   const renderLibraryCheck = (type: string) => {
     const status = libraryStatus[type];
     if (!status?.installed) return status ? (
-      <div className="tooltip tooltip-bottom" data-tip={`Missing: ${status.package}`}>
+      <Tooltip content={`Missing: ${status.package}`} position="bottom">
         <Badge variant="error" size="small" className="gap-1 cursor-help">
           <XIcon className="w-3 h-3" /> Lib Missing
         </Badge>
-      </div>
+      </Tooltip>
     ) : null;
     return null;
   };
@@ -505,7 +507,7 @@ const LLMProvidersPage: React.FC = () => {
         </Card>
       )}
 
-      <div className="divider">Custom Profiles</div>
+      <Divider>Custom Profiles</Divider>
 
       <SearchFilterBar
         searchValue={searchQuery}
@@ -545,7 +547,8 @@ const LLMProvidersPage: React.FC = () => {
         <>
           <div className="flex items-center gap-2 mb-2">
             <Checkbox
-              className="checkbox checkbox-sm checkbox-primary"
+              variant="primary"
+              size="sm"
               checked={bulk.isAllSelected}
               onChange={() => bulk.toggleAll(filteredProfileKeys)}
               aria-label="Select all profiles"
@@ -573,7 +576,8 @@ const LLMProvidersPage: React.FC = () => {
                 <div className="p-4 flex items-center justify-between cursor-pointer" onClick={() => toggleExpand(profile.key)}>
                   <div className="flex items-center gap-4">
                     <Checkbox
-                      className="checkbox checkbox-sm checkbox-primary"
+                      variant="primary"
+                      size="sm"
                       checked={bulk.isSelected(profile.key)}
                       onChange={(e) => { e.stopPropagation(); bulk.toggleItem(profile.key, e as any); }}
                       onClick={(e) => e.stopPropagation()}

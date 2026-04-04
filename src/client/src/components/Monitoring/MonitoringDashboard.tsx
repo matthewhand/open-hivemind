@@ -18,6 +18,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import SystemHealth from '../SystemHealth';
+import { LoadingSpinner } from '../DaisyUI/Loading';
 import BotStatusCard from '../BotStatusCard';
 import ActivityMonitor from './ActivityMonitor';
 import ActivityCharts from './ActivityCharts';
@@ -357,7 +358,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
               disabled={isStatusLoading || isConfigLoading} aria-busy={isStatusLoading || isConfigLoading}
             >
               {(isStatusLoading || isConfigLoading) ? (
-                <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>
+                <LoadingSpinner size="sm" />
               ) : (
                 <RotateCcw className="w-4 h-4" />
               )}

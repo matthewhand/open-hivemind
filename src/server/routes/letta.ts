@@ -112,9 +112,14 @@ router.get(
         'https://api.letta.com/v1';
 
       if (!apiKey) {
-        // No API key configured — return empty results instead of an error
-        debug('No Letta API key provided; returning empty agent list');
-        return res.json(ApiResponse.success([]));
+        return res
+          .status(HTTP_STATUS.BAD_REQUEST)
+          .json(
+            ErrorResponses.badRequest(
+              'Please provide Letta API key via x-letta-api-key header or apiKey query parameter',
+              { error: 'Missing API key' }
+            ).build()
+          );
       }
 
       const validation = await validateLettaUrl(apiUrl);

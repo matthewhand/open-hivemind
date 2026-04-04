@@ -13,7 +13,9 @@ import { SkeletonList } from '../components/DaisyUI/Skeleton';
 import { SelectOption } from '../components/DaisyUI/Select';
 import { apiService } from '../services/api';
 import Badge from '../components/DaisyUI/Badge';
+import { Stat, Stats } from '../components/DaisyUI/Stat';
 import { Alert } from '../components/DaisyUI/Alert';
+import Tooltip from '../components/DaisyUI/Tooltip';
 
 interface SitemapUrl {
   url: string;
@@ -174,35 +176,28 @@ const SitemapPage: React.FC = () => {
             <Button variant="ghost" onClick={handleDownloadXml} className="gap-2">
               <Download className="w-4 h-4" /> XML
             </Button>
-            <div className="tooltip" data-tip="Refresh">
+            <Tooltip content="Refresh">
               <Button variant="ghost" onClick={fetchSitemap} className="btn-circle" aria-label="Refresh">
                 <RefreshCw className="w-4 h-4" />
               </Button>
-            </div>
+            </Tooltip>
           </div>
         }
       />
 
       {/* Statistics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="stats shadow w-full">
-          <div className="stat">
-            <div className="stat-title">Total Pages</div>
-            <div className="stat-value">{sitemapData?.totalUrls || 0}</div>
-            <div className="stat-desc">Indexed URLs</div>
-          </div>
-        </div>
-        <div className="stats shadow w-full">
-          <div className="stat">
-            <div className="stat-title">Last Generated</div>
-            <div className="stat-value text-lg">
-              {sitemapData ? new Date(sitemapData.generated).toLocaleTimeString() : 'N/A'}
-            </div>
-            <div className="stat-desc">
-              {sitemapData ? new Date(sitemapData.generated).toLocaleDateString() : ''}
-            </div>
-          </div>
-        </div>
+        <Stats className="shadow w-full">
+          <Stat title="Total Pages" value={sitemapData?.totalUrls || 0} description="Indexed URLs" />
+        </Stats>
+        <Stats className="shadow w-full">
+          <Stat
+            title="Last Generated"
+            value={sitemapData ? new Date(sitemapData.generated).toLocaleTimeString() : 'N/A'}
+            valueClassName="text-lg"
+            description={sitemapData ? new Date(sitemapData.generated).toLocaleDateString() : ''}
+          />
+        </Stats>
       </div>
 
       {/* Controls */}
@@ -247,7 +242,7 @@ const SitemapPage: React.FC = () => {
                       <h3 className="font-mono text-sm break-all font-bold">
                         {url.url}
                       </h3>
-                      <div className="tooltip" data-tip="Open URL">
+                      <Tooltip content="Open URL">
                         <Button
                           variant="ghost"
                           size="xs"
@@ -257,7 +252,7 @@ const SitemapPage: React.FC = () => {
                         >
                           <ExternalLink className="w-4 h-4" />
                         </Button>
-                      </div>
+                      </Tooltip>
                     </div>
 
                     <p className="text-xs text-base-content/70 mb-3">

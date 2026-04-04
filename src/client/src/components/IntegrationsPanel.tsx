@@ -8,6 +8,7 @@ import Input from './DaisyUI/Input';
 import Select from './DaisyUI/Select';
 import Toggle from './DaisyUI/Toggle';
 import { LoadingSpinner as Loading } from './DaisyUI/Loading';
+import Tooltip from './DaisyUI/Tooltip';
 import Textarea from './DaisyUI/Textarea';
 import Modal, { ConfirmModal } from './DaisyUI/Modal';
 import Badge from './DaisyUI/Badge';
@@ -272,12 +273,12 @@ const IntegrationsPanel: React.FC = () => {
     return (
       <div key={key} className="form-control">
         <label className="label py-1">
-          <div className="tooltip tooltip-right z-10 text-left" data-tip={`Key: ${key}${schema.env ? ` • Env: ${schema.env}` : ''}`}>
+          <Tooltip content={`Key: ${key}${schema.env ? ` • Env: ${schema.env}` : ''}`} position="right" className="z-10 text-left">
             <span className="label-text font-medium flex items-center gap-2 text-sm opacity-90 border-b border-dashed border-base-content/30 cursor-help">
               {schema.doc || label}
               {isLocked && <LockClosedIcon className="w-3 h-3 text-warning" />}
             </span>
-          </div>
+          </Tooltip>
         </label>
         {(type === 'text' || type === 'number' || type === 'password') && (
           <div className="join w-full">
@@ -332,9 +333,9 @@ const IntegrationsPanel: React.FC = () => {
           <h2 className="text-lg font-bold flex items-center gap-2 uppercase tracking-wide text-base-content/70">
             <CpuChipIcon className="w-5 h-5" />
             LLM Providers
-            <div className="tooltip tooltip-right font-normal normal-case text-sm" data-tip="Manage AI models and API keys">
+            <Tooltip content="Manage AI models and API keys" position="right" className="font-normal normal-case text-sm">
               <AlertCircle className="w-4 h-4 cursor-help opacity-50 hover:opacity-100" />
-            </div>
+            </Tooltip>
           </h2>
           <Button
             variant="ghost"
@@ -457,9 +458,9 @@ const IntegrationsPanel: React.FC = () => {
           <h2 className="text-lg font-bold flex items-center gap-2 uppercase tracking-wide text-base-content/70">
             {category === 'llm' ? <CpuChipIcon className="w-5 h-5" /> : <ChatBubbleLeftRightIcon className="w-5 h-5" />}
             {title}
-            <div className="tooltip tooltip-right font-normal normal-case text-sm" data-tip={category === 'llm' ? 'Manage AI models and API keys' : 'Connect to messaging platforms'}>
+            <Tooltip content={category === 'llm' ? 'Manage AI models and API keys' : 'Connect to messaging platforms'} position="right" className="font-normal normal-case text-sm">
               <AlertCircle className="w-4 h-4 cursor-help opacity-50 hover:opacity-100" />
-            </div>
+            </Tooltip>
           </h2>
           <Button
             variant="ghost"
