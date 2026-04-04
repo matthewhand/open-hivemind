@@ -10,18 +10,19 @@ on:
 jobs:
   unit-tests-core:
     runs-on: ubuntu-latest
-    timeout-minutes: 15  # Increased timeout for admin auth tests
+    timeout-minutes: 15
     strategy:
-      fail-fast: false  # Continue other jobs even if one fails
+      fail-fast: false
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
         with:
           version: 10
+
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -31,11 +32,14 @@ jobs:
         run: pnpm install
 
       - name: Run core unit tests
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
         run: |
-          NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config node_modules/.bin/jest \
+          NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config ./node_modules/jest/bin/jest.js \
             tests/unit/ \
             --verbose \
             --ci \
+            --forceExit \
             --maxWorkers=2
 
   unit-tests-integrations:
@@ -47,11 +51,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
         with:
           version: 10
+
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -61,13 +66,16 @@ jobs:
         run: pnpm install
 
       - name: Run integration unit tests
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
         run: |
-          NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config node_modules/.bin/jest \
+          NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config ./node_modules/jest/bin/jest.js \
             tests/integrations/ \
             tests/llm/ \
             tests/managers/ \
             --verbose \
             --ci \
+            --forceExit \
             --maxWorkers=2
 
   unit-tests-services:
@@ -79,11 +87,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
         with:
           version: 10
+
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -93,8 +102,10 @@ jobs:
         run: pnpm install
 
       - name: Run service unit tests
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
         run: |
-          NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config node_modules/.bin/jest \
+          NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config ./node_modules/jest/bin/jest.js \
             tests/config/ \
             tests/services/ \
             tests/utils/ \
@@ -103,6 +114,7 @@ jobs:
             tests/common/ \
             --verbose \
             --ci \
+            --forceExit \
             --maxWorkers=2
 
   unit-tests-frontend:
@@ -114,11 +126,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
         with:
           version: 10
+
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
