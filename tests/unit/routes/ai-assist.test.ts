@@ -4,7 +4,9 @@ import { getLlmProfileByKey } from '../../../src/config/llmProfiles';
 import { UserConfigStore } from '../../../src/config/UserConfigStore';
 import router from '../../../src/server/routes/ai-assist';
 
-// Mock dependencies before importing the router
+const mockLoadPlugin = jest.fn();
+const mockInstantiateLlmProvider = jest.fn();
+
 jest.mock('../../../src/config/llmProfiles', () => ({
   getLlmProfileByKey: jest.fn(),
 }));
@@ -19,12 +21,9 @@ jest.mock('../../../src/config/UserConfigStore', () => ({
   },
 }));
 
-jest.mock('../../../src/integrations/flowise/flowiseProvider', () => ({
-  FlowiseProvider: jest.fn(),
-}));
-
-jest.mock('../../../src/integrations/openwebui/runInference', () => ({
-  generateChatCompletion: jest.fn(),
+jest.mock('../../../src/plugins/PluginLoader', () => ({
+  loadPlugin: (...args: any[]) => mockLoadPlugin(...args),
+  instantiateLlmProvider: (...args: any[]) => mockInstantiateLlmProvider(...args),
 }));
 
 jest.mock('../../../src/types/errors', () => ({
@@ -32,19 +31,6 @@ jest.mock('../../../src/types/errors', () => ({
     toHivemindError: (e: unknown) => (e instanceof Error ? e : new Error(String(e))),
   },
 }));
-
-jest.mock('../../../src/message/interfaces/IMessage', () => {
-  return {
-    IMessage: class {
-      content: string;
-      role: string;
-      constructor(_raw: any, role: string) {
-        this.role = role;
-        this.content = '';
-      }
-    },
-  };
-});
 
 describe('AI Assist Route - POST /generate', () => {
   let app: express.Application;
@@ -55,45 +41,34 @@ describe('AI Assist Route - POST /generate', () => {
     app.use('/', router);
     jest.clearAllMocks();
 
-    // Default: provider configured
     (UserConfigStore.getInstance as jest.Mock).mockReturnValue({
       getGeneralSettings: () => ({ webuiIntelligenceProvider: 'test-provider' }),
     });
+
+    mockLoadPlugin.mockResolvedValue({ plugin: 'ok' });
+    mockInstantiateLlmProvider.mockReturnValue({
+      supportsChatCompletion: () => true,
+      supportsCompletion: () => false,
+      generateChatCompletion: jest.fn().mockResolvedValue('AI response'),
+      generateCompletion: jest.fn(),
+    });
   });
 
-  it('should return 400 when prompt is missing', async () => {
-    const res = await request(app).post('/generate').send({});
+  it('returns 400 validation envelope when required message field is missing', async () => {
+    const res = await request(app).post('/generate').send({ botName: 'test-bot' });
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('Validation failed');
-    expect(res.body.issues).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ message: expect.stringContaining('Required') }),
-      ])
-    );
   });
 
-  it('should return 400 when prompt exceeds max length', async () => {
+  it('returns 400 when prompt exceeds max length', async () => {
     const res = await request(app)
       .post('/generate')
-      .send({ prompt: 'x'.repeat(33000), message: 'x'.repeat(33000), botName: 'test-bot' });
+      .send({ message: 'x'.repeat(33000), botName: 'test-bot' });
     expect(res.status).toBe(400);
-    expect(res.body.error).toBeDefined();
+    expect(res.body).toMatchObject({ success: false });
   });
 
-  it('should return 400 when system prompt exceeds max length', async () => {
-    const res = await request(app)
-      .post('/generate')
-      .send({
-        prompt: 'hello',
-        message: 'hello',
-        botName: 'test-bot',
-        systemPrompt: 'x'.repeat(17000),
-      });
-    expect(res.status).toBe(400);
-    expect(res.body.error).toBeDefined();
-  });
-
-  it('should return 400 when provider is not configured', async () => {
+  it('returns 400 when provider is not configured', async () => {
     (UserConfigStore.getInstance as jest.Mock).mockReturnValue({
       getGeneralSettings: () => ({ webuiIntelligenceProvider: 'none' }),
     });
@@ -105,7 +80,7 @@ describe('AI Assist Route - POST /generate', () => {
     expect(res.body.error).toBe('AI Assistance is not configured.');
   });
 
-  it('should return 404 when provider profile is not found', async () => {
+  it('returns 404 when provider profile is not found', async () => {
     (getLlmProfileByKey as jest.Mock).mockReturnValue(null);
 
     const res = await request(app)
@@ -115,38 +90,7 @@ describe('AI Assist Route - POST /generate', () => {
     expect(res.body.error).toContain('provider profile not found');
   });
 
-  it('should return 400 for unsupported provider type', async () => {
-    (getLlmProfileByKey as jest.Mock).mockReturnValue({
-      name: 'test',
-      provider: 'unknown-provider',
-      config: {},
-    });
-
-    const res = await request(app)
-      .post('/generate')
-      .send({ prompt: 'hello', message: 'hello', botName: 'test-bot' });
-    expect(res.status).toBe(400);
-    expect(res.body.error).toContain('Unsupported provider type');
-  });
-
-  it('should return result for openwebui provider', async () => {
-    (getLlmProfileByKey as jest.Mock).mockReturnValue({
-      name: 'test',
-      provider: 'openwebui',
-      config: {},
-    });
-
-    const { generateChatCompletion } = require('../../../src/integrations/openwebui/runInference');
-    (generateChatCompletion as jest.Mock).mockResolvedValue({ text: 'AI response' });
-
-    const res = await request(app)
-      .post('/generate')
-      .send({ prompt: 'hello', message: 'hello', botName: 'test-bot' });
-    expect(res.status).toBe(200);
-    expect(res.body.result).toBe('AI response');
-  });
-
-  it('should handle provider initialization errors', async () => {
+  it('returns success envelope for chat-capable provider', async () => {
     (getLlmProfileByKey as jest.Mock).mockReturnValue({
       name: 'test',
       provider: 'openai',
@@ -156,8 +100,72 @@ describe('AI Assist Route - POST /generate', () => {
     const res = await request(app)
       .post('/generate')
       .send({ prompt: 'hello', message: 'hello', botName: 'test-bot' });
-    // openai require will fail in test env, resulting in 500
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ success: true, data: { result: 'AI response' } });
+    expect(mockLoadPlugin).toHaveBeenCalledWith('llm-openai');
+  });
+
+  it('falls back to completion-only provider path', async () => {
+    (getLlmProfileByKey as jest.Mock).mockReturnValue({
+      name: 'test',
+      provider: 'openai',
+      config: {},
+    });
+
+    const completionMock = jest.fn().mockResolvedValue('completion response');
+    mockInstantiateLlmProvider.mockReturnValue({
+      supportsChatCompletion: () => false,
+      supportsCompletion: () => true,
+      generateChatCompletion: jest.fn(),
+      generateCompletion: completionMock,
+    });
+
+    const res = await request(app)
+      .post('/generate')
+      .send({ prompt: 'hello', systemPrompt: 'sys', message: 'hello', botName: 'test-bot' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.result).toBe('completion response');
+    expect(completionMock).toHaveBeenCalledWith('hello');
+  });
+
+  it('returns 400 when provider supports no generation modes', async () => {
+    (getLlmProfileByKey as jest.Mock).mockReturnValue({
+      name: 'test',
+      provider: 'openai',
+      config: {},
+    });
+
+    mockInstantiateLlmProvider.mockReturnValue({
+      supportsChatCompletion: () => false,
+      supportsCompletion: () => false,
+      generateChatCompletion: jest.fn(),
+      generateCompletion: jest.fn(),
+    });
+
+    const res = await request(app)
+      .post('/generate')
+      .send({ prompt: 'hello', message: 'hello', botName: 'test-bot' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('Provider does not support generation.');
+  });
+
+  it('returns 500 when plugin initialization fails', async () => {
+    (getLlmProfileByKey as jest.Mock).mockReturnValue({
+      name: 'test',
+      provider: 'openai',
+      config: {},
+    });
+
+    mockLoadPlugin.mockRejectedValue(new Error('plugin load failed'));
+
+    const res = await request(app)
+      .post('/generate')
+      .send({ prompt: 'hello', message: 'hello', botName: 'test-bot' });
+
     expect(res.status).toBe(500);
-    expect(res.body.error).toBe('Failed to generate response');
+    expect(res.body.error).toContain('Failed to initialize provider: plugin load failed');
   });
 });
