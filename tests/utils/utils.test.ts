@@ -78,6 +78,14 @@ describe('executeCommandSafe', () => {
       expect(typeof output).toBe('string');
     });
 
+    it('should pass custom env and cwd options to command execution', async () => {
+      const output = await executeCommandSafe('node', ['-e', 'process.stdout.write(process.env.CUSTOM_ENV || "")'], {
+        env: { ...process.env, CUSTOM_ENV: 'custom-value' } as NodeJS.ProcessEnv,
+        cwd: process.cwd(),
+      });
+      expect(output).toBe('custom-value');
+    });
+
     it('should handle timeout scenarios', async () => {
       // Test with a command that should complete quickly
       const startTime = Date.now();
@@ -119,6 +127,11 @@ describe('executeCommandSafe', () => {
     it('should handle unicode characters', async () => {
       const output = await executeCommandSafe('echo', ['unicode: 🚀 ✅ 🎉']);
       expect(output.trim()).toBe('unicode: 🚀 ✅ 🎉');
+    });
+
+    it('should return empty stdout for no-output command', async () => {
+      const output = await executeCommandSafe('node', ['-e', '']);
+      expect(output).toBe('');
     });
   });
 });
@@ -182,6 +195,12 @@ describe('readFile', () => {
     it('should handle directory paths instead of files', async () => {
       mockStat.mockResolvedValue({ isFile: () => false, isDirectory: () => true });
       await expect(readFile('directory')).rejects.toThrow();
+    });
+
+    it('should throw if stat says not a directory but readFile fails', async () => {
+      mockStat.mockResolvedValue({ isFile: () => true, isDirectory: () => false });
+      mockReadFileAsync.mockRejectedValue(new Error('read failed'));
+      await expect(readFile('bad-file.txt')).rejects.toThrow('read failed');
     });
   });
 
