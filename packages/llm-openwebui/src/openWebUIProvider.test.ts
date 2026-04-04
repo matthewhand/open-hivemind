@@ -1,42 +1,75 @@
+// Mock DNS so isSafeUrl always resolves to a public IP in tests
+jest.mock('dns', () => ({
+  promises: { lookup: jest.fn().mockResolvedValue({ address: '1.2.3.4', family: 4 }) },
+}));
+
+jest.mock('convict', () => {
+  const schema: any = {};
+  return jest.fn(() => ({
+    schema,
+    get: jest.fn((key: string) => {
+      if (key === 'apiUrl') return 'https://openwebui.example.com';
+      if (key === 'model') return 'test-model';
+      return '';
+    }),
+    set: jest.fn(),
+    validate: jest.fn(),
+    getProperties: jest.fn(() => ({ apiUrl: 'https://openwebui.example.com', model: 'test-model', username: 'u', password: 'p' })),
+  }));
+});
+
+jest.mock('@hivemind/shared-types', () => {
+  const actual = jest.requireActual('@hivemind/shared-types');
+  return { ...actual, isSafeUrl: jest.fn().mockResolvedValue(true) };
+});
+
 import { create, manifest } from './index';
 import { openWebUIProvider } from './openWebUIProvider';
 
-jest.mock('axios', () => {
-  const mockPost = jest.fn();
-  const mockGet = jest.fn();
-  const instance = { post: mockPost, get: mockGet };
-  return {
-    create: jest.fn(() => instance),
-    isAxiosError: jest.fn().mockReturnValue(false),
-    _instance: instance,
-  };
-});
+function mockFetch(body: unknown, status = 200) {
+  jest.spyOn(global, 'fetch').mockResolvedValue(
+    new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
+  );
+}
 
-const axios = require('axios');
+beforeEach(() => jest.clearAllMocks());
+afterEach(() => jest.restoreAllMocks());
 
 describe('openWebUIProvider', () => {
-  beforeEach(() => jest.clearAllMocks());
-
-  it('create() returns the singleton provider', () => {
-    expect(create()).toBe(openWebUIProvider);
-  });
-
   it('manifest type is llm', () => {
     expect(manifest.type).toBe('llm');
   });
 
-  it('generateChatCompletion returns content string', async () => {
-    axios._instance.post.mockResolvedValueOnce({
-      data: { choices: [{ message: { content: 'webui reply' } }] },
-    });
-    const result = await openWebUIProvider.generateChatCompletion('hello', []);
-    expect(result).toBe('webui reply');
+  it('supportsChatCompletion returns true', () => {
+    expect(openWebUIProvider.supportsChatCompletion()).toBe(true);
   });
 
-  it('generateChatCompletion throws on error', async () => {
-    axios._instance.post.mockRejectedValueOnce(new Error('network'));
-    await expect(openWebUIProvider.generateChatCompletion('hello', [])).rejects.toThrow(
-      'Chat completion failed'
-    );
+  it('supportsCompletion returns true', () => {
+    expect(openWebUIProvider.supportsCompletion()).toBe(true);
+  });
+
+  it('generateChatCompletion returns content string', async () => {
+    mockFetch({ choices: [{ message: { content: 'webui reply' } }] });
+    expect(await openWebUIProvider.generateChatCompletion('hello', [])).toBe('webui reply');
+  });
+
+  it('generateChatCompletion returns empty string when no content', async () => {
+    mockFetch({ choices: [{ message: { content: '' } }] });
+    expect(await openWebUIProvider.generateChatCompletion('hello', [])).toBe('');
+  });
+
+  it('generateChatCompletion throws on HTTP error', async () => {
+    mockFetch({ error: 'fail' }, 500);
+    await expect(openWebUIProvider.generateChatCompletion('hello', [])).rejects.toThrow('Chat completion failed');
+  });
+
+  it('generateCompletion returns text string', async () => {
+    mockFetch({ choices: [{ text: 'completion reply' }] });
+    expect(await openWebUIProvider.generateCompletion('prompt')).toBe('completion reply');
+  });
+
+  it('generateCompletion throws on HTTP error', async () => {
+    mockFetch({ error: 'fail' }, 500);
+    await expect(openWebUIProvider.generateCompletion('prompt')).rejects.toThrow('Non-chat completion failed');
   });
 });
