@@ -300,7 +300,15 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
   }
 
   if (configError) {
-    return <div className="alert alert-error">Failed to load configuration</div>;
+    return (
+      <div
+        className="alert alert-error"
+        role="alert"
+        aria-live="assertive"
+      >
+        Failed to load configuration
+      </div>
+    );
   }
 
   function handleSelectionChange<K extends keyof BotUIState>(
@@ -550,9 +558,14 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
         </div>
 
         {feedback && (
-          <div className={`alert alert-${feedback.type} shadow-lg mb-4`}>
+          <div
+            className={`alert alert-${feedback.type} shadow-lg mb-4`}
+            role="alert"
+            aria-live="assertive"
+            aria-describedby="feedback-message"
+          >
             <div>
-              <span>{feedback.message}</span>
+              <span id="feedback-message">{feedback.message}</span>
               <button
                 className="btn btn-ghost btn-sm"
                 onClick={() => setFeedback(null)}
@@ -565,25 +578,40 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
         )}
 
         {providersError && (
-          <div className="alert alert-warning shadow-lg mb-4">
+          <div
+            className="alert alert-warning shadow-lg mb-4"
+            role="alert"
+            aria-live="polite"
+            aria-describedby="providers-error"
+          >
             <div>
-              <span>{providersError}</span>
+              <span id="providers-error">{providersError}</span>
             </div>
           </div>
         )}
 
         {mcpError && (
-          <div className="alert alert-warning shadow-lg mb-4">
+          <div
+            className="alert alert-warning shadow-lg mb-4"
+            role="alert"
+            aria-live="polite"
+            aria-describedby="mcp-error"
+          >
             <div>
-              <span>{mcpError}</span>
+              <span id="mcp-error">{mcpError}</span>
             </div>
           </div>
         )}
 
         {statusError && (
-          <div className="alert alert-warning shadow-lg mb-4">
+          <div
+            className="alert alert-warning shadow-lg mb-4"
+            role="alert"
+            aria-live="polite"
+            aria-describedby="status-error"
+          >
             <div>
-              <span>Unable to load live status updates right now. Try refreshing in a moment.</span>
+              <span id="status-error">Unable to load live status updates right now. Try refreshing in a moment.</span>
             </div>
           </div>
         )}
