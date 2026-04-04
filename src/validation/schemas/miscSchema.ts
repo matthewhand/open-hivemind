@@ -122,6 +122,14 @@ export const ValidateConfigSchema = z.object({
 export const DashboardConfigSchema = z.object({
   body: z
     .object({
+      enabled: z.boolean().optional(),
+      learningRate: z.number().optional(),
+      confidenceThreshold: z.number().optional(),
+      recommendationFrequency: z.number().optional(),
+      behaviorTracking: z.boolean().optional(),
+      personalization: z.boolean().optional(),
+      predictiveAnalytics: z.boolean().optional(),
+      autoOptimization: z.boolean().optional(),
       layout: z.record(z.unknown()).optional(),
       theme: z.string().optional(),
       widgets: z.array(z.record(z.unknown())).optional(),
