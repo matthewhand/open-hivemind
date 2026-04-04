@@ -300,7 +300,7 @@ const MemoryProvidersPage: React.FC = () => {
 
             return (
               <Card key={profile.key} className="bg-base-100 shadow-sm border border-base-200 transition-all hover:shadow-md">
-                <div className="card-body p-0">
+                <div>
                   {/* Card header */}
                   <div className="p-4 flex items-center justify-between cursor-pointer" onClick={() => toggleExpand(profile.key)}>
                     <div className="flex items-center gap-4">

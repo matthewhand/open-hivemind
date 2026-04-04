@@ -213,7 +213,7 @@ const MessageProvidersPage: React.FC = () => {
         <div className="grid grid-cols-1 gap-4">
           {filteredProfiles.map((profile) => (
             <Card key={profile.key} className="bg-base-100 shadow-sm border border-base-200 transition-all hover:shadow-md">
-              <div className="card-body p-0">
+              <div>
                 <div className="p-4 flex items-center justify-between cursor-pointer" onClick={() => toggleExpand(profile.key)}>
                   <div className="flex items-center gap-4">
                     <div className="p-3 bg-primary/10 text-primary rounded-xl">

@@ -10,6 +10,7 @@ import useUrlParams from '../hooks/useUrlParams';
 import { apiService } from '../services/api';
 import Badge from '../components/DaisyUI/Badge';
 import Button from '../components/DaisyUI/Button';
+import Card from '../components/DaisyUI/Card';
 
 interface BotTemplate {
   id: string;
@@ -248,16 +249,15 @@ const BotTemplatesPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredTemplates.length > 0 ? (
           filteredTemplates.map((template) => (
-            <div
+            <Card
               key={template.id}
-              className={`card bg-base-100 shadow-xl h-full border ${template.featured ? 'border-primary border-2' : 'border-base-200'
+              className={`shadow-xl h-full border ${template.featured ? 'border-primary border-2' : 'border-base-200'
                 }`}
             >
-              <div className="card-body">
                 <div className="flex justify-between items-start mb-2">
-                  <h2 className="card-title">
+                  <Card.Title>
                     {template.name}
-                  </h2>
+                  </Card.Title>
                   {template.featured && (
                     <Badge variant="primary">Featured</Badge>
                   )}
@@ -283,7 +283,7 @@ const BotTemplatesPage: React.FC = () => {
                   ))}
                 </div>
 
-                <div className="card-actions mt-auto">
+                <Card.Actions className="mt-auto">
                   <Button
                     variant="primary"
                     className="flex-1"
@@ -300,9 +300,8 @@ const BotTemplatesPage: React.FC = () => {
                   >
                     {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
                   </Button>
-                </div>
-              </div>
-            </div>
+                </Card.Actions>
+            </Card>
           ))
         ) : (
           <div className="col-span-full">
