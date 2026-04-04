@@ -58,6 +58,27 @@ describe('TimingManager', () => {
       expect(delay).toBeGreaterThanOrEqual(100);
       expect(delay).toBeLessThanOrEqual(5000);
     });
+
+    it('should return maxDelay for old activity (>30s)', () => {
+      const tm = new TimingManager({ minDelay: 100, maxDelay: 5000, decayRate: -0.5 });
+      tm.channelsTimingInfo['ch-old'] = { lastIncomingMessageTime: Date.now() - 31000 };
+      const delay = tm.calculateDelay('ch-old', 50);
+      expect(delay).toBe(5000);
+    });
+
+    it('should clamp when processing time would exceed maxDelay', () => {
+      const tm = new TimingManager({ minDelay: 100, maxDelay: 1000, decayRate: -0.5 });
+      tm.channelsTimingInfo['ch-mid'] = { lastIncomingMessageTime: Date.now() - 5000 };
+      const delay = tm.calculateDelay('ch-mid', 5000);
+      expect(delay).toBe(1000);
+    });
+
+    it('should return maxDelay when channel info exists without timestamp', () => {
+      const tm = new TimingManager({ minDelay: 100, maxDelay: 1000, decayRate: -0.5 });
+      tm.channelsTimingInfo['ch-bad'] = { lastIncomingMessageTime: 0 } as any;
+      const delay = tm.calculateDelay('ch-bad', 100);
+      expect(delay).toBe(1000);
+    });
   });
 
   describe('scheduleMessage', () => {
@@ -104,6 +125,19 @@ describe('TimingManager', () => {
       tm.scheduleMessage('ch-1', 'msg', 0, sendFn);
       expect(() => jest.advanceTimersByTime(200)).not.toThrow();
       errorSpy.mockRestore();
+    });
+
+    it('should clean up timer reference after send executes', () => {
+      const tm = new TimingManager({ minDelay: 100, maxDelay: 5000, decayRate: -0.5 });
+      const sendFn = jest.fn();
+      tm.logIncomingMessage('ch-clean');
+
+      tm.scheduleMessage('ch-clean', 'cleanup', 0, sendFn);
+      expect(tm.channelTimers['ch-clean']).toBeDefined();
+
+      jest.advanceTimersByTime(200);
+      expect(sendFn).toHaveBeenCalledWith('cleanup');
+      expect(tm.channelTimers['ch-clean']).toBeUndefined();
     });
   });
 });
