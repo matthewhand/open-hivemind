@@ -70,5 +70,35 @@ describe('messageConfig', () => {
       expect(config.get('MESSAGE_MIN_DELAY')).toBe(2000);
     });
 
+    it('coerces and clamps CHANNEL_BONUSES and CHANNEL_PRIORITIES from CSV', () => {
+      process.env.CHANNEL_BONUSES = 'chanA:5,chanB:-1,chanC:1.5';
+      process.env.CHANNEL_PRIORITIES = 'chanA:4.8,chanB:-3,chanC:2';
+
+      const config = require('../../src/config/messageConfig').default;
+      const bonuses = config.get('CHANNEL_BONUSES');
+      const priorities = config.get('CHANNEL_PRIORITIES');
+
+      expect(bonuses.chanA).toBe(2); // clamped max
+      expect(bonuses.chanB).toBe(0); // clamped min
+      expect(bonuses.chanC).toBe(1.5);
+
+      expect(priorities.chanA).toBe(4); // truncates
+      expect(priorities.chanB).toBe(0); // min 0
+      expect(priorities.chanC).toBe(2);
+    });
+
+    it('supports JSON object parsing for CHANNEL_BONUSES', () => {
+      process.env.CHANNEL_BONUSES = '{"chanX":0.75,"chanY":1.25}';
+      const config = require('../../src/config/messageConfig').default;
+      const bonuses = config.get('CHANNEL_BONUSES');
+      expect(bonuses.chanX).toBe(0.75);
+      expect(bonuses.chanY).toBe(1.25);
+    });
+
+    it('throws on invalid JSON in CHANNEL_PRIORITIES env override', () => {
+      process.env.CHANNEL_PRIORITIES = '{invalid-json';
+      expect(() => require('../../src/config/messageConfig').default).toThrow(/Invalid JSON/);
+    });
+
   });
 });
