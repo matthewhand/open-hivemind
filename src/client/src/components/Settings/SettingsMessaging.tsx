@@ -12,6 +12,7 @@ import RangeSlider from '../DaisyUI/RangeSlider';
 import { SkeletonList } from '../DaisyUI/Skeleton';
 import { MessageSquare, Bot, Users, Zap, Info } from 'lucide-react';
 import Tooltip from '../DaisyUI/Tooltip';
+import Accordion from '../DaisyUI/Accordion';
 import { apiService } from '../../services/api';
 import { useSavedStamp } from '../../contexts/SavedStampContext';
 
@@ -469,72 +470,37 @@ const SettingsMessaging: React.FC = () => {
       </div>
 
       {/* Environment Variables Reference */}
-      <div className="collapse collapse-arrow bg-base-200/30">
-        <input type="checkbox" aria-label="Toggle Environment Variables Reference" />
-        <div className="collapse-title text-sm font-medium">
-          Environment Variables Reference
-        </div>
-        <div className="collapse-content">
-          <div className="overflow-x-auto">
-            <table className="table table-xs">
-              <thead>
-                <tr>
-                  <th>Setting</th>
-                  <th>Environment Variable</th>
-                  <th>Current</th>
-                </tr>
-              </thead>
-              <tbody className="font-mono text-xs">
-                <tr>
-                  <td>Only When Spoken To</td>
-                  <td>MESSAGE_ONLY_WHEN_SPOKEN_TO</td>
-                  <td>{onlyWhenSpokenTo ? '\u2705 true' : '\u2796 false'}</td>
-                </tr>
-                <tr>
-                  <td>Allow Bot-to-Bot</td>
-                  <td>MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED</td>
-                  <td>{allowBotToBot ? '\u2705 true' : '\u2796 false'}</td>
-                </tr>
-                <tr>
-                  <td>Unsolicited Addressed</td>
-                  <td>MESSAGE_UNSOLICITED_ADDRESSED</td>
-                  <td>{watch('unsolicitedAddressed') ? '\u2705 true' : '\u2796 false'}</td>
-                </tr>
-                <tr>
-                  <td>Unsolicited Unaddressed</td>
-                  <td>MESSAGE_UNSOLICITED_UNADDRESSED</td>
-                  <td>{watch('unsolicitedUnaddressed') ? '\u2705 true' : '\u2796 false'}</td>
-                </tr>
-                <tr>
-                  <td>Base Chance</td>
-                  <td>MESSAGE_UNSOLICITED_BASE_CHANCE</td>
-                  <td>{(baseChance / 100).toFixed(2)}</td>
-                </tr>
-                <tr>
-                  <td>Grace Window</td>
-                  <td>MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS</td>
-                  <td>{graceWindowMs}ms</td>
-                </tr>
-                <tr>
-                  <td>Add User Hint</td>
-                  <td>MESSAGE_ADD_USER_HINT</td>
-                  <td>{watch('addUserHint') ? '\u2705 true' : '\u2796 false'}</td>
-                </tr>
-                <tr>
-                  <td>Semantic Relevance</td>
-                  <td>MESSAGE_SEMANTIC_RELEVANCE_ENABLED</td>
-                  <td>{semanticRelevanceEnabled ? '\u2705 true' : '\u2796 false'}</td>
-                </tr>
-                <tr>
-                  <td>Semantic Relevance Bonus</td>
-                  <td>MESSAGE_SEMANTIC_RELEVANCE_BONUS</td>
-                  <td>{semanticRelevanceBonus}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+      <Accordion
+        items={[{
+          id: 'env-vars-ref',
+          title: 'Environment Variables Reference',
+          content: (
+            <div className="overflow-x-auto">
+              <table className="table table-xs">
+                <thead>
+                  <tr>
+                    <th>Setting</th>
+                    <th>Environment Variable</th>
+                    <th>Current</th>
+                  </tr>
+                </thead>
+                <tbody className="font-mono text-xs">
+                  <tr><td>Only When Spoken To</td><td>MESSAGE_ONLY_WHEN_SPOKEN_TO</td><td>{onlyWhenSpokenTo ? '\u2705 true' : '\u2796 false'}</td></tr>
+                  <tr><td>Allow Bot-to-Bot</td><td>MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED</td><td>{allowBotToBot ? '\u2705 true' : '\u2796 false'}</td></tr>
+                  <tr><td>Unsolicited Addressed</td><td>MESSAGE_UNSOLICITED_ADDRESSED</td><td>{watch('unsolicitedAddressed') ? '\u2705 true' : '\u2796 false'}</td></tr>
+                  <tr><td>Unsolicited Unaddressed</td><td>MESSAGE_UNSOLICITED_UNADDRESSED</td><td>{watch('unsolicitedUnaddressed') ? '\u2705 true' : '\u2796 false'}</td></tr>
+                  <tr><td>Base Chance</td><td>MESSAGE_UNSOLICITED_BASE_CHANCE</td><td>{(baseChance / 100).toFixed(2)}</td></tr>
+                  <tr><td>Grace Window</td><td>MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS</td><td>{graceWindowMs}ms</td></tr>
+                  <tr><td>Add User Hint</td><td>MESSAGE_ADD_USER_HINT</td><td>{watch('addUserHint') ? '\u2705 true' : '\u2796 false'}</td></tr>
+                  <tr><td>Semantic Relevance</td><td>MESSAGE_SEMANTIC_RELEVANCE_ENABLED</td><td>{semanticRelevanceEnabled ? '\u2705 true' : '\u2796 false'}</td></tr>
+                  <tr><td>Semantic Relevance Bonus</td><td>MESSAGE_SEMANTIC_RELEVANCE_BONUS</td><td>{semanticRelevanceBonus}</td></tr>
+                </tbody>
+              </table>
+            </div>
+          ),
+        }]}
+        size="sm"
+      />
 
       <div className="flex justify-end pt-4">
         <Button

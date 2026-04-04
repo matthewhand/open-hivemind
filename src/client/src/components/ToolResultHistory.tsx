@@ -63,7 +63,7 @@ const ToolResultHistory: React.FC<ToolResultHistoryProps> = ({
             }`}
             onClick={() => onViewResult(result)}
           >
-            <Card.Body className="card-body p-4">
+            <Card.Body className="p-4">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3 flex-1">
                   {result.isError ? (

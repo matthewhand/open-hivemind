@@ -1,6 +1,7 @@
 import React from 'react';
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import Modal from '../../../components/DaisyUI/Modal';
+import Accordion from '../../../components/DaisyUI/Accordion';
 import { LoadingSpinner } from '../../../components/DaisyUI/Loading';
 import { Badge } from '../../../components/DaisyUI/Badge';
 import type { ToolExecutionRecord } from '../types';
@@ -29,10 +30,22 @@ const ExecutionHistoryModal: React.FC<ExecutionHistoryModalProps> = ({ isOpen, o
                     <td>{r.duration}ms</td>
                     <td><div className="text-sm">{new Date(r.executedAt).toLocaleString()}</div></td>
                     <td>
-                      <details className="collapse collapse-arrow bg-base-200">
-                        <summary className="collapse-title text-xs font-medium cursor-pointer min-h-0 py-2">View</summary>
-                        <div className="collapse-content text-xs"><div className="space-y-2 pt-2"><div><strong>Arguments:</strong><pre className="bg-base-300 p-2 rounded mt-1 overflow-x-auto">{JSON.stringify(r.arguments, null, 2)}</pre></div>{r.status === 'success' ? <div><strong>Result:</strong><pre className="bg-base-300 p-2 rounded mt-1 overflow-x-auto">{JSON.stringify(r.result, null, 2)}</pre></div> : <div><strong>Error:</strong><div className="bg-error/10 text-error p-2 rounded mt-1">{r.error}</div></div>}</div></div>
-                      </details>
+                      <Accordion
+                        items={[{
+                          id: `details-${r.id}`,
+                          title: 'View',
+                          content: (
+                            <div className="space-y-2 pt-2 text-xs">
+                              <div><strong>Arguments:</strong><pre className="bg-base-300 p-2 rounded mt-1 overflow-x-auto">{JSON.stringify(r.arguments, null, 2)}</pre></div>
+                              {r.status === 'success'
+                                ? <div><strong>Result:</strong><pre className="bg-base-300 p-2 rounded mt-1 overflow-x-auto">{JSON.stringify(r.result, null, 2)}</pre></div>
+                                : <div><strong>Error:</strong><div className="bg-error/10 text-error p-2 rounded mt-1">{r.error}</div></div>
+                              }
+                            </div>
+                          ),
+                        }]}
+                        size="sm"
+                      />
                     </td>
                   </tr>
                 ))}

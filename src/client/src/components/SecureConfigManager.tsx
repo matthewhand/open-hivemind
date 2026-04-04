@@ -238,7 +238,10 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
       </Card>
 
       {/* Add/Edit Configuration Modal */}
-      <Modal isOpen={dialogOpen} onClose={handleCloseDialog} title={editingConfig ? 'Edit Secure Configuration' : 'Add New Secure Configuration'}>
+      <Modal isOpen={dialogOpen} onClose={handleCloseDialog} title={editingConfig ? 'Edit Secure Configuration' : 'Add New Secure Configuration'} actions={[
+        { label: 'Cancel', onClick: handleCloseDialog, variant: 'ghost' },
+        { label: editingConfig ? 'Update Configuration' : 'Add Configuration', onClick: handleSubmit, variant: 'primary', disabled: !formData.name },
+      ]}>
         <div className="space-y-4 py-4">
           <div className="form-control">
             <label htmlFor="secure-config-name" className="label"><span className="label-text">Configuration Name *</span></label>
@@ -266,31 +269,24 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
             />
           </div>
         </div>
-        <div className="modal-action">
-          <Button onClick={handleCloseDialog} variant="ghost">Cancel</Button>
-          <Button onClick={handleSubmit} variant="primary" disabled={!formData.name}>
-            {editingConfig ? 'Update Configuration' : 'Add Configuration'}
-          </Button>
-        </div>
       </Modal>
 
       {/* Backup Modal */}
-      <Modal isOpen={backupDialogOpen} onClose={() => setBackupDialogOpen(false)} title="Create Backup">
+      <Modal isOpen={backupDialogOpen} onClose={() => setBackupDialogOpen(false)} title="Create Backup" actions={[
+        { label: 'Cancel', onClick: () => setBackupDialogOpen(false), variant: 'ghost' },
+        { label: 'Create Backup', onClick: handleBackup, variant: 'primary' },
+      ]}>
         <div className="py-4">
           <p className="mb-4 text-sm">Create a backup of all secure configurations. This will download an encrypted backup file.</p>
           <Alert status="warning" message="Store backup files securely and do not share them with unauthorized users." />
         </div>
-        <div className="modal-action">
-          <Button onClick={() => setBackupDialogOpen(false)} variant="ghost">Cancel</Button>
-          <Button onClick={handleBackup} variant="primary" className="flex items-center gap-2">
-            <ArrowDownTrayIcon className="w-4 h-4" />
-            Create Backup
-          </Button>
-        </div>
       </Modal>
 
       {/* Restore Modal */}
-      <Modal isOpen={restoreDialogOpen} onClose={() => setRestoreDialogOpen(false)} title="Restore from Backup">
+      <Modal isOpen={restoreDialogOpen} onClose={() => setRestoreDialogOpen(false)} title="Restore from Backup" actions={[
+        { label: 'Cancel', onClick: () => setRestoreDialogOpen(false), variant: 'ghost' },
+        { label: 'Restore Backup', onClick: handleRestore, variant: 'error' },
+      ]}>
         <div className="space-y-4 py-4">
           <p className="text-sm">Restore configurations from a backup file. This will replace all existing secure configurations.</p>
           <div className="form-control">
@@ -298,13 +294,6 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
             <Input id="secure-config-backup-path" value={backupFile} onChange={(e) => setBackupFile(e.target.value)} placeholder="/path/to/backup.enc" />
           </div>
           <Alert status="error" message="Warning: This will replace all existing secure configurations. Make sure you have a current backup before proceeding." />
-        </div>
-        <div className="modal-action">
-          <Button onClick={() => setRestoreDialogOpen(false)} variant="ghost">Cancel</Button>
-          <Button onClick={handleRestore} variant="primary" className="btn-error flex items-center gap-2">
-            <ArrowUpTrayIcon className="w-4 h-4" />
-            Restore Backup
-          </Button>
         </div>
       </Modal>
 

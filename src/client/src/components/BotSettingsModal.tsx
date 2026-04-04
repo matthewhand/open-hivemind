@@ -92,7 +92,9 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
     const isEnvProtected = bot.envOverrides && Object.keys(bot.envOverrides).length > 0;
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={bot.name} size="xl" showCloseButton>
+        <Modal isOpen={isOpen} onClose={onClose} title={bot.name} size="xl" showCloseButton actions={[
+            { label: 'Close', onClick: onClose, variant: 'ghost' },
+        ]}>
                 <div className="flex items-center gap-3 mb-6 border-b border-base-300 pb-4 -mt-4">
                     <div className="p-3 bg-primary/10 rounded-xl text-primary">
                         <Settings className="w-6 h-6" />
@@ -327,14 +329,11 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                     </div>
                 </div>
 
-                <div className="modal-action">
-                    {hasChanges && (
-                        <div className="mr-auto flex items-center gap-2">
-                            <Badge variant="warning" size="sm">{diff.length} unsaved change{diff.length !== 1 ? 's' : ''}</Badge>
-                        </div>
-                    )}
-                    <Button variant="ghost" onClick={onClose}>Close</Button>
-                </div>
+                {hasChanges && (
+                    <div className="flex items-center gap-2 mt-4">
+                        <Badge variant="warning" size="sm">{diff.length} unsaved change{diff.length !== 1 ? 's' : ''}</Badge>
+                    </div>
+                )}
 
                 <ConfigDiffConfirmDialog
                     isOpen={showDiffConfirm}

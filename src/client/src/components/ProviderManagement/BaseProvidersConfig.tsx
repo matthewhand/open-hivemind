@@ -87,7 +87,7 @@ const SortableProviderCard: React.FC<SortableProviderCardProps> = ({
   return (
     <div ref={setNodeRef} style={style}>
       <Card className="shadow-xl border border-base-200">
-        <Card.Body className="card-body p-4 sm:p-6">
+        <Card.Body className="p-4 sm:p-6">
           <div className="flex justify-between items-start gap-4">
             <div className="flex items-start gap-3">
               <div

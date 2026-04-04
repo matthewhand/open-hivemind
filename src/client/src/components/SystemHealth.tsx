@@ -277,7 +277,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
           {/* Memory Usage */}
           <Card className="border border-base-200">
-            <Card.Body className="card-body p-4">
+            <Card.Body className="p-4">
               <div className="flex items-center mb-2">
                 <Bolt className="w-5 h-5 mr-2 text-warning" />
                 <span className="font-medium">Memory Usage</span>
@@ -302,7 +302,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
 
           {/* Load Average */}
           <Card className="border border-base-200">
-            <Card.Body className="card-body p-4">
+            <Card.Body className="p-4">
               <div className="flex items-center mb-2">
                 <Cpu className="w-5 h-5 mr-2 text-primary" />
                 <span className="font-medium">Load Average</span>
@@ -325,7 +325,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
 
           {/* Network Status (if available) */}
           <Card className="border border-base-200">
-            <Card.Body className="card-body p-4">
+            <Card.Body className="p-4">
               <div className="flex items-center mb-2">
                 <Signal className="w-5 h-5 mr-2 text-info" />
                 <span className="font-medium">API Network Status</span>

@@ -24,6 +24,7 @@ import { getProviderSchema } from '../../provider-configs';
 import { apiService } from '../../services/api';
 import { useConfigDiff } from '../../hooks/useConfigDiff';
 import { ConfigDiffConfirmDialog } from '../ConfigDiffViewer';
+import Select from '../DaisyUI/Select';
 
 interface ProviderConfigModalProps {
   modalState: ProviderModalState;
@@ -378,6 +379,21 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
       title={`${modalState.isEdit ? 'Edit' : 'Add'} ${modalState.providerType === 'message' ? 'Message' : 'LLM'} Provider`}
       size="lg"
       showCloseButton
+      actions={[
+        { label: 'Cancel', onClick: onClose, variant: 'ghost' },
+        {
+          label: `${modalState.isEdit ? 'Update' : 'Submit'} Provider`,
+          onClick: () => {
+            if (hasChanges && modalState.isEdit) {
+              setShowDiffConfirm(true);
+            } else {
+              const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
+              handleSubmit(syntheticEvent);
+            }
+          },
+          variant: 'primary',
+        },
+      ]}
     >
 
         {modalState.providerType === 'llm' ? (
@@ -386,8 +402,8 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
               <span className="label-text font-medium">Provider</span>
               <span className="label-text-alt text-error">*</span>
             </label>
-            <select
-              className="select select-bordered w-full"
+            <Select
+              className="select-bordered"
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value as LLMProviderType)}
             >
@@ -399,7 +415,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
                   </option>
                 );
               })}
-            </select>
+            </Select>
           </div>
         ) : (
           <Tabs
@@ -493,40 +509,19 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
             )}
           </div>
 
-          {/* Actions */}
-          <div className="modal-action">
-            {hasChanges && (
+          {/* Undo button (left-aligned above actions) */}
+          {hasChanges && (
+            <div className="mt-4">
               <Button
                 type="button"
                 variant="ghost"
                 onClick={handleUndoAll}
-                className="mr-auto gap-1"
+                className="gap-1"
               >
                 <RotateCcw className="w-4 h-4" /> Undo all changes
               </Button>
-            )}
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={onClose}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              variant="primary"
-              onClick={(e: any) => {
-                if (hasChanges && modalState.isEdit) {
-                  e.preventDefault();
-                  setShowDiffConfirm(true);
-                } else {
-                  handleSubmit(e);
-                }
-              }}
-            >
-              {modalState.isEdit ? 'Update' : 'Submit'} Provider
-            </Button>
-          </div>
+            </div>
+          )}
         </form>
 
         <ConfigDiffConfirmDialog

@@ -14,6 +14,8 @@ import Card from '../DaisyUI/Card';
 import { apiService } from '../../services/api';
 import Debug from 'debug';
 import Toggle from '../DaisyUI/Toggle';
+import Select from '../DaisyUI/Select';
+import Textarea from '../DaisyUI/Textarea';
 const debug = Debug('app:client:components:BotManagement:CreateBotWizard');
 
 interface CreateBotWizardProps {

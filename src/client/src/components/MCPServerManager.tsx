@@ -225,6 +225,10 @@ const MCPServerManager: React.FC = () => {
         isOpen={connectDialogOpen}
         onClose={() => setConnectDialogOpen(false)}
         title="Connect to MCP Server"
+        actions={[
+          { label: 'Cancel', onClick: () => setConnectDialogOpen(false), variant: 'ghost' },
+          { label: 'Connect Server', onClick: handleConnectServer, variant: 'primary' },
+        ]}
       >
         <div className="space-y-4">
           <div className="form-control">
@@ -268,12 +272,6 @@ const MCPServerManager: React.FC = () => {
               onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
             />
           </div>
-          <div className="modal-action">
-            <Button onClick={() => setConnectDialogOpen(false)}>Cancel</Button>
-            <Button variant="primary" onClick={handleConnectServer}>
-              Connect Server
-            </Button>
-          </div>
         </div>
       </Modal>
 
@@ -281,6 +279,9 @@ const MCPServerManager: React.FC = () => {
         isOpen={toolsDialogOpen}
         onClose={() => setToolsDialogOpen(false)}
         title={`Tools - ${selectedServer?.name}`}
+        actions={[
+          { label: 'Close', onClick: () => setToolsDialogOpen(false), variant: 'ghost' },
+        ]}
       >
         <div className="py-4">
           {serverTools.length > 0 ? (
@@ -300,9 +301,6 @@ const MCPServerManager: React.FC = () => {
           ) : (
             <p className="text-base-content/70">No tools available for this server.</p>
           )}
-        </div>
-        <div className="modal-action">
-          <Button onClick={() => setToolsDialogOpen(false)}>Close</Button>
         </div>
       </Modal>
 

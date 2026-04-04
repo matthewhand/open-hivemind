@@ -181,6 +181,10 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
         isOpen={exportDialog}
         onClose={() => setExportDialog(false)}
         title="Export Configuration"
+        actions={[
+          { label: 'Cancel', onClick: () => setExportDialog(false), variant: 'ghost' },
+          { label: 'Export', onClick: handleExportConfig, variant: 'primary', disabled: !exportFilename.trim() || isLoading('export'), loading: isLoading('export') },
+        ]}
       >
         <div className="py-4">
           <p className="text-sm text-base-content/70 mb-4">
@@ -200,18 +204,6 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
               <span className="label-text-alt">File will be saved as .json</span>
             </label>
           </div>
-        </div>
-        <div className="modal-action">
-          <Button onClick={() => setExportDialog(false)} variant="ghost">
-            Cancel
-          </Button>
-          <Button
-            onClick={handleExportConfig}
-            variant="primary"
-            disabled={!exportFilename.trim() || isLoading('export')}
-          >
-            {isLoading('export') ? <LoadingSpinner size="sm" /> : 'Export'}
-          </Button>
         </div>
       </Modal>
 

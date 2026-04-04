@@ -472,6 +472,10 @@ const BackupsPage: React.FC = () => {
           resetCreateForm();
         }}
         title="Create System Backup"
+        actions={[
+          { label: 'Cancel', onClick: () => { setCreateModalOpen(false); resetCreateForm(); }, variant: 'ghost', disabled: actionLoading === 'create' },
+          { label: 'Create Backup', onClick: handleCreateBackup, variant: 'primary', loading: actionLoading === 'create', disabled: !newBackupName.trim() || actionLoading === 'create' },
+        ]}
       >
         <div className="space-y-4">
           <p className="text-sm text-base-content/70">
@@ -525,26 +529,6 @@ const BackupsPage: React.FC = () => {
           )}
         </div>
 
-        <div className="modal-action">
-          <Button
-            variant="ghost"
-            onClick={() => {
-              setCreateModalOpen(false);
-              resetCreateForm();
-            }}
-            disabled={actionLoading === 'create'}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleCreateBackup}
-            loading={actionLoading === 'create'}
-            disabled={!newBackupName.trim() || actionLoading === 'create'}
-          >
-            Create Backup
-          </Button>
-        </div>
       </Modal>
 
       {/* Restore Backup Modal */}
@@ -556,6 +540,10 @@ const BackupsPage: React.FC = () => {
           setDecryptionKey('');
         }}
         title="Restore from Backup"
+        actions={[
+          { label: 'Cancel', onClick: () => { setRestoreModalOpen(false); setSelectedBackupForRestore(null); setDecryptionKey(''); }, variant: 'ghost', disabled: selectedBackupForRestore ? actionLoading === selectedBackupForRestore.id : false },
+          { label: 'Restore Backup', onClick: handleRestoreBackup, variant: 'warning', loading: selectedBackupForRestore ? actionLoading === selectedBackupForRestore.id : false, disabled: !selectedBackupForRestore || (selectedBackupForRestore.encrypted && !decryptionKey) || actionLoading === selectedBackupForRestore?.id },
+        ]}
       >
         {selectedBackupForRestore && (
           <div className="space-y-4">
@@ -623,32 +611,6 @@ const BackupsPage: React.FC = () => {
           </div>
         )}
 
-        <div className="modal-action">
-          <Button
-            variant="ghost"
-            onClick={() => {
-              setRestoreModalOpen(false);
-              setSelectedBackupForRestore(null);
-              setDecryptionKey('');
-            }}
-            disabled={selectedBackupForRestore ? actionLoading === selectedBackupForRestore.id : false}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="warning"
-            onClick={handleRestoreBackup}
-            loading={selectedBackupForRestore ? actionLoading === selectedBackupForRestore.id : false}
-            disabled={
-              !selectedBackupForRestore ||
-              (selectedBackupForRestore.encrypted && !decryptionKey) ||
-              actionLoading === selectedBackupForRestore.id
-            }
-          >
-            <RotateCcw className="w-4 h-4" />
-            Restore Backup
-          </Button>
-        </div>
       </Modal>
 
       {/* Confirm Modal */}

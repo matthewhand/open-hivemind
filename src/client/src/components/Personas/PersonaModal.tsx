@@ -83,6 +83,16 @@ export const PersonaModal: React.FC<PersonaModalProps> = ({
           : 'Create New Persona'
       }
       size="xl"
+      actions={[
+        { label: isViewMode ? 'Close' : 'Cancel', onClick: onClose, variant: 'ghost', disabled: loading },
+        ...(!isViewMode ? [{
+          label: loading ? 'Saving...' : editingPersona ? 'Save Changes' : 'Create Persona',
+          onClick: onSave,
+          variant: 'primary' as const,
+          disabled: loading || !!isEnvLocked,
+          loading,
+        }] : []),
+      ]}
     >
       <div className="space-y-4">
         {isEnvLocked && !isViewMode && (
@@ -209,21 +219,6 @@ export const PersonaModal: React.FC<PersonaModalProps> = ({
         </div>
       </div>
 
-      <div className="modal-action mt-6">
-        <Button onClick={onClose} variant="ghost" disabled={loading}>
-          {isViewMode ? 'Close' : 'Cancel'}
-        </Button>
-        {!isViewMode && (
-          <Button
-            onClick={onSave}
-            variant="primary"
-            disabled={loading || !!isEnvLocked}
-            aria-busy={loading}
-          >
-            {loading ? 'Saving...' : editingPersona ? 'Save Changes' : 'Create Persona'}
-          </Button>
-        )}
-      </div>
     </Modal>
   );
 };
