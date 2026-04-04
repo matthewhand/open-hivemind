@@ -1,5 +1,7 @@
 import React from 'react';
 import { MagnifyingGlassIcon as SearchIcon } from '@heroicons/react/24/outline';
+import Input from '../DaisyUI/Input';
+import Select from '../DaisyUI/Select';
 
 interface ToolFiltersProps {
   searchTerm: string;
@@ -31,10 +33,10 @@ export const ToolFilters: React.FC<ToolFiltersProps> = ({
       <div className="form-control w-full md:w-auto md:flex-1 max-w-md">
         <div className="input-group">
           <div className="relative w-full">
-            <input
+            <Input
               type="text"
               placeholder="Search tools..."
-              className="input input-bordered w-full pl-10"
+              className="pl-10"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -43,8 +45,8 @@ export const ToolFilters: React.FC<ToolFiltersProps> = ({
         </div>
       </div>
 
-      <select
-        className="select select-bordered w-full md:w-auto"
+      <Select
+        className="select-bordered md:w-auto"
         value={categoryFilter}
         onChange={(e) => setCategoryFilter(e.target.value)}
       >
@@ -54,10 +56,10 @@ export const ToolFilters: React.FC<ToolFiltersProps> = ({
             {category.charAt(0).toUpperCase() + category.slice(1)}
           </option>
         ))}
-      </select>
+      </Select>
 
-      <select
-        className="select select-bordered w-full md:w-auto"
+      <Select
+        className="select-bordered md:w-auto"
         value={serverFilter}
         onChange={(e) => setServerFilter(e.target.value)}
       >
@@ -67,17 +69,17 @@ export const ToolFilters: React.FC<ToolFiltersProps> = ({
             {server.name}
           </option>
         ))}
-      </select>
+      </Select>
 
-      <select
-        className="select select-bordered w-full md:w-auto"
+      <Select
+        className="select-bordered md:w-auto"
         value={sortBy}
         onChange={(e) => setSortBy(e.target.value)}
       >
         <option value="name">Sort: Name (A-Z)</option>
         <option value="usage">Sort: Usage Count</option>
         <option value="recent">Sort: Recently Used</option>
-      </select>
+      </Select>
     </div>
   );
 };

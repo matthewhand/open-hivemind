@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Card from '../DaisyUI/Card';
 import { Badge } from '../DaisyUI/Badge';
+import Input from '../DaisyUI/Input';
 
 export interface Alert {
   id: string;
@@ -169,10 +170,10 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
             </div>
 
             <div className="form-control">
-              <input
+              <Input
                 type="text"
                 placeholder="Search alerts..."
-                className="input input-bordered input-sm w-full"
+                size="sm"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />

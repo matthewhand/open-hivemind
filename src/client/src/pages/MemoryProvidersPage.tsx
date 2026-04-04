@@ -34,6 +34,8 @@ import { getProviderSchema, getProviderSchemasByType } from '../provider-configs
 import useUrlParams from '../hooks/useUrlParams';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import { useSavedStamp } from '../contexts/SavedStampContext';
+import Input from '../components/DaisyUI/Input';
+import Select from '../components/DaisyUI/Select';
 
 /** Shape returned by GET /api/providers/memory */
 interface ProviderHealth {
@@ -432,23 +434,23 @@ const MemoryProvidersPage: React.FC = () => {
       >
             <div className="form-control w-full mb-3">
               <label className="label" htmlFor="memory-profile-name"><span className="label-text">Profile Name</span></label>
-              <input id="memory-profile-name" type="text" className="input input-bordered w-full" placeholder="My Memory Provider" value={formData.name} onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))} />
+              <Input id="memory-profile-name" type="text" placeholder="My Memory Provider" value={formData.name} onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))} />
             </div>
             <div className="form-control w-full mb-3">
               <label className="label" htmlFor="memory-profile-provider"><span className="label-text">Provider Type</span></label>
-              <select id="memory-profile-provider" className="select select-bordered w-full" value={selectedProvider} onChange={(e) => { setSelectedProvider(e.target.value); setFormData(prev => ({ ...prev, provider: e.target.value, config: {} })); }} disabled={formModal.isEdit}>
+              <Select id="memory-profile-provider" className="select-bordered" value={selectedProvider} onChange={(e) => { setSelectedProvider(e.target.value); setFormData(prev => ({ ...prev, provider: e.target.value, config: {} })); }} disabled={formModal.isEdit}>
                 {memorySchemas.map((schema) => (<option key={schema.providerType} value={schema.providerType}>{schema.displayName}</option>))}
-              </select>
+              </Select>
             </div>
             {currentSchema?.fields?.map((field) => (
               <div key={field.name} className="form-control w-full mb-3">
                 <label className="label" htmlFor={`memory-field-${field.name}`}><span className="label-text">{field.label}{field.required && <span className="text-error ml-1">*</span>}</span></label>
                 {field.type === 'select' ? (
-                  <select id={`memory-field-${field.name}`} className="select select-bordered w-full" value={formData.config[field.name] ?? field.defaultValue ?? ''} onChange={(e) => setFormData(prev => ({ ...prev, config: { ...prev.config, [field.name]: e.target.value } }))}>
+                  <Select id={`memory-field-${field.name}`} className="select-bordered" value={formData.config[field.name] ?? field.defaultValue ?? ''} onChange={(e) => setFormData(prev => ({ ...prev, config: { ...prev.config, [field.name]: e.target.value } }))}>
                     {field.options?.map((opt) => (<option key={typeof opt === 'string' ? opt : opt.value} value={typeof opt === 'string' ? opt : opt.value}>{typeof opt === 'string' ? opt : opt.label}</option>))}
-                  </select>
+                  </Select>
                 ) : (
-                  <input id={`memory-field-${field.name}`} type={field.type === 'password' ? 'password' : 'text'} className="input input-bordered w-full" placeholder={field.placeholder || ''} value={formData.config[field.name] ?? ''} onChange={(e) => setFormData(prev => ({ ...prev, config: { ...prev.config, [field.name]: e.target.value } }))} />
+                  <Input id={`memory-field-${field.name}`} type={field.type === 'password' ? 'password' : 'text'} placeholder={field.placeholder || ''} value={formData.config[field.name] ?? ''} onChange={(e) => setFormData(prev => ({ ...prev, config: { ...prev.config, [field.name]: e.target.value } }))} />
                 )}
                 {field.description && <label className="label"><span className="label-text-alt opacity-60">{field.description}</span></label>}
               </div>

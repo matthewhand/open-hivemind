@@ -258,12 +258,12 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                     />
 
                     <div className="form-control">
-                        <textarea
-                            className="textarea textarea-bordered h-24"
+                        <Textarea
+                            className="h-24"
                             placeholder="What does this bot do?"
                             value={formData.description}
                             onChange={e => setFormData({ ...formData, description: e.target.value })}
-                        ></textarea>
+                        />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -379,8 +379,8 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                         <label className="label">
                             <span className="label-text font-bold">Apply Guard Profile</span>
                         </label>
-                        <select
-                            className="select select-bordered w-full"
+                        <Select
+                            className="select-bordered"
                             value={formData.mcpGuardProfile || ''}
                             onChange={e => setFormData({ ...formData, mcpGuardProfile: e.target.value || null })}
                         >
@@ -388,7 +388,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                             {guardProfiles.map(p => (
                                 <option key={p.id} value={p.id}>{p.name}</option>
                             ))}
-                        </select>
+                        </Select>
                         <label className="label">
                             <span className="label-text-alt">Using a profile overrides manual settings below.</span>
                         </label>

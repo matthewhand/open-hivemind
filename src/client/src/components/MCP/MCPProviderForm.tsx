@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Alert, Button, Card, Input, Select, Textarea, Toggle, InputGroup, FormLabel } from 'react-daisyui';
+import { Alert } from '../DaisyUI/Alert';
+import Button from '../DaisyUI/Button';
+import Card from '../DaisyUI/Card';
+import Input from '../DaisyUI/Input';
+import Select from '../DaisyUI/Select';
+import Textarea from '../DaisyUI/Textarea';
+import Toggle from '../DaisyUI/Toggle';
 import Form from '../DaisyUI/Form';
 import { LoadingSpinner } from '../DaisyUI/Loading';
 import { FaPlus, FaTrash, FaEye, FaEyeSlash, FaExclamationTriangle, FaInfoCircle } from 'react-icons/fa';
@@ -281,9 +287,9 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
           {/* Template Selection */}
           {templates.length > 0 && !provider && (
             <div className="mb-6">
-              <FormLabel>Start from Template (Optional)</FormLabel>
+              <label className="label"><span className="label-text">Start from Template (Optional)</span></label>
               <Select
-                className="w-full"
+                className="select-bordered"
                 value={selectedTemplate}
                 onChange={(e) => handleTemplateChange(e.target.value)}
               >
@@ -301,9 +307,9 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Name */}
               <div className="form-control">
-                <FormLabel className="label">
+                <label className="label">
                   <span className="label-text font-medium">Provider Name *</span>
-                </FormLabel>
+                </label>
                 <Input
                   type="text"
                   placeholder="e.g., File System Access, Web Scraper"
@@ -319,11 +325,11 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
 
               {/* Type */}
               <div className="form-control">
-                <FormLabel className="label">
+                <label className="label">
                   <span className="label-text font-medium">Provider Type *</span>
-                </FormLabel>
+                </label>
                 <Select
-                  className="w-full"
+                  className="select-bordered"
                   value={formData.type || 'desktop'}
                   onChange={(e) => handleInputChange('type', e.target.value as 'desktop' | 'cloud')}
                 >
@@ -340,9 +346,9 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
 
             {/* Description */}
             <div className="form-control">
-              <FormLabel className="label">
+              <label className="label">
                 <span className="label-text font-medium">Description</span>
-              </FormLabel>
+              </label>
               <Textarea
                 placeholder="Optional description of what this MCP provider does"
                 value={formData.description || ''}
@@ -354,9 +360,9 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Command */}
               <div className="form-control">
-                <FormLabel className="label">
+                <label className="label">
                   <span className="label-text font-medium">Command *</span>
-                </FormLabel>
+                </label>
                 <Input
                   type="text"
                   placeholder="e.g., npx, python, node, ./my-server"
@@ -374,9 +380,9 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
 
               {/* Arguments */}
               <div className="form-control">
-                <FormLabel className="label">
+                <label className="label">
                   <span className="label-text font-medium">Arguments</span>
-                </FormLabel>
+                </label>
                 <Input
                   type="text"
                   placeholder='e.g., --port 3000 or ["--port", "3000"]'
@@ -394,9 +400,9 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
 
             {/* Environment Variables */}
             <div className="form-control">
-              <FormLabel className="label">
+              <label className="label">
                 <span className="label-text font-medium">Environment Variables</span>
-              </FormLabel>
+              </label>
               <div className="space-y-3">
                 {envVars.map((envVar, index) => (
                   <div key={index} className="flex gap-2">
@@ -428,8 +434,9 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
                     <Button
                       type="button"
                       size="sm"
-                      color="error"
-                      variant="secondary" className="btn-outline"
+                      variant="secondary"
+                      buttonStyle="outline"
+                      className="btn-error"
                       onClick={() => removeEnvVar(index)}
                     >
                       <FaTrash className="w-3 h-3" />
@@ -439,7 +446,8 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
                 <Button
                   type="button"
                   size="sm"
-                  variant="secondary" className="btn-outline"
+                  variant="secondary"
+                  buttonStyle="outline"
                   onClick={addEnvVar}
                   className="w-full"
                 >
@@ -452,9 +460,9 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Timeout */}
               <div className="form-control">
-                <FormLabel className="label">
+                <label className="label">
                   <span className="label-text font-medium">Timeout (seconds)</span>
-                </FormLabel>
+                </label>
                 <Input
                   type="number"
                   placeholder="30"
@@ -471,9 +479,9 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
 
               {/* Auto Restart */}
               <div className="form-control">
-                <FormLabel className="label">
+                <label className="label">
                   <span className="label-text font-medium">Auto Restart</span>
-                </FormLabel>
+                </label>
                 <div className="flex items-center gap-3 mt-3">
                   <Toggle
                     checked={formData.autoRestart || false}
@@ -486,9 +494,9 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
 
             {/* Health Check */}
             <div className="form-control">
-              <FormLabel className="label">
+              <label className="label">
                 <span className="label-text font-medium">Health Check Configuration</span>
-              </FormLabel>
+              </label>
               <div className="bg-base-200 rounded-lg p-4 space-y-4">
                 <div className="flex items-center gap-3">
                   <Toggle
@@ -598,14 +606,14 @@ const MCPProviderForm: React.FC<MCPProviderFormProps> = ({
             <div className="flex justify-end gap-4 pt-6 border-t border-base-300">
               <Button
                 type="button"
-                variant="secondary" className="btn-outline"
+                variant="ghost"
                 onClick={onCancel}
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                color="primary"
+                variant="primary"
                 disabled={!validation.isValid || isLoading}
               >
                 {isLoading ? (

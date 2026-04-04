@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import SystemHealth from '../SystemHealth';
 import { LoadingSpinner } from '../DaisyUI/Loading';
+import Select from '../DaisyUI/Select';
 import BotStatusCard from '../BotStatusCard';
 import ActivityMonitor from './ActivityMonitor';
 import ActivityCharts from './ActivityCharts';
@@ -342,15 +343,16 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
         icon={<ChartBar />}
         actions={
           <div className="flex items-center gap-2">
-            <select
-              className="select select-bordered select-sm"
+            <Select
+              className="select-bordered"
+              size="sm"
               value={refreshInterval}
               onChange={(e) => setRefreshInterval(Number(e.target.value))}
             >
               <option value={30000}>30 seconds</option>
               <option value={60000}>1 minute</option>
               <option value={300000}>5 minutes</option>
-            </select>
+            </Select>
             <Button
               variant="secondary"
               className="btn-outline flex items-center gap-2"

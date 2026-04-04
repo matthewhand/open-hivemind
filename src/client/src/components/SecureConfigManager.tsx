@@ -10,6 +10,7 @@ import { Alert } from './DaisyUI/Alert';
 import { Loading } from './DaisyUI/Loading';
 import Toggle from './DaisyUI/Toggle';
 import Tooltip from './DaisyUI/Tooltip';
+import Textarea from './DaisyUI/Textarea';
 import {
   PlusIcon,
   PencilIcon,
@@ -254,9 +255,9 @@ const SecureConfigManager: React.FC<SecureConfigManagerProps> = ({ onRefresh }) 
 
           <div className="form-control">
             <label htmlFor="secure-config-data" className="label"><span className="label-text">Configuration Data (JSON)</span></label>
-            <textarea
+            <Textarea
               id="secure-config-data"
-              className="textarea textarea-bordered font-mono"
+              className="font-mono"
               rows={8}
               value={JSON.stringify(formData.data, null, 2)}
               onChange={(e) => {

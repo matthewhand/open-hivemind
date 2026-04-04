@@ -20,6 +20,8 @@ import { SkeletonPage } from '../components/DaisyUI/Skeleton';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import Toggle from '../components/DaisyUI/Toggle';
 import { Alert } from '../components/DaisyUI/Alert';
+import Input from '../components/DaisyUI/Input';
+import Select from '../components/DaisyUI/Select';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -227,9 +229,10 @@ const WebhookEventsPage: React.FC = () => {
             <label className="label" htmlFor="wh-source-filter">
               <span className="label-text">Source</span>
             </label>
-            <select
+            <Select
               id="wh-source-filter"
-              className="select select-bordered select-sm"
+              className="select-bordered"
+              size="sm"
               value={sourceFilter}
               onChange={e => { setSourceFilter(e.target.value); setPage(1); }}
             >
@@ -238,31 +241,32 @@ const WebhookEventsPage: React.FC = () => {
               <option value="slack">Slack</option>
               <option value="mattermost">Mattermost</option>
               <option value="telegram">Telegram</option>
-            </select>
+            </Select>
           </div>
           <div className="form-control">
             <label className="label" htmlFor="wh-status-filter">
               <span className="label-text">Status</span>
             </label>
-            <select
+            <Select
               id="wh-status-filter"
-              className="select select-bordered select-sm"
+              className="select-bordered"
+              size="sm"
               value={statusFilter}
               onChange={e => { setStatusFilter(e.target.value); setPage(1); }}
             >
               <option value="">All Statuses</option>
               <option value="success">Success</option>
               <option value="failed">Failed</option>
-            </select>
+            </Select>
           </div>
           <div className="form-control">
             <label className="label" htmlFor="wh-start-date">
               <span className="label-text">From</span>
             </label>
-            <input
+            <Input
               id="wh-start-date"
               type="datetime-local"
-              className="input input-bordered input-sm"
+              size="sm"
               value={startDate}
               onChange={e => { setStartDate(e.target.value); setPage(1); }}
             />
@@ -271,10 +275,10 @@ const WebhookEventsPage: React.FC = () => {
             <label className="label" htmlFor="wh-end-date">
               <span className="label-text">To</span>
             </label>
-            <input
+            <Input
               id="wh-end-date"
               type="datetime-local"
-              className="input input-bordered input-sm"
+              size="sm"
               value={endDate}
               onChange={e => { setEndDate(e.target.value); setPage(1); }}
             />

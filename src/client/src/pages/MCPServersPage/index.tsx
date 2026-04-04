@@ -19,6 +19,7 @@ import { useMCPServerDelete } from './hooks/useMCPServerDelete';
 import { MCPServerList } from './MCPServerList';
 import { MCPServerModals } from './MCPServerModals';
 import { useSavedStamp } from '../../contexts/SavedStampContext';
+import Select from '../../components/DaisyUI/Select';
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -136,8 +137,8 @@ const MCPServersPage: React.FC = () => {
           searchPlaceholder="Search servers by name or description..."
         >
           <div className="form-control">
-            <select
-              className="select select-bordered"
+            <Select
+              className="select-bordered"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
@@ -145,7 +146,7 @@ const MCPServersPage: React.FC = () => {
               <option value="running">Running</option>
               <option value="stopped">Stopped</option>
               <option value="error">Error</option>
-            </select>
+            </Select>
           </div>
         </SearchFilterBar>
       </div>

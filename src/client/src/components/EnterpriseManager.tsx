@@ -22,6 +22,8 @@ import Tabs from './DaisyUI/Tabs';
 import type { TabItem } from './DaisyUI/Tabs';
 import DataTable from './DaisyUI/DataTable';
 import type { RDVColumn } from './DaisyUI/DataTable';
+import Input from './DaisyUI/Input';
+import Select from './DaisyUI/Select';
 
 interface ComplianceRule {
   id: string;
@@ -727,10 +729,9 @@ const EnterpriseManager: React.FC = () => {
             <label htmlFor="integration-name" className="label">
               <span className="label-text">Integration Name</span>
             </label>
-            <input
+            <Input
               id="integration-name"
               type="text"
-              className="input input-bordered w-full"
               value={integrationForm.name}
               onChange={(e) => setIntegrationForm((prev) => ({ ...prev, name: e.target.value }))}
             />
@@ -739,9 +740,9 @@ const EnterpriseManager: React.FC = () => {
             <label htmlFor="integration-type" className="label">
               <span className="label-text">Type</span>
             </label>
-            <select
+            <Select
               id="integration-type"
-              className="select select-bordered w-full"
+              className="select-bordered"
               value={integrationForm.type}
               onChange={(e) =>
                 setIntegrationForm((prev) => ({
@@ -755,16 +756,15 @@ const EnterpriseManager: React.FC = () => {
               <option value="database">Database</option>
               <option value="monitoring">Monitoring</option>
               <option value="logging">Logging</option>
-            </select>
+            </Select>
           </div>
           <div className="form-control w-full mb-4">
             <label htmlFor="integration-provider" className="label">
               <span className="label-text">Provider</span>
             </label>
-            <input
+            <Input
               id="integration-provider"
               type="text"
-              className="input input-bordered w-full"
               value={integrationForm.provider}
               onChange={(e) =>
                 setIntegrationForm((prev) => ({ ...prev, provider: e.target.value }))
@@ -787,10 +787,9 @@ const EnterpriseManager: React.FC = () => {
             <label htmlFor="cloud-provider-name" className="label">
               <span className="label-text">Provider Name</span>
             </label>
-            <input
+            <Input
               id="cloud-provider-name"
               type="text"
-              className="input input-bordered w-full"
               value={cloudForm.name}
               onChange={(e) => setCloudForm((prev) => ({ ...prev, name: e.target.value }))}
             />
@@ -799,9 +798,9 @@ const EnterpriseManager: React.FC = () => {
             <label htmlFor="cloud-type" className="label">
               <span className="label-text">Cloud Type</span>
             </label>
-            <select
+            <Select
               id="cloud-type"
-              className="select select-bordered w-full"
+              className="select-bordered"
               value={cloudForm.type}
               onChange={(e) =>
                 setCloudForm((prev) => ({ ...prev, type: e.target.value as CloudProvider['type'] }))
@@ -812,16 +811,15 @@ const EnterpriseManager: React.FC = () => {
               <option value="gcp">Google Cloud Platform</option>
               <option value="digitalocean">DigitalOcean</option>
               <option value="heroku">Heroku</option>
-            </select>
+            </Select>
           </div>
           <div className="form-control w-full mb-4">
             <label htmlFor="cloud-region" className="label">
               <span className="label-text">Region</span>
             </label>
-            <input
+            <Input
               id="cloud-region"
               type="text"
-              className="input input-bordered w-full"
               value={cloudForm.region}
               onChange={(e) => setCloudForm((prev) => ({ ...prev, region: e.target.value }))}
             />

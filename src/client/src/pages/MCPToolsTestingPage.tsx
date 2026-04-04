@@ -16,6 +16,8 @@ import Toggle from '../components/DaisyUI/Toggle';
 import Divider from '../components/DaisyUI/Divider';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import Card from '../components/DaisyUI/Card';
+import Input from '../components/DaisyUI/Input';
+import Textarea from '../components/DaisyUI/Textarea';
 import Debug from 'debug';
 
 const debug = Debug('app:client:pages:MCPToolsTestingPage');
@@ -190,17 +192,16 @@ const MCPToolsTestingPage: React.FC = () => {
             aria-label={`Toggle ${key}`}
           />
         ) : type === 'integer' || type === 'number' ? (
-          <input
+          <Input
             type="number"
-            className="input input-bordered w-full"
             placeholder={`Enter ${key}...`}
             value={formData[key] !== undefined && formData[key] !== null ? formData[key] : ''}
             onChange={(e) => handleInputChange(key, e.target.value, type)}
             disabled={testing}
           />
         ) : type === 'array' || type === 'object' ? (
-          <textarea
-            className="textarea textarea-bordered font-mono text-sm"
+          <Textarea
+            className="font-mono text-sm"
             placeholder={`Enter ${type} as JSON (e.g., ${type === 'array' ? '["item1", "item2"]' : '{"key": "value"}'})`}
             value={
               formData[key] !== undefined
@@ -214,9 +215,8 @@ const MCPToolsTestingPage: React.FC = () => {
             rows={3}
           />
         ) : (
-          <input
+          <Input
             type="text"
-            className="input input-bordered w-full"
             placeholder={`Enter ${key}...`}
             value={formData[key] || ''}
             onChange={(e) => handleInputChange(key, e.target.value, type)}
