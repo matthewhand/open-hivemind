@@ -642,13 +642,12 @@ describe('API Performance Baseline Tests', () => {
         if (regressions.length > 0) {
           console.log(`\n⚠️ Performance Regressions Detected (${regressions.length}):`);
           regressions.forEach(r => console.log(`  - ${r}`));
-          console.warn('Performance has regressed compared to baseline!');
         } else {
           console.log(`\n✅ No significant performance regressions detected`);
         }
 
-        // Don't fail the test, just warn
-        // expect(regressions.length).toBe(0);
+        // Fail the test if there are regressions
+        expect(regressions.length).toBe(0);
       } else {
         console.log(`\n📝 No baseline found. This run will establish the baseline.`);
       }

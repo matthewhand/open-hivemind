@@ -2,13 +2,17 @@ import { expect, test } from '@playwright/test';
 import { setupTestWithErrorDetection, waitForPageReady } from './test-utils';
 
 /**
- * Comprehensive Smoke Test Suite
+ * ⚠️ DEPRECATED - This file is kept for backward compatibility only.
  *
- * Validates that all major pages in the WebUI load successfully.
- * This test suite is designed to run quickly (under 2 minutes) and catch
- * critical rendering issues across the entire application.
+ * This test suite has been split into granular test files for better isolation and debugging:
+ * - smoke-test-dashboard.spec.ts (Dashboard & Admin Overview)
+ * - smoke-test-bots.spec.ts (Bot Management Pages)
+ * - smoke-test-config.spec.ts (Personas, MCP, Guards)
+ * - smoke-test-monitoring.spec.ts (Monitoring & System Pages)
+ * - smoke-test-providers.spec.ts (Providers, Integrations & Docs)
  *
- * @tag @smoke
+ * @deprecated Use the new granular smoke test files instead
+ * @tag @smoke @deprecated
  */
 
 interface PageTest {
