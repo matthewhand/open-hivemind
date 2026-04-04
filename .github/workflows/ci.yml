@@ -34,7 +34,7 @@ jobs:
         env:
           NODE_OPTIONS: --max-old-space-size=8192
         run: |
-          pnpm test --passWithNoTests --forceExit --testPathPattern=tests/unit 2>&1 | tee unit-test-output.txt
+          NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config ./node_modules/jest/bin/jest.js --passWithNoTests --forceExit --maxWorkers=2 --testPathPattern=tests/unit 2>&1 | tee unit-test-output.txt
           # Extract passing unit test count from output
           UNIT_PASSING_TESTS=$(grep "Tests:" unit-test-output.txt | grep -o "[0-9]\+ passed" | grep -o "[0-9]\+")
           echo "unit_passing_tests=$UNIT_PASSING_TESTS" >> $GITHUB_OUTPUT
