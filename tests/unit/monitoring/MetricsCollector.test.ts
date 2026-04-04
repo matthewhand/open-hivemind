@@ -12,6 +12,7 @@ describe('MetricsCollector', () => {
   afterEach(() => {
     // Clean up singleton instance
     (MetricsCollector as any).instance = null;
+    jest.useRealTimers();
   });
 
   describe('Singleton Pattern', () => {
@@ -65,6 +66,105 @@ describe('MetricsCollector', () => {
       responseTimes.forEach((time) => collector.recordResponseTime(time));
       const metrics = collector.getMetrics();
       expect(metrics.responseTime.length).toBeGreaterThanOrEqual(responseTimes.length);
+    });
+
+    it('should cap response time history at 100 entries', () => {
+      for (let i = 0; i < 150; i++) {
+        collector.recordResponseTime(i);
+      }
+      const metrics = collector.getMetrics();
+      expect(metrics.responseTime.length).toBe(100);
+      expect(metrics.responseTime[0]).toBe(50);
+      expect(metrics.responseTime[99]).toBe(149);
+    });
+  });
+
+  describe('Collection lifecycle', () => {
+    it('starts collection once and emits metrics after interval tick', () => {
+      jest.useFakeTimers();
+      const emitSpy = jest.spyOn(collector, 'emit');
+
+      collector.startCollection();
+      collector.startCollection(); // no-op while already collecting
+
+      // immediate emit on start
+      expect(emitSpy).toHaveBeenCalledWith('metricsCollected', expect.any(Object));
+
+      jest.advanceTimersByTime(5000);
+      expect(emitSpy).toHaveBeenCalledWith('metricsCollected', expect.any(Object));
+
+      collector.stopCollection();
+      const callCountAtStop = emitSpy.mock.calls.length;
+      jest.advanceTimersByTime(10000);
+      expect(emitSpy.mock.calls.length).toBe(callCountAtStop);
+    });
+
+    it('shutdown stops collection and removes listeners', () => {
+      jest.useFakeTimers();
+      const listener = jest.fn();
+      collector.on('metricRecorded', listener);
+
+      collector.startCollection();
+      collector.shutdown();
+
+      expect(collector.listenerCount('metricRecorded')).toBe(0);
+      const emitSpy = jest.spyOn(collector, 'emit');
+      jest.advanceTimersByTime(5000);
+      expect(emitSpy).not.toHaveBeenCalledWith('metricsCollected', expect.anything());
+    });
+  });
+
+  describe('History and export', () => {
+    it('caps generic metric history at 1000 entries', () => {
+      for (let i = 0; i < 1200; i++) {
+        collector.recordMetric('x_metric', i);
+      }
+
+      const all = collector.getAllMetrics();
+      expect(all.length).toBe(1000);
+      expect(all[0].value).toBe(200);
+      expect(all[999].value).toBe(1199);
+    });
+
+    it('exports metrics data as valid JSON with expected keys', async () => {
+      collector.incrementMessages();
+      collector.recordResponseTime(123);
+      collector.incrementErrors();
+
+      const raw = await collector.exportMetricsData();
+      const parsed = JSON.parse(raw);
+
+      expect(parsed).toHaveProperty('timestamp');
+      expect(parsed).toHaveProperty('current');
+      expect(parsed).toHaveProperty('history');
+      expect(parsed).toHaveProperty('summary');
+      expect(parsed.current.messagesProcessed).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  describe('Aliases and reset behavior', () => {
+    it('alias methods incrementRequestCount and incrementErrorCount map correctly', () => {
+      collector.incrementRequestCount();
+      collector.incrementErrorCount();
+
+      const metrics = collector.getMetrics();
+      expect(metrics.messagesProcessed).toBe(1);
+      expect(metrics.errors).toBe(1);
+    });
+
+    it('reset clears counters and history', () => {
+      collector.incrementMessages();
+      collector.incrementErrors();
+      collector.recordResponseTime(5);
+      collector.recordMetric('custom', 1);
+
+      collector.reset();
+
+      const metrics = collector.getMetrics();
+      expect(metrics.messagesProcessed).toBe(0);
+      expect(metrics.errors).toBe(0);
+      expect(metrics.responseTime).toEqual([]);
+      expect(collector.getAllMetrics()).toEqual([]);
     });
   });
 
