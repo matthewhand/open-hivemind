@@ -229,12 +229,11 @@ const ActivityTimeline: React.FC = () => {
             <p className="text-sm opacity-70 mb-1">
               {recentEvents.length} events in last 10 minutes
             </p>
-            <div className="w-full bg-base-200 rounded-full h-2">
-              <div
-                className="bg-primary h-2 rounded-full"
-                style={{ width: `${Math.min((recentEvents.length / 10) * 100, 100)}%` }}
-              ></div>
-            </div>
+            <progress
+              className="progress progress-primary w-full"
+              value={Math.min((recentEvents.length / 10) * 100, 100)}
+              max="100"
+            />
         </Card>
         <Card className="shadow">
             <h3 className="font-bold mb-2">System Health</h3>

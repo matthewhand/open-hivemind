@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "A messenger bot to communicate with LLMs",
   "type": "commonjs",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "bin": {
     "hivemind": "dist/src/cli/HivemindCLI.js"
   },

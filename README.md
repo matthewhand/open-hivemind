@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/matthewhand/open-hivemind/workflows/CI/badge.svg)](https://github.com/matthewhand/open-hivemind/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org/)
+[![Node.js Version](https://img.shields.io/badge/node-22.x-green)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue.svg)](https://www.typescriptlang.org/)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://hub.docker.com/)
 
@@ -80,7 +80,15 @@ For developers who want to modify the code or run locally without Docker.
     cd open-hivemind
     ```
 
+2.  **Ensure Node.js 22 is installed:**
+    This project requires Node.js 22. We recommend using [nvm](https://github.com/nvm-sh/nvm) to manage versions:
+    ```bash
+    nvm install 22
+    nvm use 22
+    ```
+
 2.  **Install dependencies:**
+    This project uses pnpm for package management.
     ```bash
     pnpm install
     ```

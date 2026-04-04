@@ -109,28 +109,25 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="border border-base-300 rounded-lg overflow-hidden">
+    <div className={`collapse collapse-arrow bg-base-200 rounded-lg ${isOpen ? 'collapse-open' : ''}`}>
       <button
         type="button"
-        className="flex items-center gap-2 w-full px-3 py-2 bg-base-200 hover:bg-base-300 transition-colors text-sm font-semibold"
+        className="collapse-title flex items-center gap-2 px-3 py-2 text-sm font-semibold"
         onClick={() => setIsOpen(!isOpen)}
       >
-        {isOpen ? (
-          <ChevronDown className="w-4 h-4" />
-        ) : (
-          <ChevronRight className="w-4 h-4" />
-        )}
         <span className="capitalize">{title}</span>
         <Badge size="sm" variant="ghost" className="ml-auto">{entries.length} change{entries.length !== 1 ? 's' : ''}</Badge>
       </button>
       {isOpen && (
-        <SimpleTable compact className="w-full">
-          <tbody>
-            {entries.map((entry) => (
-              <DiffRow key={entry.path} entry={entry} />
-            ))}
-          </tbody>
-        </SimpleTable>
+        <div className="collapse-content">
+          <SimpleTable compact className="w-full">
+            <tbody>
+              {entries.map((entry) => (
+                <DiffRow key={entry.path} entry={entry} />
+              ))}
+            </tbody>
+          </SimpleTable>
+        </div>
       )}
     </div>
   );

@@ -220,13 +220,13 @@ const AnimationComponents: React.FC = () => {
             </div>
             <div>
               <h4 className="font-semibold mb-2">Preview:</h4>
-              <div className="border border-base-300 rounded-lg p-8 bg-base-100">
+              <Card className="p-8">
                 <AnimatedBox animation={currentDemo} duration={1000}>
                   <div className="w-16 h-16 bg-primary rounded-lg flex items-center justify-center">
                     <SparklesIcon className="w-8 h-8 text-primary-content" />
                   </div>
                 </AnimatedBox>
-              </div>
+              </Card>
             </div>
           </div>
         </Card.Body>
