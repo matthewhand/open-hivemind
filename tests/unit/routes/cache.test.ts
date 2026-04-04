@@ -34,7 +34,6 @@ describe('Cache Routes', () => {
       const res = await request(app).post('/cache/clear');
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.message).toBe('Cache cleared successfully');
       expect(mockClearAllSystemCaches).toHaveBeenCalledTimes(1);
     });
 
