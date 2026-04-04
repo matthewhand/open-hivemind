@@ -1,7 +1,52 @@
-import ProviderConfigManager from '@src/config/ProviderConfigManager';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
 
-jest.mock('@src/config/ProviderConfigManager');
+const mockGetAllProviders = jest.fn();
+const mockLoadPlugin = jest.fn();
+const mockInstantiateLlmProvider = jest.fn();
+
+jest.mock('@src/config/ProviderConfigManager', () => ({
+  __esModule: true,
+  default: {
+    getInstance: () => ({
+      getAllProviders: mockGetAllProviders,
+    }),
+  },
+}));
+
+jest.mock('@src/plugins/PluginLoader', () => ({
+  __esModule: true,
+  loadPlugin: (...args: any[]) => mockLoadPlugin(...args),
+  instantiateLlmProvider: (...args: any[]) => mockInstantiateLlmProvider(...args),
+}));
+
+jest.mock('@src/config/UserConfigStore', () => ({
+  UserConfigStore: {
+    getInstance: () => ({
+      getGeneralSettings: () => ({}),
+    }),
+  },
+}));
+
+jest.mock('@src/config/llmProfiles', () => ({
+  getLlmProfileByKey: jest.fn(() => null),
+}));
+
+jest.mock('@src/registries/SyncProviderRegistry', () => ({
+  SyncProviderRegistry: {
+    getInstance: () => ({
+      isInitialized: () => false,
+      getLlmProviders: () => [],
+    }),
+  },
+}));
+
+jest.mock('@config/llmConfig', () => ({
+  __esModule: true,
+  default: {
+    get: jest.fn(() => ''),
+  },
+}));
+
 jest.mock('@src/monitoring/MetricsCollector', () => ({
   MetricsCollector: {
     getInstance: () => ({
@@ -9,36 +54,27 @@ jest.mock('@src/monitoring/MetricsCollector', () => ({
     }),
   },
 }));
-jest.mock('@config/llmConfig', () => ({
-  get: jest.fn(),
-}));
-
-const MockOpenAI = jest.fn();
-jest.mock(
-  '@hivemind/llm-openai',
-  () => ({
-    OpenAiProvider: class {
-      constructor(config: any) {
-        MockOpenAI(config);
-      }
-      generateChatCompletion() {}
-      generateCompletion() {}
-    },
-  }),
-  { virtual: true }
-);
-
-const mockGetAllProviders = jest.fn();
-(ProviderConfigManager.getInstance as jest.Mock).mockReturnValue({
-  getAllProviders: mockGetAllProviders,
-});
 
 describe('getLlmProvider Caching', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+
+    mockLoadPlugin.mockImplementation((name: string) => ({
+      pluginName: name,
+    }));
+
+    mockInstantiateLlmProvider.mockImplementation((_mod: any, cfg: any) => ({
+      name: 'openai',
+      supportsChatCompletion: () => true,
+      supportsCompletion: () => true,
+      supportsHistory: () => true,
+      generateChatCompletion: jest.fn().mockResolvedValue('chat'),
+      generateCompletion: jest.fn().mockResolvedValue('completion'),
+      __cfg: cfg,
+    }));
   });
 
-  it('should reuse provider instance if config is unchanged', () => {
+  it('reuses provider instance if config is unchanged', async () => {
     const config = {
       id: 'test-cache-1',
       type: 'openai',
@@ -49,15 +85,17 @@ describe('getLlmProvider Caching', () => {
 
     mockGetAllProviders.mockReturnValue([config]);
 
-    getLlmProvider();
-    expect(MockOpenAI).toHaveBeenCalledTimes(1);
-    expect(MockOpenAI).toHaveBeenCalledWith({ key: 'val1' });
+    await getLlmProvider();
+    expect(mockLoadPlugin).toHaveBeenCalledTimes(1);
+    expect(mockInstantiateLlmProvider).toHaveBeenCalledTimes(1);
+    expect(mockInstantiateLlmProvider).toHaveBeenCalledWith(expect.any(Object), { key: 'val1' });
 
-    getLlmProvider();
-    expect(MockOpenAI).toHaveBeenCalledTimes(1); // Should not be called again
+    await getLlmProvider();
+    expect(mockLoadPlugin).toHaveBeenCalledTimes(1);
+    expect(mockInstantiateLlmProvider).toHaveBeenCalledTimes(1);
   });
 
-  it('should create new instance if config changes', () => {
+  it('creates new instance if config changes', async () => {
     const config1 = {
       id: 'test-cache-2',
       type: 'openai',
@@ -67,24 +105,20 @@ describe('getLlmProvider Caching', () => {
     };
 
     mockGetAllProviders.mockReturnValue([config1]);
-    getLlmProvider();
+    await getLlmProvider();
 
-    // MockOpenAI called once for test-cache-2
-    const initialCalls = MockOpenAI.mock.calls.length;
-
-    // Change config
     const config2 = {
       ...config1,
       config: { key: 'val2' },
     };
     mockGetAllProviders.mockReturnValue([config2]);
 
-    getLlmProvider();
-    expect(MockOpenAI).toHaveBeenCalledTimes(initialCalls + 1);
-    expect(MockOpenAI).toHaveBeenLastCalledWith({ key: 'val2' });
+    await getLlmProvider();
+    expect(mockInstantiateLlmProvider).toHaveBeenCalledTimes(2);
+    expect(mockInstantiateLlmProvider).toHaveBeenLastCalledWith(expect.any(Object), { key: 'val2' });
   });
 
-  it('should cleanup stale providers', () => {
+  it('cleans up stale providers and re-instantiates when added back', async () => {
     const config = {
       id: 'test-cache-3',
       type: 'openai',
@@ -93,21 +127,20 @@ describe('getLlmProvider Caching', () => {
       config: { key: 'val3' },
     };
 
-    // 1. Add
     mockGetAllProviders.mockReturnValue([config]);
-    getLlmProvider();
-    const callsAfterAdd = MockOpenAI.mock.calls.length;
+    await getLlmProvider();
+    expect(mockInstantiateLlmProvider).toHaveBeenCalledTimes(1);
 
-    // 2. Remove (return empty)
     mockGetAllProviders.mockReturnValue([]);
-    getLlmProvider(); // This should trigger prune
+    await getLlmProvider();
 
-    // 3. Add back (same config)
     mockGetAllProviders.mockReturnValue([config]);
-    getLlmProvider();
+    await getLlmProvider();
 
-    // It should have been re-instantiated because it was pruned in step 2
-    // So calls should increment
-    expect(MockOpenAI.mock.calls.length).toBeGreaterThan(callsAfterAdd);
+    // Calls breakdown:
+    // 1) configured provider first load
+    // 2) default fallback provider when list is empty
+    // 3) configured provider again after stale prune/add-back
+    expect(mockInstantiateLlmProvider).toHaveBeenCalledTimes(3);
   });
 });
