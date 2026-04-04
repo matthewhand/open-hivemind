@@ -19,9 +19,10 @@ describe('Sitemap API Endpoints', () => {
 
   it('should return sitemap.json', async () => {
     const response = await request(app).get('/sitemap.json').expect(200);
-    expect(response.body).toHaveProperty('urls');
-    expect(Array.isArray(response.body.urls)).toBe(true);
-    const urls = response.body.urls.map((u: any) => u.url);
+    expect(response.body).toHaveProperty('success', true);
+    expect(response.body).toHaveProperty('data.urls');
+    expect(Array.isArray(response.body.data.urls)).toBe(true);
+    const urls = response.body.data.urls.map((u: any) => u.url);
     // /dashboard removed, checking for /admin and new AI routes
     expect(urls).toContain('/admin');
     expect(urls).toContain('/admin/ai/dashboard');
