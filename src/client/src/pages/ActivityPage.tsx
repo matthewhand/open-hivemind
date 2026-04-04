@@ -16,6 +16,7 @@ import PageHeader from '../components/DaisyUI/PageHeader';
 import { SkeletonPage } from '../components/DaisyUI/Skeleton';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import Input from '../components/DaisyUI/Input';
+import Join from '../components/DaisyUI/Join';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService, ActivityEvent, ActivityResponse } from '../services/api';
 import useUrlParams from '../hooks/useUrlParams';
@@ -366,7 +367,7 @@ const ActivityPage: React.FC = () => {
         actions={
           <div className="flex items-center gap-2">
             {/* View Toggle */}
-            <div className="join">
+            <Join>
               <Button
                 size="sm"
                 variant={viewMode === 'table' ? 'primary' : 'ghost'}
@@ -383,7 +384,7 @@ const ActivityPage: React.FC = () => {
               >
                 <GitBranch className="w-4 h-4" /> Timeline
               </Button>
-            </div>
+            </Join>
 
             {/* Auto Refresh Toggle */}
             <Toggle
@@ -449,7 +450,7 @@ const ActivityPage: React.FC = () => {
         ]}
       >
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="join">
+          <Join>
             {(['1h', '6h', '24h', '7d', '30d'] as const).map((range) => (
               <Button
                 key={range}
@@ -462,7 +463,7 @@ const ActivityPage: React.FC = () => {
                 {range}
               </Button>
             ))}
-          </div>
+          </Join>
           <Input
             type="date"
             value={startDate}

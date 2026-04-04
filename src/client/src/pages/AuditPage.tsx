@@ -22,6 +22,7 @@ import useUrlParams from '../hooks/useUrlParams';
 import { useQuery } from '@tanstack/react-query';
 import { apiService } from '../services/api';
 import Diff from '../components/DaisyUI/Diff';
+import SimpleTable from '../components/DaisyUI/SimpleTable';
 import Debug from 'debug';
 const debug = Debug('app:client:pages:AuditPage');
 
@@ -450,7 +451,7 @@ const AuditPage: React.FC = () => {
       ) : (
         <Card>
           <div className="overflow-x-auto">
-            <table className="table table-sm w-full">
+            <SimpleTable size="sm" className="w-full">
               <thead>
                 <tr>
                   <th className="w-8"></th>
@@ -496,7 +497,7 @@ const AuditPage: React.FC = () => {
                   );
                 })}
               </tbody>
-            </table>
+            </SimpleTable>
           </div>
         </Card>
       )}

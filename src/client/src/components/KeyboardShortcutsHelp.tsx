@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Shortcut } from '../hooks/useKeyboardShortcuts';
-import { Kbd } from './DaisyUI';
+import { Kbd, SimpleTable } from './DaisyUI';
 
 interface KeyboardShortcutsHelpProps {
   isOpen: boolean;
@@ -70,7 +70,7 @@ const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
 
         {/* Shortcut list */}
         <div className="max-h-[60vh] overflow-y-auto py-2">
-          <table className="table table-sm w-full">
+          <SimpleTable size="sm" className="w-full">
             <tbody>
               {shortcuts.map((s, idx) => (
                 <tr key={idx} className="hover">
@@ -86,7 +86,7 @@ const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
                 </tr>
               ))}
             </tbody>
-          </table>
+          </SimpleTable>
         </div>
 
         {/* Footer */}

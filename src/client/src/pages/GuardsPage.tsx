@@ -14,6 +14,7 @@ import ModalForm from '../components/DaisyUI/ModalForm';
 import { FormField } from '../components/DaisyUI/formTypes';
 import RangeSlider from '../components/DaisyUI/RangeSlider';
 import { Badge } from '../components/DaisyUI/Badge';
+import Accordion from '../components/DaisyUI/Accordion';
 import { GuardProfile } from '@shared/types/models/security';
 import { useToast } from '../components/DaisyUI/ToastNotification';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
@@ -246,21 +247,17 @@ const GuardsPage: React.FC = () => {
           <>
             <Divider>Guardrails</Divider>
 
-            <div className="grid grid-cols-1 gap-6">
-              {/* Access Control */}
-              <div className="collapse collapse-arrow bg-base-200">
-                <input type="checkbox" defaultChecked aria-label="Toggle Access Control" />
-                <div className="collapse-title text-xl font-medium flex items-center gap-2 pr-12">
-                  <Shield className="w-5 h-5" /> Access Control
-                  <div className="ml-auto z-10" onClick={e => e.stopPropagation()}>
-                    <Toggle
-                      color="primary"
-                      checked={guardsValue?.mcpGuard?.enabled || false}
-                      onChange={e => updateGuard('mcpGuard', { enabled: e.target.checked })}
-                    />
-                  </div>
-                </div>
-                <div className="collapse-content bg-base-100 pt-4">
+            <Accordion
+              allowMultiple
+              defaultOpenItems={['access-control']}
+              className="grid grid-cols-1 gap-6"
+              items={[
+                {
+                  id: 'access-control',
+                  className: 'bg-base-200',
+                  title: (<span className="flex items-center gap-2 w-full pr-8"><Shield className="w-5 h-5" /> Access Control<span className="ml-auto z-10" onClick={(e: React.MouseEvent) => e.stopPropagation()}><Toggle color="primary" checked={guardsValue?.mcpGuard?.enabled || false} onChange={e => updateGuard('mcpGuard', { enabled: e.target.checked })} /></span></span>),
+                  content: (
+                    <div className="bg-base-100 pt-4">
                   <div className="form-control">
                     <label className="label"><span className="label-text">Type</span></label>
                     <Select
@@ -308,22 +305,15 @@ const GuardsPage: React.FC = () => {
                     />
                     <label className="label"><span className="label-text-alt opacity-70">Leave empty to allow all tools (if enabled)</span></label>
                   </div>
-                </div>
-              </div>
-
-              {/* Rate Limit */}
-              <div className="collapse collapse-arrow bg-base-200">
-                <input type="checkbox" aria-label="Toggle Rate Limiter" />
-                <div className="collapse-title text-xl font-medium flex items-center gap-2 pr-12">
-                  <RefreshCw className="w-5 h-5" /> Rate Limiter
-                  <div className="ml-auto z-10" onClick={e => e.stopPropagation()}>
-                    <Toggle
-                      checked={guardsValue?.rateLimit?.enabled || false}
-                      onChange={e => updateGuard('rateLimit', { enabled: e.target.checked })}
-                    />
-                  </div>
-                </div>
-                <div className="collapse-content bg-base-100 pt-4">
+                    </div>
+                  ),
+                },
+                {
+                  id: 'rate-limit',
+                  className: 'bg-base-200',
+                  title: (<span className="flex items-center gap-2 w-full pr-8"><RefreshCw className="w-5 h-5" /> Rate Limiter<span className="ml-auto z-10" onClick={(e: React.MouseEvent) => e.stopPropagation()}><Toggle checked={guardsValue?.rateLimit?.enabled || false} onChange={e => updateGuard('rateLimit', { enabled: e.target.checked })} /></span></span>),
+                  content: (
+                    <div className="bg-base-100 pt-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className={`form-control transition-all duration-200 ${!guardsValue?.rateLimit?.enabled ? 'opacity-50 pointer-events-none' : ''}`} aria-disabled={!guardsValue?.rateLimit?.enabled}>
                       <div className="pt-2">
@@ -363,22 +353,15 @@ const GuardsPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
-              </div>
-
-              {/* Content Filter */}
-              <div className="collapse collapse-arrow bg-base-200">
-                <input type="checkbox" aria-label="Toggle Content Filter" />
-                <div className="collapse-title text-xl font-medium flex items-center gap-2 pr-12">
-                  <AlertTriangle className="w-5 h-5" /> Content Filter
-                  <div className="ml-auto z-10" onClick={e => e.stopPropagation()}>
-                    <Toggle
-                      color="error"
-                      checked={guardsValue?.contentFilter?.enabled || false}
-                      onChange={e => updateGuard('contentFilter', { enabled: e.target.checked })}
-                    />
-                  </div>
-                </div>
-                <div className="collapse-content bg-base-100 pt-4">
+                    </div>
+                  ),
+                },
+                {
+                  id: 'content-filter',
+                  className: 'bg-base-200',
+                  title: (<span className="flex items-center gap-2 w-full pr-8"><AlertTriangle className="w-5 h-5" /> Content Filter<span className="ml-auto z-10" onClick={(e: React.MouseEvent) => e.stopPropagation()}><Toggle color="error" checked={guardsValue?.contentFilter?.enabled || false} onChange={e => updateGuard('contentFilter', { enabled: e.target.checked })} /></span></span>),
+                  content: (
+                    <div className="bg-base-100 pt-4">
                   <div className="form-control mb-8">
                     <div className={`pt-2 transition-all duration-200 ${!guardsValue?.contentFilter?.enabled ? 'opacity-50 pointer-events-none' : ''}`}>
                       <RangeSlider
@@ -414,9 +397,11 @@ const GuardsPage: React.FC = () => {
                       disabled={!guardsValue?.contentFilter?.enabled}
                     />
                   </div>
-                </div>
-              </div>
-            </div>
+                    </div>
+                  ),
+                },
+              ]}
+            />
           </>
         );
       }

@@ -4,6 +4,7 @@ import Button from '../DaisyUI/Button';
 import Card from '../DaisyUI/Card';
 import { Activity, Clock, Server, ChevronRight, ChevronDown, ZoomIn, ZoomOut, MoveLeft, MoveRight, X } from 'lucide-react';
 import Tooltip from '../DaisyUI/Tooltip';
+import Join from '../DaisyUI/Join';
 
 export interface TraceSpan {
   id: string;
@@ -224,7 +225,7 @@ export const DistributedTraceWaterfall: React.FC<DistributedTraceWaterfallProps>
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1 join">
+            <Join className="flex items-center gap-1">
                <Tooltip content="Pan left">
                  <Button variant="ghost" size="xs" onClick={() => setPanOffset(Math.max(0, panOffset - 10 / zoomLevel))} disabled={panOffset <= 0} className="join-item" aria-label="Pan left"><MoveLeft className="w-3 h-3" /></Button>
                </Tooltip>
@@ -240,7 +241,7 @@ export const DistributedTraceWaterfall: React.FC<DistributedTraceWaterfallProps>
                <Tooltip content="Pan right">
                  <Button variant="ghost" size="xs" onClick={() => setPanOffset(Math.min(100 - (100 / zoomLevel), panOffset + 10 / zoomLevel))} disabled={panOffset >= 100 - (100 / zoomLevel)} className="join-item" aria-label="Pan right"><MoveRight className="w-3 h-3" /></Button>
                </Tooltip>
-            </div>
+            </Join>
 
             <div className="text-sm text-base-content/70 flex items-center gap-4">
               <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {totalDuration.toFixed(2)}ms</span>
