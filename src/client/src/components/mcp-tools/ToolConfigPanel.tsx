@@ -124,8 +124,8 @@ const ToolConfigPanel: React.FC<ToolConfigPanelProps> = ({
           >
             <CodeBracketIcon className="w-4 h-4" />
           </button>
-        </div>
-      </Join>
+        </Join>
+      </div>
 
       <div className="form-control">
         <label className="label">

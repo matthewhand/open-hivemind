@@ -16,7 +16,7 @@ services:
       timeout: 10s
       retries: 3
     volumes:
-      - ./config:/app/config:ro
+      - ./config:/app/config
       - ./logs:/app/logs
 
   prometheus:

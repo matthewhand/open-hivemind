@@ -168,7 +168,7 @@ const SettingsIntegrations: React.FC = () => {
         <Stat className="bg-base-200/50 rounded-lg p-3">
           <div className="stat-title text-xs">Configured</div>
           <div className="stat-value text-2xl text-info">{configuredCount}</div>
-        </div>
+        </Stat>
       </div>
 
       {/* Integration Groups */}
