@@ -92,12 +92,12 @@ const AnimationComponents: React.FC = () => {
   return (
     <div className="w-full space-y-6">
       <Card className="shadow-lg border-l-4 border-secondary">
-        <div className="card-body">
+        <Card.Body>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <SparklesIcon className="w-8 h-8 text-secondary" />
               <div>
-                <h2 className="card-title text-2xl">Animation Components</h2>
+                <Card.Title className="text-2xl">Animation Components</Card.Title>
                 <p className="text-sm opacity-70">Simple animation utilities and effects</p>
               </div>
             </div>
@@ -110,13 +110,13 @@ const AnimationComponents: React.FC = () => {
               </Badge>
             </div>
           </div>
-        </div>
+        </Card.Body>
       </Card>
 
       {/* Controls */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="shadow">
-          <div className="card-body">
+          <Card.Body>
             <h3 className="font-bold mb-4">Animation Controls</h3>
             <div className="flex gap-2">
               <Button onClick={playAll} className="btn-success">
@@ -138,11 +138,11 @@ const AnimationComponents: React.FC = () => {
                 Random
               </Button>
             </div>
-          </div>
+          </Card.Body>
         </Card>
 
         <Card className="shadow">
-          <div className="card-body">
+          <Card.Body>
             <h3 className="font-bold mb-2">Active Animations</h3>
             <div className="flex items-center gap-2">
               <Progress
@@ -152,14 +152,14 @@ const AnimationComponents: React.FC = () => {
               />
               <span className="text-sm">{activeCount}/{animations.length}</span>
             </div>
-          </div>
+          </Card.Body>
         </Card>
       </div>
 
       {/* Animation List */}
       <Card className="shadow-lg">
-        <div className="card-body">
-          <h3 className="card-title text-lg mb-4">Available Animations</h3>
+        <Card.Body>
+          <Card.Title tag="h3" className="text-lg mb-4">Available Animations</Card.Title>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {activeAnimations.map((animation) => (
               <div
@@ -195,13 +195,13 @@ const AnimationComponents: React.FC = () => {
               </div>
             ))}
           </div>
-        </div>
+        </Card.Body>
       </Card>
 
       {/* Demo Section */}
       <Card className="shadow-lg">
-        <div className="card-body">
-          <h3 className="card-title text-lg mb-4">Animation Demo</h3>
+        <Card.Body>
+          <Card.Title tag="h3" className="text-lg mb-4">Animation Demo</Card.Title>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h4 className="font-semibold mb-2">Select Animation:</h4>
@@ -229,7 +229,7 @@ const AnimationComponents: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
+        </Card.Body>
       </Card>
 
       {isPlaying && (

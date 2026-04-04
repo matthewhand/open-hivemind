@@ -79,14 +79,14 @@ const PersonaChip: React.FC<PersonaChipProps> = ({
 
       {/* Built-in indicator */}
       {persona.isBuiltIn && (
-        <Badge variant="info" size="xs" className="badge-outline ml-1">
+        <Badge variant="info" size="xs" style="outline" className="ml-1">
           BUILTIN
         </Badge>
       )}
 
       {/* Usage count */}
       {showUsage && persona.usageCount > 0 && (
-        <Badge variant="neutral" size="xs" className="badge-ghost ml-1">
+        <Badge variant="ghost" size="xs" className="ml-1">
           {persona.usageCount}
         </Badge>
       )}

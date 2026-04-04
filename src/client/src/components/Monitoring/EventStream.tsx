@@ -205,7 +205,7 @@ const EventStream: React.FC<EventStreamProps> = ({
   return (
     <Card className={`shadow-xl ${className}`}>
         <div className="flex justify-between items-center mb-4">
-          <h2 className="card-title">Event Stream</h2>
+          <Card.Title>Event Stream</Card.Title>
           <div className="flex gap-2">
             <button
               className={`btn btn-sm ${isPaused ? 'btn-warning' : 'btn-ghost'}`}

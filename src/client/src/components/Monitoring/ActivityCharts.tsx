@@ -51,9 +51,9 @@ const ActivityCharts: React.FC = () => {
 
   return (
     <Card className="shadow-xl mt-6">
-        <h2 className="card-title mb-4">
+        <Card.Title className="mb-4">
           Activity Charts
-        </h2>
+        </Card.Title>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div className="form-control w-full">

@@ -348,7 +348,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
 
                     {formData.persona && (
                         <Card className="bg-base-200">
-                            <Card.Body className="card-body p-4">
+                            <Card.Body className="p-4">
                                 <Card.Title tag="h3" className="text-sm opacity-70">Agent Preview</Card.Title>
                                 <p className="text-sm">
                                     {fetchedPersonas.find(p => p.id === formData.persona)?.description || 'No description available.'}
