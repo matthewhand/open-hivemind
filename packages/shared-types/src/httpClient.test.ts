@@ -17,9 +17,10 @@ function mockFetch(status: number, body: unknown, contentType = 'application/jso
     status === 204 ? null : typeof body === 'string' ? body : JSON.stringify(body),
     { status, headers }
   );
-  global.fetch = jest.fn().mockResolvedValue(response);
+  jest.spyOn(global, 'fetch').mockResolvedValue(response);
 }
 
+beforeEach(() => jest.clearAllMocks());
 afterEach(() => jest.restoreAllMocks());
 
 describe('HttpError', () => {
@@ -71,10 +72,9 @@ describe('http.get', () => {
   it('appends query params to URL', async () => {
     mockFetch(200, {});
     await http.get(SAFE_URL, { params: { page: 1, limit: 10 } });
-    expect(fetch).toHaveBeenCalledWith(
-      expect.stringContaining('page=1'),
-      expect.anything()
-    );
+    const calledUrl = (fetch as jest.Mock).mock.calls[0][0] as string;
+    expect(calledUrl).toContain('page=1');
+    expect(calledUrl).toContain('limit=10');
   });
 
   it('does not send body on GET', async () => {
