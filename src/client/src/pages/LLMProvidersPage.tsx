@@ -11,6 +11,7 @@ import { SkeletonTableLayout } from '../components/DaisyUI/Skeleton';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { ConfirmModal } from '../components/DaisyUI/Modal';
 import { useErrorToast } from '../components/DaisyUI/ToastNotification';
+import Tooltip from '../components/DaisyUI/Tooltip';
 import {
   Brain as BrainIcon,
   Plus as AddIcon,
@@ -259,11 +260,11 @@ const LLMProvidersPage: React.FC = () => {
   const renderLibraryCheck = (type: string) => {
     const status = libraryStatus[type];
     if (!status?.installed) return status ? (
-      <div className="tooltip tooltip-bottom" data-tip={`Missing: ${status.package}`}>
+      <Tooltip content={`Missing: ${status.package}`} position="bottom">
         <Badge variant="error" size="small" className="gap-1 cursor-help">
           <XIcon className="w-3 h-3" /> Lib Missing
         </Badge>
-      </div>
+      </Tooltip>
     ) : null;
     return null;
   };

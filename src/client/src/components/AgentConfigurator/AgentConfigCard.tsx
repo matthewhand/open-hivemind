@@ -4,6 +4,8 @@ import type { FieldMetadata } from '../../services/api';
 import type { ProviderInfo } from '../../services/providerService';
 import Divider from '../DaisyUI/Divider';
 import Toggle from '../DaisyUI/Toggle';
+import { LoadingSpinner } from '../DaisyUI/Loading';
+import { Badge } from '../DaisyUI/Badge';
 
 const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
   bot,
@@ -54,7 +56,7 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
               {uiState?.messageProvider || 'No message provider selected'} · {uiState?.llmProvider || 'No LLM selected'}
             </p>
           </div>
-          {pending && <span className="loading loading-spinner loading-md" aria-hidden="true"></span>}
+          {pending && <LoadingSpinner size="md" />}
         </div>
 
         {/* Provider Configuration Section */}
@@ -317,10 +319,10 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
             Connection: {connection.label}
           </span>
           {typeof status?.messageCount === 'number' && (
-            <div className="badge badge-outline">Messages: {status.messageCount}</div>
+            <Badge style="outline">Messages: {status.messageCount}</Badge>
           )}
           {typeof status?.errorCount === 'number' && status.errorCount > 0 && (
-            <div className="badge badge-error">Errors: {status.errorCount}</div>
+            <Badge variant="error">Errors: {status.errorCount}</Badge>
           )}
         </div>
       </div>

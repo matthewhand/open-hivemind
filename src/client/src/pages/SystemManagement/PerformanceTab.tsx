@@ -5,6 +5,7 @@ import { useErrorToast } from '../../components/DaisyUI/ToastNotification';
 import DataTable from '../../components/DaisyUI/DataTable';
 import Divider from '../../components/DaisyUI/Divider';
 import { Stat, Stats } from '../../components/DaisyUI/Stat';
+import { LoadingSpinner } from '../../components/DaisyUI/Loading';
 
 interface PerformanceTabProps {
   onClearCache: () => void;
@@ -84,7 +85,7 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ onClearCache }) => {
           onClick={fetchPerformanceData}
           disabled={isPerformanceLoading}
         >
-          {isPerformanceLoading ? <span className="loading loading-spinner loading-xs" aria-hidden="true"></span> : '🔄 Refresh'}
+          {isPerformanceLoading ? <LoadingSpinner size="xs" /> : '🔄 Refresh'}
         </button>
       </div>
 

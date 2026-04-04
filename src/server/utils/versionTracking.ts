@@ -1,7 +1,10 @@
-import { execSync } from 'child_process';
+import { exec } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+import { promisify } from 'util';
 import Debug from 'debug';
+
+const execAsync = promisify(exec);
 
 const debug = Debug('app:version-tracking');
 
@@ -78,28 +81,41 @@ export async function fetchLatestVersionFromGit(
 ): Promise<string | undefined> {
   try {
     // If we have a local plugin path, fetch from remote
-    if (pluginPath && fs.existsSync(path.join(pluginPath, '.git'))) {
+    if (pluginPath) {
+      let gitExists = false;
       try {
-        execSync('git fetch --tags --quiet', { cwd: pluginPath, stdio: 'pipe' });
+        // ⚡ Bolt Optimization: Replaced synchronous fs.existsSync with async fs.promises.access to prevent event loop blocking.
+        await fs.promises.access(path.join(pluginPath, '.git'));
+        gitExists = true;
+      } catch (e) {
+        // .git does not exist or is not accessible
+      }
 
-        // Try to get the latest tag
-        const tags = execSync('git tag --sort=-v:refname', { cwd: pluginPath, encoding: 'utf-8' });
-        const latestTag = tags.trim().split('\n')[0];
-
-        if (latestTag) {
-          debug('Latest tag for %s: %s', pluginPath, latestTag);
-          return latestTag.replace(/^v/, '');
-        }
-
-        // Fall back to checking package.json on origin/main or origin/master
+      if (gitExists) {
         try {
+          // ⚡ Bolt Optimization: Converted from execSync to execAsync to prevent event loop blocking.
+          await execAsync('git fetch --tags --quiet', { cwd: pluginPath });
+
+          // Try to get the latest tag
+          const { stdout: tags } = await execAsync('git tag --sort=-v:refname', {
+            cwd: pluginPath,
+            encoding: 'utf-8',
+          });
+          const latestTag = tags.trim().split('\n')[0];
+
+          if (latestTag) {
+            debug('Latest tag for %s: %s', pluginPath, latestTag);
+            return latestTag.replace(/^v/, '');
+          }
+
+          // Fall back to checking package.json on origin/main or origin/master
           const branches = ['origin/main', 'origin/master'];
           for (const branch of branches) {
             try {
-              const pkgJson = execSync(`git show ${branch}:package.json`, {
+              // ⚡ Bolt Optimization: Converted from execSync to execAsync to prevent event loop blocking.
+              const { stdout: pkgJson } = await execAsync(`git show ${branch}:package.json`, {
                 cwd: pluginPath,
                 encoding: 'utf-8',
-                stdio: 'pipe',
               });
               const pkg = JSON.parse(pkgJson);
               if (pkg.version) {
@@ -111,10 +127,8 @@ export async function fetchLatestVersionFromGit(
             }
           }
         } catch (e) {
-          debug('Could not read package.json from remote: %s', e);
+          debug('Error fetching from git: %s', e);
         }
-      } catch (e) {
-        debug('Error fetching from git: %s', e);
       }
     }
 
@@ -138,12 +152,17 @@ export async function fetchChangelog(
   const changelog: VersionHistoryEntry[] = [];
 
   try {
-    if (!fs.existsSync(path.join(pluginPath, '.git'))) {
+    try {
+      // ⚡ Bolt Optimization: Replaced synchronous fs.existsSync with async fs.promises.access to prevent event loop blocking.
+      await fs.promises.access(path.join(pluginPath, '.git'));
+    } catch (e) {
+      // .git does not exist or is not accessible
       return changelog;
     }
 
     // Fetch latest changes
-    execSync('git fetch --quiet', { cwd: pluginPath, stdio: 'pipe' });
+    // ⚡ Bolt Optimization: Converted from execSync to execAsync to prevent event loop blocking.
+    await execAsync('git fetch --quiet', { cwd: pluginPath });
 
     // Get commits since current version tag (if it exists) or recent commits
     let gitCommand = 'git log --pretty=format:"%H|%ai|%an|%s" -n 10 origin/HEAD';
@@ -151,16 +170,15 @@ export async function fetchChangelog(
     try {
       // Try to find commits since current version
       const currentTag = `v${currentVersion}`;
-      execSync(`git rev-parse ${currentTag}`, { cwd: pluginPath, stdio: 'pipe' });
+      await execAsync(`git rev-parse ${currentTag}`, { cwd: pluginPath });
       gitCommand = `git log --pretty=format:"%H|%ai|%an|%s" ${currentTag}..origin/HEAD`;
     } catch {
       // Tag doesn't exist, fall back to recent commits
     }
 
-    const output = execSync(gitCommand, {
+    const { stdout: output } = await execAsync(gitCommand, {
       cwd: pluginPath,
       encoding: 'utf-8',
-      stdio: 'pipe',
     });
 
     const lines = output

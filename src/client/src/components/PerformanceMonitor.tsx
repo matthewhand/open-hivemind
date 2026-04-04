@@ -2,7 +2,7 @@
 import React from 'react';
 import { Alert } from './DaisyUI/Alert';
 import Card from './DaisyUI/Card';
-import { Loading } from './DaisyUI/Loading';
+import { Loading, LoadingSpinner } from './DaisyUI/Loading';
 import Button from './DaisyUI/Button';
 import { SkeletonGrid } from './DaisyUI/Skeleton';
 import { ArrowPathIcon } from '@heroicons/react/24/outline';
@@ -138,7 +138,7 @@ const PerformanceMonitor: React.FC = () => {
 
       {isFetching && (
         <div className="flex items-center gap-3 mt-6">
-          <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>
+          <LoadingSpinner size="sm" />
           <p className="text-sm text-base-content/70">
             Updating metrics...
           </p>

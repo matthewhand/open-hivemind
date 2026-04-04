@@ -5,6 +5,7 @@ import Dropdown from './DaisyUI/Dropdown';
 import Indicator from './DaisyUI/Indicator';
 import Badge from './DaisyUI/Badge';
 import { Cpu, ChevronDown, Check } from 'lucide-react';
+import { LoadingSpinner } from './DaisyUI/Loading';
 import type { BotData, LlmProviderOption } from '../pages/ChatPage';
 
 interface BotListItemProps {
@@ -64,7 +65,7 @@ export const BotListItem: React.FC<BotListItemProps> = ({
                 <>
                   <Cpu className="w-3 h-3" />
                   {swappingProvider === bot.id ? (
-                    <span className="loading loading-spinner loading-xs" aria-hidden="true" />
+                    <LoadingSpinner size="xs" />
                   ) : (
                     <>
                       <span className="truncate max-w-[80px]" title="Click to change LLM provider">{bot.llmProvider || 'Default'}</span>

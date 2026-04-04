@@ -1,46 +1,14 @@
-/** @jest-environment jsdom */
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { BrowserRouter } from 'react-router-dom';
+import TemplatesPage from '../../../../src/client/src/pages/TemplatesPage';
 import { apiService } from '../../../../src/client/src/services/api';
+import * as usePageLifecycleModule from '../../../../src/client/src/hooks/usePageLifecycle';
+import { ToastProvider } from '../../../../src/client/src/components/DaisyUI/ToastNotification';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 jest.mock('../../../../src/client/src/services/api');
-
-const mockSuccessToast = jest.fn();
-const mockErrorToast = jest.fn();
-
-jest.mock('../../../../src/client/src/components/DaisyUI/ToastNotification', () => ({
-  __esModule: true,
-  default: ({ children }: any) => children,
-  useToast: () => ({
-    addToast: jest.fn(),
-    removeToast: jest.fn(),
-    clearAll: jest.fn(),
-    toasts: [],
-  }),
-  useSuccessToast: () => mockSuccessToast,
-  useErrorToast: () => mockErrorToast,
-  useWarningToast: () => jest.fn(),
-  useInfoToast: () => jest.fn(),
-  ToastProvider: ({ children }: any) => children,
-  NotificationCenter: () => null,
-}));
-
-const mockRefetch = jest.fn().mockResolvedValue({ data: { data: { templates: [] } } });
-const mockUseQuery = jest.fn();
-
-jest.mock('@tanstack/react-query', () => ({
-  useQuery: (...args: any[]) => mockUseQuery(...args),
-  useQueryClient: () => ({ invalidateQueries: jest.fn() }),
-  QueryClient: jest.fn(),
-  QueryClientProvider: ({ children }: any) => children,
-}));
-
-jest.mock('../../../../src/client/src/services/ErrorService', () => ({
-  ErrorService: { report: jest.fn() },
-}));
-
 jest.mock('../../../../src/client/src/hooks/usePageLifecycle', () => ({
   usePageLifecycle: jest.fn(() => ({
     data: {},
@@ -49,13 +17,6 @@ jest.mock('../../../../src/client/src/hooks/usePageLifecycle', () => ({
     refetch: jest.fn(),
   })),
 }));
-
-// Need to lazily import the component AFTER all mocks are set up
-let TemplatesPage: any;
-
-beforeAll(async () => {
-  TemplatesPage = (await import('../../../../src/client/src/pages/TemplatesPage')).default;
-});
 
 const mockTemplates = [
   {
@@ -103,16 +64,36 @@ const mockTemplates = [
 ];
 
 const renderWithRouter = (component: React.ReactElement) => {
-  return render(<BrowserRouter>{component}</BrowserRouter>);
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <ToastProvider>{component}</ToastProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
+  );
 };
 
+/**
+ * @jest-environment jsdom
+ */
+
 describe('TemplatesPage', () => {
+  const mockUsePageLifecycle = usePageLifecycleModule.usePageLifecycle as jest.Mock;
+
   beforeEach(() => {
-    mockUseQuery.mockReturnValue({
+    mockUsePageLifecycle.mockReturnValue({
       data: { data: { templates: mockTemplates } },
-      isLoading: false,
+      loading: false,
       error: null,
-      refetch: mockRefetch,
+      refetch: jest.fn(),
     });
   });
 
@@ -197,13 +178,10 @@ describe('TemplatesPage', () => {
     renderWithRouter(<TemplatesPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Discord Basic Bot')).toBeInTheDocument();
+      expect(screen.getByText('discord')).toBeInTheDocument();
+      expect(screen.getByText('basic')).toBeInTheDocument();
+      expect(screen.getByText('slack')).toBeInTheDocument();
     });
-
-    // Tags are rendered inside badge spans alongside SVG icons
-    const tagBadges = document.querySelectorAll('.badge-ghost');
-    const tagTexts = Array.from(tagBadges).map((el) => el.textContent?.trim());
-    expect(tagTexts).toEqual(expect.arrayContaining(['discord', 'basic', 'slack']));
   });
 
   it('should display usage count', async () => {
@@ -227,6 +205,7 @@ describe('TemplatesPage', () => {
     fireEvent.click(previewButtons[0]);
 
     await waitFor(() => {
+      expect(screen.getByText('Template Preview')).toBeInTheDocument();
       expect(screen.getByText('Configuration')).toBeInTheDocument();
     });
   });
@@ -242,7 +221,7 @@ describe('TemplatesPage', () => {
     fireEvent.click(applyButtons[0]);
 
     await waitFor(() => {
-      expect(screen.getByText(/Creating a bot from template/)).toBeInTheDocument();
+      expect(screen.getByText('Creating a bot from template:')).toBeInTheDocument();
       expect(screen.getByPlaceholderText('Enter bot name')).toBeInTheDocument();
     });
   });
@@ -353,17 +332,17 @@ describe('TemplatesPage', () => {
   });
 
   it('should handle loading state', () => {
-    mockUseQuery.mockReturnValue({
+    mockUsePageLifecycle.mockReturnValue({
       data: null,
-      isLoading: true,
+      loading: true,
       error: null,
-      refetch: mockRefetch,
+      refetch: jest.fn(),
     });
 
-    renderWithRouter(<TemplatesPage />);
+    const { container } = renderWithRouter(<TemplatesPage />);
 
-    // Should show skeleton loader (DaisyUI uses 'skeleton' class)
-    expect(document.querySelector('.skeleton')).toBeInTheDocument();
+    // Should show skeleton loader
+    expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
   });
 
   it('should group templates by category', async () => {

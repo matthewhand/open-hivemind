@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { apiService } from '../services/api';
 import { useQuery } from '@tanstack/react-query';
 import ChatInterface, { ChatMessage } from '../components/DaisyUI/Chat';
@@ -12,6 +12,7 @@ import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotif
 import { useMediaQuery } from '../hooks/useBreakpoint';
 import Drawer from '../components/DaisyUI/Drawer';
 import { BotListItem } from '../components/BotListItem';
+import Tooltip from '../components/DaisyUI/Tooltip';
 
 // Define Bot type based on API response
 export interface BotData {
@@ -224,13 +225,15 @@ const ChatPage: React.FC = () => {
   };
 
   // Map ChatMessages to BotChatBubbles format for the sidebar preview
-  const bubbleMessages = messages.slice(-5).map(m => ({
-    id: m.id,
-    role: (m.sender?.type === 'bot' || m.sender?.type === 'system' ? (m.sender.type === 'system' ? 'system' as const : 'assistant' as const) : 'user' as const),
-    content: m.content,
-    timestamp: m.timestamp,
-    sender: m.sender?.name,
-  }));
+  const bubbleMessages = useMemo(() => {
+    return messages.slice(-5).map(m => ({
+      id: m.id,
+      role: (m.sender?.type === 'bot' || m.sender?.type === 'system' ? (m.sender.type === 'system' ? 'system' as const : 'assistant' as const) : 'user' as const),
+      content: m.content,
+      timestamp: m.timestamp,
+      sender: m.sender?.name,
+    }));
+  }, [messages]);
 
   const botListContent = (
     <>
@@ -277,7 +280,7 @@ const ChatPage: React.FC = () => {
     <div className="flex flex-col h-full bg-base-200">
       <div className="p-4 bg-base-100 border-b border-base-300 shadow-sm flex items-center gap-2">
         {!isDesktop && (
-          <div className="tooltip tooltip-right" data-tip={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}>
+          <Tooltip content={sidebarOpen ? 'Close sidebar' : 'Open sidebar'} position="right">
             <Button
               variant="ghost"
               size="sm"
@@ -288,7 +291,7 @@ const ChatPage: React.FC = () => {
             >
               {sidebarOpen ? <X className="w-5 h-5" /> : <LucideMenuIcon className="w-5 h-5" />}
             </Button>
-          </div>
+          </Tooltip>
         )}
         <PageHeader
           title="Live Chat Monitor"
@@ -296,11 +299,11 @@ const ChatPage: React.FC = () => {
           icon={MessageSquare}
           className="flex-1 mb-0 p-0 border-0 bg-transparent rounded-none"
           actions={
-            <div className="tooltip tooltip-left" data-tip="Refresh">
+            <Tooltip content="Refresh" position="left">
               <Button variant="ghost" size="md" onClick={handleRefresh} className="btn-circle" aria-label="Refresh">
                 <RefreshCw className={`w-5 h-5 ${loading || historyLoading ? 'animate-spin' : ''}`} />
               </Button>
-            </div>
+            </Tooltip>
           }
         />
       </div>

@@ -63,8 +63,10 @@ async function validatePageLoads(
       const body = page.locator('body');
       const bodyText = await body.innerText().catch(() => '');
 
-      if (bodyText.includes('Something went wrong') ||
-          bodyText.includes('Unexpected Application Error')) {
+      if (
+        bodyText.includes('Something went wrong') ||
+        bodyText.includes('Unexpected Application Error')
+      ) {
         throw new Error('React error boundary detected');
       }
 
@@ -93,7 +95,7 @@ test.describe('Smoke Test - Dashboard Pages', () => {
     await mockAllApiEndpoints(page);
 
     const results = await validatePageLoads(page, [DASHBOARD_PAGES[0]], errors);
-    const failures = results.filter(r => r.status === 'fail');
+    const failures = results.filter((r) => r.status === 'fail');
 
     expect(failures.length, `Dashboard page failed: ${failures[0]?.error}`).toBe(0);
     expect(errors.length).toBe(0);
@@ -104,7 +106,7 @@ test.describe('Smoke Test - Dashboard Pages', () => {
     await mockAllApiEndpoints(page);
 
     const results = await validatePageLoads(page, [DASHBOARD_PAGES[1]], errors);
-    const failures = results.filter(r => r.status === 'fail');
+    const failures = results.filter((r) => r.status === 'fail');
 
     expect(failures.length, `Admin overview failed: ${failures[0]?.error}`).toBe(0);
     expect(errors.length).toBe(0);

@@ -24,7 +24,7 @@ export function createRuleRoutes(): Router {
    * Get all validation rules
    */
   router.get(
-    '/rules',
+    '/api/validation/rules',
     asyncErrorHandler(async (req, res) => {
       try {
         const rules = validationService.getAllRules();
@@ -58,7 +58,7 @@ export function createRuleRoutes(): Router {
    * Get a specific validation rule
    */
   router.get(
-    '/rules/:ruleId',
+    '/api/validation/rules/:ruleId',
     param('ruleId').trim().notEmpty(),
     handleValidationErrors,
     asyncErrorHandler(async (req, res) => {
@@ -104,7 +104,7 @@ export function createRuleRoutes(): Router {
    * Create a new validation rule
    */
   router.post(
-    '/rules',
+    '/api/validation/rules',
     requireAdmin,
     validateRuleCreation,
     handleValidationErrors,
@@ -166,7 +166,7 @@ export function createRuleRoutes(): Router {
    * Delete a validation rule
    */
   router.delete(
-    '/rules/:ruleId',
+    '/api/validation/rules/:ruleId',
     requireAdmin,
     param('ruleId').trim().notEmpty(),
     handleValidationErrors,
@@ -213,7 +213,7 @@ export function createRuleRoutes(): Router {
    * Get all validation profiles
    */
   router.get(
-    '/profiles',
+    '/api/validation/profiles',
     asyncErrorHandler(async (req, res) => {
       try {
         const profiles = validationService.getAllProfiles();
@@ -247,7 +247,7 @@ export function createRuleRoutes(): Router {
    * Get a specific validation profile
    */
   router.get(
-    '/profiles/:profileId',
+    '/api/validation/profiles/:profileId',
     param('profileId').trim().notEmpty(),
     handleValidationErrors,
     asyncErrorHandler(async (req, res) => {
@@ -293,7 +293,7 @@ export function createRuleRoutes(): Router {
    * Create a new validation profile
    */
   router.post(
-    '/profiles',
+    '/api/validation/profiles',
     requireAdmin,
     validateProfileCreation,
     handleValidationErrors,
@@ -363,7 +363,7 @@ export function createRuleRoutes(): Router {
    * Delete a validation profile
    */
   router.delete(
-    '/profiles/:profileId',
+    '/api/validation/profiles/:profileId',
     requireAdmin,
     param('profileId').trim().notEmpty(),
     handleValidationErrors,

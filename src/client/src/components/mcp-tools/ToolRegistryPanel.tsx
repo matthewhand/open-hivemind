@@ -126,6 +126,7 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
                   onToggleFavorite(tool.id);
                 }}
                 title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
               >
                 {isFavorite ? (
                   <StarSolidIcon className="w-4 h-4 text-warning" />
@@ -167,6 +168,7 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
                 className="btn btn-sm btn-ghost btn-circle"
                 onClick={() => onToggleFavorite(tool.id)}
                 title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
               >
                 {isFavorite ? (
                   <StarSolidIcon className="w-5 h-5 text-warning" />

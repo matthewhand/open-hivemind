@@ -1,6 +1,7 @@
 import React from 'react';
 import Checkbox from '../../components/DaisyUI/Checkbox';
 import { Alert } from '../../components/DaisyUI/Alert';
+import Tooltip from '../../components/DaisyUI/Tooltip';
 import {
   AlertCircle,
   RefreshCw,
@@ -100,60 +101,65 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = ({
         <div className="card-actions justify-between mt-auto pt-4 border-t border-base-200">
           <div className="flex gap-1">
             {server.status === 'running' ? (
-              <button
-                className="btn btn-ghost btn-sm btn-circle text-error tooltip"
-                data-tip="Disconnect"
-                aria-label={`Disconnect ${server.name}`}
-                onClick={() => handleServerAction(server.id, 'stop')}
-              >
-                <Square className="w-5 h-5" />
-              </button>
+              <Tooltip content="Disconnect">
+                <button
+                  className="btn btn-ghost btn-sm btn-circle text-error"
+                  aria-label={`Disconnect ${server.name}`}
+                  onClick={() => handleServerAction(server.id, 'stop')}
+                >
+                  <Square className="w-5 h-5" />
+                </button>
+              </Tooltip>
             ) : (
-              <button
-                className="btn btn-ghost btn-sm btn-circle text-success tooltip"
-                data-tip={server.status === 'stopped' ? 'Connect' : 'Retry Connection'}
-                aria-label={
-                  server.status === 'stopped'
-                    ? `Connect ${server.name}`
-                    : `Retry Connection ${server.name}`
-                }
-                onClick={() => handleServerAction(server.id, 'start')}
-              >
-                {server.status === 'error' ? (
-                  <RefreshCw className="w-5 h-5" />
-                ) : (
-                  <Play className="w-5 h-5" />
-                )}
-              </button>
+              <Tooltip content={server.status === 'stopped' ? 'Connect' : 'Retry Connection'}>
+                <button
+                  className="btn btn-ghost btn-sm btn-circle text-success"
+                  aria-label={
+                    server.status === 'stopped'
+                      ? `Connect ${server.name}`
+                      : `Retry Connection ${server.name}`
+                  }
+                  onClick={() => handleServerAction(server.id, 'start')}
+                >
+                  {server.status === 'error' ? (
+                    <RefreshCw className="w-5 h-5" />
+                  ) : (
+                    <Play className="w-5 h-5" />
+                  )}
+                </button>
+              </Tooltip>
             )}
             {server.toolCount > 0 && (
-              <button
-                className="btn btn-ghost btn-sm btn-circle tooltip"
-                data-tip="View Tools"
-                aria-label={`View Tools for ${server.name}`}
-                onClick={() => handleViewTools(server)}
-              >
-                <Wrench className="w-5 h-5" />
-              </button>
+              <Tooltip content="View Tools">
+                <button
+                  className="btn btn-ghost btn-sm btn-circle"
+                  aria-label={`View Tools for ${server.name}`}
+                  onClick={() => handleViewTools(server)}
+                >
+                  <Wrench className="w-5 h-5" />
+                </button>
+              </Tooltip>
             )}
           </div>
           <div className="flex gap-1">
-            <button
-              className="btn btn-ghost btn-sm btn-circle tooltip"
-              data-tip="Edit Configuration"
-              aria-label={`Edit ${server.name}`}
-              onClick={() => handleEditServer(server)}
-            >
-              <Pencil className="w-4 h-4" />
-            </button>
-            <button
-              className="btn btn-ghost btn-sm btn-circle text-error tooltip hover:bg-error hover:text-error-content"
-              data-tip="Delete Server"
-              aria-label={`Delete ${server.name}`}
-              onClick={() => handleDeleteServer(server.id)}
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+            <Tooltip content="Edit Configuration">
+              <button
+                className="btn btn-ghost btn-sm btn-circle"
+                aria-label={`Edit ${server.name}`}
+                onClick={() => handleEditServer(server)}
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
+            </Tooltip>
+            <Tooltip content="Delete Server">
+              <button
+                className="btn btn-ghost btn-sm btn-circle text-error hover:bg-error hover:text-error-content"
+                aria-label={`Delete ${server.name}`}
+                onClick={() => handleDeleteServer(server.id)}
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </Tooltip>
           </div>
         </div>
       </div>

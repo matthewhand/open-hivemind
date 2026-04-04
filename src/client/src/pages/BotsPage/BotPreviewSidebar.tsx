@@ -7,6 +7,7 @@ import Button from '../../components/DaisyUI/Button';
 import Tabs from '../../components/DaisyUI/Tabs';
 import ConfigurationValidation from '../../components/ConfigurationValidation';
 import { Stat, Stats } from '../../components/DaisyUI/Stat';
+import Tooltip from '../../components/DaisyUI/Tooltip';
 
 interface BotPreviewSidebarProps {
   previewBot: BotConfig | null;
@@ -87,11 +88,11 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
               </div>
             </div>
           </div>
-          <div className="tooltip" data-tip="Close preview">
+          <Tooltip content="Close preview">
             <Button variant="ghost" size="sm" onClick={() => setPreviewBot(null)} className="btn-square" aria-label="Close preview">
               <X className="w-4 h-4" />
             </Button>
-          </div>
+          </Tooltip>
         </div>
 
         <div className="space-y-4">
@@ -270,7 +271,7 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
             >
               <Settings className="w-3 h-3 mr-2" /> Configuration
             </Button>
-            <div className="tooltip" data-tip="Export bot config">
+            <Tooltip content="Export bot config">
               <Button
                 variant="ghost"
                 size="sm"
@@ -280,8 +281,8 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
               >
                 <Download className="w-3 h-3" />
               </Button>
-            </div>
-            <div className="tooltip" data-tip={previewBot.status === 'active' ? 'Deactivate' : 'Activate'}>
+            </Tooltip>
+            <Tooltip content={previewBot.status === 'active' ? 'Deactivate' : 'Activate'}>
               <Button
                 variant={previewBot.status === 'active' ? 'ghost' : 'primary'}
                 size="sm"
@@ -291,7 +292,7 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
               >
                 {previewBot.status === 'active' ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
               </Button>
-            </div>
+            </Tooltip>
           </div>
         </div>
       </div>

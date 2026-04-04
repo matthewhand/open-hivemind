@@ -13,8 +13,10 @@ import { ConfirmModal } from '../components/DaisyUI/Modal';
 import ModalForm from '../components/DaisyUI/ModalForm';
 import { FormField } from '../components/DaisyUI/formTypes';
 import RangeSlider from '../components/DaisyUI/RangeSlider';
+import { Badge } from '../components/DaisyUI/Badge';
 import { GuardProfile } from '@shared/types/models/security';
 import { useToast } from '../components/DaisyUI/ToastNotification';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
 
 // Custom comma-separated input component
 const CommaSeparatedInput = ({
@@ -69,7 +71,7 @@ const CommaSeparatedInput = ({
     <div className="w-full">
       <div className="flex flex-wrap gap-2 mb-2">
         {value.map(val => (
-          <div key={val} className="badge badge-primary gap-1 p-3">
+          <Badge key={val} variant="primary" className="gap-1 p-3">
             {val}
             {!disabled && (
               <button
@@ -80,7 +82,7 @@ const CommaSeparatedInput = ({
                 ✕
               </button>
             )}
-          </div>
+          </Badge>
         ))}
       </div>
       <Input
@@ -424,7 +426,7 @@ const GuardsPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[50vh]">
-        <span className="loading loading-spinner loading-lg text-primary"></span>
+        <LoadingSpinner size="lg" color="primary" />
       </div>
     );
   }
