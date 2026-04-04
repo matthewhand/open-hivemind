@@ -16,6 +16,7 @@ import Accordion from '../DaisyUI/Accordion';
 import { apiService } from '../../services/api';
 import { useSavedStamp } from '../../contexts/SavedStampContext';
 import Textarea from '../DaisyUI/Textarea';
+import SimpleTable from '../DaisyUI/SimpleTable';
 
 const messagingSettingsSchema = z.object({
   onlyWhenSpokenTo: z.boolean(),
@@ -477,7 +478,7 @@ const SettingsMessaging: React.FC = () => {
           title: 'Environment Variables Reference',
           content: (
             <div className="overflow-x-auto">
-              <table className="table table-xs">
+              <SimpleTable size="xs">
                 <thead>
                   <tr>
                     <th>Setting</th>
@@ -496,7 +497,7 @@ const SettingsMessaging: React.FC = () => {
                   <tr><td>Semantic Relevance</td><td>MESSAGE_SEMANTIC_RELEVANCE_ENABLED</td><td>{semanticRelevanceEnabled ? '\u2705 true' : '\u2796 false'}</td></tr>
                   <tr><td>Semantic Relevance Bonus</td><td>MESSAGE_SEMANTIC_RELEVANCE_BONUS</td><td>{semanticRelevanceBonus}</td></tr>
                 </tbody>
-              </table>
+              </SimpleTable>
             </div>
           ),
         }]}

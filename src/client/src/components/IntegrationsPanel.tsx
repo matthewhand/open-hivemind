@@ -13,6 +13,7 @@ import Tooltip from './DaisyUI/Tooltip';
 import Textarea from './DaisyUI/Textarea';
 import Modal, { ConfirmModal } from './DaisyUI/Modal';
 import Badge from './DaisyUI/Badge';
+import Join from './DaisyUI/Join';
 import { useErrorToast } from './DaisyUI/ToastNotification';
 import {
   PuzzlePieceIcon,
@@ -282,7 +283,7 @@ const IntegrationsPanel: React.FC = () => {
           </Tooltip>
         </label>
         {(type === 'text' || type === 'number' || type === 'password') && (
-          <div className="join w-full">
+          <Join className="w-full">
             <Input
               type={type}
               value={value}
@@ -292,7 +293,7 @@ const IntegrationsPanel: React.FC = () => {
               placeholder={isReadOnly ? 'Protected Value' : ''}
             />
             {isLocked && <Button variant="primary" size="sm" disabled className="btn-square join-item" aria-label="Locked"><LockClosedIcon className="w-4 h-4" /></Button>}
-          </div>
+          </Join>
         )}
         {type === 'select' && (
           <Select
@@ -622,7 +623,7 @@ const IntegrationsPanel: React.FC = () => {
             </div>
             <div className="form-control">
               <label htmlFor="integration-instance-id" className="label"><span className="label-text">Instance ID</span></label>
-              <div className="join w-full">
+              <Join className="w-full">
                 <span className="btn btn-sm btn-static join-item bg-base-200 border-base-300 font-mono text-xs px-2">
                   {newIntegrationType ? `${newIntegrationType}-` : 'type-'}
                 </span>
@@ -633,7 +634,7 @@ const IntegrationsPanel: React.FC = () => {
                   placeholder="production"
                   className="join-item input-sm w-full"
                 />
-              </div>
+              </Join>
             </div>
           </div>
 

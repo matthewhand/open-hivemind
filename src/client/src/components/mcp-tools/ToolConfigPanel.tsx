@@ -4,6 +4,7 @@ import { CodeBracketIcon, ListBulletIcon } from '@heroicons/react/24/outline';
 import { Alert } from '../DaisyUI/Alert';
 import Toggle from '../DaisyUI/Toggle';
 import Input from '../DaisyUI/Input';
+import Join from '../DaisyUI/Join';
 
 interface ToolConfigPanelProps {
   tool: MCPTool;
@@ -105,7 +106,7 @@ const ToolConfigPanel: React.FC<ToolConfigPanelProps> = ({
           {tool.description}
         </p>
 
-        <div className="join">
+        <Join>
           <button
             className={`join-item btn btn-sm ${mode === 'form' ? 'btn-primary' : 'btn-ghost'}`}
             onClick={() => setMode('form')}
@@ -123,7 +124,7 @@ const ToolConfigPanel: React.FC<ToolConfigPanelProps> = ({
             <CodeBracketIcon className="w-4 h-4" />
           </button>
         </div>
-      </div>
+      </Join>
 
       <div className="form-control">
         <label className="label">

@@ -7,6 +7,7 @@ import { SkeletonPage } from '../../components/DaisyUI/Skeleton';
 import { useSuccessToast, useErrorToast, useInfoToast } from '../../components/DaisyUI/ToastNotification';
 import SearchFilterBar from '../../components/SearchFilterBar';
 import Tooltip from '../../components/DaisyUI/Tooltip';
+import Join from '../../components/DaisyUI/Join';
 import Card from '../../components/DaisyUI/Card';
 import { useIsBelowBreakpoint } from '../../hooks/useBreakpoint';
 import { useBulkSelection } from '../../hooks/useBulkSelection';
@@ -100,7 +101,7 @@ const PersonasPage: React.FC = () => {
             searchPlaceholder="Search personas by name or description..."
           >
             <div className="flex gap-2">
-              <div className="join">
+              <Join>
                 <Tooltip content="Filter by Category">
                   <Button variant="primary" size="sm" className="btn-square join-item pointer-events-none" aria-label="Filter by category" tabIndex={-1}>
                     <Filter className="w-4 h-4" aria-hidden="true" />
@@ -117,7 +118,7 @@ const PersonasPage: React.FC = () => {
                     </option>
                   ))}
                 </select>
-              </div>
+              </Join>
             </div>
           </SearchFilterBar>
 
