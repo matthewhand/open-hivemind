@@ -60,10 +60,7 @@ export async function generateChatCompletion(
       payload.systemPrompt = metadata.systemPrompt;
     }
 
-    if (!(await isSafeUrl(url))) {
-      throw new Error('OpenWebUI API URL is not safe to connect to.');
-    }
-
+    // SSRF protection is enforced by http.post() via isSafeUrl() internally
     const response = await http.post<{ text?: string } | string>(url, payload, { headers, timeout: 15000 });
 
     debug('Inference result:', response);
