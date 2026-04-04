@@ -1,6 +1,6 @@
 import { type Server as HttpServer } from 'http';
-import Debug from 'debug';
 import { Server as SocketIOServer } from 'socket.io';
+import Debug from 'debug';
 import { injectable, singleton } from 'tsyringe';
 
 const debug = Debug('app:WebSocketService:ConnectionManager');

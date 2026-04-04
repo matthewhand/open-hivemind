@@ -3,11 +3,11 @@ import { Router } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import type { AuthMiddlewareRequest } from '../../auth/types';
 import { DatabaseManager } from '../../database/DatabaseManager';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { AnomalyDetectionService } from '../../services/AnomalyDetectionService';
 import { HTTP_STATUS } from '../../types/constants';
 import { AnomalyResolveSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:webui:anomaly');
 const router = Router();

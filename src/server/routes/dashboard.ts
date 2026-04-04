@@ -5,7 +5,6 @@ import { ApiResponse } from '@src/server/utils/apiResponse';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import { createLogger } from '../../common/StructuredLogger';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { AnalyticsService } from '../../services/AnalyticsService';
 import { HTTP_STATUS } from '../../types/constants';
 import {
@@ -15,6 +14,7 @@ import {
 } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { ActivityLogger } from '../services/ActivityLogger';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 type AnnotatedEvent = MessageFlowEvent & { llmProvider: string };
 

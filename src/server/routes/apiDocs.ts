@@ -1,5 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
+import { HTTP_STATUS } from '../../types/constants';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { introspectRoutes } from '../utils/routeIntrospection';
 
@@ -15,18 +16,15 @@ const router = Router();
  *       200:
  *         description: Route catalog grouped by prefix
  */
-router.get(
-  '/',
-  asyncErrorHandler(async (req: Request, res: Response) => {
-    const app = req.app;
-    const groups = await introspectRoutes(app);
-    return res.json(
-      ApiResponse.success({
-        generatedAt: new Date().toISOString(),
-        groups,
-      })
-    );
-  })
-);
+router.get('/', asyncErrorHandler(async (req: Request, res: Response) => {
+  const app = req.app;
+  const groups = await introspectRoutes(app);
+  return res.json(
+    ApiResponse.success({
+      generatedAt: new Date().toISOString(),
+      groups,
+    })
+  );
+}));
 
 export default router;
