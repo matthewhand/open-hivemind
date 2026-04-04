@@ -3,6 +3,7 @@ import { MCPTool } from './types';
 import { CodeBracketIcon, ListBulletIcon } from '@heroicons/react/24/outline';
 import { Alert } from '../DaisyUI/Alert';
 import Toggle from '../DaisyUI/Toggle';
+import Input from '../DaisyUI/Input';
 
 interface ToolConfigPanelProps {
   tool: MCPTool;
@@ -77,18 +78,16 @@ const ToolConfigPanel: React.FC<ToolConfigPanelProps> = ({
                   aria-label={`Toggle ${key}`}
                 />
               ) : type === 'integer' || type === 'number' ? (
-                <input
+                <Input
                   type="number"
-                  className="input input-bordered w-full"
                   placeholder={`Enter ${key}...`}
                   value={formArgs[key] !== undefined && formArgs[key] !== null ? formArgs[key] : ''}
                   onChange={(e) => updateFormArg(key, e.target.value === '' ? undefined : Number(e.target.value))}
                   disabled={isRunning}
                 />
               ) : (
-                <input
+                <Input
                   type="text"
-                  className="input input-bordered w-full"
                   placeholder={`Enter ${key}...`}
                   value={formArgs[key] || ''}
                   onChange={(e) => updateFormArg(key, e.target.value)}

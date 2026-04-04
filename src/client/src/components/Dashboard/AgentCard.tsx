@@ -12,6 +12,7 @@ import { useProviders, type ProviderInfo } from '../../hooks/useProviders';
 import { usePersonas } from '../../hooks/usePersonas';
 import { CheckCircle, X, Trash2, Plus, Info } from 'lucide-react';
 import Toggle from '../DaisyUI/Toggle';
+import Textarea from '../DaisyUI/Textarea';
 
 interface AgentCardProps {
   agent: Agent;
@@ -237,8 +238,8 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
             <label className="label">
               <span className="label-text">System Instruction</span>
             </label>
-            <textarea
-              className="textarea textarea-bordered h-24"
+            <Textarea
+              className="h-24"
               value={systemInstruction}
               onChange={handleSystemInstructionChange}
               disabled={agent.envOverrides && agent.envOverrides['BOTS_' + agent.name.toUpperCase() + '_SYSTEM_INSTRUCTION']?.isOverridden}
@@ -338,8 +339,8 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
                     <label className="label">
                       <span className="label-text">Allowed User IDs (comma-separated)</span>
                     </label>
-                    <textarea
-                      className="textarea textarea-bordered h-16"
+                    <Textarea
+                      className="h-16"
                       value={mcpGuard.allowedUserIds?.join(', ') || ''}
                       onChange={(e) => handleMcpGuardChange('allowedUserIds', e.target.value.split(',').map(id => id.trim()))}
                     />

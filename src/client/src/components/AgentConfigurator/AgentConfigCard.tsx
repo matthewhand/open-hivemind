@@ -7,6 +7,8 @@ import Divider from '../DaisyUI/Divider';
 import Toggle from '../DaisyUI/Toggle';
 import { LoadingSpinner } from '../DaisyUI/Loading';
 import { Badge } from '../DaisyUI/Badge';
+import Input from '../DaisyUI/Input';
+import Select from '../DaisyUI/Select';
 
 const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
   bot,
@@ -260,8 +262,8 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
                   <label className="label">
                     <span className="label-text">Guard Type</span>
                   </label>
-                  <select
-                    className="select select-bordered"
+                  <Select
+                    className="select-bordered"
                     value={uiState.mcpGuard.type}
                     onChange={(e) => onGuardTypeChange(bot, e.target.value as GuardState['type'])}
                     disabled={metadata.mcpGuard?.locked || pending || guardrailProfileActive}
@@ -271,17 +273,16 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
                         {option.label}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
                 {uiState.mcpGuard.type === 'custom' && (
                   <div className="form-control">
                     <label className="label">
                       <span className="label-text">Allowed User IDs</span>
                     </label>
-                    <input
+                    <Input
                       type="text"
                       placeholder="user1, user2"
-                      className="input input-bordered"
                       value={guardInput}
                       onChange={(e) => onGuardUsersChange(bot, e.target.value)}
                       onBlur={() => onGuardUsersBlur(bot)}

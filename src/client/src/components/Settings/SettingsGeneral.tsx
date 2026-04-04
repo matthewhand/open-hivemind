@@ -14,6 +14,7 @@ import { Settings as SettingsIcon, ShieldCheck, Activity } from 'lucide-react';
 import Debug from 'debug';
 import { apiService } from '../../services/api';
 import { useSavedStamp } from '../../contexts/SavedStampContext';
+import Textarea from '../DaisyUI/Textarea';
 const debug = Debug('app:client:components:Settings:SettingsGeneral');
 
 const generalSettingsSchema = z.object({
@@ -242,8 +243,9 @@ const SettingsGeneral: React.FC = () => {
           </FormField>
 
           <FormField label="Description" error={errors.description}>
-            <textarea
-              className="textarea textarea-bordered textarea-sm w-full"
+            <Textarea
+              className="w-full"
+              size="sm"
               {...register('description')}
               placeholder="Brief description of this instance's purpose"
               rows={2}

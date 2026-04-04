@@ -12,6 +12,7 @@ import { Alert } from '../components/DaisyUI/Alert';
 import { useErrorToast } from '../components/DaisyUI/ToastNotification';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import Card from '../components/DaisyUI/Card';
+import Select from '../components/DaisyUI/Select';
 
 const AnalyticsDashboard: React.FC = () => {
   const { messageFlow, performanceMetrics } = useWebSocket();
@@ -121,8 +122,8 @@ const AnalyticsDashboard: React.FC = () => {
         gradient="secondary"
         actions={
           <div className="flex gap-4">
-            <select
-              className="select select-bordered"
+            <Select
+              className="select-bordered"
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
             >
@@ -130,7 +131,7 @@ const AnalyticsDashboard: React.FC = () => {
               <option value="24h">Last 24 Hours</option>
               <option value="7d">Last 7 Days</option>
               <option value="30d">Last 30 Days</option>
-            </select>
+            </Select>
             <Button
               variant="primary"
               onClick={fetchAnalyticsData}

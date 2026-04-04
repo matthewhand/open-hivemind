@@ -231,10 +231,9 @@ const MCPServerManager: React.FC = () => {
             <label className="label" htmlFor="mcp-server-name">
               <span className="label-text">Server Name</span>
             </label>
-            <input
+            <Input
               id="mcp-server-name"
               type="text"
-              className="input input-bordered"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
@@ -244,10 +243,9 @@ const MCPServerManager: React.FC = () => {
             <label className="label" htmlFor="mcp-server-url">
               <span className="label-text">Server URL</span>
             </label>
-            <input
+            <Input
               id="mcp-server-url"
               type="text"
-              className="input input-bordered"
               value={formData.serverUrl}
               onChange={(e) => setFormData({ ...formData, serverUrl: e.target.value })}
               required
@@ -260,10 +258,9 @@ const MCPServerManager: React.FC = () => {
             <label className="label" htmlFor="mcp-server-apikey">
               <span className="label-text">API Key (Optional)</span>
             </label>
-            <input
+            <Input
               id="mcp-server-apikey"
               type="password"
-              className="input input-bordered"
               value={formData.apiKey}
               onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
             />

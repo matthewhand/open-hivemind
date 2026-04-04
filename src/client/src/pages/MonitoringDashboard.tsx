@@ -5,6 +5,7 @@ import MetricChart from '../components/Monitoring/MetricChart';
 import AlertPanel from '../components/Monitoring/AlertPanel';
 import EventStream from '../components/Monitoring/EventStream';
 import PerformanceMonitor from '../components/PerformanceMonitor';
+import Select from '../components/DaisyUI/Select';
 import Debug from 'debug';
 const debug = Debug('app:client:pages:MonitoringDashboard');
 
@@ -90,8 +91,8 @@ const MonitoringDashboard: React.FC = () => {
             </p>
           </div>
           <div className="flex gap-4">
-            <select
-              className="select select-bordered"
+            <Select
+              className="select-bordered"
               value={refreshInterval}
               onChange={(e) => setRefreshInterval(Number(e.target.value))}
             >
@@ -99,7 +100,7 @@ const MonitoringDashboard: React.FC = () => {
               <option value={5000}>5s</option>
               <option value={10000}>10s</option>
               <option value={30000}>30s</option>
-            </select>
+            </Select>
           </div>
         </div>
       </div>

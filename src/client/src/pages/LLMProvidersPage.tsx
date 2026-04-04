@@ -44,6 +44,7 @@ import Checkbox from '../components/DaisyUI/Checkbox';
 import Toggle from '../components/DaisyUI/Toggle';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import { useSavedStamp } from '../contexts/SavedStampContext';
+import Select from '../components/DaisyUI/Select';
 
 type LlmModelType = 'chat' | 'embedding' | 'both';
 
@@ -374,8 +375,9 @@ const LLMProvidersPage: React.FC = () => {
               Profile used for all bot chat responses when per-use-case mode is off.
             </p>
             <div className="form-control w-full">
-              <select
-                className="select select-bordered select-sm w-full"
+              <Select
+                className="select-bordered"
+                size="sm"
                 value={defaultChatbotProfile}
                 onChange={async (e) => {
                   setDefaultChatbotProfile(e.target.value);
@@ -387,7 +389,7 @@ const LLMProvidersPage: React.FC = () => {
                 {chatProfiles.map((p) => (
                   <option key={p?.key} value={p?.key}>{p?.name || 'Unnamed'} ({p?.provider || 'Unknown'})</option>
                 ))}
-              </select>
+              </Select>
             </div>
         </Card>
 
@@ -400,8 +402,9 @@ const LLMProvidersPage: React.FC = () => {
               Powers AI assistance features inside the WebUI (e.g. generating bot names).
             </p>
             <div className="form-control w-full">
-              <select
-                className="select select-bordered select-sm w-full"
+              <Select
+                className="select-bordered"
+                size="sm"
                 value={webuiIntelligenceProvider}
                 onChange={async (e) => {
                   setWebuiIntelligenceProvider(e.target.value);
@@ -413,7 +416,7 @@ const LLMProvidersPage: React.FC = () => {
                 {chatProfiles.map((p) => (
                   <option key={p?.key} value={p?.key}>{p?.name || 'Unnamed'} ({p?.provider || 'Unknown'})</option>
                 ))}
-              </select>
+              </Select>
             </div>
         </Card>
 
@@ -425,8 +428,9 @@ const LLMProvidersPage: React.FC = () => {
               Embedding-capable provider/profile used by memory and semantic search features when embeddings are needed.
             </p>
             <div className="form-control w-full">
-              <select
-                className="select select-bordered select-sm w-full"
+              <Select
+                className="select-bordered"
+                size="sm"
                 value={defaultEmbeddingProvider}
                 onChange={async (e) => {
                   setDefaultEmbeddingProvider(e.target.value);
@@ -438,7 +442,7 @@ const LLMProvidersPage: React.FC = () => {
                 {embeddingProfiles.map((p) => (
                   <option key={p?.key} value={p?.key}>{p?.name || 'Unnamed'} ({p?.provider || 'Unknown'})</option>
                 ))}
-              </select>
+              </Select>
             </div>
         </Card>
       </div>
@@ -478,8 +482,9 @@ const LLMProvidersPage: React.FC = () => {
             {(['semantic', 'summary', 'followup', 'idle'] as const).map((task) => (
               <div key={task} className="flex items-center gap-3">
                 <label className="w-28 text-sm capitalize">{task}</label>
-                <select
-                  className="select select-bordered select-sm flex-1"
+                <Select
+                  className="select-bordered flex-1"
+                  size="sm"
                   value={taskProfiles[task] || ''}
                   onChange={async (e) => {
                     const updated = { ...taskProfiles, [task]: e.target.value || undefined };
@@ -492,7 +497,7 @@ const LLMProvidersPage: React.FC = () => {
                   {profiles.map((p: any) => (
                     <option key={p.key} value={p.key}>{p.name}</option>
                   ))}
-                </select>
+                </Select>
               </div>
             ))}
           </div>

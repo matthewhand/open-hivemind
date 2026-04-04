@@ -30,6 +30,7 @@ import {
 import PageHeader from '../components/DaisyUI/PageHeader';
 import { ConfirmModal } from '../components/DaisyUI/Modal';
 import { Alert } from '../components/DaisyUI/Alert';
+import Input from '../components/DaisyUI/Input';
 import { apiService } from '../services/api';
 
 // ---------------------------------------------------------------------------
@@ -276,10 +277,10 @@ const MarketplacePage: React.FC = () => {
         {/* Search */}
         <div className="flex-1 relative">
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/50" />
-          <input
+          <Input
             type="text"
             placeholder="Search packages..."
-            className="input input-bordered w-full pl-10"
+            className="pl-10"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -548,10 +549,9 @@ const MarketplacePage: React.FC = () => {
               <label className="label">
                 <span className="label-text">GitHub Repository URL</span>
               </label>
-              <input
+              <Input
                 type="text"
                 placeholder="https://github.com/user/provider-package"
-                className="input input-bordered w-full"
                 value={githubUrl}
                 onChange={(e) => setGithubUrl(e.target.value)}
               />
