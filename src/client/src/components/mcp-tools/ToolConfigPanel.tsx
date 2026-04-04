@@ -2,6 +2,7 @@ import React from 'react';
 import { MCPTool } from './types';
 import { CodeBracketIcon, ListBulletIcon } from '@heroicons/react/24/outline';
 import { Alert } from '../DaisyUI/Alert';
+import Mockup from '../DaisyUI/Mockup';
 import Toggle from '../DaisyUI/Toggle';
 import Input from '../DaisyUI/Input';
 
@@ -129,11 +130,7 @@ const ToolConfigPanel: React.FC<ToolConfigPanelProps> = ({
         <label className="label">
           <span className="label-text font-medium">Input Schema</span>
         </label>
-        <div className="mockup-code bg-base-300 text-xs p-0 min-h-0">
-          <pre className="p-4 overflow-x-auto">
-            <code>{JSON.stringify(tool.inputSchema, null, 2)}</code>
-          </pre>
-        </div>
+        <Mockup type="code" content={JSON.stringify(tool.inputSchema, null, 2)} className="bg-base-300 text-xs p-0 min-h-0" />
       </div>
 
       {tool.outputSchema && Object.keys(tool.outputSchema).length > 0 && (
@@ -141,11 +138,7 @@ const ToolConfigPanel: React.FC<ToolConfigPanelProps> = ({
           <label className="label">
             <span className="label-text font-medium">Output Schema</span>
           </label>
-          <div className="mockup-code bg-base-300 text-xs p-0 min-h-0">
-            <pre className="p-4 overflow-x-auto">
-              <code>{JSON.stringify(tool.outputSchema, null, 2)}</code>
-            </pre>
-          </div>
+          <Mockup type="code" content={JSON.stringify(tool.outputSchema, null, 2)} className="bg-base-300 text-xs p-0 min-h-0" />
           <label className="label">
             <span className="label-text-alt text-base-content/60">
               Expected output format returned by this tool

@@ -16,6 +16,7 @@ import Toggle from '../components/DaisyUI/Toggle';
 import Divider from '../components/DaisyUI/Divider';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import Card from '../components/DaisyUI/Card';
+import Mockup from '../components/DaisyUI/Mockup';
 import Input from '../components/DaisyUI/Input';
 import Textarea from '../components/DaisyUI/Textarea';
 import Debug from 'debug';
@@ -252,11 +253,7 @@ const MCPToolsTestingPage: React.FC = () => {
           <h3 className="text-lg font-bold">Input Schema</h3>
         </div>
 
-        <div className="mockup-code bg-base-300 text-xs">
-          <pre className="px-4 py-3 overflow-x-auto">
-            <code>{JSON.stringify(selectedTool.inputSchema, null, 2)}</code>
-          </pre>
-        </div>
+        <Mockup type="code" content={JSON.stringify(selectedTool.inputSchema, null, 2)} className="bg-base-300 text-xs" />
       </div>
     );
   };
@@ -322,13 +319,7 @@ const MCPToolsTestingPage: React.FC = () => {
             <div className="label">
               <span className="label-text font-medium">Output</span>
             </div>
-            <div className="mockup-code bg-base-300 text-xs">
-              <pre className="px-4 py-3 overflow-x-auto">
-                <code className="language-json">
-                  {JSON.stringify(testResult.output, null, 2)}
-                </code>
-              </pre>
-            </div>
+            <Mockup type="code" content={JSON.stringify(testResult.output, null, 2)} className="bg-base-300 text-xs" />
           </div>
         )}
 

@@ -250,7 +250,7 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-2">
             <Activity className="w-6 h-6 text-primary" />
-            <h2 className="card-title text-xl">Infrastructure Health</h2>
+            <Card.Title className="text-xl">Infrastructure Health</Card.Title>
           </div>
           {lastRefresh && (
             <span className="text-sm text-base-content/70">

@@ -189,7 +189,7 @@ const BotCard: React.FC<BotCardProps> = ({
 
   return (
     <Card className="shadow-xl border border-base-300 hover:shadow-2xl transition-shadow duration-200">
-      <Card.Body className="card-body p-6">
+      <Card.Body className="p-6">
         {/* Header */}
         <div className="flex justify-between items-start mb-4">
           <div className="flex-1 min-w-0">
