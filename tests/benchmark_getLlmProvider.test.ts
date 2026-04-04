@@ -1,8 +1,52 @@
-import ProviderConfigManager from '@src/config/ProviderConfigManager';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
 
-// Mock dependencies
-jest.mock('@src/config/ProviderConfigManager');
+const mockGetAllProviders = jest.fn();
+const mockLoadPlugin = jest.fn();
+const mockInstantiateLlmProvider = jest.fn();
+
+jest.mock('@src/config/ProviderConfigManager', () => ({
+  __esModule: true,
+  default: {
+    getInstance: () => ({
+      getAllProviders: mockGetAllProviders,
+    }),
+  },
+}));
+
+jest.mock('@src/plugins/PluginLoader', () => ({
+  __esModule: true,
+  loadPlugin: (...args: any[]) => mockLoadPlugin(...args),
+  instantiateLlmProvider: (...args: any[]) => mockInstantiateLlmProvider(...args),
+}));
+
+jest.mock('@src/config/UserConfigStore', () => ({
+  UserConfigStore: {
+    getInstance: () => ({
+      getGeneralSettings: () => ({}),
+    }),
+  },
+}));
+
+jest.mock('@src/config/llmProfiles', () => ({
+  getLlmProfileByKey: jest.fn(() => null),
+}));
+
+jest.mock('@src/registries/SyncProviderRegistry', () => ({
+  SyncProviderRegistry: {
+    getInstance: () => ({
+      isInitialized: () => false,
+      getLlmProviders: () => [],
+    }),
+  },
+}));
+
+jest.mock('@config/llmConfig', () => ({
+  __esModule: true,
+  default: {
+    get: jest.fn(() => ''),
+  },
+}));
+
 jest.mock('@src/monitoring/MetricsCollector', () => ({
   MetricsCollector: {
     getInstance: () => ({
@@ -10,93 +54,76 @@ jest.mock('@src/monitoring/MetricsCollector', () => ({
     }),
   },
 }));
-jest.mock('@config/llmConfig', () => ({
-  get: jest.fn(),
-}));
 
-// Mock providers with some simulated overhead
-jest.mock(
-  '@hivemind/llm-openai',
-  () => ({
-    OpenAiProvider: class {
-      config: any;
-      constructor(config: any) {
-        this.config = config;
-        // Simulate initialization work
-        for (let i = 0; i < 10000; i++) {}
-      }
-      generateChatCompletion() {}
-      generateCompletion() {}
-    },
-  }),
-  { virtual: true }
-);
+describe('Benchmark getLlmProvider (async path)', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
 
-jest.mock(
-  '@integrations/flowise/flowiseProvider',
-  () => ({
-    FlowiseProvider: class {
-      config: any;
-      constructor(config: any) {
-        this.config = config;
-        // Simulate initialization work
-        for (let i = 0; i < 10000; i++) {}
-      }
-      generateChatCompletion() {}
-      generateCompletion() {}
-    },
-  }),
-  { virtual: true }
-);
-
-// Setup mock return value
-const mockGetAllProviders = jest.fn();
-(ProviderConfigManager.getInstance as jest.Mock).mockReturnValue({
-  getAllProviders: mockGetAllProviders,
-});
-
-describe('Benchmark getLlmProvider', () => {
-  afterEach(() => {
-    jest.restoreAllMocks();
+    mockLoadPlugin.mockImplementation((name: string) => ({ pluginName: name }));
+    mockInstantiateLlmProvider.mockImplementation((_mod: any, cfg: any) => ({
+      name: String(cfg?.providerName || 'provider'),
+      supportsChatCompletion: () => true,
+      supportsCompletion: () => true,
+      supportsHistory: () => true,
+      generateChatCompletion: jest.fn().mockResolvedValue('ok'),
+      generateCompletion: jest.fn().mockResolvedValue('ok'),
+    }));
   });
 
-  it('runs benchmark', async () => {
+  it('runs benchmark using configured providers with caching warmup', async () => {
     const configProviders = [
       {
         id: 'openai-1',
         type: 'openai',
         name: 'OpenAI Test',
         enabled: true,
-        config: { apiKey: 'sk-test', model: 'gpt-4' },
+        config: { apiKey: 'sk-test', model: 'gpt-4', providerName: 'openai' },
       },
       {
         id: 'flowise-1',
         type: 'flowise',
         name: 'Flowise Test',
         enabled: true,
-        config: { baseUrl: 'http://localhost:3000' },
+        config: { baseUrl: 'http://localhost:3000', providerName: 'flowise' },
       },
     ];
 
     mockGetAllProviders.mockReturnValue(configProviders);
 
-    console.log('Warming up...');
-    for (let i = 0; i < 100; i++) {
-      getLlmProvider();
+    // Warm cache
+    for (let i = 0; i < 5; i++) {
+      await getLlmProvider();
     }
 
-    console.log('Starting benchmark...');
     const start = process.hrtime();
-    const iterations = 10000;
-
+    const iterations = 100;
     for (let i = 0; i < iterations; i++) {
-      getLlmProvider();
+      const providers = await getLlmProvider();
+      expect(providers).toHaveLength(2);
     }
-
     const end = process.hrtime(start);
     const timeInMs = end[0] * 1000 + end[1] / 1e6;
 
-    console.log(`Total time for ${iterations} iterations: ${timeInMs.toFixed(2)}ms`);
-    console.log(`Average time per iteration: ${(timeInMs / iterations).toFixed(4)}ms`);
+    expect(timeInMs).toBeGreaterThanOrEqual(0);
+    // ensure provider instantiation happened only during initial warmup/caching windows
+    expect(mockInstantiateLlmProvider.mock.calls.length).toBeLessThanOrEqual(2);
+  });
+
+  it('benchmarks legacy fallback when no configured providers are enabled', async () => {
+    const llmCfg = require('@config/llmConfig').default;
+    llmCfg.get.mockReturnValue('openai,flowise');
+
+    mockGetAllProviders.mockReturnValue([]);
+
+    const start = process.hrtime();
+    for (let i = 0; i < 20; i++) {
+      const providers = await getLlmProvider();
+      expect(providers.length).toBeGreaterThan(0);
+    }
+    const end = process.hrtime(start);
+    const timeInMs = end[0] * 1000 + end[1] / 1e6;
+
+    expect(timeInMs).toBeGreaterThanOrEqual(0);
+    expect(mockLoadPlugin).toHaveBeenCalled();
   });
 });
