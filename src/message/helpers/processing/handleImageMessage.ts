@@ -1,5 +1,5 @@
-import axios from 'axios';
 import Debug from 'debug';
+import { http } from '../../../utils/httpClient';
 import { Logger } from '@common/logger';
 
 const debug = Debug('app:message:helpers:processing:handleImageMessage');
@@ -30,18 +30,18 @@ export async function createPrediction(imageUrl: string): Promise<any> {
       postData.webhook = process.env.REPLICATE_WEBHOOK_URL;
       postData.webhook_events_filter = ['start', 'completed'];
     }
-    const response = await axios.post('https://api.replicate.com/v1/predictions', postData, {
+    const data = await http.post<unknown>('https://api.replicate.com/v1/predictions', postData, {
       headers: {
         'Content-Type': 'application/json',
         Authorization: 'Token ' + process.env.REPLICATE_API_TOKEN,
       },
     });
-    return response.data;
-  } catch (error: any) {
+    return data;
+  } catch (error: unknown) {
     debug(
       'ERROR:',
       'Failed to create prediction:',
-      error.response ? error.response.data : error.message
+      error instanceof Error ? error.message : error
     );
     throw new Error('Failed to create prediction');
   }

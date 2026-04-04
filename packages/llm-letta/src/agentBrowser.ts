@@ -1,4 +1,5 @@
 import Letta from '@letta-ai/letta-client';
+import { isSafeUrl } from '@hivemind/shared-types';
 
 /**
  * Summary of a Letta agent returned by the agent browser functions.
@@ -20,6 +21,10 @@ export interface AgentSummary {
  */
 export async function listAgents(apiKey: string, apiUrl?: string): Promise<AgentSummary[]> {
   const baseURL = apiUrl || 'https://api.letta.com/v1';
+
+  if (!(await isSafeUrl(baseURL))) {
+    throw new Error('Letta API URL is not safe to connect to.');
+  }
 
   const client = new Letta({
     baseURL: baseURL,
@@ -54,6 +59,10 @@ export async function getAgent(
   apiUrl?: string
 ): Promise<AgentSummary> {
   const baseURL = apiUrl || 'https://api.letta.com/v1';
+
+  if (!(await isSafeUrl(baseURL))) {
+    throw new Error('Letta API URL is not safe to connect to.');
+  }
 
   const client = new Letta({
     baseURL: baseURL,

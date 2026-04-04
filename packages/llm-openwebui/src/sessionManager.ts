@@ -1,5 +1,5 @@
-import axios from 'axios';
 import Debug from 'debug';
+import { http } from '@hivemind/shared-types';
 import openWebUIConfig from './openWebUIConfig';
 
 const debug = Debug('app:sessionManager');
@@ -21,12 +21,8 @@ export async function getSessionKey(): Promise<string> {
   debug('Requesting new session key for:', username);
 
   try {
-    const response = await axios.post(
-      apiUrl + '/auth/login',
-      { username, password },
-      { timeout: 15000 }
-    );
-    sessionKey = response.data.sessionKey;
+    const data = await http.post<{ sessionKey: string }>(apiUrl + '/auth/login', { username, password }, { timeout: 15000 });
+    sessionKey = data.sessionKey;
 
     if (!sessionKey) {
       throw new Error('Failed to obtain a valid session key.');

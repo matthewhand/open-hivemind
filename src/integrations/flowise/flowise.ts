@@ -1,6 +1,5 @@
-import axios from 'axios';
 import Debug from 'debug';
-import { isSafeUrl } from '../../utils/ssrfGuard';
+import { http } from '../../utils/httpClient';
 
 const debug = Debug('app:flowiseCommand');
 
@@ -60,16 +59,11 @@ export class FlowiseCommand {
       const headers = { Authorization: 'Bearer ' + apiKey };
       debug('Request Headers:', headers);
 
-      // Make a GET request to the Flowise API
-      const response = await axios.get(url, { headers });
-      debug('Flowise API response status: ' + response.status);
-
-      // Return success response with data
-      return { success: true, message: 'Request successful', data: response.data };
-    } catch (error: any) {
-      // Handle and log any errors that occur during the API request
-      debug('Flowise API request failed: ' + error.message);
-      return { success: false, message: 'Flowise API request failed', error: error.message };
+      const data = await http.get<unknown>(url, { headers });
+      return { success: true, message: 'Request successful', data };
+    } catch (error: unknown) {
+      debug('Flowise API request failed: ' + (error instanceof Error ? error.message : error));
+      return { success: false, message: 'Flowise API request failed', error: error instanceof Error ? error.message : String(error) };
     }
   }
 }

@@ -1,19 +1,14 @@
-import axios from 'axios';
 import Debug from 'debug';
+import { http, isHttpError } from '@hivemind/shared-types';
 import type { IMessage } from '@src/message/interfaces/IMessage';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import openWebUIConfig from './openWebUIConfig';
 
 const debug = Debug('app:openWebUIProvider');
 
-// Create axios instance with API URL and headers
-const openWebUIClient = axios.create({
-  baseURL: openWebUIConfig.get('apiUrl'),
-  headers: {
-    'Content-Type': 'application/json',
-    Authorization: 'Bearer ollama', // Adjust as needed
-  },
-  timeout: 15000,
+const openWebUIClient = http.create(openWebUIConfig.get('apiUrl'), {
+  'Content-Type': 'application/json',
+  Authorization: 'Bearer ollama',
 });
 
 const model = openWebUIConfig.get('model');
@@ -38,12 +33,8 @@ export const openWebUIProvider: ILlmProvider = {
     ];
 
     try {
-      const response = await openWebUIClient.post('/chat/completions', {
-        model,
-        messages,
-      });
-
-      return response.data.choices[0].message.content;
+      const data = await openWebUIClient.post<{ choices: Array<{ message: { content: string } }> }>('/chat/completions', { model, messages });
+      return data.choices[0].message.content;
     } catch (error) {
       debug('Error generating chat completion:', formatError(error));
       throw new Error(`Chat completion failed: ${getErrorMessage(error)}`);
@@ -54,13 +45,8 @@ export const openWebUIProvider: ILlmProvider = {
     debug('Generating non-chat completion with OpenWebUI:', { prompt });
 
     try {
-      const response = await openWebUIClient.post('/completions', {
-        model,
-        prompt,
-        max_tokens: 100,
-      });
-
-      return response.data.choices[0].text;
+      const data = await openWebUIClient.post<{ choices: Array<{ text: string }> }>('/completions', { model, prompt, max_tokens: 100 });
+      return data.choices[0].text;
     } catch (error) {
       debug('Error generating non-chat completion:', formatError(error));
       throw new Error(`Non-chat completion failed: ${getErrorMessage(error)}`);
@@ -81,9 +67,9 @@ function getErrorMessage(error: unknown): string {
 /**
  * Formats the error for debugging purposes.
  */
-function formatError(error: unknown): any {
-  if (axios.isAxiosError(error)) {
-    return error.response?.data || error.message;
+function formatError(error: unknown): unknown {
+  if (isHttpError(error)) {
+    return error.data || error.message;
   }
   return getErrorMessage(error);
 }

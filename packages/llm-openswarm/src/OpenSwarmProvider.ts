@@ -1,5 +1,4 @@
-import axios from 'axios';
-import { isSafeUrl } from '@hivemind/shared-types';
+import { http, isHttpError } from '@hivemind/shared-types';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import { LLMResponse } from '@llm/interfaces/LLMResponse';
 import type { IMessage } from '@message/interfaces/IMessage';
@@ -35,29 +34,23 @@ export class OpenSwarmProvider implements ILlmProvider {
       const teamName = metadata?.team || metadata?.model || 'default-team';
       const targetUrl = `${this.baseUrl}/chat/completions`;
 
-      if (!(await isSafeUrl(targetUrl))) {
-        throw new Error('OpenSwarm API URL is not safe to connect to.');
-      }
-
-      const response = await axios.post(
+      const data = await http.post<{ choices: Array<{ message: { content: string } }> }>(
         targetUrl,
         {
           model: teamName,
           messages: [...historyMessages, { role: 'user', content: userMessage }],
         },
         {
-          headers: {
-            Authorization: `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
-          },
+          headers: { Authorization: `Bearer ${this.apiKey}` },
           timeout: 15000,
         }
       );
 
-      return response.data.choices[0]?.message?.content || 'No response';
-    } catch (error: any) {
-      logger.error('OpenSwarm API error', { error: error.message });
-      return `Error: ${error.message}`;
+      return data.choices[0]?.message?.content || 'No response';
+    } catch (error: unknown) {
+      const msg = isHttpError(error) ? error.message : (error instanceof Error ? error.message : String(error));
+      logger.error('OpenSwarm API error', { error: msg });
+      return `Error: ${msg}`;
     }
   }
 

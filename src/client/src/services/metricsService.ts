@@ -1,5 +1,3 @@
-import axios from 'axios';
-
 export interface Metrics {
   timestamp: string;
   system: {
@@ -21,6 +19,7 @@ export interface Metrics {
 }
 
 export const getMetrics = async (): Promise<Metrics> => {
-  const response = await axios.get('/health/metrics');
-  return response.data;
+  const res = await fetch('/health/metrics');
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
 };

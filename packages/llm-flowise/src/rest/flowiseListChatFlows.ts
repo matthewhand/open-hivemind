@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { http } from '@hivemind/shared-types';
 import flowiseConfig from '@integrations/flowise/flowiseConfig';
 
 /**
@@ -9,9 +9,9 @@ export const flowiseListChatFlows = async (): Promise<string> => {
   const baseURL = flowiseConfig.get('FLOWISE_API_ENDPOINT');
   const apiKey = flowiseConfig.get('FLOWISE_API_KEY');
 
-  const response = await axios.get(`${baseURL}/chatflows`, {
+  const data = await http.get<Array<{ id: string; name: string }>>(`${baseURL}/chatflows`, {
     headers: { Authorization: `Bearer ${apiKey}` },
   });
 
-  return response.data.map((flow: any) => `${flow.id}: ${flow.name}`).join('\n');
+  return data.map((flow) => `${flow.id}: ${flow.name}`).join('\n');
 };

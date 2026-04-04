@@ -1,6 +1,5 @@
-import axios from 'axios';
 import Debug from 'debug';
-import { isSafeUrl } from '@hivemind/shared-types';
+import { http } from '@hivemind/shared-types';
 import type { IMessage } from '@message/interfaces/IMessage';
 import openWebUIConfig from './openWebUIConfig';
 import { getSessionKey } from './sessionManager';
@@ -65,12 +64,11 @@ export async function generateChatCompletion(
       throw new Error('OpenWebUI API URL is not safe to connect to.');
     }
 
-    const response = await axios.post(url, payload, { headers, timeout: 15000 });
+    const response = await http.post<{ text?: string } | string>(url, payload, { headers, timeout: 15000 });
 
-    debug('Inference result:', response.data);
-    // Assume OpenWebUI returns a string or object with a text field; adjust as needed
+    debug('Inference result:', response);
     const responseText =
-      typeof response.data === 'string' ? response.data : response.data.text || 'No response';
+      typeof response === 'string' ? response : (response as any).text || 'No response';
     return { text: responseText };
   } catch (error) {
     debug('Inference request failed:', error);
