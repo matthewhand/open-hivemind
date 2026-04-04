@@ -302,6 +302,15 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
 
   if (configError) {
     return <Alert status="error" message="Failed to load configuration" />;
+    return (
+      <div
+        className="alert alert-error"
+        role="alert"
+        aria-live="assertive"
+      >
+        Failed to load configuration
+      </div>
+    );
   }
 
   function handleSelectionChange<K extends keyof BotUIState>(
@@ -566,6 +575,62 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
 
         {statusError && (
           <Alert status="warning" className="shadow-lg mb-4" message="Unable to load live status updates right now. Try refreshing in a moment." />
+          <div
+            className={`alert alert-${feedback.type} shadow-lg mb-4`}
+            role="alert"
+            aria-live="assertive"
+            aria-describedby="feedback-message"
+          >
+            <div>
+              <span id="feedback-message">{feedback.message}</span>
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => setFeedback(null)}
+                aria-label="Close feedback"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
+
+        {providersError && (
+          <div
+            className="alert alert-warning shadow-lg mb-4"
+            role="alert"
+            aria-live="polite"
+            aria-describedby="providers-error"
+          >
+            <div>
+              <span id="providers-error">{providersError}</span>
+            </div>
+          </div>
+        )}
+
+        {mcpError && (
+          <div
+            className="alert alert-warning shadow-lg mb-4"
+            role="alert"
+            aria-live="polite"
+            aria-describedby="mcp-error"
+          >
+            <div>
+              <span id="mcp-error">{mcpError}</span>
+            </div>
+          </div>
+        )}
+
+        {statusError && (
+          <div
+            className="alert alert-warning shadow-lg mb-4"
+            role="alert"
+            aria-live="polite"
+            aria-describedby="status-error"
+          >
+            <div>
+              <span id="status-error">Unable to load live status updates right now. Try refreshing in a moment.</span>
+            </div>
+          </div>
         )}
 
         {bots.length === 0 ? (

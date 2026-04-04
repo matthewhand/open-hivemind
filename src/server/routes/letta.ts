@@ -21,6 +21,16 @@ async function validateLettaUrl(url: string): Promise<{ isValid: boolean; error?
     const parsedUrl = new URL(url);
     const hostname = parsedUrl.hostname.toLowerCase();
 
+    // 0. Validate environment variable values
+    const allowLocalEnv = process.env.LETTA_ALLOW_LOCAL;
+    if (allowLocalEnv !== undefined && !['true', 'false'].includes(allowLocalEnv.toLowerCase())) {
+      debug('[SECURITY ALERT] Invalid LETTA_ALLOW_LOCAL value:', allowLocalEnv);
+      return {
+        isValid: false,
+        error: 'LETTA_ALLOW_LOCAL must be "true" or "false"',
+      };
+    }
+
     // 1. Strict allowlist for Letta cloud (prevent subdomain bypass e.g. letta.com.attacker.com)
     const hostParts = hostname.split('.');
     const isLettaCloud =
@@ -31,6 +41,19 @@ async function validateLettaUrl(url: string): Promise<{ isValid: boolean; error?
     // 2. Allow local network if explicitly enabled
     const allowLocal =
       process.env.ALLOW_LOCAL_NETWORK_ACCESS === 'true' || process.env.LETTA_ALLOW_LOCAL === 'true';
+
+    // Security audit logging when SSRF bypass is active
+    if (allowLocal && !isLettaCloud) {
+      debug('[SECURITY AUDIT] LETTA_ALLOW_LOCAL is enabled, allowing non-cloud URL:', {
+        url,
+        hostname,
+        timestamp: new Date().toISOString(),
+        envVars: {
+          ALLOW_LOCAL_NETWORK_ACCESS: process.env.ALLOW_LOCAL_NETWORK_ACCESS,
+          LETTA_ALLOW_LOCAL: process.env.LETTA_ALLOW_LOCAL,
+        },
+      });
+    }
 
     if (!isLettaCloud && !allowLocal) {
       return {
