@@ -64,6 +64,10 @@
   "include": [
     "src/**/*",
     "packages/llm-openai/src/**/*",
+    "packages/llm-openswarm/src/**/*",
+    "packages/llm-flowise/src/**/*",
+    "packages/llm-openwebui/src/**/*",
+    "packages/llm-letta/src/**/*",
     "packages/message-discord/src/**/*",
     "packages/message-slack/src/**/*",
     "packages/message-mattermost/src/**/*"

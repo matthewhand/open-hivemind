@@ -353,7 +353,6 @@ const GuardsPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                    </div>
                   ),
                 },
                 {

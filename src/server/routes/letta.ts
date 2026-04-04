@@ -112,14 +112,9 @@ router.get(
         'https://api.letta.com/v1';
 
       if (!apiKey) {
-        return res
-          .status(HTTP_STATUS.BAD_REQUEST)
-          .json(
-            ErrorResponses.badRequest(
-              'Please provide Letta API key via x-letta-api-key header or apiKey query parameter',
-              { error: 'Missing API key' }
-            ).build()
-          );
+        // No API key configured — return empty results gracefully
+        debug('No Letta API key provided; returning empty result');
+        return res.json(ApiResponse.success([]));
       }
 
       const validation = await validateLettaUrl(apiUrl);
@@ -156,14 +151,9 @@ router.get(
         'https://api.letta.com/v1';
 
       if (!apiKey) {
-        return res
-          .status(HTTP_STATUS.BAD_REQUEST)
-          .json(
-            ErrorResponses.badRequest(
-              'Please provide Letta API key via x-letta-api-key header or apiKey query parameter',
-              { error: 'Missing API key' }
-            ).build()
-          );
+        // No API key configured — return empty results gracefully
+        debug('No Letta API key provided; returning empty result');
+        return res.json(ApiResponse.success([]));
       }
 
       const validation = await validateLettaUrl(apiUrl);

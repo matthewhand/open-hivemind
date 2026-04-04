@@ -68,6 +68,10 @@
     "@message": "dist/src/message",
     "@webhook": "dist/src/webhook",
     "@integrations": "dist/src/integrations",
+    "@integrations/openswarm": "dist/packages/llm-openswarm/src",
+    "@integrations/flowise": "dist/packages/llm-flowise/src",
+    "@integrations/openwebui": "dist/packages/llm-openwebui/src",
+    "@integrations/mattermost": "dist/packages/message-mattermost/src",
     "@types": "dist/src/types",
     "@client": "dist/src/client",
     "@server": "dist/src/server",
@@ -309,8 +313,7 @@
       "@modelcontextprotocol/sdk": "^1.25.2",
       "tar": "^7.5.11",
       "undici": "^6.24.0",
-      "fast-xml-parser": "^4.5.5",
-      "lodash": "^4.18.0"
+      "fast-xml-parser": "^4.5.5"
     }
   }
 }

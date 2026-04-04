@@ -25,7 +25,7 @@ export function createRealtimeRoutes(): Router {
    * Validate a configuration
    */
   router.post(
-    '/api/validation/validate',
+    '/validate',
     validateConfigurationValidation,
     handleValidationErrors,
     asyncErrorHandler(async (req, res) => {
@@ -55,7 +55,7 @@ export function createRealtimeRoutes(): Router {
    * Validate configuration data directly
    */
   router.post(
-    '/api/validation/validate-data',
+    '/validate-data',
     validateConfigurationData,
     handleValidationErrors,
     asyncErrorHandler(async (req, res) => {
@@ -96,7 +96,7 @@ export function createRealtimeRoutes(): Router {
    * Subscribe to real-time validation for a configuration
    */
   router.post(
-    '/api/validation/subscribe',
+    '/subscribe',
     validateSubscription,
     handleValidationErrors,
     asyncErrorHandler(async (req, res) => {
@@ -137,7 +137,7 @@ export function createRealtimeRoutes(): Router {
    * Unsubscribe from real-time validation
    */
   router.delete(
-    '/api/validation/unsubscribe/:configId/:clientId',
+    '/unsubscribe/:configId/:clientId',
     param('configId').isInt({ min: 1 }).withMessage('Configuration ID must be a positive integer'),
     param('clientId').trim().notEmpty().withMessage('Client ID is required'),
     handleValidationErrors,
@@ -186,7 +186,7 @@ export function createRealtimeRoutes(): Router {
    * Get validation history
    */
   router.get(
-    '/api/validation/history',
+    '/history',
     query('configId')
       .optional()
       .isInt({ min: 1 })
@@ -235,7 +235,7 @@ export function createRealtimeRoutes(): Router {
    * Get validation statistics
    */
   router.get(
-    '/api/validation/statistics',
+    '/statistics',
     asyncErrorHandler(async (req, res) => {
       try {
         const statistics = validationService.getValidationStatistics();
