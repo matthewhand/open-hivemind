@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Alert } from '../DaisyUI/Alert';
 import { Badge } from '../DaisyUI/Badge';
+import Card from '../DaisyUI/Card';
 import Button from '../DaisyUI/Button';
 import Divider from '../DaisyUI/Divider';
 import { SkeletonList } from '../DaisyUI/Skeleton';
@@ -167,7 +168,7 @@ const SettingsSecurity: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Authentication */}
-          <div className="card bg-base-200/50 p-4">
+          <Card className="bg-base-200/50 p-4">
             <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
               <span className="w-2 h-2 bg-primary rounded-full"></span>
               Authentication
@@ -222,10 +223,10 @@ const SettingsSecurity: React.FC = () => {
                 </label>
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* Rate Limiting */}
-          <div className="card bg-base-200/50 p-4">
+          <Card className="bg-base-200/50 p-4">
             <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
               <span className="w-2 h-2 bg-warning rounded-full"></span>
               Rate Limiting
@@ -273,10 +274,10 @@ const SettingsSecurity: React.FC = () => {
                 </FormField>
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* CORS */}
-          <div className="card bg-base-200/50 p-4 lg:col-span-2">
+          <Card className="bg-base-200/50 p-4 lg:col-span-2">
             <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
               <span className="w-2 h-2 bg-accent rounded-full"></span>
               CORS Configuration
@@ -324,10 +325,10 @@ const SettingsSecurity: React.FC = () => {
                 <span className="text-base-content/50 text-sm italic">No origins configured</span>
               )}
             </div>
-          </div>
+          </Card>
 
           {/* Security Features */}
-          <div className="card bg-base-200/50 p-4 lg:col-span-2">
+          <Card className="bg-base-200/50 p-4 lg:col-span-2">
             <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
               <span className="w-2 h-2 bg-success rounded-full"></span>
               Security Features
@@ -385,7 +386,7 @@ const SettingsSecurity: React.FC = () => {
                 </label>
               </div>
             </div>
-          </div>
+          </Card>
         </div>
 
         <div className="flex justify-end pt-4">
