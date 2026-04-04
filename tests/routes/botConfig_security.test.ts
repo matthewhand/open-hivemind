@@ -28,7 +28,9 @@ jest.mock('../../src/config/BotConfigurationManager');
 // Mock SecureConfigManager
 jest.mock('../../src/config/SecureConfigManager', () => ({
   SecureConfigManager: {
-    getInstance: jest.fn().mockReturnValue({}),
+    getInstanceSync: jest.fn().mockReturnValue({
+      storeConfig: jest.fn(),
+    }),
   },
 }));
 
