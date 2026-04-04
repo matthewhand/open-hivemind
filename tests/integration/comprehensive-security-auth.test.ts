@@ -1,9 +1,20 @@
 /**
- * COMPREHENSIVE SECURITY & AUTHENTICATION TESTS - PHASE 4
+ * ⚠️ DEPRECATED - Inline Mock Anti-Pattern
  *
- * Complete test coverage for authentication, authorization, CORS, rate limiting,
- * input validation, XSS protection, and all security mechanisms
+ * This test file uses an inline Express app mock (1,199 lines) which defeats the purpose
+ * of integration testing. The mock reimplements the application's routing logic in test code,
+ * creating a false sense of coverage. Real route changes are not detected.
  *
+ * TODO: Refactor into separate test files:
+ * - auth-login.test.ts (test real /webui/api/auth/* routes)
+ * - auth-cors.test.ts (test real CORS middleware)
+ * - auth-rate-limiting.test.ts (test real rate limiter)
+ * - auth-xss-protection.test.ts (test real XSS protection)
+ * - auth-sql-injection.test.ts (test real SQL injection prevention)
+ *
+ * Each file should import the real Express app from '../../src/index'
+ *
+ * @deprecated Will be refactored to use real routes
  * @file comprehensive-security-auth.test.ts
  * @author Open-Hivemind TDD Test Suite
  * @since 2025-09-27

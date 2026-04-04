@@ -1,6 +1,7 @@
 import { MattermostService } from '@hivemind/message-mattermost';
 import mattermostConfig, { type MattermostConfig } from '../config/mattermostConfig';
 import { type IMessageProvider } from '../types/IProvider';
+import { isSafeUrl } from '../utils/ssrfGuard';
 import { ReconnectionManager } from './ReconnectionManager';
 
 export class MattermostProvider implements IMessageProvider<MattermostConfig> {
@@ -211,7 +212,12 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
               try {
                 if (!inst.serverUrl || !inst.token) return false;
 
-                const response = await fetch(`${inst.serverUrl}/api/v4/users/me`, {
+                const targetUrl = `${inst.serverUrl}/api/v4/users/me`;
+                if (!(await isSafeUrl(targetUrl))) {
+                  return false;
+                }
+
+                const response = await fetch(targetUrl, {
                   method: 'GET',
                   headers: {
                     Authorization: `Bearer ${inst.token}`,
@@ -287,7 +293,17 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
           try {
             // Use Mattermost API to test the connection
             const startTime = Date.now();
-            const response = await fetch(`${serverUrl}/api/v4/users/me`, {
+
+            const targetUrl = `${serverUrl}/api/v4/users/me`;
+            if (!(await isSafeUrl(targetUrl))) {
+              return {
+                name,
+                connected: false,
+                error: 'Unsafe server URL',
+              };
+            }
+
+            const response = await fetch(targetUrl, {
               method: 'GET',
               headers: {
                 Authorization: `Bearer ${token}`,
