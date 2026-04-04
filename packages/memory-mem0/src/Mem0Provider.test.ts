@@ -3,20 +3,21 @@ import { Mem0ApiError } from './types';
 
 const BASE_CONFIG = { apiKey: 'test-key', baseUrl: 'https://api.mem0.ai/v1', maxRetries: 0 };
 
+beforeEach(() => jest.clearAllMocks());
+afterEach(() => jest.restoreAllMocks());
+
 function mockFetch(status: number, body: unknown) {
-  const response = new Response(
-    status === 204 ? null : JSON.stringify(body),
-    {
-      status,
-      headers: { 'content-type': 'application/json' },
-    }
+  return jest.spyOn(global, 'fetch').mockResolvedValue(
+    new Response(
+      status === 204 ? null : JSON.stringify(body),
+      { status, headers: { 'content-type': 'application/json' } }
+    )
   );
-  jest.spyOn(global, 'fetch').mockResolvedValue(response);
 }
 
 function mockFetchSequence(...responses: Array<{ status: number; body: unknown }>) {
   const mock = jest.spyOn(global, 'fetch');
-  responses.forEach(({ status, body }, i) => {
+  responses.forEach(({ status, body }) => {
     mock.mockResolvedValueOnce(
       new Response(status === 204 ? null : JSON.stringify(body), {
         status,
@@ -24,6 +25,7 @@ function mockFetchSequence(...responses: Array<{ status: number; body: unknown }
       })
     );
   });
+  return mock;
 }
 
 beforeEach(() => jest.clearAllMocks());

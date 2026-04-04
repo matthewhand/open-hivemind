@@ -9,7 +9,7 @@ const BASE_CONFIG = {
 };
 
 function mockFetch(status: number, body: unknown) {
-  jest.spyOn(global, 'fetch').mockResolvedValue(
+  return jest.spyOn(global, 'fetch').mockResolvedValue(
     new Response(status === 204 ? null : JSON.stringify(body), {
       status,
       headers: { 'content-type': 'application/json' },
@@ -180,6 +180,16 @@ describe('retry behaviour', () => {
     expect(fetch).toHaveBeenCalledTimes(2);
   });
 
+  it('retries on 500 and succeeds', async () => {
+    mockFetchSequence(
+      { status: 500, body: 'server error' },
+      { status: 200, body: { results: [] } }
+    );
+    const p = new Mem4aiProvider({ ...BASE_CONFIG, maxRetries: 1 });
+    await expect(p.getMemories()).resolves.toEqual([]);
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
   it('throws after exhausting retries', async () => {
     mockFetchSequence(
       { status: 500, body: 'err' },
@@ -200,7 +210,7 @@ describe('retry behaviour', () => {
 describe('circuit breaker', () => {
   it('opens after failureThreshold consecutive failures', async () => {
     jest.spyOn(global, 'fetch').mockRejectedValue(new Error('network'));
-    const p = new Mem4aiProvider({ ...BASE_CONFIG, maxRetries: 0, circuitBreaker: { failureThreshold: 2, resetTimeoutMs: 60000 } });
+    const p = new Mem4aiProvider({ ...BASE_CONFIG, maxRetries: 0, circuitBreaker: { failureThreshold: 2, resetTimeoutMs: 60000, name: 'mem4ai-cb-test' } as any });
     await expect(p.getMemories()).rejects.toThrow();
     await expect(p.getMemories()).rejects.toThrow();
     await expect(p.getMemories()).rejects.toThrow(/Circuit breaker/);
