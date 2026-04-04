@@ -8,6 +8,16 @@ const execAsync = promisify(exec);
 
 const debug = Debug('app:version-tracking');
 
+const GIT_TIMEOUT_MS = 10_000;
+
+/** Allowlist sanitiser — rejects strings containing shell metacharacters. */
+function sanitizeGitArg(value: string, label: string): string {
+  if (!/^[a-zA-Z0-9._/\-]+$/.test(value)) {
+    throw new Error(`Invalid characters in ${label}: ${value}`);
+  }
+  return value;
+}
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -94,7 +104,7 @@ export async function fetchLatestVersionFromGit(
       if (gitExists) {
         try {
           // ⚡ Bolt Optimization: Converted from execSync to execAsync to prevent event loop blocking.
-          await execAsync('git fetch --tags --quiet', { cwd: pluginPath });
+          await execAsync('git fetch --tags --quiet', { cwd: pluginPath, timeout: GIT_TIMEOUT_MS });
 
           // Try to get the latest tag
           const { stdout: tags } = await execAsync('git tag --sort=-v:refname', {
@@ -112,8 +122,8 @@ export async function fetchLatestVersionFromGit(
           const branches = ['origin/main', 'origin/master'];
           for (const branch of branches) {
             try {
-              // ⚡ Bolt Optimization: Converted from execSync to execAsync to prevent event loop blocking.
-              const { stdout: pkgJson } = await execAsync(`git show ${branch}:package.json`, {
+              const safeBranch = sanitizeGitArg(branch, 'branch');
+              const { stdout: pkgJson } = await execAsync(`git show ${safeBranch}:package.json`, {
                 cwd: pluginPath,
                 encoding: 'utf-8',
               });
@@ -162,15 +172,15 @@ export async function fetchChangelog(
 
     // Fetch latest changes
     // ⚡ Bolt Optimization: Converted from execSync to execAsync to prevent event loop blocking.
-    await execAsync('git fetch --quiet', { cwd: pluginPath });
+    await execAsync('git fetch --quiet', { cwd: pluginPath, timeout: GIT_TIMEOUT_MS });
 
     // Get commits since current version tag (if it exists) or recent commits
     let gitCommand = 'git log --pretty=format:"%H|%ai|%an|%s" -n 10 origin/HEAD';
 
     try {
       // Try to find commits since current version
-      const currentTag = `v${currentVersion}`;
-      await execAsync(`git rev-parse ${currentTag}`, { cwd: pluginPath });
+      const currentTag = sanitizeGitArg(`v${currentVersion}`, 'version tag');
+      await execAsync(`git rev-parse ${currentTag}`, { cwd: pluginPath, timeout: GIT_TIMEOUT_MS });
       gitCommand = `git log --pretty=format:"%H|%ai|%an|%s" ${currentTag}..origin/HEAD`;
     } catch {
       // Tag doesn't exist, fall back to recent commits
