@@ -90,17 +90,25 @@ describe('Specs Routes', () => {
 
       const res = await request(app)
         .post('/specs')
-        .send({ ...sampleSpec, content: '# Test Spec\nSome content' });
+        .send({ content: '# Test Spec\nSome content', ...sampleSpec });
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
       expect(res.body.data.id).toBe('test-spec');
-      expect(res.body.message).toBe('Specification saved successfully');
+      expect(res.body.data.version).toBe('1.0.0');
       expect(mockWriteFile).toHaveBeenCalledTimes(2); // index + spec.md
     });
 
     it('should return 400 for invalid spec data', async () => {
-      const res = await request(app).post('/specs').send({ id: 'invalid id!', content: 'test' });
+      const res = await request(app).post('/specs').send({
+        content: 'test',
+        id: 'invalid id!',
+        topic: 'Testing',
+        tags: ['unit'],
+        author: 'tester',
+        timestamp: '2025-01-01T00:00:00.000Z',
+        version: '1.0.0',
+      });
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
     });
@@ -115,7 +123,7 @@ describe('Specs Routes', () => {
     it('should return 400 when content is empty string', async () => {
       const res = await request(app)
         .post('/specs')
-        .send({ ...sampleSpec, content: '   ' });
+        .send({ content: '   ', ...sampleSpec });
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
     });
@@ -125,13 +133,13 @@ describe('Specs Routes', () => {
       const res = await request(app)
         .post('/specs')
         .send({
+          content: 'test content',
           id: 'valid-id',
           topic: 'Test',
           tags: ['test'],
           author: 'tester',
           timestamp: '2025-01-01',
           version: '../../etc',
-          content: 'test content',
         });
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);

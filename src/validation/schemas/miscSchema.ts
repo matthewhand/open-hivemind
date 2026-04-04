@@ -46,6 +46,12 @@ export const ExportConfigSchema = z.object({
 
 export const SpecSchema = z.object({
   body: z.object({
+    id: z.string().min(1).optional(),
+    topic: z.string().optional(),
+    tags: z.array(z.string()).optional(),
+    author: z.string().optional(),
+    timestamp: z.string().optional(),
+    version: z.string().optional(),
     content: z.string(),
   }),
 });
