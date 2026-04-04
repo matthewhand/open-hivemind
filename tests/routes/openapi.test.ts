@@ -15,8 +15,9 @@ describe('OpenAPI route', () => {
 
     expect(response.status).toBe(200);
     expect(response.headers['content-type']).toMatch(/application\/json/);
-    expect(response.body.openapi).toBe('3.0.3');
-    expect(response.body.paths).toHaveProperty('/webui/api/config');
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.openapi).toBe('3.0.3');
+    expect(response.body.data.paths).toHaveProperty('/webui/api/config');
   });
 
   it('returns JSON spec at /api/openapi.json', async () => {
@@ -24,7 +25,8 @@ describe('OpenAPI route', () => {
 
     expect(response.status).toBe(200);
     expect(response.headers['content-type']).toMatch(/application\/json/);
-    expect(response.body.openapi).toBe('3.0.3');
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.openapi).toBe('3.0.3');
   });
 
   it('returns YAML when requested via query param', async () => {
