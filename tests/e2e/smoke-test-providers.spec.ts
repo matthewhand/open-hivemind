@@ -87,8 +87,10 @@ async function validatePageLoads(
       const body = page.locator('body');
       const bodyText = await body.innerText().catch(() => '');
 
-      if (bodyText.includes('Something went wrong') ||
-          bodyText.includes('Unexpected Application Error')) {
+      if (
+        bodyText.includes('Something went wrong') ||
+        bodyText.includes('Unexpected Application Error')
+      ) {
         throw new Error('React error boundary detected');
       }
 
@@ -117,7 +119,7 @@ test.describe('Smoke Test - Providers & Documentation Pages', () => {
     await mockAllApiEndpoints(page);
 
     const results = await validatePageLoads(page, [PROVIDER_PAGES[0]], errors);
-    const failures = results.filter(r => r.status === 'fail');
+    const failures = results.filter((r) => r.status === 'fail');
 
     expect(failures.length, `Providers overview failed: ${failures[0]?.error}`).toBe(0);
     expect(errors.length).toBe(0);
@@ -128,7 +130,7 @@ test.describe('Smoke Test - Providers & Documentation Pages', () => {
     await mockAllApiEndpoints(page);
 
     const results = await validatePageLoads(page, [PROVIDER_PAGES[1]], errors);
-    const failures = results.filter(r => r.status === 'fail');
+    const failures = results.filter((r) => r.status === 'fail');
 
     expect(failures.length, `Message providers failed: ${failures[0]?.error}`).toBe(0);
     expect(errors.length).toBe(0);
@@ -139,7 +141,7 @@ test.describe('Smoke Test - Providers & Documentation Pages', () => {
     await mockAllApiEndpoints(page);
 
     const results = await validatePageLoads(page, [PROVIDER_PAGES[2]], errors);
-    const failures = results.filter(r => r.status === 'fail');
+    const failures = results.filter((r) => r.status === 'fail');
 
     expect(failures.length, `LLM providers failed: ${failures[0]?.error}`).toBe(0);
     expect(errors.length).toBe(0);
@@ -150,7 +152,7 @@ test.describe('Smoke Test - Providers & Documentation Pages', () => {
     await mockAllApiEndpoints(page);
 
     const results = await validatePageLoads(page, [PROVIDER_PAGES[3]], errors);
-    const failures = results.filter(r => r.status === 'fail');
+    const failures = results.filter((r) => r.status === 'fail');
 
     expect(failures.length, `Memory providers failed: ${failures[0]?.error}`).toBe(0);
     expect(errors.length).toBe(0);
@@ -161,7 +163,7 @@ test.describe('Smoke Test - Providers & Documentation Pages', () => {
     await mockAllApiEndpoints(page);
 
     const results = await validatePageLoads(page, [PROVIDER_PAGES[4]], errors);
-    const failures = results.filter(r => r.status === 'fail');
+    const failures = results.filter((r) => r.status === 'fail');
 
     expect(failures.length, `Tool providers failed: ${failures[0]?.error}`).toBe(0);
     expect(errors.length).toBe(0);
@@ -172,7 +174,7 @@ test.describe('Smoke Test - Providers & Documentation Pages', () => {
     await mockAllApiEndpoints(page);
 
     const results = await validatePageLoads(page, [PROVIDER_PAGES[5]], errors);
-    const failures = results.filter(r => r.status === 'fail');
+    const failures = results.filter((r) => r.status === 'fail');
 
     expect(failures.length, `LLM integrations failed: ${failures[0]?.error}`).toBe(0);
     expect(errors.length).toBe(0);
@@ -183,7 +185,7 @@ test.describe('Smoke Test - Providers & Documentation Pages', () => {
     await mockAllApiEndpoints(page);
 
     const results = await validatePageLoads(page, [PROVIDER_PAGES[6]], errors);
-    const failures = results.filter(r => r.status === 'fail');
+    const failures = results.filter((r) => r.status === 'fail');
 
     expect(failures.length, `Message integrations failed: ${failures[0]?.error}`).toBe(0);
     expect(errors.length).toBe(0);
@@ -194,7 +196,7 @@ test.describe('Smoke Test - Providers & Documentation Pages', () => {
     await mockAllApiEndpoints(page);
 
     const results = await validatePageLoads(page, [PROVIDER_PAGES[7]], errors);
-    const failures = results.filter(r => r.status === 'fail');
+    const failures = results.filter((r) => r.status === 'fail');
 
     expect(failures.length, `Marketplace failed: ${failures[0]?.error}`).toBe(0);
     expect(errors.length).toBe(0);
@@ -205,7 +207,7 @@ test.describe('Smoke Test - Providers & Documentation Pages', () => {
     await mockAllApiEndpoints(page);
 
     const results = await validatePageLoads(page, [PROVIDER_PAGES[8]], errors);
-    const failures = results.filter(r => r.status === 'fail');
+    const failures = results.filter((r) => r.status === 'fail');
 
     expect(failures.length, `Webhooks failed: ${failures[0]?.error}`).toBe(0);
     expect(errors.length).toBe(0);
@@ -216,7 +218,7 @@ test.describe('Smoke Test - Providers & Documentation Pages', () => {
     await mockAllApiEndpoints(page);
 
     const results = await validatePageLoads(page, [PROVIDER_PAGES[9]], errors);
-    const failures = results.filter(r => r.status === 'fail');
+    const failures = results.filter((r) => r.status === 'fail');
 
     expect(failures.length, `Specs failed: ${failures[0]?.error}`).toBe(0);
     expect(errors.length).toBe(0);
@@ -227,7 +229,7 @@ test.describe('Smoke Test - Providers & Documentation Pages', () => {
     await mockAllApiEndpoints(page);
 
     const results = await validatePageLoads(page, [PROVIDER_PAGES[10]], errors);
-    const failures = results.filter(r => r.status === 'fail');
+    const failures = results.filter((r) => r.status === 'fail');
 
     expect(failures.length, `API docs failed: ${failures[0]?.error}`).toBe(0);
     expect(errors.length).toBe(0);
@@ -238,7 +240,7 @@ test.describe('Smoke Test - Providers & Documentation Pages', () => {
     await mockAllApiEndpoints(page);
 
     const results = await validatePageLoads(page, [PROVIDER_PAGES[11]], errors);
-    const failures = results.filter(r => r.status === 'fail');
+    const failures = results.filter((r) => r.status === 'fail');
 
     expect(failures.length, `Sitemap failed: ${failures[0]?.error}`).toBe(0);
     expect(errors.length).toBe(0);
@@ -249,7 +251,7 @@ test.describe('Smoke Test - Providers & Documentation Pages', () => {
     await mockAllApiEndpoints(page);
 
     const results = await validatePageLoads(page, [PROVIDER_PAGES[12]], errors);
-    const failures = results.filter(r => r.status === 'fail');
+    const failures = results.filter((r) => r.status === 'fail');
 
     expect(failures.length, `Static pages failed: ${failures[0]?.error}`).toBe(0);
     expect(errors.length).toBe(0);
@@ -260,7 +262,7 @@ test.describe('Smoke Test - Providers & Documentation Pages', () => {
     await mockAllApiEndpoints(page);
 
     const results = await validatePageLoads(page, [PROVIDER_PAGES[13]], errors);
-    const failures = results.filter(r => r.status === 'fail');
+    const failures = results.filter((r) => r.status === 'fail');
 
     expect(failures.length, `DaisyUI showcase failed: ${failures[0]?.error}`).toBe(0);
     expect(errors.length).toBe(0);

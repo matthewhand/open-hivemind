@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { navigateAndWaitReady, setupTestWithErrorDetection, setupAuth } from './test-utils';
+import { navigateAndWaitReady, setupAuth, setupTestWithErrorDetection } from './test-utils';
 
 test.describe('MCP Tools Testing Page - Complete Visual Regression Tests', () => {
   const mockServers = [

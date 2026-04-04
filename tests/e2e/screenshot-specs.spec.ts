@@ -24,17 +24,17 @@ test.describe('Specifications Screenshots', () => {
               topic: 'API Authentication Spec',
               tags: ['security', 'api', 'jwt'],
               author: 'Security Team',
-              timestamp: '2023-10-25T12:00:00Z'
+              timestamp: '2023-10-25T12:00:00Z',
             },
             {
               id: 'spec-002',
               topic: 'Bot Configuration Schema',
               tags: ['bots', 'schema', 'validation'],
               author: 'Core Engineering',
-              timestamp: '2023-10-26T14:30:00Z'
-            }
-          ]
-        }
+              timestamp: '2023-10-26T14:30:00Z',
+            },
+          ],
+        },
       })
     );
 
@@ -61,9 +61,10 @@ test.describe('Specifications Screenshots', () => {
             tags: ['security', 'api', 'jwt'],
             author: 'Security Team',
             timestamp: '2023-10-25T12:00:00Z',
-            content: '# API Authentication Spec\n\nThis specification defines the authentication mechanisms for the REST API including JWT and API keys.\n\n## Authentication Flow\n1. User provides credentials\n2. System issues JWT token\n3. Client passes token in Authorization header'
-          }
-        }
+            content:
+              '# API Authentication Spec\n\nThis specification defines the authentication mechanisms for the REST API including JWT and API keys.\n\n## Authentication Flow\n1. User provides credentials\n2. System issues JWT token\n3. Client passes token in Authorization header',
+          },
+        },
       })
     );
 
@@ -71,8 +72,12 @@ test.describe('Specifications Screenshots', () => {
     await page.getByRole('button', { name: 'View Details' }).first().click();
 
     // Wait for detail page
-    await expect(page.getByRole('heading', { name: 'API Authentication Spec', exact: true })).toBeVisible();
-    await expect(page.getByText('This specification defines the authentication mechanisms')).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'API Authentication Spec', exact: true })
+    ).toBeVisible();
+    await expect(
+      page.getByText('This specification defines the authentication mechanisms')
+    ).toBeVisible();
 
     // Take screenshot of detail page
     await page.screenshot({ path: 'docs/screenshots/specs-detail-page.png', fullPage: true });

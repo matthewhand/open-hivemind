@@ -72,8 +72,10 @@ async function validatePageLoads(
       const body = page.locator('body');
       const bodyText = await body.innerText().catch(() => '');
 
-      if (bodyText.includes('Something went wrong') ||
-          bodyText.includes('Unexpected Application Error')) {
+      if (
+        bodyText.includes('Something went wrong') ||
+        bodyText.includes('Unexpected Application Error')
+      ) {
         throw new Error('React error boundary detected');
       }
 
@@ -102,7 +104,7 @@ test.describe('Smoke Test - Monitoring & System Pages', () => {
     await mockAllApiEndpoints(page);
 
     const results = await validatePageLoads(page, [MONITORING_PAGES[0]], errors);
-    const failures = results.filter(r => r.status === 'fail');
+    const failures = results.filter((r) => r.status === 'fail');
 
     expect(failures.length, `Monitoring failed: ${failures[0]?.error}`).toBe(0);
     expect(errors.length).toBe(0);
@@ -113,7 +115,7 @@ test.describe('Smoke Test - Monitoring & System Pages', () => {
     await mockAllApiEndpoints(page);
 
     const results = await validatePageLoads(page, [MONITORING_PAGES[1]], errors);
-    const failures = results.filter(r => r.status === 'fail');
+    const failures = results.filter((r) => r.status === 'fail');
 
     expect(failures.length, `Activity failed: ${failures[0]?.error}`).toBe(0);
     expect(errors.length).toBe(0);
@@ -124,7 +126,7 @@ test.describe('Smoke Test - Monitoring & System Pages', () => {
     await mockAllApiEndpoints(page);
 
     const results = await validatePageLoads(page, [MONITORING_PAGES[2]], errors);
-    const failures = results.filter(r => r.status === 'fail');
+    const failures = results.filter((r) => r.status === 'fail');
 
     expect(failures.length, `Monitoring dashboard failed: ${failures[0]?.error}`).toBe(0);
     expect(errors.length).toBe(0);
@@ -135,7 +137,7 @@ test.describe('Smoke Test - Monitoring & System Pages', () => {
     await mockAllApiEndpoints(page);
 
     const results = await validatePageLoads(page, [MONITORING_PAGES[3]], errors);
-    const failures = results.filter(r => r.status === 'fail');
+    const failures = results.filter((r) => r.status === 'fail');
 
     expect(failures.length, `Analytics failed: ${failures[0]?.error}`).toBe(0);
     expect(errors.length).toBe(0);
@@ -146,7 +148,7 @@ test.describe('Smoke Test - Monitoring & System Pages', () => {
     await mockAllApiEndpoints(page);
 
     const results = await validatePageLoads(page, [MONITORING_PAGES[4]], errors);
-    const failures = results.filter(r => r.status === 'fail');
+    const failures = results.filter((r) => r.status === 'fail');
 
     expect(failures.length, `System management failed: ${failures[0]?.error}`).toBe(0);
     expect(errors.length).toBe(0);
@@ -157,7 +159,7 @@ test.describe('Smoke Test - Monitoring & System Pages', () => {
     await mockAllApiEndpoints(page);
 
     const results = await validatePageLoads(page, [MONITORING_PAGES[5]], errors);
-    const failures = results.filter(r => r.status === 'fail');
+    const failures = results.filter((r) => r.status === 'fail');
 
     expect(failures.length, `Export failed: ${failures[0]?.error}`).toBe(0);
     expect(errors.length).toBe(0);
@@ -168,7 +170,7 @@ test.describe('Smoke Test - Monitoring & System Pages', () => {
     await mockAllApiEndpoints(page);
 
     const results = await validatePageLoads(page, [MONITORING_PAGES[6]], errors);
-    const failures = results.filter(r => r.status === 'fail');
+    const failures = results.filter((r) => r.status === 'fail');
 
     expect(failures.length, `Settings failed: ${failures[0]?.error}`).toBe(0);
     expect(errors.length).toBe(0);
@@ -179,7 +181,7 @@ test.describe('Smoke Test - Monitoring & System Pages', () => {
     await mockAllApiEndpoints(page);
 
     const results = await validatePageLoads(page, [MONITORING_PAGES[7]], errors);
-    const failures = results.filter(r => r.status === 'fail');
+    const failures = results.filter((r) => r.status === 'fail');
 
     expect(failures.length, `Bot configuration failed: ${failures[0]?.error}`).toBe(0);
     expect(errors.length).toBe(0);
@@ -190,7 +192,7 @@ test.describe('Smoke Test - Monitoring & System Pages', () => {
     await mockAllApiEndpoints(page);
 
     const results = await validatePageLoads(page, [MONITORING_PAGES[8]], errors);
-    const failures = results.filter(r => r.status === 'fail');
+    const failures = results.filter((r) => r.status === 'fail');
 
     expect(failures.length, `Config failed: ${failures[0]?.error}`).toBe(0);
     expect(errors.length).toBe(0);
@@ -201,7 +203,7 @@ test.describe('Smoke Test - Monitoring & System Pages', () => {
     await mockAllApiEndpoints(page);
 
     const results = await validatePageLoads(page, [MONITORING_PAGES[9]], errors);
-    const failures = results.filter(r => r.status === 'fail');
+    const failures = results.filter((r) => r.status === 'fail');
 
     expect(failures.length, `Health failed: ${failures[0]?.error}`).toBe(0);
     expect(errors.length).toBe(0);
@@ -212,7 +214,7 @@ test.describe('Smoke Test - Monitoring & System Pages', () => {
     await mockAllApiEndpoints(page);
 
     const results = await validatePageLoads(page, [MONITORING_PAGES[10]], errors);
-    const failures = results.filter(r => r.status === 'fail');
+    const failures = results.filter((r) => r.status === 'fail');
 
     expect(failures.length, `Audit failed: ${failures[0]?.error}`).toBe(0);
     expect(errors.length).toBe(0);
