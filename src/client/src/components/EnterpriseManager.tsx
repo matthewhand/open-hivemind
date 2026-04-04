@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import Button from './DaisyUI/Button';
 import { Alert } from './DaisyUI/Alert';
+import { Badge } from './DaisyUI/Badge';
 import Modal from './DaisyUI/Modal';
 import Tabs from './DaisyUI/Tabs';
 import type { TabItem } from './DaisyUI/Tabs';
@@ -474,9 +475,9 @@ const EnterpriseManager: React.FC = () => {
                     <p className="text-sm font-semibold mb-1">Resources:</p>
                     <div className="flex flex-wrap gap-1">
                       {provider.resources.map((resource, index) => (
-                        <div key={index} className="badge badge-outline badge-sm">
+                        <Badge key={index} size="sm" style="outline">
                           {resource.type}: {resource.count}
-                        </div>
+                        </Badge>
                       ))}
                     </div>
                   </div>
@@ -605,7 +606,7 @@ const EnterpriseManager: React.FC = () => {
                   {
                     key: 'action',
                     title: 'Action',
-                    render: (value: string) => <div className="badge badge-ghost badge-sm">{value}</div>,
+                    render: (value: string) => <Badge variant="ghost" size="sm">{value}</Badge>,
                   },
                   { key: 'resource', title: 'Resource' },
                   {

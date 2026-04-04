@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Badge } from '../components/DaisyUI/Badge';
 import {
   Webhook,
   RefreshCw,
@@ -339,7 +340,7 @@ const WebhookEventsPage: React.FC = () => {
                         </span>
                       </td>
                       <td className="font-mono text-xs truncate max-w-[240px]" title={ev.endpoint}>
-                        <span className="badge badge-ghost badge-xs mr-1">{ev.method}</span>
+                        <Badge variant="ghost" size="xs" className="mr-1">{ev.method}</Badge>
                         {ev.endpoint}
                       </td>
                       <td>{statusBadge(ev.statusCode)}</td>

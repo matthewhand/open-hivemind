@@ -3,6 +3,7 @@ import React from 'react';
 import DataTable from '../../components/DaisyUI/DataTable';
 import type { RDVColumn, RowAction } from '../../components/DaisyUI/DataTable';
 import type { BackupRecord } from './types';
+import { Badge } from '../../components/DaisyUI/Badge';
 
 interface BackupsTabProps {
   backups: BackupRecord[];
@@ -36,7 +37,7 @@ const BackupsTab: React.FC<BackupsTabProps> = ({ backups, onRestoreBackup, onDel
           {
             key: 'status',
             title: 'Status',
-            render: (value: string) => <span className="badge badge-success">{value}</span>,
+            render: (value: string) => <Badge variant="success">{value}</Badge>,
           },
           { key: 'description', title: 'Description' },
         ] as RDVColumn<BackupRecord>[]}

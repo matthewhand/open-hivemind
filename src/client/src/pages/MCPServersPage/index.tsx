@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import PageHeader from '../../components/DaisyUI/PageHeader';
 import { Alert } from '../../components/DaisyUI/Alert';
+import { Badge } from '../../components/DaisyUI/Badge';
 import EmptyState from '../../components/DaisyUI/EmptyState';
 import { SkeletonGrid } from '../../components/DaisyUI/Skeleton';
 import SearchFilterBar from '../../components/SearchFilterBar';
@@ -163,12 +164,13 @@ const MCPServersPage: React.FC = () => {
               </p>
               <div className="flex flex-wrap gap-2">
                 {cautionRepositories.map((repo) => (
-                  <span
+                  <Badge
                     key={`${repo.owner}/${repo.repo}`}
-                    className="badge badge-warning badge-outline"
+                    variant="warning"
+                    style="outline"
                   >
                     {repo.name} ({repo.owner}/{repo.repo})
-                  </span>
+                  </Badge>
                 ))}
               </div>
             </div>

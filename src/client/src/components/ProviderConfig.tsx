@@ -2,6 +2,7 @@
 import { CheckCircle, Eye, EyeOff, Info, Key, Lock, Settings, Shield, ExternalLink, HelpCircle } from 'lucide-react';
 import React, { useState } from 'react';
 import { Alert } from './DaisyUI/Alert';
+import { Badge } from './DaisyUI/Badge';
 import Card from './DaisyUI/Card';
 import Input from './DaisyUI/Input';
 import Select from './DaisyUI/Select';
@@ -177,7 +178,7 @@ const ProviderConfig: React.FC<ProviderConfigProps> = ({
           <span className="label-text-alt">
             {helperText}
             {isEnvOverride && (
-              <span className="badge badge-info badge-xs ml-2">Environment Override</span>
+              <Badge variant="info" size="xs" className="ml-2">Environment Override</Badge>
             )}
           </span>
         </label>

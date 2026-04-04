@@ -6,6 +6,7 @@ import {
   EyeIcon,
 } from '@heroicons/react/24/outline';
 import Button from './DaisyUI/Button';
+import { Badge } from './DaisyUI/Badge';
 
 interface ToolResult {
   timestamp: string;
@@ -72,7 +73,7 @@ const ToolResultHistory: React.FC<ToolResultHistoryProps> = ({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-semibold truncate">{result.toolName}</span>
-                      <span className="badge badge-sm badge-ghost">{result.serverName}</span>
+                      <Badge size="sm" variant="ghost">{result.serverName}</Badge>
                     </div>
                     <div className="text-xs text-base-content/60 flex items-center gap-1">
                       <ClockIcon className="w-3 h-3" />
