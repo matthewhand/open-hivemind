@@ -36,16 +36,16 @@ RUN if [ "$INCLUDE_FFMPEG" = "true" ]; then \
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY src/client/package.json src/client/
-RUN npm ci && npm cache clean --force
+RUN corepack enable && corepack prepare pnpm@latest --activate && pnpm install --frozen-lockfile
 
 COPY . .
 ENV BUILD_POST_BUILD_SLEEP_SECONDS=0
-RUN npm run build
+RUN pnpm run build
 
 # Remove dev dependencies after build to keep runtime image slim
-RUN npm prune --omit=dev
+RUN pnpm prune --prod
 
 # Create feature flag environment file
 RUN echo "INCLUDE_PYTHON_TOOLS=${INCLUDE_PYTHON_TOOLS}" >> .env.features && \
