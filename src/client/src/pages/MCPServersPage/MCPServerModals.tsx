@@ -1,6 +1,7 @@
 import React from 'react';
 import { CheckCircle, AlertCircle, Wrench, PackageX } from 'lucide-react';
 import Button from '../../components/DaisyUI/Button';
+import CodeBlock from '../../components/DaisyUI/CodeBlock';
 import EmptyState from '../../components/DaisyUI/EmptyState';
 import Modal, { ConfirmModal } from '../../components/DaisyUI/Modal';
 import Accordion from '../../components/DaisyUI/Accordion';
@@ -110,9 +111,9 @@ export const MCPServerModals: React.FC<MCPServerModalsProps> = ({
                         id: `schema-${idx}`,
                         title: 'Input Schema',
                         content: (
-                          <pre className="text-xs bg-base-300 p-2 rounded overflow-x-auto">
+                          <CodeBlock>
                             {JSON.stringify(tool.inputSchema, null, 2)}
-                          </pre>
+                          </CodeBlock>
                         ),
                       }]}
                       size="sm"

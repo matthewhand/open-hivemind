@@ -5,6 +5,7 @@ import Accordion from '../../../components/DaisyUI/Accordion';
 import { LoadingSpinner } from '../../../components/DaisyUI/Loading';
 import { Badge } from '../../../components/DaisyUI/Badge';
 import { Alert } from '../../../components/DaisyUI/Alert';
+import CodeBlock from '../../../components/DaisyUI/CodeBlock';
 import SimpleTable from '../../../components/DaisyUI/SimpleTable';
 import type { ToolExecutionRecord } from '../types';
 
@@ -38,9 +39,9 @@ const ExecutionHistoryModal: React.FC<ExecutionHistoryModalProps> = ({ isOpen, o
                           title: 'View',
                           content: (
                             <div className="space-y-2 pt-2 text-xs">
-                              <div><strong>Arguments:</strong><pre className="bg-base-300 p-2 rounded mt-1 overflow-x-auto">{JSON.stringify(r.arguments, null, 2)}</pre></div>
+                              <div><strong>Arguments:</strong><CodeBlock>{JSON.stringify(r.arguments, null, 2)}</CodeBlock></div>
                               {r.status === 'success'
-                                ? <div><strong>Result:</strong><pre className="bg-base-300 p-2 rounded mt-1 overflow-x-auto">{JSON.stringify(r.result, null, 2)}</pre></div>
+                                ? <div><strong>Result:</strong><CodeBlock>{JSON.stringify(r.result, null, 2)}</CodeBlock></div>
                                 : <div><strong>Error:</strong><Alert status="error" className="p-2 mt-1" compact>{r.error}</Alert></div>
                               }
                             </div>

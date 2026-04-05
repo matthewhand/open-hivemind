@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import Divider from './Divider';
 import Logo from '../Logo';
 import Avatar from './Avatar';
 import Menu from './Menu';
@@ -305,7 +306,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
 
               {recentSearches.length > 0 && (
                 <div className="p-2">
-                  {searchQuery && filteredSuggestions.length > 0 && <div className="divider my-1"></div>}
+                  {searchQuery && filteredSuggestions.length > 0 && <Divider className="my-1" />}
                   <div className="flex justify-between items-center px-3 py-2">
                     <h3 className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">Recent Searches</h3>
                     <button

@@ -14,6 +14,7 @@ import { apiService } from '../services/api';
 import Badge from '../components/DaisyUI/Badge';
 import Button from '../components/DaisyUI/Button';
 import Card from '../components/DaisyUI/Card';
+import CodeBlock from '../components/DaisyUI/CodeBlock';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import { SkeletonPage } from '../components/DaisyUI/Skeleton';
 import EmptyState from '../components/DaisyUI/EmptyState';
@@ -379,11 +380,11 @@ const WebhookEventsPage: React.FC = () => {
                           {detailLoading ? (
                             <div className="skeleton h-24 w-full" />
                           ) : (
-                            <pre className="bg-base-300 rounded-lg p-3 text-xs overflow-auto max-h-96 whitespace-pre-wrap">
+                            <CodeBlock maxHeight="max-h-96">
                               {detailPayload != null
                                 ? JSON.stringify(detailPayload, null, 2)
                                 : ev.payloadPreview || '(empty payload)'}
-                            </pre>
+                            </CodeBlock>
                           )}
                         </td>
                       </tr>

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { LoadingSpinner } from './Loading';
 
 export interface ModalAction {
   label: string;
@@ -150,7 +151,7 @@ const Modal: React.FC<ModalProps> = ({
                 onClick={action.onClick}
                 disabled={action.disabled || action.loading}
               >
-                {action.loading && <span className="loading loading-spinner" aria-hidden="true"></span>}
+                {action.loading && <LoadingSpinner size="sm" />}
                 {action.loading ? '' : action.label}
               </button>
             ))}
@@ -308,7 +309,7 @@ export const LoadingModal: React.FC<Omit<BaseModalProps, 'children'> & {
       {...props}
     >
       <div className="text-center py-8" role="status" aria-live="polite">
-        <span className="loading loading-spinner loading-lg text-primary" aria-hidden="true"></span>
+        <LoadingSpinner size="lg" color="primary" />
         <p className="mt-4 text-base-content/70">{message}</p>
       </div>
     </Modal>

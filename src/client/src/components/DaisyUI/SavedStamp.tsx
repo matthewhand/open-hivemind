@@ -127,7 +127,7 @@ const SavedStamp: React.FC<SavedStampProps> = ({
           height="200"
           viewBox="0 0 320 200"
           xmlns="http://www.w3.org/2000/svg"
-          style={{ overflow: 'visible' }}
+          className="overflow-visible"
         >
           <defs>
             {/* Roughness filter for stamp texture */}
