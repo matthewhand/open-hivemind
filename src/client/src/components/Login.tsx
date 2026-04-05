@@ -36,7 +36,7 @@ const Login: React.FC = () => {
     setError('');
     try {
       await trustedLogin();
-      navigate('/admin/bots', { replace: true });
+      navigate('/admin/overview', { replace: true });
     } catch (err) {
       setError('Trusted network login failed');
     } finally {
@@ -52,7 +52,7 @@ const Login: React.FC = () => {
     try {
       const success = await login(formData.username, formData.password);
       if (success) {
-        navigate('/admin/bots', { replace: true });
+        navigate('/admin/overview', { replace: true });
       } else {
         setError('Invalid username or password');
       }
