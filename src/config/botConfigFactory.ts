@@ -150,6 +150,29 @@ export function createBotConfig(
     };
   }
 
+  // Add Slack configuration if bot token is provided
+  const slackBotToken = botConfig.get('SLACK_BOT_TOKEN');
+  if (slackBotToken) {
+    config.slack = {
+      botToken: slackBotToken,
+      appToken: botConfig.get('SLACK_APP_TOKEN'),
+      signingSecret: botConfig.get('SLACK_SIGNING_SECRET'),
+      joinChannels: botConfig.get('SLACK_JOIN_CHANNELS'),
+      defaultChannelId: botConfig.get('SLACK_DEFAULT_CHANNEL_ID'),
+      mode: botConfig.get('SLACK_MODE') as 'socket' | 'rtm',
+    };
+  }
+
+  // Add Mattermost configuration if token is provided
+  const mattermostToken = botConfig.get('MATTERMOST_TOKEN');
+  if (mattermostToken) {
+    config.mattermost = {
+      serverUrl: botConfig.get('MATTERMOST_SERVER_URL'),
+      token: mattermostToken,
+      channel: botConfig.get('MATTERMOST_CHANNEL'),
+    };
+  }
+
   // Add OpenAI configuration if API key is provided
   const openaiApiKey = botConfig.get('OPENAI_API_KEY');
   if (openaiApiKey) {

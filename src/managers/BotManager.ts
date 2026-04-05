@@ -4,6 +4,7 @@ import path from 'path';
 import Debug from 'debug';
 import { injectable, singleton } from 'tsyringe';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
+import ProviderConfigManager from '@config/ProviderConfigManager';
 import { SecureConfigManager } from '@config/SecureConfigManager';
 import { UserConfigStore } from '@config/UserConfigStore';
 import { webUIStorage } from '../storage/webUIStorage';
@@ -33,6 +34,7 @@ const debug = Debug('app:BotManager');
 export class BotManager extends EventEmitter {
   private static instance: BotManager;
   private botConfigManager: BotConfigurationManager;
+  private providerConfigManager: ProviderConfigManager;
   private secureConfigManager: SecureConfigManager;
   private customBots = new Map<string, BotInstance>();
   private botsFilePath: string;
@@ -41,6 +43,7 @@ export class BotManager extends EventEmitter {
   constructor() {
     super();
     this.botConfigManager = BotConfigurationManager.getInstance();
+    this.providerConfigManager = ProviderConfigManager.getInstance();
     this.secureConfigManager = SecureConfigManager.getInstanceSync();
     this.botsFilePath = path.join(process.cwd(), 'config', 'user', 'custom-bots.json');
     // Note: loadCustomBots is now async but called from constructor
@@ -126,6 +129,8 @@ export class BotManager extends EventEmitter {
       mcpServers: bot.mcpServers || [],
       mcpGuard: bot.mcpGuard || { enabled: false, type: 'owner' },
       envOverrides: checkBotEnvOverrides(bot.name),
+      messageProviderInstanceId: this.providerConfigManager.getMessageProviderIdForBot(bot.name),
+      llmProviderInstanceId: this.providerConfigManager.getLlmProviderIdForBot(bot.name),
     };
   }
 

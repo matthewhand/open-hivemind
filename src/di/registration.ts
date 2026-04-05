@@ -57,9 +57,15 @@ export function registerServices(): void {
   });
 
   logger.debug('Registering ProviderConfigManager');
+  const providerConfigManager = ProviderConfigManager.getInstance();
   container.register(TOKENS.ProviderConfigManager, {
-    useValue: ProviderConfigManager.getInstance(),
+    useValue: providerConfigManager,
   });
+
+  // Reload BotConfigurationManager in case it was instantiated before dotenv loaded,
+  // then sync BOTS_* env-configured providers into ProviderConfigManager.
+  BotConfigurationManager.getInstance().reload();
+  providerConfigManager.syncBotProviders();
 
   logger.debug('Registering DatabaseManager');
   container.registerSingleton(TOKENS.DatabaseManager, DatabaseManager);
