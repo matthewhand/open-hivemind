@@ -232,7 +232,7 @@ Low impact, low urgency - Address within 10-12 weeks
 
 **Issues Identified:**
 - Outdated dependencies with known vulnerabilities
-- Redundant packages (axios vs node-fetch)
+- ~~Redundant packages (axios vs node-fetch)~~ — **resolved**: axios removed, all HTTP calls use the SSRF-safe `http` wrapper in `@hivemind/shared-types`
 - Missing automated vulnerability scanning
 
 **Implementation Plan:**

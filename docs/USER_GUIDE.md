@@ -119,6 +119,7 @@ Connect your bots to messaging services.
 *   **Discord**: Add your Discord Bot Token and configure server settings.
 *   **Slack**: Set up your Slack App Token and Bot Token.
 *   **Mattermost**: Configure your Mattermost URL and Bot Token.
+*   **Telegram**: Add your Telegram Bot Token (obtained from @BotFather).
 *   **Status**: Check connection health for each platform.
 
 ### [Memory Providers](/admin/providers/memory)

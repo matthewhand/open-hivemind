@@ -13,9 +13,9 @@ Open-Hivemind supports three deployment options. Choose the one that fits your w
 Pinokio provides the fastest path to get Open-Hivemind running locally with a managed environment.
 
 1. Install [Pinokio](https://pinokio.co/) and add this repository using the bundled `pinokio.js` manifest.
-2. Click **Install dependencies** to run `npm install` via the managed environment.
+2. Click **Install dependencies** to run `pnpm install` via the managed environment.
 3. Copy `.env.sample` to `.env` inside the Pinokio workspace and add your platform tokens (Discord, Slack, Mattermost) and LLM credentials.
-4. Press **Start**. Pinokio launches `npm run dev`, serving the API and WebUI at `http://localhost:3028`.
+4. Press **Start**. Pinokio launches `pnpm run dev`, serving the API and WebUI at `http://localhost:3028`.
 5. Choose **Open WebUI** to finish configuring personas, MCP servers, and tool guards from the browser.
 
 Pinokio keeps the service running in the background and remembers whether `node_modules` exists, so future launches are a single click.
@@ -78,14 +78,14 @@ Stop containers with `docker stop <id>` or `docker-compose down`.
 
 4. Install dependencies and start the dev server:
    ```bash
-   npm install
-   npm run dev   # serves API + WebUI on port 3028
+   pnpm install
+   pnpm run dev   # serves API + WebUI on port 3028
    ```
 
 5. For production, build and start:
    ```bash
-   npm run build
-   npm start
+   pnpm run build
+   pnpm start
    ```
 
 6. Open `http://localhost:3028` to confirm the WebUI is online.

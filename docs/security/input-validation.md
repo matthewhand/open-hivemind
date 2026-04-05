@@ -214,7 +214,7 @@ await execFilePromise(command, args, {
 When user input is used in commands (e.g., port numbers), it's validated first:
 
 ```typescript
-// From src/integrations/openswarm/SwarmInstaller.ts
+// From packages/llm-openswarm/src/SwarmInstaller.ts
 const portNum = Number(port);
 if (isNaN(portNum) || portNum < 1 || portNum > 65535) {
   throw new Error('Invalid port number');
