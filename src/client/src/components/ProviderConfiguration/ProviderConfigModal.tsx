@@ -399,7 +399,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
         {modalState.providerType === 'llm' ? (
           <div className="form-control mb-6">
             <label className="label">
-              <span className="label-text font-medium">Provider</span>
+              <span className="label-text font-medium">Provider Type</span>
               <span className="label-text-alt text-error">*</span>
             </label>
             <Select
@@ -418,14 +418,21 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
             </Select>
           </div>
         ) : (
-          <Tabs
-            tabs={messageProviderTabs}
-            activeTab={selectedType}
-            onChange={(key) => setSelectedType(key as MessageProviderType | LLMProviderType)}
-            variant="boxed"
-            size="sm"
-            className="mb-6 flex-wrap gap-1"
-          />
+          <div className="form-control mb-6">
+            <label className="label pb-0">
+              <span className="label-text font-medium">Provider Type</span>
+              <span className="label-text-alt text-error">*</span>
+            </label>
+            <Tabs
+              tabs={messageProviderTabs}
+              activeTab={selectedType}
+              onChange={(key) => setSelectedType(key as MessageProviderType | LLMProviderType)}
+              variant="boxed"
+              size="sm"
+              className="flex-wrap gap-1"
+              aria-label="Select a message provider type"
+            />
+          </div>
         )}
 
         {/* Form */}

@@ -25,6 +25,8 @@ export interface TabsProps {
   size?: 'xs' | 'sm' | 'md' | 'lg';
   /** Additional CSS classes for the container */
   className?: string;
+  /** Accessible label for the tablist (screen readers) */
+  'aria-label'?: string;
 }
 
 const variantClasses: Record<string, string> = {
@@ -47,6 +49,7 @@ export const Tabs = memo(({
   variant = 'boxed',
   size = 'md',
   className,
+  'aria-label': ariaLabel,
 }: TabsProps) => {
   const handleClick = useCallback(
     (key: string, disabled?: boolean) => {
@@ -65,7 +68,7 @@ export const Tabs = memo(({
   );
 
   return (
-    <div role="tablist" className={containerClasses}>
+    <div role="tablist" className={containerClasses} aria-label={ariaLabel}>
       {tabs.map((tab) => {
         const isActive = tab.key === activeTab;
 
