@@ -1,6 +1,6 @@
 import Debug from 'debug';
-import { http } from '../../../utils/httpClient';
 import { Logger } from '@common/logger';
+import { http } from '../../../utils/httpClient';
 
 const debug = Debug('app:message:helpers:processing:handleImageMessage');
 const logger = Logger.withContext('handleImageMessage');
@@ -38,11 +38,7 @@ export async function createPrediction(imageUrl: string): Promise<any> {
     });
     return data;
   } catch (error: unknown) {
-    debug(
-      'ERROR:',
-      'Failed to create prediction:',
-      error instanceof Error ? error.message : error
-    );
+    debug('ERROR:', 'Failed to create prediction:', error instanceof Error ? error.message : error);
     throw new Error('Failed to create prediction');
   }
 }

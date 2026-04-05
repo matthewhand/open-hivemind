@@ -343,7 +343,12 @@ router.post(
         testInput?: Record<string, any>;
       };
 
-      const results: Array<{ guard: string; enabled: boolean; result: 'allowed' | 'blocked'; reason: string }> = [];
+      const results: Array<{
+        guard: string;
+        enabled: boolean;
+        result: 'allowed' | 'blocked';
+        reason: string;
+      }> = [];
 
       // 1) Access Control (mcpGuard)
       if (guards.mcpGuard) {
@@ -361,9 +366,7 @@ router.post(
             guard: 'Access Control',
             enabled: true,
             result: isOwner ? 'allowed' : 'blocked',
-            reason: isOwner
-              ? 'Owner access granted'
-              : 'Only the owner can access this resource',
+            reason: isOwner ? 'Owner access granted' : 'Only the owner can access this resource',
           });
         } else {
           const userId = String(testInput.userId || '');

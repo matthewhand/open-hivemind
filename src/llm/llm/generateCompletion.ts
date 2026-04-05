@@ -1,5 +1,5 @@
-import { http } from '../../utils/httpClient';
 import openaiConfig from '../../config/openaiConfig';
+import { http } from '../../utils/httpClient';
 
 export async function generateCompletion(prompt: string): Promise<string> {
   const model = openaiConfig.get('OPENAI_MODEL') || 'free-small';
