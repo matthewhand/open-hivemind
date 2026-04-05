@@ -13,6 +13,7 @@ import {
   RefreshCw,
   Activity,
 } from 'lucide-react';
+import Swap from '../DaisyUI/Swap';
 import { apiService } from '../../services/api';
 
 interface ServiceStatus {
@@ -218,11 +219,12 @@ const HealthCheckWidget: React.FC<HealthCheckWidgetProps> = ({
                       {formatLatency(service.latencyMs)} latency
                     </div>
                   </div>
-                  {isExpanded ? (
-                    <ChevronUp className="w-4 h-4 text-base-content/40" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4 text-base-content/40" />
-                  )}
+                  <Swap
+                    checked={isExpanded}
+                    onContent={<ChevronUp className="w-4 h-4 text-base-content/40" />}
+                    offContent={<ChevronDown className="w-4 h-4 text-base-content/40" />}
+                    rotate
+                  />
                 </button>
 
                 {isExpanded && (
