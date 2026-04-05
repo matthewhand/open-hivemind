@@ -1,6 +1,12 @@
 import { Mem0Provider } from './Mem0Provider';
 import { Mem0ApiError } from './types';
 
+// Mock isSafeUrl so test URLs don't trigger SSRF guard failures
+jest.mock('@hivemind/shared-types', () => ({
+  ...jest.requireActual('@hivemind/shared-types'),
+  isSafeUrl: jest.fn().mockResolvedValue(true),
+}));
+
 const BASE_CONFIG = { apiKey: 'test-key', baseUrl: 'https://api.mem0.ai/v1', maxRetries: 0 };
 
 beforeEach(() => jest.clearAllMocks());
