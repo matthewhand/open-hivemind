@@ -273,10 +273,10 @@ const EventStream: React.FC<EventStreamProps> = ({
                 className="w-auto"
               />
 
-              <input
-                type="text"
+              <Input
+                size="xs"
                 placeholder="Search events..."
-                className="input input-xs input-bordered"
+                className="w-auto"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />

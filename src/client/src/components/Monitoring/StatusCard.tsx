@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { LoadingSpinner } from '../DaisyUI/Loading';
+import { Badge } from '../DaisyUI/Badge';
 
 export interface StatusMetric {
   label: string;
@@ -126,9 +127,9 @@ const StatusCard: React.FC<StatusCardProps> = ({
             {isLoading && (
               <LoadingSpinner size="sm" />
             )}
-            <div className={`badge ${getStatusColor(status)} badge-outline`}>
+            <Badge variant={getStatusColor(status) as 'primary' | 'secondary' | 'accent' | 'info' | 'success' | 'warning' | 'error' | 'ghost'} style="outline">
               {status}
-            </div>
+            </Badge>
           </div>
         </div>
 

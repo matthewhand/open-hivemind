@@ -1,6 +1,7 @@
 import React from 'react';
-import { AlertCircle, AlertTriangle, CheckCircle, Loader } from 'lucide-react';
+import { AlertCircle, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Alert } from './DaisyUI/Alert';
+import { LoadingSpinner } from './DaisyUI/Loading';
 import type { ValidationError, ValidationWarning } from '../hooks/useRealTimeValidation';
 
 export interface ValidationFeedbackProps {
@@ -53,7 +54,7 @@ export const ValidationFeedback: React.FC<ValidationFeedbackProps> = ({
   if (isValidating) {
     return (
       <div className={`flex items-center gap-2 text-base-content/60 ${compact ? 'text-xs' : 'text-sm'}`}>
-        <Loader className={`${compact ? 'w-3 h-3' : 'w-4 h-4'} animate-spin`} />
+        <LoadingSpinner size={compact ? 'xs' : 'sm'} />
         <span>Validating...</span>
       </div>
     );

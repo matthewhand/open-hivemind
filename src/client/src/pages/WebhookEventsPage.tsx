@@ -356,9 +356,9 @@ const WebhookEventsPage: React.FC = () => {
                             size="xs"
                             variant="ghost"
                             onClick={e => { e.stopPropagation(); handleRetry(ev.id); }}
-                            disabled={retrying === ev.id}
+                            loading={retrying === ev.id}
                           >
-                            <RotateCcw className={`w-3 h-3 ${retrying === ev.id ? 'animate-spin' : ''}`} />
+                            <RotateCcw className="w-3 h-3" />
                             Retry
                           </Button>
                         )}

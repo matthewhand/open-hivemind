@@ -4,6 +4,7 @@ import Modal from '../../../components/DaisyUI/Modal';
 import Accordion from '../../../components/DaisyUI/Accordion';
 import { LoadingSpinner } from '../../../components/DaisyUI/Loading';
 import { Badge } from '../../../components/DaisyUI/Badge';
+import { Alert } from '../../../components/DaisyUI/Alert';
 import SimpleTable from '../../../components/DaisyUI/SimpleTable';
 import type { ToolExecutionRecord } from '../types';
 
@@ -40,7 +41,7 @@ const ExecutionHistoryModal: React.FC<ExecutionHistoryModalProps> = ({ isOpen, o
                               <div><strong>Arguments:</strong><pre className="bg-base-300 p-2 rounded mt-1 overflow-x-auto">{JSON.stringify(r.arguments, null, 2)}</pre></div>
                               {r.status === 'success'
                                 ? <div><strong>Result:</strong><pre className="bg-base-300 p-2 rounded mt-1 overflow-x-auto">{JSON.stringify(r.result, null, 2)}</pre></div>
-                                : <div><strong>Error:</strong><div className="bg-error/10 text-error p-2 rounded mt-1">{r.error}</div></div>
+                                : <div><strong>Error:</strong><Alert status="error" className="p-2 mt-1" compact>{r.error}</Alert></div>
                               }
                             </div>
                           ),

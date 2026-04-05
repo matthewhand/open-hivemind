@@ -536,16 +536,13 @@ const EnterpriseManager: React.FC = () => {
               <h2 className="text-xl font-semibold">Audit Events</h2>
               <div className="flex gap-2">
                 <div className="form-control">
-                  <div className="input-group">
-                    <input
-                      type="text"
-                      placeholder="Search user, resource..."
-                      className="input input-sm input-bordered"
-                      value={auditSearchTerm}
-                      onChange={(e) => setAuditSearchTerm(e.target.value)}
-                      aria-label="Search audit events by user or resource"
-                    />
-                  </div>
+                  <Input
+                    size="sm"
+                    placeholder="Search user, resource..."
+                    value={auditSearchTerm}
+                    onChange={(e) => setAuditSearchTerm(e.target.value)}
+                    aria-label="Search audit events by user or resource"
+                  />
                 </div>
                 <select
                   className="select select-sm select-bordered"

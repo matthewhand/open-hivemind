@@ -300,9 +300,7 @@ const ChatPage: React.FC = () => {
           className="flex-1 mb-0 p-0 border-0 bg-transparent rounded-none"
           actions={
             <Tooltip content="Refresh" position="left">
-              <Button variant="ghost" size="md" onClick={handleRefresh} className="btn-circle" aria-label="Refresh">
-                <RefreshCw className={`w-5 h-5 ${loading || historyLoading ? 'animate-spin' : ''}`} />
-              </Button>
+              <Button variant="ghost" size="md" onClick={handleRefresh} loading={loading || historyLoading} className="btn-circle" aria-label="Refresh" />
             </Tooltip>
           }
         />
