@@ -272,16 +272,17 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                                 <span className="label-text">Message Provider <span className="text-error">*</span></span>
                             </label>
                             <div className="flex gap-2">
-                                <select
-                                    className={`select select-bordered flex-1 ${!formData.messageProvider ? 'select-error' : ''}`}
+                                <Select
+                                    className={`flex-1 ${!formData.messageProvider ? 'select-error' : ''}`}
                                     value={formData.messageProvider}
                                     onChange={e => setFormData({ ...formData, messageProvider: e.target.value })}
-                                >
-                                    <option value="" disabled>Select Provider</option>
-                                    <option value="discord">Discord</option>
-                                    <option value="slack">Slack</option>
-                                    <option value="mattermost">Mattermost</option>
-                                </select>
+                                    options={[
+                                        { label: 'Select Provider', value: '', disabled: true },
+                                        { label: 'Discord', value: 'discord' },
+                                        { label: 'Slack', value: 'slack' },
+                                        { label: 'Mattermost', value: 'mattermost' },
+                                    ]}
+                                />
                                 <Button variant="primary" buttonStyle="outline" className="btn-square" aria-label="Add provider">
                                     +
                                 </Button>
@@ -292,16 +293,18 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                             <label className="label">
                                 <span className="label-text">LLM Provider (optional)</span>
                             </label>
-                            <select
-                                className={`select select-bordered w-full ${!defaultLlmConfigured && !formData.llmProvider ? 'select-error' : ''}`}
+                            <Select
+                                className={`${!defaultLlmConfigured && !formData.llmProvider ? 'select-error' : ''}`}
                                 value={formData.llmProvider}
                                 onChange={e => setFormData({ ...formData, llmProvider: e.target.value })}
-                            >
-                                <option value="">Use System Default</option>
-                                {fetchedLlmProfiles.map(p => (
-                                    <option key={p.id} value={p.id}>{p.name} ({p.provider})</option>
-                                ))}
-                            </select>
+                                options={[
+                                    { label: 'Use System Default', value: '' },
+                                    ...fetchedLlmProfiles.map(p => ({
+                                        label: `${p.name} (${p.provider})`,
+                                        value: p.id,
+                                    })),
+                                ]}
+                            />
                             <label className="label">
                                 {defaultLlmConfigured && !formData.llmProvider ? (
                                     <span className="label-text-alt text-success flex items-center gap-1">
@@ -334,16 +337,15 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                         <label className="label">
                             <span className="label-text">Select Persona <span className="text-error">*</span></span>
                         </label>
-                        <select
-                            className={`select select-bordered w-full ${!formData.persona ? 'select-error' : ''}`}
+                        <Select
+                            className={`w-full ${!formData.persona ? 'select-error' : ''}`}
                             value={formData.persona}
                             onChange={e => setFormData({ ...formData, persona: e.target.value })}
-                        >
-                            <option value="" disabled>Choose a persona...</option>
-                            {fetchedPersonas.map(p => (
-                                <option key={p.id} value={p.id}>{p.name}</option>
-                            ))}
-                        </select>
+                            options={[
+                                { label: 'Choose a persona...', value: '', disabled: true },
+                                ...fetchedPersonas.map(p => ({ label: p.name, value: p.id })),
+                            ]}
+                        />
                     </div>
 
                     {formData.persona && (

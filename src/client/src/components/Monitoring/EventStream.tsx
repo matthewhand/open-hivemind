@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Card from '../DaisyUI/Card';
 import Button from '../DaisyUI/Button';
+import Select from '../DaisyUI/Select';
 import { useWebSocket } from '../../contexts/WebSocketContext';
 
 export interface Event {
@@ -258,17 +259,19 @@ const EventStream: React.FC<EventStreamProps> = ({
             </div>
 
             <div className="flex gap-2">
-              <select
-                className="select select-xs select-bordered"
+              <Select
+                size="xs"
                 value={levelFilter}
                 onChange={(e) => setLevelFilter(e.target.value)}
-              >
-                <option value="all">All Levels</option>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="critical">Critical</option>
-              </select>
+                options={[
+                  { label: 'All Levels', value: 'all' },
+                  { label: 'Low', value: 'low' },
+                  { label: 'Medium', value: 'medium' },
+                  { label: 'High', value: 'high' },
+                  { label: 'Critical', value: 'critical' },
+                ]}
+                className="w-auto"
+              />
 
               <input
                 type="text"

@@ -349,20 +349,17 @@ const FieldSelect: React.FC<FieldSelectProps> = ({
     <label className="label">
       <span className="label-text">{label}</span>
     </label>
-    <select
-      className={`select select-bordered ${metadata?.locked ? 'select-disabled opacity-60' : ''}`}
+    <Select
+      className={metadata?.locked ? 'select-disabled opacity-60' : ''}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       disabled={disabled || metadata?.locked}
       aria-label={label}
-    >
-      {allowEmpty && <option value="">{emptyLabel}</option>}
-      {options.map(option => (
-        <option key={option.value} value={option.value}>
-          {option.label}
-        </option>
-      ))}
-    </select>
+      options={[
+        ...(allowEmpty ? [{ label: emptyLabel || '', value: '' }] : []),
+        ...options,
+      ]}
+    />
     <FieldHelper metadata={metadata} />
     {helperContent}
   </div>

@@ -137,7 +137,7 @@ export const DistributedTraceWaterfall: React.FC<DistributedTraceWaterfallProps>
             {hasChildren ? (
               <button
                 onClick={(e) => toggleExpand(span.id, e)}
-                className="p-1 hover:bg-base-300 rounded mr-1"
+                className="btn btn-ghost btn-xs btn-square mr-1"
               >
                 {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
               </button>
@@ -306,13 +306,13 @@ export const DistributedTraceWaterfall: React.FC<DistributedTraceWaterfallProps>
             {selectedSpan.tags && Object.keys(selectedSpan.tags).length > 0 && (
               <section>
                 <h5 className="font-semibold text-base-content/70 uppercase text-xs mb-2">Tags</h5>
-                <div className="bg-base-200 rounded p-2 overflow-x-auto">
-                  <table className="w-full text-left table-auto">
+                <div className="overflow-x-auto">
+                  <table className="table table-xs w-full">
                     <tbody>
                       {Object.entries(selectedSpan.tags).map(([key, value]) => (
-                        <tr key={key} className="border-b border-base-300 last:border-0">
-                          <td className="py-1 pr-4 font-mono text-xs text-base-content/70">{key}</td>
-                          <td className="py-1 font-mono text-xs">{value}</td>
+                        <tr key={key}>
+                          <td className="font-mono text-xs text-base-content/70">{key}</td>
+                          <td className="font-mono text-xs">{value}</td>
                         </tr>
                       ))}
                     </tbody>
