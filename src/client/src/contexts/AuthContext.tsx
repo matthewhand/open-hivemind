@@ -56,16 +56,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setTokens(parsedTokens);
           setUser(parsedUser);
         } else {
-          // Token is expired, try to refresh it silently
+          // Token is expired — clear stale data immediately so the UI
+          // doesn't flash authenticated state, then try silent refresh
+          console.warn('[AuthContext] Stored token expired, clearing stale auth data');
+          localStorage.removeItem('auth_tokens');
+          localStorage.removeItem('auth_user');
           refreshToken().catch((error) => {
-            console.warn('Failed to refresh expired token on load:', error);
-            // Don't logout here - just don't set the user
-            // The app will handle being in an unauthenticated state
+            console.warn('[AuthContext] Failed to refresh expired token:', error);
+            // Stale data already cleared — user will see login page
           });
         }
       } catch (error) {
-        console.error('Failed to parse stored auth data:', error);
-        // Don't logout - just don't set the user
+        console.error('[AuthContext] Failed to parse stored auth data, clearing:', error);
+        localStorage.removeItem('auth_tokens');
+        localStorage.removeItem('auth_user');
       }
     } else if (import.meta.env.DEV && import.meta.env.VITE_AUTO_LOGIN === 'true') {
       // Auto-login is ONLY active when explicitly enabled via VITE_AUTO_LOGIN=true

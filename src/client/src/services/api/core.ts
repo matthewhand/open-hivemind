@@ -264,6 +264,17 @@ export class ApiService {
       this.extractRateLimitHeaders(response);
 
       if (!response.ok) {
+        // Auto-heal on 401: clear stale auth tokens and redirect to login
+        if (response.status === 401 && !endpoint.includes('/auth/login')) {
+          console.warn('[API] 401 Unauthorized — clearing stale auth tokens');
+          localStorage.removeItem('auth_tokens');
+          localStorage.removeItem('auth_user');
+          if (!window.location.pathname.includes('/login')) {
+            window.location.href = '/login';
+            return undefined as unknown as T;
+          }
+        }
+
         // Special handling for 429 Too Many Requests
         if (response.status === 429) {
           const retryAfter = response.headers.get('Retry-After');
