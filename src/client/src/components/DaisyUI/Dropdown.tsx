@@ -14,6 +14,7 @@ type DropdownProps = {
   contentClassName?: string;
   disabled?: boolean;
   hideArrow?: boolean;
+  'aria-label'?: string;
 };
 
 const Dropdown: React.FC<DropdownProps> = ({
@@ -29,6 +30,7 @@ const Dropdown: React.FC<DropdownProps> = ({
   contentClassName = '',
   disabled = false,
   hideArrow = false,
+  'aria-label': ariaLabel,
 }) => {
   const [uncontrolledIsOpen, setUncontrolledIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -36,12 +38,21 @@ const Dropdown: React.FC<DropdownProps> = ({
   const isOpen = controlledIsOpen ?? uncontrolledIsOpen;
   const setIsOpen = onToggle ? () => onToggle(!isOpen) : setUncontrolledIsOpen;
 
-  const handleToggle = (e?: React.MouseEvent) => {
+  const handleToggle = (e?: React.MouseEvent | React.KeyboardEvent) => {
     if (e) {
       e.stopPropagation();
     }
     if (!disabled) {
       setIsOpen(!isOpen);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleToggle(e);
+    } else if (e.key === 'Escape' && isOpen) {
+      setIsOpen(false);
     }
   };
 
@@ -88,8 +99,10 @@ const Dropdown: React.FC<DropdownProps> = ({
         role="button"
         className={`btn ${sizeClasses[size]} ${colorClasses[color]} ${disabled ? 'btn-disabled opacity-50' : ''} ${triggerClassName}`}
         onClick={handleToggle}
+        onKeyDown={handleKeyDown}
         aria-haspopup="true"
         aria-expanded={isOpen}
+        aria-label={ariaLabel}
       >
         {trigger}
         {!hideArrow && <ChevronDownIcon className="h-5 w-5" aria-hidden="true" />}
