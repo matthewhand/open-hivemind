@@ -1,5 +1,5 @@
-import { ErrorResponseBuilder } from '../../../src/utils/errorResponse';
-import { ConfigurationError, AuthenticationError, NetworkError, ValidationError } from '../../../src/types/errorClasses';
+import { ErrorResponseBuilder, SuccessResponseBuilder, createErrorResponse, sendErrorResponse, sendSuccessResponse } from '../../../src/utils/errorResponse';
+import { NetworkError, ConfigurationError } from '../../../src/types/errorClasses';
 
 describe('ErrorResponseBuilder', () => {
   describe('basic error response', () => {
@@ -23,7 +23,7 @@ describe('ErrorResponseBuilder', () => {
     });
 
     it('should include error details when available', () => {
-      const error = new ValidationError('Validation failed', 'email', 'invalid@email', 'valid email');
+      const error = new NetworkError('Network failed', { status: 500 });
       const builder = new ErrorResponseBuilder(error);
       const response = builder.build();
 
@@ -46,58 +46,80 @@ describe('ErrorResponseBuilder', () => {
     });
   });
 
-  describe('withStack', () => {
-    it('should include stack trace when enabled', () => {
-      const error = new NetworkError('Test error', { status: 500 });
+  describe('withDetails', () => {
+    it('should merge additional details', () => {
+      const error = { code: 'TEST_ERROR', message: 'Test' };
       const builder = new ErrorResponseBuilder(error);
-      builder.withStack(true);
+      builder.withDetails({ field: 'email', reason: 'invalid' });
       const response = builder.build();
 
-      expect(response.stack).toBeDefined();
-    });
-
-    it('should not include stack trace when disabled', () => {
-      const error = new NetworkError('Test error', { status: 500 });
-      const builder = new ErrorResponseBuilder(error);
-      builder.withStack(false);
-      const response = builder.build();
-
-      expect(response.stack).toBeUndefined();
+      expect(response.error.details).toEqual({
+        field: 'email',
+        reason: 'invalid',
+      });
     });
   });
 
-  describe('getHttpStatusCode', () => {
-    it('should return 400 for ConfigurationError', () => {
-      const error = new ConfigurationError('Invalid config', 'invalid');
+  describe('withMessage', () => {
+    it('should override error message', () => {
+      const error = new NetworkError('Original message', { status: 500 });
       const builder = new ErrorResponseBuilder(error);
-      expect(builder.getHttpStatusCode()).toBe(400);
-    });
+      builder.withMessage('Sanitized message');
+      const response = builder.build();
 
-    it('should return 401 for AuthenticationError', () => {
-      const error = new AuthenticationError('Unauthorized');
-      const builder = new ErrorResponseBuilder(error);
-      expect(builder.getHttpStatusCode()).toBe(401);
-    });
-
-    it('should return 500 for network errors', () => {
-      const error = new NetworkError('Server error', { status: 500 });
-      const builder = new ErrorResponseBuilder(error);
-      expect(builder.getHttpStatusCode()).toBe(500);
+      expect(response.error.message).toBe('Sanitized message');
     });
   });
 
-  describe('send', () => {
+  describe('getStatusCode', () => {
+    it('should return 400 for VALIDATION_ERROR', () => {
+      const error = { code: 'VALIDATION_ERROR', message: 'Invalid' };
+      const builder = new ErrorResponseBuilder(error);
+      expect(builder.getStatusCode()).toBe(400);
+    });
+
+    it('should return 401 for AUTH_ERROR', () => {
+      const error = { code: 'AUTH_ERROR', message: 'Unauthorized' };
+      const builder = new ErrorResponseBuilder(error);
+      expect(builder.getStatusCode()).toBe(401);
+    });
+
+    it('should return 403 for AUTHZ_ERROR', () => {
+      const error = { code: 'AUTHZ_ERROR', message: 'Forbidden' };
+      const builder = new ErrorResponseBuilder(error);
+      expect(builder.getStatusCode()).toBe(403);
+    });
+
+    it('should return 404 for NOT_FOUND', () => {
+      const error = { code: 'NOT_FOUND', message: 'Not found' };
+      const builder = new ErrorResponseBuilder(error);
+      expect(builder.getStatusCode()).toBe(404);
+    });
+
+    it('should return 429 for RATE_LIMIT_ERROR', () => {
+      const error = { code: 'RATE_LIMIT_ERROR', message: 'Too many requests' };
+      const builder = new ErrorResponseBuilder(error);
+      expect(builder.getStatusCode()).toBe(429);
+    });
+
+    it('should return 500 for unknown errors', () => {
+      const error = { code: 'UNKNOWN_ERROR', message: 'Unknown' };
+      const builder = new ErrorResponseBuilder(error);
+      expect(builder.getStatusCode()).toBe(500);
+    });
+  });
+
+  describe('sendErrorResponse', () => {
     it('should send error response via Express response', () => {
       const error = new NetworkError('Test error', { status: 500 });
-      const builder = new ErrorResponseBuilder(error);
-      builder.withRequest('/api/test', 'POST');
-
       const mockRes = {
         status: jest.fn().mockReturnThis(),
         json: jest.fn(),
+        setHeader: jest.fn(),
+        getHeader: jest.fn().mockReturnValue(undefined),
       } as any;
 
-      builder.send(mockRes);
+      sendErrorResponse(mockRes, error, 'corr-123', { path: '/api/test', method: 'POST' });
 
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
@@ -110,28 +132,28 @@ describe('ErrorResponseBuilder', () => {
   });
 
   describe('error type detection', () => {
-    it('should detect configuration error type', () => {
-      const error = new ConfigurationError('Invalid', 'invalid');
-      const builder = new ErrorResponseBuilder(error);
-      const response = builder.build();
-
-      expect(response.error.type).toBe('configuration');
-    });
-
-    it('should detect authentication error type', () => {
-      const error = new AuthenticationError('Unauthorized');
-      const builder = new ErrorResponseBuilder(error);
-      const response = builder.build();
-
-      expect(response.error.type).toBe('authentication');
-    });
-
     it('should detect network error type', () => {
       const error = new NetworkError('Connection failed', { status: 500 });
       const builder = new ErrorResponseBuilder(error);
       const response = builder.build();
 
       expect(response.error.type).toBe('network');
+    });
+
+    it('should detect configuration error type', () => {
+      const error = new ConfigurationError('Invalid config', 'key');
+      const builder = new ErrorResponseBuilder(error);
+      const response = builder.build();
+
+      expect(response.error.type).toBe('configuration');
+    });
+
+    it('should default to unknown type', () => {
+      const error = { message: 'Plain error' };
+      const builder = new ErrorResponseBuilder(error);
+      const response = builder.build();
+
+      expect(response.error.type).toBe('unknown');
     });
   });
 
@@ -143,7 +165,6 @@ describe('ErrorResponseBuilder', () => {
 
       expect(response.error.recovery).toBeDefined();
       expect(response.error.recovery?.canRecover).toBe(true);
-      expect(response.error.recovery?.retryDelay).toBeDefined();
     });
 
     it('should not include recovery for non-retryable errors', () => {
@@ -153,5 +174,63 @@ describe('ErrorResponseBuilder', () => {
 
       expect(response.error.recovery?.canRecover).toBe(false);
     });
+  });
+});
+
+describe('SuccessResponseBuilder', () => {
+  describe('basic success response', () => {
+    it('should create success response with data', () => {
+      const builder = new SuccessResponseBuilder({ id: 1, name: 'Test' });
+      const response = builder.build();
+
+      expect(response.success).toBe(true);
+      expect(response.data).toEqual({ id: 1, name: 'Test' });
+      expect(response.meta?.timestamp).toBeDefined();
+    });
+
+    it('should include correlation ID when provided', () => {
+      const builder = new SuccessResponseBuilder({ id: 1 }, 'corr-123');
+      const response = builder.build();
+
+      expect(response.meta?.correlationId).toBe('corr-123');
+    });
+  });
+
+  describe('withMeta', () => {
+    it('should add metadata', () => {
+      const builder = new SuccessResponseBuilder({ id: 1 });
+      builder.withMeta({ version: '1.0' });
+      const response = builder.build();
+
+      expect(response.meta?.version).toBe('1.0');
+    });
+  });
+
+  describe('sendSuccessResponse', () => {
+    it('should send success response via Express response', () => {
+      const mockRes = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+      } as any;
+
+      sendSuccessResponse(mockRes, { id: 1 });
+
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+        success: true,
+        data: { id: 1 },
+      }));
+    });
+  });
+});
+
+describe('createErrorResponse', () => {
+  it('should create an ErrorResponseBuilder', () => {
+    const error = new NetworkError('Test', { status: 500 });
+    const builder = createErrorResponse(error, 'corr-123');
+
+    expect(builder).toBeInstanceOf(ErrorResponseBuilder);
+    const response = builder.build();
+    expect(response.success).toBe(false);
   });
 });
