@@ -72,6 +72,6 @@
     "packages/message-slack/src/**/*",
     "packages/message-mattermost/src/**/*"
   ],
-  "exclude": ["tests/**/*", "node_modules", "src/client/**/*"],
+  "exclude": ["tests/**/*", "node_modules", "src/client/**/*", "packages/**/*.test.ts"],
   "files": ["src/global.d.ts"]
 }
