@@ -27,6 +27,8 @@ export type { StatProps, StatsProps } from './Stat';
 export { default as Tabs } from './Tabs';
 export type { TabItem, TabsProps } from './Tabs';
 export { default as StepWizard } from './StepWizard';
+export { default as Steps } from './Steps';
+export type { StepItem, StepsProps } from './Steps';
 export { default as Timeline } from './Timeline';
 export { default as ToastNotification } from './ToastNotification';
 export { default as VisualFeedback } from './VisualFeedback';

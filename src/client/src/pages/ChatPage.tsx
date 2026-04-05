@@ -13,6 +13,7 @@ import { useMediaQuery } from '../hooks/useBreakpoint';
 import Drawer from '../components/DaisyUI/Drawer';
 import { BotListItem } from '../components/BotListItem';
 import Tooltip from '../components/DaisyUI/Tooltip';
+import Swap from '../components/DaisyUI/Swap';
 
 // Define Bot type based on API response
 export interface BotData {
@@ -289,7 +290,12 @@ const ChatPage: React.FC = () => {
               aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
               aria-expanded={sidebarOpen}
             >
-              {sidebarOpen ? <X className="w-5 h-5" /> : <LucideMenuIcon className="w-5 h-5" />}
+              <Swap
+                checked={sidebarOpen}
+                onContent={<X className="w-5 h-5" />}
+                offContent={<LucideMenuIcon className="w-5 h-5" />}
+                rotate
+              />
             </Button>
           </Tooltip>
         )}
