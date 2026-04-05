@@ -36,8 +36,26 @@ RUN if [ "$INCLUDE_FFMPEG" = "true" ]; then \
 
 WORKDIR /app
 
-COPY . .
+# ---------- Stage 1: Install deps (cached until package.json/lockfile changes) ----------
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY src/client/package.json src/client/
+COPY packages/llm-flowise/package.json packages/llm-flowise/
+COPY packages/llm-letta/package.json packages/llm-letta/
+COPY packages/llm-openai/package.json packages/llm-openai/
+COPY packages/llm-openswarm/package.json packages/llm-openswarm/
+COPY packages/llm-openwebui/package.json packages/llm-openwebui/
+COPY packages/memory-mem0/package.json packages/memory-mem0/
+COPY packages/memory-mem4ai/package.json packages/memory-mem4ai/
+COPY packages/message-discord/package.json packages/message-discord/
+COPY packages/message-mattermost/package.json packages/message-mattermost/
+COPY packages/message-slack/package.json packages/message-slack/
+COPY packages/shared-types/package.json packages/shared-types/
+COPY packages/tool-mcp/package.json packages/tool-mcp/
+
 RUN corepack enable && corepack prepare pnpm@latest --activate && pnpm install --no-frozen-lockfile
+
+# ---------- Stage 2: Copy source and build (only re-runs on code changes) ----------
+COPY . .
 
 # Rebuild sqlite3 native module for Alpine Linux
 RUN apk add --no-cache sqlite-dev make g++ python3 && \
