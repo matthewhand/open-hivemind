@@ -36,7 +36,7 @@ const MessageVolumeChart: React.FC = () => {
             <YAxis />
             <Tooltip />
             <Legend />
-            <Line type="monotone" dataKey="volume" stroke="#8884d8" name="Messages Processed" />
+            <Line type="monotone" dataKey="volume" stroke="var(--fallback-pc,oklch(var(--pc)/1))" name="Messages Processed" />
           </LineChart>
         </ResponsiveContainer>
       </Card.Body>

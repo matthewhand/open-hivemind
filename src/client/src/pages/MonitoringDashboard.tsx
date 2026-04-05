@@ -130,7 +130,7 @@ const MonitoringDashboard: React.FC = () => {
             label: 'CPU'
           }))}
           type="area"
-          color="#ef4444"
+          color="var(--fallback-er,oklch(var(--er)/1))"
           unit="%"
           refreshInterval={refreshInterval}
         />
@@ -142,7 +142,7 @@ const MonitoringDashboard: React.FC = () => {
             label: 'Memory'
           }))}
           type="line"
-          color="#3b82f6"
+          color="var(--fallback-p,oklch(var(--p)/1))"
           unit="%"
           refreshInterval={refreshInterval}
         />
@@ -157,7 +157,7 @@ const MonitoringDashboard: React.FC = () => {
             label: 'Messages'
           }))}
           type="bar"
-          color="#10b981"
+          color="var(--fallback-su,oklch(var(--su)/1))"
           unit="msgs/sec"
           refreshInterval={refreshInterval}
         />
@@ -169,7 +169,7 @@ const MonitoringDashboard: React.FC = () => {
             label: 'Errors'
           }))}
           type="line"
-          color="#f59e0b"
+          color="var(--fallback-wa,oklch(var(--wa)/1))"
           unit="%"
           refreshInterval={refreshInterval}
         />

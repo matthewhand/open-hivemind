@@ -163,7 +163,7 @@ const AnalyticsDashboard: React.FC = () => {
           title="Message Volume"
           data={messageVolumeData}
           type="area"
-          color="#8b5cf6"
+          color="var(--fallback-p,oklch(var(--p)/1))"
           unit="msgs"
           height={350}
         />
@@ -175,7 +175,7 @@ const AnalyticsDashboard: React.FC = () => {
             label: 'Latency'
           }))}
           type="line"
-          color="#ef4444"
+          color="var(--fallback-er,oklch(var(--er)/1))"
           unit="ms"
           height={350}
         />
