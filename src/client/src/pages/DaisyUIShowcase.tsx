@@ -30,6 +30,19 @@ import {
   TimelineDemo,
   CarouselDemo,
   ToastDemo,
+  CountdownDemo,
+  DiffDemo,
+  DividerDemo,
+  DrawerDemo,
+  HeroDemo,
+  IndicatorDemo,
+  JoinDemo,
+  KbdDemo,
+  MockupDemo,
+  NavbarDemo,
+  PaginationDemo,
+  RatingDemo,
+  ThemeControllerDemo,
 } from '../components/DaisyUI/demos/OtherComponentsDemo';
 
 /**
@@ -47,7 +60,9 @@ const DaisyUIShowcase: React.FC = () => {
     'toggle', 'radio', 'range', 'modal', 'dropdown', 'tabs', 'tooltip',
     'avatar', 'progress', 'loading', 'table', 'menu', 'collapse',
     'skeleton', 'breadcrumbs', 'textarea', 'file-input', 'steps', 'stat',
-    'chat', 'timeline', 'carousel', 'toast', 'animations',
+    'chat', 'timeline', 'carousel', 'toast', 'countdown', 'diff',
+    'divider', 'drawer', 'hero', 'indicator', 'join', 'kbd', 'mockup',
+    'navbar', 'pagination', 'rating', 'theme-controller', 'animations',
   ];
 
   const componentTabs: TabItem[] = useMemo(() =>
@@ -109,6 +124,19 @@ const DaisyUIShowcase: React.FC = () => {
       {activeTab === 'timeline' && <TimelineDemo />}
       {activeTab === 'carousel' && <CarouselDemo />}
       {activeTab === 'toast' && <ToastDemo />}
+      {activeTab === 'countdown' && <CountdownDemo />}
+      {activeTab === 'diff' && <DiffDemo />}
+      {activeTab === 'divider' && <DividerDemo />}
+      {activeTab === 'drawer' && <DrawerDemo />}
+      {activeTab === 'hero' && <HeroDemo />}
+      {activeTab === 'indicator' && <IndicatorDemo />}
+      {activeTab === 'join' && <JoinDemo />}
+      {activeTab === 'kbd' && <KbdDemo />}
+      {activeTab === 'mockup' && <MockupDemo />}
+      {activeTab === 'navbar' && <NavbarDemo />}
+      {activeTab === 'pagination' && <PaginationDemo />}
+      {activeTab === 'rating' && <RatingDemo />}
+      {activeTab === 'theme-controller' && <ThemeControllerDemo />}
       {activeTab === 'animations' && <AnimationShowcaseDemo />}
 
       {/* Modal */}
