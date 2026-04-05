@@ -8,9 +8,7 @@ import DataTable from '../components/DaisyUI/DataTable';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import Button from '../components/DaisyUI/Button';
 import { BarChart3, RefreshCw } from 'lucide-react';
-import { Alert } from '../components/DaisyUI/Alert';
 import { useErrorToast } from '../components/DaisyUI/ToastNotification';
-import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import Card from '../components/DaisyUI/Card';
 import Select from '../components/DaisyUI/Select';
 
@@ -111,9 +109,6 @@ const AnalyticsDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-base-200 p-6">
-      {/* WIP Banner */}
-      <Alert status="info" className="mb-6" message="This feature is in preview mode. Historical data availability may be limited as we improve our data retention capabilities." />
-
       {/* Header */}
       <PageHeader
         title="Analytics Dashboard"
@@ -123,21 +118,22 @@ const AnalyticsDashboard: React.FC = () => {
         actions={
           <div className="flex gap-4">
             <Select
-              className="select-bordered"
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
-            >
-              <option value="1h">Last Hour</option>
-              <option value="24h">Last 24 Hours</option>
-              <option value="7d">Last 7 Days</option>
-              <option value="30d">Last 30 Days</option>
-            </Select>
+              options={[
+                { label: 'Last Hour', value: '1h' },
+                { label: 'Last 24 Hours', value: '24h' },
+                { label: 'Last 7 Days', value: '7d' },
+                { label: 'Last 30 Days', value: '30d' },
+              ]}
+              className="w-auto"
+            />
             <Button
               variant="primary"
               onClick={fetchAnalyticsData}
-              disabled={isLoading}
+              loading={isLoading}
             >
-              {isLoading ? <LoadingSpinner size="sm" /> : <RefreshCw className="w-4 h-4" />} Refresh
+              <RefreshCw className="w-4 h-4" /> Refresh
             </Button>
           </div>
         }
