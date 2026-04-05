@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  CheckCircle, XCircle, AlertTriangle, Info, RefreshCw, ShieldCheck, Loader2,
+  CheckCircle, XCircle, AlertTriangle, Info, RefreshCw, ShieldCheck,
 } from 'lucide-react';
+import { LoadingSpinner } from './DaisyUI/Loading';
 import { apiService } from '../services/api';
 import type { BotConfig } from '../types/bot';
 
@@ -187,7 +188,7 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
         <h4 className="text-[10px] font-bold uppercase opacity-50 mb-1.5">Backend Validation</h4>
         {loading ? (
           <div className="flex items-center gap-2 py-2 text-[11px] opacity-60" data-testid="validation-loading">
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            <LoadingSpinner size="xs" />
             <span>Validating configuration...</span>
           </div>
         ) : backendError ? (

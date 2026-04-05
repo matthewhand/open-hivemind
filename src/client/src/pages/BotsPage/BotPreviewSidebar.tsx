@@ -156,10 +156,10 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
             <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
               <div className="flex items-center justify-end mb-2">
                 <Join className="w-full">
-                  <input
-                    type="text"
+                  <Input
+                    size="xs"
                     placeholder="Filter..."
-                    className="input input-xs input-bordered join-item flex-1"
+                    className="join-item flex-1"
                     value={logFilter}
                     onChange={(e) => setLogFilter(e.target.value)}
                   />

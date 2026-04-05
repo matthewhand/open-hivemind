@@ -82,10 +82,10 @@ const PerformanceMonitor: React.FC = () => {
         <Button
           variant="secondary"
           onClick={() => refetch()}
-          disabled={isFetching}
+          loading={isFetching}
           className="btn-outline flex items-center gap-2"
         >
-          <ArrowPathIcon className={`w-5 h-5 ${isFetching ? 'animate-spin' : ''}`} />
+          <ArrowPathIcon className="w-5 h-5" />
           Refresh
         </Button>
       </div>

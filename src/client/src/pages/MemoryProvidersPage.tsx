@@ -336,10 +336,10 @@ const MemoryProvidersPage: React.FC = () => {
                         variant="ghost"
                         className="text-info hover:bg-info/10"
                         onClick={() => handleTestProfile(profile.key)}
-                        disabled={isTesting}
+                        loading={isTesting}
                         aria-label={`Test ${profile.name} provider`}
                       >
-                        {isTesting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <TestIcon className="w-4 h-4" />}
+                        <TestIcon className="w-4 h-4" />
                         <span className="ml-1 text-xs">Test</span>
                       </Button>
                       <Button size="sm" variant="ghost" onClick={() => handleEditProfile(profile)} aria-label={`Edit ${profile.name} profile`}><EditIcon className="w-4 h-4" /></Button>

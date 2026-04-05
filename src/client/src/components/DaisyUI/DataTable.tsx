@@ -3,6 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { useIsBelowBreakpoint } from '../../hooks/useBreakpoint';
 import Checkbox from './Checkbox';
 import Toggle from './Toggle';
+import Input from './Input';
 
 // ── Column / row types ──────────────────────────────────────────────────────
 
@@ -352,12 +353,12 @@ const DataTable = <T extends Record<string, any>>({
       <div className="flex items-center gap-2">
         {searchable && (
           <div className="form-control">
-            <input
-              type="text"
+            <Input
+              size="sm"
               placeholder="Search..."
               aria-label="Search table data"
               role="searchbox"
-              className="input input-bordered input-sm w-full max-w-xs"
+              className="w-full max-w-xs"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />

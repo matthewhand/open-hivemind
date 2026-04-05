@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Card from '../DaisyUI/Card';
 import Badge from '../DaisyUI/Badge';
 import Button from '../DaisyUI/Button';
+import Input from '../DaisyUI/Input';
 import DataTable from '../DaisyUI/DataTable';
 import { SkeletonTimeline } from '../DaisyUI/Skeleton';
 import EmptyState from '../DaisyUI/EmptyState';
@@ -301,20 +302,20 @@ const ActivityMonitor: React.FC = () => {
         ]}
       >
         <div className="flex items-center gap-2">
-          <input
+          <Input
             type="date"
-            className="input input-sm input-bordered"
+            size="sm"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            placeholder="Start Date"
+            className="w-auto"
           />
           <span className="text-base-content/50">-</span>
-          <input
+          <Input
             type="date"
-            className="input input-sm input-bordered"
+            size="sm"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            placeholder="End Date"
+            className="w-auto"
           />
         </div>
       </SearchFilterBar>

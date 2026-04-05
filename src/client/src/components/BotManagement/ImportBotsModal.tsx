@@ -196,8 +196,8 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
             )}
             <div className="flex gap-2 justify-end pt-2">
               <Button variant="ghost" size="sm" onClick={reset}><X className="w-4 h-4 mr-1" /> Cancel</Button>
-              <Button variant="primary" size="sm" onClick={handleImport} disabled={importing}>
-                {importing ? <RefreshCw className="w-4 h-4 mr-1 animate-spin" /> : <ArrowRight className="w-4 h-4 mr-1" />}
+              <Button variant="primary" size="sm" onClick={handleImport} loading={importing}>
+                <ArrowRight className="w-4 h-4 mr-1" />
                 {importing ? 'Importing...' : 'Confirm Import'}
               </Button>
             </div>

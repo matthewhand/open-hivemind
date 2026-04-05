@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { ProviderConfigFormProps, ProviderConfigField } from '../provider-configs/types';
+import Avatar from './DaisyUI/Avatar';
 import Input from './DaisyUI/Input';
 import Select from './DaisyUI/Select';
 import Textarea from './DaisyUI/Textarea';
@@ -479,7 +480,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
       {avatarUrl && (
         <Card className="p-3">
           <p className="text-sm text-base-content/80 mb-2">Avatar loaded successfully:</p>
-          <img src={avatarUrl} alt="Provider avatar" className="w-12 h-12 rounded-full" />
+          <Avatar size="md" shape="circle" src={avatarUrl} alt="Provider avatar" />
         </Card>
       )}
     </div>

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Avatar from './Avatar';
+import Input from './Input';
 
 export interface ChatMessage {
   id: string;
@@ -270,14 +271,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       {/* Input Area */}
       <div className="p-4 border-t border-base-200">
         <form onSubmit={handleSubmit} className="flex gap-2">
-          <input
+          <Input
             ref={inputRef}
-            type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyPress}
             placeholder={placeholder}
-            className="input input-bordered flex-1"
+            className="flex-1"
             disabled={isLoading || disabled}
           />
 
