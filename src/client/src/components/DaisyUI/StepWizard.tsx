@@ -193,8 +193,8 @@ const StepWizard: React.FC<StepWizardProps> = ({
             </div>
           </div>
 
-          {/* Step Content */}
-          <div className="min-h-[300px]">
+          {/* Step Content — keyed to force remount on step change */}
+          <div className="min-h-[300px]" key={`step-content-${activeStep}`}>
             {steps[activeStep]?.content}
           </div>
         </div>
@@ -203,13 +203,14 @@ const StepWizard: React.FC<StepWizardProps> = ({
       {/* Navigation Buttons */}
       <div className="flex justify-between items-center">
         <div className="flex gap-2">
-          <button
-            className="btn btn-ghost"
-            onClick={handlePrevious}
-            disabled={activeStep === 0}
-          >
-            ← Previous
-          </button>
+          {activeStep > 0 && (
+            <button
+              className="btn btn-ghost"
+              onClick={handlePrevious}
+            >
+              ← Previous
+            </button>
+          )}
 
           {allowSkip && activeStep < steps.length - 1 && steps[activeStep]?.optional && (
             <button
@@ -242,34 +243,7 @@ const StepWizard: React.FC<StepWizardProps> = ({
         </div>
       </div>
 
-      {/* Step Summary (for completed steps) */}
-      {completedSteps.size > 0 && (
-        <div className="mt-8">
-          <div className="collapse collapse-arrow bg-base-200">
-            <input type="checkbox" aria-label="Toggle Review Completed Steps" />
-            <div className="collapse-title text-xl font-medium">
-              Review Completed Steps ({completedSteps.size}/{steps.length})
-            </div>
-            <div className="collapse-content">
-              <div className="space-y-2">
-                {Array.from(completedSteps).map(stepIndex => (
-                  <div key={stepIndex} className="flex items-center gap-3 p-2 bg-base-100 rounded">
-                    <div className="badge badge-success">✓</div>
-                    <div>
-                      <div className="font-medium">{steps[stepIndex]?.title}</div>
-                      {steps[stepIndex]?.description && (
-                        <div className="text-sm text-base-content/60">
-                          {steps[stepIndex].description}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Step Summary removed — was confusing in modal context (looked like multiple steps visible) */}
     </div>
   );
 };

@@ -24,7 +24,7 @@ const isTest = process.env.NODE_ENV === 'test';
 const RATE_LIMIT_CONFIG = {
   default: {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10), // 15 minutes
-    max: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
+    max: parseInt(process.env.RATE_LIMIT_MAX || '500', 10),
   },
   auth: {
     windowMs: parseInt(process.env.RATE_LIMIT_AUTH_WINDOW_MS || '3600000', 10), // 1 hour
@@ -32,15 +32,15 @@ const RATE_LIMIT_CONFIG = {
   },
   config: {
     windowMs: parseInt(process.env.RATE_LIMIT_CONFIG_WINDOW_MS || '300000', 10), // 5 minutes
-    max: parseInt(process.env.RATE_LIMIT_CONFIG_MAX || '10', 10),
+    max: parseInt(process.env.RATE_LIMIT_CONFIG_MAX || '200', 10),
   },
   admin: {
     windowMs: parseInt(process.env.RATE_LIMIT_ADMIN_WINDOW_MS || '900000', 10), // 15 minutes
-    max: parseInt(process.env.RATE_LIMIT_ADMIN_MAX || '20', 10),
+    max: parseInt(process.env.RATE_LIMIT_ADMIN_MAX || '200', 10),
   },
   api: {
     windowMs: parseInt(process.env.RATE_LIMIT_API_WINDOW_MS || '60000', 10), // 1 minute
-    max: parseInt(process.env.RATE_LIMIT_API_MAX || '60', 10),
+    max: parseInt(process.env.RATE_LIMIT_API_MAX || '300', 10),
   },
 };
 

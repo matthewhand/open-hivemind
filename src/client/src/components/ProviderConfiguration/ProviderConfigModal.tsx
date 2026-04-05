@@ -498,7 +498,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
                 onTestConnection={async (config) => {
                   // Enhanced test connection with provider-specific validation
                   try {
-                    await apiService.post('/api/v1/admin/providers/test-connection', {
+                    await apiService.post('/api/admin/providers/test-connection', {
                       providerType: selectedType,
                       config,
                     });
