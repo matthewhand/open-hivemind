@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Shield, RefreshCw, AlertTriangle, Plus, Copy, Trash2, Edit2 } from 'lucide-react';
+import { Shield, RefreshCw, AlertTriangle, Plus, Copy, Trash2, Edit2, CheckCircle, XCircle } from 'lucide-react';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import Card from '../components/DaisyUI/Card';
 import Divider from '../components/DaisyUI/Divider';
@@ -15,6 +15,7 @@ import { FormField } from '../components/DaisyUI/formTypes';
 import RangeSlider from '../components/DaisyUI/RangeSlider';
 import { Badge } from '../components/DaisyUI/Badge';
 import Accordion from '../components/DaisyUI/Accordion';
+import DetailDrawer from '../components/DaisyUI/DetailDrawer';
 import { GuardProfile } from '@shared/types/models/security';
 import { useToast } from '../components/DaisyUI/ToastNotification';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
@@ -117,11 +118,29 @@ const defaultNewProfile: Omit<GuardProfile, 'id' | 'createdAt' | 'updatedAt'> = 
   }
 };
 
+/** Read-only status row for the detail drawer */
+const GuardStatusRow: React.FC<{ icon: React.ReactNode; label: string; enabled: boolean; detail: string }> = ({ icon, label, enabled, detail }) => (
+  <div className="flex items-center justify-between py-2">
+    <span className="flex items-center gap-2 text-sm font-medium">
+      {icon} {label}
+    </span>
+    <div className="flex items-center gap-2">
+      {enabled ? (
+        <CheckCircle className="w-4 h-4 text-success" />
+      ) : (
+        <XCircle className="w-4 h-4 text-base-content/30" />
+      )}
+      <Badge variant={enabled ? 'primary' : 'ghost'} size="sm">{detail}</Badge>
+    </div>
+  </div>
+);
+
 const GuardsPage: React.FC = () => {
   const { addToast } = useToast();
   const queryClient = useQueryClient();
   const [editingProfile, setEditingProfile] = useState<Partial<GuardProfile> | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<GuardProfile | null>(null);
+  const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
 
   const { data: response, isLoading } = useQuery<{ data: GuardProfile[] }>({
     queryKey: ['guardProfiles'],
@@ -133,6 +152,7 @@ const GuardsPage: React.FC = () => {
   });
 
   const profiles = response?.data || [];
+  const selectedProfile = profiles.find(p => p.id === selectedProfileId) || null;
 
   const createMutation = useMutation({
     mutationFn: async (profile: Partial<GuardProfile>) => {
@@ -184,6 +204,7 @@ const GuardsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['guardProfiles'] });
       addToast({ type: 'success', message: 'Profile deleted successfully' });
       setDeleteConfirm(null);
+      setSelectedProfileId(null);
     },
     onError: (error) => {
       addToast({ type: 'error', message: error instanceof Error ? error.message : 'Failed to delete profile' });
@@ -192,6 +213,7 @@ const GuardsPage: React.FC = () => {
   });
 
   const handleDuplicate = (profile: GuardProfile) => {
+    setSelectedProfileId(null);
     setEditingProfile({
       ...profile,
       id: undefined,
@@ -439,7 +461,11 @@ const GuardsPage: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {profiles.map(profile => (
-            <Card key={profile.id} className="hover:shadow-lg transition-shadow">
+            <Card
+              key={profile.id}
+              className="hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => setSelectedProfileId(profile.id)}
+            >
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h3 className="text-lg font-bold">{profile.name}</h3>
@@ -482,7 +508,7 @@ const GuardsPage: React.FC = () => {
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => handleDuplicate(profile)}
+                  onClick={(e) => { e.stopPropagation(); handleDuplicate(profile); }}
                   title="Duplicate Profile"
                   aria-label="Duplicate profile"
                 >
@@ -491,7 +517,7 @@ const GuardsPage: React.FC = () => {
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => setEditingProfile(profile)}
+                  onClick={(e) => { e.stopPropagation(); setEditingProfile(profile); }}
                   title="Edit Profile"
                 >
                   <Edit2 className="w-4 h-4" />
@@ -500,7 +526,7 @@ const GuardsPage: React.FC = () => {
                   size="sm"
                   variant="ghost"
                   color="error"
-                  onClick={() => setDeleteConfirm(profile)}
+                  onClick={(e) => { e.stopPropagation(); setDeleteConfirm(profile); }}
                   title="Delete Profile"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -510,6 +536,133 @@ const GuardsPage: React.FC = () => {
           ))}
         </div>
       )}
+
+      {/* Guard Profile Detail Drawer */}
+      <DetailDrawer
+        isOpen={!!selectedProfile}
+        onClose={() => setSelectedProfileId(null)}
+        title={selectedProfile?.name}
+        subtitle={selectedProfile?.description || 'No description'}
+      >
+        {selectedProfile && (
+          <div className="space-y-6">
+            {/* Guard Rules */}
+            <Card className="bg-base-200">
+              <h4 className="font-semibold text-sm uppercase tracking-wide text-base-content/60 mb-3">Guard Rules</h4>
+              <div className="divide-y divide-base-300">
+                <GuardStatusRow
+                  icon={<Shield className="w-4 h-4 text-primary" />}
+                  label="Access Control"
+                  enabled={selectedProfile.guards.mcpGuard.enabled}
+                  detail={selectedProfile.guards.mcpGuard.enabled ? selectedProfile.guards.mcpGuard.type : 'Disabled'}
+                />
+                {selectedProfile.guards.mcpGuard.enabled && (
+                  <div className="py-2 pl-6 space-y-2">
+                    {selectedProfile.guards.mcpGuard.type === 'custom' && (selectedProfile.guards.mcpGuard.allowedUsers?.length ?? 0) > 0 && (
+                      <div>
+                        <span className="text-xs text-base-content/50">Allowed Users</span>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {selectedProfile.guards.mcpGuard.allowedUsers?.map((u: string) => (
+                            <Badge key={u} variant="neutral" size="sm">{u}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {(selectedProfile.guards.mcpGuard.allowedTools?.length ?? 0) > 0 && (
+                      <div>
+                        <span className="text-xs text-base-content/50">Allowed Tools</span>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {selectedProfile.guards.mcpGuard.allowedTools?.map((t: string) => (
+                            <Badge key={t} variant="info" size="sm">{t}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <GuardStatusRow
+                  icon={<RefreshCw className="w-4 h-4 text-primary" />}
+                  label="Rate Limit"
+                  enabled={!!selectedProfile.guards.rateLimit?.enabled}
+                  detail={
+                    selectedProfile.guards.rateLimit?.enabled
+                      ? `${selectedProfile.guards.rateLimit.maxRequests} req / ${selectedProfile.guards.rateLimit.windowMs / 1000}s`
+                      : 'Disabled'
+                  }
+                />
+
+                <GuardStatusRow
+                  icon={<AlertTriangle className="w-4 h-4 text-error" />}
+                  label="Content Filter"
+                  enabled={!!selectedProfile.guards.contentFilter?.enabled}
+                  detail={
+                    selectedProfile.guards.contentFilter?.enabled
+                      ? selectedProfile.guards.contentFilter.strictness
+                      : 'Disabled'
+                  }
+                />
+                {selectedProfile.guards.contentFilter?.enabled && (selectedProfile.guards.contentFilter.blockedTerms?.length ?? 0) > 0 && (
+                  <div className="py-2 pl-6">
+                    <span className="text-xs text-base-content/50">Blocked Terms</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {selectedProfile.guards.contentFilter.blockedTerms?.map((t: string) => (
+                        <Badge key={t} variant="error" size="sm">{t}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            {/* Timestamps */}
+            {(selectedProfile.createdAt || selectedProfile.updatedAt) && (
+              <div className="text-xs text-base-content/50 space-y-1">
+                {selectedProfile.createdAt && (
+                  <p>Created: {new Date(selectedProfile.createdAt).toLocaleString()}</p>
+                )}
+                {selectedProfile.updatedAt && (
+                  <p>Updated: {new Date(selectedProfile.updatedAt).toLocaleString()}</p>
+                )}
+              </div>
+            )}
+
+            <Divider />
+
+            {/* Actions */}
+            <div className="flex flex-col gap-2">
+              <Button
+                color="primary"
+                className="w-full"
+                onClick={() => {
+                  setSelectedProfileId(null);
+                  setEditingProfile(selectedProfile);
+                }}
+              >
+                <Edit2 className="w-4 h-4 mr-2" /> Edit Profile
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => handleDuplicate(selectedProfile)}
+              >
+                <Copy className="w-4 h-4 mr-2" /> Duplicate
+              </Button>
+              <Button
+                variant="outline"
+                color="error"
+                className="w-full"
+                onClick={() => {
+                  setSelectedProfileId(null);
+                  setDeleteConfirm(selectedProfile);
+                }}
+              >
+                <Trash2 className="w-4 h-4 mr-2" /> Delete
+              </Button>
+            </div>
+          </div>
+        )}
+      </DetailDrawer>
 
       {editingProfile && (
         <ModalForm
