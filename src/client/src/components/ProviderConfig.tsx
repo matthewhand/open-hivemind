@@ -7,6 +7,7 @@ import { Badge } from './DaisyUI/Badge';
 import Card from './DaisyUI/Card';
 import Input from './DaisyUI/Input';
 import Select from './DaisyUI/Select';
+import Swap from './DaisyUI/Swap';
 import Textarea from './DaisyUI/Textarea';
 import Tooltip from './DaisyUI/Tooltip';
 
@@ -128,7 +129,12 @@ const ProviderConfig: React.FC<ProviderConfigProps> = ({
                 onClick={() => toggleSensitiveData(key)}
                 aria-label={showData ? `Hide ${label}` : `Show ${label}`}
               >
-                {showData ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                <Swap
+                  checked={showData}
+                  onContent={<EyeOff className="w-4 h-4" />}
+                  offContent={<Eye className="w-4 h-4" />}
+                  flip
+                />
               </button>
             </span>
           )}
@@ -169,7 +175,12 @@ const ProviderConfig: React.FC<ProviderConfigProps> = ({
                 onClick={() => toggleSensitiveData(key)}
                 aria-label={showData ? `Hide ${label}` : `Show ${label}`}
               >
-                {showData ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                <Swap
+                  checked={showData}
+                  onContent={<EyeOff className="w-4 h-4" />}
+                  offContent={<Eye className="w-4 h-4" />}
+                  flip
+                />
               </button>
             )}
           </div>

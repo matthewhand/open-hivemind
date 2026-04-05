@@ -22,6 +22,7 @@ import Textarea from '../components/DaisyUI/Textarea';
 import { apiService } from '../services/api';
 import { ErrorService } from '../services/ErrorService';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import Carousel from '../components/DaisyUI/Carousel';
 
 interface ConfigurationTemplate {
   id: string;
@@ -124,6 +125,38 @@ const TemplatesPage: React.FC = () => {
       return matchesSearch && matchesCategory;
     });
   }, [templates, searchQuery, selectedCategory]);
+
+  // Build carousel items from most popular templates
+  const featuredCarouselItems = useMemo(() => {
+    const popular = [...templates]
+      .sort((a, b) => b.usageCount - a.usageCount)
+      .slice(0, 4);
+
+    if (popular.length === 0) {
+      return [
+        {
+          image: '',
+          title: 'Configuration Templates',
+          description: 'Pre-built bot configurations for Discord, Slack, Mattermost, and more.',
+          bgGradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+        },
+      ];
+    }
+
+    const gradients = [
+      'linear-gradient(135deg, #6366f1, #8b5cf6)',
+      'linear-gradient(135deg, #0ea5e9, #38bdf8)',
+      'linear-gradient(135deg, #f59e0b, #fbbf24)',
+      'linear-gradient(135deg, #10b981, #34d399)',
+    ];
+
+    return popular.map((t, i) => ({
+      image: '',
+      title: t.name,
+      description: t.description || `A ${t.category} template used ${t.usageCount} times.`,
+      bgGradient: gradients[i % gradients.length],
+    }));
+  }, [templates]);
 
   // Group templates by category
   const groupedTemplates = useMemo(() => {
@@ -256,6 +289,13 @@ const TemplatesPage: React.FC = () => {
         onSearchChange={setSearchQuery}
         searchPlaceholder="Search templates by name, description, or tags..."
       />
+
+      {/* Featured Templates Carousel */}
+      {templates.length > 0 && (
+        <div className="rounded-xl overflow-hidden">
+          <Carousel items={featuredCarouselItems} autoplay interval={6000} variant="full-width" />
+        </div>
+      )}
 
       {/* Templates Grid */}
       {filteredTemplates.length === 0 ? (

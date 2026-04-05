@@ -4,6 +4,7 @@ import Card from '../DaisyUI/Card';
 import Badge from '../DaisyUI/Badge';
 import { Alert } from '../DaisyUI/Alert';
 import { SkeletonList } from '../DaisyUI/Skeleton';
+import RadialProgress from '../DaisyUI/RadialProgress';
 import {
   CheckCircle,
   AlertTriangle,
@@ -13,6 +14,7 @@ import {
   RefreshCw,
   Activity,
 } from 'lucide-react';
+import Swap from '../DaisyUI/Swap';
 import { apiService } from '../../services/api';
 
 interface ServiceStatus {
@@ -174,9 +176,17 @@ const HealthCheckWidget: React.FC<HealthCheckWidgetProps> = ({
 
         {/* Overall Summary */}
         <div
-          className={`flex items-center gap-3 p-3 rounded-lg mb-4 ${summaryConfig.bg} border ${summaryConfig.border}`}
+          className={`flex items-center gap-4 p-3 rounded-lg mb-4 ${summaryConfig.bg} border ${summaryConfig.border}`}
         >
-          <SummaryIcon className={`w-5 h-5 ${summaryConfig.color}`} />
+          <RadialProgress
+            value={totalCount > 0 ? Math.round((healthyCount / totalCount) * 100) : 0}
+            size="3.5rem"
+            thickness="0.3rem"
+            color={summaryConfig.badge === 'success' ? 'success' : summaryConfig.badge === 'warning' ? 'warning' : 'error'}
+            className="text-xs font-bold flex-shrink-0"
+          >
+            {totalCount > 0 ? Math.round((healthyCount / totalCount) * 100) : 0}%
+          </RadialProgress>
           <div className="flex-1">
             <span className="font-medium text-sm">
               {healthyCount}/{totalCount} services healthy
@@ -218,11 +228,12 @@ const HealthCheckWidget: React.FC<HealthCheckWidgetProps> = ({
                       {formatLatency(service.latencyMs)} latency
                     </div>
                   </div>
-                  {isExpanded ? (
-                    <ChevronUp className="w-4 h-4 text-base-content/40" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4 text-base-content/40" />
-                  )}
+                  <Swap
+                    checked={isExpanded}
+                    onContent={<ChevronUp className="w-4 h-4 text-base-content/40" />}
+                    offContent={<ChevronDown className="w-4 h-4 text-base-content/40" />}
+                    rotate
+                  />
                 </button>
 
                 {isExpanded && (

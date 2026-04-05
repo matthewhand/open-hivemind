@@ -13,6 +13,7 @@ import Validator, { ValidatorHint } from '../components/DaisyUI/Validator';
 import Steps from '../components/DaisyUI/Steps';
 import Button from '../components/DaisyUI/Button';
 import FormField from '../components/DaisyUI/FormField';
+import Validator, { ValidatorHint } from '../components/DaisyUI/Validator';
 import ProgressBar from '../components/DaisyUI/ProgressBar';
 import StepWizard from '../components/DaisyUI/StepWizard';
 import { Alert } from '../components/DaisyUI/Alert';
@@ -22,6 +23,10 @@ import Card from '../components/DaisyUI/Card';
 import Link from '../components/DaisyUI/Link';
 import Select from '../components/DaisyUI/Select';
 import Textarea from '../components/DaisyUI/Textarea';
+import Carousel from '../components/DaisyUI/Carousel';
+import Countdown from '../components/DaisyUI/Countdown';
+import Figure from '../components/DaisyUI/Figure';
+import Stack from '../components/DaisyUI/Stack';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -67,9 +72,17 @@ type MessengerStepValues = z.infer<typeof messengerStepSchema>;
 const WelcomeStep: React.FC = () => (
   <div className="text-center space-y-6 py-4">
     <div className="flex justify-center">
-      <div className="p-6 bg-primary/10 rounded-full">
-        <Sparkles className="w-16 h-16 text-primary" />
-      </div>
+      <Stack>
+        <div className="p-6 bg-primary/10 rounded-full">
+          <Sparkles className="w-16 h-16 text-primary" />
+        </div>
+        <div className="p-6 bg-secondary/10 rounded-full">
+          <Bot className="w-16 h-16 text-secondary" />
+        </div>
+        <div className="p-6 bg-accent/10 rounded-full">
+          <MessageSquare className="w-16 h-16 text-accent" />
+        </div>
+      </Stack>
     </div>
     <h2 className="text-3xl font-bold">Welcome to Open-Hivemind</h2>
     <p className="text-lg text-base-content/70 max-w-xl mx-auto">
@@ -77,21 +90,27 @@ const WelcomeStep: React.FC = () => (
       and connect them to messaging platforms like Discord, Slack, and Mattermost.
     </p>
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto pt-4">
-      <Card bgVariant="ghost" className="bg-base-200 text-center" compact>
+      <Figure
+        caption={<span className="text-xs text-base-content/60">Connect OpenAI, Anthropic, and more</span>}
+        className="bg-base-200 rounded-xl p-4 text-center"
+      >
         <Cpu className="w-8 h-8 mx-auto mb-2 text-primary" />
         <h4 className="font-semibold text-sm">LLM Providers</h4>
-        <p className="text-xs text-base-content/60">Connect OpenAI, Anthropic, and more</p>
-      </Card>
-      <Card bgVariant="ghost" className="bg-base-200 text-center" compact>
+      </Figure>
+      <Figure
+        caption={<span className="text-xs text-base-content/60">Create specialized agents</span>}
+        className="bg-base-200 rounded-xl p-4 text-center"
+      >
         <Bot className="w-8 h-8 mx-auto mb-2 text-secondary" />
         <h4 className="font-semibold text-sm">AI Bots</h4>
-        <p className="text-xs text-base-content/60">Create specialized agents</p>
-      </Card>
-      <Card bgVariant="ghost" className="bg-base-200 text-center" compact>
+      </Figure>
+      <Figure
+        caption={<span className="text-xs text-base-content/60">Discord, Slack, Mattermost</span>}
+        className="bg-base-200 rounded-xl p-4 text-center"
+      >
         <MessageSquare className="w-8 h-8 mx-auto mb-2 text-accent" />
         <h4 className="font-semibold text-sm">Messengers</h4>
-        <p className="text-xs text-base-content/60">Discord, Slack, Mattermost</p>
-      </Card>
+      </Figure>
     </div>
     <p className="text-sm text-base-content/50">
       This wizard will guide you through initial setup in just a few minutes.
@@ -361,43 +380,55 @@ interface DoneStepProps {
   llmProvider: string;
   botName: string;
   messenger: string;
+  onAutoRedirect?: () => void;
 }
 
-const DoneStep: React.FC<DoneStepProps> = ({ llmProvider, botName, messenger }) => (
-  <div className="text-center space-y-6 py-4">
-    <div className="flex justify-center">
-      <div className="p-6 bg-success/10 rounded-full">
-        <CheckCircle2 className="w-16 h-16 text-success" />
-      </div>
-    </div>
-    <h2 className="text-3xl font-bold">You are All Set!</h2>
-    <p className="text-lg text-base-content/70 max-w-lg mx-auto">
-      Your Open-Hivemind instance is configured and ready to go.
-    </p>
+const DONE_STEP_COUNTDOWN_MS = 30_000; // 30 seconds auto-redirect
 
-    <Card bgVariant="ghost" className="bg-base-200 max-w-md mx-auto">
-        <h4 className="font-bold mb-3">Configuration Summary</h4>
-        <div className="space-y-2 text-left text-sm">
-          <div className="flex justify-between">
-            <span className="text-base-content/60">LLM Provider:</span>
-            <span className="font-semibold capitalize">{llmProvider || 'Skipped'}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-base-content/60">Bot:</span>
-            <span className="font-semibold">{botName || 'Skipped'}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-base-content/60">Messenger:</span>
-            <span className="font-semibold capitalize">{messenger || 'Skipped'}</span>
-          </div>
+const DoneStep: React.FC<DoneStepProps> = ({ llmProvider, botName, messenger, onAutoRedirect }) => {
+  const [redirectTarget] = useState(() => Date.now() + DONE_STEP_COUNTDOWN_MS);
+
+  return (
+    <div className="text-center space-y-6 py-4">
+      <div className="flex justify-center">
+        <div className="p-6 bg-success/10 rounded-full">
+          <CheckCircle2 className="w-16 h-16 text-success" />
         </div>
-    </Card>
+      </div>
+      <h2 className="text-3xl font-bold">You are All Set!</h2>
+      <p className="text-lg text-base-content/70 max-w-lg mx-auto">
+        Your Open-Hivemind instance is configured and ready to go.
+      </p>
 
-    <p className="text-sm text-base-content/50">
-      You can change any of these settings from the admin dashboard at any time.
-    </p>
-  </div>
-);
+      <Card bgVariant="ghost" className="bg-base-200 max-w-md mx-auto">
+          <h4 className="font-bold mb-3">Configuration Summary</h4>
+          <div className="space-y-2 text-left text-sm">
+            <div className="flex justify-between">
+              <span className="text-base-content/60">LLM Provider:</span>
+              <span className="font-semibold capitalize">{llmProvider || 'Skipped'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-base-content/60">Bot:</span>
+              <span className="font-semibold">{botName || 'Skipped'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-base-content/60">Messenger:</span>
+              <span className="font-semibold capitalize">{messenger || 'Skipped'}</span>
+            </div>
+          </div>
+      </Card>
+
+      <div className="flex items-center justify-center gap-2 text-sm text-base-content/50">
+        <span>Redirecting to dashboard in</span>
+        <Countdown targetDate={redirectTarget} size="sm" compact onComplete={onAutoRedirect} />
+      </div>
+
+      <p className="text-sm text-base-content/50">
+        You can change any of these settings from the admin dashboard at any time.
+      </p>
+    </div>
+  );
+};
 
 // ---------------------------------------------------------------------------
 // Main OnboardingPage Component
@@ -615,6 +646,7 @@ const OnboardingPage: React.FC = () => {
                 llmProvider={llmProvider}
                 botName={botName}
                 messenger={messenger}
+                onAutoRedirect={handleFinish}
               />
             )}
           </div>
