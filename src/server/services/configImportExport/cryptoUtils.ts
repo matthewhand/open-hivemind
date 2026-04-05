@@ -3,8 +3,11 @@
  * for configuration import/export.
  */
 
-import { createCipheriv, createDecipheriv, createHash, randomBytes, scryptSync } from 'crypto';
+import { createCipheriv, createDecipheriv, createHash, randomBytes, scrypt } from 'crypto';
+import { promisify } from 'util';
 import { createGunzip, createGzip } from 'zlib';
+
+const scryptAsync = promisify(scrypt);
 
 /**
  * Encrypt data using AES-256-GCM with a password-derived key.
@@ -15,7 +18,8 @@ export async function encryptData(data: string | Buffer, key: string): Promise<B
   const iv = randomBytes(16);
 
   // Derive key from password
-  const derivedKey = scryptSync(key, salt, 32);
+  // ⚡ Bolt Optimization: Replaced synchronous scryptSync with async scrypt to prevent event loop blocking.
+  const derivedKey = (await scryptAsync(key, salt, 32)) as Buffer;
 
   const cipher = createCipheriv(algorithm, derivedKey, iv);
 
@@ -40,7 +44,8 @@ export async function decryptData(encryptedData: Buffer, key: string): Promise<s
   const data = encryptedData.subarray(48);
 
   // Derive key from password
-  const derivedKey = scryptSync(key, salt, 32);
+  // ⚡ Bolt Optimization: Replaced synchronous scryptSync with async scrypt to prevent event loop blocking.
+  const derivedKey = (await scryptAsync(key, salt, 32)) as Buffer;
 
   const decipher = createDecipheriv(algorithm, derivedKey, iv);
   decipher.setAuthTag(authTag);
