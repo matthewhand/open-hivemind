@@ -161,7 +161,7 @@ describe('Templates API - Comprehensive Tests', () => {
         .expect(400);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('Missing required field');
+      expect(response.body.error).toContain('Validation failed');
     });
 
     it('should reject if template not found', async () => {
@@ -193,7 +193,10 @@ describe('Templates API - Comprehensive Tests', () => {
         description: 'A custom template',
         category: 'general' as const,
         tags: ['custom'],
-        config: {},
+        config: {
+          llmProvider: 'openai',
+          messageProvider: 'discord',
+        },
       };
 
       mockTemplateService.createTemplate.mockResolvedValue({

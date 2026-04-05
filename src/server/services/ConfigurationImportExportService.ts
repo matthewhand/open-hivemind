@@ -400,13 +400,25 @@ export class ConfigurationImportExportService {
       // Read file
       let data: Buffer | string = await fs.readFile(filePath);
 
+      // First decrypt if it's encrypted (since encryption happens BEFORE compression during export? wait...)
+      // Wait, let's look at export:
+      // if (options.encrypt) { data = await encryptData(...); filePath += '.enc'; }
+      // if (options.compress) { data = await compressData(...); filePath += '.gz'; }
+      // The file ends with .enc.gz, so it was encrypted THEN compressed.
+      // We must decompress THEN decrypt.
+      // Wait, if filePath ends with .enc.gz, filePath.endsWith('.enc') is FALSE.
+      // Let's fix the logic here.
+
+      const isCompressed = filePath.endsWith('.gz') || filePath.includes('.gz.');
+      const isEncrypted = filePath.endsWith('.enc') || filePath.includes('.enc.');
+
       // Decompress if needed
-      if (filePath.endsWith('.gz')) {
+      if (isCompressed) {
         data = await decompressData(data);
       }
 
       // Decrypt if needed
-      if (filePath.endsWith('.enc')) {
+      if (isEncrypted) {
         if (!options.decryptionKey) {
           throw new Error('Decryption key is required for encrypted import');
         }

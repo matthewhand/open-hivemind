@@ -83,24 +83,27 @@ export class BackupManager {
         ...options,
       };
 
+      // Sanitize the backup name first before using it
+      const sanitizedName = PathSecurityUtils.sanitizeFilename(name);
+
       const result = await this.deps.exportConfigurations(
         configIds,
         exportOptions,
-        `backup-${name}`,
+        `backup-${sanitizedName}`,
         createdBy
       );
 
       if (result.success && result.filePath) {
         // Move to backups directory
         const backupTimestamp = Date.now();
-        const backupPath = this.getSafeBackupPath(name, new Date(backupTimestamp));
+        const backupPath = this.getSafeBackupPath(name, new Date(backupTimestamp), exportOptions.encrypt);
         const backupFileName = path.basename(backupPath);
         await fs.rename(result.filePath, backupPath);
 
         // Create metadata file
         const metadata: BackupMetadata = {
           id: generateBackupId(),
-          name,
+          name: PathSecurityUtils.sanitizeFilename(name),
           description,
           createdAt: new Date(backupTimestamp),
           createdBy: createdBy || 'unknown',
@@ -136,7 +139,7 @@ export class BackupManager {
             for (const oldBackup of backupsToDelete) {
               if (enableColdStorage) {
                 debug(`Archiving old backup to cold storage: ${oldBackup.id} (${oldBackup.name})`);
-                const oldBackupPath = this.getSafeBackupPath(oldBackup.name, oldBackup.createdAt);
+                const oldBackupPath = this.getSafeBackupPath(oldBackup.name, oldBackup.createdAt, oldBackup.encrypted);
                 const oldBackupFileName = path.basename(oldBackupPath);
                 const coldDir = path.join(process.cwd(), 'config', 'backups', 'cold');
                 await fs.mkdir(coldDir, { recursive: true });
@@ -268,7 +271,7 @@ export class BackupManager {
         return false;
       }
 
-      const backupPath = this.getSafeBackupPath(backup.name, backup.createdAt);
+      const backupPath = this.getSafeBackupPath(backup.name, backup.createdAt, backup.encrypted);
       const backupFileName = path.basename(backupPath);
       const metadataPath = path.join(this.backupsDir, `${backupFileName}.meta`);
 
@@ -288,9 +291,15 @@ export class BackupManager {
    * Ensures the filename is sanitized and the path stays within the backups directory.
    * Uses PathSecurityUtils for consistent security validation.
    */
-  getSafeBackupPath(name: string, createdAt: Date): string {
+  getSafeBackupPath(name: string, createdAt: Date, isEncrypted: boolean = false): string {
     const sanitizedName = PathSecurityUtils.sanitizeFilename(name);
-    const backupFileName = `backup-${sanitizedName}-${createdAt.getTime()}.json.gz`;
+    let backupFileName = `backup-${sanitizedName}-${createdAt.getTime()}.json`;
+
+    if (isEncrypted) {
+      backupFileName += '.enc';
+    }
+
+    backupFileName += '.gz'; // Compress is always true in createBackup defaults
 
     // Use PathSecurityUtils for consistent path validation
     return PathSecurityUtils.getSafePath(this.backupsDir, backupFileName);
@@ -309,7 +318,7 @@ export class BackupManager {
         return null;
       }
 
-      return this.getSafeBackupPath(backup.name, backup.createdAt);
+      return this.getSafeBackupPath(backup.name, backup.createdAt, backup.encrypted);
     } catch (error) {
       debug('Error getting backup file path:', error);
       return null;

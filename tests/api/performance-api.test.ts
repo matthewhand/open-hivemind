@@ -131,9 +131,13 @@ jest.mock('../../src/validation/schemas/miscSchema', () => ({
   DashboardFeedbackSchema: {},
 }));
 
-jest.mock('../../src/validation/schemas/commonSchema', () => ({
-  ReorderSchema: {},
-}));
+jest.mock('../../src/validation/schemas/commonSchema', () => {
+  const actual = jest.requireActual('../../src/validation/schemas/commonSchema');
+  return {
+    ...actual,
+    ReorderSchema: {},
+  };
+});
 
 // Mock DatabaseManager
 jest.mock('../../src/database/DatabaseManager', () => ({
