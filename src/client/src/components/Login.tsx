@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Card from './DaisyUI/Card';
 import Input from './DaisyUI/Input';
 import Button from './DaisyUI/Button';
+import Validator, { ValidatorHint } from './DaisyUI/Validator';
 import { Alert } from './DaisyUI/Alert';
 import { Loading, LoadingSpinner } from './DaisyUI/Loading';
 import { useNavigate } from 'react-router-dom';
@@ -73,34 +74,41 @@ const Login: React.FC = () => {
               <label htmlFor="login-username" className="label">
                 <span className="label-text">Username *</span>
               </label>
-              <Input
-                id="login-username"
-                name="username"
-                type="text"
-                value={formData.username}
-                onChange={handleInputChange}
-                placeholder="Enter 'admin'"
-                disabled={isLoading}
-                required
-                autoComplete="username"
-              />
+              <Validator>
+                <Input
+                  id="login-username"
+                  name="username"
+                  type="text"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  placeholder="Enter 'admin'"
+                  disabled={isLoading}
+                  required
+                  autoComplete="username"
+                />
+                <ValidatorHint>Username is required</ValidatorHint>
+              </Validator>
             </div>
 
             <div className="form-control">
               <label htmlFor="login-password" className="label">
                 <span className="label-text">Password *</span>
               </label>
-              <Input
-                id="login-password"
-                name="password"
-                type="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                placeholder="Enter password"
-                disabled={isLoading}
-                required
-                autoComplete="current-password"
-              />
+              <Validator>
+                <Input
+                  id="login-password"
+                  name="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  placeholder="Enter password"
+                  disabled={isLoading}
+                  required
+                  minLength={1}
+                  autoComplete="current-password"
+                />
+                <ValidatorHint>Password is required</ValidatorHint>
+              </Validator>
             </div>
 
             <Button

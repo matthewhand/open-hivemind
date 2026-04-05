@@ -10,6 +10,7 @@ import { Alert } from './DaisyUI/Alert';
 import Modal from './DaisyUI/Modal';
 import Tabs from './DaisyUI/Tabs';
 import { Stat } from './DaisyUI/Stat';
+import Link from './DaisyUI/Link';
 import Accordion from './DaisyUI/Accordion';
 
 interface Props {
@@ -148,9 +149,9 @@ const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) =>
                       <Badge variant="primary" size="xs">{usage.usageCount} uses</Badge>
                     </div>
                     <div className="text-sm text-base-content/60">
-                      <a href={usage.uri} className="link link-primary" target="_blank" rel="noopener noreferrer">
+                      <Link href={usage.uri} color="primary" target="_blank" rel="noopener noreferrer">
                         View in code
-                      </a>
+                      </Link>
                     </div>
                   </div>
                 ))}

@@ -9,6 +9,8 @@ import {
   ArrowRight, ArrowLeft, SkipForward, Sparkles,
 } from 'lucide-react';
 import Input from '../components/DaisyUI/Input';
+import Validator, { ValidatorHint } from '../components/DaisyUI/Validator';
+import Steps from '../components/DaisyUI/Steps';
 import Button from '../components/DaisyUI/Button';
 import FormField from '../components/DaisyUI/FormField';
 import ProgressBar from '../components/DaisyUI/ProgressBar';
@@ -17,6 +19,7 @@ import { Alert } from '../components/DaisyUI/Alert';
 import { Badge } from '../components/DaisyUI/Badge';
 import { apiService } from '../services/api';
 import Card from '../components/DaisyUI/Card';
+import Link from '../components/DaisyUI/Link';
 import Select from '../components/DaisyUI/Select';
 import Textarea from '../components/DaisyUI/Textarea';
 
@@ -165,12 +168,16 @@ const ConfigureLlmStep: React.FC<ConfigureLlmStepProps> = ({ form, llmProfiles }
 
       {llmProvider && llmProvider !== 'ollama' && (
         <FormField label="API Key" error={errors.apiKey} hint="Your key is stored securely and never leaves this server.">
-          <Input
-            id="onboarding-api-key"
-            type="password"
-            placeholder={`Enter your ${llmProvider} API key`}
-            {...register('apiKey')}
-          />
+          <Validator>
+            <Input
+              id="onboarding-api-key"
+              type="password"
+              placeholder={`Enter your ${llmProvider} API key`}
+              required
+              {...register('apiKey')}
+            />
+            <ValidatorHint>An API key is required for {llmProvider}</ValidatorHint>
+          </Validator>
         </FormField>
       )}
 
@@ -217,12 +224,17 @@ const CreateBotStep: React.FC<CreateBotStepProps> = ({ form, llmProvider }) => {
       </div>
 
       <FormField label="Bot Name" error={errors.botName} required>
-        <Input
-          id="onboarding-bot-name"
-          placeholder="e.g. HelpBot, CodeAssistant, TeamBot"
-          autoFocus
-          {...register('botName')}
-        />
+        <Validator>
+          <Input
+            id="onboarding-bot-name"
+            placeholder="e.g. HelpBot, CodeAssistant, TeamBot"
+            required
+            minLength={2}
+            autoFocus
+            {...register('botName')}
+          />
+          <ValidatorHint>Bot name must be at least 2 characters</ValidatorHint>
+        </Validator>
       </FormField>
 
       <FormField
@@ -260,7 +272,7 @@ const ConnectMessengerStep: React.FC<ConnectMessengerStepProps> = ({ form }) => 
   const instructions: Record<string, React.ReactNode> = {
     discord: (
       <div className="space-y-2 text-sm">
-        <p>1. Go to the <a href="https://discord.com/developers/applications" target="_blank" rel="noreferrer" className="link link-primary">Discord Developer Portal</a></p>
+        <p>1. Go to the <Link href="https://discord.com/developers/applications" target="_blank" rel="noreferrer" color="primary">Discord Developer Portal</Link></p>
         <p>2. Create a New Application, then go to the Bot section</p>
         <p>3. Click &quot;Reset Token&quot; to generate a bot token</p>
         <p>4. Enable Message Content Intent under Privileged Gateway Intents</p>
@@ -269,7 +281,7 @@ const ConnectMessengerStep: React.FC<ConnectMessengerStepProps> = ({ form }) => 
     ),
     slack: (
       <div className="space-y-2 text-sm">
-        <p>1. Go to <a href="https://api.slack.com/apps" target="_blank" rel="noreferrer" className="link link-primary">Slack API Apps</a></p>
+        <p>1. Go to <Link href="https://api.slack.com/apps" target="_blank" rel="noreferrer" color="primary">Slack API Apps</Link></p>
         <p>2. Create a New App from scratch</p>
         <p>3. Under OAuth &amp; Permissions, add bot scopes: <Badge size="sm">chat:write</Badge>, <Badge size="sm">channels:read</Badge>, <Badge size="sm">app_mentions:read</Badge></p>
         <p>4. Install to your workspace and copy the Bot User OAuth Token</p>
@@ -555,22 +567,19 @@ const OnboardingPage: React.FC = () => {
 
       {/* Steps indicator (DaisyUI steps) */}
       <div className="px-6 py-4 max-w-4xl mx-auto w-full">
-        <ul className="steps w-full">
-          {stepMeta.map((s, i) => {
+        <Steps
+          className="w-full"
+          items={stepMeta.map((s, i) => {
             const stepNum = i + 1;
             const isCompleted = step > stepNum;
             const isActive = step === stepNum;
-            return (
-              <li
-                key={s.label}
-                className={`step ${isCompleted || isActive ? 'step-primary' : ''}`}
-                data-content={isCompleted ? '\u2713' : String(stepNum)}
-              >
-                <span className={`text-xs ${isActive ? 'font-bold' : ''}`}>{s.label}</span>
-              </li>
-            );
+            return {
+              color: isCompleted || isActive ? 'primary' : undefined,
+              dataContent: isCompleted ? '\u2713' : String(stepNum),
+              label: <span className={`text-xs ${isActive ? 'font-bold' : ''}`}>{s.label}</span>,
+            };
           })}
-        </ul>
+        />
       </div>
 
       {/* Step content */}

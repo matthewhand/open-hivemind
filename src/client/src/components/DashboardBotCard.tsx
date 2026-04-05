@@ -80,16 +80,18 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-2 mb-4">
-          <Stat className="bg-base-200 rounded-lg p-3">
-            <div className="stat-title text-xs">Messages</div>
-            <div className="stat-value text-lg">{messageCount.toLocaleString()}</div>
-          </Stat>
-          <Stat className="bg-base-200 rounded-lg p-3">
-            <div className="stat-title text-xs">Status</div>
-            <div className={`stat-value text-lg ${connected ? 'text-success' : 'text-error'}`}>
-              {connected ? '🟢' : '🔴'}
-            </div>
-          </Stat>
+          <Stat
+            className="bg-base-200 rounded-lg p-3"
+            title="Messages"
+            value={messageCount.toLocaleString()}
+            valueClassName="text-lg"
+          />
+          <Stat
+            className="bg-base-200 rounded-lg p-3"
+            title="Status"
+            value={connected ? '🟢' : '🔴'}
+            valueClassName={`text-lg ${connected ? 'text-success' : 'text-error'}`}
+          />
         </div>
 
         {errorCount > 0 && (
