@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import Divider from './Divider';
 import Input from './Input';
 import Debug from 'debug';
 import Toggle from './Toggle';
@@ -401,7 +402,7 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
                 <ThemeCard key={`fav-${theme.value}`} theme={theme} isFavorite />
               ))}
             </div>
-            <div className="divider"></div>
+            <Divider />
           </div>
         )}
 

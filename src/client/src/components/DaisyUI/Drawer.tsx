@@ -146,7 +146,7 @@ const Drawer: React.FC<DrawerProps> = ({
     }
 
     return (
-      <li key={item.id} style={{ marginLeft: depth > 0 ? '12px' : 0 }}>
+      <li key={item.id} className={depth > 0 ? 'ml-3' : ''}>
         <button
           type="button"
           onClick={(e) => {
@@ -163,7 +163,7 @@ const Drawer: React.FC<DrawerProps> = ({
           aria-expanded={hasChildren ? isExpanded : undefined}
           aria-current={isActive ? 'page' : undefined}
           role="menuitem"
-          className={`flex items-center w-full px-3 py-2.5 rounded-lg border-none text-[14px] font-medium text-left transition-colors duration-150 ease-in-out ${
+          className={`flex items-center w-full px-3 py-2.5 rounded-lg border-none text-sm font-medium text-left transition-colors duration-150 ease-in-out ${
             isActive
               ? 'bg-primary text-primary-content'
               : 'bg-transparent text-base-content hover:bg-base-content/10'
@@ -222,8 +222,8 @@ const Drawer: React.FC<DrawerProps> = ({
           <Hexagon size={20} className="text-primary-content" />
         </div>
         <div>
-          <div className="font-semibold text-[16px]">Hivemind</div>
-          <div className="text-[12px] text-base-content/60">
+          <div className="font-semibold text-base">Hivemind</div>
+          <div className="text-xs text-base-content/60">
             Admin Dashboard
           </div>
         </div>
@@ -240,7 +240,7 @@ const Drawer: React.FC<DrawerProps> = ({
       </nav>
 
       {/* Footer */}
-      <div className="py-3 px-4 border-t border-base-content/10 text-[12px] text-base-content/60 flex items-center justify-between">
+      <div className="py-3 px-4 border-t border-base-content/10 text-xs text-base-content/60 flex items-center justify-between">
         <span>v1.0.0</span>
 
         {/* Theme Toggle */}

@@ -12,6 +12,7 @@ import {
 import Badge from '../components/DaisyUI/Badge';
 import Button from '../components/DaisyUI/Button';
 import Card from '../components/DaisyUI/Card';
+import CodeBlock from '../components/DaisyUI/CodeBlock';
 import Input from '../components/DaisyUI/Input';
 import Select from '../components/DaisyUI/Select';
 import PageHeader from '../components/DaisyUI/PageHeader';
@@ -138,18 +139,14 @@ const ExpandedRow: React.FC<{ event: AuditEvent }> = ({ event }) => {
                 className="rounded border border-base-300 w-full"
                 aspectRatio="aspect-auto min-h-[16rem]"
                 item1={
-                  <div className="bg-error/10 w-full h-full p-4 overflow-auto">
-                    <pre className="text-xs text-error">
-                      {renderJson(event.oldValue)}
-                    </pre>
-                  </div>
+                  <CodeBlock variant="error" maxHeight="max-h-none">
+                    {renderJson(event.oldValue)}
+                  </CodeBlock>
                 }
                 item2={
-                  <div className="bg-success/10 w-full h-full p-4 overflow-auto">
-                    <pre className="text-xs text-success">
-                      {renderJson(event.newValue)}
-                    </pre>
-                  </div>
+                  <CodeBlock variant="success" maxHeight="max-h-none">
+                    {renderJson(event.newValue)}
+                  </CodeBlock>
                 }
               />
             </div>
@@ -158,17 +155,17 @@ const ExpandedRow: React.FC<{ event: AuditEvent }> = ({ event }) => {
               {event.oldValue !== undefined && (
                 <div>
                   <span className="font-semibold">Previous Value:</span>
-                  <pre className="mt-1 p-2 bg-base-300 rounded text-xs overflow-auto max-h-48">
+                  <CodeBlock>
                     {renderJson(event.oldValue)}
-                  </pre>
+                  </CodeBlock>
                 </div>
               )}
               {event.newValue !== undefined && (
                 <div>
                   <span className="font-semibold">New Value:</span>
-                  <pre className="mt-1 p-2 bg-base-300 rounded text-xs overflow-auto max-h-48">
+                  <CodeBlock>
                     {renderJson(event.newValue)}
-                  </pre>
+                  </CodeBlock>
                 </div>
               )}
             </>
@@ -177,9 +174,9 @@ const ExpandedRow: React.FC<{ event: AuditEvent }> = ({ event }) => {
           {event.metadata && Object.keys(event.metadata).length > 0 && (
             <div className="col-span-full">
               <span className="font-semibold">Metadata:</span>
-              <pre className="mt-1 p-2 bg-base-300 rounded text-xs overflow-auto max-h-48">
+              <CodeBlock>
                 {renderJson(event.metadata)}
-              </pre>
+              </CodeBlock>
             </div>
           )}
         </div>

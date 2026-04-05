@@ -7,6 +7,7 @@ import {
 import { useErrorToast, useSuccessToast } from '../components/DaisyUI/ToastNotification';
 import { usePageLifecycle } from '../hooks/usePageLifecycle';
 import PageHeader from '../components/DaisyUI/PageHeader';
+import CodeBlock from '../components/DaisyUI/CodeBlock';
 import Tabs from '../components/DaisyUI/Tabs';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import SearchFilterBar from '../components/SearchFilterBar';
@@ -395,9 +396,9 @@ const TemplatesPage: React.FC = () => {
               <label className="text-xs font-bold uppercase opacity-50 mb-1 block">
                 Configuration
               </label>
-              <pre className="bg-base-200 p-4 rounded-lg text-xs overflow-x-auto max-h-96">
+              <CodeBlock className="bg-base-200 p-4" maxHeight="max-h-96">
                 {JSON.stringify(selectedTemplate.config, null, 2)}
-              </pre>
+              </CodeBlock>
             </div>
 
             <div className="flex justify-end gap-2 pt-4 border-t border-base-300">
