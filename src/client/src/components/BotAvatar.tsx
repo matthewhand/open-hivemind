@@ -33,7 +33,7 @@ export const BotAvatar: React.FC<{ bot: BotData }> = ({ bot }) => {
 
     if (!loaded) {
         return (
-            <div className="skeleton h-10 w-10 shrink-0 rounded-full bg-base-300 animate-pulse"></div>
+            <div className="skeleton h-10 w-10 shrink-0 rounded-full"></div>
         );
     }
 

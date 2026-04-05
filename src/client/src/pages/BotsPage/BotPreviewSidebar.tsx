@@ -4,6 +4,7 @@ import {
 } from 'lucide-react';
 import type { BotConfig } from '../../types/bot';
 import Button from '../../components/DaisyUI/Button';
+import Select from '../../components/DaisyUI/Select';
 import Tabs from '../../components/DaisyUI/Tabs';
 import ConfigurationValidation from '../../components/ConfigurationValidation';
 import { Stat, Stats } from '../../components/DaisyUI/Stat';
@@ -162,19 +163,21 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
                     value={logFilter}
                     onChange={(e) => setLogFilter(e.target.value)}
                   />
-                  <select
-                    className="select select-xs select-bordered join-item"
+                  <Select
+                    size="xs"
                     onChange={async (e) => {
                       const limit = parseInt(e.target.value, 10);
                       if (previewBot) {
                         await fetchPreviewActivity(previewBot.id, limit);
                       }
                     }}
-                  >
-                    <option value="20">20</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                  </select>
+                    options={[
+                      { label: '20', value: '20' },
+                      { label: '50', value: '50' },
+                      { label: '100', value: '100' },
+                    ]}
+                    className="join-item"
+                  />
                 </Join>
               </div>
 

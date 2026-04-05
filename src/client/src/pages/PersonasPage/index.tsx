@@ -2,6 +2,7 @@ import { Filter, Plus, Users } from 'lucide-react';
 import React, { useState } from 'react';
 import { Alert } from '../../components/DaisyUI/Alert';
 import Button from '../../components/DaisyUI/Button';
+import Select from '../../components/DaisyUI/Select';
 import PageHeader from '../../components/DaisyUI/PageHeader';
 import { SkeletonPage } from '../../components/DaisyUI/Skeleton';
 import { useSuccessToast, useErrorToast, useInfoToast } from '../../components/DaisyUI/ToastNotification';
@@ -107,17 +108,13 @@ const PersonasPage: React.FC = () => {
                     <Filter className="w-4 h-4" aria-hidden="true" />
                   </Button>
                 </Tooltip>
-                <select
-                  className="select select-sm select-bordered join-item"
+                <Select
+                  size="sm"
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                >
-                  {CATEGORIES.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.label}
-                    </option>
-                  ))}
-                </select>
+                  options={CATEGORIES.map((cat) => ({ label: cat.label, value: cat.id }))}
+                  className="join-item"
+                />
               </Join>
             </div>
           </SearchFilterBar>

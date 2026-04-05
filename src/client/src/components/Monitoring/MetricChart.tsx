@@ -165,9 +165,9 @@ const MetricChart: React.FC<MetricChartProps> = ({
         <div className="flex justify-between items-start mb-4">
           <div>
             <Card.Title className="text-lg">{title}</Card.Title>
-            <div className="flex gap-4 mt-2">
-              <div className="stat-value text-2xl">{getLatestValue()}</div>
-              <div className="stat-desc">Avg: {getAverageValue()}</div>
+            <div className="flex gap-4 mt-2 items-baseline">
+              <span className="text-2xl font-bold">{getLatestValue()}</span>
+              <span className="text-xs opacity-60">Avg: {getAverageValue()}</span>
             </div>
           </div>
           <div className="flex flex-col items-end gap-2">

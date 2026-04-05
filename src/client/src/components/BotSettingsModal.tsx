@@ -277,18 +277,9 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                                 <Shield className="w-4 h-4" /> Active Guards
                             </h5>
 
-                            <label className="flex items-center justify-between cursor-pointer p-2 hover:bg-base-200 rounded-md transition-colors">
-                                <span className="text-sm">Access Control</span>
-                                <Toggle className="toggle toggle-sm toggle-success" disabled checked={!!bot.mcpGuard?.enabled} />
-                            </label>
-                            <label className="flex items-center justify-between cursor-pointer p-2 hover:bg-base-200 rounded-md transition-colors opacity-50">
-                                <span className="text-sm">Rate Limiter</span>
-                                <Toggle className="toggle toggle-sm" disabled />
-                            </label>
-                            <label className="flex items-center justify-between cursor-pointer p-2 hover:bg-base-200 rounded-md transition-colors opacity-50">
-                                <span className="text-sm">Content Filter</span>
-                                <Toggle className="toggle toggle-sm" disabled />
-                            </label>
+                            <Toggle label="Access Control" color="success" size="sm" disabled checked={!!bot.mcpGuard?.enabled} />
+                            <Toggle label="Rate Limiter" size="sm" disabled checked={false} className="opacity-50" />
+                            <Toggle label="Content Filter" size="sm" disabled checked={false} className="opacity-50" />
                         </div>
 
                         {/* Action Buttons */}
