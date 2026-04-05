@@ -46,10 +46,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const storedTokens = localStorage.getItem('auth_tokens');
     const storedUser = localStorage.getItem('auth_user');
 
-    if (storedTokens && storedUser) {
+    // Guard against corrupted localStorage values (e.g., literal "undefined" string)
+    const isValidJson = (s: string | null): boolean =>
+      s !== null && s !== 'undefined' && s !== 'null' && s.length > 2;
+
+    if (isValidJson(storedTokens) && isValidJson(storedUser)) {
       try {
-        const parsedTokens = JSON.parse(storedTokens);
-        const parsedUser = JSON.parse(storedUser);
+        const parsedTokens = JSON.parse(storedTokens!);
+        const parsedUser = JSON.parse(storedUser!);
 
         // Check if token is still valid before setting it
         if (!isTokenExpired(parsedTokens.accessToken)) {
@@ -71,6 +75,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         localStorage.removeItem('auth_tokens');
         localStorage.removeItem('auth_user');
       }
+    } else if (storedTokens || storedUser) {
+      // Corrupted values in localStorage (e.g., "undefined") — silently clean up
+      localStorage.removeItem('auth_tokens');
+      localStorage.removeItem('auth_user');
     } else if (import.meta.env.DEV && import.meta.env.VITE_AUTO_LOGIN === 'true') {
       // Auto-login is ONLY active when explicitly enabled via VITE_AUTO_LOGIN=true
       // in a Vite development build (import.meta.env.DEV === true).
