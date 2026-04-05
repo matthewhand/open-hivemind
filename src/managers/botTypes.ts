@@ -15,6 +15,10 @@ export interface BotInstance {
   mcpServers?: MCPConfig[];
   mcpGuard?: MCPGuardConfig;
   envOverrides?: Record<string, { isOverridden: boolean; redactedValue?: string }>;
+  /** Provider instance ID for the message provider (from ProviderConfigManager) */
+  messageProviderInstanceId?: string;
+  /** Provider instance ID for the LLM provider (from ProviderConfigManager) */
+  llmProviderInstanceId?: string;
 }
 
 export interface CreateBotRequest {

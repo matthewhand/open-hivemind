@@ -2,6 +2,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
 import { v4 as uuidv4 } from 'uuid';
+import { BotConfigurationManager } from './BotConfigurationManager';
+import type { BotConfig } from '@src/types/config';
 
 const debug = Debug('app:providerConfigManager');
 
@@ -39,6 +41,9 @@ class ProviderConfigManager {
     if (this.store.message.length === 0 && this.store.llm.length === 0) {
       this.migrateLegacyConfigs();
     }
+
+    // Note: BOTS_* env provider sync is triggered separately via syncBotProviders()
+    // because the ProviderConfigManager singleton may be created before dotenv loads.
   }
 
   public static getInstance(): ProviderConfigManager {
@@ -164,6 +169,249 @@ class ProviderConfigManager {
       this.saveConfig();
       debug('Migration complete');
     }
+  }
+
+  /**
+   * Check if a provider instance already exists by type, category, and a key config field.
+   * Returns the existing instance if found, or undefined.
+   */
+  private findExistingProvider(
+    category: 'message' | 'llm',
+    type: string,
+    configKey: string,
+    configValue: string,
+  ): ProviderInstance | undefined {
+    return this.store[category].find(
+      (p) => p.type === type && p.config[configKey] === configValue,
+    );
+  }
+
+  /**
+   * Sync provider instances from BOTS_* env-configured bots.
+   * For each bot with embedded credentials, creates a provider instance
+   * if one with the same type + credential doesn't already exist.
+   * This is idempotent and safe to call on every startup.
+   */
+  private migrateFromBotEnvConfig(): void {
+    let botConfigManager: BotConfigurationManager;
+    try {
+      botConfigManager = BotConfigurationManager.getInstance();
+    } catch {
+      debug('BotConfigurationManager not available, skipping BOTS_* migration');
+      return;
+    }
+
+    const bots = botConfigManager.getAllBots();
+    if (bots.length === 0) return;
+
+    debug(`Syncing provider instances from ${bots.length} BOTS_* configured bots`);
+    let changed = false;
+
+    for (const bot of bots) {
+      const botName = bot.name.toLowerCase();
+
+      // --- Message providers ---
+      changed = this.syncMessageProvider(bot, botName) || changed;
+
+      // --- LLM providers ---
+      changed = this.syncLlmProvider(bot, botName) || changed;
+    }
+
+    if (changed) {
+      this.saveConfig();
+      debug('BOTS_* provider migration complete');
+    }
+  }
+
+  /**
+   * Create a message provider instance from a bot's embedded config if not already present.
+   * Returns true if a new instance was created.
+   */
+  private syncMessageProvider(bot: BotConfig, botName: string): boolean {
+    const msgType = bot.messageProvider;
+    if (!msgType) return false;
+
+    if (msgType === 'discord' && bot.discord?.token) {
+      if (this.findExistingProvider('message', 'discord', 'token', bot.discord.token)) {
+        return false;
+      }
+      this.store.message.push({
+        id: `bot-${botName}-discord`,
+        type: 'discord',
+        category: 'message',
+        name: `${botName}-discord`,
+        enabled: true,
+        config: {
+          token: bot.discord.token,
+          clientId: bot.discord.clientId || '',
+          guildId: bot.discord.guildId || '',
+          channelId: bot.discord.channelId || '',
+        },
+      });
+      debug(`Created discord message provider for bot "${botName}"`);
+      return true;
+    }
+
+    if (msgType === 'slack' && bot.slack?.botToken) {
+      if (this.findExistingProvider('message', 'slack', 'botToken', bot.slack.botToken)) {
+        return false;
+      }
+      this.store.message.push({
+        id: `bot-${botName}-slack`,
+        type: 'slack',
+        category: 'message',
+        name: `${botName}-slack`,
+        enabled: true,
+        config: {
+          botToken: bot.slack.botToken,
+          appToken: bot.slack.appToken || '',
+          signingSecret: bot.slack.signingSecret || '',
+          joinChannels: bot.slack.joinChannels || '',
+          defaultChannelId: bot.slack.defaultChannelId || '',
+          mode: bot.slack.mode || 'socket',
+        },
+      });
+      debug(`Created slack message provider for bot "${botName}"`);
+      return true;
+    }
+
+    if (msgType === 'mattermost' && bot.mattermost?.token) {
+      if (this.findExistingProvider('message', 'mattermost', 'token', bot.mattermost.token)) {
+        return false;
+      }
+      this.store.message.push({
+        id: `bot-${botName}-mattermost`,
+        type: 'mattermost',
+        category: 'message',
+        name: `${botName}-mattermost`,
+        enabled: true,
+        config: {
+          serverUrl: bot.mattermost.serverUrl || '',
+          token: bot.mattermost.token,
+          channel: bot.mattermost.channel || '',
+        },
+      });
+      debug(`Created mattermost message provider for bot "${botName}"`);
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Create an LLM provider instance from a bot's embedded config if not already present.
+   * Returns true if a new instance was created.
+   */
+  private syncLlmProvider(bot: BotConfig, botName: string): boolean {
+    const llmType = bot.llmProvider;
+    if (!llmType) return false;
+
+    if (llmType === 'openai' && bot.openai?.apiKey) {
+      if (this.findExistingProvider('llm', 'openai', 'apiKey', bot.openai.apiKey)) {
+        return false;
+      }
+      this.store.llm.push({
+        id: `bot-${botName}-openai`,
+        type: 'openai',
+        category: 'llm',
+        name: `${botName}-openai`,
+        enabled: true,
+        config: {
+          apiKey: bot.openai.apiKey,
+          model: bot.openai.model || 'gpt-4o',
+          baseUrl: bot.openai.baseUrl || '',
+        },
+      });
+      debug(`Created openai LLM provider for bot "${botName}"`);
+      return true;
+    }
+
+    if (llmType === 'flowise' && bot.flowise?.apiKey) {
+      if (this.findExistingProvider('llm', 'flowise', 'apiKey', bot.flowise.apiKey)) {
+        return false;
+      }
+      this.store.llm.push({
+        id: `bot-${botName}-flowise`,
+        type: 'flowise',
+        category: 'llm',
+        name: `${botName}-flowise`,
+        enabled: true,
+        config: {
+          apiKey: bot.flowise.apiKey,
+          apiBaseUrl: bot.flowise.apiBaseUrl || '',
+        },
+      });
+      debug(`Created flowise LLM provider for bot "${botName}"`);
+      return true;
+    }
+
+    if (llmType === 'openwebui' && bot.openwebui?.apiKey) {
+      if (this.findExistingProvider('llm', 'openwebui', 'apiKey', bot.openwebui.apiKey)) {
+        return false;
+      }
+      this.store.llm.push({
+        id: `bot-${botName}-openwebui`,
+        type: 'openwebui',
+        category: 'llm',
+        name: `${botName}-openwebui`,
+        enabled: true,
+        config: {
+          apiKey: bot.openwebui.apiKey,
+          apiUrl: bot.openwebui.apiUrl || '',
+        },
+      });
+      debug(`Created openwebui LLM provider for bot "${botName}"`);
+      return true;
+    }
+
+    if (llmType === 'openswarm' && bot.openswarm?.apiKey) {
+      if (this.findExistingProvider('llm', 'openswarm', 'apiKey', bot.openswarm.apiKey)) {
+        return false;
+      }
+      this.store.llm.push({
+        id: `bot-${botName}-openswarm`,
+        type: 'openswarm',
+        category: 'llm',
+        name: `${botName}-openswarm`,
+        enabled: true,
+        config: {
+          baseUrl: bot.openswarm.baseUrl || '',
+          apiKey: bot.openswarm.apiKey,
+          team: bot.openswarm.team || '',
+        },
+      });
+      debug(`Created openswarm LLM provider for bot "${botName}"`);
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Get the provider instance ID for a given bot's message provider.
+   * Returns the ID if a matching provider was created from this bot's config.
+   */
+  public getMessageProviderIdForBot(botName: string): string | undefined {
+    const id = `bot-${botName.toLowerCase()}-`;
+    return this.store.message.find((p) => p.id.startsWith(id))?.id;
+  }
+
+  /**
+   * Get the provider instance ID for a given bot's LLM provider.
+   * Returns the ID if a matching provider was created from this bot's config.
+   */
+  public getLlmProviderIdForBot(botName: string): string | undefined {
+    const id = `bot-${botName.toLowerCase()}-`;
+    return this.store.llm.find((p) => p.id.startsWith(id))?.id;
+  }
+
+  /**
+   * Public entry point to sync BOTS_* env-configured providers.
+   * Must be called after dotenv is loaded and BotConfigurationManager is ready.
+   * Safe to call multiple times — idempotent.
+   */
+  public syncBotProviders(): void {
+    this.migrateFromBotEnvConfig();
   }
 
   // CRUD Operations
