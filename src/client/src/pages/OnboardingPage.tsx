@@ -19,6 +19,8 @@ import { apiService } from '../services/api';
 import Card from '../components/DaisyUI/Card';
 import Select from '../components/DaisyUI/Select';
 import Textarea from '../components/DaisyUI/Textarea';
+import Figure from '../components/DaisyUI/Figure';
+import Stack from '../components/DaisyUI/Stack';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -64,9 +66,17 @@ type MessengerStepValues = z.infer<typeof messengerStepSchema>;
 const WelcomeStep: React.FC = () => (
   <div className="text-center space-y-6 py-4">
     <div className="flex justify-center">
-      <div className="p-6 bg-primary/10 rounded-full">
-        <Sparkles className="w-16 h-16 text-primary" />
-      </div>
+      <Stack>
+        <div className="p-6 bg-primary/10 rounded-full">
+          <Sparkles className="w-16 h-16 text-primary" />
+        </div>
+        <div className="p-6 bg-secondary/10 rounded-full">
+          <Bot className="w-16 h-16 text-secondary" />
+        </div>
+        <div className="p-6 bg-accent/10 rounded-full">
+          <MessageSquare className="w-16 h-16 text-accent" />
+        </div>
+      </Stack>
     </div>
     <h2 className="text-3xl font-bold">Welcome to Open-Hivemind</h2>
     <p className="text-lg text-base-content/70 max-w-xl mx-auto">
@@ -74,21 +84,27 @@ const WelcomeStep: React.FC = () => (
       and connect them to messaging platforms like Discord, Slack, and Mattermost.
     </p>
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto pt-4">
-      <Card bgVariant="ghost" className="bg-base-200 text-center" compact>
+      <Figure
+        caption={<span className="text-xs text-base-content/60">Connect OpenAI, Anthropic, and more</span>}
+        className="bg-base-200 rounded-xl p-4 text-center"
+      >
         <Cpu className="w-8 h-8 mx-auto mb-2 text-primary" />
         <h4 className="font-semibold text-sm">LLM Providers</h4>
-        <p className="text-xs text-base-content/60">Connect OpenAI, Anthropic, and more</p>
-      </Card>
-      <Card bgVariant="ghost" className="bg-base-200 text-center" compact>
+      </Figure>
+      <Figure
+        caption={<span className="text-xs text-base-content/60">Create specialized agents</span>}
+        className="bg-base-200 rounded-xl p-4 text-center"
+      >
         <Bot className="w-8 h-8 mx-auto mb-2 text-secondary" />
         <h4 className="font-semibold text-sm">AI Bots</h4>
-        <p className="text-xs text-base-content/60">Create specialized agents</p>
-      </Card>
-      <Card bgVariant="ghost" className="bg-base-200 text-center" compact>
+      </Figure>
+      <Figure
+        caption={<span className="text-xs text-base-content/60">Discord, Slack, Mattermost</span>}
+        className="bg-base-200 rounded-xl p-4 text-center"
+      >
         <MessageSquare className="w-8 h-8 mx-auto mb-2 text-accent" />
         <h4 className="font-semibold text-sm">Messengers</h4>
-        <p className="text-xs text-base-content/60">Discord, Slack, Mattermost</p>
-      </Card>
+      </Figure>
     </div>
     <p className="text-sm text-base-content/50">
       This wizard will guide you through initial setup in just a few minutes.
