@@ -1,9 +1,9 @@
 import axios from 'axios';
 import Debug from 'debug';
 import { resetAllCircuitBreakers } from '../../../src/common/CircuitBreaker';
-import { generateChatCompletion } from '../../../src/integrations/openwebui/runInference';
-import * as sessionManager from '../../../src/integrations/openwebui/sessionManager';
-import * as uploadKnowledgeFile from '../../../src/integrations/openwebui/uploadKnowledgeFile';
+import { generateChatCompletion } from '@hivemind/llm-openwebui/runInference';
+import * as sessionManager from '@hivemind/llm-openwebui/sessionManager';
+import * as uploadKnowledgeFile from '@hivemind/llm-openwebui/uploadKnowledgeFile';
 
 // Silence debug logs during tests
 jest.mock('debug', () => () => jest.fn());

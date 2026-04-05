@@ -3,7 +3,7 @@ import * as path from 'path';
 import { Router, type Request, type Response } from 'express';
 import { body, param, validationResult } from 'express-validator';
 import multer from 'multer';
-import { ApiResponse } from '@src/server/utils/apiResponse';
+import { ApiResponse } from '../utils/apiResponse';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest } from '../../auth/types';
 import { createLogger } from '../../common/StructuredLogger';
@@ -236,7 +236,8 @@ router.post(
   handleValidationErrors,
   asyncErrorHandler(async (req, res) => {
     try {
-      const createdBy = req.user?.username || 'unknown';
+      const authReq = req as AuthMiddlewareRequest;
+      const createdBy = authReq.user?.username || 'unknown';
 
       const result = await importExportService.exportConfigurations(
         req.body.configIds,
@@ -283,7 +284,8 @@ router.post(
         return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('No file uploaded'));
       }
 
-      const importedBy = req.user?.username || 'unknown';
+      const authReq = req as AuthMiddlewareRequest;
+      const importedBy = authReq.user?.username || 'unknown';
 
       const result = await importExportService.importConfigurations(
         req.file.path,
@@ -337,7 +339,8 @@ router.post(
   handleValidationErrors,
   asyncErrorHandler(async (req, res) => {
     try {
-      const createdBy = req.user?.username || 'unknown';
+      const authReq = req as AuthMiddlewareRequest;
+      const createdBy = authReq.user?.username || 'unknown';
 
       const result = await importExportService.createBackup(
         req.body.name,
@@ -407,8 +410,9 @@ router.post(
   handleValidationErrors,
   asyncErrorHandler(async (req, res) => {
     try {
+      const authReq = req as AuthMiddlewareRequest;
       const { backupId } = req.params;
-      const restoredBy = req.user?.username || 'unknown';
+      const restoredBy = authReq.user?.username || 'unknown';
 
       // Get safe backup file path
       const backupPath = await importExportService.getBackupFilePath(backupId);
