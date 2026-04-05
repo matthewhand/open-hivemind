@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Download, RefreshCw, Trash2 } from 'lucide-react';
+import { Download, LayoutGrid, List, RefreshCw, Trash2 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { CreateBotWizard } from '../../components/BotManagement/CreateBotWizard';
@@ -8,6 +8,7 @@ import { BotSettingsModal } from '../../components/BotSettingsModal';
 import BulkActionBar from '../../components/BulkActionBar';
 import Button from '../../components/DaisyUI/Button';
 import { SkeletonPage } from '../../components/DaisyUI/Skeleton';
+import Swap from '../../components/DaisyUI/Swap';
 import { useErrorToast, useSuccessToast } from '../../components/DaisyUI/ToastNotification';
 import SearchFilterBar from '../../components/SearchFilterBar';
 import Tooltip from '../../components/DaisyUI/Tooltip';
@@ -48,6 +49,7 @@ const BotsPage: React.FC = () => {
   const [, setDeletingBot] = useState<BotConfig | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [compactView, setCompactView] = useState(false);
 
   const toastSuccess = useSuccessToast();
   const toastError = useErrorToast();
@@ -182,6 +184,23 @@ const BotsPage: React.FC = () => {
                 <option value="active">Active Only</option>
                 <option value="inactive">Inactive Only</option>
               </Select>
+              <Tooltip content={compactView ? 'Switch to grid view' : 'Switch to compact view'}>
+                <div
+                  className="btn btn-ghost btn-sm btn-square"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setCompactView(!compactView)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setCompactView(!compactView); } }}
+                  aria-label={compactView ? 'Switch to grid view' : 'Switch to compact view'}
+                >
+                  <Swap
+                    checked={compactView}
+                    onContent={<LayoutGrid className="w-4 h-4" />}
+                    offContent={<List className="w-4 h-4" />}
+                    rotate
+                  />
+                </div>
+              </Tooltip>
               <Tooltip content="Refresh list">
                 <Button
                   variant="ghost"
@@ -247,6 +266,7 @@ const BotsPage: React.FC = () => {
                 handleToggleBotStatus={handleToggleBotStatus}
                 bulk={bulk}
                 isMobile={isMobile}
+                compactView={compactView}
                 onBotDragStart={onBotDragStart}
                 onBotDragOver={onBotDragOver}
                 onBotDragEnd={onBotDragEnd}
