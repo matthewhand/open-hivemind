@@ -9,6 +9,8 @@ import Modal from '../components/DaisyUI/Modal';
 import Tabs from '../components/DaisyUI/Tabs';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import Tooltip from '../components/DaisyUI/Tooltip';
+import Divider from '../components/DaisyUI/Divider';
+import DetailDrawer from '../components/DaisyUI/DetailDrawer';
 
 import {
   Store as StoreIcon,
@@ -26,6 +28,10 @@ import {
   AlertCircle as AlertIcon,
   CheckCircle as CheckIcon,
   X as CloseIcon,
+  ExternalLink as ExternalLinkIcon,
+  Info as InfoIcon,
+  Calendar as CalendarIcon,
+  Tag as TagIcon,
 } from 'lucide-react';
 import Carousel from '../components/DaisyUI/Carousel';
 import PageHeader from '../components/DaisyUI/PageHeader';
@@ -129,6 +135,8 @@ const MarketplacePage: React.FC = () => {
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean; title: string; message: string; onConfirm: () => void;
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+  const [drawerPkg, setDrawerPkg] = useState<MarketplacePackage | null>(null);
+  const [drawerTab, setDrawerTab] = useState('overview');
 
   const fetchPackages = useCallback(async () => {
     setLoading(true);
@@ -375,7 +383,13 @@ const MarketplacePage: React.FC = () => {
                                       actionInProgress === `uninstall-${pkg.name}`;
 
                         return (
-              <Card key={pkg.name} className="bg-base-200 hover:bg-base-300 transition-colors">
+              <Card
+                key={pkg.name}
+                className={`bg-base-200 hover:bg-base-300 transition-colors cursor-pointer ${
+                  drawerPkg?.name === pkg.name ? 'ring-2 ring-primary/30 border-primary' : ''
+                }`}
+                onClick={() => { setDrawerPkg(pkg); setDrawerTab('overview'); }}
+              >
                 <Card.Body className="p-4">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
@@ -402,7 +416,7 @@ const MarketplacePage: React.FC = () => {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-2">
+                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                     {pkg.status === 'installed' && (
                       <>
                         <Button
@@ -475,7 +489,13 @@ const MarketplacePage: React.FC = () => {
                             actionInProgress === `uninstall-${pkg.name}`;
 
               return (
-                <Card key={pkg.name} className="bg-base-200 hover:bg-base-300 transition-colors">
+                <Card
+                  key={pkg.name}
+                  className={`bg-base-200 hover:bg-base-300 transition-colors cursor-pointer ${
+                    drawerPkg?.name === pkg.name ? 'ring-2 ring-primary/30 border-primary' : ''
+                  }`}
+                  onClick={() => { setDrawerPkg(pkg); setDrawerTab('overview'); }}
+                >
                   <Card.Body className="p-4">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2">
@@ -507,7 +527,7 @@ const MarketplacePage: React.FC = () => {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-2">
+                    <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                       {pkg.status === 'installed' && (
                         <>
                           <Button
@@ -606,6 +626,237 @@ const MarketplacePage: React.FC = () => {
         confirmText="Uninstall"
         cancelText="Cancel"
       />
+
+      {/* Package Detail Drawer */}
+      <DetailDrawer
+        isOpen={!!drawerPkg}
+        onClose={() => setDrawerPkg(null)}
+        title={drawerPkg?.displayName}
+        subtitle={drawerPkg ? `${drawerPkg.name} v${drawerPkg.version}` : undefined}
+      >
+        {drawerPkg && (() => {
+          const Icon = TYPE_ICONS[drawerPkg.type];
+          const color = TYPE_COLORS[drawerPkg.type];
+          const statusBadge = STATUS_BADGES[drawerPkg.status];
+          const isBusy = actionInProgress?.startsWith(drawerPkg.name) ||
+                        actionInProgress === `update-${drawerPkg.name}` ||
+                        actionInProgress === `uninstall-${drawerPkg.name}`;
+
+          return (
+            <div className="space-y-4">
+              {/* Drawer Tabs */}
+              <Tabs
+                tabs={[
+                  { key: 'overview', label: 'Overview' },
+                  { key: 'details', label: 'Details' },
+                ]}
+                activeTab={drawerTab}
+                onChange={setDrawerTab}
+                variant="boxed"
+                size="sm"
+              />
+
+              {drawerTab === 'overview' && (
+                <div className="space-y-4">
+                  {/* Type & Status */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className={`p-2 rounded-lg ${TYPE_COLOR_CLASSES[color]?.bg ?? 'bg-base-200'}`}>
+                      <Icon className={`w-5 h-5 ${TYPE_COLOR_CLASSES[color]?.text ?? ''}`} />
+                    </div>
+                    <Badge variant={statusBadge.color} size="sm">{statusBadge.label}</Badge>
+                    <span className="uppercase badge badge-sm badge-outline">{drawerPkg.type}</span>
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label className="text-xs font-bold uppercase opacity-50 mb-1 block">Description</label>
+                    <p className="text-sm whitespace-pre-wrap">{drawerPkg.description || 'No description available.'}</p>
+                  </div>
+
+                  <Divider />
+
+                  {/* Version & Dates */}
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2 text-base-content/70">
+                      <TagIcon className="w-4 h-4" />
+                      <span>Version <strong>{drawerPkg.version}</strong></span>
+                    </div>
+                    {drawerPkg.installedAt && (
+                      <div className="flex items-center gap-2 text-base-content/70">
+                        <CalendarIcon className="w-4 h-4" />
+                        <span>Installed {new Date(drawerPkg.installedAt).toLocaleDateString()}</span>
+                      </div>
+                    )}
+                    {drawerPkg.updatedAt && (
+                      <div className="flex items-center gap-2 text-base-content/70">
+                        <UpdateIcon className="w-4 h-4" />
+                        <span>Updated {new Date(drawerPkg.updatedAt).toLocaleDateString()}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Repo Link */}
+                  {drawerPkg.repoUrl && (
+                    <>
+                      <Divider />
+                      <a
+                        href={drawerPkg.repoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-outline btn-sm btn-block gap-2"
+                      >
+                        <GitHubIcon className="w-4 h-4" />
+                        View on GitHub
+                        <ExternalLinkIcon className="w-3 h-3" />
+                      </a>
+                    </>
+                  )}
+
+                  <Divider />
+
+                  {/* Installation Status Indicator */}
+                  <div className={`rounded-lg p-3 text-sm ${
+                    drawerPkg.status === 'installed'
+                      ? 'bg-success/10 text-success'
+                      : drawerPkg.status === 'built-in'
+                        ? 'bg-neutral/10 text-base-content/70'
+                        : 'bg-info/10 text-info'
+                  }`}>
+                    <div className="flex items-center gap-2">
+                      {drawerPkg.status === 'installed' && <CheckIcon className="w-4 h-4" />}
+                      {drawerPkg.status === 'built-in' && <InfoIcon className="w-4 h-4" />}
+                      {drawerPkg.status === 'available' && <DownloadIcon className="w-4 h-4" />}
+                      <span className="font-medium">
+                        {drawerPkg.status === 'installed' && 'This package is installed'}
+                        {drawerPkg.status === 'built-in' && 'This package is built-in'}
+                        {drawerPkg.status === 'available' && 'This package is available for installation'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="space-y-2">
+                    {drawerPkg.status === 'installed' && (
+                      <>
+                        <Button
+                          variant="primary"
+                          size="md"
+                          className="w-full"
+                          onClick={() => handleUpdate(drawerPkg.name)}
+                          disabled={isBusy}
+                        >
+                          {actionInProgress === `update-${drawerPkg.name}` ? (
+                            <LoadingSpinner size="xs" />
+                          ) : (
+                            <UpdateIcon className="w-4 h-4" />
+                          )}
+                          Update Package
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="md"
+                          className="w-full text-error"
+                          onClick={() => handleUninstall(drawerPkg.name)}
+                          disabled={isBusy}
+                        >
+                          {actionInProgress === `uninstall-${drawerPkg.name}` ? (
+                            <LoadingSpinner size="xs" />
+                          ) : (
+                            <UninstallIcon className="w-4 h-4" />
+                          )}
+                          Uninstall
+                        </Button>
+                      </>
+                    )}
+                    {drawerPkg.status === 'available' && (
+                      <Button
+                        variant="primary"
+                        size="md"
+                        className="w-full"
+                        onClick={() => {
+                          setDrawerPkg(null);
+                          setGithubUrl(drawerPkg.repoUrl || '');
+                          setInstallModalOpen(true);
+                        }}
+                        disabled={isBusy}
+                      >
+                        <DownloadIcon className="w-4 h-4" />
+                        Install Package
+                      </Button>
+                    )}
+                    {drawerPkg.status === 'built-in' && (
+                      <div className="text-center text-sm text-base-content/50 italic py-2">
+                        Built-in packages are managed by open-hivemind
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {drawerTab === 'details' && (
+                <div className="space-y-4">
+                  {/* Package Metadata */}
+                  <div>
+                    <label className="text-xs font-bold uppercase opacity-50 mb-1 block">Package Name</label>
+                    <p className="text-sm font-mono bg-base-200 rounded p-2">{drawerPkg.name}</p>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold uppercase opacity-50 mb-1 block">Display Name</label>
+                    <p className="text-sm">{drawerPkg.displayName}</p>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold uppercase opacity-50 mb-1 block">Type</label>
+                    <div className="flex items-center gap-2">
+                      <Icon className={`w-4 h-4 ${TYPE_COLOR_CLASSES[color]?.text ?? ''}`} />
+                      <span className="text-sm capitalize">{drawerPkg.type}</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold uppercase opacity-50 mb-1 block">Version</label>
+                    <p className="text-sm">{drawerPkg.version}</p>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold uppercase opacity-50 mb-1 block">Status</label>
+                    <Badge variant={statusBadge.color} size="sm">{statusBadge.label}</Badge>
+                  </div>
+
+                  {drawerPkg.repoUrl && (
+                    <div>
+                      <label className="text-xs font-bold uppercase opacity-50 mb-1 block">Repository</label>
+                      <a
+                        href={drawerPkg.repoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm link link-primary break-all"
+                      >
+                        {drawerPkg.repoUrl}
+                      </a>
+                    </div>
+                  )}
+
+                  {drawerPkg.installedAt && (
+                    <div>
+                      <label className="text-xs font-bold uppercase opacity-50 mb-1 block">Installed At</label>
+                      <p className="text-sm">{new Date(drawerPkg.installedAt).toLocaleString()}</p>
+                    </div>
+                  )}
+
+                  {drawerPkg.updatedAt && (
+                    <div>
+                      <label className="text-xs font-bold uppercase opacity-50 mb-1 block">Last Updated</label>
+                      <p className="text-sm">{new Date(drawerPkg.updatedAt).toLocaleString()}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
+      </DetailDrawer>
     </div>
   );
 };
