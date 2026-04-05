@@ -9,7 +9,7 @@ timestamp() {
 }
 
 BUILD_HEAP="${BUILD_MAX_OLD_SPACE_SIZE:-2048}"
-POST_SLEEP="${BUILD_POST_BUILD_SLEEP_SECONDS:-300}"
+POST_SLEEP="${BUILD_POST_BUILD_SLEEP_SECONDS:-0}"
 
 if [[ -z "${NODE_OPTIONS:-}" ]]; then
   export NODE_OPTIONS="--max-old-space-size=${BUILD_HEAP}"
