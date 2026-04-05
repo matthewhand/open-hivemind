@@ -264,6 +264,26 @@ export class AuthManager {
   }
 
   /**
+   * Passwordless login for trusted admin IPs.
+   * Only succeeds for active users with the admin role.
+   */
+  public async trustedLogin(username?: string): Promise<AuthToken> {
+    const name = username || 'admin';
+    const user = Array.from(this.users.values()).find((u) => u.username === name);
+    if (!user) throw new AuthenticationError('User not found', 'USER_NOT_FOUND');
+    if (!user.isActive) throw new AuthenticationError('User is not active', 'USER_INACTIVE');
+    if (user.role !== 'admin') throw new AuthenticationError('User is not an admin', 'NOT_ADMIN');
+    user.lastLogin = new Date().toISOString();
+    this.users.set(user.id, user);
+    const accessToken = this.generateAccessToken(user);
+    const refreshToken = this.generateRefreshToken(user);
+    this.refreshTokens.add(refreshToken);
+    debug(`Trusted login for user: ${user.username}`);
+    const { passwordHash: _ph, ...safeUser } = user;
+    return { accessToken, refreshToken, user: safeUser, expiresIn: 3600 };
+  }
+
+  /**
    * Refresh access token using refresh token
    */
   public async refreshToken(refreshToken: string): Promise<AuthToken> {

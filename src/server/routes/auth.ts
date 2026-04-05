@@ -5,6 +5,7 @@ import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest, LoginCredentials, RegisterData } from '../../auth/types';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { authRateLimiter } from '../../middleware/rateLimiter';
+import { isTrustedAdminIP } from '../middleware/security';
 import { HTTP_STATUS } from '../../types/constants';
 import { validateRequest as validate } from '../../validation/validateRequest';
 import {
@@ -258,6 +259,27 @@ router.get('/verify', authRateLimiter, async (req: Request, res: Response) => {
     );
   } catch {
     return res.status(401).json(ApiResponse.error('Invalid or expired token'));
+  }
+});
+
+// GET /api/auth/trusted-status — check if request comes from trusted IP
+router.get('/trusted-status', authRateLimiter, (req: Request, res: Response) => {
+  const trusted = isTrustedAdminIP(req);
+  return res.json(ApiResponse.success({ trusted }));
+});
+
+// POST /api/auth/trusted-login — passwordless admin login from trusted IPs
+router.post('/trusted-login', authRateLimiter, async (req: Request, res: Response) => {
+  try {
+    if (!isTrustedAdminIP(req)) {
+      return res.status(403).json(ApiResponse.error('Not a trusted network'));
+    }
+    const username = req.body?.username || 'admin';
+    const authResult = await authManager.trustedLogin(username);
+    return res.json(ApiResponse.success(authResult));
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : 'Trusted login failed';
+    return res.status(401).json(ApiResponse.error(msg));
   }
 });
 

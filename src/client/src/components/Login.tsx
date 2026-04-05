@@ -1,17 +1,17 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
 import Card from './DaisyUI/Card';
 import Input from './DaisyUI/Input';
 import Button from './DaisyUI/Button';
-import Validator, { ValidatorHint } from './DaisyUI/Validator';
 import { Alert } from './DaisyUI/Alert';
-import { Loading, LoadingSpinner } from './DaisyUI/Loading';
+import { Loading } from './DaisyUI/Loading';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { login, isServerless } = useAuth();
+  const { login, isServerless, isTrustedNetwork, trustedLogin } = useAuth();
 
   const [formData, setFormData] = useState({
     username: '',
@@ -19,6 +19,7 @@ const Login: React.FC = () => {
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isTrustedLoading, setIsTrustedLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -28,6 +29,19 @@ const Login: React.FC = () => {
       [name]: value,
     }));
     if (error) {setError('');} // Clear error on input change
+  };
+
+  const handleTrustedLogin = async () => {
+    setIsTrustedLoading(true);
+    setError('');
+    try {
+      await trustedLogin();
+      navigate('/admin/bots', { replace: true });
+    } catch (err) {
+      setError('Trusted network login failed');
+    } finally {
+      setIsTrustedLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,7 +56,7 @@ const Login: React.FC = () => {
       } else {
         setError('Invalid username or password');
       }
-    } catch (_err) {
+    } catch (err) {
       setError('An unexpected error occurred');
     } finally {
       setIsLoading(false);
@@ -57,58 +71,68 @@ const Login: React.FC = () => {
           <h2 className="text-xl text-center mb-6">Sign In</h2>
 
           {isServerless && (
-            <Alert status="warning" className="mb-6 text-sm py-2">
+            <div className="alert alert-warning mb-6 text-sm py-2">
               <ExclamationTriangleIcon className="w-5 h-5 flex-shrink-0" />
               <span>Serverless Mode: Use ADMIN_PASSWORD or check logs for generated credentials.</span>
-            </Alert>
+            </div>
           )}
 
-          <div aria-live="assertive" aria-atomic="true">
-            {error && (
-              <Alert status="error" message={error} className="mb-4" />
-            )}
-          </div>
+          {isTrustedNetwork && (
+            <div className="mb-6">
+              <Button
+                variant="primary"
+                size="lg"
+                className="w-full"
+                onClick={handleTrustedLogin}
+                disabled={isTrustedLoading}
+              >
+                {isTrustedLoading ? (
+                  <><span className="loading loading-spinner loading-sm mr-2" aria-hidden="true"></span> Logging in...</>
+                ) : (
+                  'Login as Admin (Trusted Network)'
+                )}
+              </Button>
+              <p className="text-sm text-base-content/70 text-center mt-2">
+                You're on a trusted network — click above to login without a password
+              </p>
+            </div>
+          )}
 
-          <form onSubmit={handleSubmit} className="space-y-4" aria-label="Sign in form">
+          {error && (
+            <Alert status="error" message={error} className="mb-4" />
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="form-control">
-              <label htmlFor="login-username" className="label">
+              <label className="label">
                 <span className="label-text">Username *</span>
               </label>
-              <Validator>
-                <Input
-                  id="login-username"
-                  name="username"
-                  type="text"
-                  value={formData.username}
-                  onChange={handleInputChange}
-                  placeholder="Enter 'admin'"
-                  disabled={isLoading}
-                  required
-                  autoComplete="username"
-                />
-                <ValidatorHint>Username is required</ValidatorHint>
-              </Validator>
+              <Input
+                name="username"
+                type="text"
+                value={formData.username}
+                onChange={handleInputChange}
+                placeholder="Enter 'admin'"
+                disabled={isLoading}
+                required
+                autoComplete="username"
+              />
             </div>
 
             <div className="form-control">
-              <label htmlFor="login-password" className="label">
+              <label className="label">
                 <span className="label-text">Password *</span>
               </label>
-              <Validator>
-                <Input
-                  id="login-password"
-                  name="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  placeholder="Enter password"
-                  disabled={isLoading}
-                  required
-                  minLength={1}
-                  autoComplete="current-password"
-                />
-                <ValidatorHint>Password is required</ValidatorHint>
-              </Validator>
+              <Input
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                placeholder="Enter password"
+                disabled={isLoading}
+                required
+                autoComplete="current-password"
+              />
             </div>
 
             <Button
@@ -119,7 +143,7 @@ const Login: React.FC = () => {
               className="w-full mt-6"
             >
               {isLoading ? (
-                <><LoadingSpinner size="sm" className="mr-2" /> Signing in...</>
+                <><span className="loading loading-spinner loading-sm mr-2" aria-hidden="true"></span> Signing in...</>
               ) : (
                 'Sign In'
               )}
