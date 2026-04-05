@@ -202,7 +202,7 @@ if (process.env.NODE_ENV !== 'development') {
       });
     } catch {
       appLogger.error('Frontend index.html not found', { indexPath });
-      res.status(404).send('Frontend not found - please run npm run build:frontend');
+      res.status(404).send('Frontend not found - please run pnpm run build:frontend');
     }
   });
 }
@@ -777,20 +777,20 @@ async function main() {
         appLogger.info('📱 Frontend assets served from', { path: frontendDistPath });
       } else {
         appLogger.warn(
-          '⚠️  Frontend build not found - attempting auto-build via `npm run build:frontend`'
+          '⚠️  Frontend build not found - attempting auto-build via `pnpm run build:frontend`'
         );
         // SECURITY: Command injection safe - using execFile() with argument array.
-        // execFile() does not spawn a shell, so arguments are passed directly to npm.
+        // execFile() does not spawn a shell, so arguments are passed directly to pnpm.
         // No user input is involved - command and args are hardcoded.
         const { execFile } = require('child_process');
         execFile(
-          'npm',
+          'pnpm',
           ['run', 'build:frontend'],
           { cwd: process.cwd() },
           (err: Error | null, stdout: string, stderr: string) => {
             if (err) {
               appLogger.warn(
-                '⚠️  Auto-build failed (devDependencies may be pruned in production). Run `npm run build:frontend` manually.',
+                '⚠️  Auto-build failed (devDependencies may be pruned in production). Run `pnpm run build:frontend` manually.',
                 { error: err.message }
               );
             } else {
