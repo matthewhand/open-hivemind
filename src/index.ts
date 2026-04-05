@@ -274,10 +274,38 @@ if (!allowAllIPs) {
 // CSRF token endpoint
 app.get('/api/csrf-token', csrfTokenHandler);
 
-// API routes - all on same port, no separation
+// ─────────────────────────────────────────────────────────────────────────────
+// API Route Registration
+// ─────────────────────────────────────────────────────────────────────────────
+// Ordering matters. Express evaluates routers in the order they are mounted.
+// A router mounted at a broader prefix (e.g. '/api') will intercept ALL
+// sub-paths before narrower ones get a chance — if it does not handle the
+// request it must call next(), but relying on that is fragile.
+//
+// Rules:
+//   1. Auth routes first — the CSRF/token endpoint must always be reachable.
+//   2. Protected routes — routes that require authenticateToken middleware.
+//   3. Resource routers — each mounted at its own specific '/api/<resource>'.
+//      These never conflict because they only handle their own sub-paths.
+//   4. Catch-all '/api' router LAST — openapiRouter serves /api/openapi*
+//      and acts as a documentation endpoint. If placed earlier it would
+//      swallow requests meant for routers below it.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// 1. Auth & error handling (no token required)
+app.use('/api/auth', authRouter);
+app.use('/api/errors', errorsRouter);
+
+// 2. Protected routes (authenticateToken required)
+app.use('/api/swarm', authenticateToken, swarmRouter);
+app.use('/api/anomalies', authenticateToken, anomalyRouter);
+app.use('/api/guards', authenticateToken, guardsRouter);
+app.use('/api/specs', authenticateToken, specsRouter);
+app.use('/api/import-export', authenticateToken, importExportRouter);
+
+// 3. Resource routers (specific paths, no catch-all conflict)
 app.use('/api/activity', activityRouter);
 app.use('/api/agents', agentsRouter);
-app.use('/api/swarm', authenticateToken, swarmRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/config', webuiConfigRouter);
 app.use('/api/bots', botsRouter);
@@ -286,30 +314,30 @@ app.use('/api/validation', validationRouter);
 app.use('/api/hot-reload', hotReloadRouter);
 app.use('/api/ci', ciRouter);
 app.use('/api/enterprise', enterpriseRouter);
-app.use('/api/errors', errorsRouter);
 app.use('/api/secure-config', secureConfigRouter);
-app.use('/api/auth', authRouter);
 app.use('/api/admin', adminApiRouter);
-app.use('/api/anomalies', authenticateToken, anomalyRouter);
 app.use('/api/integrations', integrationsRouter);
 app.use('/api/letta', lettaRouter);
 app.use('/api/marketplace', marketplaceRouter);
 app.use('/api/mcp', mcpRouter);
 app.use('/api/mcp-tools', mcpToolsRouter);
-app.use('/api/guards', authenticateToken, guardsRouter);
 app.use('/api/onboarding', onboardingRouter);
-app.use('/api/docs', apiDocsRouter);
-app.use('/api', openapiRouter);
-app.use('/api/pluginSecurity', pluginSecurityRouter);
-app.use('/api/specs', authenticateToken, specsRouter);
-app.use('/api/import-export', authenticateToken, importExportRouter);
 app.use('/api/personas', personasRouter);
 app.use('/api/templates', templatesRouter);
 app.use('/api/usage-tracking', usageTrackingRouter);
 app.use('/api/webhooks', webhooksRouter);
 app.use('/api/webui', webuiRouter);
-app.use('/api/demo', demoRouter); // Demo mode routes
-app.use('/api/health', healthRoute); // Health API endpoints
+app.use('/api/demo', demoRouter);
+app.use('/api/docs', apiDocsRouter);
+app.use('/api/pluginSecurity', pluginSecurityRouter);
+
+// 4. Catch-all '/api' router — MUST be last
+//    openapiRouter handles /api/openapi, /api/openapi.json, etc.
+//    If mounted earlier it would intercept ALL /api/* requests.
+app.use('/api', openapiRouter);
+
+// Health endpoints
+app.use('/api/health', healthRoute);
 app.use('/health', healthRoute);
 
 app.use(sitemapRouter); // Sitemap routes at root level
@@ -353,8 +381,13 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     next();
   }
 });
-// Return 404 for all non-existent routes
-app.get('*', (req: Request, res: Response) => {
+// Return 404 for all non-existent routes (all HTTP methods)
+app.all('*', (req: Request, res: Response) => {
+  // Skip API routes — these should have been matched by earlier routers
+  if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
+    httpLogger.debug('Unmatched API route', { path: req.path, method: req.method });
+    return res.status(404).json({ error: 'Endpoint not found', path: req.path, method: req.method });
+  }
   httpLogger.debug('No matching route for request', { path: req.path });
   res.status(404).json({ error: 'Endpoint not found' });
 });

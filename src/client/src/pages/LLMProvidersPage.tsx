@@ -29,8 +29,7 @@ import {
   ChevronRight as CollapseIcon,
   Search,
   RefreshCw,
-  ToggleLeft as ToggleOffIcon,
-  ToggleRight as ToggleOnIcon,
+  Layers as LayersIcon,
 } from 'lucide-react';
 import type { LLMProviderType } from '../types/bot';
 import { LLM_PROVIDER_CONFIGS } from '../types/bot';
@@ -337,7 +336,7 @@ const LLMProvidersPage: React.FC = () => {
       {error && <Alert status="error" icon={<XIcon />} message={error} onClose={() => setError(null)} />}
 
       {/* ── Use-case assignment cards ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
 
         {/* 1. System Default (env-var fallback) */}
         <Card compact className={`bg-base-100 shadow-sm border ${defaultStatus?.configured ? 'border-success/20' : 'border-warning/20'}`}>
@@ -394,33 +393,6 @@ const LLMProvidersPage: React.FC = () => {
             </div>
         </Card>
 
-        {/* 3. WebUI Intelligence */}
-        <Card compact className="bg-base-100 shadow-sm border border-base-200">
-            <h3 className="font-bold flex items-center gap-2 mb-1">
-              <ZapIcon className="w-4 h-4 text-warning" /> WebUI Intelligence
-            </h3>
-            <p className="text-xs opacity-60 mb-3">
-              Powers AI assistance features inside the WebUI (e.g. generating bot names).
-            </p>
-            <div className="form-control w-full">
-              <Select
-                className="select-bordered"
-                size="sm"
-                value={webuiIntelligenceProvider}
-                onChange={async (e) => {
-                  setWebuiIntelligenceProvider(e.target.value);
-                  await saveGlobal({ webuiIntelligenceProvider: e.target.value }).catch(() => {});
-                }}
-                disabled={loading} aria-busy={loading}
-              >
-                <option value="">None (Disabled)</option>
-                {chatProfiles.map((p) => (
-                  <option key={p?.key} value={p?.key}>{p?.name || 'Unnamed'} ({p?.provider || 'Unknown'})</option>
-                ))}
-              </Select>
-            </div>
-        </Card>
-
         <Card compact className="bg-base-100 shadow-sm border border-base-200">
             <h3 className="font-bold flex items-center gap-2 mb-1">
               <CpuIcon className="w-4 h-4 text-secondary" /> Default Embedding Provider
@@ -453,9 +425,7 @@ const LLMProvidersPage: React.FC = () => {
         <div className="flex flex-row items-center justify-between">
           <div>
             <h3 className="font-bold flex items-center gap-2">
-              {perUseCaseEnabled
-                ? <ToggleOnIcon className="w-5 h-5 text-primary" />
-                : <ToggleOffIcon className="w-5 h-5 opacity-40" />}
+              <LayersIcon className="w-5 h-5 text-primary" />
               Per-Use-Case LLM Profiles
             </h3>
             <p className="text-xs opacity-60 mt-0.5">
@@ -474,35 +444,65 @@ const LLMProvidersPage: React.FC = () => {
       </Card>
 
       {perUseCaseEnabled && (
-        <Card compact className="bg-base-100 shadow-sm border border-base-200">
-          <div className="space-y-3">
-            <h3 className="font-bold text-sm">Task Profile Assignments</h3>
-            <p className="text-xs opacity-60">
-              Assign a profile to each task. Tasks without a profile will use the default provider.
+        <div className="space-y-6">
+          {/* WebUI Intelligence - shown inside per-use-case section */}
+          <Card compact className="bg-base-100 shadow-sm border border-base-200">
+            <h3 className="font-bold flex items-center gap-2 mb-1">
+              <ZapIcon className="w-4 h-4 text-warning" /> WebUI Intelligence
+            </h3>
+            <p className="text-xs opacity-60 mb-3">
+              Powers AI assistance features inside the WebUI (e.g. generating bot names).
             </p>
-            {(['semantic', 'summary', 'followup', 'idle'] as const).map((task) => (
-              <div key={task} className="flex items-center gap-3">
-                <label className="w-28 text-sm capitalize">{task}</label>
-                <Select
-                  className="select-bordered flex-1"
-                  size="sm"
-                  value={taskProfiles[task] || ''}
-                  onChange={async (e) => {
-                    const updated = { ...taskProfiles, [task]: e.target.value || undefined };
-                    if (!e.target.value) delete updated[task];
-                    setTaskProfiles(updated);
-                    await saveGlobal({ taskProfiles: updated }).catch(() => {});
-                  }}
-                >
-                  <option value="">— Default —</option>
-                  {profiles.map((p: any) => (
-                    <option key={p.key} value={p.key}>{p.name}</option>
-                  ))}
-                </Select>
-              </div>
-            ))}
-          </div>
-        </Card>
+            <div className="form-control w-full">
+              <Select
+                className="select-bordered"
+                size="sm"
+                value={webuiIntelligenceProvider}
+                onChange={async (e) => {
+                  setWebuiIntelligenceProvider(e.target.value);
+                  await saveGlobal({ webuiIntelligenceProvider: e.target.value }).catch(() => {});
+                }}
+                disabled={loading} aria-busy={loading}
+              >
+                <option value="">None (Disabled)</option>
+                {chatProfiles.map((p) => (
+                  <option key={p?.key} value={p?.key}>{p?.name || 'Unnamed'} ({p?.provider || 'Unknown'})</option>
+                ))}
+              </Select>
+            </div>
+          </Card>
+
+          {/* Task Profile Assignments */}
+          <Card compact className="bg-base-100 shadow-sm border border-base-200">
+            <div className="space-y-3">
+              <h3 className="font-bold text-sm">Task Profile Assignments</h3>
+              <p className="text-xs opacity-60">
+                Assign a profile to each task. Tasks without a profile will use the default provider.
+              </p>
+              {(['semantic', 'summary', 'followup', 'idle'] as const).map((task) => (
+                <div key={task} className="flex items-center gap-3">
+                  <label className="w-28 text-sm capitalize">{task}</label>
+                  <Select
+                    className="select-bordered flex-1"
+                    size="sm"
+                    value={taskProfiles[task] || ''}
+                    onChange={async (e) => {
+                      const updated = { ...taskProfiles, [task]: e.target.value || undefined };
+                      if (!e.target.value) delete updated[task];
+                      setTaskProfiles(updated);
+                      await saveGlobal({ taskProfiles: updated }).catch(() => {});
+                    }}
+                  >
+                    <option value="">— Default —</option>
+                    {profiles.map((p: any) => (
+                      <option key={p.key} value={p.key}>{p.name}</option>
+                    ))}
+                  </Select>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
       )}
 
       <Divider>Custom Profiles</Divider>
