@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Logo from '../Logo';
 import Avatar from './Avatar';
 import Menu from './Menu';
+import Tooltip from './Tooltip';
 
 interface NavItem {
   id: string;
@@ -354,13 +355,13 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
       {/* Navbar End */}
       <div className="navbar-end gap-2">
         {/* Quick Actions */}
-        <div className="tooltip tooltip-bottom" data-tip="Create New Bot">
+        <Tooltip content="Create New Bot" position="bottom">
           <button className="btn btn-ghost btn-circle btn-sm" aria-label="Create New Bot">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
             </svg>
           </button>
-        </div>
+        </Tooltip>
 
         {/* System Status Indicator */}
         <div className="dropdown dropdown-end">
