@@ -6,6 +6,7 @@ import { Alert } from '../components/DaisyUI/Alert';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import StatsCards from '../components/DaisyUI/StatsCards';
 import EmptyState from '../components/DaisyUI/EmptyState';
+import ConfigKeyValueCard from '../components/DaisyUI/ConfigKeyValueCard';
 import { SkeletonTableLayout } from '../components/DaisyUI/Skeleton';
 import SearchFilterBar from '../components/SearchFilterBar';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
@@ -388,12 +389,7 @@ const MemoryProvidersPage: React.FC = () => {
                         <h4 className="text-xs font-bold uppercase opacity-50 mb-3 flex items-center gap-2"><ConfigIcon className="w-3 h-3" /> Configuration</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                           {Object.entries(profile.config || {}).map(([k, v]) => (
-                            <div key={k} className="bg-base-100 p-2 rounded border border-base-200/50 flex flex-col">
-                              <span className="font-mono text-xs opacity-50 uppercase tracking-wider mb-1">{k}</span>
-                              <span className="font-medium text-sm truncate" title={String(v)}>
-                                {String(k).toLowerCase().includes('key') || String(k).toLowerCase().includes('token') || String(k).toLowerCase().includes('secret') ? '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' : String(v)}
-                              </span>
-                            </div>
+                            <ConfigKeyValueCard key={k} configKey={k} value={v} />
                           ))}
                         </div>
                       </div>
@@ -404,10 +400,7 @@ const MemoryProvidersPage: React.FC = () => {
                           <h4 className="text-xs font-bold uppercase opacity-50 mb-3 flex items-center gap-2"><HealthIcon className="w-3 h-3" /> Health Details</h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             {Object.entries(health.details).map(([k, v]) => (
-                              <div key={k} className="bg-base-100 p-2 rounded border border-base-200/50 flex flex-col">
-                                <span className="font-mono text-xs opacity-50 uppercase tracking-wider mb-1">{k}</span>
-                                <span className="font-medium text-sm truncate" title={String(v)}>{String(v)}</span>
-                              </div>
+                              <ConfigKeyValueCard key={k} configKey={k} value={v} maskSensitive={false} />
                             ))}
                           </div>
                         </div>
