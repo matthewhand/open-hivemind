@@ -139,7 +139,6 @@ router.post(
  */
 router.post(
   '/refresh',
-  authRateLimiter,
   validate(RefreshTokenSchema),
   asyncErrorHandler(async (req, res) => {
     try {
@@ -219,7 +218,6 @@ router.post(
  */
 router.post(
   '/verify',
-  authRateLimiter,
   validate(VerifyTokenSchema),
   asyncErrorHandler(async (req, res) => {
     try {
@@ -240,7 +238,8 @@ router.post(
 );
 
 // GET /api/auth/verify - Verify JWT token from Authorization header
-router.get('/verify', authRateLimiter, async (req: Request, res: Response) => {
+// No rate limiter — frontend calls this on every page load
+router.get('/verify', async (req: Request, res: Response) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -263,7 +262,8 @@ router.get('/verify', authRateLimiter, async (req: Request, res: Response) => {
 });
 
 // GET /api/auth/trusted-status — check if request comes from trusted IP
-router.get('/trusted-status', authRateLimiter, (req: Request, res: Response) => {
+// No rate limiter — read-only status check, called on every page load
+router.get('/trusted-status', (req: Request, res: Response) => {
   const trusted = isTrustedAdminIP(req);
   return res.json(ApiResponse.success({ trusted }));
 });
