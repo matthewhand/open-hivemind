@@ -57,24 +57,34 @@ router.get(
 );
 
 // GET /api/mcp/providers/templates - MUST be before /:id
-router.get('/providers/templates', asyncErrorHandler(async (_req, res) => {
-  try {
-    return res.json({ success: true, data: mcpProviderManager.getTemplates() });
-  } catch (error: unknown) {
-    const e = ErrorUtils.toHivemindError(error);
-    return res.status(ErrorUtils.getStatusCode(e) || 500).json({ success: false, error: ErrorUtils.getMessage(e) });
-  }
-}));
+router.get(
+  '/providers/templates',
+  asyncErrorHandler(async (_req, res) => {
+    try {
+      return res.json({ success: true, data: mcpProviderManager.getTemplates() });
+    } catch (error: unknown) {
+      const e = ErrorUtils.toHivemindError(error);
+      return res
+        .status(ErrorUtils.getStatusCode(e) || 500)
+        .json({ success: false, error: ErrorUtils.getMessage(e) });
+    }
+  })
+);
 
 // GET /api/mcp/providers/stats - MUST be before /:id
-router.get('/providers/stats', asyncErrorHandler(async (_req, res) => {
-  try {
-    return res.json({ success: true, data: mcpProviderManager.getStats() });
-  } catch (error: unknown) {
-    const e = ErrorUtils.toHivemindError(error);
-    return res.status(ErrorUtils.getStatusCode(e) || 500).json({ success: false, error: ErrorUtils.getMessage(e) });
-  }
-}));
+router.get(
+  '/providers/stats',
+  asyncErrorHandler(async (_req, res) => {
+    try {
+      return res.json({ success: true, data: mcpProviderManager.getStats() });
+    } catch (error: unknown) {
+      const e = ErrorUtils.toHivemindError(error);
+      return res
+        .status(ErrorUtils.getStatusCode(e) || 500)
+        .json({ success: false, error: ErrorUtils.getMessage(e) });
+    }
+  })
+);
 
 // GET /api/mcp/providers/:id - Get MCP provider by ID
 router.get(
