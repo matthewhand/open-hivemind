@@ -25,7 +25,7 @@ const SimpleTable: React.FC<SimpleTableProps> = ({
 }) => {
   const sizeClass = size ? `table-${size}` : '';
   const zebraClass = zebra ? 'table-zebra' : '';
-  const compactClass = compact ? 'table-compact' : '';
+  const compactClass = compact ? 'table-xs' : '';
 
   return (
     <table

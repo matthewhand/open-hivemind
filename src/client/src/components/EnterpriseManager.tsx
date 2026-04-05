@@ -370,36 +370,36 @@ const EnterpriseManager: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): 'success' | 'error' | 'warning' | 'ghost' => {
     switch (status) {
       case 'active':
       case 'connected':
       case 'compliant':
-        return 'badge-success';
+        return 'success';
       case 'inactive':
       case 'disconnected':
       case 'non-compliant':
-        return 'badge-error';
+        return 'error';
       case 'configuring':
       case 'checking':
-        return 'badge-warning';
+        return 'warning';
       default:
-        return 'badge-ghost';
+        return 'ghost';
     }
   };
 
-  const getSeverityColor = (severity: string) => {
+  const getSeverityColor = (severity: string): 'error' | 'warning' | 'info' | 'success' | 'ghost' => {
     switch (severity) {
       case 'critical':
-        return 'badge-error';
+        return 'error';
       case 'high':
-        return 'badge-warning';
+        return 'warning';
       case 'medium':
-        return 'badge-info';
+        return 'info';
       case 'low':
-        return 'badge-success';
+        return 'success';
       default:
-        return 'badge-ghost';
+        return 'ghost';
     }
   };
 
@@ -418,12 +418,12 @@ const EnterpriseManager: React.FC = () => {
                         <p className="text-sm text-base-content/70">{rule.category}</p>
                       </div>
                       <div className="flex gap-1 flex-wrap justify-end">
-                        <div className={`badge ${getSeverityColor(rule.severity)} badge-sm`}>
+                        <Badge color={getSeverityColor(rule.severity)} size="sm">
                           {rule.severity}
-                        </div>
-                        <div className={`badge ${getStatusColor(rule.status)} badge-sm`}>
+                        </Badge>
+                        <Badge color={getStatusColor(rule.status)} size="sm">
                           {rule.status}
-                        </div>
+                        </Badge>
                       </div>
                     </div>
                     <p className="text-sm mb-2">{rule.description}</p>
@@ -468,9 +468,9 @@ const EnterpriseManager: React.FC = () => {
                           {provider.type.toUpperCase()} • {provider.region}
                         </p>
                       </div>
-                      <div className={`badge ${getStatusColor(provider.status)}`}>
+                      <Badge color={getStatusColor(provider.status)}>
                         {provider.status}
-                      </div>
+                      </Badge>
                     </div>
                     <p className="text-sm font-semibold mb-1">Resources:</p>
                     <div className="flex flex-wrap gap-1">
@@ -512,9 +512,9 @@ const EnterpriseManager: React.FC = () => {
                           {integration.provider} • {integration.type}
                         </p>
                       </div>
-                      <div className={`badge ${getStatusColor(integration.status)} badge-sm`}>
+                      <Badge color={getStatusColor(integration.status)} size="sm">
                         {integration.status}
-                      </div>
+                      </Badge>
                     </div>
                     <p className="text-sm mb-2">
                       Last sync: {new Date(integration.lastSync).toLocaleString()}
@@ -544,30 +544,28 @@ const EnterpriseManager: React.FC = () => {
                     aria-label="Search audit events by user or resource"
                   />
                 </div>
-                <select
-                  className="select select-sm select-bordered"
+                <Select
+                  size="sm"
                   value={auditActionFilter}
                   onChange={(e) => setAuditActionFilter(e.target.value)}
                   aria-label="Filter by action"
-                >
-                  <option value="all">All Actions</option>
-                  {uniqueActions.map((action) => (
-                    <option key={action} value={action}>
-                      {action}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  className="select select-sm select-bordered"
+                  options={[
+                    { label: 'All Actions', value: 'all' },
+                    ...uniqueActions.map((action) => ({ label: action, value: action })),
+                  ]}
+                />
+                <Select
+                  size="sm"
                   value={auditResultFilter}
                   onChange={(e) => setAuditResultFilter(e.target.value)}
                   aria-label="Filter by result"
-                >
-                  <option value="all">All Results</option>
-                  <option value="success">Success</option>
-                  <option value="failure">Failure</option>
-                  <option value="warning">Warning</option>
-                </select>
+                  options={[
+                    { label: 'All Results', value: 'all' },
+                    { label: 'Success', value: 'success' },
+                    { label: 'Failure', value: 'failure' },
+                    { label: 'Warning', value: 'warning' },
+                  ]}
+                />
                 <Button
                   variant="primary"
                   buttonStyle="outline"
@@ -614,7 +612,7 @@ const EnterpriseManager: React.FC = () => {
                     key: 'result',
                     title: 'Result',
                     render: (value: string) => (
-                      <div className={`badge ${getStatusColor(value)} badge-sm`}>{value}</div>
+                      <Badge color={getStatusColor(value)} size="sm">{value}</Badge>
                     ),
                   },
                   {
@@ -643,9 +641,9 @@ const EnterpriseManager: React.FC = () => {
                 <Card key={metric.id} className="shadow-xl">
                     <div className="flex justify-between items-start mb-2">
                       <Card.Title tag="h3" className="text-base">{metric.name}</Card.Title>
-                      <div className={`badge ${getStatusColor(metric.status)} badge-sm`}>
+                      <Badge color={getStatusColor(metric.status)} size="sm">
                         {metric.status}
-                      </div>
+                      </Badge>
                     </div>
                     <div className="text-3xl font-bold mb-1">
                       {metric.value}{' '}

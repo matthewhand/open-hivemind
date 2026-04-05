@@ -75,10 +75,8 @@ const SettingsGeneral: React.FC = () => {
   // Generate timezone options dynamically
   const timezoneOptions = useMemo(() => {
     try {
-      // @ts-ignore - Intl.supportedValuesOf is available in modern environments
-      if (typeof Intl !== 'undefined' && Intl.supportedValuesOf) {
-        // @ts-ignore
-        const timezones = Intl.supportedValuesOf('timeZone');
+      if (typeof Intl !== 'undefined' && 'supportedValuesOf' in Intl) {
+        const timezones = (Intl as any).supportedValuesOf('timeZone') as string[];
         return timezones.map((tz: string) => ({
           value: tz,
           label: tz.replace(/_/g, ' '),
