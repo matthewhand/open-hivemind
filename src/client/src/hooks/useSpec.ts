@@ -7,6 +7,7 @@ const useSpec = (id: string) => {
     data: spec = null,
     isLoading: loading,
     error: queryError,
+    refetch,
   } = useQuery<SpecDetailResponse | null>({
     queryKey: ['spec', id],
     queryFn: async () => {
@@ -21,7 +22,7 @@ const useSpec = (id: string) => {
 
   const error = queryError instanceof Error ? queryError.message : null;
 
-  return { spec, loading, error };
+  return { spec, loading, error, refetch };
 };
 
 export default useSpec;

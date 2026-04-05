@@ -7,6 +7,7 @@ export const useSpecs = () => {
     data: specs = [],
     isLoading: loading,
     error: queryError,
+    refetch,
   } = useQuery<Spec[]>({
     queryKey: ['specs'],
     queryFn: async () => {
@@ -20,7 +21,7 @@ export const useSpecs = () => {
 
   const error = queryError instanceof Error ? queryError.message : null;
 
-  return { specs, loading, error };
+  return { specs, loading, error, refetch };
 };
 
 export default useSpecs;
