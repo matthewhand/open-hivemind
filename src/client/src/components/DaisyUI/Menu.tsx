@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export interface MenuItem {
   /** Unique identifier for the menu item */
@@ -52,6 +53,7 @@ const Menu: React.FC<MenuProps> = ({
   onItemClick,
   allowMultipleExpanded = false,
 }) => {
+  const navigate = useNavigate();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
   const getMenuClasses = () => {
@@ -104,7 +106,7 @@ const Menu: React.FC<MenuProps> = ({
 
     // Handle navigation if href is provided
     if (item.href && !item.children?.length) {
-      window.location.href = item.href;
+      navigate(item.href);
     }
   };
 

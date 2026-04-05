@@ -16,7 +16,7 @@ import { useInfoToast } from '../components/DaisyUI/ToastNotification';
 const SpecsPage: React.FC = () => {
   const infoToast = useInfoToast();
   const navigate = useNavigate();
-  const { specs, loading, error } = useSpecs();
+  const { specs, loading, error, refetch } = useSpecs();
   const { values: urlParams, setValue: setUrlParam } = useUrlParams({
     search: { type: 'string', default: '', debounce: 300 },
     page: { type: 'number', default: 1 },
@@ -61,7 +61,7 @@ const SpecsPage: React.FC = () => {
           <div className="text-center">
             <Card.Title className="text-error">Error Loading Specifications</Card.Title>
             <p className="opacity-70">{error}</p>
-            <Button className="btn-primary" onClick={() => window.location.reload()}>
+            <Button className="btn-primary" onClick={() => refetch()}>
               Try Again
             </Button>
           </div>

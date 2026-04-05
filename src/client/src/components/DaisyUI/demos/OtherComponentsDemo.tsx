@@ -1,7 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Section } from './Section';
 import { BotChatTimeline } from '../../BotChatTimeline';
+import Countdown from '../Countdown';
+import Diff from '../Diff';
+import Divider from '../Divider';
+import Drawer from '../Drawer';
+import { Hero } from '../Hero';
+import Indicator from '../Indicator';
+import Join from '../Join';
+import Kbd from '../Kbd';
+import Mockup from '../Mockup';
+import NavbarWithSearch from '../NavbarWithSearch';
+import Pagination from '../Pagination';
+import { Rating } from '../Rating';
+import AdvancedThemeSwitcher from '../AdvancedThemeSwitcher';
 
 export const BadgeDemo: React.FC = () => {
   return (
@@ -963,6 +976,302 @@ export const ToastDemo: React.FC = () => {
             <div className="alert alert-error"><span>Connection failed</span></div>
           </div>
         </div>
+      </Section>
+    </div>
+  );
+};
+
+export const CountdownDemo: React.FC = () => {
+  const fiveMinutesFromNow = useMemo(() => Date.now() + 5 * 60 * 1000, []);
+  return (
+    <div className="space-y-8">
+      <Section title="Countdown (5 min from now)">
+        <Countdown targetDate={fiveMinutesFromNow} />
+      </Section>
+      <Section title="Compact Countdown">
+        <Countdown targetDate={fiveMinutesFromNow} compact size="lg" />
+      </Section>
+      <Section title="Small Countdown">
+        <Countdown targetDate={fiveMinutesFromNow} size="sm" />
+      </Section>
+    </div>
+  );
+};
+
+export const DiffDemo: React.FC = () => {
+  return (
+    <div className="space-y-8">
+      <Section title="Text Diff">
+        <Diff
+          item1={<div className="bg-success text-success-content grid place-content-center text-2xl font-bold w-full h-full">AFTER</div>}
+          item2={<div className="bg-error text-error-content grid place-content-center text-2xl font-bold w-full h-full">BEFORE</div>}
+          className="max-w-md"
+        />
+      </Section>
+      <Section title="Color Diff">
+        <Diff
+          item1={<div className="bg-primary w-full h-full" />}
+          item2={<div className="bg-secondary w-full h-full" />}
+          className="max-w-sm"
+          aspectRatio="aspect-square"
+        />
+      </Section>
+    </div>
+  );
+};
+
+export const DividerDemo: React.FC = () => {
+  return (
+    <div className="space-y-8">
+      <Section title="Horizontal Divider">
+        <p>Content above</p>
+        <Divider />
+        <p>Content below</p>
+      </Section>
+      <Section title="Divider with Text">
+        <p>Section A</p>
+        <Divider>OR</Divider>
+        <p>Section B</p>
+      </Section>
+      <Section title="Colored Dividers">
+        <Divider color="primary">Primary</Divider>
+        <Divider color="secondary">Secondary</Divider>
+        <Divider color="accent">Accent</Divider>
+      </Section>
+      <Section title="Vertical Divider">
+        <div className="flex items-center h-24">
+          <span>Left</span>
+          <Divider vertical />
+          <span>Right</span>
+        </div>
+      </Section>
+    </div>
+  );
+};
+
+export const DrawerDemo: React.FC = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div className="space-y-8">
+      <Section title="Drawer Toggle">
+        <button className="btn btn-primary" onClick={() => setIsOpen(!isOpen)}>
+          {isOpen ? 'Close Drawer' : 'Open Drawer'}
+        </button>
+        {isOpen && (
+          <div className="border border-base-300 rounded-lg h-64 mt-4 overflow-hidden">
+            <Drawer
+              isOpen={isOpen}
+              onClose={() => setIsOpen(false)}
+              navItems={[
+                { id: 'home', label: 'Home', icon: '🏠', path: '#' },
+                { id: 'settings', label: 'Settings', icon: '⚙️', path: '#' },
+                { id: 'about', label: 'About', icon: '📖', path: '#' },
+              ]}
+            />
+          </div>
+        )}
+      </Section>
+    </div>
+  );
+};
+
+export const HeroDemo: React.FC = () => {
+  return (
+    <div className="space-y-8">
+      <Section title="Basic Hero">
+        <Hero
+          title="Welcome to Hivemind"
+          subtitle="Build intelligent bot systems with ease."
+          actions={<button className="btn btn-primary">Get Started</button>}
+          minHeight="md"
+        />
+      </Section>
+      <Section title="Hero with Background Color">
+        <Hero
+          title="Dark Hero"
+          subtitle="A hero section with custom colors."
+          bgColor="bg-neutral"
+          titleColor="text-neutral-content"
+          subtitleColor="text-neutral-content/70"
+          minHeight="sm"
+        />
+      </Section>
+    </div>
+  );
+};
+
+export const IndicatorDemo: React.FC = () => {
+  return (
+    <div className="space-y-8">
+      <Section title="Badge on Button">
+        <Indicator item={<span className="badge badge-primary">99+</span>}>
+          <button className="btn">Inbox</button>
+        </Indicator>
+      </Section>
+      <Section title="Indicator on Avatar">
+        <Indicator item={<span className="badge badge-success badge-xs" />}>
+          <div className="avatar">
+            <div className="w-12 rounded-full bg-primary text-primary-content flex items-center justify-center font-bold">A</div>
+          </div>
+        </Indicator>
+      </Section>
+      <Section title="Indicator Positions">
+        <div className="flex gap-8">
+          <Indicator item={<span className="badge badge-secondary">top</span>} verticalPosition="top">
+            <div className="grid w-16 h-16 bg-base-300 place-items-center rounded-lg">Top</div>
+          </Indicator>
+          <Indicator item={<span className="badge badge-accent">mid</span>} verticalPosition="middle">
+            <div className="grid w-16 h-16 bg-base-300 place-items-center rounded-lg">Mid</div>
+          </Indicator>
+          <Indicator item={<span className="badge badge-info">bot</span>} verticalPosition="bottom">
+            <div className="grid w-16 h-16 bg-base-300 place-items-center rounded-lg">Bot</div>
+          </Indicator>
+        </div>
+      </Section>
+    </div>
+  );
+};
+
+export const JoinDemo: React.FC = () => {
+  return (
+    <div className="space-y-8">
+      <Section title="Button Group">
+        <Join>
+          <button className="btn join-item">Left</button>
+          <button className="btn join-item btn-active">Center</button>
+          <button className="btn join-item">Right</button>
+        </Join>
+      </Section>
+      <Section title="Input Group">
+        <Join>
+          <input className="input input-bordered join-item" placeholder="Email" />
+          <button className="btn btn-primary join-item">Subscribe</button>
+        </Join>
+      </Section>
+      <Section title="Vertical Join">
+        <Join vertical>
+          <button className="btn join-item">Top</button>
+          <button className="btn join-item">Middle</button>
+          <button className="btn join-item">Bottom</button>
+        </Join>
+      </Section>
+    </div>
+  );
+};
+
+export const KbdDemo: React.FC = () => {
+  return (
+    <div className="space-y-8">
+      <Section title="Keyboard Shortcuts">
+        <div className="flex gap-2 items-center">
+          <Kbd>Ctrl</Kbd> + <Kbd>C</Kbd>
+          <span className="ml-4">Copy</span>
+        </div>
+        <div className="flex gap-2 items-center mt-2">
+          <Kbd>Ctrl</Kbd> + <Kbd>V</Kbd>
+          <span className="ml-4">Paste</span>
+        </div>
+      </Section>
+      <Section title="Kbd Sizes">
+        <div className="flex gap-4 items-center">
+          <Kbd size="xs">xs</Kbd>
+          <Kbd size="sm">sm</Kbd>
+          <Kbd size="md">md</Kbd>
+          <Kbd size="lg">lg</Kbd>
+        </div>
+      </Section>
+      <Section title="Key Combination">
+        <div className="flex gap-1 items-center">
+          <Kbd>⌘</Kbd> + <Kbd>⇧</Kbd> + <Kbd>P</Kbd>
+          <span className="ml-4">Command Palette</span>
+        </div>
+      </Section>
+    </div>
+  );
+};
+
+export const MockupDemo: React.FC = () => {
+  return (
+    <div className="space-y-8">
+      <Section title="Browser Mockup">
+        <Mockup type="browser" content="https://open-hivemind.dev" width="100%" />
+      </Section>
+      <Section title="Code Mockup">
+        <Mockup type="code" content={'npm install open-hivemind\nnpm run dev'} width="100%" />
+      </Section>
+      <Section title="Phone Mockup">
+        <Mockup type="phone" content="Hello from Hivemind!" />
+      </Section>
+    </div>
+  );
+};
+
+export const NavbarDemo: React.FC = () => {
+  return (
+    <div className="space-y-8">
+      <Section title="Navbar with Search">
+        <div className="border border-base-300 rounded-lg overflow-hidden">
+          <NavbarWithSearch
+            navItems={[
+              { id: 'home', label: 'Home', icon: '🏠', path: '/' },
+              { id: 'bots', label: 'Bots', icon: '🤖', path: '/bots' },
+              { id: 'settings', label: 'Settings', icon: '⚙️', path: '/settings' },
+            ]}
+            notificationCount={3}
+            userName="Demo User"
+          />
+        </div>
+      </Section>
+    </div>
+  );
+};
+
+export const PaginationDemo: React.FC = () => {
+  const [page, setPage] = useState(1);
+  return (
+    <div className="space-y-8">
+      <Section title="Standard Pagination">
+        <Pagination currentPage={page} totalItems={100} pageSize={10} onPageChange={setPage} />
+        <p className="mt-2 text-sm text-base-content/60">Current page: {page}</p>
+      </Section>
+      <Section title="Compact Pagination">
+        <Pagination currentPage={page} totalItems={100} pageSize={10} onPageChange={setPage} style="compact" />
+      </Section>
+      <Section title="Extended Pagination">
+        <Pagination currentPage={page} totalItems={200} pageSize={10} onPageChange={setPage} style="extended" />
+      </Section>
+    </div>
+  );
+};
+
+export const RatingDemo: React.FC = () => {
+  const [rating, setRating] = useState(3);
+  return (
+    <div className="space-y-8">
+      <Section title="Interactive Star Rating">
+        <Rating value={rating} onChange={setRating} half={false} />
+        <p className="mt-2 text-sm text-base-content/60">Rating: {rating}/5</p>
+      </Section>
+      <Section title="Heart Rating">
+        <Rating value={4} shape="heart" readOnly half={false} />
+      </Section>
+      <Section title="Rating Sizes">
+        <div className="flex flex-col gap-2">
+          <Rating value={3} size="xs" readOnly half={false} />
+          <Rating value={3} size="sm" readOnly half={false} />
+          <Rating value={3} size="md" readOnly half={false} />
+          <Rating value={3} size="lg" readOnly half={false} />
+        </div>
+      </Section>
+    </div>
+  );
+};
+
+export const ThemeControllerDemo: React.FC = () => {
+  return (
+    <div className="space-y-8">
+      <Section title="Theme Switcher (Inline)">
+        <AdvancedThemeSwitcher position="inline" compact />
       </Section>
     </div>
   );

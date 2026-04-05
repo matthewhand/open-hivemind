@@ -207,7 +207,7 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ onClearCache }) => {
           </div>
         ) : (
           <div className="flex justify-center py-8">
-            <span className="loading loading-dots loading-lg" aria-hidden="true"></span>
+            <LoadingSpinner variant="dots" size="lg" />
           </div>
         )}
       </div>

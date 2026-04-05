@@ -250,3 +250,10 @@ test_redirects.py
 test.py
 fix_icons.js
 test_files.js
+auto_heal.js
+fix_brackets.js
+fix_parens.js
+fix_regex.js
+test_parser.js
+add-usage-tracking-import.js
+parseFull.js

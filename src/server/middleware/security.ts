@@ -405,7 +405,7 @@ function isTrustedProxy(ip: string): boolean {
  * Validate and sanitize an IP address
  * Returns null if the IP is invalid or potentially malicious
  */
-function validateIP(ip: string): string | null {
+export function validateIP(ip: string): string | null {
   if (!ip || typeof ip !== 'string') {
     return null;
   }
@@ -471,7 +471,7 @@ function getConnectionIP(req: Request): string {
  * when the request comes from a trusted proxy. This prevents IP spoofing attacks
  * where an attacker could set X-Forwarded-For to 127.0.0.1 to bypass access controls.
  */
-function getClientIP(req: Request): string {
+export function getClientIP(req: Request): string {
   // Get the actual connection IP
   const connectionIP = getConnectionIP(req);
 
@@ -614,7 +614,7 @@ function ipToLong(ip: string): number {
  * Supports both IPv4 and IPv4-mapped IPv6 addresses
  * Note: IPv6 CIDR ranges are not currently supported
  */
-function isIPInCIDR(ip: string, cidr: string): boolean {
+export function isIPInCIDR(ip: string, cidr: string): boolean {
   try {
     // Handle IPv4-mapped IPv6 addresses
     let cleanIP = ip;
@@ -662,6 +662,28 @@ function isIPInCIDR(ip: string, cidr: string): boolean {
     debug('CIDR parsing error:', e);
     return false;
   }
+}
+
+/**
+ * Check whether the request originates from a trusted admin IP.
+ * Returns true when ALLOW_LOCALHOST_ADMIN is 'true' AND the client IP
+ * matches an entry in ADMIN_IP_WHITELIST (defaults to localhost).
+ */
+export function isTrustedAdminIP(req: Request): boolean {
+  if (process.env.ALLOW_LOCALHOST_ADMIN !== 'true') {
+    return false;
+  }
+  const clientIP = getClientIP(req);
+  const whitelistEnv = process.env.ADMIN_IP_WHITELIST;
+  const whitelist = whitelistEnv
+    ? whitelistEnv.split(',').map((ip) => ip.trim()).filter(Boolean)
+    : ['127.0.0.1', '::1', '::ffff:127.0.0.1'];
+  return whitelist.some((allowed) => {
+    if (allowed.includes('/')) {
+      return isIPInCIDR(clientIP, allowed);
+    }
+    return clientIP === allowed || clientIP === `::ffff:${allowed}`;
+  });
 }
 
 /**

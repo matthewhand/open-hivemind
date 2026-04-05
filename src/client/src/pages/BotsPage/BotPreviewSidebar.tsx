@@ -11,6 +11,7 @@ import { Stat, Stats } from '../../components/DaisyUI/Stat';
 import Tooltip from '../../components/DaisyUI/Tooltip';
 import Card from '../../components/DaisyUI/Card';
 import Join from '../../components/DaisyUI/Join';
+import Figure from '../../components/DaisyUI/Figure';
 
 interface BotPreviewSidebarProps {
   previewBot: BotConfig | null;
@@ -73,9 +74,18 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
     <Card className="shadow-xl border border-base-200 sticky top-6 animate-in fade-in slide-in-from-right-4 duration-300">
         <div className="flex justify-between items-start mb-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Bot className="w-6 h-6 text-primary" />
-            </div>
+            <Figure
+              caption={
+                <span className="text-[10px] uppercase tracking-wider font-semibold opacity-60">
+                  {previewBot.status}
+                </span>
+              }
+              className="flex flex-col items-center"
+            >
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Bot className="w-6 h-6 text-primary" />
+              </div>
+            </Figure>
             <div>
               <h3 className="font-bold text-lg">{previewBot.name}</h3>
               <div className="flex items-center gap-2">
@@ -121,20 +131,18 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
           </div>
 
           <Stats className="bg-base-200 w-full shadow-sm">
-            <Stat className="p-3">
-              <div className="stat-title text-xs uppercase font-bold">Messages</div>
-              <div className="stat-value text-xl text-primary">{previewBot.messageCount ?? 0}</div>
-            </Stat>
-            <Stat className="p-3">
-              <div className="stat-title text-xs uppercase font-bold">Errors</div>
-              <div
-                className={`stat-value text-xl ${
-                  (previewBot.errorCount ?? 0) > 0 ? 'text-error' : ''
-                }`}
-              >
-                {previewBot.errorCount ?? 0}
-              </div>
-            </Stat>
+            <Stat
+              className="p-3"
+              title={<span className="text-xs uppercase font-bold">Messages</span>}
+              value={previewBot.messageCount ?? 0}
+              valueClassName="text-xl text-primary"
+            />
+            <Stat
+              className="p-3"
+              title={<span className="text-xs uppercase font-bold">Errors</span>}
+              value={previewBot.errorCount ?? 0}
+              valueClassName={`text-xl ${(previewBot.errorCount ?? 0) > 0 ? 'text-error' : ''}`}
+            />
           </Stats>
 
           {/* Tabs Navigation */}

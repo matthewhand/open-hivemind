@@ -6,7 +6,7 @@ import Card from './DaisyUI/Card';
 import Input from './DaisyUI/Input';
 import Select from './DaisyUI/Select';
 import Toggle from './DaisyUI/Toggle';
-import { Loading } from './DaisyUI/Loading';
+import { Loading, LoadingSpinner } from './DaisyUI/Loading';
 import Textarea from './DaisyUI/Textarea';
 import FormField from './DaisyUI/FormField';
 import Debug from 'debug';
@@ -220,7 +220,7 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center p-12 gap-4">
-        <span className="loading loading-infinity loading-lg text-primary" aria-hidden="true" />
+        <LoadingSpinner variant="infinity" size="lg" color="primary" />
         <span className="text-base-content/50">Loading settings...</span>
       </div>
     );

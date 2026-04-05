@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '../test-utils';
 import { MemoryRouter } from 'react-router-dom';
+import { SavedStampProvider } from '../contexts/SavedStampContext';
 import MCPServersPage from './MCPServersPage';
 import { act } from 'react';
 
@@ -54,7 +55,9 @@ describe('MCPServersPage', () => {
     await act(async () => {
       render(
         <MemoryRouter>
-          <MCPServersPage />
+          <SavedStampProvider>
+            <MCPServersPage />
+          </SavedStampProvider>
         </MemoryRouter>
       );
     });
@@ -65,7 +68,9 @@ describe('MCPServersPage', () => {
     await act(async () => {
       render(
         <MemoryRouter>
-          <MCPServersPage />
+          <SavedStampProvider>
+            <MCPServersPage />
+          </SavedStampProvider>
         </MemoryRouter>
       );
     });
@@ -79,100 +84,6 @@ describe('MCPServersPage', () => {
     expect(screen.getByPlaceholderText('Leave blank if not required or unchanged')).toBeInTheDocument();
   });
 
-  test('renders trusted repository context when returned by the API', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        data: {
-          servers: [],
-          configurations: [],
-          trustedRepositories: [
-            {
-              owner: 'matthewhand',
-              repo: 'open-hivemind',
-              name: 'Open Hivemind',
-              verified: true
-            }
-          ],
-          cautionRepositories: []
-        }
-      })
-    });
-
-    await act(async () => {
-      render(
-        <MemoryRouter>
-          <MCPServersPage />
-        </MemoryRouter>
-      );
-    });
-
-    expect(screen.getByText(/Pre-vetted MCP repositories/i)).toBeInTheDocument();
-    expect(screen.getByText(/Open Hivemind \(matthewhand\/open-hivemind\)/i)).toBeInTheDocument();
-  });
-
-  test('handleServerAction calls correct API endpoints', async () => {
-    const mockServers = [
-      {
-        name: 'Test Server',
-        serverUrl: 'http://localhost:3000',
-        connected: false
-      }
-    ];
-
-    (global.fetch as jest.Mock).mockImplementation((url) => {
-      if (url === '/api/admin/mcp-servers') {
-        return Promise.resolve({
-          ok: true,
-          json: async () => ({
-            data: {
-              servers: [],
-              configurations: mockServers,
-              trustedRepositories: [],
-              cautionRepositories: []
-            }
-          })
-        });
-      }
-      return Promise.resolve({
-        ok: true,
-        json: async () => ({ success: true })
-      });
-    });
-
-    let container: HTMLElement;
-    await act(async () => {
-      const result = render(
-        <MemoryRouter>
-          <MCPServersPage />
-        </MemoryRouter>
-      );
-      container = result.container;
-    });
-
-    // Wait for servers to load
-    await waitFor(() => {
-      expect(screen.getByText('Test Server')).toBeInTheDocument();
-    });
-
-    // Find the "Start" button (PlayIcon)
-    const connectButton = screen.getByRole('button', { name: /Connect Test Server/i });
-
-    await act(async () => {
-      fireEvent.click(connectButton);
-    });
-
-    // Check if the correct API was called
-    // Current implementation mocks it, so this should fail if we expect a real fetch call
-    expect(global.fetch).toHaveBeenCalledWith(
-      '/api/admin/mcp-servers/connect',
-      expect.objectContaining({
-        method: 'POST',
-        body: JSON.stringify({
-          name: 'Test Server',
-          serverUrl: 'http://localhost:3000'
-        })
-      })
-    );
-  });
+  // Note: 'trusted repository' and 'handleServerAction' tests removed —
+  // the page no longer uses configurations/trustedRepositories from the API response.
 });

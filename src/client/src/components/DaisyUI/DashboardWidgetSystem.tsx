@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Debug from 'debug';
 import Card from './Card';
+import RadialProgress from './RadialProgress';
 const debug = Debug('app:client:components:DaisyUI:DashboardWidgetSystem');
 
 interface Widget {
@@ -173,6 +174,12 @@ const QuickActionsWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate
   );
 };
 
+const getHealthColor = (value: number): 'success' | 'warning' | 'error' => {
+  if (value > 80) return 'error';
+  if (value > 60) return 'warning';
+  return 'success';
+};
+
 const SystemHealthWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate: _onUpdate, onRemove, onConfigure }) => {
   const health = widget.data?.health || {
     cpu: 45,
@@ -191,21 +198,19 @@ const SystemHealthWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate
         </ul>
       </div>
     ) : undefined}>
-      <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-4 justify-items-center">
         {Object.entries(health).map(([key, value]) => (
-          <div key={key} className="flex items-center gap-3">
-            <div className="w-16 text-sm capitalize">{key}</div>
-            <div className="flex-1">
-              <progress
-                className={`progress w-full ${
-                  Number(value) > 80 ? 'progress-error' :
-                    Number(value) > 60 ? 'progress-warning' : 'progress-success'
-                }`}
-                value={Number(value)}
-                max="100"
-              />
-            </div>
-            <div className="w-12 text-sm text-right">{Number(value)}%</div>
+          <div key={key} className="flex flex-col items-center gap-1">
+            <RadialProgress
+              value={Number(value)}
+              size="3.5rem"
+              thickness="0.3rem"
+              color={getHealthColor(Number(value))}
+              className="text-sm font-bold"
+            >
+              {Number(value)}%
+            </RadialProgress>
+            <div className="text-xs capitalize text-base-content/70">{key}</div>
           </div>
         ))}
       </div>

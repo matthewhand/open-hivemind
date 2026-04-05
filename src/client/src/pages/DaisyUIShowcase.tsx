@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import Link from '../components/DaisyUI/Link';
 import Modal from '../components/DaisyUI/Modal';
 import Tabs from '../components/DaisyUI/Tabs';
 import type { TabItem } from '../components/DaisyUI/Tabs';
@@ -30,6 +31,19 @@ import {
   TimelineDemo,
   CarouselDemo,
   ToastDemo,
+  CountdownDemo,
+  DiffDemo,
+  DividerDemo,
+  DrawerDemo,
+  HeroDemo,
+  IndicatorDemo,
+  JoinDemo,
+  KbdDemo,
+  MockupDemo,
+  NavbarDemo,
+  PaginationDemo,
+  RatingDemo,
+  ThemeControllerDemo,
 } from '../components/DaisyUI/demos/OtherComponentsDemo';
 
 /**
@@ -47,7 +61,9 @@ const DaisyUIShowcase: React.FC = () => {
     'toggle', 'radio', 'range', 'modal', 'dropdown', 'tabs', 'tooltip',
     'avatar', 'progress', 'loading', 'table', 'menu', 'collapse',
     'skeleton', 'breadcrumbs', 'textarea', 'file-input', 'steps', 'stat',
-    'chat', 'timeline', 'carousel', 'toast', 'animations',
+    'chat', 'timeline', 'carousel', 'toast', 'countdown', 'diff',
+    'divider', 'drawer', 'hero', 'indicator', 'join', 'kbd', 'mockup',
+    'navbar', 'pagination', 'rating', 'theme-controller', 'animations',
   ];
 
   const componentTabs: TabItem[] = useMemo(() =>
@@ -63,9 +79,9 @@ const DaisyUIShowcase: React.FC = () => {
         <h1 className="text-3xl font-bold">DaisyUI Component Reference</h1>
         <p className="text-base-content/60 mt-1">
           Official DaisyUI components using raw CSS classes -
-          <a href="https://daisyui.com/components/" target="_blank" rel="noopener noreferrer" className="link link-primary ml-1">
+          <Link href="https://daisyui.com/components/" target="_blank" rel="noopener noreferrer" color="primary" className="ml-1">
             View Official Docs
-          </a>
+          </Link>
         </p>
       </div>
 
@@ -109,6 +125,19 @@ const DaisyUIShowcase: React.FC = () => {
       {activeTab === 'timeline' && <TimelineDemo />}
       {activeTab === 'carousel' && <CarouselDemo />}
       {activeTab === 'toast' && <ToastDemo />}
+      {activeTab === 'countdown' && <CountdownDemo />}
+      {activeTab === 'diff' && <DiffDemo />}
+      {activeTab === 'divider' && <DividerDemo />}
+      {activeTab === 'drawer' && <DrawerDemo />}
+      {activeTab === 'hero' && <HeroDemo />}
+      {activeTab === 'indicator' && <IndicatorDemo />}
+      {activeTab === 'join' && <JoinDemo />}
+      {activeTab === 'kbd' && <KbdDemo />}
+      {activeTab === 'mockup' && <MockupDemo />}
+      {activeTab === 'navbar' && <NavbarDemo />}
+      {activeTab === 'pagination' && <PaginationDemo />}
+      {activeTab === 'rating' && <RatingDemo />}
+      {activeTab === 'theme-controller' && <ThemeControllerDemo />}
       {activeTab === 'animations' && <AnimationShowcaseDemo />}
 
       {/* Modal */}

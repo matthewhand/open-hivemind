@@ -660,8 +660,12 @@ export const applyRateLimiting = async (req: Request, res: Response, next: NextF
   // Apply different rate limiters based on route patterns (fallback to default behavior)
   if (path.startsWith('/api/config')) {
     return configRateLimiter(req, res, next);
-  } else if (path.startsWith('/api/auth') || path.startsWith('/api/login')) {
+  } else if (path === '/api/auth/login' || path === '/api/auth/register' || path === '/api/auth/trusted-login' || path.startsWith('/api/login')) {
+    // Only rate-limit credential submission endpoints — not verify/refresh/trusted-status
     return authRateLimiter(req, res, next);
+  } else if (path.startsWith('/api/auth')) {
+    // Other auth endpoints (verify, refresh, trusted-status, me) use the standard API limiter
+    return apiRateLimiter(req, res, next);
   } else if (path.startsWith('/api/admin')) {
     return adminRateLimiter(req, res, next);
   } else if (path.startsWith('/api/')) {

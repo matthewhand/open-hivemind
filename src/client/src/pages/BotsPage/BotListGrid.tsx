@@ -13,6 +13,7 @@ interface BotListGridProps {
   handleToggleBotStatus: (bot: BotConfig) => void;
   bulk: any;
   isMobile: boolean;
+  compactView?: boolean;
   onBotDragStart: (index: number) => (e: React.DragEvent) => void;
   onBotDragOver: (index: number) => (e: React.DragEvent) => void;
   onBotDragEnd: () => void;
@@ -31,6 +32,7 @@ export const BotListGrid: React.FC<BotListGridProps> = ({
   handleToggleBotStatus,
   bulk,
   isMobile,
+  compactView = false,
   onBotDragStart,
   onBotDragOver,
   onBotDragEnd,
@@ -40,7 +42,7 @@ export const BotListGrid: React.FC<BotListGridProps> = ({
   onBotMoveDown,
 }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className={compactView ? 'grid grid-cols-1 gap-2' : 'grid grid-cols-1 md:grid-cols-2 gap-4'}>
       {filteredBots.map((bot, index) => (
         <div
           key={bot.id}

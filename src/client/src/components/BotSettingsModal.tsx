@@ -220,7 +220,7 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                         <div className="form-control w-full">
                             <label className="label">
                                 <span className="label-text flex items-center gap-2">
-                                    <Avatar size="xs" placeholder shape="circle" className="w-4 h-4" innerClassName="bg-neutral-focus text-neutral-content rounded-full w-4 text-[8px]">P</Avatar>
+                                    <Avatar size="xs" placeholder shape="circle" className="w-4 h-4" innerClassName="bg-neutral-focus text-neutral-content rounded-full w-4 text-[10px]">P</Avatar>
                                     Persona
                                     {bot.envOverrides?.persona && (
                                         <Tooltip content="Locked by environment variable" position="right">

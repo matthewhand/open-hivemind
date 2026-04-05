@@ -157,18 +157,24 @@ const SettingsIntegrations: React.FC = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
-        <Stat className="bg-base-200/50 rounded-lg p-3">
-          <div className="stat-title text-xs">Total</div>
-          <div className="stat-value text-2xl">{integrations.length}</div>
-        </Stat>
-        <Stat className="bg-base-200/50 rounded-lg p-3">
-          <div className="stat-title text-xs">Connected</div>
-          <div className="stat-value text-2xl text-success">{connectedCount}</div>
-        </Stat>
-        <Stat className="bg-base-200/50 rounded-lg p-3">
-          <div className="stat-title text-xs">Configured</div>
-          <div className="stat-value text-2xl text-info">{configuredCount}</div>
-        </Stat>
+        <Stat
+          className="bg-base-200/50 rounded-lg p-3"
+          title="Total"
+          value={integrations.length}
+          valueClassName="text-2xl"
+        />
+        <Stat
+          className="bg-base-200/50 rounded-lg p-3"
+          title="Connected"
+          value={connectedCount}
+          valueClassName="text-2xl text-success"
+        />
+        <Stat
+          className="bg-base-200/50 rounded-lg p-3"
+          title="Configured"
+          value={configuredCount}
+          valueClassName="text-2xl text-info"
+        />
       </div>
 
       {/* Integration Groups */}

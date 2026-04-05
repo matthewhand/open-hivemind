@@ -1,9 +1,6 @@
-/* eslint-disable react-refresh/only-export-components, no-empty, no-case-declarations */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import Debug from 'debug';
-import { apiService } from '../services/api';
-const debug = Debug('app:client:contexts:AuthContext');
 
 export interface User {
   id: string;
@@ -28,9 +25,16 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   isServerless: boolean;
+  isTrustedNetwork: boolean;
+  trustedLogin: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const rawBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
+const API_BASE_URL = rawBaseUrl?.replace(/\/$/, '');
+
+const buildUrl = (path: string): string => (API_BASE_URL ? `${API_BASE_URL}${path}` : path);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -42,27 +46,39 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const storedTokens = localStorage.getItem('auth_tokens');
     const storedUser = localStorage.getItem('auth_user');
 
-    if (storedTokens && storedUser) {
+    // Guard against corrupted localStorage values (e.g., literal "undefined" string)
+    const isValidJson = (s: string | null): boolean =>
+      s !== null && s !== 'undefined' && s !== 'null' && s.length > 2;
+
+    if (isValidJson(storedTokens) && isValidJson(storedUser)) {
       try {
-        const parsedTokens = JSON.parse(storedTokens);
-        const parsedUser = JSON.parse(storedUser);
+        const parsedTokens = JSON.parse(storedTokens!);
+        const parsedUser = JSON.parse(storedUser!);
 
         // Check if token is still valid before setting it
         if (!isTokenExpired(parsedTokens.accessToken)) {
           setTokens(parsedTokens);
           setUser(parsedUser);
         } else {
-          // Token is expired, try to refresh it silently
+          // Token is expired — clear stale data immediately so the UI
+          // doesn't flash authenticated state, then try silent refresh
+          console.warn('[AuthContext] Stored token expired, clearing stale auth data');
+          localStorage.removeItem('auth_tokens');
+          localStorage.removeItem('auth_user');
           refreshToken().catch((error) => {
-            debug('WARN:', 'Failed to refresh expired token on load:', error);
-            // Don't logout here - just don't set the user
-            // The app will handle being in an unauthenticated state
+            console.warn('[AuthContext] Failed to refresh expired token:', error);
+            // Stale data already cleared — user will see login page
           });
         }
       } catch (error) {
-        debug('ERROR:', 'Failed to parse stored auth data:', error);
-        // Don't logout - just don't set the user
+        console.error('[AuthContext] Failed to parse stored auth data, clearing:', error);
+        localStorage.removeItem('auth_tokens');
+        localStorage.removeItem('auth_user');
       }
+    } else if (storedTokens || storedUser) {
+      // Corrupted values in localStorage (e.g., "undefined") — silently clean up
+      localStorage.removeItem('auth_tokens');
+      localStorage.removeItem('auth_user');
     } else if (import.meta.env.DEV && import.meta.env.VITE_AUTO_LOGIN === 'true') {
       // Auto-login is ONLY active when explicitly enabled via VITE_AUTO_LOGIN=true
       // in a Vite development build (import.meta.env.DEV === true).
@@ -105,14 +121,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const [isServerless, setIsServerless] = useState(false);
+  const [isTrustedNetwork, setIsTrustedNetwork] = useState(false);
 
   useEffect(() => {
     // Check for serverless mode
     const checkServerless = async () => {
       try {
-        const data = await apiService.auth.checkHealth();
-        if (data && (data.platform === 'vercel-serverless' || data.platform === 'serverless')) {
-          setIsServerless(true);
+        const res = await fetch('/health');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.platform === 'vercel-serverless' || data.platform === 'serverless') {
+            setIsServerless(true);
+          }
         }
       } catch {
         // Assume not serverless or backend down
@@ -121,12 +141,42 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     checkServerless();
   }, []);
 
+  // Check if the client is on a trusted network
+  useEffect(() => {
+    const checkTrustedNetwork = async () => {
+      try {
+        const res = await fetch(buildUrl('/api/auth/trusted-status'));
+        if (res.ok) {
+          const data = await res.json();
+          if (data.data?.trusted === true) {
+            setIsTrustedNetwork(true);
+          }
+        }
+      } catch {
+        // Fail silently — leave as false
+      }
+    };
+    checkTrustedNetwork();
+  }, []);
+
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
       // In serverless mode, this calls the serverless function which checks env vars
-      const data = await apiService.auth.login(username, password);
+      const response = await fetch(buildUrl('/api/auth/login'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
 
-      if (data && data.success) {
+      if (!response.ok) {
+        throw new Error('Login failed');
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
         const { accessToken, refreshToken, expiresIn } = data.data;
         const authTokens: AuthTokens = {
           accessToken,
@@ -154,7 +204,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       return false;
     } catch (error) {
-      debug('ERROR:', 'Login error:', error);
+      console.error('Login error:', error);
       return false;
     }
   };
@@ -178,9 +228,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     try {
-      const data = await apiService.auth.refresh(tokens.refreshToken);
+      const response = await fetch(buildUrl('/api/auth/refresh'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refreshToken: tokens.refreshToken }),
+      });
 
-      if (data && data.success) {
+      if (!response.ok) {
+        throw new Error('Token refresh failed');
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
         const newTokens: AuthTokens = {
           accessToken: data.data.accessToken,
           refreshToken: data.data.refreshToken,
@@ -195,7 +257,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       return false;
     } catch (error) {
-      debug('ERROR:', 'Token refresh error:', error);
+      console.error('Token refresh error:', error);
       logout();
       return false;
     }
@@ -214,16 +276,68 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     try {
-      const data = await apiService.auth.verify(token);
+      const response = await fetch(buildUrl('/api/auth/verify'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token }),
+      });
 
-      if (data && data.success) {
+      if (!response.ok) {
+        throw new Error('Token verification failed');
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
         return data.user;
       }
 
       return null;
     } catch (error) {
-      debug('ERROR:', 'Token verification error:', error);
+      console.error('Token verification error:', error);
       return null;
+    }
+  };
+
+  const trustedLogin = async (): Promise<void> => {
+    try {
+      const response = await fetch(buildUrl('/api/auth/trusted-login'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Trusted login failed');
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        const { accessToken, refreshToken: rt, expiresIn, user: userFromResponse } = data.data;
+        const authTokens: AuthTokens = {
+          accessToken,
+          refreshToken: rt,
+          expiresIn,
+        };
+
+        // Use user from response directly (no need to verify — server already authenticated)
+        const userInfo: User = userFromResponse || await verifyToken(accessToken);
+
+        setTokens(authTokens);
+        setUser(userInfo);
+
+        localStorage.setItem('auth_tokens', JSON.stringify(authTokens));
+        localStorage.setItem('auth_user', JSON.stringify(userInfo));
+      } else {
+        throw new Error('Trusted login was not successful');
+      }
+    } catch (error) {
+      console.error('Trusted login error:', error);
+      throw error;
     }
   };
 
@@ -236,6 +350,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     isAuthenticated: !!user,
     isLoading,
     isServerless,
+    isTrustedNetwork,
+    trustedLogin,
   };
 
   return (
