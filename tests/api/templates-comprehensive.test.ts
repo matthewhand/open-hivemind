@@ -161,7 +161,7 @@ describe('Templates API - Comprehensive Tests', () => {
         .expect(400);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('Missing required field');
+      expect(response.body.error).toBe('Validation failed');
     });
 
     it('should reject if template not found', async () => {
