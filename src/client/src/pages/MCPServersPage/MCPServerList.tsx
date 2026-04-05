@@ -28,6 +28,8 @@ interface MCPServerListProps {
   handleServerAction: (serverId: string, action: 'start' | 'stop' | 'restart') => void;
   handleEditServer: (server: MCPServer) => void;
   handleDeleteServer: (serverId: string) => void;
+  onCardClick?: (server: MCPServer) => void;
+  selectedServerId?: string | null;
 }
 
 export const MCPServerList: React.FC<MCPServerListProps> = ({
@@ -41,6 +43,8 @@ export const MCPServerList: React.FC<MCPServerListProps> = ({
   handleServerAction,
   handleEditServer,
   handleDeleteServer,
+  onCardClick,
+  selectedServerId,
 }) => {
   return (
     <>
@@ -80,6 +84,8 @@ export const MCPServerList: React.FC<MCPServerListProps> = ({
             handleServerAction={handleServerAction}
             handleEditServer={handleEditServer as any}
             handleDeleteServer={handleDeleteServer}
+            onCardClick={onCardClick}
+            isSelected={selectedServerId === server.id}
           />
         ))}
       </div>

@@ -35,6 +35,7 @@ import type { LLMProviderType } from '../types/bot';
 import { LLM_PROVIDER_CONFIGS } from '../types/bot';
 import ProviderConfigModal from '../components/ProviderConfiguration/ProviderConfigModal';
 import Divider from '../components/DaisyUI/Divider';
+import DetailDrawer from '../components/DaisyUI/DetailDrawer';
 import { apiService } from '../services/api';
 import useUrlParams from '../hooks/useUrlParams';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -88,6 +89,7 @@ const LLMProvidersPage: React.FC = () => {
   const setSearchQuery = (v: string) => setUrlParam('search', v);
   const filterType = urlParams.type;
   const setFilterType = (v: string) => setUrlParam('type', v);
+  const [drawerProfile, setDrawerProfile] = useState<any | null>(null);
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean; title: string; message: string; onConfirm: () => void;
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
@@ -569,7 +571,7 @@ const LLMProvidersPage: React.FC = () => {
           />
         <div className="grid grid-cols-1 gap-4">
           {filteredProfiles.map((profile) => (
-            <Card key={profile.key} className="bg-base-100 shadow-sm border border-base-200 transition-all hover:shadow-md">
+            <Card key={profile.key} className={`bg-base-100 shadow-sm border transition-all hover:shadow-md cursor-pointer ${drawerProfile?.key === profile.key ? 'border-primary ring-2 ring-primary/20' : 'border-base-200'}`} onClick={() => setDrawerProfile(profile)}>
               <div>
                 <div className="p-4 flex items-center justify-between cursor-pointer" onClick={() => toggleExpand(profile.key)}>
                   <div className="flex items-center gap-4">
@@ -649,6 +651,147 @@ const LLMProvidersPage: React.FC = () => {
         </div>
         </>
       )}
+
+      {/* Detail Drawer */}
+      <DetailDrawer
+        isOpen={!!drawerProfile}
+        onClose={() => setDrawerProfile(null)}
+        title={drawerProfile?.name || 'Profile Details'}
+        subtitle={drawerProfile?.provider ? `${drawerProfile.provider} provider` : undefined}
+      >
+        {drawerProfile && (
+          <div className="space-y-4">
+            {/* Provider info */}
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-primary/10 text-primary rounded-xl">
+                {getProviderIcon(drawerProfile.provider)}
+              </div>
+              <div>
+                <div className="font-bold text-lg">{drawerProfile.name}</div>
+                <span className="text-xs font-mono opacity-50 bg-base-200 px-2 py-0.5 rounded-full">{drawerProfile.key}</span>
+              </div>
+            </div>
+
+            <Divider />
+
+            {/* Type badges */}
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="secondary" size="small" style="outline">{drawerProfile.provider}</Badge>
+              <Badge
+                variant={
+                  normalizeModelType(drawerProfile.modelType) === 'embedding'
+                    ? 'warning'
+                    : normalizeModelType(drawerProfile.modelType) === 'both'
+                      ? 'info'
+                      : 'neutral'
+                }
+                size="small"
+              >
+                {normalizeModelType(drawerProfile.modelType)}
+              </Badge>
+              {renderLibraryCheck(drawerProfile.provider)}
+              {drawerProfile.key === defaultChatbotProfile && (
+                <Badge variant="primary" size="small">Default Chatbot</Badge>
+              )}
+              {drawerProfile.key === webuiIntelligenceProvider && (
+                <Badge variant="warning" size="small">WebUI AI</Badge>
+              )}
+              {drawerProfile.key === defaultEmbeddingProvider && (
+                <Badge variant="secondary" size="small">Default Embedding</Badge>
+              )}
+            </div>
+
+            <Divider />
+
+            {/* Configuration details */}
+            <div>
+              <h4 className="text-xs font-bold uppercase opacity-50 mb-3 flex items-center gap-2">
+                <ConfigIcon className="w-3 h-3" /> Model Configuration
+              </h4>
+              <div className="space-y-2">
+                {Object.entries(drawerProfile.config || {}).map(([k, v]) => {
+                  const isSecret = /key|secret|token|password/i.test(k);
+                  return (
+                    <div key={k} className="flex justify-between items-center p-2 bg-base-200/50 rounded text-sm">
+                      <span className="font-medium text-base-content/70">{k}</span>
+                      <span className="font-mono text-xs truncate max-w-[200px]">
+                        {isSecret && v
+                          ? <span className="text-success">Configured <CheckIcon className="w-3 h-3 inline" /></span>
+                          : v === '' || v === null || v === undefined
+                            ? <span className="text-error">Not set <XIcon className="w-3 h-3 inline" /></span>
+                            : String(v)}
+                      </span>
+                    </div>
+                  );
+                })}
+                {Object.keys(drawerProfile.config || {}).length === 0 && (
+                  <p className="text-sm opacity-50 italic">No configuration values set.</p>
+                )}
+              </div>
+            </div>
+
+            <Divider />
+
+            {/* Actions */}
+            <div className="space-y-2">
+              <h4 className="text-xs font-bold uppercase opacity-50 mb-2">Actions</h4>
+
+              {/* Set as default buttons */}
+              {isChatCapable(drawerProfile) && drawerProfile.key !== defaultChatbotProfile && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start gap-2"
+                  onClick={async () => {
+                    setDefaultChatbotProfile(drawerProfile.key);
+                    await saveGlobal({ defaultChatbotProfile: drawerProfile.key }).catch(() => {});
+                  }}
+                >
+                  <ChatIcon className="w-4 h-4" /> Set as Default Chatbot
+                </Button>
+              )}
+
+              {isEmbeddingCapable(drawerProfile) && drawerProfile.key !== defaultEmbeddingProvider && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start gap-2"
+                  onClick={async () => {
+                    setDefaultEmbeddingProvider(drawerProfile.key);
+                    await saveLlmConfig({ DEFAULT_EMBEDDING_PROVIDER: drawerProfile.key }).catch(() => {});
+                  }}
+                >
+                  <CpuIcon className="w-4 h-4" /> Set as Default Embedding
+                </Button>
+              )}
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-start gap-2"
+                onClick={() => {
+                  handleEditProfile(drawerProfile);
+                  setDrawerProfile(null);
+                }}
+              >
+                <EditIcon className="w-4 h-4" /> Edit Profile
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-start gap-2 text-error border-error/30 hover:bg-error/10"
+                onClick={() => {
+                  handleDeleteProfile(drawerProfile.key);
+                  setDrawerProfile(null);
+                }}
+              >
+                <DeleteIcon className="w-4 h-4" /> Delete Profile
+              </Button>
+            </div>
+          </div>
+        )}
+      </DetailDrawer>
 
       <ProviderConfigModal
         modalState={{ ...modalState, providerType: 'llm' }}

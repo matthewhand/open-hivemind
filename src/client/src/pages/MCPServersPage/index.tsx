@@ -1,13 +1,26 @@
 import React, { useMemo, useState } from 'react';
 import {
+  AlertCircle,
+  CheckCircle,
+  Edit as EditIcon,
+  Globe,
+  Play,
   Plus,
+  RefreshCw,
   Search,
   Server,
   ShieldAlert,
+  Square,
+  Trash2,
+  Wrench,
+  XCircle,
 } from 'lucide-react';
 import PageHeader from '../../components/DaisyUI/PageHeader';
 import { Alert } from '../../components/DaisyUI/Alert';
-import { Badge } from '../../components/DaisyUI/Badge';
+import Badge from '../../components/DaisyUI/Badge';
+import Button from '../../components/DaisyUI/Button';
+import Divider from '../../components/DaisyUI/Divider';
+import DetailDrawer from '../../components/DaisyUI/DetailDrawer';
 import EmptyState from '../../components/DaisyUI/EmptyState';
 import { SkeletonGrid } from '../../components/DaisyUI/Skeleton';
 import SearchFilterBar from '../../components/SearchFilterBar';
@@ -46,6 +59,7 @@ const MCPServersPage: React.FC = () => {
   } = useMCPServerData();
 
   const [selectedServer, setSelectedServer] = useState<MCPServer | null>(null);
+  const [drawerServer, setDrawerServer] = useState<MCPServer | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [toolsModalOpen, setToolsModalOpen] = useState(false);
   const [viewingTools, setViewingTools] = useState<Tool[]>([]);
@@ -231,8 +245,170 @@ const MCPServersPage: React.FC = () => {
             setDialogOpen(true);
           }}
           handleDeleteServer={handleDeleteServer}
+          onCardClick={(server) => setDrawerServer(server)}
+          selectedServerId={drawerServer?.id}
         />
       )}
+      {/* Detail Drawer */}
+      <DetailDrawer
+        isOpen={!!drawerServer}
+        onClose={() => setDrawerServer(null)}
+        title={drawerServer?.name || 'Server Details'}
+        subtitle={drawerServer?.url || undefined}
+      >
+        {drawerServer && (() => {
+          // Find the latest server data (status may have changed)
+          const liveServer = servers.find(s => s.id === drawerServer.id) || drawerServer;
+          return (
+            <div className="space-y-4">
+              {/* Status */}
+              <div className="flex items-center gap-3">
+                <Server className="w-6 h-6 text-primary" />
+                <div className="flex-1">
+                  <div className="font-bold text-lg">{liveServer.name}</div>
+                  <p className="text-sm text-base-content/60">{liveServer.description || 'No description'}</p>
+                </div>
+                <Badge
+                  variant={liveServer.status === 'running' ? 'success' : liveServer.status === 'error' ? 'error' : 'ghost'}
+                  size="small"
+                >
+                  {liveServer.status}
+                </Badge>
+              </div>
+
+              <Divider />
+
+              {/* Connection details */}
+              <div>
+                <h4 className="text-xs font-bold uppercase opacity-50 mb-3 flex items-center gap-2">
+                  <Globe className="w-3 h-3" /> Connection Details
+                </h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center p-2 bg-base-200/50 rounded text-sm">
+                    <span className="font-medium text-base-content/70">URL</span>
+                    <span className="font-mono text-xs truncate max-w-[220px]">{liveServer.url || 'Not set'}</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 bg-base-200/50 rounded text-sm">
+                    <span className="font-medium text-base-content/70">Status</span>
+                    <span className={`text-xs font-medium ${liveServer.status === 'running' ? 'text-success' : liveServer.status === 'error' ? 'text-error' : 'text-base-content/50'}`}>
+                      {liveServer.status === 'running' && <><CheckCircle className="w-3 h-3 inline mr-1" />Connected</>}
+                      {liveServer.status === 'stopped' && <><XCircle className="w-3 h-3 inline mr-1" />Disconnected</>}
+                      {liveServer.status === 'error' && <><AlertCircle className="w-3 h-3 inline mr-1" />Error</>}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 bg-base-200/50 rounded text-sm">
+                    <span className="font-medium text-base-content/70">API Key</span>
+                    <span className="text-xs">
+                      {liveServer.apiKey
+                        ? <span className="text-success">Configured <CheckCircle className="w-3 h-3 inline" /></span>
+                        : <span className="text-base-content/50">Not set</span>}
+                    </span>
+                  </div>
+                  {liveServer.lastConnected && (
+                    <div className="flex justify-between items-center p-2 bg-base-200/50 rounded text-sm">
+                      <span className="font-medium text-base-content/70">Last Connected</span>
+                      <span className="text-xs">{new Date(liveServer.lastConnected).toLocaleString()}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Error display */}
+              {liveServer.status === 'error' && liveServer.error && (
+                <Alert status="error" className="text-xs">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>{liveServer.error}</span>
+                </Alert>
+              )}
+
+              <Divider />
+
+              {/* Tools list */}
+              <div>
+                <h4 className="text-xs font-bold uppercase opacity-50 mb-3 flex items-center gap-2">
+                  <Wrench className="w-3 h-3" /> Available Tools ({liveServer.toolCount})
+                </h4>
+                {liveServer.tools && liveServer.tools.length > 0 ? (
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {liveServer.tools.map((tool) => (
+                      <div key={tool.name} className="p-2 bg-base-200/50 rounded text-sm">
+                        <div className="font-medium text-xs">{tool.name}</div>
+                        {tool.description && (
+                          <p className="text-xs text-base-content/50 mt-0.5 line-clamp-2">{tool.description}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm opacity-50 italic">
+                    {liveServer.status === 'running' ? 'No tools reported.' : 'Connect to discover tools.'}
+                  </p>
+                )}
+              </div>
+
+              <Divider />
+
+              {/* Actions */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold uppercase opacity-50 mb-2">Actions</h4>
+
+                {/* Connect / Disconnect */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={`w-full justify-start gap-2 ${liveServer.status === 'running' ? 'text-error border-error/30 hover:bg-error/10' : 'text-success border-success/30 hover:bg-success/10'}`}
+                  onClick={() => {
+                    handleServerAction(liveServer.id, liveServer.status === 'running' ? 'stop' : 'start');
+                  }}
+                >
+                  {liveServer.status === 'running'
+                    ? <><Square className="w-4 h-4" /> Disconnect</>
+                    : <><Play className="w-4 h-4" /> Connect</>}
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start gap-2"
+                  onClick={() => {
+                    handleTestConnection(liveServer);
+                    setDrawerServer(null);
+                  }}
+                >
+                  <RefreshCw className={`w-4 h-4 ${isTesting ? 'animate-spin' : ''}`} /> Test Connection
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start gap-2"
+                  onClick={() => {
+                    setSelectedServer(liveServer);
+                    setIsEditing(true);
+                    setDialogOpen(true);
+                    setDrawerServer(null);
+                  }}
+                >
+                  <EditIcon className="w-4 h-4" /> Edit Server
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start gap-2 text-error border-error/30 hover:bg-error/10"
+                  onClick={() => {
+                    handleDeleteServer(liveServer.id);
+                    setDrawerServer(null);
+                  }}
+                >
+                  <Trash2 className="w-4 h-4" /> Remove Server
+                </Button>
+              </div>
+            </div>
+          );
+        })()}
+      </DetailDrawer>
+
       <MCPServerModals
         toolsModalOpen={toolsModalOpen}
         setToolsModalOpen={setToolsModalOpen}
