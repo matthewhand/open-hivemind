@@ -77,27 +77,6 @@ const Login: React.FC = () => {
             </div>
           )}
 
-          {isTrustedNetwork && (
-            <div className="mb-6">
-              <Button
-                variant="primary"
-                size="lg"
-                className="w-full"
-                onClick={handleTrustedLogin}
-                disabled={isTrustedLoading}
-              >
-                {isTrustedLoading ? (
-                  <><span className="loading loading-spinner loading-sm mr-2" aria-hidden="true"></span> Logging in...</>
-                ) : (
-                  'Login as Admin (Trusted Network)'
-                )}
-              </Button>
-              <p className="text-sm text-base-content/70 text-center mt-2">
-                You're on a trusted network — click above to login without a password
-              </p>
-            </div>
-          )}
-
           {error && (
             <Alert status="error" message={error} className="mb-4" />
           )}
@@ -155,6 +134,30 @@ const Login: React.FC = () => {
               </p>
             </div>
           </form>
+
+          {isTrustedNetwork && (
+            <>
+              <div className="divider text-base-content/50">or</div>
+              <div className="bg-success/10 border border-success/30 rounded-box p-4">
+                <Button
+                  variant="success"
+                  size="lg"
+                  className="w-full"
+                  onClick={handleTrustedLogin}
+                  disabled={isTrustedLoading}
+                >
+                  {isTrustedLoading ? (
+                    <><span className="loading loading-spinner loading-sm mr-2" aria-hidden="true"></span> Logging in...</>
+                  ) : (
+                    'Login as Admin (Trusted Network)'
+                  )}
+                </Button>
+                <p className="text-sm text-success text-center mt-2">
+                  You're on a trusted network — login without a password
+                </p>
+              </div>
+            </>
+          )}
         </div>
       </Card>
     </div>

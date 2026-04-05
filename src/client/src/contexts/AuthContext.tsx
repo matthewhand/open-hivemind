@@ -317,14 +317,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const data = await response.json();
 
       if (data.success) {
-        const { accessToken, refreshToken: rt, expiresIn } = data.data;
+        const { accessToken, refreshToken: rt, expiresIn, user: userFromResponse } = data.data;
         const authTokens: AuthTokens = {
           accessToken,
           refreshToken: rt,
           expiresIn,
         };
 
-        const userInfo = await verifyToken(accessToken);
+        // Use user from response directly (no need to verify — server already authenticated)
+        const userInfo: User = userFromResponse || await verifyToken(accessToken);
 
         setTokens(authTokens);
         setUser(userInfo);
