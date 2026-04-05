@@ -2,57 +2,37 @@
 
 Historical snapshots of the UI before changes. See [docs/screenshots/](../../docs/screenshots/) for current canonical images.
 
-![activity-page-before-20250101](activity-page-before-20250101.png)
-![ai-assist-button-before-20250101](ai-assist-button-before-20250101.png)
-![ai-assist-button-before](ai-assist-button-before.png)
-![ai-button-hover-20250101](ai-button-hover-20250101.png)
-![ai-button-hover-before-20250101](ai-button-hover-before-20250101.png)
-![ai-button-hover-before](ai-button-hover-before.png)
-![ai-button-hover-full-20250101](ai-button-hover-full-20250101.png)
-![ai-button-loading-before-20250101](ai-button-loading-before-20250101.png)
-![ai-button-loading-before](ai-button-loading-before.png)
-![api-rate-limit-before](api-rate-limit-before.png)
-![backup-retention-baseline-20250101](backup-retention-baseline-20250101.png)
-![backup-retention-enforced-20250101](backup-retention-enforced-20250101.png)
-![bot-create-validation-before-20250101](bot-create-validation-before-20250101.png)
-![bot-create-validation-before](bot-create-validation-before.png)
-![bot-details-modal-before-20250101](bot-details-modal-before-20250101.png)
-![bot-details-modal-before](bot-details-modal-before.png)
-![bot-wizard-validation-before-20250101](bot-wizard-validation-before-20250101.png)
-![bot-wizard-validation-before](bot-wizard-validation-before.png)
-![bots-page-before-20250101](bots-page-before-20250101.png)
-![bots-page-before](bots-page-before.png)
-![button-loading-before-light-20250101](button-loading-before-light-20250101.png)
-![button-loading-before-light](button-loading-before-light.png)
-![button-loading-before](button-loading-before.png)
-![button-loading-real-app-20250101](button-loading-real-app-20250101.png)
-![chatpage-latency-20250101](chatpage-latency-20250101.png)
-![chatpage-offline-20250101](chatpage-offline-20250101.png)
-![chatpage-optimistic-20250101](chatpage-optimistic-20250101.png)
-![chatpage-rollback-20250101](chatpage-rollback-20250101.png)
-![config-rollback-available-20250101](config-rollback-available-20250101.png)
-![config-rollback-empty-20250101](config-rollback-empty-20250101.png)
-![config-test-helper-before-20250101](config-test-helper-before-20250101.png)
-![config-test-helper-before](config-test-helper-before.png)
-![create-bot-modal-20250101](create-bot-modal-20250101.png)
-![distributed-trace-waterfall-20250101](distributed-trace-waterfall-20250101.png)
-![distributed-trace-waterfall-before-20250101](distributed-trace-waterfall-before-20250101.png)
-![guards-modal-enhanced-20250101](guards-modal-enhanced-20250101.png)
-![mcp-guard-ux-after-undo-20250101](mcp-guard-ux-after-undo-20250101.png)
-![mcp-nav-after-debug-20250101](mcp-nav-after-debug-20250101.png)
-![openwebui-before-20250101](openwebui-before-20250101.png)
-![openwebui-before](openwebui-before.png)
-![pagination-after-accessible-20250101](pagination-after-accessible-20250101.png)
-![pagination-before-20250101](pagination-before-20250101.png)
-![pagination-before](pagination-before.png)
-![pagination-expanded-scope-20250101](pagination-expanded-scope-20250101.png)
-![predictive-analytics-20250101](predictive-analytics-20250101.png)
-![predictive-analytics-before](predictive-analytics-before.png)
-![prometheus-metrics-before-20250101](prometheus-metrics-before-20250101.png)
-![prometheus-metrics-before](prometheus-metrics-before.png)
-![settings-security-20250101](settings-security-20250101.png)
-![showcase-page-20250101](showcase-page-20250101.png)
-![system-management-config-tab-20250101](system-management-config-tab-20250101.png)
-![verification-bots-search-20250101](verification-bots-search-20250101.png)
-![verification-personas-20250101](verification-personas-20250101.png)
-![verification-personas-copy-20250101](verification-personas-copy-20250101.png)
+| Filename | Description |
+|----------|-------------|
+| activity-page.png | Activity page (previous version) |
+| ai-assist-button.png | AI assist button |
+| ai-button-hover-full.png | AI button hover state (full) |
+| ai-button-hover.png | AI button hover state |
+| ai-button-loading.png | AI button loading state |
+| analytics-dashboard.png | Analytics dashboard |
+| api-rate-limit.png | API rate limit display |
+| backup-retention-baseline.png | Backup retention baseline |
+| backup-retention-enforced.png | Backup retention enforced |
+| bot-create-page.png | Bot create page |
+| bot-create-validation.png | Bot create validation |
+| bot-details-modal.png | Bot details modal |
+| bot-wizard-validation.png | Bot wizard validation |
+| bots-page.png | Bots page |
+| button-loading-real-app.png | Button loading in app |
+| button-loading.png | Button loading state |
+| chat-monitor.png | Chat monitor |
+| config-rollback-available.png | Config rollback available |
+| config-rollback-empty.png | Config rollback empty state |
+| config-test-helper.png | Config test helper |
+| create-bot-modal.png | Create bot modal |
+| guard-profiles-coverage.png | Guard profiles coverage |
+| guards-modal-enhanced.png | Guards modal enhanced |
+| mcp-guard-ux.png | MCP guard UX |
+| openwebui.png | OpenWebUI integration |
+| pagination-expanded-scope.png | Pagination expanded scope |
+| pagination.png | Pagination |
+| settings-security.png | Settings security |
+| system-management.png | System management |
+| verification-bots-search.png | Verification bots search |
+| verification-personas-copy.png | Verification personas copy |
+| verification-personas.png | Verification personas |
