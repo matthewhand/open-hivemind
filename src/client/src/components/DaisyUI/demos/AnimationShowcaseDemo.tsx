@@ -319,7 +319,7 @@ const KeyframeCard: React.FC<{ kf: KeyframeDef }> = ({ kf }) => {
         </div>
       </div>
       <Code>{kf.css}</Code>
-    </div>
+    </Card>
   );
 };
 
