@@ -4,7 +4,7 @@ import express from 'express';
 import request from 'supertest';
 import swarmRouter from '../../src/admin/swarmRoutes';
 import { AuthManager } from '../../src/auth/AuthManager';
-import { SwarmInstaller } from '../../src/integrations/openswarm/SwarmInstaller';
+import { SwarmInstaller } from '@hivemind/llm-openswarm';
 import { providerRegistry } from '../../src/registries/ProviderRegistry';
 import { authenticateToken } from '../../src/server/middleware/auth';
 
@@ -12,7 +12,7 @@ import { authenticateToken } from '../../src/server/middleware/auth';
 jest.mock('../../src/auth/AuthManager');
 
 // Mock SwarmInstaller
-jest.mock('../../src/integrations/openswarm/SwarmInstaller', () => {
+jest.mock('@hivemind/llm-openswarm', () => {
   return {
     SwarmInstaller: jest.fn().mockImplementation(() => ({
       id: 'openswarm',

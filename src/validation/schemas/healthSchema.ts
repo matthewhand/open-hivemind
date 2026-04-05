@@ -21,7 +21,7 @@ export const CreateApiEndpointSchema = z.object({
 /** PUT /api-endpoints/:id */
 export const UpdateApiEndpointSchema = z.object({
   params: z.object({
-    id: idParam('Endpoint ID'),
+    id: z.string().min(1, { message: 'Endpoint ID is required' }),
   }),
   body: z.record(z.unknown()).refine((val) => Object.keys(val).length > 0, {
     message: 'Update body must not be empty',
@@ -31,7 +31,7 @@ export const UpdateApiEndpointSchema = z.object({
 /** DELETE /api-endpoints/:id */
 export const DeleteApiEndpointSchema = z.object({
   params: z.object({
-    id: idParam('Endpoint ID'),
+    id: z.string().min(1, { message: 'Endpoint ID is required' }),
   }),
 });
 

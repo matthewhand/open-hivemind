@@ -52,6 +52,7 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
             size="sm"
             color="ghost"
             hideArrow={true}
+            aria-label={`Options for ${bot.name}`}
           >
             <li><a>🔧 Configure</a></li>
             <li><a>📊 View Logs</a></li>
