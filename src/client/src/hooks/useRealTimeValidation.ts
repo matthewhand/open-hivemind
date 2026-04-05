@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import Debug from 'debug';
 import { apiService } from '../services/api';
+
+const debug = Debug('app:client:hooks:useRealTimeValidation');
 
 export interface ValidationError {
   id: string;
@@ -119,7 +122,7 @@ export function useRealTimeValidation<T = any>(
         }
 
         // Handle validation errors gracefully
-        console.error('Validation error:', error);
+        debug('Validation error:', error);
 
         // Don't set validation state on network errors - keep previous state
         // This prevents flashing error states during connectivity issues
