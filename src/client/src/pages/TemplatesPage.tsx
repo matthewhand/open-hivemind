@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   FileText, Search, Filter, Plus, CheckCircle, Clock,
   Tag, Package, AlertCircle, RefreshCw, ChevronRight,
-  Download, Trash2, Copy, Eye
+  Download, Trash2, Copy, Eye, Edit3, User, Calendar
 } from 'lucide-react';
 import { useErrorToast, useSuccessToast } from '../components/DaisyUI/ToastNotification';
 import { usePageLifecycle } from '../hooks/usePageLifecycle';
@@ -19,6 +19,8 @@ import { Badge } from '../components/DaisyUI/Badge';
 import Card from '../components/DaisyUI/Card';
 import Input from '../components/DaisyUI/Input';
 import Textarea from '../components/DaisyUI/Textarea';
+import Divider from '../components/DaisyUI/Divider';
+import DetailDrawer from '../components/DaisyUI/DetailDrawer';
 import { apiService } from '../services/api';
 import { ErrorService } from '../services/ErrorService';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -60,6 +62,8 @@ const TemplatesPage: React.FC = () => {
   const [botName, setBotName] = useState('');
   const [botDescription, setBotDescription] = useState('');
   const [deletingTemplate, setDeletingTemplate] = useState<ConfigurationTemplate | null>(null);
+  const [drawerTemplate, setDrawerTemplate] = useState<ConfigurationTemplate | null>(null);
+  const [drawerTab, setDrawerTab] = useState('details');
 
   const toastError = useErrorToast();
   const toastSuccess = useSuccessToast();
@@ -169,6 +173,43 @@ const TemplatesPage: React.FC = () => {
     });
     return groups;
   }, [filteredTemplates]);
+
+  const handleOpenDrawer = (template: ConfigurationTemplate) => {
+    setDrawerTemplate(template);
+    setDrawerTab('details');
+  };
+
+  const handleCloseDrawer = () => {
+    setDrawerTemplate(null);
+  };
+
+  const handleExportTemplate = (template: ConfigurationTemplate) => {
+    const blob = new Blob([JSON.stringify(template.config, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${template.name.replace(/\s+/g, '-').toLowerCase()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toastSuccess('Template exported as JSON');
+  };
+
+  const handleDuplicateTemplate = async (template: ConfigurationTemplate) => {
+    try {
+      await apiService.post('/api/admin/templates', {
+        name: `${template.name} (Copy)`,
+        description: template.description,
+        category: template.category,
+        tags: template.tags,
+        config: template.config,
+      });
+      toastSuccess(`Template duplicated as "${template.name} (Copy)"`);
+      await fetchTemplates();
+    } catch (err) {
+      ErrorService.report(err, { action: 'duplicateTemplate', templateId: template.id });
+      toastError(err instanceof Error ? err.message : 'Failed to duplicate template');
+    }
+  };
 
   const handlePreviewTemplate = (template: ConfigurationTemplate) => {
     setSelectedTemplate(template);
@@ -324,7 +365,12 @@ const TemplatesPage: React.FC = () => {
                 {categoryTemplates.map((template) => (
                   <Card
                     key={template.id}
-                    className="shadow-lg border border-base-300 hover:shadow-xl transition-shadow"
+                    className={`shadow-lg border hover:shadow-xl transition-shadow cursor-pointer ${
+                      drawerTemplate?.id === template.id
+                        ? 'border-primary ring-2 ring-primary/30'
+                        : 'border-base-300'
+                    }`}
+                    onClick={() => handleOpenDrawer(template)}
                   >
                       <div className="flex items-start justify-between mb-3">
                         <Card.Title tag="h3" className="text-lg">{template.name}</Card.Title>
@@ -366,7 +412,7 @@ const TemplatesPage: React.FC = () => {
                       <Card.Actions className="gap-2">
                         <button
                           className="btn btn-ghost btn-sm btn-square"
-                          onClick={() => handlePreviewTemplate(template)}
+                          onClick={(e) => { e.stopPropagation(); handlePreviewTemplate(template); }}
                           title="Preview template"
                           aria-label="Preview template"
                         >
@@ -375,7 +421,7 @@ const TemplatesPage: React.FC = () => {
                         {!template.isBuiltIn && (
                           <button
                             className="btn btn-ghost btn-sm btn-square text-error"
-                            onClick={() => setDeletingTemplate(template)}
+                            onClick={(e) => { e.stopPropagation(); setDeletingTemplate(template); }}
                             title="Delete template"
                             aria-label="Delete template"
                           >
@@ -384,7 +430,7 @@ const TemplatesPage: React.FC = () => {
                         )}
                         <button
                           className="btn btn-primary btn-sm"
-                          onClick={() => handleApplyTemplate(template)}
+                          onClick={(e) => { e.stopPropagation(); handleApplyTemplate(template); }}
                         >
                           Apply Template
                           <ChevronRight className="w-4 h-4" />
@@ -554,6 +600,170 @@ const TemplatesPage: React.FC = () => {
         onConfirm={handleDeleteTemplate}
         onClose={() => setDeletingTemplate(null)}
       />
+
+      {/* Template Detail Drawer */}
+      <DetailDrawer
+        isOpen={!!drawerTemplate}
+        onClose={handleCloseDrawer}
+        title={drawerTemplate?.name}
+        subtitle={drawerTemplate ? `${drawerTemplate.category} template` : undefined}
+      >
+        {drawerTemplate && (
+          <div className="space-y-4">
+            {/* Drawer Tabs */}
+            <Tabs
+              tabs={[
+                { key: 'details', label: 'Details' },
+                { key: 'config', label: 'Configuration' },
+              ]}
+              activeTab={drawerTab}
+              onChange={setDrawerTab}
+              variant="boxed"
+              size="sm"
+            />
+
+            {drawerTab === 'details' && (
+              <div className="space-y-4">
+                {/* Category & Built-in Badge */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge variant="primary" className="capitalize">{drawerTemplate.category}</Badge>
+                  {drawerTemplate.isBuiltIn && (
+                    <Badge variant="info" size="sm">Built-in</Badge>
+                  )}
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="text-xs font-bold uppercase opacity-50 mb-1 block">Description</label>
+                  <p className="text-sm">{drawerTemplate.description || 'No description provided.'}</p>
+                </div>
+
+                <Divider />
+
+                {/* Tags */}
+                <div>
+                  <label className="text-xs font-bold uppercase opacity-50 mb-1 block">Tags</label>
+                  {drawerTemplate.tags.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {drawerTemplate.tags.map((tag, idx) => (
+                        <Badge key={idx} variant="ghost" size="sm" className="gap-1">
+                          <Tag className="w-3 h-3" />
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-base-content/50 italic">No tags</p>
+                  )}
+                </div>
+
+                <Divider />
+
+                {/* Usage & Author Info */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-base-200 rounded-lg p-3 text-center">
+                    <div className="text-2xl font-bold text-primary">{drawerTemplate.usageCount}</div>
+                    <div className="text-xs text-base-content/60">Bots Created</div>
+                  </div>
+                  <div className="bg-base-200 rounded-lg p-3 text-center">
+                    <div className="text-2xl font-bold text-secondary">
+                      {Object.keys(drawerTemplate.config || {}).length}
+                    </div>
+                    <div className="text-xs text-base-content/60">Config Keys</div>
+                  </div>
+                </div>
+
+                {/* Author / Creation Info */}
+                <div className="space-y-2 text-sm">
+                  {drawerTemplate.createdBy && (
+                    <div className="flex items-center gap-2 text-base-content/70">
+                      <User className="w-4 h-4" />
+                      <span>Created by <strong>{drawerTemplate.createdBy}</strong></span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 text-base-content/70">
+                    <Calendar className="w-4 h-4" />
+                    <span>Created {new Date(drawerTemplate.createdAt).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-base-content/70">
+                    <Clock className="w-4 h-4" />
+                    <span>Updated {new Date(drawerTemplate.updatedAt).toLocaleDateString()}</span>
+                  </div>
+                </div>
+
+                <Divider />
+
+                {/* Action Buttons */}
+                <div className="space-y-2">
+                  <button
+                    className="btn btn-primary btn-block"
+                    onClick={() => {
+                      handleCloseDrawer();
+                      handleApplyTemplate(drawerTemplate);
+                    }}
+                  >
+                    <Plus className="w-4 h-4" />
+                    Create Bot from Template
+                  </button>
+
+                  <button
+                    className="btn btn-outline btn-block"
+                    onClick={() => handleDuplicateTemplate(drawerTemplate)}
+                  >
+                    <Copy className="w-4 h-4" />
+                    Duplicate Template
+                  </button>
+
+                  {!drawerTemplate.isBuiltIn && (
+                    <button
+                      className="btn btn-outline btn-block"
+                      onClick={() => {
+                        handleCloseDrawer();
+                        handlePreviewTemplate(drawerTemplate);
+                      }}
+                    >
+                      <Edit3 className="w-4 h-4" />
+                      Edit Template
+                    </button>
+                  )}
+
+                  <button
+                    className="btn btn-outline btn-block"
+                    onClick={() => handleExportTemplate(drawerTemplate)}
+                  >
+                    <Download className="w-4 h-4" />
+                    Export as JSON
+                  </button>
+
+                  {!drawerTemplate.isBuiltIn && (
+                    <button
+                      className="btn btn-error btn-outline btn-block"
+                      onClick={() => {
+                        handleCloseDrawer();
+                        setDeletingTemplate(drawerTemplate);
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete Template
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {drawerTab === 'config' && (
+              <div className="space-y-3">
+                <label className="text-xs font-bold uppercase opacity-50 block">
+                  Full Configuration
+                </label>
+                <CodeBlock className="bg-base-200 p-4" maxHeight="max-h-[60vh]">
+                  {JSON.stringify(drawerTemplate.config, null, 2)}
+                </CodeBlock>
+              </div>
+            )}
+          </div>
+        )}
+      </DetailDrawer>
     </div>
   );
 };
