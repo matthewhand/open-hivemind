@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type {
   BotInstance,
   MessageProvider,
@@ -57,6 +58,7 @@ const BotCard: React.FC<BotCardProps> = ({
   onRemoveProvider,
   onPersonaChange,
 }) => {
+  const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showPersonaSelector, setShowPersonaSelector] = useState(false);
   const [providerModalState, setProviderModalState] = useState<ProviderModalState>({
@@ -286,7 +288,7 @@ const BotCard: React.FC<BotCardProps> = ({
                 }}
                 allowCreate={true}
                 onCreatePersona={() => {
-                  window.location.href = '/admin/personas';
+                  navigate('/admin/personas');
                 }}
                 size="compact"
               />
