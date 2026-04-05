@@ -10,9 +10,13 @@
 import { Mem0Provider } from '../../../packages/memory-mem0/src/Mem0Provider';
 import { Mem4aiProvider } from '../../../packages/memory-mem4ai/src/Mem4aiProvider';
 import {
-  CircuitBreakerError,
-  clearCircuitBreakerRegistry,
+  CircuitBreakerError as CommonCircuitBreakerError,
+  clearCircuitBreakerRegistry as clearCommonRegistry,
 } from '../../../src/common/CircuitBreaker';
+import {
+  CircuitBreakerError as Mem4aiCircuitBreakerError,
+  clearCircuitBreakerRegistry as clearMem4aiRegistry,
+} from '../../../packages/memory-mem4ai/src/CircuitBreaker';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -32,7 +36,8 @@ function errorResponse(status: number, body = ''): Response {
 let fetchMock: jest.Mock;
 
 beforeEach(() => {
-  clearCircuitBreakerRegistry();
+  clearCommonRegistry();
+  clearMem4aiRegistry();
   fetchMock = jest.fn();
   global.fetch = fetchMock;
 });
@@ -68,7 +73,7 @@ describe('Mem0Provider injectable circuit breaker config', () => {
     await expect(provider.search('q')).rejects.toThrow();
 
     // Third call should be rejected by the circuit breaker itself
-    await expect(provider.search('q')).rejects.toThrow(CircuitBreakerError);
+    await expect(provider.search('q')).rejects.toThrow(CommonCircuitBreakerError);
   });
 
   it('uses default thresholds when circuitBreaker config is omitted', async () => {
@@ -120,7 +125,7 @@ describe('Mem4aiProvider injectable circuit breaker config', () => {
     await expect(provider.search('q')).rejects.toThrow();
 
     // Third call should be rejected by the circuit breaker itself
-    await expect(provider.search('q')).rejects.toThrow(CircuitBreakerError);
+    await expect(provider.search('q')).rejects.toThrow(Mem4aiCircuitBreakerError);
   });
 
   it('uses default thresholds when circuitBreaker config is omitted', async () => {
@@ -139,6 +144,7 @@ describe('Mem4aiProvider injectable circuit breaker config', () => {
     }
 
     // 5th call should still go through to fetch (not be rejected by CB)
+    // because the circuit opens *after* the 5th failure, not before it
     fetchMock.mockClear();
     await expect(provider.search('q')).rejects.toThrow();
     expect(fetchMock).toHaveBeenCalled();
