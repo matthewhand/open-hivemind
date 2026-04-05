@@ -174,7 +174,14 @@ interface TimelineChartProps {
   seriesKeys: string[];
 }
 
-const colors = ['#1976d2', '#9c27b0', '#009688', '#ff5722', '#607d8b', '#795548'];
+const colors = [
+  'var(--fallback-p,oklch(var(--p)/1))',
+  'var(--fallback-s,oklch(var(--s)/1))',
+  'var(--fallback-a,oklch(var(--a)/1))',
+  'var(--fallback-er,oklch(var(--er)/1))',
+  'var(--fallback-wa,oklch(var(--wa)/1))',
+  'var(--fallback-in,oklch(var(--in)/1))',
+];
 
 const TimelineChart: React.FC<TimelineChartProps> = ({ data, seriesKeys }) => {
   if (!data.length || !seriesKeys.length) {

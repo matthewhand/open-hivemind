@@ -36,7 +36,7 @@ const LLMUsageChart: React.FC = () => {
             <YAxis />
             <Tooltip />
             <Legend />
-            <Bar dataKey="tokens" fill="#8884d8" name="Token Usage" />
+            <Bar dataKey="tokens" fill="var(--fallback-pc,oklch(var(--pc)/1))" name="Token Usage" />
           </BarChart>
         </ResponsiveContainer>
       </Card.Body>
