@@ -314,7 +314,7 @@ const MarketplacePage: React.FC = () => {
       {/* Package Grid */}
       {!loading && filteredPackages.length > 0 && (
         shouldVirtualizePackages ? (
-          <div ref={packagesParentRef} className="overflow-auto" style={{ height: '800px' }}>
+          <div ref={packagesParentRef} className="max-h-[800px] overflow-auto">
             <div
               style={{
                 height: `${packagesGridRowVirtualizer.getTotalSize()}px`,

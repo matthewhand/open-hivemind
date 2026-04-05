@@ -389,7 +389,7 @@ const MemoryProvidersPage: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                           {Object.entries(profile.config || {}).map(([k, v]) => (
                             <div key={k} className="bg-base-100 p-2 rounded border border-base-200/50 flex flex-col">
-                              <span className="font-mono text-[10px] opacity-50 uppercase tracking-wider mb-1">{k}</span>
+                              <span className="font-mono text-xs opacity-50 uppercase tracking-wider mb-1">{k}</span>
                               <span className="font-medium text-sm truncate" title={String(v)}>
                                 {String(k).toLowerCase().includes('key') || String(k).toLowerCase().includes('token') || String(k).toLowerCase().includes('secret') ? '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' : String(v)}
                               </span>
@@ -405,7 +405,7 @@ const MemoryProvidersPage: React.FC = () => {
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             {Object.entries(health.details).map(([k, v]) => (
                               <div key={k} className="bg-base-100 p-2 rounded border border-base-200/50 flex flex-col">
-                                <span className="font-mono text-[10px] opacity-50 uppercase tracking-wider mb-1">{k}</span>
+                                <span className="font-mono text-xs opacity-50 uppercase tracking-wider mb-1">{k}</span>
                                 <span className="font-medium text-sm truncate" title={String(v)}>{String(v)}</span>
                               </div>
                             ))}

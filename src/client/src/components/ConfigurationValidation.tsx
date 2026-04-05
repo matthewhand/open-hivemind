@@ -169,10 +169,10 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
 
       {/* Client-side checks */}
       <div>
-        <h4 className="text-[10px] font-bold uppercase opacity-50 mb-1.5">Client Checks</h4>
+        <h4 className="text-xs font-bold uppercase opacity-50 mb-1.5">Client Checks</h4>
         <div className="space-y-1">
           {clientChecks.map((check, idx) => (
-            <div key={idx} className="flex items-center gap-2 text-[11px]">
+            <div key={idx} className="flex items-center gap-2 text-xs">
               {statusIcon(check.status)}
               <span className="font-medium">{check.label}</span>
               {check.detail && (
@@ -185,34 +185,34 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
 
       {/* Backend validation results */}
       <div>
-        <h4 className="text-[10px] font-bold uppercase opacity-50 mb-1.5">Backend Validation</h4>
+        <h4 className="text-xs font-bold uppercase opacity-50 mb-1.5">Backend Validation</h4>
         {loading ? (
-          <div className="flex items-center gap-2 py-2 text-[11px] opacity-60" data-testid="validation-loading">
+          <div className="flex items-center gap-2 py-2 text-xs opacity-60" data-testid="validation-loading">
             <LoadingSpinner size="xs" />
             <span>Validating configuration...</span>
           </div>
         ) : backendError ? (
-          <div className="flex items-center gap-2 text-[11px] text-error" data-testid="validation-error">
+          <div className="flex items-center gap-2 text-xs text-error" data-testid="validation-error">
             <XCircle className="w-3.5 h-3.5 shrink-0" />
             <span>{backendError}</span>
           </div>
         ) : botResult ? (
           <div className="space-y-1">
             {botResult.errors.length === 0 && botResult.warnings.length === 0 ? (
-              <div className="flex items-center gap-2 text-[11px]">
+              <div className="flex items-center gap-2 text-xs">
                 <CheckCircle className="w-3.5 h-3.5 text-success shrink-0" />
                 <span>No issues detected</span>
               </div>
             ) : (
               <>
                 {botResult.errors.map((err, idx) => (
-                  <div key={`err-${idx}`} className="flex items-center gap-2 text-[11px]">
+                  <div key={`err-${idx}`} className="flex items-center gap-2 text-xs">
                     <XCircle className="w-3.5 h-3.5 text-error shrink-0" />
                     <span>{err}</span>
                   </div>
                 ))}
                 {botResult.warnings.map((warn, idx) => (
-                  <div key={`warn-${idx}`} className="flex items-center gap-2 text-[11px]">
+                  <div key={`warn-${idx}`} className="flex items-center gap-2 text-xs">
                     <AlertTriangle className="w-3.5 h-3.5 text-warning shrink-0" />
                     <span>{warn}</span>
                   </div>
@@ -221,7 +221,7 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
             )}
           </div>
         ) : (
-          <div className="flex items-center gap-2 text-[11px] opacity-50">
+          <div className="flex items-center gap-2 text-xs opacity-50">
             <Info className="w-3.5 h-3.5 shrink-0" />
             <span>Bot not found in backend validation results</span>
           </div>
@@ -231,10 +231,10 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
       {/* Environment warnings */}
       {backendData && !loading && backendData.environmentValidation.warnings.length > 0 && (
         <div>
-          <h4 className="text-[10px] font-bold uppercase opacity-50 mb-1.5">Environment</h4>
+          <h4 className="text-xs font-bold uppercase opacity-50 mb-1.5">Environment</h4>
           <div className="space-y-1">
             {backendData.environmentValidation.warnings.map((w, idx) => (
-              <div key={idx} className="flex items-center gap-2 text-[11px]">
+              <div key={idx} className="flex items-center gap-2 text-xs">
                 <AlertTriangle className="w-3.5 h-3.5 text-warning shrink-0" />
                 <span>{w}</span>
               </div>
@@ -246,10 +246,10 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
       {/* Recommendations */}
       {backendData && !loading && backendData.recommendations.length > 0 && (
         <div>
-          <h4 className="text-[10px] font-bold uppercase opacity-50 mb-1.5">Recommendations</h4>
+          <h4 className="text-xs font-bold uppercase opacity-50 mb-1.5">Recommendations</h4>
           <div className="space-y-1">
             {backendData.recommendations.map((rec, idx) => (
-              <div key={idx} className="flex items-center gap-2 text-[11px]">
+              <div key={idx} className="flex items-center gap-2 text-xs">
                 <Info className="w-3.5 h-3.5 text-info shrink-0" />
                 <span>{rec}</span>
               </div>

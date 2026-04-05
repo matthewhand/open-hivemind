@@ -370,7 +370,7 @@ const IntegrationsPanel: React.FC = () => {
                         </div>
                         <div className="min-w-0">
                           <h3 className="font-bold text-sm truncate" title={profile.name}>{profile.name}</h3>
-                          <Badge variant="ghost" size="small" className="gap-1 p-0 text-[10px]">{profile.provider}</Badge>
+                          <Badge variant="ghost" size="small" className="gap-1 p-0 text-xs">{profile.provider}</Badge>
                         </div>
                       </div>
                       <div className="flex gap-1">
@@ -388,7 +388,7 @@ const IntegrationsPanel: React.FC = () => {
                       </div>
                     </div>
                     <div className="pt-3 border-t border-base-200">
-                      <p className="text-[10px] font-bold text-base-content/40 uppercase mb-1.5 flex items-center gap-1">
+                      <p className="text-xs font-bold text-base-content/40 uppercase mb-1.5 flex items-center gap-1">
                         <Bot className="w-3 h-3" /> Used by {connectedBots.length} Bots
                       </p>
                     </div>
@@ -514,7 +514,7 @@ const IntegrationsPanel: React.FC = () => {
                   </div>
 
                   <div className="pt-3 border-t border-base-200">
-                    <p className="text-[10px] font-bold text-base-content/40 uppercase mb-1.5 flex items-center gap-1">
+                    <p className="text-xs font-bold text-base-content/40 uppercase mb-1.5 flex items-center gap-1">
                       <Bot className="w-3 h-3" /> Used by {connectedBots.length} Bots
                     </p>
                     <div className="flex flex-wrap gap-1">

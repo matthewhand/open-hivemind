@@ -137,7 +137,7 @@ const Drawer: React.FC<DrawerProps> = ({
       return (
         <div key={item.id} className="pt-4 pb-2 px-4 mt-2">
           {item.label && (
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-base-content/50">
+            <span className="text-xs font-semibold uppercase tracking-wider text-base-content/50">
               {item.label}
             </span>
           )}
@@ -178,7 +178,7 @@ const Drawer: React.FC<DrawerProps> = ({
           <span className="flex-1">{item.label}</span>
           {item.badge && (
             <span
-              className={`text-[11px] px-1.5 py-0.5 rounded-full ml-2 ${
+              className={`text-xs px-1.5 py-0.5 rounded-full ml-2 ${
                 isActive
                   ? 'bg-primary-content/20 text-primary-content'
                   : 'bg-primary text-primary-content'
@@ -257,7 +257,7 @@ const Drawer: React.FC<DrawerProps> = ({
         >
           <Sun size={14} className="theme-sun hidden" aria-hidden="true" />
           <Moon size={14} aria-hidden="true" />
-          <span className="text-[11px]">Theme</span>
+          <span className="text-xs">Theme</span>
         </button>
 
         <span className="flex items-center gap-1.5 text-success" role="status" aria-label="Connection status: Online">

@@ -407,9 +407,9 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
                               {field.label}
                             </span>
                             {field.required ? (
-                              <Badge variant="error" size="sm" className="text-[10px] h-4">Required</Badge>
+                              <Badge variant="error" size="sm" className="text-xs h-4">Required</Badge>
                             ) : (
-                              <Badge variant="ghost" size="sm" className="text-[10px] h-4">Optional</Badge>
+                              <Badge variant="ghost" size="sm" className="text-xs h-4">Optional</Badge>
                             )}
                           </div>
                           {field.description && (

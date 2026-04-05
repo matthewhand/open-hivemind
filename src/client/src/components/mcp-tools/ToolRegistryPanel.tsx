@@ -296,7 +296,7 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
       </p>
 
       {shouldVirtualize ? (
-        <div ref={parentRef} className="overflow-auto" style={{ height: '800px' }}>
+        <div ref={parentRef} className="max-h-[800px] overflow-auto">
           <div
             style={{
               height: `${gridRowVirtualizer.getTotalSize()}px`,
