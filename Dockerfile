@@ -36,6 +36,7 @@ RUN if [ "$INCLUDE_FFMPEG" = "true" ]; then \
 
 WORKDIR /app
 
+
 COPY . .
 RUN corepack enable && corepack prepare pnpm@latest --activate && pnpm install --no-frozen-lockfile
 
