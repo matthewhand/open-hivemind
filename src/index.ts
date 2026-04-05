@@ -1,3 +1,5 @@
+// Load .env FIRST — before any module reads process.env
+import 'dotenv/config';
 // Import Express types for TypeScript
 import 'reflect-metadata';
 import './utils/alias';
@@ -63,7 +65,6 @@ import Logger from '@common/logger';
 import { initProviders } from './initProviders';
 import { reloadGlobalConfigs } from './server/routes/config';
 import startupDiagnostics from './utils/startupDiagnostics';
-import 'dotenv/config';
 import debug from 'debug';
 import express from 'express';
 import * as debugEnvVarsModule from '@config/debugEnvVars';
@@ -726,6 +727,7 @@ async function main() {
   const httpEnabled = process.env.HTTP_ENABLED !== 'false';
   if (httpEnabled) {
     const port = parseInt(process.env.PORT || '3028', 10);
+    appLogger.info('DEBUG: process.env.PORT =', process.env.PORT, '→ port =', port);
     const server = createServer(app);
 
     // Register background services for graceful shutdown
