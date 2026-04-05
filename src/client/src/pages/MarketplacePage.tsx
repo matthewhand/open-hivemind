@@ -27,10 +27,12 @@ import {
   CheckCircle as CheckIcon,
   X as CloseIcon,
 } from 'lucide-react';
+import Carousel from '../components/DaisyUI/Carousel';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import { ConfirmModal } from '../components/DaisyUI/Modal';
 import { Alert } from '../components/DaisyUI/Alert';
 import Input from '../components/DaisyUI/Input';
+import Figure from '../components/DaisyUI/Figure';
 import { apiService } from '../services/api';
 
 // ---------------------------------------------------------------------------
@@ -86,6 +88,27 @@ const STATUS_BADGES = {
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
+
+const FEATURED_CAROUSEL_ITEMS = [
+  {
+    image: '',
+    title: 'LLM Providers',
+    description: 'Connect to OpenAI, Anthropic, Google, Ollama, and more to power your bots with any model.',
+    bgGradient: 'linear-gradient(135deg, #7c3aed, #a78bfa)',
+  },
+  {
+    image: '',
+    title: 'Messenger Integrations',
+    description: 'Bridge your bots to Discord, Slack, Mattermost, and other platforms seamlessly.',
+    bgGradient: 'linear-gradient(135deg, #2563eb, #60a5fa)',
+  },
+  {
+    image: '',
+    title: 'Memory & Tools',
+    description: 'Extend your bots with persistent memory, RAG pipelines, and custom tool packages.',
+    bgGradient: 'linear-gradient(135deg, #059669, #34d399)',
+  },
+];
 
 const MarketplacePage: React.FC = () => {
   const [packages, setPackages] = useState<MarketplacePackage[]>([]);
@@ -244,6 +267,11 @@ const MarketplacePage: React.FC = () => {
           </div>
         }
       />
+
+      {/* Featured Categories Carousel */}
+      <div className="mb-6 rounded-xl overflow-hidden">
+        <Carousel items={FEATURED_CAROUSEL_ITEMS} autoplay interval={7000} variant="full-width" />
+      </div>
 
       {/* Alert Messages */}
       {actionMessage && (

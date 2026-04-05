@@ -30,6 +30,7 @@ import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotif
 import { Alert } from '../components/DaisyUI/Alert';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import Card from '../components/DaisyUI/Card';
+import Countdown from '../components/DaisyUI/Countdown';
 
 interface BackupMetadata {
   id: string;
@@ -420,6 +421,33 @@ const BackupsPage: React.FC = () => {
       />
 
       <StatsCards stats={stats} />
+
+      {/* Next Recommended Backup Countdown */}
+      {backups.length > 0 && (() => {
+        const BACKUP_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
+        const latestBackupTime = backups.reduce(
+          (max, b) => Math.max(max, new Date(b.createdAt).getTime()),
+          0
+        );
+        const nextBackupTime = latestBackupTime + BACKUP_INTERVAL_MS;
+        const isOverdue = Date.now() > nextBackupTime;
+
+        return (
+          <Alert status={isOverdue ? 'warning' : 'info'} className="flex items-center gap-3">
+            <Clock className="w-5 h-5 shrink-0" />
+            {isOverdue ? (
+              <span className="text-sm font-medium">
+                Your next recommended backup is overdue. Consider creating one now.
+              </span>
+            ) : (
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <span>Next recommended backup in</span>
+                <Countdown targetDate={nextBackupTime} size="sm" compact />
+              </div>
+            )}
+          </Alert>
+        );
+      })()}
 
       <Card className="shadow-xl">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
