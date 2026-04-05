@@ -4,6 +4,7 @@ import BulkActionBar from '../../components/BulkActionBar';
 import Button from '../../components/DaisyUI/Button';
 import Checkbox from '../../components/DaisyUI/Checkbox';
 import Card from '../../components/DaisyUI/Card';
+import { Badge } from '../../components/DaisyUI/Badge';
 import { type Persona } from './hooks/usePersonasData';
 
 interface PersonaListProps {
@@ -13,6 +14,7 @@ interface PersonaListProps {
   bulkDeleting: boolean;
   handleBulkDeletePersonas: () => void;
   openEditModal: (persona: Persona) => void;
+  onSelectPersona: (persona: Persona) => void;
   isMobile: boolean;
   onDragStart: (index: number) => (e: React.DragEvent) => void;
   onDragOver: (index: number) => (e: React.DragEvent) => void;
@@ -28,6 +30,7 @@ export const PersonaList: React.FC<PersonaListProps> = ({
   bulkDeleting,
   handleBulkDeletePersonas,
   openEditModal,
+  onSelectPersona,
   isMobile,
   onDragStart,
   onDragOver,
@@ -73,10 +76,24 @@ export const PersonaList: React.FC<PersonaListProps> = ({
             onDrop={onDrop(index)}
             style={getItemStyle(index)}
           >
-            <Card className="shadow-sm border border-base-200 h-full hover:shadow-md transition-shadow">
-                <Card.Title tag="h3" className="text-lg font-bold">{persona.name}</Card.Title>
+            <Card
+              className="shadow-sm border border-base-200 h-full hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => onSelectPersona(persona)}
+            >
+                <div className="flex items-start justify-between gap-2">
+                  <Card.Title tag="h3" className="text-lg font-bold">{persona.name}</Card.Title>
+                  {persona.isBuiltIn && <Badge variant="ghost" size="sm">Built-in</Badge>}
+                </div>
                 <p className="text-sm text-base-content/70 line-clamp-2">{persona.description}</p>
-                <Button variant="primary" size="sm" onClick={() => openEditModal(persona)}>
+                {persona.category && (
+                  <Badge variant="neutral" size="sm" className="w-fit">{persona.category}</Badge>
+                )}
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="w-fit"
+                  onClick={(e) => { e.stopPropagation(); openEditModal(persona); }}
+                >
                   Edit
                 </Button>
             </Card>

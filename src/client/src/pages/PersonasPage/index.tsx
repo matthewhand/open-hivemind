@@ -1,20 +1,23 @@
-import { Filter, Plus, Users } from 'lucide-react';
+import { Copy, Edit2, Filter, Plus, Trash2, Users } from 'lucide-react';
 import React, { useState } from 'react';
 import { Alert } from '../../components/DaisyUI/Alert';
+import { Badge } from '../../components/DaisyUI/Badge';
 import Button from '../../components/DaisyUI/Button';
-import Select from '../../components/DaisyUI/Select';
+import Card from '../../components/DaisyUI/Card';
+import DetailDrawer from '../../components/DaisyUI/DetailDrawer';
+import Divider from '../../components/DaisyUI/Divider';
+import Join from '../../components/DaisyUI/Join';
 import PageHeader from '../../components/DaisyUI/PageHeader';
+import Select from '../../components/DaisyUI/Select';
 import { SkeletonPage } from '../../components/DaisyUI/Skeleton';
 import { useSuccessToast, useErrorToast, useInfoToast } from '../../components/DaisyUI/ToastNotification';
-import SearchFilterBar from '../../components/SearchFilterBar';
 import Tooltip from '../../components/DaisyUI/Tooltip';
-import Join from '../../components/DaisyUI/Join';
-import Card from '../../components/DaisyUI/Card';
+import SearchFilterBar from '../../components/SearchFilterBar';
 import { useIsBelowBreakpoint } from '../../hooks/useBreakpoint';
 import { useBulkSelection } from '../../hooks/useBulkSelection';
 import { useDragAndDrop } from '../../hooks/useDragAndDrop';
 import { usePersonaActions } from './hooks/usePersonaActions';
-import { usePersonasData } from './hooks/usePersonasData';
+import { usePersonasData, type Persona } from './hooks/usePersonasData';
 import { PersonaList } from './PersonaList';
 import { PersonaStats } from './PersonaStats';
 
@@ -33,6 +36,7 @@ const PersonasPage: React.FC = () => {
   const infoToast = useInfoToast();
   const isMobile = useIsBelowBreakpoint('md');
   const [error, setError] = useState<string | null>(null);
+  const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
 
   const {
     bots,
@@ -57,6 +61,8 @@ const PersonasPage: React.FC = () => {
     handleBulkDeletePersonas,
     openCreateModal,
     openEditModal,
+    openCloneModal,
+    handleDeletePersona,
   } = usePersonaActions(
     personas,
     setPersonas as any,
@@ -127,6 +133,7 @@ const PersonasPage: React.FC = () => {
               bulkDeleting={bulkDeleting}
               handleBulkDeletePersonas={handleBulkDeletePersonas}
               openEditModal={openEditModal}
+              onSelectPersona={setSelectedPersona}
               isMobile={isMobile}
               onDragStart={onDragStart}
               onDragOver={onDragOver}
@@ -136,6 +143,93 @@ const PersonasPage: React.FC = () => {
             />
           )}
       </Card>
+
+      {/* Persona Detail Drawer */}
+      <DetailDrawer
+        isOpen={!!selectedPersona}
+        onClose={() => setSelectedPersona(null)}
+        title={selectedPersona?.name}
+        subtitle={selectedPersona?.description}
+      >
+        {selectedPersona && (
+          <div className="space-y-6">
+            {/* Category & Status */}
+            <div className="flex flex-wrap gap-2">
+              {selectedPersona.category && (
+                <Badge variant="neutral">{selectedPersona.category}</Badge>
+              )}
+              {selectedPersona.isBuiltIn && (
+                <Badge variant="info">Built-in</Badge>
+              )}
+            </div>
+
+            {/* Assigned Bots */}
+            {(selectedPersona.assignedBotNames?.length ?? 0) > 0 && (
+              <Card className="bg-base-200">
+                <h4 className="font-semibold text-sm uppercase tracking-wide text-base-content/60 mb-2">Assigned Bots</h4>
+                <div className="flex flex-wrap gap-2">
+                  {selectedPersona.assignedBotNames?.map((name) => (
+                    <Badge key={name} variant="primary" size="sm">{name}</Badge>
+                  ))}
+                </div>
+              </Card>
+            )}
+
+            {/* System Prompt */}
+            {selectedPersona.systemPrompt && (
+              <div>
+                <h4 className="font-semibold text-sm uppercase tracking-wide text-base-content/60 mb-2">System Prompt</h4>
+                <div className="bg-base-200 rounded-lg p-3 max-h-64 overflow-y-auto">
+                  <pre className="text-sm whitespace-pre-wrap break-words font-mono text-base-content/80">
+                    {selectedPersona.systemPrompt}
+                  </pre>
+                </div>
+              </div>
+            )}
+
+            <Divider />
+
+            {/* Actions */}
+            <div className="flex flex-col gap-2">
+              {!selectedPersona.isBuiltIn && (
+                <Button
+                  color="primary"
+                  className="w-full"
+                  onClick={() => {
+                    setSelectedPersona(null);
+                    openEditModal(selectedPersona);
+                  }}
+                >
+                  <Edit2 className="w-4 h-4 mr-2" /> Edit Persona
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  setSelectedPersona(null);
+                  openCloneModal(selectedPersona);
+                }}
+              >
+                <Copy className="w-4 h-4 mr-2" /> Duplicate
+              </Button>
+              {!selectedPersona.isBuiltIn && (
+                <Button
+                  variant="outline"
+                  color="error"
+                  className="w-full"
+                  onClick={() => {
+                    setSelectedPersona(null);
+                    handleDeletePersona(selectedPersona.id, (msg) => setError(msg));
+                  }}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" /> Delete
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+      </DetailDrawer>
     </div>
   );
 };

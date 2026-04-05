@@ -19,7 +19,7 @@ export interface DetailDrawerProps {
   /** Optional subtitle below the title */
   subtitle?: React.ReactNode;
   /** Content to render inside the drawer body */
-  children: React.ReactNode;
+  children?: React.ReactNode;
   /** Width class for desktop (default: w-[420px]) */
   widthClass?: string;
   /** Additional CSS classes on the drawer panel */
@@ -83,16 +83,15 @@ const DetailDrawer: React.FC<DetailDrawerProps> = ({
           isOpen ? 'translate-x-0' : 'translate-x-full',
           className,
         ].join(' ')}
-        style={widthClass !== 'w-[420px]' ? undefined : undefined}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-base-200 shrink-0">
+        <div className="flex items-start justify-between gap-3 p-4 border-b border-base-200 shrink-0">
           <div className="min-w-0 flex-1">
             {title && (
               <h2 className="text-lg font-bold truncate">{title}</h2>
             )}
             {subtitle && (
-              <p className="text-sm text-base-content/60 truncate">{subtitle}</p>
+              <p className="text-sm text-base-content/60 mt-0.5 line-clamp-2">{subtitle}</p>
             )}
           </div>
           <button

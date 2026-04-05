@@ -43,6 +43,8 @@ export { default as HamburgerMenu } from './HamburgerMenu';
 export { default as Drawer } from './Drawer';
 export { EnhancedDrawer } from './Drawer';
 export type { DrawerNavItem, DrawerProps } from './Drawer';
+export { default as DetailDrawer } from './DetailDrawer';
+export type { DetailDrawerProps } from './DetailDrawer';
 export { default as Menu } from './Menu';
 
 // Form & Input Components
