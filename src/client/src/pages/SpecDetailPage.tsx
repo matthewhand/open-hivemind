@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import Card from '../components/DaisyUI/Card';
 import Button from '../components/DaisyUI/Button';
 import Badge from '../components/DaisyUI/Badge';
@@ -15,6 +15,7 @@ import { useInfoToast } from '../components/DaisyUI/ToastNotification';
 
 const SpecDetailPage: React.FC = () => {
   const infoToast = useInfoToast();
+  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { spec, loading, error } = useSpec(id);
 
@@ -89,7 +90,7 @@ ${spec.content.replace(/^/gm, '  ')}
           <div className="text-center">
             <Card.Title className="text-error">Error Loading Spec</Card.Title>
             <p className="opacity-70">{error || 'Specification not found'}</p>
-            <Button className="btn-primary" onClick={() => window.history.back()}>
+            <Button className="btn-primary" onClick={() => navigate(-1)}>
               Go Back
             </Button>
           </div>
@@ -105,7 +106,7 @@ ${spec.content.replace(/^/gm, '  ')}
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-4">
-                <Button size="sm" className="btn-ghost" onClick={() => window.history.back()}>
+                <Button size="sm" className="btn-ghost" onClick={() => navigate(-1)}>
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back
                 </Button>
