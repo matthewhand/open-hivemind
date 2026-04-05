@@ -92,7 +92,7 @@ Short summary:
 2. **Implement the interface** – Extend `ILlmProvider` or `IAdapterFactory` from `@hivemind/shared-types`
 3. **Register in loader** – Add a case to [`getLlmProvider.ts`](src/llm/getLlmProvider.ts) or [`getMessengerProvider.ts`](src/message/management/getMessengerProvider.ts)
 4. **Add frontend field schema** – Add a schema file under `src/client/src/provider-configs/schemas/` and register it in `index.ts`
-5. **Register in available-types endpoint** – Add an entry to `GET /api/admin/available-provider-types` in `src/server/routes/admin.ts` so the WebUI discovers it automatically
+5. **Register in available-types endpoint** – Add an entry to `GET /api/admin/available-provider-types` in `src/server/routes/admin/llmProviders.ts` so the WebUI discovers it automatically
 
 See existing packages for implementation patterns:
 - **Discord adapter**: [`packages/adapter-discord/src/DiscordService.ts`](packages/adapter-discord/src/DiscordService.ts)
@@ -128,7 +128,7 @@ See existing packages for implementation patterns:
 - **Test Execution:**  
   Run tests with:
   ```bash
-  npm run test
+  pnpm run test
   ```
   Additional tests exist to simulate edge cases and verify recovery from error conditions.
 
@@ -138,15 +138,15 @@ See existing packages for implementation patterns:
 - **TypeScript Strictness:**  
   Emphasis is on strong type safety and clear modular designs to minimize runtime failures.
 - **Modular Development:**  
-  New features should be added to the appropriate directories (e.g., `src/integrations/` or `src/llm/`) following the established design patterns.
+  New features should be added to the appropriate directories (e.g., `packages/` or `src/llm/`) following the established design patterns.
 
 ### Development Workflow
 - **Environment Setup:**  
-  Use Node.js v18 or later. Ensure environment variables like `DISCORD_BOT_TOKEN` are correctly set in your `.env` files.
+  Use Node.js v22 or later (required). Ensure environment variables like `DISCORD_BOT_TOKEN` are correctly set in your `.env` files.
 - **Debugging:**  
   Enable extended logging via:
   ```bash
-  DEBUG=app:* npm start
+  DEBUG=app:* pnpm start
   ```
 - **Iterative Testing:**  
   Utilize comprehensive unit tests and integration tests to validate all changes. Maintain high code coverage and continuously monitor logs for irregularities.

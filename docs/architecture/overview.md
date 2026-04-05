@@ -97,6 +97,5 @@ graph TD
 - **Distributed Deployment**: Kubernetes-native scaling
 - **Edge Computing**: Regional bot deployment for low latency
 - **AI Model Switching**: Dynamic LLM selection based on context
-- **Blockchain Integration**: Decentralized bot governance
 
 **Open-Hivemind: Where individual bots become a collective intelligence** 🧠✨

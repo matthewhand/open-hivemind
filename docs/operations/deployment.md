@@ -62,14 +62,14 @@ This document outlines the required secrets and setup instructions for your depl
 
 ### Common Issues
 - **Missing secrets**: Ensure all required secrets are added to GitHub
-- **Build failures**: Check that `npm run build:full` works locally
+- **Build failures**: Check that `pnpm run build` works locally
 - **Docker issues**: Verify Docker Hub credentials and repository access
 - **Domain configuration**: Ensure custom domains are properly configured
 
 ### Testing Locally
 ```bash
 # Test build process
-npm run build:full
+pnpm run build
 
 # Test Docker build
 docker build -t your-username/open-hivemind .
