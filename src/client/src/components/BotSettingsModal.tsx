@@ -202,7 +202,7 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                                         <a onClick={() => { onUpdateConfig(bot, 'llmProvider', profile.key); (document.activeElement as HTMLElement)?.blur(); }} className={bot.llmProvider === profile.key ? 'active' : ''}>
                                             <div className="flex flex-col gap-0.5">
                                                 <span>{profile.name}</span>
-                                                <span className="text-[10px] opacity-50 uppercase">{profile.provider}</span>
+                                                <span className="text-xs opacity-50 uppercase">{profile.provider}</span>
                                             </div>
                                         </a>
                                     </li>

@@ -105,14 +105,14 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
 
           <div className="grid grid-cols-2 gap-2">
             <div className="bg-base-200/50 p-2 rounded-lg">
-              <label className="text-[10px] font-bold uppercase opacity-50 block mb-1">Provider</label>
+              <label className="text-xs font-bold uppercase opacity-50 block mb-1">Provider</label>
               <div className="flex items-center gap-2">
                 <Globe className="w-3 h-3 text-primary" />
                 <span className="text-xs font-medium uppercase">{previewBot.llmProvider || 'Not configured'}</span>
               </div>
             </div>
             <div className="bg-base-200/50 p-2 rounded-lg">
-              <label className="text-[10px] font-bold uppercase opacity-50 block mb-1">Model</label>
+              <label className="text-xs font-bold uppercase opacity-50 block mb-1">Model</label>
               <div className="flex items-center gap-2">
                 <Cpu className="w-3 h-3 text-secondary" />
                 <span className="text-xs font-medium">{previewBot.llmModel || 'Not configured'}</span>
@@ -122,11 +122,11 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
 
           <Stats className="bg-base-200 w-full shadow-sm">
             <Stat className="p-3">
-              <div className="stat-title text-[10px] uppercase font-bold">Messages</div>
+              <div className="stat-title text-xs uppercase font-bold">Messages</div>
               <div className="stat-value text-xl text-primary">{previewBot.messageCount ?? 0}</div>
             </Stat>
             <Stat className="p-3">
-              <div className="stat-title text-[10px] uppercase font-bold">Errors</div>
+              <div className="stat-title text-xs uppercase font-bold">Errors</div>
               <div
                 className={`stat-value text-xl ${
                   (previewBot.errorCount ?? 0) > 0 ? 'text-error' : ''
@@ -140,9 +140,9 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
           {/* Tabs Navigation */}
           <Tabs
             tabs={[
-              { key: 'activity', label: <span className="text-[10px] uppercase font-bold">Activity</span>, icon: <Activity className="w-3 h-3" /> },
-              { key: 'chat', label: <span className="text-[10px] uppercase font-bold">Chat</span>, icon: <MessageSquare className="w-3 h-3" /> },
-              { key: 'validation', label: <span className="text-[10px] uppercase font-bold">Validation</span>, icon: <ShieldCheck className="w-3 h-3" /> },
+              { key: 'activity', label: <span className="text-xs uppercase font-bold">Activity</span>, icon: <Activity className="w-3 h-3" /> },
+              { key: 'chat', label: <span className="text-xs uppercase font-bold">Chat</span>, icon: <MessageSquare className="w-3 h-3" /> },
+              { key: 'validation', label: <span className="text-xs uppercase font-bold">Validation</span>, icon: <ShieldCheck className="w-3 h-3" /> },
             ]}
             activeTab={previewTab}
             onChange={(key) => setPreviewTab(key as 'activity' | 'chat' | 'validation')}
@@ -202,7 +202,7 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
                   {filteredLogs.map((log, idx) => (
                     <div
                       key={idx}
-                      className="bg-base-200/30 p-2 rounded text-[11px] border-l-2 border-primary"
+                      className="bg-base-200/30 p-2 rounded text-xs border-l-2 border-primary"
                     >
                       <div className="flex justify-between opacity-60 mb-1">
                         <span className="font-bold uppercase">{log.type}</span>
@@ -250,13 +250,13 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
                       className={`chat ${msg.role === 'user' ? 'chat-end' : 'chat-start'}`}
                     >
                       <div
-                        className={`chat-bubble text-[11px] min-h-0 py-1.5 px-3 ${
+                        className={`chat-bubble text-xs min-h-0 py-1.5 px-3 ${
                           msg.role === 'user' ? 'chat-bubble-primary' : 'chat-bubble-secondary'
                         }`}
                       >
                         {msg.content}
                       </div>
-                      <div className="chat-footer opacity-50 text-[9px] mt-0.5">
+                      <div className="chat-footer opacity-50 text-[10px] mt-0.5">
                         {new Date(msg.timestamp).toLocaleTimeString()}
                       </div>
                     </div>
