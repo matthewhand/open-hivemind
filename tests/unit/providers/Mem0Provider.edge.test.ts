@@ -11,6 +11,12 @@ import { Mem0Provider } from '../../../packages/memory-mem0/src/Mem0Provider';
 import { Mem0ApiError } from '../../../packages/memory-mem0/src/types';
 import { clearCircuitBreakerRegistry } from '../../../src/common/CircuitBreaker';
 
+// Mock isSafeUrl so injected test URLs don't trigger SSRF guard failures
+jest.mock('@hivemind/shared-types', () => ({
+  ...jest.requireActual('@hivemind/shared-types'),
+  isSafeUrl: jest.fn().mockResolvedValue(true),
+}));
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
