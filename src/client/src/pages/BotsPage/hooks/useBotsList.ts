@@ -26,7 +26,12 @@ export const useBotsList = (
 
   useEffect(() => {
     if (botsResponse) {
-      setBots(botsResponse.data?.bots || []);
+      // apiService.get unwraps ApiResponse, so botsResponse is the data directly
+      // Handle both array (from /api/bots) and object with bots key (from /webui/api/bot-config)
+      const botsList = Array.isArray(botsResponse) ? botsResponse
+        : Array.isArray(botsResponse?.data) ? botsResponse.data
+        : botsResponse?.data?.bots || botsResponse?.bots || [];
+      setBots(botsList);
     }
   }, [botsResponse]);
 
