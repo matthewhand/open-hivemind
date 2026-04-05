@@ -5,6 +5,9 @@ import { HomeIcon } from '@heroicons/react/24/solid';
 /**
  * Route segment to human-readable label mapping.
  * Supports both static segments and dynamic patterns.
+ *
+ * NOTE: For paths that correspond to navigation menu items, the full-path
+ * labels below take precedence so breadcrumbs match the sidebar labels.
  */
 const ROUTE_LABELS: Record<string, string> = {
   admin: 'Admin',
@@ -32,25 +35,42 @@ const ROUTE_LABELS: Record<string, string> = {
   'system-management': 'System Management',
   export: 'Export',
   settings: 'Settings',
-  configuration: 'Configuration',
+  configuration: 'Global Defaults',
   config: 'Config',
   static: 'Static Pages',
   sitemap: 'Sitemap',
-  showcase: 'DaisyUI Showcase',
+  showcase: 'UI Components',
   specs: 'Specifications',
   audit: 'Audit',
   health: 'Health',
-  webhooks: 'Webhooks',
+  webhooks: 'Webhook Events',
   'api-docs': 'API Docs',
   dashboard: 'Dashboard',
   onboarding: 'Onboarding',
+  enterprise: 'Enterprise',
+};
+
+/**
+ * Full-path to label mapping for compound nav items.
+ * Checked first so breadcrumbs match the sidebar navigation exactly.
+ */
+const FULL_PATH_LABELS: Record<string, string> = {
+  '/admin/providers/llm': 'LLM Providers',
+  '/admin/providers/message': 'Message Providers',
+  '/admin/providers/memory': 'Memory Providers',
+  '/admin/providers/tool': 'Tool Providers',
 };
 
 /**
  * Resolves a URL segment to a human-readable label.
- * Falls back to title-casing the segment if not in the config map.
+ * For the current (last) page, checks full-path labels first.
+ * Falls back to segment map, then title-casing.
  */
-function getSegmentLabel(segment: string): string {
+function getSegmentLabel(segment: string, fullPath: string, isLast: boolean): string {
+  // For the active page, check full-path compound labels first
+  if (isLast && FULL_PATH_LABELS[fullPath]) {
+    return FULL_PATH_LABELS[fullPath];
+  }
   if (ROUTE_LABELS[segment]) {
     return ROUTE_LABELS[segment];
   }
@@ -114,10 +134,11 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items }) => {
     let currentPath = '';
     segments.forEach((segment, index) => {
       currentPath += `/${segment}`;
+      const isLast = index === segments.length - 1;
       crumbs.push({
-        label: getSegmentLabel(segment),
+        label: getSegmentLabel(segment, currentPath, isLast),
         path: currentPath,
-        isActive: index === segments.length - 1,
+        isActive: isLast,
       });
     });
   }
