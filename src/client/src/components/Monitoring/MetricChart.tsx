@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Line, Bar, Area, Pie, LineChart, BarChart, AreaChart, PieChart, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
+import { ChartBarIcon } from '@heroicons/react/24/outline';
 import { Alert } from '../DaisyUI/Alert';
 import Card from '../DaisyUI/Card';
+import EmptyState from '../DaisyUI/EmptyState';
 import { LoadingSpinner } from '../DaisyUI/Loading';
 
 export interface MetricData {
@@ -193,12 +195,13 @@ const MetricChart: React.FC<MetricChartProps> = ({
               {renderChart()}
             </div>
           ) : (
-            <div className="flex items-center justify-center h-48 text-neutral-content/50">
-              <div className="text-center">
-                <div className="text-4xl mb-2">📊</div>
-                <p>No data available</p>
-              </div>
-            </div>
+            <EmptyState
+              icon={ChartBarIcon}
+              title="No data available"
+              description=""
+              variant="noData"
+              className="py-8"
+            />
           )}
         </div>
 

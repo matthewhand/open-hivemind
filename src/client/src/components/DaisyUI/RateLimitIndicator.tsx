@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRateLimit } from '../../hooks/useRateLimit';
 import Countdown from './Countdown';
+import Tooltip from './Tooltip';
 import { useInactivity } from '../../hooks/useInactivity';
 
 /**
@@ -57,19 +58,19 @@ const RateLimitIndicator: React.FC = () => {
     <div className="flex gap-2">
       {/* Session Expiry Warning */}
       {showSessionWarning && (
-        <div className="tooltip tooltip-bottom" data-tip="Session expiring soon due to inactivity">
+        <Tooltip content="Session expiring soon due to inactivity" position="bottom">
           <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-warning/15 border border-warning/30">
             <span className="text-xs font-medium text-warning mr-1">Session expires in</span>
             <span className="text-xs text-warning/70">
               <Countdown targetDate={sessionExpiryTime} size="xs" compact />
             </span>
           </div>
-        </div>
+        </Tooltip>
       )}
 
       {/* Rate Limit Indicator */}
       {!(limit === 0 || ratio > 0.5) && (
-        <div className="tooltip tooltip-bottom" data-tip={tooltipText}>
+        <Tooltip content={tooltipText} position="bottom">
           <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border ${(isNearLimit || isExhausted) ? 'bg-error/15 border-error/30' : 'bg-warning/15 border-warning/30'}`}>
             <div className={`w-2 h-2 rounded-full ${(isNearLimit || isExhausted) ? 'bg-error animate-pulse' : 'bg-warning'}`} />
             <span className={`text-xs font-medium ${(isNearLimit || isExhausted) ? 'text-error' : 'text-warning'}`}>
@@ -81,7 +82,7 @@ const RateLimitIndicator: React.FC = () => {
               </span>
             )}
           </div>
-        </div>
+        </Tooltip>
       )}
     </div>
   );

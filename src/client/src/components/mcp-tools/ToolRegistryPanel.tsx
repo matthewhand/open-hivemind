@@ -6,10 +6,12 @@ import {
   PlayIcon as RunIcon,
   ClockIcon,
 } from '@heroicons/react/24/outline';
+import { Search } from 'lucide-react';
 import { ToolFilters } from '../tools/ToolFilters';
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid';
 import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
 import Card from '../DaisyUI/Card';
+import EmptyState from '../DaisyUI/EmptyState';
 import { SkeletonGrid } from '../DaisyUI/Skeleton';
 import { Badge } from '../DaisyUI/Badge';
 import Tabs from '../DaisyUI/Tabs';
@@ -336,14 +338,12 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
       )}
 
       {filteredTools.length === 0 && !loading && (
-        <div className="text-center mt-12">
-          <h3 className="text-lg font-medium text-base-content/70">
-            No tools found
-          </h3>
-          <p className="text-sm text-base-content/50 mt-1">
-            Try adjusting your search criteria or add more MCP servers
-          </p>
-        </div>
+        <EmptyState
+          icon={Search}
+          title="No tools found"
+          description="Try adjusting your search criteria or add more MCP servers"
+          variant="noResults"
+        />
       )}
     </>
   );

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Card from '../components/DaisyUI/Card';
 import Badge from '../components/DaisyUI/Badge';
 import Button from '../components/DaisyUI/Button';
+import EmptyState from '../components/DaisyUI/EmptyState';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import Tabs from '../components/DaisyUI/Tabs';
 import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
@@ -279,15 +280,13 @@ const PluginSecurityPage: React.FC = () => {
       {loading ? (
         <SkeletonGrid count={3} />
       ) : filteredPlugins.length === 0 ? (
-        <Card className="text-center py-12">
-          <ShieldOff className="w-16 h-16 mx-auto text-base-content/30 mb-4" />
-          <h3 className="text-xl font-semibold mb-2">No plugins found</h3>
-          <p className="text-base-content/70">
-            {filter === 'all'
-              ? 'No plugins are currently installed'
-              : `No plugins match the '${filter}' filter`}
-          </p>
-        </Card>
+        <EmptyState
+          icon={ShieldOff}
+          title="No plugins found"
+          description={filter === 'all' ? 'No plugins are currently installed' : `No plugins match the '${filter}' filter`}
+          variant={filter === 'all' ? 'noData' : 'noResults'}
+          className="py-12"
+        />
       ) : (
         <div className="grid grid-cols-1 gap-4">
           {filteredPlugins.map((plugin) => (

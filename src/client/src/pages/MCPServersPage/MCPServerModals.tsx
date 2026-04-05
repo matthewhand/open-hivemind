@@ -1,6 +1,7 @@
 import React from 'react';
-import { CheckCircle, AlertCircle, Wrench } from 'lucide-react';
+import { CheckCircle, AlertCircle, Wrench, PackageX } from 'lucide-react';
 import Button from '../../components/DaisyUI/Button';
+import EmptyState from '../../components/DaisyUI/EmptyState';
 import Modal, { ConfirmModal } from '../../components/DaisyUI/Modal';
 import Accordion from '../../components/DaisyUI/Accordion';
 import ModalForm from '../../components/DaisyUI/ModalForm';
@@ -86,7 +87,12 @@ export const MCPServerModals: React.FC<MCPServerModalsProps> = ({
       >
         <div className="overflow-y-auto max-h-[60vh]">
           {viewingTools.length === 0 ? (
-            <div className="text-center py-8 opacity-50">No tools found for this server.</div>
+            <EmptyState
+              icon={PackageX}
+              title="No tools found for this server."
+              description="This MCP server does not provide any tools."
+              variant="noData"
+            />
           ) : (
             <div className="flex flex-col gap-4">
               {viewingTools.map((tool, idx) => (
