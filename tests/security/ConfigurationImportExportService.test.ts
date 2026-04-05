@@ -22,6 +22,17 @@ jest.mock('../../src/server/services/ConfigurationVersionService', () => ({
   },
 }));
 
+// Mock BackupManager constructor
+jest.mock('../../src/server/services/configImportExport/backupManager.ts', () => {
+  const actual = jest.requireActual('../../src/server/services/configImportExport/backupManager.ts');
+  return {
+    ...actual,
+    BackupManager: class extends actual.BackupManager {
+      listBackups = jest.fn();
+    }
+  };
+});
+
 describe('ConfigurationImportExportService Path Security', () => {
   let service: ConfigurationImportExportService;
 
@@ -33,8 +44,10 @@ describe('ConfigurationImportExportService Path Security', () => {
     const maliciousName = '../../etc/passwd';
     const createdAt = new Date(1600000000000);
 
-    // Mock listBackups to return a malicious backup
-    jest.spyOn(service, 'listBackups').mockResolvedValue([
+    // Get the backupManager instance and mock its listBackups method
+    // @ts-ignore - accessing private property for testing
+    const backupManager = service['backupManager'];
+    backupManager.listBackups.mockResolvedValueOnce([
       {
         id: 'malicious-id',
         name: maliciousName,
@@ -65,7 +78,10 @@ describe('ConfigurationImportExportService Path Security', () => {
     const safeName = 'my-backup';
     const createdAt = new Date(1600000000000);
 
-    jest.spyOn(service, 'listBackups').mockResolvedValue([
+    // Get the backupManager instance and mock its listBackups method
+    // @ts-ignore - accessing private property for testing
+    const backupManager = service['backupManager'];
+    backupManager.listBackups.mockResolvedValueOnce([
       {
         id: 'safe-id',
         name: safeName,
