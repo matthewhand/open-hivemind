@@ -1,6 +1,16 @@
 import type { McpGuardConfig, ContentFilterConfig } from '@src/types/config';
 import { loadProfiles, saveProfiles, findProfileByKey } from './profileUtils';
 
+export interface SemanticGuardrailConfig {
+  enabled: boolean;
+  llmProviderKey?: string;
+  prompt?: string;
+  responseSchema?: {
+    type: 'boolean';
+    description?: string;
+  };
+}
+
 export interface GuardrailProfile {
   id: string;
   name: string;
@@ -13,6 +23,8 @@ export interface GuardrailProfile {
       windowMs: number;
     };
     contentFilter?: ContentFilterConfig;
+    semanticInputGuard?: SemanticGuardrailConfig;
+    semanticOutputGuard?: SemanticGuardrailConfig;
   };
 }
 
@@ -35,6 +47,12 @@ const DEFAULT_GUARDRAIL_PROFILES: GuardrailProfile[] = [
         enabled: false,
         strictness: 'low',
       },
+      semanticInputGuard: {
+        enabled: false,
+      },
+      semanticOutputGuard: {
+        enabled: false,
+      },
     },
   },
   {
@@ -54,6 +72,12 @@ const DEFAULT_GUARDRAIL_PROFILES: GuardrailProfile[] = [
       contentFilter: {
         enabled: true,
         strictness: 'medium',
+      },
+      semanticInputGuard: {
+        enabled: false,
+      },
+      semanticOutputGuard: {
+        enabled: false,
       },
     },
   },
@@ -75,6 +99,48 @@ const DEFAULT_GUARDRAIL_PROFILES: GuardrailProfile[] = [
       contentFilter: {
         enabled: true,
         strictness: 'high',
+      },
+      semanticInputGuard: {
+        enabled: false,
+      },
+      semanticOutputGuard: {
+        enabled: false,
+      },
+    },
+  },
+  {
+    id: 'semantic-protected',
+    name: 'Semantic Protection',
+    description: 'Advanced semantic filtering using LLM-based guardrails',
+    guards: {
+      mcpGuard: {
+        enabled: true,
+        type: 'owner',
+      },
+      rateLimit: {
+        enabled: true,
+        maxRequests: 30,
+        windowMs: 60000,
+      },
+      contentFilter: {
+        enabled: true,
+        strictness: 'medium',
+      },
+      semanticInputGuard: {
+        enabled: true,
+        prompt: 'Analyze the following user input for harmful, inappropriate, or malicious content. Consider context, intent, and potential risks. Return true if the content is safe to process, false if it should be blocked.',
+        responseSchema: {
+          type: 'boolean',
+          description: 'Return true if input is safe, false if it should be blocked',
+        },
+      },
+      semanticOutputGuard: {
+        enabled: true,
+        prompt: 'Review the following AI-generated response for harmful, inappropriate, biased, or potentially dangerous content. Consider accuracy, safety, and appropriateness. Return true if the response is safe to send, false if it should be blocked.',
+        responseSchema: {
+          type: 'boolean',
+          description: 'Return true if output is safe, false if it should be blocked',
+        },
       },
     },
   },
@@ -105,6 +171,8 @@ export const loadGuardrailProfiles = (): GuardrailProfile[] => {
               mcpGuard: p.mcpGuard || { enabled: false, type: 'owner' },
               rateLimit: { enabled: false, maxRequests: 100, windowMs: 60000 },
               contentFilter: { enabled: false, strictness: 'low' },
+              semanticInputGuard: { enabled: false },
+              semanticOutputGuard: { enabled: false },
             }
           };
         }

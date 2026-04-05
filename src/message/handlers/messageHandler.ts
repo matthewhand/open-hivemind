@@ -6,6 +6,8 @@ import { getLlmProviderForBot } from '@src/llm/getLlmProvider';
 import { getQuotaManager } from '@src/middleware/quotaMiddleware';
 import { SyncProviderRegistry } from '@src/registries/SyncProviderRegistry';
 import { ContentFilterService } from '@src/services/ContentFilterService';
+import { SemanticGuardrailService } from '@src/services/SemanticGuardrailService';
+import { getGuardrailProfileByKey } from '@src/config/guardrailProfiles';
 import { MemoryManager } from '@src/services/MemoryManager';
 import { toolAugmentedCompletion } from '@src/services/toolAugmentedCompletion';
 import type { ContentFilterConfig } from '@src/types/config';
@@ -44,6 +46,7 @@ const outgoingRateLimiter = OutgoingMessageRateLimiter.getInstance();
 const _typingActivity = TypingActivity.getInstance();
 const _historyTuner = AdaptiveHistoryTuner.getInstance();
 const contentFilterService = ContentFilterService.getInstance();
+const semanticGuardrailService = SemanticGuardrailService.getInstance();
 
 /**
  * Main message handler that processes incoming messages and generates responses.
@@ -258,6 +261,77 @@ export async function handleMessage(
             }
 
             return null;
+          }
+        }
+
+        // Semantic input guardrail check
+        const guardrailProfileKey = botConfig.guardrailProfile as string | undefined;
+        if (guardrailProfileKey) {
+          const guardrailProfile = getGuardrailProfileByKey(guardrailProfileKey);
+          if (guardrailProfile?.guards?.semanticInputGuard?.enabled) {
+            pipelineMetrics.startStage('semantic_input_guard');
+            try {
+              const semanticResult = await semanticGuardrailService.evaluateInput(
+                processedMessage,
+                guardrailProfile.guards.semanticInputGuard,
+                {
+                  userId: message.getAuthorId(),
+                  channelId: message.getChannelId(),
+                  metadata: {
+                    botId: String(botConfig.BOT_ID || 'unknown-bot'),
+                    guardrailProfile: guardrailProfileKey,
+                  },
+                }
+              );
+
+              if (!semanticResult.allowed) {
+                logger(`Content blocked by semantic input guardrail: ${semanticResult.reason}`);
+                AuditLogger.getInstance().logBotAction(
+                  userId,
+                  'UPDATE',
+                  String(botConfig.name || botConfig.BOT_ID || 'unknown-bot'),
+                  'success',
+                  `Semantic input blocked: ${semanticResult.reason}`,
+                  {
+                    metadata: {
+                      type: 'SEMANTIC_INPUT_GUARD_BLOCK',
+                      channelId: channelId,
+                      botId: String(botConfig.BOT_ID || 'unknown-bot'),
+                      reason: semanticResult.reason,
+                      confidence: semanticResult.confidence,
+                      processingTime: semanticResult.processingTime,
+                      guardrailProfile: guardrailProfileKey,
+                    },
+                  }
+                );
+
+                // Optionally send a message to the user (configurable)
+                if (botConfig.MESSAGE_SEMANTIC_GUARD_NOTIFY !== false) {
+                  try {
+                    await messageProvider.sendMessageToChannel(
+                      message.getChannelId(),
+                      'Your message was flagged by our content safety system.',
+                      providerSenderKey
+                    );
+                  } catch (notifyErr) {
+                    logger('Failed to send semantic guardrail notification:', notifyErr);
+                  }
+                }
+
+                pipelineMetrics.endStage('semantic_input_guard', { blocked: true });
+                return null;
+              }
+
+              pipelineMetrics.endStage('semantic_input_guard', { 
+                blocked: false, 
+                confidence: semanticResult.confidence,
+                processingTime: semanticResult.processingTime 
+              });
+            } catch (semanticErr) {
+              logger('Semantic input guardrail failed (non-fatal):', semanticErr);
+              pipelineMetrics.endStage('semantic_input_guard', { error: true });
+              // Continue processing on error to avoid blocking legitimate content
+            }
           }
         }
 
@@ -583,6 +657,65 @@ export async function handleMessage(
 
             // Don't send the response
             return null;
+          }
+        }
+
+        // Semantic output guardrail check
+        if (guardrailProfileKey) {
+          const guardrailProfile = getGuardrailProfileByKey(guardrailProfileKey);
+          if (guardrailProfile?.guards?.semanticOutputGuard?.enabled) {
+            pipelineMetrics.startStage('semantic_output_guard');
+            try {
+              const semanticResult = await semanticGuardrailService.evaluateOutput(
+                responseText,
+                guardrailProfile.guards.semanticOutputGuard,
+                {
+                  userId: message.getAuthorId(),
+                  channelId: message.getChannelId(),
+                  metadata: {
+                    botId: String(botConfig.BOT_ID || 'unknown-bot'),
+                    guardrailProfile: guardrailProfileKey,
+                    originalInput: processedMessage,
+                  },
+                }
+              );
+
+              if (!semanticResult.allowed) {
+                logger(`Bot response blocked by semantic output guardrail: ${semanticResult.reason}`);
+                AuditLogger.getInstance().logBotAction(
+                  userId,
+                  'UPDATE',
+                  String(botConfig.name || botConfig.BOT_ID || 'unknown-bot'),
+                  'success',
+                  `Semantic output blocked: ${semanticResult.reason}`,
+                  {
+                    metadata: {
+                      type: 'SEMANTIC_OUTPUT_GUARD_BLOCK',
+                      channelId: channelId,
+                      botId: String(botConfig.BOT_ID || 'unknown-bot'),
+                      reason: semanticResult.reason,
+                      confidence: semanticResult.confidence,
+                      processingTime: semanticResult.processingTime,
+                      guardrailProfile: guardrailProfileKey,
+                    },
+                  }
+                );
+
+                // Don't send the response
+                pipelineMetrics.endStage('semantic_output_guard', { blocked: true });
+                return null;
+              }
+
+              pipelineMetrics.endStage('semantic_output_guard', { 
+                blocked: false, 
+                confidence: semanticResult.confidence,
+                processingTime: semanticResult.processingTime 
+              });
+            } catch (semanticErr) {
+              logger('Semantic output guardrail failed (non-fatal):', semanticErr);
+              pipelineMetrics.endStage('semantic_output_guard', { error: true });
+              // Continue processing on error to avoid blocking legitimate content
+            }
           }
         }
 
