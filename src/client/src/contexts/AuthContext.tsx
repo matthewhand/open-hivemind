@@ -177,15 +177,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const data = await response.json();
 
       if (data.success) {
-        const { accessToken, refreshToken, expiresIn } = data.data;
+        const { accessToken, refreshToken, expiresIn, user: userFromLogin } = data.data;
         const authTokens: AuthTokens = {
           accessToken,
           refreshToken,
           expiresIn,
         };
 
-        // Get user info from token (or mock if serverless token)
-        const userInfo = await verifyToken(accessToken);
+        // Use user from login response directly (avoids extra verify round-trip)
+        const userInfo = userFromLogin || await verifyToken(accessToken);
 
         setTokens(authTokens);
         setUser(userInfo);
@@ -291,7 +291,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const data = await response.json();
 
       if (data.success) {
-        return data.user;
+        // API wraps in ApiResponse envelope: { success, data: { user } }
+        return data.data?.user || data.user;
       }
 
       return null;
