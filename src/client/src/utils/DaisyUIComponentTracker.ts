@@ -29,40 +29,46 @@ interface DaisyUIComponentStats {
 class DaisyUIComponentTracker {
   private componentUsage: Map<string, ComponentUsage> = new Map();
 
-  // Complete list of DaisyUI components organized by category
-  private readonly daisyUIComponents = {
-    // Content & Typography
-    content: ['alert', 'badge', 'blockquote', 'code', 'kbd', 'link', 'stat', 'text'],
-
-    // Layout
-    layout: ['artboard', 'collapse', 'divider', 'drawer', 'footer', 'hero', 'join', 'mask', 'stack', 'swap'],
-
-    // Navigation
-    navigation: ['breadcrumbs', 'bottom-nav', 'menu', 'navbar', 'pagination', 'steps', 'tab', 'toggle'],
+  // Complete list of DaisyUI v5 components organized by official categories
+  // Each component appears in exactly one category. Sub-parts are not listed separately.
+  private readonly daisyUIComponents: Record<string, string[]> = {
+    // Actions
+    'Actions': ['btn', 'dropdown', 'modal', 'swap', 'theme-controller', 'tooltip'],
 
     // Data Display
-    dataDisplay: ['card', 'carousel', 'chat', 'chat-bubble', 'timeline', 'timeline-item', 'timeline-middle', 'timeline-start', 'timeline-end'],
+    'Data Display': [
+      'accordion', 'avatar', 'badge', 'card', 'carousel', 'chat',
+      'collapse', 'countdown', 'diff', 'figure', 'kbd', 'list',
+      'stat', 'table', 'timeline', 'tree',
+    ],
 
-    // Forms & Input
-    forms: ['checkbox', 'file-input', 'input', 'radio', 'range', 'rating', 'select', 'textarea', 'toggle'],
-
-    // Actions
-    actions: ['btn', 'button-group', 'dropdown', 'modal', 'tooltip'],
-
-    // Loading & Progress
-    loading: ['loading', 'progress', 'radial-progress'],
+    // Navigation
+    'Navigation': [
+      'breadcrumbs', 'bottom-nav', 'link', 'menu', 'navbar',
+      'pagination', 'steps', 'tab',
+    ],
 
     // Feedback
-    feedback: ['toast', 'indicator'],
+    'Feedback': [
+      'alert', 'loading', 'progress', 'radial-progress',
+      'skeleton', 'toast',
+    ],
 
-    // Utilities
-    utilities: ['join', 'mockup', 'phone', 'window'],
+    // Data Input
+    'Data Input': [
+      'checkbox', 'color-picker', 'file-input', 'filter', 'input',
+      'radio', 'range', 'rating', 'select', 'textarea',
+      'toggle', 'validator',
+    ],
 
-    // Themes & Styling
-    themes: ['theme'],
+    // Layout
+    'Layout': [
+      'artboard', 'divider', 'drawer', 'footer', 'hero',
+      'indicator', 'join', 'mask', 'navbar-center', 'stack',
+    ],
 
-    // Advanced Components
-    advanced: ['swap', 'mask', 'drawer', 'join', 'stack', 'artboard'],
+    // Mockup
+    'Mockup': ['browser', 'code', 'phone', 'window'],
   };
 
   // Track component usage
@@ -90,9 +96,14 @@ class DaisyUIComponentTracker {
     }
   }
 
+  // Deduplicated list of all components
+  get allComponents(): string[] {
+    return [...new Set(Object.values(this.daisyUIComponents).flat())];
+  }
+
   // Get component statistics
   getStats(): DaisyUIComponentStats {
-    const allComponents = Object.values(this.daisyUIComponents).flat();
+    const allComponents = this.allComponents;
     const usedComponents = Array.from(this.componentUsage.keys());
     const unusedComponents = allComponents.filter(comp => !usedComponents.includes(comp));
 
@@ -170,16 +181,23 @@ class DaisyUIComponentTracker {
       'artboard': 'For responsive design testing and demonstrations',
       'bottom-nav': 'For mobile navigation patterns',
       'chat': 'For messaging interfaces or AI chatbots',
-      'chat-bubble': 'For individual message display in chat interfaces',
       'collapse': 'For expandable content sections or FAQs',
       'drawer': 'For slide-out navigation panels',
       'hero': 'For landing page headers and featured content',
-      'mockup': 'For device frame demonstrations',
+      'browser': 'For browser frame mockup demonstrations',
       'phone': 'For mobile app showcases',
       'radial-progress': 'For circular progress indicators',
       'swap': 'For toggle states or on/off switches',
       'timeline': 'For process visualization or event history',
       'window': 'For desktop app demonstrations',
+      'filter': 'For data filtering UI controls',
+      'color-picker': 'For color selection inputs',
+      'validator': 'For form input validation feedback',
+      'figure': 'For image display with captions',
+      'list': 'For structured list displays',
+      'tree': 'For hierarchical data visualization',
+      'link': 'For styled navigation links',
+      'theme-controller': 'For theme switching controls',
     };
 
     Object.entries(unusedByCategory).forEach(([category, components]) => {
