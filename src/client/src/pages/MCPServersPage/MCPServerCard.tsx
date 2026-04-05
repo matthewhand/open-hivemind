@@ -35,6 +35,8 @@ interface MCPServerCardProps {
   handleServerAction: (serverId: string, action: 'start' | 'stop' | 'restart') => void;
   handleEditServer: (server: MCPServer) => void;
   handleDeleteServer: (serverId: string) => void;
+  onCardClick?: (server: MCPServer) => void;
+  isSelected?: boolean;
 }
 
 export const MCPServerCard: React.FC<MCPServerCardProps> = ({
@@ -45,9 +47,11 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = ({
   handleServerAction,
   handleEditServer,
   handleDeleteServer,
+  onCardClick,
+  isSelected,
 }) => {
   return (
-    <Card key={server.id} className="shadow-xl h-full border border-base-200">
+    <Card key={server.id} className={`shadow-xl h-full border transition-all cursor-pointer ${isSelected ? 'border-primary ring-2 ring-primary/20' : 'border-base-200 hover:shadow-2xl'}`} onClick={() => onCardClick?.(server)}>
         <div className="flex justify-between items-start mb-2">
           <div className="flex items-center gap-2">
             <Checkbox
@@ -98,7 +102,7 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = ({
           )}
         </div>
 
-        <Card.Actions className="justify-between mt-auto pt-4 border-t border-base-200">
+        <Card.Actions className="justify-between mt-auto pt-4 border-t border-base-200" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
           <div className="flex gap-1">
             {server.status === 'running' ? (
               <Tooltip content="Disconnect">
