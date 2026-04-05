@@ -6,6 +6,7 @@ import Button from './DaisyUI/Button';
 import { Alert } from './DaisyUI/Alert';
 import Dropdown from './DaisyUI/Dropdown';
 import { Stat } from './DaisyUI/Stat';
+import RadialProgress from './DaisyUI/RadialProgress';
 import type { Bot, StatusResponse } from '../services/api';
 
 interface DashboardBotCardProps {
@@ -79,17 +80,31 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 gap-2 mb-4">
-          <Stat className="bg-base-200 rounded-lg p-3">
-            <div className="stat-title text-xs">Messages</div>
-            <div className="stat-value text-lg">{messageCount.toLocaleString()}</div>
-          </Stat>
-          <Stat className="bg-base-200 rounded-lg p-3">
-            <div className="stat-title text-xs">Status</div>
-            <div className={`stat-value text-lg ${connected ? 'text-success' : 'text-error'}`}>
-              {connected ? '🟢' : '🔴'}
-            </div>
-          </Stat>
+        <div className="grid grid-cols-3 gap-2 mb-4 items-center">
+          <Stat
+            className="bg-base-200 rounded-lg p-3"
+            title="Messages"
+            value={messageCount.toLocaleString()}
+            valueClassName="text-lg"
+          />
+          <Stat
+            className="bg-base-200 rounded-lg p-3"
+            title="Status"
+            value={connected ? '🟢' : '🔴'}
+            valueClassName={`text-lg ${connected ? 'text-success' : 'text-error'}`}
+          />
+          <div className="flex flex-col items-center gap-1">
+            <RadialProgress
+              value={messageCount > 0 ? Math.round(((messageCount - errorCount) / messageCount) * 100) : 100}
+              size="3rem"
+              thickness="0.25rem"
+              color={errorCount === 0 ? 'success' : errorCount / Math.max(messageCount, 1) > 0.1 ? 'error' : 'warning'}
+              className="text-xs font-bold"
+            >
+              {messageCount > 0 ? Math.round(((messageCount - errorCount) / messageCount) * 100) : 100}%
+            </RadialProgress>
+            <div className="text-xs text-base-content/60">Success</div>
+          </div>
         </div>
 
         {errorCount > 0 && (
