@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import Link from '../components/DaisyUI/Link';
 import Modal from '../components/DaisyUI/Modal';
 import Tabs from '../components/DaisyUI/Tabs';
 import type { TabItem } from '../components/DaisyUI/Tabs';
@@ -78,9 +79,9 @@ const DaisyUIShowcase: React.FC = () => {
         <h1 className="text-3xl font-bold">DaisyUI Component Reference</h1>
         <p className="text-base-content/60 mt-1">
           Official DaisyUI components using raw CSS classes -
-          <a href="https://daisyui.com/components/" target="_blank" rel="noopener noreferrer" className="link link-primary ml-1">
+          <Link href="https://daisyui.com/components/" target="_blank" rel="noopener noreferrer" color="primary" className="ml-1">
             View Official Docs
-          </a>
+          </Link>
         </p>
       </div>
 

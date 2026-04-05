@@ -3,6 +3,7 @@ import { AlertTriangle, Copy, Shield, Info } from 'lucide-react';
 import Modal from '../DaisyUI/Modal';
 import Button from '../DaisyUI/Button';
 import Input from '../DaisyUI/Input';
+import Validator, { ValidatorHint } from '../DaisyUI/Validator';
 import { Persona } from './usePersonasLogic';
 import type { Bot } from '../../services/api';
 import Checkbox from '../DaisyUI/Checkbox';
@@ -111,16 +112,23 @@ export const PersonaModal: React.FC<PersonaModalProps> = ({
           </Alert>
         )}
 
-        <Input
-          label="Persona Name"
-          value={personaName}
-          onChange={(e) => setPersonaName(e.target.value)}
-          placeholder="e.g., Helpful Assistant"
-          required
-          disabled={!!isEnvLocked || isViewMode}
-          error={!personaName.trim() ? 'Name is required' : undefined}
-          autoFocus={!isViewMode}
-        />
+        <Validator>
+          <Input
+            label="Persona Name"
+            value={personaName}
+            onChange={(e) => setPersonaName(e.target.value)}
+            placeholder="e.g., Helpful Assistant"
+            required
+            minLength={2}
+            maxLength={100}
+            disabled={!!isEnvLocked || isViewMode}
+            error={!personaName.trim() ? 'Name is required' : undefined}
+            autoFocus={!isViewMode}
+          />
+          <ValidatorHint>
+            {!personaName.trim() ? 'A persona name is required' : 'Must be between 2 and 100 characters'}
+          </ValidatorHint>
+        </Validator>
 
         <div className="form-control w-full">
           <label className="label" htmlFor="persona-category">

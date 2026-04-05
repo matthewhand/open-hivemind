@@ -121,20 +121,18 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
           </div>
 
           <Stats className="bg-base-200 w-full shadow-sm">
-            <Stat className="p-3">
-              <div className="stat-title text-xs uppercase font-bold">Messages</div>
-              <div className="stat-value text-xl text-primary">{previewBot.messageCount ?? 0}</div>
-            </Stat>
-            <Stat className="p-3">
-              <div className="stat-title text-xs uppercase font-bold">Errors</div>
-              <div
-                className={`stat-value text-xl ${
-                  (previewBot.errorCount ?? 0) > 0 ? 'text-error' : ''
-                }`}
-              >
-                {previewBot.errorCount ?? 0}
-              </div>
-            </Stat>
+            <Stat
+              className="p-3"
+              title={<span className="text-xs uppercase font-bold">Messages</span>}
+              value={previewBot.messageCount ?? 0}
+              valueClassName="text-xl text-primary"
+            />
+            <Stat
+              className="p-3"
+              title={<span className="text-xs uppercase font-bold">Errors</span>}
+              value={previewBot.errorCount ?? 0}
+              valueClassName={`text-xl ${(previewBot.errorCount ?? 0) > 0 ? 'text-error' : ''}`}
+            />
           </Stats>
 
           {/* Tabs Navigation */}

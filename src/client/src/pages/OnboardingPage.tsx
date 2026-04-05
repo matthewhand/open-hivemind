@@ -9,6 +9,8 @@ import {
   ArrowRight, ArrowLeft, SkipForward, Sparkles,
 } from 'lucide-react';
 import Input from '../components/DaisyUI/Input';
+import Validator, { ValidatorHint } from '../components/DaisyUI/Validator';
+import Steps from '../components/DaisyUI/Steps';
 import Button from '../components/DaisyUI/Button';
 import FormField from '../components/DaisyUI/FormField';
 import Validator, { ValidatorHint } from '../components/DaisyUI/Validator';
@@ -241,12 +243,17 @@ const CreateBotStep: React.FC<CreateBotStepProps> = ({ form, llmProvider }) => {
       </div>
 
       <FormField label="Bot Name" error={errors.botName} required>
-        <Input
-          id="onboarding-bot-name"
-          placeholder="e.g. HelpBot, CodeAssistant, TeamBot"
-          autoFocus
-          {...register('botName')}
-        />
+        <Validator>
+          <Input
+            id="onboarding-bot-name"
+            placeholder="e.g. HelpBot, CodeAssistant, TeamBot"
+            required
+            minLength={2}
+            autoFocus
+            {...register('botName')}
+          />
+          <ValidatorHint>Bot name must be at least 2 characters</ValidatorHint>
+        </Validator>
       </FormField>
 
       <FormField
@@ -591,22 +598,19 @@ const OnboardingPage: React.FC = () => {
 
       {/* Steps indicator (DaisyUI steps) */}
       <div className="px-6 py-4 max-w-4xl mx-auto w-full">
-        <ul className="steps w-full">
-          {stepMeta.map((s, i) => {
+        <Steps
+          className="w-full"
+          items={stepMeta.map((s, i) => {
             const stepNum = i + 1;
             const isCompleted = step > stepNum;
             const isActive = step === stepNum;
-            return (
-              <li
-                key={s.label}
-                className={`step ${isCompleted || isActive ? 'step-primary' : ''}`}
-                data-content={isCompleted ? '\u2713' : String(stepNum)}
-              >
-                <span className={`text-xs ${isActive ? 'font-bold' : ''}`}>{s.label}</span>
-              </li>
-            );
+            return {
+              color: isCompleted || isActive ? 'primary' : undefined,
+              dataContent: isCompleted ? '\u2713' : String(stepNum),
+              label: <span className={`text-xs ${isActive ? 'font-bold' : ''}`}>{s.label}</span>,
+            };
           })}
-        </ul>
+        />
       </div>
 
       {/* Step content */}

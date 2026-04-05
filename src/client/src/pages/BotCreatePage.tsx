@@ -14,6 +14,8 @@ import { useLlmStatus } from '../hooks/useLlmStatus';
 import AIAssistButton from '../components/AIAssistButton';
 import { apiService } from '../services/api';
 import Card from '../components/DaisyUI/Card';
+import Link from '../components/DaisyUI/Link';
+import Validator, { ValidatorHint } from '../components/DaisyUI/Validator';
 import Debug from 'debug';
 import Checkbox from '../components/DaisyUI/Checkbox';
 const debug = Debug('app:client:pages:BotCreatePage');
@@ -170,13 +172,22 @@ const BotCreatePage: React.FC = () => {
                         onSuccess={(result) => handleInputChange('name', result)}
                       />
                     </label>
-                    <Input
-                      placeholder="e.g. HelpBot"
-                      value={formData.name}
-                      onChange={(e) => handleInputChange('name', e.target.value)}
-                      required
-                      className="input-bordered"
-                    />
+                    <Validator>
+                      <Input
+                        placeholder="e.g. HelpBot"
+                        value={formData.name}
+                        onChange={(e) => handleInputChange('name', e.target.value)}
+                        required
+                        minLength={CONFIG_LIMITS.BOT_NAME_MIN_LENGTH}
+                        maxLength={CONFIG_LIMITS.BOT_NAME_MAX_LENGTH}
+                        className="input-bordered"
+                      />
+                      <ValidatorHint>
+                        {formData.name.length > 0 && formData.name.length < CONFIG_LIMITS.BOT_NAME_MIN_LENGTH
+                          ? `Name must be at least ${CONFIG_LIMITS.BOT_NAME_MIN_LENGTH} characters`
+                          : `${CONFIG_LIMITS.BOT_NAME_MIN_LENGTH}-${CONFIG_LIMITS.BOT_NAME_MAX_LENGTH} characters required`}
+                      </ValidatorHint>
+                    </Validator>
                   </div>
 
                   <div className="form-control w-full">
@@ -319,7 +330,7 @@ const BotCreatePage: React.FC = () => {
                       <span className="label-text font-medium">
                         LLM Provider {defaultLlmConfigured ? '(optional)' : <span className="text-error">*</span>}
                       </span>
-                      <a href="/admin/integrations/llm" target="_blank" rel="noopener noreferrer" className="link link-primary text-xs">Manage Providers</a>
+                      <Link href="/admin/integrations/llm" target="_blank" rel="noopener noreferrer" color="primary" className="text-xs">Manage Providers</Link>
                     </label>
                     <Select
                       value={formData.llmProvider}
@@ -357,7 +368,7 @@ const BotCreatePage: React.FC = () => {
                 <div className="form-control w-full">
                   <label className="label">
                     <span className="label-text font-medium">MCP Servers</span>
-                    <a href="/admin/mcp/servers" target="_blank" rel="noopener noreferrer" className="link link-primary text-xs">Manage MCP Servers</a>
+                    <Link href="/admin/mcp/servers" target="_blank" rel="noopener noreferrer" color="primary" className="text-xs">Manage MCP Servers</Link>
                   </label>
                   <div className="text-sm text-base-content/70 mb-3">
                     Select the Model Context Protocol (MCP) servers this bot can access to use external tools and data.
