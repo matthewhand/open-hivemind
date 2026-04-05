@@ -7,6 +7,7 @@ import { Alert } from '../components/DaisyUI/Alert';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import StatsCards from '../components/DaisyUI/StatsCards';
 import EmptyState from '../components/DaisyUI/EmptyState';
+import ConfigKeyValueCard from '../components/DaisyUI/ConfigKeyValueCard';
 import { SkeletonTableLayout } from '../components/DaisyUI/Skeleton';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { ConfirmModal } from '../components/DaisyUI/Modal';
@@ -636,14 +637,7 @@ const LLMProvidersPage: React.FC = () => {
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         {Object.entries(profile.config || {}).map(([k, v]) => (
-                          <div key={k} className="bg-base-100 p-2 rounded border border-base-200/50 flex flex-col">
-                            <span className="font-mono text-xs opacity-50 uppercase tracking-wider mb-1">{k}</span>
-                            <span className="font-medium text-sm truncate" title={String(v)}>
-                              {String(k).toLowerCase().includes('key') || String(k).toLowerCase().includes('token') || String(k).toLowerCase().includes('password')
-                                ? '••••••••'
-                                : String(v)}
-                            </span>
-                          </div>
+                          <ConfigKeyValueCard key={k} configKey={k} value={v} />
                         ))}
                       </div>
                     </div>
