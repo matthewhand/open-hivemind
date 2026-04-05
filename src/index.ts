@@ -351,8 +351,15 @@ app.get('/admin*', (req: Request, res: Response) => {
 // React Router catch-all handler (must be AFTER all API routes)
 // Serve index.html for all non-API, non-asset routes so React Router handles them
 app.get('*', (req: Request, res: Response, next: NextFunction) => {
-  // Skip API routes and static assets
-  if (req.path.startsWith('/api') || req.path.startsWith('/health') || req.path.includes('.')) {
+  // Skip API routes, static assets, and Vite internal paths
+  if (
+    req.path.startsWith('/api') ||
+    req.path.startsWith('/health') ||
+    req.path.startsWith('/@') ||           // Vite internals: /@react-refresh, /@vite/client, /@fs/
+    req.path.startsWith('/node_modules') || // Vite serves node_modules in dev
+    req.path.startsWith('/src/') ||         // Vite serves source files in dev
+    req.path.includes('.')                  // Static assets with file extensions
+  ) {
     return next();
   }
   if (process.env.NODE_ENV === 'development' && viteServer) {
