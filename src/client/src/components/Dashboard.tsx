@@ -4,6 +4,7 @@ import { Alert } from './DaisyUI/Alert';
 import Button from './DaisyUI/Button';
 import Card from './DaisyUI/Card';
 import Hero from './DaisyUI/Hero';
+import RadialProgress from './DaisyUI/RadialProgress';
 import { SkeletonCard } from './DaisyUI/Skeleton';
 import { Stat, Stats } from './DaisyUI/Stat';
 import DashboardBotCard from './DashboardBotCard';
@@ -272,9 +273,20 @@ const Dashboard: React.FC = () => {
         {/* System Status Footer */}
         {status && (
           <Card title="🖥️ System Information">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="flex items-center gap-4">
+                <RadialProgress
+                  value={bots.length > 0 ? Math.round((activeBots / bots.length) * 100) : 0}
+                  size="4rem"
+                  thickness="0.3rem"
+                  color={activeBots === bots.length ? 'success' : activeBots > 0 ? 'warning' : 'error'}
+                  className="text-sm font-bold flex-shrink-0"
+                >
+                  {bots.length > 0 ? Math.round((activeBots / bots.length) * 100) : 0}%
+                </RadialProgress>
+                <Stat title="Active Bots" value={`${activeBots}/${bots.length}`} valueClassName="text-lg" description="currently active" />
+              </div>
               <Stat title="Uptime" value={<>{uptimeHours}h {uptimeMinutes}m</>} valueClassName="text-lg" description="System running smoothly" />
-              <Stat title="Total Bots" value={bots.length} valueClassName="text-lg" description={`${activeBots} currently active`} />
               <Stat title="Message Volume" value={totalMessages.toLocaleString()} valueClassName="text-lg" description="processed successfully" />
             </div>
           </Card>
