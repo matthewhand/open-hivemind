@@ -1,4 +1,3 @@
-import crypto from 'crypto';
 import Debug from 'debug';
 import { recordBotActivity } from '@message/helpers/processing/ChannelActivity';
 import type { IMessage } from '@message/interfaces/IMessage';
@@ -311,7 +310,7 @@ export class IdleResponseManager {
     log(`Scheduling idle response for ${serviceName}:${channelId} in ${delay}ms`);
 
     // Create a unique timer ID to prevent duplicates
-    const timerId = crypto.randomUUID();
+    const timerId = Date.now() + Math.random();
     activity.timer = setTimeout(async () => {
       // Verify this is still the correct timer
       const currentActivity = serviceActivity.channels.get(channelId);
