@@ -50,8 +50,8 @@ export interface ILlmProvider {
 #### Option B: Add Missing Interface Methods
 - [ ] Add `validateCredentials(): Promise<boolean>` to `ILlmProvider` interface
 - [ ] Implement in [`OpenAiProvider`](../packages/provider-openai/src/openAiProvider.ts)
-- [ ] Implement in [`FlowiseProvider`](../src/integrations/flowise/flowiseProvider.ts)
-- [ ] Implement in [`OpenWebUI`](../src/integrations/openwebui/openWebUIProvider.ts)
+- [ ] Implement in [`FlowiseProvider`](../packages/llm-flowise/src/flowiseProvider.ts)
+- [ ] Implement in [`OpenWebUI`](../packages/llm-openwebui/src/openWebUIProvider.ts)
 - [ ] Add `generateResponse()` as alias to `generateChatCompletion()` for backward compatibility
 - [ ] Update AGENTS.md to document both old and new methods
 
@@ -69,8 +69,8 @@ export interface ILlmProvider {
 | `AGENTS.md` | Update interface documentation |
 | `src/llm/interfaces/ILlmProvider.ts` | Add methods (Option B) |
 | `packages/provider-openai/src/openAiProvider.ts` | Implement new methods (Option B) |
-| `src/integrations/flowise/flowiseProvider.ts` | Implement new methods (Option B) |
-| `src/integrations/openwebui/openWebUIProvider.ts` | Implement new methods (Option B) |
+| `packages/llm-flowise/src/flowiseProvider.ts` | Implement new methods (Option B) |
+| `packages/llm-openwebui/src/openWebUIProvider.ts` | Implement new methods (Option B) |
 
 ### Acceptance Criteria
 - [ ] Documentation matches actual interface
@@ -90,15 +90,14 @@ export interface ILlmProvider {
 src/integrations/{discord,slack,mattermost}/
 ```
 
-**Actual Structure:**
+**Actual Structure (as of PR #2393 — `src/integrations/` has been removed):**
 ```
 packages/adapter-discord/src/DiscordService.ts    # Main Discord implementation
 packages/adapter-slack/src/SlackService.ts        # Main Slack implementation
 packages/adapter-mattermost/src/MattermostService.ts  # Main Mattermost implementation
-
-src/integrations/discord/                         # Only contains DiscordConnectionTest.ts
-src/integrations/slack/                           # Contains SlackService + providers
-src/integrations/mattermost/                      # Contains MattermostService
+packages/llm-flowise/src/                         # Flowise LLM provider
+packages/llm-openwebui/src/                       # OpenWebUI LLM provider
+packages/llm-openswarm/src/                       # OpenSwarm LLM provider
 ```
 
 **Import Pattern Used:**

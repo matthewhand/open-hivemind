@@ -50,8 +50,8 @@ The UI **never** has a hardcoded list of provider names. It asks the backend wha
 | Layer | Status | Location |
 |---|---|---|
 | Runtime package loading | ✅ Done | `src/llm/getLlmProvider.ts`, `src/message/management/getMessengerProvider.ts` |
-| `GET /api/admin/llm-providers` | ⚠️ Returns configured instances, not available types | `src/server/routes/admin.ts` |
-| `GET /api/admin/available-provider-types` | ❌ Not yet implemented | needs adding to `src/server/routes/admin.ts` |
+| `GET /api/admin/llm-providers` | ⚠️ Returns configured instances, not available types | `src/server/routes/admin/llmProviders.ts` |
+| `GET /api/admin/available-provider-types` | ❌ Not yet implemented | needs adding to `src/server/routes/admin/llmProviders.ts` |
 | Frontend field schemas | ⚠️ Exist but frontend-only | `src/client/src/provider-configs/schemas/` |
 | `ProviderConfigModal` dynamic form | ✅ Done | `src/client/src/components/ProviderConfiguration/ProviderConfigModal.tsx` |
 | `useProviders()` hook | ✅ Done | `src/client/src/hooks/useProviders.ts` |
@@ -135,7 +135,7 @@ const PROVIDER_SCHEMAS = {
 
 ### 5. Register in the backend available-types endpoint
 
-In `src/server/routes/admin.ts`, add your provider to the `KNOWN_LLM_TYPES` array in `GET /available-provider-types`:
+In `src/server/routes/admin/llmProviders.ts`, add your provider to the `KNOWN_LLM_TYPES` array in `GET /available-provider-types`:
 
 ```typescript
 { key: 'myprovider', label: 'My Provider', pkg: '@hivemind/provider-myprovider' }
@@ -164,10 +164,10 @@ export interface IAdapterFactory {
 |---|---|
 | `src/llm/getLlmProvider.ts` | Runtime LLM provider instantiation via `require()` |
 | `src/message/management/getMessengerProvider.ts` | Runtime adapter instantiation |
-| `src/server/routes/admin.ts` | REST endpoints for provider CRUD and discovery |
+| `src/server/routes/admin/llmProviders.ts` | REST endpoints for provider CRUD and discovery |
 | `src/client/src/provider-configs/index.ts` | Frontend field schema registry |
 | `src/client/src/hooks/useProviders.ts` | React hook for fetching available providers |
-| `src/client/src/services/providerService.ts` | Axios wrappers for provider API calls |
+| `src/client/src/services/providerService.ts` | fetch() wrappers for provider API calls |
 | `src/client/src/components/ProviderConfiguration/ProviderConfigModal.tsx` | Dynamic form renderer |
 | `packages/shared-types/src/ILlmProvider.ts` | Interface all LLM providers must implement |
 | `packages/shared-types/src/IAdapterFactory.ts` | Interface all adapters must implement |
