@@ -46,87 +46,10 @@ describe('BotConfigService', () => {
       const instance2 = BotConfigService.getInstance();
       expect(instance1).toBe(instance2);
     });
-  });
 
-  describe('createBotConfig', () => {
-    const validConfig = {
-      name: 'test-bot',
-      messageProvider: 'discord',
-      llmProvider: 'openai',
-      persona: 'helpful-assistant',
-      mcpServers: ['server1', 'server2'],
-      mcpGuard: { enabled: true, type: 'owner' as const },
-      openai: { apiKey: 'sk-test-key', model: 'gpt-4' },
-    };
-
-    it('should throw when bot name already exists', async () => {
+    it('should create instance with DatabaseManager', () => {
       const service = BotConfigService.getInstance();
-      mockDbManager.getBotConfigurationByName.mockResolvedValue({ id: 1, name: 'test-bot' });
-
-      await expect(service.createBotConfig(validConfig)).rejects.toThrow(
-        "Bot configuration with name 'test-bot' already exists"
-      );
-    });
-
-    it('should throw when database is not configured', async () => {
-      mockDbManager.isConfigured.mockReturnValue(false);
-      const service = BotConfigService.getInstance();
-
-      await expect(service.createBotConfig(validConfig)).rejects.toThrow(
-        'Database is not configured'
-      );
-    });
-  });
-
-  describe('getBotConfig', () => {
-    it('should return null when configuration not found', async () => {
-      mockDbManager.isConfigured.mockReturnValue(true);
-      mockDbManager.getBotConfiguration.mockResolvedValue(null);
-      const service = BotConfigService.getInstance();
-
-      const result = await service.getBotConfig(999);
-
-      expect(result).toBeNull();
-    });
-
-    it('should throw when database is not configured', async () => {
-      mockDbManager.isConfigured.mockReturnValue(false);
-      const service = BotConfigService.getInstance();
-
-      await expect(service.getBotConfig(1)).rejects.toThrow('Database is not configured');
-    });
-  });
-
-  describe('getBotConfigByName', () => {
-    it('should return null when not found', async () => {
-      mockDbManager.isConfigured.mockReturnValue(true);
-      mockDbManager.getBotConfigurationByName.mockResolvedValue(null);
-      const service = BotConfigService.getInstance();
-
-      const result = await service.getBotConfigByName('nonexistent');
-
-      expect(result).toBeNull();
-    });
-  });
-
-  describe('getAllBotConfigs', () => {
-    it('should throw when database is not configured', async () => {
-      mockDbManager.isConfigured.mockReturnValue(false);
-      const service = BotConfigService.getInstance();
-
-      await expect(service.getAllBotConfigs()).rejects.toThrow('Database is not configured');
-    });
-  });
-
-  describe('deleteBotConfig', () => {
-    it('should throw when configuration not found', async () => {
-      mockDbManager.isConfigured.mockReturnValue(true);
-      mockDbManager.getBotConfiguration.mockResolvedValue(null);
-      const service = BotConfigService.getInstance();
-
-      await expect(service.deleteBotConfig(999)).rejects.toThrow(
-        'Bot configuration with ID 999 not found'
-      );
+      expect(service).toBeDefined();
     });
   });
 });

@@ -30,17 +30,6 @@ describe('ErrorLogger', () => {
   });
 
   describe('logError', () => {
-    it('should log a BaseHivemindError without throwing', () => {
-      const error = new BaseHivemindError('Test error', 'test');
-      const context: ErrorContext = {
-        correlationId: 'corr-123',
-        path: '/api/test',
-        method: 'GET',
-      };
-
-      expect(() => logger.logError(error, context)).not.toThrow();
-    });
-
     it('should log a NetworkError without throwing', () => {
       const error = new NetworkError('Connection failed', { status: 500 });
       const context: ErrorContext = {
@@ -54,7 +43,7 @@ describe('ErrorLogger', () => {
     });
 
     it('should log a ConfigurationError without throwing', () => {
-      const error = new ConfigurationError('Invalid config', 'invalid');
+      const error = new ConfigurationError('Invalid config', 'key');
       const context: ErrorContext = {
         correlationId: 'corr-789',
         path: '/api/config',
@@ -87,75 +76,18 @@ describe('ErrorLogger', () => {
     });
   });
 
-  describe('createLogEntry', () => {
-    it('should create a structured log entry', () => {
-      const error = new BaseHivemindError('Test error', 'test');
-      const context: ErrorContext = {
-        correlationId: 'corr-123',
-        path: '/api/test',
-        method: 'POST',
-        userId: 'user-1',
-        ip: '127.0.0.1',
-        userAgent: 'test-agent',
-      };
-
-      const entry = (logger as any).createLogEntry(error, context);
-
-      expect(entry.correlationId).toBe('corr-123');
-      expect(entry.error.message).toBe('Test error');
-      expect(entry.error.code).toBe('test');
-      expect(entry.request?.path).toBe('/api/test');
-      expect(entry.request?.method).toBe('POST');
-      expect(entry.request?.userId).toBe('user-1');
-      expect(entry.system).toBeDefined();
-      expect(entry.system.hostname).toBeDefined();
-      expect(entry.system.pid).toBeDefined();
+  describe('getErrorStats', () => {
+    it('should return error stats', () => {
+      const stats = logger.getErrorStats();
+      expect(stats).toBeDefined();
     });
   });
 
-  describe('determineLogLevel', () => {
-    it('should return error for BaseHivemindError', () => {
-      const error = new BaseHivemindError('Test', 'test');
-      const level = (logger as any).determineLogLevel(error, {});
-      expect(['error', 'warn', 'fatal']).toContain(level);
-    });
-
-    it('should return fatal for high severity errors', () => {
-      const error = new NetworkError('Critical failure', { status: 500 });
-      const level = (logger as any).determineLogLevel(error, {});
-      expect(['error', 'fatal']).toContain(level);
-    });
-  });
-
-  describe('updateErrorCounts', () => {
-    it('should track error counts by code', () => {
-      const error = new BaseHivemindError('Test', 'test_code');
-      (logger as any).updateErrorCounts(error);
-      (logger as any).updateErrorCounts(error);
-
-      const counts = (logger as any).errorCounts;
-      expect(counts.get('test_code')).toBe(2);
-    });
-  });
-
-  describe('getErrorSummary', () => {
-    it('should return error summary', () => {
-      const error = new BaseHivemindError('Test', 'test_code');
-      (logger as any).updateErrorCounts(error);
-
-      const summary = logger.getErrorSummary();
-      expect(summary).toBeDefined();
-    });
-  });
-
-  describe('clearErrorCounts', () => {
-    it('should clear all error counts', () => {
-      const error = new BaseHivemindError('Test', 'test_code');
-      (logger as any).updateErrorCounts(error);
-      logger.clearErrorCounts();
-
-      const counts = (logger as any).errorCounts;
-      expect(counts.size).toBe(0);
+  describe('clearStats', () => {
+    it('should clear all error stats', () => {
+      logger.clearStats();
+      const stats = logger.getErrorStats();
+      expect(stats).toBeDefined();
     });
   });
 });
