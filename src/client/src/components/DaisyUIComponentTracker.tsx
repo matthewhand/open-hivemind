@@ -115,7 +115,7 @@ const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) =>
                   {Object.entries(stats.categories).map(([category, data]) => (
                     <Card key={category} className="bg-base-200">
                       <Card.Body className="p-4">
-                        <Card.Title tag="h3" className="text-lg capitalize">{category}</Card.Title>
+                        <Card.Title tag="h3" className="text-lg">{category}</Card.Title>
                         <div className="flex items-center justify-between">
                           <span className="text-sm">{data.used}/{data.total} used</span>
                           <Badge
