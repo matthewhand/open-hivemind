@@ -479,9 +479,14 @@ const MarketplacePage: React.FC = () => {
                   <Card.Body className="p-4">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <div className={`p-2 rounded-lg bg-${color}/10`}>
-                          <Icon className={`w-5 h-5 text-${color}`} />
-                        </div>
+                        <Figure
+                          caption={<span className="text-[10px] uppercase font-bold opacity-40">{pkg.type}</span>}
+                          className="flex flex-col items-center"
+                        >
+                          <div className={`p-2 rounded-lg bg-${color}/10`}>
+                            <Icon className={`w-5 h-5 text-${color}`} />
+                          </div>
+                        </Figure>
                         <div>
                           <h3 className="font-semibold">{pkg.displayName}</h3>
                           <p className="text-xs text-base-content/50 font-mono">{pkg.name}</p>

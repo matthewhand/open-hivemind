@@ -13,7 +13,6 @@ import Validator, { ValidatorHint } from '../components/DaisyUI/Validator';
 import Steps from '../components/DaisyUI/Steps';
 import Button from '../components/DaisyUI/Button';
 import FormField from '../components/DaisyUI/FormField';
-import Validator, { ValidatorHint } from '../components/DaisyUI/Validator';
 import ProgressBar from '../components/DaisyUI/ProgressBar';
 import StepWizard from '../components/DaisyUI/StepWizard';
 import { Alert } from '../components/DaisyUI/Alert';
