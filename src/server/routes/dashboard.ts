@@ -334,8 +334,18 @@ function isProviderConnected(bot: any): boolean {
  */
 router.get('/announcement', async (req, res): Promise<any> => {
   try {
+    // Log telemetry if provided (installed providers + ratings from frontend)
+    const { providers, ratings } = req.query;
+    if (providers || ratings) {
+      logger.info('Announcement telemetry', {
+        providers: providers ? String(providers) : undefined,
+        ratings: ratings ? String(ratings) : undefined,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
     const announcementPath = path.join(process.cwd(), 'ANNOUNCEMENT.md');
-    // ⚡ Bolt Optimization: Replaced synchronous fs.existsSync and fs.readFileSync with async alternatives to prevent event loop blocking.
     try {
       await fs.promises.access(announcementPath);
     } catch {

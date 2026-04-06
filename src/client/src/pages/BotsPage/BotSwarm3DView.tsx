@@ -1,8 +1,8 @@
 import React from 'react';
 import { Bot, Globe, Cpu, MessageSquare, AlertTriangle, Play, Pause } from 'lucide-react';
 import type { BotConfig } from '../../types/bot';
-import Card from '../DaisyUI/Card';
-import Badge from '../DaisyUI/Badge';
+import Card from '../../components/DaisyUI/Card';
+import Badge from '../../components/DaisyUI/Badge';
 
 interface BotSwarm3DViewProps {
   bots: BotConfig[];
