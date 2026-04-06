@@ -1,4 +1,5 @@
 import React from 'react';
+import '@testing-library/jest-dom';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -7,24 +8,69 @@ import ActivityPage from '../ActivityPage';
 import { apiService } from '../../services/api';
 
 // Mock components to avoid deep rendering issues and dependency on child implementations
-vi.mock('../../components/DaisyUI', () => ({
+vi.mock('../../components/DaisyUI/Alert', () => ({
   Alert: ({ message }: any) => <div data-testid="alert">{message}</div>,
+}));
+vi.mock('../../components/DaisyUI/Badge', () => ({
+  default: ({ children }: any) => <span data-testid="badge">{children}</span>,
   Badge: ({ children }: any) => <span data-testid="badge">{children}</span>,
+}));
+vi.mock('../../components/DaisyUI/Button', () => ({
+  default: ({ children, onClick, disabled, title }: any) => <button onClick={onClick} disabled={disabled} title={title}>{children}</button>,
   Button: ({ children, onClick, disabled, title }: any) => <button onClick={onClick} disabled={disabled} title={title}>{children}</button>,
+}));
+vi.mock('../../components/DaisyUI/Card', () => ({
+  default: ({ children }: any) => <div data-testid="card">{children}</div>,
   Card: ({ children }: any) => <div data-testid="card">{children}</div>,
+}));
+vi.mock('../../components/DaisyUI/DataTable', () => ({
+  default: () => <div data-testid="data-table" />,
   DataTable: () => <div data-testid="data-table" />,
+}));
+vi.mock('../../components/DaisyUI/StatsCards', () => ({
+  default: () => <div data-testid="stats-cards" />,
   StatsCards: () => <div data-testid="stats-cards" />,
+}));
+vi.mock('../../components/DaisyUI/Timeline', () => ({
+  default: () => <div data-testid="timeline" />,
   Timeline: () => <div data-testid="timeline" />,
+}));
+vi.mock('../../components/DaisyUI/Toggle', () => ({
+  default: ({ onChange }: any) => <input type="checkbox" data-testid="toggle" onChange={onChange} />,
   Toggle: ({ onChange }: any) => <input type="checkbox" data-testid="toggle" onChange={onChange} />,
+}));
+vi.mock('../../components/DaisyUI/PageHeader', () => ({
+  default: ({ title, actions }: any) => (
+    <div data-testid="page-header">
+      <h1>{title}</h1>
+      {actions}
+    </div>
+  ),
   PageHeader: ({ title, actions }: any) => (
     <div data-testid="page-header">
       <h1>{title}</h1>
       {actions}
     </div>
   ),
+}));
+vi.mock('../../components/DaisyUI/LoadingSpinner', () => ({
+  default: () => <div data-testid="loading-spinner" />,
   LoadingSpinner: () => <div data-testid="loading-spinner" />,
-  SkeletonPage: () => <div data-testid="loading-spinner" />,
+}));
+vi.mock('../../components/DaisyUI/EmptyState', () => ({
+  default: ({ title }: any) => <div data-testid="empty-state">{title}</div>,
   EmptyState: ({ title }: any) => <div data-testid="empty-state">{title}</div>,
+}));
+vi.mock('../../components/DaisyUI/Input', () => ({
+  default: ({ type, value, onChange, placeholder }: any) => (
+    <input
+      data-testid={placeholder === 'Start Date' ? 'start-date' : placeholder === 'End Date' ? 'end-date' : 'input'}
+      type={type}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+    />
+  ),
   Input: ({ type, value, onChange, placeholder }: any) => (
     <input
       data-testid={placeholder === 'Start Date' ? 'start-date' : placeholder === 'End Date' ? 'end-date' : 'input'}
@@ -120,8 +166,7 @@ describe('ActivityPage', () => {
     expect(screen.getByTestId('loading-spinner')).toBeInTheDocument();
   });
 
-  it.todo('renders data when loaded successfully' /* TODO: Rewrite — page now uses useQuery with apiService.get, mock shape needs updating */);
-  it.skip('renders data when loaded successfully (skipped — needs rewrite)', async () => {
+  it('renders data when loaded successfully', async () => {
     const mockData = {
       events: [
         {
@@ -143,8 +188,21 @@ describe('ActivityPage', () => {
 
     getActivityMock.mockResolvedValue(mockData);
 
-    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    render(<QueryClientProvider client={queryClient}><MemoryRouter><ActivityPage /></MemoryRouter></QueryClientProvider>);
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+        },
+      },
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <ActivityPage />
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
 
     // Wait for loading to finish
     await waitFor(() => expect(screen.queryByTestId('loading-spinner')).not.toBeInTheDocument(), { timeout: 3000 });
@@ -159,17 +217,55 @@ describe('ActivityPage', () => {
     expect(getActivityMock).toHaveBeenCalled();
   });
 
-  it.todo('handles API errors gracefully' /* TODO: Rewrite — needs proper apiService.get mock */);
-  it.skip('handles API errors gracefully (skipped — needs rewrite)', async () => {
+  it('handles API errors gracefully', async () => {
     getActivityMock.mockRejectedValue(new Error('Network error'));
 
-    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    render(<QueryClientProvider client={queryClient}><MemoryRouter><ActivityPage /></MemoryRouter></QueryClientProvider>);
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+        },
+      },
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <ActivityPage />
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
 
     // Wait for loading to finish and error to appear
     await waitFor(() => expect(screen.getByTestId('alert')).toBeInTheDocument(), { timeout: 3000 });
     expect(screen.getByText('Network error')).toBeInTheDocument();
   });
 
-  it.todo("refreshes data when refresh button is clicked" /* TODO: Fix flaky test */);
+  it("refreshes data when refresh button is clicked", async () => {
+    const mockData = { events: [], filters: { agents: [], messageProviders: [], llmProviders: [] } };
+    getActivityMock.mockResolvedValue(mockData);
+
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+        },
+      },
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <ActivityPage />
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+
+    await waitFor(() => expect(screen.queryByTestId('loading-spinner')).not.toBeInTheDocument());
+
+    const refreshButton = screen.getByTitle('Refresh');
+    fireEvent.click(refreshButton);
+
+    expect(getActivityMock).toHaveBeenCalledTimes(2);
+  });
 });
