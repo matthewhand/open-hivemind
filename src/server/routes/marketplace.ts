@@ -31,6 +31,7 @@ export interface MarketplacePackage {
   type: 'llm' | 'message' | 'memory' | 'tool' | 'bot' | 'guard' | 'persona';
   version: string;
   status: 'built-in' | 'installed' | 'available';
+  trusted: boolean;
   repoUrl?: string;
   installedAt?: string;
   updatedAt?: string;
@@ -88,6 +89,7 @@ async function scanBuiltInPackages(): Promise<MarketplacePackage[]> {
           type: manifest?.type || type,
           version: pkgJson.version || '0.0.0',
           status: 'built-in',
+          trusted: true,
         });
       } catch (e: any) {
         if (e.code !== 'ENOENT') {
@@ -116,6 +118,8 @@ async function getInstalledPlugins(): Promise<MarketplacePackage[]> {
     const installed = await listInstalledPlugins();
 
     for (const plugin of installed) {
+      // Packages from matthewhand/open-hivemind are trusted
+      const isTrusted = !!(plugin.repoUrl && /github\.com\/matthewhand\/open-hivemind/i.test(plugin.repoUrl));
       plugins.push({
         name: plugin.name,
         displayName: plugin.manifest.displayName,
@@ -123,6 +127,7 @@ async function getInstalledPlugins(): Promise<MarketplacePackage[]> {
         type: plugin.manifest.type,
         version: plugin.version,
         status: 'installed',
+        trusted: isTrusted,
         repoUrl: plugin.repoUrl,
         installedAt: plugin.installedAt,
         updatedAt: plugin.updatedAt,

@@ -52,6 +52,7 @@ interface MarketplacePackage {
   type: 'llm' | 'message' | 'memory' | 'tool';
   version: string;
   status: 'built-in' | 'installed' | 'available';
+  trusted?: boolean;
   repoUrl?: string;
   installedAt?: string;
   updatedAt?: string;
@@ -281,11 +282,13 @@ const MarketplacePage: React.FC = () => {
         <Carousel items={FEATURED_CAROUSEL_ITEMS} autoplay interval={7000} variant="full-width" />
       </div>
 
-      {/* Community Warning */}
-      <div className="alert alert-warning mb-4 text-sm">
-        <AlertIcon className="w-5 h-5 shrink-0" />
-        <span><strong>Community packages are untested and unverified.</strong> Only install from sources you trust. Community plugins are loaded from GitHub and run with full application privileges.</span>
-      </div>
+      {/* Community Warning — only show when untrusted packages exist */}
+      {packages.some(p => p.trusted === false) && (
+        <div className="alert alert-warning mb-4 text-sm">
+          <AlertIcon className="w-5 h-5 shrink-0" />
+          <span><strong>Community packages are untested and unverified.</strong> Only install from sources you trust. Community plugins are loaded from GitHub and run with full application privileges.</span>
+        </div>
+      )}
 
       {/* Alert Messages */}
       {actionMessage && (
@@ -407,9 +410,14 @@ const MarketplacePage: React.FC = () => {
                         <p className="text-xs text-base-content/50 font-mono">{pkg.name}</p>
                       </div>
                     </div>
-                    <Badge variant="primary" size="small">
-                      {statusBadge.label}
-                    </Badge>
+                    <div className="flex gap-1">
+                      {!pkg.trusted && pkg.status !== 'built-in' && (
+                        <Badge variant="warning" size="small">Community</Badge>
+                      )}
+                      <Badge variant={statusBadge.color} size="small">
+                        {statusBadge.label}
+                      </Badge>
+                    </div>
                   </div>
 
                   <p className="text-sm text-base-content/70 mb-3 line-clamp-2">
@@ -518,9 +526,14 @@ const MarketplacePage: React.FC = () => {
                           <p className="text-xs text-base-content/50 font-mono">{pkg.name}</p>
                         </div>
                       </div>
-                      <Badge variant={statusBadge.color} size="sm">
-                        {statusBadge.label}
-                      </Badge>
+                      <div className="flex gap-1">
+                        {!pkg.trusted && pkg.status !== 'built-in' && (
+                          <Badge variant="warning" size="sm">Community</Badge>
+                        )}
+                        <Badge variant={statusBadge.color} size="sm">
+                          {statusBadge.label}
+                        </Badge>
+                      </div>
                     </div>
 
                     <p className="text-sm text-base-content/70 mb-3 line-clamp-2">
