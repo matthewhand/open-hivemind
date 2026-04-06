@@ -50,6 +50,20 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
     { value: 'professional', label: 'Professional', color: 'success' },
   ];
 
+  // Static class lookup maps (Tailwind JIT-safe — avoids dynamic `bg-${color}` anti-pattern)
+  const COLOR_BTN_CLASSES: Record<string, { active: string; dot: string }> = {
+    neutral: { active: 'bg-neutral text-neutral-content border-neutral', dot: 'bg-neutral' },
+    primary: { active: 'bg-primary text-primary-content border-primary', dot: 'bg-primary' },
+    secondary: { active: 'bg-secondary text-secondary-content border-secondary', dot: 'bg-secondary' },
+    accent: { active: 'bg-accent text-accent-content border-accent', dot: 'bg-accent' },
+    info: { active: 'bg-info text-info-content border-info', dot: 'bg-info' },
+    warning: { active: 'bg-warning text-warning-content border-warning', dot: 'bg-warning' },
+    success: { active: 'bg-success text-success-content border-success', dot: 'bg-success' },
+  };
+
+  const getActiveCategoryClass = (color: string) => COLOR_BTN_CLASSES[color]?.active || COLOR_BTN_CLASSES.neutral.active;
+  const getCategoryDotClass = (color: string) => COLOR_BTN_CLASSES[color]?.dot || COLOR_BTN_CLASSES.neutral.dot;
+
   const filteredPersonas = useMemo(() => {
     let filtered = personas;
 
@@ -144,7 +158,7 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
                     className={`
                       px-2 py-1 text-xs rounded-full border transition-colors
                       ${selectedCategory === category.value
-                    ? `bg-${category.color} text-${category.color}-content border-${category.color}`
+                    ? getActiveCategoryClass(category.color)
                     : 'border-base-300 hover:bg-base-200'
                   }
                     `}
@@ -178,7 +192,7 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
                           <div
                             className={`
                               w-2 h-2 rounded-full
-                              bg-${categories.find(c => c.value === persona.category)?.color || 'neutral'}
+                              ${getCategoryDotClass(categories.find(c => c.value === persona.category)?.color || 'neutral')}
                             `}
                           />
                           <span className="font-medium text-sm">{persona.name}</span>
@@ -286,7 +300,7 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
               className={`
                 px-3 py-1 text-sm rounded-full border transition-colors
                 ${selectedCategory === category.value
-              ? `bg-${category.color} text-${category.color}-content border-${category.color}`
+              ? getActiveCategoryClass(category.color)
               : 'border-base-300 hover:bg-base-200'
             }
               `}
@@ -323,7 +337,7 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
                       <div
                         className={`
                           w-3 h-3 rounded-full
-                          bg-${categories.find(c => c.value === persona.category)?.color || 'neutral'}
+                          ${getCategoryDotClass(categories.find(c => c.value === persona.category)?.color || 'neutral')}
                         `}
                       />
                       <h4 className="font-semibold">{persona.name}</h4>

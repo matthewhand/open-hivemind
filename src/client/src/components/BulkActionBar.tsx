@@ -22,6 +22,16 @@ interface BulkActionBarProps {
  * A DaisyUI-styled action bar that appears when items are selected in a list.
  * Shows the selected count, action buttons, and a clear-selection button.
  */
+
+// Static class lookup map for button variants (Tailwind JIT-safe)
+const VARIANT_CLASSES: Record<string, string> = {
+  error: 'btn btn-sm btn-error',
+  warning: 'btn btn-sm btn-warning',
+  success: 'btn btn-sm btn-success',
+  primary: 'btn btn-sm btn-primary',
+  ghost: 'btn btn-sm btn-ghost',
+};
+
 const BulkActionBar: React.FC<BulkActionBarProps> = ({
   selectedCount,
   onClearSelection,
@@ -30,36 +40,31 @@ const BulkActionBar: React.FC<BulkActionBarProps> = ({
   if (selectedCount === 0) return null;
 
   return (
-    <div className="alert alert-info shadow-md flex flex-wrap items-center gap-2" role="toolbar" aria-label={`Bulk actions: ${selectedCount} ${selectedCount === 1 ? 'item' : 'items'} selected`} aria-live="polite">
-      <div className="flex items-center gap-2 font-semibold">
+    <div className="join join-horizontal w-full shadow" role="toolbar" aria-label={`Bulk actions: ${selectedCount} ${selectedCount === 1 ? 'item' : 'items'} selected`} aria-live="polite">
+      <div className="join-item bg-base-200 px-4 py-2 flex items-center gap-2 font-semibold">
         <Badge variant="primary" size="lg">{selectedCount}</Badge>
         <span>{selectedCount === 1 ? 'item' : 'items'} selected</span>
       </div>
 
-      <div className="flex-1" />
+      <div className="join-item flex-1" />
 
-      <div className="flex flex-wrap items-center gap-2">
-        {actions.map(action => {
-          const btnClass = action.variant
-            ? `btn btn-sm btn-${action.variant}`
-            : 'btn btn-sm btn-ghost';
-          return (
-            <button
-              key={action.key}
-              className={btnClass}
-              onClick={action.onClick}
-              disabled={action.loading}
-              aria-busy={action.loading}
-            >
-              {action.loading ? (
-                <LoadingSpinner size="xs" />
-              ) : (
-                action.icon
-              )}
-              {action.label}
-            </button>
-          );
-        })}
+      <div className="join-item flex flex-wrap items-center gap-2 bg-base-200 px-2 py-1">
+        {actions.map(action => (
+          <button
+            key={action.key}
+            className={VARIANT_CLASSES[action.variant ?? 'ghost'] ?? 'btn btn-sm btn-ghost'}
+            onClick={action.onClick}
+            disabled={action.loading}
+            aria-busy={action.loading}
+          >
+            {action.loading ? (
+              <LoadingSpinner size="xs" />
+            ) : (
+              action.icon
+            )}
+            {action.label}
+          </button>
+        ))}
 
         <button
           className="btn btn-sm btn-ghost"
