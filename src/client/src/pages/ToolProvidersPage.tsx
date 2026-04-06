@@ -200,7 +200,7 @@ const ToolProvidersPage: React.FC = () => {
                         {profile.name}
                         <span className="text-xs font-normal opacity-50 px-2 py-0.5 bg-base-200 rounded-full font-mono">{profile.key}</span>
                       </h3>
-                      <Badge variant="secondary" size="small" style="outline">{profile.provider}</Badge>
+                      <Badge variant="secondary" size="sm" style="outline">{profile.provider}</Badge>
                     </div>
                   </div>
                   <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>

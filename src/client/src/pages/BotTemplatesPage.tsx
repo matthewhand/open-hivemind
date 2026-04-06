@@ -275,7 +275,7 @@ const BotTemplatesPage: React.FC = () => {
 
                 <div className="flex flex-wrap gap-1 mb-4">
                   {template.tags.map((tag) => (
-                    <Badge key={tag} variant="neutral" size="small" style="outline">
+                    <Badge key={tag} variant="neutral" size="sm" style="outline">
                       {tag}
                     </Badge>
                   ))}

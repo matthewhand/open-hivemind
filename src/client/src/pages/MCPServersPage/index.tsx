@@ -324,7 +324,7 @@ const MCPServersPage: React.FC = () => {
                 </div>
                 <Badge
                   variant={liveServer.status === 'running' ? 'success' : liveServer.status === 'error' ? 'error' : 'ghost'}
-                  size="small"
+                  size="sm"
                 >
                   {liveServer.status}
                 </Badge>

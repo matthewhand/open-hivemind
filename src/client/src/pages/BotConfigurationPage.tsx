@@ -70,7 +70,7 @@ const ConfigSectionForm: React.FC<ConfigSectionFormProps> = ({ configName, confi
         <div key={key} className="form-control mb-4">
           <label className="label">
             <span className="label-text font-medium">{key}</span>
-            {isSensitive && <Badge variant="warning" size="small">Sensitive</Badge>}
+            {isSensitive && <Badge variant="warning" size="sm">Sensitive</Badge>}
           </label>
           <Controller
             name={key}
@@ -102,7 +102,7 @@ const ConfigSectionForm: React.FC<ConfigSectionFormProps> = ({ configName, confi
         <div key={key} className="form-control mb-4">
           <label className="label">
             <span className="label-text font-medium">{key}</span>
-            {isSensitive && <Badge variant="warning" size="small">Sensitive</Badge>}
+            {isSensitive && <Badge variant="warning" size="sm">Sensitive</Badge>}
           </label>
           <Select
             className="w-full max-w-xs"
@@ -131,7 +131,7 @@ const ConfigSectionForm: React.FC<ConfigSectionFormProps> = ({ configName, confi
         <div key={key} className="form-control mb-4">
           <label className="label">
             <span className="label-text font-medium">{key}</span>
-            {isSensitive && <Badge variant="warning" size="small">Sensitive</Badge>}
+            {isSensitive && <Badge variant="warning" size="sm">Sensitive</Badge>}
           </label>
           <Input
             type="number"
@@ -157,7 +157,7 @@ const ConfigSectionForm: React.FC<ConfigSectionFormProps> = ({ configName, confi
       <div key={key} className="form-control mb-4">
         <label className="label">
           <span className="label-text font-medium">{key}</span>
-          {isSensitive && <Badge variant="warning" size="small">Sensitive</Badge>}
+          {isSensitive && <Badge variant="warning" size="sm">Sensitive</Badge>}
         </label>
         <Input
           type={isSensitive ? 'password' : 'text'}
@@ -301,7 +301,7 @@ const BotConfigurationPage: React.FC = () => {
       title: (
         <div className="flex items-center gap-3 w-full">
           <span className="capitalize">{name}</span>
-          <Badge variant="ghost" size="small">{Object.keys(values).length} settings</Badge>
+          <Badge variant="ghost" size="sm">{Object.keys(values).length} settings</Badge>
         </div>
       ),
       content: (
@@ -348,7 +348,7 @@ const BotConfigurationPage: React.FC = () => {
               disabled={loading || rollbacks.length === 0}
             >
               <History className="w-4 h-4" />
-              Rollbacks {rollbacks.length > 0 && <Badge variant="primary" size="small">{rollbacks.length}</Badge>}
+              Rollbacks {rollbacks.length > 0 && <Badge variant="primary" size="sm">{rollbacks.length}</Badge>}
             </Button>
             <Button onClick={fetchConfigs} variant="ghost" className="gap-2" disabled={loading} aria-busy={loading}>
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Reload

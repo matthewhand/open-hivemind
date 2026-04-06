@@ -316,7 +316,7 @@ const MemoryProvidersPage: React.FC = () => {
                           <span className="text-xs font-normal opacity-50 px-2 py-0.5 bg-base-200 rounded-full font-mono">{profile.key}</span>
                         </h3>
                         <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="secondary" size="small" style="outline">{profile.provider}</Badge>
+                          <Badge variant="secondary" size="sm" style="outline">{profile.provider}</Badge>
                           {profile.config?.baseUrl && (
                             <span className="flex items-center gap-1 text-xs opacity-60">
                               <UrlIcon className="w-3 h-3" />
@@ -324,7 +324,7 @@ const MemoryProvidersPage: React.FC = () => {
                             </span>
                           )}
                           {health && (
-                            <Badge variant={statusBadgeVariant(health.status)} size="small">
+                            <Badge variant={statusBadgeVariant(health.status)} size="sm">
                               {health.status === 'ok' ? 'Healthy' : health.status === 'error' ? 'Unhealthy' : 'Unknown'}
                             </Badge>
                           )}
@@ -360,9 +360,9 @@ const MemoryProvidersPage: React.FC = () => {
                             <TestIcon className="w-3 h-3" /> Test Results
                           </h4>
                           <div className="flex items-center gap-2 text-xs">
-                            <Badge variant="success" size="small">{testResult.summary.passed} passed</Badge>
-                            {testResult.summary.failed > 0 && <Badge variant="error" size="small">{testResult.summary.failed} failed</Badge>}
-                            {testResult.summary.skipped > 0 && <Badge variant="warning" size="small">{testResult.summary.skipped} skipped</Badge>}
+                            <Badge variant="success" size="sm">{testResult.summary.passed} passed</Badge>
+                            {testResult.summary.failed > 0 && <Badge variant="error" size="sm">{testResult.summary.failed} failed</Badge>}
+                            {testResult.summary.skipped > 0 && <Badge variant="warning" size="sm">{testResult.summary.skipped} skipped</Badge>}
                             <span className="flex items-center gap-1 opacity-60">
                               <TimingIcon className="w-3 h-3" /> {testResult.summary.totalMs}ms
                             </span>
@@ -373,7 +373,7 @@ const MemoryProvidersPage: React.FC = () => {
                             <div key={idx} className="flex items-center gap-3 bg-base-100 p-2 rounded border border-base-200/50">
                               {stepIcon(step.status)}
                               <span className="font-mono text-sm flex-1">{step.step}</span>
-                              <Badge variant={statusBadgeVariant(step.status)} size="small">{step.status}</Badge>
+                              <Badge variant={statusBadgeVariant(step.status)} size="sm">{step.status}</Badge>
                               <span className="text-xs opacity-50 tabular-nums w-16 text-right">{step.ms}ms</span>
                             </div>
                           ))}

@@ -278,7 +278,7 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
             </div>
             <div className="flex items-center gap-2" title={`Current Status: ${statusData?.status || 'unknown'}`}>
               {getStatusIcon(statusData?.status || 'unknown')}
-              <Badge variant={getStatusVariant(statusData?.status || 'unknown')} size="small">
+              <Badge variant={getStatusVariant(statusData?.status || 'unknown')} size="sm">
                 {statusData?.status || 'unknown'}
               </Badge>
             </div>
@@ -286,14 +286,14 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
 
           {/* Provider and LLM Info */}
           <div className="flex flex-wrap gap-2 mb-4">
-            <Badge variant="primary" size="small">
+            <Badge variant="primary" size="sm">
               Provider: {bot.messageProvider}
             </Badge>
-            <Badge variant="secondary" size="small">
+            <Badge variant="secondary" size="sm">
               LLM: {bot.llmProvider}
             </Badge>
             {bot.persona && (
-              <Badge variant="primary" size="small">
+              <Badge variant="primary" size="sm">
                 Persona: {bot.persona}
               </Badge>
             )}

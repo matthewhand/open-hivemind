@@ -274,7 +274,7 @@ const LLMProvidersPage: React.FC = () => {
     const status = libraryStatus[type];
     if (!status?.installed) return status ? (
       <Tooltip content={`Missing: ${status.package}`} position="bottom">
-        <Badge variant="error" size="small" className="gap-1 cursor-help">
+        <Badge variant="error" size="sm" className="gap-1 cursor-help">
           <XIcon className="w-3 h-3" /> Lib Missing
         </Badge>
       </Tooltip>
@@ -437,7 +437,7 @@ const LLMProvidersPage: React.FC = () => {
                         <span className="text-xs font-normal opacity-50 px-2 py-0.5 bg-base-200 rounded-full font-mono">{profile.key}</span>
                       </h3>
                       <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="secondary" size="small" style="outline">{profile.provider}</Badge>
+                        <Badge variant="secondary" size="sm" style="outline">{profile.provider}</Badge>
                         <Badge
                           variant={
                             normalizeModelType(profile.modelType) === 'embedding'
@@ -446,19 +446,19 @@ const LLMProvidersPage: React.FC = () => {
                                 ? 'info'
                                 : 'neutral'
                           }
-                          size="small"
+                          size="sm"
                         >
                           {normalizeModelType(profile.modelType)}
                         </Badge>
                         {renderLibraryCheck(profile.provider)}
                         {profile.key === defaultChatbotProfile && (
-                          <Badge variant="primary" size="small">Default Chatbot</Badge>
+                          <Badge variant="primary" size="sm">Default Chatbot</Badge>
                         )}
                         {profile.key === webuiIntelligenceProvider && (
-                          <Badge variant="warning" size="small">WebUI AI</Badge>
+                          <Badge variant="warning" size="sm">WebUI AI</Badge>
                         )}
                         {profile.key === defaultEmbeddingProvider && (
-                          <Badge variant="secondary" size="small">Default Embedding</Badge>
+                          <Badge variant="secondary" size="sm">Default Embedding</Badge>
                         )}
                       </div>
                     </div>
@@ -584,7 +584,7 @@ const LLMProvidersPage: React.FC = () => {
 
             {/* Type badges */}
             <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary" size="small" style="outline">{drawerProfile.provider}</Badge>
+              <Badge variant="secondary" size="sm" style="outline">{drawerProfile.provider}</Badge>
               <Badge
                 variant={
                   normalizeModelType(drawerProfile.modelType) === 'embedding'
@@ -593,19 +593,19 @@ const LLMProvidersPage: React.FC = () => {
                       ? 'info'
                       : 'neutral'
                 }
-                size="small"
+                size="sm"
               >
                 {normalizeModelType(drawerProfile.modelType)}
               </Badge>
               {renderLibraryCheck(drawerProfile.provider)}
               {drawerProfile.key === defaultChatbotProfile && (
-                <Badge variant="primary" size="small">Default Chatbot</Badge>
+                <Badge variant="primary" size="sm">Default Chatbot</Badge>
               )}
               {drawerProfile.key === webuiIntelligenceProvider && (
-                <Badge variant="warning" size="small">WebUI AI</Badge>
+                <Badge variant="warning" size="sm">WebUI AI</Badge>
               )}
               {drawerProfile.key === defaultEmbeddingProvider && (
-                <Badge variant="secondary" size="small">Default Embedding</Badge>
+                <Badge variant="secondary" size="sm">Default Embedding</Badge>
               )}
             </div>
 

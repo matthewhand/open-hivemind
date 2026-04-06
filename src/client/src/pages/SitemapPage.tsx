@@ -260,13 +260,13 @@ const SitemapPage: React.FC = () => {
                     </p>
 
                     <div className="flex flex-wrap gap-1 mb-2">
-                      <Badge size="small" variant={getAccessColor(url.access)}>
+                      <Badge size="sm" variant={getAccessColor(url.access)}>
                         {url.access}
                       </Badge>
-                      <Badge size="small" style="outline" variant={getPriorityColor(url.priority)}>
+                      <Badge size="sm" style="outline" variant={getPriorityColor(url.priority)}>
                         Priority: {url.priority}
                       </Badge>
-                      <Badge size="small" style="outline">
+                      <Badge size="sm" style="outline">
                         {url.changefreq}
                       </Badge>
                     </div>

@@ -190,7 +190,7 @@ const SettingsIntegrations: React.FC = () => {
               <Card key={integration.id} className="bg-base-200/50 p-4">
                 <div className="flex justify-between items-start mb-2">
                   <h4 className="font-semibold">{integration.name}</h4>
-                  <Badge variant={getStatusVariant(integration.status)} size="small">
+                  <Badge variant={getStatusVariant(integration.status)} size="sm">
                     {getStatusIcon(integration.status)}
                     <span className="ml-1">{integration.status}</span>
                   </Badge>

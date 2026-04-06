@@ -368,7 +368,7 @@ const IntegrationsPanel: React.FC = () => {
                         </div>
                         <div className="min-w-0">
                           <h3 className="font-bold text-sm truncate" title={profile.name}>{profile.name}</h3>
-                          <Badge variant="ghost" size="small" className="gap-1 p-0 text-xs">{profile.provider}</Badge>
+                          <Badge variant="ghost" size="sm" className="gap-1 p-0 text-xs">{profile.provider}</Badge>
                         </div>
                       </div>
                       <div className="flex gap-1">
@@ -501,8 +501,8 @@ const IntegrationsPanel: React.FC = () => {
                       <div className="min-w-0">
                         <h3 className="font-bold text-sm truncate" title={key}>{key}</h3>
                         <div className="flex items-center gap-1 mt-0.5">
-                          {isLocked && <Badge variant="warning" size="small" className="gap-1 p-1"><LockClosedIcon className="w-2.5 h-2.5" /> Env</Badge>}
-                          {isActive && !isLocked && <Badge variant="success" size="small" className="gap-1 p-1">Active</Badge>}
+                          {isLocked && <Badge variant="warning" size="sm" className="gap-1 p-1"><LockClosedIcon className="w-2.5 h-2.5" /> Env</Badge>}
+                          {isActive && !isLocked && <Badge variant="success" size="sm" className="gap-1 p-1">Active</Badge>}
                         </div>
                       </div>
                     </div>

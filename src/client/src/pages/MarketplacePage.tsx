@@ -438,9 +438,9 @@ const MarketplacePage: React.FC = () => {
                     </div>
                     <div className="flex gap-1">
                       {!pkg.trusted && pkg.status !== 'built-in' && (
-                        <Badge variant="warning" size="small">Community</Badge>
+                        <Badge variant="warning" size="sm">Community</Badge>
                       )}
-                      <Badge variant={statusBadge.color} size="small">
+                      <Badge variant={statusBadge.color} size="sm">
                         {statusBadge.label}
                       </Badge>
                     </div>

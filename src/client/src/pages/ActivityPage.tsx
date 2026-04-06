@@ -221,7 +221,7 @@ const ActivityPage: React.FC = () => {
       timeout: 'warning',
       pending: 'primary',
     };
-    return <Badge variant={variants[status] || 'primary'} size="small">{status}</Badge>;
+    return <Badge variant={variants[status] || 'primary'} size="sm">{status}</Badge>;
   };
 
   const columns: RDVColumn<ActivityEvent>[] = [
@@ -251,13 +251,13 @@ const ActivityPage: React.FC = () => {
       key: 'provider',
       title: 'Provider',
       sortable: true,
-      render: (value: string) => <Badge variant="neutral" size="small">{value}</Badge>,
+      render: (value: string) => <Badge variant="neutral" size="sm">{value}</Badge>,
     },
     {
       key: 'llmProvider',
       title: 'LLM',
       sortable: true,
-      render: (value: string) => <Badge variant="primary" size="small" style="outline">{value}</Badge>,
+      render: (value: string) => <Badge variant="primary" size="sm" style="outline">{value}</Badge>,
     },
     {
       key: 'processingTime',
