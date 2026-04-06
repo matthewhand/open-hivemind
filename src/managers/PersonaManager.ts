@@ -7,6 +7,39 @@ import { ErrorUtils } from '../types/errors';
 
 const debug = Debug('app:PersonaManager');
 
+/**
+ * Per-persona response behavior overrides.
+ * Each field is optional — when not set, falls back to the global config value.
+ */
+export interface PersonaResponseBehavior {
+  /** Base probability for unsolicited replies (0-1). Default from MESSAGE_UNSOLICITED_BASE_CHANCE. */
+  baseChance?: number;
+  /** Bonus when persona is mentioned (default 0.5). */
+  mentionBonus?: number;
+  /** Bonus when persona is mentioned at the start (default 1.0). */
+  leadingMentionBonus?: number;
+  /** Penalty for off-topic messages (default -0.1). */
+  offTopicPenalty?: number;
+  /** Penalty when responding to other bots (default -0.1). */
+  botResponsePenalty?: number;
+  /** Per-message penalty during traffic bursts (default -0.1). */
+  burstTrafficPenalty?: number;
+  /** Per-extra-user penalty in dense conversations (default -0.02). */
+  userDensityPenalty?: number;
+  /** Penalty when bot-to-human ratio is high (default -0.30). */
+  botRatioPenalty?: number;
+  /** Only respond when explicitly addressed. Default from MESSAGE_ONLY_WHEN_SPOKEN_TO. */
+  onlyWhenSpokenTo?: boolean;
+  /** Grace window (ms) after last bot message in channel. Default 300000. */
+  graceWindowMs?: number;
+  /** Allow interactive follow-up questions. Default false. */
+  interactiveFollowups?: boolean;
+  /** Allow unsolicited addressed messages. Default false. */
+  unsolicitedAddressed?: boolean;
+  /** Allow unsolicited unaddressed messages. Default false. */
+  unsolicitedUnaddressed?: boolean;
+}
+
 export interface Persona {
   id: string;
   name: string;
@@ -21,6 +54,7 @@ export interface Persona {
     | 'professional';
   traits: { name: string; value: string; weight?: number; type?: string }[];
   systemPrompt: string;
+  responseBehavior?: PersonaResponseBehavior;
   isBuiltIn?: boolean;
   usageCount?: number;
   createdAt: string;
@@ -33,6 +67,7 @@ export interface CreatePersonaRequest {
   category: Persona['category'];
   traits: Persona['traits'];
   systemPrompt: string;
+  responseBehavior?: PersonaResponseBehavior;
 }
 
 export interface UpdatePersonaRequest extends Partial<CreatePersonaRequest> {}
