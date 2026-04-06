@@ -1,6 +1,6 @@
-import { getLlmProvider } from '@src/utils/llmProviderUtils';
-import { getLlmProfileByKey } from '@src/config/llmProfiles';
 import type { SemanticGuardrailConfig } from '@src/config/guardrailProfiles';
+import { getLlmProfileByKey } from '@src/config/llmProfiles';
+import { getLlmProvider } from '@src/utils/llmProviderUtils';
 import { logger } from '@src/utils/logger';
 
 export interface SemanticGuardrailResult {
@@ -74,7 +74,11 @@ export class SemanticGuardrailService {
       const evaluationPrompt = this.buildEvaluationPrompt(config.prompt, request);
 
       // Call LLM with forced boolean response
-      const response = await this.callLlmWithSchema(llmProvider, evaluationPrompt, config.responseSchema);
+      const response = await this.callLlmWithSchema(
+        llmProvider,
+        evaluationPrompt,
+        config.responseSchema
+      );
 
       const processingTime = Date.now() - startTime;
 
@@ -82,7 +86,9 @@ export class SemanticGuardrailService {
       if (typeof response === 'boolean') {
         return {
           allowed: response,
-          reason: response ? 'Content approved by semantic analysis' : 'Content blocked by semantic analysis',
+          reason: response
+            ? 'Content approved by semantic analysis'
+            : 'Content blocked by semantic analysis',
           confidence: 1.0,
           processingTime,
         };
@@ -105,11 +111,13 @@ export class SemanticGuardrailService {
         reason: 'Unable to parse guardrail response',
         processingTime,
       };
-
     } catch (error) {
       const processingTime = Date.now() - startTime;
-      logger.error('Semantic guardrail evaluation failed', { error, config: config.llmProviderKey });
-      
+      logger.error('Semantic guardrail evaluation failed', {
+        error,
+        config: config.llmProviderKey,
+      });
+
       // On error, allow content to prevent blocking legitimate requests
       return {
         allowed: true,
@@ -175,11 +183,15 @@ export class SemanticGuardrailService {
    * Build evaluation prompt with context
    */
   private buildEvaluationPrompt(basePrompt: string, request: SemanticGuardrailRequest): string {
-    const contextInfo = request.context ? [
-      request.context.messageType ? `Message Type: ${request.context.messageType}` : '',
-      request.context.userId ? `User ID: ${request.context.userId}` : '',
-      request.context.channelId ? `Channel ID: ${request.context.channelId}` : '',
-    ].filter(Boolean).join('\n') : '';
+    const contextInfo = request.context
+      ? [
+          request.context.messageType ? `Message Type: ${request.context.messageType}` : '',
+          request.context.userId ? `User ID: ${request.context.userId}` : '',
+          request.context.channelId ? `Channel ID: ${request.context.channelId}` : '',
+        ]
+          .filter(Boolean)
+          .join('\n')
+      : '';
 
     return `${basePrompt}
 
@@ -223,7 +235,7 @@ Respond with only true or false:`;
 
       // Fallback to regular generation with prompt engineering
       const response = await llmProvider.generate(prompt);
-      
+
       // Parse boolean response from text
       const text = response.toLowerCase().trim();
       if (text.includes('true') || text.includes('yes') || text.includes('allow')) {
@@ -236,7 +248,6 @@ Respond with only true or false:`;
       // If unclear, err on the side of caution but allow content
       logger.warn('Ambiguous semantic guardrail response', { response });
       return true;
-
     } catch (error) {
       logger.error('LLM call failed in semantic guardrail', { error });
       throw error;

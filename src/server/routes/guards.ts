@@ -1,4 +1,5 @@
 import Debug from 'debug';
+import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
@@ -9,7 +10,6 @@ import {
   UpdateAccessControlSchema,
 } from '../../validation/schemas/guardsSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import Debug from 'debug';
 
 const router = Router();
 const debug = Debug('app:webui:guards');
@@ -126,15 +126,15 @@ router.post(
       const { content, guardrailType = 'input', guardrailConfig } = req.body;
 
       if (!content || typeof content !== 'string') {
-        return res.status(HTTP_STATUS.BAD_REQUEST).json(
-          ApiResponse.error('Content is required and must be a string')
-        );
+        return res
+          .status(HTTP_STATUS.BAD_REQUEST)
+          .json(ApiResponse.error('Content is required and must be a string'));
       }
 
       if (!guardrailConfig || typeof guardrailConfig !== 'object') {
-        return res.status(HTTP_STATUS.BAD_REQUEST).json(
-          ApiResponse.error('Guardrail configuration is required')
-        );
+        return res
+          .status(HTTP_STATUS.BAD_REQUEST)
+          .json(ApiResponse.error('Guardrail configuration is required'));
       }
 
       const { SemanticGuardrailService } = await import('@src/services/SemanticGuardrailService');
@@ -146,19 +146,21 @@ router.post(
       } else if (guardrailType === 'output') {
         result = await semanticService.evaluateOutput(content, guardrailConfig);
       } else {
-        return res.status(HTTP_STATUS.BAD_REQUEST).json(
-          ApiResponse.error('Guardrail type must be "input" or "output"')
-        );
+        return res
+          .status(HTTP_STATUS.BAD_REQUEST)
+          .json(ApiResponse.error('Guardrail type must be "input" or "output"'));
       }
 
-      return res.json(ApiResponse.success({ 
-        result,
-        testConfig: {
-          content: content.substring(0, 100) + (content.length > 100 ? '...' : ''),
-          guardrailType,
-          guardrailEnabled: guardrailConfig.enabled,
-        }
-      }));
+      return res.json(
+        ApiResponse.success({
+          result,
+          testConfig: {
+            content: content.substring(0, 100) + (content.length > 100 ? '...' : ''),
+            guardrailType,
+            guardrailEnabled: guardrailConfig.enabled,
+          },
+        })
+      );
     } catch (error: unknown) {
       debug('Error testing semantic guardrail:', error);
       return res
