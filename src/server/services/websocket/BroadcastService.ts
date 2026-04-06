@@ -5,6 +5,7 @@ import type { Socket, Server as SocketIOServer } from 'socket.io';
 import { inject, injectable, singleton } from 'tsyringe';
 import { BotConfigurationManager } from '../../../config/BotConfigurationManager';
 import ApiMonitorService, { type EndpointStatus } from '../../../services/ApiMonitorService';
+import DemoModeService from '../../../services/DemoModeService';
 import type { BotConfig } from '../../../types/config';
 import {
   DeliveryStatus,
@@ -49,7 +50,8 @@ export class BroadcastService {
 
   constructor(
     @inject(ConnectionManager) private connectionManager: ConnectionManager,
-    @inject(ApiMonitorService) private apiMonitorService: ApiMonitorService
+    @inject(ApiMonitorService) private apiMonitorService: ApiMonitorService,
+    @inject(DemoModeService) private demoModeService: DemoModeService
   ) {
     this.setupApiMonitoring();
   }
@@ -188,10 +190,16 @@ export class BroadcastService {
   }
 
   public getMessageFlow(limit = 100): MessageFlowEvent[] {
+    if (this.demoModeService.isInDemoMode()) {
+      return this.demoModeService.getSimulatedMessageFlow(limit);
+    }
     return this.messageFlow.slice(-limit);
   }
 
   public getAlerts(limit = 50): AlertEvent[] {
+    if (this.demoModeService.isInDemoMode()) {
+      return this.demoModeService.getSimulatedAlerts(limit);
+    }
     return this.alerts.slice(-limit);
   }
 
@@ -226,6 +234,9 @@ export class BroadcastService {
   }
 
   public getPerformanceMetrics(limit = 60): PerformanceMetric[] {
+    if (this.demoModeService.isInDemoMode()) {
+      return this.demoModeService.getSimulatedPerformanceMetrics(limit);
+    }
     return this.performanceMetrics.slice(-limit);
   }
 
@@ -317,16 +328,29 @@ export class BroadcastService {
     const currentIo = this.io();
     if (!currentIo) return;
 
-    if (this.messageFlow.length > 0) {
+    // Use demo data if in demo mode
+    const messageFlow = this.demoModeService.isInDemoMode() 
+      ? this.demoModeService.getSimulatedMessageFlow(100)
+      : this.messageFlow;
+    
+    const alerts = this.demoModeService.isInDemoMode()
+      ? this.demoModeService.getSimulatedAlerts(50)
+      : this.alerts;
+
+    const performanceMetrics = this.demoModeService.isInDemoMode()
+      ? this.demoModeService.getSimulatedPerformanceMetrics(60)
+      : this.performanceMetrics;
+
+    if (messageFlow.length > 0) {
       currentIo.emit('message_flow_broadcast', {
-        latest: this.messageFlow.slice(-5),
-        total: this.messageFlow.length,
+        latest: messageFlow.slice(-5),
+        total: messageFlow.length,
         timestamp: new Date().toISOString(),
       });
     }
 
-    if (this.alerts.length > 0) {
-      const recentAlerts = this.alerts.filter(
+    if (alerts.length > 0) {
+      const recentAlerts = alerts.filter(
         (alert) => new Date(alert.timestamp) > new Date(Date.now() - 30000)
       );
       if (recentAlerts.length > 0) {
@@ -337,13 +361,18 @@ export class BroadcastService {
       }
     }
 
+    // Use demo performance metrics if available
+    const currentMetric = performanceMetrics.length > 0 
+      ? performanceMetrics[performanceMetrics.length - 1]
+      : {
+          memoryUsage: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+          messageRate: this.messageRateHistory[this.messageRateHistory.length - 1] || 0,
+          errorRate: this.errorRateHistory[this.errorRateHistory.length - 1] || 0,
+          activeConnections: connectedClients,
+        };
+
     currentIo.emit('performance_metrics_broadcast', {
-      current: {
-        memoryUsage: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-        messageRate: this.messageRateHistory[this.messageRateHistory.length - 1] || 0,
-        errorRate: this.errorRateHistory[this.errorRateHistory.length - 1] || 0,
-        activeConnections: connectedClients,
-      },
+      current: currentMetric,
       timestamp: new Date().toISOString(),
     });
 
@@ -366,7 +395,35 @@ export class BroadcastService {
   public sendBotStatus(socket: Socket): void {
     try {
       const manager = BotConfigurationManager.getInstance();
-      const bots = manager.getAllBots();
+      let bots = manager.getAllBots();
+      
+      // Add demo bots if in demo mode
+      if (this.demoModeService.isInDemoMode()) {
+        const demoBots = this.demoModeService.getDemoBots();
+        const demoStatus = demoBots.map((bot) => ({
+          name: bot.name,
+          provider: bot.messageProvider,
+          llmProvider: bot.llmProvider,
+          status: 'demo' as const,
+          lastSeen: new Date().toISOString(),
+          capabilities: {
+            voiceSupport: false,
+            multiChannel: bot.messageProvider === 'slack',
+            hasSecrets: true, // Demo bots always show as configured
+          },
+        }));
+        
+        // If no real bots, use only demo bots
+        if (bots.length === 0) {
+          socket.emit('bot_status_update', {
+            bots: demoStatus,
+            timestamp: new Date().toISOString(),
+            total: demoBots.length,
+            active: demoBots.length,
+          });
+          return;
+        }
+      }
 
       const status = bots.map((bot) => {
         const hasProviderSecret = !!(

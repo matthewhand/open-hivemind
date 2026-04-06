@@ -12,6 +12,7 @@ import { inject, injectable, singleton } from 'tsyringe';
 import { type BotConfigurationManager } from '../config/BotConfigurationManager';
 import { type UserConfigStore } from '../config/UserConfigStore';
 import { TOKENS } from '../di/container';
+import type { MessageFlowEvent, PerformanceMetric, AlertEvent } from '../server/services/websocket/types';
 
 const debug = Debug('app:DemoModeService');
 
@@ -56,6 +57,14 @@ export interface DemoConversation {
   updatedAt: string;
 }
 
+export interface DemoActivitySimulator {
+  isRunning: boolean;
+  messageFlowEvents: MessageFlowEvent[];
+  performanceMetrics: PerformanceMetric[];
+  alertEvents: AlertEvent[];
+  simulationStartTime: number;
+}
+
 /**
  * DemoModeService Singleton
  *
@@ -67,6 +76,15 @@ export class DemoModeService {
   private isDemoMode = false;
   private demoBots: DemoBot[] = [];
   private conversations = new Map<string, DemoConversation>();
+  private activitySimulator: DemoActivitySimulator = {
+    isRunning: false,
+    messageFlowEvents: [],
+    performanceMetrics: [],
+    alertEvents: [],
+    simulationStartTime: 0,
+  };
+  private simulationInterval: NodeJS.Timeout | null = null;
+  private metricsInterval: NodeJS.Timeout | null = null;
 
   constructor(
     @inject(TOKENS.BotConfigurationManager) private botManager: BotConfigurationManager,
@@ -165,7 +183,8 @@ export class DemoModeService {
 
     if (this.isDemoMode) {
       this.createDemoBots();
-      debug('Demo mode initialized with %d demo bots', this.demoBots.length);
+      this.startActivitySimulation();
+      debug('Demo mode initialized with %d demo bots and activity simulation', this.demoBots.length);
     }
   }
 
@@ -184,9 +203,11 @@ export class DemoModeService {
     this.isDemoMode = enabled;
     if (enabled) {
       this.createDemoBots();
+      this.startActivitySimulation();
       debug('Demo mode enabled at runtime with %d demo bots', this.demoBots.length);
     } else {
       this.demoBots = [];
+      this.stopActivitySimulation();
       debug('Demo mode disabled at runtime');
     }
   }
@@ -421,7 +442,276 @@ export class DemoModeService {
    */
   public reset(): void {
     this.conversations.clear();
+    this.stopActivitySimulation();
     debug('Demo mode reset - conversations cleared');
+  }
+
+  /**
+   * Start activity simulation for dashboards
+   */
+  public startActivitySimulation(): void {
+    if (!this.isDemoMode || this.activitySimulator.isRunning) {
+      return;
+    }
+
+    this.activitySimulator.isRunning = true;
+    this.activitySimulator.simulationStartTime = Date.now();
+    debug('Starting demo activity simulation');
+
+    // Simulate message flow events every 2-8 seconds
+    this.simulationInterval = setInterval(() => {
+      this.generateMessageFlowEvent();
+    }, Math.random() * 6000 + 2000);
+
+    // Generate performance metrics every 5 seconds
+    this.metricsInterval = setInterval(() => {
+      this.generatePerformanceMetric();
+      this.maybeGenerateAlert();
+    }, 5000);
+
+    // Generate initial data
+    this.generateInitialSimulationData();
+  }
+
+  /**
+   * Stop activity simulation
+   */
+  public stopActivitySimulation(): void {
+    if (this.simulationInterval) {
+      clearInterval(this.simulationInterval);
+      this.simulationInterval = null;
+    }
+    if (this.metricsInterval) {
+      clearInterval(this.metricsInterval);
+      this.metricsInterval = null;
+    }
+    this.activitySimulator.isRunning = false;
+    debug('Stopped demo activity simulation');
+  }
+
+  /**
+   * Get simulated message flow events
+   */
+  public getSimulatedMessageFlow(limit = 100): MessageFlowEvent[] {
+    return this.activitySimulator.messageFlowEvents.slice(-limit);
+  }
+
+  /**
+   * Get simulated performance metrics
+   */
+  public getSimulatedPerformanceMetrics(limit = 60): PerformanceMetric[] {
+    return this.activitySimulator.performanceMetrics.slice(-limit);
+  }
+
+  /**
+   * Get simulated alerts
+   */
+  public getSimulatedAlerts(limit = 50): AlertEvent[] {
+    return this.activitySimulator.alertEvents.slice(-limit);
+  }
+
+  /**
+   * Generate initial simulation data for more interesting dashboards
+   */
+  private generateInitialSimulationData(): void {
+    const now = Date.now();
+    
+    // Generate historical performance metrics (last 5 minutes)
+    for (let i = 60; i >= 0; i--) {
+      const timestamp = new Date(now - i * 5000).toISOString();
+      this.activitySimulator.performanceMetrics.push(this.createPerformanceMetric(timestamp));
+    }
+
+    // Generate some historical message flow events
+    for (let i = 20; i >= 0; i--) {
+      const timestamp = new Date(now - i * 10000).toISOString();
+      this.activitySimulator.messageFlowEvents.push(this.createMessageFlowEvent(timestamp));
+    }
+
+    // Generate a few sample alerts
+    this.generateSampleAlerts();
+  }
+
+  /**
+   * Generate a realistic message flow event
+   */
+  private generateMessageFlowEvent(): void {
+    const event = this.createMessageFlowEvent();
+    this.activitySimulator.messageFlowEvents.push(event);
+    
+    // Keep only last 100 events
+    if (this.activitySimulator.messageFlowEvents.length > 100) {
+      this.activitySimulator.messageFlowEvents = this.activitySimulator.messageFlowEvents.slice(-100);
+    }
+  }
+
+  /**
+   * Create a message flow event with realistic data
+   */
+  private createMessageFlowEvent(timestamp?: string): MessageFlowEvent {
+    const bot = this.demoBots[Math.floor(Math.random() * this.demoBots.length)];
+    const isIncoming = Math.random() > 0.4; // 60% outgoing, 40% incoming
+    const processingTime = Math.random() * 2000 + 100; // 100-2100ms
+    const hasError = Math.random() < 0.05; // 5% error rate
+    
+    const userNames = ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve', 'Frank', 'Grace', 'Henry'];
+    const messageContents = [
+      'Hello, how can I help you today?',
+      'What are the latest updates?',
+      'Can you explain how this works?',
+      'Thanks for the information!',
+      'I need help with configuration',
+      'What features are available?',
+      'How do I get started?',
+      'This is really helpful!'
+    ];
+
+    return {
+      id: `demo-msg-${Date.now()}-${crypto.randomUUID()}`,
+      timestamp: timestamp || new Date().toISOString(),
+      botName: bot.name,
+      provider: bot.messageProvider,
+      llmProvider: bot.llmProvider,
+      channelId: bot.discord?.channelId || bot.slack?.channelId || 'demo-channel',
+      userId: `user-${Math.floor(Math.random() * 1000)}`,
+      messageType: isIncoming ? 'incoming' : 'outgoing',
+      contentLength: messageContents[Math.floor(Math.random() * messageContents.length)].length,
+      processingTime: isIncoming ? undefined : processingTime,
+      status: hasError ? 'error' : (processingTime > 1500 ? 'timeout' : 'success'),
+      errorMessage: hasError ? 'Simulated processing error' : undefined,
+    };
+  }
+
+  /**
+   * Generate realistic performance metrics
+   */
+  private generatePerformanceMetric(): void {
+    const metric = this.createPerformanceMetric();
+    this.activitySimulator.performanceMetrics.push(metric);
+    
+    // Keep only last 60 metrics (5 minutes at 5-second intervals)
+    if (this.activitySimulator.performanceMetrics.length > 60) {
+      this.activitySimulator.performanceMetrics = this.activitySimulator.performanceMetrics.slice(-60);
+    }
+  }
+
+  /**
+   * Create a performance metric with realistic fluctuations
+   */
+  private createPerformanceMetric(timestamp?: string): PerformanceMetric {
+    const baseTime = this.activitySimulator.simulationStartTime || Date.now();
+    const elapsed = Date.now() - baseTime;
+    const cyclePosition = (elapsed / 60000) % 1; // 1-minute cycle
+    
+    // Create realistic fluctuations
+    const cpuBase = 15 + Math.sin(cyclePosition * Math.PI * 2) * 10; // 5-25% with sine wave
+    const memoryBase = 45 + Math.sin(cyclePosition * Math.PI * 4) * 15; // 30-60% with faster cycle
+    const messageRateBase = 2 + Math.sin(cyclePosition * Math.PI * 6) * 1.5; // 0.5-3.5 msgs/sec
+    
+    return {
+      timestamp: timestamp || new Date().toISOString(),
+      responseTime: Math.random() * 500 + 100, // 100-600ms
+      memoryUsage: Math.max(20, Math.min(80, memoryBase + (Math.random() - 0.5) * 10)),
+      cpuUsage: Math.max(5, Math.min(40, cpuBase + (Math.random() - 0.5) * 8)),
+      activeConnections: Math.floor(Math.random() * 5) + 1, // 1-5 connections
+      messageRate: Math.max(0, messageRateBase + (Math.random() - 0.5) * 1),
+      errorRate: Math.random() * 3, // 0-3% error rate
+    };
+  }
+
+  /**
+   * Maybe generate an alert (10% chance per call)
+   */
+  private maybeGenerateAlert(): void {
+    if (Math.random() < 0.1) { // 10% chance
+      this.generateRandomAlert();
+    }
+  }
+
+  /**
+   * Generate sample alerts for initial data
+   */
+  private generateSampleAlerts(): void {
+    const sampleAlerts = [
+      {
+        level: 'info' as const,
+        title: 'Demo Mode Active',
+        message: 'System is running in demonstration mode with simulated data',
+      },
+      {
+        level: 'warning' as const,
+        title: 'High Memory Usage',
+        message: 'Memory usage has exceeded 70% for the past 2 minutes',
+        botName: 'Demo Discord Bot',
+      },
+      {
+        level: 'error' as const,
+        title: 'Message Processing Error',
+        message: 'Failed to process message due to simulated timeout',
+        botName: 'Demo Slack Bot',
+        channelId: 'C12345678',
+      },
+    ];
+
+    sampleAlerts.forEach((alert, index) => {
+      const timestamp = new Date(Date.now() - (sampleAlerts.length - index) * 30000).toISOString();
+      this.activitySimulator.alertEvents.push({
+        id: `demo-alert-${Date.now()}-${index}`,
+        timestamp,
+        status: index === 0 ? 'acknowledged' : 'active',
+        acknowledgedAt: index === 0 ? timestamp : undefined,
+        metadata: { source: 'demo-simulation' },
+        ...alert,
+      });
+    });
+  }
+
+  /**
+   * Generate a random alert
+   */
+  private generateRandomAlert(): void {
+    const alertTypes = [
+      {
+        level: 'info' as const,
+        title: 'Bot Status Update',
+        message: 'Bot successfully reconnected to message provider',
+      },
+      {
+        level: 'warning' as const,
+        title: 'Rate Limit Approaching',
+        message: 'API rate limit usage is at 80% for the current window',
+      },
+      {
+        level: 'error' as const,
+        title: 'Connection Timeout',
+        message: 'Failed to establish connection within timeout period',
+      },
+      {
+        level: 'warning' as const,
+        title: 'High Response Time',
+        message: 'Average response time has exceeded 2 seconds',
+      },
+    ];
+
+    const alertType = alertTypes[Math.floor(Math.random() * alertTypes.length)];
+    const bot = this.demoBots[Math.floor(Math.random() * this.demoBots.length)];
+    
+    const alert: AlertEvent = {
+      id: `demo-alert-${Date.now()}-${crypto.randomUUID()}`,
+      timestamp: new Date().toISOString(),
+      status: 'active',
+      botName: Math.random() > 0.3 ? bot.name : undefined,
+      channelId: Math.random() > 0.5 ? (bot.discord?.channelId || bot.slack?.channelId) : undefined,
+      metadata: { source: 'demo-simulation' },
+      ...alertType,
+    };
+
+    this.activitySimulator.alertEvents.push(alert);
+    
+    // Keep only last 50 alerts
+    if (this.activitySimulator.alertEvents.length > 50) {
+      this.activitySimulator.alertEvents = this.activitySimulator.alertEvents.slice(-50);
+    }
   }
 }
 
