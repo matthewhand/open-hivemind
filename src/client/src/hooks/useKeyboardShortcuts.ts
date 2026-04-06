@@ -10,6 +10,8 @@ export interface Shortcut {
   description: string;
   /** If true, this shortcut fires even when the user is focused on an input/textarea */
   global?: boolean;
+  /** Category for grouping in the shortcuts help overlay */
+  category?: 'navigation' | 'actions' | 'global';
 }
 
 /**
@@ -71,10 +73,12 @@ export const useDefaultShortcuts = () => {
       global: true,
       action: () => setCommandPaletteOpen(prev => !prev),
       description: 'Open command palette',
+      category: 'global',
     },
     {
       key: 'Escape',
       global: true,
+      category: 'global',
       action: () => {
         if (isCommandPaletteOpen) {
           setCommandPaletteOpen(false);
@@ -107,15 +111,18 @@ export const useDefaultShortcuts = () => {
       ctrlKey: true,
       action: () => navigate('/admin/bots/create'),
       description: 'Create new bot',
+      category: 'actions',
     },
     {
       key: '?',
       shiftKey: true,
       action: () => setShortcutsHelpOpen(prev => !prev),
       description: 'Show keyboard shortcuts',
+      category: 'global',
     },
     {
       key: '/',
+      category: 'actions',
       action: () => {
         const searchInput = document.querySelector(
           'input[type="search"], input[placeholder*="search" i]'
@@ -131,21 +138,37 @@ export const useDefaultShortcuts = () => {
       shiftKey: true,
       action: () => navigate('/admin/settings'),
       description: 'Go to settings',
+      category: 'navigation',
     },
     {
       key: 'h',
       action: () => navigate('/admin/overview'),
       description: 'Go to overview',
+      category: 'navigation',
     },
     {
       key: 'b',
       action: () => navigate('/admin/bots'),
       description: 'Go to bots',
+      category: 'navigation',
     },
     {
       key: 'm',
       action: () => navigate('/admin/monitoring'),
       description: 'Go to monitoring',
+      category: 'navigation',
+    },
+    {
+      key: 'p',
+      action: () => navigate('/admin/personas'),
+      description: 'Go to personas',
+      category: 'navigation',
+    },
+    {
+      key: 'l',
+      action: () => navigate('/admin/providers/llm'),
+      description: 'Go to LLM providers',
+      category: 'navigation',
     },
   ];
 

@@ -4,6 +4,7 @@ import Button from './DaisyUI/Button';
 import Modal from './DaisyUI/Modal';
 import Input from './DaisyUI/Input';
 import Toggle from './DaisyUI/Toggle';
+import Kbd from './DaisyUI/Kbd';
 import { Loading, LoadingSpinner } from './DaisyUI/Loading';
 import {
   ArrowPathIcon,
@@ -14,6 +15,7 @@ import {
   ExclamationCircleIcon,
   InformationCircleIcon,
 } from '@heroicons/react/24/outline';
+import { Keyboard } from 'lucide-react';
 import { apiService } from '../services/api';
 
 interface QuickActionsProps {
@@ -215,6 +217,18 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
               <BeakerIcon className="w-5 h-5" />
             )}
             {demoMode ? 'Demo Mode ON' : 'Demo Mode'}
+          </Button>
+
+          <Button
+            variant="ghost"
+            onClick={() => {
+              // Trigger the keyboard shortcuts overlay via the same shortcut
+              document.dispatchEvent(new KeyboardEvent('keydown', { key: '?', shiftKey: true, bubbles: true }));
+            }}
+            className="flex items-center gap-2"
+          >
+            <Keyboard className="w-5 h-5" />
+            Shortcuts <Kbd size="xs">?</Kbd>
           </Button>
         </div>
       </Card>
