@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, Copy, Shield, Info, ChevronDown } from 'lucide-react';
+import { Shield, Info } from 'lucide-react';
 import PersonaAvatar, { type AvatarStyle } from '../PersonaAvatar';
 import AvatarPicker from './AvatarPicker';
 import Modal from '../DaisyUI/Modal';
