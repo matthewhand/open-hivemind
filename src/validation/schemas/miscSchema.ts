@@ -36,7 +36,7 @@ export const ImportConfigSchema = z.object({
 export const ExportConfigSchema = z.object({
   body: z
     .object({
-      configIds: z.array(z.string()).optional(),
+      configIds: z.array(z.union([z.string(), z.number()])).optional(),
       fileName: z.string().optional(),
       format: z.string().optional(),
     })
