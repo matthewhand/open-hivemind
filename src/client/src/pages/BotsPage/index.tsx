@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Download, LayoutGrid, List, RefreshCw, Trash2 } from 'lucide-react';
+import { Download, LayoutGrid, List, RefreshCw, Trash2, Upload as UploadIcon } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { CreateBotWizard } from '../../components/BotManagement/CreateBotWizard';
 import ImportBotsModal from '../../components/BotManagement/ImportBotsModal';
 import { BotSettingsModal } from '../../components/BotSettingsModal';
@@ -160,11 +160,7 @@ const BotsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <BotsPageHeader
-        onExportAll={handleExportAll}
-        onImportClick={() => setIsImportModalOpen(true)}
         onCreateClick={() => setIsCreateModalOpen(true)}
-        onQuickAddMessage={() => navigate('/admin/providers/message')}
-        onQuickAddLLM={() => navigate('/admin/providers/llm')}
       />
 
       {/* Bot List — full width, no sidebar column */}
@@ -242,8 +238,22 @@ const BotsPage: React.FC = () => {
               onClearSelection={bulk.clearSelection}
               actions={[
                 {
+                  key: 'export-all',
+                  label: 'Export All',
+                  icon: <Download className="w-4 h-4" />,
+                  variant: 'ghost',
+                  onClick: handleExportAll,
+                },
+                {
+                  key: 'import',
+                  label: 'Import',
+                  icon: <UploadIcon className="w-4 h-4" />,
+                  variant: 'ghost',
+                  onClick: () => setIsImportModalOpen(true),
+                },
+                {
                   key: 'export',
-                  label: 'Export',
+                  label: 'Export Selected',
                   icon: <Download className="w-4 h-4" />,
                   variant: 'primary',
                   onClick: handleBulkExport,

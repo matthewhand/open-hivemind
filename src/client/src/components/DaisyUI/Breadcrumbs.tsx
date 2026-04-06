@@ -47,7 +47,6 @@ const ROUTE_LABELS: Record<string, string> = {
   'api-docs': 'API Docs',
   dashboard: 'Dashboard',
   onboarding: 'Onboarding',
-  enterprise: 'Enterprise',
 };
 
 /**
