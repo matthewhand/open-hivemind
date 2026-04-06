@@ -9,6 +9,7 @@ import RadialProgress from './DaisyUI/RadialProgress';
 import { SkeletonCard } from './DaisyUI/Skeleton';
 import { Stat, Stats } from './DaisyUI/Stat';
 import DashboardBotCard from './DashboardBotCard';
+import AnnouncementBanner from './AnnouncementBanner';
 import QuickActions from './QuickActions';
 import LLMUsageChart from './Dashboard/LLMUsageChart';
 import MessageVolumeChart from './Dashboard/MessageVolumeChart';
@@ -243,6 +244,9 @@ const Dashboard: React.FC = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Announcement Banner */}
+        <AnnouncementBanner />
+
         {/* Quick Actions */}
         <div className="mb-8">
           <QuickActions onRefresh={fetchData} />

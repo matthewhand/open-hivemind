@@ -189,6 +189,7 @@ test-results/
 *.md
 # Keep important documentation files tracked
 !README.md
+!ANNOUNCEMENT.md
 !docs/**
 !docs/README.md
 !docs/ARCHITECTURE.md

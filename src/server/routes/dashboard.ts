@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { Router } from 'express';
 import { DatabaseManager } from '@src/database/DatabaseManager';
 import WebSocketService, { type MessageFlowEvent } from '@src/server/services/WebSocketService';
@@ -324,6 +326,27 @@ function isProviderConnected(bot: any): boolean {
     return true; // safe fallback
   }
 }
+
+/**
+ * GET /api/dashboard/announcement
+ * Returns the contents of ANNOUNCEMENT.md from the repo root (if it exists).
+ * No auth required — the announcement is public.
+ */
+router.get('/announcement', (req, res) => {
+  try {
+    const announcementPath = path.join(process.cwd(), 'ANNOUNCEMENT.md');
+    if (!fs.existsSync(announcementPath)) {
+      return res.json(ApiResponse.success({ hasAnnouncement: false, content: null }));
+    }
+    const content = fs.readFileSync(announcementPath, 'utf8').trim();
+    if (!content) {
+      return res.json(ApiResponse.success({ hasAnnouncement: false, content: null }));
+    }
+    return res.json(ApiResponse.success({ hasAnnouncement: true, content }));
+  } catch {
+    return res.json(ApiResponse.success({ hasAnnouncement: false, content: null }));
+  }
+});
 
 router.get('/status', authenticate, requireAdmin, (req, res) => {
   try {
