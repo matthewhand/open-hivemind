@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { apiService } from '../../../services/api';
 import { type ApiPersona, type Bot, type Persona } from './usePersonasData';
+import type { PersonaResponseBehavior } from '../../../types/bot';
 
 export const usePersonaActions = (
   personas: Persona[],
@@ -26,6 +27,7 @@ export const usePersonaActions = (
   const [personaPrompt, setPersonaPrompt] = useState('');
   const [selectedBotIds, setSelectedBotIds] = useState<string[]>([]);
   const [personaCategory, setPersonaCategory] = useState<ApiPersona['category']>('general');
+  const [responseBehavior, setResponseBehavior] = useState<PersonaResponseBehavior>({});
 
   const handlePersonaReorder = useCallback(
     async (reordered: Persona[]) => {
@@ -87,12 +89,16 @@ export const usePersonaActions = (
     try {
       let savedPersona: ApiPersona;
 
+      // Only include responseBehavior if there are actual overrides
+      const rbPayload = Object.keys(responseBehavior).length > 0 ? responseBehavior : undefined;
+
       const personaData = {
         name: personaName,
         description: personaDescription || 'Custom Persona',
         category: personaCategory,
         systemPrompt: personaPrompt,
         traits: [],
+        ...(rbPayload && { responseBehavior: rbPayload }),
       };
 
       if (cloningPersonaId) {
@@ -101,6 +107,7 @@ export const usePersonaActions = (
           description: personaDescription,
           category: personaCategory as any,
           systemPrompt: personaPrompt,
+          ...(rbPayload && { responseBehavior: rbPayload }),
         });
       } else if (editingPersona) {
         savedPersona = await apiService.updatePersona(editingPersona.id as any, personaData as any);
@@ -166,6 +173,7 @@ export const usePersonaActions = (
     setPersonaCategory('general');
     setPersonaPrompt('You are a helpful assistant.');
     setSelectedBotIds([]);
+    setResponseBehavior({});
     setEditingPersona(null);
     setCloningPersonaId(null);
     setIsViewMode(false);
@@ -178,6 +186,7 @@ export const usePersonaActions = (
     setPersonaCategory(persona.category as any);
     setPersonaPrompt(persona.systemPrompt);
     setSelectedBotIds([]);
+    setResponseBehavior(persona.responseBehavior ?? {});
     setEditingPersona(null);
     setCloningPersonaId(persona.id);
     setIsViewMode(false);
@@ -194,6 +203,7 @@ export const usePersonaActions = (
     setPersonaCategory(persona.category as any);
     setPersonaPrompt(persona.systemPrompt);
     setSelectedBotIds(persona.assignedBotIds || []);
+    setResponseBehavior(persona.responseBehavior ?? {});
     setEditingPersona(persona);
     setCloningPersonaId(null);
     setIsViewMode(false);
@@ -206,6 +216,7 @@ export const usePersonaActions = (
     setPersonaCategory(persona.category as any);
     setPersonaPrompt(persona.systemPrompt);
     setSelectedBotIds(persona.assignedBotIds || []);
+    setResponseBehavior(persona.responseBehavior ?? {});
     setEditingPersona(persona);
     setIsViewMode(true);
     setShowEditModal(true);
@@ -256,6 +267,7 @@ export const usePersonaActions = (
     setPersonaDescription('');
     setPersonaPrompt('');
     setSelectedBotIds([]);
+    setResponseBehavior({});
   }, [setShowCreateModal, setShowEditModal, setShowDeleteModal,
       setPersonaName, setPersonaDescription, setPersonaPrompt,
       setSelectedBotIds]);
@@ -294,5 +306,7 @@ export const usePersonaActions = (
     personaCategory,
     setPersonaCategory,
     setIsViewMode,
+    responseBehavior,
+    setResponseBehavior,
   };
 };

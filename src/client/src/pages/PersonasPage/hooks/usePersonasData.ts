@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiService } from '../../../services/api';
 import useUrlParams from '../../../hooks/useUrlParams';
+import type { PersonaResponseBehavior } from '../../../types/bot';
 
 export interface Bot {
   id: string;
@@ -18,6 +19,7 @@ export interface ApiPersona {
   isBuiltIn: boolean;
   category: string;
   avatarId?: string;
+  responseBehavior?: PersonaResponseBehavior;
 }
 
 export interface Persona extends ApiPersona {

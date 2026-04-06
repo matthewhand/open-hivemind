@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, Copy, Shield, Info } from 'lucide-react';
 import Modal from '../DaisyUI/Modal';
 import Button from '../DaisyUI/Button';
@@ -6,8 +6,14 @@ import Input from '../DaisyUI/Input';
 import Validator, { ValidatorHint } from '../DaisyUI/Validator';
 import { Persona } from './usePersonasLogic';
 import type { Bot } from '../../services/api';
+import type { PersonaResponseBehavior } from '../../types/bot';
 import Checkbox from '../DaisyUI/Checkbox';
 import { Alert } from '../DaisyUI/Alert';
+import { apiService } from '../../services/api';
+import ResponseBehaviorSection, {
+  FALLBACK_DEFAULTS,
+  type GlobalResponseDefaults,
+} from './ResponseBehaviorSection';
 
 interface PersonaModalProps {
   isOpen: boolean;
@@ -28,6 +34,8 @@ interface PersonaModalProps {
   bots: Bot[];
   loading: boolean;
   onSave: () => void;
+  responseBehavior?: PersonaResponseBehavior;
+  onResponseBehaviorChange?: (rb: PersonaResponseBehavior) => void;
 }
 
 const categoryOptions = [
@@ -65,10 +73,39 @@ export const PersonaModal: React.FC<PersonaModalProps> = ({
   bots,
   loading,
   onSave,
+  responseBehavior = {},
+  onResponseBehaviorChange,
 }) => {
   const isEnvLocked = useMemo(() => {
     return editingPersona?.isEnvLocked;
   }, [editingPersona]);
+
+  // Fetch global defaults for showing "Global Default: X" labels
+  const [globalDefaults, setGlobalDefaults] = useState<GlobalResponseDefaults>(FALLBACK_DEFAULTS);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    apiService.getGlobalConfig().then((data: any) => {
+      if (cancelled) return;
+      setGlobalDefaults({
+        onlyWhenSpokenTo: data.MESSAGE_ONLY_WHEN_SPOKEN_TO ?? FALLBACK_DEFAULTS.onlyWhenSpokenTo,
+        interactiveFollowups: data.MESSAGE_INTERACTIVE_FOLLOWUPS ?? FALLBACK_DEFAULTS.interactiveFollowups,
+        unsolicitedAddressed: data.MESSAGE_UNSOLICITED_ADDRESSED ?? FALLBACK_DEFAULTS.unsolicitedAddressed,
+        unsolicitedUnaddressed: data.MESSAGE_UNSOLICITED_UNADDRESSED ?? FALLBACK_DEFAULTS.unsolicitedUnaddressed,
+        baseChance: data.MESSAGE_UNSOLICITED_BASE_CHANCE ?? FALLBACK_DEFAULTS.baseChance,
+        mentionBonus: data.MESSAGE_MENTION_BONUS ?? FALLBACK_DEFAULTS.mentionBonus,
+        leadingMentionBonus: data.MESSAGE_LEADING_MENTION_BONUS ?? FALLBACK_DEFAULTS.leadingMentionBonus,
+        offTopicPenalty: data.MESSAGE_OFF_TOPIC_PENALTY ?? FALLBACK_DEFAULTS.offTopicPenalty,
+        botResponsePenalty: data.MESSAGE_BOT_RESPONSE_PENALTY ?? FALLBACK_DEFAULTS.botResponsePenalty,
+        burstTrafficPenalty: data.MESSAGE_BURST_TRAFFIC_PENALTY ?? FALLBACK_DEFAULTS.burstTrafficPenalty,
+        graceWindowMs: data.MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS ?? FALLBACK_DEFAULTS.graceWindowMs,
+      });
+    }).catch(() => {
+      // keep fallback defaults
+    });
+    return () => { cancelled = true; };
+  }, [isOpen]);
 
   return (
     <Modal
@@ -225,6 +262,16 @@ export const PersonaModal: React.FC<PersonaModalProps> = ({
             )}
           </div>
         </div>
+
+        {/* Response Behavior overrides */}
+        {onResponseBehaviorChange && (
+          <ResponseBehaviorSection
+            value={responseBehavior}
+            onChange={onResponseBehaviorChange}
+            globalDefaults={globalDefaults}
+            disabled={!!isEnvLocked || isViewMode}
+          />
+        )}
       </div>
 
     </Modal>
