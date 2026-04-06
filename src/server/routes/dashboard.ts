@@ -332,13 +332,16 @@ function isProviderConnected(bot: any): boolean {
  * Returns the contents of ANNOUNCEMENT.md from the repo root (if it exists).
  * No auth required — the announcement is public.
  */
-router.get('/announcement', (req, res) => {
+router.get('/announcement', async (req, res): Promise<any> => {
   try {
     const announcementPath = path.join(process.cwd(), 'ANNOUNCEMENT.md');
-    if (!fs.existsSync(announcementPath)) {
+    // ⚡ Bolt Optimization: Replaced synchronous fs.existsSync and fs.readFileSync with async alternatives to prevent event loop blocking.
+    try {
+      await fs.promises.access(announcementPath);
+    } catch {
       return res.json(ApiResponse.success({ hasAnnouncement: false, content: null }));
     }
-    const content = fs.readFileSync(announcementPath, 'utf8').trim();
+    const content = (await fs.promises.readFile(announcementPath, 'utf8')).trim();
     if (!content) {
       return res.json(ApiResponse.success({ hasAnnouncement: false, content: null }));
     }
@@ -348,7 +351,7 @@ router.get('/announcement', (req, res) => {
   }
 });
 
-router.get('/status', authenticate, requireAdmin, (req, res) => {
+router.get('/status', authenticate, requireAdmin, (req, res): any => {
   try {
     const manager = BotConfigurationManager.getInstance();
     let bots = [];

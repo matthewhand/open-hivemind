@@ -405,7 +405,7 @@ app.all('*', (req: Request, res: Response) => {
       .json({ error: 'Endpoint not found', path: req.path, method: req.method });
   }
   httpLogger.debug('No matching route for request', { path: req.path });
-  res.status(404).json({ error: 'Endpoint not found' });
+  return res.status(404).json({ error: 'Endpoint not found' });
 });
 
 async function startBot(messengerService: any) {
