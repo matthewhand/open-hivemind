@@ -2,13 +2,13 @@ import Debug from 'debug';
 import { AuditLogger } from '@src/common/auditLogger';
 import { ErrorHandler } from '@src/common/errors/ErrorHandler';
 import { PerformanceMonitor } from '@src/common/errors/PerformanceMonitor';
+import { getGuardrailProfileByKey } from '@src/config/guardrailProfiles';
 import { getLlmProviderForBot } from '@src/llm/getLlmProvider';
 import { getQuotaManager } from '@src/middleware/quotaMiddleware';
 import { SyncProviderRegistry } from '@src/registries/SyncProviderRegistry';
 import { ContentFilterService } from '@src/services/ContentFilterService';
-import { SemanticGuardrailService } from '@src/services/SemanticGuardrailService';
-import { getGuardrailProfileByKey } from '@src/config/guardrailProfiles';
 import { MemoryManager } from '@src/services/MemoryManager';
+import { SemanticGuardrailService } from '@src/services/SemanticGuardrailService';
 import { toolAugmentedCompletion } from '@src/services/toolAugmentedCompletion';
 import type { ContentFilterConfig } from '@src/types/config';
 import { InputSanitizer } from '@src/utils/InputSanitizer';
@@ -322,10 +322,10 @@ export async function handleMessage(
                 return null;
               }
 
-              pipelineMetrics.endStage('semantic_input_guard', { 
-                blocked: false, 
+              pipelineMetrics.endStage('semantic_input_guard', {
+                blocked: false,
                 confidence: semanticResult.confidence,
-                processingTime: semanticResult.processingTime 
+                processingTime: semanticResult.processingTime,
               });
             } catch (semanticErr) {
               logger('Semantic input guardrail failed (non-fatal):', semanticErr);
@@ -681,7 +681,9 @@ export async function handleMessage(
               );
 
               if (!semanticResult.allowed) {
-                logger(`Bot response blocked by semantic output guardrail: ${semanticResult.reason}`);
+                logger(
+                  `Bot response blocked by semantic output guardrail: ${semanticResult.reason}`
+                );
                 AuditLogger.getInstance().logBotAction(
                   userId,
                   'UPDATE',
@@ -706,10 +708,10 @@ export async function handleMessage(
                 return null;
               }
 
-              pipelineMetrics.endStage('semantic_output_guard', { 
-                blocked: false, 
+              pipelineMetrics.endStage('semantic_output_guard', {
+                blocked: false,
                 confidence: semanticResult.confidence,
-                processingTime: semanticResult.processingTime 
+                processingTime: semanticResult.processingTime,
               });
             } catch (semanticErr) {
               logger('Semantic output guardrail failed (non-fatal):', semanticErr);

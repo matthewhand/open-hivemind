@@ -394,7 +394,9 @@ app.all('*', (req: Request, res: Response) => {
   // Skip API routes — these should have been matched by earlier routers
   if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
     httpLogger.debug('Unmatched API route', { path: req.path, method: req.method });
-    return res.status(404).json({ error: 'Endpoint not found', path: req.path, method: req.method });
+    return res
+      .status(404)
+      .json({ error: 'Endpoint not found', path: req.path, method: req.method });
   }
   httpLogger.debug('No matching route for request', { path: req.path });
   res.status(404).json({ error: 'Endpoint not found' });

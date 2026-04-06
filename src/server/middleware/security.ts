@@ -676,7 +676,10 @@ export function isTrustedAdminIP(req: Request): boolean {
   const clientIP = getClientIP(req);
   const whitelistEnv = process.env.ADMIN_IP_WHITELIST;
   const whitelist = whitelistEnv
-    ? whitelistEnv.split(',').map((ip) => ip.trim()).filter(Boolean)
+    ? whitelistEnv
+        .split(',')
+        .map((ip) => ip.trim())
+        .filter(Boolean)
     : ['127.0.0.1', '::1', '::ffff:127.0.0.1'];
   return whitelist.some((allowed) => {
     if (allowed.includes('/')) {
