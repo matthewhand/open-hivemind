@@ -211,7 +211,7 @@ const Settings: React.FC = () => {
     {
       id: 'aesthetics',
       title: 'Aesthetics',
-      icon: '✨',
+      icon: '🖼️',
       content: (
         <div>
           <div className="form-control">
