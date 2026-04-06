@@ -46,6 +46,35 @@ router.get(
 );
 
 /**
+ * POST /api/demo/toggle
+ * Toggle demo mode on or off at runtime
+ */
+router.post(
+  '/toggle',
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const demoService = container.resolve(DemoModeService);
+      const wasEnabled = demoService.isInDemoMode();
+      demoService.setDemoMode(!wasEnabled);
+      const isNowEnabled = demoService.isInDemoMode();
+
+      res.json(
+        ApiResponse.success({
+          enabled: isNowEnabled,
+          message: isNowEnabled ? 'Demo mode enabled' : 'Demo mode disabled',
+        })
+      );
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
+      res
+        .status(statusCode)
+        .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DEMO_TOGGLE_ERROR'));
+    }
+  })
+);
+
+/**
  * GET /api/demo/bots
  * Get demo bots
  */

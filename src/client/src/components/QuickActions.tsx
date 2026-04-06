@@ -9,6 +9,7 @@ import {
   ArrowPathIcon,
   XMarkIcon,
   ArrowDownTrayIcon,
+  BeakerIcon,
   CheckCircleIcon,
   ExclamationCircleIcon,
   InformationCircleIcon,
@@ -32,6 +33,14 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
   });
   const [exportDialog, setExportDialog] = useState(false);
   const [exportFilename, setExportFilename] = useState('config-export');
+  const [demoMode, setDemoMode] = useState(false);
+
+  // Check demo mode status on mount
+  React.useEffect(() => {
+    apiService.get('/api/demo/status')
+      .then((data: any) => setDemoMode(data?.data?.active === true || data?.data?.isDemoMode === true))
+      .catch(() => {});
+  }, []);
 
   const showToast = (message: string, type: 'success' | 'error' | 'info') => {
     setToast({ show: true, message, type });
@@ -110,6 +119,24 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
     }
   };
 
+  const handleToggleDemoMode = async () => {
+    setLoading('demo');
+    try {
+      const response: any = await apiService.post('/api/demo/toggle', {});
+      const enabled = response?.data?.enabled;
+      setDemoMode(enabled);
+      showToast(enabled ? 'Demo mode enabled — fake data is now active' : 'Demo mode disabled', 'success');
+      if (onRefresh) onRefresh();
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : 'Failed to toggle demo mode',
+        'error',
+      );
+    } finally {
+      setLoading(null);
+    }
+  };
+
   const isLoading = (action: string) => loading === action;
 
   const getToastIcon = () => {
@@ -172,6 +199,20 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
               <ArrowDownTrayIcon className="w-5 h-5" />
             )}
             Export Config
+          </Button>
+
+          <Button
+            variant={demoMode ? 'warning' : 'ghost'}
+            onClick={handleToggleDemoMode}
+            disabled={isLoading('demo')}
+            className="flex items-center gap-2"
+          >
+            {isLoading('demo') ? (
+              <LoadingSpinner size="sm" />
+            ) : (
+              <BeakerIcon className="w-5 h-5" />
+            )}
+            {demoMode ? 'Demo Mode ON' : 'Demo Mode'}
           </Button>
         </div>
       </Card>

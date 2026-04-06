@@ -177,6 +177,21 @@ export class DemoModeService {
   }
 
   /**
+   * Toggle demo mode on or off at runtime (without restarting).
+   * When enabling, creates demo bots. When disabling, clears them.
+   */
+  public setDemoMode(enabled: boolean): void {
+    this.isDemoMode = enabled;
+    if (enabled) {
+      this.createDemoBots();
+      debug('Demo mode enabled at runtime with %d demo bots', this.demoBots.length);
+    } else {
+      this.demoBots = [];
+      debug('Demo mode disabled at runtime');
+    }
+  }
+
+  /**
    * Get demo bots
    */
   public getDemoBots(): DemoBot[] {
