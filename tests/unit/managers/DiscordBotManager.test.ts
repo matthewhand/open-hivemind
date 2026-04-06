@@ -43,6 +43,17 @@ function injectBot(manager: DiscordBotManager, name: string, wsStatus = 0): Bot 
 }
 
 describe('DiscordBotManager Map-based lookups', () => {
+  const savedToken = process.env.DISCORD_BOT_TOKEN;
+
+  beforeEach(() => {
+    delete process.env.DISCORD_BOT_TOKEN;
+  });
+
+  afterAll(() => {
+    if (savedToken !== undefined) {
+      process.env.DISCORD_BOT_TOKEN = savedToken;
+    }
+  });
   describe('getBotByName', () => {
     it('returns the bot when found', () => {
       const mgr = makeManager();

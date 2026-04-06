@@ -1,22 +1,23 @@
+/** @jest-environment jsdom */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { act, renderHook } from '@testing-library/react';
-import { useToolExecution } from '../../../../../src/client/src/pages/MCPToolsPage/hooks/useToolExecution';
-import { useToolHistory } from '../../../../../src/client/src/pages/MCPToolsPage/hooks/useToolHistory';
-import { useToolRegistry } from '../../../../../src/client/src/pages/MCPToolsPage/hooks/useToolRegistry';
-import { apiService } from '../../../../../src/client/src/services/api';
+import { useToolExecution } from '../../../src/client/src/pages/MCPToolsPage/hooks/useToolExecution';
+import { useToolHistory } from '../../../src/client/src/pages/MCPToolsPage/hooks/useToolHistory';
+import { useToolRegistry } from '../../../src/client/src/pages/MCPToolsPage/hooks/useToolRegistry';
+import { apiService } from '../../../src/client/src/services/api';
 
-jest.mock('../../../../../src/client/src/services/api', () => ({
+jest.mock('../../../src/client/src/services/api', () => ({
   apiService: {
     get: jest.fn(),
     post: jest.fn(),
   },
 }));
 
-jest.mock('../../../../../src/client/src/hooks/useLocalStorage', () => ({
+jest.mock('../../../src/client/src/hooks/useLocalStorage', () => ({
   useLocalStorage: jest.fn((key: string, initial: any) => [initial, jest.fn()]),
 }));
 
-jest.mock('../../../../../src/client/src/hooks/useUrlParams', () => ({
+jest.mock('../../../src/client/src/hooks/useUrlParams', () => ({
   __esModule: true,
   default: jest.fn(() => ({
     values: { search: '', category: 'all', server: 'all', view: 'all', sortBy: 'name' },
@@ -151,7 +152,7 @@ describe('useToolRegistry', () => {
   it('handleToggleFavorite adds and removes favorites', () => {
     (apiService.get as jest.Mock).mockResolvedValue({ servers: [] });
     const setFavoritesMock = jest.fn();
-    const { useLocalStorage } = require('../../../../../src/client/src/hooks/useLocalStorage');
+    const { useLocalStorage } = require('../../../src/client/src/hooks/useLocalStorage');
     useLocalStorage.mockImplementation((key: string, initial: any) => {
       if (key === 'mcp-tools-favorites') return [[], setFavoritesMock];
       return [initial, jest.fn()];

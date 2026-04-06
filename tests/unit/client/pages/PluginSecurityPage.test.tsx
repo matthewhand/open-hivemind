@@ -1,10 +1,15 @@
+/** @jest-environment jsdom */
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { BrowserRouter } from 'react-router-dom';
 import PluginSecurityPage from '../../../../src/client/src/pages/PluginSecurityPage';
 
-// Mock fetch
+// Mock fetch (authFetch delegates to global fetch internally)
 global.fetch = jest.fn();
+
+const renderWithRouter = (ui: React.ReactElement) =>
+  render(<BrowserRouter>{ui}</BrowserRouter>);
 
 describe('PluginSecurityPage', () => {
   const mockPlugins = [
@@ -46,7 +51,7 @@ describe('PluginSecurityPage', () => {
   });
 
   it('should render the page title and description', async () => {
-    render(<PluginSecurityPage />);
+    renderWithRouter(<PluginSecurityPage />);
 
     expect(screen.getByText('Plugin Security Dashboard')).toBeInTheDocument();
     expect(
@@ -55,7 +60,7 @@ describe('PluginSecurityPage', () => {
   });
 
   it('should fetch and display plugin security status', async () => {
-    render(<PluginSecurityPage />);
+    renderWithRouter(<PluginSecurityPage />);
 
     await waitFor(() => {
       expect(screen.getByText('llm-openai')).toBeInTheDocument();
@@ -63,28 +68,32 @@ describe('PluginSecurityPage', () => {
       expect(screen.getByText('untrusted-plugin')).toBeInTheDocument();
     });
 
-    expect(global.fetch).toHaveBeenCalledWith('/api/admin/plugins/security');
+    expect(global.fetch).toHaveBeenCalledWith('/api/admin/plugins/security', expect.any(Object));
   });
 
   it('should display statistics correctly', async () => {
-    render(<PluginSecurityPage />);
+    renderWithRouter(<PluginSecurityPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('3')).toBeInTheDocument(); // Total
-      expect(screen.getByText('2')).toBeInTheDocument(); // Trusted
-      expect(screen.getByText('1')).toBeInTheDocument(); // Untrusted or Built-in or Failed
+      // Stats cards show numeric counts; some numbers appear in multiple stat cards
+      const threes = screen.getAllByText('3');
+      expect(threes.length).toBeGreaterThanOrEqual(1); // Total
+      const twos = screen.getAllByText('2');
+      expect(twos.length).toBeGreaterThanOrEqual(1); // Trusted
+      const ones = screen.getAllByText('1');
+      expect(ones.length).toBeGreaterThanOrEqual(1); // Untrusted/Built-in/Failed
     });
   });
 
   it('should filter plugins by trust level', async () => {
-    render(<PluginSecurityPage />);
+    renderWithRouter(<PluginSecurityPage />);
 
     await waitFor(() => {
       expect(screen.getByText('llm-openai')).toBeInTheDocument();
     });
 
     // Click on "Trusted" filter
-    const trustedTab = screen.getByRole('button', { name: /Trusted/i });
+    const trustedTab = screen.getByRole('tab', { name: /^Trusted$/i });
     fireEvent.click(trustedTab);
 
     await waitFor(() => {
@@ -95,14 +104,14 @@ describe('PluginSecurityPage', () => {
   });
 
   it('should filter plugins by untrusted status', async () => {
-    render(<PluginSecurityPage />);
+    renderWithRouter(<PluginSecurityPage />);
 
     await waitFor(() => {
       expect(screen.getByText('untrusted-plugin')).toBeInTheDocument();
     });
 
     // Click on "Untrusted" filter
-    const untrustedTab = screen.getByRole('button', { name: /^Untrusted$/i });
+    const untrustedTab = screen.getByRole('tab', { name: /^Untrusted$/i });
     fireEvent.click(untrustedTab);
 
     await waitFor(() => {
@@ -113,15 +122,17 @@ describe('PluginSecurityPage', () => {
   });
 
   it('should display error message when fetch fails', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    // Reset all mocks and set fetch to reject for this test
+    (global.fetch as jest.Mock).mockReset();
+    (global.fetch as jest.Mock).mockResolvedValue({
       ok: false,
       json: async () => ({ error: 'Server error' }),
     });
 
-    render(<PluginSecurityPage />);
+    renderWithRouter(<PluginSecurityPage />);
 
     await waitFor(() => {
-      expect(screen.getByText(/Failed to load plugin security status/i)).toBeInTheDocument();
+      expect(screen.getByText(/Failed to fetch plugin security status/i)).toBeInTheDocument();
     });
   });
 
@@ -131,7 +142,7 @@ describe('PluginSecurityPage', () => {
       json: async () => ({ success: true, data: { plugins: [] } }),
     });
 
-    render(<PluginSecurityPage />);
+    renderWithRouter(<PluginSecurityPage />);
 
     await waitFor(() => {
       expect(screen.getByText('No plugins found')).toBeInTheDocument();
@@ -139,7 +150,7 @@ describe('PluginSecurityPage', () => {
   });
 
   it('should display built-in badge for built-in plugins', async () => {
-    render(<PluginSecurityPage />);
+    renderWithRouter(<PluginSecurityPage />);
 
     await waitFor(() => {
       const builtInBadges = screen.getAllByText('Built-in');
@@ -148,7 +159,7 @@ describe('PluginSecurityPage', () => {
   });
 
   it('should display signature status badges', async () => {
-    render(<PluginSecurityPage />);
+    renderWithRouter(<PluginSecurityPage />);
 
     await waitFor(() => {
       expect(screen.getByText('Valid')).toBeInTheDocument();
@@ -158,17 +169,17 @@ describe('PluginSecurityPage', () => {
   });
 
   it('should show action buttons for non-built-in plugins', async () => {
-    render(<PluginSecurityPage />);
+    renderWithRouter(<PluginSecurityPage />);
 
     await waitFor(() => {
-      const reverifyButtons = screen.getAllByLabelText(/Re-verify/i);
+      const reverifyButtons = screen.getAllByLabelText(/^Verify /i);
       // Should have Re-verify buttons for 2 non-built-in plugins
       expect(reverifyButtons.length).toBe(2);
     });
   });
 
   it('should not show action buttons for built-in plugins', async () => {
-    render(<PluginSecurityPage />);
+    renderWithRouter(<PluginSecurityPage />);
 
     await waitFor(() => {
       expect(screen.getByText('llm-openai')).toBeInTheDocument();
@@ -193,25 +204,25 @@ describe('PluginSecurityPage', () => {
         json: async () => ({ success: true, data: { plugins: mockPlugins } }),
       });
 
-    render(<PluginSecurityPage />);
+    renderWithRouter(<PluginSecurityPage />);
 
     await waitFor(() => {
       expect(screen.getByText('community-plugin')).toBeInTheDocument();
     });
 
-    const reverifyButtons = screen.getAllByLabelText(/Re-verify/i);
+    const reverifyButtons = screen.getAllByLabelText(/^Verify /i);
     fireEvent.click(reverifyButtons[0]);
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
         '/api/admin/plugins/community-plugin/verify',
-        expect.objectContaining({ method: 'POST' })
+        expect.objectContaining({ method: 'POST', headers: expect.any(Object) })
       );
     });
   });
 
   it('should refresh plugin list when refresh button is clicked', async () => {
-    render(<PluginSecurityPage />);
+    renderWithRouter(<PluginSecurityPage />);
 
     await waitFor(() => {
       expect(screen.getByText('llm-openai')).toBeInTheDocument();

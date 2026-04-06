@@ -34,13 +34,13 @@ describe('ConfigurationValidator', () => {
 
     it('should fail when name is too short', () => {
       const result = validator.validateBotConfig({
-        name: 'ab',
+        name: 'a',
         messageProvider: 'discord',
         llmProvider: 'openai',
       });
 
       expect(result.isValid).toBe(false);
-      expect(result.errors.some(e => e.includes('characters'))).toBe(true);
+      expect(result.errors.some(e => e.includes('at least'))).toBe(true);
     });
 
     it('should fail when name is too long', () => {

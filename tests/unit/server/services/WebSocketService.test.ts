@@ -28,6 +28,15 @@ jest.mock('../../../../src/services/ApiMonitorService', () => {
 });
 jest.mock('../../../../src/server/services/ActivityLogger');
 jest.mock('../../../../src/server/services/BotMetricsService');
+jest.mock('../../../../src/services/DemoModeService', () => {
+  const mock = {
+    isInDemoMode: jest.fn().mockReturnValue(false),
+    getSimulatedMessageFlow: jest.fn().mockReturnValue([]),
+    getSimulatedAlerts: jest.fn().mockReturnValue([]),
+    getSimulatedPerformanceMetrics: jest.fn().mockReturnValue([]),
+  };
+  return { __esModule: true, default: mock, DemoModeService: mock };
+});
 
 describe('WebSocketService', () => {
   let service: WebSocketService;
@@ -95,8 +104,15 @@ describe('WebSocketService', () => {
       getWarnings: jest.fn().mockReturnValue([]),
     });
 
+    const mockDemoModeService = {
+      isInDemoMode: jest.fn().mockReturnValue(false),
+      getSimulatedMessageFlow: jest.fn().mockReturnValue([]),
+      getSimulatedAlerts: jest.fn().mockReturnValue([]),
+      getSimulatedPerformanceMetrics: jest.fn().mockReturnValue([]),
+    } as any;
+
     const cm = new ConnectionManager();
-    const bs = new BroadcastService(cm, mockApiMonitor as any);
+    const bs = new BroadcastService(cm, mockApiMonitor as any, mockDemoModeService);
     const eh = new EventHandlers(cm, bs);
 
     service = new WebSocketService(cm, bs, eh);
@@ -124,9 +140,6 @@ describe('WebSocketService', () => {
       expect(instance1).toBe(instance2);
     });
 
-    test.skip('should initialize with HTTP server', () => {});
-    test.skip('should throw error when HTTP server is not provided', () => {});
-    test.skip('should setup CORS configuration', () => {});
   });
 
   describe('recordMessageFlow', () => {
@@ -181,7 +194,6 @@ describe('WebSocketService', () => {
       expect(flow[0].botName).toBe('bot-5'); // First 5 should be dropped
     });
 
-    test.skip('should increment bot message count', () => {});
   });
 
   describe('recordAlert', () => {
@@ -252,7 +264,6 @@ describe('WebSocketService', () => {
       expect(stats.errors[0]).toContain('Error 5'); // First 5 should be dropped
     });
 
-    test.skip('should increment error count for error-level alerts', () => {});
   });
 
   describe('alert management', () => {
@@ -363,8 +374,6 @@ describe('WebSocketService', () => {
   });
 
   describe('bot statistics', () => {
-    test.skip('should get stats for specific bot', () => {});
-    test.skip('should get stats for all bots', () => {});
   });
 
   describe('broadcast methods', () => {

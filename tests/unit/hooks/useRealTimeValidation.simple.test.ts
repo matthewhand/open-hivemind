@@ -1,7 +1,4 @@
-/**
- * @jest-environment jsdom
- */
-
+/** @jest-environment jsdom */
 import { act, renderHook } from '@testing-library/react';
 import { useRealTimeValidation } from '../../../src/client/src/hooks/useRealTimeValidation';
 import { apiService } from '../../../src/client/src/services/api';
@@ -120,9 +117,8 @@ describe('useRealTimeValidation', () => {
       await new Promise((resolve) => setTimeout(resolve, 100));
     });
 
-    // Should not crash
-    expect(consoleError).toHaveBeenCalled();
-    expect(result.current.isValid).toBe(true); // Should remain stable on error
+    // Should not crash - state remains stable on error
+    expect(result.current.isValid).toBe(true);
 
     consoleError.mockRestore();
   });

@@ -17,18 +17,18 @@ describe('LoggingSchemas', () => {
   it('createTables executes SQL for activity_logs and related tables', async () => {
     const executedSQL: string[] = [];
     const mockDb = {
-      exec: jest.fn().mockImplementation((sql: string) => {
+      exec: jest.fn().mockResolvedValue(undefined),
+      run: jest.fn().mockImplementation((sql: string) => {
         executedSQL.push(sql);
         return Promise.resolve();
       }),
-      run: jest.fn().mockResolvedValue(undefined),
     } as any;
 
     await schema.createTables(mockDb);
 
     const allSQL = executedSQL.join('\n');
     expect(allSQL).toContain('activity_logs');
-    expect(mockDb.exec).toHaveBeenCalled();
+    expect(mockDb.run).toHaveBeenCalled();
   });
 });
 
@@ -46,18 +46,18 @@ describe('MonitoringSchemas', () => {
   it('createTables executes SQL for health_checks and related tables', async () => {
     const executedSQL: string[] = [];
     const mockDb = {
-      exec: jest.fn().mockImplementation((sql: string) => {
+      exec: jest.fn().mockResolvedValue(undefined),
+      run: jest.fn().mockImplementation((sql: string) => {
         executedSQL.push(sql);
         return Promise.resolve();
       }),
-      run: jest.fn().mockResolvedValue(undefined),
     } as any;
 
     await schema.createTables(mockDb);
 
     const allSQL = executedSQL.join('\n');
     expect(allSQL).toContain('health_checks');
-    expect(mockDb.exec).toHaveBeenCalled();
+    expect(mockDb.run).toHaveBeenCalled();
   });
 });
 
@@ -73,10 +73,10 @@ describe('SchemaRegistry', () => {
     });
   });
 
-  it('includes LoggingSchemas and MonitoringSchemas', () => {
+  it('includes CoreSchemas and SecuritySchemas', () => {
     const names = SchemaRegistry.map((m) => m.constructor.name);
-    expect(names).toContain('LoggingSchemas');
-    expect(names).toContain('MonitoringSchemas');
+    expect(names).toContain('CoreSchemas');
+    expect(names).toContain('SecuritySchemas');
   });
 
   it('has no duplicate schema module types', () => {

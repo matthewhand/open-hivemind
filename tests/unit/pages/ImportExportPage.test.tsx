@@ -1,18 +1,17 @@
-/**
- * @jest-environment jsdom
- */
-
+/** @jest-environment jsdom */
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import { BrowserRouter } from 'react-router-dom';
-import { Provider } from 'react-redux';
-import { configureStore } from '@reduxjs/toolkit';
 import ImportExportPage from '../../../src/client/src/pages/ImportExportPage';
 
 // Mock the API service
 jest.mock('../../../src/client/src/services/api', () => ({
   apiService: {
-    getBots: jest.fn(),
+    getBots: jest.fn().mockResolvedValue([
+      { id: 1, name: 'Test Bot 1', messageProvider: 'discord', llmProvider: 'openai' },
+      { id: 2, name: 'Test Bot 2', messageProvider: 'slack', llmProvider: 'anthropic' },
+    ]),
     exportConfigurations: jest.fn(),
     importConfigurations: jest.fn(),
     validateConfigurationFile: jest.fn(),
@@ -25,42 +24,34 @@ jest.mock('../../../src/client/src/components/DaisyUI/ToastNotification', () => 
   useErrorToast: () => jest.fn(),
 }));
 
-// Mock useApiQuery hook
-jest.mock('../../../src/client/src/hooks/useApiQuery', () => ({
-  useApiQuery: (key: any, fn: any) => {
-    if (key[0] === 'bots') {
-      return {
-        data: [
-          { id: 1, name: 'Test Bot 1', messageProvider: 'discord', llmProvider: 'openai' },
-          { id: 2, name: 'Test Bot 2', messageProvider: 'slack', llmProvider: 'anthropic' },
-        ],
-        isLoading: false,
-        error: null,
-      };
-    }
-    return { data: null, isLoading: false, error: null };
-  },
+// Mock react-query to avoid needing QueryClientProvider
+const mockUseQuery = jest.fn();
+jest.mock('@tanstack/react-query', () => ({
+  useQuery: (...args: any[]) => mockUseQuery(...args),
+  useQueryClient: () => ({ invalidateQueries: jest.fn() }),
+  QueryClient: jest.fn(),
+  QueryClientProvider: ({ children }: any) => children,
 }));
-
-const mockStore = configureStore({
-  reducer: {
-    theme: (state = { theme: 'light' }) => state,
-  },
-});
 
 const renderWithProviders = (component: React.ReactElement) => {
   return render(
-    <Provider store={mockStore}>
-      <BrowserRouter>
-        {component}
-      </BrowserRouter>
-    </Provider>
+    <BrowserRouter>
+      {component}
+    </BrowserRouter>
   );
 };
 
 describe('ImportExportPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseQuery.mockReturnValue({
+      data: [
+        { id: 1, name: 'Test Bot 1', messageProvider: 'discord', llmProvider: 'openai' },
+        { id: 2, name: 'Test Bot 2', messageProvider: 'slack', llmProvider: 'anthropic' },
+      ],
+      isLoading: false,
+      error: null,
+    });
   });
 
   it('renders the main page with export and import cards', () => {
@@ -88,8 +79,8 @@ describe('ImportExportPage', () => {
     // Initially, encryption key input should not be visible
     expect(screen.queryByPlaceholderText(/encryption key/i)).not.toBeInTheDocument();
 
-    // Find and click the encrypt checkbox
-    const encryptCheckbox = screen.getAllByRole('checkbox')[5]; // 6th checkbox (0-indexed)
+    // Find and click the encrypt checkbox (5th export checkbox, index 4)
+    const encryptCheckbox = screen.getAllByRole('checkbox')[4];
     fireEvent.click(encryptCheckbox);
 
     // Now encryption key input should be visible
@@ -99,11 +90,13 @@ describe('ImportExportPage', () => {
   it('opens export modal when clicking select configurations button', async () => {
     renderWithProviders(<ImportExportPage />);
 
-    const selectButton = screen.getByText('Select Configurations to Export');
+    // Click the button (first match) to open the modal
+    const selectButton = screen.getByRole('button', { name: /Select Configurations to Export/i });
     fireEvent.click(selectButton);
 
     await waitFor(() => {
-      expect(screen.getByText('Select Configurations to Export')).toBeInTheDocument();
+      // Modal title also shows "Select Configurations to Export"
+      expect(screen.getAllByText('Select Configurations to Export').length).toBeGreaterThanOrEqual(2);
     });
   });
 
@@ -133,12 +126,6 @@ describe('ImportExportPage', () => {
   it('shows import options button after file selection', () => {
     renderWithProviders(<ImportExportPage />);
 
-    // Create a mock file
-    const file = new File(['{}'], 'test.json', { type: 'application/json' });
-
-    // Find file input and upload file
-    const fileInput = screen.getByLabelText(/file-upload-input/i) || screen.getAllByRole('button')[0];
-
     // The file upload component exists
     expect(screen.getByText(/Drag 'n' drop files here/i)).toBeInTheDocument();
   });
@@ -165,7 +152,7 @@ describe('ImportExportPage', () => {
     renderWithProviders(<ImportExportPage />);
 
     const checkboxes = screen.getAllByRole('checkbox');
-    const compressCheckbox = checkboxes[4]; // 5th checkbox (compress)
+    const compressCheckbox = checkboxes[3]; // 4th checkbox (compress, 0-indexed)
 
     expect(compressCheckbox).toBeChecked();
   });

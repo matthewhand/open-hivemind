@@ -374,12 +374,12 @@ describe('Configuration Management API Endpoints - COMPLETE TDD SUITE', () => {
   it('should handle extremely long input strings', async () => {
     const longString = 'a'.repeat(10000);
     const response = await request(app).post('/api/config/reload').send({ data: longString });
-    expect(response.status).toBeLessThan(500);
+    expect([200, 400, 404, 413]).toContain(response.status);
   });
 
   it('should handle missing required fields gracefully', async () => {
     const response = await request(app).post('/api/config/reload').send({});
-    expect(response.status).toBeLessThan(500);
+    expect([200, 400, 404, 413]).toContain(response.status);
   });
 
   it('should not expose sensitive information in responses', async () => {

@@ -1,10 +1,9 @@
-/**
- * @jest-environment jsdom
- */
+/** @jest-environment jsdom */
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import MCPToolsTestingPage from '../../../../src/client/src/pages/MCPToolsTestingPage';
 
-// Mock fetch
+// Mock fetch (authFetch delegates to global fetch internally)
 global.fetch = jest.fn();
 
 describe('MCPToolsTestingPage', () => {
@@ -18,8 +17,9 @@ describe('MCPToolsTestingPage', () => {
       json: async () => ({ servers: [] }),
     });
 
-    render(<MCPToolsTestingPage />);
-    expect(screen.getByRole('status', { hidden: true })).toBeInTheDocument();
+    const { container } = render(<MCPToolsTestingPage />);
+    // Loading state renders SkeletonGrid which uses skeleton class
+    expect(container.querySelector('.skeleton')).toBeInTheDocument();
   });
 
   it('should display available tools after loading', async () => {
@@ -57,7 +57,8 @@ describe('MCPToolsTestingPage', () => {
       expect(screen.getByText('test_tool')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('A test tool')).toBeInTheDocument();
+    // Description is only visible after selecting the tool
+    expect(screen.getByText('test-server')).toBeInTheDocument();
   });
 
   it('should show empty state when no tools available', async () => {
@@ -166,10 +167,10 @@ describe('MCPToolsTestingPage', () => {
       expect(screen.getByText('Test Parameters')).toBeInTheDocument();
     });
 
-    // Verify form fields are generated
-    expect(screen.getByText(/textInput/)).toBeInTheDocument();
-    expect(screen.getByText(/numberInput/)).toBeInTheDocument();
-    expect(screen.getByText(/boolInput/)).toBeInTheDocument();
+    // Verify form fields are generated (names appear in both schema and form)
+    expect(screen.getAllByText(/textInput/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/numberInput/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/boolInput/).length).toBeGreaterThanOrEqual(1);
 
     // Check for required indicator
     const requiredIndicators = screen.getAllByText('*');
@@ -294,9 +295,10 @@ describe('MCPToolsTestingPage', () => {
     fireEvent.click(testButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/Test Failed/i)).toBeInTheDocument();
+      // "Test Failed" appears in both the result heading and the alert
+      expect(screen.getAllByText(/Test Failed/i).length).toBeGreaterThanOrEqual(1);
     });
 
-    expect(screen.getByText(/Tool execution failed/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Tool execution failed/i).length).toBeGreaterThanOrEqual(1);
   });
 });

@@ -55,8 +55,10 @@ describe('validateRequest middleware', () => {
     expect(mockRes.status).toHaveBeenCalledWith(400);
     expect(mockRes.json).toHaveBeenCalledWith(
       expect.objectContaining({
+        success: false,
         error: 'Validation failed',
-        issues: expect.arrayContaining([
+        code: 'VALIDATION_ERROR',
+        details: expect.arrayContaining([
           expect.objectContaining({
             path: expect.any(Array),
             message: expect.any(String),
@@ -83,7 +85,8 @@ describe('validateRequest middleware', () => {
     expect(mockRes.json).toHaveBeenCalledWith(
       expect.objectContaining({
         error: 'Validation failed',
-        issues: expect.arrayContaining([
+        code: 'VALIDATION_ERROR',
+        details: expect.arrayContaining([
           expect.objectContaining({
             path: expect.arrayContaining(['query', 'page']),
           }),
@@ -107,8 +110,8 @@ describe('validateRequest middleware', () => {
 
     expect(mockRes.status).toHaveBeenCalledWith(400);
     const jsonCall = (mockRes.json as jest.Mock).mock.calls[0][0];
-    expect(jsonCall.issues.length).toBeGreaterThanOrEqual(2);
-    expect(jsonCall.issues).toEqual(
+    expect(jsonCall.details.length).toBeGreaterThanOrEqual(2);
+    expect(jsonCall.details).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ path: ['body', 'name'] }),
         expect.objectContaining({ path: ['body', 'age'] }),
@@ -129,7 +132,8 @@ describe('validateRequest middleware', () => {
     expect(mockRes.json).toHaveBeenCalledWith(
       expect.objectContaining({
         error: 'Validation failed',
-        issues: expect.arrayContaining([
+        code: 'VALIDATION_ERROR',
+        details: expect.arrayContaining([
           expect.objectContaining({ path: expect.arrayContaining(['params', 'id']) }),
         ]),
       })
@@ -152,58 +156,57 @@ describe('validateRequest middleware', () => {
     expect(mockRes.status).not.toHaveBeenCalled();
     expect(mockRes.json).not.toHaveBeenCalled();
   });
-});
-
-describe('parsed data merging (bug fix)', () => {
-  it('merges parsed body back onto req.body', () => {
-    const schema = z.object({
-      body: z.object({ name: z.string() }),
-      query: z.object({}),
-      params: z.object({}),
+  describe('parsed data merging (bug fix)', () => {
+    it('merges parsed body back onto req.body', () => {
+      const schema = z.object({
+        body: z.object({ name: z.string() }),
+        query: z.object({}),
+        params: z.object({}),
+      });
+      mockReq.body = { name: 'Alice', extra: 'stripped' };
+      validateRequest(schema)(mockReq as Request, mockRes as Response, nextFunction);
+      expect(mockReq.body).toEqual({ name: 'Alice' });
+      expect(nextFunction).toHaveBeenCalled();
     });
-    mockReq.body = { name: 'Alice', extra: 'stripped' };
-    validateRequest(schema)(mockReq as Request, mockRes as Response, nextFunction);
-    expect(mockReq.body).toEqual({ name: 'Alice' });
-    expect(nextFunction).toHaveBeenCalled();
+
+    it('merges parsed params back onto req.params', () => {
+      const schema = z.object({
+        body: z.object({}),
+        query: z.object({}),
+        params: z.object({ id: z.string() }),
+      });
+      mockReq.params = { id: '123' };
+      validateRequest(schema)(mockReq as Request, mockRes as Response, nextFunction);
+      expect(mockReq.params).toEqual({ id: '123' });
+      expect(nextFunction).toHaveBeenCalled();
+    });
   });
 
-  it('merges parsed params back onto req.params', () => {
-    const schema = z.object({
-      body: z.object({}),
-      query: z.object({}),
-      params: z.object({ id: z.string() }),
+  describe('standardized error envelope', () => {
+    it('returns ApiResponse.error envelope with VALIDATION_ERROR code', () => {
+      const schema = z.object({
+        body: z.object({ name: z.string() }),
+        query: z.object({}),
+        params: z.object({}),
+      });
+      mockReq.body = { name: 123 }; // wrong type
+      validateRequest(schema)(mockReq as Request, mockRes as Response, nextFunction);
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      const jsonArg = (mockRes.json as jest.Mock).mock.calls[0][0];
+      expect(jsonArg.success).toBe(false);
+      expect(jsonArg.error).toBe('Validation failed');
+      expect(jsonArg.code).toBe('VALIDATION_ERROR');
+      expect(Array.isArray(jsonArg.details)).toBe(true);
     });
-    mockReq.params = { id: '123' };
-    validateRequest(schema)(mockReq as Request, mockRes as Response, nextFunction);
-    expect(mockReq.params).toEqual({ id: '123' });
-    expect(nextFunction).toHaveBeenCalled();
-  });
-});
 
-describe('standardized error envelope', () => {
-  it('returns ApiResponse.error envelope with VALIDATION_ERROR code', () => {
-    const schema = z.object({
-      body: z.object({ name: z.string() }),
-      query: z.object({}),
-      params: z.object({}),
+    it('passes non-Zod errors to next()', () => {
+      const schema = {
+        parse: () => {
+          throw new Error('unexpected');
+        },
+      } as any;
+      validateRequest(schema)(mockReq as Request, mockRes as Response, nextFunction);
+      expect(nextFunction).toHaveBeenCalledWith(expect.any(Error));
     });
-    mockReq.body = { name: 123 }; // wrong type
-    validateRequest(schema)(mockReq as Request, mockRes as Response, nextFunction);
-    expect(mockRes.status).toHaveBeenCalledWith(400);
-    const jsonArg = (mockRes.json as jest.Mock).mock.calls[0][0];
-    expect(jsonArg.success).toBe(false);
-    expect(jsonArg.error).toBe('Validation failed');
-    expect(jsonArg.code).toBe('VALIDATION_ERROR');
-    expect(Array.isArray(jsonArg.details)).toBe(true);
-  });
-
-  it('passes non-Zod errors to next()', () => {
-    const schema = {
-      parse: () => {
-        throw new Error('unexpected');
-      },
-    } as any;
-    validateRequest(schema)(mockReq as Request, mockRes as Response, nextFunction);
-    expect(nextFunction).toHaveBeenCalledWith(expect.any(Error));
   });
 });

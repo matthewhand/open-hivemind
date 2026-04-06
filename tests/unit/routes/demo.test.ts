@@ -91,7 +91,8 @@ describe('Demo Routes', () => {
       const res = await request(app).post('/demo/chat').send({ botName: 'Bot' });
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('Validation failed');
-      expect(res.body.issues).toEqual(
+      expect(res.body.code).toBe('VALIDATION_ERROR');
+      expect(res.body.details).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ path: expect.arrayContaining(['message']) }),
         ])
@@ -102,7 +103,8 @@ describe('Demo Routes', () => {
       const res = await request(app).post('/demo/chat').send({ message: 'hi' });
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('Validation failed');
-      expect(res.body.issues).toEqual(
+      expect(res.body.code).toBe('VALIDATION_ERROR');
+      expect(res.body.details).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ path: expect.arrayContaining(['botName']) }),
         ])
