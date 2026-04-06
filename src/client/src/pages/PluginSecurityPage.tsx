@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { authFetch } from '../utils/authFetch';
 import Card from '../components/DaisyUI/Card';
 import Badge from '../components/DaisyUI/Badge';
@@ -23,6 +23,7 @@ import {
   Unlock,
 } from 'lucide-react';
 import { ConfirmModal } from '../components/DaisyUI/Modal';
+import Pagination from '../components/DaisyUI/Pagination';
 
 interface PluginSecurityStatus {
   pluginName: string;
@@ -41,6 +42,8 @@ const PluginSecurityPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<SecurityFilter>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 12;
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [confirmModal, setConfirmModal] = useState<{
@@ -130,20 +133,27 @@ const PluginSecurityPage: React.FC = () => {
     });
   };
 
-  const filteredPlugins = plugins.filter((plugin) => {
-    switch (filter) {
-      case 'trusted':
-        return plugin.trustLevel === 'trusted';
-      case 'untrusted':
-        return plugin.trustLevel === 'untrusted';
-      case 'built-in':
-        return plugin.isBuiltIn;
-      case 'verification-failed':
-        return plugin.signatureValid === false;
-      default:
-        return true;
-    }
-  });
+  const filteredPlugins = useMemo(() => {
+    setCurrentPage(1);
+    return plugins.filter((plugin) => {
+      switch (filter) {
+        case 'trusted':
+          return plugin.trustLevel === 'trusted';
+        case 'untrusted':
+          return plugin.trustLevel === 'untrusted';
+        case 'built-in':
+          return plugin.isBuiltIn;
+        case 'verification-failed':
+          return plugin.signatureValid === false;
+        default:
+          return true;
+      }
+    });
+  }, [plugins, filter]);
+
+  const paginatedPlugins = useMemo(() =>
+    filteredPlugins.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [filteredPlugins, currentPage, pageSize]);
 
   const getSignatureStatusBadge = (signatureValid: boolean | null) => {
     if (signatureValid === null) {
@@ -290,7 +300,7 @@ const PluginSecurityPage: React.FC = () => {
         />
       ) : (
         <div className="grid grid-cols-1 gap-4">
-          {filteredPlugins.map((plugin) => (
+          {paginatedPlugins.map((plugin) => (
             <Card key={plugin.pluginName} className="hover:shadow-lg transition-shadow">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div className="flex-1">
@@ -407,6 +417,15 @@ const PluginSecurityPage: React.FC = () => {
               </div>
             </Card>
           ))}
+        </div>
+        <div className="flex justify-center mt-6">
+          <Pagination
+            currentPage={currentPage}
+            totalItems={filteredPlugins.length}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+            style="standard"
+          />
         </div>
       )}
 

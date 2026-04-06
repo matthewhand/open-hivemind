@@ -25,6 +25,7 @@ import { apiService } from '../services/api';
 import { ErrorService } from '../services/ErrorService';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Carousel from '../components/DaisyUI/Carousel';
+import Pagination from '../components/DaisyUI/Pagination';
 
 interface ConfigurationTemplate {
   id: string;
@@ -62,6 +63,8 @@ const TemplatesPage: React.FC = () => {
   const [botName, setBotName] = useState('');
   const [botDescription, setBotDescription] = useState('');
   const [deletingTemplate, setDeletingTemplate] = useState<ConfigurationTemplate | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 12;
   const [drawerTemplate, setDrawerTemplate] = useState<ConfigurationTemplate | null>(null);
   const [drawerTab, setDrawerTab] = useState('details');
 
@@ -117,6 +120,7 @@ const TemplatesPage: React.FC = () => {
 
   // Filter templates
   const filteredTemplates = useMemo(() => {
+    setCurrentPage(1);
     return templates.filter((template) => {
       const matchesSearch =
         template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -129,6 +133,10 @@ const TemplatesPage: React.FC = () => {
       return matchesSearch && matchesCategory;
     });
   }, [templates, searchQuery, selectedCategory]);
+
+  const paginatedTemplates = useMemo(() =>
+    filteredTemplates.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [filteredTemplates, currentPage, pageSize]);
 
   // Build carousel items from most popular templates
   const featuredCarouselItems = useMemo(() => {
@@ -162,17 +170,17 @@ const TemplatesPage: React.FC = () => {
     }));
   }, [templates]);
 
-  // Group templates by category
+  // Group templates by category (from paginated subset)
   const groupedTemplates = useMemo(() => {
     const groups: Record<string, ConfigurationTemplate[]> = {};
-    filteredTemplates.forEach((template) => {
+    paginatedTemplates.forEach((template) => {
       if (!groups[template.category]) {
         groups[template.category] = [];
       }
       groups[template.category].push(template);
     });
     return groups;
-  }, [filteredTemplates]);
+  }, [paginatedTemplates]);
 
   const handleOpenDrawer = (template: ConfigurationTemplate) => {
     setDrawerTemplate(template);
@@ -441,6 +449,15 @@ const TemplatesPage: React.FC = () => {
               </div>
             </div>
           ))}
+          <div className="flex justify-center mt-6">
+            <Pagination
+              currentPage={currentPage}
+              totalItems={filteredTemplates.length}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              style="standard"
+            />
+          </div>
         </div>
       )}
 
