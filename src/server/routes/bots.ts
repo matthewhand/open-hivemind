@@ -20,7 +20,14 @@ import { WebSocketService } from '../services/WebSocketService';
 const router = Router();
 const logger = createLogger('botsRouter');
 const managerPromise = BotManager.getInstance();
-const wsService = WebSocketService.getInstance();
+// Lazy — WebSocketService depends on DI chain that isn't registered at import time
+let _wsService: WebSocketService | null = null;
+const getWsService = () => {
+  if (!_wsService) {
+    try { _wsService = WebSocketService.getInstance(); } catch { /* DI not ready */ }
+  }
+  return _wsService;
+};
 
 /**
  * @openapi
@@ -43,7 +50,7 @@ router.get(
 
       const result = bots.map((bot) => {
         // WebSocketService tracks metrics by bot name, not ID
-        const stats = wsService.getBotStats(bot.name) || {
+        const stats = getWsService()?.getBotStats(bot.name) || {
           messageCount: 0,
           errors: [],
           errorCount: 0,
