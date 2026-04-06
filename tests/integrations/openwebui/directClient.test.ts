@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { generateChatCompletionDirect } from '@hivemind/llm-openwebui/directClient';
+import { generateChatCompletionDirect } from '../../../src/integrations/openwebui/directClient';
 
 jest.mock('axios');
 

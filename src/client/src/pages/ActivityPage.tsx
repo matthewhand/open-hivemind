@@ -204,7 +204,6 @@ const ActivityPage: React.FC = () => {
     );
   }, [events, searchQuery]);
 
-  // ⚡ Bolt Optimization: Memoize timelineEvents to avoid re-mapping events on every render
   const timelineEvents = useMemo(() => filteredEvents.map(event => ({
     id: event.id || `${event.timestamp}-${event.botName}`,
     timestamp: new Date(event.timestamp),

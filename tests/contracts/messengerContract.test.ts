@@ -74,7 +74,7 @@ jest.mock('@slack/socket-mode', () => ({
 }));
 
 // Mattermost client
-jest.mock('@hivemind/message-mattermost/mattermostClient', () => {
+jest.mock('@integrations/mattermost/mattermostClient', () => {
   return {
     __esModule: true,
     default: jest.fn().mockImplementation(() => ({
@@ -215,7 +215,7 @@ describe('IMessengerService structural conformance', () => {
 
   it('MattermostService class prototype has required IMessengerService methods', () => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { MattermostService } = require('@hivemind/message-mattermost/MattermostService');
+    const { MattermostService } = require('@integrations/mattermost/MattermostService');
     const proto = MattermostService.prototype;
 
     expect(typeof proto.initialize).toBe('function');

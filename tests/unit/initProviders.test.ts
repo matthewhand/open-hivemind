@@ -69,7 +69,7 @@ jest.mock('../../src/registries/ProviderRegistry', () => {
   };
 });
 
-jest.mock('@hivemind/llm-openswarm/SwarmInstaller', () => ({
+jest.mock('../../src/integrations/openswarm/SwarmInstaller', () => ({
   SwarmInstaller: jest.fn().mockImplementation(() => ({
     id: 'swarm-installer',
   })),

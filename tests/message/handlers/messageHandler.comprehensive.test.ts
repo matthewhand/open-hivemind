@@ -224,7 +224,7 @@ jest.mock('@message/PipelineMetricsAggregator', () => ({
     })),
   },
 }));
-jest.mock('@hivemind/llm-openwebui/directClient', () => ({
+jest.mock('@integrations/openwebui/directClient', () => ({
   generateChatCompletionDirect: jest.fn(),
 }));
 jest.mock('@message/helpers/processing/stripBotId', () => ({
