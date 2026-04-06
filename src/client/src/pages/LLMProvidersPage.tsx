@@ -369,18 +369,24 @@ const LLMProvidersPage: React.FC = () => {
                     <CheckIcon className="w-4 h-4 text-success cursor-help" />
                   </Tooltip>
                 ) : !defaultChatbotProfile ? (
-                  <Tooltip content={`No API key detected for ${decodeHtmlEntities(p?.name || 'this provider')}. Set ${p?.type?.toUpperCase()}_API_KEY in your .env file or the provider will fail at runtime.`} position="top">
-                    <WarningIcon className="w-4 h-4 text-warning cursor-help" />
+                  <Tooltip content={`No API key — click to create an ${decodeHtmlEntities(p?.type || 'LLM')} profile with your key`} position="top">
+                    <button onClick={handleAddProfile} className="btn btn-ghost btn-xs btn-circle text-primary">
+                      <AddIcon className="w-4 h-4" />
+                    </button>
                   </Tooltip>
                 ) : null}
                 <Badge variant="neutral" size="small" className="ml-auto">Read-Only</Badge>
               </div>
             ))}
             {(!defaultStatus?.providers?.filter((p: any) => p?.source !== 'bot-env').length) && !defaultChatbotProfile && (
-              <Alert status="warning" className="text-xs p-2">
-                <WarningIcon className="w-4 h-4" />
-                <span>No default provider in .env. Bots without a profile will fail.</span>
-              </Alert>
+              <div className="flex items-center gap-2 p-3 bg-base-200/30 rounded-lg border border-dashed border-primary/30">
+                <span className="text-xs opacity-60 flex-1">No LLM provider configured yet.</span>
+                <Tooltip content="Create an OpenAI profile to get started" position="top">
+                  <button onClick={handleAddProfile} className="btn btn-primary btn-xs gap-1">
+                    <AddIcon className="w-3 h-3" /> Add Provider
+                  </button>
+                </Tooltip>
+              </div>
             )}
         </Card>
 
