@@ -7,6 +7,7 @@ import ImportBotsModal from '../../components/BotManagement/ImportBotsModal';
 import { BotSettingsModal } from '../../components/BotSettingsModal';
 import BulkActionBar from '../../components/BulkActionBar';
 import Button from '../../components/DaisyUI/Button';
+import DetailDrawer from '../../components/DaisyUI/DetailDrawer';
 import { SkeletonPage } from '../../components/DaisyUI/Skeleton';
 import Swap from '../../components/DaisyUI/Swap';
 import { useErrorToast, useSuccessToast } from '../../components/DaisyUI/ToastNotification';
@@ -20,7 +21,6 @@ import useUrlParams from '../../hooks/useUrlParams';
 import type { BotConfig } from '../../types/bot';
 import { BotListErrorState } from './BotListErrorState';
 import { BotListGrid } from './BotListGrid';
-import { BotPreviewSidebar } from './BotPreviewSidebar';
 // Components
 import { BotsPageHeader } from './BotsPageHeader';
 import { useBotActions } from './hooks/useBotActions';
@@ -32,6 +32,7 @@ import { useBotsPageData } from './hooks/useBotsPageData';
 import Checkbox from '../../components/DaisyUI/Checkbox';
 import { useSavedStamp } from '../../contexts/SavedStampContext';
 import Select from '../../components/DaisyUI/Select';
+import { BotDetailContent } from './BotDetailContent';
 
 const BotsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
@@ -166,145 +167,144 @@ const BotsPage: React.FC = () => {
         onQuickAddLLM={() => navigate('/admin/providers/llm')}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content: Bot List */}
-        <div
-          className={`${error && bots.length === 0 ? 'lg:col-span-3' : 'lg:col-span-2'} space-y-4`}
+      {/* Bot List — full width, no sidebar column */}
+      <div className="space-y-4">
+        <SearchFilterBar
+          searchValue={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchPlaceholder="Search agents by name or purpose..."
         >
-          <SearchFilterBar
-            searchValue={searchQuery}
-            onSearchChange={setSearchQuery}
-            searchPlaceholder="Search agents by name or purpose..."
-          >
-            <div className="flex gap-2">
-              <Select
-                className="select-bordered"
-                size="sm"
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value as any)}
+          <div className="flex gap-2">
+            <Select
+              className="select-bordered"
+              size="sm"
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value as any)}
+            >
+              <option value="all">All Status</option>
+              <option value="active">Active Only</option>
+              <option value="inactive">Inactive Only</option>
+            </Select>
+            <Tooltip content={compactView ? 'Switch to grid view' : 'Switch to compact view'}>
+              <div
+                className="btn btn-ghost btn-sm btn-square"
+                role="button"
+                tabIndex={0}
+                onClick={() => setCompactView(!compactView)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setCompactView(!compactView); } }}
+                aria-label={compactView ? 'Switch to grid view' : 'Switch to compact view'}
               >
-                <option value="all">All Status</option>
-                <option value="active">Active Only</option>
-                <option value="inactive">Inactive Only</option>
-              </Select>
-              <Tooltip content={compactView ? 'Switch to grid view' : 'Switch to compact view'}>
-                <div
-                  className="btn btn-ghost btn-sm btn-square"
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setCompactView(!compactView)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setCompactView(!compactView); } }}
-                  aria-label={compactView ? 'Switch to grid view' : 'Switch to compact view'}
-                >
-                  <Swap
-                    checked={compactView}
-                    onContent={<LayoutGrid className="w-4 h-4" />}
-                    offContent={<List className="w-4 h-4" />}
-                    rotate
-                  />
-                </div>
-              </Tooltip>
-              <Tooltip content="Refresh list">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={fetchBots}
-                  className="btn-square"
-                  aria-label="Refresh list"
-                >
-                  <RefreshCw className={`w-4 h-4 ${botsLoading ? 'animate-spin' : ''}`} />
-                </Button>
-              </Tooltip>
-            </div>
-          </SearchFilterBar>
-
-          <BotListErrorState
-            error={error}
-            botsCount={bots.length}
-            fetchBots={fetchBots}
-            filteredBotsCount={filteredBots.length}
-            searchQuery={searchQuery}
-            setIsCreateModalOpen={setIsCreateModalOpen}
-          />
-
-          {!error && filteredBots.length > 0 && (
-            <>
-              <div className="flex items-center gap-2 mb-2">
-                <Checkbox
-                  variant="primary"
-                  size="sm"
-                  checked={bulk.isAllSelected}
-                  onChange={() => bulk.toggleAll(filteredBotIds)}
-                  aria-label="Select all bots"
+                <Swap
+                  checked={compactView}
+                  onContent={<LayoutGrid className="w-4 h-4" />}
+                  offContent={<List className="w-4 h-4" />}
+                  rotate
                 />
-                <span className="text-xs text-base-content/60">Select all</span>
               </div>
-              <BulkActionBar
-                selectedCount={bulk.selectedCount}
-                onClearSelection={bulk.clearSelection}
-                actions={[
-                  {
-                    key: 'export',
-                    label: 'Export',
-                    icon: <Download className="w-4 h-4" />,
-                    variant: 'primary',
-                    onClick: handleBulkExport,
-                  },
-                  {
-                    key: 'delete',
-                    label: 'Delete',
-                    icon: <Trash2 className="w-4 h-4" />,
-                    variant: 'error',
-                    onClick: handleBulkDelete,
-                    loading: bulkDeleting,
-                  },
-                ]}
-              />
-              <BotListGrid
-                filteredBots={filteredBots}
-                previewBot={previewBot}
-                handlePreviewBot={handlePreviewBot}
-                setEditingBot={setEditingBot}
-                setDeletingBot={setDeletingBot}
-                handleToggleBotStatus={handleToggleBotStatus}
-                bulk={bulk}
-                isMobile={isMobile}
-                compactView={compactView}
-                onBotDragStart={onBotDragStart}
-                onBotDragOver={onBotDragOver}
-                onBotDragEnd={onBotDragEnd}
-                onBotDrop={onBotDrop}
-                getBotItemStyle={getBotItemStyle}
-                onBotMoveUp={onBotMoveUp}
-                onBotMoveDown={onBotMoveDown}
-              />
-            </>
-          )}
-        </div>
-
-        {/* Sidebar: Bot Preview/Details */}
-        {!(error && bots.length === 0) && (
-          <div className="lg:col-span-1">
-            <BotPreviewSidebar
-              previewBot={previewBot}
-              setPreviewBot={setPreviewBot}
-              previewTab={previewTab}
-              setPreviewTab={setPreviewTab}
-              activityLogs={activityLogs}
-              chatHistory={chatHistory}
-              logFilter={logFilter}
-              setLogFilter={setLogFilter}
-              activityError={activityError}
-              chatError={chatError}
-              fetchPreviewActivity={fetchPreviewActivity}
-              fetchPreviewChat={fetchPreviewChat}
-              setEditingBot={setEditingBot}
-              handleExportSingleBot={handleExportSingleBot}
-              handleToggleBotStatus={handleToggleBotStatus}
-            />
+            </Tooltip>
+            <Tooltip content="Refresh list">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={fetchBots}
+                className="btn-square"
+                aria-label="Refresh list"
+              >
+                <RefreshCw className={`w-4 h-4 ${botsLoading ? 'animate-spin' : ''}`} />
+              </Button>
+            </Tooltip>
           </div>
+        </SearchFilterBar>
+
+        <BotListErrorState
+          error={error}
+          botsCount={bots.length}
+          fetchBots={fetchBots}
+          filteredBotsCount={filteredBots.length}
+          searchQuery={searchQuery}
+          setIsCreateModalOpen={setIsCreateModalOpen}
+        />
+
+        {!error && filteredBots.length > 0 && (
+          <>
+            <div className="flex items-center gap-2 mb-2">
+              <Checkbox
+                variant="primary"
+                size="sm"
+                checked={bulk.isAllSelected}
+                onChange={() => bulk.toggleAll(filteredBotIds)}
+                aria-label="Select all bots"
+              />
+              <span className="text-xs text-base-content/60">Select all</span>
+            </div>
+            <BulkActionBar
+              selectedCount={bulk.selectedCount}
+              onClearSelection={bulk.clearSelection}
+              actions={[
+                {
+                  key: 'export',
+                  label: 'Export',
+                  icon: <Download className="w-4 h-4" />,
+                  variant: 'primary',
+                  onClick: handleBulkExport,
+                },
+                {
+                  key: 'delete',
+                  label: 'Delete',
+                  icon: <Trash2 className="w-4 h-4" />,
+                  variant: 'error',
+                  onClick: handleBulkDelete,
+                  loading: bulkDeleting,
+                },
+              ]}
+            />
+            <BotListGrid
+              filteredBots={filteredBots}
+              previewBot={previewBot}
+              handlePreviewBot={handlePreviewBot}
+              setEditingBot={setEditingBot}
+              setDeletingBot={setDeletingBot}
+              handleToggleBotStatus={handleToggleBotStatus}
+              bulk={bulk}
+              isMobile={isMobile}
+              compactView={compactView}
+              onBotDragStart={onBotDragStart}
+              onBotDragOver={onBotDragOver}
+              onBotDragEnd={onBotDragEnd}
+              onBotDrop={onBotDrop}
+              getBotItemStyle={getBotItemStyle}
+              onBotMoveUp={onBotMoveUp}
+              onBotMoveDown={onBotMoveDown}
+            />
+          </>
         )}
       </div>
+
+      {/* Bot Detail Drawer — slides in from right when a bot is selected */}
+      <DetailDrawer
+        isOpen={!!previewBot}
+        onClose={() => setPreviewBot(null)}
+        title={previewBot?.name}
+        subtitle={previewBot?.description}
+      >
+        <BotDetailContent
+          previewBot={previewBot}
+          previewTab={previewTab}
+          setPreviewTab={setPreviewTab}
+          activityLogs={activityLogs}
+          chatHistory={chatHistory}
+          logFilter={logFilter}
+          setLogFilter={setLogFilter}
+          activityError={activityError}
+          chatError={chatError}
+          fetchPreviewActivity={fetchPreviewActivity}
+          fetchPreviewChat={fetchPreviewChat}
+          setEditingBot={setEditingBot}
+          handleExportSingleBot={handleExportSingleBot}
+          handleToggleBotStatus={handleToggleBotStatus}
+          onClose={() => setPreviewBot(null)}
+        />
+      </DetailDrawer>
 
       {/* Modals */}
       {isCreateModalOpen && (

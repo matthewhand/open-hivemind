@@ -36,11 +36,16 @@ import ProviderConfigModal from '../ProviderConfiguration/ProviderConfigModal';
 interface BotCardProps {
   bot: BotInstance;
   personas: Persona[];
+  isSelected?: boolean;
+  onPreview?: (bot: BotInstance) => void;
   onStartBot?: (botId: string) => void;
   onStopBot?: (botId: string) => void;
+  onEdit?: (bot: BotInstance) => void;
+  onDelete?: (bot: BotInstance) => void;
+  onDeleteBot?: (botId: string) => void;
+  onToggleStatus?: (bot: BotInstance) => void;
   onConfigureBot?: (botId: string) => void;
   onCloneBot?: (botId: string) => void;
-  onDeleteBot?: (botId: string) => void;
   onAddProvider?: (botId: string, providerType: 'message' | 'llm') => void;
   onRemoveProvider?: (botId: string, providerId: string) => void;
   onPersonaChange?: (botId: string, personaId: string) => void;
@@ -49,11 +54,16 @@ interface BotCardProps {
 const BotCard: React.FC<BotCardProps> = ({
   bot,
   personas,
+  isSelected,
+  onPreview,
   onStartBot,
   onStopBot,
+  onEdit,
+  onDelete,
+  onDeleteBot,
+  onToggleStatus,
   onConfigureBot,
   onCloneBot,
-  onDeleteBot,
   onAddProvider,
   onRemoveProvider,
   onPersonaChange,
@@ -115,6 +125,7 @@ const BotCard: React.FC<BotCardProps> = ({
   };
 
   const handleConfigureBot = () => {
+    if (onEdit) { onEdit(bot); setIsDropdownOpen(false); return; }
     if (onConfigureBot) {onConfigureBot(bot.id);}
     setIsDropdownOpen(false);
   };
@@ -125,6 +136,7 @@ const BotCard: React.FC<BotCardProps> = ({
   };
 
   const handleDeleteBot = () => {
+    if (onDelete) { onDelete(bot); setIsDropdownOpen(false); return; }
     if (onDeleteBot) {onDeleteBot(bot.id);}
     setIsDropdownOpen(false);
   };
@@ -190,7 +202,11 @@ const BotCard: React.FC<BotCardProps> = ({
   };
 
   return (
-    <Card className="shadow-xl border border-base-300 hover:shadow-2xl transition-shadow duration-200">
+    <Card
+      className={`shadow-xl border transition-shadow duration-200 cursor-pointer
+        ${isSelected ? 'border-primary ring-2 ring-primary/20' : 'border-base-300 hover:shadow-2xl'}`}
+      onClick={onPreview ? () => onPreview(bot) : undefined}
+    >
       <Card.Body className="p-6">
         {/* Header */}
         <div className="flex justify-between items-start mb-4">
@@ -383,7 +399,10 @@ const BotCard: React.FC<BotCardProps> = ({
             <Button
               variant={canStart ? 'success' : 'error'}
               size="sm"
-              onClick={canStart ? handleStartBot : handleStopBot}
+              onClick={() => {
+                if (onToggleStatus) { onToggleStatus(bot); return; }
+                canStart ? handleStartBot() : handleStopBot();
+              }}
               disabled={!canStart && !canStop}
               className={!hasProviders ? 'btn-disabled' : ''}
             >
