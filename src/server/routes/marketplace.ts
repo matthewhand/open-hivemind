@@ -43,6 +43,24 @@ export interface MarketplacePackage {
 
 const PACKAGES_DIR = path.resolve(__dirname, '../../../../packages');
 const _PLUGINS_DIR = path.resolve(__dirname, '../../../../plugins');
+const COMMUNITY_CONFIG_PATH = path.resolve(__dirname, '../../../../config/community.json');
+
+/**
+ * Load the allowlist of visible packages from config/community.json.
+ * Returns null if the file doesn't exist (show all packages).
+ */
+function loadCommunityAllowlist(): Set<string> | null {
+  try {
+    if (!fs.existsSync(COMMUNITY_CONFIG_PATH)) return null;
+    const data = JSON.parse(fs.readFileSync(COMMUNITY_CONFIG_PATH, 'utf8'));
+    if (Array.isArray(data.packages)) {
+      return new Set(data.packages as string[]);
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Scan built-in packages directory for available providers.
@@ -177,7 +195,17 @@ async function getPackages(): Promise<MarketplacePackage[]> {
     packageMap.set(pkg.name, pkg);
   }
 
-  cachedPackages = Array.from(packageMap.values());
+  let allPackages = Array.from(packageMap.values());
+
+  // Filter by community.json allowlist (if it exists)
+  const allowlist = loadCommunityAllowlist();
+  if (allowlist) {
+    allPackages = allPackages.filter(
+      (pkg) => allowlist.has(pkg.name) || pkg.status === 'installed'
+    );
+  }
+
+  cachedPackages = allPackages;
   cacheTimestamp = now;
 
   return cachedPackages;
