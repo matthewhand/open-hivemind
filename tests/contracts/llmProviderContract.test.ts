@@ -68,11 +68,11 @@ jest.mock('@config/flowiseConfig', () => ({
   default: { get: jest.fn(() => '') },
 }));
 
-jest.mock('@integrations/flowise/flowiseRestClient', () => ({
+jest.mock('@hivemind/llm-flowise/flowiseRestClient', () => ({
   getFlowiseResponse: jest.fn().mockResolvedValue('flowise rest response'),
 }));
 
-jest.mock('@integrations/flowise/flowiseSdkClient', () => ({
+jest.mock('@hivemind/llm-flowise/flowiseSdkClient', () => ({
   getFlowiseSdkResponse: jest.fn().mockResolvedValue('flowise sdk response'),
 }));
 

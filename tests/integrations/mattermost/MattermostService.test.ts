@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { container } from 'tsyringe';
-import { MattermostService } from '@src/integrations/mattermost/MattermostService';
+import { MattermostService } from '@hivemind/message-mattermost/MattermostService';
 import { StartupGreetingService } from '@src/services/StartupGreetingService';
 
 jest.mock('tsyringe', () => ({
@@ -17,7 +17,7 @@ class MockStartupGreetingService {
   emit() {}
 }
 
-jest.mock('@src/integrations/mattermost/mattermostClient', () => {
+jest.mock('@hivemind/message-mattermost/mattermostClient', () => {
   return class MockMattermostClient {
     constructor() {}
     connect = jest.fn().mockResolvedValue(undefined);
