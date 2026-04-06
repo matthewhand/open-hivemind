@@ -4,7 +4,7 @@ import Card from '../components/DaisyUI/Card';
 import Badge from '../components/DaisyUI/Badge';
 import Button from '../components/DaisyUI/Button';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
-import { LanguageIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
+import { Languages as LanguageIcon, Globe as GlobeAltIcon } from 'lucide-react';
 
 type Language = 'en' | 'es' | 'fr' | 'de' | 'zh';
 

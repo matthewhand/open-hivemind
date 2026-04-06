@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import {
-  LinkIcon,
-  PlusIcon,
-  WrenchScrewdriverIcon,
-} from '@heroicons/react/24/outline';
-import { RefreshCw } from 'lucide-react';
+  RefreshCw,
+  Link2 as LinkIcon,
+  Plus as PlusIcon,
+  Wrench as WrenchScrewdriverIcon,
+} from 'lucide-react';
 import { Alert } from './DaisyUI/Alert';
 import Badge from './DaisyUI/Badge';
 import Button from './DaisyUI/Button';

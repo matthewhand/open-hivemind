@@ -5,11 +5,11 @@ import Badge from '../components/DaisyUI/Badge';
 import { Progress } from '../components/DaisyUI/Loading';
 import { Alert } from '../components/DaisyUI/Alert';
 import {
-  SparklesIcon,
-  PlayIcon,
-  PauseIcon,
-} from '@heroicons/react/24/outline';
-import { RefreshCw } from 'lucide-react';
+  RefreshCw,
+  Sparkles as SparklesIcon,
+  Play as PlayIcon,
+  Pause as PauseIcon,
+} from 'lucide-react';
 
 export interface SimpleAnimation {
   id: string;

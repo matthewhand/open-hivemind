@@ -5,12 +5,12 @@ import Button from './DaisyUI/Button';
 import { Alert } from './DaisyUI/Alert';
 import Timeline from './DaisyUI/Timeline';
 import {
-  ClockIcon,
-  UserIcon,
-  CogIcon,
-  ExclamationTriangleIcon,
-  CheckCircleIcon,
-} from '@heroicons/react/24/outline';
+  Clock as ClockIcon,
+  User as UserIcon,
+  Settings as CogIcon,
+  AlertTriangle as ExclamationTriangleIcon,
+  CheckCircle as CheckCircleIcon,
+} from 'lucide-react';
 
 export interface TimelineEvent {
   id: string;

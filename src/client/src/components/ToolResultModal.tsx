@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import {
-  ClipboardDocumentIcon,
-  ArrowDownTrayIcon,
-  CheckIcon,
-  ExclamationTriangleIcon,
-} from '@heroicons/react/24/outline';
+  ClipboardCopy as ClipboardDocumentIcon,
+  Download as ArrowDownTrayIcon,
+  Check as CheckIcon,
+  AlertTriangle as ExclamationTriangleIcon,
+} from 'lucide-react';
 import Modal from './DaisyUI/Modal';
 import Mockup from './DaisyUI/Mockup';
 import { Alert } from './DaisyUI/Alert';

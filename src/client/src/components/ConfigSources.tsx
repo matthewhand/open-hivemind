@@ -14,12 +14,12 @@ import Textarea from './DaisyUI/Textarea';
 import DataTable from './DaisyUI/DataTable';
 import { Loading } from './DaisyUI/Loading';
 import {
-  Cog6ToothIcon,
-  CodeBracketIcon,
-  LockClosedIcon,
-  ChevronDownIcon,
-} from '@heroicons/react/24/outline';
-import { RefreshCw } from 'lucide-react';
+  RefreshCw,
+  Settings as Cog6ToothIcon,
+  Code as CodeBracketIcon,
+  Lock as LockClosedIcon,
+  ChevronDown as ChevronDownIcon,
+} from 'lucide-react';
 import { apiService } from '../services/api';
 import type { ConfigSourcesResponse } from '../services/api';
 
