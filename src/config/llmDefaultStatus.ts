@@ -4,6 +4,8 @@ export interface LlmDefaultProviderSummary {
   id: string;
   name: string;
   type: string;
+  source?: 'system' | 'bot-env';
+  hasApiKey?: boolean;
 }
 
 export interface LlmDefaultStatus {
@@ -37,11 +39,20 @@ export const getLlmDefaultStatus = (): LlmDefaultStatus => {
   const providers = providerManager
     .getAllProviders('llm')
     .filter(provider => provider.enabled)
-    .map(provider => ({
-      id: provider.id,
-      name: provider.name,
-      type: provider.type,
-    }));
+    .map(provider => {
+      // Determine if this is a system default or bot-env provider
+      const isBotEnv = provider.id.startsWith('bot-');
+      // Check if provider has an API key configured
+      const config = provider.config || {};
+      const hasApiKey = !!(config.apiKey || config.api_key || config.token);
+      return {
+        id: provider.id,
+        name: provider.name,
+        type: provider.type,
+        source: isBotEnv ? 'bot-env' as const : 'system' as const,
+        hasApiKey,
+      };
+    });
 
   return {
     configured: providers.length > 0,

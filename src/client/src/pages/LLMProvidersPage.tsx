@@ -360,14 +360,19 @@ const LLMProvidersPage: React.FC = () => {
             <p className="text-xs opacity-60 mb-3">
               Fallback loaded from environment variables. Used when no profile is assigned.
             </p>
-            {defaultStatus?.providers?.map((p: any) => (
+            {defaultStatus?.providers?.filter((p: any) => p?.source !== 'bot-env').map((p: any) => (
               <div key={p?.id} className="flex items-center gap-2 p-2 bg-base-200/50 rounded text-sm">
                 {getProviderIcon(p?.type)}
                 <span className="font-medium">{decodeHtmlEntities(p?.name || 'Unnamed')}</span>
+                {p?.hasApiKey === false && (
+                  <Tooltip content={`No API key detected for ${decodeHtmlEntities(p?.name || 'this provider')}. Set ${p?.type?.toUpperCase()}_API_KEY in your .env file or the provider will fail at runtime.`} position="top">
+                    <WarningIcon className="w-4 h-4 text-warning cursor-help" />
+                  </Tooltip>
+                )}
                 <Badge variant="neutral" size="small" className="ml-auto">Read-Only</Badge>
               </div>
             ))}
-            {(!defaultStatus?.providers?.length) && (
+            {(!defaultStatus?.providers?.filter((p: any) => p?.source !== 'bot-env').length) && (
               <Alert status="warning" className="text-xs p-2">
                 <WarningIcon className="w-4 h-4" />
                 <span>No default provider in .env. Bots without a profile will fail.</span>
