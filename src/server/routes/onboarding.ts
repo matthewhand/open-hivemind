@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { createLogger } from '../../common/StructuredLogger';
+import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 import { BotManager } from '../../managers/BotManager';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { EmptyBodySchema, OnboardingStepSchema } from '../../validation/schemas/onboardingSchema';
@@ -34,10 +35,12 @@ router.get(
         return res.json(ApiResponse.success({ completed: true, step: 5 }));
       }
 
-      // Auto-detect completion: if bots exist, onboarding is implicitly done
+      // Auto-detect completion: require BOTH bots AND a configured LLM provider.
+      // This prevents marking as "done" when env-var bots exist but no LLM key is set.
       const manager = await BotManager.getInstance();
       const bots = await manager.getAllBots();
-      if (bots.length > 0) {
+      const llmStatus = getLlmDefaultStatus();
+      if (bots.length > 0 && llmStatus.configured) {
         onboardingCompleted = true;
         return res.json(ApiResponse.success({ completed: true, step: 5 }));
       }

@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Cpu, Rocket } from 'lucide-react';
 import Dashboard from '../../components/Dashboard';
 import { apiService } from '../../services/api';
+import { Alert } from '../../components/DaisyUI/Alert';
+import Button from '../../components/DaisyUI/Button';
 import Toggle from '../../components/DaisyUI/Toggle';
 import Carousel from '../../components/DaisyUI/Carousel';
 import DashboardWidgetSystem from '../../components/DaisyUI/DashboardWidgetSystem';
@@ -9,6 +12,7 @@ import DashboardWidgetSystem from '../../components/DaisyUI/DashboardWidgetSyste
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const [checked, setChecked] = useState(false);
+  const [needsSetup, setNeedsSetup] = useState(false);
 
   // Track preference for widget vs static layout
   const [useWidgetLayout, setUseWidgetLayout] = useState(() => {
@@ -29,6 +33,15 @@ const DashboardPage: React.FC = () => {
           navigate('/onboarding', { replace: true });
           return;
         }
+
+        // Even if onboarding is "completed", check if LLM is actually configured.
+        // This catches the case where bots exist from env but no LLM key is set.
+        try {
+          const llm = await apiService.get<any>('/api/config/llm-status');
+          if (!llm?.defaultConfigured) {
+            setNeedsSetup(true);
+          }
+        } catch { /* proceed normally */ }
       } catch {
         // If the endpoint is unavailable, proceed to dashboard normally
       }
@@ -64,6 +77,22 @@ const DashboardPage: React.FC = () => {
 
   return (
     <div>
+      {/* Incomplete setup prompt */}
+      {needsSetup && (
+        <div className="max-w-7xl mx-auto px-4 pt-4">
+          <Alert status="warning" className="shadow-lg" onClose={() => setNeedsSetup(false)}>
+            <Cpu className="w-5 h-5 shrink-0" />
+            <div className="flex-1">
+              <strong>Setup incomplete</strong> — no LLM provider is configured yet. Your bots won't be able to generate responses.
+            </div>
+            <Button variant="primary" size="sm" onClick={() => navigate('/onboarding')}>
+              <Rocket className="w-4 h-4 mr-1" />
+              Run Setup Wizard
+            </Button>
+          </Alert>
+        </div>
+      )}
+
       <div className="flex justify-end items-center mb-4 px-4 gap-3 bg-base-100/50 p-2 rounded-lg shadow-sm w-fit ml-auto">
         <span className="text-sm font-medium opacity-80">Static Layout</span>
         <Toggle
