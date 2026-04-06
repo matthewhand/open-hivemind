@@ -10,6 +10,7 @@ import {
   Code as CodeBracketIcon,
   Info as InformationCircleIcon,
 } from 'lucide-react';
+import PageHeader from '../components/DaisyUI/PageHeader';
 import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
 import { Alert } from '../components/DaisyUI/Alert';
 import { Badge } from '../components/DaisyUI/Badge';
@@ -351,12 +352,11 @@ const MCPToolsTestingPage: React.FC = () => {
 
   return (
     <div className="p-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">MCP Tools Testing</h1>
-        <p className="text-base-content/70">
-          Test MCP tools with custom parameters before using them in bots
-        </p>
-      </div>
+      <PageHeader
+        title="MCP Tools Testing"
+        description="Test MCP tools with custom parameters before using them in bots"
+        icon={WrenchScrewdriverIcon}
+      />
 
       {alert && (
         <div className="mb-6">

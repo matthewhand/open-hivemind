@@ -92,9 +92,9 @@ const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) =>
           <Tabs variant="lifted"
             tabs={[
               { key: 'overview', label: 'Overview' },
-              { key: 'used', label: `Used Components (${stats.usedComponents})` },
-              { key: 'unused', label: `Unused (${stats.unusedComponents.length})` },
-              { key: 'suggestions', label: `Suggestions (${suggestions.length})` },
+              { key: 'used', label: `Used Components (${stats.usedComponents})`, color: 'success' as const },
+              { key: 'unused', label: `Unused (${stats.unusedComponents.length})`, color: 'warning' as const },
+              { key: 'suggestions', label: `Suggestions (${suggestions.length})`, color: 'info' as const },
               { key: 'categories', label: 'By Category' },
             ]}
             activeTab={selectedCategory}
