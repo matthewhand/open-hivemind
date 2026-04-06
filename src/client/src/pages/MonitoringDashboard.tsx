@@ -5,17 +5,36 @@ import MetricChart from '../components/Monitoring/MetricChart';
 import AlertPanel from '../components/Monitoring/AlertPanel';
 import EventStream from '../components/Monitoring/EventStream';
 import PerformanceMonitor from '../components/PerformanceMonitor';
+import StatsCards from '../components/DaisyUI/StatsCards';
+import { SkeletonPage } from '../components/DaisyUI/Skeleton';
+import PageHeader from '../components/DaisyUI/PageHeader';
+import { Alert } from '../components/DaisyUI/Alert';
 import Select from '../components/DaisyUI/Select';
-import Debug from 'debug';
-const debug = Debug('app:client:pages:MonitoringDashboard');
+import {
+  Activity,
+  Server,
+  Zap,
+  Bell,
+  Wifi,
+  RefreshCw,
+  Cpu,
+  MemoryStick,
+  Plug,
+  TriangleAlert,
+  Siren,
+  AlertCircle,
+  ArrowUp,
+  MessageSquare,
+} from 'lucide-react';
 
 const MonitoringDashboard: React.FC = () => {
   const { isConnected, connect, disconnect, performanceMetrics, alerts } = useWebSocket();
   const [refreshInterval, setRefreshInterval] = useState(5000);
-  const [_isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     connect();
+    setIsLoading(false);
     return () => {
       disconnect();
     };
@@ -31,68 +50,56 @@ const MonitoringDashboard: React.FC = () => {
     responseTime: 0,
   };
 
-  const statusCards = [
+  const stats = [
     {
+      id: 'system-health',
       title: 'System Health',
-      subtitle: 'Overall Status',
-      status: alerts.some(a => a.level === 'error' || a.level === 'critical') ? 'warning' : 'healthy',
-      metrics: [
-        { label: 'CPU Load', value: currentMetric.cpuUsage, unit: '%' },
-        { label: 'Memory', value: currentMetric.memoryUsage, unit: '%' },
-        { label: 'Active', value: currentMetric.activeConnections, icon: '🔌' }
-      ]
+      value: alerts.some(a => a.level === 'error' || a.level === 'critical') ? 'Warning' : 'Healthy',
+      icon: <Server className="w-8 h-8" />,
+      color: (alerts.some(a => a.level === 'error' || a.level === 'critical') ? 'warning' : 'success') as const,
     },
     {
-      title: 'Message Throughput',
-      subtitle: 'Traffic Analysis',
-      status: 'healthy',
-      metrics: [
-        { label: 'Rate', value: currentMetric.messageRate, unit: '/sec' },
-        { label: 'Latency', value: currentMetric.responseTime, unit: 'ms' },
-        { label: 'Errors', value: currentMetric.errorRate, unit: '%' }
-      ]
+      id: 'message-throughput',
+      title: 'Message Rate',
+      value: `${currentMetric.messageRate}/s`,
+      icon: <Zap className="w-8 h-8" />,
+      color: 'primary' as const,
     },
     {
+      id: 'active-alerts',
       title: 'Active Alerts',
-      subtitle: 'System Notifications',
-      status: alerts.length > 0 ? 'warning' : 'healthy',
-      metrics: [
-        { label: 'Total', value: alerts.length, icon: '🔔' },
-        { label: 'Critical', value: alerts.filter(a => a.level === 'critical').length, icon: '🚨' },
-        { label: 'Warning', value: alerts.filter(a => a.level === 'warning').length, icon: '⚠️' }
-      ]
+      value: alerts.length,
+      icon: <Bell className="w-8 h-8" />,
+      color: (alerts.length > 0 ? 'warning' : 'success') as const,
     },
     {
-      title: 'Connection Status',
-      subtitle: 'WebSocket & API',
-      status: isConnected ? 'healthy' : 'error',
-      metrics: [
-        { label: 'WebSocket', value: isConnected ? 'Connected' : 'Disconnected', icon: isConnected ? '🟢' : '🔴' },
-        { label: 'API', value: 'Online', icon: '🟢' }, // detailed status could be fetched separately
-        { label: 'Uptime', value: '99.9%', icon: '⏱️' }
-      ]
-    }
+      id: 'connection-status',
+      title: 'WebSocket',
+      value: isConnected ? 'Connected' : 'Disconnected',
+      icon: <Wifi className="w-8 h-8" />,
+      color: (isConnected ? 'success' : 'error') as const,
+    },
   ];
 
+  if (isLoading) {
+    return <SkeletonPage statsCount={4} />;
+  }
+
   return (
-    <div className="min-h-screen bg-base-200 p-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-4xl font-bold mb-2">Monitoring Dashboard</h1>
-            <p className="text-lg text-neutral-content/70">
-              Real-time system monitoring and performance metrics
-              {isConnected ? (
-                <span className="text-success ml-2">● Live</span>
-              ) : (
-                <span className="text-error ml-2">● Disconnected</span>
-              )}
-            </p>
-          </div>
-          <div className="flex gap-4">
+      <PageHeader
+        title="Monitoring Dashboard"
+        description="Real-time system monitoring and performance metrics"
+        icon={Activity}
+        gradient="primary"
+        actions={
+          <div className="flex gap-2 items-center">
+            <span className={`text-sm ${isConnected ? 'text-success' : 'text-error'}`}>
+              {isConnected ? '● Live' : '● Disconnected'}
+            </span>
             <Select
-              className="select-bordered"
+              className="select-bordered select-sm"
               value={refreshInterval}
               onChange={(e) => setRefreshInterval(Number(e.target.value))}
             >
@@ -101,33 +108,68 @@ const MonitoringDashboard: React.FC = () => {
               <option value={10000}>10s</option>
               <option value={30000}>30s</option>
             </Select>
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => { disconnect(); connect(); }}
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+          </div>
+        }
+      />
+
+      {/* Connection Error Alert */}
+      {!isConnected && (
+        <Alert status="error">
+          <TriangleAlert className="w-5 h-5" />
+          <span>WebSocket disconnected. Attempting to reconnect...</span>
+        </Alert>
+      )}
+
+      {/* Status Cards */}
+      <StatsCards stats={stats} />
+
+      {/* System Details Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-base-100 rounded-box p-4 shadow">
+          <h3 className="font-semibold mb-3 flex items-center gap-2">
+            <Cpu className="w-4 h-4 text-primary" /> CPU Usage
+          </h3>
+          <div className="flex items-center gap-4">
+            <div className="radial-progress text-primary text-sm font-bold" style={{ '--value': currentMetric.cpuUsage, '--size': '4rem', '--thickness': '0.3rem' } as React.CSSProperties} role="progressbar">
+              {currentMetric.cpuUsage}%
+            </div>
+            <div className="text-sm text-base-content/70">
+              <p>Current CPU load</p>
+              <p className="text-xs text-base-content/50">Threshold: 80%</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-base-100 rounded-box p-4 shadow">
+          <h3 className="font-semibold mb-3 flex items-center gap-2">
+            <MemoryStick className="w-4 h-4 text-secondary" /> Memory Usage
+          </h3>
+          <div className="flex items-center gap-4">
+            <div className="radial-progress text-secondary text-sm font-bold" style={{ '--value': currentMetric.memoryUsage, '--size': '4rem', '--thickness': '0.3rem' } as React.CSSProperties} role="progressbar">
+              {currentMetric.memoryUsage}%
+            </div>
+            <div className="text-sm text-base-content/70">
+              <p>Current memory allocation</p>
+              <p className="text-xs text-base-content/50">Threshold: 90%</p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Status Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {statusCards.map((card, index) => (
-          <StatusCard
-            key={index}
-            title={card.title}
-            subtitle={card.subtitle}
-            status={card.status as any}
-            metrics={card.metrics}
-            refreshInterval={refreshInterval}
-            isLoading={isLoading}
-          />
-        ))}
-      </div>
-
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <MetricChart
           title="CPU Usage"
           data={performanceMetrics.map(m => ({
             timestamp: m.timestamp,
             value: m.cpuUsage,
-            label: 'CPU'
+            label: 'CPU',
           }))}
           type="area"
           color="var(--fallback-er,oklch(var(--er)/1))"
@@ -139,7 +181,7 @@ const MonitoringDashboard: React.FC = () => {
           data={performanceMetrics.map(m => ({
             timestamp: m.timestamp,
             value: m.memoryUsage,
-            label: 'Memory'
+            label: 'Memory',
           }))}
           type="line"
           color="var(--fallback-p,oklch(var(--p)/1))"
@@ -148,13 +190,13 @@ const MonitoringDashboard: React.FC = () => {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <MetricChart
           title="Message Rate"
           data={performanceMetrics.map(m => ({
             timestamp: m.timestamp,
             value: m.messageRate,
-            label: 'Messages'
+            label: 'Messages',
           }))}
           type="bar"
           color="var(--fallback-su,oklch(var(--su)/1))"
@@ -166,7 +208,7 @@ const MonitoringDashboard: React.FC = () => {
           data={performanceMetrics.map(m => ({
             timestamp: m.timestamp,
             value: m.errorRate,
-            label: 'Errors'
+            label: 'Errors',
           }))}
           type="line"
           color="var(--fallback-wa,oklch(var(--wa)/1))"
@@ -176,9 +218,7 @@ const MonitoringDashboard: React.FC = () => {
       </div>
 
       {/* Performance Monitor */}
-      <div className="mb-8">
-        <PerformanceMonitor />
-      </div>
+      <PerformanceMonitor />
 
       {/* Alerts and Events */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -192,16 +232,16 @@ const MonitoringDashboard: React.FC = () => {
             source: 'System',
             metadata: alert.metadata,
           }))}
-          onAcknowledge={(id) => debug('Acknowledged alert:', id)}
-          onResolve={(id) => debug('Resolved alert:', id)}
-          onDismiss={(id) => debug('Dismissed alert:', id)}
+          onAcknowledge={(id) => { /* handled by AlertPanel */ }}
+          onResolve={(id) => { /* handled by AlertPanel */ }}
+          onDismiss={(id) => { /* handled by AlertPanel */ }}
           maxAlerts={10}
         />
         <EventStream
           maxEvents={20}
           showFilters={true}
           autoScroll={true}
-          onEventClick={(event) => debug('Event clicked:', event)}
+          onEventClick={() => { /* handled by EventStream */ }}
         />
       </div>
     </div>

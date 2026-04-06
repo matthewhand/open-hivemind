@@ -2,7 +2,8 @@
 import {
   LayoutDashboard, Bot, Users, Shield,
   Settings, Cog, Activity, Component, MessageSquare, Brain,
-  Map, Webhook, FileText,
+  Map, Webhook, FileText, Store, BarChart3, ClipboardList,
+  FileDown, HeartPulse, HelpCircle, FileCode,
 } from 'lucide-react';
 import React from 'react';
 
@@ -58,6 +59,13 @@ export const hivemindNavItems: NavItem[] = [
     visible: true,
   },
   {
+    id: 'marketplace',
+    label: 'Marketplace',
+    icon: <NavIcon><Store className="w-4 h-4" /></NavIcon>,
+    path: '/admin/marketplace',
+    visible: true,
+  },
+  {
     id: 'bots-section',
     label: 'Bots',
     icon: <NavIcon><Bot className="w-4 h-4" /></NavIcon>,
@@ -79,6 +87,13 @@ export const hivemindNavItems: NavItem[] = [
     visible: true,
   },
   {
+    id: 'provider-configs',
+    label: 'Provider Configs',
+    icon: <NavIcon><FileCode className="w-4 h-4" /></NavIcon>,
+    path: '/admin/config',
+    visible: true,
+  },
+  {
     id: 'settings',
     label: 'System',
     icon: null as unknown as React.ReactNode,
@@ -92,6 +107,27 @@ export const hivemindNavItems: NavItem[] = [
     path: '/admin/settings',
     visible: true,
   },
+  {
+    id: 'export-import',
+    label: 'Import / Export',
+    icon: <NavIcon><FileDown className="w-4 h-4" /></NavIcon>,
+    path: '/admin/export',
+    visible: true,
+  },
+  {
+    id: 'audit-log',
+    label: 'Audit Log',
+    icon: <NavIcon><ClipboardList className="w-4 h-4" /></NavIcon>,
+    path: '/admin/audit',
+    visible: true,
+  },
+  {
+    id: 'system-health',
+    label: 'System Health',
+    icon: <NavIcon><HeartPulse className="w-4 h-4" /></NavIcon>,
+    path: '/admin/health',
+    visible: true,
+  },
 
   // Settings, Monitoring, Global Defaults all under SYSTEM
   {
@@ -99,6 +135,20 @@ export const hivemindNavItems: NavItem[] = [
     label: 'Monitoring',
     icon: <NavIcon><Activity className="w-4 h-4" /></NavIcon>,
     path: '/admin/monitoring',
+    visible: true,
+  },
+  {
+    id: 'activity-log',
+    label: 'Activity Log',
+    icon: <NavIcon><ClipboardList className="w-4 h-4" /></NavIcon>,
+    path: '/admin/activity',
+    visible: true,
+  },
+  {
+    id: 'analytics',
+    label: 'Analytics',
+    icon: <NavIcon><BarChart3 className="w-4 h-4" /></NavIcon>,
+    path: '/admin/analytics',
     visible: true,
   },
   {
@@ -142,6 +192,27 @@ export const hivemindNavItems: NavItem[] = [
     label: 'API Docs',
     icon: <NavIcon><FileText className="w-4 h-4" /></NavIcon>,
     path: '/admin/api-docs',
+    visible: true,
+  },
+  {
+    id: 'static-pages',
+    label: 'Static Pages',
+    icon: <NavIcon><FileCode className="w-4 h-4" /></NavIcon>,
+    path: '/admin/static',
+    visible: true,
+  },
+  {
+    id: 'specs',
+    label: 'Specs',
+    icon: <NavIcon><FileText className="w-4 h-4" /></NavIcon>,
+    path: '/admin/specs',
+    visible: true,
+  },
+  {
+    id: 'help',
+    label: 'Help & Docs',
+    icon: <NavIcon><HelpCircle className="w-4 h-4" /></NavIcon>,
+    path: '/admin/help',
     visible: true,
   },
 ];
