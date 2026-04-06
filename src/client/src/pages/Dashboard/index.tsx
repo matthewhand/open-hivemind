@@ -9,6 +9,7 @@ import Toggle from '../../components/DaisyUI/Toggle';
 import Carousel from '../../components/DaisyUI/Carousel';
 import DashboardWidgetSystem from '../../components/DaisyUI/DashboardWidgetSystem';
 import WelcomeSplash from '../../components/WelcomeSplash';
+import QuickActions from '../../components/QuickActions';
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -86,6 +87,11 @@ const DashboardPage: React.FC = () => {
 
   return (
     <div>
+      {/* Quick Actions - always at the top */}
+      <div className="px-4 pt-2">
+        <QuickActions onRefresh={() => {}} />
+      </div>
+
       {/* Welcome Splash - shown when config is incomplete */}
       {showWelcome && (
         <div className="max-w-7xl mx-auto px-4 pt-4">
@@ -109,6 +115,10 @@ const DashboardPage: React.FC = () => {
         </div>
       )}
 
+      <div className="mb-8">
+        <Carousel items={carouselItems} autoplay={true} interval={6000} variant="full-width" />
+      </div>
+
       <div className="flex justify-end items-center mb-4 px-4 gap-3 bg-base-100/50 p-2 rounded-lg shadow-sm w-fit ml-auto">
         <span className="text-sm font-medium opacity-80">Static Layout</span>
         <Toggle
@@ -118,10 +128,6 @@ const DashboardPage: React.FC = () => {
           aria-label="Toggle widget dashboard layout"
         />
         <span className="text-sm font-medium text-primary">Widgets Layout</span>
-      </div>
-
-      <div className="mb-8">
-        <Carousel items={carouselItems} autoplay={true} interval={6000} variant="full-width" />
       </div>
 
       {useWidgetLayout ? (
