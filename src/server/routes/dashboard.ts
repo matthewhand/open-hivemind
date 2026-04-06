@@ -352,7 +352,8 @@ router.get('/status', authenticate, requireAdmin, (req, res) => {
         errorCount: ws.getBotStats(bot.name).errorCount,
       }));
 
-    // When demo mode is active, overlay fake stats so the dashboard looks alive
+    // When demo mode is active, return real seeded bots with isDemoMode flag.
+    // The demo bots are already in BotConfigurationManager via DemoModeService.seedDemoConfig().
     let demoMode = false;
     try {
       const demoService = container.resolve(DemoModeService);
@@ -360,21 +361,7 @@ router.get('/status', authenticate, requireAdmin, (req, res) => {
     } catch { /* ignore if DI not ready */ }
 
     if (demoMode) {
-      const demoNames = ['SupportBot', 'SalesAssistant', 'OnboardingHelper', 'AnalyticsBot'];
-      const demoProviders = ['discord', 'slack', 'mattermost', 'webhook'];
-      const demoLlms = ['openai', 'anthropic', 'ollama', 'openai'];
-      const demoBots = demoNames.map((name, i) => ({
-        id: `demo-${name.toLowerCase()}`,
-        name,
-        provider: demoProviders[i],
-        llmProvider: demoLlms[i],
-        status: i < 3 ? 'active' : 'inactive',
-        connected: i < 3,
-        messageCount: Math.floor(200 + Math.random() * 1800),
-        errorCount: Math.floor(Math.random() * 5),
-      }));
-      const fakeUptime = 86400 + Math.floor(Math.random() * 172800); // 1-3 days
-      return res.json(ApiResponse.success({ bots: [...status, ...demoBots], uptime: fakeUptime, isDemoMode: true }));
+      return res.json(ApiResponse.success({ bots: status, uptime: process.uptime(), isDemoMode: true }));
     }
 
     res.json(ApiResponse.success({ bots: status, uptime: process.uptime() }));
