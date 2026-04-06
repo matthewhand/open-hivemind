@@ -22,6 +22,7 @@ const Settings: React.FC = () => {
   const setRefreshInterval = useUIStore((s) => s.setRefreshInterval);
   const setShowKeyboardShortcuts = useUIStore((s) => s.setShowKeyboardShortcuts);
   const setShowTooltips = useUIStore((s) => s.setShowTooltips);
+  const setHintStyle = useUIStore((s) => s.setHintStyle);
   const toggleAutoRefresh = useUIStore((s) => s.toggleAutoRefresh);
   const setDensity = useUIStore((s) => s.setDensity);
   const setSoundEnabled = useUIStore((s) => s.setSoundEnabled);
@@ -44,7 +45,8 @@ const Settings: React.FC = () => {
     cardBorderRadius: ui.cardBorderRadius,
     showTooltips: ui.showTooltips,
     showKeyboardShortcuts: ui.showKeyboardShortcuts,
-  }) as Record<string, unknown>, [ui.theme, ui.autoRefreshEnabled, ui.refreshInterval, ui.animationsEnabled, ui.disable3dEffects, ui.compactDensity, ui.showDescriptions, ui.cardBorderRadius, ui.showTooltips, ui.showKeyboardShortcuts]);
+    hintStyle: ui.hintStyle,
+  }) as Record<string, unknown>, [ui.theme, ui.autoRefreshEnabled, ui.refreshInterval, ui.animationsEnabled, ui.disable3dEffects, ui.compactDensity, ui.showDescriptions, ui.cardBorderRadius, ui.showTooltips, ui.showKeyboardShortcuts, ui.hintStyle]);
 
   const { hasChanges, diff, setOriginalConfig } = useConfigDiff(settingsAsRecord);
 
@@ -111,6 +113,23 @@ const Settings: React.FC = () => {
                   />
                 </label>
                 <p className="text-xs text-base-content/60 mt-1">Show keyboard shortcuts overlay.</p>
+              </div>
+
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Hint & Tip Display Style</span>
+                </label>
+                <Select
+                  className="select-bordered"
+                  size="sm"
+                  value={ui.hintStyle}
+                  onChange={(e) => setHintStyle(e.target.value as UIState['hintStyle'])}
+                >
+                  <option value="icon">Icon Only (Compact)</option>
+                  <option value="text">Icon + Text</option>
+                  <option value="full">Full Card (Detailed)</option>
+                </Select>
+                <p className="text-xs text-base-content/60 mt-1">Control how helpful hints and tips are displayed throughout the UI.</p>
               </div>
 
               <div className="form-control">

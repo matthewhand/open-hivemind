@@ -23,6 +23,7 @@ export interface UIState {
   refreshInterval: number;
   showTooltips: boolean;
   showKeyboardShortcuts: boolean;
+  hintStyle: 'icon' | 'text' | 'full';
   sidebarWidth: number;
   isMobile: boolean;
   isTablet: boolean;
@@ -94,6 +95,7 @@ export interface UIActions {
   toggleAutoRefresh: () => void;
   setShowTooltips: (show: boolean) => void;
   setShowKeyboardShortcuts: (show: boolean) => void;
+  setHintStyle: (style: UIState['hintStyle']) => void;
   setErrorReportingEnabled: (enabled: boolean) => void;
   initializeFromLocalStorage: () => void;
   handleResize: (viewport: { width: number; height: number }) => void;
@@ -119,6 +121,7 @@ const getInitialState = (): UIState => ({
   refreshInterval: 5000,
   showTooltips: true,
   showKeyboardShortcuts: true,
+  hintStyle: 'full',
   sidebarWidth: 280,
   isMobile: false,
   isTablet: false,
@@ -347,6 +350,11 @@ export const useUIStore = create<UIState & UIActions>((set, get) => ({
     localStorage.setItem('showKeyboardShortcuts', showKeyboardShortcuts.toString());
   },
 
+  setHintStyle: (hintStyle) => {
+    set({ hintStyle });
+    localStorage.setItem('hintStyle', hintStyle);
+  },
+
   setErrorReportingEnabled: (errorReportingEnabled) => {
     set({ errorReportingEnabled });
     localStorage.setItem('errorReportingEnabled', errorReportingEnabled.toString());
@@ -375,6 +383,7 @@ export const useUIStore = create<UIState & UIActions>((set, get) => ({
       ['refreshInterval', 'refreshInterval', 'int'],
       ['showTooltips', 'showTooltips', 'bool'],
       ['showKeyboardShortcuts', 'showKeyboardShortcuts', 'bool'],
+      ['hintStyle', 'hintStyle', 'str'],
       ['sidebarWidth', 'sidebarWidth', 'int'],
     ];
 
@@ -434,3 +443,4 @@ export const selectLoadingStates = (s: UIState) => s.loadingStates;
 export const selectFeatureFlags = (s: UIState) => s.featureFlags;
 export const selectAutoRefreshEnabled = (s: UIState) => s.autoRefreshEnabled;
 export const selectRefreshInterval = (s: UIState) => s.refreshInterval;
+export const selectHintStyle = (s: UIState) => s.hintStyle;
