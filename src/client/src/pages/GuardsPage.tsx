@@ -486,6 +486,7 @@ const GuardsPage: React.FC = () => {
           </Button>
         </div>
       ) : (
+        <>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {paginatedProfiles.map(profile => (
             <Card
@@ -571,6 +572,7 @@ const GuardsPage: React.FC = () => {
             style="standard"
           />
         </div>
+        </>
       )}
 
       {/* Guard Profile Detail Drawer */}
