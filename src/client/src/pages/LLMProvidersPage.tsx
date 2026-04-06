@@ -364,15 +364,19 @@ const LLMProvidersPage: React.FC = () => {
               <div key={p?.id} className="flex items-center gap-2 p-2 bg-base-200/50 rounded text-sm">
                 {getProviderIcon(p?.type)}
                 <span className="font-medium">{decodeHtmlEntities(p?.name || 'Unnamed')}</span>
-                {p?.hasApiKey === false && (
+                {p?.hasApiKey ? (
+                  <Tooltip content={`${p?.type?.toUpperCase()}_API_KEY is configured.`} position="top">
+                    <CheckIcon className="w-4 h-4 text-success cursor-help" />
+                  </Tooltip>
+                ) : !defaultChatbotProfile ? (
                   <Tooltip content={`No API key detected for ${decodeHtmlEntities(p?.name || 'this provider')}. Set ${p?.type?.toUpperCase()}_API_KEY in your .env file or the provider will fail at runtime.`} position="top">
                     <WarningIcon className="w-4 h-4 text-warning cursor-help" />
                   </Tooltip>
-                )}
+                ) : null}
                 <Badge variant="neutral" size="small" className="ml-auto">Read-Only</Badge>
               </div>
             ))}
-            {(!defaultStatus?.providers?.filter((p: any) => p?.source !== 'bot-env').length) && (
+            {(!defaultStatus?.providers?.filter((p: any) => p?.source !== 'bot-env').length) && !defaultChatbotProfile && (
               <Alert status="warning" className="text-xs p-2">
                 <WarningIcon className="w-4 h-4" />
                 <span>No default provider in .env. Bots without a profile will fail.</span>
