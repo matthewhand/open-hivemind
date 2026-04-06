@@ -152,9 +152,7 @@ const Dashboard: React.FC = () => {
         {/* Main Content Skeleton */}
         <div className="max-w-7xl mx-auto px-4 py-8">
           {/* Quick Actions Skeleton */}
-          <div className="mb-8">
-            <div className="skeleton h-12 w-full rounded"></div>
-          </div>
+          <div className="skeleton h-12 w-full rounded-xl mb-4"></div>
 
           {/* Bot Cards Grid Skeleton */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
@@ -245,14 +243,12 @@ const Dashboard: React.FC = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Quick Actions */}
+        <QuickActions onRefresh={fetchData} />
+
         {/* Announcement Banner */}
         <AnnouncementBanner />
         <TipRotator className="mb-4 px-2" />
-
-        {/* Quick Actions */}
-        <div className="mb-8">
-          <QuickActions onRefresh={fetchData} />
-        </div>
 
         {/* Quick Links — always visible navigation shortcuts */}
         <Card className="mb-8" title="Quick Links">
