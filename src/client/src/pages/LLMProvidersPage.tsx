@@ -20,7 +20,6 @@ import {
   CheckCircle as CheckIcon,
   XCircle as XIcon,
   AlertCircle as WarningIcon,
-  Zap as ZapIcon,
   MessageSquare as ChatIcon,
   Cpu as CpuIcon,
   Trash2 as DeleteIcon,
@@ -454,57 +453,36 @@ const LLMProvidersPage: React.FC = () => {
 
       {perUseCaseEnabled && (
         <div className="space-y-6">
-          {/* WebUI Intelligence - shown inside per-use-case section */}
-          <Card compact className="bg-base-100 shadow-sm border border-base-200">
-            <h3 className="font-bold flex items-center gap-2 mb-1">
-              <ZapIcon className="w-4 h-4 text-warning" /> WebUI Intelligence
-            </h3>
-            <p className="text-xs opacity-60 mb-3">
-              Powers AI assistance features inside the WebUI (e.g. generating bot names).
-            </p>
-            <div className="form-control w-full">
-              <Select
-                className="select-bordered"
-                size="sm"
-                value={webuiIntelligenceProvider}
-                onChange={async (e) => {
-                  setWebuiIntelligenceProvider(e.target.value);
-                  await saveGlobal({ webuiIntelligenceProvider: e.target.value }).catch(() => {});
-                }}
-                disabled={loading} aria-busy={loading}
-              >
-                <option value="">None (Disabled)</option>
-                {chatProfiles.map((p) => (
-                  <option key={p?.key} value={p?.key}>{decodeHtmlEntities(p?.name || 'Unnamed')} ({decodeHtmlEntities(p?.provider || 'Unknown')})</option>
-                ))}
-              </Select>
-            </div>
-          </Card>
-
-          {/* Task Profile Assignments */}
+          {/* Task Profile Assignments (includes WebUI AI as a task) */}
           <Card compact className="bg-base-100 shadow-sm border border-base-200">
             <div className="space-y-3">
               <h3 className="font-bold text-sm">Task Profile Assignments</h3>
               <p className="text-xs opacity-60">
                 Assign a profile to each task. Tasks without a profile will use the default provider.
               </p>
-              {(['semantic', 'summary', 'followup', 'idle'] as const).map((task) => (
+              {(['semantic', 'summary', 'followup', 'idle', 'webui'] as const).map((task) => (
                 <div key={task} className="flex items-center gap-3">
-                  <label className="w-28 text-sm capitalize">{task}</label>
+                  <label className="w-28 text-sm capitalize">{task === 'webui' ? 'WebUI AI' : task}</label>
                   <Select
                     className="select-bordered flex-1"
                     size="sm"
-                    value={taskProfiles[task] || ''}
+                    value={task === 'webui' ? (webuiIntelligenceProvider || '') : (taskProfiles[task] || '')}
                     onChange={async (e) => {
-                      const updated = { ...taskProfiles, [task]: e.target.value || undefined };
-                      if (!e.target.value) delete updated[task];
-                      setTaskProfiles(updated);
-                      await saveGlobal({ taskProfiles: updated }).catch(() => {});
+                      if (task === 'webui') {
+                        setWebuiIntelligenceProvider(e.target.value);
+                        await saveGlobal({ webuiIntelligenceProvider: e.target.value }).catch(() => {});
+                      } else {
+                        const updated = { ...taskProfiles, [task]: e.target.value || undefined };
+                        if (!e.target.value) delete updated[task];
+                        setTaskProfiles(updated);
+                        await saveGlobal({ taskProfiles: updated }).catch(() => {});
+                      }
                     }}
+                    disabled={loading} aria-busy={loading}
                   >
                     <option value="">— Default —</option>
-                    {profiles.map((p: any) => (
-                      <option key={p.key} value={p.key}>{decodeHtmlEntities(p.name)}</option>
+                    {(task === 'webui' ? chatProfiles : profiles).map((p: any) => (
+                      <option key={p?.key} value={p?.key}>{decodeHtmlEntities(p?.name || 'Unnamed')}{task === 'webui' ? ` (${decodeHtmlEntities(p?.provider || 'Unknown')})` : ''}</option>
                     ))}
                   </Select>
                 </div>
