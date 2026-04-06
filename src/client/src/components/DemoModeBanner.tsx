@@ -10,6 +10,8 @@ interface DemoStatus {
     botCount: number;
     conversationCount: number;
     messageCount: number;
+    isSimulationRunning?: boolean;
+    simulationStartTime?: number;
     message?: string;
 }
 
@@ -58,6 +60,12 @@ const DemoModeBanner: React.FC = () => {
                     <div className="text-sm opacity-80">
                         <span className="mr-3">🤖 {demoStatus.botCount} Demo Bots</span>
                         <span className="mr-3">💬 {demoStatus.conversationCount} Conversations</span>
+                        {demoStatus.isSimulationRunning && (
+                            <span className="mr-3 text-green-200">
+                                📊 Live Simulation
+                                <span className="inline-block w-2 h-2 bg-green-400 rounded-full ml-1 animate-pulse"></span>
+                            </span>
+                        )}
                     </div>
 
                     <button
@@ -76,6 +84,15 @@ const DemoModeBanner: React.FC = () => {
                     Settings
                 </a>
                 {' '}to enable production mode with real AI responses.
+                {demoStatus.isSimulationRunning && (
+                    <span className="ml-4">
+                        🎯 Check the{' '}
+                        <a href="/monitoring" className="underline hover:opacity-100">
+                            Monitoring Dashboard
+                        </a>
+                        {' '}to see live simulated activity!
+                    </span>
+                )}
             </div>
         </div>
     );

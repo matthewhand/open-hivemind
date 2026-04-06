@@ -423,6 +423,8 @@ export class DemoModeService {
     botCount: number;
     conversationCount: number;
     messageCount: number;
+    isSimulationRunning: boolean;
+    simulationStartTime: number;
   } {
     let messageCount = 0;
     this.conversations.forEach((conv) => {
@@ -434,6 +436,8 @@ export class DemoModeService {
       botCount: this.demoBots.length,
       conversationCount: this.conversations.size,
       messageCount,
+      isSimulationRunning: this.activitySimulator.isRunning,
+      simulationStartTime: this.activitySimulator.simulationStartTime,
     };
   }
 
@@ -461,6 +465,13 @@ export class DemoModeService {
     // Simulate message flow events every 2-8 seconds
     this.simulationInterval = setInterval(() => {
       this.generateMessageFlowEvent();
+      
+      // Occasionally generate conversation threads (5% chance)
+      if (Math.random() < 0.05 && this.demoBots.length > 0) {
+        const bot = this.demoBots[Math.floor(Math.random() * this.demoBots.length)];
+        const channelId = bot.discord?.channelId || bot.slack?.channelId || 'demo-channel';
+        this.generateConversationThread(channelId, bot.name);
+      }
     }, Math.random() * 6000 + 2000);
 
     // Generate performance metrics every 5 seconds
@@ -471,6 +482,15 @@ export class DemoModeService {
 
     // Generate initial data
     this.generateInitialSimulationData();
+    
+    // Generate an initial conversation thread after 10 seconds
+    if (this.demoBots.length > 0) {
+      setTimeout(() => {
+        const bot = this.demoBots[0];
+        const channelId = bot.discord?.channelId || bot.slack?.channelId || 'demo-channel';
+        this.generateConversationThread(channelId, bot.name);
+      }, 10000);
+    }
   }
 
   /**
@@ -551,20 +571,11 @@ export class DemoModeService {
   private createMessageFlowEvent(timestamp?: string): MessageFlowEvent {
     const bot = this.demoBots[Math.floor(Math.random() * this.demoBots.length)];
     const isIncoming = Math.random() > 0.4; // 60% outgoing, 40% incoming
-    const processingTime = Math.random() * 2000 + 100; // 100-2100ms
+    const processingTime = this.generateRealisticProcessingTime();
     const hasError = Math.random() < 0.05; // 5% error rate
     
-    const userNames = ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve', 'Frank', 'Grace', 'Henry'];
-    const messageContents = [
-      'Hello, how can I help you today?',
-      'What are the latest updates?',
-      'Can you explain how this works?',
-      'Thanks for the information!',
-      'I need help with configuration',
-      'What features are available?',
-      'How do I get started?',
-      'This is really helpful!'
-    ];
+    const scenario = this.selectMessageScenario();
+    const contentLength = scenario.content.length;
 
     return {
       id: `demo-msg-${Date.now()}-${crypto.randomUUID()}`,
@@ -573,13 +584,130 @@ export class DemoModeService {
       provider: bot.messageProvider,
       llmProvider: bot.llmProvider,
       channelId: bot.discord?.channelId || bot.slack?.channelId || 'demo-channel',
-      userId: `user-${Math.floor(Math.random() * 1000)}`,
+      userId: scenario.userId,
       messageType: isIncoming ? 'incoming' : 'outgoing',
-      contentLength: messageContents[Math.floor(Math.random() * messageContents.length)].length,
+      contentLength,
       processingTime: isIncoming ? undefined : processingTime,
       status: hasError ? 'error' : (processingTime > 1500 ? 'timeout' : 'success'),
-      errorMessage: hasError ? 'Simulated processing error' : undefined,
+      errorMessage: hasError ? this.generateErrorMessage() : undefined,
     };
+  }
+
+  /**
+   * Generate realistic processing times based on message complexity
+   */
+  private generateRealisticProcessingTime(): number {
+    // Simulate different processing complexities
+    const complexity = Math.random();
+    if (complexity < 0.6) {
+      // Simple responses: 100-500ms
+      return Math.random() * 400 + 100;
+    } else if (complexity < 0.9) {
+      // Complex responses: 500-1500ms
+      return Math.random() * 1000 + 500;
+    } else {
+      // Very complex responses: 1500-3000ms
+      return Math.random() * 1500 + 1500;
+    }
+  }
+
+  /**
+   * Select a realistic message scenario
+   */
+  private selectMessageScenario(): { content: string; userId: string; userName: string } {
+    const scenarios = [
+      // Help and support scenarios
+      {
+        content: "Hello! I'm new to Open-Hivemind. Can you help me get started?",
+        userId: 'user-001',
+        userName: 'NewUser_Alice'
+      },
+      {
+        content: "Thanks for the detailed explanation! That really helps me understand how the multi-agent system works.",
+        userId: 'user-002', 
+        userName: 'DevBob'
+      },
+      {
+        content: "What's the difference between using OpenAI vs Flowise as the LLM provider?",
+        userId: 'user-003',
+        userName: 'TechEnthusiast'
+      },
+      // Configuration scenarios
+      {
+        content: "I'm having trouble connecting my Discord bot. The token seems correct but it's not responding.",
+        userId: 'user-004',
+        userName: 'DiscordAdmin'
+      },
+      {
+        content: "How do I set up multiple bots to work in different Slack channels simultaneously?",
+        userId: 'user-005',
+        userName: 'SlackManager'
+      },
+      // Feature exploration
+      {
+        content: "The MCP integration looks interesting. Can you show me some examples of what tools I can connect?",
+        userId: 'user-006',
+        userName: 'IntegrationExplorer'
+      },
+      {
+        content: "I love how the WebUI shows real-time activity! Is there a way to export these metrics?",
+        userId: 'user-007',
+        userName: 'DataAnalyst'
+      },
+      // Positive feedback
+      {
+        content: "This platform is exactly what I was looking for! The multi-platform support is fantastic.",
+        userId: 'user-008',
+        userName: 'HappyUser'
+      },
+      {
+        content: "The demo mode is really well done - I can see the potential without having to configure everything first.",
+        userId: 'user-009',
+        userName: 'Evaluator'
+      },
+      // Technical questions
+      {
+        content: "What's the recommended setup for high-volume message processing? Any performance tips?",
+        userId: 'user-010',
+        userName: 'ScaleSeeker'
+      },
+      {
+        content: "Can I use custom personas for different types of conversations? How granular can I get?",
+        userId: 'user-011',
+        userName: 'PersonaDesigner'
+      },
+      // Quick interactions
+      {
+        content: "Thanks!",
+        userId: 'user-012',
+        userName: 'QuickThanks'
+      },
+      {
+        content: "That worked perfectly!",
+        userId: 'user-013',
+        userName: 'SuccessStory'
+      }
+    ];
+
+    return scenarios[Math.floor(Math.random() * scenarios.length)];
+  }
+
+  /**
+   * Generate realistic error messages
+   */
+  private generateErrorMessage(): string {
+    const errors = [
+      'Rate limit exceeded for LLM provider',
+      'Connection timeout to message platform',
+      'Invalid API key or expired token',
+      'Message processing queue full',
+      'Temporary service unavailable',
+      'Content filter blocked message',
+      'Channel permissions insufficient',
+      'Bot not found in specified channel'
+    ];
+    
+    return errors[Math.floor(Math.random() * errors.length)];
   }
 
   /**
@@ -602,21 +730,45 @@ export class DemoModeService {
     const baseTime = this.activitySimulator.simulationStartTime || Date.now();
     const elapsed = Date.now() - baseTime;
     const cyclePosition = (elapsed / 60000) % 1; // 1-minute cycle
+    const hourOfDay = new Date().getHours();
     
-    // Create realistic fluctuations
-    const cpuBase = 15 + Math.sin(cyclePosition * Math.PI * 2) * 10; // 5-25% with sine wave
-    const memoryBase = 45 + Math.sin(cyclePosition * Math.PI * 4) * 15; // 30-60% with faster cycle
-    const messageRateBase = 2 + Math.sin(cyclePosition * Math.PI * 6) * 1.5; // 0.5-3.5 msgs/sec
+    // Create time-of-day variations (higher activity during business hours)
+    const timeOfDayMultiplier = this.getTimeOfDayMultiplier(hourOfDay);
+    
+    // Create realistic fluctuations with time-based patterns
+    const cpuBase = (15 + Math.sin(cyclePosition * Math.PI * 2) * 10) * timeOfDayMultiplier;
+    const memoryBase = (45 + Math.sin(cyclePosition * Math.PI * 4) * 15) * (0.8 + timeOfDayMultiplier * 0.4);
+    const messageRateBase = (2 + Math.sin(cyclePosition * Math.PI * 6) * 1.5) * timeOfDayMultiplier;
+    
+    // Add some random spikes occasionally
+    const hasSpike = Math.random() < 0.05; // 5% chance of spike
+    const spikeMultiplier = hasSpike ? 1.5 + Math.random() * 0.5 : 1;
     
     return {
       timestamp: timestamp || new Date().toISOString(),
-      responseTime: Math.random() * 500 + 100, // 100-600ms
-      memoryUsage: Math.max(20, Math.min(80, memoryBase + (Math.random() - 0.5) * 10)),
-      cpuUsage: Math.max(5, Math.min(40, cpuBase + (Math.random() - 0.5) * 8)),
-      activeConnections: Math.floor(Math.random() * 5) + 1, // 1-5 connections
-      messageRate: Math.max(0, messageRateBase + (Math.random() - 0.5) * 1),
-      errorRate: Math.random() * 3, // 0-3% error rate
+      responseTime: Math.random() * 500 + 100 + (hasSpike ? 200 : 0), // 100-600ms, +200ms for spikes
+      memoryUsage: Math.max(20, Math.min(85, memoryBase + (Math.random() - 0.5) * 10)),
+      cpuUsage: Math.max(5, Math.min(60, cpuBase * spikeMultiplier + (Math.random() - 0.5) * 8)),
+      activeConnections: Math.floor(Math.random() * 8) + 1, // 1-8 connections
+      messageRate: Math.max(0, messageRateBase * spikeMultiplier + (Math.random() - 0.5) * 1),
+      errorRate: Math.random() * (hasSpike ? 8 : 3), // 0-3% normal, 0-8% during spikes
     };
+  }
+
+  /**
+   * Get time-of-day multiplier for realistic activity patterns
+   */
+  private getTimeOfDayMultiplier(hour: number): number {
+    // Simulate business hours activity (9 AM - 5 PM peak, lower at night)
+    if (hour >= 9 && hour <= 17) {
+      return 1.0 + Math.sin((hour - 9) / 8 * Math.PI) * 0.3; // Peak during business hours
+    } else if (hour >= 18 && hour <= 22) {
+      return 0.7 + Math.random() * 0.3; // Evening activity
+    } else if (hour >= 6 && hour <= 8) {
+      return 0.5 + Math.random() * 0.4; // Morning ramp-up
+    } else {
+      return 0.3 + Math.random() * 0.2; // Night time low activity
+    }
   }
 
   /**
@@ -667,8 +819,115 @@ export class DemoModeService {
   }
 
   /**
-   * Generate a random alert
+   * Generate conversation threads for more realistic demo interactions
    */
+  public generateConversationThread(channelId: string, botName: string): void {
+    const conversationScenarios = [
+      {
+        title: 'Getting Started Help',
+        messages: [
+          { user: 'NewUser_Alice', content: "Hi! I'm new to Open-Hivemind. Can someone help me understand how to set up my first bot?" },
+          { bot: true, content: "Welcome to Open-Hivemind! I'd be happy to help you get started. The easiest way is to begin with our WebUI configuration. What platform would you like to connect your bot to - Discord, Slack, or Mattermost?" },
+          { user: 'NewUser_Alice', content: "I'd like to start with Discord. I have a bot token ready." },
+          { bot: true, content: "Perfect! Here's what you need to do:\n\n1. Go to Configuration > Bots in the WebUI\n2. Click 'Create Bot'\n3. Enter your bot name and select Discord as the message provider\n4. Add your bot token in the Discord configuration section\n5. Choose an LLM provider (OpenAI, Flowise, etc.)\n\nWould you like me to walk you through any of these steps in detail?" },
+          { user: 'NewUser_Alice', content: "That's really helpful! What LLM provider would you recommend for a beginner?" },
+          { bot: true, content: "For beginners, I'd recommend starting with OpenAI - it's well-documented, reliable, and has great performance. You'll need an OpenAI API key, which you can get from platform.openai.com. Alternatively, if you want more control over your AI models, Flowise is excellent for creating custom AI workflows. What's your use case for the bot?" }
+        ]
+      },
+      {
+        title: 'Technical Discussion',
+        messages: [
+          { user: 'DevBob', content: "I'm impressed by the multi-agent orchestration. How does Open-Hivemind handle message routing between different bots?" },
+          { bot: true, content: "Great question! Open-Hivemind uses a sophisticated routing system:\n\n• **Channel-based routing**: Each bot can be configured for specific channels\n• **Load balancing**: Messages can be distributed across multiple bots\n• **Context sharing**: Bots can share conversation context for seamless handoffs\n• **Priority systems**: Different bots can have different response priorities\n\nThe system ensures no message conflicts and maintains conversation coherence." },
+          { user: 'DevBob', content: "That's fascinating! Can bots collaborate on complex tasks?" },
+          { bot: true, content: "Absolutely! That's one of Open-Hivemind's key strengths. Bots can:\n\n🤝 **Collaborate**: Multiple bots can work on different aspects of a problem\n🔄 **Hand off**: Transfer conversations based on expertise\n📊 **Specialize**: Different bots for different domains (support, sales, technical)\n🧠 **Share memory**: Access shared conversation history and context\n\nFor example, a support bot might escalate to a technical bot, which then collaborates with a documentation bot to provide comprehensive answers." }
+        ]
+      },
+      {
+        title: 'Feature Exploration',
+        messages: [
+          { user: 'TechEnthusiast', content: "I see MCP integration mentioned. What kind of tools can I connect?" },
+          { bot: true, content: "MCP (Model Context Protocol) integration opens up amazing possibilities! You can connect:\n\n🔧 **Development Tools**: GitHub, GitLab, Jira, CI/CD pipelines\n📊 **Analytics**: Google Analytics, database queries, reporting tools\n🌐 **APIs**: REST APIs, GraphQL endpoints, webhooks\n📁 **File Systems**: Local files, cloud storage, documentation\n🔍 **Search**: Elasticsearch, vector databases, knowledge bases\n\nEach tool extends your bot's capabilities beyond just conversation!" },
+          { user: 'TechEnthusiast', content: "Can you give me a practical example?" },
+          { bot: true, content: "Sure! Imagine a DevOps bot connected to:\n\n• **GitHub** - Can check PR status, create issues\n• **Monitoring tools** - Gets system metrics, alerts\n• **Deployment systems** - Triggers deployments, rollbacks\n• **Documentation** - Searches internal wikis, creates docs\n\nA user could ask: 'Deploy the latest version of user-service' and the bot would:\n1. Check GitHub for the latest release\n2. Verify system health via monitoring\n3. Trigger deployment\n4. Update documentation\n5. Report back with status\n\nAll through natural conversation!" }
+        ]
+      }
+    ];
+
+    const scenario = conversationScenarios[Math.floor(Math.random() * conversationScenarios.length)];
+    const conversation = this.getOrCreateConversation(channelId, botName);
+    
+    // Add messages with realistic timing
+    scenario.messages.forEach((msg, index) => {
+      setTimeout(() => {
+        if (msg.bot) {
+          this.addMessage(channelId, botName, msg.content, 'outgoing', 'bot-system', botName);
+        } else {
+          this.addMessage(channelId, botName, msg.content, 'incoming', `user-${index}`, msg.user);
+        }
+      }, index * 2000); // 2 second delays between messages
+    });
+  }
+  /**
+   * Get recent activity summary for dashboard display
+   */
+  public getActivitySummary(): {
+    recentMessages: number;
+    activeUsers: number;
+    averageResponseTime: number;
+    systemHealth: 'excellent' | 'good' | 'fair' | 'poor';
+    topChannels: Array<{ channelId: string; messageCount: number }>;
+  } {
+    const recentEvents = this.activitySimulator.messageFlowEvents.filter(
+      event => new Date(event.timestamp) > new Date(Date.now() - 300000) // Last 5 minutes
+    );
+    
+    const recentMetrics = this.activitySimulator.performanceMetrics.slice(-12); // Last minute
+    const avgResponseTime = recentMetrics.length > 0 
+      ? recentMetrics.reduce((sum, m) => sum + m.responseTime, 0) / recentMetrics.length
+      : 0;
+    
+    const avgCpu = recentMetrics.length > 0
+      ? recentMetrics.reduce((sum, m) => sum + m.cpuUsage, 0) / recentMetrics.length
+      : 0;
+    
+    const avgMemory = recentMetrics.length > 0
+      ? recentMetrics.reduce((sum, m) => sum + m.memoryUsage, 0) / recentMetrics.length
+      : 0;
+    
+    // Determine system health based on metrics
+    let systemHealth: 'excellent' | 'good' | 'fair' | 'poor' = 'excellent';
+    if (avgCpu > 50 || avgMemory > 80 || avgResponseTime > 1000) {
+      systemHealth = 'poor';
+    } else if (avgCpu > 35 || avgMemory > 65 || avgResponseTime > 750) {
+      systemHealth = 'fair';
+    } else if (avgCpu > 20 || avgMemory > 50 || avgResponseTime > 500) {
+      systemHealth = 'good';
+    }
+    
+    // Count unique users
+    const uniqueUsers = new Set(recentEvents.map(e => e.userId)).size;
+    
+    // Count messages by channel
+    const channelCounts = new Map<string, number>();
+    recentEvents.forEach(event => {
+      channelCounts.set(event.channelId, (channelCounts.get(event.channelId) || 0) + 1);
+    });
+    
+    const topChannels = Array.from(channelCounts.entries())
+      .map(([channelId, messageCount]) => ({ channelId, messageCount }))
+      .sort((a, b) => b.messageCount - a.messageCount)
+      .slice(0, 5);
+    
+    return {
+      recentMessages: recentEvents.length,
+      activeUsers: uniqueUsers,
+      averageResponseTime: Math.round(avgResponseTime),
+      systemHealth,
+      topChannels
+    };
+  }
+
   private generateRandomAlert(): void {
     const alertTypes = [
       {
