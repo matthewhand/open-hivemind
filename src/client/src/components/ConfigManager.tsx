@@ -10,10 +10,10 @@ import Toggle from './DaisyUI/Toggle';
 import Tooltip from './DaisyUI/Tooltip';
 import { Loading } from './DaisyUI/Loading';
 import {
-  ArrowPathIcon,
   TrashIcon,
   MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
+import { RefreshCw } from 'lucide-react';
 import { useConfigStore } from '../store/configStore';
 import { SkeletonPage } from './DaisyUI/Skeleton';
 import Debug from 'debug';
@@ -139,7 +139,7 @@ const ConfigManager: React.FC = () => {
                   aria-label="Refresh configurations"
                   onClick={() => debug('Refresh configs')}
                 >
-                  <ArrowPathIcon className="w-5 h-5" />
+                  <RefreshCw className="w-5 h-5" />
                 </Button>
               </Tooltip>
             </div>
@@ -254,7 +254,7 @@ const ConfigManager: React.FC = () => {
                     onClick={() => setEditingConfig(mockConfigs[0])}
                     className="flex items-center gap-2"
                   >
-                    <ArrowPathIcon className="w-4 h-4" />
+                    <RefreshCw className="w-4 h-4" />
                     Reset
                   </Button>
                   <Button

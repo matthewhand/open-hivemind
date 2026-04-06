@@ -7,7 +7,6 @@ import Toggle from './DaisyUI/Toggle';
 import Kbd from './DaisyUI/Kbd';
 import { Loading, LoadingSpinner } from './DaisyUI/Loading';
 import {
-  ArrowPathIcon,
   XMarkIcon,
   ArrowDownTrayIcon,
   BeakerIcon,
@@ -15,7 +14,7 @@ import {
   ExclamationCircleIcon,
   InformationCircleIcon,
 } from '@heroicons/react/24/outline';
-import { Keyboard } from 'lucide-react';
+import { Keyboard, RefreshCw } from 'lucide-react';
 import { apiService } from '../services/api';
 
 interface QuickActionsProps {
@@ -172,7 +171,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
             {isLoading('refresh') ? (
               <LoadingSpinner size="sm" />
             ) : (
-              <ArrowPathIcon className="w-5 h-5" />
+              <RefreshCw className="w-5 h-5" />
             )}
             Refresh Dashboard
           </Button>

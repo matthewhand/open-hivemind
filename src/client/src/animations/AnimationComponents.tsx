@@ -8,8 +8,8 @@ import {
   SparklesIcon,
   PlayIcon,
   PauseIcon,
-  ArrowPathIcon,
 } from '@heroicons/react/24/outline';
+import { RefreshCw } from 'lucide-react';
 
 export interface SimpleAnimation {
   id: string;
@@ -134,7 +134,7 @@ const AnimationComponents: React.FC = () => {
                 }));
                 setActiveAnimations(shuffled);
               }} className="btn-warning">
-                <ArrowPathIcon className="w-4 h-4 mr-2" />
+                <RefreshCw className="w-4 h-4 mr-2" />
                 Random
               </Button>
             </div>

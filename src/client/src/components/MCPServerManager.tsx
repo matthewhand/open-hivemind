@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import {
-  ArrowPathIcon,
   LinkIcon,
   PlusIcon,
   WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
+import { RefreshCw } from 'lucide-react';
 import { Alert } from './DaisyUI/Alert';
 import Badge from './DaisyUI/Badge';
 import Button from './DaisyUI/Button';
@@ -153,7 +153,7 @@ const MCPServerManager: React.FC = () => {
           <Button
             variant="ghost"
             onClick={fetchServers}
-            startIcon={<ArrowPathIcon className="w-5 h-5" />}
+            startIcon={<RefreshCw className="w-5 h-5" />}
           >
             Refresh
           </Button>

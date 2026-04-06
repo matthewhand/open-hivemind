@@ -14,12 +14,12 @@ import Textarea from './DaisyUI/Textarea';
 import DataTable from './DaisyUI/DataTable';
 import { Loading } from './DaisyUI/Loading';
 import {
-  ArrowPathIcon,
   Cog6ToothIcon,
   CodeBracketIcon,
   LockClosedIcon,
   ChevronDownIcon,
 } from '@heroicons/react/24/outline';
+import { RefreshCw } from 'lucide-react';
 import { apiService } from '../services/api';
 import type { ConfigSourcesResponse } from '../services/api';
 
@@ -117,7 +117,7 @@ const ConfigSources: React.FC = () => {
           onClick={fetchConfigSources}
           className="flex items-center gap-2"
         >
-          <ArrowPathIcon className="w-5 h-5" />
+          <RefreshCw className="w-5 h-5" />
           Retry
         </Button>
       </Card>
@@ -235,7 +235,7 @@ const ConfigSources: React.FC = () => {
               disabled={loading} aria-busy={loading}
               className="flex items-center gap-2"
             >
-              <ArrowPathIcon className="w-4 h-4" />
+              <RefreshCw className="w-4 h-4" />
               Refresh
             </Button>
           </div>

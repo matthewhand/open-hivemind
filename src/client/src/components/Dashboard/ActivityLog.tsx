@@ -8,7 +8,7 @@ import { SkeletonTimeline } from '../DaisyUI/Skeleton';
 import { Loading } from '../DaisyUI/Loading';
 import Select from '../DaisyUI/Select';
 import Input from '../DaisyUI/Input';
-import { ArrowPathIcon } from '@heroicons/react/24/outline';
+import { RefreshCw } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
 import { useGetActivityQuery } from '../../store/slices/apiSlice';
 import type { ActivityResponse } from '../../services/api';
@@ -70,7 +70,7 @@ const ActivityLog: React.FC = () => {
           <Card.Title>Activity Feed</Card.Title>
           <div className="flex gap-2">
             <Button variant="secondary" className="btn-outline" onClick={() => refetch()} disabled={isFetching}>
-              <ArrowPathIcon className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
               {isFetching ? 'Refreshing…' : 'Refresh'}
             </Button>
             <Button variant="primary" onClick={handleApply}>

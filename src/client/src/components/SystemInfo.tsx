@@ -18,11 +18,11 @@ import { LoadingSpinner } from './DaisyUI/Loading';
 import { ConfirmModal } from './DaisyUI/Modal';
 import {
   ArrowDownTrayIcon,
-  ArrowPathIcon,
   PowerIcon,
   PlayIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
+import { RefreshCw } from 'lucide-react';
 import { useDashboardStore } from '../store/dashboardStore';
 import { apiService } from '../services/api';
 import Debug from 'debug';
@@ -149,7 +149,7 @@ const SystemInfo: React.FC = () => {
               <Tooltip content="Restart System">
                 <Button
                   variant="warning"
-                  startIcon={<ArrowPathIcon className="w-5 h-5" />}
+                  startIcon={<RefreshCw className="w-5 h-5" />}
                   onClick={() => openConfirmDialog('restart')}
                   disabled={isLoading}
                 >
