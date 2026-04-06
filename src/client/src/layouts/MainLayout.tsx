@@ -34,7 +34,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     },
     {
       id: 'admin-marketplace',
-      label: 'Package Marketplace',
+      label: 'Community Packages',
       icon: '📦',
       path: '/admin/marketplace',
       visible: true,

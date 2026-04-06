@@ -23,7 +23,7 @@ const ROUTE_LABELS: Record<string, string> = {
   llm: 'LLM',
   memory: 'Memory',
   tool: 'Tool',
-  marketplace: 'Marketplace',
+  marketplace: 'Community',
   mcp: 'MCP',
   servers: 'Servers',
   tools: 'Tools',

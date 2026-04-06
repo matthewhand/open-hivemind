@@ -250,8 +250,8 @@ const MarketplacePage: React.FC = () => {
     <div className="p-6">
       {/* Header */}
       <PageHeader
-        title="Package Marketplace"
-        description="Browse, install, and manage provider packages"
+        title="Community Packages"
+        description="Install community plugins from GitHub — built-in packages are maintained by the core team"
         icon={StoreIcon}
         actions={
           <div className="flex gap-2">
@@ -279,6 +279,12 @@ const MarketplacePage: React.FC = () => {
       {/* Featured Categories Carousel */}
       <div className="mb-6 rounded-xl overflow-hidden">
         <Carousel items={FEATURED_CAROUSEL_ITEMS} autoplay interval={7000} variant="full-width" />
+      </div>
+
+      {/* Community Warning */}
+      <div className="alert alert-warning mb-4 text-sm">
+        <AlertIcon className="w-5 h-5 shrink-0" />
+        <span><strong>Community packages are untested and unverified.</strong> Only install from sources you trust. Community plugins are loaded from GitHub and run with full application privileges.</span>
       </div>
 
       {/* Alert Messages */}
