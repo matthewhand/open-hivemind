@@ -45,6 +45,12 @@ const PACKAGES_DIR = path.resolve(__dirname, '../../../../packages');
 const _PLUGINS_DIR = path.resolve(__dirname, '../../../../plugins');
 const COMMUNITY_CONFIG_PATH = path.resolve(__dirname, '../../../../config/community.json');
 
+const GITHUB_TOPIC = 'open-hivemind-plugin';
+const TRUSTED_REPO = 'matthewhand/open-hivemind'; // Only this specific repo is trusted
+const GITHUB_SEARCH_CACHE_TTL = 300_000; // 5 minutes
+let githubSearchCache: MarketplacePackage[] | null = null;
+let githubSearchCacheTime = 0;
+
 /**
  * Load the allowlist of visible packages from config/community.json.
  * Returns null if the file doesn't exist (show all packages).
@@ -59,6 +65,64 @@ function loadCommunityAllowlist(): Set<string> | null {
     return null;
   } catch {
     return null;
+  }
+}
+
+/**
+ * Search GitHub for public repos tagged with the open-hivemind-plugin topic.
+ * Results are cached for 5 minutes. No auth token needed for public repos.
+ */
+async function searchGitHubPackages(): Promise<MarketplacePackage[]> {
+  const now = Date.now();
+  if (githubSearchCache && now - githubSearchCacheTime < GITHUB_SEARCH_CACHE_TTL) {
+    return githubSearchCache;
+  }
+
+  try {
+    const url = `https://api.github.com/search/repositories?q=topic:${GITHUB_TOPIC}&sort=updated&per_page=50`;
+    const response = await fetch(url, {
+      headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'open-hivemind' },
+    });
+
+    if (!response.ok) {
+      debug('GitHub search failed: %d %s', response.status, response.statusText);
+      return githubSearchCache || [];
+    }
+
+    const data = await response.json() as any;
+    const repos = data.items || [];
+
+    const packages: MarketplacePackage[] = repos.map((repo: any) => {
+      const fullName = repo.full_name || '';
+      const isTrusted = fullName.toLowerCase() === TRUSTED_REPO.toLowerCase();
+
+      // Guess package type from repo name prefix
+      const repoName = repo.name || '';
+      const namePrefix = repoName.split('-')[0];
+      const validTypes = ['llm', 'message', 'memory', 'tool'] as const;
+      const type = validTypes.includes(namePrefix as any)
+        ? (namePrefix as MarketplacePackage['type'])
+        : 'tool';
+
+      return {
+        name: repoName,
+        displayName: repo.name?.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) || repoName,
+        description: repo.description || 'No description',
+        type,
+        version: '0.0.0',
+        status: 'available' as const,
+        trusted: isTrusted,
+        repoUrl: repo.html_url,
+      };
+    });
+
+    githubSearchCache = packages;
+    githubSearchCacheTime = now;
+    debug('GitHub search found %d repos with topic "%s"', packages.length, GITHUB_TOPIC);
+    return packages;
+  } catch (error) {
+    debug('GitHub search error: %s', error);
+    return githubSearchCache || [];
   }
 }
 
@@ -183,14 +247,20 @@ async function getPackages(): Promise<MarketplacePackage[]> {
     return cachedPackages;
   }
 
-  // Cache miss or expired - scan filesystem
-  debug('Cache miss or expired, scanning packages');
+  // Cache miss or expired - scan filesystem + GitHub
+  debug('Cache miss or expired, scanning packages + GitHub');
   const builtIn = await scanBuiltInPackages();
   const installed = await getInstalledPlugins();
+  const githubAvailable = await searchGitHubPackages();
 
-  // Merge: built-in packages take precedence, then installed plugins
+  // Merge: built-in > installed > GitHub available (first wins)
   const packageMap = new Map<string, MarketplacePackage>();
 
+  // GitHub repos go first (lowest priority — overwritten by local)
+  for (const pkg of githubAvailable) {
+    packageMap.set(pkg.name, pkg);
+  }
+  // Then built-in and installed (higher priority, overwrites GitHub)
   for (const pkg of [...builtIn, ...installed]) {
     packageMap.set(pkg.name, pkg);
   }
