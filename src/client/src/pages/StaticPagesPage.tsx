@@ -1,8 +1,9 @@
 import React from 'react';
 import Card from '../components/DaisyUI/Card';
 import Button from '../components/DaisyUI/Button';
+import PageHeader from '../components/DaisyUI/PageHeader';
 
-import { ExternalLink as ArrowTopRightOnSquareIcon, Home as HomeIcon, Clock as ClockIcon, Monitor as ComputerDesktopIcon } from 'lucide-react';
+import { ExternalLink as ArrowTopRightOnSquareIcon, Home as HomeIcon, Clock as ClockIcon, Monitor as ComputerDesktopIcon, FileText } from 'lucide-react';
 
 const StaticPagesPage: React.FC = () => {
 
@@ -36,10 +37,11 @@ const StaticPagesPage: React.FC = () => {
 
   return (
     <div className="p-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Static Pages</h1>
-        <p className="text-base-content/70">Browse and access static HTML pages and resources</p>
-      </div>
+      <PageHeader
+        title="Static Pages"
+        description="Browse and access static HTML pages and resources"
+        icon={FileText}
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {staticPages.map((page) => (

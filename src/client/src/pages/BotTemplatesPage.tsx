@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
-import { Copy, Check, Search, RefreshCw } from 'lucide-react';
+import { Copy, Check, Search, RefreshCw, LayoutTemplate } from 'lucide-react';
 import Carousel from '../components/DaisyUI/Carousel';
+import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
 import useUrlParams from '../hooks/useUrlParams';
 import { apiService } from '../services/api';
@@ -177,22 +178,19 @@ const BotTemplatesPage: React.FC = () => {
 
 
       <div className="mt-4 mb-8">
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">
-              Bot Templates
-            </h1>
-            <p className="text-base-content/70">
-              Quick-start templates to help you create bots faster. Choose a template and customize it for your needs.
-            </p>
-          </div>
-          <Button
-            buttonStyle="outline"
-            onClick={() => navigate('/admin/bots/create')}
-          >
-            Create Custom Bot
-          </Button>
-        </div>
+        <PageHeader
+          title="Bot Templates"
+          description="Quick-start templates to help you create bots faster. Choose a template and customize it for your needs."
+          icon={LayoutTemplate}
+          actions={
+            <Button
+              buttonStyle="outline"
+              onClick={() => navigate('/admin/bots/create')}
+            >
+              Create Custom Bot
+            </Button>
+          }
+        />
 
         {/* Recommended Templates Carousel */}
         {templates.length > 0 && (
