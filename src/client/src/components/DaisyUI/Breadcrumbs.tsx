@@ -174,10 +174,10 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items }) => {
       </script>
       <nav className="breadcrumbs text-sm mb-4" aria-label="Breadcrumb">
         <ul>
-          {/* Home link */}
+          {/* Home link — goes straight to overview, not the splash/loading page */}
           <li>
             <Link
-              to="/"
+              to="/admin/overview"
               className="inline-flex items-center gap-1 text-base-content/60 hover:text-primary transition-colors"
             >
               <HomeIcon className="w-4 h-4" />
