@@ -47,6 +47,13 @@ import { useWebSocket } from '../contexts/WebSocketContext';
 import { useSavedStamp } from '../contexts/SavedStampContext';
 import Select from '../components/DaisyUI/Select';
 
+// Utility function to decode HTML entities
+const decodeHtmlEntities = (text: string): string => {
+  const textarea = document.createElement('textarea');
+  textarea.innerHTML = text;
+  return textarea.value;
+};
+
 type LlmModelType = 'chat' | 'embedding' | 'both';
 
 const normalizeModelType = (value: unknown): LlmModelType => {
@@ -356,7 +363,7 @@ const LLMProvidersPage: React.FC = () => {
             {defaultStatus?.providers?.map((p: any) => (
               <div key={p?.id} className="flex items-center gap-2 p-2 bg-base-200/50 rounded text-sm">
                 {getProviderIcon(p?.type)}
-                <span className="font-medium">{p?.name || 'Unnamed'}</span>
+                <span className="font-medium">{decodeHtmlEntities(p?.name || 'Unnamed')}</span>
                 <Badge variant="neutral" size="small" className="ml-auto">Read-Only</Badge>
               </div>
             ))}
@@ -389,7 +396,7 @@ const LLMProvidersPage: React.FC = () => {
               >
                 <option value="">Use System Default</option>
                 {chatProfiles.map((p) => (
-                  <option key={p?.key} value={p?.key}>{p?.name || 'Unnamed'} ({p?.provider || 'Unknown'})</option>
+                  <option key={p?.key} value={p?.key}>{decodeHtmlEntities(p?.name || 'Unnamed')} ({decodeHtmlEntities(p?.provider || 'Unknown')})</option>
                 ))}
               </Select>
             </div>
@@ -415,7 +422,7 @@ const LLMProvidersPage: React.FC = () => {
               >
                 <option value="">None Selected</option>
                 {embeddingProfiles.map((p) => (
-                  <option key={p?.key} value={p?.key}>{p?.name || 'Unnamed'} ({p?.provider || 'Unknown'})</option>
+                  <option key={p?.key} value={p?.key}>{decodeHtmlEntities(p?.name || 'Unnamed')} ({decodeHtmlEntities(p?.provider || 'Unknown')})</option>
                 ))}
               </Select>
             </div>
@@ -468,7 +475,7 @@ const LLMProvidersPage: React.FC = () => {
               >
                 <option value="">None (Disabled)</option>
                 {chatProfiles.map((p) => (
-                  <option key={p?.key} value={p?.key}>{p?.name || 'Unnamed'} ({p?.provider || 'Unknown'})</option>
+                  <option key={p?.key} value={p?.key}>{decodeHtmlEntities(p?.name || 'Unnamed')} ({decodeHtmlEntities(p?.provider || 'Unknown')})</option>
                 ))}
               </Select>
             </div>
@@ -497,7 +504,7 @@ const LLMProvidersPage: React.FC = () => {
                   >
                     <option value="">— Default —</option>
                     {profiles.map((p: any) => (
-                      <option key={p.key} value={p.key}>{p.name}</option>
+                      <option key={p.key} value={p.key}>{decodeHtmlEntities(p.name)}</option>
                     ))}
                   </Select>
                 </div>
@@ -588,7 +595,7 @@ const LLMProvidersPage: React.FC = () => {
                     </div>
                     <div>
                       <h3 className="font-bold text-lg flex items-center gap-2">
-                        {profile.name}
+                        {decodeHtmlEntities(profile.name)}
                         <span className="text-xs font-normal opacity-50 px-2 py-0.5 bg-base-200 rounded-full font-mono">{profile.key}</span>
                       </h3>
                       <div className="flex items-center gap-2 mt-1">
