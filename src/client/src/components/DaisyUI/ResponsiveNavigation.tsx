@@ -86,18 +86,16 @@ const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
       >
         {/* Rate limit indicator and Demo Mode Banner */}
         {!isMobile && (
-          <div className="flex justify-end px-3 pt-1">
+          <div className="flex justify-end px-1">
             <RateLimitIndicator />
           </div>
         )}
         <DemoModeBanner />
 
-        {/* MAIN CONTENT — minimal padding, content manages its own spacing */}
-        <main className="flex-1 px-2 pt-0 pb-2">
-          <Card className="rounded-lg border border-base-content/10 shadow-sm min-h-[calc(100vh-48px)] p-3">
-            <LlmStatusBanner />
-            {children}
-          </Card>
+        {/* MAIN CONTENT — zero padding, content owns its own spacing */}
+        <main className="flex-1">
+          <LlmStatusBanner />
+          {children}
         </main>
 
         <AppFooter />
