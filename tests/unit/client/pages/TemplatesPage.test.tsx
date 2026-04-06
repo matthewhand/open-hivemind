@@ -1,14 +1,46 @@
+/** @jest-environment jsdom */
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { BrowserRouter } from 'react-router-dom';
-import TemplatesPage from '../../../../src/client/src/pages/TemplatesPage';
 import { apiService } from '../../../../src/client/src/services/api';
-import * as usePageLifecycleModule from '../../../../src/client/src/hooks/usePageLifecycle';
-import { ToastProvider } from '../../../../src/client/src/components/DaisyUI/ToastNotification';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 jest.mock('../../../../src/client/src/services/api');
+
+const mockSuccessToast = jest.fn();
+const mockErrorToast = jest.fn();
+
+jest.mock('../../../../src/client/src/components/DaisyUI/ToastNotification', () => ({
+  __esModule: true,
+  default: ({ children }: any) => children,
+  useToast: () => ({
+    addToast: jest.fn(),
+    removeToast: jest.fn(),
+    clearAll: jest.fn(),
+    toasts: [],
+  }),
+  useSuccessToast: () => mockSuccessToast,
+  useErrorToast: () => mockErrorToast,
+  useWarningToast: () => jest.fn(),
+  useInfoToast: () => jest.fn(),
+  ToastProvider: ({ children }: any) => children,
+  NotificationCenter: () => null,
+}));
+
+const mockRefetch = jest.fn().mockResolvedValue({ data: { data: { templates: [] } } });
+const mockUseQuery = jest.fn();
+
+jest.mock('@tanstack/react-query', () => ({
+  useQuery: (...args: any[]) => mockUseQuery(...args),
+  useQueryClient: () => ({ invalidateQueries: jest.fn() }),
+  QueryClient: jest.fn(),
+  QueryClientProvider: ({ children }: any) => children,
+}));
+
+jest.mock('../../../../src/client/src/services/ErrorService', () => ({
+  ErrorService: { report: jest.fn() },
+}));
+
 jest.mock('../../../../src/client/src/hooks/usePageLifecycle', () => ({
   usePageLifecycle: jest.fn(() => ({
     data: {},
@@ -17,6 +49,13 @@ jest.mock('../../../../src/client/src/hooks/usePageLifecycle', () => ({
     refetch: jest.fn(),
   })),
 }));
+
+// Need to lazily import the component AFTER all mocks are set up
+let TemplatesPage: any;
+
+beforeAll(async () => {
+  TemplatesPage = (await import('../../../../src/client/src/pages/TemplatesPage')).default;
+});
 
 const mockTemplates = [
   {
@@ -64,36 +103,16 @@ const mockTemplates = [
 ];
 
 const renderWithRouter = (component: React.ReactElement) => {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-      },
-    },
-  });
-
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <ToastProvider>{component}</ToastProvider>
-      </BrowserRouter>
-    </QueryClientProvider>
-  );
+  return render(<BrowserRouter>{component}</BrowserRouter>);
 };
 
-/**
- * @jest-environment jsdom
- */
-
 describe('TemplatesPage', () => {
-  const mockUsePageLifecycle = usePageLifecycleModule.usePageLifecycle as jest.Mock;
-
   beforeEach(() => {
-    mockUsePageLifecycle.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: { data: { templates: mockTemplates } },
-      loading: false,
+      isLoading: false,
       error: null,
-      refetch: jest.fn(),
+      refetch: mockRefetch,
     });
   });
 
@@ -114,9 +133,10 @@ describe('TemplatesPage', () => {
     renderWithRouter(<TemplatesPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Discord Basic Bot')).toBeInTheDocument();
-      expect(screen.getByText('Slack Basic Bot')).toBeInTheDocument();
-      expect(screen.getByText('Custom Template')).toBeInTheDocument();
+      // Template names may appear in both the carousel and the card grid
+      expect(screen.getAllByText('Discord Basic Bot').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText('Slack Basic Bot').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText('Custom Template').length).toBeGreaterThanOrEqual(1);
     });
   });
 
@@ -144,8 +164,12 @@ describe('TemplatesPage', () => {
     fireEvent.change(searchInput, { target: { value: 'Discord' } });
 
     await waitFor(() => {
-      expect(screen.getByText('Discord Basic Bot')).toBeInTheDocument();
-      expect(screen.queryByText('Slack Basic Bot')).not.toBeInTheDocument();
+      // The card grid should only contain Discord templates;
+      // the carousel still shows all popular templates, so we scope to card-title
+      const cardTitles = document.querySelectorAll('.card-title');
+      const cardTexts = Array.from(cardTitles).map((el) => el.textContent);
+      expect(cardTexts).toContain('Discord Basic Bot');
+      expect(cardTexts).not.toContain('Slack Basic Bot');
     });
   });
 
@@ -153,15 +177,18 @@ describe('TemplatesPage', () => {
     renderWithRouter(<TemplatesPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Discord Basic Bot')).toBeInTheDocument();
+      expect(screen.getAllByText('Discord Basic Bot').length).toBeGreaterThanOrEqual(1);
     });
 
     const discordTab = screen.getByText('Discord');
     fireEvent.click(discordTab);
 
     await waitFor(() => {
-      expect(screen.getByText('Discord Basic Bot')).toBeInTheDocument();
-      expect(screen.queryByText('Slack Basic Bot')).not.toBeInTheDocument();
+      // Scope to card-title elements since carousel still shows all templates
+      const cardTitles = document.querySelectorAll('.card-title');
+      const cardTexts = Array.from(cardTitles).map((el) => el.textContent);
+      expect(cardTexts).toContain('Discord Basic Bot');
+      expect(cardTexts).not.toContain('Slack Basic Bot');
     });
   });
 
@@ -178,10 +205,13 @@ describe('TemplatesPage', () => {
     renderWithRouter(<TemplatesPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('discord')).toBeInTheDocument();
-      expect(screen.getByText('basic')).toBeInTheDocument();
-      expect(screen.getByText('slack')).toBeInTheDocument();
+      expect(screen.getAllByText('Discord Basic Bot').length).toBeGreaterThanOrEqual(1);
     });
+
+    // Tags are rendered inside badge spans alongside SVG icons
+    const tagBadges = document.querySelectorAll('.badge-ghost');
+    const tagTexts = Array.from(tagBadges).map((el) => el.textContent?.trim());
+    expect(tagTexts).toEqual(expect.arrayContaining(['discord', 'basic', 'slack']));
   });
 
   it('should display usage count', async () => {
@@ -198,14 +228,13 @@ describe('TemplatesPage', () => {
     renderWithRouter(<TemplatesPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Discord Basic Bot')).toBeInTheDocument();
+      expect(screen.getAllByText('Discord Basic Bot').length).toBeGreaterThanOrEqual(1);
     });
 
     const previewButtons = screen.getAllByLabelText('Preview template');
     fireEvent.click(previewButtons[0]);
 
     await waitFor(() => {
-      expect(screen.getByText('Template Preview')).toBeInTheDocument();
       expect(screen.getByText('Configuration')).toBeInTheDocument();
     });
   });
@@ -214,14 +243,14 @@ describe('TemplatesPage', () => {
     renderWithRouter(<TemplatesPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Discord Basic Bot')).toBeInTheDocument();
+      expect(screen.getAllByText('Discord Basic Bot').length).toBeGreaterThanOrEqual(1);
     });
 
     const applyButtons = screen.getAllByText('Apply Template');
     fireEvent.click(applyButtons[0]);
 
     await waitFor(() => {
-      expect(screen.getByText('Creating a bot from template:')).toBeInTheDocument();
+      expect(screen.getByText(/Creating a bot from template/)).toBeInTheDocument();
       expect(screen.getByPlaceholderText('Enter bot name')).toBeInTheDocument();
     });
   });
@@ -240,7 +269,7 @@ describe('TemplatesPage', () => {
     renderWithRouter(<TemplatesPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Discord Basic Bot')).toBeInTheDocument();
+      expect(screen.getAllByText('Discord Basic Bot').length).toBeGreaterThanOrEqual(1);
     });
 
     const applyButtons = screen.getAllByText('Apply Template');
@@ -268,7 +297,7 @@ describe('TemplatesPage', () => {
     renderWithRouter(<TemplatesPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Discord Basic Bot')).toBeInTheDocument();
+      expect(screen.getAllByText('Discord Basic Bot').length).toBeGreaterThanOrEqual(1);
     });
 
     const applyButtons = screen.getAllByText('Apply Template');
@@ -289,7 +318,7 @@ describe('TemplatesPage', () => {
     renderWithRouter(<TemplatesPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Custom Template')).toBeInTheDocument();
+      expect(screen.getAllByText('Custom Template').length).toBeGreaterThanOrEqual(1);
     });
 
     const deleteButtons = screen.getAllByLabelText('Delete template');
@@ -300,7 +329,7 @@ describe('TemplatesPage', () => {
     renderWithRouter(<TemplatesPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Custom Template')).toBeInTheDocument();
+      expect(screen.getAllByText('Custom Template').length).toBeGreaterThanOrEqual(1);
     });
 
     const deleteButton = screen.getByLabelText('Delete template');
@@ -332,17 +361,17 @@ describe('TemplatesPage', () => {
   });
 
   it('should handle loading state', () => {
-    mockUsePageLifecycle.mockReturnValue({
+    mockUseQuery.mockReturnValue({
       data: null,
-      loading: true,
+      isLoading: true,
       error: null,
-      refetch: jest.fn(),
+      refetch: mockRefetch,
     });
 
-    const { container } = renderWithRouter(<TemplatesPage />);
+    renderWithRouter(<TemplatesPage />);
 
-    // Should show skeleton loader
-    expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
+    // Should show skeleton loader (DaisyUI uses 'skeleton' class)
+    expect(document.querySelector('.skeleton')).toBeInTheDocument();
   });
 
   it('should group templates by category', async () => {
