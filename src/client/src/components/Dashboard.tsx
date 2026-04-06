@@ -155,7 +155,7 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Main Content Skeleton */}
-        <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="px-2 py-2">
           {/* Quick Actions Skeleton */}
           <div className="skeleton h-12 w-full rounded-xl mb-4"></div>
 
@@ -222,10 +222,10 @@ const Dashboard: React.FC = () => {
       <QuickActions onRefresh={fetchData} />
 
       {/* Dashboard Header */}
-      <div className="max-w-7xl mx-auto px-4 mb-4">
-        <div className="text-center mb-4">
-          <h1 className="text-3xl font-bold">🧠 Open-Hivemind Dashboard</h1>
-          <p className="text-sm text-base-content/60">Your AI Agent Swarm Control Center</p>
+      <div className="px-2 mb-2">
+        <div className="text-center mb-2">
+          <h1 className="text-2xl font-bold">🧠 Open-Hivemind Dashboard</h1>
+          <p className="text-xs text-base-content/60">Your AI Agent Swarm Control Center</p>
         </div>
 
         {/* Carousel + Stats — side by side on desktop, stacked on mobile */}
@@ -262,7 +262,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="px-2 py-2">
         {/* Announcement Banner */}
         <AnnouncementBanner />
         <TipRotator className="mb-4 px-2" />
