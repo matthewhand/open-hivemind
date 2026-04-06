@@ -1,3 +1,4 @@
+// .env is loaded via --env-file=.env in the npm script (before any module init)
 // Import Express types for TypeScript
 import 'reflect-metadata';
 import './utils/alias';
@@ -63,7 +64,6 @@ import Logger from '@common/logger';
 import { initProviders } from './initProviders';
 import { reloadGlobalConfigs } from './server/routes/config';
 import startupDiagnostics from './utils/startupDiagnostics';
-import 'dotenv/config';
 import debug from 'debug';
 import express from 'express';
 import * as debugEnvVarsModule from '@config/debugEnvVars';
@@ -260,16 +260,22 @@ if (process.env.NODE_ENV !== 'development') {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // IP Filtering Security (when auth is disabled)
+// Evaluated lazily per-request so --env-file / dotenv values are available
 // ─────────────────────────────────────────────────────────────────────────────
-const allowAllIPs = process.env.HTTP_ALLOW_ALL_IPS === 'true';
-if (!allowAllIPs) {
-  appLogger.info(
-    '🔒 IP filtering ENABLED for /api/* routes (set HTTP_ALLOW_ALL_IPS=true to disable)'
-  );
-  app.use('/api', ipWhitelist);
-} else {
-  appLogger.warn('⚠️  IP filtering DISABLED (HTTP_ALLOW_ALL_IPS=true)');
-}
+let ipFilterLogged = false;
+app.use('/api', (req: Request, res: Response, next: NextFunction) => {
+  const allowAll = process.env.HTTP_ALLOW_ALL_IPS === 'true';
+  if (!ipFilterLogged) {
+    ipFilterLogged = true;
+    if (allowAll) {
+      appLogger.warn('⚠️  IP filtering DISABLED (HTTP_ALLOW_ALL_IPS=true)');
+    } else {
+      appLogger.info('🔒 IP filtering ENABLED for /api/* routes (set HTTP_ALLOW_ALL_IPS=true to disable)');
+    }
+  }
+  if (allowAll) return next();
+  return ipWhitelist(req, res, next);
+});
 
 // CSRF token endpoint
 app.get('/api/csrf-token', csrfTokenHandler);
@@ -351,8 +357,15 @@ app.get('/admin*', (req: Request, res: Response) => {
 // React Router catch-all handler (must be AFTER all API routes)
 // Serve index.html for all non-API, non-asset routes so React Router handles them
 app.get('*', (req: Request, res: Response, next: NextFunction) => {
-  // Skip API routes and static assets
-  if (req.path.startsWith('/api') || req.path.startsWith('/health') || req.path.includes('.')) {
+  // Skip API routes, static assets, and Vite internal paths
+  if (
+    req.path.startsWith('/api') ||
+    req.path.startsWith('/health') ||
+    req.path.startsWith('/@') ||           // Vite internals: /@react-refresh, /@vite/client, /@fs/
+    req.path.startsWith('/node_modules') || // Vite serves node_modules in dev
+    req.path.startsWith('/src/') ||         // Vite serves source files in dev
+    req.path.includes('.')                  // Static assets with file extensions
+  ) {
     return next();
   }
   if (process.env.NODE_ENV === 'development' && viteServer) {
@@ -386,7 +399,9 @@ app.all('*', (req: Request, res: Response) => {
   // Skip API routes — these should have been matched by earlier routers
   if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
     httpLogger.debug('Unmatched API route', { path: req.path, method: req.method });
-    return res.status(404).json({ error: 'Endpoint not found', path: req.path, method: req.method });
+    return res
+      .status(404)
+      .json({ error: 'Endpoint not found', path: req.path, method: req.method });
   }
   httpLogger.debug('No matching route for request', { path: req.path });
   res.status(404).json({ error: 'Endpoint not found' });

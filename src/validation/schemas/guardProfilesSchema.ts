@@ -70,10 +70,38 @@ const contentFilterSchema = z
   })
   .optional();
 
+const semanticGuardrailSchema = z
+  .object({
+    enabled: z.boolean().optional(),
+    llmProviderKey: z
+      .string()
+      .min(1, { message: 'LLM provider key cannot be empty' })
+      .max(100, { message: 'LLM provider key must be 100 characters or fewer' })
+      .optional(),
+    prompt: z
+      .string()
+      .min(1, { message: 'Prompt cannot be empty' })
+      .max(2000, { message: 'Prompt must be 2000 characters or fewer' })
+      .optional(),
+    responseSchema: z
+      .object({
+        type: z.literal('boolean'),
+        description: z.string().optional(),
+      })
+      .optional()
+      .default({
+        type: 'boolean',
+        description: 'Return true if content should be allowed, false if it should be blocked',
+      }),
+  })
+  .optional();
+
 const guardsObject = z.object({
   mcpGuard: mcpGuardSchema,
   rateLimit: rateLimitSchema,
   contentFilter: contentFilterSchema,
+  semanticInputGuard: semanticGuardrailSchema,
+  semanticOutputGuard: semanticGuardrailSchema,
 });
 
 /** Schema for POST / — create a new guard profile */

@@ -30,7 +30,7 @@
     "start:test": "NODE_ENV=test bash ./scripts/start-runtime.sh",
     "start:headless": "NODE_ENV=production HTTP_ENABLED=false bash ./scripts/start-runtime.sh",
     "start:dev:headless": "NODE_ENV=development HTTP_ENABLED=false node --import tsx src/index.ts",
-    "start:dev": "NODE_ENV=development node --import tsx src/index.ts",
+    "start:dev": "NODE_ENV=development node -r dotenv/config --import tsx src/index.ts",
     "dev:frontend-only": "cd src/client && ../../node_modules/.bin/vite --port 3028 --host",
     "dev:webui-only": "SKIP_MESSENGERS=true npm run start:dev",
     "dev": "npm run start:dev",

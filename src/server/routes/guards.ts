@@ -1,4 +1,5 @@
 import Debug from 'debug';
+import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
@@ -113,6 +114,58 @@ router.post(
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to toggle guard'));
+    }
+  })
+);
+
+// POST /semantic/test - Test semantic guardrail
+router.post(
+  '/semantic/test',
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const { content, guardrailType = 'input', guardrailConfig } = req.body;
+
+      if (!content || typeof content !== 'string') {
+        return res
+          .status(HTTP_STATUS.BAD_REQUEST)
+          .json(ApiResponse.error('Content is required and must be a string'));
+      }
+
+      if (!guardrailConfig || typeof guardrailConfig !== 'object') {
+        return res
+          .status(HTTP_STATUS.BAD_REQUEST)
+          .json(ApiResponse.error('Guardrail configuration is required'));
+      }
+
+      const { SemanticGuardrailService } = await import('@src/services/SemanticGuardrailService');
+      const semanticService = SemanticGuardrailService.getInstance();
+
+      let result;
+      if (guardrailType === 'input') {
+        result = await semanticService.evaluateInput(content, guardrailConfig);
+      } else if (guardrailType === 'output') {
+        result = await semanticService.evaluateOutput(content, guardrailConfig);
+      } else {
+        return res
+          .status(HTTP_STATUS.BAD_REQUEST)
+          .json(ApiResponse.error('Guardrail type must be "input" or "output"'));
+      }
+
+      return res.json(
+        ApiResponse.success({
+          result,
+          testConfig: {
+            content: content.substring(0, 100) + (content.length > 100 ? '...' : ''),
+            guardrailType,
+            guardrailEnabled: guardrailConfig.enabled,
+          },
+        })
+      );
+    } catch (error: unknown) {
+      debug('Error testing semantic guardrail:', error);
+      return res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error('Failed to test semantic guardrail'));
     }
   })
 );
