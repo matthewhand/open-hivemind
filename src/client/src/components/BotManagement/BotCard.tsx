@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useUIStore } from '../../store/uiStore';
 import PersonaAvatar from '../PersonaAvatar';
 import type {
   BotInstance,
@@ -69,6 +70,7 @@ const BotCard: React.FC<BotCardProps> = ({
   onRemoveProvider,
   onPersonaChange,
 }) => {
+  const showDescriptions = useUIStore((s) => s.showDescriptions);
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showPersonaSelector, setShowPersonaSelector] = useState(false);
@@ -222,7 +224,7 @@ const BotCard: React.FC<BotCardProps> = ({
                 {getStatusText(bot.status)}
               </Badge>
             </div>
-            {bot.description && (
+            {showDescriptions && bot.description && (
               <p className="text-sm text-base-content/60 line-clamp-2">
                 {bot.description}
               </p>

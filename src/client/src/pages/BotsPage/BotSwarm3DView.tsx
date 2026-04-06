@@ -1,5 +1,6 @@
 import React from 'react';
 import { Bot, Globe, Cpu, MessageSquare, AlertTriangle, Play, Pause } from 'lucide-react';
+import { useUIStore } from '../../store/uiStore';
 import type { BotConfig } from '../../types/bot';
 import Card from '../../components/DaisyUI/Card';
 import Badge from '../../components/DaisyUI/Badge';
@@ -33,6 +34,7 @@ export const BotSwarm3DView: React.FC<BotSwarm3DViewProps> = ({
   onPreviewBot,
   onToggleStatus,
 }) => {
+  const showDescriptions = useUIStore((s) => s.showDescriptions);
   return (
     <div className="flex flex-wrap justify-center gap-8 py-8 perspective-[1200px]">
       {bots.map((bot, index) => {
@@ -62,9 +64,11 @@ export const BotSwarm3DView: React.FC<BotSwarm3DViewProps> = ({
               {/* Name & status */}
               <div className="w-full">
                 <h3 className="font-bold text-base truncate">{bot.name}</h3>
-                <p className="text-xs text-base-content/60 line-clamp-2 mt-1 min-h-[2rem]">
-                  {bot.description || 'No description'}
-                </p>
+                {showDescriptions && (
+                  <p className="text-xs text-base-content/60 line-clamp-2 mt-1 min-h-[2rem]">
+                    {bot.description || 'No description'}
+                  </p>
+                )}
               </div>
 
               {/* Provider badges */}

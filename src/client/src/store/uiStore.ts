@@ -10,6 +10,9 @@ export interface UIState {
   soundEnabled: boolean;
   animationsEnabled: boolean;
   disable3dEffects: boolean;
+  compactDensity: boolean;
+  showDescriptions: boolean;
+  cardBorderRadius: boolean;
   language: string;
   timezone: string;
   dateFormat: string;
@@ -81,6 +84,9 @@ export interface UIActions {
   setSoundEnabled: (enabled: boolean) => void;
   setAnimationsEnabled: (enabled: boolean) => void;
   setDisable3dEffects: (enabled: boolean) => void;
+  setCompactDensity: (enabled: boolean) => void;
+  setShowDescriptions: (show: boolean) => void;
+  setCardBorderRadius: (enabled: boolean) => void;
   setLanguage: (language: string) => void;
   setTimezone: (timezone: string) => void;
   setDensity: (density: UIState['density']) => void;
@@ -100,6 +106,9 @@ const getInitialState = (): UIState => ({
   soundEnabled: false,
   animationsEnabled: true,
   disable3dEffects: false,
+  compactDensity: false,
+  showDescriptions: true,
+  cardBorderRadius: true,
   language: 'en',
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   dateFormat: 'MM/DD/YYYY',
@@ -284,6 +293,21 @@ export const useUIStore = create<UIState & UIActions>((set, get) => ({
     localStorage.setItem('disable3dEffects', disable3dEffects.toString());
   },
 
+  setCompactDensity: (compactDensity) => {
+    set({ compactDensity });
+    localStorage.setItem('compactDensity', compactDensity.toString());
+  },
+
+  setShowDescriptions: (showDescriptions) => {
+    set({ showDescriptions });
+    localStorage.setItem('showDescriptions', showDescriptions.toString());
+  },
+
+  setCardBorderRadius: (cardBorderRadius) => {
+    set({ cardBorderRadius });
+    localStorage.setItem('cardBorderRadius', cardBorderRadius.toString());
+  },
+
   setLanguage: (language) => {
     set({ language });
     localStorage.setItem('language', language);
@@ -338,6 +362,9 @@ export const useUIStore = create<UIState & UIActions>((set, get) => ({
       ['soundEnabled', 'soundEnabled', 'bool'],
       ['animationsEnabled', 'animationsEnabled', 'bool'],
       ['disable3dEffects', 'disable3dEffects', 'bool'],
+      ['compactDensity', 'compactDensity', 'bool'],
+      ['showDescriptions', 'showDescriptions', 'bool'],
+      ['cardBorderRadius', 'cardBorderRadius', 'bool'],
       ['language', 'language', 'str'],
       ['timezone', 'timezone', 'str'],
       ['dateFormat', 'dateFormat', 'str'],

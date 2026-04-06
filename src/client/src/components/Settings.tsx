@@ -15,6 +15,10 @@ const Settings: React.FC = () => {
   const ui = useUIStore((s) => s);
   const setTheme = useUIStore((s) => s.setTheme);
   const setAnimationsEnabled = useUIStore((s) => s.setAnimationsEnabled);
+  const setDisable3dEffects = useUIStore((s) => s.setDisable3dEffects);
+  const setCompactDensity = useUIStore((s) => s.setCompactDensity);
+  const setShowDescriptions = useUIStore((s) => s.setShowDescriptions);
+  const setCardBorderRadius = useUIStore((s) => s.setCardBorderRadius);
   const setRefreshInterval = useUIStore((s) => s.setRefreshInterval);
   const setShowKeyboardShortcuts = useUIStore((s) => s.setShowKeyboardShortcuts);
   const setShowTooltips = useUIStore((s) => s.setShowTooltips);
@@ -34,9 +38,13 @@ const Settings: React.FC = () => {
     autoRefreshEnabled: ui.autoRefreshEnabled,
     refreshInterval: ui.refreshInterval,
     animationsEnabled: ui.animationsEnabled,
+    disable3dEffects: ui.disable3dEffects,
+    compactDensity: ui.compactDensity,
+    showDescriptions: ui.showDescriptions,
+    cardBorderRadius: ui.cardBorderRadius,
     showTooltips: ui.showTooltips,
     showKeyboardShortcuts: ui.showKeyboardShortcuts,
-  }) as Record<string, unknown>, [ui.theme, ui.autoRefreshEnabled, ui.refreshInterval, ui.animationsEnabled, ui.showTooltips, ui.showKeyboardShortcuts]);
+  }) as Record<string, unknown>, [ui.theme, ui.autoRefreshEnabled, ui.refreshInterval, ui.animationsEnabled, ui.disable3dEffects, ui.compactDensity, ui.showDescriptions, ui.cardBorderRadius, ui.showTooltips, ui.showKeyboardShortcuts]);
 
   const { hasChanges, diff, setOriginalConfig } = useConfigDiff(settingsAsRecord);
 
@@ -201,9 +209,9 @@ const Settings: React.FC = () => {
       ),
     },
     {
-      id: 'accessibility',
-      title: 'Accessibility',
-      icon: '♿',
+      id: 'aesthetics',
+      title: 'Aesthetics',
+      icon: '✨',
       content: (
         <div>
           <div className="form-control">
@@ -215,7 +223,51 @@ const Settings: React.FC = () => {
                 onChange={(event) => setAnimationsEnabled(!event.target.checked)}
               />
             </label>
-            <p className="text-xs text-base-content/60 mt-1">Reduce animations for better accessibility.</p>
+            <p className="text-xs text-base-content/60 mt-1">Disable transitions and animations across the UI.</p>
+          </div>
+          <div className="form-control">
+            <label className="label cursor-pointer justify-start gap-4">
+              <span className="label-text">Disable 3D Hover Effects</span>
+              <Toggle
+                color="primary"
+                checked={ui.disable3dEffects}
+                onChange={(event) => setDisable3dEffects(event.target.checked)}
+              />
+            </label>
+            <p className="text-xs text-base-content/60 mt-1">Remove 3D perspective tilt on hover cards.</p>
+          </div>
+          <div className="form-control">
+            <label className="label cursor-pointer justify-start gap-4">
+              <span className="label-text">Compact Density</span>
+              <Toggle
+                color="primary"
+                checked={ui.compactDensity}
+                onChange={(event) => setCompactDensity(event.target.checked)}
+              />
+            </label>
+            <p className="text-xs text-base-content/60 mt-1">Reduce card padding and spacing for more content per screen.</p>
+          </div>
+          <div className="form-control">
+            <label className="label cursor-pointer justify-start gap-4">
+              <span className="label-text">Rounded Cards</span>
+              <Toggle
+                color="primary"
+                checked={ui.cardBorderRadius}
+                onChange={(event) => setCardBorderRadius(!event.target.checked)}
+              />
+            </label>
+            <p className="text-xs text-base-content/60 mt-1">Toggle between rounded and sharp card corners.</p>
+          </div>
+          <div className="form-control">
+            <label className="label cursor-pointer justify-start gap-4">
+              <span className="label-text">Show Bot Descriptions</span>
+              <Toggle
+                color="primary"
+                checked={ui.showDescriptions}
+                onChange={(event) => setShowDescriptions(event.target.checked)}
+              />
+            </label>
+            <p className="text-xs text-base-content/60 mt-1">Hide descriptions for a cleaner, more compact bot grid.</p>
           </div>
         </div>
       ),
@@ -269,7 +321,7 @@ const Settings: React.FC = () => {
         <Alert status="success" className="mb-6" message="Settings saved successfully!" />
       )}
 
-      <Accordion items={accordionItems} allowMultiple defaultOpenItems={['preferences']} />
+      <Accordion items={accordionItems} allowMultiple defaultOpenItems={['preferences', 'aesthetics']} />
 
       {hasChanges && (
         <div className="mt-6">

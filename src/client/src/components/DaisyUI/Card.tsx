@@ -151,9 +151,12 @@ const CardBase: React.FC<CardProps> = ({
   ...props
 }) => {
   const disable3dEffects = useUIStore((s) => s.disable3dEffects);
+  const compactDensity = useUIStore((s) => s.compactDensity);
+  const cardBorderRadius = useUIStore((s) => s.cardBorderRadius);
   // Construct CSS classes based on props
   let cardClasses = 'card bg-base-100';
-  if (compact) { cardClasses += ' card-compact'; }
+  if (compact || compactDensity) { cardClasses += ' card-compact'; }
+  if (!cardBorderRadius) { cardClasses += ' rounded-none'; }
   if (side) { cardClasses += ' card-side'; }
   if (imageFull) { cardClasses += ' image-full'; }
   if (bgVariant) { cardClasses += ` bg-${bgVariant}`; }
