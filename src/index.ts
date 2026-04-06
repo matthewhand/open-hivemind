@@ -1,5 +1,4 @@
-// Load .env FIRST — before any module reads process.env
-import 'dotenv/config';
+// .env is loaded via --env-file=.env in the npm script (before any module init)
 // Import Express types for TypeScript
 import 'reflect-metadata';
 import './utils/alias';
@@ -261,16 +260,22 @@ if (process.env.NODE_ENV !== 'development') {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // IP Filtering Security (when auth is disabled)
+// Evaluated lazily per-request so --env-file / dotenv values are available
 // ─────────────────────────────────────────────────────────────────────────────
-const allowAllIPs = process.env.HTTP_ALLOW_ALL_IPS === 'true';
-if (!allowAllIPs) {
-  appLogger.info(
-    '🔒 IP filtering ENABLED for /api/* routes (set HTTP_ALLOW_ALL_IPS=true to disable)'
-  );
-  app.use('/api', ipWhitelist);
-} else {
-  appLogger.warn('⚠️  IP filtering DISABLED (HTTP_ALLOW_ALL_IPS=true)');
-}
+let ipFilterLogged = false;
+app.use('/api', (req: Request, res: Response, next: NextFunction) => {
+  const allowAll = process.env.HTTP_ALLOW_ALL_IPS === 'true';
+  if (!ipFilterLogged) {
+    ipFilterLogged = true;
+    if (allowAll) {
+      appLogger.warn('⚠️  IP filtering DISABLED (HTTP_ALLOW_ALL_IPS=true)');
+    } else {
+      appLogger.info('🔒 IP filtering ENABLED for /api/* routes (set HTTP_ALLOW_ALL_IPS=true to disable)');
+    }
+  }
+  if (allowAll) return next();
+  return ipWhitelist(req, res, next);
+});
 
 // CSRF token endpoint
 app.get('/api/csrf-token', csrfTokenHandler);
@@ -729,7 +734,6 @@ async function main() {
   const httpEnabled = process.env.HTTP_ENABLED !== 'false';
   if (httpEnabled) {
     const port = parseInt(process.env.PORT || '3028', 10);
-    appLogger.info('DEBUG: process.env.PORT =', process.env.PORT, '→ port =', port);
     const server = createServer(app);
 
     // Register background services for graceful shutdown

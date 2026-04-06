@@ -42,7 +42,8 @@ const Swap: React.FC<SwapProps> = React.memo(({
       <input
         type="checkbox"
         checked={checked}
-        onChange={onChange ? (e) => onChange(e.target.checked) : undefined}
+        onChange={onChange ? (e) => onChange(e.target.checked) : () => {}}
+        readOnly={!onChange}
       />
       <div className="swap-on">{onContent}</div>
       <div className="swap-off">{offContent}</div>
