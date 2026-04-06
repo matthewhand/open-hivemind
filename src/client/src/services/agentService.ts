@@ -1,7 +1,15 @@
 async function apiFetch<T>(method: string, url: string, body?: unknown): Promise<T> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  try {
+    const stored = localStorage.getItem('auth_tokens');
+    if (stored && stored !== 'undefined') {
+      const tokens = JSON.parse(stored);
+      if (tokens.accessToken) headers['Authorization'] = `Bearer ${tokens.accessToken}`;
+    }
+  } catch { /* ignore */ }
   const res = await fetch(url, {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);

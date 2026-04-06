@@ -28,6 +28,13 @@ import { asyncErrorHandler } from '../../../middleware/errorHandler';
 const debug = Debug('app:server:routes:config:system');
 const router = Router();
 
+// GET /api/config - Root handler (alias for /global, used by frontend)
+router.get('/', (req, res, next) => {
+  // Rewrite to /global handler
+  req.url = '/global';
+  next();
+});
+
 // GET /api/config/ping - Diagnostic endpoint
 router.get('/ping', (req, res) => {
   return res.json(ApiResponse.success({ timestamp: new Date().toISOString() }));
