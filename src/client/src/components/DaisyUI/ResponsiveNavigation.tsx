@@ -96,10 +96,10 @@ const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
         <main className="flex-1 p-6">
           {/* White content card */}
           <Card className="rounded-xl border border-base-content/10 shadow-sm min-h-[calc(100vh-48px)] p-6">
-            <Breadcrumbs />
             <div className="mb-4">
               <LlmStatusBanner />
             </div>
+            <Breadcrumbs />
             {children}
           </Card>
         </main>
