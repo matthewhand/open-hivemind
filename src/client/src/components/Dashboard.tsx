@@ -15,6 +15,7 @@ import QuickActions from './QuickActions';
 import LLMUsageChart from './Dashboard/LLMUsageChart';
 import MessageVolumeChart from './Dashboard/MessageVolumeChart';
 import AgentGrid from './Dashboard/AgentGrid';
+import Carousel from './DaisyUI/Carousel';
 
 const getStatusColor = (botStatus: string) => {
   switch (botStatus.toLowerCase()) {
@@ -215,6 +216,24 @@ const Dashboard: React.FC = () => {
       {/* Quick Actions — flush to top */}
       <div className="max-w-7xl mx-auto px-4 pt-0 pb-2">
         <QuickActions onRefresh={fetchData} />
+      </div>
+
+      {/* Getting Started Carousel */}
+      <div className="max-w-7xl mx-auto px-4 mb-4">
+        <h3 className="text-sm font-bold uppercase tracking-wider text-base-content/40 mb-2">Getting Started</h3>
+        <Carousel
+          items={[
+            { image: '', title: '🤖 Configure Your First Bot', description: 'Set up an AI agent — assign a persona, connect a messaging platform, and choose an LLM provider.', bgGradient: 'linear-gradient(135deg, #4f46e5, #7c3aed)' },
+            { image: '', title: '🧠 Connect an LLM Provider', description: 'Add your OpenAI, Anthropic, Flowise, or Ollama API key to power bot responses.', bgGradient: 'linear-gradient(135deg, #059669, #10b981)' },
+            { image: '', title: '🎭 Create a Persona', description: 'Give your bot a unique personality — name, system prompt, response behavior, and avatar.', bgGradient: 'linear-gradient(135deg, #0891b2, #06b6d4)' },
+            { image: '', title: '🛡️ Set Up Guard Profiles', description: 'Add safety rules — access control, rate limiting, and content filtering for your bots.', bgGradient: 'linear-gradient(135deg, #d97706, #f59e0b)' },
+            { image: '', title: '📡 Multi-Platform Support', description: 'Connect to Discord, Slack, Mattermost — run coordinated bots across all platforms.', bgGradient: 'linear-gradient(135deg, #dc2626, #ef4444)' },
+            { image: '', title: '📊 Real-time Monitoring', description: 'Monitor bot performance, message volume, response times, and system health.', bgGradient: 'linear-gradient(135deg, #7c3aed, #a855f7)' },
+          ]}
+          autoplay
+          interval={6000}
+          variant="full-width"
+        />
       </div>
 
       {/* Hero Section */}
