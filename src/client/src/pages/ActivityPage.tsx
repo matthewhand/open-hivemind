@@ -204,7 +204,8 @@ const ActivityPage: React.FC = () => {
     );
   }, [events, searchQuery]);
 
-  const timelineEvents = filteredEvents.map(event => ({
+  // ⚡ Bolt Optimization: Memoize timelineEvents to avoid re-mapping events on every render
+  const timelineEvents = useMemo(() => filteredEvents.map(event => ({
     id: event.id || `${event.timestamp}-${event.botName}`,
     timestamp: new Date(event.timestamp),
     title: `${event.botName}: ${event.status}`,
@@ -212,7 +213,7 @@ const ActivityPage: React.FC = () => {
     type: event.status === 'error' || event.status === 'timeout' ? 'error' as const :
       event.status === 'success' ? 'success' as const : 'info' as const,
     metadata: { ...event },
-  }));
+  })), [filteredEvents]);
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, 'success' | 'error' | 'warning' | 'primary'> = {
