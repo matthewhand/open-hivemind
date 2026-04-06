@@ -161,8 +161,8 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
 
   return (
     <>
-      <Card className="mb-6" title="Quick Actions">
-        <div className="flex gap-2 flex-wrap">
+      <Card className="mb-6 w-full" title="Quick Actions">
+        <div className="flex gap-2 flex-wrap justify-end">
           <Button
             variant="primary"
             onClick={handleRefreshDashboard}

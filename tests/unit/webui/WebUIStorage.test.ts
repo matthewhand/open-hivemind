@@ -15,7 +15,8 @@ describe('WebUIStorage Performance', () => {
   };
 
   let existsSyncSpy: jest.SpiedFunction<typeof fs.existsSync>;
-  let readFileSyncSpy: jest.SpiedFunction<typeof fs.readFileSync>;
+  let promisesAccessSpy: jest.SpiedFunction<typeof fs.promises.access>;
+  let promisesReadFileSpy: jest.SpiedFunction<typeof fs.promises.readFile>;
   let writeFileSyncSpy: jest.SpiedFunction<typeof fs.writeFileSync>;
   let mkdirSyncSpy: jest.SpiedFunction<typeof fs.mkdirSync>;
   let promisesWriteFileSpy: jest.SpiedFunction<typeof fs.promises.writeFile>;
@@ -23,7 +24,8 @@ describe('WebUIStorage Performance', () => {
   beforeEach(() => {
     jest.restoreAllMocks();
     existsSyncSpy = jest.spyOn(fs, 'existsSync').mockReturnValue(true);
-    readFileSyncSpy = jest.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(mockConfig));
+    promisesAccessSpy = jest.spyOn(fs.promises, 'access').mockResolvedValue(undefined);
+    promisesReadFileSpy = jest.spyOn(fs.promises, 'readFile').mockResolvedValue(JSON.stringify(mockConfig));
     writeFileSyncSpy = jest.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
     promisesWriteFileSpy = jest.spyOn(fs.promises, 'writeFile').mockResolvedValue(undefined);
     mkdirSyncSpy = jest.spyOn(fs, 'mkdirSync').mockImplementation((() => undefined) as any);
@@ -35,33 +37,33 @@ describe('WebUIStorage Performance', () => {
     jest.restoreAllMocks();
   });
 
-  it('should use cache and read from disk only once', () => {
+  it('should use cache and read from disk only once', async () => {
     // Call loadConfig multiple times
-    storage.loadConfig();
-    storage.loadConfig();
-    storage.loadConfig();
+    await storage.loadConfig();
+    await storage.loadConfig();
+    await storage.loadConfig();
 
-    // Expect readFileSync to be called only once
-    expect(readFileSyncSpy).toHaveBeenCalledTimes(1);
+    // Expect readFile to be called only once
+    expect(promisesReadFileSpy).toHaveBeenCalledTimes(1);
   });
 
   it('should update cache on saveConfig', async () => {
     // Initial load
-    const config1 = storage.loadConfig();
-    expect(readFileSyncSpy).toHaveBeenCalledTimes(1);
+    const config1 = await storage.loadConfig();
+    expect(promisesReadFileSpy).toHaveBeenCalledTimes(1);
 
     // Modify and save
     const newConfig = { ...config1, agents: [{ id: 'new-agent' }] };
     await storage.saveConfig(newConfig);
 
     // Load again
-    const config2 = storage.loadConfig();
+    const config2 = await storage.loadConfig();
 
     // Should verify promisesWriteFile was called
     expect(promisesWriteFileSpy).toHaveBeenCalledTimes(1);
 
     // Should NOT read from disk again
-    expect(readFileSyncSpy).toHaveBeenCalledTimes(1);
+    expect(promisesReadFileSpy).toHaveBeenCalledTimes(1);
 
     // Should return updated config
     expect(config2.agents).toHaveLength(1);

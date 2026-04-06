@@ -247,7 +247,7 @@ export const PersonaModal: React.FC<PersonaModalProps> = ({
           </label>
           <textarea
             id="persona-system-prompt"
-            className={`textarea textarea-bordered h-48 font-mono text-sm leading-relaxed ${!!isEnvLocked || isViewMode ? 'textarea-disabled bg-base-200' : ''}`}
+            className={`textarea textarea-bordered h-48 font-mono text-sm leading-relaxed w-full ${!!isEnvLocked || isViewMode ? 'textarea-disabled bg-base-200' : ''}`}
             value={personaPrompt}
             onChange={(e) => setPersonaPrompt(e.target.value)}
             placeholder="You are a helpful assistant..."
