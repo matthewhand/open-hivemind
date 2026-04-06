@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useWebSocket } from '../contexts/WebSocketContext';
-import StatusCard from '../components/Monitoring/StatusCard';
 import MetricChart from '../components/Monitoring/MetricChart';
 import AlertPanel from '../components/Monitoring/AlertPanel';
 import EventStream from '../components/Monitoring/EventStream';
 import PerformanceMonitor from '../components/PerformanceMonitor';
 import StatsCards from '../components/DaisyUI/StatsCards';
+import RadialProgress from '../components/DaisyUI/RadialProgress';
 import { SkeletonPage } from '../components/DaisyUI/Skeleton';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import { Alert } from '../components/DaisyUI/Alert';
@@ -19,11 +19,7 @@ import {
   RefreshCw,
   Cpu,
   MemoryStick,
-  Plug,
   TriangleAlert,
-  Siren,
-  AlertCircle,
-  ArrowUp,
   MessageSquare,
 } from 'lucide-react';
 
@@ -136,9 +132,15 @@ const MonitoringDashboard: React.FC = () => {
             <Cpu className="w-4 h-4 text-primary" /> CPU Usage
           </h3>
           <div className="flex items-center gap-4">
-            <div className="radial-progress text-primary text-sm font-bold" style={{ '--value': currentMetric.cpuUsage, '--size': '4rem', '--thickness': '0.3rem' } as React.CSSProperties} role="progressbar">
+            <RadialProgress
+              value={currentMetric.cpuUsage}
+              size="4rem"
+              thickness="0.3rem"
+              color="primary"
+              className="text-sm font-bold"
+            >
               {currentMetric.cpuUsage}%
-            </div>
+            </RadialProgress>
             <div className="text-sm text-base-content/70">
               <p>Current CPU load</p>
               <p className="text-xs text-base-content/50">Threshold: 80%</p>
@@ -151,9 +153,15 @@ const MonitoringDashboard: React.FC = () => {
             <MemoryStick className="w-4 h-4 text-secondary" /> Memory Usage
           </h3>
           <div className="flex items-center gap-4">
-            <div className="radial-progress text-secondary text-sm font-bold" style={{ '--value': currentMetric.memoryUsage, '--size': '4rem', '--thickness': '0.3rem' } as React.CSSProperties} role="progressbar">
+            <RadialProgress
+              value={currentMetric.memoryUsage}
+              size="4rem"
+              thickness="0.3rem"
+              color="secondary"
+              className="text-sm font-bold"
+            >
               {currentMetric.memoryUsage}%
-            </div>
+            </RadialProgress>
             <div className="text-sm text-base-content/70">
               <p>Current memory allocation</p>
               <p className="text-xs text-base-content/50">Threshold: 90%</p>

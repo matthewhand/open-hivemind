@@ -148,29 +148,32 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
               No results found
             </li>
           )}
-          {filtered.map((item, idx) => (
-            <li
-              key={item.id}
-              role="option"
-              aria-selected={idx === selectedIndex}
-              className={`flex items-center gap-3 px-4 py-2 cursor-pointer transition-colors ${
-                idx === selectedIndex
-                  ? 'bg-primary/10 text-primary'
-                  : 'hover:bg-base-200 text-base-content'
-              }`}
-              onClick={() => selectItem(item)}
-              onMouseEnter={() => setSelectedIndex(idx)}
-            >
-              <span className="shrink-0 opacity-70">{item.icon}</span>
-              <span className="flex-1 truncate">{item.label}</span>
-              {item.section && (
-                <span className="text-xs text-base-content/40">{item.section}</span>
-              )}
-              {idx === selectedIndex && (
-                <CornerDownLeft className="w-3.5 h-3.5 opacity-40 shrink-0" />
-              )}
-            </li>
-          ))}
+          {filtered.map((item, idx) => {
+            const isActive = idx === selectedIndex;
+            return (
+              <li
+                key={item.id}
+                role="option"
+                aria-selected={isActive}
+                className={`flex items-center gap-3 px-4 py-2 cursor-pointer transition-colors ${
+                  isActive
+                    ? 'bg-primary/10 text-primary'
+                    : 'hover:bg-base-200 text-base-content'
+                }`}
+                onClick={() => selectItem(item)}
+                onMouseEnter={() => setSelectedIndex(idx)}
+              >
+                <span className="shrink-0 opacity-70">{item.icon}</span>
+                <span className="flex-1 truncate">{item.label}</span>
+                {item.section && (
+                  <span className="text-xs text-base-content/40">{item.section}</span>
+                )}
+                {isActive && (
+                  <CornerDownLeft className="w-3.5 h-3.5 opacity-40 shrink-0" />
+                )}
+              </li>
+            );
+          })}
         </ul>
 
         {/* Footer hint */}

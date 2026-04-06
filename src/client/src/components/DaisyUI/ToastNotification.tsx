@@ -98,22 +98,24 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
     setToasts([]);
   }, []);
 
-  const getPositionClasses = () => {
+  const getToastPosition = () => {
+    // Map to DaisyUI toast positional classes
+    // See: https://daisyui.com/components/toast/
     switch (position) {
       case 'top-left':
-        return 'top-4 left-4';
+        return 'toast toast-start';
       case 'top-center':
-        return 'top-4 left-1/2 transform -translate-x-1/2';
+        return 'toast toast-center';
       case 'top-right':
-        return 'top-4 right-4';
+        return 'toast toast-end';
       case 'bottom-left':
-        return 'bottom-4 left-4';
+        return 'toast toast-bottom toast-start';
       case 'bottom-center':
-        return 'bottom-4 left-1/2 transform -translate-x-1/2';
+        return 'toast toast-bottom toast-center';
       case 'bottom-right':
-        return 'bottom-4 right-4';
+        return 'toast toast-bottom toast-end';
       default:
-        return 'top-4 right-4';
+        return 'toast toast-end';
     }
   };
 
@@ -121,8 +123,8 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
     <ToastContext.Provider value={{ toasts, addToast, removeToast, clearAll }}>
       {children}
 
-      {/* Toast Container */}
-      <div className={`fixed z-50 space-y-2 ${getPositionClasses()}`} aria-live="polite" aria-label="Notifications" role="region">
+      {/* Toast Container — uses DaisyUI toast positioning */}
+      <div className={`fixed z-50 ${getToastPosition()}`} aria-live="polite" aria-label="Notifications" role="region">
         {toasts.map((toast) => (
           <ToastItem key={toast.id} toast={toast} onRemove={removeToast} position={position} />
         ))}
