@@ -129,11 +129,22 @@ export class PersonaManager extends EventEmitter {
         const data = await fs.promises.readFile(this.personasFilePath, 'utf8');
         const customPersonas = JSON.parse(data);
 
+        // Collect custom persona names to detect duplicates of built-ins
+        const customNames = new Set<string>();
         Object.values(customPersonas).forEach((p: any) => {
           if (p.id) {
             this.personas.set(p.id, p);
+            if (p.name) customNames.add(p.name);
           }
         });
+
+        // Remove built-in personas that have custom copies (same name) to avoid duplicates
+        for (const builtin of BUILTIN_PERSONAS) {
+          if (customNames.has(builtin.name)) {
+            this.personas.delete(builtin.id);
+          }
+        }
+
         debug(`Loaded ${Object.keys(customPersonas).length} custom personas`);
       } else {
         // No custom-personas.json yet — seed editable copies of all built-in personas
