@@ -140,9 +140,9 @@ export const BotDetailContent: React.FC<BotDetailContentProps> = ({
       {/* Tabs Navigation */}
       <Tabs
         tabs={[
-          { key: 'activity', label: <span className="text-xs uppercase font-bold">Activity</span>, icon: <Activity className="w-3 h-3" /> },
-          { key: 'chat', label: <span className="text-xs uppercase font-bold">Chat</span>, icon: <MessageSquare className="w-3 h-3" /> },
-          { key: 'validation', label: <span className="text-xs uppercase font-bold">Validation</span>, icon: <ShieldCheck className="w-3 h-3" /> },
+          { key: 'activity', label: <span className="text-xs uppercase font-bold">Activity</span>, icon: <Activity className="w-3 h-3" />, color: 'info' as const },
+          { key: 'chat', label: <span className="text-xs uppercase font-bold">Chat</span>, icon: <MessageSquare className="w-3 h-3" />, color: 'primary' as const },
+          { key: 'validation', label: <span className="text-xs uppercase font-bold">Validation</span>, icon: <ShieldCheck className="w-3 h-3" />, color: 'success' as const },
         ]}
         activeTab={previewTab}
         onChange={(key) => setPreviewTab(key as 'activity' | 'chat' | 'validation')}

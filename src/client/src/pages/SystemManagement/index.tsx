@@ -285,10 +285,10 @@ const SystemManagement: React.FC = () => {
       <Card className="shadow-xl">
         <Tabs variant="lifted"
             tabs={[
-              { key: 'alerts', label: 'Alert Management' },
+              { key: 'alerts', label: 'Alert Management', color: 'warning' as const },
               { key: 'config', label: 'System Configuration' },
-              { key: 'backups', label: 'Backup Management' },
-              { key: 'performance', label: 'Performance Tuning' },
+              { key: 'backups', label: 'Backup Management', color: 'info' as const },
+              { key: 'performance', label: 'Performance Tuning', color: 'accent' as const },
             ]}
             activeTab={activeTab}
             onChange={setActiveTab}

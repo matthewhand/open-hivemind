@@ -357,10 +357,12 @@ const MarketplacePage: React.FC = () => {
 
         {/* Type Filter Tabs */}
         <Tabs variant="lifted"
-          tabs={(['all', 'llm', 'message', 'memory', 'tool'] as FilterType[]).map((t) => ({
-            key: t,
-            label: t === 'all' ? 'All' : t.toUpperCase(),
-          }))}
+          tabs={(['all', 'llm', 'message', 'memory', 'tool'] as FilterType[]).map((t) => {
+            const colors: Record<string, 'primary' | 'secondary' | 'accent' | 'info'> = {
+              llm: 'primary', message: 'secondary', memory: 'accent', tool: 'info',
+            };
+            return { key: t, label: t === 'all' ? 'All' : t.toUpperCase(), color: colors[t] };
+          })}
           activeTab={filter}
           onChange={(key) => setFilter(key as FilterType)}
         />
