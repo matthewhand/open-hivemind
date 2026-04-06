@@ -35,6 +35,8 @@ const AvatarPicker: React.FC<AvatarPickerProps> = ({
                 : 'border-transparent'
             }`}
             title={label}
+            aria-label={`Select ${label} avatar style`}
+            aria-pressed={selectedStyle === key}
           >
             <PersonaAvatar seed={effectiveSeed} style={key} size={36} />
             <span className="text-[10px] opacity-60 truncate w-full text-center">{label}</span>
