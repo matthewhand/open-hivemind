@@ -3,6 +3,7 @@ import React, { useCallback, useState } from 'react';
 import { Alert } from '../../components/DaisyUI/Alert';
 import { Badge } from '../../components/DaisyUI/Badge';
 import Button from '../../components/DaisyUI/Button';
+import { ConfirmModal } from '../../components/DaisyUI/Modal';
 import Card from '../../components/DaisyUI/Card';
 import DetailDrawer from '../../components/DaisyUI/DetailDrawer';
 import Divider from '../../components/DaisyUI/Divider';
@@ -297,28 +298,17 @@ const PersonasPage: React.FC = () => {
       />
 
       {/* Delete Confirmation Modal */}
-      {showDeleteModal && deletingPersona && (
-        <div className="modal modal-open" role="dialog" aria-modal="true">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg flex items-center gap-2">
-              <Trash2 className="w-5 h-5 text-error" />
-              Delete Persona
-            </h3>
-            <p className="py-4">
-              Are you sure you want to delete <strong>{deletingPersona.name}</strong>?
-              Any bots assigned to this persona will be reset to the default persona.
-            </p>
-            <div className="modal-action">
-              <Button variant="ghost" onClick={() => { setShowDeleteModal(false); setDeletingPersona(null); }} disabled={deleting}>
-                Cancel
-              </Button>
-              <Button variant="primary" color="error" onClick={handleConfirmDelete} loading={deleting}>
-                Delete
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        isOpen={showDeleteModal && !!deletingPersona}
+        onClose={() => { setShowDeleteModal(false); setDeletingPersona(null); }}
+        onConfirm={handleConfirmDelete}
+        title="Delete Persona"
+        message={deletingPersona ? `Are you sure you want to delete "${deletingPersona.name}"? Any bots assigned to this persona will be reset to the default persona.` : ''}
+        confirmText="Delete"
+        cancelText="Cancel"
+        confirmVariant="error"
+        loading={deleting}
+      />
     </div>
   );
 };

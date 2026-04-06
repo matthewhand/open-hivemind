@@ -61,9 +61,9 @@ const DemoModeBanner: React.FC = () => {
                         <span className="mr-3">🤖 {demoStatus.botCount} Demo Bots</span>
                         <span className="mr-3">💬 {demoStatus.conversationCount} Conversations</span>
                         {demoStatus.isSimulationRunning && (
-                            <span className="mr-3 text-green-200">
+                            <span className="mr-3 text-success">
                                 📊 Live Simulation
-                                <span className="inline-block w-2 h-2 bg-green-400 rounded-full ml-1 animate-pulse"></span>
+                                <span className="inline-block w-2 h-2 bg-success rounded-full ml-1 animate-pulse"></span>
                             </span>
                         )}
                     </div>

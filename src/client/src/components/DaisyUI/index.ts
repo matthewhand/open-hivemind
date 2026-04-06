@@ -94,6 +94,15 @@ export type { ValidatorProps, ValidatorHintProps } from './Validator';
 
 // Advanced Components
 export { default as AdvancedThemeSwitcher } from './AdvancedThemeSwitcher';
+export { default as Chat } from './Chat';
+export { default as CodeBlock } from './CodeBlock';
+export { default as ConfigKeyValueCard } from './ConfigKeyValueCard';
+export { EnhancedErrorAlert } from './EnhancedErrorAlert';
+export { default as FormField } from './FormField';
+export { default as ModelAutocomplete } from './ModelAutocomplete';
+export { default as RateLimitIndicator } from './RateLimitIndicator';
+export { default as ResponsiveNavigation } from './ResponsiveNavigation';
+export { default as ThemeDropdown } from './ThemeDropdown';
 export { default as DashboardWidgetSystem } from './DashboardWidgetSystem';
 
 // Navigation Components

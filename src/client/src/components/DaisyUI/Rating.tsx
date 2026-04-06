@@ -133,7 +133,7 @@ export const Rating: React.FC<RatingProps> = ({
             key={`rating-${i}-half`}
             type="radio"
             name={groupName}
-            className={`mask ${maskClass} bg-orange-400`}
+            className={`mask ${maskClass} bg-warning`}
             style={{ maskPosition: 'left' }}
             checked={displayValue === i - 0.5}
             onChange={() => handleInputChange(i - 0.5)}
@@ -150,7 +150,7 @@ export const Rating: React.FC<RatingProps> = ({
           key={`rating-${i}`}
           type="radio"
           name={groupName}
-          className={`mask ${maskClass} bg-orange-400`}
+          className={`mask ${maskClass} bg-warning`}
           checked={displayValue === i}
           onChange={() => handleInputChange(i)}
           onMouseEnter={() => handleMouseEnter(i)}

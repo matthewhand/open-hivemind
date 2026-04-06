@@ -119,10 +119,10 @@ const BotCreatePage: React.FC = () => {
   };
 
   const platforms = [
-    { id: 'discord', name: 'Discord', icon: Gamepad2, color: 'text-indigo-500' },
-    { id: 'slack', name: 'Slack', icon: Hash, color: 'text-purple-500' },
-    { id: 'mattermost', name: 'Mattermost', icon: MessageSquare, color: 'text-blue-500' },
-    { id: 'telegram', name: 'Telegram', icon: Send, color: 'text-sky-500' },
+    { id: 'discord', name: 'Discord', icon: Gamepad2, color: 'text-primary' },
+    { id: 'slack', name: 'Slack', icon: Hash, color: 'text-secondary' },
+    { id: 'mattermost', name: 'Mattermost', icon: MessageSquare, color: 'text-accent' },
+    { id: 'telegram', name: 'Telegram', icon: Send, color: 'text-info' },
   ];
 
   const selectedPersona = personas.find(p => p.id === formData.persona);
