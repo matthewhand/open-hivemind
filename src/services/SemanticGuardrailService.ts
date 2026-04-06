@@ -1,6 +1,6 @@
-import { getLlmProvider } from '@src/llm/getLlmProvider';
-import { getLlmProfileByKey, type ProviderProfile } from '@src/config/llmProfiles';
 import type { SemanticGuardrailConfig } from '@src/config/guardrailProfiles';
+import { getLlmProfileByKey } from '@src/config/llmProfiles';
+import { getLlmProvider } from '@src/llm/getLlmProvider';
 import type { ILlmProvider } from '@src/llm/interfaces/ILlmProvider';
 import Logger from '@common/logger';
 
@@ -169,7 +169,7 @@ export class SemanticGuardrailService {
    */
   private async getLlmProvider(providerKey?: string): Promise<ILlmProvider | null> {
     const providers = await getLlmProvider();
-    
+
     if (!providers || providers.length === 0) {
       logger.warn('No LLM providers available for semantic guardrails');
       return null;
@@ -188,9 +188,11 @@ export class SemanticGuardrailService {
     }
 
     // Find matching provider by name/provider field
-    const matchingProvider = providers.find(p => p.name === profile.provider);
+    const matchingProvider = providers.find((p) => p.name === profile.provider);
     if (!matchingProvider) {
-      logger.warn(`No LLM provider matches profile: ${providerKey} (provider: ${profile.provider})`);
+      logger.warn(
+        `No LLM provider matches profile: ${providerKey} (provider: ${profile.provider})`
+      );
       return null;
     }
 
@@ -205,18 +207,22 @@ export class SemanticGuardrailService {
     const sanitize = (value: string): string => {
       // Remove common prompt injection patterns
       return value
-        .replace(/"""[\s\S]*?"""/g, '[REDACTED]')  // Remove triple-quoted sections
+        .replace(/"""[\s\S]*?"""/g, '[REDACTED]') // Remove triple-quoted sections
         .replace(/ignore previous/gi, '[FILTERED]')
         .replace(/system[:\s]/gi, '[FILTERED]')
         .replace(/new instruction[:\s]/gi, '[FILTERED]')
         .trim();
     };
 
-    const contextInfo = request.context ? [
-      request.context.messageType ? `Message Type: ${request.context.messageType}` : '',
-      request.context.userId ? `User ID: ${sanitize(request.context.userId)}` : '',
-      request.context.channelId ? `Channel ID: ${sanitize(request.context.channelId)}` : '',
-    ].filter(Boolean).join('\n') : '';
+    const contextInfo = request.context
+      ? [
+          request.context.messageType ? `Message Type: ${request.context.messageType}` : '',
+          request.context.userId ? `User ID: ${sanitize(request.context.userId)}` : '',
+          request.context.channelId ? `Channel ID: ${sanitize(request.context.channelId)}` : '',
+        ]
+          .filter(Boolean)
+          .join('\n')
+      : '';
 
     // Sanitize user content to prevent prompt injection
     const sanitizedContent = request.content

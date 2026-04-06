@@ -7,11 +7,11 @@ import { ApiResponse } from '@src/server/utils/apiResponse';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import { createLogger } from '../../common/StructuredLogger';
+import { container } from '../../di/container';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { AnalyticsService } from '../../services/AnalyticsService';
-import { HTTP_STATUS } from '../../types/constants';
 import DemoModeService from '../../services/DemoModeService';
-import { container } from '../../di/container';
+import { HTTP_STATUS } from '../../types/constants';
 import {
   AlertIdParamSchema,
   DashboardConfigSchema,
@@ -381,10 +381,14 @@ router.get('/status', authenticate, requireAdmin, (req, res) => {
     try {
       const demoService = container.resolve(DemoModeService);
       demoMode = demoService.isInDemoMode();
-    } catch { /* ignore if DI not ready */ }
+    } catch {
+      /* ignore if DI not ready */
+    }
 
     if (demoMode) {
-      return res.json(ApiResponse.success({ bots: status, uptime: process.uptime(), isDemoMode: true }));
+      return res.json(
+        ApiResponse.success({ bots: status, uptime: process.uptime(), isDemoMode: true })
+      );
     }
 
     res.json(ApiResponse.success({ bots: status, uptime: process.uptime() }));

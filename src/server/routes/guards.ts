@@ -134,9 +134,11 @@ router.post(
       // Enforce content size limit to prevent abuse
       const MAX_CONTENT_LENGTH = 5000;
       if (content.length > MAX_CONTENT_LENGTH) {
-        return res.status(HTTP_STATUS.BAD_REQUEST).json(
-          ApiResponse.error(`Content exceeds maximum length of ${MAX_CONTENT_LENGTH} characters`)
-        );
+        return res
+          .status(HTTP_STATUS.BAD_REQUEST)
+          .json(
+            ApiResponse.error(`Content exceeds maximum length of ${MAX_CONTENT_LENGTH} characters`)
+          );
       }
 
       if (!guardrailConfig || typeof guardrailConfig !== 'object') {
@@ -159,14 +161,16 @@ router.post(
           .json(ApiResponse.error('Guardrail type must be "input" or "output"'));
       }
 
-      return res.json(ApiResponse.success({
-        result,
-        testConfig: {
-          content: content.substring(0, 100) + (content.length > 100 ? '...' : ''),
-          guardrailType,
-          guardrailEnabled: guardrailConfig.enabled,
-        }
-      }));
+      return res.json(
+        ApiResponse.success({
+          result,
+          testConfig: {
+            content: content.substring(0, 100) + (content.length > 100 ? '...' : ''),
+            guardrailType,
+            guardrailEnabled: guardrailConfig.enabled,
+          },
+        })
+      );
     } catch (error: unknown) {
       debug('Error testing semantic guardrail:', error);
       return res

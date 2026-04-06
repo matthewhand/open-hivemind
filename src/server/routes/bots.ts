@@ -24,7 +24,11 @@ const managerPromise = BotManager.getInstance();
 let _wsService: WebSocketService | null = null;
 const getWsService = () => {
   if (!_wsService) {
-    try { _wsService = WebSocketService.getInstance(); } catch { /* DI not ready */ }
+    try {
+      _wsService = WebSocketService.getInstance();
+    } catch {
+      /* DI not ready */
+    }
   }
   return _wsService;
 };
