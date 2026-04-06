@@ -395,7 +395,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   }
 });
 // Return 404 for all non-existent routes (all HTTP methods)
-app.all('*', (req: Request, res: Response) => {
+app.all('*', (req: Request, res: Response): any => {
   // Skip API routes — these should have been matched by earlier routers
   if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
     httpLogger.debug('Unmatched API route', { path: req.path, method: req.method });
