@@ -7,14 +7,15 @@ import Toggle from './DaisyUI/Toggle';
 import Kbd from './DaisyUI/Kbd';
 import { Loading, LoadingSpinner } from './DaisyUI/Loading';
 import {
-  XMarkIcon,
-  ArrowDownTrayIcon,
-  BeakerIcon,
-  CheckCircleIcon,
-  ExclamationCircleIcon,
-  InformationCircleIcon,
-} from '@heroicons/react/24/outline';
-import { Keyboard, RefreshCw } from 'lucide-react';
+  Keyboard,
+  RefreshCw,
+  X as XMarkIcon,
+  Download as ArrowDownTrayIcon,
+  FlaskConical as BeakerIcon,
+  CheckCircle as CheckCircleIcon,
+  AlertCircle as ExclamationCircleIcon,
+  Info as InformationCircleIcon,
+} from 'lucide-react';
 import { apiService } from '../services/api';
 
 interface QuickActionsProps {

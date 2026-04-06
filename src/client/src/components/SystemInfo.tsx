@@ -17,12 +17,12 @@ import Tooltip from './DaisyUI/Tooltip';
 import { LoadingSpinner } from './DaisyUI/Loading';
 import { ConfirmModal } from './DaisyUI/Modal';
 import {
-  ArrowDownTrayIcon,
-  PowerIcon,
-  PlayIcon,
-  XMarkIcon,
-} from '@heroicons/react/24/outline';
-import { RefreshCw } from 'lucide-react';
+  RefreshCw,
+  Download as ArrowDownTrayIcon,
+  Power as PowerIcon,
+  Play as PlayIcon,
+  X as XMarkIcon,
+} from 'lucide-react';
 import { useDashboardStore } from '../store/dashboardStore';
 import { apiService } from '../services/api';
 import Debug from 'debug';

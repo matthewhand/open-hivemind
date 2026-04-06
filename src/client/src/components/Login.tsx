@@ -7,7 +7,7 @@ import { Alert } from './DaisyUI/Alert';
 import { Loading } from './DaisyUI/Loading';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { AlertTriangle as ExclamationTriangleIcon } from 'lucide-react';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();

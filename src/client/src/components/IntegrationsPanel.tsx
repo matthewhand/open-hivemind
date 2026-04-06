@@ -16,21 +16,19 @@ import Badge from './DaisyUI/Badge';
 import Join from './DaisyUI/Join';
 import { useErrorToast } from './DaisyUI/ToastNotification';
 import {
-  PuzzlePieceIcon,
-  ChatBubbleLeftRightIcon,
-  CpuChipIcon,
-  PlusIcon,
-  PencilSquareIcon,
-  TrashIcon,
-  LockClosedIcon,
-} from '@heroicons/react/24/outline';
-import {
   MessageSquare,
   Brain,
   Plug,
   CheckCircle,
   AlertCircle,
   Bot,
+  Puzzle as PuzzlePieceIcon,
+  MessageCircle as ChatBubbleLeftRightIcon,
+  Cpu as CpuChipIcon,
+  Plus as PlusIcon,
+  Pencil as PencilSquareIcon,
+  Trash2 as TrashIcon,
+  Lock as LockClosedIcon,
 } from 'lucide-react';
 
 import { apiService } from '../services/api';

@@ -1,10 +1,10 @@
 import React from 'react';
 import {
-  ClockIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  EyeIcon,
-} from '@heroicons/react/24/outline';
+  Clock as ClockIcon,
+  CheckCircle as CheckCircleIcon,
+  XCircle as XCircleIcon,
+  Eye as EyeIcon,
+} from 'lucide-react';
 import Button from './DaisyUI/Button';
 import Card from './DaisyUI/Card';
 import { Badge } from './DaisyUI/Badge';

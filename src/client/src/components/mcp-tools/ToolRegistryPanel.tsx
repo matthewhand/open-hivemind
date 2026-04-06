@@ -2,14 +2,16 @@ import React, { useRef, useMemo } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { MCPTool, RecentToolUsage } from './types';
 import {
-  WrenchScrewdriverIcon as ToolIcon,
-  PlayIcon as RunIcon,
-  ClockIcon,
-} from '@heroicons/react/24/outline';
-import { Search } from 'lucide-react';
+  Wrench as ToolIcon,
+  Play as RunIcon,
+  Clock as ClockIcon,
+  Search,
+  Star as StarOutlineIcon,
+} from 'lucide-react';
 import { ToolFilters } from '../tools/ToolFilters';
-import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid';
-import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
+
+// For the filled star, use the same Star icon with fill prop
+const StarSolidIcon = (props: any) => <StarOutlineIcon {...props} fill="currentColor" />;
 import Card from '../DaisyUI/Card';
 import EmptyState from '../DaisyUI/EmptyState';
 import { SkeletonGrid } from '../DaisyUI/Skeleton';

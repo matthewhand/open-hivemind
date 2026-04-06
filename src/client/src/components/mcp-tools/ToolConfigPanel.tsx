@@ -1,6 +1,6 @@
 import React from 'react';
 import { MCPTool } from './types';
-import { CodeBracketIcon, ListBulletIcon } from '@heroicons/react/24/outline';
+import { Code as CodeBracketIcon, List as ListBulletIcon } from 'lucide-react';
 import { Alert } from '../DaisyUI/Alert';
 import Mockup from '../DaisyUI/Mockup';
 import Toggle from '../DaisyUI/Toggle';

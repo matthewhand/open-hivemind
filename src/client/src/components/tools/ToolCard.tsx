@@ -1,10 +1,12 @@
 import React from 'react';
 import {
-  WrenchScrewdriverIcon as ToolIcon,
-  PlayIcon as RunIcon,
-} from '@heroicons/react/24/outline';
-import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid';
-import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
+  Wrench as ToolIcon,
+  Play as RunIcon,
+  Star as StarOutlineIcon,
+} from 'lucide-react';
+
+// For the filled star, use the same Star icon with fill prop
+const StarSolidIcon = (props: any) => <StarOutlineIcon {...props} fill="currentColor" />;
 import type { MCPTool } from '../../hooks/useToolsLogic';
 import Card from '../DaisyUI/Card';
 import { Badge } from '../DaisyUI/Badge';

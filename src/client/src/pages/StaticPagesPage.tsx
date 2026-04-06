@@ -2,7 +2,7 @@ import React from 'react';
 import Card from '../components/DaisyUI/Card';
 import Button from '../components/DaisyUI/Button';
 
-import { ArrowTopRightOnSquareIcon, HomeIcon, ClockIcon, ComputerDesktopIcon } from '@heroicons/react/24/outline';
+import { ExternalLink as ArrowTopRightOnSquareIcon, Home as HomeIcon, Clock as ClockIcon, Monitor as ComputerDesktopIcon } from 'lucide-react';
 
 const StaticPagesPage: React.FC = () => {
 

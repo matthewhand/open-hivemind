@@ -18,12 +18,12 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
-  ArrowTopRightOnSquareIcon,
-  Bars3Icon,
-  PencilIcon,
-  PlusIcon,
-  TrashIcon,
-} from '@heroicons/react/24/outline';
+  ExternalLink as ArrowTopRightOnSquareIcon,
+  GripVertical as Bars3Icon,
+  Pencil as PencilIcon,
+  Plus as PlusIcon,
+  Trash2 as TrashIcon,
+} from 'lucide-react';
 import { Alert } from '../DaisyUI/Alert';
 import Badge from '../DaisyUI/Badge';
 import Button from '../DaisyUI/Button';

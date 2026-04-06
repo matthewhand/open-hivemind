@@ -2,14 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { authFetch } from '../utils/authFetch';
 import {
-  WrenchScrewdriverIcon,
-  PlayIcon,
-  ClockIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  CodeBracketIcon,
-  InformationCircleIcon,
-} from '@heroicons/react/24/outline';
+  Wrench as WrenchScrewdriverIcon,
+  Play as PlayIcon,
+  Clock as ClockIcon,
+  CheckCircle as CheckCircleIcon,
+  XCircle as XCircleIcon,
+  Code as CodeBracketIcon,
+  Info as InformationCircleIcon,
+} from 'lucide-react';
 import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
 import { Alert } from '../components/DaisyUI/Alert';
 import { Badge } from '../components/DaisyUI/Badge';

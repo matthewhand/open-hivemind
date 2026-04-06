@@ -12,15 +12,15 @@ import Toggle from './DaisyUI/Toggle';
 import Tooltip from './DaisyUI/Tooltip';
 import Textarea from './DaisyUI/Textarea';
 import {
-  PlusIcon,
-  PencilIcon,
-  TrashIcon,
-  ShieldCheckIcon,
-  LockClosedIcon,
-  LockOpenIcon,
-  ArrowDownTrayIcon,
-  ArrowUpTrayIcon,
-} from '@heroicons/react/24/outline';
+  Plus as PlusIcon,
+  Pencil as PencilIcon,
+  Trash2 as TrashIcon,
+  ShieldCheck as ShieldCheckIcon,
+  Lock as LockClosedIcon,
+  Unlock as LockOpenIcon,
+  Download as ArrowDownTrayIcon,
+  Upload as ArrowUpTrayIcon,
+} from 'lucide-react';
 import { apiService } from '../services/api';
 import type { SecureConfig } from '../services/api';
 

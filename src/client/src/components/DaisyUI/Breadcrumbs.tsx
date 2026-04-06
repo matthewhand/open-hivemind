@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { HomeIcon } from '@heroicons/react/24/solid';
+import { Home as HomeIcon } from 'lucide-react';
 
 /**
  * Route segment to human-readable label mapping.

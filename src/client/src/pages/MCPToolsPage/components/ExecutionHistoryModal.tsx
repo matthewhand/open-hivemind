@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import { CheckCircle as CheckCircleIcon, XCircle as XCircleIcon } from 'lucide-react';
 import Modal from '../../../components/DaisyUI/Modal';
 import Accordion from '../../../components/DaisyUI/Accordion';
 import { LoadingSpinner } from '../../../components/DaisyUI/Loading';

@@ -10,10 +10,10 @@ import Toggle from './DaisyUI/Toggle';
 import Tooltip from './DaisyUI/Tooltip';
 import { Loading } from './DaisyUI/Loading';
 import {
-  TrashIcon,
-  MagnifyingGlassIcon,
-} from '@heroicons/react/24/outline';
-import { RefreshCw } from 'lucide-react';
+  RefreshCw,
+  Trash2 as TrashIcon,
+  Search as MagnifyingGlassIcon,
+} from 'lucide-react';
 import { useConfigStore } from '../store/configStore';
 import { SkeletonPage } from './DaisyUI/Skeleton';
 import Debug from 'debug';
