@@ -120,15 +120,16 @@ const DashboardPage: React.FC = () => {
         <span className="text-sm font-medium text-primary">Widgets Layout</span>
       </div>
 
+      <div className="mb-8">
+        <Carousel items={carouselItems} autoplay={true} interval={6000} variant="full-width" />
+      </div>
+
       {useWidgetLayout ? (
         <div className="animate-in fade-in duration-300">
           <DashboardWidgetSystem />
         </div>
       ) : (
         <div className="animate-in fade-in duration-300">
-          <div className="mb-8">
-            <Carousel items={carouselItems} autoplay={true} interval={6000} variant="full-width" />
-          </div>
           <Dashboard />
         </div>
       )}
