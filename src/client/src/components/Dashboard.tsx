@@ -15,7 +15,6 @@ import QuickActions from './QuickActions';
 import LLMUsageChart from './Dashboard/LLMUsageChart';
 import MessageVolumeChart from './Dashboard/MessageVolumeChart';
 import AgentGrid from './Dashboard/AgentGrid';
-import { Sparkles as SparklesIcon, Plus as PlusIcon, Users as UsersIcon, Shield as ShieldIcon } from 'lucide-react';
 
 const getStatusColor = (botStatus: string) => {
   switch (botStatus.toLowerCase()) {
@@ -213,6 +212,11 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
+      {/* Quick Actions — flush to top */}
+      <div className="max-w-7xl mx-auto px-4 pt-0 pb-2">
+        <QuickActions onRefresh={fetchData} />
+      </div>
+
       {/* Hero Section */}
       <Hero
         backgroundImage="https://images.unsplash.com/photo-1555949963-aa79dcee981c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
@@ -243,70 +247,9 @@ const Dashboard: React.FC = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Quick Actions */}
-        <QuickActions onRefresh={fetchData} />
-
         {/* Announcement Banner */}
         <AnnouncementBanner />
         <TipRotator className="mb-4 px-2" />
-
-        {/* Quick Links — always visible navigation shortcuts */}
-        <Card className="mb-8" title="Quick Links">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            <button
-              type="button"
-              onClick={() => navigate('/admin/bots')}
-              className="flex items-center gap-3 p-4 rounded-xl border border-base-300 bg-base-100 hover:border-primary hover:bg-primary/5 transition-all text-left group"
-            >
-              <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors">
-                <PlusIcon className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="font-medium text-sm">Configure Your First Bot</div>
-                <div className="text-xs text-base-content/50">Set up a new AI agent</div>
-              </div>
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/admin/providers/llm')}
-              className="flex items-center gap-3 p-4 rounded-xl border border-base-300 bg-base-100 hover:border-secondary hover:bg-secondary/5 transition-all text-left group"
-            >
-              <div className="p-2 rounded-lg bg-secondary/10 text-secondary group-hover:bg-secondary/20 transition-colors">
-                <SparklesIcon className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="font-medium text-sm">LLM Providers</div>
-                <div className="text-xs text-base-content/50">Connect AI services</div>
-              </div>
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/admin/personas')}
-              className="flex items-center gap-3 p-4 rounded-xl border border-base-300 bg-base-100 hover:border-info hover:bg-info/5 transition-all text-left group"
-            >
-              <div className="p-2 rounded-lg bg-info/10 text-info group-hover:bg-info/20 transition-colors">
-                <UsersIcon className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="font-medium text-sm">Personas</div>
-                <div className="text-xs text-base-content/50">Manage identities</div>
-              </div>
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/admin/guards')}
-              className="flex items-center gap-3 p-4 rounded-xl border border-base-300 bg-base-100 hover:border-warning hover:bg-warning/5 transition-all text-left group"
-            >
-              <div className="p-2 rounded-lg bg-warning/10 text-warning group-hover:bg-warning/20 transition-colors">
-                <ShieldIcon className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="font-medium text-sm">Guards</div>
-                <div className="text-xs text-base-content/50">Safety rules</div>
-              </div>
-            </button>
-          </div>
-        </Card>
 
         {/* Bot Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">

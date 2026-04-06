@@ -64,24 +64,12 @@ const DashboardPage: React.FC = () => {
   }
 
   const carouselItems = [
-    {
-      image: '', // Using styled content below instead
-      title: 'Welcome to Open-Hivemind',
-      description: 'Your multi-agent AI platform for seamless communication across platforms.',
-      bgGradient: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
-    },
-    {
-      image: '',
-      title: 'Real-time Monitoring',
-      description: 'Monitor your bots\' performance and health in real-time with detailed metrics.',
-      bgGradient: 'linear-gradient(135deg, #059669, #10b981)',
-    },
-    {
-      image: '',
-      title: 'Multi-Platform Support',
-      description: 'Connect to Discord, Slack, Mattermost, and more with centralized management.',
-      bgGradient: 'linear-gradient(135deg, #dc2626, #ef4444)',
-    },
+    { image: '', title: '🤖 Configure Your First Bot', description: 'Set up an AI agent — assign a persona, connect a messaging platform, and choose an LLM provider.', bgGradient: 'linear-gradient(135deg, #4f46e5, #7c3aed)' },
+    { image: '', title: '🧠 Connect an LLM Provider', description: 'Add your OpenAI, Anthropic, Flowise, or Ollama API key to power bot responses.', bgGradient: 'linear-gradient(135deg, #059669, #10b981)' },
+    { image: '', title: '🎭 Create a Persona', description: 'Give your bot a unique personality — name, system prompt, response behavior, and avatar.', bgGradient: 'linear-gradient(135deg, #0891b2, #06b6d4)' },
+    { image: '', title: '🛡️ Set Up Guard Profiles', description: 'Add safety rules — access control, rate limiting, and content filtering for your bots.', bgGradient: 'linear-gradient(135deg, #d97706, #f59e0b)' },
+    { image: '', title: '📡 Multi-Platform Support', description: 'Connect to Discord, Slack, Mattermost — run coordinated bots across all platforms.', bgGradient: 'linear-gradient(135deg, #dc2626, #ef4444)' },
+    { image: '', title: '📊 Real-time Monitoring', description: 'Monitor bot performance, message volume, response times, and system health.', bgGradient: 'linear-gradient(135deg, #7c3aed, #a855f7)' },
   ];
 
   return (
@@ -109,6 +97,11 @@ const DashboardPage: React.FC = () => {
         </div>
       )}
 
+      <div className="mb-6 px-4">
+        <h3 className="text-sm font-bold uppercase tracking-wider text-base-content/40 mb-2">Getting Started</h3>
+        <Carousel items={carouselItems} autoplay={true} interval={6000} variant="full-width" />
+      </div>
+
       <div className="flex justify-end items-center mb-4 px-4 gap-3 bg-base-100/50 p-2 rounded-lg shadow-sm w-fit ml-auto">
         <span className="text-sm font-medium opacity-80">Static Layout</span>
         <Toggle
@@ -126,9 +119,6 @@ const DashboardPage: React.FC = () => {
         </div>
       ) : (
         <div className="animate-in fade-in duration-300">
-          <div className="mb-8">
-            <Carousel items={carouselItems} autoplay={true} interval={6000} variant="full-width" />
-          </div>
           <Dashboard />
         </div>
       )}
