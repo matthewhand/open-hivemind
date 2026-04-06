@@ -167,10 +167,6 @@ export class IntegrationLoader {
     }
 
     try {
-      // Try to import manifest from the integration directory
-      // This is a simplified approach - in production you'd want proper file system access
-      const _manifestPath = `@integrations/${integrationId}/manifest.json`;
-
       // Default manifest for integrations without explicit manifests
       const defaultManifest: IntegrationManifest = {
         id: integrationId,

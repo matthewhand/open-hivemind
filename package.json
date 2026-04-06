@@ -70,7 +70,6 @@
     "@llm": "dist/src/llm",
     "@message": "dist/src/message",
     "@webhook": "dist/src/webhook",
-    "@integrations": "dist/src/integrations",
     "@integrations/openswarm": "dist/packages/llm-openswarm/src",
     "@integrations/flowise": "dist/packages/llm-flowise/src",
     "@integrations/openwebui": "dist/packages/llm-openwebui/src",
