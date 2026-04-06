@@ -89,7 +89,7 @@ async function searchGitHubPackages(): Promise<MarketplacePackage[]> {
       return githubSearchCache || [];
     }
 
-    const data = await response.json() as any;
+    const data = (await response.json()) as any;
     const repos = data.items || [];
 
     const packages: MarketplacePackage[] = repos.map((repo: any) => {
@@ -106,7 +106,9 @@ async function searchGitHubPackages(): Promise<MarketplacePackage[]> {
 
       return {
         name: repoName,
-        displayName: repo.name?.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) || repoName,
+        displayName:
+          repo.name?.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) ||
+          repoName,
         description: repo.description || 'No description',
         type,
         version: '0.0.0',

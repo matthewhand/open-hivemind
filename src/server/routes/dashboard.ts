@@ -345,7 +345,10 @@ router.get('/tips', async (_req, res): Promise<any> => {
       return res.json(ApiResponse.success({ tips: [] }));
     }
     const raw = (await fs.promises.readFile(tipsPath, 'utf8')).trim();
-    const tips = raw.split('\n').map(l => l.trim()).filter(Boolean);
+    const tips = raw
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean);
     return res.json(ApiResponse.success({ tips }));
   } catch {
     return res.json(ApiResponse.success({ tips: [] }));
