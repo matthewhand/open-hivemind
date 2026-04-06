@@ -120,7 +120,7 @@ export const hivemindNavItems: NavItem[] = [
     label: 'Enterprise',
     icon: <NavIcon><Building2 className="w-4 h-4" /></NavIcon>,
     path: '/admin/enterprise',
-    visible: true,
+    visible: false,
   },
 
   // === DEVELOPER SECTION ===
