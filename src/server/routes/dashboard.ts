@@ -19,6 +19,7 @@ import {
 } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { ActivityLogger } from '../services/ActivityLogger';
+import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 
 type AnnotatedEvent = MessageFlowEvent & { llmProvider: string };
 
@@ -352,6 +353,54 @@ router.get('/tips', async (_req, res): Promise<any> => {
     return res.json(ApiResponse.success({ tips }));
   } catch {
     return res.json(ApiResponse.success({ tips: [] }));
+  }
+});
+
+/**
+ * GET /api/dashboard/config-status
+ * Returns the configuration status of LLM, Bot, and Messenger.
+ * No auth required — used by welcome splash to determine what to show.
+ */
+router.get('/config-status', async (_req, res): Promise<any> => {
+  try {
+    const manager = BotConfigurationManager.getInstance();
+    
+    // Check if LLM is configured
+    const llmStatus = getLlmDefaultStatus();
+    const llmConfigured = llmStatus.configured;
+    
+    // Check if any bots are configured
+    let botConfigured = false;
+    try {
+      const bots = manager.getAllBots();
+      botConfigured = Array.isArray(bots) && bots.length > 0;
+    } catch {
+      botConfigured = false;
+    }
+    
+    // Check if any messenger is configured
+    let messengerConfigured = false;
+    try {
+      const bots = manager.getAllBots();
+      messengerConfigured = Array.isArray(bots) && bots.some(bot => bot.messageProvider);
+    } catch {
+      messengerConfigured = false;
+    }
+    
+    return res.json(ApiResponse.success({
+      llmConfigured,
+      botConfigured,
+      messengerConfigured,
+    }));
+  } catch (error) {
+    logger.error('Config status API error:', error);
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(
+      ApiResponse.success({
+        llmConfigured: false,
+        botConfigured: false,
+        messengerConfigured: false,
+      })
+    );
   }
 });
 
