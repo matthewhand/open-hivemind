@@ -5,6 +5,7 @@ import Button from '../../components/DaisyUI/Button';
 import Checkbox from '../../components/DaisyUI/Checkbox';
 import Card from '../../components/DaisyUI/Card';
 import { Badge } from '../../components/DaisyUI/Badge';
+import PersonaAvatar from '../../components/PersonaAvatar';
 import { type Persona } from './hooks/usePersonasData';
 
 interface PersonaListProps {
@@ -100,6 +101,7 @@ export const PersonaList: React.FC<PersonaListProps> = ({
                     )}
                     {/* Spacer for built-in personas to keep alignment */}
                     {!isCustom && <span className="w-5 flex-shrink-0" />}
+                    <PersonaAvatar seed={persona.name} style={(persona as any).avatarStyle || 'bottts'} size={40} className="flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <Card.Title tag="h3" className="text-lg font-bold">{persona.name}</Card.Title>
                       <p className="text-sm text-base-content/70 line-clamp-2">{persona.description}</p>

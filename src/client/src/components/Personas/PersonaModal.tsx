@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, Copy, Shield, Info } from 'lucide-react';
+import { AlertTriangle, Copy, Shield, Info, ChevronDown } from 'lucide-react';
+import PersonaAvatar, { type AvatarStyle } from '../PersonaAvatar';
+import AvatarPicker from './AvatarPicker';
 import Modal from '../DaisyUI/Modal';
 import Button from '../DaisyUI/Button';
 import Input from '../DaisyUI/Input';
@@ -82,6 +84,10 @@ export const PersonaModal: React.FC<PersonaModalProps> = ({
 
   // Fetch global defaults for showing "Global Default: X" labels
   const [globalDefaults, setGlobalDefaults] = useState<GlobalResponseDefaults>(FALLBACK_DEFAULTS);
+  const [avatarStyle, setAvatarStyle] = useState<AvatarStyle>(
+    (editingPersona as any)?.avatarStyle || 'bottts'
+  );
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -149,23 +155,57 @@ export const PersonaModal: React.FC<PersonaModalProps> = ({
           </Alert>
         )}
 
-        <Validator>
-          <Input
-            label="Persona Name"
-            value={personaName}
-            onChange={(e) => setPersonaName(e.target.value)}
-            placeholder="e.g., Helpful Assistant"
-            required
-            minLength={2}
-            maxLength={100}
-            disabled={!!isEnvLocked || isViewMode}
-            error={!personaName.trim() ? 'Name is required' : undefined}
-            autoFocus={!isViewMode}
-          />
-          <ValidatorHint>
-            {!personaName.trim() ? 'A persona name is required' : 'Must be between 2 and 100 characters'}
-          </ValidatorHint>
-        </Validator>
+        {/* Avatar + Name row */}
+        <div className="flex items-start gap-4">
+          <div className="flex flex-col items-center gap-1 pt-6">
+            <button
+              type="button"
+              onClick={() => !isViewMode && setShowAvatarPicker(!showAvatarPicker)}
+              className={`rounded-full border-2 transition-all ${showAvatarPicker ? 'border-primary shadow-lg' : 'border-base-300 hover:border-primary/50'} ${isViewMode ? '' : 'cursor-pointer'}`}
+              title={isViewMode ? undefined : 'Click to change avatar style'}
+              disabled={isViewMode}
+            >
+              <PersonaAvatar seed={personaName || 'new-persona'} style={avatarStyle} size={56} />
+            </button>
+            {!isViewMode && (
+              <span className="text-[10px] opacity-40">click to change</span>
+            )}
+          </div>
+          <div className="flex-1">
+            <Validator>
+              <Input
+                label="Persona Name"
+                value={personaName}
+                onChange={(e) => setPersonaName(e.target.value)}
+                placeholder="e.g., Helpful Assistant"
+                required
+                minLength={2}
+                maxLength={100}
+                disabled={!!isEnvLocked || isViewMode}
+                error={!personaName.trim() ? 'Name is required' : undefined}
+                autoFocus={!isViewMode}
+              />
+              <ValidatorHint>
+                {!personaName.trim() ? 'A persona name is required' : 'Must be between 2 and 100 characters'}
+              </ValidatorHint>
+            </Validator>
+          </div>
+        </div>
+
+        {/* Avatar style picker (collapsible) */}
+        {showAvatarPicker && !isViewMode && (
+          <div className="border border-base-200 rounded-lg p-3 bg-base-200/30">
+            <p className="text-xs opacity-60 mb-2">Choose an avatar style — the avatar updates live as you type the name.</p>
+            <AvatarPicker
+              seed={personaName || 'new-persona'}
+              selectedStyle={avatarStyle}
+              onStyleChange={(style) => {
+                setAvatarStyle(style);
+                setShowAvatarPicker(false);
+              }}
+            />
+          </div>
+        )}
 
         <div className="form-control w-full">
           <label className="label" htmlFor="persona-category">
