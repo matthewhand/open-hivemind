@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { ProviderConfigFormProps, ProviderConfigField } from '../provider-configs/types';
 import Avatar from './DaisyUI/Avatar';
 import Input from './DaisyUI/Input';
@@ -11,6 +12,7 @@ import Badge from './DaisyUI/Badge';
 import Card from './DaisyUI/Card';
 import SimpleTable from './DaisyUI/SimpleTable';
 import ModelAutocomplete from './DaisyUI/ModelAutocomplete';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import Debug from 'debug';
 import { getApiKeyFormatHint } from '../utils/apiKeyValidation';
 const debug = Debug('app:client:components:ProviderConfigForm');
@@ -36,9 +38,33 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  // Separate mandatory and advanced fields
+  const mandatoryFields = schema.fields.filter(field => field.required);
+  const advancedFields = schema.fields.filter(field => !field.required);
 
   // Group fields by their group property
   const groupedFields = schema.fields.reduce((groups, field) => {
+    const groupName = field.group || 'General';
+    if (!groups[groupName]) {
+      groups[groupName] = [];
+    }
+    groups[groupName].push(field);
+    return groups;
+  }, {} as Record<string, ProviderConfigField[]>);
+
+  // Group mandatory and advanced fields separately
+  const groupedMandatoryFields = mandatoryFields.reduce((groups, field) => {
+    const groupName = field.group || 'General';
+    if (!groups[groupName]) {
+      groups[groupName] = [];
+    }
+    groups[groupName].push(field);
+    return groups;
+  }, {} as Record<string, ProviderConfigField[]>);
+
+  const groupedAdvancedFields = advancedFields.reduce((groups, field) => {
     const groupName = field.group || 'General';
     if (!groups[groupName]) {
       groups[groupName] = [];
@@ -382,54 +408,133 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
         </div>
       </div>
 
-      {/* Form Fields by Group */}
-      {Object.entries(groupedFields).map(([groupName, fields]) => (
-        <Card key={groupName} className="shadow-sm border border-base-200">
+      {/* Mandatory Fields */}
+      {Object.keys(groupedMandatoryFields).length > 0 && (
+        <Card className="shadow-sm border border-primary/20 bg-primary/5">
           <Card.Body className="p-6">
-            <Card.Title tag="h3" className="text-lg border-b border-base-200 pb-3 mb-4">
-              {groupName}
+            <Card.Title tag="h3" className="text-lg border-b border-primary/20 pb-3 mb-4 flex items-center gap-2">
+              <Badge variant="error" size="sm">Required</Badge>
+              Essential Configuration
             </Card.Title>
-            <div className="overflow-x-auto">
-              <SimpleTable className="w-full">
-                <thead>
-                  <tr>
-                    <th className="w-1/3 text-sm font-semibold text-base-content/70">Setting</th>
-                    <th className="w-2/3 text-sm font-semibold text-base-content/70">Value</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {fields.map(field => (
-                    <tr key={field.name} className="hover:bg-base-200/50 transition-colors">
-                      <td className="align-top py-4">
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-base-content/90">
-                              {field.label}
-                            </span>
-                            {field.required ? (
-                              <Badge variant="error" size="sm" className="text-xs h-4">Required</Badge>
-                            ) : (
-                              <Badge variant="ghost" size="sm" className="text-xs h-4">Optional</Badge>
-                            )}
-                          </div>
-                          {field.description && (
-                            <span className="text-xs text-base-content/60 leading-tight">
-                              {field.description}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="align-top py-4">
-                        {renderField(field)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </SimpleTable>
+            <div className="space-y-6">
+              {Object.entries(groupedMandatoryFields).map(([groupName, fields]) => (
+                <div key={groupName}>
+                  {Object.keys(groupedMandatoryFields).length > 1 && (
+                    <h4 className="text-md font-semibold text-base-content/80 mb-3">{groupName}</h4>
+                  )}
+                  <div className="overflow-x-auto">
+                    <SimpleTable className="w-full">
+                      <thead>
+                        <tr>
+                          <th className="w-1/3 text-sm font-semibold text-base-content/70">Setting</th>
+                          <th className="w-2/3 text-sm font-semibold text-base-content/70">Value</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {fields.map(field => (
+                          <tr key={field.name} className="hover:bg-base-200/50 transition-colors">
+                            <td className="align-top py-4">
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold text-base-content/90">
+                                    {field.label}
+                                  </span>
+                                  <Badge variant="error" size="sm" className="text-xs h-4">Required</Badge>
+                                </div>
+                                {field.description && (
+                                  <span className="text-xs text-base-content/60 leading-tight">
+                                    {field.description}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="align-top py-4">
+                              {renderField(field)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </SimpleTable>
+                  </div>
+                </div>
+              ))}
             </div>
           </Card.Body>
         </Card>
-      ))}
+      )}
+
+      {/* Advanced Settings (Collapsible) */}
+      {Object.keys(groupedAdvancedFields).length > 0 && (
+        <Card className="shadow-sm border border-base-200">
+          <Card.Body className="p-6">
+            <div 
+              className="flex items-center justify-between cursor-pointer hover:bg-base-200/50 -m-2 p-2 rounded-lg transition-colors"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+            >
+              <div className="flex items-center gap-2">
+                <Badge variant="ghost" size="sm">Optional</Badge>
+                <h3 className="text-lg font-semibold">Advanced Settings</h3>
+                <span className="text-sm text-base-content/60">
+                  ({Object.values(groupedAdvancedFields).flat().length} settings)
+                </span>
+              </div>
+              {showAdvanced ? (
+                <ChevronDown className="w-5 h-5 text-base-content/60" />
+              ) : (
+                <ChevronRight className="w-5 h-5 text-base-content/60" />
+              )}
+            </div>
+            
+            {showAdvanced && (
+              <div className="mt-4 space-y-6">
+                {Object.entries(groupedAdvancedFields).map(([groupName, fields]) => (
+                  <div key={groupName}>
+                    {Object.keys(groupedAdvancedFields).length > 1 && (
+                      <h4 className="text-md font-semibold text-base-content/80 mb-3 border-b border-base-200 pb-2">
+                        {groupName}
+                      </h4>
+                    )}
+                    <div className="overflow-x-auto">
+                      <SimpleTable className="w-full">
+                        <thead>
+                          <tr>
+                            <th className="w-1/3 text-sm font-semibold text-base-content/70">Setting</th>
+                            <th className="w-2/3 text-sm font-semibold text-base-content/70">Value</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {fields.map(field => (
+                            <tr key={field.name} className="hover:bg-base-200/50 transition-colors">
+                              <td className="align-top py-4">
+                                <div className="flex flex-col gap-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-semibold text-base-content/90">
+                                      {field.label}
+                                    </span>
+                                    <Badge variant="ghost" size="sm" className="text-xs h-4">Optional</Badge>
+                                  </div>
+                                  {field.description && (
+                                    <span className="text-xs text-base-content/60 leading-tight">
+                                      {field.description}
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="align-top py-4">
+                                {renderField(field)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </SimpleTable>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card.Body>
+        </Card>
+      )}
 
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-3 pt-4 border-t">
