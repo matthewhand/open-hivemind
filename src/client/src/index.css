@@ -316,6 +316,19 @@ textarea {
   -webkit-backdrop-filter: blur(8px);
 }
 
+/* Prevent dialog from causing scrollbar layout shift */
+dialog.modal {
+  border: none;
+  outline: none;
+  max-width: 100vw;
+  max-height: 100vh;
+}
+
+/* When dialog is not open via showModal, hide it completely */
+dialog.modal:not([open]) {
+  display: none;
+}
+
 .modal-box {
   animation: modalScale 0.2s ease-out;
   border: 1px solid hsl(var(--bc) / 0.1);

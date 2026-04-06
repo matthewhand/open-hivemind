@@ -114,10 +114,9 @@ const Modal: React.FC<ModalProps> = ({
       onClick={handleBackdropClick}
       aria-modal="true"
       aria-labelledby={title ? 'modal-dialog-title' : undefined}
-      // If isOpen is true and showModal is not supported/called, ensure it's visible via CSS class or open attribute if needed
-      // DaisyUI uses 'modal-open' class usually or just <dialog open>
-      // But for native dialog with DaisyUI, showModal() adds 'open' attribute and backdrop
-      open={isOpen}
+      // DaisyUI uses modal-open class for visibility control
+      // Do NOT set open={isOpen} — showModal() manages the open attribute.
+      // Setting both causes double backdrop and layout shift.
     >
       <div className={getSizeClass()} role="document">
         {/* Header */}
