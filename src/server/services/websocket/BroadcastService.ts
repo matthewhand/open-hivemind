@@ -329,10 +329,10 @@ export class BroadcastService {
     if (!currentIo) return;
 
     // Use demo data if in demo mode
-    const messageFlow = this.demoModeService.isInDemoMode() 
+    const messageFlow = this.demoModeService.isInDemoMode()
       ? this.demoModeService.getSimulatedMessageFlow(100)
       : this.messageFlow;
-    
+
     const alerts = this.demoModeService.isInDemoMode()
       ? this.demoModeService.getSimulatedAlerts(50)
       : this.alerts;
@@ -362,14 +362,15 @@ export class BroadcastService {
     }
 
     // Use demo performance metrics if available
-    const currentMetric = performanceMetrics.length > 0 
-      ? performanceMetrics[performanceMetrics.length - 1]
-      : {
-          memoryUsage: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-          messageRate: this.messageRateHistory[this.messageRateHistory.length - 1] || 0,
-          errorRate: this.errorRateHistory[this.errorRateHistory.length - 1] || 0,
-          activeConnections: connectedClients,
-        };
+    const currentMetric =
+      performanceMetrics.length > 0
+        ? performanceMetrics[performanceMetrics.length - 1]
+        : {
+            memoryUsage: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+            messageRate: this.messageRateHistory[this.messageRateHistory.length - 1] || 0,
+            errorRate: this.errorRateHistory[this.errorRateHistory.length - 1] || 0,
+            activeConnections: connectedClients,
+          };
 
     currentIo.emit('performance_metrics_broadcast', {
       current: currentMetric,
@@ -396,7 +397,7 @@ export class BroadcastService {
     try {
       const manager = BotConfigurationManager.getInstance();
       let bots = manager.getAllBots();
-      
+
       // Add demo bots if in demo mode
       if (this.demoModeService.isInDemoMode()) {
         const demoBots = this.demoModeService.getDemoBots();
@@ -412,7 +413,7 @@ export class BroadcastService {
             hasSecrets: true, // Demo bots always show as configured
           },
         }));
-        
+
         // If no real bots, use only demo bots
         if (bots.length === 0) {
           socket.emit('bot_status_update', {

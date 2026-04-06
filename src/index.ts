@@ -5,7 +5,8 @@ import './utils/alias';
 import fs from 'fs';
 import { createServer } from 'http';
 import path from 'path';
-import type { NextFunction, Request, Response } from 'express';
+import debug from 'debug';
+import express, { type NextFunction, type Request, type Response } from 'express';
 import swarmRouter from '@src/admin/swarmRoutes';
 import { loadLlmProfiles } from '@src/config/llmProfiles';
 import { loadMemoryProfiles } from '@src/config/memoryProfiles';
@@ -58,19 +59,17 @@ import AnomalyDetectionService from '@src/services/AnomalyDetectionService';
 import DemoModeService from '@src/services/DemoModeService';
 import StartupGreetingService from '@src/services/StartupGreetingService';
 import { validateRequiredEnvVars } from '@src/utils/envValidation';
+import * as debugEnvVarsModule from '@config/debugEnvVars';
+import * as messageConfigModule from '@config/messageConfig';
+import * as webhookConfigModule from '@config/webhookConfig';
 import { getLlmProvider } from '@llm/getLlmProvider';
+import * as messengerProviderModule from '@message/management/getMessengerProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 import Logger from '@common/logger';
 import { initProviders } from './initProviders';
 import { reloadGlobalConfigs } from './server/routes/config';
-import startupDiagnostics from './utils/startupDiagnostics';
-import debug from 'debug';
-import express from 'express';
-import * as debugEnvVarsModule from '@config/debugEnvVars';
-import * as messageConfigModule from '@config/messageConfig';
-import * as webhookConfigModule from '@config/webhookConfig';
-import * as messengerProviderModule from '@message/management/getMessengerProvider';
 import * as healthRouteModule from './server/routes/health';
+import startupDiagnostics from './utils/startupDiagnostics';
 
 const indexLog = debug('app:index');
 const appLogger = Logger.withContext('app:index');
@@ -270,7 +269,9 @@ app.use('/api', (req: Request, res: Response, next: NextFunction) => {
     if (allowAll) {
       appLogger.warn('⚠️  IP filtering DISABLED (HTTP_ALLOW_ALL_IPS=true)');
     } else {
-      appLogger.info('🔒 IP filtering ENABLED for /api/* routes (set HTTP_ALLOW_ALL_IPS=true to disable)');
+      appLogger.info(
+        '🔒 IP filtering ENABLED for /api/* routes (set HTTP_ALLOW_ALL_IPS=true to disable)'
+      );
     }
   }
   if (allowAll) return next();
@@ -361,10 +362,10 @@ app.get('*', (req: Request, res: Response, next: NextFunction) => {
   if (
     req.path.startsWith('/api') ||
     req.path.startsWith('/health') ||
-    req.path.startsWith('/@') ||           // Vite internals: /@react-refresh, /@vite/client, /@fs/
+    req.path.startsWith('/@') || // Vite internals: /@react-refresh, /@vite/client, /@fs/
     req.path.startsWith('/node_modules') || // Vite serves node_modules in dev
-    req.path.startsWith('/src/') ||         // Vite serves source files in dev
-    req.path.includes('.')                  // Static assets with file extensions
+    req.path.startsWith('/src/') || // Vite serves source files in dev
+    req.path.includes('.') // Static assets with file extensions
   ) {
     return next();
   }
