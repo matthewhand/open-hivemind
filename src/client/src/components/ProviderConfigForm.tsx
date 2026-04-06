@@ -248,7 +248,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             placeholder={field.placeholder}
             min={field.validation?.min}
             max={field.validation?.max}
-            step={field.validation?.min && field.validation?.min < 1 ? '0.1' : '1'}
+            step={field.validation?.max !== undefined && field.validation.max <= 2 ? '0.01' : '1'}
             className={inputClasses}
           />
         );
