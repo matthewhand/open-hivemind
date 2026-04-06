@@ -1,5 +1,4 @@
 import Debug from 'debug';
-import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { asyncErrorHandler } from '../../middleware/errorHandler';

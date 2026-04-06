@@ -31,8 +31,11 @@ export function configMixin(api: ApiService) {
       });
     },
 
-    exportConfig(): Promise<Blob> {
-      return api.getBlob('/api/config/export', {
+    exportConfig(includeSensitive = false): Promise<Blob> {
+      const params = new URLSearchParams();
+      if (includeSensitive) params.set('includeSensitive', 'true');
+      const qs = params.toString();
+      return api.getBlob(`/api/config/export${qs ? `?${qs}` : ''}`, {
         headers: { 'Accept': 'application/json' },
       });
     },

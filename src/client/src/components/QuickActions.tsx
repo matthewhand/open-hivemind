@@ -1,9 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
 import Card from './DaisyUI/Card';
 import Button from './DaisyUI/Button';
 import Modal from './DaisyUI/Modal';
 import Input from './DaisyUI/Input';
+import Toggle from './DaisyUI/Toggle';
 import { Loading, LoadingSpinner } from './DaisyUI/Loading';
 import {
   ArrowPathIcon,
@@ -33,6 +33,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
   });
   const [exportDialog, setExportDialog] = useState(false);
   const [exportFilename, setExportFilename] = useState('config-export');
+  const [includeSensitive, setIncludeSensitive] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
 
   // Check demo mode status on mount
@@ -94,7 +95,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
   const handleExportConfig = async () => {
     setLoading('export');
     try {
-      const blob = await apiService.exportConfig();
+      const blob = await apiService.exportConfig(includeSensitive);
 
       // Create download link
       const url = window.URL.createObjectURL(blob);
@@ -108,6 +109,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
       document.body.removeChild(a);
 
       setExportDialog(false);
+      setIncludeSensitive(false);
       showToast('Configuration exported successfully', 'success');
     } catch (error) {
       showToast(
@@ -220,17 +222,14 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
       {/* Export Configuration Modal */}
       <Modal
         isOpen={exportDialog}
-        onClose={() => setExportDialog(false)}
+        onClose={() => { setExportDialog(false); setIncludeSensitive(false); }}
         title="Export Configuration"
         actions={[
-          { label: 'Cancel', onClick: () => setExportDialog(false), variant: 'ghost' },
+          { label: 'Cancel', onClick: () => { setExportDialog(false); setIncludeSensitive(false); }, variant: 'ghost' },
           { label: 'Export', onClick: handleExportConfig, variant: 'primary', disabled: !exportFilename.trim() || isLoading('export'), loading: isLoading('export') },
         ]}
       >
-        <div className="py-4">
-          <p className="text-sm text-base-content/70 mb-4">
-            Enter a filename for the configuration export:
-          </p>
+        <div className="py-4 space-y-4">
           <div className="form-control w-full">
             <label className="label">
               <span className="label-text">Filename</span>
@@ -243,6 +242,22 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
             />
             <label className="label">
               <span className="label-text-alt">File will be saved as .json</span>
+            </label>
+          </div>
+
+          <div className="form-control">
+            <label className="label cursor-pointer">
+              <div>
+                <span className="label-text font-medium">Include Sensitive Values</span>
+                <p className="text-xs text-base-content/60">
+                  Export API keys, tokens, and secrets in plaintext. By default, these are redacted.
+                </p>
+              </div>
+              <Toggle
+                color="warning"
+                checked={includeSensitive}
+                onChange={(e) => setIncludeSensitive(e.target.checked)}
+              />
             </label>
           </div>
         </div>

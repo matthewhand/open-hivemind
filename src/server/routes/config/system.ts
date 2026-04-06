@@ -489,4 +489,84 @@ router.get('/validate-config', (_req, res) => {
   return res.json({ valid: true, timestamp: new Date().toISOString(), configs: {} });
 });
 
+// GET /api/config/export — Export full configuration as downloadable JSON
+router.get(
+  '/export',
+  configLimiter,
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const includeSensitive = req.query.includeSensitive === 'true';
+
+      // Gather all config data
+      const botManager = await BotManager.getInstance();
+      const bots = await botManager.getAllBots();
+      const manager = BotConfigurationManager.getInstance();
+
+      // Redact sensitive values unless explicitly requested
+      const safeBots = bots.map((bot) => {
+        const mergedBot = {
+          ...(bot.config || {}),
+        };
+
+        if (includeSensitive) {
+          return {
+            ...mergedBot,
+            id: bot.id,
+            name: bot.name,
+            messageProvider: bot.messageProvider,
+            llmProvider: bot.llmProvider,
+            isActive: bot.isActive,
+            config: bot.config || {},
+            errorCount: 0,
+            messageCount: 0,
+            connected: bot.isActive,
+          };
+        }
+
+        const redacted = redactObject(mergedBot);
+
+        return {
+          ...redacted,
+          id: bot.id,
+          name: bot.name,
+          messageProvider: bot.messageProvider,
+          llmProvider: bot.llmProvider,
+          isActive: bot.isActive,
+          config: redactObject(bot.config || {}),
+          errorCount: 0,
+          messageCount: 0,
+          connected: bot.isActive,
+        };
+      });
+
+      const payload = {
+        schemaVersion: 1,
+        exportedAt: new Date().toISOString(),
+        includeSensitive,
+        bots: safeBots,
+        count: safeBots.length,
+        warnings: includeSensitive ? [] : manager.getWarnings(),
+      };
+
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="config-export-${Date.now()}.json"`
+      );
+      return res.json(ApiResponse.success(payload));
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      return res
+        .status(ErrorUtils.getStatusCode(hivemindError) || HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(
+          ApiResponse.error(
+            ErrorUtils.getMessage(hivemindError),
+            'CONFIG_EXPORT_ERROR',
+            ErrorUtils.getStatusCode(hivemindError) || HTTP_STATUS.INTERNAL_SERVER_ERROR
+          )
+        );
+    }
+  })
+);
+
 export default router;
