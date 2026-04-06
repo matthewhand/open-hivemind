@@ -399,6 +399,7 @@ const ActivityPage: React.FC = () => {
               size="sm"
               onClick={fetchActivity}
               disabled={loading} aria-busy={loading}
+              title="Refresh"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
