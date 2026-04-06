@@ -41,6 +41,7 @@ import { Alert } from '../components/DaisyUI/Alert';
 import Input from '../components/DaisyUI/Input';
 import Figure from '../components/DaisyUI/Figure';
 import { apiService } from '../services/api';
+import Pagination from '../components/DaisyUI/Pagination';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -137,6 +138,8 @@ const MarketplacePage: React.FC = () => {
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean; title: string; message: string; onConfirm: () => void;
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 12;
   const [drawerPkg, setDrawerPkg] = useState<MarketplacePackage | null>(null);
   const [drawerTab, setDrawerTab] = useState('overview');
 
@@ -176,6 +179,7 @@ const MarketplacePage: React.FC = () => {
 
   // Filter packages
   const filteredPackages = useMemo(() => {
+    setCurrentPage(1);
     return packages.filter(pkg => {
       const matchesType = filter === 'all' || pkg.type === filter;
       const matchesSearch = searchQuery === '' ||
@@ -185,6 +189,10 @@ const MarketplacePage: React.FC = () => {
       return matchesType && matchesSearch;
     });
   }, [packages, filter, searchQuery]);
+
+  const paginatedPackages = useMemo(() =>
+    filteredPackages.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [filteredPackages, currentPage, pageSize]);
 
   // Virtualization for large package lists
   const packagesParentRef = useRef<HTMLDivElement>(null);
@@ -530,7 +538,7 @@ const MarketplacePage: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredPackages.map((pkg) => {
+            {paginatedPackages.map((pkg) => {
               const Icon = TYPE_ICONS[pkg.type];
               const color = TYPE_COLORS[pkg.type];
               const statusBadge = STATUS_BADGES[pkg.status];
@@ -658,6 +666,15 @@ const MarketplacePage: React.FC = () => {
                 </Card>
               );
             })}
+          </div>
+          <div className="flex justify-center mt-6">
+            <Pagination
+              currentPage={currentPage}
+              totalItems={filteredPackages.length}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              style="standard"
+            />
           </div>
         )
       )}

@@ -20,6 +20,7 @@ import DetailDrawer from '../components/DaisyUI/DetailDrawer';
 import { GuardProfile } from '@shared/types/models/security';
 import { useToast } from '../components/DaisyUI/ToastNotification';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
+import Pagination from '../components/DaisyUI/Pagination';
 
 // Custom comma-separated input component
 const CommaSeparatedInput = ({
@@ -142,6 +143,8 @@ const GuardsPage: React.FC = () => {
   const [editingProfile, setEditingProfile] = useState<Partial<GuardProfile> | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<GuardProfile | null>(null);
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 12;
 
   const { data: response, isLoading } = useQuery<{ data: GuardProfile[] }>({
     queryKey: ['guardProfiles'],
@@ -153,6 +156,7 @@ const GuardsPage: React.FC = () => {
   });
 
   const profiles = response?.data || [];
+  const paginatedProfiles = profiles.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   const selectedProfile = profiles.find(p => p.id === selectedProfileId) || null;
 
   const createMutation = useMutation({
@@ -483,7 +487,7 @@ const GuardsPage: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {profiles.map(profile => (
+          {paginatedProfiles.map(profile => (
             <Card
               key={profile.id}
               className="hover:shadow-lg transition-shadow cursor-pointer border border-base-200"
@@ -557,6 +561,15 @@ const GuardsPage: React.FC = () => {
               </div>
             </Card>
           ))}
+        </div>
+        <div className="flex justify-center mt-6">
+          <Pagination
+            currentPage={currentPage}
+            totalItems={profiles.length}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+            style="standard"
+          />
         </div>
       )}
 

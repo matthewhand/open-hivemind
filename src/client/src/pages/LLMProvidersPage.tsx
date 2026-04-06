@@ -46,6 +46,7 @@ import Toggle from '../components/DaisyUI/Toggle';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import { useSavedStamp } from '../contexts/SavedStampContext';
 import Select from '../components/DaisyUI/Select';
+import Pagination from '../components/DaisyUI/Pagination';
 
 // Utility function to decode HTML entities
 const decodeHtmlEntities = (text: string): string => {
@@ -96,6 +97,8 @@ const LLMProvidersPage: React.FC = () => {
   const setSearchQuery = (v: string) => setUrlParam('search', v);
   const filterType = urlParams.type;
   const setFilterType = (v: string) => setUrlParam('type', v);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 12;
   const [drawerProfile, setDrawerProfile] = useState<any | null>(null);
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean; title: string; message: string; onConfirm: () => void;
@@ -279,12 +282,18 @@ const LLMProvidersPage: React.FC = () => {
     return null;
   };
 
-  const filteredProfiles = useMemo(() =>
-    profiles.filter(p => {
+  const filteredProfiles = useMemo(() => {
+    setCurrentPage(1);
+    return profiles.filter(p => {
       const matchesSearch = p?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             p?.provider?.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesSearch && (filterType === 'all' || p?.provider === filterType);
-    }), [profiles, searchQuery, filterType]);
+    });
+  }, [profiles, searchQuery, filterType]);
+
+  const paginatedProfiles = useMemo(() =>
+    filteredProfiles.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [filteredProfiles, currentPage, pageSize]);
 
   // Bulk selection
   const filteredProfileKeys = useMemo(() => filteredProfiles.map(p => p.key), [filteredProfiles]);
@@ -406,7 +415,7 @@ const LLMProvidersPage: React.FC = () => {
             ]}
           />
         <div className="grid grid-cols-1 gap-4">
-          {filteredProfiles.map((profile) => (
+          {paginatedProfiles.map((profile) => (
             <Card key={profile.key} className={`bg-base-100 shadow-sm border transition-all hover:shadow-md cursor-pointer ${drawerProfile?.key === profile.key ? 'border-primary ring-2 ring-primary/20' : 'border-base-200'}`} onClick={() => setDrawerProfile(profile)}>
               <div>
                 <div className="p-4 flex items-center justify-between cursor-pointer" onClick={() => toggleExpand(profile.key)}>
@@ -484,6 +493,15 @@ const LLMProvidersPage: React.FC = () => {
               </div>
             </Card>
           ))}
+        </div>
+        <div className="flex justify-center mt-6">
+          <Pagination
+            currentPage={currentPage}
+            totalItems={filteredProfiles.length}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+            style="standard"
+          />
         </div>
         </>
       )}
