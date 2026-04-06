@@ -184,21 +184,19 @@ const ConfigSectionForm: React.FC<ConfigSectionFormProps> = ({ configName, confi
       {Object.entries(values).map(([key, value]) =>
         renderField(key, schema[key] || {}, value),
       )}
-      {isDirty && (
-        <div className="mt-4 pt-4 border-t border-base-200">
-          <Button
-            variant="primary"
-            size="sm"
-            className="gap-2"
-            type="submit"
-            disabled={saving}
-            loading={saving}
-          >
-            {!saving && <Save className="w-4 h-4" />}
-            Save {configName} Configuration
-          </Button>
-        </div>
-      )}
+      <div className="mt-4 pt-4 border-t border-base-200">
+        <Button
+          variant="primary"
+          size="sm"
+          className="gap-2"
+          type="submit"
+          disabled={saving}
+          loading={saving}
+        >
+          {!saving && <Save className="w-4 h-4" />}
+          Save {configName} Configuration
+        </Button>
+      </div>
     </form>
   );
 };
