@@ -10,6 +10,7 @@ import Tabs from '../components/DaisyUI/Tabs';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import Tooltip from '../components/DaisyUI/Tooltip';
 import Divider from '../components/DaisyUI/Divider';
+import { Rating } from '../components/DaisyUI/Rating';
 import DetailDrawer from '../components/DaisyUI/DetailDrawer';
 
 import {
@@ -138,6 +139,21 @@ const MarketplacePage: React.FC = () => {
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
   const [drawerPkg, setDrawerPkg] = useState<MarketplacePackage | null>(null);
   const [drawerTab, setDrawerTab] = useState('overview');
+
+  // Local ratings stored in localStorage
+  const [ratings, setRatings] = useState<Record<string, number>>(() => {
+    try { return JSON.parse(localStorage.getItem('pkg-ratings') || '{}'); } catch { return {}; }
+  });
+  const handleRating = (name: string, value: number) => {
+    const updated = { ...ratings, [name]: value };
+    setRatings(updated);
+    localStorage.setItem('pkg-ratings', JSON.stringify(updated));
+  };
+  /** Get the issues URL for a package — goes to the package owner's repo, not ours */
+  const getFeedbackUrl = (pkg: MarketplacePackage) => {
+    if (pkg.repoUrl) return `${pkg.repoUrl}/issues`;
+    return `https://github.com/matthewhand/open-hivemind/issues/new?title=${encodeURIComponent(`[Package] ${pkg.name}: `)}`;
+  };
 
   const fetchPackages = useCallback(async () => {
     setLoading(true);
@@ -424,9 +440,29 @@ const MarketplacePage: React.FC = () => {
                     {pkg.description}
                   </p>
 
-                  <div className="flex items-center justify-between text-xs text-base-content/50 mb-3">
+                  <div className="flex items-center justify-between text-xs text-base-content/50 mb-2">
                     <span>v{pkg.version}</span>
                     <span className="uppercase badge badge-sm badge-outline">{pkg.type}</span>
+                  </div>
+
+                  {/* Rating + Feedback */}
+                  <div className="flex items-center justify-between mb-3" onClick={(e) => e.stopPropagation()}>
+                    <Rating
+                      value={ratings[pkg.name] || 0}
+                      max={5}
+                      size="xs"
+                      half
+                      onChange={(v) => handleRating(pkg.name, v)}
+                      name={`rating-${pkg.name}`}
+                    />
+                    <a
+                      href={getFeedbackUrl(pkg)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="link link-primary text-xs"
+                    >
+                      Feedback ↗
+                    </a>
                   </div>
 
                   {/* Actions */}
@@ -540,9 +576,29 @@ const MarketplacePage: React.FC = () => {
                       {pkg.description}
                     </p>
 
-                    <div className="flex items-center justify-between text-xs text-base-content/50 mb-3">
+                    <div className="flex items-center justify-between text-xs text-base-content/50 mb-2">
                       <span>v{pkg.version}</span>
                       <span className="uppercase badge badge-sm badge-outline">{pkg.type}</span>
+                    </div>
+
+                    {/* Rating + Feedback */}
+                    <div className="flex items-center justify-between mb-3">
+                      <Rating
+                        value={ratings[pkg.name] || 0}
+                        max={5}
+                        size="sm"
+                        half
+                        onChange={(v) => handleRating(pkg.name, v)}
+                        name={`drawer-rating-${pkg.name}`}
+                      />
+                      <a
+                        href={getFeedbackUrl(pkg)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-xs btn-ghost gap-1"
+                      >
+                        Leave Feedback ↗
+                      </a>
                     </div>
 
                     {/* Actions */}
