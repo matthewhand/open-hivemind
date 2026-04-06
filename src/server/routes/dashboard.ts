@@ -8,6 +8,8 @@ import { createLogger } from '../../common/StructuredLogger';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { AnalyticsService } from '../../services/AnalyticsService';
 import { HTTP_STATUS } from '../../types/constants';
+import DemoModeService from '../../services/DemoModeService';
+import { container } from '../../di/container';
 import {
   AlertIdParamSchema,
   DashboardConfigSchema,
@@ -349,6 +351,31 @@ router.get('/status', authenticate, requireAdmin, (req, res) => {
         messageCount: ws.getBotStats(bot.name).messageCount,
         errorCount: ws.getBotStats(bot.name).errorCount,
       }));
+
+    // When demo mode is active, overlay fake stats so the dashboard looks alive
+    let demoMode = false;
+    try {
+      const demoService = container.resolve(DemoModeService);
+      demoMode = demoService.isInDemoMode();
+    } catch { /* ignore if DI not ready */ }
+
+    if (demoMode) {
+      const demoNames = ['SupportBot', 'SalesAssistant', 'OnboardingHelper', 'AnalyticsBot'];
+      const demoProviders = ['discord', 'slack', 'mattermost', 'webhook'];
+      const demoLlms = ['openai', 'anthropic', 'ollama', 'openai'];
+      const demoBots = demoNames.map((name, i) => ({
+        id: `demo-${name.toLowerCase()}`,
+        name,
+        provider: demoProviders[i],
+        llmProvider: demoLlms[i],
+        status: i < 3 ? 'active' : 'inactive',
+        connected: i < 3,
+        messageCount: Math.floor(200 + Math.random() * 1800),
+        errorCount: Math.floor(Math.random() * 5),
+      }));
+      const fakeUptime = 86400 + Math.floor(Math.random() * 172800); // 1-3 days
+      return res.json(ApiResponse.success({ bots: [...status, ...demoBots], uptime: fakeUptime, isDemoMode: true }));
+    }
 
     res.json(ApiResponse.success({ bots: status, uptime: process.uptime() }));
   } catch (error) {
