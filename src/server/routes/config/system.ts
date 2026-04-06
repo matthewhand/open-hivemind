@@ -216,7 +216,7 @@ router.get('/export', asyncErrorHandler(async (req, res) => {
     // Add bot configs
     try {
       const botManager = await BotManager.getInstance();
-      const allBots = botManager.getAllBots();
+      const allBots = await botManager.getAllBots();
       exportData.bots = allBots.map((bot: any) => ({
         name: bot.name,
         messageProvider: bot.messageProvider,
