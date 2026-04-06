@@ -30,7 +30,7 @@ export function useDragAndDrop<T>({
 }: UseDragAndDropOptions<T>): UseDragAndDropReturn<T> {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
-  const _dragCounter = useRef(0);
+  const dragCounter = useRef(0);
 
   const isDragging = dragIndex !== null;
 
