@@ -6,7 +6,7 @@ import type { IMessage } from '@src/types/messages';
 // Mock dependencies
 jest.mock('@src/config/guardrailProfiles');
 jest.mock('@src/services/SemanticGuardrailService');
-jest.mock('@src/utils/llmProviderUtils');
+jest.mock('@src/llm/getLlmProvider');
 jest.mock('@src/utils/messageProviderUtils');
 
 describe('Semantic Guardrails Integration', () => {
@@ -110,7 +110,7 @@ describe('Semantic Guardrails Integration', () => {
 
       // Mock other dependencies to allow message processing to continue
       const { getMessengerProvider } = require('@src/utils/messageProviderUtils');
-      const { getLlmProviderForBot } = require('@src/utils/llmProviderUtils');
+      const { getLlmProviderForBot } = require('@src/llm/getLlmProvider');
       
       const mockMessageProvider = {
         sendMessageToChannel: jest.fn(),
