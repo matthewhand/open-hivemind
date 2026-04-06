@@ -65,7 +65,9 @@ const Dashboard: React.FC = () => {
       ]);
       const configData = configResult.status === 'fulfilled' ? configResult.value : { bots: [] };
       const statusData = statusResult.status === 'fulfilled' ? statusResult.value : { bots: [] };
-      setBots(configData?.bots ?? []);
+      // In demo mode, use status bots (which include fake demo data) as the bot list
+      const isDemoMode = (statusData as any)?.isDemoMode === true;
+      setBots(isDemoMode ? (statusData as any)?.bots ?? [] : configData?.bots ?? []);
       setStatus(statusData);
       setToastMessage('Dashboard refreshed successfully!');
       setShowToast(true);
