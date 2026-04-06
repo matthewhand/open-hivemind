@@ -323,6 +323,14 @@ View the complete navigation structure of the application.
 *   **Page Hierarchy & Filtering**: See all available pages and find specific ones by URL or description.
 *   **Formats**: Download the sitemap in XML (for SEO) or JSON formats.
 
+### [API Docs](/admin/api-docs)
+Access detailed API documentation for programmatic interaction with the system.
+
+![API Docs](screenshots/api-docs-page.png)
+
+*   **Endpoints**: Browse available endpoints and their specifications.
+*   **Authentication**: Reference for API authentication methods.
+
 ### [Specifications](/admin/specs)
 Browse and manage persisted specifications and design documents.
 
