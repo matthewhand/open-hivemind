@@ -216,6 +216,16 @@ export interface Bot {
 export type CreateBotRequest = Omit<Bot, 'id' | 'createdAt' | 'updatedAt' | 'metadata'>;
 
 export const MESSAGE_PROVIDER_CONFIGS = {
+  discord: {
+    type: 'discord' as MessageProviderType,
+    displayName: 'Discord',
+    description: 'Connect to Discord servers',
+    icon: '🎮',
+    fields: [
+      { name: 'token', label: 'Bot Token', type: 'password', required: true },
+      { name: 'clientId', label: 'Client ID', type: 'text', required: true },
+    ],
+  },
   slack: {
     type: 'slack' as MessageProviderType,
     displayName: 'Slack',
@@ -227,14 +237,15 @@ export const MESSAGE_PROVIDER_CONFIGS = {
       { name: 'signingSecret', label: 'Signing Secret', type: 'password', required: true },
     ],
   },
-  discord: {
-    type: 'discord' as MessageProviderType,
-    displayName: 'Discord',
-    description: 'Connect to Discord servers',
-    icon: '🎮',
+  mattermost: {
+    type: 'mattermost' as MessageProviderType,
+    displayName: 'Mattermost',
+    description: 'Connect to Mattermost instances',
+    icon: '💻',
     fields: [
-      { name: 'token', label: 'Bot Token', type: 'password', required: true },
-      { name: 'clientId', label: 'Client ID', type: 'text', required: true },
+      { name: 'url', label: 'Server URL', type: 'text', required: true },
+      { name: 'accessToken', label: 'Access Token', type: 'password', required: true },
+      { name: 'teamId', label: 'Team ID', type: 'text', required: false },
     ],
   },
   webhook: {
@@ -245,17 +256,6 @@ export const MESSAGE_PROVIDER_CONFIGS = {
     fields: [
       { name: 'url', label: 'Webhook URL', type: 'text', required: true },
       { name: 'secret', label: 'Secret', type: 'password', required: false },
-    ],
-  },
-  mattermost: {
-    type: 'mattermost' as MessageProviderType,
-    displayName: 'Mattermost',
-    description: 'Connect to Mattermost instances',
-    icon: '💻',
-    fields: [
-      { name: 'url', label: 'Server URL', type: 'text', required: true },
-      { name: 'accessToken', label: 'Access Token', type: 'password', required: true },
-      { name: 'teamId', label: 'Team ID', type: 'text', required: false },
     ],
   },
 };
