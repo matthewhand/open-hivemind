@@ -29,6 +29,7 @@ import {
   Search,
   RefreshCw,
   Layers as LayersIcon,
+  HelpCircle,
 } from 'lucide-react';
 import type { LLMProviderType } from '../types/bot';
 import { LLM_PROVIDER_CONFIGS } from '../types/bot';
@@ -460,9 +461,22 @@ const LLMProvidersPage: React.FC = () => {
               <p className="text-xs opacity-60">
                 Assign a profile to each task. Tasks without a profile will use the default provider.
               </p>
-              {(['semantic', 'summary', 'followup', 'idle', 'webui'] as const).map((task) => (
+              {(['semantic', 'summary', 'followup', 'idle', 'webui'] as const).map((task) => {
+                const taskHelp: Record<string, string> = {
+                  semantic: 'Evaluates message relevance and determines if the bot should respond based on context.',
+                  summary: 'Generates conversation summaries for context windows and memory management.',
+                  followup: 'Crafts natural follow-up responses when the bot stays engaged in a conversation.',
+                  idle: 'Generates unprompted messages when the bot decides to speak during quiet periods.',
+                  webui: 'Powers AI-assisted features in the admin dashboard (e.g. generating bot names, descriptions).',
+                };
+                return (
                 <div key={task} className="flex items-center gap-3">
-                  <label className="w-28 text-sm capitalize">{task === 'webui' ? 'WebUI AI' : task}</label>
+                  <label className="w-28 text-sm capitalize flex items-center gap-1">
+                    {task === 'webui' ? 'WebUI AI' : task}
+                    <Tooltip content={taskHelp[task]} position="right">
+                      <HelpCircle className="w-3.5 h-3.5 opacity-40 hover:opacity-80 cursor-help" />
+                    </Tooltip>
+                  </label>
                   <Select
                     className="select-bordered flex-1"
                     size="sm"
@@ -486,7 +500,8 @@ const LLMProvidersPage: React.FC = () => {
                     ))}
                   </Select>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </Card>
         </div>
