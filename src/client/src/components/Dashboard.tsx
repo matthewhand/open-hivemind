@@ -10,6 +10,7 @@ import { SkeletonCard } from './DaisyUI/Skeleton';
 import { Stat, Stats } from './DaisyUI/Stat';
 import DashboardBotCard from './DashboardBotCard';
 import AnnouncementBanner from './AnnouncementBanner';
+import TipRotator from './TipRotator';
 import QuickActions from './QuickActions';
 import LLMUsageChart from './Dashboard/LLMUsageChart';
 import MessageVolumeChart from './Dashboard/MessageVolumeChart';
@@ -246,6 +247,7 @@ const Dashboard: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Announcement Banner */}
         <AnnouncementBanner />
+        <TipRotator className="mb-4 px-2" />
 
         {/* Quick Actions */}
         <div className="mb-8">

@@ -332,6 +332,26 @@ function isProviderConnected(bot: any): boolean {
  * Returns the contents of ANNOUNCEMENT.md from the repo root (if it exists).
  * No auth required — the announcement is public.
  */
+/**
+ * GET /api/dashboard/tips
+ * Returns an array of tip strings from TIPS.md (one per line).
+ */
+router.get('/tips', async (_req, res): Promise<any> => {
+  try {
+    const tipsPath = path.join(process.cwd(), 'TIPS.md');
+    try {
+      await fs.promises.access(tipsPath);
+    } catch {
+      return res.json(ApiResponse.success({ tips: [] }));
+    }
+    const raw = (await fs.promises.readFile(tipsPath, 'utf8')).trim();
+    const tips = raw.split('\n').map(l => l.trim()).filter(Boolean);
+    return res.json(ApiResponse.success({ tips }));
+  } catch {
+    return res.json(ApiResponse.success({ tips: [] }));
+  }
+});
+
 router.get('/announcement', async (req, res): Promise<any> => {
   try {
     // Log telemetry if provided (installed providers + ratings from frontend)
