@@ -84,21 +84,18 @@ const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
       <div
         className={`flex-1 min-h-screen flex flex-col transition-all duration-300 ${isMobile ? 'mt-14 ml-0' : 'mt-0 ml-60'}`}
       >
-        {/* Rate limit indicator and Demo Mode Banner - Full width relative to content wrapper */}
+        {/* Rate limit indicator and Demo Mode Banner */}
         {!isMobile && (
-          <div className="flex justify-end px-6 pt-2">
+          <div className="flex justify-end px-3 pt-1">
             <RateLimitIndicator />
           </div>
         )}
         <DemoModeBanner />
 
-        {/* MAIN CONTENT - With padding */}
-        <main className="flex-1 p-6">
-          {/* White content card */}
-          <Card className="rounded-xl border border-base-content/10 shadow-sm min-h-[calc(100vh-48px)] p-6">
-            <div className="mb-4">
-              <LlmStatusBanner />
-            </div>
+        {/* MAIN CONTENT — minimal padding, content manages its own spacing */}
+        <main className="flex-1 px-2 pt-0 pb-2">
+          <Card className="rounded-lg border border-base-content/10 shadow-sm min-h-[calc(100vh-48px)] p-3">
+            <LlmStatusBanner />
             {children}
           </Card>
         </main>
