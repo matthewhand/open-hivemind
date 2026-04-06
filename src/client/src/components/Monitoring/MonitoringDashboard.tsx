@@ -379,7 +379,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
           tabs={monitoringTabs}
           activeTab={activeTab}
           onChange={handleTabChange}
-          variant="boxed"
+          variant="lifted"
           className="bg-transparent"
         />
       </div>

@@ -441,7 +441,7 @@ const BotConfigurationPage: React.FC = () => {
               items={accordionItems as any}
               allowMultiple={true}
               defaultOpenItems={configNames.slice(0, 1)}
-              variant="bordered"
+              variant="lifted"
               size="md"
             />
         </Card>

@@ -89,7 +89,7 @@ const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) =>
           </div>
 
           {/* Tabs */}
-          <Tabs
+          <Tabs variant="lifted"
             tabs={[
               { key: 'overview', label: 'Overview' },
               { key: 'used', label: `Used Components (${stats.usedComponents})` },

@@ -239,13 +239,13 @@ const PluginSecurityPage: React.FC = () => {
       <Card className="mb-6">
         <div className="flex flex-wrap gap-2 items-center">
           <span className="text-sm font-semibold">Filter by:</span>
-          <Tabs
+          <Tabs variant="lifted"
             tabs={[
               { key: 'all', label: 'All' },
-              { key: 'trusted', label: 'Trusted' },
-              { key: 'untrusted', label: 'Untrusted' },
+              { key: 'trusted', label: 'Trusted', color: 'success' },
+              { key: 'untrusted', label: 'Untrusted', color: 'warning' },
               { key: 'built-in', label: 'Built-in' },
-              { key: 'verification-failed', label: 'Verification Failed' },
+              { key: 'verification-failed', label: 'Verification Failed', color: 'error' },
             ]}
             activeTab={filter}
             onChange={(key) => setFilter(key as SecurityFilter)}

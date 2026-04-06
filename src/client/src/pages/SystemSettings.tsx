@@ -65,7 +65,7 @@ const SystemSettings: React.FC = () => {
       </div>
 
       <Card className="shadow-xl">
-        <Tabs
+        <Tabs variant="lifted"
           tabs={tabs.map((tab) => ({ key: tab.id, label: tab.label }))}
           activeTab={activeTabId}
           onChange={handleTabChange}

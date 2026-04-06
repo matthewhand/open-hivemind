@@ -300,7 +300,7 @@ const TemplatesPage: React.FC = () => {
       />
 
       {/* Category Tabs */}
-      <Tabs
+      <Tabs variant="lifted"
         tabs={CATEGORIES.map((category) => {
           const Icon = category.icon;
           const count =

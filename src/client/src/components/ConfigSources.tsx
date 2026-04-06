@@ -250,7 +250,7 @@ const ConfigSources: React.FC = () => {
           tabs={configSourceTabs}
           activeTab={tabValue}
           onChange={setTabValue}
-          variant="boxed"
+          variant="bordered"
           className="mb-4"
         />
 

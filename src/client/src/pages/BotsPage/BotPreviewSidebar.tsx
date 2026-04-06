@@ -155,7 +155,7 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
             ]}
             activeTab={previewTab}
             onChange={(key) => setPreviewTab(key as 'activity' | 'chat' | 'validation')}
-            variant="boxed"
+            variant="bordered"
             size="sm"
             className="flex-nowrap"
           />

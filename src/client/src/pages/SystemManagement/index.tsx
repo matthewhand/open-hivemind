@@ -283,7 +283,7 @@ const SystemManagement: React.FC = () => {
 
       {/* Management Tabs */}
       <Card className="shadow-xl">
-        <Tabs
+        <Tabs variant="lifted"
             tabs={[
               { key: 'alerts', label: 'Alert Management' },
               { key: 'config', label: 'System Configuration' },

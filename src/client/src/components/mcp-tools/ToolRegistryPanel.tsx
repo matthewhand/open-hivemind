@@ -273,7 +273,7 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
         ]}
         activeTab={viewFilter}
         onChange={setViewFilter}
-        variant="boxed"
+        variant="bordered"
         className="mb-4"
       />
 

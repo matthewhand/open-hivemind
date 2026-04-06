@@ -10,6 +10,8 @@ export interface TabItem {
   icon?: React.ReactNode;
   /** Whether the tab is disabled */
   disabled?: boolean;
+  /** Optional color for the tab (e.g. 'error' for dangerous, 'success' for recommended) */
+  color?: 'primary' | 'secondary' | 'accent' | 'info' | 'success' | 'warning' | 'error';
 }
 
 export interface TabsProps {
@@ -72,9 +74,21 @@ export const Tabs = memo(({
       {tabs.map((tab) => {
         const isActive = tab.key === activeTab;
 
+        const colorMap: Record<string, string> = {
+          primary: 'text-primary',
+          secondary: 'text-secondary',
+          accent: 'text-accent',
+          info: 'text-info',
+          success: 'text-success',
+          warning: 'text-warning',
+          error: 'text-error',
+        };
+
         const tabClasses = classNames('tab', {
           'tab-active': isActive,
           'tab-disabled': tab.disabled,
+          [colorMap[tab.color || ''] || '']: !!tab.color,
+          'font-semibold': !!tab.color,
         });
 
         return (

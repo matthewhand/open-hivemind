@@ -348,7 +348,7 @@ const MarketplacePage: React.FC = () => {
         </div>
 
         {/* Type Filter Tabs */}
-        <Tabs
+        <Tabs variant="lifted"
           tabs={(['all', 'llm', 'message', 'memory', 'tool'] as FilterType[]).map((t) => ({
             key: t,
             label: t === 'all' ? 'All' : t.toUpperCase(),
