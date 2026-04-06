@@ -18,6 +18,8 @@ import SecureConfigManager from '../SecureConfigManager';
 import Debug from 'debug';
 import { apiService } from '../../services/api';
 import { useSavedStamp } from '../../contexts/SavedStampContext';
+import { useToast } from '../DaisyUI/ToastNotification';
+import { useDemoModeWarning } from '../../hooks/useDemoModeWarning';
 const debug = Debug('app:client:components:Settings:SettingsSecurity');
 
 const securitySettingsSchema = z.object({
@@ -77,6 +79,8 @@ const SettingsSecurity: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const { showStamp } = useSavedStamp();
+  const { addToast } = useToast();
+  const warnIfDemo = useDemoModeWarning(addToast);
 
   const enableAuthentication = watch('enableAuthentication');
   const enableRateLimit = watch('enableRateLimit');
@@ -121,6 +125,7 @@ const SettingsSecurity: React.FC = () => {
   };
 
   const onSubmit = async (values: SecurityConfig) => {
+    if (await warnIfDemo()) return;
     setIsSaving(true);
     try {
       await apiService.updateGlobalConfig({

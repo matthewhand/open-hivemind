@@ -17,6 +17,8 @@ import { apiService } from '../../services/api';
 import { useSavedStamp } from '../../contexts/SavedStampContext';
 import Textarea from '../DaisyUI/Textarea';
 import SimpleTable from '../DaisyUI/SimpleTable';
+import { useToast } from '../DaisyUI/ToastNotification';
+import { useDemoModeWarning } from '../../hooks/useDemoModeWarning';
 
 const messagingSettingsSchema = z.object({
   onlyWhenSpokenTo: z.boolean(),
@@ -60,6 +62,8 @@ const SettingsMessaging: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error' | 'warning', message: string } | null>(null);
   const { showStamp } = useSavedStamp();
+  const { addToast } = useToast();
+  const warnIfDemo = useDemoModeWarning(addToast);
 
   const onlyWhenSpokenTo = watch('onlyWhenSpokenTo');
   const allowBotToBot = watch('allowBotToBot');
@@ -99,6 +103,7 @@ const SettingsMessaging: React.FC = () => {
   }, [fetchSettings]);
 
   const onSubmit = async (values: MessagingConfig) => {
+    if (await warnIfDemo()) return;
     setIsSaving(true);
     try {
       await apiService.updateGlobalConfig({

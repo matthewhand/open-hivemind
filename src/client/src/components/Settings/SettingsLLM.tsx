@@ -15,6 +15,8 @@ import { Bot, Link as LinkIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Debug from 'debug';
 import { useSavedStamp } from '../../contexts/SavedStampContext';
+import { useToast } from '../DaisyUI/ToastNotification';
+import { useDemoModeWarning } from '../../hooks/useDemoModeWarning';
 const debug = Debug('app:client:components:Settings:SettingsLLM');
 
 const llmSettingsSchema = z.object({
@@ -43,6 +45,8 @@ const SettingsLLM: React.FC = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [alert, setAlert] = useState<{ type: 'success' | 'error' | 'warning'; message: string } | null>(null);
     const { showStamp } = useSavedStamp();
+    const { addToast } = useToast();
+    const warnIfDemo = useDemoModeWarning(addToast);
 
     const fetchSettingsAndProviders = useCallback(async () => {
         try {
@@ -83,6 +87,7 @@ const SettingsLLM: React.FC = () => {
     }, [fetchSettingsAndProviders]);
 
     const onSubmit = async (values: LLMConfig) => {
+        if (await warnIfDemo()) return;
         setIsSaving(true);
         try {
             await authFetch('/api/config/global', {

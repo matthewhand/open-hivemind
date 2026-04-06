@@ -15,6 +15,8 @@ import Debug from 'debug';
 import { apiService } from '../../services/api';
 import { useSavedStamp } from '../../contexts/SavedStampContext';
 import Textarea from '../DaisyUI/Textarea';
+import { useToast } from '../DaisyUI/ToastNotification';
+import { useDemoModeWarning } from '../../hooks/useDemoModeWarning';
 const debug = Debug('app:client:components:Settings:SettingsGeneral');
 
 const generalSettingsSchema = z.object({
@@ -69,11 +71,14 @@ const SettingsGeneral: React.FC = () => {
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const { showStamp } = useSavedStamp();
+  const { addToast } = useToast();
+  const warnIfDemo = useDemoModeWarning(addToast);
 
   const enableHealthChecks = watch('enableHealthChecks');
 
   // Auto-save functions for individual settings (like LLMProvidersPage pattern)
   const saveGlobalSetting = async (patch: Record<string, any>) => {
+    if (await warnIfDemo()) return;
     try {
       await apiService.updateGlobalConfig(patch);
       showStamp();
@@ -145,6 +150,7 @@ const SettingsGeneral: React.FC = () => {
   }, [fetchSettings]);
 
   const onSubmit = async (values: GeneralConfig) => {
+    if (await warnIfDemo()) return;
     setIsSaving(true);
     try {
       await apiService.updateGlobalConfig({
