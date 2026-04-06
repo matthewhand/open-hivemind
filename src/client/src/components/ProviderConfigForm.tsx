@@ -387,7 +387,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
       <div className="space-y-1">
         {renderInput()}
         {error && (
-          <p className="text-xs text-red-500 mt-1">{error}</p>
+          <p className="text-xs text-error mt-1">{error}</p>
         )}
         {!error && formatHint && (field.type === 'password' || field.name === 'apiKey' || field.name === 'botToken') && (
           <p className="text-xs text-base-content/50 mt-1 italic">{formatHint}</p>

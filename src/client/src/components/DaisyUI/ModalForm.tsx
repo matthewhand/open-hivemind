@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Input from './Input';
+import Modal from './Modal';
 import type { FormField } from './formTypes';
 import Checkbox from './Checkbox';
 
@@ -46,16 +47,6 @@ const ModalForm: React.FC<ModalFormProps> = ({
       setCurrentStep(0);
     }
   }, [isOpen, initialData]);
-
-  const getSizeClass = () => {
-    switch (size) {
-    case 'sm': return 'w-11/12 max-w-md';
-    case 'md': return 'w-11/12 max-w-2xl';
-    case 'lg': return 'w-11/12 max-w-4xl';
-    case 'xl': return 'w-11/12 max-w-6xl';
-    default: return 'w-11/12 max-w-2xl';
-    }
-  };
 
   const validateField = (field: FormField, value: any): string | null => {
     if (field.required && (!value || (typeof value === 'string' && !value.trim()))) {
@@ -247,23 +238,14 @@ const ModalForm: React.FC<ModalFormProps> = ({
     return fields.filter(field => steps[currentStep].fields.includes(field.name));
   };
 
-  if (!isOpen) {return null;}
-
   return (
-    <div className="modal modal-open" role="dialog" aria-modal="true" aria-labelledby="modal-form-title">
-      <div className={`modal-box ${getSizeClass()}`}>
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <h3 id="modal-form-title" className="font-bold text-lg">{title}</h3>
-          <button
-            className="btn btn-sm btn-circle btn-ghost"
-            onClick={onClose}
-            disabled={isSubmitting}
-            aria-label="Close modal"
-          >
-            ✕
-          </button>
-        </div>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={title}
+      size={size}
+      closable={!isSubmitting}
+    >
 
         {/* Steps indicator */}
         {steps && steps.length > 1 && (
@@ -373,8 +355,7 @@ const ModalForm: React.FC<ModalFormProps> = ({
             )}
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

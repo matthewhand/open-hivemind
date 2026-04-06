@@ -53,10 +53,10 @@ interface EventsResponse {
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 const SOURCE_ICONS: Record<string, React.ReactNode> = {
-  discord: <MessageSquare className="w-4 h-4 text-indigo-400" />,
-  slack: <Hash className="w-4 h-4 text-green-400" />,
-  mattermost: <MessageSquare className="w-4 h-4 text-blue-400" />,
-  telegram: <MessageSquare className="w-4 h-4 text-sky-400" />,
+  discord: <MessageSquare className="w-4 h-4 text-primary" />,
+  slack: <Hash className="w-4 h-4 text-secondary" />,
+  mattermost: <MessageSquare className="w-4 h-4 text-accent" />,
+  telegram: <MessageSquare className="w-4 h-4 text-info" />,
 };
 
 function sourceIcon(source: string) {

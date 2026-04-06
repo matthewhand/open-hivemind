@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Divider from './Divider';
 import Input from './Input';
+import Modal from './Modal';
 import Debug from 'debug';
 import Toggle from './Toggle';
 const debug = Debug('app:client:components:DaisyUI:AdvancedThemeSwitcher');
@@ -44,6 +45,7 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
   const [favoriteThemes, setFavoriteThemes] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [themeModalOpen, setThemeModalOpen] = useState(false);
 
   const themeOptions: ThemeOption[] = [
     {
@@ -310,19 +312,18 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
   if (position === 'modal') {
     return (
       <>
-        <button className="btn btn-ghost btn-circle" onClick={() => (document.getElementById('theme-modal') as HTMLDialogElement)?.showModal()} aria-label="Open theme switcher">
+        <button className="btn btn-ghost btn-circle" onClick={() => setThemeModalOpen(true)} aria-label="Open theme switcher">
           🎨
         </button>
 
-        <dialog id="theme-modal" className="modal">
-          <div className="modal-box max-w-4xl">
-            <h3 className="font-bold text-lg mb-4">🎨 Choose Your Theme</h3>
-            <ThemeGrid />
-          </div>
-          <form method="dialog" className="modal-backdrop">
-            <button>close</button>
-          </form>
-        </dialog>
+        <Modal
+          isOpen={themeModalOpen}
+          onClose={() => setThemeModalOpen(false)}
+          title="🎨 Choose Your Theme"
+          size="xl"
+        >
+          <ThemeGrid />
+        </Modal>
       </>
     );
   }
@@ -483,7 +484,7 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
         {/* Favorite Button */}
         {!compact && (
           <button
-            className={`absolute -top-1 -right-1 btn btn-xs btn-circle transition-opacity ${isFav ? 'text-yellow-500' : 'text-base-content/30'
+            className={`absolute -top-1 -right-1 btn btn-xs btn-circle transition-opacity ${isFav ? 'text-warning' : 'text-base-content/30'
               } ${isFavorite || 'opacity-0 group-hover:opacity-100'}`}
             onClick={(e) => {
               e.stopPropagation();
