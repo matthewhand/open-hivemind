@@ -9,7 +9,6 @@ import Toggle from '../../components/DaisyUI/Toggle';
 import Carousel from '../../components/DaisyUI/Carousel';
 import DashboardWidgetSystem from '../../components/DaisyUI/DashboardWidgetSystem';
 import WelcomeSplash from '../../components/WelcomeSplash';
-import QuickActions from '../../components/QuickActions';
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -87,11 +86,6 @@ const DashboardPage: React.FC = () => {
 
   return (
     <div>
-      {/* Quick Actions - always at the top */}
-      <div className="px-4 pt-2">
-        <QuickActions onRefresh={() => {}} />
-      </div>
-
       {/* Welcome Splash - shown when config is incomplete */}
       {showWelcome && (
         <div className="max-w-7xl mx-auto px-4 pt-4">

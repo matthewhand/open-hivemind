@@ -215,6 +215,11 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
+      {/* Quick Actions — at the top, above the hero */}
+      <div className="max-w-7xl mx-auto px-4 py-4">
+        <QuickActions onRefresh={fetchData} />
+      </div>
+
       {/* Hero Section */}
       <Hero
         backgroundImage="https://images.unsplash.com/photo-1555949963-aa79dcee981c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
@@ -248,11 +253,6 @@ const Dashboard: React.FC = () => {
         {/* Announcement Banner */}
         <AnnouncementBanner />
         <TipRotator className="mb-4 px-2" />
-
-        {/* Quick Actions */}
-        <div className="mb-8">
-          <QuickActions onRefresh={fetchData} />
-        </div>
 
         {/* Quick Links — always visible navigation shortcuts */}
         <Card className="mb-8" title="Quick Links">
