@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import PersonaAvatar from '../PersonaAvatar';
 import type {
   BotInstance,
   MessageProvider,
@@ -212,6 +213,10 @@ const BotCard: React.FC<BotCardProps> = ({
         <div className="flex justify-between items-start mb-4">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2 min-w-0">
+              {(() => {
+                const p = typeof bot.persona === 'object' ? bot.persona : personas.find(pp => pp.id === bot.persona || pp.name === bot.persona);
+                return p ? <PersonaAvatar seed={p.name} style={(p as any).avatarStyle || 'bottts'} size={28} className="shrink-0" /> : null;
+              })()}
               <Card.Title className="text-lg font-semibold truncate break-all min-w-0" title={bot.name}>{bot.name}</Card.Title>
               <Badge variant={getStatusColor(bot.status) as "success" | "ghost" | "error" | "info"} size="sm" className="whitespace-nowrap shrink-0">
                 {getStatusText(bot.status)}

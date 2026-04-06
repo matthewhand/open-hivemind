@@ -83,6 +83,7 @@ export interface Persona {
   isBuiltIn?: boolean;
   usageCount?: number;
   avatarId?: string;
+  avatarStyle?: string;
   createdAt: string;
   updatedAt: string;
 }

@@ -54,6 +54,7 @@ export interface Persona {
     | 'professional';
   traits: { name: string; value: string; weight?: number; type?: string }[];
   systemPrompt: string;
+  avatarStyle?: string;
   responseBehavior?: PersonaResponseBehavior;
   isBuiltIn?: boolean;
   usageCount?: number;

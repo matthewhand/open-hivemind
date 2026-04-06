@@ -1,4 +1,5 @@
 import React, { memo } from 'react';
+import PersonaAvatar from './PersonaAvatar';
 import Badge from './DaisyUI/Badge';
 import Card from './DaisyUI/Card';
 import Rating from './DaisyUI/Rating';
@@ -36,9 +37,11 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
         {/* Card Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
-            <div className="text-3xl">
-              {getProviderIcon(bot.messageProvider)}
-            </div>
+            <PersonaAvatar
+              seed={(bot as any).persona || bot.name}
+              style={(bot as any).avatarStyle || 'bottts'}
+              size={40}
+            />
             <div>
               <Card.Title className="text-lg font-bold">
                 {bot.name}

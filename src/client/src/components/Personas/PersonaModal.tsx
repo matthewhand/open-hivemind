@@ -36,6 +36,8 @@ interface PersonaModalProps {
   bots: Bot[];
   loading: boolean;
   onSave: () => void;
+  avatarStyle?: string;
+  onAvatarStyleChange?: (style: string) => void;
   responseBehavior?: PersonaResponseBehavior;
   onResponseBehaviorChange?: (rb: PersonaResponseBehavior) => void;
 }
@@ -75,6 +77,8 @@ export const PersonaModal: React.FC<PersonaModalProps> = ({
   bots,
   loading,
   onSave,
+  avatarStyle: avatarStyleProp = 'bottts',
+  onAvatarStyleChange,
   responseBehavior = {},
   onResponseBehaviorChange,
 }) => {
@@ -84,9 +88,8 @@ export const PersonaModal: React.FC<PersonaModalProps> = ({
 
   // Fetch global defaults for showing "Global Default: X" labels
   const [globalDefaults, setGlobalDefaults] = useState<GlobalResponseDefaults>(FALLBACK_DEFAULTS);
-  const [avatarStyle, setAvatarStyle] = useState<AvatarStyle>(
-    (editingPersona as any)?.avatarStyle || 'bottts'
-  );
+  const avatarStyle = avatarStyleProp as AvatarStyle;
+  const setAvatarStyle = (style: AvatarStyle) => onAvatarStyleChange?.(style);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
 
   useEffect(() => {

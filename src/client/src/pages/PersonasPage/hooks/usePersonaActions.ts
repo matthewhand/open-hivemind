@@ -27,6 +27,7 @@ export const usePersonaActions = (
   const [personaPrompt, setPersonaPrompt] = useState('');
   const [selectedBotIds, setSelectedBotIds] = useState<string[]>([]);
   const [personaCategory, setPersonaCategory] = useState<ApiPersona['category']>('general');
+  const [avatarStyle, setAvatarStyle] = useState<string>('bottts');
   const [responseBehavior, setResponseBehavior] = useState<PersonaResponseBehavior>({});
 
   const handlePersonaReorder = useCallback(
@@ -98,6 +99,7 @@ export const usePersonaActions = (
         category: personaCategory,
         systemPrompt: personaPrompt,
         traits: [],
+        avatarStyle,
         ...(rbPayload && { responseBehavior: rbPayload }),
       };
 
@@ -173,6 +175,7 @@ export const usePersonaActions = (
     setPersonaCategory('general');
     setPersonaPrompt('You are a helpful assistant.');
     setSelectedBotIds([]);
+    setAvatarStyle('bottts');
     setResponseBehavior({});
     setEditingPersona(null);
     setCloningPersonaId(null);
@@ -186,6 +189,7 @@ export const usePersonaActions = (
     setPersonaCategory(persona.category as any);
     setPersonaPrompt(persona.systemPrompt);
     setSelectedBotIds([]);
+    setAvatarStyle((persona as any).avatarStyle || 'bottts');
     setResponseBehavior(persona.responseBehavior ?? {});
     setEditingPersona(null);
     setCloningPersonaId(persona.id);
@@ -203,6 +207,7 @@ export const usePersonaActions = (
     setPersonaCategory(persona.category as any);
     setPersonaPrompt(persona.systemPrompt);
     setSelectedBotIds(persona.assignedBotIds || []);
+    setAvatarStyle((persona as any).avatarStyle || 'bottts');
     setResponseBehavior(persona.responseBehavior ?? {});
     setEditingPersona(persona);
     setCloningPersonaId(null);
@@ -306,6 +311,8 @@ export const usePersonaActions = (
     personaCategory,
     setPersonaCategory,
     setIsViewMode,
+    avatarStyle,
+    setAvatarStyle,
     responseBehavior,
     setResponseBehavior,
   };

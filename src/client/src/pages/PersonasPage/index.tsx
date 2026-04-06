@@ -85,6 +85,8 @@ const PersonasPage: React.FC = () => {
     confirmDelete,
     deletingPersona,
     closeModals,
+    avatarStyle,
+    setAvatarStyle,
     responseBehavior,
     setResponseBehavior,
   } = usePersonaActions(
@@ -286,6 +288,8 @@ const PersonasPage: React.FC = () => {
         bots={bots as any}
         loading={saving}
         onSave={handleSave}
+        avatarStyle={avatarStyle}
+        onAvatarStyleChange={setAvatarStyle}
         responseBehavior={responseBehavior}
         onResponseBehaviorChange={setResponseBehavior}
       />
