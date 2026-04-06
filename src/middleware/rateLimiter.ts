@@ -24,23 +24,23 @@ const isTest = process.env.NODE_ENV === 'test';
 const RATE_LIMIT_CONFIG = {
   default: {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10), // 15 minutes
-    max: parseInt(process.env.RATE_LIMIT_MAX || '500', 10),
+    max: parseInt(process.env.RATE_LIMIT_MAX || '50000', 10),
   },
   auth: {
     windowMs: parseInt(process.env.RATE_LIMIT_AUTH_WINDOW_MS || '3600000', 10), // 1 hour
-    max: parseInt(process.env.RATE_LIMIT_AUTH_MAX || '5', 10),
+    max: parseInt(process.env.RATE_LIMIT_AUTH_MAX || '500', 10),
   },
   config: {
     windowMs: parseInt(process.env.RATE_LIMIT_CONFIG_WINDOW_MS || '300000', 10), // 5 minutes
-    max: parseInt(process.env.RATE_LIMIT_CONFIG_MAX || '200', 10),
+    max: parseInt(process.env.RATE_LIMIT_CONFIG_MAX || '20000', 10),
   },
   admin: {
     windowMs: parseInt(process.env.RATE_LIMIT_ADMIN_WINDOW_MS || '900000', 10), // 15 minutes
-    max: parseInt(process.env.RATE_LIMIT_ADMIN_MAX || '200', 10),
+    max: parseInt(process.env.RATE_LIMIT_ADMIN_MAX || '20000', 10),
   },
   api: {
     windowMs: parseInt(process.env.RATE_LIMIT_API_WINDOW_MS || '60000', 10), // 1 minute
-    max: parseInt(process.env.RATE_LIMIT_API_MAX || '300', 10),
+    max: parseInt(process.env.RATE_LIMIT_API_MAX || '30000', 10),
   },
 };
 
@@ -511,6 +511,12 @@ function shouldSkipRateLimit(req: Request): boolean {
 
   // Skip for health checks
   if (req.path === '/health' || req.path === '/api/health') {
+    return true;
+  }
+
+  // Skip Vite dev server paths — these are source files and node_modules,
+  // not API requests. Vite loads 100+ modules on page load.
+  if (req.path.startsWith('/src/') || req.path.startsWith('/node_modules/') || req.path.startsWith('/@')) {
     return true;
   }
 
