@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { authFetch } from '../utils/authFetch';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Shield, RefreshCw, AlertTriangle, Plus, Copy, Trash2, Edit2, CheckCircle, XCircle } from 'lucide-react';
 import PageHeader from '../components/DaisyUI/PageHeader';
@@ -141,19 +142,6 @@ const GuardsPage: React.FC = () => {
   const [editingProfile, setEditingProfile] = useState<Partial<GuardProfile> | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<GuardProfile | null>(null);
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
-
-  // Auth-aware fetch helper
-  const authFetch = (url: string, opts: RequestInit = {}) => {
-    const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(opts.headers as Record<string, string> || {}) };
-    try {
-      const stored = localStorage.getItem('auth_tokens');
-      if (stored && stored !== 'undefined') {
-        const tokens = JSON.parse(stored);
-        if (tokens.accessToken) headers['Authorization'] = `Bearer ${tokens.accessToken}`;
-      }
-    } catch { /* ignore */ }
-    return fetch(url, { ...opts, headers });
-  };
 
   const { data: response, isLoading } = useQuery<{ data: GuardProfile[] }>({
     queryKey: ['guardProfiles'],

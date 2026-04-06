@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
+import { authFetch } from '../utils/authFetch';
 import {
   WrenchScrewdriverIcon,
   PlayIcon,
@@ -53,7 +54,7 @@ const MCPToolsTestingPage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch('/api/mcp/servers');
+        const res = await authFetch('/api/mcp/servers');
         if (res.ok) {
           const json = await res.json();
           const serverList = json.servers || [];
@@ -126,7 +127,7 @@ const MCPToolsTestingPage: React.FC = () => {
     const startTime = Date.now();
 
     try {
-      const res = await fetch(`/api/mcp/servers/${selectedTool.serverName}/call-tool`, {
+      const res = await authFetch(`/api/mcp/servers/${selectedTool.serverName}/call-tool`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

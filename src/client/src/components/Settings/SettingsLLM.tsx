@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { authFetch } from '../../utils/authFetch';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -48,7 +49,7 @@ const SettingsLLM: React.FC = () => {
             setLoading(true);
 
             // Fetch global config to get the default LLM
-            const configRes = await fetch('/api/config/global');
+            const configRes = await authFetch('/api/config/global');
             const configData = await configRes.json();
             const rawConfig = configData;
             const llmData = rawConfig?.llm?.values ?? rawConfig;
@@ -57,7 +58,7 @@ const SettingsLLM: React.FC = () => {
             reset({ defaultLlm: currentDefault });
 
             // Fetch available LLM providers from the API
-            const providersRes = await fetch('/api/admin/llm-providers');
+            const providersRes = await authFetch('/api/admin/llm-providers');
             const providersData = await providersRes.json();
             const availableProviders = Array.isArray(providersData?.providers) ? providersData.providers : (Array.isArray(providersData) ? providersData : []);
             const options = availableProviders.map((p: any) => ({
@@ -84,7 +85,7 @@ const SettingsLLM: React.FC = () => {
     const onSubmit = async (values: LLMConfig) => {
         setIsSaving(true);
         try {
-            await fetch('/api/config/global', {
+            await authFetch('/api/config/global', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ llm: { LLM_PROVIDER: values.defaultLlm } }),

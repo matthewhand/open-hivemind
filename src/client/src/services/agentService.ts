@@ -1,15 +1,8 @@
+import { authFetch } from '../utils/authFetch';
+
 async function apiFetch<T>(method: string, url: string, body?: unknown): Promise<T> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  try {
-    const stored = localStorage.getItem('auth_tokens');
-    if (stored && stored !== 'undefined') {
-      const tokens = JSON.parse(stored);
-      if (tokens.accessToken) headers['Authorization'] = `Bearer ${tokens.accessToken}`;
-    }
-  } catch { /* ignore */ }
-  const res = await fetch(url, {
+  const res = await authFetch(url, {
     method,
-    headers,
     ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);

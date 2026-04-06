@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { authFetch } from '../utils/authFetch';
 import Card from '../components/DaisyUI/Card';
 import Badge from '../components/DaisyUI/Badge';
 import Button from '../components/DaisyUI/Button';
@@ -53,7 +54,7 @@ const PluginSecurityPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/admin/plugins/security');
+      const response = await authFetch('/api/admin/plugins/security');
       if (!response.ok) throw new Error('Failed to fetch plugin security status');
       const data = await response.json();
       setPlugins(data.data?.plugins || []);
@@ -73,7 +74,7 @@ const PluginSecurityPage: React.FC = () => {
     setError(null);
     setSuccessMessage(null);
     try {
-      const response = await fetch(`/api/admin/plugins/${pluginName}/verify`, {
+      const response = await authFetch(`/api/admin/plugins/${pluginName}/verify`, {
         method: 'POST',
       });
       if (!response.ok) throw new Error('Failed to verify plugin');
@@ -95,7 +96,7 @@ const PluginSecurityPage: React.FC = () => {
       const plugin = plugins.find((p) => p.pluginName === pluginName);
       const capabilities = trust && plugin ? plugin.requiredCapabilities : [];
 
-      const response = await fetch(`/api/admin/plugins/${pluginName}/trust`, {
+      const response = await authFetch(`/api/admin/plugins/${pluginName}/trust`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ trust, capabilities }),
