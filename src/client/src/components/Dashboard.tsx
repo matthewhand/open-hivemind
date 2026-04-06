@@ -218,10 +218,8 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Quick Actions — flush to top */}
-      <div className="max-w-7xl mx-auto px-4 pt-0 pb-2">
-        <QuickActions onRefresh={fetchData} />
-      </div>
+      {/* Quick Actions — flush to top, full width */}
+      <QuickActions onRefresh={fetchData} />
 
       {/* Dashboard Header */}
       <div className="max-w-7xl mx-auto px-4 mb-4">

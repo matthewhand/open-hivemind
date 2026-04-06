@@ -161,7 +161,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
 
   return (
     <>
-      <div className="w-full flex flex-wrap items-center justify-between gap-4 py-2 px-4 bg-base-100 border border-base-300 rounded-xl shadow-sm mb-4">
+      <div className="w-full flex flex-wrap items-center justify-between gap-3 py-1.5 px-3 bg-base-100 border-b border-base-300 mb-2">
         <div className="flex items-center gap-4 flex-wrap">
           <span className="font-bold text-xs uppercase tracking-widest text-base-content/50 select-none">Quick Actions</span>
           <div className="flex gap-2">
