@@ -170,6 +170,13 @@ export const useDefaultShortcuts = () => {
       description: 'Go to LLM providers',
       category: 'navigation',
     },
+    {
+      key: 'F1',
+      global: true,
+      action: () => navigate('/admin/help'),
+      description: 'Open help & FAQ',
+      category: 'global',
+    },
   ];
 
   useKeyboardShortcuts(shortcuts);

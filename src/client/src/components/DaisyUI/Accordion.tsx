@@ -17,6 +17,8 @@ export interface AccordionProps {
   variant?: 'default' | 'bordered' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   iconPosition?: 'left' | 'right';
+  /** Indicator style: 'arrow' (chevron, default), 'plus' (+/- for FAQ style) */
+  indicatorStyle?: 'arrow' | 'plus';
   onItemToggle?: (itemId: string, isOpen: boolean) => void;
 }
 
@@ -28,6 +30,7 @@ const Accordion: React.FC<AccordionProps> = ({
   variant = 'default',
   size = 'md',
   iconPosition = 'left',
+  indicatorStyle = 'arrow',
   onItemToggle,
 }) => {
   const [openItems, setOpenItems] = useState<Set<string>>(new Set(defaultOpenItems));
@@ -73,7 +76,8 @@ const Accordion: React.FC<AccordionProps> = ({
       lg: 'collapse-lg',
     };
 
-    return `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${item.className || ''}`.trim();
+    const indicator = indicatorStyle === 'plus' ? 'collapse-plus' : 'collapse-arrow';
+    return `${baseClasses} ${indicator} ${variantClasses[variant]} ${sizeClasses[size]} ${item.className || ''}`.trim();
   };
 
   const getTitleClasses = () => {

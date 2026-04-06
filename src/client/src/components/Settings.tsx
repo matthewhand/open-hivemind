@@ -9,16 +9,20 @@ import { Alert } from './DaisyUI/Alert';
 import Toggle from './DaisyUI/Toggle';
 import { LoadingSpinner } from './DaisyUI/Loading';
 import Select from './DaisyUI/Select';
+import type { UIState } from '../store/uiStore';
 
 const Settings: React.FC = () => {
   const ui = useUIStore((s) => s);
   const setTheme = useUIStore((s) => s.setTheme);
   const setAnimationsEnabled = useUIStore((s) => s.setAnimationsEnabled);
-  const setDisable3dEffects = useUIStore((s) => s.setDisable3dEffects);
   const setRefreshInterval = useUIStore((s) => s.setRefreshInterval);
   const setShowKeyboardShortcuts = useUIStore((s) => s.setShowKeyboardShortcuts);
   const setShowTooltips = useUIStore((s) => s.setShowTooltips);
   const toggleAutoRefresh = useUIStore((s) => s.toggleAutoRefresh);
+  const setDensity = useUIStore((s) => s.setDensity);
+  const setSoundEnabled = useUIStore((s) => s.setSoundEnabled);
+  const setNotificationsEnabled = useUIStore((s) => s.setNotificationsEnabled);
+  const setErrorReportingEnabled = useUIStore((s) => s.setErrorReportingEnabled);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -30,10 +34,9 @@ const Settings: React.FC = () => {
     autoRefreshEnabled: ui.autoRefreshEnabled,
     refreshInterval: ui.refreshInterval,
     animationsEnabled: ui.animationsEnabled,
-    disable3dEffects: ui.disable3dEffects,
     showTooltips: ui.showTooltips,
     showKeyboardShortcuts: ui.showKeyboardShortcuts,
-  }) as Record<string, unknown>, [ui.theme, ui.autoRefreshEnabled, ui.refreshInterval, ui.animationsEnabled, ui.disable3dEffects, ui.showTooltips, ui.showKeyboardShortcuts]);
+  }) as Record<string, unknown>, [ui.theme, ui.autoRefreshEnabled, ui.refreshInterval, ui.animationsEnabled, ui.showTooltips, ui.showKeyboardShortcuts]);
 
   const { hasChanges, diff, setOriginalConfig } = useConfigDiff(settingsAsRecord);
 
@@ -46,12 +49,12 @@ const Settings: React.FC = () => {
 
   const accordionItems: AccordionItem[] = [
     {
-      id: 'appearance',
-      title: 'Appearance',
-      icon: '🎨',
+      id: 'preferences',
+      title: 'Preferences',
+      icon: '⚙️',
       content: (
         <div>
-          <div className="mb-4">
+          <div className="mb-6">
             <h3 className="text-lg font-semibold mb-2">Theme Selection</h3>
             <p className="text-sm text-base-content/70 mb-4">Choose a theme to customize your experience.</p>
             <AdvancedThemeSwitcher
@@ -59,6 +62,102 @@ const Settings: React.FC = () => {
               onThemeChange={handleThemeSelect}
               position="inline"
             />
+          </div>
+
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-2">UI Preferences</h3>
+            <p className="text-sm text-base-content/70 mb-4">Customize the user interface behavior.</p>
+
+            <div className="space-y-4">
+              <div className="form-control">
+                <label className="label cursor-pointer justify-start gap-4">
+                  <span className="label-text">DaisyUI Animations</span>
+                  <Toggle
+                    color="primary"
+                    checked={ui.animationsEnabled}
+                    onChange={(event) => setAnimationsEnabled(event.target.checked)}
+                  />
+                </label>
+                <p className="text-xs text-base-content/60 mt-1">Enable smooth transitions and animations for UI elements.</p>
+              </div>
+
+              <div className="form-control">
+                <label className="label cursor-pointer justify-start gap-4">
+                  <span className="label-text">Show Tooltips</span>
+                  <Toggle
+                    color="primary"
+                    checked={ui.showTooltips}
+                    onChange={(event) => setShowTooltips(event.target.checked)}
+                  />
+                </label>
+                <p className="text-xs text-base-content/60 mt-1">Display helpful tooltips on hover.</p>
+              </div>
+
+              <div className="form-control">
+                <label className="label cursor-pointer justify-start gap-4">
+                  <span className="label-text">Keyboard Shortcuts Overlay</span>
+                  <Toggle
+                    color="primary"
+                    checked={ui.showKeyboardShortcuts}
+                    onChange={(event) => setShowKeyboardShortcuts(event.target.checked)}
+                  />
+                </label>
+                <p className="text-xs text-base-content/60 mt-1">Show keyboard shortcuts overlay.</p>
+              </div>
+
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">UI Density</span>
+                </label>
+                <Select
+                  className="select-bordered"
+                  size="sm"
+                  value={ui.density}
+                  onChange={(e) => setDensity(e.target.value as UIState['density'])}
+                >
+                  <option value="compact">Compact</option>
+                  <option value="comfortable">Comfortable</option>
+                  <option value="spacious">Spacious</option>
+                </Select>
+                <p className="text-xs text-base-content/60 mt-1">Adjust the spacing and size of UI elements.</p>
+              </div>
+
+              <div className="form-control">
+                <label className="label cursor-pointer justify-start gap-4">
+                  <span className="label-text">Enable Sounds</span>
+                  <Toggle
+                    color="primary"
+                    checked={ui.soundEnabled}
+                    onChange={(event) => setSoundEnabled(event.target.checked)}
+                  />
+                </label>
+                <p className="text-xs text-base-content/60 mt-1">Play sounds for notifications and interactions.</p>
+              </div>
+
+              <div className="form-control">
+                <label className="label cursor-pointer justify-start gap-4">
+                  <span className="label-text">Enable Notifications</span>
+                  <Toggle
+                    color="primary"
+                    checked={ui.notificationsEnabled}
+                    onChange={(event) => setNotificationsEnabled(event.target.checked)}
+                  />
+                </label>
+                <p className="text-xs text-base-content/60 mt-1">Show browser notifications for important events.</p>
+              </div>
+
+              <div className="form-control">
+                <label className="label cursor-pointer justify-start gap-4">
+                  <span className="label-text">Error Reporting</span>
+                  <Toggle
+                    color="primary"
+                    checked={ui.errorReportingEnabled}
+                    onChange={(event) => setErrorReportingEnabled(event.target.checked)}
+                  />
+                </label>
+                <p className="text-xs text-base-content/60 mt-1">Help improve the application by sending error reports.</p>
+              </div>
+            </div>
           </div>
         </div>
       ),
@@ -116,36 +215,7 @@ const Settings: React.FC = () => {
                 onChange={(event) => setAnimationsEnabled(!event.target.checked)}
               />
             </label>
-          </div>
-          <div className="form-control">
-            <label className="label cursor-pointer justify-start gap-4">
-              <span className="label-text">Disable 3D Hover Effects</span>
-              <Toggle
-                color="primary"
-                checked={ui.disable3dEffects}
-                onChange={(event) => setDisable3dEffects(event.target.checked)}
-              />
-            </label>
-          </div>
-          <div className="form-control">
-            <label className="label cursor-pointer justify-start gap-4">
-              <span className="label-text">Show Tooltips</span>
-              <Toggle
-                color="primary"
-                checked={ui.showTooltips}
-                onChange={(event) => setShowTooltips(event.target.checked)}
-              />
-            </label>
-          </div>
-          <div className="form-control">
-            <label className="label cursor-pointer justify-start gap-4">
-              <span className="label-text">Keyboard Shortcuts Overlay</span>
-              <Toggle
-                color="primary"
-                checked={ui.showKeyboardShortcuts}
-                onChange={(event) => setShowKeyboardShortcuts(event.target.checked)}
-              />
-            </label>
+            <p className="text-xs text-base-content/60 mt-1">Reduce animations for better accessibility.</p>
           </div>
         </div>
       ),
@@ -199,7 +269,7 @@ const Settings: React.FC = () => {
         <Alert status="success" className="mb-6" message="Settings saved successfully!" />
       )}
 
-      <Accordion items={accordionItems} allowMultiple defaultOpenItems={['appearance']} />
+      <Accordion items={accordionItems} allowMultiple defaultOpenItems={['preferences']} />
 
       {hasChanges && (
         <div className="mt-6">

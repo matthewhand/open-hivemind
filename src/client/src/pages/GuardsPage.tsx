@@ -270,13 +270,21 @@ const GuardsPage: React.FC = () => {
 
             <Accordion
               allowMultiple
-              defaultOpenItems={['access-control']}
+              defaultOpenItems={[]}
               className="grid grid-cols-1 gap-6"
               items={[
                 {
                   id: 'access-control',
                   className: 'bg-base-200',
-                  title: (<span className="flex items-center gap-2 w-full pr-8"><Shield className="w-5 h-5" /> Access Control<span className="ml-auto z-10" onClick={(e: React.MouseEvent) => e.stopPropagation()}><Toggle color="primary" checked={guardsValue?.mcpGuard?.enabled || false} onChange={e => updateGuard('mcpGuard', { enabled: e.target.checked })} /></span></span>),
+                  title: (<span className="flex items-center gap-2 w-full pr-8"><Shield className="w-5 h-5" /> Access Control<span className="ml-auto z-10" onClick={(e: React.MouseEvent) => e.stopPropagation()}><Toggle color="primary" checked={guardsValue?.mcpGuard?.enabled || false} onChange={e => {
+                    updateGuard('mcpGuard', { enabled: e.target.checked });
+                    // Auto-open drawer when enabling
+                    if (e.target.checked) {
+                      setTimeout(() => {
+                        document.getElementById('accordion-toggle-access-control')?.click();
+                      }, 50);
+                    }
+                  }} /></span></span>),
                   content: (
                     <div className="bg-base-100 pt-4">
                   <div className="form-control">
@@ -332,7 +340,15 @@ const GuardsPage: React.FC = () => {
                 {
                   id: 'rate-limit',
                   className: 'bg-base-200',
-                  title: (<span className="flex items-center gap-2 w-full pr-8"><RefreshCw className="w-5 h-5" /> Rate Limiter<span className="ml-auto z-10" onClick={(e: React.MouseEvent) => e.stopPropagation()}><Toggle checked={guardsValue?.rateLimit?.enabled || false} onChange={e => updateGuard('rateLimit', { enabled: e.target.checked })} /></span></span>),
+                  title: (<span className="flex items-center gap-2 w-full pr-8"><RefreshCw className="w-5 h-5" /> Rate Limiter<span className="ml-auto z-10" onClick={(e: React.MouseEvent) => e.stopPropagation()}><Toggle checked={guardsValue?.rateLimit?.enabled || false} onChange={e => {
+                    updateGuard('rateLimit', { enabled: e.target.checked });
+                    // Auto-open drawer when enabling
+                    if (e.target.checked) {
+                      setTimeout(() => {
+                        document.getElementById('accordion-toggle-rate-limit')?.click();
+                      }, 50);
+                    }
+                  }} /></span></span>),
                   content: (
                     <div className="bg-base-100 pt-4">
                   <div className="grid grid-cols-2 gap-4">
@@ -379,7 +395,15 @@ const GuardsPage: React.FC = () => {
                 {
                   id: 'content-filter',
                   className: 'bg-base-200',
-                  title: (<span className="flex items-center gap-2 w-full pr-8"><AlertTriangle className="w-5 h-5" /> Content Filter<span className="ml-auto z-10" onClick={(e: React.MouseEvent) => e.stopPropagation()}><Toggle color="error" checked={guardsValue?.contentFilter?.enabled || false} onChange={e => updateGuard('contentFilter', { enabled: e.target.checked })} /></span></span>),
+                  title: (<span className="flex items-center gap-2 w-full pr-8"><AlertTriangle className="w-5 h-5" /> Content Filter<span className="ml-auto z-10" onClick={(e: React.MouseEvent) => e.stopPropagation()}><Toggle color="error" checked={guardsValue?.contentFilter?.enabled || false} onChange={e => {
+                    updateGuard('contentFilter', { enabled: e.target.checked });
+                    // Auto-open drawer when enabling
+                    if (e.target.checked) {
+                      setTimeout(() => {
+                        document.getElementById('accordion-toggle-content-filter')?.click();
+                      }, 50);
+                    }
+                  }} /></span></span>),
                   content: (
                     <div className="bg-base-100 pt-4">
                   <div className="form-control mb-8">
