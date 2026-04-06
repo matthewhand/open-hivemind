@@ -5,6 +5,7 @@ type CarouselItem = {
   title: string;
   description: string;
   bgGradient?: string; // CSS gradient to use when image is empty
+  link?: string; // Optional navigation link when slide is clicked
 };
 
 type CarouselProps = {
@@ -12,6 +13,7 @@ type CarouselProps = {
   autoplay?: boolean;
   interval?: number;
   variant?: 'full-width' | 'card-style';
+  onSlideClick?: (item: CarouselItem, index: number) => void;
 };
 
 const Carousel: React.FC<CarouselProps> = ({
@@ -19,6 +21,7 @@ const Carousel: React.FC<CarouselProps> = ({
   autoplay = true,
   interval = 5000,
   variant = 'full-width',
+  onSlideClick,
 }) => {
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -60,19 +63,23 @@ const Carousel: React.FC<CarouselProps> = ({
               }`}
             style={{ display: index === activeIndex ? 'block' : 'none' }}
           >
-            {item.image ? (
-              <img src={item.image} className="w-full" alt={item.title} />
-            ) : (
-              <div
-                className="w-full h-64 flex items-center justify-center"
-                style={{ background: item.bgGradient || 'linear-gradient(135deg, #667eea, #764ba2)' }}
-              >
-                <span className="text-4xl font-bold text-white/30">{item.title}</span>
-              </div>
-            )}
-            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 p-4 text-white">
-              <h3 className="text-lg font-bold">{item.title}</h3>
-              <p>{item.description}</p>
+            <div
+              className={`w-full h-48 flex items-center justify-center ${onSlideClick || item.link ? 'cursor-pointer' : ''}`}
+              style={{ background: item.image ? undefined : (item.bgGradient || 'linear-gradient(135deg, #667eea, #764ba2)') }}
+              onClick={() => onSlideClick?.(item, index)}
+            >
+              {item.image ? (
+                <img src={item.image} className="w-full h-full object-cover" alt={item.title} />
+              ) : (
+                <span className="text-3xl font-bold text-white/20">{item.title}</span>
+              )}
+            </div>
+            <div
+              className={`absolute bottom-0 left-0 right-0 bg-black/50 p-3 text-white ${onSlideClick || item.link ? 'cursor-pointer' : ''}`}
+              onClick={() => onSlideClick?.(item, index)}
+            >
+              <h3 className="text-sm font-bold">{item.title}</h3>
+              <p className="text-xs opacity-80">{item.description}</p>
             </div>
             <div className="absolute left-5 right-5 top-1/2 flex -translate-y-1/2 transform justify-between">
               <a href={`#slide${(index - 1 + items.length) % items.length}`} className="btn btn-circle" onClick={handlePrev} aria-label="Previous slide">

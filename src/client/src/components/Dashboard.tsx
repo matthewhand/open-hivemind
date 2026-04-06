@@ -57,6 +57,7 @@ const Dashboard: React.FC = () => {
   const [botRatings, setBotRatings] = useState<Record<string, number>>({});
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [announcement, setAnnouncement] = useState<string>('');
 
   const fetchData = useCallback(async () => {
     try {
@@ -82,6 +83,10 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     fetchData();
+    // Fetch announcement
+    apiService.get<{ announcement?: string }>('/api/dashboard/announcement')
+      .then((data: any) => { if (data?.announcement) setAnnouncement(data.announcement); })
+      .catch(() => { /* no announcement */ });
   }, [fetchData]);
 
   const handleRatingChange = useCallback((botName: string, rating: number) => {
@@ -218,51 +223,45 @@ const Dashboard: React.FC = () => {
         <QuickActions onRefresh={fetchData} />
       </div>
 
-      {/* Getting Started Carousel */}
+      {/* Dashboard Header */}
       <div className="max-w-7xl mx-auto px-4 mb-4">
-        <h3 className="text-sm font-bold uppercase tracking-wider text-base-content/40 mb-2">Getting Started</h3>
-        <Carousel
-          items={[
-            { image: '', title: '🤖 Configure Your First Bot', description: 'Set up an AI agent — assign a persona, connect a messaging platform, and choose an LLM provider.', bgGradient: 'linear-gradient(135deg, #4f46e5, #7c3aed)' },
-            { image: '', title: '🧠 Connect an LLM Provider', description: 'Add your OpenAI, Anthropic, Flowise, or Ollama API key to power bot responses.', bgGradient: 'linear-gradient(135deg, #059669, #10b981)' },
-            { image: '', title: '🎭 Create a Persona', description: 'Give your bot a unique personality — name, system prompt, response behavior, and avatar.', bgGradient: 'linear-gradient(135deg, #0891b2, #06b6d4)' },
-            { image: '', title: '🛡️ Set Up Guard Profiles', description: 'Add safety rules — access control, rate limiting, and content filtering for your bots.', bgGradient: 'linear-gradient(135deg, #d97706, #f59e0b)' },
-            { image: '', title: '📡 Multi-Platform Support', description: 'Connect to Discord, Slack, Mattermost — run coordinated bots across all platforms.', bgGradient: 'linear-gradient(135deg, #dc2626, #ef4444)' },
-            { image: '', title: '📊 Real-time Monitoring', description: 'Monitor bot performance, message volume, response times, and system health.', bgGradient: 'linear-gradient(135deg, #7c3aed, #a855f7)' },
-          ]}
-          autoplay
-          interval={6000}
-          variant="full-width"
-        />
-      </div>
+        <div className="text-center mb-4">
+          <h1 className="text-3xl font-bold">🧠 Open-Hivemind Dashboard</h1>
+          <p className="text-sm text-base-content/60">Your AI Agent Swarm Control Center</p>
+        </div>
 
-      {/* Hero Section */}
-      <Hero
-        backgroundImage="https://images.unsplash.com/photo-1555949963-aa79dcee981c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
-        className="min-h-[60vh]"
-      >
-        <div className="flex flex-col items-center space-y-6">
-          <div className="text-center">
-            <h1 className="text-5xl font-bold text-white drop-shadow-lg mb-4">
-              🧠 Open-Hivemind Dashboard
-            </h1>
-            <p className="text-xl text-white/90 drop-shadow-md">
-              Your AI Agent Swarm Control Center
-            </p>
+        {/* Carousel + Stats — side by side on desktop, stacked on mobile */}
+        <div className="flex flex-col lg:flex-row gap-4">
+          {/* Getting Started Carousel */}
+          <div className="flex-1 min-w-0">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-base-content/40 mb-1">Getting Started</h3>
+            <Carousel
+              items={[
+                { image: '', title: '🤖 Configure Your First Bot', description: 'Set up an AI agent with a persona and LLM provider.', bgGradient: 'linear-gradient(135deg, #4f46e5, #7c3aed)', link: '/admin/bots' },
+                { image: '', title: '🧠 Connect an LLM Provider', description: 'Add your OpenAI, Anthropic, or Ollama API key.', bgGradient: 'linear-gradient(135deg, #059669, #10b981)', link: '/admin/providers/llm' },
+                { image: '', title: '🎭 Create a Persona', description: 'Give your bot a unique personality and response behavior.', bgGradient: 'linear-gradient(135deg, #0891b2, #06b6d4)', link: '/admin/personas' },
+                { image: '', title: '🛡️ Set Up Guard Profiles', description: 'Add safety rules for access control and rate limiting.', bgGradient: 'linear-gradient(135deg, #d97706, #f59e0b)', link: '/admin/guards' },
+                { image: '', title: '📊 Real-time Monitoring', description: 'Monitor performance, messages, and system health.', bgGradient: 'linear-gradient(135deg, #7c3aed, #a855f7)', link: '/admin/monitoring' },
+                ...(announcement ? [{ image: '', title: '📋 Announcements', description: announcement, bgGradient: 'linear-gradient(135deg, #1e40af, #3b82f6)' }] : []),
+              ]}
+              autoplay
+              interval={6000}
+              variant="full-width"
+              onSlideClick={(item) => item.link && navigate(item.link)}
+            />
           </div>
 
-          <Button variant="primary" size="lg" onClick={fetchData}>
-            🔄 Refresh Dashboard
-          </Button>
-
           {/* Stats Overview */}
-          <Stats className="shadow-lg bg-base-100/90 backdrop-blur">
-            <Stat className="place-items-center" title="Active Bots" value={activeBots} valueClassName="text-primary text-2xl" description={`out of ${bots.length} total`} />
-            <Stat className="place-items-center" title="Total Messages" value={totalMessages.toLocaleString()} valueClassName="text-secondary text-2xl" description="processed today" />
-            <Stat className="place-items-center" title="System Uptime" value={<>{uptimeHours}h {uptimeMinutes}m</>} valueClassName="text-accent text-2xl" description="running smoothly" />
-          </Stats>
+          <div className="lg:w-72 shrink-0">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-base-content/40 mb-1">Overview</h3>
+            <Stats className="shadow-sm bg-base-200/50 w-full flex-col">
+              <Stat title="Active Bots" value={activeBots} valueClassName="text-primary text-xl" description={`out of ${bots.length} total`} />
+              <Stat title="Total Messages" value={totalMessages.toLocaleString()} valueClassName="text-secondary text-xl" description="processed today" />
+              <Stat title="System Uptime" value={<>{uptimeHours}h {uptimeMinutes}m</>} valueClassName="text-accent text-xl" description="running smoothly" />
+            </Stats>
+          </div>
         </div>
-      </Hero>
+      </div>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
