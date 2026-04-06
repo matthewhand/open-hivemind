@@ -566,6 +566,42 @@ const GuardsPage: React.FC = () => {
         onClose={() => setSelectedProfileId(null)}
         title={selectedProfile?.name}
         subtitle={selectedProfile?.description || 'No description'}
+        renderDock={
+          selectedProfile && (
+            <>
+              <button
+                className="text-info hover:bg-info/10 transition-colors"
+                onClick={() => {
+                  setSelectedProfileId(null);
+                  setEditingProfile(selectedProfile);
+                }}
+                title="Edit Profile"
+              >
+                <Edit2 className="w-5 h-5" />
+                <span className="dock-label text-[10px]">Edit</span>
+              </button>
+              <button
+                className="text-primary hover:bg-primary/10 transition-colors"
+                onClick={() => handleDuplicate(selectedProfile)}
+                title="Duplicate Profile"
+              >
+                <Copy className="w-5 h-5" />
+                <span className="dock-label text-[10px]">Duplicate</span>
+              </button>
+              <button
+                className="text-error hover:bg-error/10 transition-colors"
+                onClick={() => {
+                  setSelectedProfileId(null);
+                  setDeleteConfirm(selectedProfile);
+                }}
+                title="Delete Profile"
+              >
+                <Trash2 className="w-5 h-5" />
+                <span className="dock-label text-[10px]">Delete</span>
+              </button>
+            </>
+          )
+        }
       >
         {selectedProfile && (
           <div className="space-y-6">
@@ -649,40 +685,6 @@ const GuardsPage: React.FC = () => {
                 )}
               </div>
             )}
-
-            <Divider />
-
-            {/* Actions */}
-            <div className="flex flex-col gap-2">
-              <Button
-                color="primary"
-                className="w-full"
-                onClick={() => {
-                  setSelectedProfileId(null);
-                  setEditingProfile(selectedProfile);
-                }}
-              >
-                <Edit2 className="w-4 h-4 mr-2" /> Edit Profile
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => handleDuplicate(selectedProfile)}
-              >
-                <Copy className="w-4 h-4 mr-2" /> Duplicate
-              </Button>
-              <Button
-                variant="outline"
-                color="error"
-                className="w-full"
-                onClick={() => {
-                  setSelectedProfileId(null);
-                  setDeleteConfirm(selectedProfile);
-                }}
-              >
-                <Trash2 className="w-4 h-4 mr-2" /> Delete
-              </Button>
-            </div>
           </div>
         )}
       </DetailDrawer>

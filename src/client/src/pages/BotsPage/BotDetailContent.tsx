@@ -232,40 +232,6 @@ export const BotDetailContent: React.FC<BotDetailContentProps> = ({
           onRefresh={() => previewBot && fetchPreviewChat(previewBot.id)}
         />
       )}
-
-      {/* Action buttons */}
-      <div className="flex gap-2 pt-2 border-t border-base-200">
-        <Button
-          variant="primary"
-          size="sm"
-          className="flex-1"
-          onClick={() => { setEditingBot(previewBot); onClose(); }}
-        >
-          <Settings className="w-3 h-3 mr-2" /> Configuration
-        </Button>
-        <Tooltip content="Export bot config">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleExportSingleBot(previewBot)}
-            className="btn-square"
-            aria-label="Export bot config"
-          >
-            <Download className="w-3 h-3" />
-          </Button>
-        </Tooltip>
-        <Tooltip content={previewBot.status === 'active' ? 'Deactivate' : 'Activate'}>
-          <Button
-            variant={previewBot.status === 'active' ? 'ghost' : 'primary'}
-            size="sm"
-            onClick={() => handleToggleBotStatus(previewBot)}
-            className={`btn-square ${previewBot.status === 'active' ? 'text-error border-error' : ''}`}
-            aria-label={previewBot.status === 'active' ? 'Deactivate' : 'Activate'}
-          >
-            {previewBot.status === 'active' ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
-          </Button>
-        </Tooltip>
-      </div>
     </div>
   );
 };

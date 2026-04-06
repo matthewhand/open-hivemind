@@ -20,6 +20,8 @@ export interface DetailDrawerProps {
   subtitle?: React.ReactNode;
   /** Content to render inside the drawer body */
   children?: React.ReactNode;
+  /** Optional actions to render in a bottom Dock */
+  renderDock?: React.ReactNode;
   /** Width class for desktop (default: w-[420px]) */
   widthClass?: string;
   /** Additional CSS classes on the drawer panel */
@@ -32,6 +34,7 @@ const DetailDrawer: React.FC<DetailDrawerProps> = ({
   title,
   subtitle,
   children,
+  renderDock,
   widthClass = 'w-[420px]',
   className = '',
 }) => {
@@ -104,9 +107,16 @@ const DetailDrawer: React.FC<DetailDrawerProps> = ({
         </div>
 
         {/* Body (scrollable) */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className={`flex-1 overflow-y-auto p-4 ${renderDock ? 'pb-20' : ''}`}>
           {children}
         </div>
+
+        {/* Dock */}
+        {renderDock && (
+          <div className="dock absolute bottom-0 w-full rounded-none bg-base-200 border-t border-base-300">
+            {renderDock}
+          </div>
+        )}
       </aside>
     </>
   );

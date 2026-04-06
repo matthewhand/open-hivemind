@@ -187,6 +187,49 @@ const PersonasPage: React.FC = () => {
         onClose={() => setSelectedPersona(null)}
         title={selectedPersona?.name}
         subtitle={selectedPersona?.description}
+        renderDock={
+          selectedPersona && (
+            <>
+              {!selectedPersona.isBuiltIn && (
+                <button
+                  className="text-info hover:bg-info/10 transition-colors"
+                  onClick={() => {
+                    setSelectedPersona(null);
+                    openEditModal(selectedPersona);
+                  }}
+                  title="Edit Persona"
+                >
+                  <Edit2 className="w-5 h-5" />
+                  <span className="dock-label text-[10px]">Edit</span>
+                </button>
+              )}
+              <button
+                className="text-primary hover:bg-primary/10 transition-colors"
+                onClick={() => {
+                  setSelectedPersona(null);
+                  openCloneModal(selectedPersona);
+                }}
+                title="Duplicate Persona"
+              >
+                <Copy className="w-5 h-5" />
+                <span className="dock-label text-[10px]">Duplicate</span>
+              </button>
+              {!selectedPersona.isBuiltIn && (
+                <button
+                  className="text-error hover:bg-error/10 transition-colors"
+                  onClick={() => {
+                    setSelectedPersona(null);
+                    handleDeletePersona(selectedPersona.id, (msg) => setError(msg));
+                  }}
+                  title="Delete Persona"
+                >
+                  <Trash2 className="w-5 h-5" />
+                  <span className="dock-label text-[10px]">Delete</span>
+                </button>
+              )}
+            </>
+          )
+        }
       >
         {selectedPersona && (
           <div className="space-y-6">
@@ -223,47 +266,6 @@ const PersonasPage: React.FC = () => {
                 </div>
               </div>
             )}
-
-            <Divider />
-
-            {/* Actions */}
-            <div className="flex flex-col gap-2">
-              {!selectedPersona.isBuiltIn && (
-                <Button
-                  color="primary"
-                  className="w-full"
-                  onClick={() => {
-                    setSelectedPersona(null);
-                    openEditModal(selectedPersona);
-                  }}
-                >
-                  <Edit2 className="w-4 h-4 mr-2" /> Edit Persona
-                </Button>
-              )}
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => {
-                  setSelectedPersona(null);
-                  openCloneModal(selectedPersona);
-                }}
-              >
-                <Copy className="w-4 h-4 mr-2" /> Duplicate
-              </Button>
-              {!selectedPersona.isBuiltIn && (
-                <Button
-                  variant="outline"
-                  color="error"
-                  className="w-full"
-                  onClick={() => {
-                    setSelectedPersona(null);
-                    handleDeletePersona(selectedPersona.id, (msg) => setError(msg));
-                  }}
-                >
-                  <Trash2 className="w-4 h-4 mr-2" /> Delete
-                </Button>
-              )}
-            </div>
           </div>
         )}
       </DetailDrawer>

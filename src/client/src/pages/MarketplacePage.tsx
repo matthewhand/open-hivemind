@@ -708,6 +708,62 @@ const MarketplacePage: React.FC = () => {
         onClose={() => setDrawerPkg(null)}
         title={drawerPkg?.displayName}
         subtitle={drawerPkg ? `${drawerPkg.name} v${drawerPkg.version}` : undefined}
+        renderDock={
+          drawerPkg && (
+            <>
+              {drawerPkg.status === 'installed' && (
+                <>
+                  <button
+                    className="text-primary hover:bg-primary/10 transition-colors"
+                    onClick={() => handleUpdate(drawerPkg.name)}
+                    disabled={actionInProgress?.startsWith(drawerPkg.name)}
+                    title="Update Package"
+                  >
+                    {actionInProgress === `update-${drawerPkg.name}` ? (
+                      <LoadingSpinner size="xs" />
+                    ) : (
+                      <UpdateIcon className="w-5 h-5" />
+                    )}
+                    <span className="dock-label text-[10px]">Update</span>
+                  </button>
+                  <button
+                    className="text-error hover:bg-error/10 transition-colors"
+                    onClick={() => handleUninstall(drawerPkg.name)}
+                    disabled={actionInProgress?.startsWith(drawerPkg.name)}
+                    title="Uninstall Package"
+                  >
+                    {actionInProgress === `uninstall-${drawerPkg.name}` ? (
+                      <LoadingSpinner size="xs" />
+                    ) : (
+                      <UninstallIcon className="w-5 h-5" />
+                    )}
+                    <span className="dock-label text-[10px]">Uninstall</span>
+                  </button>
+                </>
+              )}
+              {drawerPkg.status === 'available' && (
+                <button
+                  className="text-primary hover:bg-primary/10 transition-colors"
+                  onClick={() => {
+                    setDrawerPkg(null);
+                    setGithubUrl(drawerPkg.repoUrl || '');
+                    setInstallModalOpen(true);
+                  }}
+                  disabled={actionInProgress?.startsWith(drawerPkg.name)}
+                  title="Install Package"
+                >
+                  <DownloadIcon className="w-5 h-5" />
+                  <span className="dock-label text-[10px]">Install</span>
+                </button>
+              )}
+              {drawerPkg.status === 'built-in' && (
+                <div className="text-center text-[10px] text-base-content/50 italic px-4 py-2 flex items-center justify-center w-full">
+                  Built-in packages are managed by open-hivemind
+                </div>
+              )}
+            </>
+          )
+        }
       >
         {drawerPkg && (() => {
           const Icon = TYPE_ICONS[drawerPkg.type];

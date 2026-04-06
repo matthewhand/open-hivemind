@@ -318,6 +318,36 @@ const BotsPage: React.FC = () => {
         onClose={() => setPreviewBot(null)}
         title={previewBot?.name}
         subtitle={previewBot?.description}
+        renderDock={
+          previewBot && (
+            <>
+              <button
+                className="text-info hover:bg-info/10 transition-colors"
+                onClick={() => { setEditingBot(previewBot); setPreviewBot(null); }}
+                title="Configuration"
+              >
+                <Settings className="w-5 h-5" />
+                <span className="dock-label text-[10px]">Config</span>
+              </button>
+              <button
+                className="text-secondary hover:bg-secondary/10 transition-colors"
+                onClick={() => handleExportSingleBot(previewBot)}
+                title="Export bot config"
+              >
+                <Download className="w-5 h-5" />
+                <span className="dock-label text-[10px]">Export</span>
+              </button>
+              <button
+                className={`${previewBot.status === 'active' ? 'text-error hover:bg-error/10' : 'text-success hover:bg-success/10'} transition-colors`}
+                onClick={() => handleToggleBotStatus(previewBot)}
+                title={previewBot.status === 'active' ? 'Deactivate' : 'Activate'}
+              >
+                {previewBot.status === 'active' ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                <span className="dock-label text-[10px]">{previewBot.status === 'active' ? 'Pause' : 'Start'}</span>
+              </button>
+            </>
+          )
+        }
       >
         <BotDetailContent
           previewBot={previewBot}

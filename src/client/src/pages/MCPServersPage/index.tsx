@@ -255,6 +255,60 @@ const MCPServersPage: React.FC = () => {
         onClose={() => setDrawerServer(null)}
         title={drawerServer?.name || 'Server Details'}
         subtitle={drawerServer?.url || undefined}
+        renderDock={
+          drawerServer && (() => {
+            const liveServer = servers.find(s => s.id === drawerServer.id) || drawerServer;
+            return (
+              <>
+                <button
+                  className={`${liveServer.status === 'running' ? 'text-error hover:bg-error/10' : 'text-success hover:bg-success/10'} transition-colors`}
+                  onClick={() => {
+                    handleServerAction(liveServer.id, liveServer.status === 'running' ? 'stop' : 'start');
+                  }}
+                  title={liveServer.status === 'running' ? 'Disconnect' : 'Connect'}
+                >
+                  {liveServer.status === 'running' ? <Square className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                  <span className="dock-label text-[10px]">{liveServer.status === 'running' ? 'Stop' : 'Start'}</span>
+                </button>
+                <button
+                  className="text-secondary hover:bg-secondary/10 transition-colors"
+                  onClick={() => {
+                    handleRefreshTools(liveServer.id);
+                    setDrawerServer(null);
+                  }}
+                  title="Refresh Tools"
+                >
+                  <RefreshCw className={`w-5 h-5 ${refreshingId === liveServer.id ? 'animate-spin' : ''}`} />
+                  <span className="dock-label text-[10px]">Refresh</span>
+                </button>
+                <button
+                  className="text-info hover:bg-info/10 transition-colors"
+                  onClick={() => {
+                    setSelectedServer(liveServer);
+                    setIsEditing(true);
+                    setDialogOpen(true);
+                    setDrawerServer(null);
+                  }}
+                  title="Edit Server"
+                >
+                  <EditIcon className="w-5 h-5" />
+                  <span className="dock-label text-[10px]">Edit</span>
+                </button>
+                <button
+                  className="text-error hover:bg-error/10 transition-colors"
+                  onClick={() => {
+                    handleDeleteServer(liveServer.id);
+                    setDrawerServer(null);
+                  }}
+                  title="Remove Server"
+                >
+                  <Trash2 className="w-5 h-5" />
+                  <span className="dock-label text-[10px]">Delete</span>
+                </button>
+              </>
+            );
+          })()
+        }
       >
         {drawerServer && (() => {
           // Find the latest server data (status may have changed)
@@ -344,65 +398,6 @@ const MCPServersPage: React.FC = () => {
                     {liveServer.status === 'running' ? 'No tools reported.' : 'Connect to discover tools.'}
                   </p>
                 )}
-              </div>
-
-              <Divider />
-
-              {/* Actions */}
-              <div className="space-y-2">
-                <h4 className="text-xs font-bold uppercase opacity-50 mb-2">Actions</h4>
-
-                {/* Connect / Disconnect */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className={`w-full justify-start gap-2 ${liveServer.status === 'running' ? 'text-error border-error/30 hover:bg-error/10' : 'text-success border-success/30 hover:bg-success/10'}`}
-                  onClick={() => {
-                    handleServerAction(liveServer.id, liveServer.status === 'running' ? 'stop' : 'start');
-                  }}
-                >
-                  {liveServer.status === 'running'
-                    ? <><Square className="w-4 h-4" /> Disconnect</>
-                    : <><Play className="w-4 h-4" /> Connect</>}
-                </Button>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start gap-2"
-                  onClick={() => {
-                    handleTestConnection(liveServer);
-                    setDrawerServer(null);
-                  }}
-                >
-                  <RefreshCw className={`w-4 h-4 ${isTesting ? 'animate-spin' : ''}`} /> Test Connection
-                </Button>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start gap-2"
-                  onClick={() => {
-                    setSelectedServer(liveServer);
-                    setIsEditing(true);
-                    setDialogOpen(true);
-                    setDrawerServer(null);
-                  }}
-                >
-                  <EditIcon className="w-4 h-4" /> Edit Server
-                </Button>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start gap-2 text-error border-error/30 hover:bg-error/10"
-                  onClick={() => {
-                    handleDeleteServer(liveServer.id);
-                    setDrawerServer(null);
-                  }}
-                >
-                  <Trash2 className="w-4 h-4" /> Remove Server
-                </Button>
               </div>
             </div>
           );

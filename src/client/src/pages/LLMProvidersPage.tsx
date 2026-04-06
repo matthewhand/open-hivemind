@@ -494,6 +494,60 @@ const LLMProvidersPage: React.FC = () => {
         onClose={() => setDrawerProfile(null)}
         title={drawerProfile?.name || 'Profile Details'}
         subtitle={drawerProfile?.provider ? `${drawerProfile.provider} provider` : undefined}
+        renderDock={
+          drawerProfile && (
+            <>
+              {isChatCapable(drawerProfile) && drawerProfile.key !== defaultChatbotProfile && (
+                <button
+                  className="text-primary hover:bg-primary/10 transition-colors"
+                  onClick={async () => {
+                    setDefaultChatbotProfile(drawerProfile.key);
+                    await saveGlobal({ defaultChatbotProfile: drawerProfile.key }).catch(() => {});
+                  }}
+                  title="Set as Default Chatbot"
+                >
+                  <ChatIcon className="w-5 h-5" />
+                  <span className="dock-label text-[10px]">Default</span>
+                </button>
+              )}
+              {isEmbeddingCapable(drawerProfile) && drawerProfile.key !== defaultEmbeddingProvider && (
+                <button
+                  className="text-secondary hover:bg-secondary/10 transition-colors"
+                  onClick={async () => {
+                    setDefaultEmbeddingProvider(drawerProfile.key);
+                    await saveLlmConfig({ DEFAULT_EMBEDDING_PROVIDER: drawerProfile.key }).catch(() => {});
+                  }}
+                  title="Set as Default Embedding"
+                >
+                  <CpuIcon className="w-5 h-5" />
+                  <span className="dock-label text-[10px]">Embedding</span>
+                </button>
+              )}
+              <button
+                className="text-info hover:bg-info/10 transition-colors"
+                onClick={() => {
+                  handleEditProfile(drawerProfile);
+                  setDrawerProfile(null);
+                }}
+                title="Edit Profile"
+              >
+                <EditIcon className="w-5 h-5" />
+                <span className="dock-label text-[10px]">Edit</span>
+              </button>
+              <button
+                className="text-error hover:bg-error/10 transition-colors"
+                onClick={() => {
+                  handleDeleteProfile(drawerProfile.key);
+                  setDrawerProfile(null);
+                }}
+                title="Delete Profile"
+              >
+                <DeleteIcon className="w-5 h-5" />
+                <span className="dock-label text-[10px]">Delete</span>
+              </button>
+            </>
+          )
+        }
       >
         {drawerProfile && (
           <div className="space-y-4">
@@ -564,66 +618,6 @@ const LLMProvidersPage: React.FC = () => {
                   <p className="text-sm opacity-50 italic">No configuration values set.</p>
                 )}
               </div>
-            </div>
-
-            <Divider />
-
-            {/* Actions */}
-            <div className="space-y-2">
-              <h4 className="text-xs font-bold uppercase opacity-50 mb-2">Actions</h4>
-
-              {/* Set as default buttons */}
-              {isChatCapable(drawerProfile) && drawerProfile.key !== defaultChatbotProfile && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start gap-2"
-                  onClick={async () => {
-                    setDefaultChatbotProfile(drawerProfile.key);
-                    await saveGlobal({ defaultChatbotProfile: drawerProfile.key }).catch(() => {});
-                  }}
-                >
-                  <ChatIcon className="w-4 h-4" /> Set as Default Chatbot
-                </Button>
-              )}
-
-              {isEmbeddingCapable(drawerProfile) && drawerProfile.key !== defaultEmbeddingProvider && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start gap-2"
-                  onClick={async () => {
-                    setDefaultEmbeddingProvider(drawerProfile.key);
-                    await saveLlmConfig({ DEFAULT_EMBEDDING_PROVIDER: drawerProfile.key }).catch(() => {});
-                  }}
-                >
-                  <CpuIcon className="w-4 h-4" /> Set as Default Embedding
-                </Button>
-              )}
-
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full justify-start gap-2"
-                onClick={() => {
-                  handleEditProfile(drawerProfile);
-                  setDrawerProfile(null);
-                }}
-              >
-                <EditIcon className="w-4 h-4" /> Edit Profile
-              </Button>
-
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full justify-start gap-2 text-error border-error/30 hover:bg-error/10"
-                onClick={() => {
-                  handleDeleteProfile(drawerProfile.key);
-                  setDrawerProfile(null);
-                }}
-              >
-                <DeleteIcon className="w-4 h-4" /> Delete Profile
-              </Button>
             </div>
           </div>
         )}

@@ -607,6 +607,65 @@ const TemplatesPage: React.FC = () => {
         onClose={handleCloseDrawer}
         title={drawerTemplate?.name}
         subtitle={drawerTemplate ? `${drawerTemplate.category} template` : undefined}
+        renderDock={
+          drawerTemplate && (
+            <>
+              <button
+                className="text-primary hover:bg-primary/10 transition-colors"
+                onClick={() => {
+                  handleCloseDrawer();
+                  handleApplyTemplate(drawerTemplate);
+                }}
+                title="Create Bot from Template"
+              >
+                <Plus className="w-5 h-5" />
+                <span className="dock-label text-[10px]">Create</span>
+              </button>
+              <button
+                className="text-info hover:bg-info/10 transition-colors"
+                onClick={() => handleDuplicateTemplate(drawerTemplate)}
+                title="Duplicate Template"
+              >
+                <Copy className="w-5 h-5" />
+                <span className="dock-label text-[10px]">Duplicate</span>
+              </button>
+              {!drawerTemplate.isBuiltIn && (
+                <button
+                  className="text-secondary hover:bg-secondary/10 transition-colors"
+                  onClick={() => {
+                    handleCloseDrawer();
+                    handlePreviewTemplate(drawerTemplate);
+                  }}
+                  title="Edit Template"
+                >
+                  <Edit3 className="w-5 h-5" />
+                  <span className="dock-label text-[10px]">Edit</span>
+                </button>
+              )}
+              <button
+                className="text-accent hover:bg-accent/10 transition-colors"
+                onClick={() => handleExportTemplate(drawerTemplate)}
+                title="Export as JSON"
+              >
+                <Download className="w-5 h-5" />
+                <span className="dock-label text-[10px]">Export</span>
+              </button>
+              {!drawerTemplate.isBuiltIn && (
+                <button
+                  className="text-error hover:bg-error/10 transition-colors"
+                  onClick={() => {
+                    handleCloseDrawer();
+                    setDeletingTemplate(drawerTemplate);
+                  }}
+                  title="Delete Template"
+                >
+                  <Trash2 className="w-5 h-5" />
+                  <span className="dock-label text-[10px]">Delete</span>
+                </button>
+              )}
+            </>
+          )
+        }
       >
         {drawerTemplate && (
           <div className="space-y-4">
@@ -689,64 +748,6 @@ const TemplatesPage: React.FC = () => {
                     <Clock className="w-4 h-4" />
                     <span>Updated {new Date(drawerTemplate.updatedAt).toLocaleDateString()}</span>
                   </div>
-                </div>
-
-                <Divider />
-
-                {/* Action Buttons */}
-                <div className="space-y-2">
-                  <button
-                    className="btn btn-primary btn-block"
-                    onClick={() => {
-                      handleCloseDrawer();
-                      handleApplyTemplate(drawerTemplate);
-                    }}
-                  >
-                    <Plus className="w-4 h-4" />
-                    Create Bot from Template
-                  </button>
-
-                  <button
-                    className="btn btn-outline btn-block"
-                    onClick={() => handleDuplicateTemplate(drawerTemplate)}
-                  >
-                    <Copy className="w-4 h-4" />
-                    Duplicate Template
-                  </button>
-
-                  {!drawerTemplate.isBuiltIn && (
-                    <button
-                      className="btn btn-outline btn-block"
-                      onClick={() => {
-                        handleCloseDrawer();
-                        handlePreviewTemplate(drawerTemplate);
-                      }}
-                    >
-                      <Edit3 className="w-4 h-4" />
-                      Edit Template
-                    </button>
-                  )}
-
-                  <button
-                    className="btn btn-outline btn-block"
-                    onClick={() => handleExportTemplate(drawerTemplate)}
-                  >
-                    <Download className="w-4 h-4" />
-                    Export as JSON
-                  </button>
-
-                  {!drawerTemplate.isBuiltIn && (
-                    <button
-                      className="btn btn-error btn-outline btn-block"
-                      onClick={() => {
-                        handleCloseDrawer();
-                        setDeletingTemplate(drawerTemplate);
-                      }}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Delete Template
-                    </button>
-                  )}
                 </div>
               </div>
             )}
