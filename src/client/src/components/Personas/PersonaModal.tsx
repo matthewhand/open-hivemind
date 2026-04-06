@@ -185,11 +185,11 @@ export const PersonaModal: React.FC<PersonaModalProps> = ({
                 minLength={2}
                 maxLength={100}
                 disabled={!!isEnvLocked || isViewMode}
-                error={!personaName.trim() ? 'Name is required' : undefined}
+                error={!(personaName || '').trim() ? 'Name is required' : undefined}
                 autoFocus={!isViewMode}
               />
               <ValidatorHint>
-                {!personaName.trim() ? 'A persona name is required' : 'Must be between 2 and 100 characters'}
+                {!(personaName || '').trim() ? 'A persona name is required' : 'Must be between 2 and 100 characters'}
               </ValidatorHint>
             </Validator>
           </div>

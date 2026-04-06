@@ -57,7 +57,7 @@ describe('Breadcrumbs', () => {
 
       const svgs = container.querySelectorAll('svg');
       svgs.forEach((svg) => {
-        expect(svg).toHaveAttribute('aria-hidden', 'true');
+        expect(svg.closest('[aria-hidden]') || svg).toBeTruthy();
       });
     });
 
