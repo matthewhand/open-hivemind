@@ -113,42 +113,24 @@ export class PersonaManager extends EventEmitter {
       // Clear existing personas (for reload functionality)
       this.personas.clear();
 
-      // Load built-ins first
-      BUILTIN_PERSONAS.forEach((p) => this.personas.set(p.id, { ...p }));
-
       let fileExists = false;
       try {
         await fs.promises.access(this.personasFilePath);
         fileExists = true;
       } catch (err: any) {
         if (err.code !== 'ENOENT') throw err;
-        // File doesn't exist yet — we'll seed from builtins below
       }
 
       if (fileExists) {
+        // Load user-editable personas from disk (seeded from BUILTIN_PERSONAS on first run)
         const data = await fs.promises.readFile(this.personasFilePath, 'utf8');
-        const customPersonas = JSON.parse(data);
-
-        // Collect custom persona names to detect duplicates of built-ins
-        const customNames = new Set<string>();
-        Object.values(customPersonas).forEach((p: any) => {
-          if (p.id) {
-            this.personas.set(p.id, p);
-            if (p.name) customNames.add(p.name);
-          }
+        const savedPersonas = JSON.parse(data);
+        Object.values(savedPersonas).forEach((p: any) => {
+          if (p.id) this.personas.set(p.id, p);
         });
-
-        // Remove built-in personas that have custom copies (same name) to avoid duplicates
-        for (const builtin of BUILTIN_PERSONAS) {
-          if (customNames.has(builtin.name)) {
-            this.personas.delete(builtin.id);
-          }
-        }
-
-        debug(`Loaded ${Object.keys(customPersonas).length} custom personas`);
+        debug(`Loaded ${Object.keys(savedPersonas).length} personas from custom-personas.json`);
       } else {
-        // No custom-personas.json yet — seed editable copies of all built-in personas
-        // so users have something to work with immediately.
+        // First run — seed editable copies from built-in templates and persist
         await this.seedDefaultPersonas();
       }
     } catch (error: any) {
@@ -201,16 +183,14 @@ export class PersonaManager extends EventEmitter {
         await fs.promises.mkdir(personasDir, { recursive: true });
       }
 
-      // Filter out built-ins before saving
-      const customPersonas: Record<string, Persona> = {};
+      // Save all personas (no built-ins in map — all are user-editable)
+      const allPersonas: Record<string, Persona> = {};
       for (const [id, persona] of this.personas.entries()) {
-        if (!persona.isBuiltIn) {
-          customPersonas[id] = persona;
-        }
+        allPersonas[id] = persona;
       }
 
-      await fs.promises.writeFile(this.personasFilePath, JSON.stringify(customPersonas, null, 2));
-      debug(`Saved ${Object.keys(customPersonas).length} custom personas`);
+      await fs.promises.writeFile(this.personasFilePath, JSON.stringify(allPersonas, null, 2));
+      debug(`Saved ${Object.keys(allPersonas).length} personas`);
     } catch (error: any) {
       debug('Error saving personas:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError('Failed to save personas', 'configuration');
@@ -245,10 +225,6 @@ export class PersonaManager extends EventEmitter {
     const existing = this.personas.get(id);
     if (!existing) {
       throw new Error(`Persona with ID ${id} not found`);
-    }
-
-    if (existing.isBuiltIn) {
-      throw new Error('Cannot update built-in personas');
     }
 
     const updated: Persona = {
@@ -293,10 +269,6 @@ export class PersonaManager extends EventEmitter {
     const existing = this.personas.get(id);
     if (!existing) {
       return false;
-    }
-
-    if (existing.isBuiltIn) {
-      throw new Error('Cannot delete built-in personas');
     }
 
     this.personas.delete(id);
