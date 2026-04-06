@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Download, LayoutGrid, List, RefreshCw, Trash2, Upload as UploadIcon } from 'lucide-react';
+import { Bot as BotIcon, Download, LayoutGrid, List, RefreshCw, Trash2, Upload as UploadIcon } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { CreateBotWizard } from '../../components/BotManagement/CreateBotWizard';
@@ -21,6 +21,7 @@ import useUrlParams from '../../hooks/useUrlParams';
 import type { BotConfig } from '../../types/bot';
 import { BotListErrorState } from './BotListErrorState';
 import { BotListGrid } from './BotListGrid';
+import { BotSwarm3DView } from './BotSwarm3DView';
 // Components
 import { BotsPageHeader } from './BotsPageHeader';
 import { useBotActions } from './hooks/useBotActions';
@@ -39,18 +40,20 @@ const BotsPage: React.FC = () => {
   const { values: urlParams, setValue: setUrlParam } = useUrlParams({
     search: { type: 'string', default: '', debounce: 300 },
     status: { type: 'string', default: 'all' },
+    view: { type: 'string', default: 'default' },
   });
   const searchQuery = urlParams.search;
   const setSearchQuery = (v: string) => setUrlParam('search', v);
   const filterType = urlParams.status as 'all' | 'active' | 'inactive';
   const setFilterType = (v: 'all' | 'active' | 'inactive') => setUrlParam('status', v);
+  const viewMode = urlParams.view as 'default' | 'compact' | 'swarm3d';
+  const setViewMode = (v: 'default' | 'compact' | 'swarm3d') => setUrlParam('view', v);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingBot, setEditingBot] = useState<BotConfig | null>(null);
   const [, setDeletingBot] = useState<BotConfig | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
-  const [compactView, setCompactView] = useState(false);
 
   const toastSuccess = useSuccessToast();
   const toastError = useErrorToast();
@@ -181,21 +184,32 @@ const BotsPage: React.FC = () => {
               <option value="active">Active Only</option>
               <option value="inactive">Inactive Only</option>
             </Select>
-            <Tooltip content={compactView ? 'Switch to grid view' : 'Switch to compact view'}>
+            <Tooltip content={
+              viewMode === 'swarm3d' ? 'Switch to grid view'
+                : viewMode === 'compact' ? 'Switch to 3D swarm view'
+                : 'Switch to compact view'
+            }>
               <div
                 className="btn btn-ghost btn-sm btn-square"
                 role="button"
                 tabIndex={0}
-                onClick={() => setCompactView(!compactView)}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setCompactView(!compactView); } }}
-                aria-label={compactView ? 'Switch to grid view' : 'Switch to compact view'}
+                onClick={() => setViewMode(
+                  viewMode === 'default' ? 'compact'
+                    : viewMode === 'compact' ? 'swarm3d'
+                    : 'default'
+                )}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault();
+                  setViewMode(viewMode === 'default' ? 'compact' : viewMode === 'compact' ? 'swarm3d' : 'default');
+                }}}
+                aria-label="Switch view"
               >
-                <Swap
-                  checked={compactView}
-                  onContent={<LayoutGrid className="w-4 h-4" />}
-                  offContent={<List className="w-4 h-4" />}
-                  rotate
-                />
+                {viewMode === 'swarm3d' ? (
+                  <LayoutGrid className="w-4 h-4" />
+                ) : viewMode === 'compact' ? (
+                  <Bot className="w-4 h-4" />
+                ) : (
+                  <List className="w-4 h-4" />
+                )}
               </div>
             </Tooltip>
             <Tooltip content="Refresh list">
@@ -222,7 +236,14 @@ const BotsPage: React.FC = () => {
         />
 
         {!error && filteredBots.length > 0 && (
-          <>
+          viewMode === 'swarm3d' ? (
+            <BotSwarm3DView
+              bots={filteredBots}
+              onPreviewBot={handlePreviewBot}
+              onToggleStatus={handleToggleBotStatus}
+            />
+          ) : (
+            <>
             <div className="flex items-center gap-2 mb-2">
               <Checkbox
                 variant="primary"
@@ -277,7 +298,7 @@ const BotsPage: React.FC = () => {
               handleToggleBotStatus={handleToggleBotStatus}
               bulk={bulk}
               isMobile={isMobile}
-              compactView={compactView}
+              compactView={viewMode === 'compact'}
               onBotDragStart={onBotDragStart}
               onBotDragOver={onBotDragOver}
               onBotDragEnd={onBotDragEnd}
@@ -286,7 +307,8 @@ const BotsPage: React.FC = () => {
               onBotMoveUp={onBotMoveUp}
               onBotMoveDown={onBotMoveDown}
             />
-          </>
+            </>
+          )
         )}
       </div>
 

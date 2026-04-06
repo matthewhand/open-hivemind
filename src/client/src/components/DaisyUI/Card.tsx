@@ -64,6 +64,10 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
    */
   hover?: boolean;
   /**
+   * Enable DaisyUI 3D perspective hover effect (tilt on hover)
+   */
+  hover3d?: boolean;
+  /**
    * Glow color variant for hover effect
    */
   glowColor?: 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'error';
@@ -140,6 +144,7 @@ const CardBase: React.FC<CardProps> = ({
   loading = false,
   emptyState,
   hover = false,
+  hover3d = false,
   glowColor,
   className = '',
   ...props
@@ -151,6 +156,7 @@ const CardBase: React.FC<CardProps> = ({
   if (imageFull) { cardClasses += ' image-full'; }
   if (bgVariant) { cardClasses += ` bg-${bgVariant}`; }
   if (borderVariant) { cardClasses += ` border border-${borderVariant}`; }
+  if (hover3d) { cardClasses += ' hover-3d'; }
 
   // Enhanced hover effects
   if (hover) {
