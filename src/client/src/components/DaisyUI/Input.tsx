@@ -89,6 +89,7 @@ export const Input = memo(forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           id={id}
           type={isPassword ? (showPassword ? 'text' : 'password') : type}
+          autoComplete={props.autoComplete || (isPassword ? 'off' : undefined)}
           disabled={disabled || loading}
           className={inputClasses}
           aria-invalid={!!error}
