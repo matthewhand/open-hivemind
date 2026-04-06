@@ -94,7 +94,19 @@ const semanticGuardrailSchema = z
         description: 'Return true if content should be allowed, false if it should be blocked',
       }),
   })
-  .optional();
+  .optional()
+  .refine(
+    (val) => {
+      // If enabled is true, prompt must be provided
+      if (val?.enabled && !val.prompt) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: 'Prompt is required when semantic guardrail is enabled',
+    }
+  );
 
 const guardsObject = z.object({
   mcpGuard: mcpGuardSchema,

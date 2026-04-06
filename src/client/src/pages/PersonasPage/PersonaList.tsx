@@ -65,40 +65,65 @@ export const PersonaList: React.FC<PersonaListProps> = ({
         ]}
       />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {filteredPersonas.map((persona, index) => (
-          <div
-            key={persona.id}
-            className="relative"
-            draggable={!isMobile}
-            onDragStart={onDragStart(index)}
-            onDragOver={onDragOver(index)}
-            onDragEnd={onDragEnd}
-            onDrop={onDrop(index)}
-            style={getItemStyle(index)}
-          >
-            <Card
-              className="shadow-sm border border-base-200 h-full hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => onSelectPersona(persona)}
+        {filteredPersonas.map((persona, index) => {
+          const isCustom = !persona.isBuiltIn;
+          const isSelected = bulk.selectedIds.has(persona.id);
+          return (
+            <div
+              key={persona.id}
+              className="relative"
+              draggable={!isMobile}
+              onDragStart={onDragStart(index)}
+              onDragOver={onDragOver(index)}
+              onDragEnd={onDragEnd}
+              onDrop={onDrop(index)}
+              style={getItemStyle(index)}
             >
+              <Card
+                className="shadow-sm border border-base-200 h-full hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => onSelectPersona(persona)}
+              >
                 <div className="flex items-start justify-between gap-2">
-                  <Card.Title tag="h3" className="text-lg font-bold">{persona.name}</Card.Title>
-                  {persona.isBuiltIn && <Badge variant="ghost" size="sm">Built-in</Badge>}
+                  <div className="flex items-start gap-2 flex-1 min-w-0">
+                    {/* Checkbox only for custom personas */}
+                    {isCustom && (
+                      <Checkbox
+                        variant="primary"
+                        size="sm"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          bulk.toggleItem(persona.id);
+                        }}
+                        aria-label={`Select ${persona.name}`}
+                      />
+                    )}
+                    {/* Spacer for built-in personas to keep alignment */}
+                    {!isCustom && <span className="w-5 flex-shrink-0" />}
+                    <div className="flex-1 min-w-0">
+                      <Card.Title tag="h3" className="text-lg font-bold">{persona.name}</Card.Title>
+                      <p className="text-sm text-base-content/70 line-clamp-2">{persona.description}</p>
+                      {persona.category && (
+                        <Badge variant="neutral" size="sm" className="w-fit">{persona.category}</Badge>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1 flex-shrink-0">
+                    {persona.isBuiltIn && <Badge variant="ghost" size="sm">Built-in</Badge>}
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      className="w-fit"
+                      onClick={(e) => { e.stopPropagation(); openEditModal(persona); }}
+                    >
+                      Edit
+                    </Button>
+                  </div>
                 </div>
-                <p className="text-sm text-base-content/70 line-clamp-2">{persona.description}</p>
-                {persona.category && (
-                  <Badge variant="neutral" size="sm" className="w-fit">{persona.category}</Badge>
-                )}
-                <Button
-                  variant="primary"
-                  size="sm"
-                  className="w-fit"
-                  onClick={(e) => { e.stopPropagation(); openEditModal(persona); }}
-                >
-                  Edit
-                </Button>
-            </Card>
-          </div>
-        ))}
+              </Card>
+            </div>
+          );
+        })}
       </div>
     </>
   );

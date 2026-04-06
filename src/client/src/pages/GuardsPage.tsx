@@ -463,7 +463,7 @@ const GuardsPage: React.FC = () => {
           {profiles.map(profile => (
             <Card
               key={profile.id}
-              className="hover:shadow-lg transition-shadow cursor-pointer"
+              className="hover:shadow-lg transition-shadow cursor-pointer border border-base-200"
               onClick={() => setSelectedProfileId(profile.id)}
             >
               <div className="flex justify-between items-start mb-4">

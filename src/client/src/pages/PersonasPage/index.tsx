@@ -1,5 +1,5 @@
 import { Copy, Edit2, Filter, Plus, Trash2, Users } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Alert } from '../../components/DaisyUI/Alert';
 import { Badge } from '../../components/DaisyUI/Badge';
 import Button from '../../components/DaisyUI/Button';
@@ -13,6 +13,7 @@ import { SkeletonPage } from '../../components/DaisyUI/Skeleton';
 import { useSuccessToast, useErrorToast, useInfoToast } from '../../components/DaisyUI/ToastNotification';
 import Tooltip from '../../components/DaisyUI/Tooltip';
 import SearchFilterBar from '../../components/SearchFilterBar';
+import { PersonaModal } from '../../components/Personas/PersonaModal';
 import { useIsBelowBreakpoint } from '../../hooks/useBreakpoint';
 import { useBulkSelection } from '../../hooks/useBulkSelection';
 import { useDragAndDrop } from '../../hooks/useDragAndDrop';
@@ -63,6 +64,27 @@ const PersonasPage: React.FC = () => {
     openEditModal,
     openCloneModal,
     handleDeletePersona,
+    // Modal state and form state for rendering PersonaModal
+    showCreateModal,
+    showEditModal,
+    showDeleteModal,
+    editingPersona,
+    cloningPersonaId,
+    isViewMode,
+    personaName,
+    setPersonaName,
+    personaDescription,
+    setPersonaDescription,
+    personaPrompt,
+    setPersonaPrompt,
+    personaCategory,
+    setPersonaCategory,
+    selectedBotIds,
+    setSelectedBotIds,
+    handleSavePersona: savePersona,
+    confirmDelete,
+    deletingPersona,
+    closeModals,
   } = usePersonaActions(
     personas,
     setPersonas as any,
@@ -73,6 +95,17 @@ const PersonasPage: React.FC = () => {
     infoToast,
     bulk
   );
+
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleSave = useCallback(() => {
+    savePersona(setSaving, (msg) => setError(msg));
+  }, [savePersona]);
+
+  const handleConfirmDelete = useCallback(() => {
+    confirmDelete(setDeleting, (msg) => setError(msg));
+  }, [confirmDelete]);
 
   const { onDragStart, onDragOver, onDragEnd, onDrop, getItemStyle } = useDragAndDrop({
     items: filteredPersonas,
@@ -230,6 +263,52 @@ const PersonasPage: React.FC = () => {
           </div>
         )}
       </DetailDrawer>
+
+      {/* Create / Edit / Clone Persona Modal */}
+      <PersonaModal
+        isOpen={showCreateModal || showEditModal}
+        onClose={closeModals}
+        isViewMode={false}
+        editingPersona={editingPersona}
+        cloningPersonaId={cloningPersonaId}
+        personaName={personaName}
+        setPersonaName={setPersonaName}
+        personaDescription={personaDescription}
+        setPersonaDescription={setPersonaDescription}
+        personaPrompt={personaPrompt}
+        setPersonaPrompt={setPersonaPrompt}
+        personaCategory={personaCategory}
+        setPersonaCategory={setPersonaCategory}
+        selectedBotIds={selectedBotIds}
+        setSelectedBotIds={setSelectedBotIds}
+        bots={bots as any}
+        loading={saving}
+        onSave={handleSave}
+      />
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && deletingPersona && (
+        <div className="modal modal-open" role="dialog" aria-modal="true">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg flex items-center gap-2">
+              <Trash2 className="w-5 h-5 text-error" />
+              Delete Persona
+            </h3>
+            <p className="py-4">
+              Are you sure you want to delete <strong>{deletingPersona.name}</strong>?
+              Any bots assigned to this persona will be reset to the default persona.
+            </p>
+            <div className="modal-action">
+              <Button variant="ghost" onClick={() => { setShowDeleteModal(false); setDeletingPersona(null); }} disabled={deleting}>
+                Cancel
+              </Button>
+              <Button variant="primary" color="error" onClick={handleConfirmDelete} loading={deleting}>
+                Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

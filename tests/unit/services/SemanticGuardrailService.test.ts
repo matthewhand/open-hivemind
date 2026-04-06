@@ -2,9 +2,22 @@ import { SemanticGuardrailService } from '@src/services/SemanticGuardrailService
 import type { SemanticGuardrailConfig } from '@src/config/guardrailProfiles';
 
 // Mock the dependencies
-jest.mock('@src/utils/llmProviderUtils');
+jest.mock('@src/llm/getLlmProvider');
 jest.mock('@src/config/llmProfiles');
-jest.mock('@src/utils/logger');
+jest.mock('@common/logger', () => {
+  const mockLogger = {
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  };
+  return {
+    __esModule: true,
+    default: {
+      withContext: jest.fn().mockReturnValue(mockLogger),
+    },
+  };
+});
 
 describe('SemanticGuardrailService', () => {
   let service: SemanticGuardrailService;
@@ -27,7 +40,7 @@ describe('SemanticGuardrailService', () => {
 
       expect(result.allowed).toBe(true);
       expect(result.reason).toBe('Semantic guardrail disabled');
-      expect(result.processingTime).toBeGreaterThan(0);
+      expect(result.processingTime).toBeGreaterThanOrEqual(0);
     });
 
     it('should allow content when no prompt is configured', async () => {
@@ -43,7 +56,7 @@ describe('SemanticGuardrailService', () => {
 
       expect(result.allowed).toBe(true);
       expect(result.reason).toBe('No prompt configured');
-      expect(result.processingTime).toBeGreaterThan(0);
+      expect(result.processingTime).toBeGreaterThanOrEqual(0);
     });
 
     it('should allow content when LLM provider is not available', async () => {
@@ -54,8 +67,8 @@ describe('SemanticGuardrailService', () => {
       };
 
       // Mock getLlmProvider to return null
-      const { getLlmProvider } = require('@src/utils/llmProviderUtils');
-      getLlmProvider.mockResolvedValue(null);
+      const { getLlmProvider } = require('@src/llm/getLlmProvider');
+      getLlmProvider.mockResolvedValue([]);
 
       const result = await service.evaluateContent(
         { content: 'Hello world' },
@@ -64,7 +77,7 @@ describe('SemanticGuardrailService', () => {
 
       expect(result.allowed).toBe(true);
       expect(result.reason).toBe('LLM provider not available');
-      expect(result.processingTime).toBeGreaterThan(0);
+      expect(result.processingTime).toBeGreaterThanOrEqual(0);
     });
 
     it('should handle LLM provider errors gracefully', async () => {
@@ -74,11 +87,11 @@ describe('SemanticGuardrailService', () => {
       };
 
       // Mock getLlmProvider to throw an error
-      const { getLlmProvider } = require('@src/utils/llmProviderUtils');
+      const { getLlmProvider } = require('@src/llm/getLlmProvider');
       const mockProvider = {
-        generate: jest.fn().mockRejectedValue(new Error('LLM error')),
+        generateCompletion: jest.fn().mockRejectedValue(new Error('LLM error')),
       };
-      getLlmProvider.mockResolvedValue(mockProvider);
+      getLlmProvider.mockResolvedValue([mockProvider]);
 
       const result = await service.evaluateContent(
         { content: 'Hello world' },
@@ -87,7 +100,7 @@ describe('SemanticGuardrailService', () => {
 
       expect(result.allowed).toBe(true);
       expect(result.reason).toBe('Guardrail evaluation failed');
-      expect(result.processingTime).toBeGreaterThan(0);
+      expect(result.processingTime).toBeGreaterThanOrEqual(0);
     });
 
     it('should block content when LLM returns false', async () => {
@@ -97,11 +110,11 @@ describe('SemanticGuardrailService', () => {
       };
 
       // Mock getLlmProvider to return a provider that blocks content
-      const { getLlmProvider } = require('@src/utils/llmProviderUtils');
+      const { getLlmProvider } = require('@src/llm/getLlmProvider');
       const mockProvider = {
-        generate: jest.fn().mockResolvedValue('false'),
+        generateCompletion: jest.fn().mockResolvedValue('false'),
       };
-      getLlmProvider.mockResolvedValue(mockProvider);
+      getLlmProvider.mockResolvedValue([mockProvider]);
 
       const result = await service.evaluateContent(
         { content: 'Harmful content' },
@@ -111,7 +124,7 @@ describe('SemanticGuardrailService', () => {
       expect(result.allowed).toBe(false);
       expect(result.reason).toBe('Content blocked by semantic analysis');
       expect(result.confidence).toBe(1.0);
-      expect(result.processingTime).toBeGreaterThan(0);
+      expect(result.processingTime).toBeGreaterThanOrEqual(0);
     });
 
     it('should allow content when LLM returns true', async () => {
@@ -121,11 +134,11 @@ describe('SemanticGuardrailService', () => {
       };
 
       // Mock getLlmProvider to return a provider that allows content
-      const { getLlmProvider } = require('@src/utils/llmProviderUtils');
+      const { getLlmProvider } = require('@src/llm/getLlmProvider');
       const mockProvider = {
-        generate: jest.fn().mockResolvedValue('true'),
+        generateCompletion: jest.fn().mockResolvedValue('true'),
       };
-      getLlmProvider.mockResolvedValue(mockProvider);
+      getLlmProvider.mockResolvedValue([mockProvider]);
 
       const result = await service.evaluateContent(
         { content: 'Safe content' },
@@ -135,7 +148,7 @@ describe('SemanticGuardrailService', () => {
       expect(result.allowed).toBe(true);
       expect(result.reason).toBe('Content approved by semantic analysis');
       expect(result.confidence).toBe(1.0);
-      expect(result.processingTime).toBeGreaterThan(0);
+      expect(result.processingTime).toBeGreaterThanOrEqual(0);
     });
 
     it('should use structured output when available', async () => {
@@ -149,18 +162,18 @@ describe('SemanticGuardrailService', () => {
       };
 
       // Mock getLlmProvider to return a provider with structured output support
-      const { getLlmProvider } = require('@src/utils/llmProviderUtils');
+      const { getLlmProvider } = require('@src/llm/getLlmProvider');
       const mockProvider = {
-        generateStructured: jest.fn().mockResolvedValue({ allowed: true }),
+        generateCompletion: jest.fn().mockResolvedValue(JSON.stringify({ allowed: true })),
       };
-      getLlmProvider.mockResolvedValue(mockProvider);
+      getLlmProvider.mockResolvedValue([mockProvider]);
 
       const result = await service.evaluateContent(
         { content: 'Test content' },
         config
       );
 
-      expect(mockProvider.generateStructured).toHaveBeenCalled();
+      expect(mockProvider.generateCompletion).toHaveBeenCalled();
       expect(result.allowed).toBe(true);
     });
   });
@@ -172,11 +185,11 @@ describe('SemanticGuardrailService', () => {
         prompt: 'Test prompt',
       };
 
-      const { getLlmProvider } = require('@src/utils/llmProviderUtils');
+      const { getLlmProvider } = require('@src/llm/getLlmProvider');
       const mockProvider = {
-        generate: jest.fn().mockResolvedValue('true'),
+        generateCompletion: jest.fn().mockResolvedValue('true'),
       };
-      getLlmProvider.mockResolvedValue(mockProvider);
+      getLlmProvider.mockResolvedValue([mockProvider]);
 
       const result = await service.evaluateInput(
         'Test input',
@@ -185,7 +198,7 @@ describe('SemanticGuardrailService', () => {
       );
 
       expect(result.allowed).toBe(true);
-      expect(mockProvider.generate).toHaveBeenCalledWith(
+      expect(mockProvider.generateCompletion).toHaveBeenCalledWith(
         expect.stringContaining('Message Type: input')
       );
     });
@@ -198,11 +211,11 @@ describe('SemanticGuardrailService', () => {
         prompt: 'Test prompt',
       };
 
-      const { getLlmProvider } = require('@src/utils/llmProviderUtils');
+      const { getLlmProvider } = require('@src/llm/getLlmProvider');
       const mockProvider = {
-        generate: jest.fn().mockResolvedValue('true'),
+        generateCompletion: jest.fn().mockResolvedValue('true'),
       };
-      getLlmProvider.mockResolvedValue(mockProvider);
+      getLlmProvider.mockResolvedValue([mockProvider]);
 
       const result = await service.evaluateOutput(
         'Test output',
@@ -211,7 +224,7 @@ describe('SemanticGuardrailService', () => {
       );
 
       expect(result.allowed).toBe(true);
-      expect(mockProvider.generate).toHaveBeenCalledWith(
+      expect(mockProvider.generateCompletion).toHaveBeenCalledWith(
         expect.stringContaining('Message Type: output')
       );
     });

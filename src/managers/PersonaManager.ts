@@ -116,25 +116,60 @@ export class PersonaManager extends EventEmitter {
       // Load built-ins first
       BUILTIN_PERSONAS.forEach((p) => this.personas.set(p.id, { ...p }));
 
+      let fileExists = false;
       try {
         await fs.promises.access(this.personasFilePath);
+        fileExists = true;
+      } catch (err: any) {
+        if (err.code !== 'ENOENT') throw err;
+        // File doesn't exist yet — we'll seed from builtins below
+      }
+
+      if (fileExists) {
         const data = await fs.promises.readFile(this.personasFilePath, 'utf8');
         const customPersonas = JSON.parse(data);
 
         Object.values(customPersonas).forEach((p: any) => {
-          // Determine ID if not present (migration) or just use id
           if (p.id) {
             this.personas.set(p.id, p);
           }
         });
         debug(`Loaded ${Object.keys(customPersonas).length} custom personas`);
-      } catch (err: any) {
-        if (err.code !== 'ENOENT') throw err;
-        // File doesn't exist yet, that's ok
+      } else {
+        // No custom-personas.json yet — seed editable copies of all built-in personas
+        // so users have something to work with immediately.
+        await this.seedDefaultPersonas();
       }
     } catch (error: any) {
       debug('Error loading personas:', ErrorUtils.getMessage(error));
     }
+  }
+
+  /**
+   * Seed editable copies of built-in personas when no custom-personas.json exists.
+   * This gives users a working starting point they can edit directly.
+   */
+  private async seedDefaultPersonas(): Promise<void> {
+    debug('No custom-personas.json found — seeding editable copies of built-in personas');
+    const now = new Date().toISOString();
+    for (const builtin of BUILTIN_PERSONAS) {
+      const customId = crypto.randomUUID();
+      const customPersona: Persona = {
+        id: customId,
+        name: builtin.name,
+        description: builtin.description,
+        category: builtin.category,
+        traits: builtin.traits.map(t => ({ ...t })),
+        systemPrompt: builtin.systemPrompt,
+        isBuiltIn: false,
+        usageCount: 0,
+        createdAt: now,
+        updatedAt: now,
+      };
+      this.personas.set(customId, customPersona);
+    }
+    await this.savePersonas();
+    debug(`Seeded ${BUILTIN_PERSONAS.length} custom personas`);
   }
 
   /**

@@ -244,6 +244,22 @@ export const usePersonaActions = (
     }
   };
 
+  const closeModals = useCallback(() => {
+    setShowCreateModal(false);
+    setShowEditModal(false);
+    setShowDeleteModal(false);
+    setEditingPersona(null);
+    setCloningPersonaId(null);
+    setDeletingPersona(null);
+    setIsViewMode(false);
+    setPersonaName('');
+    setPersonaDescription('');
+    setPersonaPrompt('');
+    setSelectedBotIds([]);
+  }, [setShowCreateModal, setShowEditModal, setShowDeleteModal,
+      setPersonaName, setPersonaDescription, setPersonaPrompt,
+      setSelectedBotIds]);
+
   return {
     bulkDeleting,
     handlePersonaReorder,
@@ -256,6 +272,7 @@ export const usePersonaActions = (
     openCloneModal,
     openEditModal,
     openViewModal,
+    closeModals,
     showCreateModal,
     setShowCreateModal,
     showEditModal,
@@ -276,5 +293,6 @@ export const usePersonaActions = (
     setSelectedBotIds,
     personaCategory,
     setPersonaCategory,
+    setIsViewMode,
   };
 };
