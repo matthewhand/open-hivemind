@@ -99,7 +99,6 @@ const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
             <div className="mb-4">
               <LlmStatusBanner />
             </div>
-            <Breadcrumbs />
             {children}
           </Card>
         </main>

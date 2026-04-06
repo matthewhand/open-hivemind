@@ -1,4 +1,5 @@
 import React from 'react';
+import Breadcrumbs from './Breadcrumbs';
 
 interface PageHeaderProps {
   title: string;
@@ -40,39 +41,44 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   className = '',
 }) => {
   return (
-    <div
-      className={`relative overflow-hidden rounded-2xl p-6 mb-8 bg-gradient-to-br ${gradientMap[gradient]} border border-base-300/30 ${className}`}
-    >
-      {/* Background decoration */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-radial from-primary/5 to-transparent opacity-50 blur-3xl" />
+    <div className="mb-6">
+      <div
+        className={`relative overflow-hidden rounded-2xl p-6 bg-gradient-to-br ${gradientMap[gradient]} border border-base-300/30 ${className}`}
+      >
+        {/* Background decoration */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-radial from-primary/5 to-transparent opacity-50 blur-3xl" />
 
-      <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex items-start gap-4">
-          {icon && (
-            <div className={`p-3 rounded-xl ${iconBgMap[gradient]} backdrop-blur-sm shadow-sm flex items-center justify-center`}>
-              {typeof icon === 'string' ? <span className="text-4xl">{icon}</span> :
-                (typeof icon === 'function' ? React.createElement(icon as any, { className: "w-8 h-8" }) :
-                  (typeof icon === 'object' && icon && 'render' in icon) ? React.createElement(icon as any, { className: "w-8 h-8" }) :
-                    (React.isValidElement(icon) ? icon : null))}
+        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex items-start gap-4">
+            {icon && (
+              <div className={`p-3 rounded-xl ${iconBgMap[gradient]} backdrop-blur-sm shadow-sm flex items-center justify-center`}>
+                {typeof icon === 'string' ? <span className="text-4xl">{icon}</span> :
+                  (typeof icon === 'function' ? React.createElement(icon as any, { className: "w-8 h-8" }) :
+                    (typeof icon === 'object' && icon && 'render' in icon) ? React.createElement(icon as any, { className: "w-8 h-8" }) :
+                      (React.isValidElement(icon) ? icon : null))}
+              </div>
+            )}
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-base-content to-base-content/70 bg-clip-text">
+                {title}
+              </h1>
+              {description && (
+                <p className="text-base-content/60 mt-1 text-sm">
+                  {description}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {actions && (
+            <div className="flex flex-wrap gap-2">
+              {actions}
             </div>
           )}
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-base-content to-base-content/70 bg-clip-text">
-              {title}
-            </h1>
-            {description && (
-              <p className="text-base-content/60 mt-1 text-sm">
-                {description}
-              </p>
-            )}
-          </div>
         </div>
-
-        {actions && (
-          <div className="flex flex-wrap gap-2">
-            {actions}
-          </div>
-        )}
+      </div>
+      <div className="mt-4 px-2">
+        <Breadcrumbs />
       </div>
     </div>
   );
