@@ -142,10 +142,23 @@ const GuardsPage: React.FC = () => {
   const [deleteConfirm, setDeleteConfirm] = useState<GuardProfile | null>(null);
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
 
+  // Auth-aware fetch helper
+  const authFetch = (url: string, opts: RequestInit = {}) => {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(opts.headers as Record<string, string> || {}) };
+    try {
+      const stored = localStorage.getItem('auth_tokens');
+      if (stored && stored !== 'undefined') {
+        const tokens = JSON.parse(stored);
+        if (tokens.accessToken) headers['Authorization'] = `Bearer ${tokens.accessToken}`;
+      }
+    } catch { /* ignore */ }
+    return fetch(url, { ...opts, headers });
+  };
+
   const { data: response, isLoading } = useQuery<{ data: GuardProfile[] }>({
     queryKey: ['guardProfiles'],
     queryFn: async () => {
-      const res = await fetch('/api/admin/guard-profiles');
+      const res = await authFetch('/api/admin/guard-profiles');
       if (!res.ok) throw new Error('Failed to fetch guard profiles');
       return res.json();
     }
@@ -156,9 +169,8 @@ const GuardsPage: React.FC = () => {
 
   const createMutation = useMutation({
     mutationFn: async (profile: Partial<GuardProfile>) => {
-      const res = await fetch('/api/admin/guard-profiles', {
+      const res = await authFetch('/api/admin/guard-profiles', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(profile)
       });
       if (!res.ok) throw new Error('Failed to create profile');
@@ -176,9 +188,8 @@ const GuardsPage: React.FC = () => {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, profile }: { id: string, profile: Partial<GuardProfile> }) => {
-      const res = await fetch(`/api/admin/guard-profiles/${id}`, {
+      const res = await authFetch(`/api/admin/guard-profiles/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(profile)
       });
       if (!res.ok) throw new Error('Failed to update profile');
@@ -196,7 +207,7 @@ const GuardsPage: React.FC = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/admin/guard-profiles/${id}`, { method: 'DELETE' });
+      const res = await authFetch(`/api/admin/guard-profiles/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed to delete profile');
       return res.json();
     },
