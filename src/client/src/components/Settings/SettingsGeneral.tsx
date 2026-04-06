@@ -72,6 +72,17 @@ const SettingsGeneral: React.FC = () => {
 
   const enableHealthChecks = watch('enableHealthChecks');
 
+  // Auto-save functions for individual settings (like LLMProvidersPage pattern)
+  const saveGlobalSetting = async (patch: Record<string, any>) => {
+    try {
+      await apiService.updateGlobalConfig(patch);
+      showStamp();
+    } catch (error) {
+      debug('Failed to auto-save setting:', error);
+      // Silently fail for auto-save to avoid disrupting UX
+    }
+  };
+
   // Generate timezone options dynamically
   const timezoneOptions = useMemo(() => {
     try {
@@ -307,7 +318,10 @@ const SettingsGeneral: React.FC = () => {
                 <Toggle
                   label="Enable Detailed Logging"
                   checked={field.value}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(e.target.checked)}
+                  onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
+                    field.onChange(e.target.checked);
+                    await saveGlobalSetting({ 'logging.enabled': e.target.checked }).catch(() => {});
+                  }}
                   size="sm"
                 />
               )}
@@ -319,7 +333,10 @@ const SettingsGeneral: React.FC = () => {
                 <Toggle
                   label="Enable Desktop Notifications"
                   checked={field.value}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(e.target.checked)}
+                  onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
+                    field.onChange(e.target.checked);
+                    await saveGlobalSetting({ 'webui.notifications': e.target.checked }).catch(() => {});
+                  }}
                   size="sm"
                 />
               )}
@@ -359,7 +376,10 @@ const SettingsGeneral: React.FC = () => {
                 <Toggle
                   label="Enable Background Health Checks"
                   checked={field.value}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(e.target.checked)}
+                  onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
+                    field.onChange(e.target.checked);
+                    await saveGlobalSetting({ 'health.enabled': e.target.checked }).catch(() => {});
+                  }}
                   size="sm"
                 />
               )}
@@ -382,7 +402,10 @@ const SettingsGeneral: React.FC = () => {
                 <Toggle
                   label="Advanced Mode (Show all options)"
                   checked={field.value}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.onChange(e.target.checked)}
+                  onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
+                    field.onChange(e.target.checked);
+                    await saveGlobalSetting({ 'webui.advancedMode': e.target.checked }).catch(() => {});
+                  }}
                   size="sm"
                 />
               )}
