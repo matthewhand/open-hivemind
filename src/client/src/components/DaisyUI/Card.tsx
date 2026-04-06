@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import React from 'react';
+import { useUIStore } from '../../store/uiStore';
 
 // Define the props for the Card component
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -149,6 +150,7 @@ const CardBase: React.FC<CardProps> = ({
   className = '',
   ...props
 }) => {
+  const disable3dEffects = useUIStore((s) => s.disable3dEffects);
   // Construct CSS classes based on props
   let cardClasses = 'card bg-base-100';
   if (compact) { cardClasses += ' card-compact'; }
@@ -156,7 +158,7 @@ const CardBase: React.FC<CardProps> = ({
   if (imageFull) { cardClasses += ' image-full'; }
   if (bgVariant) { cardClasses += ` bg-${bgVariant}`; }
   if (borderVariant) { cardClasses += ` border border-${borderVariant}`; }
-  if (hover3d) { cardClasses += ' hover-3d'; }
+  if (hover3d && !disable3dEffects) { cardClasses += ' hover-3d'; }
 
   // Enhanced hover effects
   if (hover) {

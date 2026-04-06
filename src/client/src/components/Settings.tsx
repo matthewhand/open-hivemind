@@ -14,6 +14,7 @@ const Settings: React.FC = () => {
   const ui = useUIStore((s) => s);
   const setTheme = useUIStore((s) => s.setTheme);
   const setAnimationsEnabled = useUIStore((s) => s.setAnimationsEnabled);
+  const setDisable3dEffects = useUIStore((s) => s.setDisable3dEffects);
   const setRefreshInterval = useUIStore((s) => s.setRefreshInterval);
   const setShowKeyboardShortcuts = useUIStore((s) => s.setShowKeyboardShortcuts);
   const setShowTooltips = useUIStore((s) => s.setShowTooltips);
@@ -29,9 +30,10 @@ const Settings: React.FC = () => {
     autoRefreshEnabled: ui.autoRefreshEnabled,
     refreshInterval: ui.refreshInterval,
     animationsEnabled: ui.animationsEnabled,
+    disable3dEffects: ui.disable3dEffects,
     showTooltips: ui.showTooltips,
     showKeyboardShortcuts: ui.showKeyboardShortcuts,
-  }) as Record<string, unknown>, [ui.theme, ui.autoRefreshEnabled, ui.refreshInterval, ui.animationsEnabled, ui.showTooltips, ui.showKeyboardShortcuts]);
+  }) as Record<string, unknown>, [ui.theme, ui.autoRefreshEnabled, ui.refreshInterval, ui.animationsEnabled, ui.disable3dEffects, ui.showTooltips, ui.showKeyboardShortcuts]);
 
   const { hasChanges, diff, setOriginalConfig } = useConfigDiff(settingsAsRecord);
 
@@ -112,6 +114,16 @@ const Settings: React.FC = () => {
                 color="primary"
                 checked={!ui.animationsEnabled}
                 onChange={(event) => setAnimationsEnabled(!event.target.checked)}
+              />
+            </label>
+          </div>
+          <div className="form-control">
+            <label className="label cursor-pointer justify-start gap-4">
+              <span className="label-text">Disable 3D Hover Effects</span>
+              <Toggle
+                color="primary"
+                checked={ui.disable3dEffects}
+                onChange={(event) => setDisable3dEffects(event.target.checked)}
               />
             </label>
           </div>

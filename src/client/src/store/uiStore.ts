@@ -9,6 +9,7 @@ export interface UIState {
   notificationsEnabled: boolean;
   soundEnabled: boolean;
   animationsEnabled: boolean;
+  disable3dEffects: boolean;
   language: string;
   timezone: string;
   dateFormat: string;
@@ -79,6 +80,7 @@ export interface UIActions {
   setNotificationsEnabled: (enabled: boolean) => void;
   setSoundEnabled: (enabled: boolean) => void;
   setAnimationsEnabled: (enabled: boolean) => void;
+  setDisable3dEffects: (enabled: boolean) => void;
   setLanguage: (language: string) => void;
   setTimezone: (timezone: string) => void;
   setDensity: (density: UIState['density']) => void;
@@ -97,6 +99,7 @@ const getInitialState = (): UIState => ({
   notificationsEnabled: true,
   soundEnabled: false,
   animationsEnabled: true,
+  disable3dEffects: false,
   language: 'en',
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   dateFormat: 'MM/DD/YYYY',
@@ -276,6 +279,11 @@ export const useUIStore = create<UIState & UIActions>((set, get) => ({
     localStorage.setItem('animationsEnabled', animationsEnabled.toString());
   },
 
+  setDisable3dEffects: (disable3dEffects) => {
+    set({ disable3dEffects });
+    localStorage.setItem('disable3dEffects', disable3dEffects.toString());
+  },
+
   setLanguage: (language) => {
     set({ language });
     localStorage.setItem('language', language);
@@ -329,6 +337,7 @@ export const useUIStore = create<UIState & UIActions>((set, get) => ({
       ['notificationsEnabled', 'notificationsEnabled', 'bool'],
       ['soundEnabled', 'soundEnabled', 'bool'],
       ['animationsEnabled', 'animationsEnabled', 'bool'],
+      ['disable3dEffects', 'disable3dEffects', 'bool'],
       ['language', 'language', 'str'],
       ['timezone', 'timezone', 'str'],
       ['dateFormat', 'dateFormat', 'str'],
