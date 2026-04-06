@@ -270,8 +270,8 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
       <Tabs
         tabs={[
           { key: 'all', label: 'All Tools' },
-          { key: 'favorites', label: `Favorites${favorites.length > 0 ? ` (${favorites.length})` : ''}` },
-          { key: 'recent', label: `Recently Used${recentTools.length > 0 ? ` (${recentTools.length})` : ''}` },
+          { key: 'favorites', label: `Favorites${favorites.length > 0 ? ` (${favorites.length})` : ''}`, color: 'warning' as const },
+          { key: 'recent', label: `Recently Used${recentTools.length > 0 ? ` (${recentTools.length})` : ''}`, color: 'info' as const },
         ]}
         activeTab={viewFilter}
         onChange={setViewFilter}

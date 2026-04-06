@@ -216,7 +216,7 @@ const BotCard: React.FC<BotCardProps> = ({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2 min-w-0">
               {(() => {
-                const p = typeof bot.persona === 'object' ? bot.persona : personas.find(pp => pp.id === bot.persona || pp.name === bot.persona);
+                const p = typeof bot.persona === 'object' ? bot.persona : personas?.find(pp => pp.id === bot.persona || pp.name === bot.persona);
                 return p ? <PersonaAvatar seed={p.name} style={(p as any).avatarStyle || 'bottts'} size={28} className="shrink-0" /> : null;
               })()}
               <Card.Title className="text-lg font-semibold truncate break-all min-w-0" title={bot.name}>{bot.name}</Card.Title>

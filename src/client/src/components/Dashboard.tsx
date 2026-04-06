@@ -152,9 +152,7 @@ const Dashboard: React.FC = () => {
         {/* Main Content Skeleton */}
         <div className="max-w-7xl mx-auto px-4 py-8">
           {/* Quick Actions Skeleton */}
-          <div className="mb-8">
-            <div className="skeleton h-12 w-full rounded"></div>
-          </div>
+          <div className="skeleton h-12 w-full rounded-xl mb-4"></div>
 
           {/* Bot Cards Grid Skeleton */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
@@ -215,6 +213,11 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
+      {/* Quick Actions — at the top, above the hero */}
+      <div className="max-w-7xl mx-auto px-4 py-4">
+        <QuickActions onRefresh={fetchData} />
+      </div>
+
       {/* Hero Section */}
       <Hero
         backgroundImage="https://images.unsplash.com/photo-1555949963-aa79dcee981c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
@@ -245,14 +248,12 @@ const Dashboard: React.FC = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Quick Actions */}
+        <QuickActions onRefresh={fetchData} />
+
         {/* Announcement Banner */}
         <AnnouncementBanner />
         <TipRotator className="mb-4 px-2" />
-
-        {/* Quick Actions */}
-        <div className="mb-8">
-          <QuickActions onRefresh={fetchData} />
-        </div>
 
         {/* Quick Links — always visible navigation shortcuts */}
         <Card className="mb-8" title="Quick Links">
@@ -342,22 +343,37 @@ const Dashboard: React.FC = () => {
         {/* System Status Footer */}
         {status && (
           <Card title="🖥️ System Information">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="flex items-center gap-4">
-                <RadialProgress
-                  value={bots.length > 0 ? Math.round((activeBots / bots.length) * 100) : 0}
-                  size="4rem"
-                  thickness="0.3rem"
-                  color={activeBots === bots.length ? 'success' : activeBots > 0 ? 'warning' : 'error'}
-                  className="text-sm font-bold flex-shrink-0"
-                >
-                  {bots.length > 0 ? Math.round((activeBots / bots.length) * 100) : 0}%
-                </RadialProgress>
-                <Stat title="Active Bots" value={`${activeBots}/${bots.length}`} valueClassName="text-lg" description="currently active" />
-              </div>
-              <Stat title="Uptime" value={<>{uptimeHours}h {uptimeMinutes}m</>} valueClassName="text-lg" description="System running smoothly" />
-              <Stat title="Message Volume" value={totalMessages.toLocaleString()} valueClassName="text-lg" description="processed successfully" />
-            </div>
+            <Stats className="w-full shadow-sm bg-base-200/50">
+              <Stat
+                title="Active Bots"
+                value={`${activeBots}/${bots.length}`}
+                description="currently active"
+                valueClassName="text-lg"
+                figure={
+                  <RadialProgress
+                    value={bots.length > 0 ? Math.round((activeBots / bots.length) * 100) : 0}
+                    size="3rem"
+                    thickness="0.25rem"
+                    color={activeBots === bots.length ? 'success' : activeBots > 0 ? 'warning' : 'error'}
+                    className="text-[0.65rem] font-bold"
+                  >
+                    {bots.length > 0 ? Math.round((activeBots / bots.length) * 100) : 0}%
+                  </RadialProgress>
+                }
+              />
+              <Stat
+                title="System Uptime"
+                value={<>{uptimeHours}h {uptimeMinutes}m</>}
+                description="System running smoothly"
+                valueClassName="text-lg"
+              />
+              <Stat
+                title="Message Volume"
+                value={totalMessages.toLocaleString()}
+                description="processed successfully"
+                valueClassName="text-lg"
+              />
+            </Stats>
           </Card>
         )}
       </div>

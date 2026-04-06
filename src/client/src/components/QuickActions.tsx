@@ -161,52 +161,61 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
 
   return (
     <>
-      <Card className="mb-6 w-full" title="Quick Actions">
-        <div className="flex gap-2 flex-wrap justify-end">
-          <Button
-            variant="primary"
-            onClick={handleRefreshDashboard}
-            disabled={isLoading('refresh')}
-            className="flex items-center gap-2"
-          >
-            {isLoading('refresh') ? (
-              <LoadingSpinner size="sm" />
-            ) : (
-              <RefreshCw className="w-5 h-5" />
-            )}
-            Refresh Dashboard
-          </Button>
+      <div className="w-full flex flex-wrap items-center justify-between gap-4 py-2 px-4 bg-base-100 border border-base-300 rounded-xl shadow-sm mb-4">
+        <div className="flex items-center gap-4 flex-wrap">
+          <span className="font-bold text-xs uppercase tracking-widest text-base-content/50 select-none">Quick Actions</span>
+          <div className="flex gap-2">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleRefreshDashboard}
+              disabled={isLoading('refresh')}
+              className="flex items-center gap-2"
+            >
+              {isLoading('refresh') ? (
+                <LoadingSpinner size="sm" />
+              ) : (
+                <RefreshCw className="w-4 h-4" />
+              )}
+              Refresh
+            </Button>
 
-          <Button
-            variant="secondary"
-            onClick={handleClearCache}
-            disabled={isLoading('clear')}
-            className="flex items-center gap-2"
-          >
-            {isLoading('clear') ? (
-              <LoadingSpinner size="sm" />
-            ) : (
-              <XMarkIcon className="w-5 h-5" />
-            )}
-            Clear Cache
-          </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleClearCache}
+              disabled={isLoading('clear')}
+              className="flex items-center gap-2"
+            >
+              {isLoading('clear') ? (
+                <LoadingSpinner size="sm" />
+              ) : (
+                <XMarkIcon className="w-4 h-4" />
+              )}
+              Clear Cache
+            </Button>
 
-          <Button
-            variant="accent"
-            onClick={() => setExportDialog(true)}
-            disabled={isLoading('export')}
-            className="flex items-center gap-2"
-          >
-            {isLoading('export') ? (
-              <LoadingSpinner size="sm" />
-            ) : (
-              <ArrowDownTrayIcon className="w-5 h-5" />
-            )}
-            Export Config
-          </Button>
+            <Button
+              variant="accent"
+              size="sm"
+              onClick={() => setExportDialog(true)}
+              disabled={isLoading('export')}
+              className="flex items-center gap-2"
+            >
+              {isLoading('export') ? (
+                <LoadingSpinner size="sm" />
+              ) : (
+                <ArrowDownTrayIcon className="w-4 h-4" />
+              )}
+              Export
+            </Button>
+          </div>
+        </div>
 
+        <div className="flex items-center gap-2">
           <Button
             variant={demoMode ? 'warning' : 'ghost'}
+            size="sm"
             onClick={handleToggleDemoMode}
             disabled={isLoading('demo')}
             className="flex items-center gap-2"
@@ -214,24 +223,25 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
             {isLoading('demo') ? (
               <LoadingSpinner size="sm" />
             ) : (
-              <BeakerIcon className="w-5 h-5" />
+              <BeakerIcon className="w-4 h-4" />
             )}
             {demoMode ? 'Demo Mode ON' : 'Demo Mode'}
           </Button>
 
           <Button
             variant="ghost"
+            size="sm"
             onClick={() => {
               // Trigger the keyboard shortcuts overlay via the same shortcut
               document.dispatchEvent(new KeyboardEvent('keydown', { key: '?', shiftKey: true, bubbles: true }));
             }}
             className="flex items-center gap-2"
           >
-            <Keyboard className="w-5 h-5" />
+            <Keyboard className="w-4 h-4" />
             Shortcuts <Kbd size="xs">?</Kbd>
           </Button>
         </div>
-      </Card>
+      </div>
 
       {/* Export Configuration Modal */}
       <Modal

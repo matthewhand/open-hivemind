@@ -429,7 +429,9 @@ export class DemoModeService {
    */
   private async seedDemoConfig(): Promise<void> {
     const existingBots = this.botManager.getAllBots();
-    if (existingBots.length === 0) {
+    const demoBotNames = new Set(DEMO_BOT_CONFIGS.map(c => c.name));
+    const hasDemoBots = existingBots.some(b => demoBotNames.has(b.name));
+    if (!hasDemoBots) {
       // Seed demo bots into BotConfigurationManager
       for (const cfg of DEMO_BOT_CONFIGS) {
         const botConfig: Record<string, unknown> = {

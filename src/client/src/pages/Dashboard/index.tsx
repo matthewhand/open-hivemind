@@ -8,11 +8,13 @@ import Button from '../../components/DaisyUI/Button';
 import Toggle from '../../components/DaisyUI/Toggle';
 import Carousel from '../../components/DaisyUI/Carousel';
 import DashboardWidgetSystem from '../../components/DaisyUI/DashboardWidgetSystem';
+import WelcomeSplash from '../../components/WelcomeSplash';
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const [checked, setChecked] = useState(false);
   const [needsSetup, setNeedsSetup] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
 
   // Track preference for widget vs static layout
   const [useWidgetLayout, setUseWidgetLayout] = useState(() => {
@@ -37,8 +39,11 @@ const DashboardPage: React.FC = () => {
         // Even if onboarding is "completed", check if LLM is actually configured.
         // This catches the case where bots exist from env but no LLM key is set.
         try {
-          const llm = await apiService.get<any>('/api/config/llm-status');
-          if (!llm?.defaultConfigured) {
+          const configStatus = await apiService.get<any>('/api/dashboard/config-status');
+          const status = configStatus?.data || configStatus;
+          const anyIncomplete = !status.llmConfigured || !status.botConfigured || !status.messengerConfigured;
+          setShowWelcome(anyIncomplete);
+          if (anyIncomplete) {
             setNeedsSetup(true);
           }
         } catch { /* proceed normally */ }
@@ -48,6 +53,10 @@ const DashboardPage: React.FC = () => {
       setChecked(true);
     };
     checkOnboarding();
+
+    // Poll every 5 seconds to check if config has been updated
+    const interval = setInterval(checkOnboarding, 5000);
+    return () => clearInterval(interval);
   }, [navigate]);
 
   if (!checked) {
@@ -77,8 +86,15 @@ const DashboardPage: React.FC = () => {
 
   return (
     <div>
-      {/* Incomplete setup prompt */}
-      {needsSetup && (
+      {/* Welcome Splash - shown when config is incomplete */}
+      {showWelcome && (
+        <div className="max-w-7xl mx-auto px-4 pt-4">
+          <WelcomeSplash />
+        </div>
+      )}
+
+      {/* Incomplete setup prompt - shown when needs setup but not showing welcome */}
+      {needsSetup && !showWelcome && (
         <div className="max-w-7xl mx-auto px-4 pt-4">
           <Alert status="warning" className="shadow-lg" onClose={() => setNeedsSetup(false)}>
             <Cpu className="w-5 h-5 shrink-0" />
@@ -92,6 +108,10 @@ const DashboardPage: React.FC = () => {
           </Alert>
         </div>
       )}
+
+      <div className="mb-8">
+        <Carousel items={carouselItems} autoplay={true} interval={6000} variant="full-width" />
+      </div>
 
       <div className="flex justify-end items-center mb-4 px-4 gap-3 bg-base-100/50 p-2 rounded-lg shadow-sm w-fit ml-auto">
         <span className="text-sm font-medium opacity-80">Static Layout</span>
@@ -110,9 +130,6 @@ const DashboardPage: React.FC = () => {
         </div>
       ) : (
         <div className="animate-in fade-in duration-300">
-          <div className="mb-8">
-            <Carousel items={carouselItems} autoplay={true} interval={6000} variant="full-width" />
-          </div>
           <Dashboard />
         </div>
       )}

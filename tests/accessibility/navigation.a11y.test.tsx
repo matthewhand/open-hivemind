@@ -132,44 +132,44 @@ describe('Accessibility: Navigation Components', () => {
     ];
 
     it('has no axe violations', async () => {
-      const { container } = render(<Menu items={menuItems} />);
+      const { container } = render(<MemoryRouter><Menu items={menuItems} /></MemoryRouter>);
       const results = await axe(container);
       expect(results).toHaveNoViolations();
     });
 
     it('renders with role="menu" and aria-label', () => {
-      render(<Menu items={menuItems} />);
+      render(<MemoryRouter><Menu items={menuItems} /></MemoryRouter>);
       const menu = screen.getByRole('menu', { name: 'Navigation menu' });
       expect(menu).toBeInTheDocument();
     });
 
     it('menu items have role="menuitem" or role="button"', () => {
-      render(<Menu items={menuItems} />);
+      render(<MemoryRouter><Menu items={menuItems} /></MemoryRouter>);
       // Regular items are menuitem, parent items with children are button
       const menuItems$ = screen.getAllByRole('menuitem');
       expect(menuItems$.length).toBeGreaterThan(0);
     });
 
     it('disabled items have aria-disabled', () => {
-      render(<Menu items={menuItems} />);
+      render(<MemoryRouter><Menu items={menuItems} /></MemoryRouter>);
       const disabledItem = screen.getByText('Disabled').closest('a');
       expect(disabledItem).toHaveAttribute('aria-disabled', 'true');
     });
 
     it('disabled items have tabIndex=-1', () => {
-      render(<Menu items={menuItems} />);
+      render(<MemoryRouter><Menu items={menuItems} /></MemoryRouter>);
       const disabledItem = screen.getByText('Disabled').closest('a');
       expect(disabledItem).toHaveAttribute('tabindex', '-1');
     });
 
     it('parent menu item has aria-expanded', () => {
-      render(<Menu items={menuItems} />);
+      render(<MemoryRouter><Menu items={menuItems} /></MemoryRouter>);
       const parentItem = screen.getByText('Sub Menu').closest('a');
       expect(parentItem).toHaveAttribute('aria-expanded', 'false');
     });
 
     it('expanded submenu has role="menu" with aria-label', () => {
-      render(<Menu items={menuItems} />);
+      render(<MemoryRouter><Menu items={menuItems} /></MemoryRouter>);
       // Click the parent to expand
       const parentItem = screen.getByText('Sub Menu').closest('a')!;
       fireEvent.click(parentItem);
@@ -181,7 +181,7 @@ describe('Accessibility: Navigation Components', () => {
     });
 
     it('icons are decorative (aria-hidden)', () => {
-      const { container } = render(<Menu items={menuItems} />);
+      const { container } = render(<MemoryRouter><Menu items={menuItems} /></MemoryRouter>);
       const iconContainers = container.querySelectorAll('.menu-item-icon');
       iconContainers.forEach((iconContainer) => {
         expect(iconContainer).toHaveAttribute('aria-hidden', 'true');

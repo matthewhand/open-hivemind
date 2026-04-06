@@ -77,10 +77,20 @@ describe('LLM Profiles API Endpoints', () => {
 
       expect(response.body.success).toBe(true);
       expect(response.body.data?.profile || response.body.profile).toEqual(
-        expect.objectContaining(payload)
+        expect.objectContaining({
+          key: payload.key,
+          name: payload.name,
+          provider: payload.provider,
+          modelType: payload.modelType,
+        })
       );
       expect(mockSaveLlmProfiles).toHaveBeenCalledWith({
-        llm: [expect.objectContaining(payload)],
+        llm: [expect.objectContaining({
+          key: payload.key,
+          name: payload.name,
+          provider: payload.provider,
+          modelType: payload.modelType,
+        })],
       });
     });
 

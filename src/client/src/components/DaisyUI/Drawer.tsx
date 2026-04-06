@@ -22,6 +22,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ChevronRight, ChevronDown, Hexagon, Sun, Moon } from 'lucide-react';
+import ThemeDropdown from './ThemeDropdown';
 
 /* ------------------------------------------------------------------ */
 /*  Public types                                                       */

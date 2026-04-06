@@ -72,7 +72,7 @@ const mockAxiosPost: jest.Mock = (global as any).__axiosMockPost;
 const mockAxiosGet: jest.Mock = (global as any).__axiosMockGet;
 
 // Mock Flowise clients
-jest.mock('@integrations/flowise/flowiseRestClient', () => ({
+jest.mock('@hivemind/llm-flowise/src/flowiseRestClient', () => ({
   getFlowiseResponse: jest.fn().mockResolvedValue('flowise rest response'),
 }));
 

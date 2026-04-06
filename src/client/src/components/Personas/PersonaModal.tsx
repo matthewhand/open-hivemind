@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, Copy, Shield, Info, ChevronDown } from 'lucide-react';
+import { Shield, Info } from 'lucide-react';
 import PersonaAvatar, { type AvatarStyle } from '../PersonaAvatar';
 import AvatarPicker from './AvatarPicker';
 import Modal from '../DaisyUI/Modal';
@@ -185,11 +185,11 @@ export const PersonaModal: React.FC<PersonaModalProps> = ({
                 minLength={2}
                 maxLength={100}
                 disabled={!!isEnvLocked || isViewMode}
-                error={!personaName.trim() ? 'Name is required' : undefined}
+                error={!(personaName || '').trim() ? 'Name is required' : undefined}
                 autoFocus={!isViewMode}
               />
               <ValidatorHint>
-                {!personaName.trim() ? 'A persona name is required' : 'Must be between 2 and 100 characters'}
+                {!(personaName || '').trim() ? 'A persona name is required' : 'Must be between 2 and 100 characters'}
               </ValidatorHint>
             </Validator>
           </div>

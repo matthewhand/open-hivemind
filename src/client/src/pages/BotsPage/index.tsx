@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Bot as BotIcon, Download, LayoutGrid, List, RefreshCw, Trash2, Upload as UploadIcon } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { CreateBotWizard } from '../../components/BotManagement/CreateBotWizard';
 import ImportBotsModal from '../../components/BotManagement/ImportBotsModal';
 import { BotSettingsModal } from '../../components/BotSettingsModal';
