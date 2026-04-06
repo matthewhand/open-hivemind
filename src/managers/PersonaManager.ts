@@ -187,7 +187,7 @@ export class PersonaManager extends EventEmitter {
         name: builtin.name,
         description: builtin.description,
         category: builtin.category,
-        traits: builtin.traits.map((t) => ({ ...t })),
+        traits: builtin.traits.map(t => ({ ...t })),
         systemPrompt: builtin.systemPrompt,
         isBuiltIn: false,
         usageCount: 0,

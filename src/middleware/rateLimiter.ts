@@ -516,11 +516,7 @@ function shouldSkipRateLimit(req: Request): boolean {
 
   // Skip Vite dev server paths — these are source files and node_modules,
   // not API requests. Vite loads 100+ modules on page load.
-  if (
-    req.path.startsWith('/src/') ||
-    req.path.startsWith('/node_modules/') ||
-    req.path.startsWith('/@')
-  ) {
+  if (req.path.startsWith('/src/') || req.path.startsWith('/node_modules/') || req.path.startsWith('/@')) {
     return true;
   }
 

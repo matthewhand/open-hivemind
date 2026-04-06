@@ -7,19 +7,15 @@
  */
 
 import 'reflect-metadata';
-import crypto from 'crypto';
 import Debug from 'debug';
+import crypto from 'crypto';
 import { inject, injectable, singleton } from 'tsyringe';
 import { type BotConfigurationManager } from '../config/BotConfigurationManager';
 import { type UserConfigStore } from '../config/UserConfigStore';
 import { TOKENS } from '../di/container';
+import type { MessageFlowEvent, PerformanceMetric, AlertEvent } from '../server/services/websocket/types';
 import { MetricsCollector } from '../monitoring/MetricsCollector';
 import { ActivityLogger } from '../server/services/ActivityLogger';
-import type {
-  AlertEvent,
-  MessageFlowEvent,
-  PerformanceMetric,
-} from '../server/services/websocket/types';
 import { WebSocketService } from '../server/services/WebSocketService';
 
 const debug = Debug('app:DemoModeService');
@@ -28,15 +24,7 @@ export interface DemoBot {
   id: string;
   name: string;
   messageProvider: 'discord' | 'slack' | 'mattermost' | 'webhook';
-  llmProvider:
-    | 'openai'
-    | 'flowise'
-    | 'openwebui'
-    | 'perplexity'
-    | 'replicate'
-    | 'n8n'
-    | 'openswarm'
-    | 'letta';
+  llmProvider: 'openai' | 'flowise' | 'openwebui' | 'perplexity' | 'replicate' | 'n8n' | 'openswarm' | 'letta';
   persona: string;
   systemInstruction: string;
   status: 'active' | 'idle' | 'demo';
@@ -75,22 +63,13 @@ export interface DemoActivitySimulator {
 /**
  * Demo bot configurations with variety across platforms, LLMs, and personas.
  */
-const DEMO_BOT_CONFIGS: Array<{
-  name: string;
-  messageProvider: string;
-  llmProvider: string;
-  persona: string;
-  systemInstruction: string;
-  discord?: Record<string, string>;
-  slack?: Record<string, string>;
-}> = [
+const DEMO_BOT_CONFIGS: Array<{ name: string; messageProvider: string; llmProvider: string; persona: string; systemInstruction: string; discord?: Record<string, string>; slack?: Record<string, string> }> = [
   {
     name: 'SupportBot',
     messageProvider: 'discord',
     llmProvider: 'openai',
     persona: 'customer-service',
-    systemInstruction:
-      'You are a friendly customer support agent. Be empathetic and helpful. Always offer a clear next step.',
+    systemInstruction: 'You are a friendly customer support agent. Be empathetic and helpful. Always offer a clear next step.',
     discord: { channelId: 'support-questions', guildId: 'demo-guild-001' },
   },
   {
@@ -98,8 +77,7 @@ const DEMO_BOT_CONFIGS: Array<{
     messageProvider: 'slack',
     llmProvider: 'flowise',
     persona: 'sales-expert',
-    systemInstruction:
-      'You are a sales assistant. Highlight product value, handle objections gracefully, and suggest relevant features.',
+    systemInstruction: 'You are a sales assistant. Highlight product value, handle objections gracefully, and suggest relevant features.',
     slack: { channelId: 'C-SALES-001', teamId: 'T-DEMO-001' },
   },
   {
@@ -107,16 +85,14 @@ const DEMO_BOT_CONFIGS: Array<{
     messageProvider: 'mattermost',
     llmProvider: 'openwebui',
     persona: 'helpful-assistant',
-    systemInstruction:
-      'You guide new users through setup. Be patient, clear, and encourage exploration of features.',
+    systemInstruction: 'You guide new users through setup. Be patient, clear, and encourage exploration of features.',
   },
   {
     name: 'AnalyticsBot',
     messageProvider: 'discord',
     llmProvider: 'perplexity',
     persona: 'data-analyst',
-    systemInstruction:
-      'You are a data analyst. Provide clear, concise summaries with actionable insights.',
+    systemInstruction: 'You are a data analyst. Provide clear, concise summaries with actionable insights.',
     discord: { channelId: 'analytics-reports', guildId: 'demo-guild-002' },
   },
   {
@@ -124,8 +100,7 @@ const DEMO_BOT_CONFIGS: Array<{
     messageProvider: 'slack',
     llmProvider: 'openai',
     persona: 'technical-support',
-    systemInstruction:
-      'You are a DevOps assistant. Provide precise, step-by-step troubleshooting guidance.',
+    systemInstruction: 'You are a DevOps assistant. Provide precise, step-by-step troubleshooting guidance.',
     slack: { channelId: 'C-DEVOPS-001', teamId: 'T-DEMO-002' },
   },
   {
@@ -133,8 +108,7 @@ const DEMO_BOT_CONFIGS: Array<{
     messageProvider: 'mattermost',
     llmProvider: 'replicate',
     persona: 'creative-writer',
-    systemInstruction:
-      'You are a creative writing assistant. Use vivid language and help users develop engaging stories.',
+    systemInstruction: 'You are a creative writing assistant. Use vivid language and help users develop engaging stories.',
   },
 ];
 
@@ -144,36 +118,31 @@ const DEMO_PERSONAS = [
     name: 'Customer Service Agent',
     description: 'Empathetic and professional customer support persona',
     category: 'customer_service',
-    systemPrompt:
-      "You are a customer service representative. Be polite, empathetic, and solution-focused. Always acknowledge the user's concern before offering help.",
+    systemPrompt: 'You are a customer service representative. Be polite, empathetic, and solution-focused. Always acknowledge the user\'s concern before offering help.',
   },
   {
     name: 'Sales Expert',
     description: 'Persuasive yet consultative sales approach',
     category: 'professional',
-    systemPrompt:
-      'You are a sales professional. Focus on understanding customer needs, highlighting value, and building trust rather than hard selling.',
+    systemPrompt: 'You are a sales professional. Focus on understanding customer needs, highlighting value, and building trust rather than hard selling.',
   },
   {
     name: 'Data Analyst',
     description: 'Clear, data-driven insights specialist',
     category: 'general',
-    systemPrompt:
-      'You are a data analyst. Present findings clearly with context, highlight key trends, and suggest actionable next steps.',
+    systemPrompt: 'You are a data analyst. Present findings clearly with context, highlight key trends, and suggest actionable next steps.',
   },
   {
     name: 'Creative Writer',
     description: 'Imaginative content creator',
     category: 'creative',
-    systemPrompt:
-      'You are a creative writer. Use vivid imagery, varied sentence structure, and engaging storytelling techniques.',
+    systemPrompt: 'You are a creative writer. Use vivid imagery, varied sentence structure, and engaging storytelling techniques.',
   },
   {
     name: 'Technical Support',
     description: 'Step-by-step troubleshooting expert',
     category: 'technical',
-    systemPrompt:
-      'You are a technical support specialist. Provide clear, numbered steps. Explain why each step matters. Ask clarifying questions when needed.',
+    systemPrompt: 'You are a technical support specialist. Provide clear, numbered steps. Explain why each step matters. Ask clarifying questions when needed.',
   },
 ];
 
@@ -181,21 +150,11 @@ const DEMO_PERSONAS = [
 const DEMO_GUARD_PROFILES = [
   {
     name: 'Strict Production',
-    description:
-      'High-security profile for production bots with rate limiting and content filtering',
+    description: 'High-security profile for production bots with rate limiting and content filtering',
     guards: {
-      mcpGuard: {
-        enabled: true,
-        type: 'owner',
-        allowedUsers: ['admin@demo.com'],
-        allowedTools: ['calculator', 'search'],
-      },
+      mcpGuard: { enabled: true, type: 'owner', allowedUsers: ['admin@demo.com'], allowedTools: ['calculator', 'search'] },
       rateLimit: { enabled: true, maxRequests: 50, windowMs: 60000 },
-      contentFilter: {
-        enabled: true,
-        strictness: 'high' as const,
-        blockedTerms: ['password', 'secret'],
-      },
+      contentFilter: { enabled: true, strictness: 'high' as const, blockedTerms: ['password', 'secret'] },
     },
   },
   {
@@ -211,18 +170,9 @@ const DEMO_GUARD_PROFILES = [
     name: 'Public Facing',
     description: 'Balanced profile for customer-facing bots',
     guards: {
-      mcpGuard: {
-        enabled: true,
-        type: 'custom',
-        allowedUsers: [],
-        allowedTools: ['knowledge-base', 'ticket-lookup'],
-      },
+      mcpGuard: { enabled: true, type: 'custom', allowedUsers: [], allowedTools: ['knowledge-base', 'ticket-lookup'] },
       rateLimit: { enabled: true, maxRequests: 100, windowMs: 60000 },
-      contentFilter: {
-        enabled: true,
-        strictness: 'medium' as const,
-        blockedTerms: ['confidential', 'internal'],
-      },
+      contentFilter: { enabled: true, strictness: 'medium' as const, blockedTerms: ['confidential', 'internal'] },
     },
   },
 ];
@@ -241,80 +191,21 @@ const DEMO_USERS = [
 
 /** Realistic message scenarios for simulation */
 const MESSAGE_SCENARIOS = [
-  {
-    content: 'Hello! I need help getting started with the platform.',
-    response:
-      "Welcome! I'd be happy to help you get started. Let me walk you through the key features.",
-  },
-  {
-    content: 'How do I configure a new bot?',
-    response:
-      'Great question! You can configure bots through the WebUI dashboard, environment variables, or JSON config files in config/bots/.',
-  },
-  {
-    content: "What's the difference between OpenAI and Flowise providers?",
-    response:
-      'OpenAI provides direct access to GPT models with low latency, while Flowise offers visual workflow orchestration with drag-and-drop chains.',
-  },
-  {
-    content: 'Can I use custom personas for different conversations?',
-    response:
-      'Absolutely! You can create unlimited custom personas with unique system prompts, traits, and behaviors. Each bot can be assigned a different persona.',
-  },
-  {
-    content: 'The response time seems slow today',
-    response:
-      'I understand your concern. Let me check the current metrics... Average response time is 340ms, which is within normal range.',
-  },
-  {
-    content: 'Thanks for the detailed explanation!',
-    response: "You're welcome! Feel free to ask if you have any other questions.",
-  },
-  {
-    content: 'How does the MCP integration work?',
-    response:
-      'MCP (Model Context Protocol) lets bots connect to external tools and services. You can configure MCP servers in the MCP Servers page.',
-  },
-  {
-    content: "I'm getting a rate limit error on my Discord bot",
-    response:
-      'Rate limit errors typically mean your bot is hitting the configured request limit. You can adjust this in the guard profile settings.',
-  },
-  {
-    content: 'Can I export my configuration?',
-    response:
-      'Yes! Use the Export Config button in Quick Actions. You can choose to include or redact sensitive values.',
-  },
-  {
-    content: 'What guard profiles are available?',
-    response:
-      'Guard profiles define security policies including access control, rate limiting, and content filtering. You can create custom profiles in the Guards page.',
-  },
-  {
-    content: 'This platform is exactly what I was looking for!',
-    response:
-      "That's great to hear! I'm glad Open-Hivemind meets your needs. Don't hesitate to reach out if you need anything.",
-  },
-  {
-    content: 'How do I set up webhook events?',
-    response:
-      "Webhooks can be configured in the Webhook Events page. You'll need to provide a URL and optionally a secret for verification.",
-  },
-  {
-    content: 'Is there a way to monitor bot health?',
-    response:
-      'The Monitoring Dashboard provides real-time health checks, activity feeds, and performance metrics for all your bots.',
-  },
-  {
-    content: 'Can I clone an existing bot configuration?',
-    response:
-      'Yes! In the Bots page, click the Clone button on any bot to create a copy with a new name.',
-  },
-  {
-    content: "What's new in the latest update?",
-    response:
-      'Check the changelog in Settings for the latest features, bug fixes, and improvements.',
-  },
+  { content: "Hello! I need help getting started with the platform.", response: "Welcome! I'd be happy to help you get started. Let me walk you through the key features." },
+  { content: "How do I configure a new bot?", response: "Great question! You can configure bots through the WebUI dashboard, environment variables, or JSON config files in config/bots/." },
+  { content: "What's the difference between OpenAI and Flowise providers?", response: "OpenAI provides direct access to GPT models with low latency, while Flowise offers visual workflow orchestration with drag-and-drop chains." },
+  { content: "Can I use custom personas for different conversations?", response: "Absolutely! You can create unlimited custom personas with unique system prompts, traits, and behaviors. Each bot can be assigned a different persona." },
+  { content: "The response time seems slow today", response: "I understand your concern. Let me check the current metrics... Average response time is 340ms, which is within normal range." },
+  { content: "Thanks for the detailed explanation!", response: "You're welcome! Feel free to ask if you have any other questions." },
+  { content: "How does the MCP integration work?", response: "MCP (Model Context Protocol) lets bots connect to external tools and services. You can configure MCP servers in the MCP Servers page." },
+  { content: "I'm getting a rate limit error on my Discord bot", response: "Rate limit errors typically mean your bot is hitting the configured request limit. You can adjust this in the guard profile settings." },
+  { content: "Can I export my configuration?", response: "Yes! Use the Export Config button in Quick Actions. You can choose to include or redact sensitive values." },
+  { content: "What guard profiles are available?", response: "Guard profiles define security policies including access control, rate limiting, and content filtering. You can create custom profiles in the Guards page." },
+  { content: "This platform is exactly what I was looking for!", response: "That's great to hear! I'm glad Open-Hivemind meets your needs. Don't hesitate to reach out if you need anything." },
+  { content: "How do I set up webhook events?", response: "Webhooks can be configured in the Webhook Events page. You'll need to provide a URL and optionally a secret for verification." },
+  { content: "Is there a way to monitor bot health?", response: "The Monitoring Dashboard provides real-time health checks, activity feeds, and performance metrics for all your bots." },
+  { content: "Can I clone an existing bot configuration?", response: "Yes! In the Bots page, click the Clone button on any bot to create a copy with a new name." },
+  { content: "What's new in the latest update?", response: "Check the changelog in Settings for the latest features, bug fixes, and improvements." },
 ];
 
 const ERROR_MESSAGES = [
@@ -371,8 +262,7 @@ export class DemoModeService {
     const hasRealCredentials = bots.some((bot) => {
       if (bot.discord?.token && bot.discord.token.length > 10) return true;
       if (bot.slack?.botToken && bot.slack.botToken.length > 10) return true;
-      if ((bot as any).mattermost?.accessToken && (bot as any).mattermost.accessToken.length > 10)
-        return true;
+      if ((bot as any).mattermost?.accessToken && (bot as any).mattermost.accessToken.length > 10) return true;
       if (bot.openai?.apiKey && bot.openai.apiKey.length > 10) return true;
       if (bot.flowise?.apiKey && bot.flowise.apiKey.length > 10) return true;
       return false;
@@ -389,12 +279,8 @@ export class DemoModeService {
     if (this.isDemoMode) {
       this.seedDemoConfig();
       this.startActivitySimulation();
-      debug(
-        'Demo mode initialized — seeded %d bots, %d personas, %d guard profiles',
-        this.demoBots.length,
-        DEMO_PERSONAS.length,
-        DEMO_GUARD_PROFILES.length
-      );
+      debug('Demo mode initialized — seeded %d bots, %d personas, %d guard profiles',
+        this.demoBots.length, DEMO_PERSONAS.length, DEMO_GUARD_PROFILES.length);
     }
   }
 
@@ -446,11 +332,7 @@ export class DemoModeService {
           botConfig.discord = { ...cfg.discord, token: 'demo-token-placeholder' };
         }
         if (cfg.slack) {
-          botConfig.slack = {
-            ...cfg.slack,
-            botToken: 'demo-token-placeholder',
-            signingSecret: 'demo-secret',
-          };
+          botConfig.slack = { ...cfg.slack, botToken: 'demo-token-placeholder', signingSecret: 'demo-secret' };
         }
         // Add demo LLM placeholders
         if (cfg.llmProvider === 'openai') {
@@ -484,12 +366,8 @@ export class DemoModeService {
           status: 'demo',
           connected: true,
           isDemo: true,
-          discord: cfg.discord
-            ? { channelId: cfg.discord.channelId, guildId: cfg.discord.guildId }
-            : undefined,
-          slack: cfg.slack
-            ? { channelId: cfg.slack.channelId, teamId: cfg.slack.teamId }
-            : undefined,
+          discord: cfg.discord ? { channelId: cfg.discord.channelId, guildId: cfg.discord.guildId } : undefined,
+          slack: cfg.slack ? { channelId: cfg.slack.channelId, teamId: cfg.slack.teamId } : undefined,
         });
       }
       debug('Seeded %d demo bots into BotConfigurationManager', this.demoBots.length);
@@ -657,7 +535,7 @@ export class DemoModeService {
       return "Hello! 👋 Welcome to Open-Hivemind! I'm a demo bot. How can I help you today?";
     }
     if (lowerMessage.includes('help')) {
-      return 'Open-Hivemind offers multi-platform bots, multiple LLM providers, MCP integration, and personas. Configure API keys to unlock full functionality!';
+      return "Open-Hivemind offers multi-platform bots, multiple LLM providers, MCP integration, and personas. Configure API keys to unlock full functionality!";
     }
     const scenario = MESSAGE_SCENARIOS[Math.floor(Math.random() * MESSAGE_SCENARIOS.length)];
     return scenario.response;
@@ -675,12 +553,8 @@ export class DemoModeService {
     for (let i = 60; i >= 0; i--) {
       const cpu = 15 + Math.sin(i * 0.1) * 10 + (Math.random() - 0.5) * 8;
       const mem = 45 + Math.sin(i * 0.2) * 15 + (Math.random() - 0.5) * 10;
-      this.metricsCollector.recordMetric('demo.cpu', Math.max(5, Math.min(60, cpu)), {
-        source: 'demo',
-      });
-      this.metricsCollector.recordMetric('demo.memory', Math.max(20, Math.min(85, mem)), {
-        source: 'demo',
-      });
+      this.metricsCollector.recordMetric('demo.cpu', Math.max(5, Math.min(60, cpu)), { source: 'demo' });
+      this.metricsCollector.recordMetric('demo.memory', Math.max(20, Math.min(85, mem)), { source: 'demo' });
       this.metricsCollector.recordResponseTime(100 + Math.random() * 500);
       if (Math.random() < 0.3) {
         this.metricsCollector.incrementMessages();
@@ -742,12 +616,8 @@ export class DemoModeService {
     // Record in MetricsCollector
     this.metricsCollector.recordMetric('demo.cpu', metric.cpuUsage, { source: 'demo' });
     this.metricsCollector.recordMetric('demo.memory', metric.memoryUsage, { source: 'demo' });
-    this.metricsCollector.recordMetric('demo.responseTime', metric.responseTime, {
-      source: 'demo',
-    });
-    this.metricsCollector.recordMetric('demo.activeConnections', metric.activeConnections, {
-      source: 'demo',
-    });
+    this.metricsCollector.recordMetric('demo.responseTime', metric.responseTime, { source: 'demo' });
+    this.metricsCollector.recordMetric('demo.activeConnections', metric.activeConnections, { source: 'demo' });
     this.metricsCollector.recordMetric('demo.messageRate', metric.messageRate, { source: 'demo' });
     this.metricsCollector.recordMetric('demo.errorRate', metric.errorRate, { source: 'demo' });
 
@@ -785,37 +655,24 @@ export class DemoModeService {
       messageType: isIncoming ? 'incoming' : 'outgoing',
       contentLength: scenario.content.length,
       processingTime: isIncoming ? undefined : processingTime,
-      status: hasError ? 'error' : processingTime > 1500 ? 'timeout' : 'success',
-      errorMessage: hasError
-        ? ERROR_MESSAGES[Math.floor(Math.random() * ERROR_MESSAGES.length)]
-        : undefined,
+      status: hasError ? 'error' : (processingTime > 1500 ? 'timeout' : 'success'),
+      errorMessage: hasError ? ERROR_MESSAGES[Math.floor(Math.random() * ERROR_MESSAGES.length)] : undefined,
     };
   }
 
   /**
    * Create an alert event WITH id/timestamp — for WS recordAlert.
    */
-  private createAlertEventForWS(
-    _timestamp?: string
-  ): Omit<AlertEvent, 'id' | 'timestamp' | 'status' | 'acknowledgedAt' | 'resolvedAt'> {
+  private createAlertEventForWS(_timestamp?: string): Omit<AlertEvent, 'id' | 'timestamp' | 'status' | 'acknowledgedAt' | 'resolvedAt'> {
     const bot = this.demoBots[Math.floor(Math.random() * this.demoBots.length)];
-    const levels: Array<'info' | 'warning' | 'error' | 'critical'> = [
-      'info',
-      'warning',
-      'error',
-      'critical',
-    ];
+    const levels: Array<'info' | 'warning' | 'error' | 'critical'> = ['info', 'warning', 'error', 'critical'];
     const level = levels[Math.floor(Math.random() * levels.length)];
 
     const titles: Record<string, string[]> = {
       info: ['Bot connected successfully', 'Configuration reloaded', 'Health check passed'],
       warning: ['High response time detected', 'Rate limit approaching', 'Memory usage elevated'],
       error: ['LLM provider connection failed', 'Message delivery timeout', 'Rate limit exceeded'],
-      critical: [
-        'Service unavailable',
-        'Multiple bot failures detected',
-        'System resource exhaustion',
-      ],
+      critical: ['Service unavailable', 'Multiple bot failures detected', 'System resource exhaustion'],
     };
 
     return {
@@ -853,14 +710,14 @@ export class DemoModeService {
 
   private generateProcessingTime(): number {
     const r = Math.random();
-    if (r < 0.6) return Math.random() * 400 + 100; // 60% fast
-    if (r < 0.9) return Math.random() * 1000 + 500; // 30% medium
-    return Math.random() * 1500 + 1500; // 10% slow
+    if (r < 0.6) return Math.random() * 400 + 100;       // 60% fast
+    if (r < 0.9) return Math.random() * 1000 + 500;      // 30% medium
+    return Math.random() * 1500 + 1500;                    // 10% slow
   }
 
   private getTimeOfDayMultiplier(hour: number): number {
     // Business hours (9-17) = higher activity
-    if (hour >= 9 && hour <= 17) return 1.2 + Math.sin(((hour - 9) / 8) * Math.PI) * 0.3;
+    if (hour >= 9 && hour <= 17) return 1.2 + Math.sin((hour - 9) / 8 * Math.PI) * 0.3;
     if (hour >= 7 && hour <= 20) return 0.8;
     return 0.3;
   }

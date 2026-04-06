@@ -362,15 +362,14 @@ export class BroadcastService {
     }
 
     // Use demo performance metrics if available
-    const currentMetric =
-      performanceMetrics.length > 0
-        ? performanceMetrics[performanceMetrics.length - 1]
-        : {
-            memoryUsage: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-            messageRate: this.messageRateHistory[this.messageRateHistory.length - 1] || 0,
-            errorRate: this.errorRateHistory[this.errorRateHistory.length - 1] || 0,
-            activeConnections: connectedClients,
-          };
+    const currentMetric = performanceMetrics.length > 0
+      ? performanceMetrics[performanceMetrics.length - 1]
+      : {
+          memoryUsage: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+          messageRate: this.messageRateHistory[this.messageRateHistory.length - 1] || 0,
+          errorRate: this.errorRateHistory[this.errorRateHistory.length - 1] || 0,
+          activeConnections: connectedClients,
+        };
 
     currentIo.emit('performance_metrics_broadcast', {
       current: currentMetric,

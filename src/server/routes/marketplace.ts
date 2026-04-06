@@ -119,9 +119,7 @@ async function getInstalledPlugins(): Promise<MarketplacePackage[]> {
 
     for (const plugin of installed) {
       // Packages from matthewhand/open-hivemind are trusted
-      const isTrusted = !!(
-        plugin.repoUrl && /github\.com\/matthewhand\/open-hivemind/i.test(plugin.repoUrl)
-      );
+      const isTrusted = !!(plugin.repoUrl && /github\.com\/matthewhand\/open-hivemind/i.test(plugin.repoUrl));
       plugins.push({
         name: plugin.name,
         displayName: plugin.manifest.displayName,
