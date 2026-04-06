@@ -202,6 +202,41 @@ router.get('/source/:key', (req, res) => {
   }
 });
 
+// GET /api/config/export - Export all configurations as downloadable JSON
+router.get('/export', asyncErrorHandler(async (req, res) => {
+  try {
+    const exportData: Record<string, unknown> = {};
+
+    // Collect all global configs
+    Object.entries(globalConfigs).forEach(([key, config]) => {
+      const props = config.getProperties();
+      exportData[key] = redactObject(props);
+    });
+
+    // Add bot configs
+    try {
+      const botManager = await BotManager.getInstance();
+      const allBots = botManager.getAllBots();
+      exportData.bots = allBots.map((bot: any) => ({
+        name: bot.name,
+        messageProvider: bot.messageProvider,
+        llmProvider: bot.llmProvider,
+        persona: bot.persona,
+        isActive: bot.isActive,
+      }));
+    } catch { exportData.bots = []; }
+
+    const json = JSON.stringify(exportData, null, 2);
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="config-export-${new Date().toISOString().slice(0, 10)}.json"`);
+    return res.send(json);
+  } catch (error: unknown) {
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(ApiResponse.error('Failed to export configuration'));
+  }
+}));
+
 // GET /api/config/global - Get all global configurations (schema + values)
 router.get('/global', (req, res) => {
   try {
