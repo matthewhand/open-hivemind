@@ -10,6 +10,7 @@ import {
   BulkDeletePersonasSchema,
   ClonePersonaSchema,
   PersonaIdParamSchema,
+  PersonaResponseBehaviorSchema,
   UpdatePersonaRouteSchema,
 } from '../../validation/schemas/personasSchema';
 import { validateRequest } from '../../validation/validateRequest';
@@ -56,6 +57,7 @@ const CreatePersonaSchema = z.object({
       .max(MAX_SYSTEM_PROMPT_LENGTH, {
         message: `System prompt must not exceed ${MAX_SYSTEM_PROMPT_LENGTH} characters`,
       }),
+    responseBehavior: PersonaResponseBehaviorSchema,
   }),
 });
 

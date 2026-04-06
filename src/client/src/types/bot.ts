@@ -55,6 +55,23 @@ export interface LLMProvider {
   enabled: boolean;
 }
 
+/** Per-persona response behavior overrides. All fields optional -- falls back to global config. */
+export interface PersonaResponseBehavior {
+  baseChance?: number;
+  mentionBonus?: number;
+  leadingMentionBonus?: number;
+  offTopicPenalty?: number;
+  botResponsePenalty?: number;
+  burstTrafficPenalty?: number;
+  userDensityPenalty?: number;
+  botRatioPenalty?: number;
+  onlyWhenSpokenTo?: boolean;
+  graceWindowMs?: number;
+  interactiveFollowups?: boolean;
+  unsolicitedAddressed?: boolean;
+  unsolicitedUnaddressed?: boolean;
+}
+
 export interface Persona {
   id: string;
   name: string;
@@ -62,6 +79,7 @@ export interface Persona {
   category: PersonaCategory | string;
   traits: PersonaTrait[];
   systemPrompt: string;
+  responseBehavior?: PersonaResponseBehavior;
   isBuiltIn?: boolean;
   usageCount?: number;
   avatarId?: string;
@@ -82,6 +100,7 @@ export interface CreatePersonaRequest {
   category: PersonaCategory;
   traits: PersonaTrait[];
   systemPrompt: string;
+  responseBehavior?: PersonaResponseBehavior;
 }
 
 export interface UpdatePersonaRequest {
@@ -91,6 +110,7 @@ export interface UpdatePersonaRequest {
   category?: PersonaCategory;
   traits?: PersonaTrait[];
   systemPrompt?: string;
+  responseBehavior?: PersonaResponseBehavior;
 }
 
 export interface ProviderModalState {

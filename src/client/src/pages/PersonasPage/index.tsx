@@ -85,6 +85,8 @@ const PersonasPage: React.FC = () => {
     confirmDelete,
     deletingPersona,
     closeModals,
+    responseBehavior,
+    setResponseBehavior,
   } = usePersonaActions(
     personas,
     setPersonas as any,
@@ -284,6 +286,8 @@ const PersonasPage: React.FC = () => {
         bots={bots as any}
         loading={saving}
         onSave={handleSave}
+        responseBehavior={responseBehavior}
+        onResponseBehaviorChange={setResponseBehavior}
       />
 
       {/* Delete Confirmation Modal */}
