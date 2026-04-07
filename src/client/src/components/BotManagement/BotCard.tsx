@@ -1,37 +1,31 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState } from 'react';
+import React from 'react';
 import type {
   BotInstance,
-  MessageProvider,
-  LLMProvider,
-  Persona,
-  ProviderModalState,
 } from '../../types';
 import {
   BotStatus,
-  DEFAULT_PERSONA,
+  MESSAGE_PROVIDER_CONFIGS,
+  LLM_PROVIDER_CONFIGS,
 } from '../../types';
-import Button from '../DaisyUI/Button';
 import Badge from '../DaisyUI/Badge';
 import {
   Play as PlayIcon,
   Square as StopIcon,
-  Settings as SettingsIcon,
-  Copy as CloneIcon,
   Trash2 as DeleteIcon,
-  MoreVertical as MoreIcon,
-  User as UserIcon,
   Edit as EditIcon,
-  Plus as PlusIcon,
 } from 'lucide-react';
-import ProviderList from './ProviderList';
-import PersonaChip from './PersonaChip';
-import PersonaSelector from './PersonaSelector';
-import ProviderConfigModal from '../ProviderConfiguration/ProviderConfigModal';
 
 interface BotCardProps {
-  bot: BotInstance;
-  personas: Persona[];
+  bot: BotInstance | any;
+  personas?: any[];
+  /** Simplified props used by BotsPage */
+  isSelected?: boolean;
+  onPreview?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  onToggleStatus?: () => void;
+  /** Legacy props from older usage */
   onStartBot?: (botId: string) => void;
   onStopBot?: (botId: string) => void;
   onConfigureBot?: (botId: string) => void;
@@ -44,43 +38,33 @@ interface BotCardProps {
 
 const BotCard: React.FC<BotCardProps> = ({
   bot,
-  personas,
+  isSelected,
+  onPreview,
+  onEdit,
+  onDelete,
+  onToggleStatus,
   onStartBot,
   onStopBot,
   onConfigureBot,
-  onCloneBot,
   onDeleteBot,
-  onAddProvider,
-  onRemoveProvider,
-  onPersonaChange,
 }) => {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [showPersonaSelector, setShowPersonaSelector] = useState(false);
-  const [providerModalState, setProviderModalState] = useState<ProviderModalState>({
-    isOpen: false,
-    providerType: 'message',
-    mode: 'create',
-  });
-
-  const currentPersona = (personas || []).find(p => p.id === bot.personaId) || DEFAULT_PERSONA;
-
-  const getStatusColor = (status: BotStatus) => {
+  const getStatusColor = (status: string): "success" | "ghost" | "error" | "info" => {
     switch (status) {
     case 'active':
-      return 'badge-success';
+      return 'success';
     case 'inactive':
     case 'stopping':
-      return 'badge-ghost';
+      return 'ghost';
     case 'error':
-      return 'badge-error';
+      return 'error';
     case 'starting':
-      return 'badge-info';
+      return 'info';
     default:
-      return 'badge-ghost';
+      return 'ghost';
     }
   };
 
-  const getStatusText = (status: BotStatus) => {
+  const getStatusText = (status: string) => {
     switch (status) {
     case 'active':
       return 'Running';
@@ -99,321 +83,165 @@ const BotCard: React.FC<BotCardProps> = ({
 
   const canStart = bot.status === 'inactive' || bot.status === 'error';
   const canStop = bot.status === 'active';
-  const hasProviders = (bot.messageProviders || []).length > 0 || (bot.llmProviders || []).length > 0;
 
-  const handleStartBot = () => {
-    if (onStartBot) {onStartBot(bot.id);}
+  // Resolve provider display names
+  const messageProviders = bot.messageProviders || [];
+  const llmProviders = bot.llmProviders || [];
+
+  const getProviderLabel = (type: string, configs: Record<string, any>): string => {
+    const config = Object.values(configs).find((c: any) => c.type === type);
+    return config ? (config as any).displayName : type;
   };
 
-  const handleStopBot = () => {
-    if (onStopBot) {onStopBot(bot.id);}
+  // Persona info: use bot.persona object or fallback
+  const persona = bot.persona;
+  const personaName = persona?.name || '';
+  const personaInitial = (bot.name || 'B').charAt(0).toUpperCase();
+
+  // Category color for avatar background
+  const getCategoryBg = (category?: string) => {
+    const colors: Record<string, string> = {
+      professional: 'bg-success/20 text-success',
+      creative: 'bg-secondary/20 text-secondary',
+      technical: 'bg-accent/20 text-accent',
+      casual: 'bg-warning/20 text-warning',
+      educational: 'bg-info/20 text-info',
+      entertainment: 'bg-warning/20 text-warning',
+      general: 'bg-neutral/20 text-neutral',
+      customer_service: 'bg-primary/20 text-primary',
+    };
+    return colors[category || ''] || 'bg-primary/20 text-primary';
   };
 
-  const handleConfigureBot = () => {
-    if (onConfigureBot) {onConfigureBot(bot.id);}
-    setIsDropdownOpen(false);
-  };
-
-  const handleCloneBot = () => {
-    if (onCloneBot) {onCloneBot(bot.id);}
-    setIsDropdownOpen(false);
-  };
-
-  const handleDeleteBot = () => {
-    if (onDeleteBot) {onDeleteBot(bot.id);}
-    setIsDropdownOpen(false);
-  };
-
-  const handleAddMessageProvider = () => {
-    if (onAddProvider) {
-      onAddProvider(bot.id, 'message');
-      return;
+  const handleStartStop = () => {
+    if (onToggleStatus) {
+      onToggleStatus();
+    } else if (canStart && onStartBot) {
+      onStartBot(bot.id);
+    } else if (canStop && onStopBot) {
+      onStopBot(bot.id);
     }
-
-    setProviderModalState({
-      isOpen: true,
-      providerType: 'message',
-      mode: 'create',
-      botId: bot.id,
-    });
   };
 
-  const handleAddLLMProvider = () => {
-    if (onAddProvider) {
-      onAddProvider(bot.id, 'llm');
-      return;
+  const handleEdit = () => {
+    if (onEdit) {
+      onEdit();
+    } else if (onConfigureBot) {
+      onConfigureBot(bot.id);
     }
-
-    setProviderModalState({
-      isOpen: true,
-      providerType: 'llm',
-      mode: 'create',
-      botId: bot.id,
-    });
   };
 
-  const handleEditProvider = (provider: MessageProvider | LLMProvider) => {
-    // Determine provider type from the provider's type string
-    const providerType = provider.type.includes('discord') || provider.type.includes('slack') || provider.type.includes('telegram') || provider.type.includes('mattermost')
-      ? 'message' as const
-      : 'llm' as const;
-    setProviderModalState({
-      isOpen: true,
-      providerType,
-      mode: 'edit',
-      provider: provider,
-      botId: bot.id,
-      isEdit: true,
-    });
-  };
-
-  const handleRemoveProvider = (providerId: string) => {
-    if (onRemoveProvider) {onRemoveProvider(bot.id, providerId);}
-  };
-
-  const handleProviderModalClose = () => {
-    setProviderModalState(prev => ({
-      ...prev,
-      isOpen: false,
-    }));
-  };
-
-  const handleProviderSubmit = () => {
-    // This handler bridges the Modal submission to the parent's add/update logic.
-    // Ideally update BotContext or call a prop function.
-    handleProviderModalClose();
+  const handleDelete = () => {
+    if (onDelete) {
+      onDelete();
+    } else if (onDeleteBot) {
+      onDeleteBot(bot.id);
+    }
   };
 
   return (
-    <div className="card bg-base-100 shadow-xl border border-base-300 hover:shadow-2xl transition-shadow duration-200">
-      <div className="card-body p-6">
-        {/* Header */}
-        <div className="flex justify-between items-start mb-4">
+    <div
+      className={`card bg-base-100 shadow-md border hover:shadow-lg transition-shadow duration-200 cursor-pointer ${
+        isSelected ? 'border-primary ring-1 ring-primary/30' : 'border-base-300'
+      }`}
+      onClick={onPreview}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onPreview?.(); }}
+    >
+      <div className="card-body p-4">
+        {/* Top row: Avatar + Name + Status */}
+        <div className="flex items-start gap-3">
+          {/* Persona Avatar */}
+          <div
+            className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 text-lg font-bold ${getCategoryBg(persona?.category)}`}
+            title={personaName || bot.name}
+          >
+            {personaInitial}
+          </div>
+
+          {/* Name + Description */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2 min-w-0">
-              <h2 className="card-title text-lg font-semibold truncate break-all min-w-0" title={bot.name}>{bot.name}</h2>
-              <Badge variant={getStatusColor(bot.status) as "success" | "ghost" | "error" | "info"} size="sm" className="whitespace-nowrap shrink-0">
+            <div className="flex items-center gap-2 mb-0.5">
+              <h3 className="font-semibold text-base truncate" title={bot.name}>
+                {bot.name}
+              </h3>
+              <Badge
+                variant={getStatusColor(bot.status)}
+                size="sm"
+                className="whitespace-nowrap shrink-0"
+              >
                 {getStatusText(bot.status)}
               </Badge>
             </div>
             {bot.description && (
-              <p className="text-sm text-base-content/60 line-clamp-2">
+              <p className="text-sm text-base-content/60 line-clamp-1 mb-1.5">
                 {bot.description}
               </p>
             )}
-            {bot.error && (
-              <div className="alert alert-error py-2 mt-2">
-                <span className="text-xs">{bot.error}</span>
-              </div>
-            )}
-          </div>
 
-          {/* Dropdown Menu */}
-          <div className="dropdown dropdown-end">
-            <button
-              className="btn btn-sm btn-ghost btn-circle"
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              aria-label="More Options"
-            >
-              <MoreIcon className="w-4 h-4" />
-            </button>
-            {isDropdownOpen && (
-              <ul className="dropdown-content menu p-2 shadow-lg bg-base-100 rounded-box w-52 z-10">
-                <li>
-                  <a onClick={handleConfigureBot} className="flex items-center gap-2">
-                    <SettingsIcon className="w-4 h-4" />
-                    Configure
-                  </a>
-                </li>
-                <li>
-                  <a onClick={handleCloneBot} className="flex items-center gap-2">
-                    <CloneIcon className="w-4 h-4" />
-                    Clone
-                  </a>
-                </li>
-                <li>
-                  <a onClick={handleDeleteBot} className="flex items-center gap-2 text-error">
-                    <DeleteIcon className="w-4 h-4" />
-                    Delete
-                  </a>
-                </li>
-              </ul>
-            )}
-          </div>
-        </div>
-
-        {/* Persona Section */}
-        <div className="mb-4">
-          <div className="flex justify-between items-center mb-2">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-base-content/80">
-                Persona
-              </span>
-              <Badge variant="neutral" size="xs">
-                {currentPersona.isBuiltIn ? 'BUILTIN' : 'CUSTOM'}
-              </Badge>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowPersonaSelector(!showPersonaSelector)}
-              disabled={bot.status === 'active'}
-              className="px-2"
-              aria-label="Edit Persona"
-            >
-              <EditIcon className="w-4 h-4" />
-            </Button>
-          </div>
-          <div className="p-3 bg-base-200/30 rounded-lg">
-            <PersonaChip
-              persona={currentPersona}
-              size="lg"
-              showUsage={true}
-              clickable={false}
-            />
-          </div>
-          {showPersonaSelector && (
-            <div className="mt-3">
-              <PersonaSelector
-                personas={personas}
-                selectedPersonaId={bot.personaId}
-                onPersonaSelect={(personaId) => {
-                  if (onPersonaChange) {onPersonaChange(bot.id, personaId);}
-                  setShowPersonaSelector(false);
-                }}
-                allowCreate={true}
-                onCreatePersona={() => {
-                  window.location.href = '/admin/personas';
-                }}
-                size="compact"
-              />
-            </div>
-          )}
-        </div>
-
-        {/* Message Providers Section */}
-        <div className="mb-4">
-          <div className="flex justify-between items-center mb-2">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-base-content/80">
-                Message Providers
-              </span>
-              <Badge variant="neutral" size="xs">
-                {(bot.messageProviders || []).length}
-              </Badge>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleAddMessageProvider}
-              disabled={bot.status === 'active'}
-              className="px-2"
-              data-testid="add-message-provider-btn"
-              aria-label="Add Message Provider"
-            >
-              <PlusIcon className="w-4 h-4" />
-            </Button>
-          </div>
-          <ProviderList
-            providers={bot.messageProviders}
-            type="message"
-            onRemove={handleRemoveProvider}
-            onEdit={handleEditProvider}
-            disabled={bot.status === 'active'}
-          />
-        </div>
-
-        {/* LLM Providers Section */}
-        <div className="mb-6">
-          <div className="flex justify-between items-center mb-2">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-base-content/80">
-                LLM Providers
-              </span>
-              <Badge variant="neutral" size="xs">
-                {(bot.llmProviders || []).length}
-              </Badge>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleAddLLMProvider}
-              disabled={bot.status === 'active'}
-              className="px-2"
-              data-testid="add-llm-provider-btn"
-              aria-label="Add LLM Provider"
-            >
-              <PlusIcon className="w-4 h-4" />
-            </Button>
-          </div>
-          <ProviderList
-            providers={bot.llmProviders}
-            type="llm"
-            onRemove={handleRemoveProvider}
-            onEdit={handleEditProvider}
-            disabled={bot.status === 'active'}
-          />
-        </div>
-
-        {/* Footer Info and Actions */}
-        <div className="flex justify-between items-center">
-          <div className="text-xs text-base-content/60">
-            <div>Created: {new Date(bot.createdAt).toLocaleDateString()}</div>
-            {bot.lastActive && (
-              <div>Last active: {new Date(bot.lastActive).toLocaleDateString()}</div>
-            )}
-          </div>
-
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleConfigureBot}
-            >
-              <SettingsIcon className="w-4 h-4" />
-              Configure
-            </Button>
-
-            <Button
-              variant={canStart ? 'success' : 'error'}
-              size="sm"
-              onClick={canStart ? handleStartBot : handleStopBot}
-              disabled={!canStart && !canStop}
-              className={!hasProviders ? 'btn-disabled' : ''}
-            >
-              {canStart ? (
-                <>
-                  <PlayIcon className="w-4 h-4" />
-                  Start
-                </>
-              ) : (
-                <>
-                  <StopIcon className="w-4 h-4" />
-                  Stop
-                </>
+            {/* Provider badges */}
+            <div className="flex flex-wrap gap-1.5">
+              {messageProviders.map((p: any) => (
+                <span
+                  key={p.id || p.type}
+                  className="badge badge-sm badge-outline gap-1"
+                  title={`Message: ${getProviderLabel(p.type, MESSAGE_PROVIDER_CONFIGS)}`}
+                >
+                  {getProviderLabel(p.type, MESSAGE_PROVIDER_CONFIGS)}
+                </span>
+              ))}
+              {llmProviders.map((p: any) => (
+                <span
+                  key={p.id || p.type}
+                  className="badge badge-sm badge-outline badge-primary gap-1"
+                  title={`LLM: ${getProviderLabel(p.type, LLM_PROVIDER_CONFIGS)}`}
+                >
+                  {getProviderLabel(p.type, LLM_PROVIDER_CONFIGS)}
+                </span>
+              ))}
+              {messageProviders.length === 0 && llmProviders.length === 0 && (
+                <span className="badge badge-sm badge-warning badge-outline">No providers</span>
               )}
-            </Button>
+            </div>
+          </div>
+
+          {/* Compact actions */}
+          <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+            <button
+              className={`btn btn-xs btn-ghost btn-square ${canStart ? 'text-success' : canStop ? 'text-error' : 'btn-disabled'}`}
+              onClick={handleStartStop}
+              disabled={!canStart && !canStop}
+              aria-label={canStart ? 'Start bot' : 'Stop bot'}
+              title={canStart ? 'Start' : 'Stop'}
+            >
+              {canStart ? <PlayIcon className="w-3.5 h-3.5" /> : <StopIcon className="w-3.5 h-3.5" />}
+            </button>
+            <button
+              className="btn btn-xs btn-ghost btn-square"
+              onClick={handleEdit}
+              aria-label="Edit bot"
+              title="Edit"
+            >
+              <EditIcon className="w-3.5 h-3.5" />
+            </button>
+            <button
+              className="btn btn-xs btn-ghost btn-square text-error/70 hover:text-error"
+              onClick={handleDelete}
+              aria-label="Delete bot"
+              title="Delete"
+            >
+              <DeleteIcon className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
 
-        {/* Warning for missing providers */}
-        {!hasProviders && (
-          <div className="alert alert-warning py-3 mt-4">
-            <span className="text-xs">
-              ⚠️ This bot has no providers configured. Add message and LLM providers before starting.
-            </span>
+        {/* Error alert (only when there is an error) */}
+        {bot.error && (
+          <div className="alert alert-error py-1.5 mt-2">
+            <span className="text-xs">{bot.error}</span>
           </div>
         )}
-
-        {/* Provider Configuration Modal */}
-        <ProviderConfigModal
-          modalState={providerModalState}
-          existingProviders={
-            providerModalState.providerType === 'message' ? bot.messageProviders : bot.llmProviders
-          }
-          onClose={handleProviderModalClose}
-          onSubmit={handleProviderSubmit}
-        />
       </div>
     </div>
   );

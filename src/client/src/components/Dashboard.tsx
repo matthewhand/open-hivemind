@@ -13,7 +13,7 @@ import TipRotator from './TipRotator';
 import QuickActions from './QuickActions';
 import AgentGrid from './Dashboard/AgentGrid';
 import Carousel from './DaisyUI/Carousel';
-import { useMediaQuery } from '../hooks/useBreakpoint';
+import { useMediaQuery } from '../hooks/useResponsive';
 
 const getStatusColor = (botStatus: string) => {
   switch (botStatus.toLowerCase()) {
