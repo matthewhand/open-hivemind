@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { navigateAndWaitReady, setupAuth, setupTestWithErrorDetection } from './test-utils';
+import { navigateAndWaitReady, setupTestWithErrorDetection, setupAuth } from './test-utils';
 
 test.describe('Marketplace Page', () => {
   test.beforeEach(async ({ page }) => {
@@ -48,25 +48,26 @@ test.describe('Marketplace Page', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify([
-          {
-            name: 'open-hivemind/local-llm',
-            displayName: 'Local LLM Provider',
-            description: 'Provides connection to local LLM instances',
-            version: '1.0.0',
-            type: 'llm',
-            status: 'built-in',
-            repoUrl: 'https://github.com/open-hivemind/local-llm',
-          },
-          {
-            name: 'community/advanced-tools',
-            displayName: 'Advanced Tools Pack',
-            description: 'Collection of advanced tools for your bots',
-            version: '2.1.0',
-            type: 'tool',
-            status: 'available',
-            repoUrl: 'https://github.com/community/advanced-tools',
-          },
-        ]),
+            {
+              name: 'open-hivemind/local-llm',
+              displayName: 'Local LLM Provider',
+              description: 'Provides connection to local LLM instances',
+              version: '1.0.0',
+              type: 'llm',
+              status: 'built-in',
+              repoUrl: 'https://github.com/open-hivemind/local-llm'
+            },
+            {
+              name: 'community/advanced-tools',
+              displayName: 'Advanced Tools Pack',
+              description: 'Collection of advanced tools for your bots',
+              version: '2.1.0',
+              type: 'tool',
+              status: 'available',
+              repoUrl: 'https://github.com/community/advanced-tools'
+            }
+          ]
+        )
       });
     });
   });
@@ -79,9 +80,10 @@ test.describe('Marketplace Page', () => {
     await navigateAndWaitReady(page, '/admin/marketplace');
 
     // Wait for packages to load
-    await page.waitForSelector('h1:has-text("Package Marketplace")', { timeout: 10000 });
+    await page.waitForSelector('h1:has-text("Community Packages")', { timeout: 10000 });
 
     // Wait for package cards to appear (or loading spinner to disappear)
+    await page.waitForTimeout(2000);
 
     // Screenshot Marketplace Page
     await page.screenshot({ path: 'docs/screenshots/marketplace-page.png', fullPage: true });
@@ -104,7 +106,7 @@ test.describe('Marketplace Page', () => {
     await navigateAndWaitReady(page, '/admin/marketplace');
 
     // Wait for page to load
-    await page.waitForSelector('h1:has-text("Package Marketplace")', { timeout: 10000 });
+    await page.waitForSelector('h1:has-text("Community Packages")', { timeout: 10000 });
 
     // Click "Install from URL" button
     const installButton = page.locator('button:has-text("Install from URL")');
@@ -118,6 +120,7 @@ test.describe('Marketplace Page', () => {
     await modal.locator('input[type="text"]').fill('https://github.com/user/custom-provider');
 
     // Wait a bit for UI to settle
+    await page.waitForTimeout(500);
 
     // Screenshot Install Modal
     await page.screenshot({
@@ -140,13 +143,14 @@ test.describe('Marketplace Page', () => {
     await navigateAndWaitReady(page, '/admin/marketplace');
 
     // Wait for page to load
-    await page.waitForSelector('h1:has-text("Package Marketplace")', { timeout: 10000 });
+    await page.waitForSelector('h1:has-text("Community Packages")', { timeout: 10000 });
 
     // Click on LLM filter tab
     const llmTab = page.locator('.tab:has-text("LLM")');
     await llmTab.click();
 
     // Wait for filter to apply
+    await page.waitForTimeout(500);
 
     // Verify only LLM packages are shown (check for LLM badge)
     const llmBadges = page.locator('.badge-outline:has-text("LLM")');

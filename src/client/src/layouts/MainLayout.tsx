@@ -2,7 +2,6 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import ResponsiveNavigation from '../components/DaisyUI/ResponsiveNavigation';
-import NavbarWithSearch from '../components/DaisyUI/NavbarWithSearch';
 
 interface MainLayoutProps {
   children: React.ReactNode;
