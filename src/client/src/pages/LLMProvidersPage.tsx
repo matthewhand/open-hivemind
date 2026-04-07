@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useModal } from '../hooks/useModal';
 import Card from '../components/DaisyUI/Card';
@@ -7,12 +8,8 @@ import { Alert } from '../components/DaisyUI/Alert';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import StatsCards from '../components/DaisyUI/StatsCards';
 import EmptyState from '../components/DaisyUI/EmptyState';
-import ConfigKeyValueCard from '../components/DaisyUI/ConfigKeyValueCard';
-import { SkeletonTableLayout } from '../components/DaisyUI/Skeleton';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import SearchFilterBar from '../components/SearchFilterBar';
-import { ConfirmModal } from '../components/DaisyUI/Modal';
-import { useErrorToast } from '../components/DaisyUI/ToastNotification';
-import Tooltip from '../components/DaisyUI/Tooltip';
 import {
   Brain as BrainIcon,
   Plus as AddIcon,
@@ -20,6 +17,7 @@ import {
   CheckCircle as CheckIcon,
   XCircle as XIcon,
   AlertCircle as WarningIcon,
+  Zap as ZapIcon,
   MessageSquare as ChatIcon,
   Cpu as CpuIcon,
   Trash2 as DeleteIcon,
@@ -28,32 +26,13 @@ import {
   ChevronRight as CollapseIcon,
   Search,
   RefreshCw,
-  Layers as LayersIcon,
-  HelpCircle,
+  ToggleLeft as ToggleOffIcon,
+  ToggleRight as ToggleOnIcon,
 } from 'lucide-react';
 import type { LLMProviderType } from '../types/bot';
 import { LLM_PROVIDER_CONFIGS } from '../types/bot';
 import ProviderConfigModal from '../components/ProviderConfiguration/ProviderConfigModal';
-import Divider from '../components/DaisyUI/Divider';
-import DetailDrawer from '../components/DaisyUI/DetailDrawer';
 import { apiService } from '../services/api';
-import useUrlParams from '../hooks/useUrlParams';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useBulkSelection } from '../hooks/useBulkSelection';
-import BulkActionBar from '../components/BulkActionBar';
-import Checkbox from '../components/DaisyUI/Checkbox';
-import Toggle from '../components/DaisyUI/Toggle';
-import { useWebSocket } from '../contexts/WebSocketContext';
-import { useSavedStamp } from '../contexts/SavedStampContext';
-import Select from '../components/DaisyUI/Select';
-import Pagination from '../components/DaisyUI/Pagination';
-
-// Utility function to decode HTML entities
-const decodeHtmlEntities = (text: string): string => {
-  const textarea = document.createElement('textarea');
-  textarea.innerHTML = text;
-  return textarea.value;
-};
 
 type LlmModelType = 'chat' | 'embedding' | 'both';
 
@@ -76,8 +55,6 @@ const isEmbeddingCapable = (profile: any): boolean => {
 
 const LLMProvidersPage: React.FC = () => {
   const { modalState, openAddModal, openEditModal, closeModal } = useModal();
-  const errorToast = useErrorToast();
-  const { showStamp } = useSavedStamp();
   const [profiles, setProfiles] = useState<any[]>([]);
   const [defaultStatus, setDefaultStatus] = useState<any>(null);
   const [expandedProfile, setExpandedProfile] = useState<string | null>(null);
@@ -86,116 +63,39 @@ const LLMProvidersPage: React.FC = () => {
   const [defaultChatbotProfile, setDefaultChatbotProfile] = useState<string>('');
   const [defaultEmbeddingProvider, setDefaultEmbeddingProvider] = useState<string>('');
   const [perUseCaseEnabled, setPerUseCaseEnabled] = useState<boolean>(false);
-  const [taskProfiles, setTaskProfiles] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { values: urlParams, setValue: setUrlParam } = useUrlParams({
-    search: { type: 'string', default: '', debounce: 300 },
-    type: { type: 'string', default: 'all' },
-  });
-  const searchQuery = urlParams.search;
-  const setSearchQuery = (v: string) => setUrlParam('search', v);
-  const filterType = urlParams.type;
-  const setFilterType = (v: string) => setUrlParam('type', v);
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 12;
-  const [drawerProfile, setDrawerProfile] = useState<any | null>(null);
-  const [confirmModal, setConfirmModal] = useState<{
-    isOpen: boolean; title: string; message: string; onConfirm: () => void;
-  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterType, setFilterType] = useState('all');
 
-  const _queryClient = useQueryClient();
-
-  // Cached queries for LLM profiles, status, and global config
-  const {
-    data: profilesRes,
-    isLoading: profilesLoading,
-    error: profilesError,
-    refetch: refetchProfiles,
-  } = useQuery<any>({
-    queryKey: ['config', 'llm-profiles'],
-    queryFn: () => apiService.get('/api/config/llm-profiles'),
-    staleTime: 30_000,
-    gcTime: 60_000,
-  });
-
-  const {
-    data: statusRes,
-    isLoading: statusLoading,
-    refetch: refetchStatus,
-  } = useQuery<any>({
-    queryKey: ['config', 'llm-status'],
-    queryFn: () => apiService.get('/api/config/llm-status'),
-    staleTime: 30_000,
-    gcTime: 60_000,
-  });
-
-  const {
-    data: globalRes,
-    isLoading: globalLoading,
-    refetch: refetchGlobal,
-  } = useQuery<any>({
-    queryKey: ['config', 'global'],
-    queryFn: () => apiService.get('/api/config/global'),
-    staleTime: 30_000,
-    gcTime: 60_000,
-  });
-
-  // Derive state from cached responses
-  useEffect(() => {
-    if (profilesRes) {
-      setProfiles(profilesRes.llm || profilesRes.profiles?.llm || []);
-    }
-  }, [profilesRes]);
-
-  useEffect(() => {
-    if (statusRes) {
+  const fetchProfiles = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [profilesResult, statusResult, globalResult] = await Promise.allSettled([
+        apiService.get('/api/config/llm-profiles'),
+        apiService.get('/api/config/llm-status'),
+        apiService.get('/api/config/global'),
+      ]);
+      const profilesRes = profilesResult.status === 'fulfilled' ? profilesResult.value : {};
+      const statusRes = statusResult.status === 'fulfilled' ? statusResult.value : {};
+      const globalRes = globalResult.status === 'fulfilled' ? globalResult.value : {};
+      setProfiles((profilesRes as any).llm || (profilesRes as any).profiles?.llm || []);
       setDefaultStatus(statusRes);
-      if (statusRes.libraryStatus) setLibraryStatus(statusRes.libraryStatus);
-    }
-  }, [statusRes]);
-
-  useEffect(() => {
-    if (globalRes) {
-      const gs = globalRes._userSettings?.values || {};
-      const llmValues = globalRes.llm?.values || {};
+      const gs = (globalRes as any)._userSettings?.values || {};
+      const llmValues = (globalRes as any).llm?.values || {};
       setWebuiIntelligenceProvider(gs.webuiIntelligenceProvider || '');
       setDefaultChatbotProfile(gs.defaultChatbotProfile || '');
       setDefaultEmbeddingProvider(llmValues.DEFAULT_EMBEDDING_PROVIDER || gs.defaultEmbeddingProfile || '');
       setPerUseCaseEnabled(!!gs.perUseCaseEnabled);
-      setTaskProfiles(gs.taskProfiles || {});
+      if ((statusRes as any).libraryStatus) setLibraryStatus((statusRes as any).libraryStatus);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load configuration');
+    } finally {
+      setLoading(false);
     }
-  }, [globalRes]);
+  }, []);
 
-  // Sync loading/error
-  useEffect(() => {
-    setLoading(profilesLoading || statusLoading || globalLoading);
-  }, [profilesLoading, statusLoading, globalLoading]);
-
-  useEffect(() => {
-    if (profilesError) setError(profilesError.message);
-  }, [profilesError]);
-
-  // Auto-refresh when config changes are broadcast via WebSocket
-  const { configVersion, lastConfigChange } = useWebSocket();
-  const configVersionRef = React.useRef(configVersion);
-  useEffect(() => {
-    // Skip the initial mount (configVersion starts at 0)
-    if (configVersionRef.current === configVersion) return;
-    configVersionRef.current = configVersion;
-
-    // Only refetch when relevant config types change
-    const relevantTypes = ['llm-profiles', 'global'];
-    if (lastConfigChange?.type && !relevantTypes.includes(lastConfigChange.type)) return;
-
-    refetchProfiles();
-    refetchStatus();
-    refetchGlobal();
-  }, [configVersion, lastConfigChange, refetchProfiles, refetchStatus, refetchGlobal]);
-
-  const fetchProfiles = useCallback(async () => {
-    await Promise.all([refetchProfiles(), refetchStatus(), refetchGlobal()]);
-  }, [refetchProfiles, refetchStatus, refetchGlobal]);
+  useEffect(() => { fetchProfiles(); }, [fetchProfiles]);
 
   const saveGlobal = async (patch: Record<string, any>) => {
     await apiService.put('/api/config/global', patch);
@@ -212,23 +112,16 @@ const LLMProvidersPage: React.FC = () => {
 
   const handleEditProfile = (profile: any) => {
     openEditModal('global', 'llm', {
-      id: profile?.key, name: profile?.name, type: profile?.provider, config: profile?.config, modelType: profile?.modelType, enabled: true,
-    });
+      id: profile.key, name: profile.name, type: profile.provider, config: profile.config, modelType: profile.modelType, enabled: true,
+    } as any);
   };
 
   const handleDeleteProfile = async (key: string) => {
-    setConfirmModal({
-      isOpen: true,
-      title: 'Delete Profile',
-      message: `Delete profile "${key}"?`,
-      onConfirm: async () => {
-        setConfirmModal(prev => ({ ...prev, isOpen: false }));
-        try {
-          await apiService.delete(`/api/config/llm-profiles/${key}`);
-          fetchProfiles();
-        } catch (err: any) { errorToast('Delete Failed', `Failed to delete: ${err.message}`); }
-      },
-    });
+    if (!window.confirm(`Delete profile "${key}"?`)) return;
+    try {
+      await apiService.delete(`/api/config/llm-profiles/${key}`);
+      fetchProfiles();
+    } catch (err: any) { alert(`Failed to delete: ${err.message}`); }
   };
 
   const handleProviderSubmit = async (providerData: any) => {
@@ -258,9 +151,8 @@ const LLMProvidersPage: React.FC = () => {
         await apiService.post('/api/config/llm-profiles', payload);
       }
       closeModal();
-      showStamp();
       fetchProfiles();
-    } catch (err: any) { errorToast('Save Failed', `Failed to save: ${err.message}`); }
+    } catch (err: any) { alert(`Failed to save: ${err.message}`); }
   };
 
   const getProviderIcon = (type: string) => {
@@ -273,52 +165,24 @@ const LLMProvidersPage: React.FC = () => {
   const renderLibraryCheck = (type: string) => {
     const status = libraryStatus[type];
     if (!status?.installed) return status ? (
-      <Tooltip content={`Missing: ${status.package}`} position="bottom">
-        <Badge variant="error" size="sm" className="gap-1 cursor-help">
+      <div className="tooltip tooltip-bottom" data-tip={`Missing: ${status.package}`}>
+        <Badge variant="error" size="small" className="gap-1 cursor-help">
           <XIcon className="w-3 h-3" /> Lib Missing
         </Badge>
-      </Tooltip>
+      </div>
     ) : null;
     return null;
   };
 
-  const filteredProfiles = useMemo(() => {
-    setCurrentPage(1);
-    return profiles.filter(p => {
-      const matchesSearch = p?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            p?.provider?.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesSearch && (filterType === 'all' || p?.provider === filterType);
-    });
-  }, [profiles, searchQuery, filterType]);
-
-  const paginatedProfiles = useMemo(() =>
-    filteredProfiles.slice((currentPage - 1) * pageSize, currentPage * pageSize),
-    [filteredProfiles, currentPage, pageSize]);
-
-  // Bulk selection
-  const filteredProfileKeys = useMemo(() => filteredProfiles.map(p => p.key), [filteredProfiles]);
-  const bulk = useBulkSelection(filteredProfileKeys);
-  const [bulkDeleting, setBulkDeleting] = useState(false);
-
-  const handleBulkDeleteProfiles = async () => {
-    if (bulk.selectedCount === 0) return;
-    setBulkDeleting(true);
-    try {
-      const keys = Array.from(bulk.selectedIds);
-      await Promise.allSettled(
-        keys.map(key => apiService.delete(`/api/config/llm-profiles/${key}`))
-      );
-      bulk.clearSelection();
-      fetchProfiles();
-    } catch (err: any) {
-      errorToast('Bulk Delete Failed', 'Failed to delete some profiles');
-    } finally {
-      setBulkDeleting(false);
-    }
-  };
+  const filteredProfiles = useMemo(() =>
+    profiles.filter(p => {
+      const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            p.provider.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesSearch && (filterType === 'all' || p.provider === filterType);
+    }), [profiles, searchQuery, filterType]);
 
   const providerTypes = useMemo(() => {
-    const types = new Set(profiles.map(p => p?.provider).filter(Boolean));
+    const types = new Set(profiles.map(p => p.provider));
     return Array.from(types).map(type => ({ label: type, value: type }));
   }, [profiles]);
 
@@ -336,7 +200,7 @@ const LLMProvidersPage: React.FC = () => {
       <PageHeader
         title="LLM Providers"
         description="Configure AI provider profiles and assign them to specific use cases."
-        icon={BrainIcon}
+        icon={<BrainIcon className="w-6 h-6" />}
         actions={
           <div className="flex gap-2">
             <Button variant="ghost" onClick={fetchProfiles} disabled={loading} aria-busy={loading}>
@@ -353,185 +217,10 @@ const LLMProvidersPage: React.FC = () => {
 
       {error && <Alert status="error" icon={<XIcon />} message={error} onClose={() => setError(null)} />}
 
-      {/* ── Use-case assignment cards ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-
-        {/* 1. System Default (env-var fallback) */}
-        <Card compact className={`bg-base-100 shadow-sm border ${defaultStatus?.configured ? 'border-success/20' : 'border-warning/20'}`}>
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="font-bold flex items-center gap-2">
-                <ConfigIcon className="w-4 h-4" /> System Default
-              </h3>
-              {defaultStatus?.configured
-                ? <Badge variant="success" size="sm">Active</Badge>
-                : <Badge variant="warning" size="sm">Not Set</Badge>}
-            </div>
-            <p className="text-xs opacity-60 mb-3">
-              Fallback loaded from environment variables. Used when no profile is assigned.
-            </p>
-            {defaultStatus?.providers?.filter((p: any) => p?.source !== 'bot-env').map((p: any) => (
-              <div key={p?.id} className="flex items-center gap-2 p-2 bg-base-200/50 rounded text-sm">
-                {getProviderIcon(p?.type)}
-                <span className="font-medium">{decodeHtmlEntities(p?.name || 'Unnamed')}</span>
-                {p?.hasApiKey ? (
-                  <Tooltip content={`${p?.type?.toUpperCase()}_API_KEY is configured.`} position="top">
-                    <CheckIcon className="w-4 h-4 text-success cursor-help" />
-                  </Tooltip>
-                ) : !defaultChatbotProfile ? (
-                  <Tooltip content={`No API key — click to create an ${decodeHtmlEntities(p?.type || 'LLM')} profile with your key`} position="top">
-                    <button onClick={handleAddProfile} className="btn btn-ghost btn-xs btn-circle text-primary">
-                      <AddIcon className="w-4 h-4" />
-                    </button>
-                  </Tooltip>
-                ) : null}
-                <Badge variant="neutral" size="sm" className="ml-auto">Read-Only</Badge>
-              </div>
-            ))}
-            {(!defaultStatus?.providers?.filter((p: any) => p?.source !== 'bot-env').length) && !defaultChatbotProfile && (
-              <div className="flex items-center gap-2 p-3 bg-base-200/30 rounded-lg border border-dashed border-primary/30">
-                <span className="text-xs opacity-60 flex-1">No LLM provider configured yet.</span>
-                <Tooltip content="Create an OpenAI profile to get started" position="top">
-                  <button onClick={handleAddProfile} className="btn btn-primary btn-xs gap-1">
-                    <AddIcon className="w-3 h-3" /> Add Provider
-                  </button>
-                </Tooltip>
-              </div>
-            )}
-        </Card>
-
-        {/* 2. Default Chatbot LLM Profile */}
-        <Card compact className="bg-base-100 shadow-sm border border-base-200">
-            <h3 className="font-bold flex items-center gap-2 mb-1">
-              <ChatIcon className="w-4 h-4 text-primary" /> Default Chatbot Profile
-            </h3>
-            <p className="text-xs opacity-60 mb-3">
-              Profile used for all bot chat responses when per-use-case mode is off.
-            </p>
-            <div className="form-control w-full">
-              <Select
-                className="select-bordered"
-                size="sm"
-                value={defaultChatbotProfile}
-                onChange={async (e) => {
-                  setDefaultChatbotProfile(e.target.value);
-                  await saveGlobal({ defaultChatbotProfile: e.target.value }).catch(() => {});
-                }}
-                disabled={loading} aria-busy={loading}
-              >
-                <option value="">Use System Default</option>
-                {chatProfiles.map((p) => (
-                  <option key={p?.key} value={p?.key}>{decodeHtmlEntities(p?.name || 'Unnamed')} ({decodeHtmlEntities(p?.provider || 'Unknown')})</option>
-                ))}
-              </Select>
-            </div>
-        </Card>
-
-        <Card compact className="bg-base-100 shadow-sm border border-base-200">
-            <h3 className="font-bold flex items-center gap-2 mb-1">
-              <CpuIcon className="w-4 h-4 text-secondary" /> Default Embedding Provider
-            </h3>
-            <p className="text-xs opacity-60 mb-3">
-              Embedding-capable provider/profile used by memory and semantic search features when embeddings are needed.
-            </p>
-            <div className="form-control w-full">
-              <Select
-                className="select-bordered"
-                size="sm"
-                value={defaultEmbeddingProvider}
-                onChange={async (e) => {
-                  setDefaultEmbeddingProvider(e.target.value);
-                  await saveLlmConfig({ DEFAULT_EMBEDDING_PROVIDER: e.target.value }).catch(() => {});
-                }}
-                disabled={loading} aria-busy={loading}
-              >
-                <option value="">None Selected</option>
-                {embeddingProfiles.map((p) => (
-                  <option key={p?.key} value={p?.key}>{decodeHtmlEntities(p?.name || 'Unnamed')} ({decodeHtmlEntities(p?.provider || 'Unknown')})</option>
-                ))}
-              </Select>
-            </div>
-        </Card>
+      <div className="alert alert-info text-sm">
+        <ConfigIcon className="w-4 h-4" />
+        <span>Default provider assignments, embedding config, and per-use-case settings have moved to <strong>Settings &gt; LLM</strong>.</span>
       </div>
-
-      {/* ── Per-use-case toggle ── */}
-      <Card compact className="bg-base-100 shadow-sm border border-base-200">
-        <div className="flex flex-row items-center justify-between">
-          <div>
-            <h3 className="font-bold flex items-center gap-2">
-              <LayersIcon className="w-5 h-5 text-primary" />
-              Per-Use-Case LLM Profiles
-            </h3>
-            <p className="text-xs opacity-60 mt-0.5">
-              When enabled, assign different profiles to summarisation, moderation, and other tasks independently.
-            </p>
-          </div>
-          <Toggle
-            color="primary"
-            checked={perUseCaseEnabled}
-            onChange={async (e) => {
-              setPerUseCaseEnabled(e.target.checked);
-              await saveGlobal({ perUseCaseEnabled: e.target.checked }).catch(() => {});
-            }}
-          />
-        </div>
-      </Card>
-
-      {perUseCaseEnabled && (
-        <div className="space-y-6">
-          {/* Task Profile Assignments (includes WebUI AI as a task) */}
-          <Card compact className="bg-base-100 shadow-sm border border-base-200">
-            <div className="space-y-3">
-              <h3 className="font-bold text-sm">Task Profile Assignments</h3>
-              <p className="text-xs opacity-60">
-                Assign a profile to each task. Tasks without a profile will use the default provider.
-              </p>
-              {(['semantic', 'summary', 'followup', 'idle', 'webui'] as const).map((task) => {
-                const taskHelp: Record<string, string> = {
-                  semantic: 'Evaluates message relevance and determines if the bot should respond based on context.',
-                  summary: 'Generates conversation summaries for context windows and memory management.',
-                  followup: 'Crafts natural follow-up responses when the bot stays engaged in a conversation.',
-                  idle: 'Generates unprompted messages when the bot decides to speak during quiet periods.',
-                  webui: 'Powers AI-assisted features in the admin dashboard (e.g. generating bot names, descriptions).',
-                };
-                return (
-                <div key={task} className="flex items-center gap-3">
-                  <label className="w-28 text-sm capitalize flex items-center gap-1">
-                    {task === 'webui' ? 'WebUI AI' : task}
-                    <Tooltip content={taskHelp[task]} position="right">
-                      <HelpCircle className="w-3.5 h-3.5 opacity-40 hover:opacity-80 cursor-help" />
-                    </Tooltip>
-                  </label>
-                  <Select
-                    className="select-bordered flex-1"
-                    size="sm"
-                    value={task === 'webui' ? (webuiIntelligenceProvider || '') : (taskProfiles[task] || '')}
-                    onChange={async (e) => {
-                      if (task === 'webui') {
-                        setWebuiIntelligenceProvider(e.target.value);
-                        await saveGlobal({ webuiIntelligenceProvider: e.target.value }).catch(() => {});
-                      } else {
-                        const updated = { ...taskProfiles, [task]: e.target.value || undefined };
-                        if (!e.target.value) delete updated[task];
-                        setTaskProfiles(updated);
-                        await saveGlobal({ taskProfiles: updated }).catch(() => {});
-                      }
-                    }}
-                    disabled={loading} aria-busy={loading}
-                  >
-                    <option value="">— Default —</option>
-                    {(task === 'webui' ? chatProfiles : profiles).map((p: any) => (
-                      <option key={p?.key} value={p?.key}>{decodeHtmlEntities(p?.name || 'Unnamed')}{task === 'webui' ? ` (${decodeHtmlEntities(p?.provider || 'Unknown')})` : ''}</option>
-                    ))}
-                  </Select>
-                </div>
-                );
-              })}
-            </div>
-          </Card>
-        </div>
-      )}
-
-      <Divider>Custom Profiles</Divider>
 
       <SearchFilterBar
         searchValue={searchQuery}
@@ -547,7 +236,7 @@ const LLMProvidersPage: React.FC = () => {
       />
 
       {loading ? (
-        <SkeletonTableLayout rows={6} columns={4} />
+        <div className="flex justify-center py-12"><LoadingSpinner size="lg" /></div>
       ) : profiles.length === 0 ? (
         <EmptyState
           icon={BrainIcon}
@@ -568,55 +257,22 @@ const LLMProvidersPage: React.FC = () => {
           variant="noResults"
         />
       ) : (
-        <>
-          <div className="flex items-center gap-2 mb-2">
-            <Checkbox
-              variant="primary"
-              size="sm"
-              checked={bulk.isAllSelected}
-              onChange={() => bulk.toggleAll(filteredProfileKeys)}
-              aria-label="Select all profiles"
-            />
-            <span className="text-xs text-base-content/60">Select all</span>
-          </div>
-          <BulkActionBar
-            selectedCount={bulk.selectedCount}
-            onClearSelection={bulk.clearSelection}
-            actions={[
-              {
-                key: 'delete',
-                label: 'Delete',
-                icon: <DeleteIcon className="w-4 h-4" />,
-                variant: 'error',
-                onClick: handleBulkDeleteProfiles,
-                loading: bulkDeleting,
-              },
-            ]}
-          />
         <div className="grid grid-cols-1 gap-4">
-          {paginatedProfiles.map((profile) => (
-            <Card key={profile.key} className={`bg-base-100 shadow-sm border transition-all hover:shadow-md cursor-pointer ${drawerProfile?.key === profile.key ? 'border-primary ring-2 ring-primary/20' : 'border-base-200'}`} onClick={() => setDrawerProfile(profile)}>
-              <div>
+          {filteredProfiles.map((profile) => (
+            <Card key={profile.key} className="bg-base-100 shadow-sm border border-base-200 transition-all hover:shadow-md">
+              <div className="card-body p-0">
                 <div className="p-4 flex items-center justify-between cursor-pointer" onClick={() => toggleExpand(profile.key)}>
                   <div className="flex items-center gap-4">
-                    <Checkbox
-                      variant="primary"
-                      size="sm"
-                      checked={bulk.isSelected(profile.key)}
-                      onChange={(e) => { e.stopPropagation(); bulk.toggleItem(profile.key, e as any); }}
-                      onClick={(e) => e.stopPropagation()}
-                      aria-label={`Select ${profile.name}`}
-                    />
                     <div className="p-3 bg-primary/10 text-primary rounded-xl">
                       {getProviderIcon(profile.provider)}
                     </div>
                     <div>
                       <h3 className="font-bold text-lg flex items-center gap-2">
-                        {decodeHtmlEntities(profile.name)}
+                        {profile.name}
                         <span className="text-xs font-normal opacity-50 px-2 py-0.5 bg-base-200 rounded-full font-mono">{profile.key}</span>
                       </h3>
                       <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="secondary" size="sm" style="outline">{profile.provider}</Badge>
+                        <Badge variant="secondary" size="small" style="outline">{profile.provider}</Badge>
                         <Badge
                           variant={
                             normalizeModelType(profile.modelType) === 'embedding'
@@ -625,31 +281,31 @@ const LLMProvidersPage: React.FC = () => {
                                 ? 'info'
                                 : 'neutral'
                           }
-                          size="sm"
+                          size="small"
                         >
                           {normalizeModelType(profile.modelType)}
                         </Badge>
                         {renderLibraryCheck(profile.provider)}
                         {profile.key === defaultChatbotProfile && (
-                          <Badge variant="primary" size="sm">Default Chatbot</Badge>
+                          <Badge variant="primary" size="small">Default Chatbot</Badge>
                         )}
                         {profile.key === webuiIntelligenceProvider && (
-                          <Badge variant="warning" size="sm">WebUI AI</Badge>
+                          <Badge variant="warning" size="small">WebUI AI</Badge>
                         )}
                         {profile.key === defaultEmbeddingProvider && (
-                          <Badge variant="secondary" size="sm">Default Embedding</Badge>
+                          <Badge variant="secondary" size="small">Default Embedding</Badge>
                         )}
                       </div>
                     </div>
                   </div>
                   <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                    <Button size="sm" variant="ghost" onClick={() => handleEditProfile(profile)} aria-label={`Edit ${profile.name} profile`}>
+                    <Button size="sm" variant="ghost" onClick={() => handleEditProfile(profile)}>
                       <EditIcon className="w-4 h-4" />
                     </Button>
-                    <Button size="sm" variant="ghost" className="text-error hover:bg-error/10" onClick={() => handleDeleteProfile(profile.key)} aria-label={`Delete ${profile.name} profile`}>
+                    <Button size="sm" variant="ghost" className="text-error hover:bg-error/10" onClick={() => handleDeleteProfile(profile.key)}>
                       <DeleteIcon className="w-4 h-4" />
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => toggleExpand(profile.key)} aria-label={expandedProfile === profile.key ? 'Collapse details' : 'Expand details'}>
+                    <Button size="sm" variant="ghost" onClick={() => toggleExpand(profile.key)}>
                       {expandedProfile === profile.key ? <CollapseIcon className="w-4 h-4" /> : <ExpandIcon className="w-4 h-4" />}
                     </Button>
                   </div>
@@ -663,7 +319,14 @@ const LLMProvidersPage: React.FC = () => {
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         {Object.entries(profile.config || {}).map(([k, v]) => (
-                          <ConfigKeyValueCard key={k} configKey={k} value={v} />
+                          <div key={k} className="bg-base-100 p-2 rounded border border-base-200/50 flex flex-col">
+                            <span className="font-mono text-[10px] opacity-50 uppercase tracking-wider mb-1">{k}</span>
+                            <span className="font-medium text-sm truncate" title={String(v)}>
+                              {String(k).toLowerCase().includes('key') || String(k).toLowerCase().includes('token') || String(k).toLowerCase().includes('password')
+                                ? '••••••••'
+                                : String(v)}
+                            </span>
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -673,169 +336,13 @@ const LLMProvidersPage: React.FC = () => {
             </Card>
           ))}
         </div>
-        <div className="flex justify-center mt-6">
-          <Pagination
-            currentPage={currentPage}
-            totalItems={filteredProfiles.length}
-            pageSize={pageSize}
-            onPageChange={setCurrentPage}
-            style="standard"
-          />
-        </div>
-        </>
       )}
-
-      {/* Detail Drawer */}
-      <DetailDrawer
-        isOpen={!!drawerProfile}
-        onClose={() => setDrawerProfile(null)}
-        title={drawerProfile?.name || 'Profile Details'}
-        subtitle={drawerProfile?.provider ? `${drawerProfile.provider} provider` : undefined}
-        renderDock={
-          drawerProfile && (
-            <>
-              {isChatCapable(drawerProfile) && drawerProfile.key !== defaultChatbotProfile && (
-                <button
-                  className="text-primary hover:bg-primary/10 transition-colors"
-                  onClick={async () => {
-                    setDefaultChatbotProfile(drawerProfile.key);
-                    await saveGlobal({ defaultChatbotProfile: drawerProfile.key }).catch(() => {});
-                  }}
-                  title="Set as Default Chatbot"
-                >
-                  <ChatIcon className="w-5 h-5" />
-                  <span className="dock-label text-[10px]">Default</span>
-                </button>
-              )}
-              {isEmbeddingCapable(drawerProfile) && drawerProfile.key !== defaultEmbeddingProvider && (
-                <button
-                  className="text-secondary hover:bg-secondary/10 transition-colors"
-                  onClick={async () => {
-                    setDefaultEmbeddingProvider(drawerProfile.key);
-                    await saveLlmConfig({ DEFAULT_EMBEDDING_PROVIDER: drawerProfile.key }).catch(() => {});
-                  }}
-                  title="Set as Default Embedding"
-                >
-                  <CpuIcon className="w-5 h-5" />
-                  <span className="dock-label text-[10px]">Embedding</span>
-                </button>
-              )}
-              <button
-                className="text-info hover:bg-info/10 transition-colors"
-                onClick={() => {
-                  handleEditProfile(drawerProfile);
-                  setDrawerProfile(null);
-                }}
-                title="Edit Profile"
-              >
-                <EditIcon className="w-5 h-5" />
-                <span className="dock-label text-[10px]">Edit</span>
-              </button>
-              <button
-                className="text-error hover:bg-error/10 transition-colors"
-                onClick={() => {
-                  handleDeleteProfile(drawerProfile.key);
-                  setDrawerProfile(null);
-                }}
-                title="Delete Profile"
-              >
-                <DeleteIcon className="w-5 h-5" />
-                <span className="dock-label text-[10px]">Delete</span>
-              </button>
-            </>
-          )
-        }
-      >
-        {drawerProfile && (
-          <div className="space-y-4">
-            {/* Provider info */}
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-primary/10 text-primary rounded-xl">
-                {getProviderIcon(drawerProfile.provider)}
-              </div>
-              <div>
-                <div className="font-bold text-lg">{drawerProfile.name}</div>
-                <span className="text-xs font-mono opacity-50 bg-base-200 px-2 py-0.5 rounded-full">{drawerProfile.key}</span>
-              </div>
-            </div>
-
-            <Divider />
-
-            {/* Type badges */}
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary" size="sm" style="outline">{drawerProfile.provider}</Badge>
-              <Badge
-                variant={
-                  normalizeModelType(drawerProfile.modelType) === 'embedding'
-                    ? 'warning'
-                    : normalizeModelType(drawerProfile.modelType) === 'both'
-                      ? 'info'
-                      : 'neutral'
-                }
-                size="sm"
-              >
-                {normalizeModelType(drawerProfile.modelType)}
-              </Badge>
-              {renderLibraryCheck(drawerProfile.provider)}
-              {drawerProfile.key === defaultChatbotProfile && (
-                <Badge variant="primary" size="sm">Default Chatbot</Badge>
-              )}
-              {drawerProfile.key === webuiIntelligenceProvider && (
-                <Badge variant="warning" size="sm">WebUI AI</Badge>
-              )}
-              {drawerProfile.key === defaultEmbeddingProvider && (
-                <Badge variant="secondary" size="sm">Default Embedding</Badge>
-              )}
-            </div>
-
-            <Divider />
-
-            {/* Configuration details */}
-            <div>
-              <h4 className="text-xs font-bold uppercase opacity-50 mb-3 flex items-center gap-2">
-                <ConfigIcon className="w-3 h-3" /> Model Configuration
-              </h4>
-              <div className="space-y-2">
-                {Object.entries(drawerProfile.config || {}).map(([k, v]) => {
-                  const isSecret = /key|secret|token|password/i.test(k);
-                  return (
-                    <div key={k} className="flex justify-between items-center p-2 bg-base-200/50 rounded text-sm">
-                      <span className="font-medium text-base-content/70">{k}</span>
-                      <span className="font-mono text-xs truncate max-w-[200px]">
-                        {isSecret && v
-                          ? <span className="text-success">Configured <CheckIcon className="w-3 h-3 inline" /></span>
-                          : v === '' || v === null || v === undefined
-                            ? <span className="text-error">Not set <XIcon className="w-3 h-3 inline" /></span>
-                            : String(v)}
-                      </span>
-                    </div>
-                  );
-                })}
-                {Object.keys(drawerProfile.config || {}).length === 0 && (
-                  <p className="text-sm opacity-50 italic">No configuration values set.</p>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      </DetailDrawer>
 
       <ProviderConfigModal
         modalState={{ ...modalState, providerType: 'llm' }}
         existingProviders={profiles}
         onClose={closeModal}
         onSubmit={handleProviderSubmit}
-      />
-
-      <ConfirmModal
-        isOpen={confirmModal.isOpen}
-        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
-        title={confirmModal.title}
-        message={confirmModal.message}
-        onConfirm={confirmModal.onConfirm}
-        confirmVariant="error"
-        confirmText="Delete"
-        cancelText="Cancel"
       />
     </div>
   );

@@ -1,329 +1,286 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { authFetch } from '../../utils/authFetch';
-import { useForm, useWatch } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Alert } from '../DaisyUI/Alert';
-import Button from '../DaisyUI/Button';
+import Badge from '../DaisyUI/Badge';
 import Card from '../DaisyUI/Card';
-import Divider from '../DaisyUI/Divider';
-import { SkeletonList } from '../DaisyUI/Skeleton';
-import Select from '../DaisyUI/Select';
-import FormField from '../DaisyUI/FormField';
-import Toggle from '../DaisyUI/Toggle';
-import { Bot, Link as LinkIcon, Cpu, MessageSquare, Layers, HelpCircle } from 'lucide-react';
+import {
+  Bot,
+  Settings as ConfigIcon,
+  CheckCircle as CheckIcon,
+  XCircle as XIcon,
+  AlertCircle as WarningIcon,
+  Zap as ZapIcon,
+  MessageSquare as ChatIcon,
+  Cpu as CpuIcon,
+  Brain as BrainIcon,
+  ToggleLeft as ToggleOffIcon,
+  ToggleRight as ToggleOnIcon,
+  Link as LinkIcon,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
-import Debug from 'debug';
-import { useSavedStamp } from '../../contexts/SavedStampContext';
-import { useToast } from '../DaisyUI/ToastNotification';
-import { useDemoModeWarning } from '../../hooks/useDemoModeWarning';
-import Tooltip from '../DaisyUI/Tooltip';
-const debug = Debug('app:client:components:Settings:SettingsLLM');
+import { apiService } from '../../services/api';
+import type { LLMProviderType } from '../../types/bot';
+import { LLM_PROVIDER_CONFIGS } from '../../types/bot';
 
-const llmSettingsSchema = z.object({
-    defaultLlm: z.string().optional(),
-    defaultChatbotProfile: z.string().optional(),
-    defaultEmbeddingProvider: z.string().optional(),
-    perUseCaseEnabled: z.boolean().optional(),
-    webuiIntelligenceProvider: z.string().optional(),
-    taskProfiles: z.record(z.string()).optional()
-});
+type LlmModelType = 'chat' | 'embedding' | 'both';
 
-type LLMConfig = z.infer<typeof llmSettingsSchema>;
+const normalizeModelType = (value: unknown): LlmModelType => {
+  if (value === 'embedding' || value === 'both') return value;
+  return 'chat';
+};
 
-const defaultValues: LLMConfig = {
-    defaultLlm: '',
-    defaultChatbotProfile: '',
-    defaultEmbeddingProvider: '',
-    perUseCaseEnabled: false,
-    webuiIntelligenceProvider: '',
-    taskProfiles: {}
+const isChatCapable = (profile: any): boolean => {
+  const t = normalizeModelType(profile?.modelType);
+  return t === 'chat' || t === 'both';
+};
+
+const isEmbeddingCapable = (profile: any): boolean => {
+  const t = normalizeModelType(profile?.modelType);
+  return t === 'embedding' || t === 'both';
 };
 
 const SettingsLLM: React.FC = () => {
-    const {
-        register,
-        handleSubmit,
-        reset,
-        control,
-        formState: { errors },
-    } = useForm<LLMConfig>({
-        resolver: zodResolver(llmSettingsSchema),
-        defaultValues,
-    });
+  const [profiles, setProfiles] = useState<any[]>([]);
+  const [defaultStatus, setDefaultStatus] = useState<any>(null);
+  const [webuiIntelligenceProvider, setWebuiIntelligenceProvider] = useState<string>('');
+  const [defaultChatbotProfile, setDefaultChatbotProfile] = useState<string>('');
+  const [defaultEmbeddingProvider, setDefaultEmbeddingProvider] = useState<string>('');
+  const [perUseCaseEnabled, setPerUseCaseEnabled] = useState<boolean>(false);
+  const [loading, setLoading] = useState(true);
+  const [alert, setAlert] = useState<{ type: 'success' | 'error' | 'warning'; message: string } | null>(null);
 
-    const perUseCaseEnabled = useWatch({ control, name: 'perUseCaseEnabled' });
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [profilesResult, statusResult, globalResult] = await Promise.allSettled([
+        apiService.get('/api/config/llm-profiles'),
+        apiService.get('/api/config/llm-status'),
+        apiService.get('/api/config/global'),
+      ]);
+      const profilesRes = profilesResult.status === 'fulfilled' ? profilesResult.value : {};
+      const statusRes = statusResult.status === 'fulfilled' ? statusResult.value : {};
+      const globalRes = globalResult.status === 'fulfilled' ? globalResult.value : {};
 
-    const [providers, setProviders] = useState<Array<{ value: string; label: string }>>([]);
-    const [profiles, setProfiles] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [isSaving, setIsSaving] = useState(false);
-    const [alert, setAlert] = useState<{ type: 'success' | 'error' | 'warning'; message: string } | null>(null);
-    const { showStamp } = useSavedStamp();
-    const { addToast } = useToast();
-    const warnIfDemo = useDemoModeWarning(addToast);
+      setProfiles((profilesRes as any).llm || (profilesRes as any).profiles?.llm || []);
+      setDefaultStatus(statusRes);
 
-    const fetchSettingsAndProviders = useCallback(async () => {
-        try {
-            setLoading(true);
-
-            // Fetch global config to get the default LLM
-            const configRes = await authFetch('/api/config/global');
-            const configData = await configRes.json();
-            const rawConfig = configData;
-            const llmData = rawConfig?.llm?.values ?? rawConfig;
-            const gs = rawConfig?._userSettings?.values || {};
-
-            const currentDefault = llmData.LLM_PROVIDER || '';
-            reset({ 
-                defaultLlm: currentDefault,
-                defaultChatbotProfile: gs.defaultChatbotProfile || '',
-                defaultEmbeddingProvider: llmData.DEFAULT_EMBEDDING_PROVIDER || gs.defaultEmbeddingProvider || '',
-                perUseCaseEnabled: !!gs.perUseCaseEnabled,
-                webuiIntelligenceProvider: gs.webuiIntelligenceProvider || '',
-                taskProfiles: gs.taskProfiles || {}
-            });
-
-            // Fetch available LLM providers from the API
-            const providersRes = await authFetch('/api/admin/llm-providers');
-            const providersData = await providersRes.json();
-            const availableProviders = Array.isArray(providersData?.providers) ? providersData.providers : (Array.isArray(providersData) ? providersData : []);
-            const options = availableProviders.map((p: any) => ({
-                value: p.key,
-                label: p.label,
-            }));
-            setProviders(options);
-
-            // Fetch available LLM profiles from the API
-            const profilesRes = await authFetch('/api/config/llm-profiles');
-            const profilesData = await profilesRes.json();
-            const availableProfiles = Array.isArray(profilesData?.llm) ? profilesData.llm : (Array.isArray(profilesData?.profiles?.llm) ? profilesData.profiles.llm : (Array.isArray(profilesData) ? profilesData : []));
-            setProfiles(availableProfiles);
-
-        } catch (err) {
-            debug('ERROR:', 'Failed to load LLM settings:', err);
-            setAlert({
-                type: 'warning',
-                message: 'Could not load LLM settings or providers. Using defaults.',
-            });
-        } finally {
-            setLoading(false);
-        }
-    }, [reset]);
-
-    useEffect(() => {
-        fetchSettingsAndProviders();
-    }, [fetchSettingsAndProviders]);
-
-    const onSubmit = async (values: LLMConfig) => {
-        if (await warnIfDemo()) return;
-        setIsSaving(true);
-        try {
-            // Clean up taskProfiles
-            const cleanTaskProfiles = { ...values.taskProfiles };
-            Object.keys(cleanTaskProfiles).forEach(k => {
-                if (!cleanTaskProfiles[k]) delete cleanTaskProfiles[k];
-            });
-
-            await authFetch('/api/config/global', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    llm: { 
-                        LLM_PROVIDER: values.defaultLlm || undefined,
-                        DEFAULT_EMBEDDING_PROVIDER: values.defaultEmbeddingProvider || undefined
-                    },
-                    defaultChatbotProfile: values.defaultChatbotProfile || undefined,
-                    perUseCaseEnabled: values.perUseCaseEnabled,
-                    webuiIntelligenceProvider: values.webuiIntelligenceProvider || undefined,
-                    taskProfiles: cleanTaskProfiles
-                }),
-            });
-
-            setAlert({ type: 'success', message: 'LLM settings saved successfully!' });
-            showStamp();
-            setTimeout(() => setAlert(null), 5000);
-        } catch (err) {
-            debug('ERROR:', 'Save failed:', err);
-            setAlert({
-                type: 'error',
-                message: 'Failed to save LLM settings. Please try again.',
-            });
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    if (loading) {
-        return (
-            <div className="py-6 px-4">
-                <SkeletonList items={4} />
-            </div>
-        );
+      const gs = (globalRes as any)._userSettings?.values || {};
+      const llmValues = (globalRes as any).llm?.values || {};
+      setWebuiIntelligenceProvider(gs.webuiIntelligenceProvider || '');
+      setDefaultChatbotProfile(gs.defaultChatbotProfile || '');
+      setDefaultEmbeddingProvider(llmValues.DEFAULT_EMBEDDING_PROVIDER || gs.defaultEmbeddingProfile || '');
+      setPerUseCaseEnabled(!!gs.perUseCaseEnabled);
+    } catch (err: any) {
+      console.error('Failed to load LLM settings:', err);
+      setAlert({ type: 'warning', message: 'Could not load LLM settings. Using defaults.' });
+    } finally {
+      setLoading(false);
     }
+  }, []);
 
-    const decodeHtmlEntities = (text: string): string => {
-        const textarea = document.createElement('textarea');
-        textarea.innerHTML = text;
-        return textarea.value;
-    };
-    const normalizeModelType = (value: unknown): string => {
-        if (value === 'embedding' || value === 'both') return value;
-        return 'chat';
-    };
-    const isChatCapable = (p: any): boolean => {
-        const mt = normalizeModelType(p?.modelType);
-        return mt === 'chat' || mt === 'both';
-    };
-    const isEmbeddingCapable = (p: any): boolean => {
-        const mt = normalizeModelType(p?.modelType);
-        return mt === 'embedding' || mt === 'both';
-    };
+  useEffect(() => { fetchData(); }, [fetchData]);
 
+  const saveGlobal = async (patch: Record<string, any>) => {
+    await apiService.put('/api/config/global', patch);
+  };
+
+  const saveLlmConfig = async (patch: Record<string, any>) => {
+    await apiService.put('/api/config/global', {
+      configName: 'llm',
+      updates: patch,
+    });
+  };
+
+  const getProviderIcon = (type: string) => {
+    const config = LLM_PROVIDER_CONFIGS[type as LLMProviderType];
+    return config?.icon || <BrainIcon className="w-5 h-5" />;
+  };
+
+  const chatProfiles = useMemo(() => profiles.filter(isChatCapable), [profiles]);
+  const embeddingProfiles = useMemo(() => profiles.filter(isEmbeddingCapable), [profiles]);
+
+  if (loading) {
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="flex items-center gap-3 mb-4">
-                <Bot className="w-5 h-5 text-primary" />
-                <div>
-                    <h5 className="text-lg font-bold">LLM Configuration</h5>
-                    <p className="text-sm text-base-content/70">Configure the default Large Language Model for AI actions</p>
-                </div>
-            </div>
-
-            {alert && (
-                <Alert
-                    status={alert.type === "success" ? "success" : alert.type === "warning" ? "warning" : "error"}
-                    message={alert.message}
-                    onClose={() => setAlert(null)}
-                />
-            )}
-
-            <Card className="bg-base-200/50 p-4">
-                <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
-                    <span className="w-2 h-2 bg-primary rounded-full"></span>
-                    System Default Fallbacks
-                </h6>
-
-                <div className="max-w-md mb-4">
-                    <FormField label="Default LLM Plugin" hint="Select an LLM plugin from your configured providers to act as the global fallback engine.">
-                        <Select
-                            {...register("defaultLlm")}
-                            className="w-full"
-                        >
-                            <option value="">None selected</option>
-                            {providers.map((p) => (
-                                <option key={p.value} value={p.value}>
-                                    {p.label}
-                                </option>
-                            ))}
-                        </Select>
-                    </FormField>
-                </div>
-            </Card>
-
-            <Card className="bg-base-200/50 p-4">
-                <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4 text-primary" />
-                    Routing Defaults
-                </h6>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <FormField label="Default Chatbot Profile" hint="Profile used for all bot chat responses when per-use-case mode is off.">
-                        <Select {...register("defaultChatbotProfile")} className="w-full">
-                            <option value="">Use System Default</option>
-                            {profiles.filter(isChatCapable).map((p) => (
-                                <option key={p?.key} value={p?.key}>{decodeHtmlEntities(p?.name || "Unnamed")} ({decodeHtmlEntities(p?.provider || "Unknown")})</option>
-                            ))}
-                        </Select>
-                    </FormField>
-
-                    <FormField label="Default Embedding Provider" hint="Profile used by memory and semantic search features when embeddings are needed.">
-                        <Select {...register("defaultEmbeddingProvider")} className="w-full">
-                            <option value="">None Selected</option>
-                            {profiles.filter(isEmbeddingCapable).map((p) => (
-                                <option key={p?.key} value={p?.key}>{decodeHtmlEntities(p?.name || "Unnamed")} ({decodeHtmlEntities(p?.provider || "Unknown")})</option>
-                            ))}
-                        </Select>
-                    </FormField>
-                </div>
-
-                <Divider />
-
-                <div className="flex flex-row items-center justify-between mb-4">
-                    <div>
-                        <h3 className="font-bold flex items-center gap-2">
-                            <Layers className="w-4 h-4 text-primary" />
-                            Per-Use-Case LLM Profiles
-                        </h3>
-                        <p className="text-xs opacity-60 mt-0.5">
-                            When enabled, assign different profiles to summarisation, moderation, and other tasks independently.
-                        </p>
-                    </div>
-                    <Toggle
-                        color="primary"
-                        checked={!!perUseCaseEnabled}
-                        {...register("perUseCaseEnabled")}
-                    />
-                </div>
-
-                {perUseCaseEnabled && (
-                    <div className="space-y-4 mt-4 bg-base-100 p-4 rounded-xl border border-base-300">
-                        <h3 className="font-bold text-sm">Task Profile Assignments</h3>
-                        <p className="text-xs opacity-60 mb-2">Assign a profile to each task. Tasks without a profile will use the default provider.</p>
-                        
-                        {(["semantic", "summary", "followup", "idle", "webui"] as const).map((task) => {
-                            const taskHelp: Record<string, string> = {
-                                semantic: "Evaluates message relevance and determines if the bot should respond based on context.",
-                                summary: "Generates conversation summaries for context windows and memory management.",
-                                followup: "Crafts natural follow-up responses when the bot stays engaged in a conversation.",
-                                idle: "Generates unprompted messages when the bot decides to speak during quiet periods.",
-                                webui: "Powers AI-assisted features in the admin dashboard (e.g. generating bot names, descriptions).",
-                            };
-                            
-                            const fieldName = task === "webui" ? "webuiIntelligenceProvider" : "taskProfiles." + task;
-                            
-                            return (
-                                <div key={task} className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-2">
-                                    <label className="w-40 text-sm capitalize flex items-center gap-1 font-medium">
-                                        {task === "webui" ? "WebUI AI" : task}
-                                        <Tooltip content={taskHelp[task]} position="right">
-                                            <HelpCircle className="w-3.5 h-3.5 opacity-40 hover:opacity-80 cursor-help" />
-                                        </Tooltip>
-                                    </label>
-                                    <Select
-                                        {...register(fieldName as any)}
-                                        className="flex-1"
-                                        size="sm"
-                                    >
-                                        <option value="">— Default —</option>
-                                        {(task === "webui" ? profiles.filter(isChatCapable) : profiles).map((p: any) => (
-                                            <option key={p?.key} value={p?.key}>
-                                                {decodeHtmlEntities(p?.name || "Unnamed")} {task === "webui" ? "(" + decodeHtmlEntities(p?.provider || "Unknown") + ")" : ""}
-                                            </option>
-                                        ))}
-                                    </Select>
-                                </div>
-                            );
-                        })}
-                    </div>
-                )}
-            </Card>
-
-            <div className="flex justify-between items-center pt-4">
-                <Link to="/admin/providers/llm" className="btn btn-sm btn-ghost gap-2 text-primary">
-                    <LinkIcon className="w-4 h-4" />
-                    Manage LLM Profiles
-                </Link>
-                <Button
-                    type="submit"
-                    variant="primary"
-                    loading={isSaving}
-                >
-                    {isSaving ? "Saving..." : "Save Settings"}
-                </Button>
-            </div>
-        </form>
+      <div className="flex items-center justify-center py-12">
+        <span className="loading loading-spinner loading-lg" aria-hidden="true"></span>
+      </div>
     );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3 mb-4">
+        <Bot className="w-5 h-5 text-primary" />
+        <div>
+          <h5 className="text-lg font-bold">LLM Configuration</h5>
+          <p className="text-sm text-base-content/70">
+            Configure default providers, profiles, and per-use-case assignments for your AI features.
+          </p>
+        </div>
+      </div>
+
+      {alert && (
+        <Alert
+          status={alert.type === 'success' ? 'success' : alert.type === 'warning' ? 'warning' : 'error'}
+          message={alert.message}
+          onClose={() => setAlert(null)}
+        />
+      )}
+
+      {/* Use-case assignment cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+        {/* 1. System Default (env-var fallback) */}
+        <Card className={`bg-base-100 shadow-sm border ${defaultStatus?.configured ? 'border-success/20' : 'border-warning/20'}`}>
+          <div className="card-body p-5">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="font-bold flex items-center gap-2">
+                <ConfigIcon className="w-4 h-4" /> System Default
+              </h3>
+              {defaultStatus?.configured
+                ? <Badge variant="success" size="small">Active</Badge>
+                : <Badge variant="warning" size="small">Not Set</Badge>}
+            </div>
+            <p className="text-xs opacity-60 mb-3">
+              Fallback loaded from environment variables. Used when no profile is assigned.
+            </p>
+            {defaultStatus?.providers?.map((p: any) => (
+              <div key={p.id} className="flex items-center gap-2 p-2 bg-base-200/50 rounded text-sm">
+                {getProviderIcon(p.type)}
+                <span className="font-medium">{p.name}</span>
+                <Badge variant="neutral" size="small" className="ml-auto">Read-Only</Badge>
+              </div>
+            ))}
+            {(!defaultStatus?.providers?.length) && (
+              <div className="alert alert-warning text-xs p-2">
+                <WarningIcon className="w-4 h-4" />
+                <span>No default provider in .env. Bots without a profile will fail.</span>
+              </div>
+            )}
+          </div>
+        </Card>
+
+        {/* 2. Default Chatbot LLM Profile */}
+        <Card className="bg-base-100 shadow-sm border border-base-200">
+          <div className="card-body p-5">
+            <h3 className="font-bold flex items-center gap-2 mb-1">
+              <ChatIcon className="w-4 h-4 text-primary" /> Default Chatbot Profile
+            </h3>
+            <p className="text-xs opacity-60 mb-3">
+              Profile used for all bot chat responses when per-use-case mode is off.
+            </p>
+            <div className="form-control w-full">
+              <select
+                className="select select-bordered select-sm w-full"
+                value={defaultChatbotProfile}
+                onChange={async (e) => {
+                  setDefaultChatbotProfile(e.target.value);
+                  await saveGlobal({ defaultChatbotProfile: e.target.value }).catch(() => {});
+                }}
+                disabled={loading} aria-busy={loading}
+              >
+                <option value="">Use System Default</option>
+                {chatProfiles.map((p) => (
+                  <option key={p.key} value={p.key}>{p.name} ({p.provider})</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </Card>
+
+        {/* 3. WebUI Intelligence */}
+        <Card className="bg-base-100 shadow-sm border border-base-200">
+          <div className="card-body p-5">
+            <h3 className="font-bold flex items-center gap-2 mb-1">
+              <ZapIcon className="w-4 h-4 text-warning" /> WebUI Intelligence
+            </h3>
+            <p className="text-xs opacity-60 mb-3">
+              Powers AI assistance features inside the WebUI (e.g. generating bot names).
+            </p>
+            <div className="form-control w-full">
+              <select
+                className="select select-bordered select-sm w-full"
+                value={webuiIntelligenceProvider}
+                onChange={async (e) => {
+                  setWebuiIntelligenceProvider(e.target.value);
+                  await saveGlobal({ webuiIntelligenceProvider: e.target.value }).catch(() => {});
+                }}
+                disabled={loading} aria-busy={loading}
+              >
+                <option value="">None (Disabled)</option>
+                {chatProfiles.map((p) => (
+                  <option key={p.key} value={p.key}>{p.name} ({p.provider})</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </Card>
+
+        {/* 4. Default Embedding Provider */}
+        <Card className="bg-base-100 shadow-sm border border-base-200">
+          <div className="card-body p-5">
+            <h3 className="font-bold flex items-center gap-2 mb-1">
+              <CpuIcon className="w-4 h-4 text-secondary" /> Default Embedding Provider
+            </h3>
+            <p className="text-xs opacity-60 mb-3">
+              Embedding-capable provider/profile used by memory and semantic search features.
+            </p>
+            <div className="form-control w-full">
+              <select
+                className="select select-bordered select-sm w-full"
+                value={defaultEmbeddingProvider}
+                onChange={async (e) => {
+                  setDefaultEmbeddingProvider(e.target.value);
+                  await saveLlmConfig({ DEFAULT_EMBEDDING_PROVIDER: e.target.value }).catch(() => {});
+                }}
+                disabled={loading} aria-busy={loading}
+              >
+                <option value="">None Selected</option>
+                {embeddingProfiles.map((p) => (
+                  <option key={p.key} value={p.key}>{p.name} ({p.provider})</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Per-use-case toggle */}
+      <Card className="bg-base-100 shadow-sm border border-base-200">
+        <div className="card-body p-5 flex flex-row items-center justify-between">
+          <div>
+            <h3 className="font-bold flex items-center gap-2">
+              {perUseCaseEnabled
+                ? <ToggleOnIcon className="w-5 h-5 text-primary" />
+                : <ToggleOffIcon className="w-5 h-5 opacity-40" />}
+              Per-Use-Case LLM Profiles
+            </h3>
+            <p className="text-xs opacity-60 mt-0.5">
+              When enabled, assign different profiles to summarisation, moderation, and other tasks independently.
+            </p>
+          </div>
+          <input
+            type="checkbox"
+            className="toggle toggle-primary"
+            checked={perUseCaseEnabled}
+            onChange={async (e) => {
+              setPerUseCaseEnabled(e.target.checked);
+              await saveGlobal({ perUseCaseEnabled: e.target.checked }).catch(() => {});
+            }}
+          />
+        </div>
+      </Card>
+
+      {/* Link to full LLM Providers page for creating / editing profiles */}
+      <div className="flex justify-between items-center text-sm pt-2">
+        <span className="text-base-content/70">Need to create or manage custom LLM profiles?</span>
+        <Link to="/admin/providers/llm" className="btn btn-sm btn-ghost gap-2 text-primary">
+          <LinkIcon className="w-4 h-4" />
+          Go to LLM Providers
+        </Link>
+      </div>
+    </div>
+  );
 };
 
 export default SettingsLLM;
