@@ -77,13 +77,14 @@ const CommaSeparatedInput = ({
           <Badge key={val} variant="primary" className="gap-1 p-3">
             {val}
             {!disabled && (
-              <button
-                type="button"
-                className="btn btn-ghost btn-xs btn-circle h-4 w-4 min-h-0"
+              <Button
+                variant="ghost"
+                size="xs"
+                className="btn-circle h-4 w-4 min-h-0"
                 onClick={() => removeValue(val)}
               >
                 ✕
-              </button>
+              </Button>
             )}
           </Badge>
         ))}
@@ -527,7 +528,7 @@ const GuardsPage: React.FC = () => {
               <div className="flex justify-end gap-2 mt-auto">
                 <Button
                   size="sm"
-                  variant="ghost"
+                  variant="outline"
                   onClick={(e) => { e.stopPropagation(); handleDuplicate(profile); }}
                   title="Duplicate Profile"
                   aria-label="Duplicate profile"
@@ -536,7 +537,7 @@ const GuardsPage: React.FC = () => {
                 </Button>
                 <Button
                   size="sm"
-                  variant="ghost"
+                  variant="outline"
                   onClick={(e) => { e.stopPropagation(); setEditingProfile(profile); }}
                   title="Edit Profile"
                 >
@@ -544,7 +545,7 @@ const GuardsPage: React.FC = () => {
                 </Button>
                 <Button
                   size="sm"
-                  variant="ghost"
+                  variant="outline"
                   color="error"
                   onClick={(e) => { e.stopPropagation(); setDeleteConfirm(profile); }}
                   title="Delete Profile"

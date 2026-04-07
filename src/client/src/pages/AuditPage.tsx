@@ -7,6 +7,7 @@ import {
   ExclamationCircleIcon,
   ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
+import Button from '../components/DaisyUI/Button';
 
 interface AuditEvent {
   id: string;
@@ -79,29 +80,29 @@ const AuditPage: React.FC = () => {
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Audit Log</h1>
-        <button
-          className="btn btn-outline"
+        <Button
+          buttonStyle="outline"
           onClick={fetchAuditEvents}
           disabled={loading}
-          aria-busy={loading}
           aria-label="Refresh audit logs"
         >
           <ArrowPathIcon className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : ''}`} />
           Refresh
-        </button>
+        </Button>
       </div>
 
       {error && (
         <div className="alert alert-error mb-4">
           <ExclamationCircleIcon className="w-6 h-6" />
           <span>{error}</span>
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setError(null)}
-            className="btn btn-sm btn-ghost"
             aria-label="Close error message"
           >
             ✕
-          </button>
+          </Button>
         </div>
       )}
 
@@ -138,8 +139,9 @@ const AuditPage: React.FC = () => {
           <option value="failure">Failure</option>
           <option value="warning">Warning</option>
         </select>
-        <button
-          className="btn btn-sm btn-outline"
+        <Button
+          buttonStyle="outline"
+          size="sm"
           onClick={() => {
             setSearchTerm('');
             setActionFilter('all');
@@ -149,7 +151,7 @@ const AuditPage: React.FC = () => {
           aria-label="Clear audit filters"
         >
           <FunnelIcon className="w-4 h-4 mr-1" /> Clear Filters
-        </button>
+        </Button>
       </div>
 
       {/* Content */}

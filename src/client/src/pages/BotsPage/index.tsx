@@ -209,7 +209,7 @@ const BotsPage: React.FC = () => {
             </Tooltip>
             <Tooltip content="Refresh list">
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={fetchBots}
                 className="btn-square"

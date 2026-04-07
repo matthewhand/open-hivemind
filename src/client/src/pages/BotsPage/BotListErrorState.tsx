@@ -26,7 +26,7 @@ export const BotListErrorState: React.FC<BotListErrorStateProps> = ({
       <Alert status="error" className="shadow-sm mb-4">
         <AlertCircle className="w-5 h-5" />
         <span>{error}</span>
-        <Button variant="ghost" size="xs" onClick={fetchBots}>Try Again</Button>
+        <Button variant="outline" size="xs" onClick={fetchBots}>Try Again</Button>
       </Alert>
     );
   }

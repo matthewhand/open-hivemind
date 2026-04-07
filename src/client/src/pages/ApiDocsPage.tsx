@@ -11,6 +11,7 @@ import Textarea from '../components/DaisyUI/Textarea';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import Accordion from '../components/DaisyUI/Accordion';
 import { Code as CodeBracketIcon } from 'lucide-react';
+import Button from '../components/DaisyUI/Button';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -205,14 +206,15 @@ const TryItPanel: React.FC<{ route: RouteInfo }> = ({ route }) => {
           />
         </div>
       )}
-      <button
-        className="btn btn-sm btn-primary"
+      <Button
+        variant="primary"
+        size="sm"
         onClick={send}
         disabled={loading}
       >
         {loading && <LoadingSpinner />}
         {loading ? 'Sending...' : 'Send Request'}
-      </button>
+      </Button>
       {response !== null && (
         <div className="mt-4">
           <div className="flex items-center gap-2 mb-2">

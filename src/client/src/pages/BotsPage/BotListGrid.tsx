@@ -1,6 +1,7 @@
 import React from 'react';
 import { GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
 import BotCard from '../../components/BotManagement/BotCard';
+import Button from '../../components/DaisyUI/Button';
 import type { BotConfig } from '../../types/bot';
 import Checkbox from '../../components/DaisyUI/Checkbox';
 
@@ -65,22 +66,26 @@ export const BotListGrid: React.FC<BotListGridProps> = ({
             />
             {isMobile ? (
               <span className="flex flex-col">
-                <button
-                  className="btn btn-ghost btn-xs btn-square p-0"
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  className="btn-square p-0"
                   onClick={() => onBotMoveUp(index)}
                   disabled={index === 0}
                   aria-label="Move up"
                 >
                   <ChevronUp className="w-3 h-3" />
-                </button>
-                <button
-                  className="btn btn-ghost btn-xs btn-square p-0"
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  className="btn-square p-0"
                   onClick={() => onBotMoveDown(index)}
                   disabled={index === filteredBots.length - 1}
                   aria-label="Move down"
                 >
                   <ChevronDown className="w-3 h-3" />
-                </button>
+                </Button>
               </span>
             ) : (
               <span

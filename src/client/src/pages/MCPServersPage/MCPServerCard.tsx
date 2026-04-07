@@ -12,6 +12,7 @@ import {
   Wrench,
 } from 'lucide-react';
 import Card from '../../components/DaisyUI/Card';
+import Button from '../../components/DaisyUI/Button';
 
 // Types simplified for this component
 interface MCPServer {
@@ -87,12 +88,14 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = ({
               <strong>Tools:</strong> {server.toolCount}
             </p>
             {server.toolCount > 0 && (server.status === 'running' || server.tools?.length) && (
-              <button
-                className="btn btn-xs btn-ghost text-primary"
+              <Button
+                variant="outline"
+                size="xs"
+                className="text-primary"
                 onClick={() => handleViewTools(server)}
               >
                 View Tools
-              </button>
+              </Button>
             )}
           </div>
           {server.lastConnected && (
@@ -106,18 +109,22 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = ({
           <div className="flex gap-1">
             {server.status === 'running' ? (
               <Tooltip content="Disconnect">
-                <button
-                  className="btn btn-ghost btn-sm btn-circle text-error"
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="btn-circle text-error"
                   aria-label={`Disconnect ${server.name}`}
                   onClick={() => handleServerAction(server.id, 'stop')}
                 >
                   <Square className="w-5 h-5" />
-                </button>
+                </Button>
               </Tooltip>
             ) : (
               <Tooltip content={server.status === 'stopped' ? 'Connect' : 'Retry Connection'}>
-                <button
-                  className="btn btn-ghost btn-sm btn-circle text-success"
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="btn-circle text-success"
                   aria-label={
                     server.status === 'stopped'
                       ? `Connect ${server.name}`
@@ -130,39 +137,45 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = ({
                   ) : (
                     <Play className="w-5 h-5" />
                   )}
-                </button>
+                </Button>
               </Tooltip>
             )}
             {server.toolCount > 0 && (
               <Tooltip content="View Tools">
-                <button
-                  className="btn btn-ghost btn-sm btn-circle"
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="btn-circle"
                   aria-label={`View Tools for ${server.name}`}
                   onClick={() => handleViewTools(server)}
                 >
                   <Wrench className="w-5 h-5" />
-                </button>
+                </Button>
               </Tooltip>
             )}
           </div>
           <div className="flex gap-1">
             <Tooltip content="Edit Configuration">
-              <button
-                className="btn btn-ghost btn-sm btn-circle"
+              <Button
+                variant="outline"
+                size="sm"
+                className="btn-circle"
                 aria-label={`Edit ${server.name}`}
                 onClick={() => handleEditServer(server)}
               >
                 <Pencil className="w-4 h-4" />
-              </button>
+              </Button>
             </Tooltip>
             <Tooltip content="Delete Server">
-              <button
-                className="btn btn-ghost btn-sm btn-circle text-error hover:bg-error hover:text-error-content"
+              <Button
+                variant="outline"
+                size="sm"
+                className="btn-circle text-error hover:bg-error hover:text-error-content"
                 aria-label={`Delete ${server.name}`}
                 onClick={() => handleDeleteServer(server.id)}
               >
                 <Trash2 className="w-4 h-4" />
-              </button>
+              </Button>
             </Tooltip>
           </div>
         </Card.Actions>

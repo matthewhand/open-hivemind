@@ -347,14 +347,14 @@ const ImportExportPage: React.FC = () => {
             </div>
 
             <Card.Actions className="mt-6">
-              <button
-                className="btn btn-primary"
+              <Button
+                variant="primary"
                 onClick={() => setShowExportModal(true)}
                 disabled={botsLoading}
               >
                 <Download className="w-4 h-4" />
                 Select Configurations to Export
-              </button>
+              </Button>
             </Card.Actions>
         </Card>
 
@@ -376,13 +376,15 @@ const ImportExportPage: React.FC = () => {
 
             {selectedFile && (
               <div className="mt-4">
-                <button
-                  className="btn btn-outline btn-sm mb-4"
+                <Button
+                  buttonStyle="outline"
+                  size="sm"
+                  className="mb-4"
                   onClick={() => setShowImportModal(true)}
                 >
                   <Settings className="w-4 h-4" />
                   Import Options
-                </button>
+                </Button>
 
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm">
@@ -412,15 +414,18 @@ const ImportExportPage: React.FC = () => {
                 </div>
 
                 <div className="flex gap-2 mt-4">
-                  <button
-                    className="btn btn-outline btn-sm flex-1"
+                  <Button
+                    buttonStyle="outline"
+                    size="sm"
+                    className="flex-1"
                     onClick={handleValidate}
                   >
                     <CheckCircle className="w-4 h-4" />
                     Validate
-                  </button>
-                  <button
-                    className="btn btn-primary flex-1"
+                  </Button>
+                  <Button
+                    variant="primary"
+                    className="flex-1"
                     onClick={handleImport}
                     disabled={isImporting}
                   >
@@ -435,7 +440,7 @@ const ImportExportPage: React.FC = () => {
                         Import
                       </>
                     )}
-                  </button>
+                  </Button>
                 </div>
 
                 {isImporting && importProgress > 0 && (

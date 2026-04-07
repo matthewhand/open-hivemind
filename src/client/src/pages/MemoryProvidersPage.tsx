@@ -265,10 +265,10 @@ const MemoryProvidersPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-end mb-4">
         <div className="flex gap-2">
-          <Button variant="ghost" onClick={fetchHealth} disabled={healthLoading} aria-busy={healthLoading}>
+          <Button variant="outline" onClick={fetchHealth} disabled={healthLoading} aria-busy={healthLoading}>
             <HealthIcon className={`w-4 h-4 ${healthLoading ? 'animate-pulse' : ''}`} /> Health
           </Button>
-          <Button variant="ghost" onClick={fetchProfiles} disabled={loading} aria-busy={loading}>
+          <Button variant="outline" onClick={fetchProfiles} disabled={loading} aria-busy={loading}>
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
           </Button>
           <Button variant="primary" onClick={handleAddProfile}>
@@ -337,8 +337,8 @@ const MemoryProvidersPage: React.FC = () => {
                         <TestIcon className="w-4 h-4" />
                         <span className="ml-1 text-xs">Test</span>
                       </Button>
-                      <Button size="sm" variant="ghost" onClick={() => handleEditProfile(profile)} aria-label={`Edit ${profile.name} profile`}><EditIcon className="w-4 h-4" /></Button>
-                      <Button size="sm" variant="ghost" className="text-error hover:bg-error/10" onClick={() => handleDeleteProfile(profile.key)} aria-label={`Delete ${profile.name} profile`}><DeleteIcon className="w-4 h-4" /></Button>
+                      <Button size="sm" variant="outline" onClick={() => handleEditProfile(profile)} aria-label={`Edit ${profile.name} profile`}><EditIcon className="w-4 h-4" /></Button>
+                      <Button size="sm" variant="outline" className="text-error hover:bg-error/10" onClick={() => handleDeleteProfile(profile.key)} aria-label={`Delete ${profile.name} profile`}><DeleteIcon className="w-4 h-4" /></Button>
                       <Button size="sm" variant="ghost" onClick={() => toggleExpand(profile.key)} aria-label={expandedProfile === profile.key ? 'Collapse details' : 'Expand details'}>
                         {expandedProfile === profile.key ? <CollapseIcon className="w-4 h-4" /> : <ExpandIcon className="w-4 h-4" />}
                       </Button>

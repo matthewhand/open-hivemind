@@ -352,13 +352,15 @@ const ExportPage: React.FC = () => {
       )}
 
       <div ref={statsRef} className="relative">
-        <button
-          className="btn btn-sm btn-ghost absolute top-0 right-0 z-10"
+        <Button
+          variant="ghost"
+          size="sm"
+          className="absolute top-0 right-0 z-10"
           onClick={handleDownloadStatsImage}
           title="Download stats as image"
         >
           <DownloadIcon className="w-4 h-4" /> Save as Image
-        </button>
+        </Button>
         <StatsCards stats={stats} isLoading={loading && backups.length === 0} />
       </div>
 

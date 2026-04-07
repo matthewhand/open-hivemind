@@ -198,7 +198,7 @@ const LLMProvidersPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-end mb-4">
         <div className="flex gap-2">
-          <Button variant="ghost" onClick={fetchProfiles} disabled={loading} aria-busy={loading}>
+          <Button variant="outline" onClick={fetchProfiles} disabled={loading} aria-busy={loading}>
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
           </Button>
           <Button variant="primary" onClick={handleAddProfile}>
@@ -293,10 +293,10 @@ const LLMProvidersPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                    <Button size="sm" variant="ghost" onClick={() => handleEditProfile(profile)}>
+                    <Button size="sm" variant="outline" onClick={() => handleEditProfile(profile)}>
                       <EditIcon className="w-4 h-4" />
                     </Button>
-                    <Button size="sm" variant="ghost" className="text-error hover:bg-error/10" onClick={() => handleDeleteProfile(profile.key)}>
+                    <Button size="sm" variant="outline" className="text-error hover:bg-error/10" onClick={() => handleDeleteProfile(profile.key)}>
                       <DeleteIcon className="w-4 h-4" />
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => toggleExpand(profile.key)}>

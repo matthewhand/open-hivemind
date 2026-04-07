@@ -191,9 +191,9 @@ const MarketplacePage: React.FC = () => {
             <AlertIcon className="w-5 h-5" />
           )}
           <span>{actionMessage.text}</span>
-          <button className="btn btn-ghost btn-xs" onClick={() => setActionMessage(null)}>
+          <Button variant="ghost" size="xs" onClick={() => setActionMessage(null)}>
             <CloseIcon className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
       )}
 
@@ -212,7 +212,7 @@ const MarketplacePage: React.FC = () => {
         <div className="alert alert-error mb-4">
           <AlertIcon className="w-5 h-5" />
           <span>{error}</span>
-          <Button variant="ghost" size="xs" onClick={fetchPackages}>
+          <Button variant="outline" size="xs" onClick={fetchPackages}>
             Retry
           </Button>
         </div>
@@ -304,9 +304,11 @@ const MarketplacePage: React.FC = () => {
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-1" data-testid={`star-rating-${pkg.name}`}>
                       {[1, 2, 3, 4, 5].map((star) => (
-                        <button
+                        <Button
                           key={star}
-                          className="btn btn-ghost btn-xs p-0"
+                          variant="ghost"
+                          size="xs"
+                          className="p-0"
                           data-testid={`star-${star}`}
                           onClick={() => handleRating(pkg.name, star)}
                           aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
@@ -318,7 +320,7 @@ const MarketplacePage: React.FC = () => {
                                 : 'text-base-content/30'
                             }`}
                           />
-                        </button>
+                        </Button>
                       ))}
                     </div>
                     {pkg.feedbackUrl ? (
@@ -363,7 +365,7 @@ const MarketplacePage: React.FC = () => {
                           Update
                         </Button>
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
                           onClick={() => handleUninstall(pkg.name)}
                           disabled={isBusy}

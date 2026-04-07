@@ -343,14 +343,14 @@ const BotConfigurationPage: React.FC = () => {
           <div className="flex gap-2">
             <Button
               onClick={() => setIsRollbackModalOpen(true)}
-              variant="ghost"
+              variant="outline"
               className="gap-2"
               disabled={loading || rollbacks.length === 0}
             >
               <History className="w-4 h-4" />
               Rollbacks {rollbacks.length > 0 && <Badge variant="primary" size="sm">{rollbacks.length}</Badge>}
             </Button>
-            <Button onClick={fetchConfigs} variant="ghost" className="gap-2" disabled={loading} aria-busy={loading}>
+            <Button onClick={fetchConfigs} variant="outline" className="gap-2" disabled={loading} aria-busy={loading}>
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Reload
             </Button>
           </div>

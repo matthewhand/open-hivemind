@@ -194,12 +194,13 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
                 <div className="text-center py-6">
                   <AlertCircle className="w-8 h-8 mx-auto mb-2 text-error" />
                   <p className="text-xs text-error mb-2">{activityError}</p>
-                  <button
-                    className="btn btn-ghost btn-xs"
+                  <Button
+                    variant="ghost"
+                    size="xs"
                     onClick={() => previewBot && fetchPreviewActivity(previewBot.id)}
                   >
                     <RefreshCw className="w-3 h-3 mr-1" /> Retry
-                  </button>
+                  </Button>
                 </div>
               ) : filteredLogs.length === 0 ? (
                 <div className="text-center py-8 opacity-40">

@@ -151,7 +151,7 @@ const SitemapPage: React.FC = () => {
         />
         <Alert status="error">
           <span>Error loading sitemap: {error}</span>
-          <Button variant="ghost" size="sm" onClick={fetchSitemap}>Retry</Button>
+          <Button variant="outline" size="sm" onClick={fetchSitemap}>Retry</Button>
         </Alert>
       </div>
     );
@@ -174,11 +174,11 @@ const SitemapPage: React.FC = () => {
         icon={MapIcon}
         actions={
           <div className="flex gap-2">
-            <Button variant="ghost" onClick={handleDownloadXml} className="gap-2">
+            <Button variant="outline" onClick={handleDownloadXml} className="gap-2">
               <Download className="w-4 h-4" /> XML
             </Button>
             <Tooltip content="Refresh">
-              <Button variant="ghost" onClick={fetchSitemap} className="btn-circle" aria-label="Refresh">
+              <Button variant="outline" onClick={fetchSitemap} className="btn-circle" aria-label="Refresh">
                 <RefreshCw className="w-4 h-4" />
               </Button>
             </Tooltip>

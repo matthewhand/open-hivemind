@@ -1,6 +1,7 @@
 import React from 'react';
 import { Bot, Plus } from 'lucide-react';
 import PageHeader from '../../components/DaisyUI/PageHeader';
+import Button from '../../components/DaisyUI/Button';
 import Stack from '../../components/DaisyUI/Stack';
 
 /** Stacked bot avatars shown as a visual accent next to the page title */
@@ -33,12 +34,12 @@ export const BotsPageHeader: React.FC<BotsPageHeaderProps> = ({
       description="Configure, monitor, and deploy your specialized AI agents."
       icon={<SwarmAvatarStack />}
       actions={
-        <button
-          className="btn btn-primary"
+        <Button
+          variant="primary"
           onClick={onCreateClick}
         >
           <Plus className="w-4 h-4 mr-2" /> Create New Bot
-        </button>
+        </Button>
       }
     />
   );
