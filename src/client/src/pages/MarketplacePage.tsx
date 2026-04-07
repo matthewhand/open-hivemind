@@ -103,10 +103,8 @@ const MarketplacePage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/marketplace/packages');
-      if (!response.ok) throw new Error('Failed to fetch packages');
-      const data = await response.json();
-      setPackages(data);
+      const data: any = await apiService.get('/api/marketplace/packages');
+      setPackages(data?.data || data || []);
     } catch (err: any) {
       setError(err.message || 'Failed to load marketplace');
     } finally {
@@ -134,19 +132,9 @@ const MarketplacePage: React.FC = () => {
     setActionMessage(null);
 
     try {
-      const response = await fetch('/api/marketplace/install', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ repoUrl: githubUrl.trim() }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Installation failed');
-      }
-
-      setActionMessage({ type: 'success', text: `Installed ${data.package.displayName} successfully!` });
+      const result: any = await apiService.post('/api/marketplace/install', { repoUrl: githubUrl.trim() });
+      const data = result?.data || result;
+      setActionMessage({ type: 'success', text: `Installed ${data?.package?.displayName || 'package'} successfully!` });
       setGithubUrl('');
       setInstallModalOpen(false);
       await fetchPackages();
@@ -163,14 +151,9 @@ const MarketplacePage: React.FC = () => {
     setActionMessage(null);
 
     try {
-      const response = await fetch(`/api/marketplace/update/${name}`, { method: 'POST' });
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Update failed');
-      }
-
-      setActionMessage({ type: 'success', text: `Updated ${data.package.displayName} successfully!` });
+      const result: any = await apiService.post(`/api/marketplace/update/${name}`, {});
+      const data = result?.data || result;
+      setActionMessage({ type: 'success', text: `Updated ${data?.package?.displayName || name} successfully!` });
       await fetchPackages();
     } catch (err: any) {
       setActionMessage({ type: 'error', text: err.message || 'Update failed' });
@@ -187,13 +170,7 @@ const MarketplacePage: React.FC = () => {
     setActionMessage(null);
 
     try {
-      const response = await fetch(`/api/marketplace/uninstall/${name}`, { method: 'POST' });
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Uninstall failed');
-      }
-
+      await apiService.post(`/api/marketplace/uninstall/${name}`, {});
       setActionMessage({ type: 'success', text: `Uninstalled ${name} successfully!` });
       await fetchPackages();
     } catch (err: any) {

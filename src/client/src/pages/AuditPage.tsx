@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState, useCallback } from 'react';
+import { apiService } from '../services/api';
 import {
   ArrowPathIcon,
   FunnelIcon,
@@ -32,12 +33,8 @@ const AuditPage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch('/api/audit?limit=100');
-      if (!res.ok) {
-        throw new Error(`Failed to fetch audit logs (HTTP ${res.status})`);
-      }
-      const data = await res.json();
-      setAuditEvents(data.auditEvents ?? []);
+      const data: any = await apiService.get('/api/admin/audit-logs?limit=100');
+      setAuditEvents(data?.data?.auditEvents ?? data?.auditEvents ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load audit logs');
       setAuditEvents([]);
