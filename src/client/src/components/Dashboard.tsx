@@ -49,6 +49,7 @@ const getProviderIcon = (provider: string) => {
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const isDesktop = useMediaQuery({ minWidth: 1024 });
+  const isWide = useMediaQuery({ minWidth: 1440 });
   const [bots, setBots] = useState<Bot[]>([]);
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -236,7 +237,7 @@ const Dashboard: React.FC = () => {
             autoplay
             interval={6000}
             variant="full-width"
-            visibleCount={isDesktop ? 2 : 1}
+            visibleCount={isWide ? 3 : isDesktop ? 2 : 1}
             onSlideClick={(item) => item.link && navigate(item.link)}
           />
         </div>
