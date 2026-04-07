@@ -13,6 +13,7 @@ import TipRotator from './TipRotator';
 import QuickActions from './QuickActions';
 import AgentGrid from './Dashboard/AgentGrid';
 import Carousel from './DaisyUI/Carousel';
+import { useMediaQuery } from '../hooks/useBreakpoint';
 
 const getStatusColor = (botStatus: string) => {
   switch (botStatus.toLowerCase()) {
@@ -47,6 +48,7 @@ const getProviderIcon = (provider: string) => {
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+  const isDesktop = useMediaQuery({ minWidth: 1024 });
   const [bots, setBots] = useState<Bot[]>([]);
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -242,6 +244,7 @@ const Dashboard: React.FC = () => {
               autoplay
               interval={6000}
               variant="full-width"
+              visibleCount={isDesktop ? 2 : 1}
               onSlideClick={(item) => item.link && navigate(item.link)}
             />
           </div>
