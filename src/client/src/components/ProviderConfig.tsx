@@ -179,7 +179,7 @@ const ProviderConfig: React.FC<ProviderConfigProps> = ({
                 label: 'Client ID',
                 helperText: 'Application ID from Discord Developer Portal',
               },
-              { key: 'guildId', label: 'Guild ID', helperText: 'Server ID where bot will operate' },
+              { key: 'guildId', label: 'Guild ID', helperText: 'Discord guild (server) ID where bot will operate' },
               { key: 'channelId', label: 'Channel ID', helperText: 'Default text channel ID' },
               {
                 key: 'voiceChannelId',

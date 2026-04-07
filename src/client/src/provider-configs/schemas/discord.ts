@@ -34,10 +34,10 @@ export const discordProviderSchema: ProviderConfigSchema = {
     },
     {
       name: 'guildId',
-      label: 'Server ID',
+      label: 'Guild ID',
       type: 'text',
-      required: false,
-      description: 'Specific Discord server to connect to (leave empty for all servers)',
+      required: true,
+      description: 'The Discord guild (server) ID where the bot will operate',
       placeholder: '876543210987654321',
       group: 'Connection',
     },
@@ -45,7 +45,7 @@ export const discordProviderSchema: ProviderConfigSchema = {
       name: 'intents',
       label: 'Bot Intents',
       type: 'multiselect',
-      required: true,
+      required: false,
       description: 'Gateway intents your bot requires',
       options: [
         { label: 'Guilds', value: 'GUILDS' },
