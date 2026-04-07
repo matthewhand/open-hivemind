@@ -29,7 +29,7 @@ export const hivemindNavItems: NavItem[] = [
   // === MAIN SECTION ===
   {
     id: 'overview',
-    label: 'Overview',
+    label: 'Dashboard',
     icon: <NavIcon><LayoutDashboard className="w-4 h-4" /></NavIcon>,
     path: '/admin/overview',
     visible: true,

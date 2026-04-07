@@ -12,7 +12,7 @@ import {
  */
 
 const ALL_PAGES = [
-  { path: '/admin/overview', label: 'Overview' },
+  { path: '/admin/overview', label: 'Dashboard' },
   { path: '/admin/providers/llm', label: 'LLM Providers' },
   { path: '/admin/providers/message', label: 'Message Providers' },
   { path: '/admin/bots', label: 'Bots' },
@@ -94,7 +94,7 @@ async function mockAllEndpoints(page: import('@playwright/test').Page) {
             changefreq: 'daily',
             priority: 1.0,
             lastmod: new Date().toISOString(),
-            description: 'Overview',
+            description: 'Dashboard',
             access: 'authenticated',
           },
           {
@@ -265,7 +265,7 @@ async function mockAllEndpoints(page: import('@playwright/test').Page) {
         status: 200,
         json: {
           pages: [
-            { path: '/admin/overview', label: 'Overview', category: 'Main' },
+            { path: '/admin/overview', label: 'Dashboard', category: 'Main' },
             { path: '/admin/bots', label: 'Bots', category: 'Configuration' },
           ],
         },
