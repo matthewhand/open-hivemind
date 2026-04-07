@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import type { AgentConfigCardProps, GuardState } from './types';
 import type { FieldMetadata } from '../../services/api';
 import type { ProviderInfo } from '../../services/providerService';
@@ -10,6 +10,7 @@ import { Badge } from '../DaisyUI/Badge';
 import Input from '../DaisyUI/Input';
 import Select from '../DaisyUI/Select';
 
+// ⚡ Bolt Optimization: Memoize the AgentConfigCard to prevent re-rendering all agents when only one agent's status updates.
 const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
   bot,
   metadata,
@@ -461,4 +462,4 @@ const renderProviderHelper = (info?: ProviderInfo) => {
   );
 };
 
-export default AgentConfigCard;
+export default memo(AgentConfigCard);
