@@ -230,7 +230,7 @@ const ProviderConfig: React.FC<ProviderConfigProps> = ({
               {
                 key: 'guildId',
                 label: 'Guild ID',
-                helperText: 'Server ID where bot will operate (Enable Developer Mode in Discord settings to copy IDs)',
+                helperText: 'Discord guild (server) ID where bot will operate (Enable Developer Mode in Discord settings to copy IDs)',
                 helpUrl: 'https://support.discord.com/hc/en-us/articles/206346498',
               },
               {

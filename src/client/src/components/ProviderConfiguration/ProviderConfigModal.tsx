@@ -506,7 +506,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
                   } catch (err) {
                     logger.error('Test connection failed:', err);
                     // Fallback: basic validation if endpoint not available
-                    const hasRequiredFields = ['apiKey', 'endpoint', 'baseUrl'].some(
+                    const hasRequiredFields = ['apiKey', 'endpoint', 'baseUrl', 'botToken'].some(
                       key => config[key] && config[key].toString().trim() !== ''
                     );
                     return hasRequiredFields;
