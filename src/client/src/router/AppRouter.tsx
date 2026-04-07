@@ -27,6 +27,9 @@ const MCPServersPage = lazy(() => import('../pages/MCPServersPage'));
 const MCPToolsPage = lazy(() => import('../pages/MCPToolsPage'));
 const MonitoringPage = lazy(() => import('../pages/MonitoringPage'));
 const ActivityPage = lazy(() => import('../pages/ActivityPage'));
+const ProvidersManagementPage = lazy(() => import('../pages/ProvidersManagementPage'));
+const ActivityManagementPage = lazy(() => import('../pages/ActivityManagementPage'));
+const DeveloperPage = lazy(() => import('../pages/DeveloperPage'));
 
 // Monitoring Dashboard pages
 const MonitoringDashboard = lazy(() => import('../pages/MonitoringDashboard'));
@@ -128,12 +131,12 @@ const AppRouter: React.FC = () => {
           <Route path="integrations" element={<Navigate to="/admin/integrations/llm" replace />} />
           <Route path="integrations/:type" element={<RouteErrorBoundary pageName="Integrations"><IntegrationsPage /></RouteErrorBoundary>} />
 
-          {/* Providers Routes */}
-          <Route path="providers" element={<RouteErrorBoundary pageName="Providers"><ProvidersPage /></RouteErrorBoundary>} />
-          <Route path="providers/message" element={<RouteErrorBoundary pageName="Message Providers"><MessageProvidersPage /></RouteErrorBoundary>} />
-          <Route path="providers/llm" element={<RouteErrorBoundary pageName="LLM Providers"><LLMProvidersPage /></RouteErrorBoundary>} />
-          <Route path="providers/memory" element={<RouteErrorBoundary pageName="Memory Providers"><MemoryProvidersPage /></RouteErrorBoundary>} />
-          <Route path="providers/tool" element={<RouteErrorBoundary pageName="Tool Providers"><ToolProvidersPage /></RouteErrorBoundary>} />
+          {/* Providers — tabbed page (LLM, Message, Memory, Tool) */}
+          <Route path="providers" element={<RouteErrorBoundary pageName="Providers"><ProvidersManagementPage /></RouteErrorBoundary>} />
+          <Route path="providers/llm" element={<Navigate to="/admin/providers?tab=llm" replace />} />
+          <Route path="providers/message" element={<Navigate to="/admin/providers?tab=message" replace />} />
+          <Route path="providers/memory" element={<Navigate to="/admin/providers?tab=memory" replace />} />
+          <Route path="providers/tool" element={<Navigate to="/admin/providers?tab=tool" replace />} />
 
           {/* Marketplace Route */}
           <Route path="marketplace" element={<RouteErrorBoundary pageName="Marketplace"><MarketplacePage /></RouteErrorBoundary>} />
@@ -174,12 +177,10 @@ const AppRouter: React.FC = () => {
 
           <Route path="guards" element={<Navigate to="/admin/bots?tab=guards" replace />} />
 
-          {/* Monitoring Routes */}
-          <Route path="monitoring" element={<RouteErrorBoundary pageName="Monitoring"><MonitoringPage /></RouteErrorBoundary>} />
-          <Route path="activity" element={<RouteErrorBoundary pageName="Activity"><ActivityPage /></RouteErrorBoundary>} />
-
-          {/* New Monitoring Dashboard Routes */}
-          <Route path="monitoring-dashboard" element={<RouteErrorBoundary pageName="Monitoring Dashboard"><MonitoringDashboard /></RouteErrorBoundary>} />
+          {/* Activity — tabbed page (Feed, Monitoring, Live Dashboard) */}
+          <Route path="activity" element={<RouteErrorBoundary pageName="Activity"><ActivityManagementPage /></RouteErrorBoundary>} />
+          <Route path="monitoring" element={<Navigate to="/admin/activity?tab=monitoring" replace />} />
+          <Route path="monitoring-dashboard" element={<Navigate to="/admin/activity?tab=live" replace />} />
           <Route path="analytics" element={<RouteErrorBoundary pageName="Analytics"><AnalyticsDashboard /></RouteErrorBoundary>} />
           <Route path="system-management" element={<RouteErrorBoundary pageName="System Management"><SystemManagement /></RouteErrorBoundary>} />
 
@@ -205,10 +206,12 @@ const AppRouter: React.FC = () => {
               </ProtectedRoute>
             }
           />
-          <Route path="static" element={<RouteErrorBoundary pageName="Static Pages"><StaticPagesPage /></RouteErrorBoundary>} />
-          <Route path="sitemap" element={<RouteErrorBoundary pageName="Sitemap"><SitemapPage /></RouteErrorBoundary>} />
-          <Route path="showcase" element={<RouteErrorBoundary pageName="DaisyUI Showcase"><DaisyUIShowcase /></RouteErrorBoundary>} />
-          <Route path="specs" element={<RouteErrorBoundary pageName="Specs"><SpecsPage /></RouteErrorBoundary>} />
+          {/* Developer — tabbed page (Specs, Sitemap, UI Components, Static Pages) */}
+          <Route path="developer" element={<RouteErrorBoundary pageName="Developer"><DeveloperPage /></RouteErrorBoundary>} />
+          <Route path="static" element={<Navigate to="/admin/developer?tab=static-pages" replace />} />
+          <Route path="sitemap" element={<Navigate to="/admin/developer?tab=sitemap" replace />} />
+          <Route path="showcase" element={<Navigate to="/admin/developer?tab=showcase" replace />} />
+          <Route path="specs" element={<Navigate to="/admin/developer?tab=specs" replace />} />
           <Route path="specs/:id" element={<RouteErrorBoundary pageName="Spec Detail"><SpecDetailPage /></RouteErrorBoundary>} />
           <Route path="audit" element={<RouteErrorBoundary pageName="Audit"><AuditPage /></RouteErrorBoundary>} />
           <Route path="health" element={<RouteErrorBoundary pageName="Health"><AdminHealthPage /></RouteErrorBoundary>} />
