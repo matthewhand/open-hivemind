@@ -12,7 +12,6 @@ import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotif
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import { useLlmStatus } from '../hooks/useLlmStatus';
 import { usePageLifecycle } from '../hooks/usePageLifecycle';
-import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
@@ -319,20 +318,6 @@ const BotsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="AI Swarm Management"
-        description="Configure, monitor, and deploy your specialized AI agents."
-        icon={<Bot className="w-8 h-8 text-primary" />}
-        actions={
-          <button
-            className="btn btn-primary"
-            onClick={() => setIsCreateModalOpen(true)}
-          >
-            <Plus className="w-4 h-4 mr-2" /> Create New Bot
-          </button>
-        }
-      />
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content: Bot List */}
         <div className={`${error && bots.length === 0 ? 'lg:col-span-3' : 'lg:col-span-2'} space-y-4`}>

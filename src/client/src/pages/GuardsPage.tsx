@@ -3,7 +3,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Shield, Plus, Edit2, Trash2, Check, RefreshCw, AlertCircle, Save, X, Settings, AlertTriangle, Copy } from 'lucide-react';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
-import PageHeader from '../components/DaisyUI/PageHeader';
 import SearchFilterBar from '../components/SearchFilterBar';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
@@ -192,23 +191,6 @@ const GuardsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Guard Profiles"
-        description="Manage security and access control profiles for bots"
-        icon={<Shield className="w-8 h-8 text-primary" />}
-        actions={
-          <div className="flex gap-2">
-            <button onClick={fetchProfiles} className="btn btn-ghost btn-sm" disabled={loading} aria-busy={loading} title="Refresh" aria-label="Refresh profiles">
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            </button>
-            <button onClick={handleCreate} className="btn btn-primary btn-sm">
-              <Plus className="w-4 h-4 mr-2" />
-              New Profile
-            </button>
-          </div>
-        }
-      />
-
       <SearchFilterBar
         searchValue={searchValue}
         onSearchChange={setSearchValue}

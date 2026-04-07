@@ -22,7 +22,6 @@ import Input from '../components/DaisyUI/Input';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import Modal from '../components/DaisyUI/Modal';
-import PageHeader from '../components/DaisyUI/PageHeader';
 import StatsCards from '../components/DaisyUI/StatsCards';
 import ToastNotification from '../components/DaisyUI/ToastNotification';
 import SearchFilterBar from '../components/SearchFilterBar';
@@ -345,23 +344,6 @@ const PersonasPage: React.FC = () => {
     <div className="space-y-6">
       {/* Error Alert */}
       {error && <Alert status="error" message={error} onClose={() => setError(null)} />}
-
-      {/* Header */}
-      <PageHeader
-        title="Personas (Beta)"
-        description="Manage AI personalities and system prompts"
-        icon={Sparkles}
-        actions={
-          <div className="flex gap-2">
-            <Button variant="ghost" onClick={fetchData} disabled={loading} aria-busy={loading}>
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
-            </Button>
-            <Button variant="primary" onClick={openCreateModal}>
-              <Plus className="w-4 h-4" /> Create Persona
-            </Button>
-          </div>
-        }
-      />
 
       {/* Stats Cards */}
       <StatsCards stats={stats} isLoading={loading} />
