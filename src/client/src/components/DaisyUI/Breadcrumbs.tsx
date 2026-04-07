@@ -133,6 +133,8 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items }) => {
     let currentPath = '';
     segments.forEach((segment, index) => {
       currentPath += `/${segment}`;
+      // Skip the "admin" segment — Home already links to /admin/overview
+      if (segment === 'admin') return;
       const isLast = index === segments.length - 1;
       crumbs.push({
         label: getSegmentLabel(segment, currentPath, isLast),
@@ -152,7 +154,7 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items }) => {
         '@type': 'ListItem',
         position: 1,
         name: 'Home',
-        item: origin,
+        item: `${origin}/admin/overview`,
       },
       ...crumbs.map((crumb, index) => ({
         '@type': 'ListItem',

@@ -77,7 +77,7 @@ describe('Breadcrumbs', () => {
   });
 
   describe('auto mode (no items prop)', () => {
-    it('generates breadcrumbs from pathname', () => {
+    it('generates breadcrumbs from pathname, skipping admin segment', () => {
       render(
         <MemoryRouter initialEntries={['/admin/bots']}>
           <Breadcrumbs />
@@ -85,7 +85,7 @@ describe('Breadcrumbs', () => {
       );
 
       expect(screen.getByText('Home')).toBeInTheDocument();
-      expect(screen.getByText('Admin')).toBeInTheDocument();
+      expect(screen.queryByText('Admin')).not.toBeInTheDocument();
       expect(screen.getByText('Bots')).toBeInTheDocument();
     });
 
