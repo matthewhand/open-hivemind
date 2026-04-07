@@ -1,5 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import Card from '../components/DaisyUI/Card';
+import Tabs from '../components/DaisyUI/Tabs';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 
 const SitemapPage = lazy(() => import('./SitemapPage'));
@@ -10,38 +12,34 @@ const TABS = [
   { key: 'sitemap', label: 'Sitemap' },
   { key: 'showcase', label: 'UI Components' },
   { key: 'static-pages', label: 'Static Pages' },
-] as const;
-
-type TabKey = (typeof TABS)[number]['key'];
+];
 
 const DeveloperPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = (TABS.some(t => t.key === searchParams.get('tab')) ? searchParams.get('tab') : 'sitemap') as TabKey;
+  const activeTab = searchParams.get('tab') || 'sitemap';
 
-  const setTab = (tab: TabKey) => {
+  const handleTabChange = (tab: string) => {
     setSearchParams(tab === 'sitemap' ? {} : { tab }, { replace: true });
   };
 
   return (
-    <div className="space-y-6">
-      <div role="tablist" className="tabs tabs-boxed bg-base-200 w-fit">
-        {TABS.map(({ key, label }) => (
-          <button
-            key={key}
-            role="tab"
-            className={`tab ${activeTab === key ? 'tab-active' : ''}`}
-            onClick={() => setTab(key)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      <Suspense fallback={<div className="flex justify-center items-center min-h-[200px]"><LoadingSpinner size="lg" /></div>}>
-        {activeTab === 'sitemap' && <SitemapPage />}
-        {activeTab === 'showcase' && <DaisyUIShowcase />}
-        {activeTab === 'static-pages' && <StaticPagesPage />}
-      </Suspense>
+    <div className="p-6">
+      <Card className="shadow-xl">
+        <Tabs
+          variant="lifted"
+          tabs={TABS}
+          activeTab={activeTab}
+          onChange={handleTabChange}
+          className="mb-6"
+        />
+        <div className="mt-4">
+          <Suspense fallback={<div className="flex justify-center items-center min-h-[200px]"><LoadingSpinner size="lg" /></div>}>
+            {activeTab === 'sitemap' && <SitemapPage />}
+            {activeTab === 'showcase' && <DaisyUIShowcase />}
+            {activeTab === 'static-pages' && <StaticPagesPage />}
+          </Suspense>
+        </div>
+      </Card>
     </div>
   );
 };

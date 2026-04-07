@@ -1,57 +1,45 @@
 import React, { lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import Card from '../components/DaisyUI/Card';
+import Tabs from '../components/DaisyUI/Tabs';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 
 const ActivityPage = lazy(() => import('./ActivityPage'));
 const MonitoringPage = lazy(() => import('./MonitoringPage'));
 const MonitoringDashboard = lazy(() => import('./MonitoringDashboard'));
 
-type Tab = 'feed' | 'monitoring' | 'monitoring-dashboard';
-
-const TABS: { key: Tab; label: string }[] = [
+const TABS = [
   { key: 'feed', label: 'Feed' },
   { key: 'monitoring', label: 'Monitoring' },
-  { key: 'monitoring-dashboard', label: 'Live Dashboard' },
+  { key: 'live', label: 'Live Dashboard' },
 ];
-
-const TabFallback: React.FC = () => (
-  <div className="flex justify-center items-center min-h-[200px]">
-    <LoadingSpinner size="lg" />
-  </div>
-);
 
 const ActivityManagementPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = (searchParams.get('tab') as Tab) || 'feed';
+  const activeTab = searchParams.get('tab') || 'feed';
 
-  const handleTabChange = (tab: Tab) => {
-    if (tab === 'feed') {
-      setSearchParams({});
-    } else {
-      setSearchParams({ tab });
-    }
+  const handleTabChange = (tab: string) => {
+    setSearchParams(tab === 'feed' ? {} : { tab }, { replace: true });
   };
 
   return (
-    <div className="space-y-6">
-      <div role="tablist" className="tabs tabs-boxed bg-base-200 w-fit">
-        {TABS.map(({ key, label }) => (
-          <button
-            key={key}
-            role="tab"
-            className={`tab ${activeTab === key ? 'tab-active' : ''}`}
-            onClick={() => handleTabChange(key)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      <Suspense fallback={<TabFallback />}>
-        {activeTab === 'feed' && <ActivityPage />}
-        {activeTab === 'monitoring' && <MonitoringPage />}
-        {activeTab === 'monitoring-dashboard' && <MonitoringDashboard />}
-      </Suspense>
+    <div className="p-6">
+      <Card className="shadow-xl">
+        <Tabs
+          variant="lifted"
+          tabs={TABS}
+          activeTab={activeTab}
+          onChange={handleTabChange}
+          className="mb-6"
+        />
+        <div className="mt-4">
+          <Suspense fallback={<div className="flex justify-center items-center min-h-[200px]"><LoadingSpinner size="lg" /></div>}>
+            {activeTab === 'feed' && <ActivityPage />}
+            {activeTab === 'monitoring' && <MonitoringPage />}
+            {activeTab === 'live' && <MonitoringDashboard />}
+          </Suspense>
+        </div>
+      </Card>
     </div>
   );
 };
