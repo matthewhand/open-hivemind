@@ -4,7 +4,6 @@ import Card from '../components/DaisyUI/Card';
 import Button from '../components/DaisyUI/Button';
 import Badge from '../components/DaisyUI/Badge';
 import { Alert } from '../components/DaisyUI/Alert';
-import PageHeader from '../components/DaisyUI/PageHeader';
 import StatsCards from '../components/DaisyUI/StatsCards';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import ConfigKeyValueCard from '../components/DaisyUI/ConfigKeyValueCard';
@@ -156,21 +155,16 @@ const MessageProvidersPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Message Providers"
-        description="Configure messaging platform connections for your bots."
-        icon={<MessageIcon className="w-6 h-6" />}
-        actions={
-          <div className="flex gap-2">
-            <Button variant="ghost" onClick={fetchProfiles} disabled={loading} aria-busy={loading}>
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
-            </Button>
-            <Button variant="primary" onClick={handleAddProfile}>
-              <AddIcon className="w-4 h-4 mr-2" /> Create Profile
-            </Button>
-          </div>
-        }
-      />
+      <div className="flex justify-end mb-4">
+        <div className="flex gap-2">
+          <Button variant="ghost" onClick={fetchProfiles} disabled={loading} aria-busy={loading}>
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
+          </Button>
+          <Button variant="primary" onClick={handleAddProfile}>
+            <AddIcon className="w-4 h-4 mr-2" /> Create Profile
+          </Button>
+        </div>
+      </div>
 
       <StatsCards stats={stats} isLoading={loading} />
 

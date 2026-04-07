@@ -3,7 +3,6 @@ import Card from '../components/DaisyUI/Card';
 import Button from '../components/DaisyUI/Button';
 import Badge from '../components/DaisyUI/Badge';
 import { Alert } from '../components/DaisyUI/Alert';
-import PageHeader from '../components/DaisyUI/PageHeader';
 import StatsCards from '../components/DaisyUI/StatsCards';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import ConfigKeyValueCard from '../components/DaisyUI/ConfigKeyValueCard';
@@ -264,24 +263,19 @@ const MemoryProvidersPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Memory Providers"
-        description="Configure memory providers for persistent context and knowledge storage."
-        icon={<MemoryIcon className="w-6 h-6" />}
-        actions={
-          <div className="flex gap-2">
-            <Button variant="ghost" onClick={fetchHealth} disabled={healthLoading} aria-busy={healthLoading}>
-              <HealthIcon className={`w-4 h-4 ${healthLoading ? 'animate-pulse' : ''}`} /> Health
-            </Button>
-            <Button variant="ghost" onClick={fetchProfiles} disabled={loading} aria-busy={loading}>
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
-            </Button>
-            <Button variant="primary" onClick={handleAddProfile}>
-              <AddIcon className="w-4 h-4 mr-2" /> Create Profile
-            </Button>
-          </div>
-        }
-      />
+      <div className="flex justify-end mb-4">
+        <div className="flex gap-2">
+          <Button variant="ghost" onClick={fetchHealth} disabled={healthLoading} aria-busy={healthLoading}>
+            <HealthIcon className={`w-4 h-4 ${healthLoading ? 'animate-pulse' : ''}`} /> Health
+          </Button>
+          <Button variant="ghost" onClick={fetchProfiles} disabled={loading} aria-busy={loading}>
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
+          </Button>
+          <Button variant="primary" onClick={handleAddProfile}>
+            <AddIcon className="w-4 h-4 mr-2" /> Create Profile
+          </Button>
+        </div>
+      </div>
       <StatsCards stats={stats} isLoading={loading} />
       {error && <Alert status="error" icon={<XIcon />} message={error} onClose={() => setError(null)} />}
       <SearchFilterBar
