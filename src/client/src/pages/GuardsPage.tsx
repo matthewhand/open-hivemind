@@ -274,7 +274,11 @@ const GuardsPage: React.FC = () => {
 
             <Accordion
               allowMultiple
-              defaultOpenItems={[]}
+              defaultOpenItems={[
+                ...(guardsValue?.mcpGuard?.enabled ? ['access-control'] : []),
+                ...(guardsValue?.rateLimit?.enabled ? ['rate-limit'] : []),
+                ...(guardsValue?.contentFilter?.enabled ? ['content-filter'] : []),
+              ]}
               className="grid grid-cols-1 gap-6"
               items={[
                 {
