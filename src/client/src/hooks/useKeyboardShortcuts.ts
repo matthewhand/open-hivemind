@@ -87,8 +87,8 @@ export const useDefaultShortcuts = () => {
     },
     {
       key: 'm',
-      action: () => navigate('/admin/monitoring'),
-      description: 'Go to monitoring',
+      action: () => navigate('/admin/activity'),
+      description: 'Go to activity',
     },
     {
       key: 'Escape',
