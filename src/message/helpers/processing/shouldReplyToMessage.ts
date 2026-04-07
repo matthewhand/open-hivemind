@@ -153,7 +153,8 @@ export async function shouldReplyToMessage(
 
   // Grace window: applies independently of onlyWhenSpokenTo.
   // If the bot recently spoke in this channel, allow follow-up replies.
-  const graceMsRaw = personaBehavior?.graceWindowMs ??
+  const graceMsRaw =
+    personaBehavior?.graceWindowMs ??
     getMessageSetting('MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS', botConfig);
   const graceMs = typeof graceMsRaw === 'number' ? graceMsRaw : Number(graceMsRaw) || 0;
   const lastActivityTime = graceMs > 0 ? getLastBotActivity(channelId, botId) : 0;
