@@ -1,5 +1,6 @@
 import Debug from 'debug';
 import messageConfig from '@config/messageConfig';
+import { PersonaManager, type PersonaResponseBehavior } from '../../../managers/PersonaManager';
 import TypingMonitor from '../monitoring/TypingMonitor';
 import { shouldReplyToUnsolicitedMessage } from '../unsolicitedMessageHandler';
 import { getLastBotActivity } from './ChannelActivity';
@@ -10,6 +11,27 @@ import { getMessageSetting } from './ResponseProfile';
 import { isOnTopic } from './SemanticRelevanceChecker';
 
 const debug = Debug('app:shouldReplyToMessage');
+
+/**
+ * Resolve the persona's responseBehavior from botConfig.persona (an ID string).
+ * Returns undefined when no persona is configured or the persona has no overrides.
+ */
+async function resolvePersonaResponseBehavior(
+  botConfig?: Record<string, unknown>
+): Promise<PersonaResponseBehavior | undefined> {
+  const personaId = botConfig?.persona;
+  if (typeof personaId !== 'string' || !personaId) {
+    return undefined;
+  }
+  try {
+    const manager = await PersonaManager.getInstance();
+    const persona = manager.getPersona(personaId);
+    return persona?.responseBehavior;
+  } catch (err) {
+    debug('Error resolving persona response behavior:', err);
+    return undefined;
+  }
+}
 
 export interface ReplyDecision {
   shouldReply: boolean;
@@ -35,7 +57,12 @@ export async function shouldReplyToMessage(
   const channelId = message.getChannelId();
   debug(`Evaluating message in channel: ${channelId}`);
 
-  const onlyWhenSpokenTo = Boolean(getMessageSetting('MESSAGE_ONLY_WHEN_SPOKEN_TO', botConfig));
+  // Resolve persona-level response behavior overrides (persona first, global fallback)
+  const personaBehavior = await resolvePersonaResponseBehavior(botConfig);
+
+  const onlyWhenSpokenTo =
+    personaBehavior?.onlyWhenSpokenTo ??
+    Boolean(getMessageSetting('MESSAGE_ONLY_WHEN_SPOKEN_TO', botConfig));
   const rawText = String(message.getText?.() || '');
   const text = rawText.toLowerCase();
 
@@ -277,11 +304,15 @@ export async function shouldReplyToMessage(
   const lastStr = lastPostTime > 0 ? `${Math.floor(timeSinceLastActivity / 1000)}s ago` : 'never';
 
   let chance = 0.0;
-  const baseChanceRaw = getMessageSetting('MESSAGE_UNSOLICITED_BASE_CHANCE', botConfig);
-  if (typeof baseChanceRaw === 'number') {
-    chance = baseChanceRaw;
-  } else if (typeof baseChanceRaw === 'string' && baseChanceRaw.trim() !== '') {
-    chance = Number(baseChanceRaw);
+  if (typeof personaBehavior?.baseChance === 'number') {
+    chance = personaBehavior.baseChance;
+  } else {
+    const baseChanceRaw = getMessageSetting('MESSAGE_UNSOLICITED_BASE_CHANCE', botConfig);
+    if (typeof baseChanceRaw === 'number') {
+      chance = baseChanceRaw;
+    } else if (typeof baseChanceRaw === 'string' && baseChanceRaw.trim() !== '') {
+      chance = Number(baseChanceRaw);
+    }
   }
 
   const baseChance = chance;
@@ -395,7 +426,8 @@ export async function shouldReplyToMessage(
     isDirectMention || isWakeword || isNameAddressed || isDM,
     isLeadingAddress,
     isReplyToBot,
-    botConfig
+    botConfig,
+    personaBehavior
   );
   chance = modResult.chance;
 
@@ -740,16 +772,19 @@ function applyModifiers(
   isDirectlyAddressed = false,
   isLeadingAddress = false,
   isReplyToBot = false,
-  botConfig?: Record<string, any>
+  botConfig?: Record<string, any>,
+  personaBehavior?: PersonaResponseBehavior
 ): { chance: number; modifiers: string } {
   const text = (message.getText?.() || '').toLowerCase();
   const mods: string[] = [];
   if (isDirectlyAddressed) {
-    chance += 0.5;
-    mods.push('+Mention(+0.5)');
+    const mentionBonus = personaBehavior?.mentionBonus ?? 0.5;
+    chance += mentionBonus;
+    mods.push(`+Mention(+${mentionBonus})`);
     if (isLeadingAddress) {
-      chance += 1.0;
-      mods.push('+Leading(+1.0)');
+      const leadingBonus = personaBehavior?.leadingMentionBonus ?? 1.0;
+      chance += leadingBonus;
+      mods.push(`+Leading(+${leadingBonus})`);
     }
   }
   if (isReplyToBot) {
@@ -773,7 +808,8 @@ function applyModifiers(
   }
   if (typeof message.isFromBot === 'function' && message.isFromBot()) {
     const botModifier =
-      Number(getMessageSetting('MESSAGE_BOT_RESPONSE_MODIFIER', botConfig)) || -0.1;
+      personaBehavior?.botResponsePenalty ??
+      (Number(getMessageSetting('MESSAGE_BOT_RESPONSE_MODIFIER', botConfig)) || -0.1);
     chance += botModifier;
     mods.push(`${botModifier >= 0 ? '+' : ''}BotResponse(${botModifier})`);
   }
