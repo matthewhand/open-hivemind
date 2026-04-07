@@ -148,41 +148,64 @@ const ConfigureLlmStep: React.FC<ConfigureLlmStepProps> = ({ form, llmProfiles }
       <div className="text-center mb-4">
         <h3 className="text-xl font-bold">Configure LLM Provider</h3>
         <p className="text-base-content/70 text-sm">
-          Choose which large language model will power your bots.
+          {llmProfiles.length > 0
+            ? 'Select one of your configured LLM providers, or add a new one.'
+            : 'No LLM providers configured yet. Add one below or configure via the LLM Providers page.'}
         </p>
       </div>
 
-      {llmProfiles.length > 0 && (
-        <Alert status="info">
-          <Cpu className="w-5 h-5" />
-          <span>
-            You have {llmProfiles.length} LLM profile(s) already configured.
-            You can skip this step if you want to use existing profiles.
-          </span>
-        </Alert>
+      {llmProfiles.length > 0 ? (
+        <FormField label="LLM Provider" error={errors.llmProvider}>
+          <Controller
+            name="llmProvider"
+            control={control}
+            render={({ field }) => (
+              <Select
+                id="onboarding-llm-provider"
+                className="select-bordered"
+                value={field.value}
+                onChange={(e) => {
+                  field.onChange(e.target.value);
+                  form.setValue('model', '');
+                }}
+              >
+                <option value="">Select a configured provider...</option>
+                {llmProfiles.map((p) => (
+                  <option key={p.key} value={p.provider || p.key}>{p.name || p.key}</option>
+                ))}
+              </Select>
+            )}
+          />
+        </FormField>
+      ) : (
+        <FormField label="LLM Provider" error={errors.llmProvider}>
+          <Controller
+            name="llmProvider"
+            control={control}
+            render={({ field }) => (
+              <Select
+                id="onboarding-llm-provider"
+                className="select-bordered"
+                value={field.value}
+                onChange={(e) => {
+                  field.onChange(e.target.value);
+                  form.setValue('model', '');
+                }}
+              >
+                {providerOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </Select>
+            )}
+          />
+        </FormField>
       )}
 
-      <FormField label="LLM Provider" error={errors.llmProvider}>
-        <Controller
-          name="llmProvider"
-          control={control}
-          render={({ field }) => (
-            <Select
-              id="onboarding-llm-provider"
-              className="select-bordered"
-              value={field.value}
-              onChange={(e) => {
-                field.onChange(e.target.value);
-                form.setValue('model', '');
-              }}
-            >
-              {providerOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </Select>
-          )}
-        />
-      </FormField>
+      <div className="text-center">
+        <a href="/admin/providers/llm" target="_blank" rel="noopener noreferrer" className="link link-primary text-sm">
+          Manage LLM Providers ↗
+        </a>
+      </div>
 
       {llmProvider && llmProvider !== 'ollama' && (
         <FormField label="API Key" error={errors.apiKey} hint="Your key is stored securely and never leaves this server.">
@@ -283,7 +306,7 @@ interface ConnectMessengerStepProps {
   form: UseFormReturn<MessengerStepValues>;
 }
 
-const ConnectMessengerStep: React.FC<ConnectMessengerStepProps> = ({ form }) => {
+const ConnectMessengerStep: React.FC<ConnectMessengerStepProps & { messageProfiles?: any[] }> = ({ form, messageProfiles = [] }) => {
   const { register, control, watch, formState: { errors } } = form;
   const messenger = watch('messenger');
 
@@ -320,9 +343,18 @@ const ConnectMessengerStep: React.FC<ConnectMessengerStepProps> = ({ form }) => 
       <div className="text-center mb-4">
         <h3 className="text-xl font-bold">Connect a Messenger</h3>
         <p className="text-base-content/70 text-sm">
-          Choose a messaging platform to connect your bot to.
+          {messageProfiles.length > 0
+            ? 'Select a configured messenger, or set up a new one.'
+            : 'Choose a messaging platform to connect your bot to.'}
         </p>
       </div>
+
+      {messageProfiles.length > 0 && (
+        <Alert status="info" className="mb-2">
+          <MessageSquare className="w-5 h-5" />
+          <span>You have {messageProfiles.length} messenger(s) configured. Select one below or add a new platform.</span>
+        </Alert>
+      )}
 
       <Controller
         name="messenger"
@@ -371,6 +403,12 @@ const ConnectMessengerStep: React.FC<ConnectMessengerStepProps> = ({ form }) => 
           </FormField>
         </>
       )}
+
+      <div className="text-center">
+        <a href="/admin/providers/message" target="_blank" rel="noopener noreferrer" className="link link-primary text-sm">
+          Manage Message Providers ↗
+        </a>
+      </div>
     </div>
   );
 };
@@ -438,8 +476,8 @@ const TOTAL_STEPS = 5;
 const stepMeta = [
   { label: 'Welcome' },
   { label: 'LLM' },
-  { label: 'Bot' },
   { label: 'Messenger' },
+  { label: 'Bot' },
   { label: 'Done' },
 ];
 
@@ -630,14 +668,14 @@ const OnboardingPage: React.FC = () => {
               />
             )}
             {step === 3 && (
-              <CreateBotStep
-                form={botForm}
-                llmProvider={llmProvider}
+              <ConnectMessengerStep
+                form={messengerForm}
               />
             )}
             {step === 4 && (
-              <ConnectMessengerStep
-                form={messengerForm}
+              <CreateBotStep
+                form={botForm}
+                llmProvider={llmProvider}
               />
             )}
             {step === 5 && (
