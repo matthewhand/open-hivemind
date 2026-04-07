@@ -12,8 +12,6 @@ import DashboardBotCard from './DashboardBotCard';
 import AnnouncementBanner from './AnnouncementBanner';
 import TipRotator from './TipRotator';
 import QuickActions from './QuickActions';
-import LLMUsageChart from './Dashboard/LLMUsageChart';
-import MessageVolumeChart from './Dashboard/MessageVolumeChart';
 import AgentGrid from './Dashboard/AgentGrid';
 import Carousel from './DaisyUI/Carousel';
 
@@ -280,12 +278,6 @@ const Dashboard: React.FC = () => {
               getStatusColor={getStatusColor}
             />
           ))}
-        </div>
-
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <MessageVolumeChart />
-          <LLMUsageChart />
         </div>
 
         {/* Agent Grid */}

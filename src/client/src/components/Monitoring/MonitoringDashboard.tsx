@@ -8,6 +8,8 @@ import PageHeader from '../DaisyUI/PageHeader';
 import StatsCards from '../DaisyUI/StatsCards';
 import Tabs from '../DaisyUI/Tabs';
 import type { TabItem } from '../DaisyUI/Tabs';
+import LLMUsageChart from '../Dashboard/LLMUsageChart';
+import MessageVolumeChart from '../Dashboard/MessageVolumeChart';
 import {
   Activity,
   RotateCcw,
@@ -388,6 +390,10 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
       <div className="bg-base-100 rounded-b-lg border border-t-0 border-base-200">
         <TabPanel value={activeTab} index="health">
           <SystemHealth refreshInterval={refreshInterval} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            <MessageVolumeChart />
+            <LLMUsageChart />
+          </div>
         </TabPanel>
 
         <TabPanel value={activeTab} index="bots">
