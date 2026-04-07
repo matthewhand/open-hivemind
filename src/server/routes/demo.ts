@@ -7,6 +7,7 @@
 import { Router } from 'express';
 import { container } from 'tsyringe';
 import { ApiResponse } from '@src/server/utils/apiResponse';
+import { authenticate, requireAdmin } from '../../auth/middleware';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 import DemoModeService from '../../services/DemoModeService';
 import { HTTP_STATUS } from '../../types/constants';
@@ -15,6 +16,9 @@ import { ChatGenerateSchema, EmptySchema } from '../../validation/schemas/miscSc
 import { validateRequest } from '../../validation/validateRequest';
 
 const router = Router();
+
+// All demo routes require admin authentication
+router.use(authenticate, requireAdmin);
 
 /**
  * GET /api/demo/status

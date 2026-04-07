@@ -315,6 +315,8 @@ export async function shouldReplyToMessage(
     }
   }
 
+  // Clamp base chance to [0, 1] to prevent misconfigured personas from spamming
+  chance = Math.max(0, Math.min(1, chance));
   const baseChance = chance;
   mods.push(`Base(${baseChance.toFixed(2)} @ ${lastStr})`);
 
