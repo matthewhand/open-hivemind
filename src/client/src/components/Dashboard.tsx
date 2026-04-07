@@ -237,7 +237,7 @@ const Dashboard: React.FC = () => {
             autoplay
             interval={6000}
             variant="full-width"
-            visibleCount={isWide ? 3 : isDesktop ? 2 : 1}
+            visibleCount={isWide ? 4 : isDesktop ? 3 : 1}
             onSlideClick={(item) => item.link && navigate(item.link)}
           />
         </div>
