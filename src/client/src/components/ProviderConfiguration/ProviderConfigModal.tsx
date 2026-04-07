@@ -363,14 +363,25 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   const currentSchema = getCurrentSchema();
   const _allFields = config?.fields || [];
 
-  const messageProviderTabs: TabItem[] = providerTypes.map(type => {
+  // ⚡ Bolt Optimization: Memoize tab calculations to avoid re-creating arrays on every render
+  const messageProviderTabs: TabItem[] = useMemo(() => providerTypes.map(type => {
     const typeConfig = (configs as any)[type];
     return {
       key: type,
       label: typeConfig.displayName || typeConfig.name,
       icon: <span>{typeof typeConfig.icon === 'string' ? typeConfig.icon : '\u2022'}</span>,
     };
-  });
+  }), [configs, providerTypes]);
+
+  // ⚡ Bolt Optimization: Memoize select options for LLM providers
+  const llmProviderOptions = useMemo(() => providerTypes.map(type => {
+    const typeConfig = (configs as any)[type];
+    return (
+      <option key={type} value={type}>
+        {typeConfig.displayName || typeConfig.name}
+      </option>
+    );
+  }), [configs, providerTypes]);
 
   return (
     <Modal
@@ -407,14 +418,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value as LLMProviderType)}
             >
-              {providerTypes.map(type => {
-                const typeConfig = (configs as any)[type];
-                return (
-                  <option key={type} value={type}>
-                    {typeConfig.displayName || typeConfig.name}
-                  </option>
-                );
-              })}
+              {llmProviderOptions}
             </Select>
           </div>
         ) : (
