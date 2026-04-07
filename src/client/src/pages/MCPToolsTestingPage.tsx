@@ -18,6 +18,7 @@ import Toggle from '../components/DaisyUI/Toggle';
 import Divider from '../components/DaisyUI/Divider';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import Card from '../components/DaisyUI/Card';
+import Button from '../components/DaisyUI/Button';
 import Mockup from '../components/DaisyUI/Mockup';
 import Input from '../components/DaisyUI/Input';
 import Textarea from '../components/DaisyUI/Textarea';
@@ -424,8 +425,8 @@ const MCPToolsTestingPage: React.FC = () => {
                   {renderParameterForm()}
 
                   <Card.Actions className="mt-4">
-                    <button
-                      className="btn btn-primary"
+                    <Button
+                      variant="primary"
                       onClick={handleTestTool}
                       disabled={testing}
                     >
@@ -440,7 +441,7 @@ const MCPToolsTestingPage: React.FC = () => {
                           Test Tool
                         </>
                       )}
-                    </button>
+                    </Button>
                   </Card.Actions>
               </Card>
 

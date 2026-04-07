@@ -613,12 +613,13 @@ const OnboardingPage: React.FC = () => {
           <span className="font-bold text-lg">Open-Hivemind Setup</span>
         </div>
         {step < TOTAL_STEPS && (
-          <button
-            className="btn btn-ghost btn-sm"
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={handleSkipAll}
           >
             Skip Setup
-          </button>
+          </Button>
         )}
       </div>
 

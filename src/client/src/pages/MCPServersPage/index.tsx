@@ -123,8 +123,8 @@ const MCPServersPage: React.FC = () => {
         description="Model Context Protocol servers provide tools and capabilities to your AI agents."
         icon={Server}
         actions={
-          <button
-            className="btn btn-primary"
+          <Button
+            variant="primary"
             onClick={() => {
               setSelectedServer({
                 id: '',
@@ -141,7 +141,7 @@ const MCPServersPage: React.FC = () => {
           >
             <Plus className="w-5 h-5 mr-2" />
             Add Server
-          </button>
+          </Button>
         }
       />
       <div className="mb-6">

@@ -8,6 +8,7 @@ import { useErrorToast, useSuccessToast } from '../components/DaisyUI/ToastNotif
 import { usePageLifecycle } from '../hooks/usePageLifecycle';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import CodeBlock from '../components/DaisyUI/CodeBlock';
+import Button from '../components/DaisyUI/Button';
 import Tabs from '../components/DaisyUI/Tabs';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import SearchFilterBar from '../components/SearchFilterBar';
@@ -294,15 +295,16 @@ const TemplatesPage: React.FC = () => {
         icon={<FileText className="w-8 h-8 text-primary" />}
         actions={
           <div className="flex gap-2">
-            <button
-              className="btn btn-ghost btn-sm"
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={fetchTemplates}
               disabled={loading}
               title="Refresh templates"
               aria-label="Refresh templates"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            </button>
+            </Button>
           </div>
         }
       />
@@ -418,31 +420,36 @@ const TemplatesPage: React.FC = () => {
 
                       {/* Actions */}
                       <Card.Actions className="gap-2">
-                        <button
-                          className="btn btn-ghost btn-sm btn-square"
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="btn-square"
                           onClick={(e) => { e.stopPropagation(); handlePreviewTemplate(template); }}
                           title="Preview template"
                           aria-label="Preview template"
                         >
                           <Eye className="w-4 h-4" />
-                        </button>
+                        </Button>
                         {!template.isBuiltIn && (
-                          <button
-                            className="btn btn-ghost btn-sm btn-square text-error"
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="btn-square text-error"
                             onClick={(e) => { e.stopPropagation(); setDeletingTemplate(template); }}
                             title="Delete template"
                             aria-label="Delete template"
                           >
                             <Trash2 className="w-4 h-4" />
-                          </button>
+                          </Button>
                         )}
-                        <button
-                          className="btn btn-primary btn-sm"
+                        <Button
+                          variant="primary"
+                          size="sm"
                           onClick={(e) => { e.stopPropagation(); handleApplyTemplate(template); }}
                         >
                           Apply Template
                           <ChevronRight className="w-4 h-4" />
-                        </button>
+                        </Button>
                       </Card.Actions>
                   </Card>
                 ))}
@@ -505,24 +512,24 @@ const TemplatesPage: React.FC = () => {
             </div>
 
             <div className="flex justify-end gap-2 pt-4 border-t border-base-300">
-              <button
-                className="btn btn-ghost"
+              <Button
+                variant="ghost"
                 onClick={() => {
                   setShowPreviewModal(false);
                   setSelectedTemplate(null);
                 }}
               >
                 Close
-              </button>
-              <button
-                className="btn btn-primary"
+              </Button>
+              <Button
+                variant="primary"
                 onClick={() => {
                   setShowPreviewModal(false);
                   handleApplyTemplate(selectedTemplate);
                 }}
               >
                 Apply Template
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -574,8 +581,8 @@ const TemplatesPage: React.FC = () => {
           </div>
 
           <div className="flex justify-end gap-2 pt-4 border-t border-base-300">
-            <button
-              className="btn btn-ghost"
+            <Button
+              variant="ghost"
               onClick={() => {
                 setShowApplyModal(false);
                 setSelectedTemplate(null);
@@ -585,9 +592,9 @@ const TemplatesPage: React.FC = () => {
               disabled={applyingTemplate}
             >
               Cancel
-            </button>
-            <button
-              className="btn btn-primary"
+            </Button>
+            <Button
+              variant="primary"
               onClick={handleConfirmApply}
               disabled={applyingTemplate || !botName.trim()}
             >
@@ -602,7 +609,7 @@ const TemplatesPage: React.FC = () => {
                   Create Bot
                 </>
               )}
-            </button>
+            </Button>
           </div>
         </div>
       </Modal>

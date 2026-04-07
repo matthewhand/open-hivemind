@@ -7,6 +7,7 @@ import Divider from '../../components/DaisyUI/Divider';
 import { Stat, Stats } from '../../components/DaisyUI/Stat';
 import { LoadingSpinner } from '../../components/DaisyUI/Loading';
 import Card from '../../components/DaisyUI/Card';
+import Button from '../../components/DaisyUI/Button';
 
 interface PerformanceTabProps {
   onClearCache: () => void;
@@ -58,12 +59,13 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ onClearCache }) => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h3 className="text-xl font-semibold">System Performance & Monitoring</h3>
-        <button
-          className="btn btn-warning btn-sm"
+        <Button
+          className="btn-warning"
+          size="sm"
           onClick={onClearCache}
         >
           Clear System Cache
-        </button>
+        </Button>
       </div>
 
       {apiStatus && (
@@ -81,13 +83,14 @@ const PerformanceTab: React.FC<PerformanceTabProps> = ({ onClearCache }) => {
 
       <div className="flex justify-between items-center mt-8">
         <h3 className="text-xl font-semibold">Performance Tuning & System Info</h3>
-        <button
-          className="btn btn-sm btn-ghost"
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={fetchPerformanceData}
           disabled={isPerformanceLoading}
         >
           {isPerformanceLoading ? <LoadingSpinner size="xs" /> : '🔄 Refresh'}
-        </button>
+        </Button>
       </div>
 
       {systemInfo && (

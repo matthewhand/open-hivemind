@@ -8,6 +8,7 @@ import StatsCards from '../components/DaisyUI/StatsCards';
 import RadialProgress from '../components/DaisyUI/RadialProgress';
 import { SkeletonPage } from '../components/DaisyUI/Skeleton';
 import PageHeader from '../components/DaisyUI/PageHeader';
+import Button from '../components/DaisyUI/Button';
 import { Alert } from '../components/DaisyUI/Alert';
 import Select from '../components/DaisyUI/Select';
 import {
@@ -104,12 +105,13 @@ const MonitoringDashboard: React.FC = () => {
               <option value={10000}>10s</option>
               <option value={30000}>30s</option>
             </Select>
-            <button
-              className="btn btn-ghost btn-sm"
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => { disconnect(); connect(); }}
             >
               <RefreshCw className="w-4 h-4" />
-            </button>
+            </Button>
           </div>
         }
       />

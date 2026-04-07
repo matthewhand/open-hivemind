@@ -13,6 +13,7 @@ import BackupsTab from './BackupsTab';
 import PerformanceTab from './PerformanceTab';
 import type { SystemConfig, BackupRecord } from './types';
 import { LoadingSpinner } from '../../components/DaisyUI/Loading';
+import Button from '../../components/DaisyUI/Button';
 import Input from '../../components/DaisyUI/Input';
 
 const SystemManagement: React.FC = () => {
@@ -256,13 +257,13 @@ const SystemManagement: React.FC = () => {
             </p>
           </div>
           <div className="flex gap-4">
-            <button
-              className="btn btn-success"
+            <Button
+              className="btn-success"
               onClick={openBackupModal}
               disabled={isCreatingBackup}
             >
               {isCreatingBackup ? <LoadingSpinner size="sm" /> : '💾'} Create Backup
-            </button>
+            </Button>
           </div>
         </div>
       </div>
