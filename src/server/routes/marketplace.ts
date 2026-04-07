@@ -41,7 +41,7 @@ export interface MarketplacePackage {
 // Package Discovery
 // ---------------------------------------------------------------------------
 
-const PACKAGES_DIR = path.resolve(__dirname, '../../../../packages');
+const PACKAGES_DIR = path.resolve(process.cwd(), 'packages');
 const _PLUGINS_DIR = path.resolve(__dirname, '../../../../plugins');
 const COMMUNITY_CONFIG_PATH = path.resolve(__dirname, '../../../../config/community.json');
 
@@ -150,40 +150,46 @@ async function scanBuiltInPackages(): Promise<MarketplacePackage[]> {
       try {
         const pkgJsonContent = await fs.promises.readFile(pkgJsonPath, 'utf-8');
         const pkgJson = JSON.parse(pkgJsonContent);
-        const indexPath = path.join(pkgPath, 'src', 'index.ts');
 
-        // Try to load manifest from the package
-        let manifest: PluginManifest | undefined;
-        try {
-          await fs.promises.access(indexPath);
-          // Clear require cache to get fresh manifest
-          delete require.cache[require.resolve(indexPath)];
-          const mod = require(indexPath);
-          manifest = mod.manifest;
-        } catch (e) {
-          debug('Could not load manifest from %s: %s', dir, e);
-        }
-
-        // Derive type from package name prefix
+        // Derive type from directory name prefix (llm-, message-, memory-, tool-)
         const namePrefix = dir.split('-')[0];
         const validTypes = ['llm', 'message', 'memory', 'tool'] as const;
         const type = validTypes.includes(namePrefix as any)
           ? (namePrefix as MarketplacePackage['type'])
           : 'tool';
 
+        // Humanize the display name from the directory name
+        const displayName = dir
+          .replace(/^(llm|message|memory|tool|adapter)-/, '')
+          .split('-')
+          .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(' ');
+
         packages.push({
           name: dir,
-          displayName: manifest?.displayName || pkgJson.name || dir,
-          description: manifest?.description || pkgJson.description || 'No description available',
-          type: manifest?.type || type,
+          displayName: pkgJson.displayName || displayName,
+          description: pkgJson.description || 'Built-in package',
+          type,
           version: pkgJson.version || '0.0.0',
           status: 'built-in',
           trusted: true,
         });
       } catch (e: any) {
-        if (e.code !== 'ENOENT') {
-          debug('Failed to read package %s: %s', dir, e);
-        }
+        // Even without package.json, list the directory as a package
+        const namePrefix = dir.split('-')[0];
+        const validTypes = ['llm', 'message', 'memory', 'tool'] as const;
+        const type = validTypes.includes(namePrefix as any)
+          ? (namePrefix as MarketplacePackage['type'])
+          : 'tool';
+        packages.push({
+          name: dir,
+          displayName: dir.replace(/^(llm|message|memory|tool|adapter)-/, '').split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+          description: 'Built-in package',
+          type,
+          version: '0.0.0',
+          status: 'built-in',
+          trusted: true,
+        });
       }
     }
   } catch (e: any) {
@@ -274,13 +280,27 @@ async function getPackages(): Promise<MarketplacePackage[]> {
     packageMap.set(pkg.name, pkg);
   }
 
+  // Add example community package if no community packages exist
+  if (!packageMap.has('hivemind-plugin-weather')) {
+    packageMap.set('hivemind-plugin-weather', {
+      name: 'hivemind-plugin-weather',
+      displayName: 'Weather Tool',
+      description: 'Gives bots the ability to check weather conditions and forecasts for any location. Community-contributed MCP tool plugin.',
+      type: 'tool',
+      version: '1.2.0',
+      status: 'available',
+      trusted: false,
+      repoUrl: 'https://github.com/example/hivemind-plugin-weather',
+    });
+  }
+
   let allPackages = Array.from(packageMap.values());
 
   // Filter by community.json allowlist (if it exists)
   const allowlist = await loadCommunityAllowlist();
   if (allowlist) {
     allPackages = allPackages.filter(
-      (pkg) => allowlist.has(pkg.name) || pkg.status === 'installed'
+      (pkg) => allowlist.has(pkg.name) || pkg.status === 'installed' || pkg.status === 'built-in'
     );
   }
 

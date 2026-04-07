@@ -294,10 +294,10 @@ export async function shouldReplyToMessage(
     }
   }
 
-  const timeSinceLastActivity =
+  const timeSinceLastPost =
     lastPostTime > 0 ? Math.max(0, Date.now() - lastPostTime) : Infinity;
-  const hasPostedRecently = timeSinceLastActivity < SILENCE_THRESHOLD;
-  const lastStr = lastPostTime > 0 ? `${Math.floor(timeSinceLastActivity / 1000)}s ago` : 'never';
+  const hasPostedRecently = timeSinceLastPost < SILENCE_THRESHOLD;
+  const lastStr = lastPostTime > 0 ? `${Math.floor(timeSinceLastPost / 1000)}s ago` : 'never';
 
   let chance = 0.0;
   if (typeof personaBehavior?.baseChance === 'number') {
@@ -317,7 +317,7 @@ export async function shouldReplyToMessage(
   mods.push(`Base(${baseChance.toFixed(2)} @ ${lastStr})`);
 
   if (hasPostedRecently) {
-    const minutesElapsed = timeSinceLastActivity / 60000;
+    const minutesElapsed = timeSinceLastPost / 60000;
     const recentBonus = 0.5 / (1 + minutesElapsed);
     chance += recentBonus;
     mods.push(`+Recent(+${recentBonus.toFixed(2)})`);
