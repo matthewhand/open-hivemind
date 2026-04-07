@@ -210,25 +210,7 @@ export const PersonaModal: React.FC<PersonaModalProps> = ({
           </div>
         )}
 
-        <div className="form-control w-full">
-          <label className="label" htmlFor="persona-category">
-            <span className="label-text font-medium">Category</span>
-          </label>
-          <select
-            id="persona-category"
-            className={`select select-bordered w-full ${!!isEnvLocked || isViewMode ? 'select-disabled bg-base-200' : ''}`}
-            value={personaCategory}
-            onChange={(e) => setPersonaCategory(e.target.value as any)}
-            disabled={!!isEnvLocked || isViewMode}
-            aria-label="Persona Category"
-          >
-            {categoryOptions.filter((c) => c.value !== 'all').map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* Category picker hidden — defaults to 'general'. Roadmap: user-defined categories */}
 
         <Input
           label="Description (Optional)"

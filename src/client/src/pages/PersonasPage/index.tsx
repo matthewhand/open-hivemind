@@ -145,22 +145,7 @@ const PersonasPage: React.FC = () => {
             onSearchChange={setSearchQuery}
             searchPlaceholder="Search personas by name or description..."
           >
-            <div className="flex gap-2">
-              <Join>
-                <Tooltip content="Filter by Category">
-                  <Button variant="primary" size="sm" className="btn-square join-item pointer-events-none" aria-label="Filter by category" tabIndex={-1}>
-                    <Filter className="w-4 h-4" aria-hidden="true" />
-                  </Button>
-                </Tooltip>
-                <Select
-                  size="sm"
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  options={CATEGORIES.map((cat) => ({ label: cat.label, value: cat.id }))}
-                  className="join-item"
-                />
-              </Join>
-            </div>
+            {/* Category filter hidden — roadmap: user-defined categories */}
           </SearchFilterBar>
 
           {!displayError && filteredPersonas.length > 0 && (

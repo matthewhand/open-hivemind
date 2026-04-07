@@ -105,9 +105,7 @@ export const PersonaList: React.FC<PersonaListProps> = ({
                     <div className="flex-1 min-w-0">
                       <Card.Title tag="h3" className="text-lg font-bold">{persona.name}</Card.Title>
                       <p className="text-sm text-base-content/70 line-clamp-2">{persona.description}</p>
-                      {persona.category && (
-                        <Badge variant="neutral" size="sm" className="w-fit">{persona.category}</Badge>
-                      )}
+                      {/* Category badge hidden — roadmap: user-defined categories */}
                     </div>
                   </div>
                   <div className="flex flex-col gap-1 flex-shrink-0">
