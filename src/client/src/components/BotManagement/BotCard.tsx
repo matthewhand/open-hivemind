@@ -386,12 +386,8 @@ const BotCard: React.FC<BotCardProps> = ({
 
         {/* Footer Info and Actions */}
         <div className="flex justify-between items-center">
-          <div className="text-xs text-base-content/60">
-            <div>Created: {new Date(bot.createdAt).toLocaleDateString()}</div>
-            {bot.lastActive && (
-              <div>Last active: {new Date(bot.lastActive).toLocaleDateString()}</div>
-            )}
-          </div>
+          {/* Created/Last active hidden until date formatting is reliable */}
+          <div />
 
           <div className="flex gap-2">
             <Button
