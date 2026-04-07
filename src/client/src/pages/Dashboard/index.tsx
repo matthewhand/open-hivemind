@@ -1,17 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Cpu, Rocket } from 'lucide-react';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Activity, Cpu, LayoutDashboard, Rocket } from 'lucide-react';
 import Dashboard from '../../components/Dashboard';
 import { apiService } from '../../services/api';
 import { Alert } from '../../components/DaisyUI/Alert';
 import Button from '../../components/DaisyUI/Button';
+import { LoadingSpinner } from '../../components/DaisyUI/Loading';
 import Toggle from '../../components/DaisyUI/Toggle';
 import Carousel from '../../components/DaisyUI/Carousel';
 import DashboardWidgetSystem from '../../components/DaisyUI/DashboardWidgetSystem';
 import WelcomeSplash from '../../components/WelcomeSplash';
 
+const SystemHealth = lazy(() => import('../../components/SystemHealth'));
+
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'dashboard';
   const [checked, setChecked] = useState(false);
   const [needsSetup, setNeedsSetup] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
@@ -72,8 +77,41 @@ const DashboardPage: React.FC = () => {
     { image: '', title: '📊 Real-time Monitoring', description: 'Monitor bot performance, message volume, response times, and system health.', bgGradient: 'linear-gradient(135deg, #7c3aed, #a855f7)' },
   ];
 
+  const setTab = (tab: string) => {
+    if (tab === 'dashboard') {
+      searchParams.delete('tab');
+      setSearchParams(searchParams);
+    } else {
+      setSearchParams({ tab });
+    }
+  };
+
   return (
     <div>
+      {/* Tabs */}
+      <div className="tabs tabs-bordered px-4 mb-4">
+        <button
+          className={`tab gap-2 ${activeTab === 'dashboard' ? 'tab-active' : ''}`}
+          onClick={() => setTab('dashboard')}
+        >
+          <LayoutDashboard className="w-4 h-4" /> Dashboard
+        </button>
+        <button
+          className={`tab gap-2 ${activeTab === 'health' ? 'tab-active' : ''}`}
+          onClick={() => setTab('health')}
+        >
+          <Activity className="w-4 h-4" /> Health
+        </button>
+      </div>
+
+      {activeTab === 'health' ? (
+        <div className="px-4">
+          <Suspense fallback={<LoadingSpinner size="lg" />}>
+            <SystemHealth refreshInterval={30000} />
+          </Suspense>
+        </div>
+      ) : (
+      <div>
       {/* Welcome Splash - shown when config is incomplete */}
       {showWelcome && (
         <div className="max-w-7xl mx-auto px-4 pt-4">
@@ -121,6 +159,8 @@ const DashboardPage: React.FC = () => {
         <div className="animate-in fade-in duration-300">
           <Dashboard />
         </div>
+      )}
+    </div>
       )}
     </div>
   );
