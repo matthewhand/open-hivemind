@@ -446,26 +446,83 @@ dialog.modal:not([open]) {
 
 .alert-info {
   background-color: oklch(var(--in));
-  color: oklch(var(--inc));
+  color: oklch(var(--inc, 1 0 0));
   border-color: oklch(var(--in));
 }
 
 .alert-success {
   background-color: oklch(var(--su));
-  color: oklch(var(--suc));
+  color: oklch(var(--suc, 1 0 0));
   border-color: oklch(var(--su));
 }
 
 .alert-warning {
   background-color: oklch(var(--wa));
-  color: oklch(var(--wac));
+  color: oklch(var(--wac, 0.2 0 0));
   border-color: oklch(var(--wa));
 }
 
 .alert-error {
   background-color: oklch(var(--er));
-  color: oklch(var(--erc));
+  color: oklch(var(--erc, 1 0 0));
   border-color: oklch(var(--er));
+}
+
+/* Ensure alert text is always readable on dark themes */
+[data-theme='dark'] .alert-success,
+[data-theme='night'] .alert-success,
+[data-theme='dracula'] .alert-success,
+[data-theme='forest'] .alert-success,
+[data-theme='business'] .alert-success,
+[data-theme='coffee'] .alert-success,
+[data-theme='dim'] .alert-success,
+[data-theme='sunset'] .alert-success,
+[data-theme='synthwave'] .alert-success,
+[data-theme='cyberpunk'] .alert-success {
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme='dark'] .alert-info,
+[data-theme='night'] .alert-info,
+[data-theme='dracula'] .alert-info,
+[data-theme='forest'] .alert-info,
+[data-theme='business'] .alert-info,
+[data-theme='coffee'] .alert-info,
+[data-theme='dim'] .alert-info,
+[data-theme='sunset'] .alert-info,
+[data-theme='synthwave'] .alert-info,
+[data-theme='cyberpunk'] .alert-info {
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme='dark'] .alert-error,
+[data-theme='night'] .alert-error,
+[data-theme='dracula'] .alert-error,
+[data-theme='forest'] .alert-error,
+[data-theme='business'] .alert-error,
+[data-theme='coffee'] .alert-error,
+[data-theme='dim'] .alert-error,
+[data-theme='sunset'] .alert-error,
+[data-theme='synthwave'] .alert-error,
+[data-theme='cyberpunk'] .alert-error {
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme='dark'] .alert-warning,
+[data-theme='night'] .alert-warning,
+[data-theme='dracula'] .alert-warning,
+[data-theme='forest'] .alert-warning,
+[data-theme='business'] .alert-warning,
+[data-theme='coffee'] .alert-warning,
+[data-theme='dim'] .alert-warning,
+[data-theme='sunset'] .alert-warning,
+[data-theme='synthwave'] .alert-warning,
+[data-theme='cyberpunk'] .alert-warning {
+  color: #1a1a1a;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.2);
 }
 
 /* Dark mode visibility adjustment */
@@ -479,6 +536,14 @@ dialog.modal:not([open]) {
   color: hsl(0, 100%, 75%);
   /* Brighter red for dark backgrounds */
   text-shadow: 0 0 1px rgba(0, 0, 0, 0.5);
+}
+
+/* Ensure alert child elements inherit text color for contrast */
+.alert .btn-ghost,
+.alert .btn-circle,
+.alert span,
+.alert a {
+  color: inherit;
 }
 
 /* Alert icon glow */
