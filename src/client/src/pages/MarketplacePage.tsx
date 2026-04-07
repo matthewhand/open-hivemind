@@ -188,7 +188,7 @@ const MarketplacePage: React.FC = () => {
 
   // Breadcrumbs
   const breadcrumbItems = [
-    { label: 'Marketplace', href: '/admin/marketplace', isActive: true },
+    { label: 'Community', href: '/admin/community', isActive: true },
   ];
 
   return (
@@ -200,7 +200,7 @@ const MarketplacePage: React.FC = () => {
         <div className="flex items-center gap-3">
           <StoreIcon className="w-8 h-8 text-primary" />
           <div>
-            <h1 className="text-2xl font-bold">Package Marketplace</h1>
+            <h1 className="text-2xl font-bold">Community</h1>
             <p className="text-sm text-base-content/70">
               Browse, install, and manage provider packages
             </p>

@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import {
-  LayoutDashboard, Bot, Users, Shield,
-  Settings, Cog, Activity, Component, MessageSquare, Brain,
-  Map,
+  LayoutDashboard, Bot,
+  Settings, Cog, Activity, Code, MessageSquare, Brain,
+  Map, Store,
 } from 'lucide-react';
 import React from 'react';
 
@@ -28,7 +28,7 @@ export const hivemindNavItems: NavItem[] = [
   // === MAIN SECTION ===
   {
     id: 'overview',
-    label: 'Overview',
+    label: 'Dashboard',
     icon: <NavIcon><LayoutDashboard className="w-4 h-4" /></NavIcon>,
     path: '/admin/overview',
     visible: true,
@@ -44,17 +44,10 @@ export const hivemindNavItems: NavItem[] = [
     visible: true,
   },
   {
-    id: 'integrations-llm',
-    label: 'LLM Providers',
-    icon: <NavIcon><Brain className="w-4 h-4" /></NavIcon>,
-    path: '/admin/providers/llm',
-    visible: true,
-  },
-  {
-    id: 'integrations-message',
-    label: 'Message Providers',
-    icon: <NavIcon><MessageSquare className="w-4 h-4" /></NavIcon>,
-    path: '/admin/providers/message',
+    id: 'providers',
+    label: 'Providers',
+    icon: <NavIcon><Cog className="w-4 h-4" /></NavIcon>,
+    path: '/admin/providers',
     visible: true,
   },
   {
@@ -65,17 +58,10 @@ export const hivemindNavItems: NavItem[] = [
     visible: true,
   },
   {
-    id: 'personas',
-    label: 'Personas',
-    icon: <NavIcon><Users className="w-4 h-4" /></NavIcon>,
-    path: '/admin/personas',
-    visible: true,
-  },
-  {
-    id: 'guards',
-    label: 'Guards',
-    icon: <NavIcon><Shield className="w-4 h-4" /></NavIcon>,
-    path: '/admin/guards',
+    id: 'community',
+    label: 'Community',
+    icon: <NavIcon><Store className="w-4 h-4" /></NavIcon>,
+    path: '/admin/community',
     visible: true,
   },
   {
@@ -93,12 +79,12 @@ export const hivemindNavItems: NavItem[] = [
     visible: true,
   },
 
-  // Settings, Monitoring, Global Defaults all under SYSTEM
+  // Settings, Activity, Global Defaults all under SYSTEM
   {
-    id: 'monitoring',
-    label: 'Monitoring',
+    id: 'activity',
+    label: 'Activity',
     icon: <NavIcon><Activity className="w-4 h-4" /></NavIcon>,
-    path: '/admin/monitoring',
+    path: '/admin/activity',
     visible: true,
   },
   {
@@ -118,17 +104,10 @@ export const hivemindNavItems: NavItem[] = [
     visible: true,
   },
   {
-    id: 'showcase',
-    label: 'UI Components',
-    icon: <NavIcon><Component className="w-4 h-4" /></NavIcon>,
-    path: '/admin/showcase',
-    visible: true,
-  },
-  {
-    id: 'sitemap',
-    label: 'Sitemap',
-    icon: <NavIcon><Map className="w-4 h-4" /></NavIcon>,
-    path: '/admin/sitemap',
+    id: 'developer',
+    label: 'Developer',
+    icon: <NavIcon><Code className="w-4 h-4" /></NavIcon>,
+    path: '/admin/developer',
     visible: true,
   },
 ];
