@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
+import SettingsPreferences from '../components/Settings/SettingsPreferences';
 import SettingsGeneral from '../components/Settings/SettingsGeneral';
 import SettingsSecurity from '../components/Settings/SettingsSecurity';
 import SettingsMessaging from '../components/Settings/SettingsMessaging';
@@ -17,6 +18,7 @@ const SystemSettings: React.FC = () => {
   ];
 
   const tabs = [
+    { id: 'preferences', label: 'Preferences', component: <SettingsPreferences /> },
     { id: 'general', label: 'General', component: <SettingsGeneral /> },
     { id: 'messaging', label: 'Messaging', component: <SettingsMessaging /> },
     { id: 'llm', label: 'LLM', component: <SettingsLLM /> },

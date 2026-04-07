@@ -12,6 +12,7 @@ export interface UIState {
   dateFormat: string;
   timeFormat: '12h' | '24h';
   density: 'compact' | 'comfortable' | 'spacious';
+  hintStyle: 'icon' | 'text' | 'full';
   errorReportingEnabled: boolean;
   autoRefreshEnabled: boolean;
   refreshInterval: number;
@@ -67,6 +68,7 @@ const initialState: UIState = {
   dateFormat: 'MM/DD/YYYY',
   timeFormat: '12h',
   density: 'comfortable',
+  hintStyle: 'full',
   errorReportingEnabled: true,
   autoRefreshEnabled: true,
   refreshInterval: 5000,
@@ -295,7 +297,12 @@ const uiSlice = createSlice({
       localStorage.setItem('density', action.payload);
       document.documentElement.setAttribute('data-density', action.payload);
     },
-    
+
+    setHintStyle: (state, action: PayloadAction<UIState['hintStyle']>) => {
+      state.hintStyle = action.payload;
+      localStorage.setItem('hintStyle', action.payload);
+    },
+
     setRefreshInterval: (state, action: PayloadAction<number>) => {
       state.refreshInterval = Math.max(1000, action.payload); // Minimum 1 second
       localStorage.setItem('refreshInterval', state.refreshInterval.toString());
@@ -336,6 +343,7 @@ const uiSlice = createSlice({
         'dateFormat',
         'timeFormat',
         'density',
+        'hintStyle',
         'errorReportingEnabled',
         'autoRefreshEnabled',
         'refreshInterval',
@@ -423,6 +431,7 @@ export const {
   setLanguage,
   setTimezone,
   setDensity,
+  setHintStyle,
   setRefreshInterval,
   toggleAutoRefresh,
   setShowTooltips,
@@ -447,6 +456,7 @@ export const selectTimezone = (state: { ui: UIState }) => state.ui.timezone;
 export const selectDateFormat = (state: { ui: UIState }) => state.ui.dateFormat;
 export const selectTimeFormat = (state: { ui: UIState }) => state.ui.timeFormat;
 export const selectDensity = (state: { ui: UIState }) => state.ui.density;
+export const selectHintStyle = (state: { ui: UIState }) => state.ui.hintStyle;
 export const selectErrorReportingEnabled = (state: { ui: UIState }) => state.ui.errorReportingEnabled;
 export const selectAutoRefreshEnabled = (state: { ui: UIState }) => state.ui.autoRefreshEnabled;
 export const selectRefreshInterval = (state: { ui: UIState }) => state.ui.refreshInterval;
@@ -496,6 +506,7 @@ export const selectUIConfig = (state: { ui: UIState }) => ({
   theme: state.ui.theme,
   density: state.ui.density,
   animationsEnabled: state.ui.animationsEnabled,
+  hintStyle: state.ui.hintStyle,
   showTooltips: state.ui.showTooltips,
   language: state.ui.language,
   timezone: state.ui.timezone,

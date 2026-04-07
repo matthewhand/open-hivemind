@@ -54,6 +54,7 @@ const initializeApp = () => {
     'showKeyboardShortcuts',
     'errorReportingEnabled',
     'autoRefreshEnabled',
+    'hintStyle',
   ];
 
   settings.forEach(setting => {

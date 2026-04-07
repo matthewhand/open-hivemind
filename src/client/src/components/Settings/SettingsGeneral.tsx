@@ -12,7 +12,6 @@ interface GeneralConfig {
   description: string;
   timezone: string;
   language: string;
-  theme: string;
   enableNotifications: boolean;
   enableLogging: boolean;
   logLevel: string;
@@ -29,7 +28,6 @@ const SettingsGeneral: React.FC = () => {
     description: '',
     timezone: 'UTC',
     language: 'en',
-    theme: 'auto',
     enableNotifications: true,
     enableLogging: true,
     logLevel: 'info',
@@ -87,7 +85,6 @@ const SettingsGeneral: React.FC = () => {
         description: userSettings['app.description'] || config.app?.description?.value || 'Multi-agent AI coordination platform',
         timezone: userSettings['app.timezone'] || config.app?.timezone?.value || 'UTC',
         language: userSettings['app.language'] || config.app?.language?.value || 'en',
-        theme: userSettings['webui.theme'] || config.webui?.theme?.value || 'auto',
         enableNotifications: userSettings['webui.notifications'] ?? (config.webui?.notifications?.value !== false),
         enableLogging: userSettings['logging.enabled'] ?? (config.logging?.enabled?.value !== false),
         logLevel: userSettings['logging.level'] || config.logging?.level?.value || 'info',
@@ -124,7 +121,6 @@ const SettingsGeneral: React.FC = () => {
           'app.description': settings.description,
           'app.timezone': settings.timezone,
           'app.language': settings.language,
-          'webui.theme': settings.theme,
           'webui.notifications': settings.enableNotifications,
           'logging.level': settings.logLevel,
           'logging.enabled': settings.enableLogging,
@@ -249,7 +245,7 @@ const SettingsGeneral: React.FC = () => {
         <div className={commonCardClass}>
           <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
             <span className="w-2 h-2 bg-secondary rounded-full"></span>
-            Localization & Appearance
+            Localization
           </h6>
 
           <div className="form-control mb-4">
@@ -266,16 +262,19 @@ const SettingsGeneral: React.FC = () => {
 
           <div className="form-control">
             <label className="label py-1">
-              <span className="label-text text-sm font-medium">Theme</span>
+              <span className="label-text text-sm font-medium">Language</span>
             </label>
             <Select
-              value={settings.theme}
-              onChange={(e) => handleChange('theme', e.target.value)}
+              value={settings.language}
+              onChange={(e) => handleChange('language', e.target.value)}
               size="sm"
               options={[
-                { value: 'auto', label: 'Auto (System)' },
-                { value: 'light', label: 'Light' },
-                { value: 'dark', label: 'Dark' },
+                { value: 'en', label: 'English' },
+                { value: 'es', label: 'Spanish' },
+                { value: 'fr', label: 'French' },
+                { value: 'de', label: 'German' },
+                { value: 'ja', label: 'Japanese' },
+                { value: 'zh', label: 'Chinese' },
               ]}
             />
           </div>
