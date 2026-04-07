@@ -227,37 +227,34 @@ const Dashboard: React.FC = () => {
           <p className="text-xs text-base-content/60">Your AI Agent Swarm Control Center</p>
         </div>
 
-        {/* Carousel + Stats — side by side on desktop, stacked on mobile */}
-        <div className="flex flex-col lg:flex-row gap-4">
-          {/* Getting Started Carousel */}
-          <div className="flex-1 min-w-0">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-base-content/40 mb-1">Getting Started</h3>
-            <Carousel
-              items={[
-                { image: '', title: '🤖 Configure Your First Bot', description: 'Set up an AI agent with a persona and LLM provider.', bgGradient: 'linear-gradient(135deg, #4f46e5, #7c3aed)', link: '/admin/bots' },
-                { image: '', title: '🧠 Connect an LLM Provider', description: 'Add your OpenAI, Anthropic, or Ollama API key.', bgGradient: 'linear-gradient(135deg, #059669, #10b981)', link: '/admin/providers/llm' },
-                { image: '', title: '🎭 Create a Persona', description: 'Give your bot a unique personality and response behavior.', bgGradient: 'linear-gradient(135deg, #0891b2, #06b6d4)', link: '/admin/personas' },
-                { image: '', title: '🛡️ Set Up Guard Profiles', description: 'Add safety rules for access control and rate limiting.', bgGradient: 'linear-gradient(135deg, #d97706, #f59e0b)', link: '/admin/guards' },
-                { image: '', title: '📊 Real-time Monitoring', description: 'Monitor performance, messages, and system health.', bgGradient: 'linear-gradient(135deg, #7c3aed, #a855f7)', link: '/admin/monitoring' },
-                ...(announcement ? [{ image: '', title: '📋 Announcements', description: announcement, bgGradient: 'linear-gradient(135deg, #1e40af, #3b82f6)' }] : []),
-              ]}
-              autoplay
-              interval={6000}
-              variant="full-width"
-              visibleCount={isDesktop ? 2 : 1}
-              onSlideClick={(item) => item.link && navigate(item.link)}
-            />
-          </div>
+        {/* Getting Started Carousel — full width */}
+        <div className="mb-4">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-base-content/40 mb-1">Getting Started</h3>
+          <Carousel
+            items={[
+              { image: '', title: '🤖 Configure Your First Bot', description: 'Set up an AI agent with a persona and LLM provider.', bgGradient: 'linear-gradient(135deg, #4f46e5, #7c3aed)', link: '/admin/bots' },
+              { image: '', title: '🧠 Connect an LLM Provider', description: 'Add your OpenAI, Anthropic, or Ollama API key.', bgGradient: 'linear-gradient(135deg, #059669, #10b981)', link: '/admin/providers/llm' },
+              { image: '', title: '🎭 Create a Persona', description: 'Give your bot a unique personality and response behavior.', bgGradient: 'linear-gradient(135deg, #0891b2, #06b6d4)', link: '/admin/personas' },
+              { image: '', title: '🛡️ Set Up Guard Profiles', description: 'Add safety rules for access control and rate limiting.', bgGradient: 'linear-gradient(135deg, #d97706, #f59e0b)', link: '/admin/guards' },
+              { image: '', title: '📊 Real-time Monitoring', description: 'Monitor performance, messages, and system health.', bgGradient: 'linear-gradient(135deg, #7c3aed, #a855f7)', link: '/admin/monitoring' },
+              ...(announcement ? [{ image: '', title: '📋 Announcements', description: announcement, bgGradient: 'linear-gradient(135deg, #1e40af, #3b82f6)' }] : []),
+            ]}
+            autoplay
+            interval={6000}
+            variant="full-width"
+            visibleCount={isDesktop ? 2 : 1}
+            onSlideClick={(item) => item.link && navigate(item.link)}
+          />
+        </div>
 
-          {/* Stats Overview */}
-          <div className="lg:w-72 shrink-0">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-base-content/40 mb-1">Overview</h3>
-            <Stats className="shadow-sm bg-base-200/50 w-full flex-col">
-              <Stat title="Active Bots" value={activeBots} valueClassName="text-primary text-xl" description={`out of ${bots.length} total`} />
-              <Stat title="Total Messages" value={totalMessages.toLocaleString()} valueClassName="text-secondary text-xl" description="processed today" />
-              <Stat title="System Uptime" value={<>{uptimeHours}h {uptimeMinutes}m</>} valueClassName="text-accent text-xl" description="running smoothly" />
-            </Stats>
-          </div>
+        {/* Stats Overview — full width below carousel */}
+        <div>
+          <h3 className="text-xs font-bold uppercase tracking-wider text-base-content/40 mb-1">Overview</h3>
+          <Stats className="shadow-sm bg-base-200/50 w-full">
+            <Stat title="Active Bots" value={activeBots} valueClassName="text-primary text-xl" description={`out of ${bots.length} total`} />
+            <Stat title="Total Messages" value={totalMessages.toLocaleString()} valueClassName="text-secondary text-xl" description="processed today" />
+            <Stat title="System Uptime" value={<>{uptimeHours}h {uptimeMinutes}m</>} valueClassName="text-accent text-xl" description="running smoothly" />
+          </Stats>
         </div>
       </div>
 
