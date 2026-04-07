@@ -151,38 +151,33 @@ export async function shouldReplyToMessage(
     }
   }
 
-  // If configured to only respond when spoken to, check grace window
-  if (onlyWhenSpokenTo && !isDirectlyAddressed) {
-    const graceMsRaw = getMessageSetting('MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS', botConfig);
-    const graceMs = typeof graceMsRaw === 'number' ? graceMsRaw : Number(graceMsRaw) || 0;
-    const lastActivityTime = graceMs > 0 ? getLastBotActivity(channelId, botId) : 0;
-    const timeSinceLastActivity =
-      lastActivityTime > 0 ? Math.max(0, Date.now() - lastActivityTime) : Infinity;
+  // Grace window: applies independently of onlyWhenSpokenTo.
+  // If the bot recently spoke in this channel, allow follow-up replies.
+  const graceMsRaw = personaBehavior?.graceWindowMs ??
+    getMessageSetting('MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS', botConfig);
+  const graceMs = typeof graceMsRaw === 'number' ? graceMsRaw : Number(graceMsRaw) || 0;
+  const lastActivityTime = graceMs > 0 ? getLastBotActivity(channelId, botId) : 0;
+  const timeSinceLastActivity =
+    lastActivityTime > 0 ? Math.max(0, Date.now() - lastActivityTime) : Infinity;
+  const withinGraceWindow = graceMs > 0 && lastActivityTime > 0 && timeSinceLastActivity <= graceMs;
 
-    if (!(graceMs > 0 && lastActivityTime > 0 && timeSinceLastActivity <= graceMs)) {
-      debug('MESSAGE_ONLY_WHEN_SPOKEN_TO enabled and not addressed, no grace; not replying.');
-      return {
-        shouldReply: false,
-        reason: 'Not addressed (OnlyWhenSpokenTo)',
-        meta: {
-          mods: 'none',
-          last: lastActivityTime > 0 ? `${Math.round(timeSinceLastActivity / 1000)}s` : 'never',
-        },
-      };
-    }
+  // Only When Spoken To: if enabled and not addressed AND not within grace, skip.
+  if (onlyWhenSpokenTo && !isDirectlyAddressed && !withinGraceWindow) {
+    debug('MESSAGE_ONLY_WHEN_SPOKEN_TO enabled and not addressed, no grace; not replying.');
+    return {
+      shouldReply: false,
+      reason: 'Not addressed (OnlyWhenSpokenTo)',
+      meta: {
+        mods: 'none',
+        last: lastActivityTime > 0 ? `${Math.round(timeSinceLastActivity / 1000)}s` : 'never',
+      },
+    };
   }
 
   // Safety by default: avoid bot-to-bot loops unless explicitly allowed.
   if (isFromBot && !isDirectlyAddressed) {
-    const graceMsRaw = getMessageSetting('MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS', botConfig);
-    const graceMs = typeof graceMsRaw === 'number' ? graceMsRaw : Number(graceMsRaw) || 0;
-    const lastActivityTime = graceMs > 0 ? getLastBotActivity(channelId, botId) : 0;
-    const timeSinceLastActivity =
-      lastActivityTime > 0 ? Math.max(0, Date.now() - lastActivityTime) : Infinity;
-    const withinGrace = graceMs > 0 && lastActivityTime > 0 && timeSinceLastActivity <= graceMs;
-
     const allowUnaddressedBots = Boolean(messageConfig.get('MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED'));
-    if (!allowUnaddressedBots && !withinGrace) {
+    if (!allowUnaddressedBots && !withinGraceWindow) {
       return { shouldReply: false, reason: 'Unaddressed bot message disabled' };
     }
   }
