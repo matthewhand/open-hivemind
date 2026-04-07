@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "installCommand": "npm ci",
-  "buildCommand": "npm run build:serverless",
+  "installCommand": "pnpm install --no-frozen-lockfile",
+  "buildCommand": "pnpm run build:serverless",
   "outputDirectory": "src/client/dist",
   "devCommand": "npm run dev:frontend-only",
   "framework": "vite",

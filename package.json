@@ -1,6 +1,7 @@
 {
   "name": "open-hivemind",
   "version": "1.0.0",
+  "packageManager": "pnpm@10.25.0",
   "description": "A messenger bot to communicate with LLMs",
   "type": "commonjs",
   "engines": {
