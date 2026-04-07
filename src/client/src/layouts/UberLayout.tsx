@@ -15,8 +15,8 @@ const UberLayout: React.FC = () => {
       if (item.id === 'monitoring' && monitoringBadge) {
         return { ...item, badge: monitoringBadge };
       }
-      // Add warning badge to LLM Integrations if unconfigured
-      if (item.id === 'integrations-llm' && configWarning) {
+      // Add warning badge to Providers if unconfigured
+      if (item.id === 'providers' && configWarning) {
         return { ...item, badge: '!' };
       }
       return item;
