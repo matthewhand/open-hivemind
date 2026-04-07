@@ -6,6 +6,7 @@ import SettingsSecurity from '../components/Settings/SettingsSecurity';
 import SettingsMessaging from '../components/Settings/SettingsMessaging';
 import SettingsLLM from '../components/Settings/SettingsLLM';
 import SettingsIntegrations from '../components/Settings/SettingsIntegrations';
+import Button from '../components/DaisyUI/Button';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import Tabs from '../components/DaisyUI/Tabs';
 import Card from '../components/DaisyUI/Card';
@@ -55,13 +56,10 @@ const SystemSettings: React.FC = () => {
       />
 
       <div className="flex justify-end mb-4">
-        <button
-          className="btn btn-ghost btn-sm gap-2 text-base-content/60 hover:text-primary"
-          onClick={handleRestartWizard}
-        >
+        <Button variant="ghost" size="sm" onClick={handleRestartWizard} className="gap-2">
           <RotateCcw className="w-4 h-4" />
-          Restart Setup Wizard
-        </button>
+          Rerun Setup Wizard
+        </Button>
       </div>
 
       <Card className="shadow-xl">
