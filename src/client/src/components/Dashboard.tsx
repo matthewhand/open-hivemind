@@ -254,7 +254,7 @@ const Dashboard: React.FC = () => {
 
       {/* Main Content */}
       <div className="px-2 py-2">
-        {/* TipRotator moved to navbar (ResponsiveNavigation) */}
+        <TipRotator className="mb-4 px-2" />
 
         {/* Bot Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">

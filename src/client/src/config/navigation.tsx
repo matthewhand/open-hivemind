@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Bot, Users, Shield,
   Settings, Cog, Activity, Component, MessageSquare, Brain,
   Map, Webhook, FileText, Store, BarChart3, ClipboardList,
-  FileDown, HeartPulse, HelpCircle, FileCode,
+  FileDown, HeartPulse, HelpCircle, FileCode, Info,
 } from 'lucide-react';
 import React from 'react';
 
@@ -213,6 +213,13 @@ export const hivemindNavItems: NavItem[] = [
     label: 'Help & Docs',
     icon: <NavIcon><HelpCircle className="w-4 h-4" /></NavIcon>,
     path: '/admin/help',
+    visible: true,
+  },
+  {
+    id: 'about',
+    label: 'About',
+    icon: <NavIcon><Info className="w-4 h-4" /></NavIcon>,
+    path: '/admin/about',
     visible: true,
   },
 ];

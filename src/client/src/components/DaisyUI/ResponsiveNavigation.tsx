@@ -5,7 +5,6 @@ import HamburgerMenu from './HamburgerMenu';
 import { Menu as MenuIcon, X } from 'lucide-react';
 import DemoModeBanner from '../DemoModeBanner';
 import LlmStatusBanner from '../LlmStatusBanner';
-import TipRotator from '../TipRotator';
 import Breadcrumbs from './Breadcrumbs';
 import RateLimitIndicator from './RateLimitIndicator';
 import { useRateLimitToast } from '../../hooks/useRateLimitToast';
@@ -92,7 +91,6 @@ const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
           </div>
         )}
         <DemoModeBanner />
-        <TipRotator className="px-4 py-1 border-b border-base-300 bg-base-100/50" />
 
         {/* MAIN CONTENT — zero padding, content owns its own spacing */}
         <main className="flex-1">
