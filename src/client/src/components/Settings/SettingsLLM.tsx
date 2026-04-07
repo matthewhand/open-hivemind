@@ -97,7 +97,7 @@ const SettingsLLM: React.FC = () => {
             // Fetch available LLM profiles from the API
             const profilesRes = await authFetch('/api/config/llm-profiles');
             const profilesData = await profilesRes.json();
-            const availableProfiles = Array.isArray(profilesData?.profiles?.llm) ? profilesData.profiles.llm : (Array.isArray(profilesData) ? profilesData : []);
+            const availableProfiles = Array.isArray(profilesData?.llm) ? profilesData.llm : (Array.isArray(profilesData?.profiles?.llm) ? profilesData.profiles.llm : (Array.isArray(profilesData) ? profilesData : []));
             setProfiles(availableProfiles);
 
         } catch (err) {
@@ -162,9 +162,23 @@ const SettingsLLM: React.FC = () => {
         );
     }
 
-    const decodeHtmlEntities = (text: string) => text; // simple mock or import if needed
-    const isChatCapable = (p: any) => true; // simplistic fallback
-    const isEmbeddingCapable = (p: any) => true;
+    const decodeHtmlEntities = (text: string): string => {
+        const textarea = document.createElement('textarea');
+        textarea.innerHTML = text;
+        return textarea.value;
+    };
+    const normalizeModelType = (value: unknown): string => {
+        if (value === 'embedding' || value === 'both') return value;
+        return 'chat';
+    };
+    const isChatCapable = (p: any): boolean => {
+        const mt = normalizeModelType(p?.modelType);
+        return mt === 'chat' || mt === 'both';
+    };
+    const isEmbeddingCapable = (p: any): boolean => {
+        const mt = normalizeModelType(p?.modelType);
+        return mt === 'embedding' || mt === 'both';
+    };
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
