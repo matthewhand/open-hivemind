@@ -19,6 +19,8 @@ export const CreateLlmProfileSchema = z.object({
     name: profileNameField,
     provider: profileProviderField,
     modelType: z.enum(['chat', 'embedding', 'both']).optional().default('chat'),
+    config: z.record(z.unknown()).optional(),
+    description: z.string().optional(),
   }),
 });
 
@@ -46,6 +48,8 @@ export const CreateMessageProfileSchema = z.object({
     key: profileKeyField,
     name: profileNameField,
     provider: profileProviderField,
+    config: z.record(z.unknown()).optional(),
+    description: z.string().optional(),
   }),
 });
 
