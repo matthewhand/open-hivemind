@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Info, Github, Heart, Lightbulb } from 'lucide-react';
 import Card from '../components/DaisyUI/Card';
 import PageHeader from '../components/DaisyUI/PageHeader';
-import TipRotator from '../components/TipRotator';
 import AnnouncementBanner from '../components/AnnouncementBanner';
 import { apiService } from '../services/api';
 
@@ -29,13 +28,6 @@ const AboutPage: React.FC = () => {
           <div><span className="text-base-content/60">Platform:</span> <span className="font-mono">{healthData?.system?.platform || 'unknown'}</span></div>
           <div><span className="text-base-content/60">Node.js:</span> <span className="font-mono">{healthData?.system?.nodeVersion || 'unknown'}</span></div>
           <div><span className="text-base-content/60">Status:</span> <span className={`badge badge-sm ${healthData?.status === 'healthy' ? 'badge-success' : 'badge-warning'}`}>{healthData?.status || 'checking...'}</span></div>
-        </div>
-      </Card>
-
-      <Card title="Tips & Hints">
-        <div className="space-y-3">
-          <TipRotator className="py-2" />
-          <p className="text-xs text-base-content/50">Tips rotate every 8 seconds. Edit TIPS.md to customize.</p>
         </div>
       </Card>
 
