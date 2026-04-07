@@ -11,7 +11,6 @@ const IntegrationsPage: React.FC = () => {
   }
 
   const breadcrumbItems = [
-    { label: 'Admin', href: '/admin/overview' },
     { label: 'General', href: '/admin/settings' },
     { label: type.charAt(0).toUpperCase() + type.slice(1), href: `/admin/integrations/${type}`, isActive: true },
   ];

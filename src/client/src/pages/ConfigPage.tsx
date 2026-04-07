@@ -6,7 +6,6 @@ import { Plug } from 'lucide-react';
 
 const ConfigPage: React.FC = () => {
   const breadcrumbItems = [
-    { label: 'Admin', href: '/admin/overview' },
     { label: 'Config', href: '/admin/config', isActive: true },
   ];
 

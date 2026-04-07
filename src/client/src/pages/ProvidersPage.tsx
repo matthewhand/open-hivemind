@@ -69,7 +69,6 @@ const TYPE_FEATURES: Record<string, string[]> = {
 const ProvidersPage: React.FC = () => {
   const navigate = useNavigate();
   const breadcrumbItems = [
-    { label: 'Admin', href: '/admin/overview' },
     { label: 'Providers', href: '/admin/providers', isActive: true },
   ];
 

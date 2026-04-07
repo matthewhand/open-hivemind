@@ -27,13 +27,8 @@ const BreadcrumbNavigation: React.FC = () => {
     pathSegments.forEach((segment, index) => {
       currentPath += `/${segment}`;
 
-      // Skip adding breadcrumb for 'admin' as it's the main section
+      // Skip 'admin' segment — Home already links to the admin root
       if (segment === 'admin') {
-        breadcrumbs.push({
-          label: 'Admin',
-          path: currentPath,
-          isActive: index === pathSegments.length - 1,
-        });
         return;
       }
 

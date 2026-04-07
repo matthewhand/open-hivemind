@@ -188,7 +188,6 @@ const MarketplacePage: React.FC = () => {
 
   // Breadcrumbs
   const breadcrumbItems = [
-    { label: 'Admin', href: '/admin/overview' },
     { label: 'Marketplace', href: '/admin/marketplace', isActive: true },
   ];
 
