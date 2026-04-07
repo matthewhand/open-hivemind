@@ -83,13 +83,13 @@ describe('CircuitBreaker — HALF_OPEN state', () => {
   it('rejects after halfOpenMaxAttempts probe limit reached before success', async () => {
     // With halfOpenMaxAttempts=2: first probe allowed, second probe allowed,
     // third probe rejected because limit reached
-    const cb = new CircuitBreaker({ name: 'test', failureThreshold: 1, resetTimeoutMs: 1, halfOpenMaxAttempts: 2 });
+    const cb = new CircuitBreaker({ name: 'test', failureThreshold: 1, resetTimeoutMs: 10, halfOpenMaxAttempts: 2 });
     await openAndWait(cb);
     // First probe — allowed but fails, re-opens
     await expect(cb.execute(() => Promise.reject(new Error('e')))).rejects.toThrow();
     expect(cb.getState()).toBe(CircuitBreakerState.OPEN);
     // Wait again for HALF_OPEN
-    await new Promise((r) => setTimeout(r, 10));
+    await new Promise((r) => setTimeout(r, 20));
     // First probe — allowed, succeeds
     await cb.execute(() => Promise.resolve('ok'));
     // Second probe — allowed, succeeds → closes

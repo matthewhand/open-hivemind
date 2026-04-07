@@ -2,6 +2,15 @@ import { Mem4aiProvider } from './Mem4aiProvider';
 import { Mem4aiApiError } from './types';
 import { clearCircuitBreakerRegistry } from './CircuitBreaker';
 
+// Mock isSafeUrl to avoid real DNS lookups in tests
+jest.mock('@hivemind/shared-types', () => {
+  const actual = jest.requireActual('@hivemind/shared-types');
+  return {
+    ...actual,
+    isSafeUrl: jest.fn(async () => true),
+  };
+});
+
 const BASE_CONFIG = {
   apiKey: 'test-key',
   apiUrl: 'https://api.mem4ai.example.com',
