@@ -39,7 +39,7 @@ const MessageProvidersPage: React.FC = () => {
     try {
       setLoading(true);
       const res = await apiService.get('/api/config/message-profiles');
-      setProfiles((res as any).profiles?.message || []);
+      setProfiles((res as any).message || (res as any).profiles?.message || []);
     } catch (err: any) {
       setError(err.message || 'Failed to load message profiles');
     } finally {
