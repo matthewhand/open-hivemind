@@ -2,12 +2,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Card from '../components/DaisyUI/Card';
 import Button from '../components/DaisyUI/Button';
 import Badge from '../components/DaisyUI/Badge';
+import { Alert } from '../components/DaisyUI/Alert';
+import Input from '../components/DaisyUI/Input';
 import {
   Store as StoreIcon,
   Download as DownloadIcon,
   RefreshCw as UpdateIcon,
   Trash2 as UninstallIcon,
-  Plus as PlusIcon,
   Search as SearchIcon,
   Brain as LLMIcon,
   MessageCircle as MessageIcon,
@@ -16,7 +17,6 @@ import {
   Github as GitHubIcon,
   AlertCircle as AlertIcon,
   CheckCircle as CheckIcon,
-  X as CloseIcon,
 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -189,39 +189,37 @@ const MarketplacePage: React.FC = () => {
     <div className="p-6">
       {/* Alert Messages */}
       {actionMessage && (
-        <div className={`alert mb-4 ${actionMessage.type === 'success' ? 'alert-success' : 'alert-error'}`}>
-          {actionMessage.type === 'success' ? (
-            <CheckIcon className="w-5 h-5" />
-          ) : (
-            <AlertIcon className="w-5 h-5" />
-          )}
+        <Alert
+          status={actionMessage.type}
+          icon={actionMessage.type === 'success' ? <CheckIcon className="w-5 h-5" /> : <AlertIcon className="w-5 h-5" />}
+          className="mb-4"
+          onClose={() => setActionMessage(null)}
+        >
           <span>{actionMessage.text}</span>
-          <button className="btn btn-ghost btn-xs" onClick={() => setActionMessage(null)}>
-            <CloseIcon className="w-4 h-4" />
-          </button>
-        </div>
+        </Alert>
       )}
 
       {/* Error State */}
       {error && (
-        <div className="alert alert-error mb-4">
-          <AlertIcon className="w-5 h-5" />
+        <Alert
+          status="error"
+          icon={<AlertIcon className="w-5 h-5" />}
+          className="mb-4"
+        >
           <span>{error}</span>
           <Button variant="ghost" size="xs" onClick={fetchPackages}>
             Retry
           </Button>
-        </div>
+        </Alert>
       )}
 
       {/* Search and Filters */}
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
         {/* Search */}
-        <div className="flex-1 relative">
-          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/50" />
-          <input
-            type="text"
+        <div className="flex-1">
+          <Input
             placeholder="Search packages..."
-            className="input input-bordered w-full pl-10"
+            prefix={<SearchIcon className="w-5 h-5" />}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -361,23 +359,13 @@ const MarketplacePage: React.FC = () => {
           <div className="modal-box">
             <h3 className="font-bold text-lg mb-4">Install Package from GitHub</h3>
 
-            <div className="form-control w-full">
-              <label className="label">
-                <span className="label-text">GitHub Repository URL</span>
-              </label>
-              <input
-                type="text"
-                placeholder="https://github.com/user/provider-package"
-                className="input input-bordered w-full"
-                value={githubUrl}
-                onChange={(e) => setGithubUrl(e.target.value)}
-              />
-              <label className="label">
-                <span className="label-text-alt text-base-content/50">
-                  Enter the full GitHub URL of the provider package
-                </span>
-              </label>
-            </div>
+            <Input
+              label="GitHub Repository URL"
+              placeholder="https://github.com/user/provider-package"
+              value={githubUrl}
+              onChange={(e) => setGithubUrl(e.target.value)}
+              helperText="Enter the full GitHub URL of the provider package"
+            />
 
             <div className="modal-action">
               <Button
@@ -417,8 +405,5 @@ const MarketplacePage: React.FC = () => {
     </div>
   );
 };
-
-// Missing imports
-const RefreshCw = UpdateIcon;
 
 export default MarketplacePage;
