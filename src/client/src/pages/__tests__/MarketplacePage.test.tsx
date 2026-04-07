@@ -53,8 +53,8 @@ describe('MarketplacePage', () => {
     renderWithProviders(<MarketplacePage />);
 
     await waitFor(() => {
-      expect(screen.getByText(/Community Packages/i)).toBeInTheDocument();
-      expect(screen.getByText(/Install community plugins from GitHub/i)).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Community Packages/i })).toBeInTheDocument();
+      expect(screen.getByText(/Browse, install, and manage community packages/i)).toBeInTheDocument();
     });
   });
 });
