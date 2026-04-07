@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
+import { PathSecurityUtils } from '../../../utils/PathSecurityUtils';
 import { Router } from 'express';
 import { redactSensitiveInfo } from '../../../common/redactSensitiveInfo';
 import { BotConfigurationManager } from '../../../config/BotConfigurationManager';
@@ -16,7 +17,6 @@ import { ApiResponse } from '../../utils/apiResponse';
 import { configLimiter } from '../../../middleware/rateLimiter';
 import {
   broadcastConfigUpdate,
-  isPathWithinAllowed,
   isSensitiveKey,
   isValidConfigName,
   redactObject,
@@ -397,10 +397,10 @@ router.put('/global', configLimiter, validateRequest(ConfigUpdateSchema), async 
       targetFile = `providers/${configName}.json`;
     }
 
-    const targetPath = path.join(configDir, targetFile);
-
-    // Security: Ensure the target path is within the config directory
-    if (!isPathWithinAllowed(targetPath, configDir)) {
+    let targetPath = '';
+    try {
+      targetPath = PathSecurityUtils.getSafePath(configDir, targetFile);
+    } catch (e) {
       return res
         .status(HTTP_STATUS.BAD_REQUEST)
         .json(ApiResponse.error('Invalid config path', undefined, 400));

@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { HTTP_STATUS } from '../../types/constants';
+import { PathSecurityUtils } from '../../utils/PathSecurityUtils';
 import { SpecSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 
@@ -61,11 +62,11 @@ router.post(
         return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Invalid spec data'));
       }
 
-      const specDir = path.join(specsDirectory, id, version);
-      const resolvedSpecDir = path.resolve(specDir);
-      const resolvedSpecsDirectory = path.resolve(specsDirectory);
-
-      if (!resolvedSpecDir.startsWith(resolvedSpecsDirectory + path.sep)) {
+      let specDir = '';
+      try {
+        const specIdPath = PathSecurityUtils.getSafePath(specsDirectory, id);
+        specDir = PathSecurityUtils.getSafePath(specIdPath, version);
+      } catch (e) {
         return res
           .status(HTTP_STATUS.BAD_REQUEST)
           .json(ApiResponse.error('Invalid spec ID or version: Path traversal detected'));
@@ -106,14 +107,10 @@ router.get('/:id', async (req, res) => {
     return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Invalid spec ID format'));
   }
 
-  const targetPath = path.join(specsDirectory, id);
-  const resolvedTargetPath = path.resolve(targetPath);
-  const resolvedSpecsDirectory = path.resolve(specsDirectory);
-
-  if (
-    !resolvedTargetPath.startsWith(resolvedSpecsDirectory + path.sep) &&
-    resolvedTargetPath !== resolvedSpecsDirectory
-  ) {
+  let targetPath = '';
+  try {
+    targetPath = PathSecurityUtils.getSafePath(specsDirectory, id);
+  } catch (e) {
     return res
       .status(HTTP_STATUS.BAD_REQUEST)
       .json(ApiResponse.error('Invalid spec ID: Path traversal detected'));
