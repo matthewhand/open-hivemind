@@ -1,13 +1,54 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { apiService, type Bot, type StatusResponse } from '../services/api';
 import { Alert } from './DaisyUI/Alert';
 import Button from './DaisyUI/Button';
+import Card from './DaisyUI/Card';
 import Hero from './DaisyUI/Hero';
+import RadialProgress from './DaisyUI/RadialProgress';
 import { SkeletonCard } from './DaisyUI/Skeleton';
+import { Stat, Stats } from './DaisyUI/Stat';
 import DashboardBotCard from './DashboardBotCard';
+import TipRotator from './TipRotator';
 import QuickActions from './QuickActions';
+import AgentGrid from './Dashboard/AgentGrid';
+import Carousel from './DaisyUI/Carousel';
+import { useMediaQuery } from '../hooks/useBreakpoint';
+
+const getStatusColor = (botStatus: string) => {
+  switch (botStatus.toLowerCase()) {
+    case 'active':
+      return 'success';
+    case 'connecting':
+      return 'warning';
+    case 'inactive':
+    case 'unavailable':
+      return 'error';
+    case 'error':
+      return 'error';
+    default:
+      return 'info';
+  }
+};
+
+const getProviderIcon = (provider: string) => {
+  switch (provider.toLowerCase()) {
+    case 'discord':
+      return '💬';
+    case 'slack':
+      return '📢';
+    case 'telegram':
+      return '✈️';
+    case 'mattermost':
+      return '💼';
+    default:
+      return '🤖';
+  }
+};
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
+  const isDesktop = useMediaQuery({ minWidth: 1024 });
   const [bots, setBots] = useState<Bot[]>([]);
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -15,6 +56,7 @@ const Dashboard: React.FC = () => {
   const [botRatings, setBotRatings] = useState<Record<string, number>>({});
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [announcement, setAnnouncement] = useState<string>('');
 
   const fetchData = useCallback(async () => {
     try {
@@ -25,7 +67,9 @@ const Dashboard: React.FC = () => {
       ]);
       const configData = configResult.status === 'fulfilled' ? configResult.value : { bots: [] };
       const statusData = statusResult.status === 'fulfilled' ? statusResult.value : { bots: [] };
-      setBots(configData.bots);
+      // In demo mode, use status bots (which include fake demo data) as the bot list
+      const isDemoMode = (statusData as any)?.isDemoMode === true;
+      setBots(isDemoMode ? (statusData as any)?.bots ?? [] : configData?.bots ?? []);
       setStatus(statusData);
       setToastMessage('Dashboard refreshed successfully!');
       setShowToast(true);
@@ -38,38 +82,11 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     fetchData();
+    // Fetch announcement
+    apiService.get<{ announcement?: string }>('/api/dashboard/announcement')
+      .then((data: any) => { if (data?.announcement) setAnnouncement(data.announcement); })
+      .catch(() => { /* no announcement */ });
   }, [fetchData]);
-
-  const getStatusColor = useCallback((botStatus: string) => {
-    switch (botStatus.toLowerCase()) {
-      case 'active':
-        return 'success';
-      case 'connecting':
-        return 'warning';
-      case 'inactive':
-      case 'unavailable':
-        return 'error';
-      case 'error':
-        return 'error';
-      default:
-        return 'info';
-    }
-  }, []);
-
-  const getProviderIcon = useCallback((provider: string) => {
-    switch (provider.toLowerCase()) {
-      case 'discord':
-        return '💬';
-      case 'slack':
-        return '📢';
-      case 'telegram':
-        return '✈️';
-      case 'mattermost':
-        return '💼';
-      default:
-        return '🤖';
-    }
-  }, []);
 
   const handleRatingChange = useCallback((botName: string, rating: number) => {
     setBotRatings((prev) => ({ ...prev, [botName]: rating }));
@@ -114,34 +131,32 @@ const Dashboard: React.FC = () => {
             <div className="skeleton h-6 w-64 rounded"></div>
 
             {/* Stats Overview Skeleton */}
-            <div className="stats shadow-lg bg-base-100/90 backdrop-blur">
-              <div className="stat place-items-center">
+            <Stats className="shadow-lg bg-base-100/90 backdrop-blur">
+              <Stat className="place-items-center">
                 <div className="skeleton h-6 w-20 rounded mb-2"></div>
                 <div className="skeleton h-8 w-12 rounded mb-2"></div>
                 <div className="skeleton h-4 w-24 rounded"></div>
-              </div>
-              <div className="stat place-items-center">
+              </Stat>
+              <Stat className="place-items-center">
                 <div className="skeleton h-6 w-24 rounded mb-2"></div>
                 <div className="skeleton h-8 w-16 rounded mb-2"></div>
                 <div className="skeleton h-4 w-20 rounded"></div>
-              </div>
-              <div className="stat place-items-center">
+              </Stat>
+              <Stat className="place-items-center">
                 <div className="skeleton h-6 w-20 rounded mb-2"></div>
                 <div className="skeleton h-8 w-14 rounded mb-2"></div>
                 <div className="skeleton h-4 w-28 rounded"></div>
-              </div>
-            </div>
+              </Stat>
+            </Stats>
 
             <div className="skeleton h-12 w-48 rounded"></div>
           </div>
         </div>
 
         {/* Main Content Skeleton */}
-        <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="px-2 py-2">
           {/* Quick Actions Skeleton */}
-          <div className="mb-8">
-            <div className="skeleton h-12 w-full rounded"></div>
-          </div>
+          <div className="skeleton h-12 w-full rounded-xl mb-4"></div>
 
           {/* Bot Cards Grid Skeleton */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
@@ -154,21 +169,21 @@ const Dashboard: React.FC = () => {
           <div className="bg-base-100 rounded-lg shadow p-6">
             <div className="skeleton h-8 w-48 rounded mb-4"></div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="stat">
+              <Stat>
                 <div className="skeleton h-4 w-12 rounded mb-2"></div>
                 <div className="skeleton h-6 w-16 rounded mb-2"></div>
                 <div className="skeleton h-3 w-32 rounded"></div>
-              </div>
-              <div className="stat">
+              </Stat>
+              <Stat>
                 <div className="skeleton h-4 w-16 rounded mb-2"></div>
                 <div className="skeleton h-6 w-12 rounded mb-2"></div>
                 <div className="skeleton h-3 w-28 rounded"></div>
-              </div>
-              <div className="stat">
+              </Stat>
+              <Stat>
                 <div className="skeleton h-4 w-20 rounded mb-2"></div>
                 <div className="skeleton h-6 w-18 rounded mb-2"></div>
                 <div className="skeleton h-3 w-30 rounded"></div>
-              </div>
+              </Stat>
             </div>
           </div>
         </div>
@@ -196,69 +211,59 @@ const Dashboard: React.FC = () => {
       {/* Toast Notification */}
       {showToast && (
         <div className="toast toast-bottom toast-center z-50" role="status" aria-live="polite">
-          <div className="alert alert-success">
+          <Alert status="success" onClose={() => setShowToast(false)}>
             <span>{toastMessage}</span>
-            <button
-              className="btn btn-sm btn-ghost"
-              onClick={() => setShowToast(false)}
-              aria-label="Close notification"
-            >
-              ✕
-            </button>
-          </div>
+          </Alert>
         </div>
       )}
 
-      {/* Hero Section */}
-      <Hero
-        backgroundImage="https://images.unsplash.com/photo-1555949963-aa79dcee981c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
-        className="min-h-[60vh]"
-      >
-        <div className="flex flex-col items-center space-y-6">
-          <div className="text-center">
-            <h1 className="text-5xl font-bold text-white drop-shadow-lg mb-4">
-              🧠 Open-Hivemind Dashboard
-            </h1>
-            <p className="text-xl text-white/90 drop-shadow-md">
-              Your AI Agent Swarm Control Center
-            </p>
-          </div>
+      {/* Quick Actions — flush to top, full width */}
+      <QuickActions onRefresh={fetchData} />
 
-          <Button variant="primary" size="lg" onClick={fetchData}>
-            🔄 Refresh Dashboard
-          </Button>
+      {/* Dashboard Header */}
+      <div className="px-2 mb-2">
+        <div className="text-center mb-2">
+          <h1 className="text-2xl font-bold">🧠 Open-Hivemind Dashboard</h1>
+          <p className="text-xs text-base-content/60">Your AI Agent Swarm Control Center</p>
+        </div>
+
+        {/* Carousel + Stats — side by side on desktop, stacked on mobile */}
+        <div className="flex flex-col lg:flex-row gap-4">
+          {/* Getting Started Carousel */}
+          <div className="flex-1 min-w-0">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-base-content/40 mb-1">Getting Started</h3>
+            <Carousel
+              items={[
+                { image: '', title: '🤖 Configure Your First Bot', description: 'Set up an AI agent with a persona and LLM provider.', bgGradient: 'linear-gradient(135deg, #4f46e5, #7c3aed)', link: '/admin/bots' },
+                { image: '', title: '🧠 Connect an LLM Provider', description: 'Add your OpenAI, Anthropic, or Ollama API key.', bgGradient: 'linear-gradient(135deg, #059669, #10b981)', link: '/admin/providers/llm' },
+                { image: '', title: '🎭 Create a Persona', description: 'Give your bot a unique personality and response behavior.', bgGradient: 'linear-gradient(135deg, #0891b2, #06b6d4)', link: '/admin/personas' },
+                { image: '', title: '🛡️ Set Up Guard Profiles', description: 'Add safety rules for access control and rate limiting.', bgGradient: 'linear-gradient(135deg, #d97706, #f59e0b)', link: '/admin/guards' },
+                { image: '', title: '📊 Real-time Monitoring', description: 'Monitor performance, messages, and system health.', bgGradient: 'linear-gradient(135deg, #7c3aed, #a855f7)', link: '/admin/monitoring' },
+                ...(announcement ? [{ image: '', title: '📋 Announcements', description: announcement, bgGradient: 'linear-gradient(135deg, #1e40af, #3b82f6)' }] : []),
+              ]}
+              autoplay
+              interval={6000}
+              variant="full-width"
+              visibleCount={isDesktop ? 2 : 1}
+              onSlideClick={(item) => item.link && navigate(item.link)}
+            />
+          </div>
 
           {/* Stats Overview */}
-          <div className="stats shadow-lg bg-base-100/90 backdrop-blur">
-            <div className="stat place-items-center">
-              <div className="stat-title">Active Bots</div>
-              <div className="stat-value text-primary text-2xl">{activeBots}</div>
-              <div className="stat-desc">out of {bots.length} total</div>
-            </div>
-            <div className="stat place-items-center">
-              <div className="stat-title">Total Messages</div>
-              <div className="stat-value text-secondary text-2xl">
-                {totalMessages.toLocaleString()}
-              </div>
-              <div className="stat-desc">processed today</div>
-            </div>
-            <div className="stat place-items-center">
-              <div className="stat-title">System Uptime</div>
-              <div className="stat-value text-accent text-2xl">
-                {uptimeHours}h {uptimeMinutes}m
-              </div>
-              <div className="stat-desc">running smoothly</div>
-            </div>
+          <div className="lg:w-72 shrink-0">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-base-content/40 mb-1">Overview</h3>
+            <Stats className="shadow-sm bg-base-200/50 w-full flex-col">
+              <Stat title="Active Bots" value={activeBots} valueClassName="text-primary text-xl" description={`out of ${bots.length} total`} />
+              <Stat title="Total Messages" value={totalMessages.toLocaleString()} valueClassName="text-secondary text-xl" description="processed today" />
+              <Stat title="System Uptime" value={<>{uptimeHours}h {uptimeMinutes}m</>} valueClassName="text-accent text-xl" description="running smoothly" />
+            </Stats>
           </div>
         </div>
-      </Hero>
+      </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Quick Actions */}
-        <div className="mb-8">
-          <QuickActions onRefresh={fetchData} />
-        </div>
+      <div className="px-2 py-2">
+        <TipRotator className="mb-4 px-2" />
 
         {/* Bot Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
@@ -266,7 +271,7 @@ const Dashboard: React.FC = () => {
             <DashboardBotCard
               key={bot.name}
               bot={bot}
-              botStatusData={status?.bots.find((b) => b.id === bot.id)}
+              botStatusData={status?.bots?.find((b) => b.id === bot.id)}
               rating={botRatings[bot.name] || 0}
               onRatingChange={handleRatingChange}
               getProviderIcon={getProviderIcon}
@@ -275,30 +280,47 @@ const Dashboard: React.FC = () => {
           ))}
         </div>
 
+        {/* Agent Grid */}
+        <div className="mb-8">
+          <h3 className="text-xl font-bold mb-4">Agents</h3>
+          <AgentGrid />
+        </div>
+
         {/* System Status Footer */}
         {status && (
-          <div className="bg-base-100 rounded-lg shadow p-6">
-            <h3 className="text-xl font-bold mb-4 flex items-center">🖥️ System Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="stat">
-                <div className="stat-title">Uptime</div>
-                <div className="stat-value text-lg">
-                  {uptimeHours}h {uptimeMinutes}m
-                </div>
-                <div className="stat-desc">System running smoothly</div>
-              </div>
-              <div className="stat">
-                <div className="stat-title">Total Bots</div>
-                <div className="stat-value text-lg">{bots.length}</div>
-                <div className="stat-desc">{activeBots} currently active</div>
-              </div>
-              <div className="stat">
-                <div className="stat-title">Message Volume</div>
-                <div className="stat-value text-lg">{totalMessages.toLocaleString()}</div>
-                <div className="stat-desc">processed successfully</div>
-              </div>
-            </div>
-          </div>
+          <Card title="🖥️ System Information">
+            <Stats className="w-full shadow-sm bg-base-200/50">
+              <Stat
+                title="Active Bots"
+                value={`${activeBots}/${bots.length}`}
+                description="currently active"
+                valueClassName="text-lg"
+                figure={
+                  <RadialProgress
+                    value={bots.length > 0 ? Math.round((activeBots / bots.length) * 100) : 0}
+                    size="3rem"
+                    thickness="0.25rem"
+                    color={activeBots === bots.length ? 'success' : activeBots > 0 ? 'warning' : 'error'}
+                    className="text-[0.65rem] font-bold"
+                  >
+                    {bots.length > 0 ? Math.round((activeBots / bots.length) * 100) : 0}%
+                  </RadialProgress>
+                }
+              />
+              <Stat
+                title="System Uptime"
+                value={<>{uptimeHours}h {uptimeMinutes}m</>}
+                description="System running smoothly"
+                valueClassName="text-lg"
+              />
+              <Stat
+                title="Message Volume"
+                value={totalMessages.toLocaleString()}
+                description="processed successfully"
+                valueClassName="text-lg"
+              />
+            </Stats>
+          </Card>
         )}
       </div>
     </div>
