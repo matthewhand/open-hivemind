@@ -9,7 +9,6 @@ import RadialProgress from './DaisyUI/RadialProgress';
 import { SkeletonCard } from './DaisyUI/Skeleton';
 import { Stat, Stats } from './DaisyUI/Stat';
 import DashboardBotCard from './DashboardBotCard';
-import AnnouncementBanner from './AnnouncementBanner';
 import TipRotator from './TipRotator';
 import QuickActions from './QuickActions';
 import AgentGrid from './Dashboard/AgentGrid';
@@ -261,8 +260,6 @@ const Dashboard: React.FC = () => {
 
       {/* Main Content */}
       <div className="px-2 py-2">
-        {/* Announcement Banner */}
-        <AnnouncementBanner />
         <TipRotator className="mb-4 px-2" />
 
         {/* Bot Cards Grid */}
