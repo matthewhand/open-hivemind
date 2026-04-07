@@ -69,6 +69,8 @@ const PersonasPage: React.FC = () => {
     showCreateModal,
     showEditModal,
     showDeleteModal,
+    setShowDeleteModal,
+    setDeletingPersona,
     editingPersona,
     cloningPersonaId,
     isViewMode,
