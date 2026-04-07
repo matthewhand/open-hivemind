@@ -18,15 +18,13 @@ const StandaloneActivity = lazy(() => import('../pages/StandaloneActivity'));
 
 // Uber pages
 const OverviewPage = lazy(() => import('../pages/OverviewPage'));
-const BotsPage = lazy(() => import('../pages/BotsPage'));
+const BotsManagementPage = lazy(() => import('../pages/BotsManagementPage'));
 const BotCreatePage = lazy(() => import('../pages/BotCreatePage'));
 const BotTemplatesPage = lazy(() => import('../pages/BotTemplatesPage'));
 const ChatPage = lazy(() => import('../pages/ChatPage'));
-const PersonasPage = lazy(() => import('../pages/PersonasPage'));
 const MCPServerManager = lazy(() => import('../components/MCPServerManager'));
 const MCPServersPage = lazy(() => import('../pages/MCPServersPage'));
 const MCPToolsPage = lazy(() => import('../pages/MCPToolsPage'));
-const GuardsPage = lazy(() => import('../pages/GuardsPage'));
 const MonitoringPage = lazy(() => import('../pages/MonitoringPage'));
 const ActivityPage = lazy(() => import('../pages/ActivityPage'));
 
@@ -121,7 +119,7 @@ const AppRouter: React.FC = () => {
 
 
           {/* Bot Management Routes */}
-          <Route path="bots" element={<RouteErrorBoundary pageName="Bots"><BotsPage /></RouteErrorBoundary>} />
+          <Route path="bots" element={<RouteErrorBoundary pageName="Bots"><BotsManagementPage /></RouteErrorBoundary>} />
           <Route path="bots/create" element={<RouteErrorBoundary pageName="Create Bot"><BotCreatePage /></RouteErrorBoundary>} />
           <Route path="bots/templates" element={<RouteErrorBoundary pageName="Bot Templates"><BotTemplatesPage /></RouteErrorBoundary>} />
           <Route path="chat" element={<RouteErrorBoundary pageName="Chat"><ChatPage /></RouteErrorBoundary>} />
@@ -140,7 +138,7 @@ const AppRouter: React.FC = () => {
           {/* Marketplace Route */}
           <Route path="marketplace" element={<RouteErrorBoundary pageName="Marketplace"><MarketplacePage /></RouteErrorBoundary>} />
 
-          <Route path="personas" element={<RouteErrorBoundary pageName="Personas"><PersonasPage /></RouteErrorBoundary>} />
+          <Route path="personas" element={<Navigate to="/admin/bots?tab=personas" replace />} />
 
           {/* MCP Routes */}
           <Route
@@ -174,16 +172,7 @@ const AppRouter: React.FC = () => {
             }
           />
 
-          <Route
-            path="guards"
-            element={
-              <ProtectedRoute>
-                <RouteErrorBoundary pageName="Guards">
-                  <GuardsPage />
-                </RouteErrorBoundary>
-              </ProtectedRoute>
-            }
-          />
+          <Route path="guards" element={<Navigate to="/admin/bots?tab=guards" replace />} />
 
           {/* Monitoring Routes */}
           <Route path="monitoring" element={<RouteErrorBoundary pageName="Monitoring"><MonitoringPage /></RouteErrorBoundary>} />

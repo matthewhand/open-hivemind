@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components, no-empty, no-case-declarations */
 import {
-  LayoutDashboard, Bot, Users, Shield,
+  LayoutDashboard, Bot,
   Settings, Cog, Activity, Component, MessageSquare, Brain,
   Map, Webhook, FileText, Store, BarChart3, ClipboardList,
   FileDown, HeartPulse, HelpCircle, FileCode, Info,
@@ -70,20 +70,6 @@ export const hivemindNavItems: NavItem[] = [
     label: 'Bots',
     icon: <NavIcon><Bot className="w-4 h-4" /></NavIcon>,
     path: '/admin/bots',
-    visible: true,
-  },
-  {
-    id: 'personas',
-    label: 'Personas',
-    icon: <NavIcon><Users className="w-4 h-4" /></NavIcon>,
-    path: '/admin/personas',
-    visible: true,
-  },
-  {
-    id: 'guards',
-    label: 'Guards',
-    icon: <NavIcon><Shield className="w-4 h-4" /></NavIcon>,
-    path: '/admin/guards',
     visible: true,
   },
   {
