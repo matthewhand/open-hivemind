@@ -64,8 +64,13 @@ interface LoadingFallbackProps {
   message?: string;
 }
 
+const TipRotator = lazy(() => import('../components/TipRotator'));
+
 const LoadingFallback: React.FC<LoadingFallbackProps> = ({ message: _message = 'Loading...' }) => (
   <div className="min-h-[60vh] p-6">
+    <Suspense fallback={null}>
+      <TipRotator className="mb-4 px-2" />
+    </Suspense>
     <SkeletonPage variant="cards" statsCount={3} />
   </div>
 );
