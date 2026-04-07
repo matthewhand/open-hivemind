@@ -26,7 +26,8 @@ export function monitoringMixin(api: ApiService) {
       });
       const search = query.toString();
       const endpoint = `/api/dashboard/activity${search ? `?${search}` : ''}`;
-      return api.request<ActivityResponse>(endpoint);
+      return api.request<{ data: ActivityResponse }>(endpoint)
+        .then(res => (res as any).data ?? res) as Promise<ActivityResponse>;
     },
 
     acknowledgeAlert(alertId: string): Promise<{ success: boolean; message: string }> {
