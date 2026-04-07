@@ -107,10 +107,10 @@ describe('Accessibility: Navigation Components', () => {
           <Breadcrumbs />
         </MemoryRouter>,
       );
-      const adminLink = screen.getByText('Admin');
-      const closestSpan = adminLink.closest('span');
-      const closestA = adminLink.closest('a');
-      // The admin link should be an <a> tag, not have aria-current
+      const homeLink = screen.getByText('Home');
+      const closestSpan = homeLink.closest('span');
+      const closestA = homeLink.closest('a');
+      // The home link should be an <a> tag, not have aria-current
       expect(closestA || closestSpan).not.toHaveAttribute('aria-current');
     });
   });
