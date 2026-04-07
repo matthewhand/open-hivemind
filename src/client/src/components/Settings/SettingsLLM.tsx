@@ -16,6 +16,11 @@ import {
   ToggleLeft as ToggleOffIcon,
   ToggleRight as ToggleOnIcon,
   Link as LinkIcon,
+  Search as SearchIcon,
+  Clock as ClockIcon,
+  Reply as ReplyIcon,
+  Coffee as CoffeeIcon,
+  Monitor as MonitorIcon,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { apiService } from '../../services/api';
@@ -46,6 +51,13 @@ const SettingsLLM: React.FC = () => {
   const [defaultChatbotProfile, setDefaultChatbotProfile] = useState<string>('');
   const [defaultEmbeddingProvider, setDefaultEmbeddingProvider] = useState<string>('');
   const [perUseCaseEnabled, setPerUseCaseEnabled] = useState<boolean>(false);
+  const [taskProfiles, setTaskProfiles] = useState<Record<string, string>>({
+    LLM_TASK_SEMANTIC_PROVIDER: '',
+    LLM_TASK_SUMMARY_PROVIDER: '',
+    LLM_TASK_FOLLOWUP_PROVIDER: '',
+    LLM_TASK_IDLE_PROVIDER: '',
+    LLM_TASK_WEBUI_PROVIDER: '',
+  });
   const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState<{ type: 'success' | 'error' | 'warning'; message: string } | null>(null);
 
@@ -70,6 +82,16 @@ const SettingsLLM: React.FC = () => {
       setDefaultChatbotProfile(gs.defaultChatbotProfile || '');
       setDefaultEmbeddingProvider(llmValues.DEFAULT_EMBEDDING_PROVIDER || gs.defaultEmbeddingProfile || '');
       setPerUseCaseEnabled(!!gs.perUseCaseEnabled);
+
+      // Load per-use-case task profile assignments from llm config
+      setTaskProfiles((prev) => ({
+        ...prev,
+        LLM_TASK_SEMANTIC_PROVIDER: llmValues.LLM_TASK_SEMANTIC_PROVIDER || '',
+        LLM_TASK_SUMMARY_PROVIDER: llmValues.LLM_TASK_SUMMARY_PROVIDER || '',
+        LLM_TASK_FOLLOWUP_PROVIDER: llmValues.LLM_TASK_FOLLOWUP_PROVIDER || '',
+        LLM_TASK_IDLE_PROVIDER: llmValues.LLM_TASK_IDLE_PROVIDER || '',
+        LLM_TASK_WEBUI_PROVIDER: llmValues.LLM_TASK_WEBUI_PROVIDER || gs.webuiIntelligenceProvider || '',
+      }));
     } catch (err: any) {
       console.error('Failed to load LLM settings:', err);
       setAlert({ type: 'warning', message: 'Could not load LLM settings. Using defaults.' });
@@ -270,6 +292,57 @@ const SettingsLLM: React.FC = () => {
           />
         </div>
       </Card>
+
+      {/* Per-use-case task profile assignments */}
+      {perUseCaseEnabled && (
+        <Card className="bg-base-100 shadow-sm border border-primary/20">
+          <div className="card-body p-5">
+            <h3 className="font-bold flex items-center gap-2 mb-1">
+              <BrainIcon className="w-4 h-4 text-primary" /> Task Profile Assignments
+            </h3>
+            <p className="text-xs opacity-60 mb-4">
+              Assign a specific LLM profile to each task type. Leave as &quot;Use Default&quot; to fall back to the default chatbot profile.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {([
+                { key: 'LLM_TASK_SEMANTIC_PROVIDER', label: 'Semantic Relevance', icon: <SearchIcon className="w-4 h-4 text-info" />, description: 'Determines if a message is relevant to a bot\'s topic' },
+                { key: 'LLM_TASK_SUMMARY_PROVIDER', label: 'Summarization', icon: <ClockIcon className="w-4 h-4 text-success" />, description: 'Generates conversation summaries and log prose' },
+                { key: 'LLM_TASK_FOLLOWUP_PROVIDER', label: 'Follow-up', icon: <ReplyIcon className="w-4 h-4 text-warning" />, description: 'Generates follow-up questions and continuations' },
+                { key: 'LLM_TASK_IDLE_PROVIDER', label: 'Idle Response', icon: <CoffeeIcon className="w-4 h-4 text-secondary" />, description: 'Handles idle/scheduled responses when no user input' },
+                { key: 'LLM_TASK_WEBUI_PROVIDER', label: 'WebUI Intelligence', icon: <MonitorIcon className="w-4 h-4 text-accent" />, description: 'Powers AI-assisted features within the web interface' },
+              ] as const).map(({ key, label, icon, description }) => (
+                <div key={key} className="flex items-start gap-3 p-3 bg-base-200/40 rounded-lg border border-base-200">
+                  <div className="mt-0.5">{icon}</div>
+                  <div className="flex-1 min-w-0">
+                    <label className="font-medium text-sm">{label}</label>
+                    <p className="text-[11px] opacity-50 mb-2">{description}</p>
+                    <select
+                      className="select select-bordered select-sm w-full"
+                      value={taskProfiles[key] || ''}
+                      onChange={async (e) => {
+                        const value = e.target.value;
+                        setTaskProfiles((prev) => ({ ...prev, [key]: value }));
+                        if (key === 'LLM_TASK_WEBUI_PROVIDER') {
+                          await saveGlobal({ webuiIntelligenceProvider: value }).catch(() => {});
+                        } else {
+                          await saveLlmConfig({ [key]: value }).catch(() => {});
+                        }
+                      }}
+                      disabled={loading}
+                      aria-busy={loading}
+                    >
+                      <option value="">Use Default</option>
+                      {chatProfiles.map((p) => (
+                        <option key={p.key} value={p.key}>{p.name} ({p.provider})</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Link to full LLM Providers page for creating / editing profiles */}
       <div className="flex justify-between items-center text-sm pt-2">
