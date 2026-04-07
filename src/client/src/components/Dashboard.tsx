@@ -220,13 +220,7 @@ const Dashboard: React.FC = () => {
       {/* Quick Actions — flush to top, full width */}
       <QuickActions onRefresh={fetchData} />
 
-      {/* Dashboard Header */}
       <div className="px-2 mb-2">
-        <div className="text-center mb-2">
-          <h1 className="text-2xl font-bold">🧠 Open-Hivemind Dashboard</h1>
-          <p className="text-xs text-base-content/60">Your AI Agent Swarm Control Center</p>
-        </div>
-
         {/* Getting Started Carousel — full width */}
         <div className="mb-4">
           <h3 className="text-xs font-bold uppercase tracking-wider text-base-content/40 mb-1">Getting Started</h3>
@@ -260,7 +254,7 @@ const Dashboard: React.FC = () => {
 
       {/* Main Content */}
       <div className="px-2 py-2">
-        <TipRotator className="mb-4 px-2" />
+        {/* TipRotator moved to navbar (ResponsiveNavigation) */}
 
         {/* Bot Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
