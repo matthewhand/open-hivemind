@@ -23,7 +23,6 @@ import { BotListErrorState } from './BotListErrorState';
 import { BotListGrid } from './BotListGrid';
 import { BotSwarm3DView } from './BotSwarm3DView';
 // Components
-import { BotsPageHeader } from './BotsPageHeader';
 import { useBotActions } from './hooks/useBotActions';
 import { useBotExport } from './hooks/useBotExport';
 import { useBotPreview } from './hooks/useBotPreview';
@@ -162,10 +161,6 @@ const BotsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <BotsPageHeader
-        onCreateClick={() => setIsCreateModalOpen(true)}
-      />
-
       {/* Bot List — full width, no sidebar column */}
       <div className="space-y-4">
         <SearchFilterBar

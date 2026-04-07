@@ -3,7 +3,6 @@ import { apiService } from '../services/api';
 import Card from '../components/DaisyUI/Card';
 import Button from '../components/DaisyUI/Button';
 import Badge from '../components/DaisyUI/Badge';
-import Breadcrumbs from '../components/DaisyUI/Breadcrumbs';
 import {
   Store as StoreIcon,
   Download as DownloadIcon,
@@ -181,47 +180,8 @@ const MarketplacePage: React.FC = () => {
     }
   };
 
-  // Breadcrumbs
-  const breadcrumbItems = [
-    { label: 'Community Packages', href: '/admin/marketplace', isActive: true },
-  ];
-
   return (
     <div className="p-6">
-      <Breadcrumbs items={breadcrumbItems} />
-
-      {/* Header */}
-      <div className="flex items-center justify-between mt-4 mb-6">
-        <div className="flex items-center gap-3">
-          <StoreIcon className="w-8 h-8 text-primary" />
-          <div>
-            <h1 className="text-2xl font-bold">Community Packages</h1>
-            <p className="text-sm text-base-content/70">
-              Browse, install, and manage community packages
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={fetchPackages}
-            disabled={loading} aria-busy={loading}
-          >
-            <RefreshCw className={`w-4 h-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setInstallModalOpen(true)}
-          >
-            <PlusIcon className="w-4 h-4 mr-1" />
-            Install from URL
-          </Button>
-        </div>
-      </div>
-
       {/* Alert Messages */}
       {actionMessage && (
         <div className={`alert mb-4 ${actionMessage.type === 'success' ? 'alert-success' : 'alert-error'}`}>

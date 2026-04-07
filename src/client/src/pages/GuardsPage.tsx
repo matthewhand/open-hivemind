@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { authFetch } from '../utils/authFetch';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Shield, RefreshCw, AlertTriangle, Plus, Copy, Trash2, Edit2, CheckCircle, XCircle } from 'lucide-react';
-import PageHeader from '../components/DaisyUI/PageHeader';
 import Card from '../components/DaisyUI/Card';
 import Divider from '../components/DaisyUI/Divider';
 import Input from '../components/DaisyUI/Input';
@@ -470,16 +469,6 @@ const GuardsPage: React.FC = () => {
 
   return (
     <div className="container mx-auto p-4 max-w-7xl">
-      <PageHeader
-        title="Guard Profiles"
-        description="Manage security, access, and rate limit policies for your bots."
-        actions={
-          <Button color="primary" onClick={() => setEditingProfile(defaultNewProfile as any)}>
-            <Plus className="w-4 h-4 mr-2" /> New Profile
-          </Button>
-        }
-      />
-
       {profiles.length === 0 ? (
         <div className="text-center py-16 bg-base-200 rounded-box">
           <Shield className="w-16 h-16 mx-auto text-base-content/30 mb-4" />

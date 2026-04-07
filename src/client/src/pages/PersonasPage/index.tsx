@@ -1,4 +1,4 @@
-import { Copy, Edit2, Filter, Plus, Trash2, Users } from 'lucide-react';
+import { Copy, Edit2, Filter, Plus, Trash2 } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 import { Alert } from '../../components/DaisyUI/Alert';
 import { Badge } from '../../components/DaisyUI/Badge';
@@ -8,7 +8,6 @@ import Card from '../../components/DaisyUI/Card';
 import DetailDrawer from '../../components/DaisyUI/DetailDrawer';
 import Divider from '../../components/DaisyUI/Divider';
 import Join from '../../components/DaisyUI/Join';
-import PageHeader from '../../components/DaisyUI/PageHeader';
 import Select from '../../components/DaisyUI/Select';
 import { SkeletonPage } from '../../components/DaisyUI/Skeleton';
 import { useSuccessToast, useErrorToast, useInfoToast } from '../../components/DaisyUI/ToastNotification';
@@ -127,17 +126,6 @@ const PersonasPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {displayError && <Alert status="error" message={displayError} onClose={() => setError(null)} />}
-
-      <PageHeader
-        title="Persona Management"
-        description="Create and manage specialized identities for your AI agents."
-        icon={<Users className="w-8 h-8 text-primary" />}
-        actions={
-          <Button variant="primary" onClick={openCreateModal}>
-            <Plus className="w-4 h-4 mr-2" /> Create Persona
-          </Button>
-        }
-      />
 
       <PersonaStats personas={personas} />
 
