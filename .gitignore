@@ -17,12 +17,8 @@ test_final*.out
 test_run*.out
 test_output*.txt
 
-# Test runtime-generated provider instances
-config/test/providers/instances.json
-
-# Configuration files with sensitive data
-config/user/
-config/providers/
+# Config files - generated at runtime with defaults
+config/*
 .env.real
 *.config.json
 *credentials*
@@ -207,9 +203,7 @@ test-results/
 !docs/getting-started/**
 !archive/screenshots/README.md
 
-# User bot state config
-config/user-config.json
-config/message-profiles.json
+
 
 .qwen
 .serena
@@ -224,12 +218,6 @@ archive/*
 .specify/
 .kilocode/
 AGENTS.md
-\nconfig/.key
-
-# Sensitive config files - never commit
-config/.key
-config/secure/
-config/providers/
 scripts/benchmarks/temp-import-bench.json
 
 # Screenshots: only allow docs/screenshots/ and archive/screenshots/
@@ -237,7 +225,6 @@ scripts/benchmarks/temp-import-bench.json
 
 # Development artifacts
 .letta/
-config/backups/
 src/client/coverage/
 *.patch
 /*.png

@@ -1,8 +1,0 @@
-{
-  "description": "Packages listed here appear in the Community Packages page. Unlisted packages are hidden.",
-  "packages": [
-    "llm-openai",
-    "message-discord",
-    "memory-mem0"
-  ]
-}
