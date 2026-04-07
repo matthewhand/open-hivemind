@@ -2,12 +2,7 @@ import React, { memo } from 'react';
 import PersonaAvatar from './PersonaAvatar';
 import Badge from './DaisyUI/Badge';
 import Card from './DaisyUI/Card';
-import Rating from './DaisyUI/Rating';
 import Button from './DaisyUI/Button';
-import { Alert } from './DaisyUI/Alert';
-import Dropdown from './DaisyUI/Dropdown';
-import { Stat } from './DaisyUI/Stat';
-import RadialProgress from './DaisyUI/RadialProgress';
 import type { Bot, StatusResponse } from '../services/api';
 
 interface DashboardBotCardProps {
@@ -19,122 +14,74 @@ interface DashboardBotCardProps {
   getStatusColor: (status: string) => string;
 }
 
+/** Map status strings to valid Badge variants. */
+const toBadgeVariant = (color: string): 'success' | 'warning' | 'error' | 'neutral' => {
+  if (color === 'success') return 'success';
+  if (color === 'warning') return 'warning';
+  if (color === 'error') return 'error';
+  return 'neutral';
+};
+
 const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
   bot,
   botStatusData,
-  rating,
-  onRatingChange,
-  getProviderIcon,
   getStatusColor,
 }) => {
   const botStatus = botStatusData?.status || 'unknown';
-  const connected = botStatusData?.connected ?? false;
-  const messageCount = botStatusData?.messageCount ?? 0;
-  const errorCount = botStatusData?.errorCount ?? 0;
 
   return (
-    <Card className="shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-        {/* Card Header */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-3">
-            <PersonaAvatar
-              seed={(bot as any).persona || bot.name}
-              style={(bot as any).avatarStyle || 'bottts'}
-              size={40}
-            />
-            <div>
-              <Card.Title className="text-lg font-bold">
-                {bot.name}
-              </Card.Title>
-              <p className="text-sm opacity-70">{bot.messageProvider}</p>
-            </div>
+    <Card className="shadow-md hover:shadow-lg transition-shadow duration-200">
+      <div className="card-body p-4">
+        {/* Header: avatar + name + status */}
+        <div className="flex items-center gap-3">
+          <PersonaAvatar
+            seed={bot.persona || bot.name}
+            size={40}
+          />
+          <div className="flex-1 min-w-0">
+            <h2 className="card-title text-base font-semibold truncate">
+              {bot.name}
+            </h2>
           </div>
-          <Dropdown
-            trigger="⚙️"
-            position="bottom"
-            className="dropdown-end"
-            size="sm"
-            color="ghost"
-            hideArrow={true}
-            aria-label={`Options for ${bot.name}`}
-          >
-            <li><a>🔧 Configure</a></li>
-            <li><a>📊 View Logs</a></li>
-            <li><a>🔄 Restart</a></li>
-            <li><a>🔍 Debug</a></li>
-          </Dropdown>
-        </div>
-
-        {/* Status Badges */}
-        <div className="flex flex-wrap gap-2 mb-4">
           <Badge
-            variant={getStatusColor(botStatus) as 'success' | 'warning' | 'error' | 'info'}
-            className="text-xs font-semibold"
+            variant={toBadgeVariant(getStatusColor(botStatus))}
+            size="small"
           >
             {botStatus.toUpperCase()}
           </Badge>
+        </div>
+
+        {/* Provider badges */}
+        <div className="flex flex-wrap gap-1.5 mt-3">
+          <Badge variant="neutral" size="small">
+            {bot.messageProvider}
+          </Badge>
           {bot.llmProvider && (
-            <Badge variant="secondary" className="text-xs">
-              🧠 {bot.llmProvider.toUpperCase()}
+            <Badge variant="secondary" size="small">
+              {bot.llmProvider}
             </Badge>
           )}
-          <Badge variant="neutral" style="outline" className="text-xs">
-            📱 {bot.messageProvider.toUpperCase()}
-          </Badge>
+          {bot.persona && (
+            <Badge variant="ghost" size="small">
+              {bot.persona}
+            </Badge>
+          )}
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-2 mb-4 items-center">
-          <Stat
-            className="bg-base-200 rounded-lg p-3"
-            title="Messages"
-            value={messageCount.toLocaleString()}
-            valueClassName="text-lg"
-          />
-          <Stat
-            className="bg-base-200 rounded-lg p-3"
-            title="Status"
-            value={connected ? '🟢' : '🔴'}
-            valueClassName={`text-lg ${connected ? 'text-success' : 'text-error'}`}
-          />
-          <div className="flex flex-col items-center gap-1">
-            <RadialProgress
-              value={messageCount > 0 ? Math.round(((messageCount - errorCount) / messageCount) * 100) : 100}
-              size="3rem"
-              thickness="0.25rem"
-              color={errorCount === 0 ? 'success' : errorCount / Math.max(messageCount, 1) > 0.1 ? 'error' : 'warning'}
-              className="text-xs font-bold"
-            >
-              {messageCount > 0 ? Math.round(((messageCount - errorCount) / messageCount) * 100) : 100}%
-            </RadialProgress>
-            <div className="text-xs text-base-content/60">Success</div>
+        {/* Error alert (only when errors exist) */}
+        {(botStatusData?.errorCount ?? 0) > 0 && (
+          <div className="alert alert-error py-2 mt-3">
+            <span className="text-xs">{botStatusData?.errorCount} error(s)</span>
           </div>
-        </div>
-
-        {errorCount > 0 && (
-          <Alert status="error" className="mb-4" message={`${errorCount} errors detected`} />
         )}
 
-        {/* Rating */}
-        <div className="mb-4">
-          <p className="text-sm mb-2">Performance Rating:</p>
-          <Rating
-            value={rating}
-            onChange={(newRating) => onRatingChange(bot.name, newRating)}
-            size="sm"
-            aria-label={`Rate ${bot.name} agent performance`}
-          />
+        {/* Actions */}
+        <div className="card-actions justify-end mt-3">
+          <Button variant="outline" size="sm">
+            Details
+          </Button>
         </div>
-
-        {/* Action Buttons */}
-        <Card.Actions className="justify-between">
-          <Button variant="ghost" size="sm">
-            📊 Analytics
-          </Button>
-          <Button variant="primary" size="sm">
-            💬 Interact
-          </Button>
-        </Card.Actions>
+      </div>
     </Card>
   );
 });
