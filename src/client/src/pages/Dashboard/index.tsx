@@ -1,11 +1,13 @@
 import React, { lazy, Suspense, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Activity, Cpu, LayoutDashboard, Rocket } from 'lucide-react';
+import { Cpu, Rocket } from 'lucide-react';
 import Dashboard from '../../components/Dashboard';
 import { apiService } from '../../services/api';
 import { Alert } from '../../components/DaisyUI/Alert';
 import Button from '../../components/DaisyUI/Button';
+import Card from '../../components/DaisyUI/Card';
 import { LoadingSpinner } from '../../components/DaisyUI/Loading';
+import Tabs from '../../components/DaisyUI/Tabs';
 import Toggle from '../../components/DaisyUI/Toggle';
 import Carousel from '../../components/DaisyUI/Carousel';
 import DashboardWidgetSystem from '../../components/DaisyUI/DashboardWidgetSystem';
@@ -88,28 +90,24 @@ const DashboardPage: React.FC = () => {
 
   return (
     <div>
-      {/* Tabs */}
-      <div className="tabs tabs-bordered px-4 mb-4">
-        <button
-          className={`tab gap-2 ${activeTab === 'dashboard' ? 'tab-active' : ''}`}
-          onClick={() => setTab('dashboard')}
-        >
-          <LayoutDashboard className="w-4 h-4" /> Dashboard
-        </button>
-        <button
-          className={`tab gap-2 ${activeTab === 'health' ? 'tab-active' : ''}`}
-          onClick={() => setTab('health')}
-        >
-          <Activity className="w-4 h-4" /> Health
-        </button>
-      </div>
+      <div className="p-6">
+      <Card className="shadow-xl">
+        <Tabs
+          variant="lifted"
+          tabs={[
+            { key: 'dashboard', label: 'Dashboard' },
+            { key: 'health', label: 'Health' },
+          ]}
+          activeTab={activeTab}
+          onChange={(tab) => setTab(tab)}
+          className="mb-6"
+        />
+        <div className="mt-4">
 
       {activeTab === 'health' ? (
-        <div className="px-4">
           <Suspense fallback={<LoadingSpinner size="lg" />}>
             <SystemHealth refreshInterval={30000} />
           </Suspense>
-        </div>
       ) : (
       <div>
       {/* Welcome Splash - shown when config is incomplete */}
@@ -162,6 +160,9 @@ const DashboardPage: React.FC = () => {
       )}
     </div>
       )}
+    </div>
+      </Card>
+      </div>
     </div>
   );
 };
