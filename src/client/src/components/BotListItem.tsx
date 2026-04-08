@@ -19,7 +19,7 @@ interface BotListItemProps {
   onSwapProvider: (botId: string, providerKey: string) => void;
 }
 
-export const BotListItem: React.FC<BotListItemProps> = ({
+const BotListItemComponent: React.FC<BotListItemProps> = ({
   bot,
   isSelected,
   onSelect,
@@ -115,3 +115,6 @@ export const BotListItem: React.FC<BotListItemProps> = ({
     </li>
   );
 };
+
+// ⚡ Bolt Optimization: Added React.memo() to prevent unnecessary re-renders of list items when parent state changes.
+export const BotListItem = React.memo(BotListItemComponent);
