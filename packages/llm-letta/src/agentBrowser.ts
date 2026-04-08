@@ -1,5 +1,5 @@
-import Letta from '@letta-ai/letta-client';
 import { isSafeUrl } from '@hivemind/shared-types';
+import Letta from '@letta-ai/letta-client';
 
 /**
  * Summary of a Letta agent returned by the agent browser functions.

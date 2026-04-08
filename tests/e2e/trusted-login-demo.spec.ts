@@ -82,18 +82,12 @@ async function setupCommonMocks(page: import('@playwright/test').Page) {
   await page.route('**/api/csrf-token', (route) =>
     route.fulfill({ json: { token: 'mock-csrf-token' } })
   );
-  await page.route('**/api/health', (route) =>
-    route.fulfill({ json: { status: 'ok' } })
-  );
+  await page.route('**/api/health', (route) => route.fulfill({ json: { status: 'ok' } }));
   await page.route('**/api/health/detailed', (route) =>
     route.fulfill({ json: { status: 'healthy' } })
   );
-  await page.route('**/api/config', (route) =>
-    route.fulfill({ json: { bots: [] } })
-  );
-  await page.route('**/api/config/global', (route) =>
-    route.fulfill({ json: {} })
-  );
+  await page.route('**/api/config', (route) => route.fulfill({ json: { bots: [] } }));
+  await page.route('**/api/config/global', (route) => route.fulfill({ json: {} }));
   await page.route('**/api/config/llm-status', (route) =>
     route.fulfill({
       json: {
@@ -107,12 +101,8 @@ async function setupCommonMocks(page: import('@playwright/test').Page) {
   await page.route('**/api/config/llm-profiles', (route) =>
     route.fulfill({ json: { profiles: { llm: [] } } })
   );
-  await page.route('**/api/personas', (route) =>
-    route.fulfill({ json: [] })
-  );
-  await page.route('**/api/admin/guard-profiles', (route) =>
-    route.fulfill({ json: { data: [] } })
-  );
+  await page.route('**/api/personas', (route) => route.fulfill({ json: [] }));
+  await page.route('**/api/admin/guard-profiles', (route) => route.fulfill({ json: { data: [] } }));
   await page.route('**/api/bots', (route) =>
     route.fulfill({ status: 200, json: { data: { bots: [] } } })
   );
@@ -148,9 +138,7 @@ test.describe('Trusted Network Login + Demo Mode', () => {
 
     // Setup mocks for the dashboard the user lands on after login
     await setupCommonMocks(page);
-    await page.route('**/api/demo/status', (route) =>
-      route.fulfill({ json: { active: false } })
-    );
+    await page.route('**/api/demo/status', (route) => route.fulfill({ json: { active: false } }));
     await page.route('**/api/dashboard/status', (route) =>
       route.fulfill({ json: { bots: [], uptime: 100 } })
     );
@@ -209,7 +197,13 @@ test.describe('Trusted Network Login + Demo Mode', () => {
     await page.route('**/api/demo/toggle', (route) => {
       demoEnabled = !demoEnabled;
       return route.fulfill({
-        json: { success: true, data: { enabled: demoEnabled, message: demoEnabled ? 'Demo mode enabled' : 'Demo mode disabled' } },
+        json: {
+          success: true,
+          data: {
+            enabled: demoEnabled,
+            message: demoEnabled ? 'Demo mode enabled' : 'Demo mode disabled',
+          },
+        },
       });
     });
 

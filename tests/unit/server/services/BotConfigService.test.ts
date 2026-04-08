@@ -1,5 +1,5 @@
-import { BotConfigService } from '../../../../src/server/services/BotConfigService';
 import { DatabaseManager } from '../../../../src/database/DatabaseManager';
+import { BotConfigService } from '../../../../src/server/services/BotConfigService';
 import { ConfigurationValidator } from '../../../../src/server/services/ConfigurationValidator';
 
 // Mock DatabaseManager

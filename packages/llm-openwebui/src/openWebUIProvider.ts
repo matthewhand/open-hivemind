@@ -33,7 +33,10 @@ export const openWebUIProvider: ILlmProvider = {
     ];
 
     try {
-      const data = await openWebUIClient.post<{ choices: Array<{ message: { content: string } }> }>('/chat/completions', { model, messages });
+      const data = await openWebUIClient.post<{ choices: Array<{ message: { content: string } }> }>(
+        '/chat/completions',
+        { model, messages }
+      );
       return data.choices[0].message.content;
     } catch (error) {
       debug('Error generating chat completion:', formatError(error));
@@ -45,7 +48,10 @@ export const openWebUIProvider: ILlmProvider = {
     debug('Generating non-chat completion with OpenWebUI:', { prompt });
 
     try {
-      const data = await openWebUIClient.post<{ choices: Array<{ text: string }> }>('/completions', { model, prompt, max_tokens: 100 });
+      const data = await openWebUIClient.post<{ choices: Array<{ text: string }> }>(
+        '/completions',
+        { model, prompt, max_tokens: 100 }
+      );
       return data.choices[0].text;
     } catch (error) {
       debug('Error generating non-chat completion:', formatError(error));

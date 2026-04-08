@@ -1,4 +1,4 @@
-import { isSafeUrl, isPrivateIP } from '../../../src/utils/ssrfGuard';
+import { isPrivateIP, isSafeUrl } from '../../../src/utils/ssrfGuard';
 
 describe('ssrfGuard', () => {
   describe('isPrivateIP', () => {
