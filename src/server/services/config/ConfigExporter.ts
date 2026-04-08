@@ -90,13 +90,28 @@ export class ConfigExporter {
 
       // Optionally include version history
       if (options.includeVersions) {
-        const versionPromises = configs
+        // ⚡ Bolt Optimization: Replace N DB queries with batched bulk queries
+        const configIds = configs
           .filter((c) => c.id != null)
-          .map(async (config) => this.dbManager.getBotConfigurationVersions(config.id as number));
-        const settled = await Promise.allSettled(versionPromises);
-        const versions = settled
-          .map((r) => (r.status === 'fulfilled' ? r.value : []))
-          .flat();
+          .map((c) => c.id as number);
+
+        const versions: BotConfigurationVersion[] = [];
+        const BATCH_SIZE = 50;
+
+        for (let i = 0; i < configIds.length; i += BATCH_SIZE) {
+          const batch = configIds.slice(i, i + BATCH_SIZE);
+          try {
+            const versionsMap = await this.dbManager.getBotConfigurationVersionsBulk(batch);
+            for (const batchVersions of versionsMap.values()) {
+              versions.push(...batchVersions);
+            }
+          } catch (error) {
+            // Replicate original Promise.allSettled behavior by catching and logging
+            // errors without aborting the entire export.
+            console.error(`Failed to fetch versions for batch: ${batch}`, error);
+          }
+        }
+
         exportData.versions = versions;
         (exportData.metadata as Record<string, unknown>).versionCount = versions.length;
       }
