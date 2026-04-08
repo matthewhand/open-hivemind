@@ -1,12 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState, useCallback } from 'react';
 import { apiService } from '../services/api';
-import {
-  ArrowPathIcon,
-  FunnelIcon,
-  ExclamationCircleIcon,
-  ShieldCheckIcon,
-} from '@heroicons/react/24/outline';
+import { RefreshCw, Filter, AlertCircle, ShieldCheck } from 'lucide-react';
+import PageHeader from '../components/DaisyUI/PageHeader';
 import Button from '../components/DaisyUI/Button';
 
 interface AuditEvent {
@@ -78,22 +74,26 @@ const AuditPage: React.FC = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Audit Log</h1>
-        <Button
-          buttonStyle="outline"
-          onClick={fetchAuditEvents}
-          disabled={loading}
-          aria-label="Refresh audit logs"
-        >
-          <ArrowPathIcon className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
-      </div>
+      <PageHeader
+        title="Audit Log"
+        icon={<ShieldCheck className="w-8 h-8" />}
+        gradient="warning"
+        actions={
+          <Button
+            buttonStyle="outline"
+            onClick={fetchAuditEvents}
+            disabled={loading}
+            aria-label="Refresh audit logs"
+          >
+            <RefreshCw className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        }
+      />
 
       {error && (
         <div className="alert alert-error mb-4">
-          <ExclamationCircleIcon className="w-6 h-6" />
+          <AlertCircle className="w-6 h-6" />
           <span>{error}</span>
           <Button
             variant="ghost"
@@ -150,7 +150,7 @@ const AuditPage: React.FC = () => {
           disabled={!searchTerm && actionFilter === 'all' && resultFilter === 'all'}
           aria-label="Clear audit filters"
         >
-          <FunnelIcon className="w-4 h-4 mr-1" /> Clear Filters
+          <Filter className="w-4 h-4 mr-1" /> Clear Filters
         </Button>
       </div>
 
@@ -161,7 +161,7 @@ const AuditPage: React.FC = () => {
         </div>
       ) : filteredEvents.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-base-content/60">
-          <ShieldCheckIcon className="w-16 h-16 mb-4" />
+          <ShieldCheck className="w-16 h-16 mb-4" />
           <p className="text-lg font-semibold">No audit logs</p>
           <p className="text-sm mt-1">
             {auditEvents.length === 0
