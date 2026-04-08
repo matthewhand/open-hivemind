@@ -1,3 +1,9 @@
+// Mock isSafeUrl so tests don't do real DNS lookups
+jest.mock('@hivemind/shared-types', () => ({
+  ...jest.requireActual('@hivemind/shared-types'),
+  isSafeUrl: jest.fn(async () => true),
+}));
+
 import { Mem4aiProvider } from './Mem4aiProvider';
 import { Mem4aiApiError } from './types';
 import { clearCircuitBreakerRegistry } from './CircuitBreaker';
