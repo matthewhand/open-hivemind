@@ -91,6 +91,7 @@ export class BotCommandHandler implements CommandHandler {
   }
 
   private async addBot(options: any): Promise<void> {
+    // eslint-disable-next-line no-console
     console.log(chalk.blue('Adding new bot...'));
 
     if (!options.name || !options.provider || !options.llm) {
@@ -104,6 +105,7 @@ export class BotCommandHandler implements CommandHandler {
   }
 
   private async addBotInteractive(): Promise<void> {
+    // eslint-disable-next-line no-console
     console.log(chalk.blue('Interactive Bot Setup'));
 
     const answers = await inquirer.prompt([
@@ -188,6 +190,7 @@ export class BotCommandHandler implements CommandHandler {
   }
 
   private async startBot(name: string): Promise<void> {
+    // eslint-disable-next-line no-console
     console.log(chalk.blue(`Starting bot '${name}'...`));
     // Here you would start the specific bot
     console.log(chalk.green(`✓ Bot '${name}' started`));

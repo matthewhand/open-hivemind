@@ -1,3 +1,10 @@
+/**
+ * @jest-environment jsdom
+ */
+
+/**
+ */
+
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
@@ -82,11 +89,22 @@ const renderWithRouter = (component: React.ReactElement) => {
 };
 
 /**
- * @jest-environment jsdom
  */
 
 describe('TemplatesPage', () => {
   const mockUsePageLifecycle = usePageLifecycleModule.usePageLifecycle as jest.Mock;
+
+  beforeAll(() => {
+    // Mock global document if not available
+    if (typeof document === 'undefined') {
+      (global as any).document = {
+        createElement: () => ({}),
+      };
+    }
+    if (typeof window === 'undefined') {
+      (global as any).window = {};
+    }
+  });
 
   beforeEach(() => {
     mockUsePageLifecycle.mockReturnValue({

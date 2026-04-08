@@ -1,9 +1,14 @@
 import axios from 'axios';
 import Debug from 'debug';
 import { resetAllCircuitBreakers } from '../../../src/common/CircuitBreaker';
-import { generateChatCompletion } from '../../../src/integrations/openwebui/runInference';
-import * as sessionManager from '../../../src/integrations/openwebui/sessionManager';
-import * as uploadKnowledgeFile from '../../../src/integrations/openwebui/uploadKnowledgeFile';
+
+jest.mock('../../../packages/shared-types/src/httpClient', () => ({
+  request: jest.fn().mockResolvedValue({ body: { choices: [{ message: { content: 'sdk response' } }] } }),
+}));
+// @ts-ignore
+import { generateChatCompletion } from '../../../packages/llm-openwebui/src/runInference';
+import * as sessionManager from '../../../packages/llm-openwebui/src/sessionManager';
+import * as uploadKnowledgeFile from '../../../packages/llm-openwebui/src/uploadKnowledgeFile';
 
 // Silence debug logs during tests
 jest.mock('debug', () => () => jest.fn());

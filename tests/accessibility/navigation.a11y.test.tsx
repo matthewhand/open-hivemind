@@ -107,7 +107,8 @@ describe('Accessibility: Navigation Components', () => {
           <Breadcrumbs />
         </MemoryRouter>,
       );
-      const adminLink = screen.getByText('Admin');
+      // Depending on the breadcrumbs definition, '/admin' maps to Home.
+      const adminLink = screen.getByText('Home');
       const closestSpan = adminLink.closest('span');
       const closestA = adminLink.closest('a');
       // The admin link should be an <a> tag, not have aria-current

@@ -255,17 +255,21 @@ export const authenticate = async (
   return middleware.authenticate(req, res, next);
 };
 
-export const requireRole = (requiredRole: UserRole) => {
+export const requireRole = (
+  requiredRole: UserRole
+): ((req: Request, res: Response, next: NextFunction) => void) => {
   const middleware = new AuthMiddleware();
   return middleware.requireRole(requiredRole);
 };
 
-export const requirePermission = (permission: string) => {
+export const requirePermission = (
+  permission: string
+): ((req: Request, res: Response, next: NextFunction) => void) => {
   const middleware = new AuthMiddleware();
   return middleware.requirePermission(permission);
 };
 
-export const requireAdmin = (() => {
+export const requireAdmin: (req: Request, res: Response, next: NextFunction) => void = (() => {
   const middleware = new AuthMiddleware();
   return middleware.requireAdmin;
 })();

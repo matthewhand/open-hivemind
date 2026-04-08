@@ -20,7 +20,7 @@ const mockedConfig = {
 jest.mock('../../../src/integrations/openwebui/openWebUIConfig', () => ({
   __esModule: true,
   default: mockedConfig,
-}));
+}), { virtual: true });
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;

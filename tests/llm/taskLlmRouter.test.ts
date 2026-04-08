@@ -43,7 +43,7 @@ jest.mock('@hivemind/llm-openai', () => ({
 }));
 
 // Mock Flowise provider
-jest.mock('@integrations/flowise/flowiseProvider', () => ({
+jest.mock('../../packages/llm-flowise/src/flowiseProvider', () => ({
   __esModule: true,
   FlowiseProvider: jest.fn().mockImplementation((_cfg: any) => ({
     name: 'flowise',

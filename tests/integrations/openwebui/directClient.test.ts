@@ -1,5 +1,9 @@
 import axios from 'axios';
-import { generateChatCompletionDirect } from '../../../src/integrations/openwebui/directClient';
+import { generateChatCompletionDirect } from '../../../packages/llm-openwebui/src/directClient';
+
+jest.mock('../../../packages/shared-types/src/httpClient', () => ({
+  request: jest.fn().mockResolvedValue({ body: { choices: [{ message: { content: 'openwebui direct' } }] } }),
+}));
 
 jest.mock('axios');
 
