@@ -3,7 +3,6 @@ import * as path from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
 import { configLimiter } from '@src/middleware/rateLimiter';
-import type { PluginManifest } from '@src/plugins/PluginLoader';
 import {
   installPlugin,
   listInstalledPlugins,
@@ -183,7 +182,11 @@ async function scanBuiltInPackages(): Promise<MarketplacePackage[]> {
           : 'tool';
         packages.push({
           name: dir,
-          displayName: dir.replace(/^(llm|message|memory|tool|adapter)-/, '').split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+          displayName: dir
+            .replace(/^(llm|message|memory|tool|adapter)-/, '')
+            .split('-')
+            .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' '),
           description: 'Built-in package',
           type,
           version: '0.0.0',
@@ -285,7 +288,8 @@ async function getPackages(): Promise<MarketplacePackage[]> {
     packageMap.set('hivemind-plugin-weather', {
       name: 'hivemind-plugin-weather',
       displayName: 'Weather Tool',
-      description: 'Gives bots the ability to check weather conditions and forecasts for any location. Community-contributed MCP tool plugin.',
+      description:
+        'Gives bots the ability to check weather conditions and forecasts for any location. Community-contributed MCP tool plugin.',
       type: 'tool',
       version: '1.2.0',
       status: 'available',
@@ -442,7 +446,7 @@ router.post(
 
       debug('Updating plugin %s', name);
 
-      const plugin = await updatePlugin(name);
+      await updatePlugin(name);
 
       // ⚡ Bolt Optimization: Invalidate cache after update
       invalidateCache();

@@ -117,11 +117,11 @@ describe('PersonasPage', () => {
     expect(screen.getByRole('status', { name: /loading page content/i })).toBeInTheDocument();
   });
 
-  it('renders page heading when no personas exist', async () => {
+  it('renders stats card title', async () => {
     renderWithProviders(<PersonasPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Persona Management')).toBeInTheDocument();
+      expect(screen.getByText('Total Personas')).toBeInTheDocument();
     });
   });
 

@@ -58,8 +58,8 @@ vi.mock('../../components/DaisyUI/LoadingSpinner', () => ({
   LoadingSpinner: () => <div data-testid="loading-spinner" />,
 }));
 vi.mock('../../components/DaisyUI/EmptyState', () => ({
-  default: ({ title }: any) => <div data-testid="empty-state">{title}</div>,
-  EmptyState: ({ title }: any) => <div data-testid="empty-state">{title}</div>,
+  default: ({ title, onAction, actionLabel }: any) => <div data-testid="empty-state">{title}<button onClick={onAction}>{actionLabel}</button></div>,
+  EmptyState: ({ title, onAction, actionLabel }: any) => <div data-testid="empty-state">{title}<button onClick={onAction}>{actionLabel}</button></div>,
 }));
 vi.mock('../../components/DaisyUI/Input', () => ({
   default: ({ type, value, onChange, placeholder }: any) => (
@@ -263,7 +263,8 @@ describe('ActivityPage', () => {
 
     await waitFor(() => expect(screen.queryByTestId('loading-spinner')).not.toBeInTheDocument());
 
-    const refreshButton = screen.getByTitle('Refresh');
+    // In the empty state, the refresh button is rendered with the text 'Refresh'
+    const refreshButton = screen.getByRole('button', { name: /Refresh/i });
     fireEvent.click(refreshButton);
 
     expect(getActivityMock).toHaveBeenCalledTimes(2);

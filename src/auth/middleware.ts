@@ -27,7 +27,7 @@ export class AuthMiddleware {
    */
   public authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     // Helper to check for localhost
-    const isLocalhostRequest = () => {
+    const isLocalhostRequest = (): boolean => {
       const clientIP = req.ip ?? req.connection?.remoteAddress ?? req.socket?.remoteAddress ?? '';
       const host = req.get('host');
       const origin = req.get('origin');

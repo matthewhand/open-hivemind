@@ -92,14 +92,14 @@ describe('LLMProvidersPage', () => {
     vi.mocked(apiService.get).mockReturnValue(new Promise(() => {}));
 
     renderWithProviders(<LLMProvidersPage />);
-    expect(document.querySelectorAll('.skeleton').length).toBeGreaterThan(0);
+    expect(document.querySelectorAll('.loading-spinner').length).toBeGreaterThan(0);
   });
 
-  it('renders LLM Providers heading', async () => {
+  it('renders Total Profiles stat card', async () => {
     renderWithProviders(<LLMProvidersPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('LLM Providers')).toBeInTheDocument();
+      expect(screen.getByText('Total Profiles')).toBeInTheDocument();
     });
   });
 
@@ -107,8 +107,8 @@ describe('LLMProvidersPage', () => {
     renderWithProviders(<LLMProvidersPage />);
 
     await waitFor(() => {
-      // Page renders heading even with empty profiles
-      expect(screen.getByText('LLM Providers')).toBeInTheDocument();
+      // Empty state component renders when profiles list is empty
+      expect(screen.getByText('No Profiles Created')).toBeInTheDocument();
     });
   });
 });
