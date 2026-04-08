@@ -17,6 +17,7 @@ import { SecureConfigManager } from '../../../config/SecureConfigManager';
 import { ErrorUtils } from '../../../types/errors';
 import { ConfigurationTemplateService } from '../ConfigurationTemplateService';
 import { ConfigurationVersionService } from '../ConfigurationVersionService';
+import { BotConfigurationVersion } from '../../../database/types';
 import {
   encryptData,
   compressData,

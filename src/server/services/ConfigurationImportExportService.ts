@@ -4,6 +4,7 @@ import Debug from 'debug';
 import { SecureConfigManager } from '../../config/SecureConfigManager';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { ErrorUtils } from '../../types/errors';
+import { BotConfigurationVersion } from '../../database/types';
 import {
   BackupManager,
   calculateChecksum,
