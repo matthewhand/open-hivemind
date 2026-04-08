@@ -8,6 +8,7 @@ import Divider from '../components/DaisyUI/Divider';
 import Dropdown from '../components/DaisyUI/Dropdown';
 
 import { SkeletonList } from '../components/DaisyUI/Skeleton';
+import PageHeader from '../components/DaisyUI/PageHeader';
 import { ArrowLeft, Download } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import useSpec from '../hooks/useSpec';
@@ -104,29 +105,27 @@ ${spec.content.replace(/^/gm, '  ')}
       <div className="mt-6">
         <Card className="shadow-lg">
             {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-4">
-                <Button size="sm" className="btn-ghost" onClick={() => navigate(-1)}>
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back
-                </Button>
-                <div>
-                  <h1 className="text-3xl font-bold">{spec.topic}</h1>
-                  <p className="opacity-70">
-                    By {spec.author} • {new Date(spec.timestamp).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-              <Dropdown
-                trigger={
-                  <Button className="btn-primary">
-                    <Download className="w-4 h-4 mr-2" />
-                    Export
+            <PageHeader
+              title={spec.topic}
+              description={`By ${spec.author} \u2022 ${new Date(spec.timestamp).toLocaleDateString()}`}
+              actions={
+                <div className="flex items-center gap-2">
+                  <Button size="sm" className="btn-ghost" onClick={() => navigate(-1)}>
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back
                   </Button>
-                }
-                items={exportItems}
-              />
-            </div>
+                  <Dropdown
+                    trigger={
+                      <Button className="btn-primary">
+                        <Download className="w-4 h-4 mr-2" />
+                        Export
+                      </Button>
+                    }
+                    items={exportItems}
+                  />
+                </div>
+              }
+            />
 
             {/* Tags */}
             <div className="flex flex-wrap gap-2 mb-6">
