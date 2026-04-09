@@ -354,4 +354,5 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
   );
 };
 
-export default AgentCard;
+// ⚡ Bolt Optimization: Added React.memo() to prevent unnecessary re-renders of this heavy component in lists.
+export default React.memo(AgentCard);
