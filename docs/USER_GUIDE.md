@@ -259,6 +259,9 @@ Manage system and provider settings (convict configs) for your application and p
 
 ### Demo Mode
 When running the application without configuration (e.g., first launch), a **Demo Mode** banner appears.
+
+![Demo Mode Banner](screenshots/demo-mode-banner.png)
+
 *   **Simulation**: The system simulates bot activity, conversations, and metrics to demonstrate platform capabilities.
 *   **Visual Indicator**: A purple banner indicates that data is simulated and not persisted.
 
@@ -365,10 +368,10 @@ To view these static pages, navigate to **Developer & Tools > Static Pages** in 
 To ensure this guide remains up-to-date, screenshots are automatically generated using Playwright.
 
 **Automated Update (GitHub Actions):**
-You can trigger the **Update Screenshots** workflow manually from the Actions tab in GitHub.
+You can trigger the **Update Screenshots** workflow manually from the Actions tab in GitHub. This workflow captures screenshots dynamically on demand.
 
 **Manual Update (Local):**
 ```bash
 npm run generate-docs
 ```
-This process runs the End-to-End (E2E) tests located in `tests/e2e/screenshot-*.spec.ts`, captures the UI state, and saves the images to `docs/screenshots/`.
+This process runs the End-to-End (E2E) tests located in `tests/e2e/screenshot-*.spec.ts`, captures the UI state natively, and saves the images to `docs/screenshots/`.
