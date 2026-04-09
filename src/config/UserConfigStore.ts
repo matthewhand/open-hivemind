@@ -28,6 +28,7 @@ export class UserConfigStore {
     generalSettings?: GeneralSettings;
   } = {};
   private configPath: string;
+  private botMap: Map<string, BotConfiguration> = new Map();
 
   public constructor() {
     this.configPath = path.join(process.cwd(), 'config', 'user-config.json');
@@ -42,6 +43,18 @@ export class UserConfigStore {
         bots: [],
         botDisabledStates: {},
       };
+    }
+    this.initializeBotMap();
+  }
+
+  private initializeBotMap(): void {
+    this.botMap.clear();
+    if (this.config.bots) {
+      for (const bot of this.config.bots) {
+        if (bot.name) {
+          this.botMap.set(bot.name, bot);
+        }
+      }
     }
   }
 
@@ -64,6 +77,7 @@ export class UserConfigStore {
         botDisabledStates: {},
       };
     }
+    this.initializeBotMap();
   }
 
   /**
@@ -141,7 +155,9 @@ export class UserConfigStore {
     if (!this.config.bots) {
       return undefined;
     }
-    const botConfig = this.config.bots.find(bot => bot.name === botName);
+    // ⚡ Bolt Optimization: Use the synchronized botMap for O(1) cache lookups
+    // instead of repeatedly executing O(N) Array.prototype.find operations.
+    const botConfig = this.botMap.get(botName);
     if (!botConfig) {
       return undefined;
     }
@@ -223,6 +239,7 @@ export class UserConfigStore {
     } else {
       this.config.bots.push(botConfig);
     }
+    this.botMap.set(botName, botConfig);
   }
 
   /**
