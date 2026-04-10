@@ -94,8 +94,8 @@ describe('PluginSecurityPage', () => {
       expect(screen.getByText('llm-openai')).toBeInTheDocument();
     });
 
-    // Click on "Trusted" filter tab (rendered as role="tab")
-    const trustedTab = screen.getByRole('tab', { name: 'Trusted' });
+    // Click on "Trusted" filter tab (rendered as a <button>)
+    const trustedTab = screen.getByRole('button', { name: 'Trusted' });
     fireEvent.click(trustedTab);
 
     await waitFor(() => {
@@ -112,8 +112,8 @@ describe('PluginSecurityPage', () => {
       expect(screen.getByText('untrusted-plugin')).toBeInTheDocument();
     });
 
-    // Click on "Untrusted" filter tab (rendered as role="tab")
-    const untrustedTab = screen.getByRole('tab', { name: 'Untrusted' });
+    // Click on "Untrusted" filter tab (rendered as a <button>)
+    const untrustedTab = screen.getByRole('button', { name: 'Untrusted' });
     fireEvent.click(untrustedTab);
 
     await waitFor(() => {
