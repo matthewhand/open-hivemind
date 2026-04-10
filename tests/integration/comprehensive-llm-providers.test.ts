@@ -18,6 +18,8 @@ import { OpenSwarmProvider } from '../../packages/llm-openswarm/src/OpenSwarmPro
 import { getCircuitBreaker } from '../../src/common/CircuitBreaker';
 import type { ILlmProvider } from '../../src/llm/interfaces/ILlmProvider';
 import { LLMResponse } from '../../src/llm/interfaces/LLMResponse';
+import { getFlowiseSdkResponse } from '../../packages/llm-flowise/src/flowiseSdkClient';
+import { getFlowiseResponse } from '../../packages/llm-flowise/src/flowiseRestClient';
 
 // ---------------------------------------------------------------------------
 // Mock external dependencies BEFORE importing providers
@@ -69,17 +71,14 @@ jest.mock('axios', () => {
 const mockAxiosPost: jest.Mock = (global as any).__axiosMockPost;
 const mockAxiosGet: jest.Mock = (global as any).__axiosMockGet;
 
-// Mock Flowise clients
-jest.mock('@hivemind/llm-flowise', () => ({
+// Mock Flowise SDK and REST clients
+jest.mock('../../packages/llm-flowise/src/flowiseSdkClient', () => ({
+  getFlowiseSdkResponse: jest.fn().mockResolvedValue('flowise sdk response'),
+}));
+
+jest.mock('../../packages/llm-flowise/src/flowiseRestClient', () => ({
   getFlowiseResponse: jest.fn().mockResolvedValue('flowise rest response'),
-  FlowiseProvider: jest.fn().mockImplementation(() => ({
-    name: 'flowise',
-    generateResponse: jest.fn().mockResolvedValue({
-      content: 'flowise rest response',
-      provider: 'flowise',
-      model: 'flowise-default',
-    })
-  }))
+  getFlowiseResponseFallback: jest.fn().mockResolvedValue('flowise rest response'),
 }));
 
 
@@ -702,11 +701,11 @@ describe('COMPREHENSIVE LLM PROVIDER TESTS - PHASE 3', () => {
     });
 
     test('Flowise create() returns a FlowiseProvider', () => {
-      const { create, manifest } = require('../../packages/llm-flowise/src/index');
-      const provider = create();
+      const flowiseIndex = jest.requireActual('../../packages/llm-flowise/src/index');
+      const provider = flowiseIndex.create();
       expect(provider).toBeInstanceOf(FlowiseProvider);
-      expect(manifest.type).toBe('llm');
-      expect(manifest.displayName).toBe('Flowise');
+      expect(flowiseIndex.manifest.type).toBe('llm');
+      expect(flowiseIndex.manifest.displayName).toBe('Flowise');
     });
 
     test('OpenSwarm create() returns an OpenSwarmProvider', () => {

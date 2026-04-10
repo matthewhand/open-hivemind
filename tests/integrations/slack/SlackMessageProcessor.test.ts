@@ -2,18 +2,6 @@ import { SlackBotManager } from '../../../packages/message-slack/src/SlackBotMan
 import SlackMessage from '../../../packages/message-slack/src/SlackMessage';
 import { SlackMessageProcessor } from '../../../packages/message-slack/src/SlackMessageProcessor';
 
-const mockHttpGet = jest.fn();
-jest.mock('@hivemind/shared-types', () => {
-  const actual = jest.requireActual('@hivemind/shared-types');
-  return {
-    ...actual,
-    http: {
-      ...actual.http,
-      get: (...args: any[]) => mockHttpGet(...args),
-    },
-  };
-});
-
 jest.mock('@hivemind/shared-types', () => ({
   http: {
     get: jest.fn(),

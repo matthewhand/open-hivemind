@@ -67,6 +67,8 @@ module.exports = {
     '^@hivemind/message-mattermost/(.*)$': '<rootDir>/packages/message-mattermost/src/$1',
     '^@hivemind/llm-openai$': '<rootDir>/packages/llm-openai/src/index.ts',
     '^@hivemind/llm-openai/(.*)$': '<rootDir>/packages/llm-openai/src/$1',
+    '^@hivemind/llm-flowise$': '<rootDir>/packages/llm-flowise/src/index.ts',
+    '^@hivemind/llm-flowise/(.*)$': '<rootDir>/packages/llm-flowise/src/$1',
     '^@hivemind/llm-openswarm$': '<rootDir>/packages/llm-openswarm/src/index.ts',
     '^@hivemind/llm-openswarm/(.*)$': '<rootDir>/packages/llm-openswarm/src/$1',
     '^@hivemind/llm-openwebui$': '<rootDir>/packages/llm-openwebui/src/index.ts',
