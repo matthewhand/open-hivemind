@@ -316,7 +316,33 @@ router.get(
       if (!bot) {
         return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Bot not found'));
       }
-      return res.json(ApiResponse.success());
+      
+      // Get bot status and stats
+      const statuses = await manager.getBotsStatus();
+      const statusMap = new Map(statuses.map((s) => [s.id, s.isRunning]));
+      const stats = getWsService()?.getBotStats(bot.name) || {
+        messageCount: 0,
+        errors: [],
+        errorCount: 0,
+      };
+      
+      const result = {
+        id: bot.id,
+        name: bot.name,
+        provider: bot.messageProvider,
+        messageProvider: bot.messageProvider,
+        llmProvider: bot.llmProvider,
+        persona: bot.persona,
+        status: bot.isActive ? 'active' : 'disabled',
+        connected: statusMap.get(bot.id) || false,
+        messageCount: stats.messageCount,
+        errorCount: stats.errorCount,
+        config: bot.config,
+        isActive: bot.isActive,
+        // Note: envOverrides intentionally excluded to avoid exposing sensitive data
+      };
+      
+      return res.json(ApiResponse.success(result));
     } catch (error: unknown) {
       logger.error(
         'Failed to retrieve bot',

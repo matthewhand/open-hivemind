@@ -10,6 +10,7 @@ import { ApiResponse } from '@src/server/utils/apiResponse';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 import DemoModeService from '../../services/DemoModeService';
+import { WebSocketService } from '../services/WebSocketService';
 import { HTTP_STATUS } from '../../types/constants';
 import { ErrorUtils } from '../../types/errors';
 import { ChatGenerateSchema, EmptySchema } from '../../validation/schemas/miscSchema';
@@ -61,6 +62,19 @@ router.post(
       const wasEnabled = demoService.isInDemoMode();
       demoService.setDemoMode(!wasEnabled);
       const isNowEnabled = demoService.isInDemoMode();
+
+      // Broadcast configuration change to update all connected clients
+      try {
+        const wsService = WebSocketService.getInstance();
+        wsService.broadcastConfigChange({
+          type: 'demo_mode',
+          action: isNowEnabled ? 'enabled' : 'disabled',
+          key: 'demo_mode_toggle'
+        });
+      } catch (wsError) {
+        // WebSocket service might not be available, continue anyway
+        console.warn('Failed to broadcast demo mode change:', wsError);
+      }
 
       res.json(
         ApiResponse.success({
