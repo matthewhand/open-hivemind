@@ -47,11 +47,7 @@ export async function processCommand(
   } catch (error: unknown) {
     debug(
       '[processCommand] Error processing message: ' +
-        (error instanceof Error
-          ? error instanceof Error
-            ? error.message
-            : String(error)
-          : String(error))
+        (error instanceof Error ? error.message : String(error))
     );
     return false;
   }

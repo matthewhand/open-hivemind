@@ -308,7 +308,7 @@ export class ApiService {
       if ((error instanceof Error ? error.name : 'Error') === 'AbortError') {
         throw new Error(`Request timed out after ${options?.timeout || 15000}ms`);
       }
-      const errorMessage = error instanceof Error ? (error instanceof Error ? error.message : String(error)) : String(error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
       debug('ERROR:', `API request failed for ${endpoint}:`, errorMessage);
       throw error;
     }

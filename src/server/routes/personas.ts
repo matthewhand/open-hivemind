@@ -248,7 +248,9 @@ router.delete(
             systemInstruction: 'You are a helpful assistant.',
           });
         } catch (error: unknown) {
-          logger.warn(`Failed to revert bot ${bot.id} to default persona`, { error });
+          logger.warn(`Failed to revert bot ${bot.id} to default persona`, {
+            error: error instanceof Error ? error.message : String(error),
+          });
           // Continue with deletion even if bot update fails
         }
       }
@@ -282,7 +284,10 @@ router.delete(
         botsReverted: botsToRevert.length,
       });
     } catch (error: unknown) {
-      logger.error('Bulk delete personas failed', error);
+      logger.error(
+        'Bulk delete personas failed',
+        error instanceof Error ? error : new Error(String(error))
+      );
       return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         error: 'Failed to delete personas',
         details: error instanceof Error ? error.message : String(error),
