@@ -55,14 +55,14 @@ export const loadDynamicConfigs = async () => {
             try {
               newConfig.validate({ allowed: 'warn' });
             } catch (e) {
-              logger.warn(`Validation warning for ${name}:`, e);
+              logger.warn(`Validation warning for ${name}:`, { error: e });
             }
 
             globalConfigs[name] = newConfig;
           }
         }
       });
-    } catch (e: any) {
+    } catch (e: unknown) {
       if ((e as any).code !== 'ENOENT') {
         throw e;
       }

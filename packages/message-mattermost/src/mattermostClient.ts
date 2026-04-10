@@ -1,5 +1,10 @@
+import {
+  createHttpClient,
+  http,
+  isHttpError,
+  type HttpClientInstance,
+} from '@hivemind/shared-types';
 import { Logger } from '@common/logger';
-import { http, createHttpClient, isHttpError, type HttpClientInstance } from '@hivemind/shared-types';
 import type { MattermostPost } from './MattermostMessage';
 
 const logger = Logger.withContext('MattermostClient');
@@ -95,9 +100,12 @@ export default class MattermostClient {
 
   async getChannelPosts(channelId: string, page = 0, perPage = 60): Promise<MattermostPost[]> {
     try {
-      const data = await this.api.get<{ posts: Record<string, MattermostPost> }>(`/channels/${channelId}/posts`, {
-        params: { page, per_page: perPage },
-      });
+      const data = await this.api.get<{ posts: Record<string, MattermostPost> }>(
+        `/channels/${channelId}/posts`,
+        {
+          params: { page, per_page: perPage },
+        }
+      );
       return Object.values(data.posts);
     } catch (error: any) {
       logger.error('Failed to get channel posts', { channelId, error: error.message });
@@ -107,7 +115,7 @@ export default class MattermostClient {
 
   async getUser(userId: string): Promise<User | null> {
     try {
-      return this.api.get<User>(`/users/${userId}`);
+      return await this.api.get<User>(`/users/${userId}`);
     } catch (error) {
       return null;
     }
@@ -115,7 +123,7 @@ export default class MattermostClient {
 
   async getChannel(channelId: string): Promise<Channel | null> {
     try {
-      return this.api.get<Channel>(`/channels/${channelId}`);
+      return await this.api.get<Channel>(`/channels/${channelId}`);
     } catch (error) {
       return null;
     }
@@ -132,7 +140,7 @@ export default class MattermostClient {
 
   async getChannelByName(teamId: string, channelName: string): Promise<Channel | null> {
     try {
-      return this.api.get<Channel>(`/teams/${teamId}/channels/name/${channelName}`);
+      return await this.api.get<Channel>(`/teams/${teamId}/channels/name/${channelName}`);
     } catch (error) {
       return null;
     }
@@ -226,7 +234,9 @@ export default class MattermostClient {
         parent_id: parentId || '',
       });
     } catch (error: unknown) {
-      logger.debug('Mattermost typing indicator failed', { error: isHttpError(error) ? error.message : error });
+      logger.debug('Mattermost typing indicator failed', {
+        error: isHttpError(error) ? error.message : error,
+      });
     }
   }
 }

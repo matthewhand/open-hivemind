@@ -47,7 +47,7 @@ router.get('/', async (req: Request, res: Response) => {
     }
 
     return res.json(ApiResponse.success(configs));
-  } catch (error: any) {
+  } catch (error: unknown) {
     debug('Failed to list secure configs:', error);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
@@ -69,7 +69,7 @@ router.get('/:id', async (req: Request, res: Response) => {
     }
 
     return res.json(ApiResponse.success(config));
-  } catch (error: any) {
+  } catch (error: unknown) {
     debug(`Failed to get secure config ${req.params.id}:`, error);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
@@ -120,14 +120,14 @@ router.post(
       );
 
       return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success({ id, name, type }));
-    } catch (error: any) {
+    } catch (error: unknown) {
       debug('Failed to create secure config:', error);
       logConfigChange(
         req,
         'CREATE',
         `secure-config/${req.body?.id || 'unknown'}`,
         'failure',
-        `Failed to create secure configuration: ${error.message}`
+        `Failed to create secure configuration: ${error instanceof Error ? error.message : String(error)}`
       );
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
@@ -191,14 +191,14 @@ router.put(
       );
 
       return res.json(ApiResponse.success({ id, name, type }));
-    } catch (error: any) {
+    } catch (error: unknown) {
       debug(`Failed to update secure config ${req.params.id}:`, error);
       logConfigChange(
         req,
         'UPDATE',
         `secure-config/${req.params.id}`,
         'failure',
-        `Failed to update secure configuration: ${error.message}`
+        `Failed to update secure configuration: ${error instanceof Error ? error.message : String(error)}`
       );
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
@@ -237,14 +237,14 @@ router.delete('/:id', async (req: AuditedRequest, res: Response) => {
     );
 
     return res.json(ApiResponse.success());
-  } catch (error: any) {
+  } catch (error: unknown) {
     debug(`Failed to delete secure config ${req.params.id}:`, error);
     logConfigChange(
       req,
       'DELETE',
       `secure-config/${req.params.id}`,
       'failure',
-      `Failed to delete secure configuration: ${error.message}`
+      `Failed to delete secure configuration: ${error instanceof Error ? error.message : String(error)}`
     );
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
@@ -272,14 +272,14 @@ router.post(
       );
 
       return res.json(ApiResponse.success({ backupId }));
-    } catch (error: any) {
+    } catch (error: unknown) {
       debug('Failed to create backup:', error);
       logConfigChange(
         req,
         'CREATE',
         'secure-config/backup',
         'failure',
-        `Failed to create backup: ${error.message}`
+        `Failed to create backup: ${error instanceof Error ? error.message : String(error)}`
       );
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
@@ -297,7 +297,7 @@ router.get('/backups/list', async (req: Request, res: Response) => {
     const backups = await (await secureConfigManagerPromise).listBackups();
 
     return res.json(ApiResponse.success(backups));
-  } catch (error: any) {
+  } catch (error: unknown) {
     debug('Failed to list backups:', error);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
@@ -326,14 +326,14 @@ router.post(
       );
 
       return res.json(ApiResponse.success());
-    } catch (error: any) {
+    } catch (error: unknown) {
       debug(`Failed to restore backup ${req.params.backupId}:`, error);
       logConfigChange(
         req,
         'UPDATE',
         'secure-config/global',
         'failure',
-        `Failed to restore from backup ${req.params.backupId}: ${error.message}`
+        `Failed to restore from backup ${req.params.backupId}: ${error instanceof Error ? error.message : String(error)}`
       );
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)

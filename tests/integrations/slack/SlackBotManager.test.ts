@@ -56,19 +56,18 @@ describe('SlackBotManager', () => {
       appToken: 'test-app-token',
       signingSecret: 'test-signing-secret'
     };
-    
-    const slackBotManager = new SlackBotManager(config);
-    
+
+    const slackBotManager = new SlackBotManager([config], 'socket');
+
     // Test initialization
     expect(slackBotManager).toBeDefined();
-    
+
     // Test configuration
     expect(MockSocketModeClient).toHaveBeenCalledWith({
       appToken: 'test-app-token'
     });
-    
-    // Test that event handlers are set up
-    const mockSocketClient = MockSocketModeClient.mock.instances[0];
-    expect(mockSocketClient.on).toHaveBeenCalled();
+
+    // Test that the socket client was instantiated (event handlers registered on start/initialize)
+    expect(MockSocketModeClient).toHaveBeenCalledTimes(1);
   });
 });

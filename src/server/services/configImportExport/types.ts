@@ -22,6 +22,8 @@ export interface ExportResult {
   size?: number;
   checksum?: string;
   error?: string;
+  /** Diagnostic info populated on successful exports */
+  metadata?: { durationMs: number; configCount: number };
 }
 
 export interface ImportResult {

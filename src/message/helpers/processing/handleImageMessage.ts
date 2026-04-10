@@ -73,8 +73,11 @@ export async function handleImageMessage(message: any): Promise<boolean> {
       logger.debug('No attachments found');
       return false;
     }
-  } catch (error: any) {
-    debug('ERROR:', 'Error in handleImageMessage: ' + error.message);
+  } catch (error: unknown) {
+    debug(
+      'ERROR:',
+      'Error in handleImageMessage: ' + (error instanceof Error ? error.message : String(error))
+    );
     return false;
   }
 }

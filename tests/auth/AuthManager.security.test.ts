@@ -14,6 +14,7 @@ describe('AuthManager Security Fix', () => {
   const originalEnv = process.env;
   beforeEach(() => {
     jest.resetModules();
+    jest.clearAllMocks();
     process.env = { ...originalEnv };
     (AuthManager as any).instance = null;
   });

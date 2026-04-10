@@ -27,6 +27,7 @@ module.exports = {
     uuid: require.resolve('uuid'),
     '^@tests/(.*)$': '<rootDir>/tests/$1',
     '^@src/utils/logger$': '<rootDir>/tests/mocks/logger.ts',
+    '.*src/client/src/utils/logger$': '<rootDir>/tests/mocks/clientLogger.ts',
     '^@src/integrations/slack/(.*)$': '<rootDir>/packages/message-slack/src/$1',
     '^@src/integrations/mattermost/(.*)$': '<rootDir>/packages/message-mattermost/src/$1',
     '^@src/(.*)$': '<rootDir>/src/$1',

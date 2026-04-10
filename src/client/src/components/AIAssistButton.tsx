@@ -38,10 +38,10 @@ const AIAssistButton: React.FC<AIAssistButtonProps> = ({
       if (response && response.result) {
         onSuccess(response.result);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError('Failed to generate');
       // Check if it's a configuration error
-      if (err.message && err.message.includes('not configured')) {
+      if ((err instanceof Error ? err.message : String(err)) && (err instanceof Error ? err.message : String(err)).includes('not configured')) {
         warningToast('AI Not Configured', 'AI Assistance is not configured. Please go to LLM Providers page to configure it.');
       } else {
         warningToast('AI Generation failed');

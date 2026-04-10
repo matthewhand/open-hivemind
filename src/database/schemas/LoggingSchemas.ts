@@ -267,18 +267,18 @@ export class LoggingSchemas implements ISchemaModule {
 
   private async createTable(db: Database, sql: string): Promise<void> {
     try {
-      await db.exec(sql);
-    } catch (err: any) {
-      Logger.error(`Error creating table: ${err.message}`);
+      await db.run(sql);
+    } catch (err: unknown) {
+      Logger.error(`Error creating table: ${err instanceof Error ? err.message : String(err)}`);
       throw err;
     }
   }
 
   private async createIndex(db: Database, sql: string): Promise<void> {
     try {
-      await db.exec(sql);
-    } catch (err: any) {
-      Logger.error(`Error creating index: ${err.message}`);
+      await db.run(sql);
+    } catch (err: unknown) {
+      Logger.error(`Error creating index: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 }

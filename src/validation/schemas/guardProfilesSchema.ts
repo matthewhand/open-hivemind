@@ -168,6 +168,21 @@ export const BulkDeleteGuardProfilesSchema = z.object({
   }),
 });
 
+/** Schema for POST /test — test a guard configuration against sample input */
+export const TestGuardProfileSchema = z.object({
+  body: z.object({
+    guards: guardsObject.partial(),
+    testInput: z
+      .object({
+        userId: z.string().optional(),
+        toolName: z.string().optional(),
+        content: z.string().optional(),
+        requestCount: z.number().optional(),
+      })
+      .optional(),
+  }),
+});
+
 /** Schema for POST /bulk/toggle — bulk toggle guard profiles */
 export const BulkToggleGuardProfilesSchema = z.object({
   body: z.object({

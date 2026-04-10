@@ -26,7 +26,7 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 # NOTE: split COPY (manifests-only → install → source) breaks pnpm workspace
 # resolution for hoisted deps like zustand. Full COPY required.
 COPY . .
-RUN pnpm install --no-frozen-lockfile
+RUN pnpm install --frozen-lockfile
 
 # Rebuild sqlite3 native module for Alpine
 RUN cd /app/node_modules/.pnpm/sqlite3@*/node_modules/sqlite3 && \
@@ -51,6 +51,9 @@ RUN echo "INCLUDE_PYTHON_TOOLS=${INCLUDE_PYTHON_TOOLS}" >> .env.features && \
     echo "INCLUDE_NODE_TOOLS=${INCLUDE_NODE_TOOLS}" >> .env.features && \
     echo "INCLUDE_FFMPEG=${INCLUDE_FFMPEG}" >> .env.features
 RUN mkdir -p config/uploads data logs
+
+RUN chown -R node:node /app
+USER node
 
 EXPOSE 3000
 CMD ["node", "dist/src/index.js"]

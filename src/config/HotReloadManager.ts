@@ -406,7 +406,7 @@ export class HotReloadManager {
           continue;
         }
 
-        sanitizedChanges[key] = value;
+        (sanitizedChanges as Record<string, unknown>)[key] = value;
       }
 
       if (Object.keys(sanitizedChanges).length > 0) {

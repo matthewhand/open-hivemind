@@ -49,12 +49,12 @@ describe('MarketplacePage', () => {
       </MemoryRouter>
     );
 
-  it('renders page title and description', async () => {
+  it('renders page search and empty state', async () => {
     renderWithProviders(<MarketplacePage />);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /Community Packages/i })).toBeInTheDocument();
-      expect(screen.getByText(/Browse, install, and manage community packages/i)).toBeInTheDocument();
+      expect(screen.getByPlaceholderText(/Search packages/i)).toBeInTheDocument();
+      expect(screen.getByText(/No packages found/i)).toBeInTheDocument();
     });
   });
 });

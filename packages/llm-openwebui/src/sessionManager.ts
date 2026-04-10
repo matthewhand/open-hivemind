@@ -21,7 +21,11 @@ export async function getSessionKey(): Promise<string> {
   debug('Requesting new session key for:', username);
 
   try {
-    const data = await http.post<{ sessionKey: string }>(apiUrl + '/auth/login', { username, password }, { timeout: 15000 });
+    const data = await http.post<{ sessionKey: string }>(
+      apiUrl + '/auth/login',
+      { username, password },
+      { timeout: 15000 }
+    );
     sessionKey = data.sessionKey;
 
     if (!sessionKey) {

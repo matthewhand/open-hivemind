@@ -25,7 +25,9 @@ describe('WebUIStorage Performance', () => {
     jest.restoreAllMocks();
     existsSyncSpy = jest.spyOn(fs, 'existsSync').mockReturnValue(true);
     promisesAccessSpy = jest.spyOn(fs.promises, 'access').mockResolvedValue(undefined);
-    promisesReadFileSpy = jest.spyOn(fs.promises, 'readFile').mockResolvedValue(JSON.stringify(mockConfig));
+    promisesReadFileSpy = jest
+      .spyOn(fs.promises, 'readFile')
+      .mockResolvedValue(JSON.stringify(mockConfig));
     writeFileSyncSpy = jest.spyOn(fs, 'writeFileSync').mockImplementation(() => {});
     promisesWriteFileSpy = jest.spyOn(fs.promises, 'writeFile').mockResolvedValue(undefined);
     mkdirSyncSpy = jest.spyOn(fs, 'mkdirSync').mockImplementation((() => undefined) as any);

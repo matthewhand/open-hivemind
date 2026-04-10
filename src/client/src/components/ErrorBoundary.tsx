@@ -1,5 +1,6 @@
 import React from 'react';
 import Debug from 'debug';
+import { logger } from '../utils/logger';
 import Button from './DaisyUI/Button';
 import Card from './DaisyUI/Card';
 const debug = Debug('app:client:components:ErrorBoundary');
@@ -42,8 +43,8 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 
     // Attempt to extract the object causing the crash from the react error info
     if (error.message.includes('Objects are not valid as a React child')) {
-       console.error("REACT CRASH DETAILS: Check component stack below for the culprit!");
-       console.error(errorInfo.componentStack);
+       logger.error("REACT CRASH DETAILS: Check component stack below for the culprit!");
+       logger.error(errorInfo.componentStack);
     }
   }
 

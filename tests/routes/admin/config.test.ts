@@ -1,5 +1,5 @@
-import request from 'supertest';
 import express from 'express';
+import request from 'supertest';
 import adminConfigRouter from '../../../src/server/routes/admin/config';
 
 // Mock webUIStorage
@@ -9,9 +9,9 @@ jest.mock('../../../src/storage/webUIStorage', () => ({
       { id: 'openai', name: 'OpenAI', type: 'openai', isActive: true },
       { id: 'anthropic', name: 'Anthropic', type: 'anthropic', isActive: false },
     ]),
-    getMessengerProviders: jest.fn().mockReturnValue([
-      { id: 'discord', name: 'Discord', type: 'discord', isActive: true },
-    ]),
+    getMessengerProviders: jest
+      .fn()
+      .mockReturnValue([{ id: 'discord', name: 'Discord', type: 'discord', isActive: true }]),
     getLlmProvider: jest.fn().mockImplementation((id: string) => {
       if (id === 'openai') {
         return { id: 'openai', name: 'OpenAI', type: 'openai', isActive: true };
@@ -84,9 +84,7 @@ describe('Admin Config Routes', () => {
 
   describe('POST /api/admin/llm-providers', () => {
     it('should return 400 for invalid provider data', async () => {
-      const res = await request(app)
-        .post('/api/admin/llm-providers')
-        .send({});
+      const res = await request(app).post('/api/admin/llm-providers').send({});
 
       expect(res.status).toBe(400);
     });

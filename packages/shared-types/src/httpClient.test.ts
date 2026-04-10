@@ -1,10 +1,15 @@
-import { http, createHttpClient, HttpError, isHttpError } from './httpClient';
+import { createHttpClient, http, HttpError, isHttpError } from './httpClient';
 
 // Mock isSafeUrl so tests don't do real DNS lookups
 jest.mock('./ssrfGuard', () => ({
   isSafeUrl: jest.fn(async (url: string) => {
     // Treat localhost and private IPs as unsafe, everything else safe
-    return !url.includes('localhost') && !url.includes('127.0.0.1') && !url.includes('169.254') && !url.includes('internal');
+    return (
+      !url.includes('localhost') &&
+      !url.includes('127.0.0.1') &&
+      !url.includes('169.254') &&
+      !url.includes('internal')
+    );
   }),
 }));
 
@@ -34,7 +39,8 @@ describe('HttpError', () => {
 });
 
 describe('isHttpError', () => {
-  it('returns true for HttpError', () => expect(isHttpError(new HttpError(500, null, 'err'))).toBe(true));
+  it('returns true for HttpError', () =>
+    expect(isHttpError(new HttpError(500, null, 'err'))).toBe(true));
   it('returns false for plain Error', () => expect(isHttpError(new Error('x'))).toBe(false));
   it('returns false for non-errors', () => expect(isHttpError('string')).toBe(false));
 });
@@ -51,8 +57,9 @@ describe('SSRF protection', () => {
 
   it('validates full URL including query params', async () => {
     // params are appended before isSafeUrl check
-    await expect(http.get('https://api.example.com', { params: { redirect: 'http://localhost' } }))
-      .rejects.toThrow(HttpError);
+    await expect(
+      http.get('https://api.example.com', { params: { redirect: 'http://localhost' } })
+    ).rejects.toThrow(HttpError);
   });
 
   it('allows safe URLs', async () => {

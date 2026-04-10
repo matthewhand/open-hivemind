@@ -43,7 +43,7 @@ export class ReconnectionManager {
       maxDelayMs: config?.maxDelayMs ?? 60000,
       maxRetries: config?.maxRetries ?? 10,
       jitter: config?.jitter ?? true,
-      healthCheckFn: config?.healthCheckFn,
+      healthCheckFn: config?.healthCheckFn ?? (() => Promise.resolve(true)),
       healthCheckIntervalMs: config?.healthCheckIntervalMs ?? 30000, // default 30s
     };
     this.healthCheckFn = config?.healthCheckFn;
@@ -125,12 +125,14 @@ export class ReconnectionManager {
       // Re-check stopped flag after async connectFn to avoid acting on stale state
       if (this.stopped) return;
       this.onConnected();
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Re-check stopped flag after async connectFn to prevent scheduling new timers
       if (this.stopped) return;
 
-      this.lastError = error;
-      debug(`[${this.providerId}] Connection attempt failed: ${error.message}`);
+      this.lastError = error instanceof Error ? error : new Error(String(error));
+      debug(
+        `[${this.providerId}] Connection attempt failed: ${error instanceof Error ? error.message : String(error)}`
+      );
 
       if (this.attempts >= this.config.maxRetries) {
         debug(`[${this.providerId}] Max retries (${this.config.maxRetries}) reached. Giving up.`);
@@ -166,9 +168,11 @@ export class ReconnectionManager {
           debug(`[${this.providerId}] Health check returned false, triggering disconnect`);
           this.onDisconnected(new Error('Health check failed'));
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         if (!this.stopped && this.state === 'connected') {
-          debug(`[${this.providerId}] Health check threw error: ${error.message}`);
+          debug(
+            `[${this.providerId}] Health check threw error: ${error instanceof Error ? error.message : String(error)}`
+          );
           this.onDisconnected(error instanceof Error ? error : new Error(String(error)));
         }
       }

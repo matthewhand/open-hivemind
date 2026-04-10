@@ -309,8 +309,6 @@ export class IdleResponseManager {
     const delay = this.getRandomDelay();
     log(`Scheduling idle response for ${serviceName}:${channelId} in ${delay}ms`);
 
-    // Create a unique timer ID to prevent duplicates
-    const timerId = Date.now() + Math.random();
     activity.timer = setTimeout(async () => {
       // Verify this is still the correct timer
       const currentActivity = serviceActivity.channels.get(channelId);

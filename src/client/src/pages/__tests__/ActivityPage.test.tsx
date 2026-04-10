@@ -58,8 +58,26 @@ vi.mock('../../components/DaisyUI/LoadingSpinner', () => ({
   LoadingSpinner: () => <div data-testid="loading-spinner" />,
 }));
 vi.mock('../../components/DaisyUI/EmptyState', () => ({
-  default: ({ title }: any) => <div data-testid="empty-state">{title}</div>,
-  EmptyState: ({ title }: any) => <div data-testid="empty-state">{title}</div>,
+  default: ({ title, actionLabel, onAction }: any) => (
+    <div data-testid="empty-state">
+      {title}
+      {actionLabel && onAction && (
+        <button onClick={onAction} aria-label={typeof actionLabel === 'string' ? actionLabel : 'action'}>
+          {actionLabel}
+        </button>
+      )}
+    </div>
+  ),
+  EmptyState: ({ title, actionLabel, onAction }: any) => (
+    <div data-testid="empty-state">
+      {title}
+      {actionLabel && onAction && (
+        <button onClick={onAction} aria-label={typeof actionLabel === 'string' ? actionLabel : 'action'}>
+          {actionLabel}
+        </button>
+      )}
+    </div>
+  ),
 }));
 vi.mock('../../components/DaisyUI/Input', () => ({
   default: ({ type, value, onChange, placeholder }: any) => (
@@ -242,22 +260,13 @@ describe('ActivityPage', () => {
   });
 
   it('refreshes data when refresh button is clicked', async () => {
+    // Return empty events so the EmptyState (with its Refresh button) is rendered
     const mockData = {
-      events: [
-        {
-          id: '1',
-          timestamp: new Date().toISOString(),
-          botName: 'TestBot',
-          status: 'success',
-          provider: 'discord',
-          llmProvider: 'openai',
-          messageType: 'text'
-        }
-      ],
+      events: [],
       filters: {
-        agents: ['TestBot'],
-        messageProviders: ['discord'],
-        llmProviders: ['openai']
+        agents: [],
+        messageProviders: [],
+        llmProviders: []
       }
     };
 
@@ -266,13 +275,13 @@ describe('ActivityPage', () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(<QueryClientProvider client={queryClient}><MemoryRouter><ActivityPage /></MemoryRouter></QueryClientProvider>);
 
-    // Wait for initial load
+    // Wait for initial load (EmptyState should render because events is empty)
     await waitFor(() => expect(screen.queryByTestId('loading-spinner')).not.toBeInTheDocument(), { timeout: 3000 });
 
     // Clear previous calls
     getActivityMock.mockClear();
 
-    // Find and click refresh button
+    // Find and click the Refresh button rendered by EmptyState
     const refreshButton = screen.getByRole('button', { name: /refresh/i });
     fireEvent.click(refreshButton);
 

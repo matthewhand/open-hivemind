@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { logger } from '../../utils/logger';
 import { Alert } from '../DaisyUI/Alert';
 import Badge from '../DaisyUI/Badge';
 import Card from '../DaisyUI/Card';
@@ -92,8 +93,8 @@ const SettingsLLM: React.FC = () => {
         LLM_TASK_IDLE_PROVIDER: llmValues.LLM_TASK_IDLE_PROVIDER || '',
         LLM_TASK_WEBUI_PROVIDER: llmValues.LLM_TASK_WEBUI_PROVIDER || gs.webuiIntelligenceProvider || '',
       }));
-    } catch (err: any) {
-      console.error('Failed to load LLM settings:', err);
+    } catch (err: unknown) {
+      logger.error('Failed to load LLM settings:', err);
       setAlert({ type: 'warning', message: 'Could not load LLM settings. Using defaults.' });
     } finally {
       setLoading(false);

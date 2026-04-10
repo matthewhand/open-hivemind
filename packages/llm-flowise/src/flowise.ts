@@ -58,7 +58,11 @@ export class FlowiseCommand {
       return { success: true, message: 'Request successful', data };
     } catch (error: unknown) {
       debug('Flowise API request failed: ' + (error instanceof Error ? error.message : error));
-      return { success: false, message: 'Flowise API request failed', error: error instanceof Error ? error.message : String(error) };
+      return {
+        success: false,
+        message: 'Flowise API request failed',
+        error: error instanceof Error ? error.message : String(error),
+      };
     }
   }
 }
