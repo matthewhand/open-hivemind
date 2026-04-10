@@ -317,6 +317,27 @@ const MESSAGE_SCENARIOS = [
   },
 ];
 
+/** Multi-turn conversation threads for realistic demo interactions */
+const CONVERSATION_THREADS = [
+  [
+    { user: "Hi there! I'm new to Open-Hivemind", bot: "Welcome! I'm excited to help you get started. What would you like to learn about first?" },
+    { user: "How do I create my first bot?", bot: "Creating your first bot is easy! Go to Configuration > Bots and click 'Create Bot'. You'll need to configure a message platform and LLM provider." },
+    { user: "What platforms are supported?", bot: "We support Discord, Slack, Mattermost, and webhooks. Each has different setup requirements - would you like help with a specific platform?" },
+    { user: "I'd like to use Discord", bot: "Perfect! For Discord, you'll need to create a bot application in the Discord Developer Portal and get your bot token. Then configure the channels you want it to monitor." }
+  ],
+  [
+    { user: "My bot isn't responding to messages", bot: "Let me help troubleshoot that. First, can you confirm your bot is showing as 'Connected' in the dashboard?" },
+    { user: "It shows as connected but still no responses", bot: "That suggests the connection is working but message processing might be the issue. Check if your LLM provider API key is valid and has sufficient credits." },
+    { user: "The API key looks correct", bot: "Try checking the bot's system logs in the Monitoring page. Look for any error messages that might indicate what's preventing responses." },
+    { user: "Found it! There's a rate limit error", bot: "Ah, that's the issue! You can adjust rate limits in your guard profile settings, or upgrade your LLM provider plan for higher limits." }
+  ],
+  [
+    { user: "Can multiple bots work in the same channel?", bot: "Yes! Multiple bots can coexist in the same channel. Open-Hivemind includes social awareness to prevent them from talking over each other." },
+    { user: "How does that work exactly?", bot: "Bots use probability-based engagement and 'social anxiety' logic. If a conversation already has active bots, others are less likely to jump in unless directly mentioned." },
+    { user: "That's clever! Can I adjust this behavior?", bot: "Absolutely! You can tune engagement probability, mention bonuses, and crowd control settings in each bot's configuration." }
+  ]
+];
+
 const ERROR_MESSAGES = [
   'Rate limit exceeded for LLM provider',
   'Connection timeout to message platform',
@@ -332,6 +353,7 @@ export class DemoModeService {
   private isDemoMode = false;
   private demoBots: DemoBot[] = [];
   private conversations = new Map<string, DemoConversation>();
+  private activeThreads = new Map<string, { threadIndex: number; stepIndex: number; lastActivity: number }>();
   private activitySimulator: DemoActivitySimulator = {
     isRunning: false,
     simulationStartTime: 0,
@@ -708,6 +730,7 @@ export class DemoModeService {
 
   /**
    * Generate a message event and push it through the real pipeline.
+   * Uses conversation threads for more realistic multi-turn interactions.
    */
   private generateAndRecordMessageEvent(): void {
     const event = this.createMessageFlowEventForWS();
@@ -764,15 +787,64 @@ export class DemoModeService {
   // ─── Internal: Event Creation ─────────────────────────────────────
 
   /**
+   * Generate realistic conversation thread content.
+   */
+  private generateThreadContent(): { content: string; isFromUser: boolean } {
+    const now = Date.now();
+    
+    // 30% chance to start a new conversation thread
+    if (Math.random() < 0.3 || this.activeThreads.size === 0) {
+      const threadIndex = Math.floor(Math.random() * CONVERSATION_THREADS.length);
+      const channelKey = `thread-${Date.now()}`;
+      this.activeThreads.set(channelKey, { threadIndex, stepIndex: 0, lastActivity: now });
+      
+      const thread = CONVERSATION_THREADS[threadIndex];
+      return { content: thread[0].user, isFromUser: true };
+    }
+    
+    // Continue existing thread
+    const activeThreadKeys = Array.from(this.activeThreads.keys());
+    const channelKey = activeThreadKeys[Math.floor(Math.random() * activeThreadKeys.length)];
+    const threadState = this.activeThreads.get(channelKey)!;
+    const thread = CONVERSATION_THREADS[threadState.threadIndex];
+    
+    // Clean up old threads (older than 5 minutes)
+    if (now - threadState.lastActivity > 300000) {
+      this.activeThreads.delete(channelKey);
+      return this.generateThreadContent(); // Try again
+    }
+    
+    const currentStep = thread[threadState.stepIndex];
+    const isUserTurn = threadState.stepIndex % 2 === 0;
+    
+    // Update thread state
+    threadState.stepIndex++;
+    threadState.lastActivity = now;
+    
+    // End thread if we've reached the end
+    if (threadState.stepIndex >= thread.length) {
+      this.activeThreads.delete(channelKey);
+    }
+    
+    return {
+      content: isUserTurn ? currentStep.user : currentStep.bot,
+      isFromUser: isUserTurn
+    };
+  }
+
+  /**
    * Create a message flow event WITH id/timestamp — for ActivityLogger.
    */
   private createMessageFlowEventForWS(_timestamp?: string): MessageFlowEvent {
     const bot = this.demoBots[Math.floor(Math.random() * this.demoBots.length)];
-    const isIncoming = Math.random() > 0.4;
     const processingTime = this.generateProcessingTime();
     const hasError = Math.random() < 0.05;
     const user = DEMO_USERS[Math.floor(Math.random() * DEMO_USERS.length)];
-    const scenario = MESSAGE_SCENARIOS[Math.floor(Math.random() * MESSAGE_SCENARIOS.length)];
+    
+    // Use conversation threads for more realistic content
+    const threadContent = this.generateThreadContent();
+    const isIncoming = threadContent.isFromUser;
+    const content = threadContent.content;
 
     return {
       id: `demo-msg-${Date.now()}-${crypto.randomUUID()}`,
@@ -783,7 +855,7 @@ export class DemoModeService {
       channelId: bot.discord?.channelId || bot.slack?.channelId || `demo-channel-${bot.name}`,
       userId: user.id,
       messageType: isIncoming ? 'incoming' : 'outgoing',
-      contentLength: scenario.content.length,
+      contentLength: content.length,
       processingTime: isIncoming ? undefined : processingTime,
       status: hasError ? 'error' : processingTime > 1500 ? 'timeout' : 'success',
       errorMessage: hasError
