@@ -62,7 +62,11 @@ export class SessionStore {
     if (!this.userIdToSessionIds.has(userId)) {
       this.userIdToSessionIds.set(userId, []);
     }
-    this.userIdToSessionIds.get(userId)!.push(sessionId);
+
+    const userSessions = this.userIdToSessionIds.get(userId);
+    if (userSessions) {
+      userSessions.push(sessionId);
+    }
 
     debug('Session stored for user: %s, session ID: %s', userId, sessionId);
     return sessionId;

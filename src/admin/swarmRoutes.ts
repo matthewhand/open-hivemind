@@ -1,11 +1,12 @@
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { providerRegistry } from '../registries/ProviderRegistry';
+import type { IToolInstaller } from '../types/IToolInstaller';
 
 const debug = Debug('app:swarmRoutes');
 const swarmRouter = Router();
 
-const getInstaller = () => {
+const getInstaller = (): IToolInstaller => {
   const installer = providerRegistry.getInstaller('openswarm');
   if (!installer) {
     throw new Error('OpenSwarm installer not registered');

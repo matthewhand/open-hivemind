@@ -446,7 +446,7 @@ router.post(
 
       debug('Updating plugin %s', name);
 
-      const plugin = await updatePlugin(name);
+      await updatePlugin(name);
 
       // ⚡ Bolt Optimization: Invalidate cache after update
       invalidateCache();

@@ -48,7 +48,7 @@ describe('openwebui/uploadKnowledgeFile', () => {
     jest.doMock('@integrations/openwebui/sessionManager', () => ({
       __esModule: true,
       getSessionKey: jest.fn().mockResolvedValue('sk-abc'),
-    }));
+    }), { virtual: true });
 
     // Mock fs with existsSync and createReadStream
     jest.doMock('fs', () => {

@@ -112,6 +112,18 @@ const renderWithRouter = (component: React.ReactElement, templates?: any[]) => {
 describe('TemplatesPage', () => {
   const mockUsePageLifecycle = usePageLifecycleModule.usePageLifecycle as jest.Mock;
 
+  beforeAll(() => {
+    // Mock global document if not available
+    if (typeof document === 'undefined') {
+      (global as any).document = {
+        createElement: () => ({}),
+      };
+    }
+    if (typeof window === 'undefined') {
+      (global as any).window = {};
+    }
+  });
+
   beforeEach(() => {
     mockUsePageLifecycle.mockReturnValue({
       data: { data: { templates: mockTemplates } },

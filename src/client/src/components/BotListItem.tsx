@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { BotAvatar } from './BotAvatar';
 import Divider from './DaisyUI/Divider';
 import Dropdown from './DaisyUI/Dropdown';
@@ -19,7 +19,7 @@ interface BotListItemProps {
   onSwapProvider: (botId: string, providerKey: string) => void;
 }
 
-export const BotListItem: React.FC<BotListItemProps> = ({
+const BotListItemComponent: React.FC<BotListItemProps> = ({
   bot,
   isSelected,
   onSelect,
@@ -29,11 +29,22 @@ export const BotListItem: React.FC<BotListItemProps> = ({
   onToggleDropdown,
   onSwapProvider,
 }) => {
+  // Stabilize callbacks so the memo wrapper actually prevents re-renders
+  const handleSelect = useCallback(() => onSelect(bot.id), [bot.id, onSelect]);
+  const handleToggleDropdown = useCallback(
+    (isOpen: boolean) => onToggleDropdown(isOpen, bot.id),
+    [bot.id, onToggleDropdown]
+  );
+  const handleSwapDefault = useCallback(
+    (e: React.MouseEvent) => { e.stopPropagation(); onSwapProvider(bot.id, ''); },
+    [bot.id, onSwapProvider]
+  );
+
   return (
     <li className="relative">
       <button
         className={`${isSelected ? 'active' : ''} flex items-center gap-3 py-3 w-full text-left`}
-        onClick={() => onSelect(bot.id)}
+        onClick={handleSelect}
         aria-label={`Select bot ${bot.name}`}
         aria-current={isSelected ? 'true' : undefined}
       >
@@ -59,7 +70,7 @@ export const BotListItem: React.FC<BotListItemProps> = ({
               color="none"
               hideArrow={true}
               isOpen={showProviderDropdown === bot.id}
-              onToggle={(isOpen) => onToggleDropdown(isOpen, bot.id)}
+              onToggle={handleToggleDropdown}
               disabled={swappingProvider === bot.id}
               trigger={
                 <>
@@ -81,10 +92,7 @@ export const BotListItem: React.FC<BotListItemProps> = ({
               <li>
                 <button
                   className={`${!bot.llmProvider ? 'active' : ''} btn btn-ghost btn-sm justify-start`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSwapProvider(bot.id, '');
-                  }}
+                  onClick={handleSwapDefault}
                 >
                   <Check className={`w-4 h-4 ${!bot.llmProvider ? 'visible' : 'invisible'}`} />
                   System Default
@@ -115,3 +123,7 @@ export const BotListItem: React.FC<BotListItemProps> = ({
     </li>
   );
 };
+
+BotListItemComponent.displayName = 'BotListItem';
+
+export const BotListItem = React.memo(BotListItemComponent);
