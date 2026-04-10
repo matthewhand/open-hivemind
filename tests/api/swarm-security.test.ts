@@ -82,17 +82,16 @@ describe('Swarm API Security', () => {
 
   // SCENARIO: Source Code Verification
   describe('Source Code Verification', () => {
-    it('src/index.ts should have authentication on /api/swarm', () => {
-      const indexPath = path.join(__dirname, '../../src/index.ts');
-      const content = fs.readFileSync(indexPath, 'utf-8');
+    it('src/server/registerRoutes.ts should have authentication on /api/swarm', () => {
+      const registerRoutesPath = path.join(__dirname, '../../src/server/registerRoutes.ts');
+      const content = fs.readFileSync(registerRoutesPath, 'utf-8');
 
       // Check for the secure line
       const hasSecureLine = content.includes(
         "app.use('/api/swarm', authenticateToken, swarmRouter);"
       );
 
-      // Check for the vulnerable line (should be gone or commented out, but we check for replacement)
-      // Actually, we just want to ensure the secure line exists.
+      // Ensure the secure line exists.
       expect(hasSecureLine).toBe(true);
     });
   });
