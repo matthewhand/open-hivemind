@@ -179,7 +179,10 @@ export async function sendWelcomeMessage(bot: BotInstance): Promise<void> {
       }
     }
   } catch (welcomeErr: unknown) {
-    debug(`Failed to send welcome message for ${bot.name}:`, welcomeErr instanceof Error ? welcomeErr.message : String(welcomeErr));
+    debug(
+      `Failed to send welcome message for ${bot.name}:`,
+      welcomeErr instanceof Error ? welcomeErr.message : String(welcomeErr)
+    );
   }
 }
 

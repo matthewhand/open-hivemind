@@ -333,7 +333,9 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
             return {
               name,
               connected: false,
-              error: (e instanceof Error ? e.message : String(e)) || 'Failed to connect to Mattermost API',
+              error:
+                (e instanceof Error ? e.message : String(e)) ||
+                'Failed to connect to Mattermost API',
             };
           }
         })
@@ -371,7 +373,7 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
         status: 'down',
         connected: false,
         details: 'Health check failed',
-        error: (e instanceof Error ? e.message : String(e)),
+        error: e instanceof Error ? e.message : String(e),
       };
     }
   }

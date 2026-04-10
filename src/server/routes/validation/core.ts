@@ -219,7 +219,10 @@ export function createCoreRoutes(): Router {
           timestamp: new Date().toISOString(),
         });
       } catch (error: unknown) {
-        debug('Validation summary failed: %s', (error instanceof Error ? error.message : String(error)));
+        debug(
+          'Validation summary failed: %s',
+          error instanceof Error ? error.message : String(error)
+        );
         return res
           .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
           .json({ error: 'Internal server error' });

@@ -130,7 +130,9 @@ export class ReconnectionManager {
       if (this.stopped) return;
 
       this.lastError = error instanceof Error ? error : new Error(String(error));
-      debug(`[${this.providerId}] Connection attempt failed: ${(error instanceof Error ? error.message : String(error))}`);
+      debug(
+        `[${this.providerId}] Connection attempt failed: ${error instanceof Error ? error.message : String(error)}`
+      );
 
       if (this.attempts >= this.config.maxRetries) {
         debug(`[${this.providerId}] Max retries (${this.config.maxRetries}) reached. Giving up.`);
@@ -168,7 +170,9 @@ export class ReconnectionManager {
         }
       } catch (error: unknown) {
         if (!this.stopped && this.state === 'connected') {
-          debug(`[${this.providerId}] Health check threw error: ${(error instanceof Error ? error.message : String(error))}`);
+          debug(
+            `[${this.providerId}] Health check threw error: ${error instanceof Error ? error.message : String(error)}`
+          );
           this.onDisconnected(error instanceof Error ? error : new Error(String(error)));
         }
       }

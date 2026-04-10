@@ -152,7 +152,9 @@ router.post(
       const newPersona = manager.createPersona(req.body);
       return res.status(HTTP_STATUS.CREATED).json(newPersona);
     } catch (error: unknown) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: (error instanceof Error ? error.message : String(error)) });
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: error instanceof Error ? error.message : String(error) });
     }
   })
 );
@@ -176,10 +178,16 @@ router.post(
       const clonedPersona = manager.clonePersona(req.params.id, req.body);
       return res.status(HTTP_STATUS.CREATED).json(clonedPersona);
     } catch (error: unknown) {
-      if ((error instanceof Error ? error.message : String(error)).includes(ERROR_CODES.NOT_FOUND)) {
-        return res.status(HTTP_STATUS.NOT_FOUND).json({ error: (error instanceof Error ? error.message : String(error)) });
+      if (
+        (error instanceof Error ? error.message : String(error)).includes(ERROR_CODES.NOT_FOUND)
+      ) {
+        return res
+          .status(HTTP_STATUS.NOT_FOUND)
+          .json({ error: error instanceof Error ? error.message : String(error) });
       }
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: (error instanceof Error ? error.message : String(error)) });
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: error instanceof Error ? error.message : String(error) });
     }
   })
 );
@@ -194,7 +202,9 @@ router.put(
       const updatedPersona = manager.updatePersona(req.params.id, req.body);
       return res.json(updatedPersona);
     } catch (error: unknown) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: (error instanceof Error ? error.message : String(error)) });
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: error instanceof Error ? error.message : String(error) });
     }
   })
 );
@@ -256,7 +266,10 @@ router.delete(
             failed.push({ id: persona.id, error: 'Delete operation returned false' });
           }
         } catch (error: unknown) {
-          failed.push({ id: persona.id, error: (error instanceof Error ? error.message : String(error)) });
+          failed.push({
+            id: persona.id,
+            error: error instanceof Error ? error.message : String(error),
+          });
         }
       }
 
@@ -272,7 +285,7 @@ router.delete(
       logger.error('Bulk delete personas failed', error);
       return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         error: 'Failed to delete personas',
-        details: (error instanceof Error ? error.message : String(error)),
+        details: error instanceof Error ? error.message : String(error),
       });
     }
   })
@@ -293,7 +306,9 @@ router.delete(
       await manager.deletePersona(req.params.id);
       return res.json({ success: true });
     } catch (error: unknown) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: (error instanceof Error ? error.message : String(error)) });
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: error instanceof Error ? error.message : String(error) });
     }
   })
 );

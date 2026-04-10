@@ -20,7 +20,10 @@ export default async function loadServerPolicy(): Promise<string> {
     debug('[loadServerPolicy] Server policy loaded successfully.');
     return policyData;
   } catch (error: unknown) {
-    debug('[loadServerPolicy] Failed to load server policy: ' + (error instanceof Error ? error.message : String(error)));
+    debug(
+      '[loadServerPolicy] Failed to load server policy: ' +
+        (error instanceof Error ? error.message : String(error))
+    );
     throw new Error('Unable to load server policy.');
   }
 }

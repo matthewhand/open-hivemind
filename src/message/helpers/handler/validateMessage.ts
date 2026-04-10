@@ -27,7 +27,9 @@ export function validateMessage(message: IMessage): boolean {
 
     return isValid;
   } catch (error: unknown) {
-    debug('Failed to validate message: ' + (error instanceof Error ? error.message : String(error)));
+    debug(
+      'Failed to validate message: ' + (error instanceof Error ? error.message : String(error))
+    );
     return false;
   }
 }

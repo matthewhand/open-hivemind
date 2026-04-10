@@ -104,11 +104,15 @@ async function discoverMemoryProviders(): Promise<void> {
         providerRegistry.registerMemoryProvider(profile.key, instance);
         debug('Registered memory provider from profile: %s (%s)', profile.key, pluginName);
       } catch (err: unknown) {
-        debug('Could not load memory provider for profile "%s": %s', profile.key, (err instanceof Error ? err.message : String(err)));
+        debug(
+          'Could not load memory provider for profile "%s": %s',
+          profile.key,
+          err instanceof Error ? err.message : String(err)
+        );
       }
     }
   } catch (err: unknown) {
-    debug('Failed to load memory profiles: %s', (err instanceof Error ? err.message : String(err)));
+    debug('Failed to load memory profiles: %s', err instanceof Error ? err.message : String(err));
   }
 
   // 2. Scan packages/memory-* for auto-discovery
@@ -127,7 +131,11 @@ async function discoverMemoryProviders(): Promise<void> {
         providerRegistry.registerMemoryProvider(pkgName, instance);
         debug('Auto-discovered memory provider package: %s', pkgName);
       } catch (err: unknown) {
-        debug('Could not auto-load memory package "%s": %s', pkgName, (err instanceof Error ? err.message : String(err)));
+        debug(
+          'Could not auto-load memory package "%s": %s',
+          pkgName,
+          err instanceof Error ? err.message : String(err)
+        );
       }
     }
   } catch {
@@ -154,11 +162,15 @@ async function discoverToolProviders(): Promise<void> {
         providerRegistry.registerToolProvider(profile.key, instance);
         debug('Registered tool provider from profile: %s (%s)', profile.key, pluginName);
       } catch (err: unknown) {
-        debug('Could not load tool provider for profile "%s": %s', profile.key, (err instanceof Error ? err.message : String(err)));
+        debug(
+          'Could not load tool provider for profile "%s": %s',
+          profile.key,
+          err instanceof Error ? err.message : String(err)
+        );
       }
     }
   } catch (err: unknown) {
-    debug('Failed to load tool profiles: %s', (err instanceof Error ? err.message : String(err)));
+    debug('Failed to load tool profiles: %s', err instanceof Error ? err.message : String(err));
   }
 
   // 2. Scan packages/tool-* for auto-discovery
@@ -176,7 +188,11 @@ async function discoverToolProviders(): Promise<void> {
         providerRegistry.registerToolProvider(pkgName, instance);
         debug('Auto-discovered tool provider package: %s', pkgName);
       } catch (err: unknown) {
-        debug('Could not auto-load tool package "%s": %s', pkgName, (err instanceof Error ? err.message : String(err)));
+        debug(
+          'Could not auto-load tool package "%s": %s',
+          pkgName,
+          err instanceof Error ? err.message : String(err)
+        );
       }
     }
   } catch {

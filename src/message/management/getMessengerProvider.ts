@@ -97,7 +97,9 @@ export async function getMessengerProvider() {
         gmpDebug('Initialized %s provider via plugin loader', name);
       }
     } catch (e: unknown) {
-      gmpDebug(`Failed to initialize ${name} provider: ${e instanceof Error ? e.message : String(e)}`);
+      gmpDebug(
+        `Failed to initialize ${name} provider: ${e instanceof Error ? e.message : String(e)}`
+      );
     }
   }
 

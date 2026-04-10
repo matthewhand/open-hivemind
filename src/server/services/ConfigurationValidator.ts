@@ -230,7 +230,7 @@ export class ConfigurationValidator {
     } catch (error: unknown) {
       return {
         isValid: false,
-        errors: [(error instanceof Error ? error.message : String(error))],
+        errors: [error instanceof Error ? error.message : String(error)],
         warnings: [],
         suggestions: [],
       };
@@ -505,7 +505,7 @@ export class ConfigurationValidator {
     } catch (error: unknown) {
       return {
         success: false,
-        message: `Configuration test failed: ${(error instanceof Error ? error.message : String(error))}`,
+        message: `Configuration test failed: ${error instanceof Error ? error.message : String(error)}`,
         details: error,
       };
     }

@@ -23,6 +23,6 @@ export async function routeCommand(commandContent: string): Promise<string | nul
         return `Unrecognized command: ${parsed.commandName}`;
     }
   } catch (error: unknown) {
-    return `Error: ${(error instanceof Error ? error.message : String(error))}`;
+    return `Error: ${error instanceof Error ? error.message : String(error)}`;
   }
 }

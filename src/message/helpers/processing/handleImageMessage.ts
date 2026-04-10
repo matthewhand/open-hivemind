@@ -74,7 +74,10 @@ export async function handleImageMessage(message: any): Promise<boolean> {
       return false;
     }
   } catch (error: unknown) {
-    debug('ERROR:', 'Error in handleImageMessage: ' + (error instanceof Error ? error.message : String(error)));
+    debug(
+      'ERROR:',
+      'Error in handleImageMessage: ' + (error instanceof Error ? error.message : String(error))
+    );
     return false;
   }
 }

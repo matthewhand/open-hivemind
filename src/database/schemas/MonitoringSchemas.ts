@@ -161,7 +161,7 @@ export class MonitoringSchemas implements ISchemaModule {
     try {
       await db.run(sql);
     } catch (err: unknown) {
-      Logger.error(`Error creating table: ${(err instanceof Error ? err.message : String(err))}`);
+      Logger.error(`Error creating table: ${err instanceof Error ? err.message : String(err)}`);
       throw err;
     }
   }
@@ -170,7 +170,7 @@ export class MonitoringSchemas implements ISchemaModule {
     try {
       await db.run(sql);
     } catch (err: unknown) {
-      Logger.error(`Error creating index: ${(err instanceof Error ? err.message : String(err))}`);
+      Logger.error(`Error creating index: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 }

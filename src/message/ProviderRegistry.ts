@@ -162,7 +162,9 @@ export async function getMessengerServiceByProvider(
     debug(`Successfully loaded provider: ${providerName}`);
     return service;
   } catch (error: unknown) {
-    debug(`Failed to load provider "${providerName}": ${(error instanceof Error ? error.message : String(error))}`);
+    debug(
+      `Failed to load provider "${providerName}": ${error instanceof Error ? error.message : String(error)}`
+    );
     return null;
   }
 }

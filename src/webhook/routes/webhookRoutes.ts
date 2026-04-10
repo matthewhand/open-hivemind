@@ -108,7 +108,10 @@ export function configureWebhookRoutes(
         await messageService.sendPublicAnnouncement(channelId, resultMessage);
         debug('Successfully sent webhook message to channel:', channelId);
       } catch (error: unknown) {
-        debug('Failed to send webhook message:', (error instanceof Error ? error.message : String(error)));
+        debug(
+          'Failed to send webhook message:',
+          error instanceof Error ? error.message : String(error)
+        );
         return res.status(500).json({ error: 'Failed to process webhook' });
       }
 

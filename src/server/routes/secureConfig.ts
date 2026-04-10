@@ -127,7 +127,7 @@ router.post(
         'CREATE',
         `secure-config/${req.body?.id || 'unknown'}`,
         'failure',
-        `Failed to create secure configuration: ${(error instanceof Error ? error.message : String(error))}`
+        `Failed to create secure configuration: ${error instanceof Error ? error.message : String(error)}`
       );
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
@@ -198,7 +198,7 @@ router.put(
         'UPDATE',
         `secure-config/${req.params.id}`,
         'failure',
-        `Failed to update secure configuration: ${(error instanceof Error ? error.message : String(error))}`
+        `Failed to update secure configuration: ${error instanceof Error ? error.message : String(error)}`
       );
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
@@ -244,7 +244,7 @@ router.delete('/:id', async (req: AuditedRequest, res: Response) => {
       'DELETE',
       `secure-config/${req.params.id}`,
       'failure',
-      `Failed to delete secure configuration: ${(error instanceof Error ? error.message : String(error))}`
+      `Failed to delete secure configuration: ${error instanceof Error ? error.message : String(error)}`
     );
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
@@ -279,7 +279,7 @@ router.post(
         'CREATE',
         'secure-config/backup',
         'failure',
-        `Failed to create backup: ${(error instanceof Error ? error.message : String(error))}`
+        `Failed to create backup: ${error instanceof Error ? error.message : String(error)}`
       );
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
@@ -333,7 +333,7 @@ router.post(
         'UPDATE',
         'secure-config/global',
         'failure',
-        `Failed to restore from backup ${req.params.backupId}: ${(error instanceof Error ? error.message : String(error))}`
+        `Failed to restore from backup ${req.params.backupId}: ${error instanceof Error ? error.message : String(error)}`
       );
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
