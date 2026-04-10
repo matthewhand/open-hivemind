@@ -24,7 +24,9 @@ jest.mock('../../../src/config/UserConfigStore', () => ({
 
 jest.mock('../../../src/config/SecureConfigManager', () => ({
   SecureConfigManager: {
-    getInstance: jest.fn().mockReturnValue({}),
+    getInstance: jest.fn().mockReturnValue({
+      syncBotProviders: jest.fn(),
+    }),
   },
 }));
 
