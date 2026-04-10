@@ -198,9 +198,7 @@ adminRouter.get(
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : String(e);
       debug(`Failed to get schema for provider ${providerId}`, e);
-      return res
-        .status(500)
-        .json({ success: false, error: message });
+      return res.status(500).json({ success: false, error: message });
     }
   }
 );
@@ -219,13 +217,14 @@ adminRouter.post(
         .json({ success: false, error: `Message provider '${providerId}' not found` });
     }
 
+    const body = req.body as { name?: string; token?: string; llm?: string };
     try {
       await (provider as IMessageProvider).addBot(req.body);
 
       logAdminAction(
         req,
         `CREATE_${providerId.toUpperCase()}_BOT`,
-        `${providerId}-bots/${req.body?.name || 'unknown'}`,
+        `${providerId}-bots/${body.name || 'unknown'}`,
         'success',
         `Created ${provider.label} bot`
       );
@@ -235,7 +234,7 @@ adminRouter.post(
       logAdminAction(
         req,
         `CREATE_${providerId.toUpperCase()}_BOT`,
-        `${providerId}-bots/${req.body?.name || 'unknown'}`,
+        `${providerId}-bots/${body.name || 'unknown'}`,
         'failure',
         `Failed to create ${provider.label} bot: ${message}`
       );
@@ -305,12 +304,13 @@ adminRouter.post(
 adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: Response) => {
   const provider = providerRegistry.get('slack') as IMessageProvider;
   if (!provider) return res.status(404).json({ success: false, error: 'Slack provider not found' });
+  const body = req.body as { name?: string; token?: string };
   try {
     await provider.addBot(req.body);
     logAdminAction(
       req,
       'CREATE_SLACK_BOT',
-      `slack-bots/${req.body?.name}`,
+      `slack-bots/${body.name}`,
       'success',
       'Created Slack bot'
     );
@@ -320,7 +320,7 @@ adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: R
     logAdminAction(
       req,
       'CREATE_SLACK_BOT',
-      `slack-bots/${req.body?.name || 'unknown'}`,
+      `slack-bots/${body.name || 'unknown'}`,
       'failure',
       `Failed to create Slack bot: ${message}`
     );
@@ -333,7 +333,11 @@ adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res:
   if (!provider)
     return res.status(404).json({ success: false, error: 'Discord provider not found' });
   try {
-    const { name, token, llm } = req.body || {};
+    const { name, token, llm } = (req.body || {}) as {
+      name?: string;
+      token?: string;
+      llm?: string;
+    };
     if (!token) {
       logAdminAction(
         req,
@@ -396,17 +400,18 @@ adminRouter.post('/discord-bots', requireAdmin, async (req: AuditedRequest, res:
     logAdminAction(
       req,
       'CREATE_DISCORD_BOT',
-      `discord-bots/${req.body?.name}`,
+      `discord-bots/${name || 'unnamed'}`,
       'success',
       'Created Discord bot'
     );
     return res.json({ success: true, note: 'Saved. Restart app to initialize Discord bot.' });
   } catch (e) {
     const message = (e as Error)?.message || String(e);
+    const discordBody = req.body as { name?: string };
     logAdminAction(
       req,
       'CREATE_DISCORD_BOT',
-      `discord-bots/${req.body?.name || 'unnamed'}`,
+      `discord-bots/${discordBody.name || 'unnamed'}`,
       'failure',
       `Failed to create Discord bot: ${message}`
     );

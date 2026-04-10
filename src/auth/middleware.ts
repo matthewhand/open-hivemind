@@ -55,7 +55,7 @@ export class AuthMiddleware {
           origin === 'https://127.0.0.1' ||
           origin.startsWith('https://127.0.0.1:'));
 
-      return isLocalhostIp || isLocalhostHost || isLocalhostOrigin;
+      return !!(isLocalhostIp || isLocalhostHost || isLocalhostOrigin);
     };
 
     const allowLocalBypass = process.env.ALLOW_LOCALHOST_ADMIN === 'true';
