@@ -44,7 +44,7 @@ describe('executeCommandSafe', () => {
     });
 
     it('should handle multiline output', async () => {
-      const output = await executeCommandSafe('printf', ['line1\nline2']);
+      const output = await executeCommandSafe('node', ['-e', 'process.stdout.write("line1\\nline2")']);
       expect(output.trim()).toBe('line1\nline2');
     });
   });

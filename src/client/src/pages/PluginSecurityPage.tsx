@@ -299,6 +299,7 @@ const PluginSecurityPage: React.FC = () => {
           className="py-12"
         />
       ) : (
+        <>
         <div className="grid grid-cols-1 gap-4">
           {paginatedPlugins.map((plugin) => (
             <Card key={plugin.pluginName} className="hover:shadow-lg transition-shadow">
@@ -427,6 +428,7 @@ const PluginSecurityPage: React.FC = () => {
             style="standard"
           />
         </div>
+        </>
       )}
 
       {/* Confirm Modal */}

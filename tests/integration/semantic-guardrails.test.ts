@@ -6,14 +6,36 @@ import type { IMessage } from '@src/types/messages';
 // Mock dependencies
 jest.mock('@src/config/guardrailProfiles');
 jest.mock('@src/services/SemanticGuardrailService');
-jest.mock('@src/utils/llmProviderUtils');
-jest.mock('@src/utils/messageProviderUtils');
+jest.mock('@src/llm/getLlmProvider', () => ({
+  getLlmProviderForBot: jest.fn(),
+}));
+jest.mock('@message/management/getMessengerProvider', () => ({
+  getMessengerProvider: jest.fn(),
+}));
+jest.mock('@src/services/toolAugmentedCompletion', () => ({
+  toolAugmentedCompletion: jest.fn(),
+}));
+jest.mock('@src/message/helpers/processing/shouldReplyToMessage', () => ({
+  shouldReplyToMessage: jest.fn(),
+}));
+jest.mock('@src/registries/SyncProviderRegistry', () => ({
+  SyncProviderRegistry: {
+    getInstance: jest.fn().mockReturnValue({
+      isInitialized: jest.fn().mockReturnValue(false),
+    }),
+  },
+}));
 
 describe('Semantic Guardrails Integration', () => {
   let mockMessage: IMessage;
   let mockSemanticService: jest.Mocked<SemanticGuardrailService>;
+  const OLD_ENV = process.env;
 
   beforeEach(() => {
+    jest.clearAllMocks();
+
+    process.env = { ...OLD_ENV, DISABLE_QUOTA: 'true' };
+
     // Mock message object
     mockMessage = {
       getText: jest.fn().mockReturnValue('Test message'),
@@ -33,7 +55,31 @@ describe('Semantic Guardrails Integration', () => {
 
     (SemanticGuardrailService.getInstance as jest.Mock).mockReturnValue(mockSemanticService);
 
-    jest.clearAllMocks();
+    // Set up default mocks for pipeline dependencies
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { getMessengerProvider } = require('@message/management/getMessengerProvider');
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { getLlmProviderForBot } = require('@src/llm/getLlmProvider');
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { toolAugmentedCompletion } = require('@src/services/toolAugmentedCompletion');
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { shouldReplyToMessage } = require('@src/message/helpers/processing/shouldReplyToMessage');
+
+    getMessengerProvider.mockResolvedValue([
+      {
+        sendMessageToChannel: jest.fn(),
+        getClientId: jest.fn().mockReturnValue('client123'),
+      },
+    ]);
+    getLlmProviderForBot.mockResolvedValue({
+      generate: jest.fn().mockResolvedValue({ text: 'Test response' }),
+    });
+    toolAugmentedCompletion.mockResolvedValue({ text: 'Test response' });
+    shouldReplyToMessage.mockResolvedValue({ shouldReply: true, reason: 'Test' });
+  });
+
+  afterEach(() => {
+    process.env = OLD_ENV;
   });
 
   describe('Input Guardrails', () => {
@@ -109,14 +155,16 @@ describe('Semantic Guardrails Integration', () => {
       });
 
       // Mock other dependencies to allow message processing to continue
-      const { getMessengerProvider } = require('@src/utils/messageProviderUtils');
-      const { getLlmProviderForBot } = require('@src/utils/llmProviderUtils');
-      
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { getMessengerProvider } = require('@message/management/getMessengerProvider');
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { getLlmProviderForBot } = require('@src/llm/getLlmProvider');
+
       const mockMessageProvider = {
         sendMessageToChannel: jest.fn(),
         getClientId: jest.fn().mockReturnValue('client123'),
       };
-      
+
       const mockLlmProvider = {
         generate: jest.fn().mockResolvedValue({ text: 'Test response' }),
       };
@@ -164,14 +212,16 @@ describe('Semantic Guardrails Integration', () => {
       });
 
       // Mock other dependencies
-      const { getMessengerProvider } = require('@src/utils/messageProviderUtils');
-      const { getLlmProviderForBot } = require('@src/utils/llmProviderUtils');
-      
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { getMessengerProvider } = require('@message/management/getMessengerProvider');
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { getLlmProviderForBot } = require('@src/llm/getLlmProvider');
+
       const mockMessageProvider = {
         sendMessageToChannel: jest.fn(),
         getClientId: jest.fn().mockReturnValue('client123'),
       };
-      
+
       const mockLlmProvider = {
         generate: jest.fn().mockResolvedValue({ text: 'Inappropriate response' }),
       };
@@ -200,7 +250,7 @@ describe('Semantic Guardrails Integration', () => {
           }),
         })
       );
-      
+
       expect(result).toBeNull(); // Response should be blocked
       expect(mockMessageProvider.sendMessageToChannel).not.toHaveBeenCalled();
     });
@@ -227,14 +277,16 @@ describe('Semantic Guardrails Integration', () => {
       mockSemanticService.evaluateInput.mockRejectedValue(new Error('LLM service unavailable'));
 
       // Mock other dependencies
-      const { getMessengerProvider } = require('@src/utils/messageProviderUtils');
-      const { getLlmProviderForBot } = require('@src/utils/llmProviderUtils');
-      
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { getMessengerProvider } = require('@message/management/getMessengerProvider');
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { getLlmProviderForBot } = require('@src/llm/getLlmProvider');
+
       const mockMessageProvider = {
         sendMessageToChannel: jest.fn(),
         getClientId: jest.fn().mockReturnValue('client123'),
       };
-      
+
       const mockLlmProvider = {
         generate: jest.fn().mockResolvedValue({ text: 'Test response' }),
       };

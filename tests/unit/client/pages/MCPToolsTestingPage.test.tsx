@@ -1,8 +1,13 @@
 /**
  * @jest-environment jsdom
  */
+import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import MCPToolsTestingPage from '../../../../src/client/src/pages/MCPToolsTestingPage';
+
+// MCPToolsTestingPage uses useLocation via Breadcrumbs — wrap in MemoryRouter
+const renderPage = () => render(<MemoryRouter><MCPToolsTestingPage /></MemoryRouter>);
 
 // Mock fetch
 global.fetch = jest.fn();
@@ -18,7 +23,7 @@ describe('MCPToolsTestingPage', () => {
       json: async () => ({ servers: [] }),
     });
 
-    render(<MCPToolsTestingPage />);
+    renderPage();
     expect(screen.getByRole('status', { hidden: true })).toBeInTheDocument();
   });
 
@@ -51,13 +56,12 @@ describe('MCPToolsTestingPage', () => {
       }),
     });
 
-    render(<MCPToolsTestingPage />);
+    renderPage();
 
     await waitFor(() => {
       expect(screen.getByText('test_tool')).toBeInTheDocument();
     });
-
-    expect(screen.getByText('A test tool')).toBeInTheDocument();
+    // Description only appears in the detail panel after selecting a tool
   });
 
   it('should show empty state when no tools available', async () => {
@@ -66,7 +70,7 @@ describe('MCPToolsTestingPage', () => {
       json: async () => ({ servers: [] }),
     });
 
-    render(<MCPToolsTestingPage />);
+    renderPage();
 
     await waitFor(() => {
       expect(screen.getByText(/No tools available/i)).toBeInTheDocument();
@@ -102,7 +106,7 @@ describe('MCPToolsTestingPage', () => {
       }),
     });
 
-    render(<MCPToolsTestingPage />);
+    renderPage();
 
     await waitFor(() => {
       expect(screen.getByText('test_tool')).toBeInTheDocument();
@@ -153,7 +157,7 @@ describe('MCPToolsTestingPage', () => {
       }),
     });
 
-    render(<MCPToolsTestingPage />);
+    renderPage();
 
     await waitFor(() => {
       expect(screen.getByText('test_tool')).toBeInTheDocument();
@@ -166,10 +170,10 @@ describe('MCPToolsTestingPage', () => {
       expect(screen.getByText('Test Parameters')).toBeInTheDocument();
     });
 
-    // Verify form fields are generated
-    expect(screen.getByText(/textInput/)).toBeInTheDocument();
-    expect(screen.getByText(/numberInput/)).toBeInTheDocument();
-    expect(screen.getByText(/boolInput/)).toBeInTheDocument();
+    // Verify form fields are generated (label spans contain the field names)
+    expect(screen.getAllByText(/textInput/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/numberInput/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/boolInput/).length).toBeGreaterThan(0);
 
     // Check for required indicator
     const requiredIndicators = screen.getAllByText('*');
@@ -206,7 +210,7 @@ describe('MCPToolsTestingPage', () => {
       }),
     });
 
-    render(<MCPToolsTestingPage />);
+    renderPage();
 
     await waitFor(() => {
       expect(screen.getByText('test_tool')).toBeInTheDocument();
@@ -268,7 +272,7 @@ describe('MCPToolsTestingPage', () => {
       }),
     });
 
-    render(<MCPToolsTestingPage />);
+    renderPage();
 
     await waitFor(() => {
       expect(screen.getByText('test_tool')).toBeInTheDocument();
@@ -294,9 +298,9 @@ describe('MCPToolsTestingPage', () => {
     fireEvent.click(testButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/Test Failed/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/Test Failed/i).length).toBeGreaterThan(0);
     });
 
-    expect(screen.getByText(/Tool execution failed/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Tool execution failed/i).length).toBeGreaterThan(0);
   });
 });

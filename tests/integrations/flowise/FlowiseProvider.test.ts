@@ -145,11 +145,11 @@ describe('FlowiseProvider Integration', () => {
         return '';
       });
 
-      // API error - FlowiseProvider re-throws errors
+      // API error - FlowiseProvider catches errors and returns fallback message
       mockedGetFlowiseResponse.mockRejectedValue(new Error('API Error'));
       await expect(
         flowiseProvider.generateChatCompletion('test', [], { channelId: 'test-channel' })
-      ).rejects.toThrow('API Error');
+      ).resolves.toBe('There was an error communicating with the AI service.');
 
       // Reset circuit breaker before next test
       resetAllCircuitBreakers();
@@ -158,7 +158,7 @@ describe('FlowiseProvider Integration', () => {
       mockedGetFlowiseResponse.mockRejectedValue(new Error('ETIMEDOUT'));
       await expect(
         flowiseProvider.generateChatCompletion('test', [], { channelId: 'test-channel' })
-      ).rejects.toThrow('ETIMEDOUT');
+      ).resolves.toBe('There was an error communicating with the AI service.');
     });
 
     it('should handle malformed responses', async () => {
@@ -174,14 +174,14 @@ describe('FlowiseProvider Integration', () => {
       });
       expect(result).toBeNull();
 
-      // SDK mode without chatflowId should throw
+      // SDK mode without chatflowId - provider catches and returns fallback
       mockedFlowiseConfig.get.mockImplementation((key: string | null | undefined) => {
         if (key === 'FLOWISE_USE_REST') return false;
         return '';
       });
       await expect(
         flowiseProvider.generateChatCompletion('test', [], { channelId: 'test-channel' })
-      ).rejects.toThrow('FLOWISE_CONVERSATION_CHATFLOW_ID is not set');
+      ).resolves.toBe('There was an error communicating with the AI service.');
     });
 
     it('should handle concurrent requests and state isolation', async () => {
@@ -263,10 +263,10 @@ describe('FlowiseProvider Integration', () => {
         return '';
       });
 
-      // Missing chatflowId in SDK mode should throw
+      // Missing chatflowId in SDK mode - provider catches the error and returns fallback
       await expect(
         flowiseProvider.generateChatCompletion('test', [], { channelId: 'test-channel' })
-      ).rejects.toThrow('FLOWISE_CONVERSATION_CHATFLOW_ID is not set');
+      ).resolves.toBe('There was an error communicating with the AI service.');
     });
 
     it('should handle invalid configuration values', async () => {
@@ -397,7 +397,7 @@ describe('FlowiseProvider Integration', () => {
 
       await expect(
         flowiseProvider.generateChatCompletion('test', [], { channelId: 'test-channel' })
-      ).rejects.toThrow('Unauthorized');
+      ).resolves.toBe('There was an error communicating with the AI service.');
     });
 
     it('should handle service unavailable errors', async () => {
@@ -407,7 +407,7 @@ describe('FlowiseProvider Integration', () => {
 
       await expect(
         flowiseProvider.generateChatCompletion('test', [], { channelId: 'test-channel' })
-      ).rejects.toThrow('Service Unavailable');
+      ).resolves.toBe('There was an error communicating with the AI service.');
     });
 
     it('should handle rate limiting', async () => {
@@ -417,7 +417,7 @@ describe('FlowiseProvider Integration', () => {
 
       await expect(
         flowiseProvider.generateChatCompletion('test', [], { channelId: 'test-channel' })
-      ).rejects.toThrow('Rate limit exceeded');
+      ).resolves.toBe('There was an error communicating with the AI service.');
     });
   });
 });

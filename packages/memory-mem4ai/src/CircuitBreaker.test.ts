@@ -74,10 +74,22 @@ describe('CircuitBreaker — HALF_OPEN state', () => {
   });
 
   it('re-opens on failure in HALF_OPEN', async () => {
-    const cb = new CircuitBreaker({ name: 'test', failureThreshold: 1, resetTimeoutMs: 1, halfOpenMaxAttempts: 3 });
-    await openAndWait(cb);
+    // Use a long resetTimeoutMs so the circuit doesn't auto-transition back to HALF_OPEN
+    // before we can assert the OPEN state.
+    const cb = new CircuitBreaker({ name: 'test', failureThreshold: 1, resetTimeoutMs: 10000, halfOpenMaxAttempts: 3 });
+    // Manually open by triggering failure then checking internal state
     await expect(cb.execute(() => Promise.reject(new Error('e')))).rejects.toThrow();
-    expect(cb.getState()).toBe(CircuitBreakerState.OPEN);
+    // Circuit should be OPEN now; wait long enough for resetTimeoutMs=10000 NOT to fire
+    // but still verify HALF_OPEN transition works by using a short-timeout circuit
+    // Actually: just check internal state directly to avoid auto-transition in getState()
+    expect((cb as any).state).toBe(CircuitBreakerState.OPEN);
+
+    // Now test that failing in HALF_OPEN re-opens: use a 1ms-timeout circuit
+    const cb2 = new CircuitBreaker({ name: 'test2', failureThreshold: 1, resetTimeoutMs: 1, halfOpenMaxAttempts: 3 });
+    await openAndWait(cb2);
+    await expect(cb2.execute(() => Promise.reject(new Error('e')))).rejects.toThrow();
+    // Check internal state directly, not getState() which auto-transitions
+    expect((cb2 as any).state).toBe(CircuitBreakerState.OPEN);
   });
 
   it('rejects after halfOpenMaxAttempts probe limit reached before success', async () => {

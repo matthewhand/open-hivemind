@@ -17,7 +17,7 @@ describe('guardProfilesSchema', () => {
             mcpGuard: {
               enabled: true,
               type: 'owner',
-              allowedUsers: ['user1'],
+              allowedUsers: ['user1@example.com'],
               allowedTools: ['tool1'],
             },
             rateLimit: {
@@ -46,7 +46,7 @@ describe('guardProfilesSchema', () => {
             mcpGuard: {
               enabled: true,
               type: 'custom',
-              allowedUsers: ['user@invalid'],
+              allowedUsers: ['not-an-email'],
             },
           },
         },
@@ -55,9 +55,7 @@ describe('guardProfilesSchema', () => {
       const result = CreateGuardProfileSchema.safeParse(invalidProfile);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain(
-          'letters, numbers, dashes, and underscores'
-        );
+        expect(result.error.errors[0].message).toContain('valid email address');
       }
     });
 
@@ -78,9 +76,7 @@ describe('guardProfilesSchema', () => {
       const result = CreateGuardProfileSchema.safeParse(invalidProfile);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain(
-          'letters, numbers, dashes, and underscores'
-        );
+        expect(result.error.errors[0].message).toContain('letters, numbers');
       }
     });
 
@@ -91,7 +87,7 @@ describe('guardProfilesSchema', () => {
           guards: {
             rateLimit: {
               enabled: true,
-              maxRequests: 20000,
+              maxRequests: 2000000,
               windowMs: 60000,
             },
           },
@@ -101,12 +97,12 @@ describe('guardProfilesSchema', () => {
       const result = CreateGuardProfileSchema.safeParse(invalidProfile);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain('10,000');
+        expect(result.error.errors[0].message).toContain('1,000,000');
       }
     });
 
-    it('should reject excessive window time', () => {
-      const invalidProfile = {
+    it('should allow large window times', () => {
+      const validProfile = {
         body: {
           name: 'Test Profile',
           guards: {
@@ -119,11 +115,8 @@ describe('guardProfilesSchema', () => {
         },
       };
 
-      const result = CreateGuardProfileSchema.safeParse(invalidProfile);
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.errors[0].message).toContain('1 hour');
-      }
+      const result = CreateGuardProfileSchema.safeParse(validProfile);
+      expect(result.success).toBe(true);
     });
 
     it('should reject invalid strictness level', () => {

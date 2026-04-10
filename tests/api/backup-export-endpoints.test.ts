@@ -249,7 +249,7 @@ describe('Backup and Export API Endpoints - Comprehensive Test Suite', () => {
         .expect(400);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Validation failed');
+      expect(response.body.error).toBe('Validation failed');
     });
 
     it('should validate configIds must be positive numbers', async () => {
@@ -574,7 +574,9 @@ describe('Backup and Export API Endpoints - Comprehensive Test Suite', () => {
       const response = await request(app).get('/api/import-export/backups').expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data).toEqual(mockBackups);
+      expect(response.body.data).toHaveLength(2);
+      expect(response.body.data[0].id).toBe('backup-1');
+      expect(response.body.data[1].id).toBe('backup-2');
       expect(response.body.count).toBe(2);
     });
 
@@ -721,7 +723,7 @@ describe('Backup and Export API Endpoints - Comprehensive Test Suite', () => {
         .expect(404);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Backup not found or invalid');
+      expect(response.body.error).toBe('Backup not found or invalid');
     });
 
     it('should validate decryption key length (min 8 characters)', async () => {
@@ -818,7 +820,7 @@ describe('Backup and Export API Endpoints - Comprehensive Test Suite', () => {
         .expect(404);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Backup not found');
+      expect(response.body.error).toBe('Backup not found');
     });
 
     it('should handle delete errors', async () => {
@@ -834,8 +836,8 @@ describe('Backup and Export API Endpoints - Comprehensive Test Suite', () => {
 
   describe('GET /api/import-export/backups/:backupId/download - Download Backup', () => {
     it('should download backup file successfully', async () => {
-      const mockBackupPath = '/config/backups/backup-123.json.gz';
-      mockService.getBackupFilePath.mockResolvedValue(mockBackupPath);
+      // Use __filename as a real file that exists so res.sendFile succeeds
+      mockService.getBackupFilePath.mockResolvedValue(__filename);
       (fs.access as jest.Mock).mockResolvedValue(undefined);
 
       const response = await request(app)
@@ -853,7 +855,7 @@ describe('Backup and Export API Endpoints - Comprehensive Test Suite', () => {
         .expect(404);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Backup not found or invalid');
+      expect(response.body.error).toBe('Backup not found or invalid');
     });
 
     it('should return 404 when backup file does not exist on disk', async () => {
@@ -865,7 +867,7 @@ describe('Backup and Export API Endpoints - Comprehensive Test Suite', () => {
         .expect(404);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Backup file not found');
+      expect(response.body.error).toBe('Backup file not found');
     });
 
     it('should handle download errors', async () => {
@@ -905,7 +907,7 @@ describe('Backup and Export API Endpoints - Comprehensive Test Suite', () => {
       const response = await request(app).post('/api/import-export/import').send({}).expect(400);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('No file uploaded');
+      expect(response.body.error).toBe('No file uploaded');
     });
 
     it('should reject invalid file types', async () => {
@@ -1034,7 +1036,7 @@ describe('Backup and Export API Endpoints - Comprehensive Test Suite', () => {
       const response = await request(app).post('/api/import-export/validate').send({}).expect(400);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('No file uploaded');
+      expect(response.body.error).toBe('No file uploaded');
     });
 
     it('should clean up uploaded file after validation', async () => {

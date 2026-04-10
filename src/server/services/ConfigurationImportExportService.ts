@@ -306,8 +306,8 @@ export class ConfigurationImportExportService {
         data = await decompressData(data);
       }
 
-      // Decrypt if needed
-      if (filePath.endsWith('.enc')) {
+      // Decrypt if needed (handle both .enc and .enc.gz compound extension)
+      if (filePath.endsWith('.enc') || filePath.endsWith('.enc.gz')) {
         const strData = data.toString('utf8');
         try {
           const parsedEncrypted = JSON.parse(strData);
@@ -405,8 +405,8 @@ export class ConfigurationImportExportService {
         data = await decompressData(data);
       }
 
-      // Decrypt if needed
-      if (filePath.endsWith('.enc')) {
+      // Decrypt if needed (handle both .enc and .enc.gz compound extension)
+      if (filePath.endsWith('.enc') || filePath.endsWith('.enc.gz')) {
         if (!options.decryptionKey) {
           throw new Error('Decryption key is required for encrypted import');
         }

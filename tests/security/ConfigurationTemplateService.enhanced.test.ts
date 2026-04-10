@@ -10,12 +10,13 @@ jest.mock('../../src/database/DatabaseManager');
 
 // Mock ConfigurationValidator
 jest.mock('../../src/server/services/ConfigurationValidator', () => {
+  const validateBotConfigMock = jest.fn().mockReturnValue({ isValid: true, errors: [] });
+  const MockConfigurationValidator = jest.fn().mockImplementation(() => ({
+    validateBotConfig: validateBotConfigMock,
+  }));
+  (MockConfigurationValidator as any)._validateBotConfigMock = validateBotConfigMock;
   return {
-    ConfigurationValidator: jest.fn().mockImplementation(() => {
-      return {
-        validateBotConfig: jest.fn().mockReturnValue({ isValid: true, errors: [] }),
-      };
-    }),
+    ConfigurationValidator: MockConfigurationValidator,
   };
 });
 
@@ -24,6 +25,7 @@ describe('ConfigurationTemplateService - Enhanced Security Tests', () => {
   let service: ConfigurationTemplateService;
 
   beforeEach(async () => {
+    jest.clearAllMocks();
     (ConfigurationTemplateService as any).instance = null;
 
     if (fs.existsSync(TEST_DIR)) {
@@ -93,14 +95,11 @@ describe('ConfigurationTemplateService - Enhanced Security Tests', () => {
     });
 
     test('should validate template configuration on create', async () => {
-      const mockValidator = (
-        ConfigurationValidator as jest.MockedClass<typeof ConfigurationValidator>
-      ).mock.instances[0] as any;
-
-      mockValidator.validateBotConfig.mockReturnValueOnce({
+      const configValidator = (service as any).configValidator;
+      jest.spyOn(configValidator, 'validateBotConfig').mockReturnValueOnce({
         isValid: false,
         errors: ['Invalid config'],
-      });
+      } as any);
 
       await expect(
         service.createTemplate({
@@ -128,14 +127,11 @@ describe('ConfigurationTemplateService - Enhanced Security Tests', () => {
         },
       });
 
-      const mockValidator = (
-        ConfigurationValidator as jest.MockedClass<typeof ConfigurationValidator>
-      ).mock.instances[0] as any;
-
-      mockValidator.validateBotConfig.mockReturnValueOnce({
+      const configValidator = (service as any).configValidator;
+      jest.spyOn(configValidator, 'validateBotConfig').mockReturnValueOnce({
         isValid: false,
         errors: ['Invalid update config'],
-      });
+      } as any);
 
       await expect(
         service.updateTemplate(template.id, {

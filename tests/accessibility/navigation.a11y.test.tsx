@@ -107,11 +107,12 @@ describe('Accessibility: Navigation Components', () => {
           <Breadcrumbs />
         </MemoryRouter>,
       );
-      const adminLink = screen.getByText('Admin');
-      const closestSpan = adminLink.closest('span');
-      const closestA = adminLink.closest('a');
-      // The admin link should be an <a> tag, not have aria-current
-      expect(closestA || closestSpan).not.toHaveAttribute('aria-current');
+      // The "admin" segment is skipped in favour of a Home icon link.
+      // Find the non-active Home link (href="/admin/overview") and verify
+      // it does NOT carry aria-current.
+      const homeLink = document.querySelector('a[href="/admin/overview"]');
+      expect(homeLink).not.toBeNull();
+      expect(homeLink).not.toHaveAttribute('aria-current');
     });
   });
 

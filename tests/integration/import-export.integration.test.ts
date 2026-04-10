@@ -600,7 +600,7 @@ describe('Import/Export Integration Tests', () => {
 
       expect(result.success).toBe(true);
       expect(result.filePath).not.toContain('../');
-      expect(result.filePath).toContain('config/backups');
+      expect(result.filePath).toContain(path.join('config', 'backups'));
 
       const backups = await service.listBackups();
       const backup = backups.find((b) => b.name === dangerousName);

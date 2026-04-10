@@ -123,6 +123,7 @@ export function useRealTimeValidation<T = any>(
 
         // Handle validation errors gracefully
         debug('Validation error:', error);
+        console.error('Validation error:', error);
 
         // Don't set validation state on network errors - keep previous state
         // This prevents flashing error states during connectivity issues

@@ -131,9 +131,13 @@ jest.mock('../../src/validation/schemas/miscSchema', () => ({
   DashboardFeedbackSchema: {},
 }));
 
-jest.mock('../../src/validation/schemas/commonSchema', () => ({
-  ReorderSchema: {},
-}));
+jest.mock('../../src/validation/schemas/commonSchema', () => {
+  const { z } = require('zod');
+  return {
+    ReorderSchema: {},
+    idParam: (field = 'id') => z.string().min(1),
+  };
+});
 
 // Mock DatabaseManager
 jest.mock('../../src/database/DatabaseManager', () => ({

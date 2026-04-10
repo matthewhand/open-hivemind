@@ -345,7 +345,7 @@ const MCPToolsTestingPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="p-6">
+      <div className="p-6" role="status" aria-label="Loading MCP tools">
         <SkeletonGrid count={6} showImage={false} />
       </div>
     );
