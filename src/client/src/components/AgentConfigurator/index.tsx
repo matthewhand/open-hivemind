@@ -82,146 +82,125 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
     error: providersError,
   } = useProviders();
 
-  useEffect(() => {
-    const fetchMcpServers = async () => {
-      try {
-        const servers = await getMCPServers();
-        setAvailableMcpServers(servers);
-        setMcpError(null);
-      } catch {
-        setMcpError('Failed to load MCP servers');
-      }
-    };
-
-    fetchMcpServers();
-  }, []);
-
+  // Optimized: Batch all profile API calls into a single useEffect
   useEffect(() => {
     let isMounted = true;
-    const fetchResponseProfiles = async () => {
+
+    const fetchAllProfiles = async () => {
       try {
-        const data: any = await apiService.get('/api/config/response-profiles');
-        const profiles = Array.isArray(data?.profiles) ? data.profiles : [];
+        // Batch all API calls concurrently
+        const [
+          mcpServersResult,
+          responseProfilesResult,
+          guardrailProfilesResult,
+          llmProfilesResult,
+          mcpServerProfilesResult
+        ] = await Promise.allSettled([
+          apiService.get('/api/admin/mcp-servers'),
+          apiService.get('/api/config/response-profiles'),
+          apiService.get('/api/config/guardrails'),
+          apiService.get('/api/config/llm-profiles'),
+          apiService.get('/api/config/mcp-server-profiles')
+        ]);
 
-        const options = profiles
-          .filter((p: any) => p.enabled !== false)
-          .map((profile: any) => ({
-            value: String(profile.key || ''),
-            label: profile.name || profile.key,
-          }))
-          .filter((option: any) => option.value.length > 0)
-          .sort((a: any, b: any) => a.label.localeCompare(b.label));
+        if (!isMounted) return;
 
-        if (isMounted) {
+        // Process MCP servers
+        if (mcpServersResult.status === 'fulfilled') {
+          const data: any = mcpServersResult.value;
+          const servers: MCPServer[] = [];
+          if (data.servers) {
+            Object.entries(data.servers).forEach(([name, server]: [string, unknown]) => {
+              const serverObj = server as { serverUrl?: string; apiKey?: string };
+              servers.push({
+                name,
+                serverUrl: serverObj.serverUrl || '',
+                apiKey: serverObj.apiKey || '',
+                connected: true,
+              });
+            });
+          }
+          setMcpServers(servers);
+        } else {
+          setMcpError('Failed to load MCP servers');
+        }
+
+        // Process response profiles
+        if (responseProfilesResult.status === 'fulfilled') {
+          const data: any = responseProfilesResult.value;
+          const profiles = Array.isArray(data?.profiles) ? data.profiles : [];
+          const options = profiles
+            .filter((p: any) => p.enabled !== false)
+            .map((profile: any) => ({
+              value: String(profile.key || ''),
+              label: profile.name || profile.key,
+            }))
+            .filter((option: any) => option.value.length > 0)
+            .sort((a: any, b: any) => a.label.localeCompare(b.label));
           setResponseProfileOptions(options);
         }
-      } catch {
-        // If unavailable, leave options empty and rely on env/defaults
-      }
-    };
 
-    fetchResponseProfiles();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+        // Process guardrail profiles
+        if (guardrailProfilesResult.status === 'fulfilled') {
+          const data: any = guardrailProfilesResult.value;
+          const profiles = Array.isArray(data?.profiles) ? data.profiles : [];
+          const options = profiles
+            .map((profile: any) => ({
+              value: String(profile.key || ''),
+              label: profile.name || profile.key,
+              description: profile.description,
+            }))
+            .filter((option) => option.value.length > 0)
+            .sort((a, b) => a.label.localeCompare(b.label));
 
-  useEffect(() => {
-    let isMounted = true;
-    const fetchGuardrailProfiles = async () => {
-      try {
-        const data: any = await apiService.get('/api/config/guardrails');
-        const profiles = Array.isArray(data?.profiles) ? data.profiles : [];
-
-        const options = profiles
-          .map((profile: any) => ({
-            value: String(profile.key || ''),
-            label: profile.name || profile.key,
-            description: profile.description,
-          }))
-          .filter((option) => option.value.length > 0)
-          .sort((a, b) => a.label.localeCompare(b.label));
-
-        const map: Record<string, GuardState> = {};
-        for (const profile of profiles) {
-          if (!profile?.key || !profile?.mcpGuard) {
-            continue;
+          const map: Record<string, GuardState> = {};
+          for (const profile of profiles) {
+            if (!profile?.key || !profile?.mcpGuard) continue;
+            const guard = profile.mcpGuard;
+            map[String(profile.key)] = {
+              enabled: Boolean(guard.enabled),
+              type: guard.type === 'custom' ? 'custom' : 'owner',
+              allowedUserIds: Array.isArray(guard.allowedUserIds)
+                ? guard.allowedUserIds.filter(
+                    (id: any) => typeof id === 'string' && id.trim().length > 0
+                  )
+                : [],
+            };
           }
-          const guard = profile.mcpGuard;
-          map[String(profile.key)] = {
-            enabled: Boolean(guard.enabled),
-            type: guard.type === 'custom' ? 'custom' : 'owner',
-            allowedUserIds: Array.isArray(guard.allowedUserIds)
-              ? guard.allowedUserIds.filter(
-                  (id: any) => typeof id === 'string' && id.trim().length > 0
-                )
-              : [],
-          };
-        }
-
-        if (isMounted) {
           setGuardrailProfileOptions(options);
           setGuardrailProfileMap(map);
         }
-      } catch {
-        // ignore guardrail profile load errors
-      }
-    };
 
-    fetchGuardrailProfiles();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    let isMounted = true;
-    const fetchLlmProfiles = async () => {
-      try {
-        const data: any = await apiService.get('/api/config/llm-profiles');
-        const llmProfilesList = Array.isArray(data?.llm)
-          ? data.llm
-          : Array.isArray(data?.profiles?.llm)
-            ? data.profiles.llm
-            : [];
-        if (isMounted) {
+        // Process LLM profiles
+        if (llmProfilesResult.status === 'fulfilled') {
+          const data: any = llmProfilesResult.value;
+          const llmProfilesList = Array.isArray(data?.llm)
+            ? data.llm
+            : Array.isArray(data?.profiles?.llm)
+              ? data.profiles.llm
+              : [];
           setLlmProfiles(llmProfilesList);
         }
-      } catch {
-        // ignore profile load errors
-      }
-    };
 
-    fetchLlmProfiles();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    let isMounted = true;
-    const fetchMcpServerProfiles = async () => {
-      try {
-        const data: any = await apiService.get('/api/config/mcp-server-profiles');
-        const profiles = Array.isArray(data?.profiles) ? data.profiles : [];
-
-        const options = profiles
-          .map((profile: any) => ({
-            value: String(profile.key || ''),
-            label: profile.name || profile.key,
-          }))
-          .filter((option: any) => option.value.length > 0)
-          .sort((a: any, b: any) => a.label.localeCompare(b.label));
-
-        if (isMounted) {
+        // Process MCP server profiles
+        if (mcpServerProfilesResult.status === 'fulfilled') {
+          const data: any = mcpServerProfilesResult.value;
+          const profiles = Array.isArray(data?.profiles) ? data.profiles : [];
+          const options = profiles
+            .map((profile: any) => ({
+              value: String(profile.key || ''),
+              label: profile.name || profile.key,
+            }))
+            .filter((option: any) => option.value.length > 0)
+            .sort((a: any, b: any) => a.label.localeCompare(b.label));
           setMcpServerProfileOptions(options);
         }
-      } catch {
-        // ignore profile load errors
+      } catch (error) {
+        console.error('Failed to fetch profiles:', error);
       }
     };
 
-    fetchMcpServerProfiles();
+    fetchAllProfiles();
     return () => {
       isMounted = false;
     };
