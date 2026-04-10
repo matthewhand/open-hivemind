@@ -10,6 +10,12 @@ import { Mem4aiProvider } from '../../../packages/memory-mem4ai/src/Mem4aiProvid
 import { Mem4aiApiError } from '../../../packages/memory-mem4ai/src/types';
 import { clearCircuitBreakerRegistry } from '../../../src/common/CircuitBreaker';
 
+// Mock isSafeUrl so test URLs don't trigger SSRF guard failures
+jest.mock('@hivemind/shared-types', () => ({
+  ...jest.requireActual('@hivemind/shared-types'),
+  isSafeUrl: jest.fn().mockResolvedValue(true),
+}));
+
 // ---------------------------------------------------------------------------
 // Test helpers
 // ---------------------------------------------------------------------------
@@ -97,7 +103,7 @@ describe('Mem4aiProvider — constructor / configuration', () => {
     );
   });
 
-  it('strips trailing slashes from apiUrl', () => {
+  it('strips trailing slashes from apiUrl', async () => {
     const provider = new Mem4aiProvider({
       apiKey: TEST_API_KEY,
       apiUrl: 'https://custom.example.com/v1///',
@@ -105,7 +111,7 @@ describe('Mem4aiProvider — constructor / configuration', () => {
     });
     fetchMock.mockResolvedValueOnce(jsonResponse({ results: [] }));
 
-    void provider.search('hello');
+    await provider.search('hello');
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining('https://custom.example.com/v1/memories/search/'),
       expect.anything()

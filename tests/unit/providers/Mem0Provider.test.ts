@@ -94,19 +94,19 @@ describe('Mem0Provider — constructor / configuration', () => {
     expect(() => new Mem0Provider({ apiKey: '' })).toThrow('apiKey is required');
   });
 
-  it('uses the default baseUrl when none is provided', () => {
+  it('uses the default baseUrl when none is provided', async () => {
     const provider = new Mem0Provider({ apiKey: TEST_API_KEY, maxRetries: 0 });
     fetchMock.mockResolvedValueOnce(jsonResponse({ results: [] }));
 
     // Fire a search to inspect the URL
-    void provider.search('hello');
+    await provider.search('hello');
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining(DEFAULT_BASE_URL),
       expect.anything()
     );
   });
 
-  it('uses a custom baseUrl and strips trailing slashes', () => {
+  it('uses a custom baseUrl and strips trailing slashes', async () => {
     const provider = new Mem0Provider({
       apiKey: TEST_API_KEY,
       baseUrl: 'https://custom.example.com/v1///',
@@ -114,7 +114,7 @@ describe('Mem0Provider — constructor / configuration', () => {
     });
     fetchMock.mockResolvedValueOnce(jsonResponse({ results: [] }));
 
-    void provider.search('hello');
+    await provider.search('hello');
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining('https://custom.example.com/v1/memories/search/'),
       expect.anything()
