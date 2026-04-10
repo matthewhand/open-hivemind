@@ -28,6 +28,31 @@ export class UserConfigStore {
     generalSettings?: GeneralSettings;
   } = {};
   private configPath: string;
+  private botMap: Map<string, BotOverride> = new Map();
+
+  private syncBotMap(): void {
+    this.botMap.clear();
+    if (!this.config.bots) return;
+
+    // Pre-calculate disabled status for all bots
+    const disabledBots = new Set(this.config.generalSettings?.disabledBots || []);
+
+    for (const botConfig of this.config.bots) {
+      if (!botConfig.name) continue;
+      this.botMap.set(botConfig.name, {
+        disabled: disabledBots.has(botConfig.name) || this.isBotDisabled(botConfig.name),
+        messageProvider: botConfig.messageProvider as MessageProvider,
+        llmProvider: botConfig.llmProvider as LlmProvider,
+        llmProfile: 'llmProfile' in botConfig ? (botConfig.llmProfile as string | undefined) : undefined,
+        responseProfile: botConfig.responseProfile as string | undefined,
+        persona: botConfig.persona,
+        systemInstruction: botConfig.systemInstruction,
+        mcpServers: botConfig.mcpServers as McpServerConfig[],
+        mcpGuard: botConfig.mcpGuard as McpGuardConfig,
+        mcpGuardProfile: 'mcpGuardProfile' in botConfig ? (botConfig.mcpGuardProfile as string | undefined) : undefined,
+      });
+    }
+  }
 
   public constructor() {
     this.configPath = path.join(process.cwd(), 'config', 'user-config.json');
@@ -43,6 +68,7 @@ export class UserConfigStore {
         botDisabledStates: {},
       };
     }
+    this.syncBotMap();
   }
 
   public static getInstance(): UserConfigStore {
@@ -64,6 +90,7 @@ export class UserConfigStore {
         botDisabledStates: {},
       };
     }
+    this.syncBotMap();
   }
 
   /**
@@ -105,6 +132,11 @@ export class UserConfigStore {
       disabledAt: disabled ? new Date().toISOString() : undefined,
     };
 
+    const override = this.botMap.get(botName);
+    if (override) {
+      override.disabled = disabled;
+    }
+
     await this.saveConfig();
   }
 
@@ -138,26 +170,8 @@ export class UserConfigStore {
    * @returns A BotOverride object if found, otherwise undefined.
    */
   public getBotOverride(botName: string): BotOverride | undefined {
-    if (!this.config.bots) {
-      return undefined;
-    }
-    const botConfig = this.config.bots.find(bot => bot.name === botName);
-    if (!botConfig) {
-      return undefined;
-    }
-    // Map BotConfiguration to BotOverride
-    return {
-      disabled: this.isBotDisabled(botName),
-      messageProvider: botConfig.messageProvider as MessageProvider,
-      llmProvider: botConfig.llmProvider as LlmProvider,
-      llmProfile: 'llmProfile' in botConfig ? (botConfig.llmProfile as string | undefined) : undefined,
-      responseProfile: botConfig.responseProfile as string | undefined,
-      persona: botConfig.persona,
-      systemInstruction: botConfig.systemInstruction,
-      mcpServers: botConfig.mcpServers as McpServerConfig[],
-      mcpGuard: botConfig.mcpGuard as McpGuardConfig,
-      mcpGuardProfile: 'mcpGuardProfile' in botConfig ? (botConfig.mcpGuardProfile as string | undefined) : undefined,
-    };
+    // ⚡ Bolt Optimization: O(1) lookup using cached botMap instead of O(N) array find
+    return this.botMap.get(botName);
   }
 
   /**
@@ -165,31 +179,7 @@ export class UserConfigStore {
    * @returns A Map of botName to BotOverride.
    */
   public getAllBotOverrides(): Map<string, BotOverride> {
-    const overrides = new Map<string, BotOverride>();
-    if (!this.config.bots) {
-      return overrides;
-    }
-
-    // Pre-calculate disabled status for all bots to avoid O(N^2)
-    const disabledBots = new Set(this.config.generalSettings?.disabledBots || []);
-
-    for (const botConfig of this.config.bots) {
-      if (!botConfig.name) continue;
-      overrides.set(botConfig.name, {
-        disabled: disabledBots.has(botConfig.name),
-        messageProvider: botConfig.messageProvider as MessageProvider,
-        llmProvider: botConfig.llmProvider as LlmProvider,
-        llmProfile: 'llmProfile' in botConfig ? (botConfig.llmProfile as string | undefined) : undefined,
-        responseProfile: botConfig.responseProfile as string | undefined,
-        persona: botConfig.persona,
-        systemInstruction: botConfig.systemInstruction,
-        mcpServers: botConfig.mcpServers as McpServerConfig[],
-        mcpGuard: botConfig.mcpGuard as McpGuardConfig,
-        mcpGuardProfile: 'mcpGuardProfile' in botConfig ? (botConfig.mcpGuardProfile as string | undefined) : undefined,
-      });
-    }
-
-    return overrides;
+    return new Map(this.botMap);
   }
 
   /**
@@ -223,6 +213,7 @@ export class UserConfigStore {
     } else {
       this.config.bots.push(botConfig);
     }
+    this.syncBotMap();
   }
 
   /**
