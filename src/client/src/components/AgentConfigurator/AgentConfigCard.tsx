@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useMemo } from 'react';
+import React from 'react';
 import type { AgentConfigCardProps, GuardState } from './types';
 import type { FieldMetadata } from '../../services/api';
 import type { ProviderInfo } from '../../services/providerService';
@@ -10,6 +10,15 @@ import { Badge } from '../DaisyUI/Badge';
 import Input from '../DaisyUI/Input';
 import Select from '../DaisyUI/Select';
 
+/**
+ * ⚡ Bolt Performance Optimization:
+ * We use React.memo() on AgentConfigCard because this is a heavy, top-level configurator
+ * component that receives many callbacks and object props.
+ * It prevents unnecessary re-renders when parent states (like sidebar or routing states) change,
+ * avoiding costly re-evaluations of the entire form and inner child components.
+ *
+ * Impact: Reduces expensive React tree reconciliation during typing or unrelated state updates.
+ */
 const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
   bot,
   metadata,
@@ -41,56 +50,10 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
   const messageConfigured = Boolean(uiState?.messageProvider);
   const llmConfigured = Boolean(uiState?.llmProvider);
   const fullyConfigured = messageConfigured && llmConfigured;
+  const connection = connectionStatusLabel(status?.connected, status?.status);
+  const selectedMessageInfo = uiState?.messageProvider ? messageProviderInfo[uiState.messageProvider] : undefined;
+  const selectedLlmInfo = uiState?.llmProvider ? llmProviderInfo[uiState.llmProvider] : undefined;
   const guardrailProfileActive = Boolean(uiState?.mcpGuardProfile);
-
-  // Stable derived values — avoid recomputing on every render
-  const connection = useMemo(
-    () => connectionStatusLabel(status?.connected, status?.status),
-    [status?.connected, status?.status]
-  );
-  const selectedMessageInfo = useMemo(
-    () => (uiState?.messageProvider ? messageProviderInfo[uiState.messageProvider] : undefined),
-    [uiState?.messageProvider, messageProviderInfo]
-  );
-  const selectedLlmInfo = useMemo(
-    () => (uiState?.llmProvider ? llmProviderInfo[uiState.llmProvider] : undefined),
-    [uiState?.llmProvider, llmProviderInfo]
-  );
-
-  // Stabilized callbacks so child components don't re-render due to new inline functions
-  const handleSystemInstructionChange = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) =>
-      onSelectionChange(bot, 'systemInstruction', e.target.value, false),
-    [bot, onSelectionChange]
-  );
-  const handleSystemInstructionBlur = useCallback(
-    () => onSystemInstructionBlur(bot),
-    [bot, onSystemInstructionBlur]
-  );
-  const handleMcpServersChange = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const values = Array.from(e.target.selectedOptions, (option) => option.value);
-      onSelectionChange(bot, 'mcpServers', values);
-    },
-    [bot, onSelectionChange]
-  );
-  const handleGuardToggle = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => onGuardToggle(bot, e.target.checked),
-    [bot, onGuardToggle]
-  );
-  const handleGuardUsersBlur = useCallback(
-    () => onGuardUsersBlur(bot),
-    [bot, onGuardUsersBlur]
-  );
-  const handleGuardUsersKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        onGuardUsersBlur(bot);
-      }
-    },
-    [bot, onGuardUsersBlur]
-  );
 
   return (
     <Card className="shadow-xl border border-base-300 h-full">
@@ -188,8 +151,8 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
                   className={`textarea textarea-bordered ${metadata.systemInstruction?.locked ? 'textarea-disabled opacity-60' : ''}`}
                   placeholder="System instruction..."
                   value={uiState?.systemInstruction || ''}
-                  onChange={handleSystemInstructionChange}
-                  onBlur={handleSystemInstructionBlur}
+                  onChange={(e) => onSelectionChange(bot, 'systemInstruction', e.target.value, false)}
+                  onBlur={() => onSystemInstructionBlur(bot)}
                   disabled={metadata.systemInstruction?.locked || pending}
                   readOnly={metadata.systemInstruction?.locked}
                   rows={3}
@@ -274,7 +237,10 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
                 className={`select select-bordered ${metadata.mcpServers?.locked ? 'select-disabled opacity-60' : ''}`}
                 multiple
                 value={uiState?.mcpServers || []}
-                onChange={handleMcpServersChange}
+                onChange={(e) => {
+                  const values = Array.from(e.target.selectedOptions, option => option.value);
+                  onSelectionChange(bot, 'mcpServers', values);
+                }}
                 disabled={metadata.mcpServers?.locked || pending}
               >
                 {availableMcpServers.map(server => (
@@ -292,7 +258,7 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
                 <Toggle
                   className={`toggle ${uiState?.mcpGuard?.enabled ? 'toggle-primary' : ''}`}
                   checked={uiState?.mcpGuard?.enabled || false}
-                  onChange={handleGuardToggle}
+                  onChange={(e) => onGuardToggle(bot, e.target.checked)}
                   disabled={metadata.mcpGuard?.locked || pending || guardrailProfileActive}
                 />
               </label>
@@ -328,8 +294,13 @@ const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
                       placeholder="user1, user2"
                       value={guardInput}
                       onChange={(e) => onGuardUsersChange(bot, e.target.value)}
-                      onBlur={handleGuardUsersBlur}
-                      onKeyDown={handleGuardUsersKeyDown}
+                      onBlur={() => onGuardUsersBlur(bot)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          onGuardUsersBlur(bot);
+                        }
+                      }}
                       disabled={metadata.mcpGuard?.locked || pending || guardrailProfileActive}
                     />
                     <label className="label">
@@ -499,6 +470,4 @@ const renderProviderHelper = (info?: ProviderInfo) => {
   );
 };
 
-AgentConfigCard.displayName = 'AgentConfigCard';
-
-export default memo(AgentConfigCard);
+export default React.memo(AgentConfigCard);
