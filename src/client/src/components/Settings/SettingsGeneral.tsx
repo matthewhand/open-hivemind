@@ -66,6 +66,9 @@ const SettingsGeneral: React.FC = () => {
     defaultValues,
   });
 
+  const [showGettingStartedPref, setShowGettingStartedPref] = useState(
+    () => localStorage.getItem('hivemind-show-getting-started') !== 'false',
+  );
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error', message: string } | null>(null);
@@ -294,6 +297,30 @@ const SettingsGeneral: React.FC = () => {
               ]}
             />
           </FormField>
+        </Card>
+
+        {/* Aesthetic Preferences */}
+        <Card className="bg-base-100 border border-base-300 shadow-sm p-4 h-full">
+          <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
+            <span className="w-2 h-2 bg-info rounded-full"></span>
+            Aesthetic Preferences
+          </h6>
+
+          <div className="space-y-3">
+            <Toggle
+              label="Show Getting Started tab"
+              checked={showGettingStartedPref}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                const val = e.target.checked;
+                setShowGettingStartedPref(val);
+                localStorage.setItem('hivemind-show-getting-started', val ? 'true' : 'false');
+              }}
+              size="sm"
+            />
+            <p className="text-xs text-base-content/50 pl-1">
+              When enabled, shows the Getting Started tab on the Overview page with setup guides and tips.
+            </p>
+          </div>
         </Card>
 
         {/* Logging */}
