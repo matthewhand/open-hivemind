@@ -195,14 +195,19 @@ export class StartupDiagnostics {
             const fullPath = path.join(process.cwd(), configPath);
             const stats = await fs.promises.stat(fullPath);
             return { path: configPath, exists: true, size: stats.size };
-          } catch (error: any) {
-            if (error.code === 'ENOENT') {
+          } catch (error: unknown) {
+            if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
               return { path: configPath, exists: false };
             }
             return {
               path: configPath,
               exists: false,
-              error: error instanceof Error ? error.message : String(error),
+              error:
+                error instanceof Error
+                  ? error instanceof Error
+                    ? error.message
+                    : String(error)
+                  : String(error),
             };
           }
         }

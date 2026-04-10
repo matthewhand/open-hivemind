@@ -161,7 +161,7 @@ export const usePersonaActions = (
           ? 'Persona updated successfully'
           : 'Persona created successfully'
       );
-    } catch (err: any) {
+    } catch (err: unknown) {
       errorToast('Save Failed', 'Failed to save persona changes');
       setError('Failed to save persona changes');
     } finally {

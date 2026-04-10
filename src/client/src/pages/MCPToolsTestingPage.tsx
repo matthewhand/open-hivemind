@@ -157,17 +157,17 @@ const MCPToolsTestingPage: React.FC = () => {
       });
 
       setAlert({ type: 'success', message: 'Tool executed successfully!' });
-    } catch (error: any) {
+    } catch (error: unknown) {
       const executionTime = Date.now() - startTime;
 
       setTestResult({
         success: false,
-        error: error.message,
+        error: (error instanceof Error ? error.message : String(error)),
         executionTime,
         timestamp: new Date().toISOString(),
       });
 
-      setAlert({ type: 'error', message: `Test failed: ${error.message}` });
+      setAlert({ type: 'error', message: `Test failed: ${(error instanceof Error ? error.message : String(error))}` });
     } finally {
       setTesting(false);
     }

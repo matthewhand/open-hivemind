@@ -65,7 +65,7 @@ async function initializeRedis(): Promise<void> {
   try {
     const redis = await import('redis');
     const rateLimitRedis = await import('rate-limit-redis');
-    RedisStore = rateLimitRedis.RedisStore;
+    RedisStore = rateLimitRedis.RedisStore as unknown as new (opts: Record<string, unknown>) => any;
 
     const redisUrl = process.env.REDIS_URL;
     if (!redisUrl) {
@@ -846,7 +846,7 @@ export function shutdownRateLimiter(): void {
   // Close Redis connection
   if (redisClient) {
     debug('Closing Redis connection');
-    redisClient.quit().catch((err) => {
+    redisClient.quit().catch((err: unknown) => {
       debug('Error closing Redis:', err);
     });
   }

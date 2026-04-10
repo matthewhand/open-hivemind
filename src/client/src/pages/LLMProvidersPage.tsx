@@ -87,8 +87,8 @@ const LLMProvidersPage: React.FC = () => {
       setDefaultEmbeddingProvider(llmValues.DEFAULT_EMBEDDING_PROVIDER || gs.defaultEmbeddingProfile || '');
       setPerUseCaseEnabled(!!gs.perUseCaseEnabled);
       if ((statusRes as any).libraryStatus) setLibraryStatus((statusRes as any).libraryStatus);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load configuration');
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : String(err)) || 'Failed to load configuration');
     } finally {
       setLoading(false);
     }
@@ -120,7 +120,7 @@ const LLMProvidersPage: React.FC = () => {
     try {
       await apiService.delete(`/api/config/llm-profiles/${key}`);
       fetchProfiles();
-    } catch (err: any) { alert(`Failed to delete: ${err.message}`); }
+    } catch (err: unknown) { alert(`Failed to delete: ${(err instanceof Error ? err.message : String(err))}`); }
   };
 
   const handleProviderSubmit = async (providerData: any) => {
@@ -141,7 +141,7 @@ const LLMProvidersPage: React.FC = () => {
           await apiService.delete(`/api/config/llm-profiles/${oldKey}`);
           try {
             await apiService.post('/api/config/llm-profiles', payload);
-          } catch (e: any) {
+          } catch (e: unknown) {
             if (backup) await apiService.post('/api/config/llm-profiles', backup).catch(() => {});
             throw e;
           }
@@ -151,7 +151,7 @@ const LLMProvidersPage: React.FC = () => {
       }
       closeModal();
       fetchProfiles();
-    } catch (err: any) { alert(`Failed to save: ${err.message}`); }
+    } catch (err: unknown) { alert(`Failed to save: ${(err instanceof Error ? err.message : String(err))}`); }
   };
 
   const getProviderIcon = (type: string) => {

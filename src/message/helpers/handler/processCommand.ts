@@ -44,10 +44,14 @@ export async function processCommand(
     }
 
     return true;
-  } catch (error: any) {
+  } catch (error: unknown) {
     debug(
       '[processCommand] Error processing message: ' +
-        (error instanceof Error ? error.message : String(error))
+        (error instanceof Error
+          ? error instanceof Error
+            ? error.message
+            : String(error)
+          : String(error))
     );
     return false;
   }

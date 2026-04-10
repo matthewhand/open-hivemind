@@ -54,8 +54,8 @@ const MessageProvidersPage: React.FC = () => {
       setLoading(true);
       const res = await apiService.get('/api/config/message-profiles');
       setProfiles((res as any).message || (res as any).profiles?.message || []);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load message profiles');
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : String(err)) || 'Failed to load message profiles');
     } finally {
       setLoading(false);
     }
@@ -85,8 +85,8 @@ const MessageProvidersPage: React.FC = () => {
         try {
           await apiService.delete(`/api/config/message-profiles/${key}`);
           fetchProfiles();
-        } catch (err: any) {
-          errorToast('Delete Failed', `Failed to delete: ${err.message}`);
+        } catch (err: unknown) {
+          errorToast('Delete Failed', `Failed to delete: ${(err instanceof Error ? err.message : String(err))}`);
         }
       },
     });
@@ -111,7 +111,7 @@ const MessageProvidersPage: React.FC = () => {
           await apiService.delete(`/api/config/message-profiles/${oldKey}`);
           try {
             await apiService.post('/api/config/message-profiles', payload);
-          } catch (createErr: any) {
+          } catch (createErr: unknown) {
             if (backup) await apiService.post('/api/config/message-profiles', backup).catch(() => {});
             throw createErr;
           }
@@ -123,8 +123,8 @@ const MessageProvidersPage: React.FC = () => {
       closeModal();
       showStamp();
       fetchProfiles();
-    } catch (err: any) {
-      errorToast('Save Failed', `Failed to save profile: ${err.message}`);
+    } catch (err: unknown) {
+      errorToast('Save Failed', `Failed to save profile: ${(err instanceof Error ? err.message : String(err))}`);
     }
   };
 

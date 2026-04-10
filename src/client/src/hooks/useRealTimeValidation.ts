@@ -115,9 +115,9 @@ export function useRealTimeValidation<T = any>(
             isValidating: false,
           });
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Ignore abort errors (request was cancelled)
-        if (error.name === 'AbortError' || controller.signal.aborted) {
+        if ((error instanceof Error ? error.name : 'Error') === 'AbortError' || controller.signal.aborted) {
           return;
         }
 

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, no-empty, no-case-declarations */
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { logger } from '../utils/logger';
 
 export interface User {
   id: string;
@@ -71,7 +72,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           });
         }
       } catch (error) {
-        console.error('[AuthContext] Failed to parse stored auth data, clearing:', error);
+        logger.error('[AuthContext] Failed to parse stored auth data, clearing:', error);
         localStorage.removeItem('auth_tokens');
         localStorage.removeItem('auth_user');
       }
@@ -204,7 +205,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       return false;
     } catch (error) {
-      console.error('Login error:', error);
+      logger.error('Login error:', error);
       return false;
     }
   };
@@ -257,7 +258,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       return false;
     } catch (error) {
-      console.error('Token refresh error:', error);
+      logger.error('Token refresh error:', error);
       logout();
       return false;
     }
@@ -297,7 +298,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       return null;
     } catch (error) {
-      console.error('Token verification error:', error);
+      logger.error('Token verification error:', error);
       return null;
     }
   };
@@ -337,7 +338,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         throw new Error('Trusted login was not successful');
       }
     } catch (error) {
-      console.error('Trusted login error:', error);
+      logger.error('Trusted login error:', error);
       throw error;
     }
   };
