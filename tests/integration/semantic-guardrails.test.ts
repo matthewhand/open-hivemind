@@ -1,5 +1,5 @@
-import { handleMessage } from '@src/message/handlers/messageHandler';
 import { getGuardrailProfileByKey } from '@src/config/guardrailProfiles';
+import { handleMessage } from '@src/message/handlers/messageHandler';
 import { SemanticGuardrailService } from '@src/services/SemanticGuardrailService';
 import type { IMessage } from '@src/types/messages';
 

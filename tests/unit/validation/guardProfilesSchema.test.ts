@@ -364,7 +364,7 @@ describe('guardProfilesSchema', () => {
 
       const result = CreateGuardProfileSchema.safeParse(validProfile);
       expect(result.success).toBe(true);
-      
+
       if (result.success) {
         const schema = result.data.body.guards.semanticInputGuard?.responseSchema;
         expect(schema?.type).toBe('boolean');

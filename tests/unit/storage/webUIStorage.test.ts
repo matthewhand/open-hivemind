@@ -190,7 +190,9 @@ describe('WebUIStorage', () => {
         lastUpdated: '2026-03-30T00:00:00.000Z',
       };
 
-      await expect(storage.saveConfig(mockConfig)).rejects.toThrow('Failed to save web UI configuration');
+      await expect(storage.saveConfig(mockConfig)).rejects.toThrow(
+        'Failed to save web UI configuration'
+      );
 
       // Restore permissions for cleanup
       fs.chmodSync(configUserDir, 0o755);

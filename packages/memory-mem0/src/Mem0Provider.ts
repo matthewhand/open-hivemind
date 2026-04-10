@@ -1,10 +1,10 @@
 import Debug from 'debug';
-import { isSafeUrl } from '@hivemind/shared-types';
-import type {
-  IMemoryProvider,
-  MemoryEntry,
-  MemoryScopeOptions,
-  MemorySearchResult,
+import {
+  isSafeUrl,
+  type IMemoryProvider,
+  type MemoryEntry,
+  type MemoryScopeOptions,
+  type MemorySearchResult,
 } from '@hivemind/shared-types';
 import {
   getCircuitBreaker,

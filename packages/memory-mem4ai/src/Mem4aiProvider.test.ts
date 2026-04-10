@@ -1,12 +1,6 @@
-// Mock isSafeUrl so tests don't do real DNS lookups
-jest.mock('@hivemind/shared-types', () => ({
-  ...jest.requireActual('@hivemind/shared-types'),
-  isSafeUrl: jest.fn(async () => true),
-}));
-
+import { clearCircuitBreakerRegistry } from './CircuitBreaker';
 import { Mem4aiProvider } from './Mem4aiProvider';
 import { Mem4aiApiError } from './types';
-import { clearCircuitBreakerRegistry } from './CircuitBreaker';
 
 // Mock isSafeUrl to avoid real DNS lookups in tests
 jest.mock('@hivemind/shared-types', () => ({
@@ -50,13 +44,13 @@ afterEach(() => jest.restoreAllMocks());
 
 describe('Mem4aiProvider constructor', () => {
   it('throws if apiKey is missing', () => {
-    expect(() => new Mem4aiProvider({ apiKey: '', apiUrl: 'https://api.mem4ai.example.com' }))
-      .toThrow('apiKey is required');
+    expect(
+      () => new Mem4aiProvider({ apiKey: '', apiUrl: 'https://api.mem4ai.example.com' })
+    ).toThrow('apiKey is required');
   });
 
   it('throws if apiUrl is missing', () => {
-    expect(() => new Mem4aiProvider({ apiKey: 'key', apiUrl: '' }))
-      .toThrow('apiUrl is required');
+    expect(() => new Mem4aiProvider({ apiKey: 'key', apiUrl: '' })).toThrow('apiUrl is required');
   });
 
   it('strips trailing slash from apiUrl', () => {
@@ -123,9 +117,14 @@ describe('getMemories', () => {
 
 describe('getMemory', () => {
   it('returns null on 404', async () => {
-    jest.spyOn(global, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({}), { status: 404, headers: { 'content-type': 'application/json' } })
-    );
+    jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue(
+        new Response(JSON.stringify({}), {
+          status: 404,
+          headers: { 'content-type': 'application/json' },
+        })
+      );
     const p = new Mem4aiProvider(BASE_CONFIG);
     expect(await p.getMemory('missing')).toBeNull();
   });
@@ -204,10 +203,7 @@ describe('retry behaviour', () => {
   });
 
   it('throws after exhausting retries', async () => {
-    mockFetchSequence(
-      { status: 500, body: 'err' },
-      { status: 500, body: 'err' }
-    );
+    mockFetchSequence({ status: 500, body: 'err' }, { status: 500, body: 'err' });
     const p = new Mem4aiProvider({ ...BASE_CONFIG, maxRetries: 1 });
     await expect(p.getMemories()).rejects.toBeInstanceOf(Mem4aiApiError);
   });
@@ -223,7 +219,11 @@ describe('retry behaviour', () => {
 describe('circuit breaker', () => {
   it('opens after failureThreshold consecutive failures', async () => {
     jest.spyOn(global, 'fetch').mockRejectedValue(new Error('network'));
-    const p = new Mem4aiProvider({ ...BASE_CONFIG, maxRetries: 0, circuitBreaker: { failureThreshold: 2, resetTimeoutMs: 60000, name: 'mem4ai-cb-test' } as any });
+    const p = new Mem4aiProvider({
+      ...BASE_CONFIG,
+      maxRetries: 0,
+      circuitBreaker: { failureThreshold: 2, resetTimeoutMs: 60000, name: 'mem4ai-cb-test' } as any,
+    });
     await expect(p.getMemories()).rejects.toThrow();
     await expect(p.getMemories()).rejects.toThrow();
     await expect(p.getMemories()).rejects.toThrow(/Circuit breaker/);
@@ -253,9 +253,14 @@ describe('legacy convenience methods', () => {
   });
 
   it('get() returns null on 404', async () => {
-    jest.spyOn(global, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({}), { status: 404, headers: { 'content-type': 'application/json' } })
-    );
+    jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue(
+        new Response(JSON.stringify({}), {
+          status: 404,
+          headers: { 'content-type': 'application/json' },
+        })
+      );
     const p = new Mem4aiProvider(BASE_CONFIG);
     expect(await p.get('missing')).toBeNull();
   });

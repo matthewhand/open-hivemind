@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { navigateAndWaitReady, setupTestWithErrorDetection, setupAuth } from './test-utils';
+import { navigateAndWaitReady, setupAuth, setupTestWithErrorDetection } from './test-utils';
 
 test.describe('Community Packages Page', () => {
   test.beforeEach(async ({ page }) => {
@@ -71,7 +71,8 @@ test.describe('Community Packages Page', () => {
           {
             name: 'community/advanced-tools',
             displayName: 'Advanced Tools Pack',
-            description: 'Collection of advanced tools including web search, code execution, and file management',
+            description:
+              'Collection of advanced tools including web search, code execution, and file management',
             version: '2.1.0',
             type: 'tool',
             status: 'available',

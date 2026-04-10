@@ -13,12 +13,14 @@ beforeEach(() => jest.clearAllMocks());
 afterEach(() => jest.restoreAllMocks());
 
 function mockFetch(status: number, body: unknown) {
-  return jest.spyOn(global, 'fetch').mockResolvedValue(
-    new Response(
-      status === 204 ? null : JSON.stringify(body),
-      { status, headers: { 'content-type': 'application/json' } }
-    )
-  );
+  return jest
+    .spyOn(global, 'fetch')
+    .mockResolvedValue(
+      new Response(status === 204 ? null : JSON.stringify(body), {
+        status,
+        headers: { 'content-type': 'application/json' },
+      })
+    );
 }
 
 function mockFetchSequence(...responses: Array<{ status: number; body: unknown }>) {
@@ -39,8 +41,9 @@ afterEach(() => jest.restoreAllMocks());
 
 describe('Mem0Provider constructor', () => {
   it('throws if apiKey is missing', () => {
-    expect(() => new Mem0Provider({ apiKey: '', baseUrl: 'https://api.mem0.ai/v1' }))
-      .toThrow('apiKey is required');
+    expect(() => new Mem0Provider({ apiKey: '', baseUrl: 'https://api.mem0.ai/v1' })).toThrow(
+      'apiKey is required'
+    );
   });
 
   it('uses default baseUrl when not provided', () => {
@@ -204,10 +207,7 @@ describe('retry behaviour', () => {
   });
 
   it('throws after exhausting retries', async () => {
-    mockFetchSequence(
-      { status: 500, body: 'err' },
-      { status: 500, body: 'err' }
-    );
+    mockFetchSequence({ status: 500, body: 'err' }, { status: 500, body: 'err' });
     const p = new Mem0Provider({ ...BASE_CONFIG, maxRetries: 1 });
     await expect(p.getMemories()).rejects.toBeInstanceOf(Mem0ApiError);
   });
@@ -243,9 +243,14 @@ describe('legacy convenience methods', () => {
   });
 
   it('get() returns null on 404', async () => {
-    jest.spyOn(global, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({}), { status: 404, headers: { 'content-type': 'application/json' } })
-    );
+    jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue(
+        new Response(JSON.stringify({}), {
+          status: 404,
+          headers: { 'content-type': 'application/json' },
+        })
+      );
     const p = new Mem0Provider(BASE_CONFIG);
     expect(await p.get('missing')).toBeNull();
   });

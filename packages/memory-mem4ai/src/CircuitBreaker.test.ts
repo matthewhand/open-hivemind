@@ -1,9 +1,9 @@
 import {
   CircuitBreaker,
-  CircuitBreakerState,
   CircuitBreakerError,
-  getCircuitBreaker,
+  CircuitBreakerState,
   clearCircuitBreakerRegistry,
+  getCircuitBreaker,
   resetAllCircuitBreakers,
 } from './CircuitBreaker';
 
@@ -48,7 +48,9 @@ describe('CircuitBreaker — OPEN state', () => {
   it('rejects immediately when OPEN', async () => {
     const cb = new CircuitBreaker({ name: 'test', failureThreshold: 1, resetTimeoutMs: 60000 });
     await expect(cb.execute(() => Promise.reject(new Error('e')))).rejects.toThrow();
-    await expect(cb.execute(() => Promise.resolve('ok'))).rejects.toBeInstanceOf(CircuitBreakerError);
+    await expect(cb.execute(() => Promise.resolve('ok'))).rejects.toBeInstanceOf(
+      CircuitBreakerError
+    );
   });
 
   it('transitions to HALF_OPEN after resetTimeoutMs', async () => {
@@ -66,7 +68,12 @@ describe('CircuitBreaker — HALF_OPEN state', () => {
   }
 
   it('closes after halfOpenMaxAttempts successes', async () => {
-    const cb = new CircuitBreaker({ name: 'test', failureThreshold: 1, resetTimeoutMs: 1, halfOpenMaxAttempts: 2 });
+    const cb = new CircuitBreaker({
+      name: 'test',
+      failureThreshold: 1,
+      resetTimeoutMs: 1,
+      halfOpenMaxAttempts: 2,
+    });
     await openAndWait(cb);
     await cb.execute(() => Promise.resolve('ok'));
     await cb.execute(() => Promise.resolve('ok'));
@@ -95,7 +102,12 @@ describe('CircuitBreaker — HALF_OPEN state', () => {
   it('rejects after halfOpenMaxAttempts probe limit reached before success', async () => {
     // With halfOpenMaxAttempts=2: first probe allowed, second probe allowed,
     // third probe rejected because limit reached
-    const cb = new CircuitBreaker({ name: 'test', failureThreshold: 1, resetTimeoutMs: 1, halfOpenMaxAttempts: 2 });
+    const cb = new CircuitBreaker({
+      name: 'test',
+      failureThreshold: 1,
+      resetTimeoutMs: 1,
+      halfOpenMaxAttempts: 2,
+    });
     await openAndWait(cb);
     // First probe — allowed but fails, re-opens
     await expect(cb.execute(() => Promise.reject(new Error('e')))).rejects.toThrow();
