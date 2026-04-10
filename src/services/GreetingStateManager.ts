@@ -49,8 +49,8 @@ export class GreetingStateManager {
         const data = await fs.readFile(this.stateFilePath, 'utf-8');
         this.state = JSON.parse(data);
         appLogger.info('Loaded greeting state from file', { path: this.stateFilePath });
-      } catch (error: any) {
-        if (error.code === 'ENOENT') {
+      } catch (error: unknown) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
           // File doesn't exist yet, start with empty state
           this.state = {};
           appLogger.info('No existing greeting state file found, starting fresh');

@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import SystemManagement from '../SystemManagement';
 import { apiService } from '../../services/api';
 import * as WebSocketContext from '../../contexts/WebSocketContext';
@@ -78,13 +79,13 @@ describe('SystemManagement', () => {
   });
 
   it('renders system management page', async () => {
-    render(<ToastProvider><SystemManagement /></ToastProvider>);
+    render(<MemoryRouter><ToastProvider><SystemManagement /></ToastProvider></MemoryRouter>);
     expect(screen.getByText('System Management')).toBeInTheDocument();
     await waitFor(() => expect(apiService.getGlobalConfig).toHaveBeenCalled());
   });
 
   it('handles backup creation with encryption', async () => {
-    render(<ToastProvider><SystemManagement /></ToastProvider>);
+    render(<MemoryRouter><ToastProvider><SystemManagement /></ToastProvider></MemoryRouter>);
 
     // Find create backup button
     const createButton = screen.getByRole('button', { name: /Create Backup/i });
@@ -115,7 +116,7 @@ describe('SystemManagement', () => {
   });
 
   it('handles performance tab interactions', async () => {
-    render(<ToastProvider><SystemManagement /></ToastProvider>);
+    render(<MemoryRouter><ToastProvider><SystemManagement /></ToastProvider></MemoryRouter>);
 
     // Click Performance Tuning tab
     const perfTab = screen.getByText('Performance Tuning');

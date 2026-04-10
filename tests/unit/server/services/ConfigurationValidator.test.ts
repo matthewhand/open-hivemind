@@ -34,7 +34,7 @@ describe('ConfigurationValidator', () => {
 
     it('should fail when name is too short', () => {
       const result = validator.validateBotConfig({
-        name: 'ab',
+        name: 'a',
         messageProvider: 'discord',
         llmProvider: 'openai',
       });

@@ -74,8 +74,8 @@ export async function getAgent(
   return {
     id: agent.id,
     name: agent.name,
-    description: agent.description,
-    created_at: agent.created_at,
-    updated_at: agent.updated_at,
+    description: agent.description ?? undefined,
+    created_at: agent.created_at ?? undefined,
+    updated_at: agent.updated_at ?? undefined,
   };
 }

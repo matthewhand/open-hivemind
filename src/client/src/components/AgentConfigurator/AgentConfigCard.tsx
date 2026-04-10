@@ -10,6 +10,15 @@ import { Badge } from '../DaisyUI/Badge';
 import Input from '../DaisyUI/Input';
 import Select from '../DaisyUI/Select';
 
+/**
+ * ⚡ Bolt Performance Optimization:
+ * We use React.memo() on AgentConfigCard because this is a heavy, top-level configurator
+ * component that receives many callbacks and object props.
+ * It prevents unnecessary re-renders when parent states (like sidebar or routing states) change,
+ * avoiding costly re-evaluations of the entire form and inner child components.
+ *
+ * Impact: Reduces expensive React tree reconciliation during typing or unrelated state updates.
+ */
 const AgentConfigCard: React.FC<AgentConfigCardProps> = ({
   bot,
   metadata,
@@ -461,4 +470,4 @@ const renderProviderHelper = (info?: ProviderInfo) => {
   );
 };
 
-export default AgentConfigCard;
+export default React.memo(AgentConfigCard);

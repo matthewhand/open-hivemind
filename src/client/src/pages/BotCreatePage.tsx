@@ -105,7 +105,7 @@ const BotCreatePage: React.FC = () => {
 
       setAlert({ type: 'success', message: 'Bot created successfully!' });
       setTimeout(() => navigate('/admin/bots'), 1500);
-    } catch (_error) {
+    } catch (error) {
       setAlert({
         type: 'error',
         message: error instanceof Error ? error.message : 'Failed to create bot',

@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { useRealTimeValidation } from '../../../src/client/src/hooks/useRealTimeValidation';
 import { apiService } from '../../../src/client/src/services/api';
 
@@ -99,31 +99,27 @@ describe('useRealTimeValidation', () => {
       }) as any;
     });
 
-    const { result } = renderHook(() =>
-      useRealTimeValidation({ name: 'test' }, { debounceMs: 100 })
+    const { result } = renderHook(
+      ({ data }) => useRealTimeValidation(data, { debounceMs: 100 }),
+      { initialProps: { data: { name: 'test' } } }
     );
 
-    // Fast-forward past debounce
-    jest.advanceTimersByTime(100);
+    // Fast-forward past debounce, flush React state updates
+    await act(async () => {
+      jest.advanceTimersByTime(100);
+    });
 
-    // Should be validating
-    await waitFor(
-      () => {
-        expect(result.current.isValidating).toBe(true);
-      },
-      { timeout: 1000 }
-    );
+    // API should have been called, and isValidating should be true (pending promise)
+    expect(mockPost).toHaveBeenCalled();
+    expect(result.current.isValidating).toBe(true);
 
-    // Fast-forward validation time
-    jest.advanceTimersByTime(50);
+    // Fast-forward validation time and flush
+    await act(async () => {
+      jest.advanceTimersByTime(50);
+    });
 
     // Should no longer be validating
-    await waitFor(
-      () => {
-        expect(result.current.isValidating).toBe(false);
-      },
-      { timeout: 1000 }
-    );
+    expect(result.current.isValidating).toBe(false);
   });
 
   it('should return validation errors', async () => {
@@ -149,10 +145,15 @@ describe('useRealTimeValidation', () => {
       },
     });
 
-    const { result } = renderHook(() => useRealTimeValidation({ name: '' }, { debounceMs: 100 }));
+    const { result } = renderHook(
+      ({ data }) => useRealTimeValidation(data, { debounceMs: 100 }),
+      { initialProps: { data: { name: '' } } }
+    );
 
-    // Fast-forward past debounce
-    jest.advanceTimersByTime(100);
+    // Fast-forward past debounce, flush React state updates
+    await act(async () => {
+      jest.advanceTimersByTime(100);
+    });
 
     // Wait for validation to complete
     await waitFor(() => {
@@ -186,12 +187,15 @@ describe('useRealTimeValidation', () => {
       },
     });
 
-    const { result } = renderHook(() =>
-      useRealTimeValidation({ apiKey: 'sk-12345' }, { debounceMs: 100 })
+    const { result } = renderHook(
+      ({ data }) => useRealTimeValidation(data, { debounceMs: 100 }),
+      { initialProps: { data: { apiKey: 'sk-12345' } } }
     );
 
-    // Fast-forward past debounce
-    jest.advanceTimersByTime(100);
+    // Fast-forward past debounce, flush React state updates
+    await act(async () => {
+      jest.advanceTimersByTime(100);
+    });
 
     // Wait for validation to complete
     await waitFor(() => {
@@ -248,8 +252,9 @@ describe('useRealTimeValidation', () => {
 
     mockPost.mockRejectedValue(new Error('Network error'));
 
-    const { result } = renderHook(() =>
-      useRealTimeValidation({ name: 'test' }, { debounceMs: 100 })
+    const { result } = renderHook(
+      ({ data }) => useRealTimeValidation(data, { debounceMs: 100 }),
+      { initialProps: { data: { name: 'test' } } }
     );
 
     // Fast-forward past debounce
@@ -281,8 +286,9 @@ describe('useRealTimeValidation', () => {
       },
     });
 
-    const { result } = renderHook(() =>
-      useRealTimeValidation({ name: 'test' }, { debounceMs: 100, enabled: false })
+    const { result } = renderHook(
+      ({ data }) => useRealTimeValidation(data, { debounceMs: 100, enabled: false }),
+      { initialProps: { data: { name: 'test' } } }
     );
 
     // Fast-forward past debounce
@@ -312,8 +318,9 @@ describe('useRealTimeValidation', () => {
       },
     });
 
-    renderHook(() =>
-      useRealTimeValidation({ name: 'test' }, { debounceMs: 100, profileId: 'strict' })
+    renderHook(
+      ({ data }) => useRealTimeValidation(data, { debounceMs: 100, profileId: 'strict' }),
+      { initialProps: { data: { name: 'test' } } }
     );
 
     // Fast-forward past debounce

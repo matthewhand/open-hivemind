@@ -1,114 +1,113 @@
-import React, { memo, useCallback } from 'react';
-import classNames from 'classnames';
+/**
+ * Tabs Component - DaisyUI tabbed interface
+ */
 
-export interface TabItem {
-  /** Unique key for the tab */
-  key: string;
-  /** Display label for the tab */
-  label: string | React.ReactNode;
-  /** Optional icon displayed before the label */
-  icon?: React.ReactNode;
-  /** Whether the tab is disabled */
+import React, { useState } from 'react';
+
+interface Tab {
+  /** Tab identifier — `id` is canonical; `key` is accepted as an alias for backward compatibility */
+  id?: string;
+  key?: string;
+  label: string;
+  content?: React.ReactNode;
   disabled?: boolean;
   /** Optional color for the tab (e.g. 'error' for dangerous, 'success' for recommended) */
   color?: 'primary' | 'secondary' | 'accent' | 'info' | 'success' | 'warning' | 'error';
+  badge?: string | number;
+  icon?: React.ReactNode;
 }
 
-export interface TabsProps {
-  /** Array of tab definitions */
-  tabs: TabItem[];
-  /** Currently active tab key (controlled) */
-  activeTab: string;
-  /** Callback fired when a tab is selected */
-  onChange: (key: string) => void;
-  /** Visual variant of the tabs container */
-  variant?: 'boxed' | 'bordered' | 'lifted';
-  /** Size of the tab items */
+interface TabsProps {
+  tabs: Tab[];
+  defaultTab?: string;
+  /** Controlled active tab id */
+  activeTab?: string;
+  /** Callback when active tab changes (controlled mode) */
+  onChange?: (tabId: string) => void;
+  variant?: 'default' | 'bordered' | 'lifted' | 'boxed';
   size?: 'xs' | 'sm' | 'md' | 'lg';
-  /** Additional CSS classes for the container */
   className?: string;
-  /** Accessible label for the tablist (screen readers) */
-  'aria-label'?: string;
+  onTabChange?: (tabId: string) => void;
 }
 
-const variantClasses: Record<string, string> = {
-  boxed: 'tabs-boxed',
-  bordered: 'tabs-bordered',
-  lifted: 'tabs-lifted',
-};
-
-const sizeClasses: Record<string, string> = {
-  xs: 'tabs-xs',
-  sm: 'tabs-sm',
-  md: '',
-  lg: 'tabs-lg',
-};
-
-export const Tabs = memo(({
+const Tabs: React.FC<TabsProps> = ({
   tabs,
-  activeTab,
+  defaultTab,
+  activeTab: controlledActiveTab,
   onChange,
-  variant = 'boxed',
+  variant = 'default',
   size = 'md',
-  className,
-  'aria-label': ariaLabel,
-}: TabsProps) => {
-  const handleClick = useCallback(
-    (key: string, disabled?: boolean) => {
-      if (!disabled) {
-        onChange(key);
-      }
-    },
-    [onChange],
-  );
+  className = '',
+  onTabChange
+}) => {
+  const getTabId = (tab: Tab) => tab.id ?? tab.key ?? '';
+  const isControlled = controlledActiveTab !== undefined;
+  const [internalActiveTab, setInternalActiveTab] = useState(defaultTab || getTabId(tabs[0]));
+  const activeTab = isControlled ? controlledActiveTab : internalActiveTab;
 
-  const containerClasses = classNames(
-    'tabs',
-    variantClasses[variant],
-    sizeClasses[size],
-    className,
-  );
+  const handleTabClick = (tabId: string) => {
+    if (tabs.find(tab => getTabId(tab) === tabId)?.disabled) return;
+    if (!isControlled) setInternalActiveTab(tabId);
+    onChange?.(tabId);
+    onTabChange?.(tabId);
+  };
+
+  const getTabsClasses = () => {
+    const variantClasses = {
+      default: '',
+      bordered: 'tabs-bordered',
+      lifted: 'tabs-lifted',
+      boxed: 'tabs-boxed'
+    };
+
+    const sizeClasses = {
+      xs: 'tabs-xs',
+      sm: 'tabs-sm',
+      md: '',
+      lg: 'tabs-lg'
+    };
+
+    return `tabs ${variantClasses[variant]} ${sizeClasses[size]}`;
+  };
+
+  const activeTabContent = tabs.find(tab => getTabId(tab) === activeTab)?.content;
 
   return (
-    <div role="tablist" className={containerClasses} aria-label={ariaLabel}>
-      {tabs.map((tab) => {
-        const isActive = tab.key === activeTab;
-
-        const colorMap: Record<string, string> = {
-          primary: 'text-primary',
-          secondary: 'text-secondary',
-          accent: 'text-accent',
-          info: 'text-info',
-          success: 'text-success',
-          warning: 'text-warning',
-          error: 'text-error',
-        };
-
-        const tabClasses = classNames('tab', {
-          'tab-active': isActive,
-          'tab-disabled': tab.disabled,
-          [colorMap[tab.color || ''] || '']: !!tab.color,
-          'font-semibold': !!tab.color,
-        });
-
-        return (
+    <div className={className}>
+      <div className={getTabsClasses()}>
+        {tabs.map((tab) => (
           <button
-            key={tab.key}
-            role="tab"
-            className={tabClasses}
-            aria-selected={isActive}
+            key={getTabId(tab)}
+            className={`tab ${activeTab === getTabId(tab) ? 'tab-active' : ''} ${tab.disabled ? 'tab-disabled' : ''}`}
+            onClick={() => handleTabClick(getTabId(tab))}
             disabled={tab.disabled}
-            onClick={() => handleClick(tab.key, tab.disabled)}
           >
-            {tab.icon && <span className="mr-1" aria-hidden="true">{tab.icon}</span>}
-            {tab.label}
+            <div className="flex items-center gap-2">
+              {tab.icon && <span>{tab.icon}</span>}
+              <span>{tab.label}</span>
+              {tab.badge && (
+                <span className="badge badge-sm badge-primary">
+                  {tab.badge}
+                </span>
+              )}
+            </div>
           </button>
-        );
-      })}
+        ))}
+      </div>
+      
+      {variant === 'lifted' && (
+        <div className="tab-content bg-base-100 border-base-300 rounded-box p-6">
+          {activeTabContent}
+        </div>
+      )}
+      
+      {variant !== 'lifted' && (
+        <div className="tab-content p-4">
+          {activeTabContent}
+        </div>
+      )}
     </div>
   );
-});
-
-Tabs.displayName = 'Tabs';
+};
 
 export default Tabs;

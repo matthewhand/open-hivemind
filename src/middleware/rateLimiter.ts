@@ -65,7 +65,7 @@ async function initializeRedis(): Promise<void> {
   try {
     const redis = await import('redis');
     const rateLimitRedis = await import('rate-limit-redis');
-    RedisStore = rateLimitRedis.RedisStore;
+    RedisStore = rateLimitRedis.RedisStore as unknown as new (opts: Record<string, unknown>) => any;
 
     const redisUrl = process.env.REDIS_URL;
     if (!redisUrl) {
@@ -535,7 +535,7 @@ function shouldSkipRateLimit(req: Request): boolean {
   return false;
 }
 
-// Default rate limiter - 100 requests per 15 minutes
+// Default rate limiter - 50k requests per 15 minutes
 export const defaultRateLimiter = rateLimit({
   windowMs: RATE_LIMIT_CONFIG.default.windowMs,
   max: RATE_LIMIT_CONFIG.default.max,
@@ -547,7 +547,7 @@ export const defaultRateLimiter = rateLimit({
   handler: createRateLimitHandler('default'),
 });
 
-// Configuration endpoint rate limiter - 10 requests per 5 minutes
+// Configuration endpoint rate limiter - 20k requests per 5 minutes
 export const configRateLimiter = rateLimit({
   windowMs: RATE_LIMIT_CONFIG.config.windowMs,
   max: RATE_LIMIT_CONFIG.config.max,
@@ -559,7 +559,7 @@ export const configRateLimiter = rateLimit({
   handler: createRateLimitHandler('configuration'),
 });
 
-// Authentication rate limiter - 5 attempts per hour
+// Authentication rate limiter - 500 attempts per hour
 export const authRateLimiter = rateLimit({
   windowMs: RATE_LIMIT_CONFIG.auth.windowMs,
   max: RATE_LIMIT_CONFIG.auth.max,
@@ -579,7 +579,7 @@ export const authRateLimiter = rateLimit({
   skipSuccessfulRequests: false,
 });
 
-// Admin operations rate limiter - 20 requests per 15 minutes
+// Admin operations rate limiter - 20k requests per 15 minutes
 export const adminRateLimiter = rateLimit({
   windowMs: RATE_LIMIT_CONFIG.admin.windowMs,
   max: RATE_LIMIT_CONFIG.admin.max,
@@ -591,7 +591,7 @@ export const adminRateLimiter = rateLimit({
   handler: createRateLimitHandler('admin'),
 });
 
-// API rate limiter - 60 requests per minute
+// API rate limiter - 30k requests per minute
 export const apiRateLimiter = rateLimit({
   windowMs: RATE_LIMIT_CONFIG.api.windowMs,
   max: RATE_LIMIT_CONFIG.api.max,
@@ -846,7 +846,7 @@ export function shutdownRateLimiter(): void {
   // Close Redis connection
   if (redisClient) {
     debug('Closing Redis connection');
-    redisClient.quit().catch((err) => {
+    redisClient.quit().catch((err: unknown) => {
       debug('Error closing Redis:', err);
     });
   }

@@ -51,8 +51,8 @@ export class ToolPreferencesService {
         const content = await fs.promises.readFile(this.dataFile, 'utf8');
         this.data = JSON.parse(content);
         debug('Loaded tool preferences from file');
-      } catch (error: any) {
-        if (error.code === 'ENOENT') {
+      } catch (error: unknown) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
           debug('No existing tool preferences file, starting fresh');
           await this.saveData();
         } else {

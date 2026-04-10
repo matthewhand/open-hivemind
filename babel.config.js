@@ -29,6 +29,7 @@ module.exports = {
         "loose": true
       }
     ],
-    "@babel/plugin-transform-object-rest-spread"
+    "@babel/plugin-transform-object-rest-spread",
+    require("path").resolve(__dirname, "tests/babel-plugin-import-meta-env")
   ]
 };

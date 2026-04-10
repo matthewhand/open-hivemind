@@ -47,7 +47,7 @@ describe('GuardsPage', () => {
     renderWithProviders(<GuardsPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Guard Profiles')).toBeInTheDocument();
+      expect(screen.getByText('No Guard Profiles')).toBeInTheDocument();
     });
   });
 

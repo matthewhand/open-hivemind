@@ -72,8 +72,8 @@ describe('ConfigurationImportExportService Path Security', () => {
     expect(result).not.toBeNull();
     expect(result).toContain('backup-passwd-1600000000000.json.gz');
     expect(path.isAbsolute(result!)).toBe(true);
-    // Verify the path is within the backups directory
-    expect(result).toContain('config/backups');
+    // Verify the path is within the backups directory (use path.join for cross-platform)
+    expect(result).toContain(path.join('config', 'backups'));
   });
 
   it('getBackupFilePath should return a valid path for safe names', async () => {

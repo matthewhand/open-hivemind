@@ -58,8 +58,26 @@ vi.mock('../../components/DaisyUI/LoadingSpinner', () => ({
   LoadingSpinner: () => <div data-testid="loading-spinner" />,
 }));
 vi.mock('../../components/DaisyUI/EmptyState', () => ({
-  default: ({ title }: any) => <div data-testid="empty-state">{title}</div>,
-  EmptyState: ({ title }: any) => <div data-testid="empty-state">{title}</div>,
+  default: ({ title, actionLabel, onAction }: any) => (
+    <div data-testid="empty-state">
+      {title}
+      {actionLabel && onAction && (
+        <button onClick={onAction} aria-label={typeof actionLabel === 'string' ? actionLabel : 'action'}>
+          {actionLabel}
+        </button>
+      )}
+    </div>
+  ),
+  EmptyState: ({ title, actionLabel, onAction }: any) => (
+    <div data-testid="empty-state">
+      {title}
+      {actionLabel && onAction && (
+        <button onClick={onAction} aria-label={typeof actionLabel === 'string' ? actionLabel : 'action'}>
+          {actionLabel}
+        </button>
+      )}
+    </div>
+  ),
 }));
 vi.mock('../../components/DaisyUI/Input', () => ({
   default: ({ type, value, onChange, placeholder }: any) => (
@@ -241,31 +259,33 @@ describe('ActivityPage', () => {
     expect(screen.getByText('Network error')).toBeInTheDocument();
   });
 
-  it("refreshes data when refresh button is clicked", async () => {
-    const mockData = { events: [], filters: { agents: [], messageProviders: [], llmProviders: [] } };
+  it('refreshes data when refresh button is clicked', async () => {
+    // Return empty events so the EmptyState (with its Refresh button) is rendered
+    const mockData = {
+      events: [],
+      filters: {
+        agents: [],
+        messageProviders: [],
+        llmProviders: []
+      }
+    };
+
     getActivityMock.mockResolvedValue(mockData);
 
-    const queryClient = new QueryClient({
-      defaultOptions: {
-        queries: {
-          retry: false,
-        },
-      },
-    });
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(<QueryClientProvider client={queryClient}><MemoryRouter><ActivityPage /></MemoryRouter></QueryClientProvider>);
 
-    render(
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter>
-          <ActivityPage />
-        </MemoryRouter>
-      </QueryClientProvider>
-    );
+    // Wait for initial load (EmptyState should render because events is empty)
+    await waitFor(() => expect(screen.queryByTestId('loading-spinner')).not.toBeInTheDocument(), { timeout: 3000 });
 
-    await waitFor(() => expect(screen.queryByTestId('loading-spinner')).not.toBeInTheDocument());
+    // Clear previous calls
+    getActivityMock.mockClear();
 
-    const refreshButton = screen.getByTitle('Refresh');
+    // Find and click the Refresh button rendered by EmptyState
+    const refreshButton = screen.getByRole('button', { name: /refresh/i });
     fireEvent.click(refreshButton);
 
-    expect(getActivityMock).toHaveBeenCalledTimes(2);
+    // Wait for refresh to complete
+    await waitFor(() => expect(getActivityMock).toHaveBeenCalledTimes(1), { timeout: 2000 });
   });
 });

@@ -93,14 +93,14 @@ const SystemHealth: React.FC<SystemHealthProps> = ({
         }
         setLastRefresh(new Date());
         setError(null);
-      } catch (err: any) {
+      } catch (err: unknown) {
         // Error details shown inline via setError
         // Provide more specific error messages based on error type
-        if (err.name === 'TypeError' && err.message.includes('fetch')) {
+        if ((err instanceof Error ? err.name : 'Error') === 'TypeError' && (err instanceof Error ? err.message : String(err)).includes('fetch')) {
           setError('Network error: Unable to connect to server. Please check your connection.');
-        } else if (err.status === 401 || err.status === 403) {
+        } else if ((err as any).status === 401 || (err as any).status === 403) {
           setError('Authentication error: Please log in to view system health details.');
-        } else if (err.status >= 500) {
+        } else if ((err as any).status >= 500) {
           setError('Server error: Health check service is temporarily unavailable.');
         } else {
           setError('Failed to fetch system health data. Some metrics may be unavailable.');

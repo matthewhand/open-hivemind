@@ -334,7 +334,13 @@ export class BusinessKpiCollector extends EventEmitter {
    */
   getKpiDashboard(): {
     kpis: KpiDefinition[];
-    summary: ReturnType<typeof this.getKpiSummary>;
+    summary: {
+      totalKpis: number;
+      byCategory: Record<KpiCategory, number>;
+      atWarning: string[];
+      atCritical: string[];
+      totalDailySpend: number;
+    };
     timeRange: { start: number; end: number };
   } {
     return {

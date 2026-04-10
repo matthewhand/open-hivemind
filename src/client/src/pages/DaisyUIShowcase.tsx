@@ -6,6 +6,7 @@ import type { TabItem } from '../components/DaisyUI/Tabs';
 import { ButtonsDemo } from '../components/DaisyUI/demos/ButtonsDemo';
 import { AnimationShowcaseDemo } from '../components/DaisyUI/demos/AnimationShowcaseDemo';
 import { InputDemo, SelectDemo, CheckboxDemo, TextareaDemo, FileInputDemo } from '../components/DaisyUI/demos/FormsDemo';
+import PageHeader from '../components/DaisyUI/PageHeader';
 import {
   BadgeDemo,
   AlertDemo,
@@ -75,15 +76,16 @@ const DaisyUIShowcase: React.FC = () => {
   return (
     <div className="p-6">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">DaisyUI Component Reference</h1>
-        <p className="text-base-content/60 mt-1">
-          Official DaisyUI components using raw CSS classes -
-          <Link href="https://daisyui.com/components/" target="_blank" rel="noopener noreferrer" color="primary" className="ml-1">
+      <PageHeader
+        title="DaisyUI Component Reference"
+        description="Official DaisyUI components using raw CSS classes"
+        gradient="secondary"
+        actions={
+          <Link href="https://daisyui.com/components/" target="_blank" rel="noopener noreferrer" color="primary">
             View Official Docs
           </Link>
-        </p>
-      </div>
+        }
+      />
 
       {/* Component Navigation */}
       <Tabs

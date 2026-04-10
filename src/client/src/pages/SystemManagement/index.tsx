@@ -15,6 +15,7 @@ import type { SystemConfig, BackupRecord } from './types';
 import { LoadingSpinner } from '../../components/DaisyUI/Loading';
 import Button from '../../components/DaisyUI/Button';
 import Input from '../../components/DaisyUI/Input';
+import PageHeader from '../../components/DaisyUI/PageHeader';
 
 const SystemManagement: React.FC = () => {
   const { alerts, performanceMetrics } = useWebSocket();
@@ -248,25 +249,20 @@ const SystemManagement: React.FC = () => {
   return (
     <div className="min-h-screen bg-base-200 p-6">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-4xl font-bold mb-2">System Management</h1>
-            <p className="text-lg text-neutral-content/70">
-              Manage system configuration, alerts, and backups
-            </p>
-          </div>
-          <div className="flex gap-4">
-            <Button
-              className="btn-success"
-              onClick={openBackupModal}
-              disabled={isCreatingBackup}
-            >
-              {isCreatingBackup ? <LoadingSpinner size="sm" /> : '💾'} Create Backup
-            </Button>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="System Management"
+        description="Manage system configuration, alerts, and backups"
+        gradient="accent"
+        actions={
+          <Button
+            className="btn-success"
+            onClick={openBackupModal}
+            disabled={isCreatingBackup}
+          >
+            {isCreatingBackup ? <LoadingSpinner size="sm" /> : '💾'} Create Backup
+          </Button>
+        }
+      />
 
       {/* System Status Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

@@ -54,7 +54,7 @@ export class BotConfigurationDAO {
 
     try {
       const result = await this.db.run(sql, params);
-      return result.lastID;
+      return result.lastID ?? 0;
     } catch (err) {
       Logger.error('Error creating bot configuration:', err);
       throw err;
@@ -211,7 +211,7 @@ export class BotConfigurationDAO {
 
     try {
       const result = await this.db.run(sql, [id]);
-      return result.changes > 0;
+      return (result.changes ?? 0) > 0;
     } catch (err) {
       Logger.error('Error deleting bot configuration:', err);
       throw err;

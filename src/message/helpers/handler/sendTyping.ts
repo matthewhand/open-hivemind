@@ -36,7 +36,7 @@ export async function sendTyping(client: Client, channelId: string): Promise<voi
     } else {
       debug('Channel ID: ' + channelId + ' does not support typing.');
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     debug(
       'Failed to start typing in channel ID: ' +
         channelId +

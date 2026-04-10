@@ -1,63 +1,72 @@
-import React from 'react';
-import classNames from 'classnames';
+/**
+ * Steps Component - DaisyUI step indicator for multi-step processes
+ */
 
-export interface StepItem {
-  /** Content rendered inside the step indicator */
-  content?: React.ReactNode;
-  /** Text label rendered after the step indicator */
-  label?: React.ReactNode;
-  /** Color variant for the step */
-  color?: 'primary' | 'secondary' | 'accent' | 'neutral' | 'info' | 'success' | 'warning' | 'error';
-  /** Override the data-content attribute (e.g. checkmark character) */
-  dataContent?: string;
-  /** Additional CSS classes */
-  className?: string;
+import React from 'react';
+
+interface Step {
+  title: string;
+  description?: string;
+  status?: 'pending' | 'active' | 'completed' | 'error';
+  icon?: React.ReactNode;
 }
 
-export interface StepsProps extends React.HTMLAttributes<HTMLUListElement> {
-  /** Step items to render */
-  items: StepItem[];
-  /** Layout direction */
-  variant?: 'horizontal' | 'vertical';
-  /** Additional CSS classes */
+interface StepsProps {
+  steps: Step[];
+  currentStep: number;
+  orientation?: 'horizontal' | 'vertical';
   className?: string;
+  onStepClick?: (stepIndex: number) => void;
 }
 
 const Steps: React.FC<StepsProps> = ({
-  items,
-  variant = 'horizontal',
-  className,
-  ...props
+  steps,
+  currentStep,
+  orientation = 'horizontal',
+  className = '',
+  onStepClick
 }) => {
-  const classes = classNames(
-    'steps',
-    { 'steps-vertical': variant === 'vertical' },
-    className,
-  );
+  const getStepClasses = (index: number, step: Step) => {
+    const baseClasses = 'step';
+    const statusClasses = {
+      completed: 'step-primary',
+      active: 'step-primary',
+      error: 'step-error',
+      pending: ''
+    };
+
+    let status = step.status;
+    if (!status) {
+      if (index < currentStep) status = 'completed';
+      else if (index === currentStep) status = 'active';
+      else status = 'pending';
+    }
+
+    return `${baseClasses} ${statusClasses[status]}`;
+  };
 
   return (
-    <ul className={classes} {...props}>
-      {items.map((item, index) => {
-        const stepClasses = classNames(
-          'step',
-          { [`step-${item.color}`]: item.color },
-          item.className,
-        );
-
-        return (
-          <li
-            key={index}
-            className={stepClasses}
-            {...(item.dataContent !== undefined ? { 'data-content': item.dataContent } : {})}
-          >
-            {item.content || item.label}
-          </li>
-        );
-      })}
+    <ul className={`steps ${orientation === 'vertical' ? 'steps-vertical' : ''} ${className}`}>
+      {steps.map((step, index) => (
+        <li
+          key={index}
+          className={getStepClasses(index, step)}
+          onClick={() => onStepClick?.(index)}
+          style={{ cursor: onStepClick ? 'pointer' : 'default' }}
+        >
+          <div className="step-content">
+            {step.icon && <div className="step-icon">{step.icon}</div>}
+            <div className="step-title">{step.title}</div>
+            {step.description && (
+              <div className="step-description text-sm opacity-70">
+                {step.description}
+              </div>
+            )}
+          </div>
+        </li>
+      ))}
     </ul>
   );
 };
-
-Steps.displayName = 'Steps';
 
 export default Steps;

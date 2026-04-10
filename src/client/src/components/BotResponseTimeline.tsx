@@ -147,6 +147,8 @@ const TimelineEntry: React.FC<{ msg: ChatMessage; isLast: boolean }> = ({ msg, i
             <button
               className="text-[10px] text-primary hover:underline mt-0.5 inline-flex items-center gap-0.5"
               onClick={() => setExpanded(!expanded)}
+              aria-label={expanded ? 'Show less of the message' : 'Show more of the message'}
+              aria-expanded={expanded}
             >
               {expanded ? (
                 <><ChevronUp className="w-3 h-3" /> Show less</>
@@ -204,7 +206,7 @@ const BotResponseTimeline: React.FC<BotResponseTimelineProps> = ({
         <AlertCircle className="w-8 h-8 mx-auto mb-2 text-error" />
         <p className="text-xs text-error mb-2">{chatError}</p>
         {onRetry && (
-          <button className="btn btn-ghost btn-xs" onClick={onRetry}>
+          <button className="btn btn-ghost btn-xs" onClick={onRetry} aria-label="Retry loading messages">
             <RefreshCw className="w-3 h-3 mr-1" /> Retry
           </button>
         )}
@@ -242,8 +244,15 @@ const BotResponseTimeline: React.FC<BotResponseTimelineProps> = ({
         </div>
       )}
 
-      {/* Scrollable timeline */}
-      <div ref={scrollRef} className="max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+      {/* Scrollable timeline — role="log" makes screen readers announce new messages */}
+      <div
+        ref={scrollRef}
+        className="max-h-[300px] overflow-y-auto pr-1 custom-scrollbar"
+        role="log"
+        aria-label="Bot response history"
+        aria-live="polite"
+        aria-relevant="additions"
+      >
         {sorted.map((msg, idx) => (
           <TimelineEntry key={idx} msg={msg} isLast={idx === sorted.length - 1} />
         ))}

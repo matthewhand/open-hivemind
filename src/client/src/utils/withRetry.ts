@@ -20,14 +20,14 @@ export async function withRetry<T>(
   const maxRetries = originalRetries ?? retries;
   try {
     return await operation();
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (retries <= 0) {
       throw error;
     }
 
     // Check if the error is transient before retrying
-    const isTransient = error.message && (error.message.toLowerCase().includes('network') || error.message.toLowerCase().includes('timeout') || error.message.toLowerCase().includes('fetch'));
-    if (!isTransient && error.name !== 'TypeError') { throw error; }
+    const isTransient = (error instanceof Error ? error.message : String(error)) && ((error instanceof Error ? error.message : String(error)).toLowerCase().includes('network') || (error instanceof Error ? error.message : String(error)).toLowerCase().includes('timeout') || (error instanceof Error ? error.message : String(error)).toLowerCase().includes('fetch'));
+    if (!isTransient && (error instanceof Error ? error.name : 'Error') !== 'TypeError') { throw error; }
 
     const currentAttempt = maxRetries - retries + 1;
     if (onRetry) {

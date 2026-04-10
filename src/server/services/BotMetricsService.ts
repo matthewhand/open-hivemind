@@ -52,8 +52,8 @@ export class BotMetricsService {
       const data = await fs.promises.readFile(this.metricsPath, 'utf-8');
       this.metrics = JSON.parse(data);
       debug('Loaded bot metrics from disk');
-    } catch (error: any) {
-      if (error.code === 'ENOENT') {
+    } catch (error: unknown) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         debug('No existing metrics file found, starting fresh');
       } else {
         debug('Failed to load bot metrics:', error);

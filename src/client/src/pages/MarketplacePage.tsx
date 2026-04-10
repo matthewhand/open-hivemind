@@ -105,8 +105,8 @@ const MarketplacePage: React.FC = () => {
     try {
       const data: any = await apiService.get('/api/marketplace/packages');
       setPackages(data?.data || data || []);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load marketplace');
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : String(err)) || 'Failed to load marketplace');
     } finally {
       setLoading(false);
     }
@@ -138,8 +138,8 @@ const MarketplacePage: React.FC = () => {
       setGithubUrl('');
       setInstallModalOpen(false);
       await fetchPackages();
-    } catch (err: any) {
-      setActionMessage({ type: 'error', text: err.message || 'Installation failed' });
+    } catch (err: unknown) {
+      setActionMessage({ type: 'error', text: (err instanceof Error ? err.message : String(err)) || 'Installation failed' });
     } finally {
       setActionInProgress(null);
     }
@@ -155,8 +155,8 @@ const MarketplacePage: React.FC = () => {
       const data = result?.data || result;
       setActionMessage({ type: 'success', text: `Updated ${data?.package?.displayName || name} successfully!` });
       await fetchPackages();
-    } catch (err: any) {
-      setActionMessage({ type: 'error', text: err.message || 'Update failed' });
+    } catch (err: unknown) {
+      setActionMessage({ type: 'error', text: (err instanceof Error ? err.message : String(err)) || 'Update failed' });
     } finally {
       setActionInProgress(null);
     }
@@ -173,8 +173,8 @@ const MarketplacePage: React.FC = () => {
       await apiService.post(`/api/marketplace/uninstall/${name}`, {});
       setActionMessage({ type: 'success', text: `Uninstalled ${name} successfully!` });
       await fetchPackages();
-    } catch (err: any) {
-      setActionMessage({ type: 'error', text: err.message || 'Uninstall failed' });
+    } catch (err: unknown) {
+      setActionMessage({ type: 'error', text: (err instanceof Error ? err.message : String(err)) || 'Uninstall failed' });
     } finally {
       setActionInProgress(null);
     }

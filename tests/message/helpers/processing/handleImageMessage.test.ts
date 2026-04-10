@@ -1,12 +1,22 @@
-import axios from 'axios';
 import {
   createPrediction,
   handleImageMessage,
   predictionImageMap,
 } from '@message/helpers/processing/handleImageMessage';
 
-jest.mock('axios');
-const mockedAxios = axios as jest.Mocked<typeof axios>;
+// Mock the http client used by handleImageMessage
+jest.mock('@src/utils/httpClient', () => ({
+  http: {
+    post: jest.fn(),
+    get: jest.fn(),
+  },
+  createHttpClient: jest.fn(),
+  isHttpError: jest.fn(() => false),
+}));
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { http } = require('@src/utils/httpClient');
+const mockedHttpPost = http.post as jest.Mock;
 
 describe('handleImageMessage', () => {
   beforeEach(() => {
@@ -24,7 +34,7 @@ describe('handleImageMessage', () => {
       },
       reply: jest.fn(),
     };
-    mockedAxios.post.mockResolvedValue({ data: { id: 'prediction-id' } });
+    mockedHttpPost.mockResolvedValue({ id: 'prediction-id' });
     process.env.REPLICATE_WEBHOOK_URL = 'http://webhook.url';
 
     const result = await handleImageMessage(mockMessage);
@@ -58,7 +68,7 @@ describe('handleImageMessage', () => {
         first: () => ({ url: 'http://example.com/image.jpg' }),
       },
     };
-    mockedAxios.post.mockRejectedValue(new Error('API error'));
+    mockedHttpPost.mockRejectedValue(new Error('API error'));
     const result = await handleImageMessage(mockMessage);
     expect(result).toBe(false);
   });
@@ -66,18 +76,18 @@ describe('handleImageMessage', () => {
 
 describe('createPrediction', () => {
   beforeEach(() => {
-    mockedAxios.post.mockClear();
+    mockedHttpPost.mockClear();
   });
 
   it('should create a prediction and return data', async () => {
-    mockedAxios.post.mockResolvedValue({ data: { id: 'prediction-id' } });
+    mockedHttpPost.mockResolvedValue({ id: 'prediction-id' });
     const result = await createPrediction('http://example.com/image.jpg');
     expect(result).toEqual({ id: 'prediction-id' });
-    expect(mockedAxios.post).toHaveBeenCalled();
+    expect(mockedHttpPost).toHaveBeenCalled();
   });
 
-  it('should throw an error when axios call fails', async () => {
-    mockedAxios.post.mockRejectedValue(new Error('Network error'));
+  it('should throw an error when http call fails', async () => {
+    mockedHttpPost.mockRejectedValue(new Error('Network error'));
     await expect(createPrediction('http://example.com/image.jpg')).rejects.toThrow(
       'Failed to create prediction'
     );
@@ -85,17 +95,17 @@ describe('createPrediction', () => {
 
   it('should set sync to true when REPLICATE_WEBHOOK_URL is not set', async () => {
     delete process.env.REPLICATE_WEBHOOK_URL;
-    mockedAxios.post.mockResolvedValue({ data: {} });
+    mockedHttpPost.mockResolvedValue({});
     await createPrediction('http://example.com/image.jpg');
-    const postData = mockedAxios.post.mock.calls[0][1] as any;
+    const postData = mockedHttpPost.mock.calls[0][1] as any;
     expect(postData.sync).toBe(true);
   });
 
   it('should include webhook data when REPLICATE_WEBHOOK_URL is set', async () => {
     process.env.REPLICATE_WEBHOOK_URL = 'http://test.hook';
-    mockedAxios.post.mockResolvedValue({ data: {} });
+    mockedHttpPost.mockResolvedValue({});
     await createPrediction('http://example.com/image.jpg');
-    const postData = mockedAxios.post.mock.calls[0][1] as any;
+    const postData = mockedHttpPost.mock.calls[0][1] as any;
     expect(postData.webhook).toBe('http://test.hook');
     expect(postData.webhook_events_filter).toEqual(['start', 'completed']);
   });

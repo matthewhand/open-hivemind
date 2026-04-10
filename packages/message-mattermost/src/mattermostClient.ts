@@ -115,7 +115,7 @@ export default class MattermostClient {
 
   async getUser(userId: string): Promise<User | null> {
     try {
-      return this.api.get<User>(`/users/${userId}`);
+      return await this.api.get<User>(`/users/${userId}`);
     } catch (error) {
       return null;
     }
@@ -123,7 +123,7 @@ export default class MattermostClient {
 
   async getChannel(channelId: string): Promise<Channel | null> {
     try {
-      return this.api.get<Channel>(`/channels/${channelId}`);
+      return await this.api.get<Channel>(`/channels/${channelId}`);
     } catch (error) {
       return null;
     }
@@ -140,7 +140,7 @@ export default class MattermostClient {
 
   async getChannelByName(teamId: string, channelName: string): Promise<Channel | null> {
     try {
-      return this.api.get<Channel>(`/teams/${teamId}/channels/name/${channelName}`);
+      return await this.api.get<Channel>(`/teams/${teamId}/channels/name/${channelName}`);
     } catch (error) {
       return null;
     }

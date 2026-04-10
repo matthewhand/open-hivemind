@@ -68,7 +68,7 @@ const ActivityMonitor: React.FC = () => {
         });
       }
       setError(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       debug('ERROR:', 'Failed to fetch activity:', err);
       setError('Failed to load activity history');
     } finally {
