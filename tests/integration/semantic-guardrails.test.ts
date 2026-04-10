@@ -1,5 +1,5 @@
-import { handleMessage } from '@src/message/handlers/messageHandler';
 import { getGuardrailProfileByKey } from '@src/config/guardrailProfiles';
+import { handleMessage } from '@src/message/handlers/messageHandler';
 import { SemanticGuardrailService } from '@src/services/SemanticGuardrailService';
 import type { IMessage } from '@src/types/messages';
 
@@ -111,12 +111,12 @@ describe('Semantic Guardrails Integration', () => {
       // Mock other dependencies to allow message processing to continue
       const { getMessengerProvider } = require('@src/utils/messageProviderUtils');
       const { getLlmProviderForBot } = require('@src/utils/llmProviderUtils');
-      
+
       const mockMessageProvider = {
         sendMessageToChannel: jest.fn(),
         getClientId: jest.fn().mockReturnValue('client123'),
       };
-      
+
       const mockLlmProvider = {
         generate: jest.fn().mockResolvedValue({ text: 'Test response' }),
       };
@@ -166,12 +166,12 @@ describe('Semantic Guardrails Integration', () => {
       // Mock other dependencies
       const { getMessengerProvider } = require('@src/utils/messageProviderUtils');
       const { getLlmProviderForBot } = require('@src/utils/llmProviderUtils');
-      
+
       const mockMessageProvider = {
         sendMessageToChannel: jest.fn(),
         getClientId: jest.fn().mockReturnValue('client123'),
       };
-      
+
       const mockLlmProvider = {
         generate: jest.fn().mockResolvedValue({ text: 'Inappropriate response' }),
       };
@@ -200,7 +200,7 @@ describe('Semantic Guardrails Integration', () => {
           }),
         })
       );
-      
+
       expect(result).toBeNull(); // Response should be blocked
       expect(mockMessageProvider.sendMessageToChannel).not.toHaveBeenCalled();
     });
@@ -229,12 +229,12 @@ describe('Semantic Guardrails Integration', () => {
       // Mock other dependencies
       const { getMessengerProvider } = require('@src/utils/messageProviderUtils');
       const { getLlmProviderForBot } = require('@src/utils/llmProviderUtils');
-      
+
       const mockMessageProvider = {
         sendMessageToChannel: jest.fn(),
         getClientId: jest.fn().mockReturnValue('client123'),
       };
-      
+
       const mockLlmProvider = {
         generate: jest.fn().mockResolvedValue({ text: 'Test response' }),
       };

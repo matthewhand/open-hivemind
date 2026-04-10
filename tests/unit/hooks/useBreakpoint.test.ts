@@ -1,8 +1,12 @@
 /**
  * @jest-environment jsdom
  */
-import { renderHook, act } from '@testing-library/react';
-import { useBreakpoint, useIsBelowBreakpoint, useMediaQuery } from '../../../src/client/src/hooks/useBreakpoint';
+import { act, renderHook } from '@testing-library/react';
+import {
+  useBreakpoint,
+  useIsBelowBreakpoint,
+  useMediaQuery,
+} from '../../../src/client/src/hooks/useBreakpoint';
 
 describe('useBreakpoint', () => {
   beforeEach(() => {
@@ -32,19 +36,31 @@ describe('useBreakpoint', () => {
   });
 
   it('should return lg for large screens', () => {
-    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1100 });
+    Object.defineProperty(window, 'innerWidth', {
+      writable: true,
+      configurable: true,
+      value: 1100,
+    });
     const { result } = renderHook(() => useBreakpoint(0));
     expect(result.current).toBe('lg');
   });
 
   it('should return xl for extra large screens', () => {
-    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1300 });
+    Object.defineProperty(window, 'innerWidth', {
+      writable: true,
+      configurable: true,
+      value: 1300,
+    });
     const { result } = renderHook(() => useBreakpoint(0));
     expect(result.current).toBe('xl');
   });
 
   it('should return 2xl for very large screens', () => {
-    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1600 });
+    Object.defineProperty(window, 'innerWidth', {
+      writable: true,
+      configurable: true,
+      value: 1600,
+    });
     const { result } = renderHook(() => useBreakpoint(0));
     expect(result.current).toBe('2xl');
   });
@@ -55,7 +71,11 @@ describe('useBreakpoint', () => {
     expect(result.current).toBe('md');
 
     act(() => {
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1100 });
+      Object.defineProperty(window, 'innerWidth', {
+        writable: true,
+        configurable: true,
+        value: 1100,
+      });
       window.dispatchEvent(new Event('resize'));
       jest.advanceTimersByTime(0);
     });
@@ -80,7 +100,11 @@ describe('useIsBelowBreakpoint', () => {
   });
 
   it('should return false when at or above breakpoint', () => {
-    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1100 });
+    Object.defineProperty(window, 'innerWidth', {
+      writable: true,
+      configurable: true,
+      value: 1100,
+    });
     const { result } = renderHook(() => useIsBelowBreakpoint('lg', 0));
     expect(result.current).toBe(false);
   });
@@ -93,7 +117,11 @@ describe('useMediaQuery', () => {
       addEventListener: jest.fn(),
       removeEventListener: jest.fn(),
     }));
-    Object.defineProperty(window, 'matchMedia', { writable: true, configurable: true, value: mockMatchMedia });
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      configurable: true,
+      value: mockMatchMedia,
+    });
 
     const { result } = renderHook(() => useMediaQuery({ maxWidth: 640 }));
     expect(result.current).toBe(true);
@@ -105,7 +133,11 @@ describe('useMediaQuery', () => {
       addEventListener: jest.fn(),
       removeEventListener: jest.fn(),
     }));
-    Object.defineProperty(window, 'matchMedia', { writable: true, configurable: true, value: mockMatchMedia });
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      configurable: true,
+      value: mockMatchMedia,
+    });
 
     const { result } = renderHook(() => useMediaQuery({ maxWidth: 640 }));
     expect(result.current).toBe(false);

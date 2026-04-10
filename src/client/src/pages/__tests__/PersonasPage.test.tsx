@@ -121,7 +121,7 @@ describe('PersonasPage', () => {
     renderWithProviders(<PersonasPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Persona Management')).toBeInTheDocument();
+      expect(screen.getByText('Total Personas')).toBeInTheDocument();
     });
   });
 

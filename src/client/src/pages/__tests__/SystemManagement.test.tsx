@@ -4,6 +4,7 @@ import SystemManagement from '../SystemManagement';
 import { apiService } from '../../services/api';
 import * as WebSocketContext from '../../contexts/WebSocketContext';
 import { ToastProvider } from '../../components/DaisyUI/ToastNotification';
+import { MemoryRouter } from 'react-router-dom';
 
 // Mock apiService
 jest.mock('../../services/api', () => ({
@@ -78,13 +79,13 @@ describe('SystemManagement', () => {
   });
 
   it('renders system management page', async () => {
-    render(<ToastProvider><SystemManagement /></ToastProvider>);
+    render(<ToastProvider><MemoryRouter><SystemManagement /></MemoryRouter></ToastProvider>);
     expect(screen.getByText('System Management')).toBeInTheDocument();
     await waitFor(() => expect(apiService.getGlobalConfig).toHaveBeenCalled());
   });
 
   it('handles backup creation with encryption', async () => {
-    render(<ToastProvider><SystemManagement /></ToastProvider>);
+    render(<ToastProvider><MemoryRouter><SystemManagement /></MemoryRouter></ToastProvider>);
 
     // Find create backup button
     const createButton = screen.getByRole('button', { name: /Create Backup/i });
@@ -115,7 +116,7 @@ describe('SystemManagement', () => {
   });
 
   it('handles performance tab interactions', async () => {
-    render(<ToastProvider><SystemManagement /></ToastProvider>);
+    render(<ToastProvider><MemoryRouter><SystemManagement /></MemoryRouter></ToastProvider>);
 
     // Click Performance Tuning tab
     const perfTab = screen.getByText('Performance Tuning');

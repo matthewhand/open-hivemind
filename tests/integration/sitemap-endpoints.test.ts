@@ -11,6 +11,16 @@
 
 import express, { type Express } from 'express';
 import request from 'supertest';
+import activityRouter from '../../src/server/routes/activity';
+import botsRouter from '../../src/server/routes/bots';
+import configRouter from '../../src/server/routes/config';
+import consolidatedRouter from '../../src/server/routes/consolidated';
+// ---------------------------------------------------------------------------
+// Import routers AFTER mocks
+// ---------------------------------------------------------------------------
+import healthRouter from '../../src/server/routes/health';
+import mcpRouter from '../../src/server/routes/mcp';
+import personasRouter from '../../src/server/routes/personas';
 
 // ---------------------------------------------------------------------------
 // Mock auth middleware used by MCP sub-routes (must be before router imports)
@@ -171,17 +181,6 @@ jest.mock('../../src/server/services/BotConfigService', () => ({
     })),
   },
 }));
-
-// ---------------------------------------------------------------------------
-// Import routers AFTER mocks
-// ---------------------------------------------------------------------------
-import healthRouter from '../../src/server/routes/health';
-import botsRouter from '../../src/server/routes/bots';
-import personasRouter from '../../src/server/routes/personas';
-import configRouter from '../../src/server/routes/config';
-import mcpRouter from '../../src/server/routes/mcp';
-import activityRouter from '../../src/server/routes/activity';
-import consolidatedRouter from '../../src/server/routes/consolidated';
 
 // These may fail to import if optional packages are missing; handle gracefully
 let validationRouter: any;

@@ -1,8 +1,4 @@
-import {
-  CircuitBreaker,
-  RetryHandler,
-  type RetryConfig,
-} from '../../../src/utils/errorRecovery';
+import { CircuitBreaker, RetryHandler, type RetryConfig } from '../../../src/utils/errorRecovery';
 
 describe('CircuitBreaker', () => {
   let breaker: CircuitBreaker;

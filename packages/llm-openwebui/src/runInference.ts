@@ -61,7 +61,10 @@ export async function generateChatCompletion(
     }
 
     // SSRF protection is enforced by http.post() via isSafeUrl() internally
-    const response = await http.post<{ text?: string } | string>(url, payload, { headers, timeout: 15000 });
+    const response = await http.post<{ text?: string } | string>(url, payload, {
+      headers,
+      timeout: 15000,
+    });
 
     debug('Inference result:', response);
     const responseText =

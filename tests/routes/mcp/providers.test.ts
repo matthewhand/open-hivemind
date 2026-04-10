@@ -1,5 +1,5 @@
-import request from 'supertest';
 import express from 'express';
+import request from 'supertest';
 import mcpProvidersRouter from '../../../src/server/routes/mcp/providers';
 
 // Mock MCPProviderManager
@@ -12,9 +12,9 @@ jest.mock('../../../src/config/MCPProviderManager', () => ({
     provider1: { id: 'provider1', status: 'running', lastCheck: new Date() },
     provider2: { id: 'provider2', status: 'stopped', lastCheck: new Date() },
   }),
-  getTemplates: jest.fn().mockReturnValue([
-    { id: 'template1', name: 'Template 1', description: 'Test template' },
-  ]),
+  getTemplates: jest
+    .fn()
+    .mockReturnValue([{ id: 'template1', name: 'Template 1', description: 'Test template' }]),
   getStats: jest.fn().mockReturnValue({
     total: 2,
     enabled: 1,
@@ -26,10 +26,12 @@ jest.mock('../../../src/config/MCPProviderManager', () => ({
     }
     return undefined;
   }),
-  createProvider: jest.fn().mockImplementation((config: any) => Promise.resolve({
-    id: 'new-provider',
-    ...config,
-  })),
+  createProvider: jest.fn().mockImplementation((config: any) =>
+    Promise.resolve({
+      id: 'new-provider',
+      ...config,
+    })
+  ),
   updateProvider: jest.fn().mockImplementation((id: string, config: any) => {
     if (id === 'provider1') {
       return Promise.resolve({ id, ...config });

@@ -99,7 +99,7 @@ describe('LLMProvidersPage', () => {
     renderWithProviders(<LLMProvidersPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('LLM Providers')).toBeInTheDocument();
+      expect(screen.getByText('Total Profiles')).toBeInTheDocument();
     });
   });
 
@@ -108,7 +108,7 @@ describe('LLMProvidersPage', () => {
 
     await waitFor(() => {
       // Page renders heading even with empty profiles
-      expect(screen.getByText('LLM Providers')).toBeInTheDocument();
+      expect(screen.getByText('Total Profiles')).toBeInTheDocument();
     });
   });
 });

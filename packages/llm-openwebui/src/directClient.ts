@@ -42,10 +42,13 @@ export async function generateChatCompletionDirect(
   messages.push({ role: 'user', content: userMessage });
 
   try {
-    const data = await client.post<{ choices: Array<{ message: { content: string } }> }>('/chat/completions', {
-      model: overrides.model,
-      messages,
-    });
+    const data = await client.post<{ choices: Array<{ message: { content: string } }> }>(
+      '/chat/completions',
+      {
+        model: overrides.model,
+        messages,
+      }
+    );
     const text = data?.choices?.[0]?.message?.content;
     if (typeof text === 'string' && text.length > 0) {
       return text;

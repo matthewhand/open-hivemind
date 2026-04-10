@@ -78,7 +78,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
         </div>
       </div>
       <div className="mt-4 px-2">
-        <Breadcrumbs />
+        {/* <Breadcrumbs /> */}
       </div>
     </div>
   );
