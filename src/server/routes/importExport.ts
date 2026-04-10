@@ -254,7 +254,7 @@ router.post(
           })
         );
       } else {
-        return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error(result.error));
+        return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error(result.error ?? 'Unknown error'));
       }
     } catch (error) {
       logger.error('Error exporting configurations:', error);
@@ -363,7 +363,7 @@ router.post(
           })
         );
       } else {
-        return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error(result.error));
+        return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error(result.error ?? 'Unknown error'));
       }
     } catch (error) {
       logger.error('Error creating backup:', error);

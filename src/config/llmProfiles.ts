@@ -68,7 +68,7 @@ export const loadLlmProfiles = (): LlmProfiles => {
       }
       return {
         llm: Array.isArray(parsed.llm)
-          ? parsed.llm
+          ? (parsed.llm as unknown[])
             .map(normalizeProfile)
             .filter((profile): profile is ProviderProfile => profile !== null)
           : [],

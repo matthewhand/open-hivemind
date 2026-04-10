@@ -218,8 +218,8 @@ export function createCoreRoutes(): Router {
           botValidation: summary.botValidation,
           timestamp: new Date().toISOString(),
         });
-      } catch (error: any) {
-        debug('Validation summary failed: %s', error.message);
+      } catch (error: unknown) {
+        debug('Validation summary failed: %s', (error instanceof Error ? error.message : String(error)));
         return res
           .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
           .json({ error: 'Internal server error' });

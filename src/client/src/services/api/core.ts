@@ -70,7 +70,7 @@ export class ApiService {
       this.rateLimitListeners.forEach(listener => {
         try {
           listener(info);
-        } catch (_error) {
+        } catch (error) {
           debug('ERROR:', 'Rate limit listener error', {
             error: error instanceof Error ? error.message : String(error)
           });
@@ -104,7 +104,7 @@ export class ApiService {
         const token = data.token || data.csrfToken || '';
         this.csrfToken = token;
         return token;
-      } catch (_error) {
+      } catch (error) {
         // Silently fail - CSRF may not be required in all environments
         console.debug('CSRF token fetch failed (may not be required):', error);
         return '';
@@ -304,11 +304,11 @@ export class ApiService {
         }
         throw new Error(`Invalid JSON response from server: ${text.slice(0, 100)}...`);
       }
-    } catch (error: any) {
-      if (error.name === 'AbortError') {
+    } catch (error: unknown) {
+      if ((error instanceof Error ? error.name : 'Error') === 'AbortError') {
         throw new Error(`Request timed out after ${options?.timeout || 15000}ms`);
       }
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage = error instanceof Error ? (error instanceof Error ? error.message : String(error)) : String(error);
       debug('ERROR:', `API request failed for ${endpoint}:`, errorMessage);
       throw error;
     }

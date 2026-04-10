@@ -19,8 +19,8 @@ export default async function loadServerPolicy(): Promise<string> {
     const policyData = await fs.promises.readFile(policyPath, 'utf-8');
     debug('[loadServerPolicy] Server policy loaded successfully.');
     return policyData;
-  } catch (error: any) {
-    debug('[loadServerPolicy] Failed to load server policy: ' + error.message);
+  } catch (error: unknown) {
+    debug('[loadServerPolicy] Failed to load server policy: ' + (error instanceof Error ? error.message : String(error)));
     throw new Error('Unable to load server policy.');
   }
 }

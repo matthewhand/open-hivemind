@@ -43,9 +43,9 @@ const configPath = path.join(configDir, 'providers/openwebui.json');
 
 try {
   openWebUIConfig.loadFile(configPath);
-} catch (error: any) {
-  if (error.code !== 'ENOENT') {
-    debug('WARN:', `Error reading openwebui config from ${configPath}:`, error.message);
+} catch (error: unknown) {
+  if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+    debug('WARN:', `Error reading openwebui config from ${configPath}:`, (error instanceof Error ? error.message : String(error)));
   } else {
     debug('WARN:', `OpenWebUI config file not found at ${configPath}, using environment variables and defaults`);
   }

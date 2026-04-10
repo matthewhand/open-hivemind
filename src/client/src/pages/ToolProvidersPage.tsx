@@ -62,8 +62,8 @@ const ToolProvidersPage: React.FC = () => {
       setLoading(true);
       const res = await apiService.get('/api/config/tool-profiles');
       setProfiles((res as any).tool || []);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load tool profiles');
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : String(err)) || 'Failed to load tool profiles');
     } finally {
       setLoading(false);
     }
@@ -102,7 +102,7 @@ const ToolProvidersPage: React.FC = () => {
         try {
           await apiService.delete(`/api/config/tool-profiles/${key}`);
           fetchProfiles();
-        } catch (err: any) { errorToast('Delete Failed', `Failed to delete: ${err.message}`); }
+        } catch (err: unknown) { errorToast('Delete Failed', `Failed to delete: ${(err instanceof Error ? err.message : String(err))}`); }
       },
     });
   };
@@ -121,13 +121,13 @@ const ToolProvidersPage: React.FC = () => {
           const backup = profiles.find((p) => p.key === oldKey);
           await apiService.delete(`/api/config/tool-profiles/${oldKey}`);
           try { await apiService.post('/api/config/tool-profiles', payload); }
-          catch (e: any) { if (backup) await apiService.post('/api/config/tool-profiles', backup).catch(() => {}); throw e; }
+          catch (e: unknown) { if (backup) await apiService.post('/api/config/tool-profiles', backup).catch(() => {}); throw e; }
         }
       } else { await apiService.post('/api/config/tool-profiles', payload); }
       setFormModal({ isOpen: false, isEdit: false, profile: null });
       showStamp();
       fetchProfiles();
-    } catch (err: any) { errorToast('Save Failed', `Failed to save profile: ${err.message}`); }
+    } catch (err: unknown) { errorToast('Save Failed', `Failed to save profile: ${(err instanceof Error ? err.message : String(err))}`); }
   };
 
   const getProviderIcon = (type: string) => {

@@ -172,12 +172,12 @@ const TryItPanel: React.FC<{ route: RouteInfo }> = ({ route }) => {
       // We assume 200 for successful responses from apiService for display.
       setStatusCode(200);
       setResponse(JSON.stringify(res, null, 2));
-    } catch (err: any) {
-      if (err.status) {
-         setStatusCode(err.status);
-      } else if (err.message && err.message.includes('failed (')) {
+    } catch (err: unknown) {
+      if ((err as any).status) {
+         setStatusCode((err as any).status);
+      } else if ((err instanceof Error ? err.message : String(err)) && (err instanceof Error ? err.message : String(err)).includes('failed (')) {
          // Try to extract status from ApiService error message: "API request failed (404): ..."
-         const match = err.message.match(/failed \((\d+)\)/);
+         const match = (err instanceof Error ? err.message : String(err)).match(/failed \((\d+)\)/);
          if (match) {
            setStatusCode(parseInt(match[1], 10));
          } else {
@@ -186,7 +186,7 @@ const TryItPanel: React.FC<{ route: RouteInfo }> = ({ route }) => {
       } else {
          setStatusCode(500);
       }
-      setResponse(`Error: ${err.message}`);
+      setResponse(`Error: ${(err instanceof Error ? err.message : String(err))}`);
     } finally {
       setLoading(false);
     }
@@ -344,8 +344,8 @@ const ApiDocsPage: React.FC = () => {
         if (data.data.groups.length > 0) {
           setActivePrefix(data.data.groups[0].prefix);
         }
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError((err instanceof Error ? err.message : String(err)));
       } finally {
         setLoading(false);
       }

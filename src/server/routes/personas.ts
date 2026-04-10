@@ -151,8 +151,8 @@ router.post(
       // Basic validation until strict schema is hooked up globally if needed
       const newPersona = manager.createPersona(req.body);
       return res.status(HTTP_STATUS.CREATED).json(newPersona);
-    } catch (error: any) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
+    } catch (error: unknown) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: (error instanceof Error ? error.message : String(error)) });
     }
   })
 );
@@ -175,11 +175,11 @@ router.post(
 
       const clonedPersona = manager.clonePersona(req.params.id, req.body);
       return res.status(HTTP_STATUS.CREATED).json(clonedPersona);
-    } catch (error: any) {
-      if (error.message.includes(ERROR_CODES.NOT_FOUND)) {
-        return res.status(HTTP_STATUS.NOT_FOUND).json({ error: error.message });
+    } catch (error: unknown) {
+      if ((error instanceof Error ? error.message : String(error)).includes(ERROR_CODES.NOT_FOUND)) {
+        return res.status(HTTP_STATUS.NOT_FOUND).json({ error: (error instanceof Error ? error.message : String(error)) });
       }
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: (error instanceof Error ? error.message : String(error)) });
     }
   })
 );
@@ -193,8 +193,8 @@ router.put(
       const manager = await getManager();
       const updatedPersona = manager.updatePersona(req.params.id, req.body);
       return res.json(updatedPersona);
-    } catch (error: any) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
+    } catch (error: unknown) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: (error instanceof Error ? error.message : String(error)) });
     }
   })
 );
@@ -237,8 +237,8 @@ router.delete(
             persona: 'default',
             systemInstruction: 'You are a helpful assistant.',
           });
-        } catch (error: any) {
-          logger.warn(`Failed to revert bot ${bot.id} to default persona`, error);
+        } catch (error: unknown) {
+          logger.warn(`Failed to revert bot ${bot.id} to default persona`, { error });
           // Continue with deletion even if bot update fails
         }
       }
@@ -249,14 +249,14 @@ router.delete(
 
       for (const persona of personasToDelete) {
         try {
-          const result = manager.deletePersona(persona.id);
+          const result = await manager.deletePersona(persona.id);
           if (result) {
             deleted.push(persona.id);
           } else {
             failed.push({ id: persona.id, error: 'Delete operation returned false' });
           }
-        } catch (error: any) {
-          failed.push({ id: persona.id, error: error.message });
+        } catch (error: unknown) {
+          failed.push({ id: persona.id, error: (error instanceof Error ? error.message : String(error)) });
         }
       }
 
@@ -268,11 +268,11 @@ router.delete(
         failed,
         botsReverted: botsToRevert.length,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Bulk delete personas failed', error);
       return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         error: 'Failed to delete personas',
-        details: error.message,
+        details: (error instanceof Error ? error.message : String(error)),
       });
     }
   })
@@ -290,10 +290,10 @@ router.delete(
         return res.json({ success: true }); // Idempotency: return HTTP_STATUS.OK if already gone
       }
 
-      manager.deletePersona(req.params.id);
+      await manager.deletePersona(req.params.id);
       return res.json({ success: true });
-    } catch (error: any) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: error.message });
+    } catch (error: unknown) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: (error instanceof Error ? error.message : String(error)) });
     }
   })
 );
