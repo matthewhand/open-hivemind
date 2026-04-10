@@ -4,8 +4,8 @@ import ProviderConfigManager, { type ProviderInstance } from '@src/config/Provid
 import { UserConfigStore } from '@src/config/UserConfigStore';
 import { MetricsCollector } from '@src/monitoring/MetricsCollector';
 import llmTaskConfig from '@config/llmTaskConfig';
-import { FlowiseProvider } from '@integrations/flowise/flowiseProvider';
-import * as openWebUIImport from '@integrations/openwebui/runInference';
+import { FlowiseProvider } from '../../packages/llm-flowise/src/flowiseProvider';
+import * as openWebUIImport from '../../packages/llm-openwebui/src/runInference';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import type { IMessage } from '@message/interfaces/IMessage';

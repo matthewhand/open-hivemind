@@ -184,7 +184,7 @@ jest.mock('@message/PipelineMetricsAggregator', () => ({
     })),
   },
 }));
-jest.mock('@integrations/openwebui/directClient', () => ({
+jest.mock('../../../packages/llm-openwebui/src/directClient', () => ({
   generateChatCompletionDirect: jest.fn(),
 }));
 jest.mock('debug', () => () => jest.fn());

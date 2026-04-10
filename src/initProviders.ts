@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
-import { SwarmInstaller } from '@integrations/openswarm/SwarmInstaller';
+import { SwarmInstaller } from '../packages/llm-openswarm/src/SwarmInstaller';
 import { loadMemoryProfiles } from './config/memoryProfiles';
 import { loadToolProfiles } from './config/toolProfiles';
 import {

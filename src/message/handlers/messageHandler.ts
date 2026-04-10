@@ -10,7 +10,7 @@ import { MemoryManager } from '@src/services/MemoryManager';
 import { toolAugmentedCompletion } from '@src/services/toolAugmentedCompletion';
 import type { ContentFilterConfig } from '@src/types/config';
 import { InputSanitizer } from '@src/utils/InputSanitizer';
-import { generateChatCompletionDirect } from '@integrations/openwebui/directClient';
+import { generateChatCompletionDirect } from '../../../packages/llm-openwebui/src/directClient';
 import { ChannelDelayManager } from '@message/helpers/handler/ChannelDelayManager';
 import type { IMessage } from '@message/interfaces/IMessage';
 import { getMessengerProvider } from '@message/management/getMessengerProvider';

@@ -103,6 +103,9 @@ const BotsPage: React.FC = () => {
   }, [bots, searchQuery, filterType]);
 
   const filteredBotIds = useMemo(() => filteredBots.map((b) => b.id), [filteredBots]);
+  // ⚡ Bolt Optimization: Memoized existingBotNames to prevent unnecessary re-creations of the array
+  // on every render, avoiding unnecessary re-renders of the ImportBotsModal component
+  const existingBotNames = useMemo(() => bots.map((b) => b.name), [bots]);
   const bulk = useBulkSelection(filteredBotIds);
 
   const {
@@ -321,7 +324,7 @@ const BotsPage: React.FC = () => {
       <ImportBotsModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
-        existingBotNames={bots.map((b) => b.name)}
+        existingBotNames={existingBotNames}
         onImportComplete={() => {
           setIsImportModalOpen(false);
           fetchBots();

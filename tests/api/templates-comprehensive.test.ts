@@ -193,7 +193,7 @@ describe('Templates API - Comprehensive Tests', () => {
         description: 'A custom template',
         category: 'general' as const,
         tags: ['custom'],
-        config: {},
+        config: { exampleKey: 'value' },
       };
 
       mockTemplateService.createTemplate.mockResolvedValue({

@@ -5,8 +5,8 @@ describe('Credential Management and Secret Handling', () => {
   describe('Secure Config Manager', () => {
     let configManager: SecureConfigManager;
 
-    beforeEach(() => {
-      configManager = new SecureConfigManager();
+    beforeAll(async () => {
+      configManager = await SecureConfigManager.getInstance();
     });
 
     test('should store and retrieve configurations securely', async () => {

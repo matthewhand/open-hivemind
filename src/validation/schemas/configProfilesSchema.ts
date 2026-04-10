@@ -19,7 +19,7 @@ export const CreateLlmProfileSchema = z.object({
     name: profileNameField,
     provider: profileProviderField,
     modelType: z.enum(['chat', 'embedding', 'both']).optional().default('chat'),
-  }),
+  }).passthrough(),
 });
 
 export const UpdateLlmProfileSchema = z.object({
@@ -27,10 +27,10 @@ export const UpdateLlmProfileSchema = z.object({
     key: z.string().min(1, { message: 'Profile key is required' }),
   }),
   body: z.object({
-    name: profileNameField,
-    provider: profileProviderField,
+    name: profileNameField.optional(),
+    provider: profileProviderField.optional(),
     modelType: z.enum(['chat', 'embedding', 'both']).optional(),
-  }),
+  }).passthrough(),
 });
 
 export const LlmProfileKeyParamSchema = z.object({

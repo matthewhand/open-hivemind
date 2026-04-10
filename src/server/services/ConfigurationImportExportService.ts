@@ -307,7 +307,7 @@ export class ConfigurationImportExportService {
       }
 
       // Decrypt if needed
-      if (filePath.endsWith('.enc')) {
+      if (filePath.includes('.enc')) {
         const strData = data.toString('utf8');
         try {
           const parsedEncrypted = JSON.parse(strData);
@@ -406,7 +406,7 @@ export class ConfigurationImportExportService {
       }
 
       // Decrypt if needed
-      if (filePath.endsWith('.enc')) {
+      if (filePath.includes('.enc')) {
         if (!options.decryptionKey) {
           throw new Error('Decryption key is required for encrypted import');
         }

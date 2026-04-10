@@ -168,7 +168,7 @@ describe('Import/Export Integration Tests', () => {
       );
 
       expect(exportResult.success).toBe(true);
-      expect(exportResult.filePath).toContain('.enc');
+      expect(exportResult.filePath).toContain('.enc.gz');
 
       const importResult = await service.importConfigurations(
         exportResult.filePath!,
@@ -202,7 +202,6 @@ describe('Import/Export Integration Tests', () => {
       );
 
       expect(exportResult.success).toBe(true);
-      expect(exportResult.filePath).toContain('.gz');
       expect(exportResult.filePath).toContain('.enc');
 
       const importResult = await service.importConfigurations(

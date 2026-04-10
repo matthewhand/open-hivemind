@@ -61,7 +61,7 @@ export const ErrorLogSchema = z.object({
     error: z.string().optional(),
     message: z.string().optional(),
     stack: z.string().optional(),
-  }),
+  }).passthrough(),
 });
 
 export const CIDeploySchema = z.object({
