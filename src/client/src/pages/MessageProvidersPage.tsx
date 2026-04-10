@@ -7,9 +7,11 @@ import { Alert } from '../components/DaisyUI/Alert';
 import StatsCards from '../components/DaisyUI/StatsCards';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import ConfigKeyValueCard from '../components/DaisyUI/ConfigKeyValueCard';
-import { SkeletonTableLayout } from '../components/DaisyUI/Skeleton';
+import { SkeletonTableLayout, SkeletonList } from '../components/DaisyUI/Skeleton';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { ConfirmModal } from '../components/DaisyUI/Modal';
+import Tabs from '../components/DaisyUI/Tabs';
+import Toggle from '../components/DaisyUI/Toggle';
 import { useErrorToast } from '../components/DaisyUI/ToastNotification';
 import {
   MessageSquare as MessageIcon,
@@ -22,132 +24,250 @@ import {
   ChevronRight as CollapseIcon,
   Search,
   RefreshCw,
+  Store as StoreIcon,
+  Download as DownloadIcon,
+  Star as StarIcon,
+  ExternalLink as ExternalLinkIcon,
+  AlertCircle as AlertIcon,
 } from 'lucide-react';
 import ProviderConfigModal from '../components/ProviderConfiguration/ProviderConfigModal';
+import SettingsMessaging from '../components/Settings/SettingsMessaging';
 import { apiService } from '../services/api';
 import { getProviderSchema } from '../provider-configs';
 import { useSavedStamp } from '../contexts/SavedStampContext';
 import useUrlParams from '../hooks/useUrlParams';
 
-const MessageProvidersPage: React.FC = () => {
-  const { modalState, openAddModal, openEditModal, closeModal } = useModal();
-  const errorToast = useErrorToast();
-  const { showStamp } = useSavedStamp();
-  const [profiles, setProfiles] = useState<any[]>([]);
-  const [expandedProfile, setExpandedProfile] = useState<string | null>(null);
+// ---------------------------------------------------------------------------
+// Community Tab – inline marketplace filtered to message type
+// ---------------------------------------------------------------------------
+
+interface MarketplacePackage {
+  name: string;
+  displayName: string;
+  description: string;
+  type: 'llm' | 'message' | 'memory' | 'tool';
+  version: string;
+  status: 'built-in' | 'installed' | 'available';
+  repoUrl?: string;
+  feedbackUrl?: string;
+  rating?: number;
+}
+
+const CommunityTab: React.FC = () => {
+  const [packages, setPackages] = useState<MarketplacePackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { values: urlParams, setValue: setUrlParam } = useUrlParams({
-    search: { type: 'string', default: '', debounce: 300 },
-    type: { type: 'string', default: 'all' },
-  });
-  const searchQuery = urlParams.search;
-  const setSearchQuery = (v: string) => setUrlParam('search', v);
-  const filterType = urlParams.type;
-  const setFilterType = (v: string) => setUrlParam('type', v);
-  const [confirmModal, setConfirmModal] = useState<{
-    isOpen: boolean; title: string; message: string; onConfirm: () => void;
-  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
-  const fetchProfiles = useCallback(async () => {
-    try {
+  useEffect(() => {
+    const fetchPackages = async () => {
       setLoading(true);
-      const res = await apiService.get('/api/config/message-profiles');
-      setProfiles((res as any).message || (res as any).profiles?.message || []);
-    } catch (err: unknown) {
-      setError((err instanceof Error ? err.message : String(err)) || 'Failed to load message profiles');
-    } finally {
-      setLoading(false);
-    }
+      setError(null);
+      try {
+        const data: any = await apiService.get('/api/marketplace/packages');
+        const all: MarketplacePackage[] = data?.data || data || [];
+        setPackages(all.filter((p) => p.type === 'message'));
+      } catch (err: unknown) {
+        setError(
+          (err instanceof Error ? err.message : String(err)) ||
+            'Failed to load community packages',
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPackages();
   }, []);
 
-  useEffect(() => { fetchProfiles(); }, [fetchProfiles]);
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <span className="loading loading-spinner loading-lg text-primary" aria-hidden="true"></span>
+      </div>
+    );
+  }
 
-  const handleAddProfile = () => openAddModal('global', 'message');
+  if (error) {
+    return (
+      <div className="alert alert-error mb-4">
+        <AlertIcon className="w-5 h-5" />
+        <span>{error}</span>
+      </div>
+    );
+  }
 
-  const handleEditProfile = (profile: any) => {
-    openEditModal('global', 'message', {
-      id: profile.key,
-      name: profile.name,
-      type: profile.provider,
-      config: profile.config,
-      enabled: true,
-    } as any);
-  };
+  if (packages.length === 0) {
+    return (
+      <EmptyState
+        icon={StoreIcon}
+        title="No Community Message Packages"
+        description="There are no community message provider packages available yet."
+        variant="noData"
+      />
+    );
+  }
 
-  const handleDeleteProfile = async (key: string) => {
-    setConfirmModal({
-      isOpen: true,
-      title: 'Delete Profile',
-      message: `Delete profile "${key}"?`,
-      onConfirm: async () => {
-        setConfirmModal(prev => ({ ...prev, isOpen: false }));
-        try {
-          await apiService.delete(`/api/config/message-profiles/${key}`);
-          fetchProfiles();
-        } catch (err: unknown) {
-          errorToast('Delete Failed', `Failed to delete: ${(err instanceof Error ? err.message : String(err))}`);
-        }
-      },
-    });
-  };
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {packages.map((pkg) => {
+        const statusLabel =
+          pkg.status === 'built-in'
+            ? 'Built-in'
+            : pkg.status === 'installed'
+              ? 'Installed'
+              : 'Available';
+        const statusColor =
+          pkg.status === 'built-in'
+            ? 'neutral'
+            : pkg.status === 'installed'
+              ? 'success'
+              : ('info' as const);
 
-  const handleProviderSubmit = async (providerData: any) => {
-    try {
-      const payload = {
-        key: providerData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
-        name: providerData.name,
-        provider: providerData.type,
-        config: providerData.config,
-      };
+        return (
+          <Card key={pkg.name} className="bg-base-200 hover:bg-base-300 transition-colors">
+            <Card.Body className="p-4">
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <MessageIcon className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">{pkg.displayName}</h3>
+                    <p className="text-xs text-base-content/50 font-mono">{pkg.name}</p>
+                  </div>
+                </div>
+                <Badge variant={statusColor} size="sm">
+                  {statusLabel}
+                </Badge>
+              </div>
 
-      if (modalState.isEdit && modalState.provider?.id) {
-        const oldKey = modalState.provider.id;
-        const newKey = payload.key;
-        if (oldKey === newKey) {
-          await apiService.put(`/api/config/message-profiles/${oldKey}`, payload);
-        } else {
-          const backup = profiles.find((p) => p.key === oldKey);
-          await apiService.delete(`/api/config/message-profiles/${oldKey}`);
-          try {
-            await apiService.post('/api/config/message-profiles', payload);
-          } catch (createErr: unknown) {
-            if (backup) await apiService.post('/api/config/message-profiles', backup).catch(() => {});
-            throw createErr;
-          }
-        }
-      } else {
-        await apiService.post('/api/config/message-profiles', payload);
-      }
+              <p className="text-sm text-base-content/70 mb-3 line-clamp-2">{pkg.description}</p>
 
-      closeModal();
-      showStamp();
-      fetchProfiles();
-    } catch (err: unknown) {
-      errorToast('Save Failed', `Failed to save profile: ${(err instanceof Error ? err.message : String(err))}`);
-    }
-  };
+              <div className="flex items-center justify-between text-xs text-base-content/50 mb-3">
+                <span>v{pkg.version}</span>
+                <span className="uppercase badge badge-sm badge-outline">message</span>
+              </div>
 
-  const getProviderIcon = (type: string) => {
-    const schema = getProviderSchema(type);
-    return schema?.icon || <MessageIcon className="w-5 h-5" />;
-  };
+              {/* Rating & Feedback */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <StarIcon
+                      key={star}
+                      className={`w-4 h-4 ${
+                        (pkg.rating ?? 0) >= star
+                          ? 'fill-warning text-warning'
+                          : 'text-base-content/30'
+                      }`}
+                    />
+                  ))}
+                </div>
+                {(pkg.feedbackUrl || pkg.repoUrl) && (
+                  <a
+                    href={pkg.feedbackUrl || `${pkg.repoUrl}/issues`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="link link-primary text-xs flex items-center gap-1"
+                  >
+                    Feedback <ExternalLinkIcon className="w-3 h-3" />
+                  </a>
+                )}
+              </div>
 
-  const toggleExpand = (key: string) => setExpandedProfile(expandedProfile === key ? null : key);
+              <div className="flex gap-2">
+                {pkg.status === 'available' && (
+                  <Button variant="primary" size="sm" className="flex-1">
+                    <DownloadIcon className="w-4 h-4 mr-1" />
+                    Install
+                  </Button>
+                )}
+                {pkg.status === 'built-in' && (
+                  <span className="text-xs text-base-content/50 italic w-full text-center">
+                    Included with open-hivemind
+                  </span>
+                )}
+                {pkg.status === 'installed' && (
+                  <span className="text-xs text-success w-full text-center">Installed</span>
+                )}
+              </div>
+            </Card.Body>
+          </Card>
+        );
+      })}
+    </div>
+  );
+};
 
-  const filteredProfiles = useMemo(() =>
-    profiles.filter(p => {
-      const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            p.provider.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesType = filterType === 'all' || p.provider === filterType;
-      return matchesSearch && matchesType;
-    }), [profiles, searchQuery, filterType]);
+// ---------------------------------------------------------------------------
+// Settings Tab – wraps SettingsMessaging with advanced toggle
+// ---------------------------------------------------------------------------
 
-  const providerTypes = useMemo(() => {
-    const types = new Set(profiles.map(p => p.provider));
-    return Array.from(types).map(type => ({ label: type, value: type }));
-  }, [profiles]);
+const SettingsTab: React.FC = () => {
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-base-content/70">
+          Configure messaging behavior and platform settings.
+        </p>
+        <Toggle
+          label="Advanced"
+          checked={showAdvanced}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setShowAdvanced(e.target.checked)}
+          color="primary"
+          size="sm"
+        />
+      </div>
+      <div className={showAdvanced ? '' : '[&_.advanced-settings]:hidden'}>
+        <SettingsMessaging />
+      </div>
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Profiles Tab – existing content extracted
+// ---------------------------------------------------------------------------
+
+interface ProfilesTabProps {
+  profiles: any[];
+  loading: boolean;
+  error: string | null;
+  setError: (e: string | null) => void;
+  searchQuery: string;
+  setSearchQuery: (v: string) => void;
+  filterType: string;
+  setFilterType: (v: string) => void;
+  fetchProfiles: () => void;
+  handleAddProfile: () => void;
+  handleEditProfile: (profile: any) => void;
+  handleDeleteProfile: (key: string) => void;
+  expandedProfile: string | null;
+  toggleExpand: (key: string) => void;
+  filteredProfiles: any[];
+  providerTypes: { label: string; value: string }[];
+  getProviderIcon: (type: string) => React.ReactNode;
+}
+
+const ProfilesTab: React.FC<ProfilesTabProps> = ({
+  profiles,
+  loading,
+  error,
+  setError,
+  searchQuery,
+  setSearchQuery,
+  filterType,
+  setFilterType,
+  fetchProfiles,
+  handleAddProfile,
+  handleEditProfile,
+  handleDeleteProfile,
+  expandedProfile,
+  toggleExpand,
+  filteredProfiles,
+  providerTypes,
+  getProviderIcon,
+}) => {
   const stats = [
     { id: 'total', title: 'Total Profiles', value: profiles.length, icon: 'message', color: 'primary' as const },
     { id: 'types', title: 'Platform Types', value: providerTypes.length, icon: 'cpu', color: 'secondary' as const },
@@ -254,6 +374,191 @@ const MessageProvidersPage: React.FC = () => {
           ))}
         </div>
       )}
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Main Page Component
+// ---------------------------------------------------------------------------
+
+const TAB_IDS = ['profiles', 'settings', 'community'] as const;
+type TabId = (typeof TAB_IDS)[number];
+
+const MessageProvidersPage: React.FC = () => {
+  const { modalState, openAddModal, openEditModal, closeModal } = useModal();
+  const errorToast = useErrorToast();
+  const { showStamp } = useSavedStamp();
+  const [profiles, setProfiles] = useState<any[]>([]);
+  const [expandedProfile, setExpandedProfile] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { values: urlParams, setValue: setUrlParam } = useUrlParams({
+    tab: { type: 'string', default: 'profiles' },
+    search: { type: 'string', default: '', debounce: 300 },
+    type: { type: 'string', default: 'all' },
+  });
+
+  const activeTab = TAB_IDS.includes(urlParams.tab as TabId) ? (urlParams.tab as TabId) : 'profiles';
+  const setActiveTab = (id: string) => setUrlParam('tab', id);
+  const searchQuery = urlParams.search;
+  const setSearchQuery = (v: string) => setUrlParam('search', v);
+  const filterType = urlParams.type;
+  const setFilterType = (v: string) => setUrlParam('type', v);
+
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean; title: string; message: string; onConfirm: () => void;
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+
+  const fetchProfiles = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await apiService.get('/api/config/message-profiles');
+      setProfiles((res as any).message || (res as any).profiles?.message || []);
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : String(err)) || 'Failed to load message profiles');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchProfiles(); }, [fetchProfiles]);
+
+  const handleAddProfile = () => openAddModal('global', 'message');
+
+  const handleEditProfile = (profile: any) => {
+    openEditModal('global', 'message', {
+      id: profile.key,
+      name: profile.name,
+      type: profile.provider,
+      config: profile.config,
+      enabled: true,
+    } as any);
+  };
+
+  const handleDeleteProfile = async (key: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Profile',
+      message: `Delete profile "${key}"?`,
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          await apiService.delete(`/api/config/message-profiles/${key}`);
+          fetchProfiles();
+        } catch (err: unknown) {
+          errorToast('Delete Failed', `Failed to delete: ${(err instanceof Error ? err.message : String(err))}`);
+        }
+      },
+    });
+  };
+
+  const handleProviderSubmit = async (providerData: any) => {
+    try {
+      const payload = {
+        key: providerData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+        name: providerData.name,
+        provider: providerData.type,
+        config: providerData.config,
+      };
+
+      if (modalState.isEdit && modalState.provider?.id) {
+        const oldKey = modalState.provider.id;
+        const newKey = payload.key;
+        if (oldKey === newKey) {
+          await apiService.put(`/api/config/message-profiles/${oldKey}`, payload);
+        } else {
+          const backup = profiles.find((p) => p.key === oldKey);
+          await apiService.delete(`/api/config/message-profiles/${oldKey}`);
+          try {
+            await apiService.post('/api/config/message-profiles', payload);
+          } catch (createErr: unknown) {
+            if (backup) await apiService.post('/api/config/message-profiles', backup).catch(() => {});
+            throw createErr;
+          }
+        }
+      } else {
+        await apiService.post('/api/config/message-profiles', payload);
+      }
+
+      closeModal();
+      showStamp();
+      fetchProfiles();
+    } catch (err: unknown) {
+      errorToast('Save Failed', `Failed to save profile: ${(err instanceof Error ? err.message : String(err))}`);
+    }
+  };
+
+  const getProviderIcon = (type: string) => {
+    const schema = getProviderSchema(type);
+    return schema?.icon || <MessageIcon className="w-5 h-5" />;
+  };
+
+  const toggleExpand = (key: string) => setExpandedProfile(expandedProfile === key ? null : key);
+
+  const filteredProfiles = useMemo(() =>
+    profiles.filter(p => {
+      const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            p.provider.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesType = filterType === 'all' || p.provider === filterType;
+      return matchesSearch && matchesType;
+    }), [profiles, searchQuery, filterType]);
+
+  const providerTypes = useMemo(() => {
+    const types = new Set(profiles.map(p => p.provider));
+    return Array.from(types).map(type => ({ label: type, value: type }));
+  }, [profiles]);
+
+  const tabs = [
+    {
+      id: 'profiles',
+      label: 'Profiles',
+      icon: <MessageIcon className="w-4 h-4" />,
+      badge: profiles.length || undefined,
+      content: (
+        <ProfilesTab
+          profiles={profiles}
+          loading={loading}
+          error={error}
+          setError={setError}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          filterType={filterType}
+          setFilterType={setFilterType}
+          fetchProfiles={fetchProfiles}
+          handleAddProfile={handleAddProfile}
+          handleEditProfile={handleEditProfile}
+          handleDeleteProfile={handleDeleteProfile}
+          expandedProfile={expandedProfile}
+          toggleExpand={toggleExpand}
+          filteredProfiles={filteredProfiles}
+          providerTypes={providerTypes}
+          getProviderIcon={getProviderIcon}
+        />
+      ),
+    },
+    {
+      id: 'settings',
+      label: 'Settings',
+      icon: <ConfigIcon className="w-4 h-4" />,
+      content: <SettingsTab />,
+    },
+    {
+      id: 'community',
+      label: 'Community',
+      icon: <StoreIcon className="w-4 h-4" />,
+      content: <CommunityTab />,
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <Tabs
+        tabs={tabs}
+        variant="lifted"
+        activeTab={activeTab}
+        onChange={setActiveTab}
+      />
 
       <ProviderConfigModal
         modalState={{ ...modalState, providerType: 'message' }}
