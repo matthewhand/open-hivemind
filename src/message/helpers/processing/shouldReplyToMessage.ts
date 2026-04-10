@@ -294,7 +294,8 @@ export async function shouldReplyToMessage(
     }
   }
 
-  const timeSinceLastPost = lastPostTime > 0 ? Math.max(0, Date.now() - lastPostTime) : Infinity;
+  const timeSinceLastPost =
+    lastPostTime > 0 ? Math.max(0, Date.now() - lastPostTime) : Infinity;
   const hasPostedRecently = timeSinceLastPost < SILENCE_THRESHOLD;
   const lastStr = lastPostTime > 0 ? `${Math.floor(timeSinceLastPost / 1000)}s ago` : 'never';
 

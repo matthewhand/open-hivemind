@@ -7,7 +7,7 @@ export const getLlmProviderConfig = (providerId: string) => {
   return {
     id: providerId,
     name: providerId,
-    enabled: true,
+    enabled: true
   };
 };
 
