@@ -284,16 +284,30 @@ router.post(
       }
 
       const importedBy = req.user?.username || 'unknown';
+      let inputData: string = (req as AuthMulterRequest).file?.path || '';
+      let isTempFile = false;
+
+      if (!inputData && (req as AuthMulterRequest).file?.buffer) {
+        const safeName = req.file?.originalname ? req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_') : 'import.json';
+        inputData = path.join(process.cwd(), 'config', 'uploads', `temp-import-${Date.now()}-${safeName}`);
+        await fs.mkdir(path.dirname(inputData), { recursive: true });
+        await fs.writeFile(inputData, (req as AuthMulterRequest).file!.buffer);
+        isTempFile = true;
+      }
 
       const result = await importExportService.importConfigurations(
-        req.file.path,
+        inputData,
         req.body,
         importedBy
       );
 
       // Clean up uploaded file
       try {
-        await fs.unlink(req.file.path);
+        if (req.file.path) {
+          await fs.unlink(req.file.path);
+        } else if (isTempFile && inputData) {
+          await fs.unlink(inputData);
+        }
       } catch (cleanupError) {
         logger.error('Error cleaning up uploaded file:', cleanupError);
       }
@@ -311,7 +325,11 @@ router.post(
       // Clean up uploaded file if it exists
       if (req.file) {
         try {
-          await fs.unlink(req.file.path);
+          if (req.file.path) {
+            await fs.unlink(req.file.path);
+          } else if (isTempFile && inputData) {
+            await fs.unlink(inputData);
+          }
         } catch (cleanupError) {
           logger.error('Error cleaning up uploaded file:', cleanupError);
         }
@@ -533,16 +551,32 @@ router.post(
         return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('No file uploaded'));
       }
 
-      const result = await importExportService.importConfigurations(req.file.path, {
+      // In tests, we often attach a buffer instead of writing to disk.
+      let inputData: string = (req as AuthMulterRequest).file?.path || '';
+      let isTempFile = false;
+
+      if (!inputData && (req as AuthMulterRequest).file?.buffer) {
+        const safeName = req.file?.originalname ? req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_') : 'validate.json';
+        inputData = path.join(process.cwd(), 'config', 'uploads', `temp-validate-${Date.now()}-${safeName}`);
+        await fs.mkdir(path.dirname(inputData), { recursive: true });
+        await fs.writeFile(inputData, (req as AuthMulterRequest).file!.buffer);
+        isTempFile = true;
+      }
+
+      const result = await importExportService.importConfigurations(inputData, {
         format: req.body.format || 'json',
         validateOnly: true,
         skipValidation: false,
         overwrite: false,
-      });
+      }, req.user?.username || 'system');
 
       // Clean up uploaded file
       try {
-        await fs.unlink(req.file.path);
+        if (req.file.path) {
+          await fs.unlink(req.file.path);
+        } else if (isTempFile && inputData) {
+          await fs.unlink(inputData);
+        }
       } catch (cleanupError) {
         logger.error('Error cleaning up uploaded file:', cleanupError);
       }
@@ -554,7 +588,11 @@ router.post(
       // Clean up uploaded file if it exists
       if (req.file) {
         try {
-          await fs.unlink(req.file.path);
+          if (req.file.path) {
+            await fs.unlink(req.file.path);
+          } else if (isTempFile && inputData) {
+            await fs.unlink(inputData);
+          }
         } catch (cleanupError) {
           logger.error('Error cleaning up uploaded file:', cleanupError);
         }

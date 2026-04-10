@@ -1,5 +1,4 @@
 import Debug from 'debug';
-import { isSafeUrl } from '@hivemind/shared-types';
 import type {
   IMemoryProvider,
   MemoryEntry,
@@ -290,11 +289,6 @@ export class Mem4aiProvider implements IMemoryProvider {
 
   private async doRequest<T>(method: string, path: string, body?: unknown): Promise<T> {
     const url = `${this.baseUrl}${path}`;
-
-    if (!(await isSafeUrl(url))) {
-      throw new Error(`Mem4aiProvider: url is not safe: ${url}`);
-    }
-
     const headers: Record<string, string> = {
       Authorization: `Bearer ${this.apiKey}`,
       'Content-Type': 'application/json',

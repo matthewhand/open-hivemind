@@ -53,7 +53,8 @@ describe('MarketplacePage', () => {
     renderWithProviders(<MarketplacePage />);
 
     await waitFor(() => {
-      expect(screen.getAllByText(/Community Packages/i)[0]).toBeInTheDocument();
+      expect(screen.getByText(/Community Packages/i)).toBeInTheDocument();
+      expect(screen.getByText(/Install community plugins from GitHub/i)).toBeInTheDocument();
     });
   });
 });
