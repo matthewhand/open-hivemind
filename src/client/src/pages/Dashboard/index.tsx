@@ -1,6 +1,6 @@
 import React, { lazy, Suspense, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Cpu, Rocket } from 'lucide-react';
+import { Cpu, Rocket, X, HelpCircle } from 'lucide-react';
 import Dashboard from '../../components/Dashboard';
 import { apiService } from '../../services/api';
 import { Alert } from '../../components/DaisyUI/Alert';
@@ -24,6 +24,9 @@ const DashboardPage: React.FC = () => {
   const [needsSetup, setNeedsSetup] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const [announcementDesc, setAnnouncementDesc] = useState<string>('');
+  const [showGettingStarted, setShowGettingStarted] = useState(
+    () => localStorage.getItem('hivemind-hide-getting-started') !== 'true',
+  );
 
   // Fetch announcement text
   useEffect(() => {
@@ -85,13 +88,22 @@ const DashboardPage: React.FC = () => {
     return null; // brief blank while checking onboarding status
   }
 
+  const dismissGettingStarted = () => {
+    localStorage.setItem('hivemind-hide-getting-started', 'true');
+    setShowGettingStarted(false);
+  };
+
+  const restoreGettingStarted = () => {
+    localStorage.removeItem('hivemind-hide-getting-started');
+    setShowGettingStarted(true);
+  };
+
   const carouselItems = [
-    { image: '', title: '🤖 Configure Your First Bot', description: 'Set up an AI agent — assign a persona, connect a messaging platform, and choose an LLM provider.', bgGradient: 'linear-gradient(135deg, #4f46e5, #7c3aed)' },
-    { image: '', title: '🧠 Connect an LLM Provider', description: 'Add your OpenAI, Anthropic, Flowise, or Ollama API key to power bot responses.', bgGradient: 'linear-gradient(135deg, #059669, #10b981)' },
-    { image: '', title: '🎭 Create a Persona', description: 'Give your bot a unique personality — name, system prompt, response behavior, and avatar.', bgGradient: 'linear-gradient(135deg, #0891b2, #06b6d4)' },
-    { image: '', title: '🛡️ Set Up Guard Profiles', description: 'Add safety rules — access control, rate limiting, and content filtering for your bots.', bgGradient: 'linear-gradient(135deg, #d97706, #f59e0b)' },
-    { image: '', title: '📡 Multi-Platform Support', description: 'Connect to Discord, Slack, Mattermost — run coordinated bots across all platforms.', bgGradient: 'linear-gradient(135deg, #dc2626, #ef4444)' },
-    { image: '', title: '📊 Real-time Monitoring', description: 'Monitor bot performance, message volume, response times, and system health.', bgGradient: 'linear-gradient(135deg, #7c3aed, #a855f7)' },
+    { image: '', title: '🤖 Configure Your First Bot', description: 'Set up an AI agent — assign a persona, connect a messaging platform, and choose an LLM provider.', bgGradient: 'linear-gradient(135deg, #4f46e5, #7c3aed)', link: '/admin/bots' },
+    { image: '', title: '🧠 Connect an LLM Provider', description: 'Add your OpenAI, Anthropic, Flowise, or Ollama API key to power bot responses.', bgGradient: 'linear-gradient(135deg, #059669, #10b981)', link: '/admin/providers/llm' },
+    { image: '', title: '🎭 Create a Persona', description: 'Give your bot a unique personality — name, system prompt, response behavior, and avatar.', bgGradient: 'linear-gradient(135deg, #0891b2, #06b6d4)', link: '/admin/personas' },
+    { image: '', title: '🛡️ Set Up Guard Profiles', description: 'Add safety rules — access control, rate limiting, and content filtering for your bots.', bgGradient: 'linear-gradient(135deg, #d97706, #f59e0b)', link: '/admin/guards' },
+    { image: '', title: '📊 Real-time Monitoring', description: 'Monitor bot performance, message volume, response times, and system health.', bgGradient: 'linear-gradient(135deg, #7c3aed, #a855f7)', link: '/admin/monitoring' },
     { image: '', title: '📋 Announcements', description: announcementDesc || 'Check out what\'s new and what\'s coming next.', bgGradient: 'linear-gradient(135deg, #1e40af, #3b82f6)', link: 'https://github.com/matthewhand/open-hivemind/blob/main/ANNOUNCEMENT.md' },
   ];
 
@@ -104,6 +116,8 @@ const DashboardPage: React.FC = () => {
       }
     }
   };
+
+  const gettingStartedVisible = showGettingStarted || needsSetup;
 
   const setTab = (tab: string) => {
     if (tab === 'dashboard') {
@@ -136,46 +150,78 @@ const DashboardPage: React.FC = () => {
           </Suspense>
       ) : (
       <div>
-      {/* Welcome Splash - shown when config is incomplete */}
-      {showWelcome && (
-        <div className="max-w-7xl mx-auto px-4 pt-4">
-          <WelcomeSplash />
-        </div>
-      )}
+      {/* Getting Started section — visible when user hasn't dismissed or setup is incomplete */}
+      {gettingStartedVisible && (
+        <div className="mx-4 mb-6 rounded-xl bg-base-200/50 border border-base-300 p-5">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-base-content/60">Getting Started</h3>
+            <button
+              className="btn btn-ghost btn-xs gap-1 text-base-content/40 hover:text-base-content/70"
+              onClick={dismissGettingStarted}
+              title="Hide Getting Started"
+            >
+              <X className="w-4 h-4" />
+              Hide
+            </button>
+          </div>
 
-      {/* Incomplete setup prompt - shown when needs setup but not showing welcome */}
-      {needsSetup && !showWelcome && (
-        <div className="max-w-7xl mx-auto px-4 pt-4">
-          <Alert status="warning" className="shadow-lg" onClose={() => setNeedsSetup(false)}>
-            <Cpu className="w-5 h-5 shrink-0" />
-            <div className="flex-1">
-              <strong>Setup incomplete</strong> — no LLM provider is configured yet. Your bots won't be able to generate responses.
+          {/* Welcome Splash - shown when config is incomplete */}
+          {showWelcome && (
+            <div className="max-w-7xl mx-auto mb-4">
+              <WelcomeSplash />
             </div>
-            <Button variant="primary" size="sm" onClick={() => navigate('/onboarding')}>
-              <Rocket className="w-4 h-4 mr-1" />
-              Run Setup Wizard
-            </Button>
-          </Alert>
+          )}
+
+          {/* Incomplete setup prompt - shown when needs setup but not showing welcome */}
+          {needsSetup && !showWelcome && (
+            <div className="max-w-7xl mx-auto mb-4">
+              <Alert status="warning" className="shadow-lg" onClose={() => setNeedsSetup(false)}>
+                <Cpu className="w-5 h-5 shrink-0" />
+                <div className="flex-1">
+                  <strong>Setup incomplete</strong> — no LLM provider is configured yet. Your bots won't be able to generate responses.
+                </div>
+                <Button variant="primary" size="sm" onClick={() => navigate('/onboarding')}>
+                  <Rocket className="w-4 h-4 mr-1" />
+                  Run Setup Wizard
+                </Button>
+              </Alert>
+            </div>
+          )}
+
+          <Carousel items={carouselItems} autoplay={true} interval={6000} variant="full-width" onSlideClick={handleSlideClick} />
         </div>
       )}
 
-      <div className="mb-6 px-4">
-        <h3 className="text-sm font-bold uppercase tracking-wider text-base-content/40 mb-2">Getting Started</h3>
-        <Carousel items={carouselItems} autoplay={true} interval={6000} variant="full-width" />
+      <div className="divider mx-4" />
+
+      {/* Overview heading + controls */}
+      <div className="flex items-center justify-between mb-4 px-4">
+        <div className="flex items-center gap-3">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-base-content/60">Overview</h3>
+          {!gettingStartedVisible && (
+            <button
+              className="btn btn-ghost btn-xs gap-1 text-base-content/40 hover:text-primary"
+              onClick={restoreGettingStarted}
+              title="Show Getting Started guide"
+            >
+              <HelpCircle className="w-3.5 h-3.5" />
+              Getting Started
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-3 bg-base-100/50 p-2 rounded-lg shadow-sm">
+          <span className="text-sm font-medium opacity-80">Static Layout</span>
+          <Toggle
+            color="primary"
+            checked={useWidgetLayout}
+            onChange={(e) => setUseWidgetLayout(e.target.checked)}
+            aria-label="Toggle widget dashboard layout"
+          />
+          <span className="text-sm font-medium text-primary">Widgets Layout</span>
+        </div>
       </div>
 
       <QuickActions onRefresh={() => {}} />
-
-      <div className="flex justify-end items-center mb-4 px-4 gap-3 bg-base-100/50 p-2 rounded-lg shadow-sm w-fit ml-auto">
-        <span className="text-sm font-medium opacity-80">Static Layout</span>
-        <Toggle
-          color="primary"
-          checked={useWidgetLayout}
-          onChange={(e) => setUseWidgetLayout(e.target.checked)}
-          aria-label="Toggle widget dashboard layout"
-        />
-        <span className="text-sm font-medium text-primary">Widgets Layout</span>
-      </div>
 
       {useWidgetLayout ? (
         <div className="animate-in fade-in duration-300">
