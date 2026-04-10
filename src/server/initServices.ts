@@ -256,7 +256,7 @@ export async function initServices(
 
   // Initialize Demo Mode Service
   const demoService = container.resolve(DemoModeService);
-  demoService.initialize();
+  await demoService.initialize();
 
   if (demoService.isInDemoMode()) {
     appLogger.info('\ud83c\udfad Demo Mode ACTIVE - No credentials configured');

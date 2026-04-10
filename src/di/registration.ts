@@ -17,6 +17,7 @@ import { UserConfigStore } from '../config/UserConfigStore';
 import { DatabaseManager } from '../database/DatabaseManager';
 import { SchemaManager } from '../database/SchemaManager';
 import { BotManager } from '../managers/BotManager';
+import DemoModeService from '../services/DemoModeService';
 import { RealTimeValidationService } from '../server/services/RealTimeValidationService';
 import { WebSocketService } from '../server/services/WebSocketService';
 import { container, TOKENS } from './container';
@@ -49,13 +50,6 @@ export function registerServices(): void {
     useValue: SecureConfigManager.getInstance(),
   });
 
-  logger.warn(
-    'UserConfigStore is being registered a second time; this will override the first registration'
-  );
-  container.register(TOKENS.UserConfigStore, {
-    useValue: UserConfigStore.getInstance(),
-  });
-
   logger.debug('Registering ProviderConfigManager');
   const providerConfigManager = ProviderConfigManager.getInstance();
   container.register(TOKENS.ProviderConfigManager, {
@@ -84,6 +78,9 @@ export function registerServices(): void {
 
   logger.debug('Registering RealTimeValidationService');
   container.registerSingleton(TOKENS.RealTimeValidationService, RealTimeValidationService);
+
+  logger.debug('Registering DemoModeService');
+  container.registerSingleton('DemoModeService', DemoModeService);
 
   logger.info('✅ DI services registered');
 }

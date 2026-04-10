@@ -442,10 +442,10 @@ export class DemoModeService {
   /**
    * Initialize demo mode — seed config and start simulation.
    */
-  public initialize(): void {
+  public async initialize(): Promise<void> {
     this.isDemoMode = this.detectDemoMode();
     if (this.isDemoMode) {
-      this.seedDemoConfig();
+      await this.seedDemoConfig();
       this.startActivitySimulation();
       debug(
         'Demo mode initialized — seeded %d bots, %d personas, %d guard profiles',
@@ -466,9 +466,10 @@ export class DemoModeService {
   public setDemoMode(enabled: boolean): void {
     this.isDemoMode = enabled;
     if (enabled) {
-      this.seedDemoConfig();
-      this.startActivitySimulation();
-      debug('Demo mode enabled at runtime');
+      this.seedDemoConfig().then(() => {
+        this.startActivitySimulation();
+        debug('Demo mode enabled at runtime');
+      }).catch((e) => debug('Failed to seed demo config: %s', e));
     } else {
       this.stopActivitySimulation();
       debug('Demo mode disabled at runtime (seeded config remains)');
