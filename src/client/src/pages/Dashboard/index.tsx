@@ -12,6 +12,7 @@ import Toggle from '../../components/DaisyUI/Toggle';
 import Carousel from '../../components/DaisyUI/Carousel';
 import DashboardWidgetSystem from '../../components/DaisyUI/DashboardWidgetSystem';
 import WelcomeSplash from '../../components/WelcomeSplash';
+import QuickActions from '../../components/QuickActions';
 
 const SystemHealth = lazy(() => import('../../components/SystemHealth'));
 
@@ -22,6 +23,20 @@ const DashboardPage: React.FC = () => {
   const [checked, setChecked] = useState(false);
   const [needsSetup, setNeedsSetup] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
+  const [announcementDesc, setAnnouncementDesc] = useState<string>('');
+
+  // Fetch announcement text
+  useEffect(() => {
+    apiService.get<{ announcement?: string }>('/api/dashboard/announcement')
+      .then((data: any) => {
+        const text = data?.announcement || '';
+        if (text) {
+          const firstLine = text.split('\n').find((l: string) => l.trim()) || '';
+          setAnnouncementDesc(firstLine.length > 120 ? firstLine.slice(0, 120) + '...' : firstLine);
+        }
+      })
+      .catch(() => { /* no announcement */ });
+  }, []);
 
   // Track preference for widget vs static layout
   const [useWidgetLayout, setUseWidgetLayout] = useState(() => {
@@ -77,7 +92,18 @@ const DashboardPage: React.FC = () => {
     { image: '', title: '🛡️ Set Up Guard Profiles', description: 'Add safety rules — access control, rate limiting, and content filtering for your bots.', bgGradient: 'linear-gradient(135deg, #d97706, #f59e0b)' },
     { image: '', title: '📡 Multi-Platform Support', description: 'Connect to Discord, Slack, Mattermost — run coordinated bots across all platforms.', bgGradient: 'linear-gradient(135deg, #dc2626, #ef4444)' },
     { image: '', title: '📊 Real-time Monitoring', description: 'Monitor bot performance, message volume, response times, and system health.', bgGradient: 'linear-gradient(135deg, #7c3aed, #a855f7)' },
+    { image: '', title: '📋 Announcements', description: announcementDesc || 'Check out what\'s new and what\'s coming next.', bgGradient: 'linear-gradient(135deg, #1e40af, #3b82f6)', link: 'https://github.com/matthewhand/open-hivemind/blob/main/ANNOUNCEMENT.md' },
   ];
+
+  const handleSlideClick = (item: { link?: string }) => {
+    if (item.link) {
+      if (item.link.startsWith('http')) {
+        window.open(item.link, '_blank');
+      } else {
+        navigate(item.link);
+      }
+    }
+  };
 
   const setTab = (tab: string) => {
     if (tab === 'dashboard') {
@@ -137,6 +163,8 @@ const DashboardPage: React.FC = () => {
         <h3 className="text-sm font-bold uppercase tracking-wider text-base-content/40 mb-2">Getting Started</h3>
         <Carousel items={carouselItems} autoplay={true} interval={6000} variant="full-width" />
       </div>
+
+      <QuickActions onRefresh={() => {}} />
 
       <div className="flex justify-end items-center mb-4 px-4 gap-3 bg-base-100/50 p-2 rounded-lg shadow-sm w-fit ml-auto">
         <span className="text-sm font-medium opacity-80">Static Layout</span>

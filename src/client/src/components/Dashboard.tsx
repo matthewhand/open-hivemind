@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { apiService, type Bot, type StatusResponse } from '../services/api';
 import { Alert } from './DaisyUI/Alert';
 import Button from './DaisyUI/Button';
@@ -9,11 +8,7 @@ import RadialProgress from './DaisyUI/RadialProgress';
 import { SkeletonCard } from './DaisyUI/Skeleton';
 import { Stat, Stats } from './DaisyUI/Stat';
 import DashboardBotCard from './DashboardBotCard';
-import TipRotator from './TipRotator';
-import QuickActions from './QuickActions';
 import AgentGrid from './Dashboard/AgentGrid';
-import Carousel from './DaisyUI/Carousel';
-import { useMediaQuery } from '../hooks/useBreakpoint';
 
 const getStatusColor = (botStatus: string) => {
   switch (botStatus.toLowerCase()) {
@@ -47,9 +42,6 @@ const getProviderIcon = (provider: string) => {
 };
 
 const Dashboard: React.FC = () => {
-  const navigate = useNavigate();
-  const isDesktop = useMediaQuery({ minWidth: 1024 });
-  const isWide = useMediaQuery({ minWidth: 1440 });
   const [bots, setBots] = useState<Bot[]>([]);
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,7 +49,6 @@ const Dashboard: React.FC = () => {
   const [botRatings, setBotRatings] = useState<Record<string, number>>({});
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-  const [announcement, setAnnouncement] = useState<string>('');
 
   const fetchData = useCallback(async () => {
     try {
@@ -83,10 +74,6 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-    // Fetch announcement
-    apiService.get<{ announcement?: string }>('/api/dashboard/announcement')
-      .then((data: any) => { if (data?.announcement) setAnnouncement(data.announcement); })
-      .catch(() => { /* no announcement */ });
   }, [fetchData]);
 
   const handleRatingChange = useCallback((botName: string, rating: number) => {
@@ -218,44 +205,8 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Quick Actions — flush to top, full width */}
-      <QuickActions onRefresh={fetchData} />
-
-      <div className="px-2 mb-2">
-        {/* Getting Started Carousel — full width */}
-        <div className="mb-4">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-base-content/40 mb-1">Getting Started</h3>
-          <Carousel
-            items={[
-              { image: '', title: '🤖 Configure Your First Bot', description: 'Set up an AI agent with a persona and LLM provider.', bgGradient: 'linear-gradient(135deg, #4f46e5, #7c3aed)', link: '/admin/bots' },
-              { image: '', title: '🧠 Connect an LLM Provider', description: 'Add your OpenAI, Anthropic, or Ollama API key.', bgGradient: 'linear-gradient(135deg, #059669, #10b981)', link: '/admin/providers/llm' },
-              { image: '', title: '🎭 Create a Persona', description: 'Give your bot a unique personality and response behavior.', bgGradient: 'linear-gradient(135deg, #0891b2, #06b6d4)', link: '/admin/personas' },
-              { image: '', title: '🛡️ Set Up Guard Profiles', description: 'Add safety rules for access control and rate limiting.', bgGradient: 'linear-gradient(135deg, #d97706, #f59e0b)', link: '/admin/guards' },
-              { image: '', title: '📊 Real-time Monitoring', description: 'Monitor performance, messages, and system health.', bgGradient: 'linear-gradient(135deg, #7c3aed, #a855f7)', link: '/admin/monitoring' },
-              ...(announcement ? [{ image: '', title: '📋 Announcements', description: announcement, bgGradient: 'linear-gradient(135deg, #1e40af, #3b82f6)' }] : []),
-            ]}
-            autoplay
-            interval={6000}
-            variant="full-width"
-            visibleCount={isWide ? 4 : isDesktop ? 3 : 1}
-            onSlideClick={(item) => item.link && navigate(item.link)}
-          />
-        </div>
-
-        {/* Stats Overview — full width below carousel */}
-        <div>
-          <h3 className="text-xs font-bold uppercase tracking-wider text-base-content/40 mb-1">Overview</h3>
-          <Stats className="shadow-sm bg-base-200/50 w-full">
-            <Stat title="Active Bots" value={activeBots} valueClassName="text-primary text-xl" description={`out of ${bots.length} total`} />
-            <Stat title="Total Messages" value={totalMessages.toLocaleString()} valueClassName="text-secondary text-xl" description="processed today" />
-            <Stat title="System Uptime" value={<>{uptimeHours}h {uptimeMinutes}m</>} valueClassName="text-accent text-xl" description="running smoothly" />
-          </Stats>
-        </div>
-      </div>
-
       {/* Main Content */}
       <div className="px-2 py-2">
-        <TipRotator className="mb-4 px-2" />
 
         {/* Bot Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">

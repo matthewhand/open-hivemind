@@ -17,7 +17,6 @@ import { Badge } from './DaisyUI/Badge';
 import Steps from './DaisyUI/Steps';
 import { apiService } from '../services/api';
 import AnnouncementBanner from './AnnouncementBanner';
-import TipRotator from './TipRotator';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -170,9 +169,6 @@ const WelcomeSplash: React.FC = () => {
 
       {/* Announcement Banner */}
       <AnnouncementBanner />
-
-      {/* User Tips */}
-      <TipRotator className="flex items-center gap-2 text-sm text-base-content/70 px-4" />
 
       {/* Configuration Progress */}
       <Card className="bg-base-100 shadow-lg">
