@@ -17,9 +17,9 @@ import { UserConfigStore } from '../config/UserConfigStore';
 import { DatabaseManager } from '../database/DatabaseManager';
 import { SchemaManager } from '../database/SchemaManager';
 import { BotManager } from '../managers/BotManager';
-import DemoModeService from '../services/DemoModeService';
 import { RealTimeValidationService } from '../server/services/RealTimeValidationService';
 import { WebSocketService } from '../server/services/WebSocketService';
+import DemoModeService from '../services/DemoModeService';
 import { container, TOKENS } from './container';
 
 const logger = Logger.withContext('DI');
