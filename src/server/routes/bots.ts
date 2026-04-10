@@ -316,7 +316,7 @@ router.get(
       if (!bot) {
         return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Bot not found'));
       }
-      
+
       // Get bot status and stats
       const statuses = await manager.getBotsStatus();
       const statusMap = new Map(statuses.map((s) => [s.id, s.isRunning]));
@@ -325,7 +325,7 @@ router.get(
         errors: [],
         errorCount: 0,
       };
-      
+
       const result = {
         id: bot.id,
         name: bot.name,
@@ -341,7 +341,7 @@ router.get(
         isActive: bot.isActive,
         // Note: envOverrides intentionally excluded to avoid exposing sensitive data
       };
-      
+
       return res.json(ApiResponse.success(result));
     } catch (error: unknown) {
       logger.error(

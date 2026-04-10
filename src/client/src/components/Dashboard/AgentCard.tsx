@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import Card from '../DaisyUI/Card';
 import Chip from '../DaisyUI/Chip';
 import Select from '../DaisyUI/Select';
@@ -354,4 +354,5 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
   );
 };
 
-export default AgentCard;
+// ⚡ Bolt Optimization: Added memo() to prevent unnecessary re-renders in grid lists
+export default memo(AgentCard);

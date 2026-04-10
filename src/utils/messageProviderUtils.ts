@@ -7,7 +7,7 @@ export const getMessageProviderConfig = (providerId: string) => {
   return {
     id: providerId,
     name: providerId,
-    enabled: true
+    enabled: true,
   };
 };
 
