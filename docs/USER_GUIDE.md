@@ -28,6 +28,8 @@ Welcome to the Open-Hivemind User Guide. This document provides a detailed walkt
   - [System Management](#system-management)
   - [Global Defaults](#global-defaults)
   - [Demo Mode](#demo-mode)
+  - [Onboarding Wizard](#onboarding-wizard)
+  - [Command Palette](#command-palette)
 - [AI & Analytics](#ai--analytics)
   - [Integrations](#integrations)
 - [Developer & Tools](#developer--tools)
@@ -259,8 +261,54 @@ Manage system and provider settings (convict configs) for your application and p
 
 ### Demo Mode
 When running the application without configuration (e.g., first launch), a **Demo Mode** banner appears.
+
+![Demo Mode Banner](screenshots/demo-mode-banner.png)
+
+![Demo Mode Dashboard](screenshots/demo-mode-dashboard.png)
+
 *   **Simulation**: The system simulates bot activity, conversations, and metrics to demonstrate platform capabilities.
-*   **Visual Indicator**: A purple banner indicates that data is simulated and not persisted.
+*   **Visual Indicator**: A purple banner at the top of every page indicates that data is simulated and not persisted.
+*   **Realistic data**: Demo mode seeds example bots, personas, and activity events so every page has content to explore.
+*   **Exiting demo mode**: Complete the Setup Wizard (accessible via the banner's **Get Started** button or **Settings → Setup Wizard**) to switch to live configuration.
+
+---
+
+### Onboarding Wizard
+
+The Setup Wizard guides you through the minimum configuration required to run a live bot. It launches automatically on first start and can be re-run at any time from **Settings → Rerun Setup Wizard**.
+
+**Steps:**
+
+| Step | What you configure |
+|------|-------------------|
+| 1. Welcome | Overview of what's needed |
+| 2. Message Provider | Choose a platform (Discord, Slack, Mattermost) and enter credentials |
+| 3. LLM Provider | Choose an AI provider (OpenAI, Flowise, OpenWebUI) and enter API key |
+| 4. Create a Bot | Name your first bot and link it to the providers from steps 2 & 3 |
+| 5. Review | Confirm configuration and launch |
+
+*   If you skip a step the wizard marks it incomplete; you can still navigate forward and return later.
+*   Configured providers are shown with a green check on the wizard summary page.
+
+---
+
+### Command Palette
+
+Press **Ctrl + K** (or **⌘ K** on macOS) anywhere in the admin UI to open the Command Palette.
+
+*   **Search**: Type any page name, route segment, or section keyword to filter instantly.
+*   **Keyboard navigation**: Use **↑ / ↓** arrow keys to move between results, **Enter** to navigate, **Esc** to close.
+*   **Screen reader support**: The palette announces the result count after each keystroke and traps focus within the dialog.
+
+**Available shortcut keys:**
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl + K` | Open / close Command Palette |
+| `F1` | Open Help & FAQ page |
+| `Esc` | Close any open modal or palette |
+| `↑ / ↓` | Navigate Command Palette results |
+| `Enter` | Select highlighted Command Palette item |
 
 ---
 
@@ -365,10 +413,10 @@ To view these static pages, navigate to **Developer & Tools > Static Pages** in 
 To ensure this guide remains up-to-date, screenshots are automatically generated using Playwright.
 
 **Automated Update (GitHub Actions):**
-You can trigger the **Update Screenshots** workflow manually from the Actions tab in GitHub.
+You can trigger the **Update Screenshots** workflow manually from the Actions tab in GitHub. This workflow captures screenshots dynamically on demand.
 
 **Manual Update (Local):**
 ```bash
 npm run generate-docs
 ```
-This process runs the End-to-End (E2E) tests located in `tests/e2e/screenshot-*.spec.ts`, captures the UI state, and saves the images to `docs/screenshots/`.
+This process runs the End-to-End (E2E) tests located in `tests/e2e/screenshot-*.spec.ts`, captures the UI state natively, and saves the images to `docs/screenshots/`.
