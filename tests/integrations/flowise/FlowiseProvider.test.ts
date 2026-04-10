@@ -1,4 +1,4 @@
-import flowiseConfig from '../../../packages/llm-flowise/src/flowiseConfig';
+import flowiseConfig from '../../../src/config/flowiseConfig';
 import flowiseProvider from '../../../packages/llm-flowise/src/flowiseProvider';
 import { getFlowiseResponse } from '../../../packages/llm-flowise/src/flowiseRestClient';
 import { getFlowiseSdkResponse } from '../../../packages/llm-flowise/src/flowiseSdkClient';
@@ -9,7 +9,7 @@ import { resetAllCircuitBreakers } from '@common/CircuitBreaker';
 jest.mock('../../../packages/llm-flowise/src/flowiseRestClient');
 jest.mock('../../../packages/llm-flowise/src/flowiseSdkClient');
 jest.mock('../../../src/llm/getLlmProvider');
-jest.mock('../../../packages/llm-flowise/src/flowiseConfig');
+jest.mock('../../../src/config/flowiseConfig');
 
 const mockedGetFlowiseResponse = getFlowiseResponse as jest.Mock;
 const mockedGetFlowiseSdkResponse = getFlowiseSdkResponse as jest.Mock;
