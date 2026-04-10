@@ -50,12 +50,23 @@ export class ConfigExporter {
   /**
    * Export a set of bot configurations to a file.
    */
+  /** Maximum number of configurations allowed in a single export (guards against runaway exports). */
+  static readonly MAX_EXPORT_CONFIGS = 500;
+
   async exportConfigurations(
     configIds: number[],
     options: ExportOptions,
     fileName?: string,
     createdBy?: string
   ): Promise<ExportResult> {
+    if (configIds.length > ConfigExporter.MAX_EXPORT_CONFIGS) {
+      return {
+        success: false,
+        error: `Export exceeds the ${ConfigExporter.MAX_EXPORT_CONFIGS}-configuration limit. Split into smaller batches.`,
+      };
+    }
+
+    const exportStartMs = Date.now();
     try {
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const baseFileName = fileName || `configurations-export-${timestamp}`;
@@ -157,10 +168,17 @@ export class ConfigExporter {
 
       await fs.writeFile(filePath, data);
       const checksum = calculateChecksum(data);
+      const durationMs = Date.now() - exportStartMs;
 
-      debug(`Exported ${configs.length} configurations to ${filePath}`);
+      debug(`Exported ${configs.length} configurations to ${filePath} in ${durationMs}ms`);
 
-      return { success: true, filePath, size: data.length, checksum };
+      return {
+        success: true,
+        filePath,
+        size: data.length,
+        checksum,
+        metadata: { durationMs, configCount: configs.length },
+      };
     } catch (error) {
       debug('Error exporting configurations:', error);
       return { success: false, error: ErrorUtils.getMessage(error) };
