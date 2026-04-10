@@ -8,7 +8,8 @@ import { ConfigurationValidator } from '../../src/server/services/ConfigurationV
 jest.mock('../../src/database/DatabaseManager');
 (DatabaseManager.getInstance as jest.Mock).mockReturnValue({});
 
-// Mock ConfigurationValidator
+// Mock ConfigurationValidator - store reference so tests can override behavior
+const mockValidateBotConfig = jest.fn().mockReturnValue({ isValid: true, errors: [] });
 jest.mock('../../src/server/services/ConfigurationValidator', () => {
   const validateBotConfigMock = jest.fn().mockReturnValue({ isValid: true, errors: [] });
   const MockConfigurationValidator = jest.fn().mockImplementation(() => ({
@@ -16,7 +17,11 @@ jest.mock('../../src/server/services/ConfigurationValidator', () => {
   }));
   (MockConfigurationValidator as any)._validateBotConfigMock = validateBotConfigMock;
   return {
-    ConfigurationValidator: MockConfigurationValidator,
+    ConfigurationValidator: jest.fn().mockImplementation(() => {
+      return {
+        validateBotConfig: mockValidateBotConfig,
+      };
+    }),
   };
 });
 
@@ -95,8 +100,7 @@ describe('ConfigurationTemplateService - Enhanced Security Tests', () => {
     });
 
     test('should validate template configuration on create', async () => {
-      const configValidator = (service as any).configValidator;
-      jest.spyOn(configValidator, 'validateBotConfig').mockReturnValueOnce({
+      mockValidateBotConfig.mockReturnValueOnce({
         isValid: false,
         errors: ['Invalid config'],
       } as any);
@@ -127,8 +131,7 @@ describe('ConfigurationTemplateService - Enhanced Security Tests', () => {
         },
       });
 
-      const configValidator = (service as any).configValidator;
-      jest.spyOn(configValidator, 'validateBotConfig').mockReturnValueOnce({
+      mockValidateBotConfig.mockReturnValueOnce({
         isValid: false,
         errors: ['Invalid update config'],
       } as any);
@@ -538,6 +541,9 @@ describe('ConfigurationTemplateService - Enhanced Security Tests', () => {
       });
 
       await service.deleteTemplate(template1.id);
+
+      // Ensure Date.now() advances so the generated ID suffix differs
+      await new Promise((resolve) => setTimeout(resolve, 2));
 
       const template2 = await service.createTemplate({
         name: 'Same Name',

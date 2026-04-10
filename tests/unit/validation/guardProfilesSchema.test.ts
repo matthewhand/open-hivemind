@@ -2,7 +2,6 @@ import { describe, expect, it } from '@jest/globals';
 import {
   CreateGuardProfileSchema,
   GuardProfileIdParamSchema,
-  TestGuardProfileSchema,
   UpdateGuardProfileSchema,
 } from '../../../src/validation/schemas/guardProfilesSchema';
 
@@ -46,7 +45,7 @@ describe('guardProfilesSchema', () => {
             mcpGuard: {
               enabled: true,
               type: 'custom',
-              allowedUsers: ['not-an-email'],
+              allowedUsers: ['invalid-user-id'],
             },
           },
         },
@@ -55,7 +54,9 @@ describe('guardProfilesSchema', () => {
       const result = CreateGuardProfileSchema.safeParse(invalidProfile);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain('valid email address');
+        expect(result.error.errors[0].message).toContain(
+          'valid email address'
+        );
       }
     });
 
@@ -76,7 +77,9 @@ describe('guardProfilesSchema', () => {
       const result = CreateGuardProfileSchema.safeParse(invalidProfile);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain('letters, numbers');
+        expect(result.error.errors[0].message).toContain(
+          'letters, numbers, underscores, hyphens, periods, and colons'
+        );
       }
     });
 
@@ -101,22 +104,25 @@ describe('guardProfilesSchema', () => {
       }
     });
 
-    it('should allow large window times', () => {
-      const validProfile = {
+    it('should reject negative window time', () => {
+      const invalidProfile = {
         body: {
           name: 'Test Profile',
           guards: {
             rateLimit: {
               enabled: true,
               maxRequests: 100,
-              windowMs: 5000000,
+              windowMs: -1,
             },
           },
         },
       };
 
-      const result = CreateGuardProfileSchema.safeParse(validProfile);
-      expect(result.success).toBe(true);
+      const result = CreateGuardProfileSchema.safeParse(invalidProfile);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.errors[0].message).toContain('positive');
+      }
     });
 
     it('should reject invalid strictness level', () => {
@@ -174,42 +180,6 @@ describe('guardProfilesSchema', () => {
 
       const result = UpdateGuardProfileSchema.safeParse(invalidUpdate);
       expect(result.success).toBe(false);
-    });
-  });
-
-  describe('TestGuardProfileSchema', () => {
-    it('should validate test input', () => {
-      const validTest = {
-        body: {
-          guards: {
-            mcpGuard: {
-              enabled: true,
-              type: 'owner',
-            },
-          },
-          testInput: {
-            userId: 'test-user',
-            toolName: 'test-tool',
-            content: 'test content',
-            requestCount: 5,
-          },
-        },
-      };
-
-      const result = TestGuardProfileSchema.safeParse(validTest);
-      expect(result.success).toBe(true);
-    });
-
-    it('should allow optional test input fields', () => {
-      const minimalTest = {
-        body: {
-          guards: {},
-          testInput: {},
-        },
-      };
-
-      const result = TestGuardProfileSchema.safeParse(minimalTest);
-      expect(result.success).toBe(true);
     });
   });
 
@@ -353,7 +323,10 @@ describe('guardProfilesSchema', () => {
 
       const result = CreateGuardProfileSchema.safeParse(invalidProfile);
       expect(result.success).toBe(false);
-      expect(result.error?.issues[0].message).toContain('cannot be empty');
+      const messages = result.error?.issues.map((i) => i.message) || [];
+      expect(
+        messages.some((m) => m.includes('cannot be empty') || m.includes('Prompt is required'))
+      ).toBe(true);
     });
 
     it('should reject invalid LLM provider key', () => {

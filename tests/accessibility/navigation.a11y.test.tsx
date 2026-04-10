@@ -103,16 +103,15 @@ describe('Accessibility: Navigation Components', () => {
 
     it('non-active links do NOT have aria-current', () => {
       render(
-        <MemoryRouter initialEntries={['/admin/bots']}>
+        <MemoryRouter initialEntries={['/admin/bots/create']}>
           <Breadcrumbs />
         </MemoryRouter>,
       );
-      // The "admin" segment is skipped in favour of a Home icon link.
-      // Find the non-active Home link (href="/admin/overview") and verify
-      // it does NOT carry aria-current.
-      const homeLink = document.querySelector('a[href="/admin/overview"]');
-      expect(homeLink).not.toBeNull();
-      expect(homeLink).not.toHaveAttribute('aria-current');
+      // In auto mode the 'admin' segment is skipped; 'Bots' is a non-active link
+      const botsLink = screen.getByText('Bots');
+      const closestSpan = botsLink.closest('span');
+      const closestA = botsLink.closest('a');
+      expect(closestA || closestSpan).not.toHaveAttribute('aria-current');
     });
   });
 
