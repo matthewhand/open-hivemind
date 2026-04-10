@@ -128,6 +128,10 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
           <input
             ref={inputRef}
             type="text"
+            role="combobox"
+            aria-expanded="true"
+            aria-controls="command-palette-results"
+            aria-activedescendant={filtered.length > 0 && selectedIndex >= 0 ? `palette-item-${filtered[selectedIndex].id}` : undefined}
             className="input input-ghost w-full focus:outline-none border-none bg-transparent py-4 text-base"
             placeholder="Type a command or search..."
             value={query}
@@ -139,6 +143,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
 
         {/* Results list */}
         <ul
+          id="command-palette-results"
           ref={listRef}
           className="max-h-72 overflow-y-auto py-2"
           role="listbox" aria-label="Command results"
@@ -152,6 +157,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
             const isActive = idx === selectedIndex;
             return (
               <li
+                id={`palette-item-${item.id}`}
                 key={item.id}
                 role="option"
                 aria-selected={isActive}
