@@ -67,7 +67,7 @@ export async function initializeBotProvider(
         `Provider ${bot.messageProvider} service unavailable or does not support addBot`
       );
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     debug(`Error initializing bot provider for ${bot.name}:`, ErrorUtils.getMessage(error));
     throw error;
   }
@@ -86,7 +86,7 @@ export async function shutdownBotProvider(bot: BotInstance): Promise<void> {
       await service.removeBot(bot.name);
     }
     debug(`Shutdown bot provider for ${bot.name}`);
-  } catch (error: any) {
+  } catch (error: unknown) {
     debug(`Error shutting down bot provider for ${bot.name}:`, ErrorUtils.getMessage(error));
     throw error;
   }
@@ -118,7 +118,7 @@ export async function startBotById(
     runningState.set(botId, true);
     debug(`Bot ${bot.name} started successfully`);
     emitter.emit('botStarted', { botId, name: bot.name });
-  } catch (error: any) {
+  } catch (error: unknown) {
     debug(`Failed to start bot ${botId}:`, ErrorUtils.getMessage(error));
     emitter.emit('botError', { botId, error });
     throw error;
@@ -150,7 +150,7 @@ export async function stopBotById(
     runningState.set(botId, false);
     debug(`Bot ${bot.name} stopped successfully`);
     emitter.emit('botStopped', { botId, name: bot.name });
-  } catch (error: any) {
+  } catch (error: unknown) {
     debug(`Failed to stop bot ${botId}:`, ErrorUtils.getMessage(error));
     emitter.emit('botError', { botId, error });
     throw error;
@@ -178,8 +178,11 @@ export async function sendWelcomeMessage(bot: BotInstance): Promise<void> {
         debug(`Sent welcome message for bot ${bot.name} to channel ${defaultChannel}`);
       }
     }
-  } catch (welcomeErr: any) {
-    debug(`Failed to send welcome message for ${bot.name}:`, welcomeErr?.message);
+  } catch (welcomeErr: unknown) {
+    debug(
+      `Failed to send welcome message for ${bot.name}:`,
+      welcomeErr instanceof Error ? welcomeErr.message : String(welcomeErr)
+    );
   }
 }
 
@@ -197,7 +200,7 @@ export async function stopBotServicesAndConnections(bot: BotInstance): Promise<v
         try {
           await service.stop();
           debug(`Stopped service for bot: ${bot.name} (${bot.id})`);
-        } catch (serviceError: any) {
+        } catch (serviceError: unknown) {
           debug(`Error stopping service for bot ${bot.name}:`, ErrorUtils.getMessage(serviceError));
         }
       }
@@ -214,7 +217,7 @@ export async function stopBotServicesAndConnections(bot: BotInstance): Promise<v
         try {
           await connection.close();
           debug(`Closed connection for bot: ${bot.name} (${bot.id})`);
-        } catch (connectionError: any) {
+        } catch (connectionError: unknown) {
           debug(
             `Error closing connection for bot ${bot.name}:`,
             ErrorUtils.getMessage(connectionError)

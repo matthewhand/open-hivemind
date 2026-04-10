@@ -92,7 +92,7 @@ export class SessionManager {
     const newToken = this.authManager.generateAccessToken(user);
 
     // Store new session
-    await this.sessionStore.storeSession(payload.userId, newToken, payload.role);
+    await this.sessionStore.storeSession(payload.userId, newToken, payload.role ?? 'user');
 
     debug('Token rotated for user: %s', payload.userId);
     return newToken;
@@ -112,8 +112,8 @@ export class SessionManager {
   /**
    * Session middleware for Express
    */
-  public sessionMiddleware() {
-    return async (req: Request, res: Response, next: NextFunction) => {
+  public sessionMiddleware(): (req: Request, res: Response, next: NextFunction) => Promise<void> {
+    return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       const authHeader = req.headers['authorization'];
       const token = authHeader && authHeader.split(' ')[1];
 

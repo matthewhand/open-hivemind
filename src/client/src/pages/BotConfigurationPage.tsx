@@ -236,8 +236,8 @@ const BotConfigurationPage: React.FC = () => {
       const data: any = await apiService.get('/api/config/global');
       setConfigs(data || {});
       await fetchRollbacks();
-    } catch (err: any) {
-      const message = err.message || 'Failed to fetch configuration';
+    } catch (err: unknown) {
+      const message = (err instanceof Error ? err.message : String(err)) || 'Failed to fetch configuration';
       setError(message);
       errorToast('Configuration Error', message);
     } finally {
@@ -261,8 +261,8 @@ const BotConfigurationPage: React.FC = () => {
       setIsRollbackModalOpen(false);
       setSelectedSnapshot(null);
       await fetchConfigs();
-    } catch (err: any) {
-      setError(err.message || 'Failed to rollback configuration');
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : String(err)) || 'Failed to rollback configuration');
     } finally {
       setRollingBack(false);
     }
@@ -283,8 +283,8 @@ const BotConfigurationPage: React.FC = () => {
 
       // Refresh to get updated values
       await fetchConfigs();
-    } catch (err: any) {
-      setError(err.message || 'Failed to save configuration');
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : String(err)) || 'Failed to save configuration');
     } finally {
       setSaving(false);
     }

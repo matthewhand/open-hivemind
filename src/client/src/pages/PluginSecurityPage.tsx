@@ -61,8 +61,8 @@ const PluginSecurityPage: React.FC = () => {
       if (!response.ok) throw new Error('Failed to fetch plugin security status');
       const data = await response.json();
       setPlugins(data.data?.plugins || []);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load plugin security status');
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : String(err)) || 'Failed to load plugin security status');
     } finally {
       setLoading(false);
     }
@@ -84,8 +84,8 @@ const PluginSecurityPage: React.FC = () => {
       const data = await response.json();
       setSuccessMessage(`Plugin '${pluginName}' verified successfully`);
       await fetchPluginSecurity();
-    } catch (err: any) {
-      setError(err.message || 'Failed to verify plugin');
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : String(err)) || 'Failed to verify plugin');
     } finally {
       setActionInProgress(null);
     }
@@ -112,8 +112,8 @@ const PluginSecurityPage: React.FC = () => {
           : `Plugin '${pluginName}' marked as untrusted`
       );
       await fetchPluginSecurity();
-    } catch (err: any) {
-      setError(err.message || 'Failed to update plugin trust');
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : String(err)) || 'Failed to update plugin trust');
     } finally {
       setActionInProgress(null);
     }
@@ -299,6 +299,7 @@ const PluginSecurityPage: React.FC = () => {
           className="py-12"
         />
       ) : (
+        <>
         <div className="grid grid-cols-1 gap-4">
           {paginatedPlugins.map((plugin) => (
             <Card key={plugin.pluginName} className="hover:shadow-lg transition-shadow">
@@ -427,6 +428,7 @@ const PluginSecurityPage: React.FC = () => {
             style="standard"
           />
         </div>
+        </>
       )}
 
       {/* Confirm Modal */}

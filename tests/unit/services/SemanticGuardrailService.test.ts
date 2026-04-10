@@ -1,5 +1,5 @@
-import { SemanticGuardrailService } from '@src/services/SemanticGuardrailService';
 import type { SemanticGuardrailConfig } from '@src/config/guardrailProfiles';
+import { SemanticGuardrailService } from '@src/services/SemanticGuardrailService';
 
 // Mock the dependencies
 jest.mock('@src/llm/getLlmProvider');
@@ -33,10 +33,7 @@ describe('SemanticGuardrailService', () => {
         enabled: false,
       };
 
-      const result = await service.evaluateContent(
-        { content: 'Hello world' },
-        config
-      );
+      const result = await service.evaluateContent({ content: 'Hello world' }, config);
 
       expect(result.allowed).toBe(true);
       expect(result.reason).toBe('Semantic guardrail disabled');
@@ -49,10 +46,7 @@ describe('SemanticGuardrailService', () => {
         // No prompt configured
       };
 
-      const result = await service.evaluateContent(
-        { content: 'Hello world' },
-        config
-      );
+      const result = await service.evaluateContent({ content: 'Hello world' }, config);
 
       expect(result.allowed).toBe(true);
       expect(result.reason).toBe('No prompt configured');
@@ -70,10 +64,7 @@ describe('SemanticGuardrailService', () => {
       const { getLlmProvider } = require('@src/llm/getLlmProvider');
       getLlmProvider.mockResolvedValue([]);
 
-      const result = await service.evaluateContent(
-        { content: 'Hello world' },
-        config
-      );
+      const result = await service.evaluateContent({ content: 'Hello world' }, config);
 
       expect(result.allowed).toBe(true);
       expect(result.reason).toBe('LLM provider not available');
@@ -93,10 +84,7 @@ describe('SemanticGuardrailService', () => {
       };
       getLlmProvider.mockResolvedValue([mockProvider]);
 
-      const result = await service.evaluateContent(
-        { content: 'Hello world' },
-        config
-      );
+      const result = await service.evaluateContent({ content: 'Hello world' }, config);
 
       expect(result.allowed).toBe(true);
       expect(result.reason).toBe('Guardrail evaluation failed');
@@ -116,10 +104,7 @@ describe('SemanticGuardrailService', () => {
       };
       getLlmProvider.mockResolvedValue([mockProvider]);
 
-      const result = await service.evaluateContent(
-        { content: 'Harmful content' },
-        config
-      );
+      const result = await service.evaluateContent({ content: 'Harmful content' }, config);
 
       expect(result.allowed).toBe(false);
       expect(result.reason).toBe('Content blocked by semantic analysis');
@@ -140,10 +125,7 @@ describe('SemanticGuardrailService', () => {
       };
       getLlmProvider.mockResolvedValue([mockProvider]);
 
-      const result = await service.evaluateContent(
-        { content: 'Safe content' },
-        config
-      );
+      const result = await service.evaluateContent({ content: 'Safe content' }, config);
 
       expect(result.allowed).toBe(true);
       expect(result.reason).toBe('Content approved by semantic analysis');
@@ -168,10 +150,7 @@ describe('SemanticGuardrailService', () => {
       };
       getLlmProvider.mockResolvedValue([mockProvider]);
 
-      const result = await service.evaluateContent(
-        { content: 'Test content' },
-        config
-      );
+      const result = await service.evaluateContent({ content: 'Test content' }, config);
 
       expect(mockProvider.generateCompletion).toHaveBeenCalled();
       expect(result.allowed).toBe(true);
@@ -191,11 +170,10 @@ describe('SemanticGuardrailService', () => {
       };
       getLlmProvider.mockResolvedValue([mockProvider]);
 
-      const result = await service.evaluateInput(
-        'Test input',
-        config,
-        { userId: 'user123', channelId: 'channel456' }
-      );
+      const result = await service.evaluateInput('Test input', config, {
+        userId: 'user123',
+        channelId: 'channel456',
+      });
 
       expect(result.allowed).toBe(true);
       expect(mockProvider.generateCompletion).toHaveBeenCalledWith(
@@ -217,11 +195,10 @@ describe('SemanticGuardrailService', () => {
       };
       getLlmProvider.mockResolvedValue([mockProvider]);
 
-      const result = await service.evaluateOutput(
-        'Test output',
-        config,
-        { userId: 'user123', channelId: 'channel456' }
-      );
+      const result = await service.evaluateOutput('Test output', config, {
+        userId: 'user123',
+        channelId: 'channel456',
+      });
 
       expect(result.allowed).toBe(true);
       expect(mockProvider.generateCompletion).toHaveBeenCalledWith(

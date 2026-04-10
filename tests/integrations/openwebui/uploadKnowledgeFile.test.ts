@@ -6,8 +6,8 @@ describe('openwebui/uploadKnowledgeFile', () => {
 
   const loadIsolated = (opts?: {
     exists?: boolean;
-    axiosResolve?: any;
-    axiosReject?: any;
+    httpResolve?: any;
+    httpReject?: any;
     responseMissingId?: boolean;
     configuredPath?: string;
   }) => {
@@ -16,22 +16,22 @@ describe('openwebui/uploadKnowledgeFile', () => {
     const exists = opts?.exists ?? true;
     const configuredPath = opts?.configuredPath ?? knowledgePath;
 
-    const axiosPost = jest.fn();
-    if (opts?.axiosReject) {
-      axiosPost.mockRejectedValue(opts.axiosReject);
+    const httpPost = jest.fn();
+    if (opts?.httpReject) {
+      httpPost.mockRejectedValue(opts.httpReject);
     } else if (opts?.responseMissingId) {
-      axiosPost.mockResolvedValue({ data: {} });
-    } else if (opts?.axiosResolve) {
-      axiosPost.mockResolvedValue(opts.axiosResolve);
+      httpPost.mockResolvedValue({});
+    } else if (opts?.httpResolve) {
+      httpPost.mockResolvedValue(opts.httpResolve);
     } else {
-      axiosPost.mockResolvedValue({ data: { fileId: 'file-123' } });
+      httpPost.mockResolvedValue({ fileId: 'file-123' });
     }
 
     // Mock debug: silence logs
     jest.doMock('debug', () => () => jest.fn());
 
     // Mock config with apiUrl and knowledgeFile
-    jest.doMock('../../../src/integrations/openwebui/openWebUIConfig', () => ({
+    jest.doMock('@integrations/openwebui/openWebUIConfig', () => ({
       __esModule: true,
       default: {
         getProperties: () => ({
@@ -45,56 +45,45 @@ describe('openwebui/uploadKnowledgeFile', () => {
     }));
 
     // Mock sessionManager.getSessionKey to return a stable token
-    jest.doMock('../../../src/integrations/openwebui/sessionManager', () => ({
+    jest.doMock('@integrations/openwebui/sessionManager', () => ({
       __esModule: true,
       getSessionKey: jest.fn().mockResolvedValue('sk-abc'),
-    }));
+    }), { virtual: true });
 
-    // Mock fs.promises.access and fs.createReadStream
+    // Mock fs with existsSync and createReadStream
     jest.doMock('fs', () => {
-      const access = exists
-        ? jest.fn().mockResolvedValue(undefined)
-        : jest.fn().mockRejectedValue(new Error('ENOENT'));
-      const createReadStream = jest.fn().mockReturnValue({ _fakeStream: true });
       return {
         __esModule: true,
         default: {
-          promises: { access },
-          createReadStream,
+          existsSync: exists ? jest.fn().mockReturnValue(true) : jest.fn().mockReturnValue(false),
+          createReadStream: jest.fn().mockReturnValue({ _fakeStream: true }),
           constants: { F_OK: 0 },
         },
-        promises: { access },
-        createReadStream,
+        existsSync: exists ? jest.fn().mockReturnValue(true) : jest.fn().mockReturnValue(false),
+        createReadStream: jest.fn().mockReturnValue({ _fakeStream: true }),
         constants: { F_OK: 0 },
       };
     });
 
-    // Mock ssrfGuard to allow all URLs in tests
-    jest.doMock('../../../src/utils/ssrfGuard', () => ({
-      __esModule: true,
-      isSafeUrl: jest.fn().mockResolvedValue(true),
+    // Mock @hivemind/shared-types http
+    jest.doMock('@hivemind/shared-types', () => ({
+      http: {
+        post: httpPost,
+        get: jest.fn(),
+        put: jest.fn(),
+        delete: jest.fn(),
+        create: jest.fn(),
+      },
     }));
-
-    // Mock axios to ensure both axios.post and axios.create().post use same mock
-    jest.doMock('axios', () => {
-      const axiosMock: any = { post: axiosPost };
-      axiosMock.create = jest.fn(() => ({ post: axiosPost }));
-      return { __esModule: true, default: axiosMock };
-    });
 
     let mod: any;
     jest.isolateModules(() => {
-      mod = require('../../../src/integrations/openwebui/uploadKnowledgeFile');
+      mod = require('@integrations/openwebui/uploadKnowledgeFile');
     });
-
-    const axios = require('axios');
-    const fs = require('fs');
 
     return {
       mod,
-      axiosPost,
-      axios,
-      fs,
+      httpPost,
     };
   };
 
@@ -103,30 +92,29 @@ describe('openwebui/uploadKnowledgeFile', () => {
   });
 
   it('uploads the knowledge file and caches the returned fileId (happy path)', async () => {
-    const { mod, axiosPost } = loadIsolated({
+    const { mod, httpPost } = loadIsolated({
       exists: true,
-      axiosResolve: { data: { fileId: 'file-xyz' } },
+      httpResolve: { fileId: 'file-xyz' },
     });
 
     const { uploadKnowledgeFileOnStartup, getKnowledgeFileId } = mod;
 
     await uploadKnowledgeFileOnStartup();
 
-    // Validate axios call
-    expect(axiosPost).toHaveBeenCalledTimes(1);
-    const [url, body, options] = axiosPost.mock.calls[0];
-    // apiUrl ends with '/api/', session code appends '/v1/files' resulting in '/api//v1/files'
-    expect(url).toMatch(/\/api\/\/v1\/files$/);
-    // We pass the stream directly as body
+    // Validate http.post call
+    expect(httpPost).toHaveBeenCalledTimes(1);
+    const [url, body, options] = httpPost.mock.calls[0];
+    expect(url).toMatch(/\/v1\/files$/);
     expect(body).toBeDefined();
-    expect(body).not.toBeNull();
-    expect(options).toEqual({
-      headers: {
-        Authorization: 'Bearer sk-abc',
-        'Content-Type': 'multipart/form-data',
-      },
-      timeout: 30000,
-    });
+    expect(options).toEqual(
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: 'Bearer sk-abc',
+          'Content-Type': 'multipart/form-data',
+        }),
+        timeout: 30000,
+      })
+    );
 
     // Cached id is retrievable
     expect(getKnowledgeFileId()).toBe('file-xyz');
@@ -152,10 +140,10 @@ describe('openwebui/uploadKnowledgeFile', () => {
     await expect(uploadKnowledgeFileOnStartup()).rejects.toThrow(/Knowledge file does not exist/);
   });
 
-  it('throws generic error when axios rejects', async () => {
+  it('throws generic error when http rejects', async () => {
     const { mod } = loadIsolated({
       exists: true,
-      axiosReject: new Error('network issue'),
+      httpReject: new Error('network issue'),
     });
     const { uploadKnowledgeFileOnStartup } = mod;
 

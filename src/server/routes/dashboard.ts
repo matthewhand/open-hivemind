@@ -438,11 +438,11 @@ router.get('/announcement', async (req, res): Promise<any> => {
 router.get('/status', authenticate, requireAdmin, (req, res): any => {
   try {
     const manager = BotConfigurationManager.getInstance();
-    let bots = [];
+    let bots: Array<{ name: string; messageProvider: string; llmProvider: string }> = [];
     try {
       bots = manager.getAllBots();
     } catch (e) {
-      logger.warn('Failed to load bots for status:', e);
+      logger.warn('Failed to load bots for status:', { error: e });
       bots = [];
     }
 
@@ -674,8 +674,8 @@ function annotateEvent(
   const bot = botMap.get(event.botName);
   return {
     ...event,
-    userId: redactString(event.userId),
-    channelId: redactString(event.channelId),
+    userId: redactString(event.userId) ?? '',
+    channelId: redactString(event.channelId) ?? '',
     llmProvider: bot?.llmProvider || 'unknown',
   };
 }

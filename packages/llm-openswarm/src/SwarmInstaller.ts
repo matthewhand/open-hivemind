@@ -1,8 +1,8 @@
 import { exec, spawn } from 'child_process';
 import path from 'path';
 import { promisify } from 'util';
-import Logger from '@common/logger';
 import { type IToolInstaller } from '@src/types/IToolInstaller';
+import Logger from '@common/logger';
 
 const execAsync = promisify(exec);
 

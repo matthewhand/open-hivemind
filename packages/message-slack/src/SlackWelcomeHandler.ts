@@ -58,7 +58,7 @@ export class SlackWelcomeHandler {
     }
 
     debug(`Generating welcome message for channel ${channelName}`);
-    const llmProvider = getLlmProvider()[0];
+    const llmProvider = (await getLlmProvider())[0];
     if (!llmProvider) {
       debug('Warning: No LLM provider available, using fallback quote');
     }

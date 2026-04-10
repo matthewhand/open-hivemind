@@ -182,10 +182,10 @@ const AppRouter: React.FC = () => {
 
           <Route path="guards" element={<Navigate to="/admin/bots?tab=guards" replace />} />
 
-          {/* Activity — tabbed page (Feed, Monitoring, Live Dashboard) */}
-          <Route path="activity" element={<RouteErrorBoundary pageName="Activity"><ActivityManagementPage /></RouteErrorBoundary>} />
-          <Route path="monitoring" element={<Navigate to="/admin/activity?tab=monitoring" replace />} />
-          <Route path="monitoring-dashboard" element={<Navigate to="/admin/activity?tab=live" replace />} />
+          {/* Activity & Monitoring — now consolidated into Overview tabs */}
+          <Route path="activity" element={<Navigate to="/admin/overview?tab=activity" replace />} />
+          <Route path="monitoring" element={<Navigate to="/admin/overview?tab=monitoring" replace />} />
+          <Route path="monitoring-dashboard" element={<Navigate to="/admin/overview?tab=monitoring" replace />} />
           <Route path="analytics" element={<RouteErrorBoundary pageName="Analytics"><AnalyticsDashboard /></RouteErrorBoundary>} />
           <Route path="system-management" element={<RouteErrorBoundary pageName="System Management"><SystemManagement /></RouteErrorBoundary>} />
 

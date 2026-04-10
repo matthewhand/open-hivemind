@@ -77,8 +77,18 @@ const ChatPage: React.FC = () => {
     }
   }, []);
 
+  // ⚡ Bolt Optimization: Memoize inline functions to prevent BotListItem re-renders
+  const handleSelectBot = useCallback((id: string) => {
+    setSelectedBotId(id);
+    setSidebarOpen(false);
+  }, []);
+
+  const handleToggleDropdown = useCallback((isOpen: boolean, botId: string) => {
+    setShowProviderDropdown(isOpen ? botId : null);
+  }, []);
+
   // Hot swap LLM provider
-  const handleSwapProvider = async (botId: string, newProviderKey: string) => {
+  const handleSwapProvider = useCallback(async (botId: string, newProviderKey: string) => {
     setSwappingProvider(botId);
     try {
       await apiService.put(`/api/admin/bots/${botId}/llm-provider`, { llmProvider: newProviderKey });
@@ -95,7 +105,7 @@ const ChatPage: React.FC = () => {
       setSwappingProvider(null);
       setShowProviderDropdown(null);
     }
-  };
+  }, [showSuccess, showError]);
 
   // Fetch bots via cache layer
   const {
@@ -251,11 +261,11 @@ const ChatPage: React.FC = () => {
                 key={bot.id}
                 bot={bot}
                 isSelected={selectedBotId === bot.id}
-                onSelect={(id) => { setSelectedBotId(id); setSidebarOpen(false); }}
+                onSelect={handleSelectBot}
                 llmProviders={llmProviders}
                 swappingProvider={swappingProvider}
                 showProviderDropdown={showProviderDropdown}
-                onToggleDropdown={(isOpen, botId) => setShowProviderDropdown(isOpen ? botId : null)}
+                onToggleDropdown={handleToggleDropdown}
                 onSwapProvider={handleSwapProvider}
               />
             ))}

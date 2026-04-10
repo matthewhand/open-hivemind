@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Bot, Users, Shield, Settings, Activity, Component,
@@ -39,6 +39,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   const filtered = useMemo(() => {
@@ -75,10 +76,46 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
     selected?.scrollIntoView({ block: 'nearest' });
   }, [selectedIndex]);
 
-  const selectItem = (item: PaletteItem) => {
-    onClose();
-    navigate(item.path);
-  };
+  // Focus trap: keep Tab/Shift-Tab cycling within the dialog
+  const handleDialogKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (e.key !== 'Tab') return;
+      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (!focusable || focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    },
+    []
+  );
+
+  const selectItem = useCallback(
+    (item: PaletteItem) => {
+      onClose();
+      navigate(item.path);
+    },
+    [onClose, navigate]
+  );
+
+  // Announce result count to screen readers after query changes
+  const resultCountLabel = useMemo(() => {
+    if (!query.trim()) return '';
+    return filtered.length === 0
+      ? 'No results found'
+      : `${filtered.length} result${filtered.length === 1 ? '' : 's'}`;
+  }, [filtered.length, query]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     switch (e.key) {
@@ -116,11 +153,12 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
 
       {/* Palette card */}
       <div
+        ref={dialogRef}
         className="relative w-full max-w-lg bg-base-100 rounded-xl shadow-2xl border border-base-300 overflow-hidden"
         role="dialog"
         aria-modal="true"
         aria-label="Command palette"
-        onKeyDown={handleKeyDown}
+        onKeyDown={(e) => { handleKeyDown(e); handleDialogKeyDown(e); }}
       >
         {/* Search input */}
         <div className="flex items-center gap-2 px-4 border-b border-base-300">
@@ -129,9 +167,9 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
             ref={inputRef}
             type="text"
             role="combobox"
-            aria-expanded="true"
+            aria-expanded={isOpen}
             aria-controls="command-palette-results"
-            aria-activedescendant={filtered.length > 0 && selectedIndex >= 0 ? `palette-item-${filtered[selectedIndex].id}` : undefined}
+            aria-activedescendant={filtered[selectedIndex] ? `command-item-${filtered[selectedIndex].id}` : undefined}
             className="input input-ghost w-full focus:outline-none border-none bg-transparent py-4 text-base"
             placeholder="Type a command or search..."
             value={query}
@@ -141,12 +179,24 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
           <Kbd size="sm" className="shrink-0">Esc</Kbd>
         </div>
 
+        {/* Live region — announces result count to screen readers */}
+        <div
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          className="sr-only"
+        >
+          {resultCountLabel}
+        </div>
+
         {/* Results list */}
         <ul
           id="command-palette-results"
           ref={listRef}
+          id="command-palette-results"
           className="max-h-72 overflow-y-auto py-2"
-          role="listbox" aria-label="Command results"
+          role="listbox"
+          aria-label="Command results"
         >
           {filtered.length === 0 && (
             <li className="px-4 py-6 text-center text-base-content/50">
@@ -159,6 +209,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
               <li
                 id={`palette-item-${item.id}`}
                 key={item.id}
+                id={`command-item-${item.id}`}
                 role="option"
                 aria-selected={isActive}
                 className={`flex items-center gap-3 px-4 py-2 cursor-pointer transition-colors ${

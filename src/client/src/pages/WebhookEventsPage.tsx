@@ -132,8 +132,8 @@ const WebhookEventsPage: React.FC = () => {
         setTotalPages(json.data.totalPages);
         setTotal(json.data.total);
       }
-    } catch (err: any) {
-      setError(err.message ?? 'Failed to load webhook events');
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : String(err)) ?? 'Failed to load webhook events');
     } finally {
       setLoading(false);
     }
@@ -181,8 +181,8 @@ const WebhookEventsPage: React.FC = () => {
       if (!json.success) throw new Error(json.error);
       // Refresh the list
       fetchEvents(true);
-    } catch (err: any) {
-      setError(err.message ?? 'Retry failed');
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : String(err)) ?? 'Retry failed');
     } finally {
       setRetrying(null);
     }

@@ -157,17 +157,17 @@ const MCPToolsTestingPage: React.FC = () => {
       });
 
       setAlert({ type: 'success', message: 'Tool executed successfully!' });
-    } catch (error: any) {
+    } catch (error: unknown) {
       const executionTime = Date.now() - startTime;
 
       setTestResult({
         success: false,
-        error: error.message,
+        error: (error instanceof Error ? error.message : String(error)),
         executionTime,
         timestamp: new Date().toISOString(),
       });
 
-      setAlert({ type: 'error', message: `Test failed: ${error.message}` });
+      setAlert({ type: 'error', message: `Test failed: ${(error instanceof Error ? error.message : String(error))}` });
     } finally {
       setTesting(false);
     }
@@ -345,7 +345,7 @@ const MCPToolsTestingPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="p-6">
+      <div className="p-6" role="status" aria-label="Loading MCP tools">
         <SkeletonGrid count={6} showImage={false} />
       </div>
     );

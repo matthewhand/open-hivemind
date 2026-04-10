@@ -57,11 +57,22 @@ export const SpecSchema = z.object({
 });
 
 export const ErrorLogSchema = z.object({
-  body: z.object({
-    error: z.string().optional(),
-    message: z.string().optional(),
-    stack: z.string().optional(),
-  }),
+  body: z
+    .object({
+      error: z.string().optional(),
+      message: z.string().optional(),
+      stack: z.string().optional(),
+      correlationId: z.string().optional(),
+      name: z.string().optional(),
+      code: z.string().optional(),
+      severity: z.string().optional(),
+      timestamp: z.string().optional(),
+      componentStack: z.string().optional(),
+      userAgent: z.string().optional(),
+      url: z.string().optional(),
+      details: z.record(z.unknown()).optional(),
+    })
+    .passthrough(),
 });
 
 export const CIDeploySchema = z.object({

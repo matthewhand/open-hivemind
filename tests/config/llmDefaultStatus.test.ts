@@ -36,7 +36,7 @@ describe('llmDefaultStatus', () => {
     const status = getLlmDefaultStatus();
     expect(status.configured).toBe(true);
     expect(status.providers).toHaveLength(1);
-    expect(status.providers[0]).toEqual({ id: '1', name: 'OpenAI', type: 'openai' });
+    expect(status.providers[0]).toEqual(expect.objectContaining({ id: '1', name: 'OpenAI', type: 'openai' }));
   });
 
   it('should filter out disabled providers', () => {

@@ -69,8 +69,8 @@ async function discoverProviders(): Promise<void> {
 
     try {
       await fs.promises.access(integrationsDir, fs.constants.F_OK);
-    } catch (err: any) {
-      if (err.code === 'ENOENT') {
+    } catch (err: unknown) {
+      if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
         debug('Integrations directory not found');
         return;
       }
@@ -102,7 +102,7 @@ async function discoverProviders(): Promise<void> {
           });
           debug(`Discovered provider: ${providerName} -> ${serviceFileName}`);
           break;
-        } catch (err: any) {
+        } catch (err: unknown) {
           // File doesn't exist, try next path
           continue;
         }
@@ -161,8 +161,10 @@ export async function getMessengerServiceByProvider(
     loadedProviders.set(normalizedName, service);
     debug(`Successfully loaded provider: ${providerName}`);
     return service;
-  } catch (error: any) {
-    debug(`Failed to load provider "${providerName}": ${error.message}`);
+  } catch (error: unknown) {
+    debug(
+      `Failed to load provider "${providerName}": ${error instanceof Error ? error.message : String(error)}`
+    );
     return null;
   }
 }

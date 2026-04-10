@@ -36,7 +36,10 @@ export async function uploadKnowledgeFileOnStartup(): Promise<void> {
 
     const targetUrl = apiUrl + '/v1/files';
     const fileData = fs.createReadStream(knowledgeFile);
-    const response = await http.post<{ fileId: string }>(targetUrl, fileData, { headers: { Authorization: 'Bearer ' + sessionKey, 'Content-Type': 'multipart/form-data' }, timeout: 30000 });
+    const response = await http.post<{ fileId: string }>(targetUrl, fileData, {
+      headers: { Authorization: 'Bearer ' + sessionKey, 'Content-Type': 'multipart/form-data' },
+      timeout: 30000,
+    });
 
     knowledgeFileId = response.fileId;
     if (!knowledgeFileId) {

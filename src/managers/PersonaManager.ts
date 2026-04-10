@@ -153,8 +153,8 @@ export class PersonaManager extends EventEmitter {
       try {
         await fs.promises.access(this.personasFilePath);
         fileExists = true;
-      } catch (err: any) {
-        if (err.code !== 'ENOENT') throw err;
+      } catch (err: unknown) {
+        if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
       }
 
       if (fileExists) {
@@ -169,7 +169,7 @@ export class PersonaManager extends EventEmitter {
         // First run — seed editable copies from built-in templates and persist
         await this.seedDefaultPersonas();
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       debug('Error loading personas:', ErrorUtils.getMessage(error));
     }
   }
@@ -227,7 +227,7 @@ export class PersonaManager extends EventEmitter {
 
       await fs.promises.writeFile(this.personasFilePath, JSON.stringify(allPersonas, null, 2));
       debug(`Saved ${Object.keys(allPersonas).length} personas`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       debug('Error saving personas:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError('Failed to save personas', 'configuration');
     }

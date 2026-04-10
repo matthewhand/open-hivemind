@@ -4,29 +4,30 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Toggle from '../../../src/client/src/components/DaisyUI/Toggle';
 
+// Toggle uses role="switch" (semantic HTML) not role="checkbox"
 describe('Toggle', () => {
-  it('renders an unchecked checkbox by default', () => {
+  it('renders an unchecked switch by default', () => {
     render(<Toggle />);
-    const input = screen.getByRole('checkbox');
+    const input = screen.getByRole('switch');
     expect(input).toBeInTheDocument();
     expect(input).not.toBeChecked();
   });
 
   it('renders as checked when checked prop is true', () => {
     render(<Toggle checked onChange={jest.fn()} />);
-    expect(screen.getByRole('checkbox')).toBeChecked();
+    expect(screen.getByRole('switch')).toBeChecked();
   });
 
   it('fires onChange when toggled', () => {
     const onChange = jest.fn();
     render(<Toggle onChange={onChange} />);
-    fireEvent.click(screen.getByRole('checkbox'));
+    fireEvent.click(screen.getByRole('switch'));
     expect(onChange).toHaveBeenCalledTimes(1);
   });
 
   it('is disabled when disabled prop is set', () => {
     render(<Toggle disabled />);
-    expect(screen.getByRole('checkbox')).toBeDisabled();
+    expect(screen.getByRole('switch')).toBeDisabled();
   });
 
   it('renders label text', () => {
@@ -49,17 +50,17 @@ describe('Toggle', () => {
     'applies toggle-%s class for size="%s"',
     (size) => {
       render(<Toggle size={size} />);
-      expect(screen.getByRole('checkbox').className).toContain(`toggle-${size}`);
+      expect(screen.getByRole('switch').className).toContain(`toggle-${size}`);
     },
   );
 
   it('applies color class', () => {
     render(<Toggle color="primary" />);
-    expect(screen.getByRole('checkbox').className).toContain('toggle-primary');
+    expect(screen.getByRole('switch').className).toContain('toggle-primary');
   });
 
   it('passes extra HTML attributes', () => {
     render(<Toggle aria-label="dark mode" />);
-    expect(screen.getByRole('checkbox')).toHaveAttribute('aria-label', 'dark mode');
+    expect(screen.getByRole('switch')).toHaveAttribute('aria-label', 'dark mode');
   });
 });

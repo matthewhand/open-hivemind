@@ -5,9 +5,11 @@
 import React, { useState } from 'react';
 
 interface Tab {
-  id: string;
+  /** Tab identifier — `id` is canonical; `key` is accepted as an alias for backward compatibility */
+  id?: string;
+  key?: string;
   label: string;
-  content: React.ReactNode;
+  content?: React.ReactNode;
   disabled?: boolean;
   /** Optional color for the tab (e.g. 'error' for dangerous, 'success' for recommended) */
   color?: 'primary' | 'secondary' | 'accent' | 'info' | 'success' | 'warning' | 'error';
@@ -18,6 +20,10 @@ interface Tab {
 interface TabsProps {
   tabs: Tab[];
   defaultTab?: string;
+  /** Controlled active tab id */
+  activeTab?: string;
+  /** Callback when active tab changes (controlled mode) */
+  onChange?: (tabId: string) => void;
   variant?: 'default' | 'bordered' | 'lifted' | 'boxed';
   size?: 'xs' | 'sm' | 'md' | 'lg';
   className?: string;
@@ -27,16 +33,22 @@ interface TabsProps {
 const Tabs: React.FC<TabsProps> = ({
   tabs,
   defaultTab,
+  activeTab: controlledActiveTab,
+  onChange,
   variant = 'default',
   size = 'md',
   className = '',
   onTabChange
 }) => {
-  const [activeTab, setActiveTab] = useState(defaultTab || tabs[0]?.id);
+  const getTabId = (tab: Tab) => tab.id ?? tab.key ?? '';
+  const isControlled = controlledActiveTab !== undefined;
+  const [internalActiveTab, setInternalActiveTab] = useState(defaultTab || getTabId(tabs[0]));
+  const activeTab = isControlled ? controlledActiveTab : internalActiveTab;
 
   const handleTabClick = (tabId: string) => {
-    if (tabs.find(tab => tab.id === tabId)?.disabled) return;
-    setActiveTab(tabId);
+    if (tabs.find(tab => getTabId(tab) === tabId)?.disabled) return;
+    if (!isControlled) setInternalActiveTab(tabId);
+    onChange?.(tabId);
     onTabChange?.(tabId);
   };
 
@@ -58,16 +70,16 @@ const Tabs: React.FC<TabsProps> = ({
     return `tabs ${variantClasses[variant]} ${sizeClasses[size]}`;
   };
 
-  const activeTabContent = tabs.find(tab => tab.id === activeTab)?.content;
+  const activeTabContent = tabs.find(tab => getTabId(tab) === activeTab)?.content;
 
   return (
     <div className={className}>
       <div className={getTabsClasses()}>
         {tabs.map((tab) => (
           <button
-            key={tab.id}
-            className={`tab ${activeTab === tab.id ? 'tab-active' : ''} ${tab.disabled ? 'tab-disabled' : ''}`}
-            onClick={() => handleTabClick(tab.id)}
+            key={getTabId(tab)}
+            className={`tab ${activeTab === getTabId(tab) ? 'tab-active' : ''} ${tab.disabled ? 'tab-disabled' : ''}`}
+            onClick={() => handleTabClick(getTabId(tab))}
             disabled={tab.disabled}
           >
             <div className="flex items-center gap-2">

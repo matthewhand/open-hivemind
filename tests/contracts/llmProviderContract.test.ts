@@ -90,6 +90,14 @@ jest.mock('@letta-ai/letta-client', () => {
 
 jest.mock('@hivemind/shared-types', () => ({
   isSafeUrl: jest.fn().mockResolvedValue(true),
+  http: {
+    create: jest.fn().mockReturnValue({
+      get: jest.fn().mockResolvedValue({}),
+      post: jest.fn().mockResolvedValue({ choices: [{ text: 'mocked text response', message: { content: 'mocked response' } }] }),
+    }),
+  },
+  createHttpClient: jest.fn(),
+  isHttpError: jest.fn().mockReturnValue(false),
 }));
 
 // Suppress debug output during tests

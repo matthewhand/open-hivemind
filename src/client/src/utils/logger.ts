@@ -4,7 +4,9 @@
  * In production, debug and info logs are suppressed to keep the console clean.
  */
 
-const IS_DEV = import.meta.env.DEV;
+// In Vite this is replaced at build time; in Jest we fall back to NODE_ENV.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const IS_DEV: boolean = (typeof process !== 'undefined' && (process as any).env?.NODE_ENV !== 'production') ?? false;
 
 export const logger = {
   /**

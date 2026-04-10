@@ -195,9 +195,12 @@ adminRouter.get(
       const schema = provider.getSchema();
       const serialized = serializeSchema(schema);
       return res.json({ success: true, schema: serialized });
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
       debug(`Failed to get schema for provider ${providerId}`, e);
-      return res.status(500).json({ success: false, error: e.message || String(e) });
+      return res
+        .status(500)
+        .json({ success: false, error: message });
     }
   }
 );

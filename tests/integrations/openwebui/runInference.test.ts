@@ -1,22 +1,24 @@
-import axios from 'axios';
 import Debug from 'debug';
 import { resetAllCircuitBreakers } from '../../../src/common/CircuitBreaker';
-import { generateChatCompletion } from '../../../src/integrations/openwebui/runInference';
-import * as sessionManager from '../../../src/integrations/openwebui/sessionManager';
-import * as uploadKnowledgeFile from '../../../src/integrations/openwebui/uploadKnowledgeFile';
+import { generateChatCompletion } from '@integrations/openwebui/runInference';
+import * as sessionManager from '@integrations/openwebui/sessionManager';
+import * as uploadKnowledgeFile from '@integrations/openwebui/uploadKnowledgeFile';
+import { http } from '@hivemind/shared-types';
 
 // Silence debug logs during tests
 jest.mock('debug', () => () => jest.fn());
 
-jest.mock('axios');
-jest.mock('../../../src/utils/ssrfGuard', () => ({
-  isSafeUrl: jest.fn().mockResolvedValue(true),
+jest.mock('@hivemind/shared-types', () => ({
+  http: {
+    post: jest.fn(),
+    get: jest.fn(),
+    put: jest.fn(),
+    delete: jest.fn(),
+    create: jest.fn(),
+  },
 }));
-const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-jest.mock('../../../src/utils/ssrfGuard', () => ({
-  isSafeUrl: jest.fn().mockResolvedValue(true),
-}));
+const mockHttp = http as jest.Mocked<typeof http>;
 
 describe('runInference.generateChatCompletion', () => {
   const mockGetSessionKey = jest.spyOn(sessionManager, 'getSessionKey');
@@ -42,7 +44,7 @@ describe('runInference.generateChatCompletion', () => {
   it('sends POST to /chat/completions with expected headers and payload; handles string response', async () => {
     mockGetSessionKey.mockResolvedValue('sk-123');
     mockGetKnowledgeFileId.mockReturnValue('kf-abc');
-    mockedAxios.post.mockResolvedValue({ data: 'hello world' });
+    mockHttp.post.mockResolvedValue('hello world');
 
     const res = await generateChatCompletion('Hi there', [makeMsg('prev1'), makeMsg('prev2')], {
       a: 1,
@@ -50,12 +52,10 @@ describe('runInference.generateChatCompletion', () => {
 
     expect(mockGetSessionKey).toHaveBeenCalledTimes(1);
     expect(mockGetKnowledgeFileId).toHaveBeenCalledTimes(1);
+    expect(mockHttp.post).toHaveBeenCalledTimes(1);
 
-    // Validate axios call
-    expect(mockedAxios.post).toHaveBeenCalledTimes(1);
-    const [url, payload, options] = mockedAxios.post.mock.calls[0];
-
-    expect(url).toMatch(/\/api\/\/chat\/completions$/); // default apiUrl ends with /api/
+    const [url, payload, options] = (mockHttp.post as jest.Mock).mock.calls[0];
+    expect(url).toMatch(/\/chat\/completions$/);
     expect(payload).toEqual({
       prompt: 'Hi there',
       knowledgeFileId: 'kf-abc',
@@ -77,7 +77,7 @@ describe('runInference.generateChatCompletion', () => {
   it('normalizes object response with text field', async () => {
     mockGetSessionKey.mockResolvedValue('sk-xxx');
     mockGetKnowledgeFileId.mockReturnValue('kf-zzz');
-    mockedAxios.post.mockResolvedValue({ data: { text: 'response text' } });
+    mockHttp.post.mockResolvedValue({ text: 'response text' });
 
     const res = await generateChatCompletion('Ask', [makeMsg('history')]);
     expect(res).toEqual({ text: 'response text' });
@@ -86,16 +86,16 @@ describe('runInference.generateChatCompletion', () => {
   it('falls back to "No response" when data is object without text', async () => {
     mockGetSessionKey.mockResolvedValue('sk-xxx');
     mockGetKnowledgeFileId.mockReturnValue('kf-zzz');
-    mockedAxios.post.mockResolvedValue({ data: { somethingElse: true } });
+    mockHttp.post.mockResolvedValue({ somethingElse: true });
 
     const res = await generateChatCompletion('Ask', []);
     expect(res).toEqual({ text: 'No response' });
   });
 
-  it('throws generic error when axios rejects', async () => {
+  it('throws generic error when http rejects', async () => {
     mockGetSessionKey.mockResolvedValue('sk-err');
     mockGetKnowledgeFileId.mockReturnValue('kf-err');
-    mockedAxios.post.mockRejectedValue(new Error('network down'));
+    mockHttp.post.mockRejectedValue(new Error('network down'));
 
     await expect(generateChatCompletion('fail please', [])).rejects.toThrow(
       'Inference failed. Please try again.'

@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { renderHook, act } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { useLocalStorage } from '../../../src/client/src/hooks/useLocalStorage';
 
 // Mock localStorage

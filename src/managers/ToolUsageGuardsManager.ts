@@ -79,11 +79,11 @@ export class ToolUsageGuardsManager extends EventEmitter {
           }
         });
         debug(`Loaded ${this.guards.size} tool usage guards`);
-      } catch (err: any) {
-        if (err.code !== 'ENOENT') throw err;
+      } catch (err: unknown) {
+        if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
         debug('No tool usage guards file found, starting with empty guards');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       debug('Error loading tool usage guards:', ErrorUtils.getMessage(error));
     }
   }
@@ -113,7 +113,7 @@ export class ToolUsageGuardsManager extends EventEmitter {
 
       await fs.promises.writeFile(this.guardsFilePath, JSON.stringify(guardsData, null, 2));
       debug(`Saved ${this.guards.size} tool usage guards`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       debug('Error saving tool usage guards:', ErrorUtils.getMessage(error));
       throw ErrorUtils.createError('Failed to save tool usage guards', 'configuration');
     }

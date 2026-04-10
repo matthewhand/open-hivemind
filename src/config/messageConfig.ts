@@ -19,9 +19,9 @@ function strictParseJSON(input: string): Record<string, unknown> {
       return parsed as Record<string, unknown>;
     }
     throw new Error('Expected JSON object');
-  } catch (e: any) {
+  } catch (e: unknown) {
     // strict: rethrow to surface malformed JSON
-    throw new Error(`Invalid JSON: ${e?.message || String(e)}`);
+    throw new Error(`Invalid JSON: ${e instanceof Error ? e.message : String(e)}`);
   }
 }
 
@@ -792,9 +792,9 @@ const configPath = path.join(configDir, 'providers/message.json');
 
 try {
   messageConfig.loadFile(configPath);
-} catch (error: any) {
-  if (error.code !== 'ENOENT') {
-    debug(`Error reading message config from ${configPath}:`, error.message);
+} catch (error: unknown) {
+  if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+    debug(`Error reading message config from ${configPath}:`, (error instanceof Error ? error.message : String(error)));
   } else {
     debug(`Message config file not found at ${configPath}, using environment variables and defaults`);
   }

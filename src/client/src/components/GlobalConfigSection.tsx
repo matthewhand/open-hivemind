@@ -73,8 +73,8 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
       } else {
         setHasConfig(false);
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch configuration');
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : String(err)) || 'Failed to fetch configuration');
     } finally {
       setLoading(false);
     }
@@ -105,8 +105,8 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
       showStamp();
       await fetchConfig(); // Refresh
       setJsonState({});
-    } catch (err: any) {
-      setError(err.message || 'Failed to save configuration');
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : String(err)) || 'Failed to save configuration');
     } finally {
       setSaving(false);
       setTimeout(() => setSuccess(null), 3000);
@@ -126,8 +126,8 @@ const GlobalConfigSection: React.FC<GlobalConfigSectionProps> = ({ section }) =>
         throw new Error(data.message || data.error || 'Connection test failed');
       }
       setTestStatus({ type: 'success', message: data.message || 'Connection successful' });
-    } catch (err: any) {
-      setTestStatus({ type: 'error', message: err.message || 'Connection test failed' });
+    } catch (err: unknown) {
+      setTestStatus({ type: 'error', message: (err instanceof Error ? err.message : String(err)) || 'Connection test failed' });
     } finally {
       setTesting(false);
       setTimeout(() => setTestStatus(null), 4000);

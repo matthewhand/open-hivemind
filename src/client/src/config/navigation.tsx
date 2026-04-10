@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components, no-empty, no-case-declarations */
 import {
   LayoutDashboard, Bot,
-  Settings, Cog, Activity, Component, MessageSquare, Brain,
+  Settings, Cog, Component, MessageSquare, Brain,
   Map, Webhook, FileText, Store, BarChart3, ClipboardList,
   FileDown, HeartPulse, HelpCircle, FileCode, Info,
 } from 'lucide-react';
@@ -64,13 +64,6 @@ export const hivemindNavItems: NavItem[] = [
     label: 'System',
     icon: null as unknown as React.ReactNode,
     divider: true,
-    visible: true,
-  },
-  {
-    id: 'activity',
-    label: 'Activity',
-    icon: <NavIcon><Activity className="w-4 h-4" /></NavIcon>,
-    path: '/admin/activity',
     visible: true,
   },
   {

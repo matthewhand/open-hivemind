@@ -1,10 +1,10 @@
 import Debug from 'debug';
-import { isSafeUrl } from '@hivemind/shared-types';
-import type {
-  IMemoryProvider,
-  MemoryEntry,
-  MemoryScopeOptions,
-  MemorySearchResult,
+import {
+  isSafeUrl,
+  type IMemoryProvider,
+  type MemoryEntry,
+  type MemoryScopeOptions,
+  type MemorySearchResult,
 } from '@hivemind/shared-types';
 import {
   getCircuitBreaker,
@@ -58,12 +58,6 @@ export class Mem0Provider implements IMemoryProvider {
       failureThreshold: config.circuitBreaker?.failureThreshold ?? 5,
       resetTimeoutMs: config.circuitBreaker?.resetTimeoutMs ?? 30_000,
       halfOpenMaxAttempts: config.circuitBreaker?.halfOpenMaxAttempts ?? 3,
-    });
-
-    // Validate baseUrl eagerly — isSafeUrl is async so we schedule a check and
-    // throw on the first request if the URL is unsafe.
-    isSafeUrl(this.baseUrl).then((safe) => {
-      if (!safe) throw new Error(`Mem0Provider: baseUrl is not safe: ${this.baseUrl}`);
     });
 
     debug(
@@ -288,6 +282,11 @@ export class Mem0Provider implements IMemoryProvider {
 
   private async doRequest<T>(method: string, path: string, body?: unknown): Promise<T> {
     const url = `${this.baseUrl}${path}`;
+
+    if (!(await isSafeUrl(url))) {
+      throw new Error(`Mem0Provider: url is not safe: ${url}`);
+    }
+
     const headers: Record<string, string> = {
       Authorization: `Token ${this.apiKey}`,
       'Content-Type': 'application/json',

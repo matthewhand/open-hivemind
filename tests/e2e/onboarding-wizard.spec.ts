@@ -216,9 +216,9 @@ test.describe('Onboarding Wizard', () => {
     await page.waitForLoadState('domcontentloaded');
 
     // Wait for either the redirect or the onboarding content
-    await expect(page.getByText('Welcome to Open-Hivemind').or(
-      page.getByText('Open-Hivemind Setup')
-    )).toBeVisible({ timeout: 15000 });
+    await expect(
+      page.getByText('Welcome to Open-Hivemind').or(page.getByText('Open-Hivemind Setup'))
+    ).toBeVisible({ timeout: 15000 });
 
     await page.screenshot({ path: 'test-results/onboarding-06-redirect.png', fullPage: true });
   });
@@ -244,7 +244,10 @@ test.describe('Onboarding Wizard', () => {
     await backButton.click();
     await expect(page.getByText('Configure LLM Provider')).toBeVisible({ timeout: 10000 });
 
-    await page.screenshot({ path: 'test-results/onboarding-07-back-navigation.png', fullPage: true });
+    await page.screenshot({
+      path: 'test-results/onboarding-07-back-navigation.png',
+      fullPage: true,
+    });
   });
 
   test('Skip Setup button is visible on intermediate steps', async ({ page }) => {

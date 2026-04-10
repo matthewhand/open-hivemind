@@ -36,8 +36,8 @@ const ConfigPage: React.FC = () => {
         if (p.type === 'tool' && p.status !== 'available') summary.tool++;
       });
       setIntegrations(summary);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load integrations');
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : String(err)) || 'Failed to load integrations');
     } finally {
       setLoading(false);
     }
