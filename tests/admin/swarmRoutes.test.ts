@@ -5,7 +5,7 @@ import { SwarmInstaller } from '../../src/integrations/openswarm/SwarmInstaller'
 import { providerRegistry } from '../../src/registries/ProviderRegistry';
 
 // Mock the SwarmInstaller to return successful responses
-jest.mock('@src/integrations/openswarm/SwarmInstaller', () => {
+jest.mock('@hivemind/llm-openswarm', () => {
   return {
     SwarmInstaller: jest.fn().mockImplementation(() => ({
       id: 'openswarm',

@@ -132,6 +132,7 @@ jest.mock('../../src/validation/schemas/miscSchema', () => ({
 }));
 
 jest.mock('../../src/validation/schemas/commonSchema', () => ({
+  ...jest.requireActual('../../src/validation/schemas/commonSchema'),
   ReorderSchema: {},
 }));
 
