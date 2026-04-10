@@ -243,6 +243,36 @@ export class UserConfigStore {
   }
 
   /**
+   * Remove the user override for a bot and keep the botMap in sync.
+   * Returns true if a record was removed, false if no override existed.
+   */
+  public deleteBotOverride(botName: string): boolean {
+    const before = this.config.bots?.length ?? 0;
+    this.config.bots = (this.config.bots ?? []).filter((b) => b.name !== botName);
+    this.botMap.delete(botName);
+    return (this.config.bots?.length ?? 0) < before;
+  }
+
+  /**
+   * Find the first bot whose configuration satisfies a predicate.
+   * Useful for provider-based or platform-based lookups without iterating externally.
+   */
+  public findBot(predicate: (bot: BotConfiguration) => boolean): BotConfiguration | undefined {
+    for (const bot of this.botMap.values()) {
+      if (predicate(bot)) return bot;
+    }
+    return undefined;
+  }
+
+  /**
+   * Return all bot configurations as an array.
+   * Reads from the in-memory map so callers don't need to access the internal config object.
+   */
+  public getAllBots(): BotConfiguration[] {
+    return Array.from(this.botMap.values());
+  }
+
+  /**
    * Get general settings.
    * @returns The general settings object.
    */
