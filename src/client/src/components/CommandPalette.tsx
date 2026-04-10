@@ -191,6 +191,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
 
         {/* Results list */}
         <ul
+          id="command-palette-results"
           ref={listRef}
           id="command-palette-results"
           className="max-h-72 overflow-y-auto py-2"
@@ -206,6 +207,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
             const isActive = idx === selectedIndex;
             return (
               <li
+                id={`palette-item-${item.id}`}
                 key={item.id}
                 id={`command-item-${item.id}`}
                 role="option"
