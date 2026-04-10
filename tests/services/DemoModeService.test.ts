@@ -4,14 +4,33 @@
 
 import { DemoModeService } from '../../src/services/DemoModeService';
 
+// Mock the singletons that DemoModeService accesses via lazy getters
+jest.mock('../../src/monitoring/MetricsCollector', () => ({
+  MetricsCollector: {
+    getInstance: jest.fn(() => ({
+      recordMetric: jest.fn(),
+      recordResponseTime: jest.fn(),
+      incrementMessages: jest.fn(),
+      incrementErrors: jest.fn(),
+      recordLlmTokenUsage: jest.fn(),
+    })),
+  },
+}));
+jest.mock('../../src/server/services/ActivityLogger', () => ({
+  ActivityLogger: {
+    getInstance: jest.fn(() => ({
+      log: jest.fn(),
+    })),
+  },
+}));
 jest.mock('../../src/server/services/WebSocketService', () => ({
   WebSocketService: {
     getInstance: jest.fn(() => ({
       recordMessageFlow: jest.fn(),
       recordAlert: jest.fn(),
-      getMessageFlow: jest.fn(() => []),
-      getAlerts: jest.fn(() => []),
-      getPerformanceMetrics: jest.fn(() => []),
+      getMessageFlow: jest.fn().mockReturnValue([]),
+      getAlerts: jest.fn().mockReturnValue([]),
+      getPerformanceMetrics: jest.fn().mockReturnValue([]),
     })),
   },
 }));
@@ -22,10 +41,12 @@ describe('DemoModeService', () => {
   let mockUserConfigStore: any;
 
   beforeEach(() => {
+    jest.useFakeTimers();
     mockBotManager = {
       getAllBots: jest.fn(() => []),
       getWarnings: jest.fn(() => ['No bot configuration found']),
       isLegacyMode: jest.fn(() => false),
+      addBot: jest.fn(),
     };
     mockUserConfigStore = {
       getBotOverride: jest.fn(() => null),
@@ -41,6 +62,9 @@ describe('DemoModeService', () => {
   });
 
   afterEach(() => {
+    // Stop any running simulation timers before restoring real timers
+    demoService.reset();
+    jest.useRealTimers();
     jest.clearAllMocks();
   });
 
@@ -61,101 +85,80 @@ describe('DemoModeService', () => {
       expect(demoService.detectDemoMode()).toBe(false);
     });
 
-    it('should return true when no credentials are configured', () => {
+    it('should return true when no bots are configured', () => {
       // No env vars set, no bots configured
+      mockBotManager.getAllBots.mockReturnValue([]);
       expect(demoService.detectDemoMode()).toBe(true);
     });
 
-    it('should return false when a bot is configured with a real Discord token via env', () => {
-      mockBotManager.getAllBots.mockReturnValueOnce([
-        { discord: { token: 'valid-discord-bot-token-here' } },
-      ]);
-      mockBotManager.getWarnings.mockReturnValueOnce([]);
-      expect(demoService.detectDemoMode()).toBe(false);
-    });
-
-    it('should return false when a bot is configured with a real OpenAI key via env', () => {
-      mockBotManager.getAllBots.mockReturnValueOnce([
-        { openai: { apiKey: 'sk-valid-openai-api-key-here' } },
-      ]);
-      mockBotManager.getWarnings.mockReturnValueOnce([]);
-      expect(demoService.detectDemoMode()).toBe(false);
-    });
-
     it('should return false when a bot is configured with a real Discord token', () => {
-      mockBotManager.getAllBots.mockReturnValueOnce([
+      mockBotManager.getAllBots.mockReturnValue([
         { discord: { token: 'valid-discord-bot-token-here' } },
       ]);
-      mockBotManager.getWarnings.mockReturnValueOnce([]);
       expect(demoService.detectDemoMode()).toBe(false);
     });
 
     it('should return false when a bot is configured with a real Slack token', () => {
-      mockBotManager.getAllBots.mockReturnValueOnce([
+      mockBotManager.getAllBots.mockReturnValue([
         { slack: { botToken: 'valid-slack-bot-token-here' } },
       ]);
-      mockBotManager.getWarnings.mockReturnValueOnce([]);
       expect(demoService.detectDemoMode()).toBe(false);
     });
 
     it('should return false when a bot is configured with a real Mattermost token', () => {
-      mockBotManager.getAllBots.mockReturnValueOnce([
+      mockBotManager.getAllBots.mockReturnValue([
         { mattermost: { accessToken: 'valid-mattermost-bot-token-here' } },
       ]);
-      mockBotManager.getWarnings.mockReturnValueOnce([]);
       expect(demoService.detectDemoMode()).toBe(false);
     });
 
     it('should return false when a bot is configured with a real OpenAI key', () => {
-      mockBotManager.getAllBots.mockReturnValueOnce([
+      mockBotManager.getAllBots.mockReturnValue([
         { openai: { apiKey: 'sk-valid-openai-api-key-here' } },
       ]);
-      mockBotManager.getWarnings.mockReturnValueOnce([]);
       expect(demoService.detectDemoMode()).toBe(false);
     });
 
     it('should return false when a bot is configured with a real Flowise key', () => {
-      mockBotManager.getAllBots.mockReturnValueOnce([
+      mockBotManager.getAllBots.mockReturnValue([
         { flowise: { apiKey: 'valid-flowise-api-key-here' } },
       ]);
-      mockBotManager.getWarnings.mockReturnValueOnce([]);
       expect(demoService.detectDemoMode()).toBe(false);
     });
 
     it('should return true when a bot has short/invalid credentials', () => {
-      mockBotManager.getAllBots.mockReturnValueOnce([
+      mockBotManager.getAllBots.mockReturnValue([
         {
           discord: { token: 'short' },
           slack: { botToken: 'short' },
-          mattermost: { token: 'short' },
+          mattermost: { accessToken: 'short' },
           openai: { apiKey: 'short' },
           flowise: { apiKey: 'short' },
         },
       ]);
-      mockBotManager.getWarnings.mockReturnValueOnce(['No bot configuration found']);
       expect(demoService.detectDemoMode()).toBe(true);
     });
 
     it('should return true when no bots are configured at all', () => {
-      mockBotManager.getAllBots.mockReturnValueOnce([]);
-      mockBotManager.getWarnings.mockReturnValueOnce(['No bot configuration found']);
+      mockBotManager.getAllBots.mockReturnValue([]);
       expect(demoService.detectDemoMode()).toBe(true);
     });
 
-    it('should continue checking bots and return false if at least one has valid credentials', () => {
-      mockBotManager.getAllBots.mockReturnValueOnce([
+    it('should return false if at least one bot has valid credentials', () => {
+      mockBotManager.getAllBots.mockReturnValue([
         { discord: { token: 'short' } }, // too short — not valid
-        { openai: { apiKey: 'valid-openai-api-key' } }, // valid
+        { openai: { apiKey: 'valid-openai-api-key' } }, // valid (> 10 chars)
       ]);
-      mockBotManager.getWarnings.mockReturnValueOnce([]);
       expect(demoService.detectDemoMode()).toBe(false);
     });
   });
 
   describe('initialize', () => {
-    it('should create demo bots when in demo mode', () => {
+    it('should create demo bots when in demo mode', async () => {
       process.env.DEMO_MODE = 'true';
       demoService.initialize();
+      // seedDemoConfig is async internally; flush microtasks so bots are populated
+      await Promise.resolve();
 
       const bots = demoService.getDemoBots();
       expect(bots.length).toBeGreaterThan(0);
@@ -317,6 +320,7 @@ describe('DemoModeService', () => {
     });
 
     it('should handle concurrent addMessage calls safely', async () => {
+      jest.useRealTimers();
       const promises = [];
       for (let i = 0; i < 100; i++) {
         promises.push(
