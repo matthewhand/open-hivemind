@@ -51,7 +51,9 @@ export async function getFlowiseResponse(channelId: string, question: string): P
     debug('Sending request to Flowise:', { baseURL, chatflowId, payload });
     const targetUrl = `${baseURL}/prediction/${chatflowId}`;
 
-    const data = await http.post<{ text: string; chatId?: string }>(targetUrl, payload, { headers });
+    const data = await http.post<{ text: string; chatId?: string }>(targetUrl, payload, {
+      headers,
+    });
     const { text, chatId: newChatId } = data;
 
     debug('Received response from Flowise:', { text, newChatId });

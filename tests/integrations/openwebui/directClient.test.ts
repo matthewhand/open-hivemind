@@ -1,13 +1,13 @@
-import axios from 'axios';
-import { generateChatCompletionDirect } from '../../../packages/llm-openwebui/src/directClient';
+import { generateChatCompletionDirect } from '@integrations/openwebui/directClient';
+import { http } from '@hivemind/shared-types';
 
-jest.mock('../../../packages/shared-types/src/httpClient', () => ({
-  request: jest.fn().mockResolvedValue({ body: { choices: [{ message: { content: 'openwebui direct' } }] } }),
+jest.mock('@hivemind/shared-types', () => ({
+  http: {
+    create: jest.fn(),
+  },
 }));
 
-jest.mock('axios');
-
-const mockedAxios = axios as jest.Mocked<typeof axios>;
+const mockHttp = http as jest.Mocked<typeof http>;
 
 const makeMessage = (text: string, role = 'user') =>
   ({ getText: () => text, role }) as { getText: () => string; role?: string };
@@ -24,12 +24,10 @@ describe('generateChatCompletionDirect', () => {
   });
 
   it('sends request and returns first choice content', async () => {
-    const post = jest.fn().mockResolvedValue({
-      data: {
-        choices: [{ message: { content: 'ok response' } }],
-      },
+    const mockPost = jest.fn().mockResolvedValue({
+      choices: [{ message: { content: 'ok response' } }],
     });
-    mockedAxios.create.mockReturnValue({ post } as any);
+    mockHttp.create.mockReturnValue({ post: mockPost } as any);
 
     const result = await generateChatCompletionDirect(
       {
@@ -43,16 +41,14 @@ describe('generateChatCompletionDirect', () => {
     );
 
     expect(result).toBe('ok response');
-    expect(mockedAxios.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        baseURL: 'http://localhost:3000/api',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer abc',
-        },
-      })
+    expect(mockHttp.create).toHaveBeenCalledWith(
+      'http://localhost:3000/api',
+      {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer abc',
+      }
     );
-    expect(post).toHaveBeenCalledWith(
+    expect(mockPost).toHaveBeenCalledWith(
       '/chat/completions',
       {
         model: 'llama3.2',
@@ -61,8 +57,7 @@ describe('generateChatCompletionDirect', () => {
           { role: 'assistant', content: 'prev-1' },
           { role: 'user', content: 'hello' },
         ],
-      },
-      expect.anything()
+      }
     );
   });
 });

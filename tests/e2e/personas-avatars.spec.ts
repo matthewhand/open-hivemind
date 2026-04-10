@@ -70,7 +70,12 @@ test.describe('Persona Management & Avatars', () => {
     await page.route('**/api/config/llm-status', async (route) => {
       await route.fulfill({
         status: 200,
-        json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
+        json: {
+          defaultConfigured: true,
+          defaultProviders: [],
+          botsMissingLlmProvider: [],
+          hasMissing: false,
+        },
       });
     });
 
@@ -143,7 +148,9 @@ test.describe('Persona Management & Avatars', () => {
     await expect(page.getByText('Create New Persona')).toBeVisible();
 
     // Avatar should be visible in the modal (the clickable avatar button)
-    const avatarButton = page.locator('button').filter({ has: page.locator('img[alt^="Avatar for"]') });
+    const avatarButton = page
+      .locator('button')
+      .filter({ has: page.locator('img[alt^="Avatar for"]') });
     await expect(avatarButton.first()).toBeVisible();
 
     // "click to change" hint text should be present

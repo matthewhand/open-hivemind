@@ -16,7 +16,6 @@ import { Alert } from './DaisyUI/Alert';
 import { Badge } from './DaisyUI/Badge';
 import Steps from './DaisyUI/Steps';
 import { apiService } from '../services/api';
-import AnnouncementBanner from './AnnouncementBanner';
 import TipRotator from './TipRotator';
 
 // ---------------------------------------------------------------------------
@@ -167,9 +166,6 @@ const WelcomeSplash: React.FC = () => {
           Your multi-agent AI platform for creating intelligent bots across messaging platforms.
         </p>
       </div>
-
-      {/* Announcement Banner */}
-      <AnnouncementBanner />
 
       {/* User Tips */}
       <TipRotator className="flex items-center gap-2 text-sm text-base-content/70 px-4" />

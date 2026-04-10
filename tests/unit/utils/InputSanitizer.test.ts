@@ -73,15 +73,24 @@ describe('InputSanitizer', () => {
 
   describe('validateMessage', () => {
     it('should reject empty content', () => {
-      expect(InputSanitizer.validateMessage('')).toEqual({ isValid: false, reason: 'Content is required' });
+      expect(InputSanitizer.validateMessage('')).toEqual({
+        isValid: false,
+        reason: 'Content is required',
+      });
     });
 
     it('should reject whitespace-only content', () => {
-      expect(InputSanitizer.validateMessage('   ')).toEqual({ isValid: false, reason: 'Content cannot be empty' });
+      expect(InputSanitizer.validateMessage('   ')).toEqual({
+        isValid: false,
+        reason: 'Content cannot be empty',
+      });
     });
 
     it('should reject too long content', () => {
-      expect(InputSanitizer.validateMessage('a'.repeat(10001))).toEqual({ isValid: false, reason: 'Content is too long' });
+      expect(InputSanitizer.validateMessage('a'.repeat(10001))).toEqual({
+        isValid: false,
+        reason: 'Content is too long',
+      });
     });
 
     it('should accept valid content', () => {

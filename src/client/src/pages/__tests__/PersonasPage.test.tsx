@@ -117,7 +117,7 @@ describe('PersonasPage', () => {
     expect(screen.getByRole('status', { name: /loading page content/i })).toBeInTheDocument();
   });
 
-  it('renders stats card title', async () => {
+  it('renders page stats when no personas exist', async () => {
     renderWithProviders(<PersonasPage />);
 
     await waitFor(() => {

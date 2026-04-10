@@ -106,8 +106,8 @@ export const BotActivityWaterfallMonitor: React.FC = () => {
                 setTraceId(`bot-activity-${Date.now().toString(36)}`);
                 setSpans(newSpans);
                 setError(null);
-            } catch (err: any) {
-                if (mounted) setError(err.message || 'Failed to load activity data');
+            } catch (err: unknown) {
+                if (mounted) setError((err instanceof Error ? err.message : String(err)) || 'Failed to load activity data');
             } finally {
                 if (mounted) setLoading(false);
             }

@@ -1,3 +1,28 @@
+# Git history (large, not needed in image)
+.git
+.github
+
+# Tests (not needed at runtime)
+tests/
+**/__tests__/
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+
+# Docs and archives
+docs/
+archive/
+*.md
+!README.md
+
+# Dev tooling
+.claude/
+.jules/
+.cursor/
+.vscode/
+.idea/
+
 # Dependency directories
 node_modules
 

@@ -46,7 +46,7 @@ describe('validateRequest middleware', () => {
     expect(mockRes.json).toHaveBeenCalledWith(
       expect.objectContaining({
         error: 'Validation failed',
-        issues: expect.arrayContaining([
+        details: expect.arrayContaining([
           expect.objectContaining({
             message: 'Name is required',
           }),
@@ -72,7 +72,7 @@ describe('validateRequest middleware', () => {
     expect(mockRes.json).toHaveBeenCalledWith(
       expect.objectContaining({
         error: 'Validation failed',
-        issues: expect.any(Array),
+        details: expect.any(Array),
       })
     );
   });
@@ -93,7 +93,7 @@ describe('validateRequest middleware', () => {
     expect(mockRes.json).toHaveBeenCalledWith(
       expect.objectContaining({
         error: 'Validation failed',
-        issues: expect.arrayContaining([
+        details: expect.arrayContaining([
           expect.objectContaining({
             message: 'ID is required',
           }),
@@ -182,6 +182,6 @@ describe('validateRequest middleware', () => {
     expect(mockRes.status).toHaveBeenCalledWith(400);
     const jsonCall = mockRes.json.mock.calls[0][0];
     expect(jsonCall.error).toBe('Validation failed');
-    expect(jsonCall.issues.length).toBeGreaterThanOrEqual(2);
+    expect(jsonCall.details.length).toBeGreaterThanOrEqual(2);
   });
 });

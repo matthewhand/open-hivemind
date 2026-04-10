@@ -75,13 +75,13 @@ export function useToolExecution({ setAlert, setUsageCounts, setRecentlyUsed }: 
 
       setUsageCounts(prev => ({ ...prev, [tool.id]: (prev[tool.id] || 0) + 1 }));
       setRecentlyUsed(prev => [{ toolId: tool.id, timestamp: new Date().toISOString(), arguments: args }, ...prev.filter(r => r.toolId !== tool.id)].slice(0, 10));
-    } catch (err: any) {
+    } catch (err: unknown) {
       const errorResult: ToolResult = {
         timestamp: new Date().toISOString(),
         toolName: tool.name,
         serverName: tool.serverName,
         arguments: args,
-        error: { message: err.message },
+        error: { message: (err instanceof Error ? err.message : String(err)) },
         isError: true
       };
       setSelectedResult(errorResult);

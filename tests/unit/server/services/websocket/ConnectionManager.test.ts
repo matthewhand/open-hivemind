@@ -18,7 +18,14 @@ describe('websocket/ConnectionManager', () => {
       sockets: {
         sockets: new Map([
           ['1', { disconnect: jest.fn() }],
-          ['2', { disconnect: jest.fn(() => { throw new Error('disconnect fail'); }) }],
+          [
+            '2',
+            {
+              disconnect: jest.fn(() => {
+                throw new Error('disconnect fail');
+              }),
+            },
+          ],
         ]),
       },
       removeAllListeners: jest.fn(),

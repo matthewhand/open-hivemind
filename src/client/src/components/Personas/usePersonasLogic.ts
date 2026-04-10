@@ -72,7 +72,7 @@ export function usePersonasLogic() {
     try {
       setError(null);
       await queryClient.invalidateQueries({ queryKey: ['personasLogic'] });
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError('Failed to fetch data.');
       logger.error(err);
     }
@@ -159,8 +159,8 @@ export function usePersonasLogic() {
       successToast(`Deleted ${bulkSelection.selectedIds.size} personas`);
       bulkSelection.clearSelection();
       await fetchData();
-    } catch (err: any) {
-      setError(err.message || 'Failed to delete selected personas');
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : String(err)) || 'Failed to delete selected personas');
       errorToast('Failed to delete selected personas');
     } finally {
       setMutating(false);
@@ -261,8 +261,8 @@ export function usePersonasLogic() {
         }
       }
       await fetchData();
-    } catch (err: any) {
-      setError(err.message || 'Failed to save persona');
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : String(err)) || 'Failed to save persona');
       errorToast('Failed to save persona');
     } finally {
       setMutating(false);
@@ -277,8 +277,8 @@ export function usePersonasLogic() {
       setShowDeleteModal(false);
       setDeletingPersona(null);
       await fetchData();
-    } catch (err: any) {
-      setError(err.message || 'Failed to delete persona');
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : String(err)) || 'Failed to delete persona');
       errorToast('Failed to delete persona');
     } finally {
       setMutating(false);

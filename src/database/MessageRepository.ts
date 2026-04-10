@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 import Debug from 'debug';
 import type { Database } from 'sqlite';
 import type { BotMetrics, ConversationSummary, MessageRecord } from './types';
@@ -25,7 +25,7 @@ export class MessageRepository {
     const db = this.getDb();
     if (!db || !this.isConnected()) {
       // Return mock ID for tests when not connected
-      return Math.floor(Math.random() * 1000000);
+      return crypto.randomInt(0, 1000000);
     }
 
     try {
@@ -52,7 +52,7 @@ export class MessageRepository {
     } catch (error) {
       debug('Error saving message:', error);
       // Return mock ID for tests when there's an error
-      return Math.floor(Math.random() * 1000000);
+      return crypto.randomInt(0, 1000000);
     }
   }
 
@@ -60,7 +60,7 @@ export class MessageRepository {
     const db = this.getDb();
     if (!db || !this.isConnected()) {
       // Return mock ID for tests when not connected
-      return Math.floor(Math.random() * 1000000);
+      return crypto.randomInt(0, 1000000);
     }
 
     try {
@@ -93,7 +93,7 @@ export class MessageRepository {
     } catch (error) {
       debug('Error storing message:', error);
       // Return mock ID for tests when there's an error
-      return Math.floor(Math.random() * 1000000);
+      return crypto.randomInt(0, 1000000);
     }
   }
 

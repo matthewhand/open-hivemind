@@ -8,15 +8,15 @@
  */
 
 import { Mem0Provider } from '../../../packages/memory-mem0/src/Mem0Provider';
+import {
+  clearCircuitBreakerRegistry as clearMem4aiCircuitBreakerRegistry,
+  CircuitBreakerError as Mem4aiCircuitBreakerError,
+} from '../../../packages/memory-mem4ai/src/CircuitBreaker';
 import { Mem4aiProvider } from '../../../packages/memory-mem4ai/src/Mem4aiProvider';
 import {
   CircuitBreakerError,
   clearCircuitBreakerRegistry,
 } from '../../../src/common/CircuitBreaker';
-import {
-  CircuitBreakerError as Mem4aiCircuitBreakerError,
-  clearCircuitBreakerRegistry as clearMem4aiCircuitBreakerRegistry,
-} from '../../../packages/memory-mem4ai/src/CircuitBreaker';
 
 // Mock isSafeUrl so injected test URLs don't trigger SSRF guard failures
 jest.mock('@hivemind/shared-types', () => ({

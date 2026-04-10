@@ -46,7 +46,7 @@ export function getQuotaManager(): QuotaManager {
     debug('QuotaManager initialised with in-memory store');
   }
 
-  _quotaManager = new QuotaManager(_quotaStore);
+  _quotaManager = new QuotaManager(_quotaStore!);
   return _quotaManager;
 }
 

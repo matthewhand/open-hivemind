@@ -4,6 +4,7 @@ import Debug from 'debug';
 import { SecureConfigManager } from '../../config/SecureConfigManager';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { ErrorUtils } from '../../types/errors';
+import { BotConfigurationVersion } from '../../database/types';
 import {
   BackupManager,
   calculateChecksum,
@@ -127,13 +128,27 @@ export class ConfigurationImportExportService {
 
       // Include versions if requested
       if (options.includeVersions) {
-        const versionPromises = configs
+        // ⚡ Bolt Optimization: Replace N DB queries with batched bulk queries
+        const configIds = configs
           .filter((c) => c.id != null)
-          .map(async (config) => this.dbManager.getBotConfigurationVersions(config.id as number));
-        const versionsNested = await Promise.allSettled(versionPromises);
-        const versions = versionsNested
-          .map((r) => (r.status === 'fulfilled' ? r.value : []))
-          .flat();
+          .map((c) => c.id as number);
+
+        const versions: BotConfigurationVersion[] = [];
+        const BATCH_SIZE = 50;
+
+        for (let i = 0; i < configIds.length; i += BATCH_SIZE) {
+          const batch = configIds.slice(i, i + BATCH_SIZE);
+          try {
+            const versionsMap = await this.dbManager.getBotConfigurationVersionsBulk(batch);
+            for (const batchVersions of versionsMap.values()) {
+              versions.push(...batchVersions);
+            }
+          } catch (error) {
+            // Replicate original Promise.allSettled behavior by catching and logging
+            // errors without aborting the entire export.
+            console.error(`Failed to fetch versions for batch: ${batch}`, error);
+          }
+        }
 
         exportData.versions = versions;
         (exportData.metadata as Record<string, unknown>).versionCount = versions.length;
@@ -306,8 +321,8 @@ export class ConfigurationImportExportService {
         data = await decompressData(data);
       }
 
-      // Decrypt if needed
-      if (filePath.endsWith('.enc')) {
+      // Decrypt if needed (handle both .enc and .enc.gz compound extension)
+      if (filePath.endsWith('.enc') || filePath.endsWith('.enc.gz')) {
         const strData = data.toString('utf8');
         try {
           const parsedEncrypted = JSON.parse(strData);
@@ -405,8 +420,8 @@ export class ConfigurationImportExportService {
         data = await decompressData(data);
       }
 
-      // Decrypt if needed
-      if (filePath.endsWith('.enc')) {
+      // Decrypt if needed (handle both .enc and .enc.gz compound extension)
+      if (filePath.endsWith('.enc') || filePath.endsWith('.enc.gz')) {
         if (!options.decryptionKey) {
           throw new Error('Decryption key is required for encrypted import');
         }

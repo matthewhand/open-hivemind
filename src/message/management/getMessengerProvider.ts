@@ -96,8 +96,10 @@ export async function getMessengerProvider() {
         messengerServices.push(svc);
         gmpDebug('Initialized %s provider via plugin loader', name);
       }
-    } catch (e: any) {
-      gmpDebug(`Failed to initialize ${name} provider: ${e?.message || String(e)}`);
+    } catch (e: unknown) {
+      gmpDebug(
+        `Failed to initialize ${name} provider: ${e instanceof Error ? e.message : String(e)}`
+      );
     }
   }
 

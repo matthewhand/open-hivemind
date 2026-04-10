@@ -178,11 +178,20 @@ describe('openAiProvider', () => {
       expect(response).toBe('');
     });
 
-    // Skipped: Testing missing API key requires clearing process.env.OPENAI_API_KEY
-    // which is complex in Jest. The error handling code path is covered by other tests.
-    it.todo(
-      'should throw ConfigurationError when API key is missing' /* TODO: Fix and re-enable */
-    );
+    it('should throw ConfigurationError when API key is missing', async () => {
+      // Mock config to return undefined for API key
+      (mockedConfig.get as jest.Mock).mockImplementation((key: string) => {
+        if (key === 'OPENAI_API_KEY') return undefined;
+        return 'default-value';
+      });
+      
+      // Create a new provider instance to trigger the configuration check
+      const providerWithoutKey = new OpenAiProvider();
+      
+      // Should throw when trying to use the provider without API key
+      await expect(providerWithoutKey.generateChatCompletion('test', []))
+        .rejects.toThrow(/API key/i);
+    });
 
     it('should retry on failure and eventually throw', async () => {
       mockChatCreate.mockRejectedValue(new Error('API Error'));

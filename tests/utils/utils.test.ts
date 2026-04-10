@@ -44,7 +44,7 @@ describe('executeCommandSafe', () => {
     });
 
     it('should handle multiline output', async () => {
-      const output = await executeCommandSafe('printf', ['line1\nline2']);
+      const output = await executeCommandSafe('node', ['-e', 'process.stdout.write("line1\\nline2")']);
       expect(output.trim()).toBe('line1\nline2');
     });
   });
@@ -79,10 +79,14 @@ describe('executeCommandSafe', () => {
     });
 
     it('should pass custom env and cwd options to command execution', async () => {
-      const output = await executeCommandSafe('node', ['-e', 'process.stdout.write(process.env.CUSTOM_ENV || "")'], {
-        env: { ...process.env, CUSTOM_ENV: 'custom-value' } as NodeJS.ProcessEnv,
-        cwd: process.cwd(),
-      });
+      const output = await executeCommandSafe(
+        'node',
+        ['-e', 'process.stdout.write(process.env.CUSTOM_ENV || "")'],
+        {
+          env: { ...process.env, CUSTOM_ENV: 'custom-value' } as NodeJS.ProcessEnv,
+          cwd: process.cwd(),
+        }
+      );
       expect(output).toBe('custom-value');
     });
 

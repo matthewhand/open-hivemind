@@ -144,7 +144,7 @@ export class SecureConfigManager {
       
       await fs.promises.writeFile(filePath, encryptedData, 'utf8');
       debug(`Configuration ${config.id} stored successfully`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
       debug(`Failed to store configuration ${config.id}:`, hivemindError.message);
       throw ErrorUtils.createError(
@@ -166,8 +166,8 @@ export class SecureConfigManager {
       try {
         await fs.promises.access(filePath);
         encryptedData = await fs.promises.readFile(filePath, 'utf8');
-      } catch (err: any) {
-        if (err.code === 'ENOENT') {
+      } catch (err: unknown) {
+        if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
           return null;
         }
         throw err;
@@ -202,7 +202,7 @@ export class SecureConfigManager {
       }
 
       return config;
-    } catch (error: any) {
+    } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
       debug(`Failed to retrieve configuration ${id}:`, hivemindError.message);
       return null;
@@ -217,8 +217,8 @@ export class SecureConfigManager {
         const encryptedData = await fs.promises.readFile(configPath, 'utf8');
         const decryptedData = this.decrypt(encryptedData);
         return JSON.parse(decryptedData);
-      } catch (err: any) {
-        if (err.code !== 'ENOENT') {
+      } catch (err: unknown) {
+        if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
           throw err;
         }
         return null;
@@ -258,10 +258,10 @@ export class SecureConfigManager {
         await fs.promises.access(filePath);
         await fs.promises.unlink(filePath);
         debug(`Configuration ${id} deleted`);
-      } catch (err: any) {
-        if (err.code !== 'ENOENT') throw err;
+      } catch (err: unknown) {
+        if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
       debug(`Failed to delete configuration ${id}:`, hivemindError.message);
       throw ErrorUtils.createError(
@@ -312,8 +312,8 @@ export class SecureConfigManager {
       await fs.promises.access(this.backupDir);
       const files = await fs.promises.readdir(this.backupDir);
       return files.filter(f => f.endsWith('.enc'));
-    } catch (err: any) {
-      if (err.code === 'ENOENT') return [];
+    } catch (err: unknown) {
+      if ((err as NodeJS.ErrnoException).code === 'ENOENT') return [];
       throw err;
     }
   }
@@ -366,7 +366,7 @@ export class SecureConfigManager {
 
       debug(`Backup ${backupId} created with ${Object.keys(allConfigs).length} configurations`);
       return backupId;
-    } catch (error: any) {
+    } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug('Failed to create backup:', {
@@ -405,8 +405,8 @@ export class SecureConfigManager {
 
       try {
         await fs.promises.access(backupPath);
-      } catch (err: any) {
-        if (err.code === 'ENOENT') {
+      } catch (err: unknown) {
+        if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
           throw ErrorUtils.createError(
             `Backup ${backupId} not found`,
             'validation',
@@ -440,7 +440,7 @@ export class SecureConfigManager {
       );
 
       debug(`Backup ${backupId} restored successfully`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
       const errorInfo = ErrorUtils.classifyError(hivemindError);
       debug(`Failed to restore backup ${backupId}:`, {
@@ -472,8 +472,8 @@ export class SecureConfigManager {
     try {
       await fs.promises.access(this.keyPath);
       return await fs.promises.readFile(this.keyPath);
-    } catch (err: any) {
-      if (err.code !== 'ENOENT') throw err;
+    } catch (err: unknown) {
+      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
 
       const key = crypto.randomBytes(32);
       await fs.promises.writeFile(this.keyPath, key);

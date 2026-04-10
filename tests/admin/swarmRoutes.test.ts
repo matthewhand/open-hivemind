@@ -1,11 +1,11 @@
 import express from 'express';
 import request from 'supertest';
 import swarmRouter from '../../src/admin/swarmRoutes';
-import { SwarmInstaller } from '../../src/integrations/openswarm/SwarmInstaller';
+import { SwarmInstaller } from '@integrations/openswarm/SwarmInstaller';
 import { providerRegistry } from '../../src/registries/ProviderRegistry';
 
 // Mock the SwarmInstaller to return successful responses
-jest.mock('@hivemind/llm-openswarm', () => {
+jest.mock('@integrations/openswarm/SwarmInstaller', () => {
   return {
     SwarmInstaller: jest.fn().mockImplementation(() => ({
       id: 'openswarm',

@@ -2,6 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import express, { type Express } from 'express';
 import request from 'supertest';
+import importExportRouter from '../../../../src/server/routes/importExport';
 
 // Mock dependencies
 jest.mock('fs/promises');
@@ -62,8 +63,6 @@ jest.mock('../../../../src/server/services/ConfigurationImportExportService', ()
     },
   };
 });
-
-import importExportRouter from '../../../../src/server/routes/importExport';
 
 // Get the mock service created inside the jest.mock factory
 const { __mockService: mockService } = jest.requireMock(

@@ -30,8 +30,8 @@ export async function loadCustomBots(
         }
       });
       debug(`Loaded ${customBots.size} custom bots`);
-    } catch (err: any) {
-      if (err.code !== 'ENOENT') throw err;
+    } catch (err: unknown) {
+      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
       // File doesn't exist yet, that's ok
     }
   } catch (error: unknown) {

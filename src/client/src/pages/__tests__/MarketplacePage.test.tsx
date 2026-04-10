@@ -49,13 +49,12 @@ describe('MarketplacePage', () => {
       </MemoryRouter>
     );
 
-  it('renders correctly', async () => {
+  it('renders page search and empty state', async () => {
     renderWithProviders(<MarketplacePage />);
 
     await waitFor(() => {
-      expect(screen.getByPlaceholderText(/Search packages.../i)).toBeInTheDocument();
-      expect(screen.getByText(/All/i)).toBeInTheDocument();
-      expect(screen.getByText(/LLM/i)).toBeInTheDocument();
+      expect(screen.getByPlaceholderText(/Search packages/i)).toBeInTheDocument();
+      expect(screen.getByText(/No packages found/i)).toBeInTheDocument();
     });
   });
 });

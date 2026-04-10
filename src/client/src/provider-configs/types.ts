@@ -10,12 +10,12 @@ const debug = Debug('app:client:provider-configs:types');
  *   'memory'  — external memory stores (mem0, memvault, zep, ...)
  *   'tool'    — tool/function providers; subtypes include:
  *                 'mcp'      — Model Context Protocol servers
- *                 'skill'    — TODO: packaged capability bundles (investigate)
- *                 'function' — TODO: direct function registration
- *                 'builtin'  — TODO: hardcoded system capabilities
+ *                 'skill'    — Packaged capability bundles (reusable skill sets)
+ *                 'function' — Direct function registration (custom JavaScript functions)
+ *                 'builtin'  — Hardcoded system capabilities (core platform functions)
  */
 export interface ProviderConfigSchema {
-  type: 'message' | 'llm' | 'memory' | 'tool';
+  type: 'message' | 'llm' | 'memory' | 'tool' | 'skill' | 'function' | 'builtin';
   providerType: string;
   displayName: string;
   description: string;
@@ -97,6 +97,56 @@ export interface MCPServerDefinition {
   command?: string;
   args?: string[];
   env?: Record<string, string>;
+}
+
+// Skill provider definition for packaged capability bundles
+export interface SkillDefinition {
+  name: string;
+  description: string;
+  version: string;
+  category: string;
+  capabilities: string[];
+  dependencies?: string[];
+  config?: Record<string, any>;
+  metadata?: {
+    author?: string;
+    license?: string;
+    repository?: string;
+    tags?: string[];
+  };
+}
+
+// Function provider definition for direct function registration
+export interface FunctionDefinition {
+  name: string;
+  description: string;
+  parameters: {
+    type: 'object';
+    properties: Record<string, {
+      type: string;
+      description?: string;
+      required?: boolean;
+    }>;
+    required?: string[];
+  };
+  implementation: string | Function;
+  category?: string;
+  examples?: Array<{
+    input: Record<string, any>;
+    output: any;
+    description?: string;
+  }>;
+}
+
+// Builtin provider definition for hardcoded system capabilities
+export interface BuiltinDefinition {
+  name: string;
+  description: string;
+  category: 'system' | 'utility' | 'integration' | 'security';
+  capabilities: string[];
+  enabled: boolean;
+  config?: Record<string, any>;
+  permissions?: string[];
 }
 
 // Avatar service interface

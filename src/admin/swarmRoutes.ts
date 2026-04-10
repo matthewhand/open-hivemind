@@ -28,8 +28,7 @@ swarmRouter.get('/check', async (_req: Request, res: Response) => {
       webUIUrl: installer.getWebUIUrl ? installer.getWebUIUrl() : '',
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    debug('Swarm check failed: %s', message);
+    debug('Swarm check failed: %s', error instanceof Error ? error.message : String(error));
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
@@ -41,8 +40,7 @@ swarmRouter.post('/install', async (_req: Request, res: Response) => {
     const result = await installer.install();
     res.json({ success: result.success, message: result.message });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    debug('Swarm install failed: %s', message);
+    debug('Swarm install failed: %s', error instanceof Error ? error.message : String(error));
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
@@ -73,8 +71,7 @@ swarmRouter.post('/start', async (req: Request, res: Response) => {
     const result = await installer.start({ port });
     return res.json({ success: result.success, message: result.message });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    debug('Swarm start failed: %s', message);
+    debug('Swarm start failed: %s', error instanceof Error ? error.message : String(error));
     return res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });

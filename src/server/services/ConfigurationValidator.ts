@@ -227,10 +227,10 @@ export class ConfigurationValidator {
         warnings: [],
         suggestions: [],
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         isValid: false,
-        errors: [error.message],
+        errors: [error instanceof Error ? error.message : String(error)],
         warnings: [],
         suggestions: [],
       };
@@ -502,10 +502,10 @@ export class ConfigurationValidator {
           llmProvider: llmProviderTest,
         },
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        message: `Configuration test failed: ${error.message}`,
+        message: `Configuration test failed: ${error instanceof Error ? error.message : String(error)}`,
         details: error,
       };
     }

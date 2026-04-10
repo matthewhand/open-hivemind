@@ -156,53 +156,54 @@ const ModelAutocomplete: React.FC<ModelAutocompleteProps> = ({
     }
   }, [apiKey, providerType, fetchModelsFromServer, fetchModelsFromProvider]);
 
-  // Fetch models when provider type, API key, or base URL changes
+  // Debounced fetch models when provider type, API key, or base URL changes
   useEffect(() => {
-    if (providerType !== 'custom') {
+    if (providerType === 'custom') return;
+    
+    const timer = setTimeout(() => {
       fetchModels();
-    }
-  }, [apiKey, baseUrl, providerType, fetchModels]);
+    }, 300); // Debounce API calls
+    
+    return () => clearTimeout(timer);
+  }, [apiKey, baseUrl, providerType]); // Remove fetchModels from deps to prevent cascading
 
   // Validate model input
-  const validateModel = useCallback(async (modelValue: string) => {
-    if (!modelValue || providerType === 'custom') {
+  // Debounced validation
+  useEffect(() => {
+    if (!value || providerType === 'custom') {
       setValidationWarning(null);
       onValidationSuccess?.();
       return;
     }
 
-    setIsValidating(true);
-    setValidationWarning(null);
-
-    // Check if model exists in suggestions
-    const exactMatch = suggestions.find(s => s.id === modelValue || s.name === modelValue);
-
-    if (!exactMatch && suggestions.length > 0) {
-      setValidationWarning(`Model "${modelValue}" not found in available models. Custom models may work with third-party providers.`);
-      onValidationError?.(validationWarning || 'Model not in official list');
-    } else {
-      onValidationSuccess?.();
-    }
-
-    // Additional validation for API key format (warning only)
-    if (apiKey && providerType === 'openai' && !apiKey.startsWith('sk-')) {
-      setValidationWarning(prev => prev ?
-        `${prev} • OpenAI API keys typically start with "sk-"` :
-        'OpenAI API keys typically start with "sk-"',
-      );
-    }
-
-    setIsValidating(false);
-  }, [suggestions, providerType, apiKey, onValidationError, onValidationSuccess, validationWarning]);
-
-  // Debounced validation
-  useEffect(() => {
     const timer = setTimeout(() => {
-      validateModel(value);
+      setIsValidating(true);
+      setValidationWarning(null);
+
+      // Check if model exists in suggestions
+      const exactMatch = suggestions.find(s => s.id === value || s.name === value);
+
+      if (!exactMatch && suggestions.length > 0) {
+        const warning = `Model "${value}" not found in available models. Custom models may work with third-party providers.`;
+        setValidationWarning(warning);
+        onValidationError?.(warning);
+      } else {
+        onValidationSuccess?.();
+      }
+
+      // Additional validation for API key format (warning only)
+      if (apiKey && providerType === 'openai' && !apiKey.startsWith('sk-')) {
+        setValidationWarning(prev => prev ?
+          `${prev} • OpenAI API keys typically start with "sk-"` :
+          'OpenAI API keys typically start with "sk-"'
+        );
+      }
+
+      setIsValidating(false);
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [value, validateModel]);
+  }, [value, suggestions, providerType, apiKey, onValidationError, onValidationSuccess]); // Inline validation logic to avoid function recreation
 
   // Filter suggestions based on input
   const filteredSuggestions = suggestions.filter(suggestion =>

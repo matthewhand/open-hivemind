@@ -54,8 +54,8 @@ async function readRegistry(): Promise<PluginRegistryEntry[]> {
   try {
     const content = await fs.promises.readFile(REGISTRY_FILE, 'utf-8');
     return JSON.parse(content);
-  } catch (e: any) {
-    if (e.code === 'ENOENT') {
+  } catch (e: unknown) {
+    if ((e as NodeJS.ErrnoException).code === 'ENOENT') {
       return [];
     }
     debug('Failed to parse registry.json — returning empty');
@@ -254,8 +254,8 @@ export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
       throw new Error(
         `Plugin '${name}' is already installed at ${pluginPath}. Use updatePlugin('${name}') to upgrade.`
       );
-    } catch (e: any) {
-      if (e.code !== 'ENOENT') {
+    } catch (e: unknown) {
+      if ((e as NodeJS.ErrnoException).code !== 'ENOENT') {
         throw e;
       }
     }
@@ -298,8 +298,8 @@ export async function uninstallPlugin(name: string): Promise<void> {
 
   try {
     await fs.promises.access(pluginPath);
-  } catch (e: any) {
-    if (e.code === 'ENOENT') {
+  } catch (e: unknown) {
+    if ((e as NodeJS.ErrnoException).code === 'ENOENT') {
       throw new Error(`Plugin '${name}' not found at ${pluginPath}. Is it installed?`);
     }
     throw e;
@@ -323,8 +323,8 @@ export async function updatePlugin(name: string): Promise<PluginInfo> {
 
   try {
     await fs.promises.access(pluginPath);
-  } catch (e: any) {
-    if (e.code === 'ENOENT') {
+  } catch (e: unknown) {
+    if ((e as NodeJS.ErrnoException).code === 'ENOENT') {
       throw new Error(`Plugin '${name}' not found at ${pluginPath}. Install it first.`);
     }
     throw e;
@@ -366,8 +366,8 @@ export async function listInstalledPlugins(): Promise<PluginInfo[]> {
 
   try {
     await fs.promises.access(PLUGINS_DIR);
-  } catch (e: any) {
-    if (e.code === 'ENOENT') {
+  } catch (e: unknown) {
+    if ((e as NodeJS.ErrnoException).code === 'ENOENT') {
       return results;
     }
     throw e;
@@ -432,7 +432,7 @@ let _securityPolicy: PluginSecurityPolicy | undefined;
  */
 export function getSecurityPolicy(): PluginSecurityPolicy {
   if (!_securityPolicy) {
-    _securityPolicy = new PluginSecurityPolicy(PLUGIN_SIGNING_KEY);
+    _securityPolicy = new PluginSecurityPolicy(PLUGIN_SIGNING_KEY!);
   }
   return _securityPolicy;
 }

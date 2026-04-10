@@ -6,7 +6,9 @@ import { DataManagementSchemas } from './DataManagementSchemas';
 import { IncidentSchemas } from './IncidentSchemas';
 import { IntegrationSchemas } from './IntegrationSchemas';
 import type { ISchemaModule } from './ISchemaModule';
+import { LoggingSchemas } from './LoggingSchemas';
 import { MetricsSchemas } from './MetricsSchemas';
+import { MonitoringSchemas } from './MonitoringSchemas';
 import { OperationsSchemas } from './OperationsSchemas';
 import { SecuritySchemas } from './SecuritySchemas';
 import { WorkflowSchemas } from './WorkflowSchemas';
@@ -19,7 +21,9 @@ export const SchemaRegistry: ISchemaModule[] = [
   new DataManagementSchemas(),
   new IncidentSchemas(),
   new IntegrationSchemas(),
+  new LoggingSchemas(),
   new MetricsSchemas(),
+  new MonitoringSchemas(),
   new OperationsSchemas(),
   new SecuritySchemas(),
   new WorkflowSchemas(),
@@ -33,7 +37,9 @@ export {
   DataManagementSchemas,
   IncidentSchemas,
   IntegrationSchemas,
+  LoggingSchemas,
   MetricsSchemas,
+  MonitoringSchemas,
   OperationsSchemas,
   SecuritySchemas,
   WorkflowSchemas,

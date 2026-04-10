@@ -1,56 +1,59 @@
-import React from 'react';
-import classNames from 'classnames';
+/**
+ * Swap Component - DaisyUI swap toggle for switching between two states
+ */
 
-export interface SwapProps extends Omit<React.HTMLAttributes<HTMLLabelElement>, 'onChange'> {
-  /** Whether the swap is in the "on" state */
-  checked?: boolean;
-  /** Callback when the swap state changes */
-  onChange?: (checked: boolean) => void;
-  /** Content shown when checked/active */
+import React, { useState } from 'react';
+
+interface SwapProps {
   onContent: React.ReactNode;
-  /** Content shown when unchecked/inactive */
   offContent: React.ReactNode;
-  /** Apply rotate animation on swap */
-  rotate?: boolean;
-  /** Apply flip animation on swap */
-  flip?: boolean;
-  /** Additional CSS classes */
+  checked?: boolean;
+  onChange?: (checked: boolean) => void;
+  variant?: 'default' | 'rotate' | 'flip';
   className?: string;
+  disabled?: boolean;
 }
 
-const Swap: React.FC<SwapProps> = React.memo(({
-  checked,
-  onChange,
+const Swap: React.FC<SwapProps> = ({
   onContent,
   offContent,
-  rotate = false,
-  flip = false,
-  className,
-  ...props
+  checked = false,
+  onChange,
+  variant = 'default',
+  className = '',
+  disabled = false
 }) => {
-  const classes = classNames(
-    'swap',
-    {
-      'swap-rotate': rotate,
-      'swap-flip': flip,
-    },
-    className,
-  );
+  const [isChecked, setIsChecked] = useState(checked);
+
+  const handleChange = (newChecked: boolean) => {
+    if (disabled) return;
+    setIsChecked(newChecked);
+    onChange?.(newChecked);
+  };
+
+  const getSwapClasses = () => {
+    const variantClasses = {
+      default: '',
+      rotate: 'swap-rotate',
+      flip: 'swap-flip'
+    };
+
+    return `swap ${variantClasses[variant]} ${disabled ? 'swap-disabled' : ''}`;
+  };
 
   return (
-    <label className={classes} {...props}>
+    <label className={`${getSwapClasses()} ${className}`}>
       <input
         type="checkbox"
-        checked={checked}
-        onChange={onChange ? (e) => onChange(e.target.checked) : () => {}}
-        readOnly={!onChange}
+        checked={isChecked}
+        onChange={(e) => handleChange(e.target.checked)}
+        disabled={disabled}
+        className="swap-checkbox"
       />
       <div className="swap-on">{onContent}</div>
       <div className="swap-off">{offContent}</div>
     </label>
   );
-});
-
-Swap.displayName = 'Swap';
+};
 
 export default Swap;

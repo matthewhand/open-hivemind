@@ -63,7 +63,10 @@ interface ErrorInfo {
 /**
  * Extract error information from an Error object
  */
-function extractErrorInfo(error: Error): ErrorInfo {
+function extractErrorInfo(error: unknown): ErrorInfo {
+  if (!(error instanceof Error)) {
+    return { name: 'UnknownError', message: String(error) };
+  }
   const info: ErrorInfo = {
     name: error.name,
     message: error.message,
@@ -181,7 +184,7 @@ export class StructuredLogger {
   /**
    * Log an error message with optional Error object
    */
-  error(message: string, error?: Error, context?: Record<string, unknown>): void {
+  error(message: string, error?: unknown, context?: Record<string, unknown>): void {
     const errorContext = error
       ? {
           ...context,
@@ -197,7 +200,7 @@ export class StructuredLogger {
   /**
    * Log a fatal error message (application cannot continue)
    */
-  fatal(message: string, error?: Error, context?: Record<string, unknown>): void {
+  fatal(message: string, error?: unknown, context?: Record<string, unknown>): void {
     const errorContext = error
       ? {
           ...context,
