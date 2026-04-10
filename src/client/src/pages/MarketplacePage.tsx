@@ -1,71 +1,23 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { apiService } from '../services/api';
-import Card from '../components/DaisyUI/Card';
 import Button from '../components/DaisyUI/Button';
-import Badge from '../components/DaisyUI/Badge';
 import {
   Store as StoreIcon,
-  Download as DownloadIcon,
-  RefreshCw as UpdateIcon,
-  Trash2 as UninstallIcon,
-  Plus as PlusIcon,
   Search as SearchIcon,
-  Brain as LLMIcon,
-  MessageCircle as MessageIcon,
-  Database as MemoryIcon,
-  Wrench as ToolIcon,
   Github as GitHubIcon,
   AlertCircle as AlertIcon,
   AlertTriangle as WarningIcon,
   CheckCircle as CheckIcon,
   X as CloseIcon,
-  Star as StarIcon,
-  ExternalLink as ExternalLinkIcon,
 } from 'lucide-react';
+import { MarketplaceCard } from '../components/Marketplace';
+import type { MarketplacePackage } from '../components/Marketplace';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-interface MarketplacePackage {
-  name: string;
-  displayName: string;
-  description: string;
-  type: 'llm' | 'message' | 'memory' | 'tool';
-  version: string;
-  status: 'built-in' | 'installed' | 'available';
-  repoUrl?: string;
-  feedbackUrl?: string;
-  rating?: number;
-  installedAt?: string;
-  updatedAt?: string;
-}
-
 type FilterType = 'all' | 'llm' | 'message' | 'memory' | 'tool';
-
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-const TYPE_ICONS = {
-  llm: LLMIcon,
-  message: MessageIcon,
-  memory: MemoryIcon,
-  tool: ToolIcon,
-} as const;
-
-const TYPE_COLORS = {
-  llm: 'secondary',
-  message: 'primary',
-  memory: 'accent',
-  tool: 'info',
-} as const;
-
-const STATUS_BADGES = {
-  'built-in': { label: 'Built-in', color: 'neutral' as const },
-  'installed': { label: 'Installed', color: 'success' as const },
-  'available': { label: 'Available', color: 'info' as const },
-} as const;
 
 // ---------------------------------------------------------------------------
 // Component
@@ -103,6 +55,7 @@ const MarketplacePage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const data: any = await apiService.get('/api/marketplace/packages');
       setPackages(data?.data || data || []);
     } catch (err: unknown) {
@@ -132,6 +85,7 @@ const MarketplacePage: React.FC = () => {
     setActionMessage(null);
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result: any = await apiService.post('/api/marketplace/install', { repoUrl: githubUrl.trim() });
       const data = result?.data || result;
       setActionMessage({ type: 'success', text: `Installed ${data?.package?.displayName || 'package'} successfully!` });
@@ -145,12 +99,19 @@ const MarketplacePage: React.FC = () => {
     }
   };
 
+  // Install a specific package (from card button)
+  const handleInstall = (pkg: MarketplacePackage) => {
+    setGithubUrl(pkg.repoUrl || '');
+    setInstallModalOpen(true);
+  };
+
   // Update package
   const handleUpdate = async (name: string) => {
     setActionInProgress(`update-${name}`);
     setActionMessage(null);
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result: any = await apiService.post(`/api/marketplace/update/${name}`, {});
       const data = result?.data || result;
       setActionMessage({ type: 'success', text: `Updated ${data?.package?.displayName || name} successfully!` });
@@ -266,141 +227,22 @@ const MarketplacePage: React.FC = () => {
       {!loading && filteredPackages.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredPackages.map((pkg) => {
-            const Icon = TYPE_ICONS[pkg.type];
-            const color = TYPE_COLORS[pkg.type];
-            const statusBadge = STATUS_BADGES[pkg.status];
             const isBusy = actionInProgress?.startsWith(pkg.name) ||
                           actionInProgress === `update-${pkg.name}` ||
                           actionInProgress === `uninstall-${pkg.name}`;
 
             return (
-              <Card key={pkg.name} className="bg-base-200 hover:bg-base-300 transition-colors">
-                <Card.Body className="p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className={`p-2 rounded-lg bg-${color}/10`}>
-                        <Icon className={`w-5 h-5 text-${color}`} />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold">{pkg.displayName}</h3>
-                        <p className="text-xs text-base-content/50 font-mono">{pkg.name}</p>
-                      </div>
-                    </div>
-                    <Badge variant={statusBadge.color} size="sm">
-                      {statusBadge.label}
-                    </Badge>
-                  </div>
-
-                  <p className="text-sm text-base-content/70 mb-3 line-clamp-2">
-                    {pkg.description}
-                  </p>
-
-                  <div className="flex items-center justify-between text-xs text-base-content/50 mb-3">
-                    <span>v{pkg.version}</span>
-                    <span className="uppercase badge badge-sm badge-outline">{pkg.type}</span>
-                  </div>
-
-                  {/* Star Rating & Feedback */}
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-1" data-testid={`star-rating-${pkg.name}`}>
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Button
-                          key={star}
-                          variant="ghost"
-                          size="xs"
-                          className="p-0"
-                          data-testid={`star-${star}`}
-                          onClick={() => handleRating(pkg.name, star)}
-                          aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
-                        >
-                          <StarIcon
-                            className={`w-4 h-4 ${
-                              (ratings[pkg.name] ?? pkg.rating ?? 0) >= star
-                                ? 'fill-warning text-warning'
-                                : 'text-base-content/30'
-                            }`}
-                          />
-                        </Button>
-                      ))}
-                    </div>
-                    {pkg.feedbackUrl ? (
-                      <a
-                        href={pkg.feedbackUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="link link-primary text-xs flex items-center gap-1"
-                        data-testid={`feedback-link-${pkg.name}`}
-                      >
-                        Feedback <ExternalLinkIcon className="w-3 h-3" />
-                      </a>
-                    ) : pkg.repoUrl ? (
-                      <a
-                        href={`${pkg.repoUrl}/issues`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="link link-primary text-xs flex items-center gap-1"
-                        data-testid={`feedback-link-${pkg.name}`}
-                      >
-                        Feedback <ExternalLinkIcon className="w-3 h-3" />
-                      </a>
-                    ) : null}
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex gap-2">
-                    {pkg.status === 'installed' && (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => handleUpdate(pkg.name)}
-                          disabled={isBusy}
-                        >
-                          {actionInProgress === `update-${pkg.name}` ? (
-                            <span className="loading loading-spinner loading-xs" aria-hidden="true"></span>
-                          ) : (
-                            <UpdateIcon className="w-4 h-4" />
-                          )}
-                          Update
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleUninstall(pkg.name)}
-                          disabled={isBusy}
-                        >
-                          {actionInProgress === `uninstall-${pkg.name}` ? (
-                            <span className="loading loading-spinner loading-xs" aria-hidden="true"></span>
-                          ) : (
-                            <UninstallIcon className="w-4 h-4 text-error" />
-                          )}
-                        </Button>
-                      </>
-                    )}
-                    {pkg.status === 'available' && (
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => {
-                          setGithubUrl(pkg.repoUrl || '');
-                          setInstallModalOpen(true);
-                        }}
-                        disabled={isBusy}
-                      >
-                        <DownloadIcon className="w-4 h-4 mr-1" />
-                        Install
-                      </Button>
-                    )}
-                    {pkg.status === 'built-in' && (
-                      <span className="text-xs text-base-content/50 italic w-full text-center">
-                        Included with open-hivemind
-                      </span>
-                    )}
-                  </div>
-                </Card.Body>
-              </Card>
+              <MarketplaceCard
+                key={pkg.name}
+                pkg={pkg}
+                isBusy={!!isBusy}
+                actionInProgress={actionInProgress}
+                userRating={ratings[pkg.name]}
+                onRate={handleRating}
+                onInstall={handleInstall}
+                onUpdate={handleUpdate}
+                onUninstall={handleUninstall}
+              />
             );
           })}
         </div>
@@ -468,8 +310,5 @@ const MarketplacePage: React.FC = () => {
     </div>
   );
 };
-
-// Missing imports
-const RefreshCw = UpdateIcon;
 
 export default MarketplacePage;
