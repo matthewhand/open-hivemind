@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { authFetch } from '../utils/authFetch';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Shield, RefreshCw, AlertTriangle, Plus, Copy, Trash2, Edit2, CheckCircle, XCircle } from 'lucide-react';
+import { Shield, RefreshCw, AlertTriangle, Plus, Copy, Trash2, Edit2, CheckCircle, XCircle, Settings, Users } from 'lucide-react';
 import Card from '../components/DaisyUI/Card';
 import Divider from '../components/DaisyUI/Divider';
 import Input from '../components/DaisyUI/Input';
 import Button from '../components/DaisyUI/Button';
 import Toggle from '../components/DaisyUI/Toggle';
 import Select from '../components/DaisyUI/Select';
+import Tabs from '../components/DaisyUI/Tabs';
 import Textarea from '../components/DaisyUI/Textarea';
 import { ConfirmModal } from '../components/DaisyUI/Modal';
 import ModalForm from '../components/DaisyUI/ModalForm';
@@ -137,14 +139,122 @@ const GuardStatusRow: React.FC<{ icon: React.ReactNode; label: string; enabled: 
   </div>
 );
 
+/** Guard Settings tab (placeholder — no settings API yet) */
+const GuardSettingsTab: React.FC = () => {
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  return (
+    <div className="space-y-6">
+      <Card className="shadow-md border border-base-200">
+        <div className="flex items-center gap-2 mb-4">
+          <Settings className="w-5 h-5 text-primary" />
+          <h3 className="text-lg font-semibold">Global Guard Defaults</h3>
+        </div>
+
+        <div className="space-y-4">
+          {/* Default rate limit */}
+          <div className="form-control opacity-50 pointer-events-none">
+            <label className="label"><span className="label-text font-medium">Default Rate Limit</span></label>
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="Max Requests"
+                type="number"
+                value={100}
+                readOnly
+                disabled
+              />
+              <Input
+                label="Window (seconds)"
+                type="number"
+                value={60}
+                readOnly
+                disabled
+              />
+            </div>
+            <label className="label">
+              <span className="label-text-alt text-base-content/50">
+                Applied to new guard profiles by default.
+              </span>
+            </label>
+          </div>
+
+          <Divider>Content Filtering</Divider>
+
+          {/* Default content filter level */}
+          <div className="form-control opacity-50 pointer-events-none">
+            <label className="label"><span className="label-text font-medium">Default Content Filter Level</span></label>
+            <Select
+              disabled
+              value="medium"
+              options={[
+                { value: 'low', label: 'Low' },
+                { value: 'medium', label: 'Medium' },
+                { value: 'high', label: 'High' },
+              ]}
+            />
+          </div>
+        </div>
+
+        <div className="mt-6 p-4 bg-info/10 rounded-lg text-info text-sm">
+          Guard settings coming soon. These controls will be connected in a future release.
+        </div>
+      </Card>
+
+      {/* Advanced toggle */}
+      <Card className="shadow-md border border-base-200">
+        <Toggle
+          label="Advanced"
+          checked={showAdvanced}
+          onChange={() => setShowAdvanced(v => !v)}
+          color="primary"
+        />
+        {showAdvanced && (
+          <div className="mt-4 space-y-4 animate-fadeIn">
+            <Divider>Advanced Guard Settings</Divider>
+            <div className="form-control opacity-50 pointer-events-none">
+              <label className="label"><span className="label-text">Custom Rule Configuration</span></label>
+              <Textarea
+                disabled
+                placeholder="Define custom guard rules in JSON format..."
+                rows={4}
+              />
+            </div>
+            <div className="form-control opacity-50 pointer-events-none">
+              <label className="label"><span className="label-text">Guard Evaluation Order</span></label>
+              <Select
+                disabled
+                value="sequential"
+                options={[
+                  { value: 'sequential', label: 'Sequential (all guards run in order)' },
+                  { value: 'parallel', label: 'Parallel (all guards run simultaneously)' },
+                  { value: 'fail-fast', label: 'Fail-Fast (stop on first failure)' },
+                ]}
+              />
+            </div>
+            <div className="p-4 bg-info/10 rounded-lg text-info text-sm">
+              Advanced guard settings coming soon.
+            </div>
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+};
+
 const GuardsPage: React.FC = () => {
   const { addToast } = useToast();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [editingProfile, setEditingProfile] = useState<Partial<GuardProfile> | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<GuardProfile | null>(null);
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 12;
+
+  const activeTab = searchParams.get('tab') || 'profiles';
+  const handleTabChange = (tabId: string) => {
+    setSearchParams(tabId === 'profiles' ? {} : { tab: tabId }, { replace: true });
+  };
 
   const { data: response, isLoading } = useQuery<{ data: GuardProfile[] }>({
     queryKey: ['guardProfiles'],
@@ -470,102 +580,126 @@ const GuardsPage: React.FC = () => {
 
   return (
     <div className="container mx-auto p-4 max-w-7xl">
-      {profiles.length === 0 ? (
-        <div className="text-center py-16 bg-base-200 rounded-box">
-          <Shield className="w-16 h-16 mx-auto text-base-content/30 mb-4" />
-          <h3 className="text-xl font-bold mb-2">No Guard Profiles</h3>
-          <p className="text-base-content/70 mb-6">Create your first guard profile to secure your bots.</p>
-          <Button color="primary" onClick={() => setEditingProfile(defaultNewProfile as any)}>
-            <Plus className="w-4 h-4 mr-2" /> Create Profile
-          </Button>
-        </div>
-      ) : (
-        <><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {paginatedProfiles.map(profile => (
-            <Card
-              key={profile.id}
-              className="hover:shadow-lg transition-shadow cursor-pointer border border-base-200"
-              onClick={() => setSelectedProfileId(profile.id)}
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="text-lg font-bold">{profile.name}</h3>
-                  <p className="text-sm text-base-content/70 line-clamp-2 min-h-[2.5rem] mt-1">
-                    {profile.description || 'No description'}
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-3 mb-6">
-                <div className="flex justify-between items-center text-sm">
-                  <span className="flex items-center gap-2">
-                    <Shield className="w-4 h-4 opacity-70" /> Access Control
-                  </span>
-                  <div className={`badge ${profile.guards.mcpGuard.enabled ? 'badge-primary badge-outline' : 'badge-ghost'}`}>
-                    {profile.guards.mcpGuard.enabled ? profile.guards.mcpGuard.type : 'Disabled'}
+      <Tabs
+        variant="lifted"
+        activeTab={activeTab}
+        onChange={handleTabChange}
+        tabs={[
+          {
+            id: 'profiles',
+            label: 'Profiles',
+            icon: <Users className="w-4 h-4" />,
+            content: (
+              <>
+                {profiles.length === 0 ? (
+                  <div className="text-center py-16 bg-base-200 rounded-box">
+                    <Shield className="w-16 h-16 mx-auto text-base-content/30 mb-4" />
+                    <h3 className="text-xl font-bold mb-2">No Guard Profiles</h3>
+                    <p className="text-base-content/70 mb-6">Create your first guard profile to secure your bots.</p>
+                    <Button color="primary" onClick={() => setEditingProfile(defaultNewProfile as any)}>
+                      <Plus className="w-4 h-4 mr-2" /> Create Profile
+                    </Button>
                   </div>
-                </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {paginatedProfiles.map(profile => (
+                        <Card
+                          key={profile.id}
+                          className="hover:shadow-lg transition-shadow cursor-pointer border border-base-200"
+                          onClick={() => setSelectedProfileId(profile.id)}
+                        >
+                          <div className="flex justify-between items-start mb-4">
+                            <div>
+                              <h3 className="text-lg font-bold">{profile.name}</h3>
+                              <p className="text-sm text-base-content/70 line-clamp-2 min-h-[2.5rem] mt-1">
+                                {profile.description || 'No description'}
+                              </p>
+                            </div>
+                          </div>
 
-                <div className="flex justify-between items-center text-sm">
-                  <span className="flex items-center gap-2">
-                    <RefreshCw className="w-4 h-4 opacity-70" /> Rate Limit
-                  </span>
-                  <div className={`badge ${profile.guards.rateLimit?.enabled ? 'badge-primary badge-outline' : 'badge-ghost'}`}>
-                    {profile.guards.rateLimit?.enabled ? `${profile.guards.rateLimit.maxRequests}/${profile.guards.rateLimit.windowMs / 1000}s` : 'Disabled'}
-                  </div>
-                </div>
+                          <div className="space-y-3 mb-6">
+                            <div className="flex justify-between items-center text-sm">
+                              <span className="flex items-center gap-2">
+                                <Shield className="w-4 h-4 opacity-70" /> Access Control
+                              </span>
+                              <div className={`badge ${profile.guards.mcpGuard.enabled ? 'badge-primary badge-outline' : 'badge-ghost'}`}>
+                                {profile.guards.mcpGuard.enabled ? profile.guards.mcpGuard.type : 'Disabled'}
+                              </div>
+                            </div>
 
-                <div className="flex justify-between items-center text-sm">
-                  <span className="flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4 opacity-70" /> Content Filter
-                  </span>
-                  <div className={`badge ${profile.guards.contentFilter?.enabled ? 'badge-error badge-outline' : 'badge-ghost'}`}>
-                    {profile.guards.contentFilter?.enabled ? profile.guards.contentFilter.strictness : 'Disabled'}
-                  </div>
-                </div>
-              </div>
+                            <div className="flex justify-between items-center text-sm">
+                              <span className="flex items-center gap-2">
+                                <RefreshCw className="w-4 h-4 opacity-70" /> Rate Limit
+                              </span>
+                              <div className={`badge ${profile.guards.rateLimit?.enabled ? 'badge-primary badge-outline' : 'badge-ghost'}`}>
+                                {profile.guards.rateLimit?.enabled ? `${profile.guards.rateLimit.maxRequests}/${profile.guards.rateLimit.windowMs / 1000}s` : 'Disabled'}
+                              </div>
+                            </div>
 
-              <div className="flex justify-end gap-2 mt-auto">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={(e) => { e.stopPropagation(); handleDuplicate(profile); }}
-                  title="Duplicate Profile"
-                  aria-label="Duplicate profile"
-                >
-                  <Copy className="w-4 h-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={(e) => { e.stopPropagation(); setEditingProfile(profile); }}
-                  title="Edit Profile"
-                >
-                  <Edit2 className="w-4 h-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  color="error"
-                  onClick={(e) => { e.stopPropagation(); setDeleteConfirm(profile); }}
-                  title="Delete Profile"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
-        <div className="flex justify-center mt-6">
-          <Pagination
-            currentPage={currentPage}
-            totalItems={profiles.length}
-            pageSize={pageSize}
-            onPageChange={setCurrentPage}
-            style="standard"
-          />
-        </div></>
-      )}
+                            <div className="flex justify-between items-center text-sm">
+                              <span className="flex items-center gap-2">
+                                <AlertTriangle className="w-4 h-4 opacity-70" /> Content Filter
+                              </span>
+                              <div className={`badge ${profile.guards.contentFilter?.enabled ? 'badge-error badge-outline' : 'badge-ghost'}`}>
+                                {profile.guards.contentFilter?.enabled ? profile.guards.contentFilter.strictness : 'Disabled'}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex justify-end gap-2 mt-auto">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => { e.stopPropagation(); handleDuplicate(profile); }}
+                              title="Duplicate Profile"
+                              aria-label="Duplicate profile"
+                            >
+                              <Copy className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => { e.stopPropagation(); setEditingProfile(profile); }}
+                              title="Edit Profile"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              color="error"
+                              onClick={(e) => { e.stopPropagation(); setDeleteConfirm(profile); }}
+                              title="Delete Profile"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                    <div className="flex justify-center mt-6">
+                      <Pagination
+                        currentPage={currentPage}
+                        totalItems={profiles.length}
+                        pageSize={pageSize}
+                        onPageChange={setCurrentPage}
+                        style="standard"
+                      />
+                    </div>
+                  </>
+                )}
+              </>
+            ),
+          },
+          {
+            id: 'settings',
+            label: 'Settings',
+            icon: <Settings className="w-4 h-4" />,
+            content: <GuardSettingsTab />,
+          },
+        ]}
+      />
 
       {/* Guard Profile Detail Drawer */}
       <DetailDrawer
