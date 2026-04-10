@@ -45,8 +45,8 @@ import usageTrackingRouter from '@src/server/routes/usageTracking';
 import validationRouter from '@src/server/routes/validation';
 import webhooksRouter from '@src/server/routes/webhooks';
 import webuiRouter from '@src/server/routes/webui';
-import * as healthRouteModule from './routes/health';
 import Logger from '@common/logger';
+import * as healthRouteModule from './routes/health';
 
 const appLogger = Logger.withContext('app:index');
 const httpLogger = Logger.withContext('http');

@@ -6,12 +6,13 @@
  * demo mode, anomaly detection, and webhook registration.
  */
 import debug from 'debug';
-import { container } from '@src/di/container';
-import { registerServices } from '@src/di/registration';
 import { loadLlmProfiles } from '@src/config/llmProfiles';
 import { loadMemoryProfiles } from '@src/config/memoryProfiles';
 import { loadToolProfiles } from '@src/config/toolProfiles';
+import { container } from '@src/di/container';
+import { registerServices } from '@src/di/registration';
 import { SyncProviderRegistry, type ProviderProfile } from '@src/registries/SyncProviderRegistry';
+import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
 import AnomalyDetectionService from '@src/services/AnomalyDetectionService';
 import DemoModeService from '@src/services/DemoModeService';
 import StartupGreetingService from '@src/services/StartupGreetingService';
@@ -24,9 +25,8 @@ import * as messengerProviderModule from '@message/management/getMessengerProvid
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 import Logger from '@common/logger';
 import { initProviders } from '../initProviders';
-import { reloadGlobalConfigs } from './routes/config';
 import startupDiagnostics from '../utils/startupDiagnostics';
-import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
+import { reloadGlobalConfigs } from './routes/config';
 
 const indexLog = debug('app:index');
 const appLogger = Logger.withContext('app:index');
@@ -186,7 +186,9 @@ export interface InitServicesResult {
  * Initialize all backend services: DI, database, providers, messengers, pipeline, etc.
  * Returns the messenger services array so the caller can pass it to HTTP/webhook setup.
  */
-export async function initServices(app: import('express').Application): Promise<InitServicesResult> {
+export async function initServices(
+  app: import('express').Application
+): Promise<InitServicesResult> {
   const shutdownCoordinator = ShutdownCoordinator.getInstance();
 
   registerServices();

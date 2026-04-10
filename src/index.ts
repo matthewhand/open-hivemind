@@ -11,9 +11,9 @@ import WebSocketService from '@src/server/services/WebSocketService';
 import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
 import AnomalyDetectionService from '@src/services/AnomalyDetectionService';
 import Logger from '@common/logger';
-import { setupMiddleware } from './server/setupMiddleware';
-import { registerRoutes } from './server/registerRoutes';
 import { initServices, initWebhooks } from './server/initServices';
+import { registerRoutes } from './server/registerRoutes';
+import { setupMiddleware } from './server/setupMiddleware';
 
 const appLogger = Logger.withContext('app:index');
 const frontendLogger = Logger.withContext('frontend');
