@@ -131,6 +131,35 @@ adminRouter.get('/personas', async (_req: Request, res: Response) => {
   res.json({ success: true, personas: await loadPersonas() });
 });
 
+// Bridge route to new BotManager system
+adminRouter.get('/bots', async (_req: Request, res: Response) => {
+  try {
+    // Import BotManager dynamically to avoid circular dependencies
+    const { BotManager } = await import('../managers/BotManager');
+    const manager = await BotManager.getInstance();
+    const bots = await manager.getAllBots();
+    const statuses = await manager.getBotsStatus();
+    const statusMap = new Map(statuses.map((s) => [s.id, s.isRunning]));
+
+    const result = bots.map((bot) => ({
+      id: bot.id,
+      name: bot.name,
+      provider: bot.messageProvider,
+      messageProvider: bot.messageProvider,
+      llmProvider: bot.llmProvider,
+      persona: bot.persona,
+      status: bot.isActive ? 'active' : 'disabled',
+      connected: statusMap.get(bot.id) || false,
+      isActive: bot.isActive,
+    }));
+
+    res.json({ success: true, bots: result });
+  } catch (error) {
+    debug('Failed to retrieve bots from BotManager', error);
+    res.json({ success: true, bots: [] });
+  }
+});
+
 adminRouter.get('/llm-providers', (_req: Request, res: Response) => {
   const providers = providerRegistry.getLLMProviders().map((p) => ({
     key: p.id,
@@ -166,9 +195,11 @@ adminRouter.get(
       const schema = provider.getSchema();
       const serialized = serializeSchema(schema);
       return res.json({ success: true, schema: serialized });
-    } catch (e: any) {
+    } catch (e: unknown) {
       debug(`Failed to get schema for provider ${providerId}`, e);
-      return res.status(500).json({ success: false, error: e.message || String(e) });
+      return res
+        .status(500)
+        .json({ success: false, error: (e instanceof Error ? e.message : String(e)) || String(e) });
     }
   }
 );

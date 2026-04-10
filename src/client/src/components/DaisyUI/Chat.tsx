@@ -113,20 +113,25 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     return (
       <div key={message.id} className={`chat ${isCurrentUser ? 'chat-end' : 'chat-start'} ${isGrouped ? 'mt-1' : 'mt-4'}`}>
         {!isGrouped && (
-          <Avatar
-            size="md"
-            shape="circle"
-            src={message.sender.avatar || undefined}
-            placeholder={!message.sender.avatar}
-            className="chat-image"
-            innerClassName={!message.sender.avatar ? `bg-${isBot ? 'secondary' : 'primary'} text-${isBot ? 'secondary' : 'primary'}-content rounded-full w-10 flex items-center justify-center` : "w-10 rounded-full"}
-          >
-            {!message.sender.avatar && (
-              <span className="text-xl">
-                {isBot ? '🤖' : (message.sender.name || '?').charAt(0).toUpperCase()}
-              </span>
-            )}
-          </Avatar>
+          <div className="chat-image avatar">
+            <div className="w-10 rounded-full">
+              {message.sender.avatar ? (
+                <img
+                  alt={`${message.sender.name} avatar`}
+                  src={message.sender.avatar}
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+              ) : (
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl ${
+                  isBot 
+                    ? 'bg-secondary text-secondary-content' 
+                    : 'bg-primary text-primary-content'
+                }`}>
+                  {isBot ? '🤖' : (message.sender.name || '?').charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
+          </div>
         )}
 
         {!isGrouped && (
@@ -185,9 +190,21 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           )}
         </div>
 
-        {/* Reactions */}
-        {message.metadata?.reactions && message.metadata.reactions.length > 0 && (
-          <div className="chat-footer">
+        {/* Chat Footer - Status and Reactions */}
+        <div className="chat-footer opacity-50">
+          {/* Message Status */}
+          {message.metadata?.status === 'delivered' && (
+            <span className="text-xs">Delivered</span>
+          )}
+          {message.metadata?.status === 'sent' && (
+            <span className="text-xs">Sent</span>
+          )}
+          {message.metadata?.status === 'failed' && (
+            <span className="text-xs text-error">Failed</span>
+          )}
+          
+          {/* Reactions */}
+          {message.metadata?.reactions && message.metadata.reactions.length > 0 && (
             <div className="flex gap-1 mt-1">
               {message.metadata.reactions.map((reaction, idx) => (
                 <div key={idx} className="badge badge-sm badge-ghost">
@@ -195,8 +212,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     );
   };
@@ -248,15 +265,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             {/* Typing Indicator */}
             {showTypingIndicator && typingUsers.length > 0 && (
               <div className="chat chat-start">
-                <Avatar
-                  size="md"
-                  shape="circle"
-                  placeholder={true}
-                  className="chat-image"
-                  innerClassName="bg-secondary text-secondary-content rounded-full w-10 text-xl flex items-center justify-center"
-                >
-                  🤖
-                </Avatar>
+                <div className="chat-image avatar">
+                  <div className="w-10 rounded-full">
+                    <div className="w-10 h-10 rounded-full bg-secondary text-secondary-content flex items-center justify-center text-xl">
+                      🤖
+                    </div>
+                  </div>
+                </div>
                 <div className="chat-bubble chat-bubble-secondary">
                   <span className="loading loading-dots loading-sm" aria-hidden="true"></span>
                 </div>

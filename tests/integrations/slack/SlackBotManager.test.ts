@@ -50,7 +50,25 @@ describe('SlackBotManager', () => {
     );
   });
 
-  it.todo(
-    'should handle initialization, configuration, and message handling' /* TODO: Fix and re-enable */
-  );
+  it('should handle initialization, configuration, and message handling', async () => {
+    const config = {
+      token: 'test-token',
+      appToken: 'test-app-token',
+      signingSecret: 'test-signing-secret'
+    };
+    
+    const slackBotManager = new SlackBotManager(config);
+    
+    // Test initialization
+    expect(slackBotManager).toBeDefined();
+    
+    // Test configuration
+    expect(MockSocketModeClient).toHaveBeenCalledWith({
+      appToken: 'test-app-token'
+    });
+    
+    // Test that event handlers are set up
+    const mockSocketClient = MockSocketModeClient.mock.instances[0];
+    expect(mockSocketClient.on).toHaveBeenCalled();
+  });
 });

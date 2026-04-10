@@ -8,7 +8,33 @@
 import { BotConfiguration, DatabaseManager } from '../../src/database/DatabaseManager';
 import { ConfigurationVersionService } from '../../src/server/services/ConfigurationVersionService';
 
-// eslint-disable-next-line jest/no-disabled-tests
-describe.skip('Configuration Version Deletion' /* TODO: Fix and re-enable entire suite */, () => {
-  it('placeholder', () => {});
+describe('Configuration Version Deletion', () => {
+  let databaseManager: DatabaseManager;
+  let versionService: ConfigurationVersionService;
+  
+  beforeEach(async () => {
+    // Initialize test database and services
+    databaseManager = new DatabaseManager();
+    versionService = new ConfigurationVersionService();
+  });
+  
+  afterEach(async () => {
+    // Clean up test data
+    if (databaseManager) {
+      await databaseManager.close();
+    }
+  });
+  
+  it('should handle version deletion gracefully', async () => {
+    // Test that version deletion doesn't break the system
+    const result = await versionService.deleteVersion('test-version-id');
+    expect(result).toBeDefined();
+  });
+  
+  it('should validate version exists before deletion', async () => {
+    // Test validation of version existence
+    const nonExistentId = 'non-existent-version';
+    await expect(versionService.deleteVersion(nonExistentId))
+      .rejects.toThrow();
+  });
 });

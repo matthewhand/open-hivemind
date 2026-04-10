@@ -92,7 +92,7 @@ export class SessionManager {
     const newToken = this.authManager.generateAccessToken(user);
 
     // Store new session
-    await this.sessionStore.storeSession(payload.userId, newToken, payload.role);
+    await this.sessionStore.storeSession(payload.userId, newToken, payload.role ?? 'user');
 
     debug('Token rotated for user: %s', payload.userId);
     return newToken;

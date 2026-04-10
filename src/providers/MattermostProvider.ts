@@ -173,7 +173,7 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
     try {
       const content = await fs.promises.readFile(messengersPath, 'utf8');
       cfg = JSON.parse(content);
-    } catch (e: any) {
+    } catch (e: unknown) {
       return { added: 0 };
     }
 
@@ -329,11 +329,13 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
                 error: `HTTP ${response.status}: ${response.statusText}`,
               };
             }
-          } catch (e: any) {
+          } catch (e: unknown) {
             return {
               name,
               connected: false,
-              error: e.message || 'Failed to connect to Mattermost API',
+              error:
+                (e instanceof Error ? e.message : String(e)) ||
+                'Failed to connect to Mattermost API',
             };
           }
         })
@@ -366,12 +368,12 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
         details: `${connectedCount}/${totalCount} bot(s) connected`,
         error: errors.length > 0 ? errors.join('; ') : undefined,
       };
-    } catch (e: any) {
+    } catch (e: unknown) {
       return {
         status: 'down',
         connected: false,
         details: 'Health check failed',
-        error: e.message,
+        error: e instanceof Error ? e.message : String(e),
       };
     }
   }

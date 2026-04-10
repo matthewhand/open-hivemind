@@ -129,8 +129,8 @@ const IntegrationsPanel: React.FC = () => {
         const profilesData = profilesResult.value;
         setLlmProfiles(profilesData.llm || profilesData.profiles?.llm || []);
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : String(err)));
     } finally {
       setLoading(false);
     }
@@ -163,8 +163,8 @@ const IntegrationsPanel: React.FC = () => {
       await fetchData();
       setIsModalOpen(false);
       setSelectedConfigName(null);
-    } catch (err: any) {
-      errorToast('Save Failed', err.message);
+    } catch (err: unknown) {
+      errorToast('Save Failed', (err instanceof Error ? err.message : String(err)));
     } finally {
       setSaving(false);
     }
@@ -187,8 +187,8 @@ const IntegrationsPanel: React.FC = () => {
       setNewIntegrationType('');
       setNewIntegrationName('');
       setNewConfigValues({});
-    } catch (err: any) {
-      errorToast('Create Failed', err.message);
+    } catch (err: unknown) {
+      errorToast('Create Failed', (err instanceof Error ? err.message : String(err)));
     } finally {
       setSaving(false);
     }
@@ -213,8 +213,8 @@ const IntegrationsPanel: React.FC = () => {
 
       await fetchData();
       setProviderModalState({ ...providerModalState, isOpen: false });
-    } catch (err: any) {
-      errorToast('Save Failed', `Failed to save profile: ${err.message}`);
+    } catch (err: unknown) {
+      errorToast('Save Failed', `Failed to save profile: ${(err instanceof Error ? err.message : String(err))}`);
     } finally {
       setSaving(false);
     }
@@ -231,8 +231,8 @@ const IntegrationsPanel: React.FC = () => {
           setSaving(true);
           await apiService.delete(`/api/config/llm-profiles/${key}`);
           await fetchData();
-        } catch (err: any) {
-          errorToast('Delete Failed', `Failed to delete profile: ${err.message}`);
+        } catch (err: unknown) {
+          errorToast('Delete Failed', `Failed to delete profile: ${(err instanceof Error ? err.message : String(err))}`);
         } finally {
           setSaving(false);
         }

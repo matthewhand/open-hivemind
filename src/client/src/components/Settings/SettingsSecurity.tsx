@@ -106,7 +106,7 @@ const SettingsSecurity: React.FC = () => {
         enableSecurityHeaders: true,
         enableApiKeyAuth: true,
       });
-    } catch (_error) {
+    } catch (error) {
       debug('ERROR:', 'Failed to load security settings:', error);
     } finally {
       setLoading(false);
@@ -137,7 +137,7 @@ const SettingsSecurity: React.FC = () => {
       setAlert({ type: 'success', message: 'Security settings saved!' });
       showStamp();
       setTimeout(() => setAlert(null), 3000);
-    } catch (_error) {
+    } catch (error) {
       setAlert({ type: 'error', message: 'Failed to save. Some settings require environment variables.' });
     } finally {
       setIsSaving(false);

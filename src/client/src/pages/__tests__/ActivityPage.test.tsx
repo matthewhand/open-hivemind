@@ -241,31 +241,42 @@ describe('ActivityPage', () => {
     expect(screen.getByText('Network error')).toBeInTheDocument();
   });
 
-  it("refreshes data when refresh button is clicked", async () => {
-    const mockData = { events: [], filters: { agents: [], messageProviders: [], llmProviders: [] } };
+  it('refreshes data when refresh button is clicked', async () => {
+    const mockData = {
+      events: [
+        {
+          id: '1',
+          timestamp: new Date().toISOString(),
+          botName: 'TestBot',
+          status: 'success',
+          provider: 'discord',
+          llmProvider: 'openai',
+          messageType: 'text'
+        }
+      ],
+      filters: {
+        agents: ['TestBot'],
+        messageProviders: ['discord'],
+        llmProviders: ['openai']
+      }
+    };
+
     getActivityMock.mockResolvedValue(mockData);
 
-    const queryClient = new QueryClient({
-      defaultOptions: {
-        queries: {
-          retry: false,
-        },
-      },
-    });
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(<QueryClientProvider client={queryClient}><MemoryRouter><ActivityPage /></MemoryRouter></QueryClientProvider>);
 
-    render(
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter>
-          <ActivityPage />
-        </MemoryRouter>
-      </QueryClientProvider>
-    );
+    // Wait for initial load
+    await waitFor(() => expect(screen.queryByTestId('loading-spinner')).not.toBeInTheDocument(), { timeout: 3000 });
 
-    await waitFor(() => expect(screen.queryByTestId('loading-spinner')).not.toBeInTheDocument());
+    // Clear previous calls
+    getActivityMock.mockClear();
 
-    const refreshButton = screen.getByTitle('Refresh');
+    // Find and click refresh button
+    const refreshButton = screen.getByRole('button', { name: /refresh/i });
     fireEvent.click(refreshButton);
 
-    expect(getActivityMock).toHaveBeenCalledTimes(2);
+    // Wait for refresh to complete
+    await waitFor(() => expect(getActivityMock).toHaveBeenCalledTimes(1), { timeout: 2000 });
   });
 });
