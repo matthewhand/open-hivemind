@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Card from '../DaisyUI/Card';
 import Chip from '../DaisyUI/Chip';
 import Select from '../DaisyUI/Select';
@@ -43,8 +43,14 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
     { key: 'openwebui', label: 'OpenWebUI' },
   ];
 
-  const messengerOptions = messageProviders.length ? messageProviders : fallbackMessengerProviders;
-  const llmOptions = llmProviders.length ? llmProviders : fallbackLlmProviders;
+  const messengerOptions = useMemo(
+    () => (messageProviders.length ? messageProviders : fallbackMessengerProviders),
+    [messageProviders]
+  );
+  const llmOptions = useMemo(
+    () => (llmProviders.length ? llmProviders : fallbackLlmProviders),
+    [llmProviders]
+  );
   const { personas, loading: personasLoading, error: personasError } = usePersonas();
 
   useEffect(() => {
@@ -103,10 +109,30 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
     }
   };
 
-  const isConfigured = llmProvider && messengerProvider && persona;
+  const isConfigured = useMemo(
+    () => Boolean(llmProvider && messengerProvider && persona),
+    [llmProvider, messengerProvider, persona]
+  );
 
   // Check for environment variable overrides
-  const hasEnvOverrides = agent.envOverrides && Object.keys(agent.envOverrides).length > 0;
+  const hasEnvOverrides = useMemo(
+    () => Boolean(agent.envOverrides && Object.keys(agent.envOverrides).length > 0),
+    [agent.envOverrides]
+  );
+
+  const handleRemoveMcpServerStable = useCallback(
+    (index: number) => {
+      setMcpServers((prev) => prev.filter((_, i) => i !== index));
+    },
+    []
+  );
+
+  const handleAddMcpServerStable = useCallback(() => {
+    if (newMcpServer.name && newMcpServer.serverUrl) {
+      setMcpServers((prev) => [...prev, newMcpServer]);
+      setNewMcpServer({ name: '', serverUrl: '', apiKey: '' });
+    }
+  }, [newMcpServer]);
 
   if (!configurable) {
     return (
@@ -354,5 +380,6 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
   );
 };
 
-// ⚡ Bolt Optimization: Added React.memo() to prevent unnecessary re-renders of this heavy component in lists.
+AgentCard.displayName = 'AgentCard';
+
 export default React.memo(AgentCard);
