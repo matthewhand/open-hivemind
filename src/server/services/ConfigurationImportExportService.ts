@@ -3,8 +3,8 @@ import * as path from 'path';
 import Debug from 'debug';
 import { SecureConfigManager } from '../../config/SecureConfigManager';
 import { DatabaseManager } from '../../database/DatabaseManager';
+import { type BotConfigurationVersion } from '../../database/types';
 import { ErrorUtils } from '../../types/errors';
-import { BotConfigurationVersion } from '../../database/types';
 import {
   BackupManager,
   calculateChecksum,
@@ -129,9 +129,7 @@ export class ConfigurationImportExportService {
       // Include versions if requested
       if (options.includeVersions) {
         // ⚡ Bolt Optimization: Replace N DB queries with batched bulk queries
-        const configIds = configs
-          .filter((c) => c.id != null)
-          .map((c) => c.id as number);
+        const configIds = configs.filter((c) => c.id != null).map((c) => c.id as number);
 
         const versions: BotConfigurationVersion[] = [];
         const BATCH_SIZE = 50;

@@ -121,7 +121,7 @@ export class UserConfigStore {
 
     const override = this.botMap.get(botName);
     if (override) {
-      override.disabled = disabled;
+      (override as BotConfiguration & { disabled?: boolean }).disabled = disabled;
     }
 
     await this.saveConfig();
@@ -186,7 +186,7 @@ export class UserConfigStore {
    * @returns A Map of botName to BotOverride.
    */
   public getAllBotOverrides(): Map<string, BotOverride> {
-    return new Map(this.botMap);
+    return new Map(this.botMap) as unknown as Map<string, BotOverride>;
   }
 
   /**
