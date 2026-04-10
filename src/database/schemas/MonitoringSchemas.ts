@@ -159,7 +159,7 @@ export class MonitoringSchemas implements ISchemaModule {
 
   private async createTable(db: Database, sql: string): Promise<void> {
     try {
-      await db.run(sql);
+      await db.exec(sql);
     } catch (err: any) {
       Logger.error(`Error creating table: ${err.message}`);
       throw err;
@@ -168,7 +168,7 @@ export class MonitoringSchemas implements ISchemaModule {
 
   private async createIndex(db: Database, sql: string): Promise<void> {
     try {
-      await db.run(sql);
+      await db.exec(sql);
     } catch (err: any) {
       Logger.error(`Error creating index: ${err.message}`);
     }
