@@ -30,8 +30,10 @@ export const verifyWebhookToken = (req: Request, res: Response, next: NextFuncti
   let expectedToken: string;
   try {
     expectedToken = String(webhookConfig.get('WEBHOOK_TOKEN'));
-  } catch (error: any) {
-    Logger.error('Webhook configuration error', { error: error.message });
+  } catch (error: unknown) {
+    Logger.error('Webhook configuration error', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     res.status(500).send('Internal Server Error: Webhook configuration error');
     return;
   }
@@ -106,8 +108,10 @@ export const verifyIpWhitelist = (req: Request, res: Response, next: NextFunctio
           .map((s) => s.trim())
           .filter(Boolean)
       : [];
-  } catch (error: any) {
-    Logger.error('Webhook configuration error', { error: error.message });
+  } catch (error: unknown) {
+    Logger.error('Webhook configuration error', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     res.status(500).send('Internal Server Error: Webhook configuration error');
     return;
   }

@@ -3,7 +3,6 @@ import * as path from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
 import { configLimiter } from '@src/middleware/rateLimiter';
-import type { PluginManifest } from '@src/plugins/PluginLoader';
 import {
   installPlugin,
   listInstalledPlugins,
@@ -65,8 +64,8 @@ async function loadCommunityAllowlist(): Promise<Set<string> | null> {
       return new Set(data.packages as string[]);
     }
     return null;
-  } catch (err: any) {
-    if (err.code !== 'ENOENT') {
+  } catch (err: unknown) {
+    if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
       debug('Failed to read community.json: %s', err);
     }
     return null;
@@ -174,7 +173,7 @@ async function scanBuiltInPackages(): Promise<MarketplacePackage[]> {
           status: 'built-in',
           trusted: true,
         });
-      } catch (e: any) {
+      } catch (e: unknown) {
         // Even without package.json, list the directory as a package
         const namePrefix = dir.split('-')[0];
         const validTypes = ['llm', 'message', 'memory', 'tool'] as const;
@@ -183,7 +182,11 @@ async function scanBuiltInPackages(): Promise<MarketplacePackage[]> {
           : 'tool';
         packages.push({
           name: dir,
-          displayName: dir.replace(/^(llm|message|memory|tool|adapter)-/, '').split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+          displayName: dir
+            .replace(/^(llm|message|memory|tool|adapter)-/, '')
+            .split('-')
+            .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' '),
           description: 'Built-in package',
           type,
           version: '0.0.0',
@@ -192,8 +195,8 @@ async function scanBuiltInPackages(): Promise<MarketplacePackage[]> {
         });
       }
     }
-  } catch (e: any) {
-    if (e.code !== 'ENOENT') {
+  } catch (e: unknown) {
+    if ((e as NodeJS.ErrnoException).code !== 'ENOENT') {
       debug('Failed to read packages directory: %s', e);
     } else {
       debug('packages/ directory not found');
@@ -285,7 +288,8 @@ async function getPackages(): Promise<MarketplacePackage[]> {
     packageMap.set('hivemind-plugin-weather', {
       name: 'hivemind-plugin-weather',
       displayName: 'Weather Tool',
-      description: 'Gives bots the ability to check weather conditions and forecasts for any location. Community-contributed MCP tool plugin.',
+      description:
+        'Gives bots the ability to check weather conditions and forecasts for any location. Community-contributed MCP tool plugin.',
       type: 'tool',
       version: '1.2.0',
       status: 'available',
@@ -328,7 +332,7 @@ router.get(
       debug('Returning %d packages', packages.length);
 
       return res.json(ApiResponse.success(packages));
-    } catch (err: any) {
+    } catch (err: unknown) {
       debug('Error listing packages: %s', err);
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
@@ -355,7 +359,7 @@ router.get(
       }
 
       return res.json(ApiResponse.success(pkg));
-    } catch (err: any) {
+    } catch (err: unknown) {
       debug('Error getting package: %s', err);
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
@@ -392,7 +396,7 @@ router.post(
       invalidateCache();
 
       return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success());
-    } catch (err: any) {
+    } catch (err: unknown) {
       debug('Install error: %s', err);
       return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Installation failed'));
     }
@@ -420,7 +424,7 @@ router.post(
       invalidateCache();
 
       return res.json(ApiResponse.success());
-    } catch (err: any) {
+    } catch (err: unknown) {
       debug('Uninstall error: %s', err);
       return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Uninstall failed'));
     }
@@ -442,13 +446,13 @@ router.post(
 
       debug('Updating plugin %s', name);
 
-      const plugin = await updatePlugin(name);
+      await updatePlugin(name);
 
       // ⚡ Bolt Optimization: Invalidate cache after update
       invalidateCache();
 
       return res.json(ApiResponse.success());
-    } catch (err: any) {
+    } catch (err: unknown) {
       debug('Update error: %s', err);
       return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Update failed'));
     }

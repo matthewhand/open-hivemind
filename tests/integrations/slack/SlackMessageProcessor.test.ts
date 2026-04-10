@@ -1,11 +1,29 @@
-import axios from 'axios';
 import { SlackBotManager } from '../../../packages/message-slack/src/SlackBotManager';
 import SlackMessage from '../../../packages/message-slack/src/SlackMessage';
 import { SlackMessageProcessor } from '../../../packages/message-slack/src/SlackMessageProcessor';
 
-jest.mock('axios', () => ({
-  get: jest.fn(),
+const mockHttpGet = jest.fn();
+jest.mock('@hivemind/shared-types', () => {
+  const actual = jest.requireActual('@hivemind/shared-types');
+  return {
+    ...actual,
+    http: {
+      ...actual.http,
+      get: (...args: any[]) => mockHttpGet(...args),
+    },
+  };
+});
+
+jest.mock('@hivemind/shared-types', () => ({
+  http: {
+    get: jest.fn(),
+  },
+  isSafeUrl: jest.fn().mockResolvedValue(true),
+  isHttpError: jest.fn().mockReturnValue(false),
 }));
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const mockHttpGet: jest.Mock = require('@hivemind/shared-types').http.get;
 
 // Helper to create a mock webClient with only what we need per test
 function createWebClientMock(overrides: Partial<any> = {}) {
@@ -181,8 +199,8 @@ describe('SlackMessageProcessor', () => {
 
     it('handles image file handling in message enrichment', async () => {
       process.env.SUPPRESS_CANVAS_CONTENT = 'false';
-      let axiosGet = axios.get as jest.Mock;
-      axiosGet.mockResolvedValueOnce({ data: Buffer.from('image-bytes') });
+      // http.get returns the data directly (not wrapped in { data: ... })
+      mockHttpGet.mockResolvedValueOnce(Buffer.from('image-bytes'));
 
       let webClient = createWebClientMock({
         files: {

@@ -92,14 +92,15 @@ describe('LLMProvidersPage', () => {
     vi.mocked(apiService.get).mockReturnValue(new Promise(() => {}));
 
     renderWithProviders(<LLMProvidersPage />);
-    expect(document.querySelectorAll('.skeleton').length).toBeGreaterThan(0);
+    // Refresh button has aria-busy when loading
+    expect(document.querySelectorAll('[aria-busy="true"]').length).toBeGreaterThan(0);
   });
 
-  it('renders LLM Providers heading', async () => {
+  it('renders LLM Providers page actions when loaded', async () => {
     renderWithProviders(<LLMProvidersPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('LLM Providers')).toBeInTheDocument();
+      expect(screen.getByText('Create Profile')).toBeInTheDocument();
     });
   });
 
@@ -107,8 +108,8 @@ describe('LLMProvidersPage', () => {
     renderWithProviders(<LLMProvidersPage />);
 
     await waitFor(() => {
-      // Page renders heading even with empty profiles
-      expect(screen.getByText('LLM Providers')).toBeInTheDocument();
+      // Page renders empty state when there are no profiles
+      expect(screen.getByText('No Profiles Created')).toBeInTheDocument();
     });
   });
 });

@@ -48,7 +48,11 @@ export class OpenSwarmProvider implements ILlmProvider {
 
       return data.choices[0]?.message?.content || 'No response';
     } catch (error: unknown) {
-      const msg = isHttpError(error) ? error.message : (error instanceof Error ? error.message : String(error));
+      const msg = isHttpError(error)
+        ? error.message
+        : error instanceof Error
+          ? error.message
+          : String(error);
       logger.error('OpenSwarm API error', { error: msg });
       return `Error: ${msg}`;
     }

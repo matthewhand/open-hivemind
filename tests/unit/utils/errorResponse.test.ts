@@ -1,5 +1,11 @@
-import { ErrorResponseBuilder, SuccessResponseBuilder, createErrorResponse, sendErrorResponse, sendSuccessResponse } from '../../../src/utils/errorResponse';
-import { NetworkError, ConfigurationError } from '../../../src/types/errorClasses';
+import { ConfigurationError, NetworkError } from '../../../src/types/errorClasses';
+import {
+  createErrorResponse,
+  ErrorResponseBuilder,
+  sendErrorResponse,
+  sendSuccessResponse,
+  SuccessResponseBuilder,
+} from '../../../src/utils/errorResponse';
 
 describe('ErrorResponseBuilder', () => {
   describe('basic error response', () => {
@@ -122,12 +128,14 @@ describe('ErrorResponseBuilder', () => {
       sendErrorResponse(mockRes, error, 'corr-123', { path: '/api/test', method: 'POST' });
 
       expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
-        success: false,
-        error: expect.objectContaining({
-          message: 'Test error',
-        }),
-      }));
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          error: expect.objectContaining({
+            message: 'Test error',
+          }),
+        })
+      );
     });
   });
 
@@ -216,10 +224,12 @@ describe('SuccessResponseBuilder', () => {
       sendSuccessResponse(mockRes, { id: 1 });
 
       expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
-        success: true,
-        data: { id: 1 },
-      }));
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: true,
+          data: { id: 1 },
+        })
+      );
     });
   });
 });

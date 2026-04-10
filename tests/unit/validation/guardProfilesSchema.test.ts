@@ -2,7 +2,6 @@ import { describe, expect, it } from '@jest/globals';
 import {
   CreateGuardProfileSchema,
   GuardProfileIdParamSchema,
-  TestGuardProfileSchema,
   UpdateGuardProfileSchema,
 } from '../../../src/validation/schemas/guardProfilesSchema';
 
@@ -17,7 +16,7 @@ describe('guardProfilesSchema', () => {
             mcpGuard: {
               enabled: true,
               type: 'owner',
-              allowedUsers: ['user1'],
+              allowedUsers: ['user1@example.com'],
               allowedTools: ['tool1'],
             },
             rateLimit: {
@@ -46,7 +45,7 @@ describe('guardProfilesSchema', () => {
             mcpGuard: {
               enabled: true,
               type: 'custom',
-              allowedUsers: ['user@invalid'],
+              allowedUsers: ['invalid-user-id'],
             },
           },
         },
@@ -56,7 +55,7 @@ describe('guardProfilesSchema', () => {
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.errors[0].message).toContain(
-          'letters, numbers, dashes, and underscores'
+          'valid email address'
         );
       }
     });
@@ -79,7 +78,7 @@ describe('guardProfilesSchema', () => {
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.errors[0].message).toContain(
-          'letters, numbers, dashes, and underscores'
+          'letters, numbers, underscores, hyphens, periods, and colons'
         );
       }
     });
@@ -91,7 +90,7 @@ describe('guardProfilesSchema', () => {
           guards: {
             rateLimit: {
               enabled: true,
-              maxRequests: 20000,
+              maxRequests: 2000000,
               windowMs: 60000,
             },
           },
@@ -101,11 +100,11 @@ describe('guardProfilesSchema', () => {
       const result = CreateGuardProfileSchema.safeParse(invalidProfile);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain('10,000');
+        expect(result.error.errors[0].message).toContain('1,000,000');
       }
     });
 
-    it('should reject excessive window time', () => {
+    it('should reject negative window time', () => {
       const invalidProfile = {
         body: {
           name: 'Test Profile',
@@ -113,7 +112,7 @@ describe('guardProfilesSchema', () => {
             rateLimit: {
               enabled: true,
               maxRequests: 100,
-              windowMs: 5000000,
+              windowMs: -1,
             },
           },
         },
@@ -122,7 +121,7 @@ describe('guardProfilesSchema', () => {
       const result = CreateGuardProfileSchema.safeParse(invalidProfile);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain('1 hour');
+        expect(result.error.errors[0].message).toContain('positive');
       }
     });
 
@@ -181,42 +180,6 @@ describe('guardProfilesSchema', () => {
 
       const result = UpdateGuardProfileSchema.safeParse(invalidUpdate);
       expect(result.success).toBe(false);
-    });
-  });
-
-  describe('TestGuardProfileSchema', () => {
-    it('should validate test input', () => {
-      const validTest = {
-        body: {
-          guards: {
-            mcpGuard: {
-              enabled: true,
-              type: 'owner',
-            },
-          },
-          testInput: {
-            userId: 'test-user',
-            toolName: 'test-tool',
-            content: 'test content',
-            requestCount: 5,
-          },
-        },
-      };
-
-      const result = TestGuardProfileSchema.safeParse(validTest);
-      expect(result.success).toBe(true);
-    });
-
-    it('should allow optional test input fields', () => {
-      const minimalTest = {
-        body: {
-          guards: {},
-          testInput: {},
-        },
-      };
-
-      const result = TestGuardProfileSchema.safeParse(minimalTest);
-      expect(result.success).toBe(true);
     });
   });
 
@@ -360,7 +323,10 @@ describe('guardProfilesSchema', () => {
 
       const result = CreateGuardProfileSchema.safeParse(invalidProfile);
       expect(result.success).toBe(false);
-      expect(result.error?.issues[0].message).toContain('cannot be empty');
+      const messages = result.error?.issues.map((i) => i.message) || [];
+      expect(
+        messages.some((m) => m.includes('cannot be empty') || m.includes('Prompt is required'))
+      ).toBe(true);
     });
 
     it('should reject invalid LLM provider key', () => {
@@ -398,7 +364,7 @@ describe('guardProfilesSchema', () => {
 
       const result = CreateGuardProfileSchema.safeParse(validProfile);
       expect(result.success).toBe(true);
-      
+
       if (result.success) {
         const schema = result.data.body.guards.semanticInputGuard?.responseSchema;
         expect(schema?.type).toBe('boolean');

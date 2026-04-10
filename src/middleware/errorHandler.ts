@@ -96,7 +96,7 @@ function sanitizeRequestBody(body: unknown): Record<string, unknown> | unknown {
     'api_key',
   ];
 
-  const sanitized = { ...body };
+  const sanitized: Record<string, unknown> = { ...body };
 
   for (const field of sensitiveFields) {
     if (field in sanitized) {

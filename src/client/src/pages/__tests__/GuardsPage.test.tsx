@@ -47,7 +47,8 @@ describe('GuardsPage', () => {
     renderWithProviders(<GuardsPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Guard Profiles')).toBeInTheDocument();
+      // In the empty state, the title "No Guard Profiles" is shown
+      expect(screen.getByText('No Guard Profiles')).toBeInTheDocument();
     });
   });
 

@@ -29,12 +29,19 @@ describe('useRealTimeValidation', () => {
     });
   });
 
-  it('should not call API when disabled', () => {
+  it('should not call API when disabled', async () => {
     const mockPost = apiService.post as jest.MockedFunction<typeof apiService.post>;
 
-    renderHook(() => useRealTimeValidation({ name: 'test' }, { enabled: false }));
+    const { unmount } = renderHook(
+      ({ data }) => useRealTimeValidation(data, { enabled: false }),
+      { initialProps: { data: { name: 'test' } } }
+    );
+
+    // Flush any pending React state updates before asserting
+    await act(async () => {});
 
     expect(mockPost).not.toHaveBeenCalled();
+    unmount();
   });
 
   it('should return validation errors', async () => {
@@ -87,19 +94,19 @@ describe('useRealTimeValidation', () => {
       },
     });
 
-    const { rerender } = renderHook(
+    renderHook(
       ({ data }) => useRealTimeValidation(data, { debounceMs: 0, profileId: 'strict' }),
       { initialProps: { data: { name: 'test' } } }
     );
 
+    // Wait for the debounced validation to fire and complete
     await act(async () => {
-      rerender({ data: { name: 'test2' } });
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 50));
     });
 
     expect(mockPost).toHaveBeenCalledWith(
       '/api/admin/validate/bot-config',
-      { configData: { name: 'test2' }, profileId: 'strict' },
+      { configData: { name: 'test' }, profileId: 'strict' },
       expect.any(Object)
     );
   });

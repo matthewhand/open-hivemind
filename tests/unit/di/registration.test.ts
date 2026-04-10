@@ -12,7 +12,7 @@ jest.mock('../../../src/config/ConfigurationManager', () => ({
 
 jest.mock('../../../src/config/BotConfigurationManager', () => ({
   BotConfigurationManager: {
-    getInstance: jest.fn().mockReturnValue({}),
+    getInstance: jest.fn().mockReturnValue({ reload: jest.fn() }),
   },
 }));
 
@@ -24,14 +24,16 @@ jest.mock('../../../src/config/UserConfigStore', () => ({
 
 jest.mock('../../../src/config/SecureConfigManager', () => ({
   SecureConfigManager: {
-    getInstance: jest.fn().mockReturnValue({}),
+    getInstance: jest.fn().mockReturnValue({
+      syncBotProviders: jest.fn(),
+    }),
   },
 }));
 
 jest.mock('../../../src/config/ProviderConfigManager', () => ({
   __esModule: true,
   default: {
-    getInstance: jest.fn().mockReturnValue({}),
+    getInstance: jest.fn().mockReturnValue({ syncBotProviders: jest.fn() }),
   },
 }));
 

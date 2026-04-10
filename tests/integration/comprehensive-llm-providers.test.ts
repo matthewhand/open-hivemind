@@ -9,8 +9,6 @@
  * @since 2025-09-27
  */
 
-import { getFlowiseResponse } from '@integrations/flowise/flowiseRestClient';
-import { getFlowiseSdkResponse } from '@integrations/flowise/flowiseSdkClient';
 import { FlowiseProvider } from '../../packages/llm-flowise/src/flowiseProvider';
 // ---------------------------------------------------------------------------
 // Now import the providers
@@ -72,13 +70,18 @@ const mockAxiosPost: jest.Mock = (global as any).__axiosMockPost;
 const mockAxiosGet: jest.Mock = (global as any).__axiosMockGet;
 
 // Mock Flowise clients
-jest.mock('@integrations/flowise/flowiseRestClient', () => ({
+jest.mock('@hivemind/llm-flowise', () => ({
   getFlowiseResponse: jest.fn().mockResolvedValue('flowise rest response'),
+  FlowiseProvider: jest.fn().mockImplementation(() => ({
+    name: 'flowise',
+    generateResponse: jest.fn().mockResolvedValue({
+      content: 'flowise rest response',
+      provider: 'flowise',
+      model: 'flowise-default',
+    })
+  }))
 }));
 
-jest.mock('@integrations/flowise/flowiseSdkClient', () => ({
-  getFlowiseSdkResponse: jest.fn().mockResolvedValue('flowise sdk response'),
-}));
 
 // Mock config modules
 jest.mock('@config/openaiConfig', () => ({

@@ -166,8 +166,8 @@ export class MetricsSchemas implements ISchemaModule {
   private async createTable(db: Database, sql: string): Promise<void> {
     try {
       await db.run(sql);
-    } catch (err: any) {
-      Logger.error(`Error creating table: ${err.message}`);
+    } catch (err: unknown) {
+      Logger.error(`Error creating table: ${err instanceof Error ? err.message : String(err)}`);
       throw err;
     }
   }
@@ -175,8 +175,8 @@ export class MetricsSchemas implements ISchemaModule {
   private async createIndex(db: Database, sql: string): Promise<void> {
     try {
       await db.run(sql);
-    } catch (err: any) {
-      Logger.error(`Error creating index: ${err.message}`);
+    } catch (err: unknown) {
+      Logger.error(`Error creating index: ${err instanceof Error ? err.message : String(err)}`);
       // Don't reject on index creation error as it might already exist
     }
   }

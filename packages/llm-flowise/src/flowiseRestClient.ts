@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import { http, isHttpError } from '@hivemind/shared-types';
 import { ConfigurationManager } from '@config/ConfigurationManager';
-import flowiseConfig from '@integrations/flowise/flowiseConfig';
+import flowiseConfig from './flowiseConfig';
 
 const debug = Debug('app:flowiseClient');
 
@@ -51,7 +51,9 @@ export async function getFlowiseResponse(channelId: string, question: string): P
     debug('Sending request to Flowise:', { baseURL, chatflowId, payload });
     const targetUrl = `${baseURL}/prediction/${chatflowId}`;
 
-    const data = await http.post<{ text: string; chatId?: string }>(targetUrl, payload, { headers });
+    const data = await http.post<{ text: string; chatId?: string }>(targetUrl, payload, {
+      headers,
+    });
     const { text, chatId: newChatId } = data;
 
     debug('Received response from Flowise:', { text, newChatId });

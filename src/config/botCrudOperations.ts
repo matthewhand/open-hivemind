@@ -30,8 +30,8 @@ export async function addBotToFile(
   try {
     await fs.promises.access(filePath);
     throw new Error(`Bot with defined filename ${safeName}.json already exists`);
-  } catch (e: any) {
-    if (e.code !== 'ENOENT') throw e;
+  } catch (e: unknown) {
+    if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e;
   }
 
   try {
@@ -71,8 +71,8 @@ export async function updateBotOnFile(
       currentConfig = JSON.parse(data);
       configCache.set(filePath, currentConfig);
     }
-  } catch (e: any) {
-    if (e.code !== 'ENOENT') {
+  } catch (e: unknown) {
+    if ((e as NodeJS.ErrnoException).code !== 'ENOENT') {
       debug(`Failed to read existing bot config ${filePath}: ${e}`);
     }
   }
@@ -109,8 +109,8 @@ export async function deleteBotFromFile(name: string): Promise<void> {
     await fs.promises.access(filePath);
     await fs.promises.unlink(filePath);
     debug(`Deleted bot config for ${name} at ${filePath}`);
-  } catch (e: any) {
-    if (e.code === 'ENOENT') {
+  } catch (e: unknown) {
+    if ((e as NodeJS.ErrnoException).code === 'ENOENT') {
       // Check if it's an environment variable bot
       const envBotNames = discoverBotNamesFromEnv();
       const canonical = (n: string): string => String(n || '').trim().toLowerCase().replace(/[_\s]+/g, '-');

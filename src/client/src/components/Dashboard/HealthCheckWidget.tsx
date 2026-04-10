@@ -77,8 +77,8 @@ const HealthCheckWidget: React.FC<HealthCheckWidgetProps> = ({
       setServices(data.services || []);
       setLastRefresh(new Date());
       setError(null);
-    } catch (err: any) {
-      if (err.status === 401 || err.status === 403) {
+    } catch (err: unknown) {
+      if ((err as any).status === 401 || (err as any).status === 403) {
         setError('Authentication required to view service health.');
       } else {
         setError('Unable to fetch service health data.');

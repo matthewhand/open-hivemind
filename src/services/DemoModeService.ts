@@ -320,22 +320,55 @@ const MESSAGE_SCENARIOS = [
 /** Multi-turn conversation threads for realistic demo interactions */
 const CONVERSATION_THREADS = [
   [
-    { user: "Hi there! I'm new to Open-Hivemind", bot: "Welcome! I'm excited to help you get started. What would you like to learn about first?" },
-    { user: "How do I create my first bot?", bot: "Creating your first bot is easy! Go to Configuration > Bots and click 'Create Bot'. You'll need to configure a message platform and LLM provider." },
-    { user: "What platforms are supported?", bot: "We support Discord, Slack, Mattermost, and webhooks. Each has different setup requirements - would you like help with a specific platform?" },
-    { user: "I'd like to use Discord", bot: "Perfect! For Discord, you'll need to create a bot application in the Discord Developer Portal and get your bot token. Then configure the channels you want it to monitor." }
+    {
+      user: "Hi there! I'm new to Open-Hivemind",
+      bot: "Welcome! I'm excited to help you get started. What would you like to learn about first?",
+    },
+    {
+      user: 'How do I create my first bot?',
+      bot: "Creating your first bot is easy! Go to Configuration > Bots and click 'Create Bot'. You'll need to configure a message platform and LLM provider.",
+    },
+    {
+      user: 'What platforms are supported?',
+      bot: 'We support Discord, Slack, Mattermost, and webhooks. Each has different setup requirements - would you like help with a specific platform?',
+    },
+    {
+      user: "I'd like to use Discord",
+      bot: "Perfect! For Discord, you'll need to create a bot application in the Discord Developer Portal and get your bot token. Then configure the channels you want it to monitor.",
+    },
   ],
   [
-    { user: "My bot isn't responding to messages", bot: "Let me help troubleshoot that. First, can you confirm your bot is showing as 'Connected' in the dashboard?" },
-    { user: "It shows as connected but still no responses", bot: "That suggests the connection is working but message processing might be the issue. Check if your LLM provider API key is valid and has sufficient credits." },
-    { user: "The API key looks correct", bot: "Try checking the bot's system logs in the Monitoring page. Look for any error messages that might indicate what's preventing responses." },
-    { user: "Found it! There's a rate limit error", bot: "Ah, that's the issue! You can adjust rate limits in your guard profile settings, or upgrade your LLM provider plan for higher limits." }
+    {
+      user: "My bot isn't responding to messages",
+      bot: "Let me help troubleshoot that. First, can you confirm your bot is showing as 'Connected' in the dashboard?",
+    },
+    {
+      user: 'It shows as connected but still no responses',
+      bot: 'That suggests the connection is working but message processing might be the issue. Check if your LLM provider API key is valid and has sufficient credits.',
+    },
+    {
+      user: 'The API key looks correct',
+      bot: "Try checking the bot's system logs in the Monitoring page. Look for any error messages that might indicate what's preventing responses.",
+    },
+    {
+      user: "Found it! There's a rate limit error",
+      bot: "Ah, that's the issue! You can adjust rate limits in your guard profile settings, or upgrade your LLM provider plan for higher limits.",
+    },
   ],
   [
-    { user: "Can multiple bots work in the same channel?", bot: "Yes! Multiple bots can coexist in the same channel. Open-Hivemind includes social awareness to prevent them from talking over each other." },
-    { user: "How does that work exactly?", bot: "Bots use probability-based engagement and 'social anxiety' logic. If a conversation already has active bots, others are less likely to jump in unless directly mentioned." },
-    { user: "That's clever! Can I adjust this behavior?", bot: "Absolutely! You can tune engagement probability, mention bonuses, and crowd control settings in each bot's configuration." }
-  ]
+    {
+      user: 'Can multiple bots work in the same channel?',
+      bot: 'Yes! Multiple bots can coexist in the same channel. Open-Hivemind includes social awareness to prevent them from talking over each other.',
+    },
+    {
+      user: 'How does that work exactly?',
+      bot: "Bots use probability-based engagement and 'social anxiety' logic. If a conversation already has active bots, others are less likely to jump in unless directly mentioned.",
+    },
+    {
+      user: "That's clever! Can I adjust this behavior?",
+      bot: "Absolutely! You can tune engagement probability, mention bonuses, and crowd control settings in each bot's configuration.",
+    },
+  ],
 ];
 
 const ERROR_MESSAGES = [
@@ -353,7 +386,10 @@ export class DemoModeService {
   private isDemoMode = false;
   private demoBots: DemoBot[] = [];
   private conversations = new Map<string, DemoConversation>();
-  private activeThreads = new Map<string, { threadIndex: number; stepIndex: number; lastActivity: number }>();
+  private activeThreads = new Map<
+    string,
+    { threadIndex: number; stepIndex: number; lastActivity: number }
+  >();
   private activitySimulator: DemoActivitySimulator = {
     isRunning: false,
     simulationStartTime: 0,
@@ -828,7 +864,7 @@ export class DemoModeService {
 
     return {
       content: isUserTurn ? currentStep.user : currentStep.bot,
-      isFromUser: isUserTurn
+      isFromUser: isUserTurn,
     };
   }
 

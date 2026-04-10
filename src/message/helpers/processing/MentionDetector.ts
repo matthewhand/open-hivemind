@@ -103,7 +103,8 @@ export function detectMentions(
       if (replyMetadata) {
         replyToUsername = replyMetadata.username;
         isReplyToBot =
-          replyMetadata.userId === botId || (botUsername && replyMetadata.username === botUsername);
+          replyMetadata.userId === botId ||
+          !!(botUsername && replyMetadata.username === botUsername);
         isReplyToOther = !isReplyToBot;
       }
     }

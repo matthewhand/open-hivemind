@@ -44,7 +44,7 @@ export async function processCommand(
     }
 
     return true;
-  } catch (error: any) {
+  } catch (error: unknown) {
     debug(
       '[processCommand] Error processing message: ' +
         (error instanceof Error ? error.message : String(error))

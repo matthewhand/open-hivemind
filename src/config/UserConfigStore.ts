@@ -28,6 +28,7 @@ export class UserConfigStore {
     generalSettings?: GeneralSettings;
   } = {};
   private configPath: string;
+  private botMap: Map<string, BotConfiguration> = new Map();
 
   public constructor() {
     this.configPath = path.join(process.cwd(), 'config', 'user-config.json');
@@ -42,6 +43,18 @@ export class UserConfigStore {
         bots: [],
         botDisabledStates: {},
       };
+    }
+    this.initializeBotMap();
+  }
+
+  private initializeBotMap(): void {
+    this.botMap.clear();
+    if (this.config.bots) {
+      for (const bot of this.config.bots) {
+        if (bot.name) {
+          this.botMap.set(bot.name, bot);
+        }
+      }
     }
   }
 
@@ -64,6 +77,7 @@ export class UserConfigStore {
         botDisabledStates: {},
       };
     }
+    this.initializeBotMap();
   }
 
   /**
@@ -105,6 +119,11 @@ export class UserConfigStore {
       disabledAt: disabled ? new Date().toISOString() : undefined,
     };
 
+    const override = this.botMap.get(botName);
+    if (override) {
+      override.disabled = disabled;
+    }
+
     await this.saveConfig();
   }
 
@@ -141,7 +160,9 @@ export class UserConfigStore {
     if (!this.config.bots) {
       return undefined;
     }
-    const botConfig = this.config.bots.find(bot => bot.name === botName);
+    // ⚡ Bolt Optimization: Use the synchronized botMap for O(1) cache lookups
+    // instead of repeatedly executing O(N) Array.prototype.find operations.
+    const botConfig = this.botMap.get(botName);
     if (!botConfig) {
       return undefined;
     }
@@ -165,31 +186,7 @@ export class UserConfigStore {
    * @returns A Map of botName to BotOverride.
    */
   public getAllBotOverrides(): Map<string, BotOverride> {
-    const overrides = new Map<string, BotOverride>();
-    if (!this.config.bots) {
-      return overrides;
-    }
-
-    // Pre-calculate disabled status for all bots to avoid O(N^2)
-    const disabledBots = new Set(this.config.generalSettings?.disabledBots || []);
-
-    for (const botConfig of this.config.bots) {
-      if (!botConfig.name) continue;
-      overrides.set(botConfig.name, {
-        disabled: disabledBots.has(botConfig.name),
-        messageProvider: botConfig.messageProvider as MessageProvider,
-        llmProvider: botConfig.llmProvider as LlmProvider,
-        llmProfile: 'llmProfile' in botConfig ? (botConfig.llmProfile as string | undefined) : undefined,
-        responseProfile: botConfig.responseProfile as string | undefined,
-        persona: botConfig.persona,
-        systemInstruction: botConfig.systemInstruction,
-        mcpServers: botConfig.mcpServers as McpServerConfig[],
-        mcpGuard: botConfig.mcpGuard as McpGuardConfig,
-        mcpGuardProfile: 'mcpGuardProfile' in botConfig ? (botConfig.mcpGuardProfile as string | undefined) : undefined,
-      });
-    }
-
-    return overrides;
+    return new Map(this.botMap);
   }
 
   /**
@@ -223,6 +220,37 @@ export class UserConfigStore {
     } else {
       this.config.bots.push(botConfig);
     }
+    this.botMap.set(botName, botConfig);
+  }
+
+  /**
+   * Remove the user override for a bot and keep the botMap in sync.
+   * Returns true if a record was removed, false if no override existed.
+   */
+  public deleteBotOverride(botName: string): boolean {
+    const before = this.config.bots?.length ?? 0;
+    this.config.bots = (this.config.bots ?? []).filter((b) => b.name !== botName);
+    this.botMap.delete(botName);
+    return (this.config.bots?.length ?? 0) < before;
+  }
+
+  /**
+   * Find the first bot whose configuration satisfies a predicate.
+   * Useful for provider-based or platform-based lookups without iterating externally.
+   */
+  public findBot(predicate: (bot: BotConfiguration) => boolean): BotConfiguration | undefined {
+    for (const bot of this.botMap.values()) {
+      if (predicate(bot)) return bot;
+    }
+    return undefined;
+  }
+
+  /**
+   * Return all bot configurations as an array.
+   * Reads from the in-memory map so callers don't need to access the internal config object.
+   */
+  public getAllBots(): BotConfiguration[] {
+    return Array.from(this.botMap.values());
   }
 
   /**

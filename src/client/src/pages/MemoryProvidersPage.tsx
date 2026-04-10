@@ -126,8 +126,8 @@ const MemoryProvidersPage: React.FC = () => {
       setLoading(true);
       const res = await apiService.get('/api/config/memory-profiles');
       setProfiles((res as any).memory || []);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load memory profiles');
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : String(err)) || 'Failed to load memory profiles');
     } finally {
       setLoading(false);
     }
@@ -142,8 +142,8 @@ const MemoryProvidersPage: React.FC = () => {
         map[provider.name] = provider;
       }
       setHealthMap(map);
-    } catch (err: any) {
-      errorToast('Health Check Failed', err.message || 'Could not fetch provider health');
+    } catch (err: unknown) {
+      errorToast('Health Check Failed', (err instanceof Error ? err.message : String(err)) || 'Could not fetch provider health');
     } finally {
       setHealthLoading(false);
     }
@@ -167,8 +167,8 @@ const MemoryProvidersPage: React.FC = () => {
     try {
       const res = await apiService.post(`/api/providers/memory/${profileKey}/test`, {}) as TestResult;
       setTestResults(prev => ({ ...prev, [profileKey]: res }));
-    } catch (err: any) {
-      errorToast('Test Failed', err.message || `Test for "${profileKey}" failed`);
+    } catch (err: unknown) {
+      errorToast('Test Failed', (err instanceof Error ? err.message : String(err)) || `Test for "${profileKey}" failed`);
       setTestResults(prev => {
         const next = { ...prev };
         delete next[profileKey];
@@ -198,7 +198,7 @@ const MemoryProvidersPage: React.FC = () => {
         try {
           await apiService.delete(`/api/config/memory-profiles/${key}`);
           fetchProfiles();
-        } catch (err: any) { errorToast('Delete Failed', `Failed to delete: ${err.message}`); }
+        } catch (err: unknown) { errorToast('Delete Failed', `Failed to delete: ${(err instanceof Error ? err.message : String(err))}`); }
       },
     });
   };
@@ -217,13 +217,13 @@ const MemoryProvidersPage: React.FC = () => {
           const backup = profiles.find((p) => p.key === oldKey);
           await apiService.delete(`/api/config/memory-profiles/${oldKey}`);
           try { await apiService.post('/api/config/memory-profiles', payload); }
-          catch (e: any) { if (backup) await apiService.post('/api/config/memory-profiles', backup).catch(() => {}); throw e; }
+          catch (e: unknown) { if (backup) await apiService.post('/api/config/memory-profiles', backup).catch(() => {}); throw e; }
         }
       } else { await apiService.post('/api/config/memory-profiles', payload); }
       setFormModal({ isOpen: false, isEdit: false, profile: null });
       showStamp();
       fetchProfiles();
-    } catch (err: any) { errorToast('Save Failed', `Failed to save profile: ${err.message}`); }
+    } catch (err: unknown) { errorToast('Save Failed', `Failed to save profile: ${(err instanceof Error ? err.message : String(err))}`); }
   };
 
   const getProviderIcon = (type: string) => {

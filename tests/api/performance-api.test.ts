@@ -132,7 +132,25 @@ jest.mock('../../src/validation/schemas/miscSchema', () => ({
 }));
 
 jest.mock('../../src/validation/schemas/commonSchema', () => ({
+  ...jest.requireActual('../../src/validation/schemas/commonSchema'),
   ReorderSchema: {},
+  idParam: () => ({ optional: () => ({}) }),
+  nameString: () => ({ optional: () => ({}) }),
+  keyString: () => ({ optional: () => ({}) }),
+  IdParamSchema: {},
+  KeyParamSchema: {},
+  NameParamSchema: {},
+  PaginationQuerySchema: {},
+  ToggleEnabledSchema: {},
+}));
+
+jest.mock('../../src/validation/schemas/healthSchema', () => ({
+  CreateApiEndpointSchema: {},
+  UpdateApiEndpointSchema: {},
+  DeleteApiEndpointSchema: {},
+  CleanupConfigSchema: {},
+  ApiEndpointConfigSchema: {},
+  EndpointIdParamSchema: {},
 }));
 
 // Mock DatabaseManager

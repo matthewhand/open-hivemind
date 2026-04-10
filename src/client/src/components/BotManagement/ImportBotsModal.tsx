@@ -126,9 +126,9 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
       setStep('result');
       setFeedbackState({ state: 'success', message: 'Import Successful!' });
       onImportComplete();
-    } catch (err: any) {
-      setParseError(err.message || 'Network error during import');
-      setFeedbackState({ state: 'error', message: err.message || 'Network error during import' });
+    } catch (err: unknown) {
+      setParseError((err instanceof Error ? err.message : String(err)) || 'Network error during import');
+      setFeedbackState({ state: 'error', message: (err instanceof Error ? err.message : String(err)) || 'Network error during import' });
     } finally {
       setImporting(false);
     }

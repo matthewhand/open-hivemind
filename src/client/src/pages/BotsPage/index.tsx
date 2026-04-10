@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Bot as BotIcon, Download, LayoutGrid, List, RefreshCw, Trash2, Upload as UploadIcon } from 'lucide-react';
+import { Bot as BotIcon, Download, LayoutGrid, List, RefreshCw, Settings, Trash2, Upload as UploadIcon } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import Tabs from '../../components/DaisyUI/Tabs';
+import BotSettingsTab from './BotSettingsTab';
 import { CreateBotWizard } from '../../components/BotManagement/CreateBotWizard';
 import ImportBotsModal from '../../components/BotManagement/ImportBotsModal';
 import { BotSettingsModal } from '../../components/BotSettingsModal';
@@ -155,15 +157,23 @@ const BotsPage: React.FC = () => {
     onReorder: handleReorder,
   });
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'instances';
+  const handleTabChange = (tabId: string) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('tab', tabId);
+      return next;
+    });
+  };
+
   if (loading && bots.length === 0 && !error) {
     return <SkeletonPage variant="cards" statsCount={4} showFilters />;
   }
 
-  return (
-    <div className="space-y-6">
-      {/* Bot List — full width, no sidebar column */}
-      <div className="space-y-4">
-        <SearchFilterBar
+  const instancesContent = (
+    <div className="space-y-4">
+      <SearchFilterBar
           searchValue={searchQuery}
           onSearchChange={setSearchQuery}
           searchPlaceholder="Search agents by name or purpose..."
@@ -306,6 +316,29 @@ const BotsPage: React.FC = () => {
           )
         )}
       </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      <Tabs
+        variant="lifted"
+        activeTab={activeTab}
+        onChange={handleTabChange}
+        tabs={[
+          {
+            id: 'instances',
+            label: 'Instances',
+            icon: <BotIcon className="w-4 h-4" />,
+            content: instancesContent,
+          },
+          {
+            id: 'settings',
+            label: 'Settings',
+            icon: <Settings className="w-4 h-4" />,
+            content: <BotSettingsTab />,
+          },
+        ]}
+      />
 
       {/* Bot Detail Drawer — slides in from right when a bot is selected */}
       <DetailDrawer

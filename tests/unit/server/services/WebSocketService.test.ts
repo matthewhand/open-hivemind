@@ -95,8 +95,16 @@ describe('WebSocketService', () => {
       getWarnings: jest.fn().mockReturnValue([]),
     });
 
+    const mockDemoModeService = {
+      isInDemoMode: jest.fn().mockReturnValue(false),
+      getDemoBots: jest.fn().mockReturnValue([]),
+      getSimulatedMessageFlow: jest.fn().mockReturnValue([]),
+      getSimulatedAlerts: jest.fn().mockReturnValue([]),
+      getSimulatedPerformanceMetrics: jest.fn().mockReturnValue([]),
+    };
+
     const cm = new ConnectionManager();
-    const bs = new BroadcastService(cm, mockApiMonitor as any);
+    const bs = new BroadcastService(cm, mockApiMonitor as any, mockDemoModeService as any);
     const eh = new EventHandlers(cm, bs);
 
     service = new WebSocketService(cm, bs, eh);

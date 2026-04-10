@@ -1,8 +1,8 @@
-import { BroadcastService } from '../../../../../src/server/services/websocket/BroadcastService';
-import { DeliveryStatus } from '../../../../../src/types/websocket';
 import { BotConfigurationManager } from '../../../../../src/config/BotConfigurationManager';
 import { ActivityLogger } from '../../../../../src/server/services/ActivityLogger';
 import { BotMetricsService } from '../../../../../src/server/services/BotMetricsService';
+import { BroadcastService } from '../../../../../src/server/services/websocket/BroadcastService';
+import { DeliveryStatus } from '../../../../../src/types/websocket';
 
 jest.mock('../../../../../src/config/BotConfigurationManager');
 jest.mock('../../../../../src/server/services/ActivityLogger');
@@ -11,6 +11,7 @@ jest.mock('../../../../../src/server/services/BotMetricsService');
 describe('websocket/BroadcastService', () => {
   let connectionManager: any;
   let apiMonitorService: any;
+  let demoModeService: any;
   let io: any;
   let socket: any;
   const apiCallbacks: Record<string, Function> = {};
@@ -56,6 +57,14 @@ describe('websocket/BroadcastService', () => {
       getAllBots: jest.fn(() => []),
       getWarnings: jest.fn(() => []),
     });
+
+    demoModeService = {
+      isInDemoMode: jest.fn(() => false),
+      getDemoBots: jest.fn(() => []),
+      getSimulatedMessageFlow: jest.fn(() => []),
+      getSimulatedAlerts: jest.fn(() => []),
+      getSimulatedPerformanceMetrics: jest.fn(() => []),
+    };
   });
 
   afterEach(() => {
@@ -63,7 +72,7 @@ describe('websocket/BroadcastService', () => {
   });
 
   it('sets up API monitoring callbacks on construction', () => {
-    new BroadcastService(connectionManager, apiMonitorService);
+    new BroadcastService(connectionManager, apiMonitorService, demoModeService);
 
     expect(apiMonitorService.on).toHaveBeenCalledWith('statusUpdate', expect.any(Function));
     expect(apiMonitorService.on).toHaveBeenCalledWith('healthCheckResult', expect.any(Function));
@@ -72,7 +81,7 @@ describe('websocket/BroadcastService', () => {
   });
 
   it('handles API status update and records alert for error/offline status', () => {
-    new BroadcastService(connectionManager, apiMonitorService);
+    new BroadcastService(connectionManager, apiMonitorService, demoModeService);
 
     apiCallbacks.statusUpdate({
       id: 'ep-1',
@@ -108,7 +117,7 @@ describe('websocket/BroadcastService', () => {
       getWarnings: jest.fn(() => []),
     });
 
-    const service = new BroadcastService(connectionManager, apiMonitorService);
+    const service = new BroadcastService(connectionManager, apiMonitorService, demoModeService);
     service.sendBotStatus(socket);
 
     expect(socket.emit).toHaveBeenCalledWith(
@@ -132,7 +141,7 @@ describe('websocket/BroadcastService', () => {
       throw new Error('config failure');
     });
 
-    const service = new BroadcastService(connectionManager, apiMonitorService);
+    const service = new BroadcastService(connectionManager, apiMonitorService, demoModeService);
     service.sendConfigValidation(socket);
 
     expect(socket.emit).toHaveBeenCalledWith('error', {
@@ -141,7 +150,7 @@ describe('websocket/BroadcastService', () => {
   });
 
   it('retries tracked messages then marks timed out after max retries', () => {
-    const service = new BroadcastService(connectionManager, apiMonitorService);
+    const service = new BroadcastService(connectionManager, apiMonitorService, demoModeService);
     service.configureAck({ enabled: true, messageTimeoutMs: 10, maxRetries: 1 });
 
     const envelope = service.sendTrackedMessage('evt', { ok: true }, 'chan');
@@ -157,7 +166,7 @@ describe('websocket/BroadcastService', () => {
   });
 
   it('broadcastMonitoringData tolerates bot stats aggregation failure', () => {
-    const service = new BroadcastService(connectionManager, apiMonitorService);
+    const service = new BroadcastService(connectionManager, apiMonitorService, demoModeService);
     jest.spyOn(service as any, 'getAllBotStats').mockImplementation(() => {
       throw new Error('stats fail');
     });

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useMemo, useState } from 'react';
+import { logger } from '../../utils/logger';
 import { usePersonas } from '../../hooks/usePersonas';
 import { useProviders } from '../../hooks/useProviders';
 import { getMCPServers } from '../../services/agentService';
@@ -196,7 +197,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
           setMcpServerProfileOptions(options);
         }
       } catch (error) {
-        console.error('Failed to fetch profiles:', error);
+        logger.error('Failed to fetch profiles:', error);
       }
     };
 

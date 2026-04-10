@@ -23,7 +23,7 @@ describe('profileUtils', () => {
       const originalDir = process.env.NODE_CONFIG_DIR;
       process.env.NODE_CONFIG_DIR = '/config';
       const result = getProfilesPath('sub/test.json');
-      expect(result).toBe('/config/sub/test.json');
+      expect(result).toBe(path.join('/config', 'sub', 'test.json'));
       process.env.NODE_CONFIG_DIR = originalDir;
     });
   });

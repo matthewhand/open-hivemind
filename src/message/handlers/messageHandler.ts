@@ -46,7 +46,8 @@ const outgoingRateLimiter = OutgoingMessageRateLimiter.getInstance();
 const _typingActivity = TypingActivity.getInstance();
 const _historyTuner = AdaptiveHistoryTuner.getInstance();
 const contentFilterService = ContentFilterService.getInstance();
-const semanticGuardrailService = SemanticGuardrailService.getInstance();
+// Lazy: resolved per-call so mocks set in beforeEach are picked up in tests
+const getSemanticGuardrailService = () => SemanticGuardrailService.getInstance();
 
 /**
  * Main message handler that processes incoming messages and generates responses.
@@ -271,7 +272,7 @@ export async function handleMessage(
           if (guardrailProfile?.guards?.semanticInputGuard?.enabled) {
             pipelineMetrics.startStage('semantic_input_guard');
             try {
-              const semanticResult = await semanticGuardrailService.evaluateInput(
+              const semanticResult = await getSemanticGuardrailService().evaluateInput(
                 processedMessage,
                 guardrailProfile.guards.semanticInputGuard,
                 {
@@ -666,7 +667,7 @@ export async function handleMessage(
           if (guardrailProfile?.guards?.semanticOutputGuard?.enabled) {
             pipelineMetrics.startStage('semantic_output_guard');
             try {
-              const semanticResult = await semanticGuardrailService.evaluateOutput(
+              const semanticResult = await getSemanticGuardrailService().evaluateOutput(
                 responseText,
                 guardrailProfile.guards.semanticOutputGuard,
                 {

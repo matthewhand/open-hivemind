@@ -1,5 +1,6 @@
 import { execFile } from 'child_process';
 import fs from 'fs';
+import path from 'path';
 import { convertOpusToWav } from '@hivemind/message-discord/media/convertOpusToWav';
 
 jest.mock('child_process');
@@ -28,9 +29,9 @@ describe('convertOpusToWav', () => {
 
     const result = await convertOpusToWav(opusBuffer, outputDir);
 
-    expect(result).toBe('/temp/output.wav');
-    expect(mockFs.promises.writeFile).toHaveBeenCalledWith('/temp/input.opus', opusBuffer);
-    expect(mockFs.promises.unlink).toHaveBeenCalledWith('/temp/input.opus');
+    expect(result).toBe(path.join('/temp', 'output.wav'));
+    expect(mockFs.promises.writeFile).toHaveBeenCalledWith(path.join('/temp', 'input.opus'), opusBuffer);
+    expect(mockFs.promises.unlink).toHaveBeenCalledWith(path.join('/temp', 'input.opus'));
   });
 
   it('should handle ffmpeg errors', async () => {

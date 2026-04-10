@@ -75,7 +75,11 @@ async function request<T>(
 
     if (!response.ok) {
       let data: unknown;
-      try { data = await response.json(); } catch { data = await response.text().catch(() => ''); }
+      try {
+        data = await response.json();
+      } catch {
+        data = await response.text().catch(() => '');
+      }
       throw new HttpError(response.status, data, `HTTP ${response.status} ${response.statusText}`);
     }
 
@@ -92,13 +96,20 @@ async function request<T>(
   }
 }
 
-export function createHttpClient(baseURL: string, defaultHeaders: Record<string, string> = {}): HttpClientInstance {
+export function createHttpClient(
+  baseURL: string,
+  defaultHeaders: Record<string, string> = {}
+): HttpClientInstance {
   const base = baseURL.replace(/\/$/, '');
 
   const resolvePath = (path: string): string => {
     // Prevent path traversal escaping the base URL (e.g. //evil.com or absolute URLs)
     if (/^https?:\/\//i.test(path) || path.startsWith('//')) {
-      throw new HttpError(0, null, `SSRF protection: absolute path not allowed in http.create() instance: ${path}`);
+      throw new HttpError(
+        0,
+        null,
+        `SSRF protection: absolute path not allowed in http.create() instance: ${path}`
+      );
     }
     return `${base}${path.startsWith('/') ? path : `/${path}`}`;
   };
@@ -122,9 +133,12 @@ export function createHttpClient(baseURL: string, defaultHeaders: Record<string,
 
 export const http = {
   get: <T>(url: string, options?: RequestOptions) => request<T>('GET', url, undefined, options),
-  post: <T>(url: string, body?: unknown, options?: RequestOptions) => request<T>('POST', url, body, options),
-  put: <T>(url: string, body?: unknown, options?: RequestOptions) => request<T>('PUT', url, body, options),
-  delete: <T>(url: string, options?: RequestOptions) => request<T>('DELETE', url, undefined, options),
+  post: <T>(url: string, body?: unknown, options?: RequestOptions) =>
+    request<T>('POST', url, body, options),
+  put: <T>(url: string, body?: unknown, options?: RequestOptions) =>
+    request<T>('PUT', url, body, options),
+  delete: <T>(url: string, options?: RequestOptions) =>
+    request<T>('DELETE', url, undefined, options),
   create: (baseURL: string, defaultHeaders?: Record<string, string>) =>
     createHttpClient(baseURL, defaultHeaders),
 };
