@@ -202,12 +202,7 @@ export class StartupDiagnostics {
             return {
               path: configPath,
               exists: false,
-              error:
-                error instanceof Error
-                  ? error instanceof Error
-                    ? error.message
-                    : String(error)
-                  : String(error),
+              error: error instanceof Error ? error.message : String(error),
             };
           }
         }

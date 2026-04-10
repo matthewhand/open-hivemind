@@ -41,11 +41,7 @@ export async function sendTyping(client: Client, channelId: string): Promise<voi
       'Failed to start typing in channel ID: ' +
         channelId +
         ': ' +
-        (error instanceof Error
-          ? error instanceof Error
-            ? error.message
-            : String(error)
-          : String(error))
+        (error instanceof Error ? error.message : String(error))
     );
   }
 }
