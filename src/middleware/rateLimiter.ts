@@ -520,8 +520,8 @@ function createRateLimitHandler(type: string) {
  * Skip rate limiting for certain conditions
  */
 function shouldSkipRateLimit(req: Request): boolean {
-  // Skip in test environment
-  if (isTest) {
+  // Skip in test environment (check dynamically so tests can override NODE_ENV)
+  if (process.env.NODE_ENV === 'test') {
     return true;
   }
 

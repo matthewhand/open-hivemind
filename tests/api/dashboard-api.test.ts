@@ -22,7 +22,7 @@ jest.mock('../../src/server/services/WebSocketService', () => ({
   __esModule: true,
   default: {
     getInstance: jest.fn().mockReturnValue({
-      getBotStats: jest.fn().mockReturnValue({ messageCount: 0, errors: [] }),
+      getBotStats: jest.fn().mockReturnValue({ messageCount: 0, errorCount: 0, errors: [] }),
       getMessageFlow: jest.fn().mockReturnValue([]),
       getAllBotStats: jest.fn().mockReturnValue({}),
     }),

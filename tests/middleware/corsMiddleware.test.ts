@@ -1,5 +1,21 @@
 import type { NextFunction, Request, Response } from 'express';
-import { applyCors, getCorsOrigins } from '../../src/middleware/corsMiddleware';
+
+// Force module re-evaluation with a clean CORS_ORIGIN so tests aren't
+// influenced by whatever is set in the local .env (e.g. CORS_ORIGIN=*)
+const originalCorsOrigin = process.env.CORS_ORIGIN;
+delete process.env.CORS_ORIGIN;
+
+jest.resetModules();
+const { applyCors, getCorsOrigins } = require('../../src/middleware/corsMiddleware') as typeof import('../../src/middleware/corsMiddleware');
+
+afterAll(() => {
+  // Restore the env var after all tests
+  if (originalCorsOrigin !== undefined) {
+    process.env.CORS_ORIGIN = originalCorsOrigin;
+  } else {
+    delete process.env.CORS_ORIGIN;
+  }
+});
 
 describe('corsMiddleware', () => {
   let req: Partial<Request>;
