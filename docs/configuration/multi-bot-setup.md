@@ -1,309 +1,283 @@
-# Multi-Bot Configuration Guide
+# Bot Configuration
 
 Navigation: [Docs Index](../README.md) | [Configuration Overview](overview.md) | [Multi-Instance Setup](multi-instance-setup.md)
 
 
-This guide explains how to configure multiple bots using the new BOTS prefix system, while maintaining backward compatibility with the legacy comma-separated token approach.
+This guide covers how to configure bots in Open Hivemind using the recommended profile-based approach, with notes on legacy direct-key configuration for CI and secret-injection scenarios.
 
 ## Overview
 
-The new multi-bot configuration system allows you to:
-- Configure multiple bots with individual settings
-- Use different LLM providers per bot
-- Set unique Discord tokens and settings per bot
-- Maintain backward compatibility with existing configurations
-- Use environment variables or configuration files
+Bot configuration is split into three tiers. Profiles are reusable — one profile can be shared across many bots, making it easy to update a model or API key in one place.
 
-## New Configuration System (Recommended)
-
-### Environment Variables
-
-Use the `BOTS` environment variable to define bot names, then configure each bot individually:
-
-```bash
-# Define bot names
-BOTS=max,sam,assistant
-
-# Configure Max bot
-BOTS_MAX_NAME=Max
-BOTS_MAX_MESSAGE_PROVIDER=discord
-BOTS_MAX_LLM_PROVIDER=flowise
-BOTS_MAX_DISCORD_BOT_TOKEN=your-max-discord-token
-BOTS_MAX_DISCORD_CLIENT_ID=your-max-client-id
-BOTS_MAX_DISCORD_GUILD_ID=your-max-guild-id
-BOTS_MAX_DISCORD_CHANNEL_ID=your-max-channel-id
-BOTS_MAX_FLOWISE_API_KEY=your-max-flowise-key
-BOTS_MAX_FLOWISE_API_BASE_URL=http://localhost:3000/api/v1
-
-# Configure Sam bot
-BOTS_SAM_NAME=Sam
-BOTS_SAM_MESSAGE_PROVIDER=discord
-BOTS_SAM_LLM_PROVIDER=openai
-BOTS_SAM_DISCORD_BOT_TOKEN=your-sam-discord-token
-BOTS_SAM_OPENAI_API_KEY=your-sam-openai-key
-BOTS_SAM_OPENAI_MODEL=gpt-4
-
-# Configure Assistant bot
-BOTS_ASSISTANT_NAME=Assistant
-BOTS_ASSISTANT_MESSAGE_PROVIDER=slack
-BOTS_ASSISTANT_LLM_PROVIDER=openwebui
-BOTS_ASSISTANT_OPENWEBUI_API_KEY=your-assistant-openwebui-key
+```mermaid
+flowchart TD
+    LP[LLM Profile\nconfig/llm-profiles.json] -->|key reference| BC[Bot Config]
+    GP[Guard Profile\nguardrail-profiles.json] -->|key reference| BC
+    MP[MCP Server Profile\nmcp-server-profiles.json] -->|key reference| BC
+    CRED[Message Credentials\nBOTS_n_DISCORD_BOT_TOKEN etc.] -->|env var| BC
+    BC --> BOT[Running Bot]
 ```
 
-### Configuration Files
+| Tier | What it holds | Where it lives |
+|---|---|---|
+| **LLM Profile** | Provider, model, API key, base URL | `config/llm-profiles.json` or Web UI → Providers → LLM |
+| **Message Provider Credentials** | Platform tokens (Discord, Slack, Mattermost) | `BOTS_{n}_*` env vars — no profile system yet |
+| **Bot Config** | References tier 1+2 by key, plus persona/behaviour settings | `BOTS_{n}_*` env vars, `config/bots/{name}.json`, or Web UI → Bots |
 
-You can also use individual JSON configuration files for each bot:
+**Priority order** (highest wins):
+1. `BOTS_{name}_*` environment variables
+2. Profile settings (fill gaps not covered by env vars)
+3. `config/bots/{name}.json` file defaults
 
-Create `config/bots/max.json`:
+---
+
+## Recommended approach: Profile-based
+
+### Step 1 — Create an LLM Profile
+
+Via Web UI: **Providers → LLM → Add New**
+
+Or add an entry to `config/llm-profiles.json`:
+
 ```json
 {
-  "name": "Max",
-  "MESSAGE_PROVIDER": "discord",
-  "LLM_PROVIDER": "flowise",
-  "DISCORD_BOT_TOKEN": "your-max-discord-token",
-  "DISCORD_CLIENT_ID": "your-max-client-id",
-  "DISCORD_GUILD_ID": "your-max-guild-id",
-  "DISCORD_CHANNEL_ID": "your-max-channel-id",
-  "FLOWISE_API_KEY": "your-max-flowise-key",
-  "FLOWISE_API_BASE_URL": "http://localhost:3000/api/v1"
+  "production-gpt4o": {
+    "provider": "openai",
+    "config": {
+      "apiKey": "sk-...",
+      "model": "gpt-4o",
+      "baseURL": "https://api.openai.com/v1"
+    }
+  },
+  "internal-flowise": {
+    "provider": "flowise",
+    "config": {
+      "apiKey": "flowise-key",
+      "apiBaseUrl": "http://localhost:3000/api/v1",
+      "chatflowId": "your-chatflow-id"
+    }
+  }
 }
 ```
 
-Create `config/bots/sam.json`:
+The key (e.g. `"production-gpt4o"`) is what bots reference via `BOTS_{n}_LLM_PROFILE`.
+
+### Step 2 — Configure message provider credentials
+
+Message provider credentials are still per-bot env vars — there is no profile system for these yet.
+
+**Discord**
+
+| Variable | Description |
+|---|---|
+| `BOTS_{n}_DISCORD_BOT_TOKEN` | Bot token from Discord Developer Portal |
+| `BOTS_{n}_DISCORD_CLIENT_ID` | Application client ID |
+| `BOTS_{n}_DISCORD_GUILD_ID` | Guild (server) ID |
+| `BOTS_{n}_DISCORD_CHANNEL_ID` | Default channel ID |
+
+**Slack**
+
+| Variable | Description |
+|---|---|
+| `BOTS_{n}_SLACK_BOT_TOKEN` | Bot token (`xoxb-...`) |
+| `BOTS_{n}_SLACK_APP_TOKEN` | App-level token (`xapp-...`) |
+| `BOTS_{n}_SLACK_SIGNING_SECRET` | Signing secret for request verification |
+| `BOTS_{n}_SLACK_JOIN_CHANNELS` | Comma-separated channel IDs to join on startup |
+
+**Mattermost**
+
+| Variable | Description |
+|---|---|
+| `BOTS_{n}_MATTERMOST_SERVER_URL` | Mattermost server URL |
+| `BOTS_{n}_MATTERMOST_TOKEN` | Personal access token or bot token |
+| `BOTS_{n}_MATTERMOST_CHANNEL` | Default channel name |
+
+### Step 3 — Create a bot
+
+Via Web UI: **Bots → Create**
+
+Or define the bot in your `.env` file using profile references instead of raw API keys:
+
+```bash
+# Register bot names
+BOTS=alpha
+
+# Bot type
+BOTS_ALPHA_MESSAGE_PROVIDER=discord
+BOTS_ALPHA_LLM_PROVIDER=openai
+
+# Profile references (recommended — no secrets in bot config)
+BOTS_ALPHA_LLM_PROFILE=production-gpt4o
+BOTS_ALPHA_MCP_GUARD_PROFILE=owner-only
+
+# Message provider credentials (still env vars)
+BOTS_ALPHA_DISCORD_BOT_TOKEN=your-discord-token-here
+BOTS_ALPHA_DISCORD_CLIENT_ID=your-client-id
+BOTS_ALPHA_DISCORD_GUILD_ID=your-guild-id
+
+# Identity
+BOTS_ALPHA_PERSONA=helpful-assistant
+```
+
+---
+
+## Optional profiles
+
+In addition to `LLM_PROFILE`, bots support several other profile types. All are referenced by string key.
+
+### MCP Guard Profile (`MCP_GUARD_PROFILE`)
+
+Controls which users can invoke MCP tools.
+
+**Variable:** `BOTS_{n}_MCP_GUARD_PROFILE`
+**Applied by:** `applyGuardrailProfile()` in `botConfigFactory.ts`
+**Profile file:** `config/guardrail-profiles.json`
+
+```bash
+BOTS_ALPHA_MCP_GUARD_PROFILE=owner-only
+```
+
 ```json
 {
-  "name": "Sam",
-  "MESSAGE_PROVIDER": "discord",
-  "LLM_PROVIDER": "openai",
-  "DISCORD_BOT_TOKEN": "your-sam-discord-token",
-  "OPENAI_API_KEY": "your-sam-openai-key",
-  "OPENAI_MODEL": "gpt-4"
+  "owner-only": {
+    "mcpGuard": {
+      "mode": "owner",
+      "allowlist": ["123456789", "987654321"]
+    }
+  }
 }
 ```
 
-## Legacy Configuration (Backward Compatible)
+### MCP Server Profile (`MCP_SERVER_PROFILE`)
 
-The system still supports the legacy comma-separated token approach:
+Injects a predefined set of MCP servers into a bot.
 
-```bash
-# Single bot
-DISCORD_BOT_TOKEN=your-discord-token
-OPENAI_API_KEY=your-openai-key
-
-# Multiple bots (comma-separated)
-DISCORD_BOT_TOKEN=token1,token2,token3
-OPENAI_API_KEY=your-openai-key
-FLOWISE_API_KEY=your-flowise-key
-```
-
-## Configuration Priority
-
-1. **BOTS environment variable** (highest priority)
-2. **Individual bot configuration files** (config/bots/*.json)
-3. **Legacy DISCORD_BOT_TOKEN** (lowest priority)
-
-## Supported Providers
-
-### Message Providers
-- `discord` - Discord bot
-- `slack` - Slack bot
-- `mattermost` - Mattermost bot
-- `webhook` - Webhook integration
-
-### LLM Providers
-- `openai` - OpenAI GPT models
-- `flowise` - Flowise AI platform
-- `openwebui` - OpenWebUI integration
-- `perplexity` - Perplexity AI
-- `replicate` - Replicate models
-- `n8n` - n8n workflows
-
-## Examples
-
-### Example 1: Two Discord Bots with Different LLM Providers
+**Variable:** `BOTS_{n}_MCP_SERVER_PROFILE`
+**Applied by:** `applyMcpServerProfile()` in `botConfigFactory.ts`
+**Profile file:** `config/mcp-server-profiles.json`
 
 ```bash
-# Bot configuration
-BOTS=max,sam
-
-# Max bot - Flowise
-BOTS_MAX_MESSAGE_PROVIDER=discord
-BOTS_MAX_LLM_PROVIDER=flowise
-BOTS_MAX_DISCORD_BOT_TOKEN=discord-token-max
-BOTS_MAX_FLOWISE_API_KEY=flowise-key-max
-
-# Sam bot - OpenAI
-BOTS_SAM_MESSAGE_PROVIDER=discord
-BOTS_SAM_LLM_PROVIDER=openai
-BOTS_SAM_DISCORD_BOT_TOKEN=discord-token-sam
-BOTS_SAM_OPENAI_API_KEY=openai-key-sam
-BOTS_SAM_OPENAI_MODEL=gpt-4
+BOTS_ALPHA_MCP_SERVER_PROFILE=internal-tools
 ```
 
-### Example 2: Mixed Providers
+### Memory Profile (`MEMORY_PROFILE`)
+
+Configures the bot's memory/context backend.
+
+**Variable:** `BOTS_{n}_MEMORY_PROFILE`
+**Profile file:** `config/memory-profiles.json`
+
+> **Note:** `MEMORY_PROFILE` is not applied at runtime yet. The variable is parsed and stored but `applyMemoryProfile()` is not called during bot initialisation. This is a known TODO.
+
+### Response Profile (`RESPONSE_PROFILE`)
+
+Overrides message-behaviour settings (typing delays, response length, etc.).
+
+**Variable:** `BOTS_{n}_RESPONSE_PROFILE`
+
+> **Note:** `RESPONSE_PROFILE` is not fully materialised yet. The variable is recognised but the apply step is incomplete. This is a known TODO.
+
+---
+
+## Legacy: direct provider env vars
+
+You can still set provider credentials directly on a bot without an LLM profile. This is useful for CI pipelines or secret-injection environments where you want to avoid maintaining a `llm-profiles.json` file.
+
+Direct vars **override** any LLM profile — the profile is not applied when the corresponding env var is already set.
 
 ```bash
-# Bot configuration
-BOTS=discord-bot,slack-bot
-
-# Discord bot
-BOTS_DISCORD_BOT_MESSAGE_PROVIDER=discord
-BOTS_DISCORD_BOT_LLM_PROVIDER=flowise
-BOTS_DISCORD_BOT_DISCORD_BOT_TOKEN=discord-token
-BOTS_DISCORD_BOT_FLOWISE_API_KEY=flowise-key
-
-# Slack bot
-BOTS_SLACK_BOT_MESSAGE_PROVIDER=slack
-BOTS_SLACK_BOT_LLM_PROVIDER=openai
-BOTS_SLACK_BOT_OPENAI_API_KEY=openai-key
+BOTS_ALPHA_LLM_PROVIDER=openai
+BOTS_ALPHA_OPENAI_API_KEY=sk-...         # overrides any LLM_PROFILE
+BOTS_ALPHA_OPENAI_MODEL=gpt-4o
 ```
-
-### Example 3: Using Configuration Files
 
 ```bash
-# Just define bot names
-BOTS=max,sam
-
-# Create individual files:
-# config/bots/max.json
-# config/bots/sam.json
+BOTS_ALPHA_LLM_PROVIDER=flowise
+BOTS_ALPHA_FLOWISE_API_KEY=flowise-key   # overrides any LLM_PROFILE
+BOTS_ALPHA_FLOWISE_API_BASE_URL=http://localhost:3000/api/v1
 ```
 
-## Migration Guide
+```bash
+BOTS_ALPHA_LLM_PROVIDER=letta
+BOTS_ALPHA_LETTA_AGENT_ID=agent-uuid     # overrides any LLM_PROFILE
+```
 
-### From Legacy to New System
+---
 
-1. **Identify your current setup**:
-   ```bash
-   # Check current configuration
-   echo $DISCORD_BOT_TOKEN
-   echo $OPENAI_API_KEY
-   ```
+## Multi-bot example
 
-2. **Create new configuration**:
-   ```bash
-   # Instead of:
-   DISCORD_BOT_TOKEN=token1,token2
-   
-   # Use:
-   BOTS=bot1,bot2
-   BOTS_BOT1_DISCORD_BOT_TOKEN=token1
-   BOTS_BOT2_DISCORD_BOT_TOKEN=token2
-   ```
+Two bots sharing an infrastructure: one Discord bot backed by a centralised OpenAI profile, one Slack bot backed by an internal Flowise instance.
 
-3. **Test the new configuration**:
-   ```bash
-   # Run with new configuration
-   npm run dev
-   ```
+```bash
+# Register bots
+BOTS=discord-alpha,slack-support
 
-### Hybrid Approach During Migration
+# --- discord-alpha ---
+BOTS_DISCORD_ALPHA_MESSAGE_PROVIDER=discord
+BOTS_DISCORD_ALPHA_LLM_PROVIDER=openai
+BOTS_DISCORD_ALPHA_LLM_PROFILE=production-gpt4o      # uses shared profile
+BOTS_DISCORD_ALPHA_MCP_GUARD_PROFILE=owner-only
+BOTS_DISCORD_ALPHA_PERSONA=helpful-assistant
+BOTS_DISCORD_ALPHA_DISCORD_BOT_TOKEN=discord-token-alpha
+BOTS_DISCORD_ALPHA_DISCORD_CLIENT_ID=client-id-alpha
+BOTS_DISCORD_ALPHA_DISCORD_GUILD_ID=guild-id-alpha
+BOTS_DISCORD_ALPHA_DISCORD_CHANNEL_ID=channel-id-alpha
 
-You can run both configurations simultaneously during migration. The system will:
-- Use the new BOTS configuration if present
-- Issue warnings about configuration conflicts
-- Fall back to legacy configuration if BOTS is not defined
+# --- slack-support ---
+BOTS_SLACK_SUPPORT_MESSAGE_PROVIDER=slack
+BOTS_SLACK_SUPPORT_LLM_PROVIDER=flowise
+BOTS_SLACK_SUPPORT_LLM_PROFILE=internal-flowise      # uses shared profile
+BOTS_SLACK_SUPPORT_MCP_GUARD_PROFILE=allowlist-support
+BOTS_SLACK_SUPPORT_PERSONA=support-agent
+BOTS_SLACK_SUPPORT_SLACK_BOT_TOKEN=xoxb-...
+BOTS_SLACK_SUPPORT_SLACK_APP_TOKEN=xapp-...
+BOTS_SLACK_SUPPORT_SLACK_SIGNING_SECRET=signing-secret
+BOTS_SLACK_SUPPORT_SLACK_JOIN_CHANNELS=C01234567,C09876543
+```
 
-## Environment Variables Reference
+---
 
-### Bot Definition
-- `BOTS` - Comma-separated list of bot names
+## Profile reference
 
-### Per-Bot Configuration
-Replace `{name}` with your bot name (case-insensitive):
+| Profile type | Variable | Profile file | Applied by | Status |
+|---|---|---|---|---|
+| LLM | `BOTS_{n}_LLM_PROFILE` | `config/llm-profiles.json` | `applyLlmProfile()` | Fully applied |
+| MCP Guard | `BOTS_{n}_MCP_GUARD_PROFILE` | `config/guardrail-profiles.json` | `applyGuardrailProfile()` | Fully applied |
+| MCP Server | `BOTS_{n}_MCP_SERVER_PROFILE` | `config/mcp-server-profiles.json` | `applyMcpServerProfile()` | Fully applied |
+| Memory | `BOTS_{n}_MEMORY_PROFILE` | `config/memory-profiles.json` | `applyMemoryProfile()` | TODO: not applied at runtime |
+| Response | `BOTS_{n}_RESPONSE_PROFILE` | _(pending)_ | _(pending)_ | TODO: not fully materialised |
 
-#### Bot Identity
-- `BOTS_{name}_NAME` - Bot display name
-
-#### Message Provider
-- `BOTS_{name}_MESSAGE_PROVIDER` - discord, slack, mattermost, webhook
-
-#### LLM Provider
-- `BOTS_{name}_LLM_PROVIDER` - openai, flowise, openwebui, perplexity, replicate, n8n
-
-#### Discord Configuration
-- `BOTS_{name}_DISCORD_BOT_TOKEN` - Discord bot token
-- `BOTS_{name}_DISCORD_CLIENT_ID` - Discord client ID
-- `BOTS_{name}_DISCORD_GUILD_ID` - Discord guild ID
-- `BOTS_{name}_DISCORD_CHANNEL_ID` - Default channel ID
-- `BOTS_{name}_DISCORD_VOICE_CHANNEL_ID` - Voice channel ID
-
-#### OpenAI Configuration
-- `BOTS_{name}_OPENAI_API_KEY` - OpenAI API key
-- `BOTS_{name}_OPENAI_MODEL` - Model name (default: gpt-4)
-
-#### Flowise Configuration
-- `BOTS_{name}_FLOWISE_API_KEY` - Flowise API key
-- `BOTS_{name}_FLOWISE_API_BASE_URL` - API base URL (default: http://localhost:3000/api/v1)
-
-#### OpenWebUI Configuration
-- `BOTS_{name}_OPENWEBUI_API_KEY` - OpenWebUI API key
-- `BOTS_{name}_OPENWEBUI_API_URL` - API URL (default: http://localhost:3000/api/)
+---
 
 ## Troubleshooting
 
-### Common Issues
+### No bots found
 
-1. **No bots found**:
-   - Check that `BOTS` environment variable is set
-   - Verify individual bot tokens are provided
-   - Check configuration file paths
+- Check that `BOTS` is set and lists your bot names (comma-separated, case-insensitive).
+- Verify at least one message provider credential is set for each bot.
+- Check `config/bots/` for JSON files that match the bot names.
 
-2. **Configuration conflicts**:
-   - Look for warnings in console output
-   - Ensure only one configuration method is used
+### Profile not applied
 
-3. **Bot not responding**:
-   - Verify Discord bot token is valid
-   - Check bot permissions in Discord
-   - Review application logs
+- Confirm the profile key in `BOTS_{n}_LLM_PROFILE` (etc.) exactly matches a key in the corresponding profile JSON file.
+- Direct `BOTS_{n}_OPENAI_API_KEY`-style vars take priority over the profile — remove them if you want the profile to win.
 
-### Debug Mode
+### Debug mode
 
-Enable debug logging:
+Enable verbose startup logging:
+
 ```bash
-DEBUG=app:* npm run dev
+DEBUG=app:BotConfigurationManager npm run dev
 ```
 
-### Configuration Validation
+### Validate configuration via API
 
-Test your configuration:
+With the server running (`npm run dev`):
+
 ```bash
-# List all configured bots (server must be running: npm run dev)
-curl -s http://localhost:3028/api/config/bots
+# List all resolved bot configs
+curl -s http://localhost:3028/api/config/bots | jq .
+
+# Inspect a specific bot
+curl -s http://localhost:3028/api/config/bots/alpha | jq .
 ```
-
-## API Reference
-
-### BotConfigurationManager
-
-```typescript
-// Get singleton instance
-const manager = BotConfigurationManager.getInstance();
-
-// Get all bots
-const bots = manager.getAllBots();
-
-// Get Discord-specific bots
-const discordBots = manager.getDiscordBotConfigs();
-
-// Get specific bot
-const bot = manager.getBot('max');
-
-// Check if using legacy mode
-const isLegacy = manager.isLegacyMode();
-
-// Get configuration warnings
-const warnings = manager.getWarnings();
-
-// Reload configuration
-manager.reload();
-```
-
-### DiscordService Integration
-
-The DiscordService automatically uses the new configuration system:
-- Loads bots from BotConfigurationManager
-- Creates individual Discord clients per bot
-- Maintains backward compatibility
-- Provides bot-specific message handling
