@@ -21,10 +21,7 @@ const MESSENGER_PACKAGES = [
   '@hivemind/message-mattermost',
 ];
 
-const MEMORY_PACKAGES = [
-  '@hivemind/memory-mem0',
-  '@hivemind/memory-mem4ai',
-];
+const MEMORY_PACKAGES = ['@hivemind/memory-mem0', '@hivemind/memory-mem4ai'];
 
 function tryLoadSchema(pkg: string): unknown | null {
   try {

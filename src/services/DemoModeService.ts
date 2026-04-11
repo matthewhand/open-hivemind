@@ -466,10 +466,12 @@ export class DemoModeService {
   public setDemoMode(enabled: boolean): void {
     this.isDemoMode = enabled;
     if (enabled) {
-      this.seedDemoConfig().then(() => {
-        this.startActivitySimulation();
-        debug('Demo mode enabled at runtime');
-      }).catch((e) => debug('Failed to seed demo config: %s', e));
+      this.seedDemoConfig()
+        .then(() => {
+          this.startActivitySimulation();
+          debug('Demo mode enabled at runtime');
+        })
+        .catch((e) => debug('Failed to seed demo config: %s', e));
     } else {
       this.stopActivitySimulation();
       debug('Demo mode disabled at runtime (seeded config remains)');
