@@ -1,5 +1,8 @@
 import type { ProviderConfigSchema } from '../types';
 
+const LETTA_CLOUD_URL = 'https://api.letta.com/v1';
+const LETTA_LOCAL_URL = 'http://localhost:8283';
+
 export const lettaProviderSchema: ProviderConfigSchema = {
     type: 'llm',
     providerType: 'letta',
@@ -8,25 +11,43 @@ export const lettaProviderSchema: ProviderConfigSchema = {
     icon: '🧠',
     color: '#9B59B6',
     defaultConfig: {
-        apiUrl: 'https://api.letta.com/v1',
+        deployment: 'local',
+        apiUrl: LETTA_LOCAL_URL,
     },
     fields: [
+        {
+            name: 'deployment',
+            label: 'Deployment',
+            type: 'select',
+            required: true,
+            description: 'Choose where your Letta server is running',
+            group: 'Connection',
+            defaultValue: 'local',
+            options: [
+                { value: 'local', label: '🏠 Self-Hosted', description: 'Local Letta container (docker compose up -d letta)' },
+                { value: 'cloud', label: '☁️ Letta Cloud', description: 'Hosted at api.letta.com — sign up at app.letta.com' },
+            ],
+            linkedDefaults: {
+                targetField: 'apiUrl',
+                values: { local: LETTA_LOCAL_URL, cloud: LETTA_CLOUD_URL },
+            },
+        },
         {
             name: 'apiUrl',
             label: 'API URL',
             type: 'url',
             required: true,
-            description: 'Your Letta API base URL (use https://api.letta.com/v1 for Letta Cloud)',
-            placeholder: 'https://api.letta.com/v1',
+            description: 'Your Letta API base URL',
+            placeholder: LETTA_LOCAL_URL,
             group: 'Connection',
         },
         {
             name: 'apiKey',
-            label: 'API Key',
+            label: 'API Key / Server Password',
             type: 'password',
             required: true,
-            description: 'Your Letta API key',
-            placeholder: 'sk-let-...',
+            description: 'Letta Cloud API key (sk-let-...) or self-hosted server password (LETTA_SERVER_PASSWORD)',
+            placeholder: 'sk-let-... or your server password',
             group: 'Authentication',
         },
         {

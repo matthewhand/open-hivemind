@@ -49,6 +49,8 @@ export interface ProviderConfigField {
   component?: any;
   componentProps?: Record<string, any>;
   dependsOn?: string | { field: string; value: any }; // Field dependency
+  // Linked defaults: when this field changes, set another field's value from a map
+  linkedDefaults?: { targetField: string; values: Record<string, any> };
   // Helper action for fetching data (e.g., agent lookup)
   helperAction?: {
     type: 'fetch';

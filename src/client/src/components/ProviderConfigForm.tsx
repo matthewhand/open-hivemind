@@ -113,6 +113,16 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
   const handleFieldChange = (fieldName: string, value: any) => {
     const newConfig = { ...config, [fieldName]: value };
+
+    // Apply linkedDefaults: when this field changes, auto-set linked target fields
+    const field = schema.fields.find(f => f.name === fieldName);
+    if (field?.linkedDefaults) {
+      const { targetField, values } = field.linkedDefaults;
+      if (values[value] !== undefined) {
+        newConfig[targetField] = values[value];
+      }
+    }
+
     setConfig(newConfig);
 
     // Clear errors for this field
@@ -121,7 +131,6 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
     setErrors(newErrors);
 
     // Validate field
-    const field = schema.fields.find(f => f.name === fieldName);
     if (field) {
       const error = validateField(field, value);
       if (error) {
