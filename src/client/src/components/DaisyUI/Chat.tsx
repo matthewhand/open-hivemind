@@ -148,12 +148,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           </div>
         )}
 
-        <div className={`chat-bubble ${isCurrentUser
-          ? 'chat-bubble-primary'
-          : isBot
-            ? 'chat-bubble-secondary'
-            : 'chat-bubble-accent'
-          } ${message.metadata?.status === 'failed' ? 'chat-bubble-error' : ''}`}>
+        <div className={`chat-bubble ${message.metadata?.status === 'failed'
+            ? 'chat-bubble-error text-error-content'
+            : isCurrentUser
+              ? 'chat-bubble-primary'
+              : isBot
+                ? 'chat-bubble-secondary'
+                : 'chat-bubble-accent'
+          }`}>
           {message.type === 'code' ? (
             <div className="mockup-code text-sm">
               <pre><code>{message.content}</code></pre>
@@ -175,7 +177,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           {message.metadata?.status === 'failed' && onRetryMessage && (
             <div className="flex items-center mt-2">
               <button
-                className="btn btn-xs btn-error btn-outline"
+                className="btn btn-xs btn-neutral"
                 onClick={() => onRetryMessage(message.id)}
               >
                 Retry
