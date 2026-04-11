@@ -2,10 +2,21 @@ import React from 'react';
 import '@testing-library/jest-dom';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { WebSocketProvider } from '../../contexts/WebSocketContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi } from 'vitest';
 import ActivityPage from '../ActivityPage';
 import { apiService } from '../../services/api';
+
+vi.mock('../../hooks/useWebSocket', () => ({
+  useWebSocket: () => ({
+    socket: null,
+    connected: false,
+    error: null,
+    connect: vi.fn(),
+    disconnect: vi.fn()
+  })
+}));
 
 // Mock components to avoid deep rendering issues and dependency on child implementations
 vi.mock('../../components/DaisyUI/Alert', () => ({
@@ -176,7 +187,9 @@ describe('ActivityPage', () => {
     getActivityMock.mockReturnValue(new Promise(() => { }));
 
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    render(<QueryClientProvider client={queryClient}><MemoryRouter><ActivityPage /></MemoryRouter></QueryClientProvider>);
+    render(<QueryClientProvider client={queryClient}><WebSocketProvider><WebSocketProvider>
+          <WebSocketProvider><MemoryRouter><ActivityPage /></MemoryRouter></WebSocketProvider>
+        </WebSocketProvider></WebSocketProvider></QueryClientProvider>);
 
     // We expect loading spinner to be present
     // Note: The component sets loading=true initially, and fetchActivity is called in useEffect.
@@ -216,9 +229,11 @@ describe('ActivityPage', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter>
+        <WebSocketProvider>
+          <WebSocketProvider><MemoryRouter>
           <ActivityPage />
-        </MemoryRouter>
+        </MemoryRouter></WebSocketProvider>
+        </WebSocketProvider>
       </QueryClientProvider>
     );
 
@@ -248,9 +263,11 @@ describe('ActivityPage', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter>
+        <WebSocketProvider>
+          <WebSocketProvider><MemoryRouter>
           <ActivityPage />
-        </MemoryRouter>
+        </MemoryRouter></WebSocketProvider>
+        </WebSocketProvider>
       </QueryClientProvider>
     );
 
@@ -273,7 +290,9 @@ describe('ActivityPage', () => {
     getActivityMock.mockResolvedValue(mockData);
 
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    render(<QueryClientProvider client={queryClient}><MemoryRouter><ActivityPage /></MemoryRouter></QueryClientProvider>);
+    render(<QueryClientProvider client={queryClient}><WebSocketProvider><WebSocketProvider>
+          <WebSocketProvider><MemoryRouter><ActivityPage /></MemoryRouter></WebSocketProvider>
+        </WebSocketProvider></WebSocketProvider></QueryClientProvider>);
 
     // Wait for initial load (EmptyState should render because events is empty)
     await waitFor(() => expect(screen.queryByTestId('loading-spinner')).not.toBeInTheDocument(), { timeout: 3000 });

@@ -8,7 +8,7 @@ import MainLayout from '../layouts/MainLayout';
 import DashboardPage from '../pages/Dashboard';
 import UberLayout from '../layouts/UberLayout';
 import LoadingPage from '../pages/LoadingPage';
-import { RouteErrorBoundary } from '../components/ErrorBoundary';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 const Login = lazy(() => import('../components/Login'));
 import { useAuth } from '../contexts/AuthContext';
@@ -97,22 +97,22 @@ const AppRouter: React.FC = () => {
   return (
     <Suspense fallback={<LoadingFallback message="Loading page..." />}>
       <Routes>
-        <Route path="/" element={<RouteErrorBoundary pageName="Loading"><LoadingPage /></RouteErrorBoundary>} />
-        <Route path="/login" element={<RouteErrorBoundary pageName="Login"><Login /></RouteErrorBoundary>} />
-        <Route path="/onboarding" element={<RouteErrorBoundary pageName="Onboarding"><OnboardingPage /></RouteErrorBoundary>} />
+        <Route path="/" element={<ErrorBoundary pageName="Loading"><LoadingPage /></ErrorBoundary>} />
+        <Route path="/login" element={<ErrorBoundary pageName="Login"><Login /></ErrorBoundary>} />
+        <Route path="/onboarding" element={<ErrorBoundary pageName="Onboarding"><OnboardingPage /></ErrorBoundary>} />
 
         {/* User Dashboard Routes - Wrapped in MainLayout */}
         <Route element={
           <ProtectedRoute>
             <MainLayout>
-              <RouteErrorBoundary pageName="Dashboard Layout">
+              <ErrorBoundary pageName="Dashboard Layout">
                 <Outlet />
-              </RouteErrorBoundary>
+              </ErrorBoundary>
             </MainLayout>
           </ProtectedRoute>
         }>
-          <Route path="/dashboard" element={<RouteErrorBoundary pageName="Dashboard"><DashboardPage /></RouteErrorBoundary>} />
-          <Route path="/activity" element={<RouteErrorBoundary pageName="Activity"><StandaloneActivity /></RouteErrorBoundary>} />
+          <Route path="/dashboard" element={<ErrorBoundary pageName="Dashboard"><DashboardPage /></ErrorBoundary>} />
+          <Route path="/activity" element={<ErrorBoundary pageName="Activity"><StandaloneActivity /></ErrorBoundary>} />
         </Route>
 
         {/* Admin routes - UberLayout handles its own navigation */}
@@ -122,24 +122,24 @@ const AppRouter: React.FC = () => {
           </ProtectedRoute>
         }>
           <Route index element={<Navigate to="/admin/overview" replace />} />
-          <Route path="overview" element={<RouteErrorBoundary pageName="Overview"><OverviewPage /></RouteErrorBoundary>} />
+          <Route path="overview" element={<ErrorBoundary pageName="Overview"><OverviewPage /></ErrorBoundary>} />
 
 
           {/* Bot Management Routes */}
-          <Route path="bots" element={<RouteErrorBoundary pageName="Bots"><BotsPage /></RouteErrorBoundary>} />
-          <Route path="bots/create" element={<RouteErrorBoundary pageName="Create Bot"><BotCreatePage /></RouteErrorBoundary>} />
-          <Route path="bots/templates" element={<RouteErrorBoundary pageName="Bot Templates"><BotTemplatesPage /></RouteErrorBoundary>} />
+          <Route path="bots" element={<ErrorBoundary pageName="Bots"><BotsPage /></ErrorBoundary>} />
+          <Route path="bots/create" element={<ErrorBoundary pageName="Create Bot"><BotCreatePage /></ErrorBoundary>} />
+          <Route path="bots/templates" element={<ErrorBoundary pageName="Bot Templates"><BotTemplatesPage /></ErrorBoundary>} />
 
           {/* Each provider type gets its own top-level page with tabs */}
-          <Route path="llm" element={<RouteErrorBoundary pageName="LLM"><LLMProvidersPage /></RouteErrorBoundary>} />
-          <Route path="message" element={<RouteErrorBoundary pageName="Message"><MessageProvidersPage /></RouteErrorBoundary>} />
-          <Route path="memory" element={<RouteErrorBoundary pageName="Memory"><MemoryProvidersPage /></RouteErrorBoundary>} />
-          <Route path="tool" element={<RouteErrorBoundary pageName="Tool"><ToolProvidersPage /></RouteErrorBoundary>} />
-          <Route path="config/response-profiles" element={<RouteErrorBoundary pageName="Response Profiles"><ResponseProfilesPage /></RouteErrorBoundary>} />
+          <Route path="llm" element={<ErrorBoundary pageName="LLM"><LLMProvidersPage /></ErrorBoundary>} />
+          <Route path="message" element={<ErrorBoundary pageName="Message"><MessageProvidersPage /></ErrorBoundary>} />
+          <Route path="memory" element={<ErrorBoundary pageName="Memory"><MemoryProvidersPage /></ErrorBoundary>} />
+          <Route path="tool" element={<ErrorBoundary pageName="Tool"><ToolProvidersPage /></ErrorBoundary>} />
+          <Route path="config/response-profiles" element={<ErrorBoundary pageName="Response Profiles"><ResponseProfilesPage /></ErrorBoundary>} />
 
           {/* Personas and Guards are standalone pages */}
-          <Route path="personas" element={<RouteErrorBoundary pageName="Personas"><PersonasPage /></RouteErrorBoundary>} />
-          <Route path="guards" element={<RouteErrorBoundary pageName="Guards"><GuardsPage /></RouteErrorBoundary>} />
+          <Route path="personas" element={<ErrorBoundary pageName="Personas"><PersonasPage /></ErrorBoundary>} />
+          <Route path="guards" element={<ErrorBoundary pageName="Guards"><GuardsPage /></ErrorBoundary>} />
 
           {/* Legacy redirects */}
           <Route path="providers" element={<Navigate to="/admin/llm" replace />} />
@@ -148,19 +148,19 @@ const AppRouter: React.FC = () => {
           <Route path="providers/memory" element={<Navigate to="/admin/memory" replace />} />
           <Route path="providers/tool" element={<Navigate to="/admin/tool" replace />} />
           <Route path="integrations" element={<Navigate to="/admin/llm" replace />} />
-          <Route path="integrations/:type" element={<RouteErrorBoundary pageName="Integrations"><IntegrationsPage /></RouteErrorBoundary>} />
+          <Route path="integrations/:type" element={<ErrorBoundary pageName="Integrations"><IntegrationsPage /></ErrorBoundary>} />
 
           {/* Marketplace Route */}
-          <Route path="marketplace" element={<RouteErrorBoundary pageName="Marketplace"><MarketplacePage /></RouteErrorBoundary>} />
+          <Route path="marketplace" element={<ErrorBoundary pageName="Marketplace"><MarketplacePage /></ErrorBoundary>} />
 
           {/* MCP Routes */}
           <Route
             path="mcp"
             element={
               <ProtectedRoute>
-                <RouteErrorBoundary pageName="MCP Server Manager">
+                <ErrorBoundary pageName="MCP Server Manager">
                   <MCPServerManager />
-                </RouteErrorBoundary>
+                </ErrorBoundary>
               </ProtectedRoute>
             }
           />
@@ -168,9 +168,9 @@ const AppRouter: React.FC = () => {
             path="mcp/servers"
             element={
               <ProtectedRoute>
-                <RouteErrorBoundary pageName="MCP Servers">
+                <ErrorBoundary pageName="MCP Servers">
                   <MCPServersPage />
-                </RouteErrorBoundary>
+                </ErrorBoundary>
               </ProtectedRoute>
             }
           />
@@ -178,9 +178,9 @@ const AppRouter: React.FC = () => {
             path="mcp/tools"
             element={
               <ProtectedRoute>
-                <RouteErrorBoundary pageName="MCP Tools">
+                <ErrorBoundary pageName="MCP Tools">
                   <MCPToolsPage />
-                </RouteErrorBoundary>
+                </ErrorBoundary>
               </ProtectedRoute>
             }
           />
@@ -191,18 +191,18 @@ const AppRouter: React.FC = () => {
           <Route path="activity" element={<Navigate to="/admin/overview?tab=activity" replace />} />
           <Route path="monitoring" element={<Navigate to="/admin/overview?tab=monitoring" replace />} />
           <Route path="monitoring-dashboard" element={<Navigate to="/admin/overview?tab=monitoring" replace />} />
-          <Route path="analytics" element={<RouteErrorBoundary pageName="Analytics"><AnalyticsDashboard /></RouteErrorBoundary>} />
-          <Route path="system-management" element={<RouteErrorBoundary pageName="System Management"><SystemManagement /></RouteErrorBoundary>} />
+          <Route path="analytics" element={<ErrorBoundary pageName="Analytics"><AnalyticsDashboard /></ErrorBoundary>} />
+          <Route path="system-management" element={<ErrorBoundary pageName="System Management"><SystemManagement /></ErrorBoundary>} />
 
-          <Route path="export" element={<RouteErrorBoundary pageName="Export"><ExportPage /></RouteErrorBoundary>} />
-          <Route path="settings" element={<RouteErrorBoundary pageName="Settings"><SystemSettings /></RouteErrorBoundary>} />
+          <Route path="export" element={<ErrorBoundary pageName="Export"><ExportPage /></ErrorBoundary>} />
+          <Route path="settings" element={<ErrorBoundary pageName="Settings"><SystemSettings /></ErrorBoundary>} />
           <Route
             path="configuration"
             element={
               <ProtectedRoute>
-                <RouteErrorBoundary pageName="Bot Configuration">
+                <ErrorBoundary pageName="Bot Configuration">
                   <BotConfigurationPage />
-                </RouteErrorBoundary>
+                </ErrorBoundary>
               </ProtectedRoute>
             }
           />
@@ -210,26 +210,26 @@ const AppRouter: React.FC = () => {
             path="config"
             element={
               <ProtectedRoute>
-                <RouteErrorBoundary pageName="Config">
+                <ErrorBoundary pageName="Config">
                   <ConfigPage />
-                </RouteErrorBoundary>
+                </ErrorBoundary>
               </ProtectedRoute>
             }
           />
           {/* Developer — tabbed page (Specs, Sitemap, UI Components, Static Pages) */}
-          <Route path="developer" element={<RouteErrorBoundary pageName="Developer"><DeveloperPage /></RouteErrorBoundary>} />
+          <Route path="developer" element={<ErrorBoundary pageName="Developer"><DeveloperPage /></ErrorBoundary>} />
           <Route path="static" element={<Navigate to="/admin/developer?tab=static-pages" replace />} />
           <Route path="sitemap" element={<Navigate to="/admin/developer?tab=sitemap" replace />} />
           <Route path="showcase" element={<Navigate to="/admin/developer?tab=showcase" replace />} />
           <Route path="specs" element={<Navigate to="/admin/developer?tab=specs" replace />} />
-          <Route path="specs/:id" element={<RouteErrorBoundary pageName="Spec Detail"><SpecDetailPage /></RouteErrorBoundary>} />
-          <Route path="audit" element={<RouteErrorBoundary pageName="Audit"><AuditPage /></RouteErrorBoundary>} />
-          <Route path="health" element={<RouteErrorBoundary pageName="Health"><AdminHealthPage /></RouteErrorBoundary>} />
+          <Route path="specs/:id" element={<ErrorBoundary pageName="Spec Detail"><SpecDetailPage /></ErrorBoundary>} />
+          <Route path="audit" element={<ErrorBoundary pageName="Audit"><AuditPage /></ErrorBoundary>} />
+          <Route path="health" element={<ErrorBoundary pageName="Health"><AdminHealthPage /></ErrorBoundary>} />
 
-          <Route path="webhooks" element={<RouteErrorBoundary pageName="Webhook Events"><WebhookEventsPage /></RouteErrorBoundary>} />
-          <Route path="api-docs" element={<RouteErrorBoundary pageName="API Docs"><ApiDocsPage /></RouteErrorBoundary>} />
-          <Route path="help" element={<RouteErrorBoundary pageName="Help"><HelpPage /></RouteErrorBoundary>} />
-          <Route path="about" element={<RouteErrorBoundary pageName="About"><AboutPage /></RouteErrorBoundary>} />
+          <Route path="webhooks" element={<ErrorBoundary pageName="Webhook Events"><WebhookEventsPage /></ErrorBoundary>} />
+          <Route path="api-docs" element={<ErrorBoundary pageName="API Docs"><ApiDocsPage /></ErrorBoundary>} />
+          <Route path="help" element={<ErrorBoundary pageName="Help"><HelpPage /></ErrorBoundary>} />
+          <Route path="about" element={<ErrorBoundary pageName="About"><AboutPage /></ErrorBoundary>} />
 
         </Route>
 

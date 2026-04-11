@@ -138,7 +138,7 @@ export class AuthMiddleware {
    * Role-based authorization middleware
    * Checks if user has required role
    */
-  public requireRole = (requiredRole: string) => {
+  public requireRole = (requiredRole: string): ((req: Request, res: Response, next: NextFunction) => void) => {
     return (req: Request, res: Response, next: NextFunction): void => {
       const authReq = req as AuthMiddlewareRequest;
       if (!authReq.user) {
@@ -179,7 +179,7 @@ export class AuthMiddleware {
    * Permission-based authorization middleware
    * Checks if user has specific permission
    */
-  public requirePermission = (permission: string) => {
+  public requirePermission = (permission: string): ((req: Request, res: Response, next: NextFunction) => void) => {
     return (req: Request, res: Response, next: NextFunction): void => {
       const authReq = req as AuthMiddlewareRequest;
       if (!authReq.user) {
