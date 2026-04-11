@@ -1,6 +1,6 @@
 import Debug from 'debug';
-import ipaddr from 'ipaddr.js';
 import type { NextFunction, Request, Response } from 'express';
+import ipaddr from 'ipaddr.js';
 import { RateLimitError } from '../../types/errorClasses';
 
 const debug = Debug('app:securityMiddleware');
