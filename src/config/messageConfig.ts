@@ -417,7 +417,7 @@ const messageConfig = convict({
     env: 'MESSAGE_DELAY_MULTIPLIER',
   },
   MESSAGE_RESPONSE_PROFILES: {
-    doc: 'Named response profiles for per-bot engagement tuning. JSON map of profileName -> {MESSAGE_* overrides}.',
+    doc: 'Named response profiles for per-bot engagement tuning. JSON map of profileName → {MESSAGE_* overrides}. Built-in profiles: "default" (baseline), "eager" (low delay, higher unsolicited chance, responds unprompted), "cautious" (high delay, very low unsolicited chance, only responds when spoken to). Additional custom profiles can be added here and referenced via BOTS_{name}_RESPONSE_PROFILE.',
     format: 'response-profiles',
     default: {
       default: {},
@@ -531,13 +531,13 @@ const messageConfig = convict({
     env: 'MESSAGE_INTERACTIVE_FOLLOWUPS',
   },
   MESSAGE_UNSOLICITED_ADDRESSED: {
-    doc: 'Allow unsolicited addressed messages',
+    doc: 'Allow the bot to send unsolicited replies to messages that were explicitly directed at it (e.g. mentions, DMs) but where the bot chose not to respond immediately. When false the bot only replies when actively triggered.',
     format: Boolean,
     default: false,
     env: 'MESSAGE_UNSOLICITED_ADDRESSED',
   },
   MESSAGE_UNSOLICITED_UNADDRESSED: {
-    doc: 'Allow unsolicited unaddressed messages',
+    doc: 'Allow the bot to send unsolicited replies to messages that were NOT directed at it. Probability is governed by MESSAGE_UNSOLICITED_BASE_CHANCE and related factor vars. Has no effect when MESSAGE_ONLY_WHEN_SPOKEN_TO=true.',
     format: Boolean,
     default: false,
     env: 'MESSAGE_UNSOLICITED_UNADDRESSED',
