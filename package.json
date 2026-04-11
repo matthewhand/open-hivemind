@@ -16,7 +16,7 @@
     "packages/*"
   ],
   "scripts": {
-    "prepare": "husky install",
+    "prepare": "husky",
     "lint": "node ./node_modules/eslint/bin/eslint.js src/",
     "lint:fix": "node ./node_modules/eslint/bin/eslint.js src/ --fix",
     "format": "node ./node_modules/prettier/bin/prettier.cjs --write \"src/**/*.ts\" \"src/**/*.tsx\" \"tests/**/*.ts\" \"packages/**/*.ts\"",
@@ -63,8 +63,7 @@
     "build:only:frontend": "npm run build:frontend",
     "test:only": "npm run test",
     "test:only:backend": "npm run test",
-    "test:only:frontend": "cd src/client && npx vitest run",
-    "prepare": "git config core.hooksPath .githooks || true"
+    "test:only:frontend": "cd src/client && npx vitest run"
   },
   "_moduleAliases": {
     "@src": "dist/src",
@@ -287,7 +286,7 @@
     "jest-axe": "^10.0.0",
     "jest-environment-jsdom": "^29.7.0",
     "jest-snapshot": "^29.7.0",
-    "lint-staged": "^15.4.3",
+    "lint-staged": "^15.5.2",
     "mocha": "^10.7.3",
     "npm-run-all": "^4.1.5",
     "prettier": "^3.8.1",
@@ -354,9 +353,17 @@
     "patchedDependencies": {}
   },
   "lint-staged": {
-    "*.{ts,tsx,js}": [
-      "prettier --write",
-      "eslint --fix"
+    "src/**/*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "tests/**/*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "packages/**/*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
     ]
   }
 }
