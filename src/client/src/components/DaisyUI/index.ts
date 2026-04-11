@@ -3,7 +3,7 @@ export { default as Accordion } from './Accordion';
 export { Alert } from './Alert';
 export { default as Avatar } from './Avatar';
 export { default as Badge } from './Badge';
-export { default as Breadcrumbs, AutoBreadcrumbs } from './Breadcrumbs';
+export { default as Breadcrumbs } from './Breadcrumbs';
 export type { BreadcrumbItem, BreadcrumbsProps } from './Breadcrumbs';
 export { default as Hero } from './Hero';
 export { default as Button } from './Button';

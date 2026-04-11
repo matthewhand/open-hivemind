@@ -1,7 +1,7 @@
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
-import Breadcrumbs, { AutoBreadcrumbs } from '../Breadcrumbs';
+import Breadcrumbs from '../Breadcrumbs';
 
 describe('Breadcrumbs', () => {
   describe('manual mode (items prop)', () => {
@@ -119,12 +119,6 @@ describe('Breadcrumbs', () => {
       const bots = screen.getByText('Bots');
       const span = bots.closest('span');
       expect(span).toHaveAttribute('aria-current', 'page');
-    });
-  });
-
-  describe('backward compatibility', () => {
-    it('exports AutoBreadcrumbs as an alias', () => {
-      expect(AutoBreadcrumbs).toBe(Breadcrumbs);
     });
   });
 });
