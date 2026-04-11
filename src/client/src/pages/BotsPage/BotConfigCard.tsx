@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Bot, Globe, Cpu, Settings, Pause, Play, Trash2, MoreVertical } from 'lucide-react';
 import type { BotConfig } from '../../types/bot';
 import Card from '../../components/DaisyUI/Card';
@@ -181,4 +181,7 @@ const BotConfigCard: React.FC<BotConfigCardProps> = ({
   );
 };
 
-export default BotConfigCard;
+BotConfigCard.displayName = 'BotConfigCard';
+
+// ⚡ Bolt Optimization: Added React.memo() to prevent unnecessary re-renders in grid lists
+export default memo(BotConfigCard);
