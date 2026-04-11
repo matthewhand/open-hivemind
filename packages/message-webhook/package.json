@@ -1,0 +1,15 @@
+{
+  "name": "@hivemind/message-webhook",
+  "version": "1.0.0",
+  "description": "Webhook messenger adapter for Open Hivemind",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "author": "matthewhand",
+  "license": "MIT",
+  "dependencies": {
+    "@hivemind/shared-types": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
