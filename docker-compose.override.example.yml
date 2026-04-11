@@ -104,10 +104,34 @@ services:
       - "127.0.0.1:8474:7474"
       - "127.0.0.1:8687:7687"
 
+  # ---------------------------------------------------------------------------
+  # Letta — self-hosted stateful agent server (REST API on port 8283)
+  # Docs: https://docs.letta.com/guides/docker/
+  # ---------------------------------------------------------------------------
+  letta:
+    image: letta/letta:latest
+    ports:
+      - "127.0.0.1:8283:8283"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_API_BASE=${OPENAI_API_BASE:-}
+      - SECURE=true
+      - LETTA_SERVER_PASSWORD=${LETTA_SERVER_PASSWORD}
+    volumes:
+      - letta_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8283/v1/health/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
 volumes:
   mem0_postgres_data:
   mem0_neo4j_data:
   mem0_history:
+  letta_pgdata:
 
 networks:
   mem0_network:
