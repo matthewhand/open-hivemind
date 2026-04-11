@@ -51,24 +51,22 @@ describe('SlackBotManager', () => {
   });
 
   it('should handle initialization, configuration, and message handling', async () => {
-    const mockConfigs = [
-      {
-        token: 'xoxb-bot-token',
-        appToken: 'xapp-app-token',
-        signingSecret: 'secret',
-        name: 'testbot',
-      },
-    ];
+    const config = {
+      token: 'test-token',
+      appToken: 'test-app-token',
+      signingSecret: 'test-signing-secret',
+    };
 
     const manager = new SlackBotManager(mockConfigs, 'socket');
     const mockHandler = jest.fn().mockResolvedValue('bot response');
     manager.setMessageHandler(mockHandler);
 
-    // Mock successful authentication
-    const mockAuthTest = jest.fn().mockResolvedValue({
-      ok: true,
-      user_id: 'U12345',
-      user: 'testbot',
+    // Test initialization
+    expect(slackBotManager).toBeDefined();
+
+    // Test configuration
+    expect(MockSocketModeClient).toHaveBeenCalledWith({
+      appToken: 'test-app-token',
     });
 
     MockWebClient.mockImplementation(

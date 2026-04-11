@@ -74,8 +74,13 @@ describe('CircuitBreaker — HALF_OPEN state', () => {
   });
 
   it('re-opens on failure in HALF_OPEN', async () => {
-    const cb = new CircuitBreaker({ name: 'test', failureThreshold: 1, resetTimeoutMs: 1, halfOpenMaxAttempts: 3 });
-    await openAndWait(cb);
+    const cb = new CircuitBreaker({
+      name: 'test',
+      failureThreshold: 1,
+      resetTimeoutMs: 100,
+      halfOpenMaxAttempts: 3,
+    });
+    await openAndAdvance(cb, 100);
     await expect(cb.execute(() => Promise.reject(new Error('e')))).rejects.toThrow();
     expect(cb.getState()).toBe(CircuitBreakerState.OPEN);
   });

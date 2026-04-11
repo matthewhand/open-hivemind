@@ -12,8 +12,12 @@ import path from 'path';
  * Excluded: test files, declaration files, node_modules, dist/
  */
 
-const AXIOS_IMPORT_PATTERN =
-  `"from 'axios'\\|from \\"axios\\"\\|require('axios')\\|require(\\"axios\\")"`;
+    const violations = output
+      .split('\n')
+      .filter(Boolean)
+      .filter(
+        (line) => !line.includes('.test.') && !line.includes('.spec.') && !line.includes('.d.ts')
+      );
 
 const DIRS_TO_GUARD = [
   ['packages', path.resolve(__dirname, '../../../packages')],

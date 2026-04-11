@@ -43,11 +43,9 @@ describe('Response Profiles API', () => {
   });
 
   it('POST /api/config/response-profiles should create a profile', async () => {
-    const newProfile = { key: 'new-profile', name: 'New Profile', settings: { MESSAGE_MIN_DELAY: 100 } };
-    const res = await request(app)
-      .post('/api/config/response-profiles')
-      .send(newProfile);
-    
+    const newProfile = { name: 'New Profile', settings: { MESSAGE_MIN_DELAY: 100 } };
+    const res = await request(app).post('/api/config/response-profiles').send(newProfile);
+
     expect(res.status).toBe(201);
     expect(res.body.data.profile.name).toBe('New Profile');
   });
