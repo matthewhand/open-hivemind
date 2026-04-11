@@ -113,11 +113,11 @@ The authenticated response includes an optional `pipeline` object with trace sta
     "totalTraces": 142,
     "avgDurationMs": 87.3,
     "stageAvgMs": {
-      "classify": 2.1,
+      "receive": 2.1,
+      "decision": 3.0,
       "enrich": 12.4,
-      "generate": 65.8,
-      "filter": 3.0,
-      "deliver": 4.0
+      "inference": 65.8,
+      "send": 4.0
     },
     "errorRate": 0.02,
     "recentTraces": 5

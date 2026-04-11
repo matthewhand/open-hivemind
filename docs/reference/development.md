@@ -47,7 +47,7 @@ Open-Hivemind is an advanced, multi-agent bot ecosystem built with TypeScript. T
 - **TypeScript Strictness:**  
   Emphasis is on strong type safety and clear modular designs to minimize runtime failures.
 - **Modular Development:**  
-  New features should be added to the appropriate directories (e.g., `src/integrations/` or `src/llm/`) following the established design patterns.
+  New features should be added to the appropriate directories (e.g., `packages/llm-*/src/` for LLM providers or `packages/message-*/src/` for messaging adapters) following the established design patterns.
 
 ### Development Workflow
 - **Environment Setup:**  

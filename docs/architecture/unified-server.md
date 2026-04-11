@@ -81,7 +81,7 @@ graph LR
 | `NODE_ENV` | `development` | Environment mode |
 | `HTTP_ENABLED` | `true` | Enable/disable HTTP server |
 | `SKIP_MESSENGERS` | `false` | Skip bot initialization |
-| `MESSAGE_PROVIDER` | `discord` | Default messenger platform |
+| `MESSAGE_PROVIDER` | `slack` | Default messenger platform |
 
 ### Usage Examples
 

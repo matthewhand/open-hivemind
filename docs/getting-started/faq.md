@@ -314,8 +314,8 @@ See [MCP Documentation](../mcp/overview.md) for details.
 
 Yes! Implement the `ILlmProvider` interface:
 
-1. Create `src/integrations/your-provider/yourProvider.ts`
-2. Implement required methods
+1. Create `packages/llm-your-provider/src/yourProvider.ts`
+2. Implement the required `ILlmProvider` methods
 3. Register in `src/llm/getLlmProvider.ts`
 
 ---

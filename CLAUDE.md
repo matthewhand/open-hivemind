@@ -15,6 +15,10 @@
 | `SKIP_MESSENGERS` | `false` | Skip messenger service initialization |
 | `WEBHOOK_ENABLED` | `false` | Enable the webhook service |
 | `USE_LEGACY_HANDLER` | `false` | Revert to the legacy monolithic `handleMessage()` instead of the 5-stage pipeline. The pipeline is the default message processing path. |
+| `ENABLE_VITE_DEV` | `false` | Enable Vite dev middleware (hot reload) inside the server process |
+| `ENABLE_WELCOME_MESSAGE` | `false` | Send a welcome message to the default channel on bot startup |
+| `WELCOME_MESSAGE_TEXT` | `''` | Text of the startup welcome message (requires `ENABLE_WELCOME_MESSAGE=true`) |
+| `DATABASE_PATH` | `./data/hivemind.db` | Path to the SQLite database file |
 
 ## Screenshot Convention
 
