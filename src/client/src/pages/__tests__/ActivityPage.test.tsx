@@ -21,6 +21,17 @@ vi.mock('../../hooks/useWebSocket', () => ({
 }));
 
 import { apiService } from '../../services/api';
+import { useWebSocket } from '../../hooks/useWebSocket';
+
+
+
+vi.mock('../../hooks/useWebSocket', () => ({
+  useWebSocket: () => ({
+    socket: null,
+    connect: vi.fn(),
+    disconnect: vi.fn()
+  })
+}));
 
 vi.mock('../../hooks/useWebSocket', () => ({
   useWebSocket: () => ({

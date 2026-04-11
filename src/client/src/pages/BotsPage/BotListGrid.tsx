@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
 import BotConfigCard from './BotConfigCard';
 import Button from '../../components/DaisyUI/Button';
@@ -24,7 +24,7 @@ interface BotListGridProps {
   onBotMoveDown: (index: number) => void;
 }
 
-export const BotListGrid: React.FC<BotListGridProps> = ({
+export const BotListGrid: React.FC<BotListGridProps> = memo(({
   filteredBots,
   previewBot,
   handlePreviewBot,
@@ -108,4 +108,6 @@ export const BotListGrid: React.FC<BotListGridProps> = ({
       ))}
     </div>
   );
-};
+});
+
+BotListGrid.displayName = 'BotListGrid';

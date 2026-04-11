@@ -8,3 +8,6 @@
 ## 2024-05-19 - Avoid Sequential Queries in Config Exporter
 **Learning:** `getBotConfiguration` was repeatedly called in loops inside `exportConfigurations` methods, causing an N+1 performance bottleneck.
 **Action:** Replaced sequential database lookups with `getBotConfigurationsBulk` when batch exporting configurations.
+## 2024-05-20 - BotConfigCard rendering in BotListGrid
+**Learning:** `BotConfigCard` was mapping inside `BotListGrid` without `React.memo`, meaning that standard React state changes in the parent component (like checking the bulk action checkbox, drag-and-drop operations, or opening an individual card's preview drawer) forced a complete re-render of every complex configuration card on the page.
+**Action:** Always wrap repeating, complex item list components in `React.memo()`. I applied `memo` to both `BotConfigCard` and the parent list `BotListGrid` so that interacting with one item does not re-render the entire grid unless the data specifically changes.
