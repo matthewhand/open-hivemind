@@ -21,8 +21,10 @@ export class LettaProvider implements ILlmProvider {
 
   private constructor(config?: LettaProviderConfig) {
     this.config = config || {};
-    // SDK auto-reads LETTA_API_KEY and LETTA_BASE_URL from env
-    this.client = new Letta();
+    // Uses LETTA_SERVER_PASSWORD for both cloud and self-hosted auth
+    this.client = new Letta({
+      apiKey: process.env.LETTA_SERVER_PASSWORD,
+    });
   }
 
   static getInstance(config?: LettaProviderConfig): LettaProvider {
