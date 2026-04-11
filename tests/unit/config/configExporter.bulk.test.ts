@@ -27,6 +27,13 @@ const makeDbManager = (botCount: number) => {
   };
 };
 
+const makeTemplateSvc = () => ({ getAllTemplates: jest.fn().mockResolvedValue([]) });
+const makeVersionSvc = () => ({ getVersions: jest.fn().mockResolvedValue([]) });
+
+const makeExporter = (dbMgr: ReturnType<typeof makeDbManager>) =>
+  // Private constructor — use cast to bypass TypeScript enforcement in tests
+  new (ConfigExporter as any)(dbMgr, makeTemplateSvc(), makeVersionSvc(), '/tmp/test-exports') as ConfigExporter;
+
 describe('ConfigExporter — bulk lookup optimisation', () => {
   let exporter: ConfigExporter;
   let dbManager: ReturnType<typeof makeDbManager>;
@@ -35,7 +42,7 @@ describe('ConfigExporter — bulk lookup optimisation', () => {
 
   beforeEach(() => {
     dbManager = makeDbManager(BOT_IDS.length);
-    exporter = new ConfigExporter(dbManager as any, '/tmp/test-exports');
+    exporter = makeExporter(dbManager);
   });
 
   it('calls getBotConfigurationsBulk exactly once for any number of bot IDs', async () => {
@@ -54,12 +61,12 @@ describe('ConfigExporter — bulk lookup optimisation', () => {
   it('passes all IDs in a single call regardless of bot count', async () => {
     // Use 50 bots (below the MAX_EXPORT_CONFIGS limit)
     const moderateBotIds = Array.from({ length: 50 }, (_, i) => i + 1);
-    dbManager = makeDbManager(moderateBotIds.length);
-    exporter = new ConfigExporter(dbManager as any, '/tmp/test-exports');
+    const localDbManager = makeDbManager(moderateBotIds.length);
+    const localExporter = makeExporter(localDbManager);
 
-    await exporter.exportConfigurations(moderateBotIds, { format: 'json' });
+    await localExporter.exportConfigurations(moderateBotIds, { format: 'json' });
 
     // Single bulk call, not batched per-bot
-    expect(dbManager.getBotConfigurationsBulk).toHaveBeenCalledTimes(1);
+    expect(localDbManager.getBotConfigurationsBulk).toHaveBeenCalledTimes(1);
   });
 });
