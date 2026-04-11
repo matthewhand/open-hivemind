@@ -21,6 +21,7 @@ const Login: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isTrustedLoading, setIsTrustedLoading] = useState(false);
   const [error, setError] = useState('');
+  const [keepMeLoggedIn, setKeepMeLoggedIn] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -50,7 +51,7 @@ const Login: React.FC = () => {
     setError('');
 
     try {
-      const success = await login(formData.username, formData.password);
+      const success = await login(formData.username, formData.password, keepMeLoggedIn);
       if (success) {
         navigate('/admin/overview', { replace: true });
       } else {
@@ -114,12 +115,25 @@ const Login: React.FC = () => {
               />
             </div>
 
+            <div className="form-control">
+              <label className="label cursor-pointer justify-start gap-3 py-1">
+                <input
+                  type="checkbox"
+                  className="checkbox checkbox-primary checkbox-sm"
+                  checked={keepMeLoggedIn}
+                  onChange={e => setKeepMeLoggedIn(e.target.checked)}
+                  disabled={isLoading}
+                />
+                <span className="label-text">Keep me logged in</span>
+              </label>
+            </div>
+
             <Button
               type="submit"
               variant="primary"
               disabled={isLoading}
               size="lg"
-              className="w-full mt-6"
+              className="w-full mt-2"
             >
               {isLoading ? (
                 <><span className="loading loading-spinner loading-sm mr-2" aria-hidden="true"></span> Signing in...</>

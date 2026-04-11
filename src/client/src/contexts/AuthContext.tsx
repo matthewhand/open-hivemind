@@ -20,7 +20,7 @@ export interface AuthTokens {
 interface AuthContextType {
   user: User | null;
   tokens: AuthTokens | null;
-  login: (username: string, password: string) => Promise<boolean>;
+  login: (username: string, password: string, keepLoggedIn?: boolean) => Promise<boolean>;
   logout: () => void;
   refreshToken: () => Promise<boolean>;
   isAuthenticated: boolean;
@@ -42,10 +42,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [tokens, setTokens] = useState<AuthTokens | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load tokens from localStorage on mount
+  // Load tokens from localStorage (keep-logged-in) or sessionStorage (session only) on mount
   useEffect(() => {
-    const storedTokens = localStorage.getItem('auth_tokens');
-    const storedUser = localStorage.getItem('auth_user');
+    const storedTokens = localStorage.getItem('auth_tokens') ?? sessionStorage.getItem('auth_tokens');
+    const storedUser = localStorage.getItem('auth_user') ?? sessionStorage.getItem('auth_user');
 
     // Guard against corrupted localStorage values (e.g., literal "undefined" string)
     const isValidJson = (s: string | null): boolean =>
@@ -160,7 +160,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     checkTrustedNetwork();
   }, []);
 
-  const login = async (username: string, password: string): Promise<boolean> => {
+  const login = async (username: string, password: string, keepLoggedIn = false): Promise<boolean> => {
     try {
       // In serverless mode, this calls the serverless function which checks env vars
       const response = await fetch(buildUrl('/api/auth/login'), {
@@ -191,9 +191,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setTokens(authTokens);
         setUser(userInfo);
 
-        // Store in localStorage
-        localStorage.setItem('auth_tokens', JSON.stringify(authTokens));
-        localStorage.setItem('auth_user', JSON.stringify(userInfo));
+        // Persist to localStorage when "keep me logged in" is checked,
+        // otherwise sessionStorage (cleared when the browser tab/window closes).
+        const storage = keepLoggedIn ? localStorage : sessionStorage;
+        storage.setItem('auth_tokens', JSON.stringify(authTokens));
+        storage.setItem('auth_user', JSON.stringify(userInfo));
 
         // Mark as acknowledged if successful serverless login
         if (isServerless) {
@@ -213,8 +215,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = () => {
     setUser(null);
     setTokens(null);
+    // Clear from both storages — we don't know which was used at login time
     localStorage.removeItem('auth_tokens');
     localStorage.removeItem('auth_user');
+    sessionStorage.removeItem('auth_tokens');
+    sessionStorage.removeItem('auth_user');
   };
 
   const refreshToken = async (): Promise<boolean> => {
@@ -251,7 +256,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         };
 
         setTokens(newTokens);
-        localStorage.setItem('auth_tokens', JSON.stringify(newTokens));
+        // Write back to whichever storage held the original tokens
+        const storage = localStorage.getItem('auth_tokens') !== null ? localStorage : sessionStorage;
+        storage.setItem('auth_tokens', JSON.stringify(newTokens));
 
         return true;
       }
