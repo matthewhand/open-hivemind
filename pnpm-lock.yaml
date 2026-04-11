@@ -18,7 +18,8 @@ overrides:
   hono: ^4.12.12
   '@hono/node-server': ^1.19.13
   basic-ftp: ^5.2.1
-  minimatch: '>=10.2.3'
+  minimatch: ^10.0.0
+  test-exclude>minimatch: ^10.0.0
   serialize-javascript: ^7.0.3
   brace-expansion: ^5.0.5
   smol-toml: ^1.6.1
@@ -83,6 +84,9 @@ importers:
       '@hivemind/message-slack':
         specifier: workspace:*
         version: link:packages/message-slack
+      '@hivemind/message-webhook':
+        specifier: workspace:*
+        version: link:packages/message-webhook
       '@hivemind/shared-types':
         specifier: workspace:*
         version: link:packages/shared-types
@@ -846,6 +850,16 @@ importers:
         version: 4.1.13
       typescript:
         specifier: ^5.9.2
+        version: 5.9.3
+
+  packages/message-webhook:
+    dependencies:
+      '@hivemind/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+    devDependencies:
+      typescript:
+        specifier: ^5.9.3
         version: 5.9.3
 
   packages/shared-types:

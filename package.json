@@ -326,7 +326,6 @@
       "basic-ftp": "^5.2.1",
       "minimatch": "^10.0.0",
       "test-exclude>minimatch": "^10.0.0",
-      "//minimatch": "REQUIRED: CVE-2026-27903/CVE-2026-26996 — babel-plugin-istanbul@8 and glob@10 support v10 natively",
       "serialize-javascript": "^7.0.3",
       "brace-expansion": "^5.0.5",
       "smol-toml": "^1.6.1",
