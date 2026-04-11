@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import DataTable from '../../components/DaisyUI/DataTable';
-import type { RDVColumn, RowAction } from '../../components/DaisyUI/DataTable';
+import type { Column, RowAction } from '../../components/DaisyUI/DataTable';
 import type { BackupRecord } from './types';
 import { Badge } from '../../components/DaisyUI/Badge';
 
@@ -40,7 +40,7 @@ const BackupsTab: React.FC<BackupsTabProps> = ({ backups, onRestoreBackup, onDel
             render: (value: string) => <Badge variant="success">{value}</Badge>,
           },
           { key: 'description', title: 'Description' },
-        ] as RDVColumn<BackupRecord>[]}
+        ] as Column<BackupRecord>[]}
         actions={[
           { label: 'Restore', variant: 'primary', onClick: (b) => onRestoreBackup(b.id) },
           { label: 'Delete', variant: 'error', onClick: (b) => onDeleteBackup(b.id) },
