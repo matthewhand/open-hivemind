@@ -283,21 +283,18 @@ async function getPackages(): Promise<MarketplacePackage[]> {
     packageMap.set(pkg.name, pkg);
   }
 
-  // TODO: Replace with a real community tool example once the first
-  // community-contributed MCP tool plugin is published. The weather tool
-  // below is a placeholder to demonstrate the community tool listing UI.
-  // Add example community package if no community packages exist
-  if (!packageMap.has('hivemind-plugin-weather')) {
-    packageMap.set('hivemind-plugin-weather', {
-      name: 'hivemind-plugin-weather',
-      displayName: 'Weather Tool',
+  // Community-contributed MCP tool plugin examples
+  if (!packageMap.has('mcp-server-everything')) {
+    packageMap.set('mcp-server-everything', {
+      name: 'mcp-server-everything',
+      displayName: 'Everything MCP Server',
       description:
-        'Gives bots the ability to check weather conditions and forecasts for any location. Community-contributed MCP tool plugin.',
+        'A comprehensive reference implementation for Model Context Protocol servers, providing a wide variety of tools and resources.',
       type: 'tool',
-      version: '1.2.0',
+      version: '1.0.0',
       status: 'available',
       trusted: false,
-      repoUrl: 'https://github.com/example/hivemind-plugin-weather',
+      repoUrl: 'https://github.com/modelcontextprotocol/servers/tree/main/src/everything',
     });
   }
 
