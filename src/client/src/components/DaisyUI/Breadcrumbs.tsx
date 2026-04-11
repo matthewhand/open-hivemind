@@ -214,8 +214,3 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items }) => {
 };
 
 export default Breadcrumbs;
-
-/**
- * @deprecated Use Breadcrumbs (the default export) with no props for auto mode.
- */
-export const AutoBreadcrumbs = Breadcrumbs;
