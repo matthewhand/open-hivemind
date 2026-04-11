@@ -235,18 +235,6 @@ export class StructuredLogger {
     });
   }
 
-  /**
-   * Create a child logger with additional context that will be included in all log entries
-   *
-   * @deprecated Use withTraceId or withSpanId instead for correlation
-   */
-  child(options: Partial<StructuredLoggerOptions>): StructuredLogger {
-    return new StructuredLogger({
-      service: options.service ?? this.service,
-      traceId: options.traceId ?? this.traceId,
-      spanId: options.spanId ?? this.spanId,
-    });
-  }
 }
 
 /**

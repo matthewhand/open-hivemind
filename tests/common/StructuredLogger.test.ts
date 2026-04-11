@@ -120,23 +120,6 @@ describe('StructuredLogger', () => {
     });
   });
 
-  describe('child', () => {
-    it('should create a child logger with additional context', () => {
-      const childLogger = logger.child({ component: 'database' });
-      expect(childLogger).toBeInstanceOf(StructuredLogger);
-      expect(childLogger).not.toBe(logger);
-    });
-
-    it('should merge parent context with child context', () => {
-      const parentLogger = logger.child({ service: 'parent' });
-      const childLogger = parentLogger.child({ component: 'child' });
-
-      childLogger.info('Child message');
-
-      // Verify the method doesn't throw
-    });
-  });
-
   describe('setLevel', () => {
     it('should allow debug logging', () => {
       // Debug uses the debug package, not console
