@@ -457,7 +457,7 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
 
       {/* Widget Palette */}
       {showWidgetPalette && (
-        <Card className="fixed top-20 right-4 z-40 w-80" title="Add Widget">
+        <Card className="fixed top-20 right-4 z-40 w-80 bg-base-100 shadow-xl border border-base-300" title="Add Widget">
           <div className="grid grid-cols-1 gap-2">
             {widgetTypes.map(type => (
               <button
