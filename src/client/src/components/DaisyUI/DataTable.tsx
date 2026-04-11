@@ -23,9 +23,6 @@ export interface Column<T> {
   width?: string;
 }
 
-/** @deprecated Use Column instead */
-export type RDVColumn<T> = Column<T>;
-
 export interface RowAction<T> {
   label: string;
   icon?: React.ReactNode;
@@ -66,9 +63,6 @@ export interface DataTableProps<T> {
   /** Unique key extractor. Defaults to index. */
   rowKey?: (record: T, index: number) => string | number;
 }
-
-/** @deprecated Use DataTableProps instead */
-export type ResponsiveDataViewProps<T> = DataTableProps<T>;
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -670,9 +664,3 @@ const DataTable = <T extends Record<string, any>>({
 const MemoizedDataTable = React.memo(DataTable) as typeof DataTable;
 
 export default MemoizedDataTable;
-
-/** @deprecated Use DataTable (the default export) instead */
-export const ResponsiveDataView = MemoizedDataTable;
-
-/** @deprecated Use DataTable (the default export) instead */
-export const Table = MemoizedDataTable;

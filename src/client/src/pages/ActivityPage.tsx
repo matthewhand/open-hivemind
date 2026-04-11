@@ -9,7 +9,7 @@ import Tooltip from '../components/DaisyUI/Tooltip';
 import Button from '../components/DaisyUI/Button';
 import Card from '../components/DaisyUI/Card';
 import DataTable from '../components/DaisyUI/DataTable';
-import type { RDVColumn } from '../components/DaisyUI/DataTable';
+import type { Column } from '../components/DaisyUI/DataTable';
 import StatsCards from '../components/DaisyUI/StatsCards';
 import Timeline from '../components/DaisyUI/Timeline';
 import { SkeletonPage } from '../components/DaisyUI/Skeleton';
@@ -257,7 +257,7 @@ const ActivityPage: React.FC = () => {
     return <Badge variant={variants[status] || 'primary'} size="sm">{status}</Badge>;
   };
 
-  const columns: RDVColumn<ActivityEvent>[] = [
+  const columns: Column<ActivityEvent>[] = [
     {
       key: 'timestamp',
       title: 'Time',

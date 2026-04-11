@@ -25,7 +25,7 @@ import StatsCards from '../components/DaisyUI/StatsCards';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService } from '../services/api';
 import DataTable from '../components/DaisyUI/DataTable';
-import type { RDVColumn, RowAction } from '../components/DaisyUI/DataTable';
+import type { Column, RowAction } from '../components/DaisyUI/DataTable';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import { Alert } from '../components/DaisyUI/Alert';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
@@ -252,7 +252,7 @@ const BackupsPage: React.FC = () => {
     );
   }, [backups, searchQuery]);
 
-  const backupColumns: RDVColumn<BackupMetadata>[] = [
+  const backupColumns: Column<BackupMetadata>[] = [
     {
       key: 'name',
       title: 'Name',

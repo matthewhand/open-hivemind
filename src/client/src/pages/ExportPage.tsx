@@ -32,7 +32,7 @@ import { apiService } from '../services/api';
 import DataTable from '../components/DaisyUI/DataTable';
 import Card from '../components/DaisyUI/Card';
 import Select from '../components/DaisyUI/Select';
-import type { RDVColumn, RowAction } from '../components/DaisyUI/DataTable';
+import type { Column, RowAction } from '../components/DaisyUI/DataTable';
 
 interface Backup {
   id: string;
@@ -213,7 +213,7 @@ const ExportPage: React.FC = () => {
     );
   }, [backups, searchQuery]);
 
-  const backupColumns: RDVColumn<Backup>[] = [
+  const backupColumns: Column<Backup>[] = [
     {
       key: 'name',
       title: 'Name',

@@ -22,10 +22,6 @@ interface CreateBotWizardProps {
     isOpen: boolean;
     onClose: () => void;
     onSubmit?: (data: any) => void;
-    /** @deprecated Use isOpen/onClose/onSubmit instead */
-    onCancel?: () => void;
-    /** @deprecated Use isOpen/onClose/onSubmit instead */
-    onSuccess?: () => void;
     personas?: any[];
     llmProfiles?: any[];
     defaultLlmConfigured?: boolean;
@@ -36,15 +32,10 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
         isOpen,
         onClose,
         onSubmit,
-        onCancel,
-        onSuccess,
         personas: propsPersonas,
         llmProfiles: propsLlmProfiles,
         defaultLlmConfigured: propsDefaultLlmConfigured,
     } = props;
-
-    const handleCancel = onCancel || onClose;
-    const handleSuccess = onSuccess || onClose;
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -181,10 +172,10 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
 
             if (onSubmit) {
                 await onSubmit(payload);
-                handleSuccess();
+                onClose();
             } else {
                 await apiService.post('/api/bots', payload);
-                handleSuccess();
+                onClose();
             }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to create bot');
@@ -502,7 +493,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
 
     return (
 
-        <Modal isOpen={isOpen} onClose={handleCancel} title="Create New Bot" size="lg">
+        <Modal isOpen={isOpen} onClose={onClose} title="Create New Bot" size="lg">
             <div className="flex flex-col h-full max-h-[70vh]">
                 {error && (
                     <Alert status="error" className="mb-4" message={error} />
@@ -512,7 +503,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                     <StepWizard
                         steps={wizardSteps}
                         onComplete={() => hasChanges ? setShowDiffConfirm(true) : handleSubmit()}
-                        onCancel={handleCancel}
+                        onCancel={onClose}
                         showProgress={true}
                     />
                 </div>

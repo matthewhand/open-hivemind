@@ -12,7 +12,7 @@ import { SkeletonList } from './DaisyUI/Skeleton';
 import Card from './DaisyUI/Card';
 import Modal, { ConfirmModal } from './DaisyUI/Modal';
 import DataTable from './DaisyUI/DataTable';
-import type { RDVColumn, RowAction } from './DaisyUI/DataTable';
+import type { Column, RowAction } from './DaisyUI/DataTable';
 import { apiService } from '../services/api';
 
 interface MCPServer {
@@ -200,7 +200,7 @@ const MCPServerManager: React.FC = () => {
               </Badge>
             ),
           },
-        ] as RDVColumn<MCPServer>[]}
+        ] as Column<MCPServer>[]}
         actions={[
           {
             label: 'View Tools',
