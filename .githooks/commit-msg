@@ -1,0 +1,12 @@
+#!/bin/sh
+# Reject commit messages where the same non-empty line appears 3+ times.
+# This is the fingerprint of an AI-agent loop (e.g. Jules/Bolt squash artefact).
+MSG=$(cat "$1")
+DUPES=$(printf '%s\n' "$MSG" | grep -v '^[[:space:]]*$' | sort | uniq -c | awk '$1 >= 3 { sub(/^ *[0-9]+ /, ""); print }')
+if [ -n "$DUPES" ]; then
+  echo "ERROR: commit message contains a line repeated 3+ times (possible AI agent loop):"
+  echo "$DUPES"
+  echo ""
+  echo "Clean up the message and try again."
+  exit 1
+fi

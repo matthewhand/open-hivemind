@@ -1,0 +1,38 @@
+# .git-blame-ignore-revs
+#
+# Commits listed here are excluded from `git blame` output so that
+# mechanical fixes don't obscure the last meaningful change to a line.
+#
+# Usage: git blame --ignore-revs-file .git-blame-ignore-revs <file>
+# Auto-configure: git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# ── 2026-04-11 firefighting sequence ─────────────────────────────────────────
+# These 10 commits fixed tests broken by the #2508 index.ts refactor.
+# They contain no logic changes — only test import/mock/assertion fixes.
+#
+57405dd367890da4d755131485125ed60538f318
+# fix(tests): wrap SystemManagement tests in MemoryRouter and fix Tabs controlled mode
+273900975693a08406e5094851b984fa629dcc47
+# fix(tests): update page heading assertions to match current rendered output
+9a97af55f91cf96f23ed521c873a23e86ac85043
+# fix(tests): update ActivityPage and StandaloneActivity tests to match current components
+e9c92327482e1ec1a54eb41c60114fa2116ab415
+# fix(tests): resolve 5 failing performance tests
+75a75c355f1804f34d8df1bcee4f7c7dfe2a669e
+# fix(tests): update ActivityPage and StandaloneActivity tests
+adec84b1bd452d726ddcf6f860c55596b82a469c
+# fix(test): update SlackBotManager test to pass array config with mode arg
+9158a3a7f8783a0fe5e20f46cc96f2fe111a969d
+# fix(tests): fix 2 failing tests after index.ts refactor and DatabaseManager changes
+ccfdf9b6977d232a7377c97f3852e34fdaeeb756
+# fix(tests): update PluginSecurityPage filter tab queries from role=tab to role=button
+7b28652b319afd40957e5c4c4a617d816df249de
+# fix(tests): resolve broken imports in initProviders and modals a11y tests (#2513)
+86cc0296db6ee4b0f0a5f6defd54fd655d8609b4
+# fix(ci): resolve smoke test sqlite3 binding and npm audit vulnerabilities (#2512)
+#
+# ── Formatting-only commits ───────────────────────────────────────────────────
+ae97dc4f78cfafe54fac271e89540eb2968e43e4
+# fix(lint): auto-fix 58 prettier formatting errors
+d87caa52616319d2ac86e14df1761e61899326c6
+# fix(lint): prettier formatting in registration.ts and errors.ts

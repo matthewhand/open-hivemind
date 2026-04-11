@@ -61,7 +61,8 @@
     "build:only:frontend": "npm run build:frontend",
     "test:only": "npm run test",
     "test:only:backend": "npm run test",
-    "test:only:frontend": "cd src/client && npx vitest run"
+    "test:only:frontend": "cd src/client && npx vitest run",
+    "prepare": "git config core.hooksPath .githooks || true"
   },
   "_moduleAliases": {
     "@src": "dist/src",

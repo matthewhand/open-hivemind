@@ -40,6 +40,26 @@ jobs:
           echo "unit_passing_tests=$UNIT_PASSING_TESTS" >> $GITHUB_OUTPUT
           echo "Found $UNIT_PASSING_TESTS passing unit tests"
 
+      - name: Architecture guard — no raw axios in packages or server
+        run: |
+          NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config \
+            ./node_modules/jest/bin/jest.js --forceExit \
+            --testPathPattern=tests/unit/architecture
+
+      - name: Type-debt ratchet — as-any count must not grow
+        # Baseline set at time of #2509 strict-mode merge.
+        # Any PR that adds a new 'as any' cast fails here.
+        run: |
+          COUNT=$(grep -r "as any" src/ --include="*.ts" --include="*.tsx" | wc -l)
+          BASELINE=586
+          if [ "$COUNT" -gt "$BASELINE" ]; then
+            echo "❌ 'as any' count grew: $COUNT (baseline $BASELINE)"
+            echo "   Each 'as any' added by this PR must be justified and approved."
+            echo "   To lower the baseline, remove existing casts and update BASELINE."
+            exit 1
+          fi
+          echo "✅ 'as any' count: $COUNT / $BASELINE"
+
       - name: Install Playwright browsers
         run: pnpm dlx playwright install --with-deps
 
