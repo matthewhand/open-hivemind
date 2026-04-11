@@ -26,7 +26,7 @@ const ActivityPage: React.FC = () => {
   const [data, setData] = useState<ActivityResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'table' | 'timeline'>('table');
+  const [viewMode, setViewMode] = useState<'table' | 'timeline' | 'conversation'>('table');
   const [autoRefresh, setAutoRefresh] = useState(false);
 
   // Live Orchestration State
@@ -223,6 +223,19 @@ const ActivityPage: React.FC = () => {
       (e.errorMessage && e.errorMessage.toLowerCase().includes(lowerQuery))
     );
   }, [events, searchQuery]);
+
+  // Group events into conversation threads (by channel + user)
+  const conversationThreads = useMemo(() => {
+    const threads = new Map<string, ActivityEvent[]>();
+    filteredEvents.forEach(event => {
+      const threadKey = `${event.channelId}-${event.userId}-${event.botName}`;
+      if (!threads.has(threadKey)) {
+        threads.set(threadKey, []);
+      }
+      threads.get(threadKey)!.push(event);
+    });
+    return threads;
+  }, [filteredEvents]);
 
   const timelineEvents = filteredEvents.map(event => ({
     id: event.id || `${event.timestamp}-${event.botName}`,
@@ -516,6 +529,41 @@ const ActivityPage: React.FC = () => {
         </div>
       </Card>
 
+      {/* View Mode Toggle */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-base-content/60">
+          {viewMode === 'conversation'
+            ? `Grouped into ${conversationThreads.size} conversation${conversationThreads.size !== 1 ? 's' : ''}`
+            : `${filteredEvents.length} event${filteredEvents.length !== 1 ? 's' : ''}`}
+        </p>
+        <Join>
+          <Button
+            size="sm"
+            variant={viewMode === 'table' ? 'primary' : 'ghost'}
+            className="join-item"
+            onClick={() => setViewMode('table')}
+          >
+            Table
+          </Button>
+          <Button
+            size="sm"
+            variant={viewMode === 'timeline' ? 'primary' : 'ghost'}
+            className="join-item"
+            onClick={() => setViewMode('timeline')}
+          >
+            Timeline
+          </Button>
+          <Button
+            size="sm"
+            variant={viewMode === 'conversation' ? 'primary' : 'ghost'}
+            className="join-item"
+            onClick={() => setViewMode('conversation')}
+          >
+            Conversations
+          </Button>
+        </Join>
+      </div>
+
       {/* Content */}
       {loading && !data ? (
         <SkeletonPage variant="table" statsCount={0} showFilters={false} />
@@ -537,6 +585,63 @@ const ActivityPage: React.FC = () => {
               pagination={{ pageSize: 25, pageSizeOptions: [10, 25, 50, 100] }}
               searchable={false}
             />
+          ) : viewMode === 'conversation' ? (
+            <div className="space-y-4 p-4">
+              {Array.from(conversationThreads.entries()).map(([threadKey, threadEvents]) => {
+                const [channelId, userId, botName] = threadKey.split('-');
+                return (
+                  <Card key={threadKey} compact>
+                    <div className="px-4 py-2 bg-base-200 border-b border-base-300 flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Badge variant="primary" size="xs">{botName}</Badge>
+                        <span className="text-base-content/60">User: {userId.slice(0, 8)}…</span>
+                        <span className="text-base-content/40">•</span>
+                        <span className="text-base-content/60">Channel: {channelId.slice(0, 8)}…</span>
+                      </div>
+                      <span className="text-xs text-base-content/50">{threadEvents.length} messages</span>
+                    </div>
+                    <div className="p-4 space-y-2 max-h-96 overflow-y-auto">
+                      {threadEvents.map((evt) => (
+                        <div
+                          key={evt.id}
+                          className={`flex items-start gap-3 p-3 rounded-lg text-sm ${
+                            evt.messageType === 'incoming'
+                              ? 'bg-base-200'
+                              : evt.status === 'error' || evt.status === 'timeout'
+                              ? 'bg-error/10 border border-error/20'
+                              : 'bg-success/10'
+                          }`}
+                        >
+                          <div className={`w-2 h-2 rounded-full mt-1.5 ${
+                            evt.messageType === 'incoming' ? 'bg-primary' :
+                            evt.status === 'error' || evt.status === 'timeout' ? 'bg-error' : 'bg-success'
+                          }`} />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">
+                                {evt.messageType === 'incoming' ? 'User' : evt.botName}
+                              </span>
+                              <span className="text-xs text-base-content/40">
+                                {new Date(evt.timestamp).toLocaleTimeString()}
+                              </span>
+                              {evt.processingTime && (
+                                <span className="text-xs text-base-content/40">
+                                  ({evt.processingTime}ms)
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-base-content/60 mt-0.5">
+                              {evt.status === 'error' ? `Error: ${evt.errorMessage || 'Unknown'}` :
+                               evt.messageType} via {evt.provider} → {evt.llmProvider}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
           ) : (
             <div className="p-4">
               <Timeline

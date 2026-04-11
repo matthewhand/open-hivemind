@@ -538,4 +538,112 @@ router.post(
   })
 );
 
+// POST /providers/:key/test-stream — streaming test with SSE
+// Supports: token-by-token streaming, client-side cancel, 429 retry-after
+router.post(
+  '/providers/:key/test-stream',
+  configRateLimit,
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const { key } = req.params;
+      const { message, systemPrompt } = req.body as { message?: string; systemPrompt?: string };
+
+      if (!message?.trim()) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
+          error: 'Invalid request',
+          message: 'message is required',
+        });
+      }
+
+      const profiles = await webUIStorage.getLlmProviders();
+      const profile = profiles.find((p: any) => p.key === key) as any;
+
+      if (!profile) {
+        return res.status(HTTP_STATUS.NOT_FOUND).json({
+          error: 'Profile not found',
+          message: `No LLM profile with key "${key}"`,
+        });
+      }
+
+      const { instantiateLlmProvider, loadPlugin } = await import('../../../plugins/PluginLoader');
+      const config: Record<string, unknown> = profile.config || {};
+
+      let provider;
+      try {
+        const mod = await loadPlugin(`llm-${profile.provider.toLowerCase()}`);
+        provider = instantiateLlmProvider(mod, config);
+      } catch {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
+          error: 'Failed to load provider',
+          message: `Could not load provider plugin: llm-${profile.provider}`,
+        });
+      }
+
+      // Set up SSE headers
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.flushHeaders();
+
+      const messages: any[] = systemPrompt
+        ? [{ role: 'system', content: systemPrompt }]
+        : [];
+
+      const start = Date.now();
+      let fullReply = '';
+
+      // If the provider supports streaming, use it
+      if ('generateChatCompletionStream' in provider && typeof (provider as any).generateChatCompletionStream === 'function') {
+        const stream = await (provider as any).generateChatCompletionStream(message.trim(), messages);
+        for await (const chunk of stream) {
+          // Check if client disconnected
+          if (res.writableEnded) return;
+
+          const token = chunk?.choices?.[0]?.delta?.content || chunk?.content || '';
+          if (token) {
+            fullReply += token;
+            res.write(`data: ${JSON.stringify({ token, done: false })}\n\n`);
+          }
+        }
+      } else {
+        // Fallback: non-streaming provider
+        const response: any = await provider.generateChatCompletion(message.trim(), messages);
+        fullReply = typeof response === 'string' ? response : (response?.content || response?.message || '');
+        // Send the full response as a single chunk
+        res.write(`data: ${JSON.stringify({ token: fullReply, done: true })}\n\n`);
+      }
+
+      const latency = Date.now() - start;
+
+      // Send final metadata
+      res.write(`data: ${JSON.stringify({
+        done: true,
+        model: (config.model as string) || profile.provider,
+        latency,
+      })}\n\n`);
+
+      res.end();
+      return;
+    } catch (err: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(err);
+
+      // Handle 429 rate-limit specifically
+      if (hivemindError.message?.includes('429') || hivemindError.message?.toLowerCase().includes('rate limit')) {
+        const retryAfter = 60; // default
+        res.status(HTTP_STATUS.TOO_MANY_REQUESTS).json({
+          error: 'Rate limited',
+          message: hivemindError.message,
+          retryAfter,
+        });
+      } else {
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+          error: 'Test failed',
+          message: hivemindError.message,
+        });
+      }
+    }
+    return;
+  })
+);
+
 export default router;

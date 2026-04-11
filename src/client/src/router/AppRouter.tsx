@@ -23,7 +23,6 @@ const PersonasPage = lazy(() => import('../pages/PersonasPage'));
 const GuardsPage = lazy(() => import('../pages/GuardsPage'));
 const BotCreatePage = lazy(() => import('../pages/BotCreatePage'));
 const BotTemplatesPage = lazy(() => import('../pages/BotTemplatesPage'));
-const ChatPage = lazy(() => import('../pages/ChatPage'));
 const MCPServerManager = lazy(() => import('../components/MCPServerManager'));
 const MCPServersPage = lazy(() => import('../pages/MCPServersPage'));
 const MCPToolsPage = lazy(() => import('../pages/MCPToolsPage'));
@@ -130,7 +129,6 @@ const AppRouter: React.FC = () => {
           <Route path="bots" element={<RouteErrorBoundary pageName="Bots"><BotsPage /></RouteErrorBoundary>} />
           <Route path="bots/create" element={<RouteErrorBoundary pageName="Create Bot"><BotCreatePage /></RouteErrorBoundary>} />
           <Route path="bots/templates" element={<RouteErrorBoundary pageName="Bot Templates"><BotTemplatesPage /></RouteErrorBoundary>} />
-          <Route path="chat" element={<RouteErrorBoundary pageName="Chat"><ChatPage /></RouteErrorBoundary>} />
 
           {/* Each provider type gets its own top-level page with tabs */}
           <Route path="llm" element={<RouteErrorBoundary pageName="LLM"><LLMProvidersPage /></RouteErrorBoundary>} />
