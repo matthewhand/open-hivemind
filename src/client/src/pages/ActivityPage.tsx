@@ -5,6 +5,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Clock, RefreshCw, X, Info, BarChart3, CheckCircle2, AlertCircle, Bot } from 'lucide-react';
 import { Alert } from '../components/DaisyUI/Alert';
 import Badge from '../components/DaisyUI/Badge';
+import Checkbox from '../components/DaisyUI/Checkbox';
 import Tooltip from '../components/DaisyUI/Tooltip';
 import Button from '../components/DaisyUI/Button';
 import Card from '../components/DaisyUI/Card';
@@ -28,6 +29,24 @@ const ActivityPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'table' | 'timeline' | 'conversation'>('table');
   const [autoRefresh, setAutoRefresh] = useState(false);
+  const [eventTypes, setEventTypes] = useState<Set<string>>(new Set(['all']));
+
+  const toggleEventType = (type: string) => {
+    setEventTypes(prev => {
+      const next = new Set(prev);
+      if (type === 'all') {
+        return new Set(['all']);
+      }
+      next.delete('all');
+      if (next.has(type)) {
+        if (next.size === 1) return new Set(['all']); // Don't allow empty
+        next.delete(type);
+      } else {
+        next.add(type);
+      }
+      return next;
+    });
+  };
 
   // Live Orchestration State
   const [orchestrationLogs, setOrchestrationLogs] = useState<any[]>([]);
@@ -213,16 +232,24 @@ const ActivityPage: React.FC = () => {
 
   // Filter events client-side based on search query
   const filteredEvents = useMemo(() => {
-    if (!searchQuery) return events;
+    let result = events;
+
+    // Filter by event type
+    if (!eventTypes.has('all')) {
+      result = result.filter(e => eventTypes.has(e.messageType) || (e.status !== 'success' && eventTypes.has(e.status)));
+    }
+
+    // Filter by search query
+    if (!searchQuery) return result;
     const lowerQuery = searchQuery.toLowerCase();
-    return events.filter(e =>
+    return result.filter(e =>
       e.botName.toLowerCase().includes(lowerQuery) ||
       e.provider.toLowerCase().includes(lowerQuery) ||
       e.llmProvider.toLowerCase().includes(lowerQuery) ||
       e.status.toLowerCase().includes(lowerQuery) ||
       (e.errorMessage && e.errorMessage.toLowerCase().includes(lowerQuery))
     );
-  }, [events, searchQuery]);
+  }, [events, searchQuery, eventTypes]);
 
   // Group events into conversation threads (by channel + user)
   const conversationThreads = useMemo(() => {
@@ -563,6 +590,49 @@ const ActivityPage: React.FC = () => {
           )}
         </div>
       </SearchFilterBar>
+
+      {/* Event Type Filter Checkboxes */}
+      <Card compact>
+        <div className="flex items-center gap-4 flex-wrap">
+          <span className="text-xs font-semibold text-base-content/60 uppercase tracking-wider">Filter by type:</span>
+          <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+            <Checkbox
+              checked={eventTypes.has('all')}
+              onChange={() => toggleEventType('all')}
+            />
+            <span className="text-base-content/70">All</span>
+          </label>
+          <span className="text-base-content/20">|</span>
+          <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+            <Checkbox
+              checked={eventTypes.has('incoming') || eventTypes.has('all')}
+              onChange={() => toggleEventType('incoming')}
+            />
+            <Badge variant="primary" size="xs">📥 Incoming</Badge>
+          </label>
+          <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+            <Checkbox
+              checked={eventTypes.has('outgoing') || eventTypes.has('all')}
+              onChange={() => toggleEventType('outgoing')}
+            />
+            <Badge variant="secondary" size="xs">📤 Outgoing</Badge>
+          </label>
+          <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+            <Checkbox
+              checked={eventTypes.has('timeout') || eventTypes.has('all')}
+              onChange={() => toggleEventType('timeout')}
+            />
+            <Badge variant="warning" size="xs">⏱️ Timeout</Badge>
+          </label>
+          <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+            <Checkbox
+              checked={eventTypes.has('error') || eventTypes.has('all')}
+              onChange={() => toggleEventType('error')}
+            />
+            <Badge variant="error" size="xs">❌ Error</Badge>
+          </label>
+        </div>
+      </Card>
 
       {/* Live Orchestration Log (New Feature) */}
       <Card title="Live Orchestration Log" icon={<RefreshCw className={`w-5 h-5 ${orchestrationLogs.length > 0 ? 'animate-spin-slow' : ''}`} />}>
