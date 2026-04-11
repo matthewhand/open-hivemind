@@ -647,3 +647,51 @@ describe('Mem0Provider — edge cases', () => {
     expect(url).toBe(`${DEFAULT_BASE_URL}/memories/`);
   });
 });
+
+// ---------------------------------------------------------------------------
+// SSRF guard — regression tests (introduced in #2496)
+// ---------------------------------------------------------------------------
+
+describe('Mem0Provider — SSRF guard (per-request)', () => {
+  let isSafeUrlMock: jest.Mock;
+
+  beforeEach(() => {
+    // Obtain a fresh handle and clear accumulated call history so assertions
+    // are scoped to the current test only.
+    isSafeUrlMock = require('@hivemind/shared-types').isSafeUrl as jest.Mock;
+    isSafeUrlMock.mockClear();
+    isSafeUrlMock.mockResolvedValue(true); // safe default; individual tests override
+    fetchMock.mockClear();
+  });
+
+  it('calls isSafeUrl on every request, not just at construction time', async () => {
+    isSafeUrlMock.mockResolvedValue(true);
+    const provider = makeProvider();
+    fetchMock.mockResolvedValue(jsonResponse({ results: [] }));
+
+    await provider.search('hello', 'user-1');
+    await provider.getAll();
+
+    // isSafeUrl must be called for each outbound request
+    expect(isSafeUrlMock.mock.calls.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('throws and never calls fetch when isSafeUrl returns false', async () => {
+    isSafeUrlMock.mockResolvedValue(false);
+    const provider = makeProvider();
+
+    await expect(provider.search('query', 'user-1')).rejects.toThrow(/not safe/i);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('passes the full resolved URL (baseUrl + path) to isSafeUrl', async () => {
+    isSafeUrlMock.mockResolvedValue(true);
+    fetchMock.mockResolvedValue(jsonResponse({ results: [] }));
+
+    const provider = makeProvider(); // uses TEST_BASE_URL
+    await provider.getAll();
+
+    const checkedUrl: string = isSafeUrlMock.mock.calls[0][0];
+    expect(checkedUrl).toContain(TEST_BASE_URL);
+  });
+});

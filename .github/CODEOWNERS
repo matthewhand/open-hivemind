@@ -1,0 +1,22 @@
+# CODEOWNERS — automatic reviewer assignment for sensitive paths.
+# GitHub requires at least one approval from a listed owner before merge.
+# Syntax: <path-pattern>  <@user-or-team> ...
+
+# Security-sensitive middleware — any change requires an extra review pass
+src/server/middleware/security.ts           @matthewhand
+src/server/utils/sanitizeConfig.ts          @matthewhand
+src/validation/                             @matthewhand
+
+# Authentication and session handling
+src/server/routes/auth/                     @matthewhand
+src/server/middleware/auth*.ts              @matthewhand
+
+# Architectural guard tests — changes must be reviewed carefully to avoid
+# weakening the guards (e.g. adding exclusions that hide real violations)
+tests/unit/architecture/                    @matthewhand
+
+# Dockerfile and CI pipelines — deployment surface
+Dockerfile                                  @matthewhand
+Dockerfile.dev                              @matthewhand
+docker-compose*.yml                         @matthewhand
+.github/workflows/                          @matthewhand

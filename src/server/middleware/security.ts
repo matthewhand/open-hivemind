@@ -626,6 +626,11 @@ export function isIPInCIDR(ip: string, cidr: string): boolean {
     let addr = ipaddr.parse(ip);
     let network = ipaddr.parse(range);
 
+    // Validate upper bound before matching — ipaddr.js silently clamps bits
+    // which would make /129 behave identically to /128 (wrong).
+    const maxBits = addr.kind() === 'ipv6' || network.kind() === 'ipv6' ? 128 : 32;
+    if (bits > maxBits) return false;
+
     // If versions match, use standard match
     if (addr.kind() === network.kind()) {
       return (addr as any).match(network, bits);
