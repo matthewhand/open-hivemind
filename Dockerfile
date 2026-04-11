@@ -32,8 +32,10 @@ COPY packages/memory-mem4ai/package.json packages/memory-mem4ai/
 COPY packages/message-discord/package.json packages/message-discord/
 COPY packages/message-mattermost/package.json packages/message-mattermost/
 COPY packages/message-slack/package.json packages/message-slack/
+COPY packages/message-webhook/package.json packages/message-webhook/
 COPY packages/shared-types/package.json packages/shared-types/
 COPY packages/tool-mcp/package.json packages/tool-mcp/
+COPY src/client/package.json src/client/
 
 RUN corepack enable && corepack prepare pnpm@latest --activate && pnpm install --no-frozen-lockfile
 
