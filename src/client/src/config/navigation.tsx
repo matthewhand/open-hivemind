@@ -45,7 +45,7 @@ export const hivemindNavItems: NavItem[] = [
   },
   {
     id: 'message',
-    label: 'Message',
+    label: 'Platforms',
     icon: <NavIcon><MessageSquare className="w-4 h-4" /></NavIcon>,
     path: '/admin/message',
     visible: true,

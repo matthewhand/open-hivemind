@@ -475,4 +475,67 @@ router.post(
   })
 );
 
+// POST /providers/:key/test — send a test message to a specific LLM profile
+router.post(
+  '/providers/:key/test',
+  configRateLimit,
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const { key } = req.params;
+      const { message } = req.body as { message?: string };
+
+      if (!message?.trim()) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
+          error: 'Invalid request',
+          message: 'message is required',
+        });
+      }
+
+      const profiles = await webUIStorage.getLlmProviders();
+      const profile = profiles.find((p: any) => p.key === key) as any;
+
+      if (!profile) {
+        return res.status(HTTP_STATUS.NOT_FOUND).json({
+          error: 'Profile not found',
+          message: `No LLM profile with key "${key}"`,
+        });
+      }
+
+      const { instantiateLlmProvider, loadPlugin } = await import('../../../plugins/PluginLoader');
+      const config: Record<string, unknown> = profile.config || {};
+
+      let provider;
+      try {
+        const mod = await loadPlugin(`llm-${profile.provider.toLowerCase()}`);
+        provider = instantiateLlmProvider(mod, config);
+      } catch {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
+          error: 'Failed to load provider',
+          message: `Could not load provider plugin: llm-${profile.provider}`,
+        });
+      }
+
+      const start = Date.now();
+      const response: any = await provider.generateChatCompletion(message.trim(), []);
+      const latency = Date.now() - start;
+
+      const reply = typeof response === 'string'
+        ? response
+        : (response?.content || response?.message || '');
+
+      return res.json({
+        reply,
+        model: (config.model as string) || profile.provider,
+        latency,
+      });
+    } catch (err: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(err);
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        error: 'Test failed',
+        message: hivemindError.message,
+      });
+    }
+  })
+);
+
 export default router;

@@ -13,6 +13,7 @@ import EmptyState from '../components/DaisyUI/EmptyState';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { MarketplaceGrid } from '../components/Marketplace';
+import LlmTestChat from '../components/LlmTestChat';
 import {
   Brain as BrainIcon,
   Plus as AddIcon,
@@ -88,6 +89,7 @@ const ProfilesTab: React.FC<{
   onEditProfile: (profile: any) => void;
   onDeleteProfile: (key: string) => void;
   onToggleExpand: (key: string) => void;
+  onTestProfile?: (key: string, provider: string) => void;
 }> = ({
   profiles,
   filteredProfiles,
@@ -110,6 +112,7 @@ const ProfilesTab: React.FC<{
   onEditProfile,
   onDeleteProfile,
   onToggleExpand,
+  onTestProfile,
 }) => {
   const getProviderIcon = (type: string) => {
     const config = LLM_PROVIDER_CONFIGS[type as LLMProviderType];
@@ -248,6 +251,17 @@ const ProfilesTab: React.FC<{
                     </div>
                   </div>
                   <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                    {onTestProfile && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-success hover:bg-success/10"
+                        aria-label={`Test ${profile.name} provider`}
+                        onClick={() => onTestProfile(profile.key, profile.provider)}
+                      >
+                        <ChatIcon className="w-4 h-4" />
+                      </Button>
+                    )}
                     <Button size="sm" variant="outline" aria-label={`Edit ${profile.name} profile`} onClick={() => onEditProfile(profile)}>
                       <EditIcon className="w-4 h-4" />
                     </Button>
@@ -642,6 +656,8 @@ const LLMProvidersPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all');
+  const [testProfileKey, setTestProfileKey] = useState<string | null>(null);
+  const [testProviderType, setTestProviderType] = useState('');
 
   const fetchProfiles = useCallback(async () => {
     try {
@@ -836,6 +852,10 @@ const LLMProvidersPage: React.FC = () => {
           onEditProfile={handleEditProfile}
           onDeleteProfile={handleDeleteProfile}
           onToggleExpand={toggleExpand}
+          onTestProfile={(key, provider) => {
+            setTestProfileKey(key);
+            setTestProviderType(provider);
+          }}
         />
       ),
     },
@@ -911,6 +931,15 @@ const LLMProvidersPage: React.FC = () => {
           onSubmit={handleProviderSubmit}
         />
       </div>
+
+      {/* Test Chat Drawer */}
+      {testProfileKey && (
+        <LlmTestChat
+          providerKey={testProfileKey}
+          providerType={testProviderType}
+          onClose={() => setTestProfileKey(null)}
+        />
+      )}
     </div>
   );
 };
