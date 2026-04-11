@@ -12,7 +12,6 @@ import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
 import AnomalyDetectionService from '@src/services/AnomalyDetectionService';
 import Logger from '@common/logger';
 import { initServices, initWebhooks } from './server/initServices';
-import { registerRoutes } from './server/registerRoutes';
 import { setupMiddleware } from './server/setupMiddleware';
 
 const appLogger = Logger.withContext('app:index');

@@ -352,5 +352,14 @@
     "ignoredBuiltDependencies": [
       "sqlite3"
     ]
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "node ./node_modules/prettier/bin/prettier.cjs --write",
+      "node ./node_modules/eslint/bin/eslint.js --fix"
+    ],
+    "*.{js,json,md,yml,yaml}": [
+      "node ./node_modules/prettier/bin/prettier.cjs --write"
+    ]
   }
 }

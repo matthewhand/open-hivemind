@@ -1,9 +1,9 @@
 import Debug from 'debug';
+import { PendingActionManager } from '@src/managers/PendingActionManager';
 import { MCPService } from '@src/mcp/MCPService';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { getMcpServerProfileByKey } from '@config/mcpServerProfiles';
 import { withTimeout } from '@common/withTimeout';
-import { PendingActionManager } from '@src/managers/PendingActionManager';
 
 const debug = Debug('app:ToolManager');
 
