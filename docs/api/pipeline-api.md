@@ -78,7 +78,7 @@ Basic health check. The response now conditionally includes `providerRegistry` c
   },
   "system": {
     "platform": "linux",
-    "nodeVersion": "v20.11.0",
+    "nodeVersion": "v22.0.0",
     "processId": 12345
   },
   "memoryProviders": {

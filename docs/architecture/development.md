@@ -128,7 +128,7 @@ See existing packages for implementation patterns:
 - **Test Execution:**  
   Run tests with:
   ```bash
-  pnpm run test
+  npm test
   ```
   Additional tests exist to simulate edge cases and verify recovery from error conditions.
 
@@ -142,11 +142,11 @@ See existing packages for implementation patterns:
 
 ### Development Workflow
 - **Environment Setup:**  
-  Use Node.js v22 or later (required). Ensure environment variables like `DISCORD_BOT_TOKEN` are correctly set in your `.env` files.
+  **Node.js ≥ 22 is required** (declared in `engines` in `package.json`; tested on v22 and v24). Ensure environment variables like `DISCORD_BOT_TOKEN` are correctly set in your `.env` file.
 - **Debugging:**  
   Enable extended logging via:
   ```bash
-  DEBUG=app:* pnpm start
+  DEBUG=app:* npm run dev
   ```
 - **Iterative Testing:**  
   Utilize comprehensive unit tests and integration tests to validate all changes. Maintain high code coverage and continuously monitor logs for irregularities.
@@ -169,23 +169,31 @@ This document serves as a comprehensive manual for developers working on Open-Hi
 
 | Path | Purpose |
 |------|---------|
-| `docs/screenshots/<name>.png` | Canonical screenshots — what docs reference. Plain kebab-case names, no suffixes. |
-| `archive/screenshots/<name>-before-<YYYYMMDD>.png` | Timestamped snapshots taken before a UI change. |
-| `/*.png` (repo root) | Gitignored — transient agent output, never committed. |
+| `docs/screenshots/<name>.png` | **Current state** (after) — canonical screenshots that docs reference. |
+| `archive/screenshots/<name>.png` | **Previous state** (before) — version before the most recent update. |
+| `/*.png` (repo root) | Gitignored — never commit here. |
+
+Both directories use the **same plain kebab-case filenames**. The directory conveys whether it is current or previous — not the filename.
 
 ### Updating a screenshot
 
 ```bash
-# Archive the old one with a date stamp
-git mv docs/screenshots/foo.png archive/screenshots/foo-before-$(date +%Y%m%d).png
+# Archive the current version (becomes the "before")
+git mv docs/screenshots/foo.png archive/screenshots/foo.png
 
-# Place the new canonical screenshot
+# Place the new version (becomes the "after" / current)
 cp /path/to/new.png docs/screenshots/foo.png
-git add docs/screenshots/foo.png archive/screenshots/
+git add docs/screenshots/foo.png archive/screenshots/foo.png
+```
+
+### Adding a brand-new screenshot
+
+```bash
+cp /path/to/new.png docs/screenshots/foo.png
+git add docs/screenshots/foo.png
 ```
 
 ### Rules
-- `docs/screenshots/` filenames must be plain kebab-case — no `-before`, `-after`, `-v2`, or date suffixes.
-- `archive/screenshots/` filenames must include a `-before-YYYYMMDD` or `-YYYYMMDD` timestamp.
-- Never duplicate a file between `docs/` and `archive/`.
+- Filenames must be **plain kebab-case** — no `-before`, `-after`, `-v2`, `-YYYYMMDD` suffixes.
+- `archive/` filenames must match `docs/` filenames exactly — same name, different folder.
 - Root `*.png` files are gitignored; delete them after use.

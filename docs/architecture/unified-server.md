@@ -13,29 +13,25 @@ The Open Hivemind Server runs a single process that provides:
 
 ## 🚀 Quick Start
 
-### Option 1: Build and Start (Production)
+### Option 1: Development Mode (recommended)
 ```bash
-# Build everything and start production server
-npm run start:unified
-
-# Or manually:
-npm run build
-npm run start
+# Start with hot reload — runs TypeScript directly via tsx, no build step needed
+npm run dev
 ```
 
-### Option 2: Development Mode
-```bash
-# Start in development mode with hot reload
-npm run start:dev
+> **Requires Node.js ≥ 22** (`engines` field in `package.json`). Tested on Node.js v22 and v24.
 
-# Or use the convenience script:
-./scripts/start-unified.sh
+### Option 2: Production
+```bash
+# Build frontend + backend, then start in production mode
+npm run build
+npm run start
 ```
 
 ### Option 3: WebUI Only (No Bots)
 ```bash
 # Start only the web interface, skip messenger initialization
-SKIP_MESSENGERS=true npm run start:dev
+SKIP_MESSENGERS=true npm run dev
 ```
 
 ## 📁 Architecture
@@ -104,11 +100,11 @@ NODE_ENV=production PORT=3000 npm run start
 
 ### 1. Development Mode
 ```bash
-# Start with live reload
-npm run start:dev
+# Start with live reload (TypeScript run directly via tsx — no build step)
+npm run dev
 
-# In another terminal, frontend dev server
-npm run dev:frontend
+# Frontend dev server only (Vite, port 3028)
+npm run dev:frontend-only
 ```
 
 ### 2. Build Process
@@ -117,7 +113,7 @@ npm run dev:frontend
 npm run build
 
 # Build backend only
-npm run build:server
+npm run build:backend
 
 # Build frontend only
 npm run build:frontend
@@ -197,10 +193,10 @@ The server handles:
 The server works great with Docker:
 
 ```dockerfile
-FROM node:18-alpine
+FROM node:22-alpine
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 COPY . .
 RUN npm run build
 EXPOSE 3028
