@@ -35,6 +35,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
   const [errors, setErrors] = useState<FieldError>({});
   const [isLoading, setIsLoading] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [healthStatus, setHealthStatus] = useState<Record<string, boolean | null>>({});
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -226,7 +227,28 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
     }
   };
 
+  // Auto-ping health check URLs when field values change
+  React.useEffect(() => {
+    for (const field of schema.fields) {
+      if (field.healthCheck && config[field.name]) {
+        const url = `${config[field.name]}${field.healthCheck.suffix}`;
+        setHealthStatus(prev => ({ ...prev, [field.name]: null })); // loading
+        fetch(url, { signal: AbortSignal.timeout(3000) })
+          .then(r => setHealthStatus(prev => ({ ...prev, [field.name]: r.ok })))
+          .catch(() => setHealthStatus(prev => ({ ...prev, [field.name]: false })));
+      }
+    }
+  }, [schema.fields.filter(f => f.healthCheck).map(f => config[f.name]).join(',')]);
+
   const renderField = (field: ProviderConfigField) => {
+    // dependsOn: hide field unless dependency condition is met
+    if (field.dependsOn) {
+      const dep = typeof field.dependsOn === 'string'
+        ? { field: field.dependsOn, value: true }
+        : field.dependsOn;
+      if (config[dep.field] !== dep.value) return null;
+    }
+
     const value = config[field.name] ?? field.defaultValue ?? '';
     const error = externalErrors[field.name] || errors[field.name];
 
@@ -264,13 +286,20 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
 
       case 'url':
         return (
-          <Input
-            type="url"
-            value={value}
-            onChange={(e) => handleFieldChange(field.name, e.target.value)}
-            placeholder={field.placeholder}
-            className={inputClasses}
-          />
+          <div className="flex items-center gap-2">
+            <Input
+              type="url"
+              value={value}
+              onChange={(e) => handleFieldChange(field.name, e.target.value)}
+              placeholder={field.placeholder}
+              className={inputClasses}
+            />
+            {field.healthCheck && healthStatus[field.name] !== undefined && (
+              <span className={`badge badge-sm ${healthStatus[field.name] === null ? 'badge-ghost' : healthStatus[field.name] ? 'badge-success' : 'badge-error'}`}>
+                {healthStatus[field.name] === null ? '…' : healthStatus[field.name] ? '✓' : '✗'}
+              </span>
+            )}
+          </div>
         );
 
       case 'select':

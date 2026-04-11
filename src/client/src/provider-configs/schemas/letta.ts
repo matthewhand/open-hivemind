@@ -40,6 +40,7 @@ export const lettaProviderSchema: ProviderConfigSchema = {
             description: 'Your Letta API base URL',
             placeholder: LETTA_LOCAL_URL,
             group: 'Connection',
+            healthCheck: { suffix: '/v1/health/' },
         },
         {
             name: 'apiKey',

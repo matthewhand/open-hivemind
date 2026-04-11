@@ -1,6 +1,10 @@
-import type { IAdapterConfig, IMessengerService, IServiceDependencies } from '@hivemind/shared-types';
-import { WebhookService } from '@webhook/WebhookService';
+import type {
+  IAdapterConfig,
+  IMessengerService,
+  IServiceDependencies,
+} from '@hivemind/shared-types';
 import { schema } from '@webhook/schema';
+import { WebhookService } from '@webhook/WebhookService';
 
 /**
  * WebhookProvider

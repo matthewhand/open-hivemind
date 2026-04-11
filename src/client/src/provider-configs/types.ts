@@ -51,6 +51,8 @@ export interface ProviderConfigField {
   dependsOn?: string | { field: string; value: any }; // Field dependency
   // Linked defaults: when this field changes, set another field's value from a map
   linkedDefaults?: { targetField: string; values: Record<string, any> };
+  // Health check: auto-ping this URL (resolved from field value) to show a status badge
+  healthCheck?: { suffix: string };
   // Helper action for fetching data (e.g., agent lookup)
   helperAction?: {
     type: 'fetch';
