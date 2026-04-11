@@ -4,7 +4,7 @@ import { type IProvider } from '../../../types/IProvider';
 import { providerRegistry } from '../../../registries/ProviderRegistry';
 
 export function broadcastConfigUpdate(
-  type: 'llm-profiles' | 'memory-profiles' | 'tool-profiles' | 'message-profiles' | 'global',
+  type: 'llm-profiles' | 'memory-profiles' | 'tool-profiles' | 'message-profiles' | 'response-profiles' | 'global',
   action: 'create' | 'update' | 'delete',
   key?: string,
 ): void {

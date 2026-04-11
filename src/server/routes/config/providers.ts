@@ -436,7 +436,6 @@ router.delete('/response-profiles/:key', configLimiter, asyncErrorHandler(async 
   }
 }));
 
-export default router;
 router.post('/tool-profiles', configLimiter, validateRequest(CreateToolProfileSchema), asyncErrorHandler(async (req, res) => {
   try {
     const newProfile = req.body;

@@ -2,9 +2,10 @@ import { withRetry } from '../utils/withRetry';
 import logger from '../utils/logger';
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Clock, RefreshCw, X } from 'lucide-react';
+import { Clock, RefreshCw, X, Info } from 'lucide-react';
 import { Alert } from '../components/DaisyUI/Alert';
 import Badge from '../components/DaisyUI/Badge';
+import Tooltip from '../components/DaisyUI/Tooltip';
 import Button from '../components/DaisyUI/Button';
 import Card from '../components/DaisyUI/Card';
 import DataTable from '../components/DaisyUI/DataTable';
@@ -376,6 +377,27 @@ const ActivityPage: React.FC = () => {
 
       {/* Stats Cards */}
       <StatsCards stats={stats} isLoading={loading && !data} />
+
+      {/* Event Status Legend */}
+      <div className="flex items-center gap-4 text-xs text-base-content/60">
+        <Tooltip content="What each status means">
+          <span className="flex items-center gap-1 cursor-help">
+            <Info className="w-3 h-3" /> Status legend
+          </span>
+        </Tooltip>
+        <span className="flex items-center gap-1">
+          <Badge variant="success" size="xs">success</Badge> Message processed
+        </span>
+        <span className="flex items-center gap-1">
+          <Badge variant="error" size="xs">error</Badge> Processing failed
+        </span>
+        <span className="flex items-center gap-1">
+          <Badge variant="warning" size="xs">timeout</Badge> Response timed out
+        </span>
+        <span className="flex items-center gap-1">
+          <Badge variant="primary" size="xs">pending</Badge> Awaiting response
+        </span>
+      </div>
 
       {/* Filters */}
       <SearchFilterBar
