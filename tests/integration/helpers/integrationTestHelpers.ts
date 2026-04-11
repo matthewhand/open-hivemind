@@ -8,11 +8,26 @@
  */
 
 /**
- * Check if an environment variable exists and has a value
+ * Placeholder patterns that indicate a credential hasn't been set up yet.
+ * Values matching these patterns are treated as "not configured".
+ */
+const PLACEHOLDER_PATTERNS = [
+  /^your-/i,
+  /^your_/i,
+  /^<.+>$/,
+  /^CHANGE.?ME/i,
+  /^xxx/i,
+  /^test-token$/i,
+  /^placeholder/i,
+];
+
+/**
+ * Check if an environment variable exists, has a value, and is not a placeholder.
  */
 export function hasEnvVar(name: string): boolean {
   const value = process.env[name];
-  return typeof value === 'string' && value.trim().length > 0;
+  if (typeof value !== 'string' || value.trim().length === 0) return false;
+  return !PLACEHOLDER_PATTERNS.some((re) => re.test(value.trim()));
 }
 
 /**

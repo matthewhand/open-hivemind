@@ -169,7 +169,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
             role="combobox"
             aria-expanded={isOpen}
             aria-controls="command-palette-results"
-            aria-activedescendant={filtered[selectedIndex] ? `command-item-${filtered[selectedIndex].id}` : undefined}
+            aria-activedescendant={filtered[selectedIndex] ? `palette-item-${filtered[selectedIndex].id}` : undefined}
             className="input input-ghost w-full focus:outline-none border-none bg-transparent py-4 text-base"
             placeholder="Type a command or search..."
             value={query}
