@@ -3,6 +3,19 @@ import { WebSocketService } from '../../services/WebSocketService';
 import { type IProvider } from '../../../types/IProvider';
 import { providerRegistry } from '../../../registries/ProviderRegistry';
 
+/**
+ * Broadcasts a config change event to all connected WebSocket clients.
+ *
+ * @param type - Which config section changed:
+ *   - `llm-profiles` — LLM provider profile (OpenAI, Anthropic, etc.)
+ *   - `message-profiles` — Messenger provider profile (Slack, Discord, etc.)
+ *   - `memory-profiles` — Memory provider profile (Mem0, Mem4AI, etc.)
+ *   - `tool-profiles` — Tool provider profile (MCP, web search, etc.)
+ *   - `response-profiles` — Response profile (engagement rules, unsolicited behavior)
+ *   - `global` — Global system settings (default providers, env vars)
+ * @param action - The type of change: create, update, or delete
+ * @param key - Optional profile key for profile-scoped changes
+ */
 export function broadcastConfigUpdate(
   type: 'llm-profiles' | 'memory-profiles' | 'tool-profiles' | 'message-profiles' | 'response-profiles' | 'global',
   action: 'create' | 'update' | 'delete',

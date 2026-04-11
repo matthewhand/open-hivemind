@@ -2,7 +2,7 @@ import { withRetry } from '../utils/withRetry';
 import logger from '../utils/logger';
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Clock, RefreshCw, X, Info } from 'lucide-react';
+import { Clock, RefreshCw, X, Info, BarChart3, CheckCircle2, AlertCircle, Bot } from 'lucide-react';
 import { Alert } from '../components/DaisyUI/Alert';
 import Badge from '../components/DaisyUI/Badge';
 import Tooltip from '../components/DaisyUI/Tooltip';
@@ -286,6 +286,22 @@ const ActivityPage: React.FC = () => {
       width: '100px',
       render: (value: number) => value ? <span className="font-mono">{value}ms</span> : '-',
     },
+    {
+      key: 'messageType',
+      title: 'Event',
+      sortable: true,
+      width: '140px',
+      render: (value: string) => {
+        const typeLabels: Record<string, { label: string; variant: 'primary' | 'secondary' | 'accent' | 'info' | 'warning' | 'error' }> = {
+          incoming: { label: '📥 Incoming', variant: 'primary' },
+          outgoing: { label: '📤 Outgoing', variant: 'secondary' },
+          error: { label: '❌ Error', variant: 'error' },
+          timeout: { label: '⏱️ Timeout', variant: 'warning' },
+        };
+        const info = typeLabels[value] || { label: value, variant: 'info' };
+        return <Badge variant={info.variant} size="sm">{info.label}</Badge>;
+      },
+    },
   ];
 
   const stats = [
@@ -293,28 +309,28 @@ const ActivityPage: React.FC = () => {
       id: 'total',
       title: 'Total Events',
       value: events.length,
-      icon: '📊',
+      icon: <BarChart3 className="w-8 h-8" />,
       color: 'primary' as const,
     },
     {
       id: 'success',
       title: 'Successful',
       value: events.filter(e => e.status === 'success').length,
-      icon: '✅',
+      icon: <CheckCircle2 className="w-8 h-8" />,
       color: 'success' as const,
     },
     {
       id: 'errors',
       title: 'Errors',
       value: events.filter(e => e.status === 'error' || e.status === 'timeout').length,
-      icon: '❌',
+      icon: <AlertCircle className="w-8 h-8" />,
       color: 'error' as const,
     },
     {
       id: 'bots',
       title: 'Active Bots',
       value: availableFilters?.agents?.length || 0,
-      icon: '🤖',
+      icon: <Bot className="w-8 h-8" />,
       color: 'secondary' as const,
     },
   ];

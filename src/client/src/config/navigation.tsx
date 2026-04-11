@@ -1,4 +1,21 @@
 /* eslint-disable react-refresh/only-export-components, no-empty, no-case-declarations */
+//
+// Navigation Configuration
+//
+// NAMING CONVENTION:
+// - Labels should match the domain language users expect:
+//   "Messaging" (not "Platforms") for Slack/Discord/Mattermost connections
+//   "LLM" for language model provider configuration
+//   "Bots" for bot management
+// - Keep labels to 1–2 words; avoid generic terms like "Other" or "Platforms"
+// - Use "Resources" for secondary links (Developer, About)
+// - Section dividers use capitalized labels (System, Resources)
+//
+// When adding a new nav item, ensure:
+// 1. The label matches the page title and domain language
+// 2. The path exists in AppRouter.tsx (or has a redirect)
+// 3. A screenshot is added to the PR for visual review
+//
 import {
   LayoutDashboard, Bot,
   Settings, Cog, Component, MessageSquare, Brain,
