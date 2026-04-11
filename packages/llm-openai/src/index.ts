@@ -4,6 +4,7 @@ import { OpenAiProvider } from './openAiProvider';
 
 export * from './openAiProvider';
 export { default as openAiService, OpenAiService } from './OpenAiService';
+export { schema } from './schema';
 
 /** Standard factory — preferred entry point for PluginLoader */
 export function create(

@@ -3,6 +3,7 @@ import { openWebUIProvider } from './openWebUIProvider';
 
 export { openWebUIProvider } from './openWebUIProvider';
 export { generateChatCompletion } from './runInference';
+export { schema } from './schema';
 
 /** Standard factory — preferred entry point for PluginLoader */
 export function create(_config?: any): typeof openWebUIProvider {

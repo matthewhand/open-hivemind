@@ -14,6 +14,7 @@ import type { Mem0Config } from './types';
  */
 
 export { Mem0Provider } from './Mem0Provider';
+export { schema } from './schema';
 export type {
   Mem0Config,
   Mem0Memory,

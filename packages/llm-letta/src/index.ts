@@ -3,6 +3,7 @@ import { LettaProvider } from './lettaProvider';
 
 export { LettaProvider, LettaProviderConfig } from './lettaProvider';
 export { listAgents, getAgent, type AgentSummary } from './agentBrowser';
+export { schema } from './schema';
 
 /** Standard factory — preferred entry point for PluginLoader */
 export function create(config?: any): LettaProvider {

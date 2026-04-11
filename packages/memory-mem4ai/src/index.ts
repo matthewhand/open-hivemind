@@ -14,6 +14,7 @@ import type { Mem4aiConfig } from './types';
  */
 
 export { Mem4aiProvider } from './Mem4aiProvider';
+export { schema } from './schema';
 export type {
   Mem4aiConfig,
   Mem4aiMemory,

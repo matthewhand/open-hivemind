@@ -3,6 +3,7 @@ import { FlowiseProvider } from './flowiseProvider';
 
 export { FlowiseProvider } from './flowiseProvider';
 export { default as flowiseProvider } from './flowiseProvider';
+export { schema } from './schema';
 
 /** Standard factory — preferred entry point for PluginLoader */
 export function create(config?: any): FlowiseProvider {

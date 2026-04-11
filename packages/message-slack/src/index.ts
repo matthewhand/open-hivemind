@@ -14,6 +14,8 @@ export { SlackMessageHandler } from './events/SlackMessageHandler';
 // Utility modules
 export { SlackChannelManager } from './utils/SlackChannelManager';
 
+export { schema } from './schema';
+
 // Re-export existing classes for backward compatibility
 export { default as SlackService } from './SlackService';
 export { SlackBotManager } from './SlackBotManager';

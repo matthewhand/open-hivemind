@@ -15,6 +15,7 @@ import type { PluginManifest } from '../../../src/plugins/PluginLoader';
 import { Discord, DiscordService } from './DiscordService';
 
 export { DiscordService, Discord };
+export { schema } from './schema';
 export { default as DiscordMessage } from './DiscordMessage';
 export { testDiscordConnection } from './DiscordConnectionTest';
 export { DiscordMessageProvider } from './providers/DiscordMessageProvider';

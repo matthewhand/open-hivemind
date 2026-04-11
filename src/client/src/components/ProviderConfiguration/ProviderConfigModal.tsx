@@ -25,6 +25,9 @@ import { apiService } from '../../services/api';
 import { useConfigDiff } from '../../hooks/useConfigDiff';
 import { ConfigDiffConfirmDialog } from '../ConfigDiffViewer';
 import Select from '../DaisyUI/Select';
+import { useAvailableProviderTypes } from '../../hooks/useAvailableProviderTypes';
+import type { ProviderSchema as ApiProviderSchema } from '../../hooks/useAvailableProviderTypes';
+import { DynamicSchemaForm } from '../DynamicSchemaForm';
 
 interface ProviderConfigModalProps {
   modalState: ProviderModalState;
@@ -51,6 +54,37 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [openAiEmbeddingModels, setOpenAiEmbeddingModels] = useState<string[]>([]);
   const [showDiffConfirm, setShowDiffConfirm] = useState(false);
+
+  // Fetch self-documenting schemas from provider packages
+  const { data: apiProviderTypes } = useAvailableProviderTypes();
+
+  // Build a lookup of API schemas by key for the current provider category
+  const apiSchemasByKey = useMemo<Record<string, ApiProviderSchema>>(() => {
+    const list = modalState.providerType === 'message'
+      ? apiProviderTypes.messenger
+      : modalState.providerType === 'llm'
+        ? apiProviderTypes.llm
+        : apiProviderTypes.memory;
+    return Object.fromEntries((list ?? []).map((s) => [s.key, s]));
+  }, [apiProviderTypes, modalState.providerType]);
+
+  // Merged LLM provider type list: hardcoded list + any extra API keys not already present
+  const mergedLlmProviderTypes = useMemo<string[]>(() => {
+    const hardcoded = Object.keys(LLM_PROVIDER_CONFIGS);
+    if (apiProviderTypes.llm.length === 0) return hardcoded;
+    const apiKeys = apiProviderTypes.llm.map((s) => s.key);
+    const extra = apiKeys.filter((k) => !hardcoded.includes(k));
+    return [...hardcoded, ...extra];
+  }, [apiProviderTypes.llm]);
+
+  // Merged message provider type list: hardcoded list + any extra API keys not already present
+  const mergedMessageProviderTypes = useMemo<string[]>(() => {
+    const hardcoded = Object.keys(MESSAGE_PROVIDER_CONFIGS);
+    if (apiProviderTypes.messenger.length === 0) return hardcoded;
+    const apiKeys = apiProviderTypes.messenger.map((s) => s.key);
+    const extra = apiKeys.filter((k) => !hardcoded.includes(k));
+    return [...hardcoded, ...extra];
+  }, [apiProviderTypes.messenger]);
 
   const formDataAsRecord = useMemo(() => formData as Record<string, unknown>, [formData]);
   const { hasChanges, diff, setOriginalConfig, resetToOriginal } = useConfigDiff(formDataAsRecord);
@@ -159,7 +193,9 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   ): string => {
     const configs = providerType === 'message' ? MESSAGE_PROVIDER_CONFIGS : LLM_PROVIDER_CONFIGS;
     const config = (configs as any)[type];
-    const baseName = config?.displayName || config?.name || 'New Provider';
+    // Also check API schema label as fallback for provider types not in the hardcoded list
+    const apiLabel = apiSchemasByKey[type]?.label;
+    const baseName = config?.displayName || config?.name || apiLabel || 'New Provider';
 
     if (!currentExistingProviders || currentExistingProviders.length === 0) {
       return `${baseName}-1`;
@@ -269,6 +305,18 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     return null;
   };
 
+  // Build a normalized field list from API schema for validation/submission
+  // when no local ProviderConfigSchema is available for the selected type
+  const getApiSchemaFields = (): Array<{ name: string; label: string; required: boolean; type: string }> => {
+    const s = apiSchemasByKey[selectedType];
+    if (!s) return [];
+    return [
+      ...s.fields.required.map(f => ({ ...f, required: true })),
+      ...s.fields.optional.map(f => ({ ...f, required: false })),
+      ...s.fields.advanced.map(f => ({ ...f, required: false })),
+    ];
+  };
+
   const validateForm = (): boolean => {
     const config = getCurrentConfig();
     const newErrors: Record<string, string> = {};
@@ -285,7 +333,11 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     }
 
     const schema = getCurrentSchema();
-    const allFields = schema ? schema.fields : (config.fields || []);
+    const allFields = schema
+      ? schema.fields
+      : config?.fields
+        ? config.fields
+        : getApiSchemaFields();
 
     // Validate required fields
     allFields.forEach((field: any) => {
@@ -310,7 +362,11 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
 
     const config = getCurrentConfig();
     const schema = getCurrentSchema();
-    const allFields = schema ? schema.fields : (config.fields || []);
+    const allFields = schema
+      ? schema.fields
+      : config?.fields
+        ? config.fields
+        : getApiSchemaFields();
 
     const providerConfig: Record<string, any> = {};
 
@@ -357,20 +413,41 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
 
   // Get ALL configs to iterate types for tabs
   const configs = modalState.providerType === 'message' ? MESSAGE_PROVIDER_CONFIGS : LLM_PROVIDER_CONFIGS;
-  const providerTypes = Object.keys(configs);
+  // Use merged provider type lists (hardcoded + API-discovered)
+  const providerTypes = modalState.providerType === 'message'
+    ? mergedMessageProviderTypes
+    : mergedLlmProviderTypes;
   // Safe config access: if selectedType mismatch, fallback to first in list
   const config = (configs as any)[selectedType] || (configs as any)[providerTypes[0]];
   const currentSchema = getCurrentSchema();
   const _allFields = config?.fields || [];
 
-  const messageProviderTabs: TabItem[] = providerTypes.map(type => {
-    const typeConfig = (configs as any)[type];
-    return {
-      key: type,
-      label: typeConfig.displayName || typeConfig.name,
-      icon: <span>{typeof typeConfig.icon === 'string' ? typeConfig.icon : '\u2022'}</span>,
-    };
-  });
+  // Helper: get display name for a provider type key (from hardcoded config or API schema)
+  const getProviderDisplayName = (type: string): string => {
+    const hardcoded = (configs as any)[type];
+    if (hardcoded?.displayName || hardcoded?.name) {
+      return hardcoded.displayName || hardcoded.name;
+    }
+    return apiSchemasByKey[type]?.label ?? type;
+  };
+
+  // Helper: get icon for a provider type key
+  const getProviderIcon = (type: string): string => {
+    const hardcoded = (configs as any)[type];
+    if (hardcoded?.icon && typeof hardcoded.icon === 'string') {
+      return hardcoded.icon;
+    }
+    return '\u2022';
+  };
+
+  const messageProviderTabs: TabItem[] = providerTypes.map(type => ({
+    key: type,
+    label: getProviderDisplayName(type),
+    icon: <span>{getProviderIcon(type)}</span>,
+  }));
+
+  // API schema for the currently selected provider type (used as fallback form renderer)
+  const apiSchemaForSelected: ApiProviderSchema | undefined = apiSchemasByKey[selectedType];
 
   return (
     <Modal
@@ -407,14 +484,11 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value as LLMProviderType)}
             >
-              {providerTypes.map(type => {
-                const typeConfig = (configs as any)[type];
-                return (
-                  <option key={type} value={type}>
-                    {typeConfig.displayName || typeConfig.name}
-                  </option>
-                );
-              })}
+              {providerTypes.map(type => (
+                <option key={type} value={type}>
+                  {getProviderDisplayName(type)}
+                </option>
+              ))}
             </Select>
           </div>
         ) : (
@@ -488,7 +562,8 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
 
           {/* Provider-specific fields */}
           <div className="space-y-4 mb-6">
-            {currentSchema && (
+            {currentSchema ? (
+              /* Preferred: rich local schema via ProviderConfigForm */
               <ProviderConfigForm
                 providerType={selectedType}
                 schema={currentSchema}
@@ -513,7 +588,14 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
                   }
                 }}
               />
-            )}
+            ) : apiSchemaForSelected ? (
+              /* Fallback: dynamic form driven by self-documenting API schema */
+              <DynamicSchemaForm
+                schema={apiSchemaForSelected}
+                values={formData as Record<string, string>}
+                onChange={(name, value) => handleFieldChange(name, value)}
+              />
+            ) : null}
           </div>
 
           {/* Undo button (left-aligned above actions) */}

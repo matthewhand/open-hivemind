@@ -13,6 +13,7 @@ import maintenanceRouter from './maintenance';
 import mcpServersRouter from './mcpServers';
 import messengerProvidersRouter from './messengerProviders';
 import monitoringRouter from './monitoring';
+import providerTypesRouter from './providerTypes';
 import systemInfoRouter from './systemInfo';
 import usersRouter from './users';
 
@@ -58,6 +59,7 @@ router.use('/', llmProvidersRouter);
 router.use('/', maintenanceRouter);
 router.use('/', mcpServersRouter);
 router.use('/', messengerProvidersRouter);
+router.use('/', providerTypesRouter);
 router.use('/', systemInfoRouter);
 router.use('/', usersRouter);
 
