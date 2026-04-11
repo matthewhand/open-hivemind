@@ -42,9 +42,15 @@ describe('WebUI Configuration API - COMPLETE TDD SUITE', () => {
 
       const configString = JSON.stringify(response.body);
 
-      // Should not contain sensitive data
+      // Should not contain sensitive data values (key names containing these words are acceptable)
       expect(configString).not.toMatch(/password/i);
-      expect(configString).not.toMatch(/secret/i);
+      // Ensure signingSecret and similar fields have redacted values, not literal secrets
+      expect(configString).not.toMatch(/"signingSecret"\s*:\s*"(?!\*\*\*)[^"]+"/);
+      expect(configString).not.toMatch(/"botToken"\s*:\s*"(?!\*\*\*)[^"]+"/);
+      expect(configString).not.toMatch(/"appToken"\s*:\s*"(?!\*\*\*)[^"]+"/);
+      expect(configString).not.toMatch(/"clientSecret"\s*:\s*"(?!\*\*\*)[^"]+"/);
+      expect(configString).not.toMatch(/"webhookSecret"\s*:\s*"(?!\*\*\*)[^"]+"/);
+      expect(configString).not.toMatch(/"secret"\s*:\s*"(?!\*\*\*)[^"]+"/i);
       // If bots are present, tokens should be redacted
       // Note: In test environment with no bots configured, these patterns won't match
       // The test verifies the API doesn't leak sensitive data
