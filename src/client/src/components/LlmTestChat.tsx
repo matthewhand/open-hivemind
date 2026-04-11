@@ -1,10 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { X, Send, Loader2, Sparkles, Settings2 } from 'lucide-react';
-import Button from './DaisyUI/Button';
-import Input from './DaisyUI/Input';
-import Textarea from './DaisyUI/Textarea';
-import Toggle from './DaisyUI/Toggle';
-import { useSuccessToast, useErrorToast } from './DaisyUI/ToastNotification';
+import Button from '../DaisyUI/Button';
+import Input from '../DaisyUI/Input';
+import Textarea from '../DaisyUI/Textarea';
+import Toggle from '../DaisyUI/Toggle';
+import { useSuccessToast, useErrorToast } from '../DaisyUI/ToastNotification';
 
 interface LlmTestChatProps {
   providerKey: string;

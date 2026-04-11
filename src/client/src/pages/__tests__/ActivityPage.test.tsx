@@ -6,16 +6,15 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi } from 'vitest';
 import ActivityPage from '../ActivityPage';
 import { apiService } from '../../services/api';
+import { useWebSocket } from '../../hooks/useWebSocket';
+
+
 
 vi.mock('../../hooks/useWebSocket', () => ({
   useWebSocket: () => ({
     socket: null,
-    connected: false,
-    error: null,
-    lastMessage: null,
-    sendMessage: vi.fn(),
-    subscribe: vi.fn(),
-    unsubscribe: vi.fn()
+    connect: vi.fn(),
+    disconnect: vi.fn()
   })
 }));
 
