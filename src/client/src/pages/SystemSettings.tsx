@@ -5,7 +5,6 @@ import SettingsGeneral from '../components/Settings/SettingsGeneral';
 import SettingsSecurity from '../components/Settings/SettingsSecurity';
 import SettingsMessaging from '../components/Settings/SettingsMessaging';
 import SettingsLLM from '../components/Settings/SettingsLLM';
-import SettingsIntegrations from '../components/Settings/SettingsIntegrations';
 import Button from '../components/DaisyUI/Button';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import Tabs from '../components/DaisyUI/Tabs';
@@ -33,8 +32,7 @@ const SystemSettings: React.FC = () => {
     { id: 'general', label: 'General', component: <SettingsGeneral /> },
     { id: 'messaging', label: 'Messaging', component: <SettingsMessaging /> },
     { id: 'llm', label: 'LLM', component: <SettingsLLM /> },
-    { id: 'integrations', label: 'Integrations', component: <SettingsIntegrations /> },
-    { id: 'security', label: 'Security', component: <HiddenFeatureToggle fallback="hide"><SettingsSecurity /></HiddenFeatureToggle> },
+{ id: 'security', label: 'Security', component: <HiddenFeatureToggle fallback="hide"><SettingsSecurity /></HiddenFeatureToggle> },
   ];
 
   // Determine active tab index, default to 0 (General) if not found or not specified
