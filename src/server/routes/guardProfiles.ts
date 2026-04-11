@@ -16,7 +16,6 @@ import {
   UpdateGuardProfileSchema,
 } from '../../validation/schemas/guardProfilesSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const router = Router();
 
@@ -29,7 +28,7 @@ if (!isTestEnv) {
 }
 
 // GET / - List all profiles
-router.get('/', asyncErrorHandler(async (req, res) => {
+router.get('/', (req: Request, res: Response) => {
   try {
     const profiles = loadGuardrailProfiles();
     return res.json(ApiResponse.success(profiles));
@@ -38,10 +37,10 @@ router.get('/', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to load guardrail profiles'));
   }
-}));
+});
 
 // GET /:id - Get a specific profile
-router.get('/:id', validateRequest(GuardProfileIdParamSchema), asyncErrorHandler(async (req, res) => {
+router.get('/:id', validateRequest(GuardProfileIdParamSchema), (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const profiles = loadGuardrailProfiles();
@@ -57,7 +56,7 @@ router.get('/:id', validateRequest(GuardProfileIdParamSchema), asyncErrorHandler
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to retrieve profile'));
   }
-}));
+});
 
 interface GuardBody {
   name: string;
@@ -83,7 +82,7 @@ interface GuardBody {
 }
 
 // POST / - Create a new profile
-router.post('/', validateRequest(CreateGuardProfileSchema), asyncErrorHandler(async (req, res) => {
+router.post('/', validateRequest(CreateGuardProfileSchema), (req: Request, res: Response) => {
   try {
     const { name, description, guards } = req.body as GuardBody;
 
@@ -148,10 +147,10 @@ router.post('/', validateRequest(CreateGuardProfileSchema), asyncErrorHandler(as
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to create guard profile'));
   }
-}));
+});
 
 // PUT /:id - Update a profile
-router.put('/:id', validateRequest(UpdateGuardProfileSchema), asyncErrorHandler(async (req, res) => {
+router.put('/:id', validateRequest(UpdateGuardProfileSchema), (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { name, description, guards } = req.body as Partial<GuardBody>;
@@ -208,10 +207,10 @@ router.put('/:id', validateRequest(UpdateGuardProfileSchema), asyncErrorHandler(
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to update guard profile'));
   }
-}));
+});
 
 // DELETE /:id - Delete a profile
-router.delete('/:id', validateRequest(GuardProfileIdParamSchema), asyncErrorHandler(async (req, res) => {
+router.delete('/:id', validateRequest(GuardProfileIdParamSchema), (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const profiles = loadGuardrailProfiles();
@@ -230,12 +229,13 @@ router.delete('/:id', validateRequest(GuardProfileIdParamSchema), asyncErrorHand
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to delete guard profile'));
   }
-}));
+});
 
 // POST /bulk/delete - Delete multiple profiles atomically
 router.post(
   '/bulk/delete',
-  validateRequest(BulkDeleteGuardProfilesSchema), asyncErrorHandler(async (req, res) => {
+  validateRequest(BulkDeleteGuardProfilesSchema),
+  (req: Request, res: Response) => {
     try {
       const { ids } = req.body as { ids: string[] };
       const profiles = loadGuardrailProfiles();
@@ -258,13 +258,14 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to delete guard profiles'));
     }
-  })
+  }
 );
 
 // POST /bulk/toggle - Toggle multiple profiles atomically
 router.post(
   '/bulk/toggle',
-  validateRequest(BulkToggleGuardProfilesSchema), asyncErrorHandler(async (req, res) => {
+  validateRequest(BulkToggleGuardProfilesSchema),
+  (req: Request, res: Response) => {
     try {
       const { ids, enabled } = req.body as { ids: string[]; enabled: boolean };
       const profiles = loadGuardrailProfiles();
@@ -309,7 +310,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to toggle guard profiles'));
     }
-  })
+  }
 );
 
 export default router;

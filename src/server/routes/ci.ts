@@ -4,13 +4,12 @@ import { ApiResponse } from '@src/server/utils/apiResponse';
 import { HTTP_STATUS } from '../../types/constants';
 import { CIDeploySchema, CIRollbackSchema, EmptySchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:ciRoutes');
 const router = Router();
 
 // Get deployment history
-router.get('/api/deployments', asyncErrorHandler(async (req, res) => {
+router.get('/api/deployments', (req, res) => {
   try {
     // In a real implementation, this would fetch from a database
     // For now, return mock data
@@ -63,10 +62,10 @@ router.get('/api/deployments', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
   }
-}));
+});
 
 // Start a new deployment
-router.post('/api/deployments', validateRequest(CIDeploySchema), asyncErrorHandler(async (req, res) => {
+router.post('/api/deployments', validateRequest(CIDeploySchema), (req, res) => {
   try {
     const { name, environment, branch, commitHash } = req.body;
 
@@ -106,10 +105,10 @@ router.post('/api/deployments', validateRequest(CIDeploySchema), asyncErrorHandl
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
   }
-}));
+});
 
 // Get deployment details
-router.get('/api/deployments/:id', asyncErrorHandler(async (req, res) => {
+router.get('/api/deployments/:id', (req, res) => {
   try {
     const { id } = req.params;
 
@@ -143,10 +142,10 @@ router.get('/api/deployments/:id', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
   }
-}));
+});
 
 // Rollback deployment
-router.post('/api/deployments/:id/rollback', validateRequest(CIRollbackSchema), asyncErrorHandler(async (req, res) => {
+router.post('/api/deployments/:id/rollback', validateRequest(CIRollbackSchema), (req, res) => {
   try {
     const { id } = req.params;
 
@@ -159,10 +158,10 @@ router.post('/api/deployments/:id/rollback', validateRequest(CIRollbackSchema), 
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
   }
-}));
+});
 
 // Get configuration drift detections
-router.get('/api/drift', asyncErrorHandler(async (req, res) => {
+router.get('/api/drift', (req, res) => {
   try {
     // In a real implementation, this would check for configuration drift
     // For now, return mock data
@@ -189,10 +188,10 @@ router.get('/api/drift', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
   }
-}));
+});
 
 // Validate deployment configuration
-router.post('/api/deployments/validate', validateRequest(EmptySchema), asyncErrorHandler(async (req, res) => {
+router.post('/api/deployments/validate', validateRequest(EmptySchema), (req, res) => {
   try {
     const { environment, configuration } = req.body;
 
@@ -221,10 +220,10 @@ router.post('/api/deployments/validate', validateRequest(EmptySchema), asyncErro
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
   }
-}));
+});
 
 // Get CI/CD pipeline status
-router.get('/api/pipeline/status', asyncErrorHandler(async (req, res) => {
+router.get('/api/pipeline/status', (req, res) => {
   try {
     // In a real implementation, this would get pipeline status
     // For now, return mock data
@@ -244,10 +243,10 @@ router.get('/api/pipeline/status', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
   }
-}));
+});
 
 // Trigger automated tests
-router.post('/api/tests/run', validateRequest(EmptySchema), asyncErrorHandler(async (req, res) => {
+router.post('/api/tests/run', validateRequest(EmptySchema), (req, res) => {
   try {
     const { type, environment } = req.body;
 
@@ -273,10 +272,10 @@ router.post('/api/tests/run', validateRequest(EmptySchema), asyncErrorHandler(as
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
   }
-}));
+});
 
 // Get test results
-router.get('/api/tests/results/:id', asyncErrorHandler(async (req, res) => {
+router.get('/api/tests/results/:id', (req, res) => {
   try {
     const { id } = req.params;
 
@@ -319,6 +318,6 @@ router.get('/api/tests/results/:id', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
   }
-}));
+});
 
 export default router;

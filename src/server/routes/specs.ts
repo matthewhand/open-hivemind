@@ -7,7 +7,6 @@ import { ApiResponse } from '@src/server/utils/apiResponse';
 import { HTTP_STATUS } from '../../types/constants';
 import { SpecSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:server:routes:specs');
 
@@ -41,7 +40,7 @@ async function saveSpecsIndex(index: SpecMetadata[]) {
   await fs.writeFile(indexPath, JSON.stringify(index, null, 2));
 }
 
-router.post('/', validateRequest(SpecSchema), asyncErrorHandler(async (req, res) => {
+router.post('/', validateRequest(SpecSchema), async (req, res) => {
   try {
     const { id, topic, tags, author, timestamp, version, content } = req.body;
 
@@ -82,7 +81,7 @@ router.post('/', validateRequest(SpecSchema), asyncErrorHandler(async (req, res)
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to save specification'));
   }
-}));
+});
 
 router.get('/', async (req, res) => {
   try {

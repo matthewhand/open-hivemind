@@ -2,18 +2,23 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { apiService } from '../services/api';
 import { useQuery } from '@tanstack/react-query';
 import ChatInterface, { ChatMessage } from '../components/DaisyUI/Chat';
+import { BotAvatar } from '../components/BotAvatar';
 import BotChatBubbles from '../components/BotChatBubbles';
-import { RefreshCw, MessageSquare, Menu as LucideMenuIcon, X } from 'lucide-react';
+import { RefreshCw, MessageSquare, Cpu, Check, ChevronDown, Menu as LucideMenuIcon, X, XCircle } from 'lucide-react';
+import Menu from '../components/DaisyUI/Menu';
+import Indicator from '../components/DaisyUI/Indicator';
+import Badge from '../components/DaisyUI/Badge';
 import Button from '../components/DaisyUI/Button';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { SkeletonList, SkeletonMessageList } from '../components/DaisyUI/Skeleton';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import { useMediaQuery } from '../hooks/useBreakpoint';
+import { Alert } from '../components/DaisyUI/Alert';
 import Drawer from '../components/DaisyUI/Drawer';
-import { BotListItem } from '../components/BotListItem';
+import Dropdown from '../components/DaisyUI/Dropdown';
 
 // Define Bot type based on API response
-export interface BotData {
+interface BotData {
   id: string;
   name: string;
   status: string;
@@ -27,7 +32,7 @@ export interface BotData {
 }
 
 // LLM Provider option interface
-export interface LlmProviderOption {
+interface LlmProviderOption {
   key: string;
   name: string;
   provider: string;
@@ -44,25 +49,10 @@ const ChatPage: React.FC = () => {
   const [showProviderDropdown, setShowProviderDropdown] = useState<string | null>(null);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const isDesktop = useMediaQuery({ minWidth: 1024 });
 
   const showSuccess = useSuccessToast();
   const showError = useErrorToast();
-
-  // Track offline status
-  useEffect(() => {
-    const handleOnline = () => setIsOffline(false);
-    const handleOffline = () => setIsOffline(true);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
 
   // Fetch LLM providers
   const fetchLlmProviders = useCallback(async () => {
@@ -86,7 +76,7 @@ const ChatPage: React.FC = () => {
       ));
 
       showSuccess('LLM provider updated successfully');
-    } catch (err) {
+    } catch (_err) {
       showError(err instanceof Error ? err.message : 'Failed to swap provider');
     } finally {
       setSwappingProvider(null);
@@ -242,17 +232,83 @@ const ChatPage: React.FC = () => {
         ) : (
           <ul className="menu w-full p-2 gap-1">
             {bots.map(bot => (
-              <BotListItem
-                key={bot.id}
-                bot={bot}
-                isSelected={selectedBotId === bot.id}
-                onSelect={(id) => { setSelectedBotId(id); setSidebarOpen(false); }}
-                llmProviders={llmProviders}
-                swappingProvider={swappingProvider}
-                showProviderDropdown={showProviderDropdown}
-                onToggleDropdown={(isOpen, botId) => setShowProviderDropdown(isOpen ? botId : null)}
-                onSwapProvider={handleSwapProvider}
-              />
+              <li key={bot.id} className="relative">
+                <button
+                  className={`${selectedBotId === bot.id ? 'active' : ''} flex items-center gap-3 py-3`}
+                  onClick={() => { setSelectedBotId(bot.id); setSidebarOpen(false); }}
+                >
+                  <Indicator item={<Badge color={bot.connected ? 'success' : undefined} className="badge-xs p-0 w-3 h-3" />} verticalPosition="bottom" horizontalPosition="end">
+                    <BotAvatar bot={bot} />
+                  </Indicator>
+                  <div className="flex flex-col items-start min-w-0 flex-1">
+                    <span className="font-semibold truncate w-full text-left">{bot.name}</span>
+                    <div className="flex items-center gap-2 w-full">
+                      <span className="text-xs opacity-50 truncate text-left capitalize">{bot.messageProvider}</span>
+                      <span className="text-xs opacity-30">•</span>
+                      {/* LLM Provider Hot Swap Dropdown */}
+                      <Dropdown
+                        className="flex-1"
+                        triggerClassName="btn-ghost btn-xs px-1 min-h-0 h-auto flex items-center gap-1 text-xs opacity-70 hover:opacity-100 group"
+                        contentClassName="shadow-lg bg-base-100 w-52 z-50 max-h-60 overflow-y-auto"
+                        position="right"
+                        size="none"
+                        color="none"
+                        hideArrow={true}
+                        isOpen={showProviderDropdown === bot.id}
+                        onToggle={(isOpen) => setShowProviderDropdown(isOpen ? bot.id : null)}
+                        disabled={swappingProvider === bot.id}
+                        trigger={
+                          <>
+                            <Cpu className="w-3 h-3" />
+                            {swappingProvider === bot.id ? (
+                              <span className="loading loading-spinner loading-xs" aria-hidden="true" />
+                            ) : (
+                              <>
+                                <span className="truncate max-w-[80px]" title="Click to change LLM provider">{bot.llmProvider || 'Default'}</span>
+                                <ChevronDown className="w-3 h-3 opacity-50 group-hover:opacity-100" />
+                              </>
+                            )}
+                          </>
+                        }
+                      >
+                        <li className="menu-title">
+                          <span>Switch Provider</span>
+                        </li>
+                        <li>
+                          <button
+                            className={`${!bot.llmProvider ? 'active' : ''} btn btn-ghost btn-sm justify-start`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSwapProvider(bot.id, '');
+                            }}
+                          >
+                            <Check className={`w-4 h-4 ${!bot.llmProvider ? 'visible' : 'invisible'}`} />
+                            System Default
+                          </button>
+                        </li>
+                        <div className="divider my-1"></div>
+                        {llmProviders.map(provider => (
+                          <li key={provider.key}>
+                            <button
+                              className={`${bot.llmProvider === provider.key ? 'active' : ''} btn btn-ghost btn-sm justify-start`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSwapProvider(bot.id, provider.key);
+                              }}
+                            >
+                              <Check className={`w-4 h-4 ${bot.llmProvider === provider.key ? 'visible' : 'invisible'}`} />
+                              <div className="flex flex-col items-start">
+                                <span className="font-medium">{provider.name}</span>
+                                <span className="text-xs opacity-50">{provider.provider}</span>
+                              </div>
+                            </button>
+                          </li>
+                        ))}
+                      </Dropdown>
+                    </div>
+                  </div>
+                </button>
+              </li>
             ))}
           </ul>
         )}
@@ -343,11 +399,10 @@ const ChatPage: React.FC = () => {
               <ChatInterface
                 messages={messages}
                 onSendMessage={handleSendMessage}
-                placeholder={isOffline ? "You are currently offline..." : "Type a message..."}
+                placeholder="Type a message..."
                 className="h-full"
                 maxHeight="100%"
                 isLoading={false}
-                disabled={isOffline}
               />
               {/* Overlay to intercept clicks on input area if needed, but placeholder should suffice */}
             </div>

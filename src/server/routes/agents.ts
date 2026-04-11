@@ -15,7 +15,6 @@ import {
   UpdateAgentSchema,
 } from '../../validation/schemas/agentsSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:webui:agents');
 const router = Router();
@@ -132,7 +131,7 @@ const getEnvOverrides = (): Record<string, { isOverridden: boolean; redactedValu
 // Routes
 
 // GET /api/agents - Get all agents
-router.get('/', asyncErrorHandler(async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const agents = await loadJsonConfig<AgentConfig[]>(AGENTS_CONFIG_FILE, []);
     const envOverrides = getEnvOverrides();
@@ -177,10 +176,10 @@ router.get('/', asyncErrorHandler(async (req, res) => {
         )
       );
   }
-}));
+});
 
 // POST /api/agents - Create new agent
-router.post('/', validateRequest(CreateAgentSchema), asyncErrorHandler(async (req, res) => {
+router.post('/', validateRequest(CreateAgentSchema), async (req, res) => {
   try {
     const agentData: Omit<AgentConfig, 'id' | 'createdAt' | 'updatedAt'> = req.body;
 
@@ -224,10 +223,10 @@ router.post('/', validateRequest(CreateAgentSchema), asyncErrorHandler(async (re
         )
       );
   }
-}));
+});
 
 // PUT /api/agents/:id - Update agent
-router.put('/:id', validateRequest(UpdateAgentSchema), asyncErrorHandler(async (req, res) => {
+router.put('/:id', validateRequest(UpdateAgentSchema), async (req, res) => {
   try {
     const { id } = req.params;
     const updates: Partial<AgentConfig> = req.body;
@@ -264,10 +263,10 @@ router.put('/:id', validateRequest(UpdateAgentSchema), asyncErrorHandler(async (
         )
       );
   }
-}));
+});
 
 // DELETE /api/agents/:id - Delete agent
-router.delete('/:id', validateRequest(AgentIdParamSchema), asyncErrorHandler(async (req, res) => {
+router.delete('/:id', validateRequest(AgentIdParamSchema), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -302,10 +301,10 @@ router.delete('/:id', validateRequest(AgentIdParamSchema), asyncErrorHandler(asy
         )
       );
   }
-}));
+});
 
 // GET /api/agents/personas - Get all personas
-router.get('/personas', asyncErrorHandler(async (req, res) => {
+router.get('/personas', async (req, res) => {
   try {
     const personas = await loadJsonConfig<Persona[]>(PERSONAS_CONFIG_FILE, [
       {
@@ -349,10 +348,10 @@ router.get('/personas', asyncErrorHandler(async (req, res) => {
         )
       );
   }
-}));
+});
 
 // POST /api/agents/personas - Create new persona
-router.post('/personas', validateRequest(CreateAgentPersonaSchema), asyncErrorHandler(async (req, res) => {
+router.post('/personas', validateRequest(CreateAgentPersonaSchema), async (req, res) => {
   try {
     const { name, systemPrompt } = req.body;
 
@@ -392,10 +391,10 @@ router.post('/personas', validateRequest(CreateAgentPersonaSchema), asyncErrorHa
         )
       );
   }
-}));
+});
 
 // PUT /api/agents/personas/:key - Update persona
-router.put('/personas/:key', validateRequest(UpdateAgentPersonaSchema), asyncErrorHandler(async (req, res) => {
+router.put('/personas/:key', validateRequest(UpdateAgentPersonaSchema), async (req, res) => {
   try {
     const { key } = req.params;
     const { name, systemPrompt } = req.body;
@@ -432,10 +431,10 @@ router.put('/personas/:key', validateRequest(UpdateAgentPersonaSchema), asyncErr
         )
       );
   }
-}));
+});
 
 // DELETE /api/agents/personas/:key - Delete persona
-router.delete('/personas/:key', validateRequest(AgentPersonaKeyParamSchema), asyncErrorHandler(async (req, res) => {
+router.delete('/personas/:key', validateRequest(AgentPersonaKeyParamSchema), async (req, res) => {
   try {
     const { key } = req.params;
 
@@ -476,6 +475,6 @@ router.delete('/personas/:key', validateRequest(AgentPersonaKeyParamSchema), asy
         )
       );
   }
-}));
+});
 
 export default router;

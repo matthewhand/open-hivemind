@@ -464,7 +464,7 @@ const LLMProvidersPage: React.FC = () => {
             </p>
           </div>
           <Toggle
-            color="primary"
+            className="toggle toggle-primary"
             checked={perUseCaseEnabled}
             onChange={async (e) => {
               setPerUseCaseEnabled(e.target.checked);

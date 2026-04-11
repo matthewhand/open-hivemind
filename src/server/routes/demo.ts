@@ -12,7 +12,6 @@ import { HTTP_STATUS } from '../../types/constants';
 import { ErrorUtils } from '../../types/errors';
 import { ChatGenerateSchema, EmptySchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const router = Router();
 
@@ -20,7 +19,7 @@ const router = Router();
  * GET /api/demo/status
  * Get demo mode status
  */
-router.get('/status', asyncErrorHandler(async (req, res) => {
+router.get('/status', (req, res) => {
   try {
     const demoService = container.resolve(DemoModeService);
     const status = demoService.getDemoStatus();
@@ -40,13 +39,13 @@ router.get('/status', asyncErrorHandler(async (req, res) => {
       .status(statusCode)
       .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DEMO_STATUS_ERROR'));
   }
-}));
+});
 
 /**
  * GET /api/demo/bots
  * Get demo bots
  */
-router.get('/bots', asyncErrorHandler(async (req, res) => {
+router.get('/bots', (req, res) => {
   try {
     const demoService = container.resolve(DemoModeService);
     const bots = demoService.getDemoBots();
@@ -65,13 +64,13 @@ router.get('/bots', asyncErrorHandler(async (req, res) => {
       .status(statusCode)
       .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DEMO_BOTS_ERROR'));
   }
-}));
+});
 
 /**
  * POST /api/demo/chat
  * Send a message to a demo bot and get a simulated response
  */
-router.post('/chat', validateRequest(ChatGenerateSchema), asyncErrorHandler(async (req, res) => {
+router.post('/chat', validateRequest(ChatGenerateSchema), (req, res) => {
   try {
     const { message, botName, channelId, userId, userName } = req.body;
 
@@ -137,13 +136,13 @@ router.post('/chat', validateRequest(ChatGenerateSchema), asyncErrorHandler(asyn
       .status(statusCode)
       .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DEMO_CHAT_ERROR'));
   }
-}));
+});
 
 /**
  * GET /api/demo/conversations
  * Get all demo conversations
  */
-router.get('/conversations', asyncErrorHandler(async (req, res) => {
+router.get('/conversations', (req, res) => {
   try {
     const demoService = container.resolve(DemoModeService);
     const conversations = demoService.getAllConversations();
@@ -161,13 +160,13 @@ router.get('/conversations', asyncErrorHandler(async (req, res) => {
       .status(statusCode)
       .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DEMO_CONVERSATIONS_ERROR'));
   }
-}));
+});
 
 /**
  * GET /api/demo/conversations/:channelId/:botName
  * Get conversation history for a specific channel and bot
  */
-router.get('/conversations/:channelId/:botName', asyncErrorHandler(async (req, res) => {
+router.get('/conversations/:channelId/:botName', (req, res) => {
   try {
     const { channelId, botName } = req.params;
     const demoService = container.resolve(DemoModeService);
@@ -190,13 +189,13 @@ router.get('/conversations/:channelId/:botName', asyncErrorHandler(async (req, r
         ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DEMO_CONVERSATION_HISTORY_ERROR')
       );
   }
-}));
+});
 
 /**
  * POST /api/demo/reset
  * Reset demo mode (clear all conversations)
  */
-router.post('/reset', validateRequest(EmptySchema), asyncErrorHandler(async (req, res) => {
+router.post('/reset', validateRequest(EmptySchema), (req, res) => {
   try {
     const demoService = container.resolve(DemoModeService);
     demoService.reset();
@@ -209,13 +208,13 @@ router.post('/reset', validateRequest(EmptySchema), asyncErrorHandler(async (req
       .status(statusCode)
       .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DEMO_RESET_ERROR'));
   }
-}));
+});
 
 /**
  * GET /api/demo/info
  * Get information about demo mode features
  */
-router.get('/info', asyncErrorHandler(async (req, res) => {
+router.get('/info', (req, res) => {
   res.json(
     ApiResponse.success({
       title: 'Open-Hivemind Demo Mode',
@@ -245,6 +244,6 @@ router.get('/info', asyncErrorHandler(async (req, res) => {
       ],
     })
   );
-}));
+});
 
 export default router;

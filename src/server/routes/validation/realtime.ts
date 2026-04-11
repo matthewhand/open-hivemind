@@ -5,7 +5,6 @@ import type { AuthMiddlewareRequest } from '../../../auth/types';
 import { HTTP_STATUS } from '../../../types/constants';
 import { ErrorUtils } from '../../../types/errors';
 import { RealTimeValidationService } from '../../services/RealTimeValidationService';
-import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import {
   getErrorResponse,
   handleValidationErrors,
@@ -27,7 +26,8 @@ export function createRealtimeRoutes(): Router {
   router.post(
     '/api/validation/validate',
     validateConfigurationValidation,
-    handleValidationErrors, asyncErrorHandler(async (req, res) => {
+    handleValidationErrors,
+    async (req: AuthMiddlewareRequest, res: Response) => {
       try {
         const { configId, profileId = 'standard', clientId } = req.body;
 
@@ -46,7 +46,7 @@ export function createRealtimeRoutes(): Router {
           error: ErrorUtils.getMessage(error as any),
         });
       }
-    })
+    }
   );
 
   /**
@@ -56,7 +56,8 @@ export function createRealtimeRoutes(): Router {
   router.post(
     '/api/validation/validate-data',
     validateConfigurationData,
-    handleValidationErrors, asyncErrorHandler(async (req, res) => {
+    handleValidationErrors,
+    async (req: AuthMiddlewareRequest, res: Response) => {
       try {
         const { configData, profileId = 'standard' } = req.body;
 
@@ -86,7 +87,7 @@ export function createRealtimeRoutes(): Router {
               : new Date(),
         });
       }
-    })
+    }
   );
 
   /**
@@ -96,7 +97,8 @@ export function createRealtimeRoutes(): Router {
   router.post(
     '/api/validation/subscribe',
     validateSubscription,
-    handleValidationErrors, asyncErrorHandler(async (req, res) => {
+    handleValidationErrors,
+    async (req: AuthMiddlewareRequest, res: Response) => {
       try {
         const { configId, clientId, profileId = 'standard' } = req.body;
 
@@ -126,7 +128,7 @@ export function createRealtimeRoutes(): Router {
               : new Date(),
         });
       }
-    })
+    }
   );
 
   /**
@@ -231,7 +233,7 @@ export function createRealtimeRoutes(): Router {
    * GET /api/validation/statistics
    * Get validation statistics
    */
-  router.get('/api/validation/statistics', asyncErrorHandler(async (req, res) => {
+  router.get('/api/validation/statistics', async (req: AuthMiddlewareRequest, res: Response) => {
     try {
       const statistics = validationService.getValidationStatistics();
 
@@ -256,7 +258,7 @@ export function createRealtimeRoutes(): Router {
         timestamp,
       });
     }
-  }));
+  });
 
   return router;
 }

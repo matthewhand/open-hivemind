@@ -3,14 +3,13 @@ import { Router, type Response } from 'express';
 import type { AuthMiddlewareRequest } from '../../../auth/types';
 import { HTTP_STATUS } from '../../../types/constants';
 import { ErrorUtils } from '../../../types/errors';
-import { asyncErrorHandler } from '../../../middleware/errorHandler';
 
 const debug = Debug('app:server:routes:validation:schemas');
 
 export function createSchemaRoutes(): Router {
   const router = Router();
 
-  router.get('/api/validation/schema', asyncErrorHandler(async (req, res) => {
+  router.get('/api/validation/schema', (_req: AuthMiddlewareRequest, res: Response) => {
     const schema = {
       botConfig: {
         required: ['name', 'messageProvider', 'llmProvider'],
@@ -91,7 +90,7 @@ export function createSchemaRoutes(): Router {
           })
         );
     }
-  }));
+  });
 
   return router;
 }

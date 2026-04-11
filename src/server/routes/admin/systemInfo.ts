@@ -4,7 +4,6 @@ import { ErrorUtils } from '../../../common/ErrorUtils';
 import { DatabaseManager } from '../../../database/DatabaseManager';
 import { HTTP_STATUS } from '../../../types/constants';
 import { getRelevantEnvVars } from '../../../utils/envUtils';
-import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import {
   getChatModels,
   getEmbeddingModels,
@@ -108,7 +107,7 @@ router.get('/providers', (req: Request, res: Response) => {
 });
 
 // GET /system-info - Get system information
-router.get('/system-info', asyncErrorHandler(async (req, res) => {
+router.get('/system-info', async (req: Request, res: Response) => {
   try {
     const dbManager = DatabaseManager.getInstance();
 
@@ -134,7 +133,7 @@ router.get('/system-info', asyncErrorHandler(async (req, res) => {
       message: hivemindError.message || 'An error occurred while fetching system info',
     });
   }
-}));
+});
 
 /**
  * @openapi

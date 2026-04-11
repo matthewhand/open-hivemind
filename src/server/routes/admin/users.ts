@@ -9,7 +9,6 @@ import {
   UpdatePersonaSchema,
 } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
-import { asyncErrorHandler } from '../../../middleware/errorHandler';
 
 const router = Router();
 
@@ -23,7 +22,7 @@ const router = Router();
  *       200:
  *         description: List of personas
  */
-router.get('/personas', asyncErrorHandler(async (req, res) => {
+router.get('/personas', async (req: Request, res: Response) => {
   try {
     // Get personas from persistent storage
     const storedPersonas = await webUIStorage.getPersonas();
@@ -57,7 +56,7 @@ router.get('/personas', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to retrieve personas'));
   }
-}));
+});
 
 /**
  * @openapi

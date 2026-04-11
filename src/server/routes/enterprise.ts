@@ -9,7 +9,6 @@ import {
   PerformanceOptimizeSchema,
 } from '../../validation/schemas/enterpriseSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:enterpriseRoutes');
 const router = Router();
@@ -197,7 +196,7 @@ router.post('/api/integrations', validateRequest(CreateEnterpriseIntegrationSche
 });
 
 // Get audit events — supports composable query-param filters
-router.get('/api/audit', asyncErrorHandler(async (req, res) => {
+router.get('/api/audit', async (req, res) => {
   try {
     const {
       limit = '200',
@@ -230,10 +229,10 @@ router.get('/api/audit', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
   }
-}));
+});
 
 // Export audit events as CSV (no pagination cap)
-router.get('/api/audit/export', asyncErrorHandler(async (req, res) => {
+router.get('/api/audit/export', async (req, res) => {
   try {
     const { search, action, resource, user, dateFrom, dateTo } = req.query as Record<
       string,
@@ -291,7 +290,7 @@ router.get('/api/audit/export', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
   }
-}));
+});
 
 // Get performance metrics
 router.get('/api/performance', (req, res) => {

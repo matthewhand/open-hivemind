@@ -10,7 +10,8 @@ export const usePersonaActions = (
   successToast: (title?: string, message?: string) => void,
   errorToast: (title?: string, message?: string) => void,
   infoToast: (title?: string, message?: string) => void,
-  bulk: any
+  bulk: any,
+  showStamp?: () => void
 ) => {
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -61,7 +62,7 @@ export const usePersonaActions = (
       await fetchData();
       bulk.clearSelection();
       successToast('Selected personas deleted');
-    } catch (err) {
+    } catch (_err) {
       errorToast('Error', 'Failed to delete some personas');
     } finally {
       setBulkDeleting(false);
@@ -72,7 +73,7 @@ export const usePersonaActions = (
     try {
       await navigator.clipboard.writeText(text);
       successToast('Copied!', 'System prompt copied to clipboard');
-    } catch (err) {
+    } catch (_err) {
       errorToast('Error', 'Failed to copy to clipboard');
     }
   };
@@ -152,6 +153,7 @@ export const usePersonaActions = (
           ? 'Persona updated successfully'
           : 'Persona created successfully'
       );
+      showStamp?.();
     } catch (err: any) {
       errorToast('Save Failed', 'Failed to save persona changes');
       setError('Failed to save persona changes');
@@ -237,7 +239,7 @@ export const usePersonaActions = (
       await fetchData();
       setShowDeleteModal(false);
       setDeletingPersona(null);
-    } catch (err) {
+    } catch (_err) {
       setError('Failed to delete persona');
     } finally {
       setLoading(false);

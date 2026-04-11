@@ -7,7 +7,6 @@ import { errorLogger } from '../../utils/errorLogger';
 import { ErrorLogSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { authenticateToken } from '../middleware/auth';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const router = Router();
 const logger = createLogger('errorsRouter');
@@ -21,7 +20,7 @@ router.options('*', (req, res) => {
 });
 
 // Frontend error reporting endpoint
-router.post('/frontend', validateRequest(ErrorLogSchema), asyncErrorHandler(async (req, res) => {
+router.post('/frontend', validateRequest(ErrorLogSchema), async (req: Request, res: Response) => {
   try {
     const errorReport = req.body as {
       name: string;
@@ -97,7 +96,7 @@ router.post('/frontend', validateRequest(ErrorLogSchema), asyncErrorHandler(asyn
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to process error report'));
   }
-}));
+});
 
 // Get error statistics (for monitoring)
 router.get('/stats', authenticateToken, async (req: Request, res: Response) => {

@@ -7,7 +7,6 @@ import { ApiResponse } from '@src/server/utils/apiResponse';
 import { HTTP_STATUS } from '../../types/constants';
 import { ErrorResponses } from '../../utils/errorResponse';
 import { isPrivateIP, isSafeUrl } from '../../utils/ssrfGuard';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:server:routes:letta');
 
@@ -78,7 +77,7 @@ async function validateLettaUrl(url: string): Promise<{ isValid: boolean; error?
 /**
  * GET /api/letta/agents - List available Letta agents
  */
-router.get('/agents', asyncErrorHandler(async (req, res) => {
+router.get('/agents', async (req: Request, res: Response) => {
   try {
     const apiKey = req.headers['x-letta-api-key'] as string;
     const apiUrl =
@@ -113,12 +112,12 @@ router.get('/agents', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ErrorResponses.internalServerError(message).build());
   }
-}));
+});
 
 /**
  * GET /api/letta/agents/:id - Get a specific agent details
  */
-router.get('/agents/:id', asyncErrorHandler(async (req, res) => {
+router.get('/agents/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const apiKey = req.headers['x-letta-api-key'] as string;
@@ -154,6 +153,6 @@ router.get('/agents/:id', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ErrorResponses.internalServerError(message).build());
   }
-}));
+});
 
 export default router;

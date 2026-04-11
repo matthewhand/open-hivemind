@@ -6,7 +6,6 @@ import { HTTP_STATUS } from '../../../types/constants';
 import { isSafeUrl } from '../../../utils/ssrfGuard';
 import { TestConnectionSchema } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
-import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import {
   getChatModels,
   getEmbeddingModels,
@@ -34,7 +33,7 @@ router.post(
   '/providers/test-connection',
   configRateLimit,
   validateRequest(TestConnectionSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { providerType, config } = req.body;
 
@@ -258,7 +257,7 @@ router.post(
         message: hivemindError.message || 'An error occurred while testing connection',
       });
     }
-  })
+  }
 );
 
 // GET /providers - Get available providers

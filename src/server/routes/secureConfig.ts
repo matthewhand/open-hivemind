@@ -11,7 +11,6 @@ import {
 } from '../../validation/schemas/secureConfigSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { auditMiddleware, logConfigChange, type AuditedRequest } from '../middleware/audit';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:SecureConfigRoutes');
 const router = Router();
@@ -84,7 +83,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.post(
   '/',
   validateRequest(CreateSecureConfigSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: AuditedRequest, res: Response) => {
     try {
       const { id, name, type, data } = req.body;
 
@@ -133,7 +132,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to store configuration'));
     }
-  })
+  }
 );
 
 /**
@@ -143,7 +142,7 @@ router.post(
 router.put(
   '/:id',
   validateRequest(UpdateSecureConfigSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: AuditedRequest, res: Response) => {
     try {
       const { id } = req.params;
       const { name, type, data } = req.body;
@@ -204,7 +203,7 @@ router.put(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to update configuration'));
     }
-  })
+  }
 );
 
 /**
@@ -259,7 +258,7 @@ router.delete('/:id', async (req: AuditedRequest, res: Response) => {
 router.post(
   '/backup',
   validateRequest(ConfigBackupSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: AuditedRequest, res: Response) => {
     try {
       const backupId = await (await secureConfigManagerPromise).createBackup();
 
@@ -285,7 +284,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to create backup'));
     }
-  })
+  }
 );
 
 /**
@@ -312,7 +311,7 @@ router.get('/backups/list', async (req: Request, res: Response) => {
 router.post(
   '/restore/:backupId',
   validateRequest(BackupIdParamSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: AuditedRequest, res: Response) => {
     try {
       const { backupId } = req.params;
       await (await secureConfigManagerPromise).restoreBackup(backupId);
@@ -339,7 +338,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to restore from backup'));
     }
-  })
+  }
 );
 
 export default router;

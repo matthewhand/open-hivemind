@@ -11,7 +11,6 @@ import {
 } from '@heroicons/react/24/outline';
 import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
 import { Alert } from '../components/DaisyUI/Alert';
-import Toggle from '../components/DaisyUI/Toggle';
 import Debug from 'debug';
 
 const debug = Debug('app:client:pages:MCPToolsTestingPage');
@@ -178,12 +177,12 @@ const MCPToolsTestingPage: React.FC = () => {
         </label>
 
         {type === 'boolean' ? (
-          <Toggle
-            color="primary"
+          <input
+            type="checkbox"
+            className="toggle toggle-primary"
             checked={formData[key] || false}
             onChange={(e) => handleInputChange(key, e.target.checked, type)}
             disabled={testing}
-            aria-label={`Toggle ${key}`}
           />
         ) : type === 'integer' || type === 'number' ? (
           <input

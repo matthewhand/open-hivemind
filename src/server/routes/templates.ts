@@ -10,7 +10,6 @@ import {
 import { validateRequest } from '../../validation/validateRequest';
 import { BotConfigService } from '../services/BotConfigService';
 import { ConfigurationTemplateService } from '../services/ConfigurationTemplateService';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const router = Router();
 const debug = Debug('app:routes:templates');
@@ -163,7 +162,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.post(
   '/:id/apply',
   validateRequest(ApplyTemplateSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const templateService = ConfigurationTemplateService.getInstance();
       const botConfigService = BotConfigService.getInstance();
@@ -244,7 +243,7 @@ router.post(
         message: hivemindError.message || 'An error occurred while applying template',
       });
     }
-  })
+  }
 );
 
 /**
@@ -270,7 +269,7 @@ router.post(
  *       200:
  *         description: Created template
  */
-router.post('/', validateRequest(CreateTemplateSchema), asyncErrorHandler(async (req, res) => {
+router.post('/', validateRequest(CreateTemplateSchema), async (req: Request, res: Response) => {
   try {
     const templateService = ConfigurationTemplateService.getInstance();
     const { name, description, category, tags, config } = req.body;
@@ -297,7 +296,7 @@ router.post('/', validateRequest(CreateTemplateSchema), asyncErrorHandler(async 
       message: hivemindError.message || 'An error occurred while creating template',
     });
   }
-}));
+});
 
 /**
  * @openapi
@@ -320,7 +319,7 @@ router.post('/', validateRequest(CreateTemplateSchema), asyncErrorHandler(async 
 router.delete(
   '/:id',
   validateRequest(DeleteTemplateSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const templateService = ConfigurationTemplateService.getInstance();
       const { id } = req.params;
@@ -349,7 +348,7 @@ router.delete(
         message: hivemindError.message || 'An error occurred while deleting template',
       });
     }
-  })
+  }
 );
 
 export default router;

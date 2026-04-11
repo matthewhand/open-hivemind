@@ -8,7 +8,6 @@ import {
   UpdateAccessControlSchema,
 } from '../../validation/schemas/guardsSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const router = Router();
 const debug = Debug('app:webui:guards');
@@ -46,7 +45,7 @@ const validateIpOctets = (ip: string): boolean => {
 router.post(
   '/',
   validateRequest(UpdateAccessControlSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const accessConfig = req.body;
 
@@ -85,14 +84,14 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to save access control'));
     }
-  })
+  }
 );
 
 // POST /:id/toggle - Toggle guard enabled status
 router.post(
   '/:id/toggle',
   validateRequest(ToggleGuardSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { enabled } = req.body;
@@ -114,7 +113,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to toggle guard'));
     }
-  })
+  }
 );
 
 export default router;

@@ -360,7 +360,7 @@ const AdvancedThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
           <label className="label cursor-pointer">
             <span className="label-text">🌗 Auto Theme (System)</span>
             <Toggle
-              color="primary"
+              className="toggle toggle-primary"
               checked={isAutoMode}
               onChange={toggleAutoMode}
             />

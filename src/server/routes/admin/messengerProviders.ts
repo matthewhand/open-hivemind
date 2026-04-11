@@ -9,7 +9,6 @@ import {
   UpdateMessengerProviderSchema,
 } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
-import { asyncErrorHandler } from '../../../middleware/errorHandler';
 
 const router = Router();
 
@@ -55,7 +54,7 @@ router.get('/messenger-providers', (req: Request, res: Response) => {
 router.post(
   '/messenger-providers',
   validateRequest(MessengerProviderSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { name, type, config } = req.body;
 
@@ -94,14 +93,14 @@ router.post(
         message: hivemindError.message || 'An error occurred while creating messenger provider',
       });
     }
-  })
+  }
 );
 
 // PUT /messenger-providers/:id - Update an existing messenger provider
 router.put(
   '/messenger-providers/:id',
   validateRequest(UpdateMessengerProviderSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { name, type, config } = req.body;
@@ -153,7 +152,7 @@ router.put(
         message: hivemindError.message || 'An error occurred while updating messenger provider',
       });
     }
-  })
+  }
 );
 
 /**
@@ -175,7 +174,7 @@ router.put(
 router.delete(
   '/messenger-providers/:id',
   validateRequest(ToggleIdParamSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
 
@@ -193,14 +192,14 @@ router.delete(
         message: hivemindError.message || 'An error occurred while deleting messenger provider',
       });
     }
-  })
+  }
 );
 
 // POST /messenger-providers/:id/toggle - Toggle messenger provider active status
 router.post(
   '/messenger-providers/:id/toggle',
   validateRequest(ToggleProviderSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { isActive } = req.body;
@@ -229,7 +228,7 @@ router.post(
         message: hivemindError.message || 'An error occurred while updating provider status',
       });
     }
-  })
+  }
 );
 
 export default router;

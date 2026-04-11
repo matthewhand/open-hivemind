@@ -5,7 +5,7 @@ import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest, LoginCredentials, RegisterData } from '../../auth/types';
 import { authRateLimiter } from '../../middleware/rateLimiter';
 import { HTTP_STATUS } from '../../types/constants';
-import { validateRequest as validate } from '../../validation/validateRequest';
+import { validate } from '../middleware/validate';
 import {
   ChangePasswordSchema,
   LoginSchema,
@@ -17,7 +17,6 @@ import {
   VerifyTokenSchema,
 } from '../schemas/auth.schemas';
 import { ApiResponse } from '../utils/apiResponse';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:AuthRoutes');
 const router = Router();
@@ -49,7 +48,7 @@ router.post(
   '/login',
   authRateLimiter,
   validate(LoginSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const credentials: LoginCredentials = req.body;
       // Normal authentication flow
@@ -64,7 +63,7 @@ router.post(
         .status(HTTP_STATUS.UNAUTHORIZED)
         .json(ApiResponse.error(errMsg || 'Invalid credentials', undefined, 401));
     }
-  })
+  }
 );
 
 /**
@@ -98,7 +97,7 @@ router.post(
   authenticate,
   requireAdmin,
   validate(RegisterSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const registerData: RegisterData = req.body;
 
@@ -112,7 +111,7 @@ router.post(
         .status(HTTP_STATUS.BAD_REQUEST)
         .json(ApiResponse.error(errMsg || 'Failed to register user', undefined, 400));
     }
-  })
+  }
 );
 
 /**
@@ -140,7 +139,7 @@ router.post(
   '/refresh',
   authRateLimiter,
   validate(RefreshTokenSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { refreshToken } = req.body;
 
@@ -154,7 +153,7 @@ router.post(
         .status(HTTP_STATUS.UNAUTHORIZED)
         .json(ApiResponse.error(errMsg || 'Invalid refresh token', undefined, 401));
     }
-  })
+  }
 );
 
 /**
@@ -183,7 +182,7 @@ router.post(
   '/logout',
   authenticate,
   validate(LogoutSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { refreshToken } = req.body;
 
@@ -199,7 +198,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Logout failed', undefined, 500));
     }
-  })
+  }
 );
 
 /**
@@ -220,7 +219,7 @@ router.post(
   '/verify',
   authRateLimiter,
   validate(VerifyTokenSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { token } = req.body;
       const payload = authManager.verifyAccessToken(token);
@@ -235,7 +234,7 @@ router.post(
         .status(HTTP_STATUS.UNAUTHORIZED)
         .json(ApiResponse.error('Invalid token', undefined, 401));
     }
-  })
+  }
 );
 
 router.get('/me', authenticate, (req: Request, res: Response) => {
@@ -251,7 +250,7 @@ router.put(
   '/password',
   authenticate,
   validate(ChangePasswordSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { currentPassword, newPassword } = req.body;
 
@@ -311,7 +310,7 @@ router.put(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Password change failed', undefined, 500));
     }
-  })
+  }
 );
 
 /**

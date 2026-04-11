@@ -5,7 +5,6 @@ import { DatabaseManager } from '../../database/DatabaseManager';
 import { HTTP_STATUS } from '../../types/constants';
 import { LogActivitySchema } from '../../validation/schemas/activitySchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:webui:activity');
 const router = Router();
@@ -61,7 +60,7 @@ interface ActivitySummary {
 }
 
 // GET /api/activity/messages - Get filtered message activity
-router.get('/messages', asyncErrorHandler(async (req, res) => {
+router.get('/messages', async (req, res) => {
   try {
     const filter: ActivityFilter = {
       agentId: req.query.agentId as string,
@@ -97,10 +96,10 @@ router.get('/messages', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to fetch message activity'));
   }
-}));
+});
 
 // GET /api/activity/llm-usage - Get LLM usage metrics
-router.get('/llm-usage', asyncErrorHandler(async (req, res) => {
+router.get('/llm-usage', async (req, res) => {
   try {
     const filter: ActivityFilter = {
       llmProvider: req.query.llmProvider as string,
@@ -126,10 +125,10 @@ router.get('/llm-usage', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to fetch LLM usage'));
   }
-}));
+});
 
 // GET /api/activity/summary - Get activity summary
-router.get('/summary', asyncErrorHandler(async (req, res) => {
+router.get('/summary', async (req, res) => {
   try {
     const filter: ActivityFilter = {
       startDate: req.query.startDate as string,
@@ -165,10 +164,10 @@ router.get('/summary', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to fetch activity summary'));
   }
-}));
+});
 
 // GET /api/activity/chart-data - Get time-series data for charts
-router.get('/chart-data', asyncErrorHandler(async (req, res) => {
+router.get('/chart-data', async (req, res) => {
   try {
     const filter: ActivityFilter = {
       messageProvider: req.query.messageProvider as string,
@@ -237,10 +236,10 @@ router.get('/chart-data', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to fetch chart data'));
   }
-}));
+});
 
 // GET /api/activity/agents - Get agent activity statistics
-router.get('/agents', asyncErrorHandler(async (req, res) => {
+router.get('/agents', async (req, res) => {
   try {
     const filter: ActivityFilter = {
       startDate: req.query.startDate as string,
@@ -287,10 +286,10 @@ router.get('/agents', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to fetch agent activity'));
   }
-}));
+});
 
 // GET /api/activity/mcp-tools - Get MCP tool usage statistics
-router.get('/mcp-tools', asyncErrorHandler(async (req, res) => {
+router.get('/mcp-tools', async (req, res) => {
   try {
     const filter: ActivityFilter = {
       agentId: req.query.agentId as string,
@@ -325,10 +324,10 @@ router.get('/mcp-tools', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to fetch MCP tool usage'));
   }
-}));
+});
 
 // POST /api/activity/log - Log a new activity event (for internal use)
-router.post('/log', validateRequest(LogActivitySchema), asyncErrorHandler(async (req, res) => {
+router.post('/log', validateRequest(LogActivitySchema), async (req, res) => {
   try {
     const {
       agentId,
@@ -365,6 +364,6 @@ router.post('/log', validateRequest(LogActivitySchema), asyncErrorHandler(async 
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to log activity'));
   }
-}));
+});
 
 export default router;

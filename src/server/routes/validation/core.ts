@@ -5,7 +5,6 @@ import type { BotConfig } from '../../../types/config';
 import { HTTP_STATUS } from '../../../types/constants';
 import { ValidationTestSchema } from '../../../validation/schemas/miscSchema';
 import { validateRequest } from '../../../validation/validateRequest';
-import { asyncErrorHandler } from '../../../middleware/errorHandler';
 
 const debug = Debug('app:server:routes:validation:core');
 
@@ -179,7 +178,7 @@ export function createCoreRoutes(): Router {
   router.post(
     '/api/validation/test',
     validateRequest(ValidationTestSchema),
-    asyncErrorHandler(async (req, res) => {
+    async (req: AuthMiddlewareRequest, res: Response) => {
       try {
         const { config } = req.body ?? {};
 
@@ -224,7 +223,7 @@ export function createCoreRoutes(): Router {
           .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
           .json({ error: 'Internal server error' });
       }
-    })
+    }
   );
 
   /**

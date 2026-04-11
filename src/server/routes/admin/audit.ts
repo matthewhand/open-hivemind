@@ -9,7 +9,6 @@ import {
   UpdateToolUsageGuardSchema,
 } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
-import { asyncErrorHandler } from '../../../middleware/errorHandler';
 
 const router = Router();
 
@@ -34,7 +33,7 @@ const configRateLimit = isTestEnv
  *       200:
  *         description: List of tool usage guards
  */
-router.get('/tool-usage-guards', asyncErrorHandler(async (req, res) => {
+router.get('/tool-usage-guards', (req: Request, res: Response) => {
   try {
     // Mock data for tool usage guards
     const guards = [
@@ -71,7 +70,7 @@ router.get('/tool-usage-guards', asyncErrorHandler(async (req, res) => {
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to retrieve tool usage guards'));
   }
-}));
+});
 
 /**
  * @openapi
@@ -97,7 +96,8 @@ router.get('/tool-usage-guards', asyncErrorHandler(async (req, res) => {
 router.post(
   '/tool-usage-guards',
   configRateLimit,
-  validateRequest(ToolUsageGuardSchema), asyncErrorHandler(async (req, res) => {
+  validateRequest(ToolUsageGuardSchema),
+  (req: Request, res: Response) => {
     try {
       const { name, description, toolId, guardType, allowedUsers, allowedRoles, isActive } =
         req.body;
@@ -121,14 +121,15 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to create tool usage guard'));
     }
-  })
+  }
 );
 
 // PUT /tool-usage-guards/:id - Update an existing tool usage guard
 router.put(
   '/tool-usage-guards/:id',
   configRateLimit,
-  validateRequest(UpdateToolUsageGuardSchema), asyncErrorHandler(async (req, res) => {
+  validateRequest(UpdateToolUsageGuardSchema),
+  (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { name, description, toolId, guardType, allowedUsers, allowedRoles, isActive } =
@@ -153,7 +154,7 @@ router.put(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to update tool usage guard'));
     }
-  })
+  }
 );
 
 /**
@@ -175,7 +176,8 @@ router.put(
 router.delete(
   '/tool-usage-guards/:id',
   configRateLimit,
-  validateRequest(ToggleIdParamSchema), asyncErrorHandler(async (req, res) => {
+  validateRequest(ToggleIdParamSchema),
+  (req: Request, res: Response) => {
     try {
       const { id } = req.params;
 
@@ -189,14 +191,15 @@ router.delete(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to delete tool usage guard'));
     }
-  })
+  }
 );
 
 // POST /tool-usage-guards/:id/toggle - Toggle tool usage guard active status
 router.post(
   '/tool-usage-guards/:id/toggle',
   configRateLimit,
-  validateRequest(ToggleProviderSchema), asyncErrorHandler(async (req, res) => {
+  validateRequest(ToggleProviderSchema),
+  (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { isActive } = req.body;
@@ -211,12 +214,12 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to update guard status'));
     }
-  })
+  }
 );
 
 // Placeholder for audit log queries
-router.get('/audit-logs', asyncErrorHandler(async (req, res) => {
+router.get('/audit-logs', (req, res) => {
   res.json(ApiResponse.success({ logs: [] }));
-}));
+});
 
 export default router;

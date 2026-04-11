@@ -3,7 +3,6 @@ import { Router, type Request, type Response } from 'express';
 import { providerRegistry } from '../../registries/ProviderRegistry';
 import { HTTP_STATUS } from '../../types/constants';
 import { ApiResponse } from '../utils/apiResponse';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:providers-route');
 const router = Router();
@@ -12,7 +11,7 @@ const router = Router();
  * GET /api/providers/memory
  * List all registered memory providers with health status.
  */
-router.get('/memory', asyncErrorHandler(async (req, res) => {
+router.get('/memory', async (_req: Request, res: Response) => {
   try {
     const memoryProviders = providerRegistry.getMemoryProviders();
     const results: Array<{
@@ -55,7 +54,7 @@ router.get('/memory', asyncErrorHandler(async (req, res) => {
       })
     );
   }
-}));
+});
 
 /**
  * POST /api/providers/memory/:name/test
@@ -63,7 +62,7 @@ router.get('/memory', asyncErrorHandler(async (req, res) => {
  *
  * Returns step-by-step results so you can see exactly where things break.
  */
-router.post('/memory/:name/test', asyncErrorHandler(async (req, res) => {
+router.post('/memory/:name/test', async (req: Request, res: Response) => {
   const { name } = req.params;
   const userId = (req.body?.userId as string) || 'smoke-test';
   const steps: Array<{
@@ -220,13 +219,13 @@ router.post('/memory/:name/test', asyncErrorHandler(async (req, res) => {
       })
     );
   }
-}));
+});
 
 /**
  * GET /api/providers/tool
  * List all registered tool providers with status.
  */
-router.get('/tool', asyncErrorHandler(async (req, res) => {
+router.get('/tool', async (_req: Request, res: Response) => {
   try {
     const toolProviders = providerRegistry.getToolProviders();
     const results: Array<{
@@ -273,6 +272,6 @@ router.get('/tool', asyncErrorHandler(async (req, res) => {
       })
     );
   }
-}));
+});
 
 export default router;
