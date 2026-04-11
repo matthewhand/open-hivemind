@@ -84,11 +84,15 @@ export async function getMessengerProvider() {
     { name: 'mattermost', wanted: hasMattermost && wantProvider('mattermost') },
   ];
 
+  // Lazy load dependencies provider to maintain CJS compatibility
+  const { ServiceDependenciesProvider } = require('../../services/ServiceDependenciesProvider');
+  const dependencies = ServiceDependenciesProvider.getDependencies();
+
   for (const { name, wanted } of requestedTypes) {
     if (!wanted) continue;
     try {
       const mod = await loadPlugin(`message-${name}`);
-      const svc = instantiateMessageService(mod);
+      const svc = instantiateMessageService(mod, undefined, dependencies);
       if (svc) {
         if (typeof (svc as any).provider === 'undefined') {
           (svc as any).provider = name;
@@ -116,7 +120,7 @@ export async function getMessengerProvider() {
       gmpDebug('No valid messenger providers initialized, defaulting to Slack');
       try {
         const mod = await loadPlugin('message-slack');
-        const svc = instantiateMessageService(mod);
+        const svc = instantiateMessageService(mod, undefined, dependencies);
         if (svc) {
           if (typeof (svc as any).provider === 'undefined') {
             (svc as any).provider = 'slack';

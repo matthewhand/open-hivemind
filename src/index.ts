@@ -46,7 +46,7 @@ const frontendAssetsPath = path.join(frontendDistPath, 'assets');
 const viteServerRef: { current: any } = { current: undefined };
 
 // Check if frontend dist exists (async check will be done in main())
-let frontendDistExists = false;
+let frontendDistExists = fs.existsSync(frontendDistPath);
 
 // Initialize ShutdownCoordinator for graceful shutdown
 const shutdownCoordinator = ShutdownCoordinator.getInstance();

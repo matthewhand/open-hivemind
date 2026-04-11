@@ -36,6 +36,10 @@ export class DiscordBotManager {
   }
 
   private loadBotsFromConfig(): void {
+    if (!this.deps) {
+      console.warn('DiscordBotManager: No dependencies provided during initialization');
+      return;
+    }
     const { getAllBotConfigs, isBotDisabled, discordConfig, errorTypes } = this.deps;
     const { ConfigError } = errorTypes;
 

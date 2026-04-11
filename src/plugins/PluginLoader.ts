@@ -224,20 +224,21 @@ export function instantiateLlmProvider(
  */
 export function instantiateMessageService(
   mod: PluginModule,
-  config?: AnyConfig | unknown
+  config?: AnyConfig | unknown,
+  dependencies?: IServiceDependencies
 ): IMessengerService {
   // Message services use 'Service' suffix rather than 'Provider'
   if (typeof mod.create === 'function') {
-    return mod.create(config) as IMessengerService;
+    return mod.create(config, dependencies) as IMessengerService;
   }
   if (typeof mod.default === 'function') {
-    return mod.default(config) as IMessengerService;
+    return mod.default(config, dependencies) as IMessengerService;
   }
   const svcKey = Object.keys(mod).find(
     (k) => k.endsWith('Service') && typeof mod[k]?.getInstance === 'function'
   );
   if (svcKey && typeof mod[svcKey].getInstance === 'function') {
-    return mod[svcKey].getInstance() as IMessengerService;
+    return mod[svcKey].getInstance(config, dependencies) as IMessengerService;
   }
   throw new Error(
     'Plugin does not export create(), a default factory, or a Service.getInstance().'
