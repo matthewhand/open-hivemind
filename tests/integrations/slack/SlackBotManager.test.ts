@@ -54,7 +54,7 @@ describe('SlackBotManager', () => {
     const config = {
       token: 'test-token',
       appToken: 'test-app-token',
-      signingSecret: 'test-signing-secret'
+      signingSecret: 'test-signing-secret',
     };
 
     const slackBotManager = new SlackBotManager([config], 'socket');
@@ -64,7 +64,7 @@ describe('SlackBotManager', () => {
 
     // Test configuration
     expect(MockSocketModeClient).toHaveBeenCalledWith({
-      appToken: 'test-app-token'
+      appToken: 'test-app-token',
     });
 
     // Test that the socket client was instantiated (event handlers registered on start/initialize)

@@ -49,9 +49,7 @@ describe('POST /auth/refresh', () => {
     };
     mockAuthManager.refreshToken.mockResolvedValue(tokenSet);
 
-    const res = await request(app)
-      .post('/auth/refresh')
-      .send({ refreshToken: 'valid-rtok' });
+    const res = await request(app).post('/auth/refresh').send({ refreshToken: 'valid-rtok' });
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
@@ -64,9 +62,7 @@ describe('POST /auth/refresh', () => {
   it('returns 401 when refreshToken is invalid or expired', async () => {
     mockAuthManager.refreshToken.mockRejectedValue(new Error('Token expired'));
 
-    const res = await request(app)
-      .post('/auth/refresh')
-      .send({ refreshToken: 'expired-token' });
+    const res = await request(app).post('/auth/refresh').send({ refreshToken: 'expired-token' });
 
     expect(res.status).toBe(401);
     expect(res.body.success).toBe(false);
@@ -74,9 +70,7 @@ describe('POST /auth/refresh', () => {
   });
 
   it('returns 400 with VALIDATION_ERROR when refreshToken field is missing', async () => {
-    const res = await request(app)
-      .post('/auth/refresh')
-      .send({});
+    const res = await request(app).post('/auth/refresh').send({});
 
     expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);
@@ -85,9 +79,7 @@ describe('POST /auth/refresh', () => {
   });
 
   it('returns 400 with VALIDATION_ERROR when refreshToken is an empty string', async () => {
-    const res = await request(app)
-      .post('/auth/refresh')
-      .send({ refreshToken: '' });
+    const res = await request(app).post('/auth/refresh').send({ refreshToken: '' });
 
     expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);
@@ -118,9 +110,7 @@ describe('POST /auth/refresh', () => {
   it('returns 401 with a generic message when refreshToken throws a non-Error value', async () => {
     mockAuthManager.refreshToken.mockRejectedValue('string error');
 
-    const res = await request(app)
-      .post('/auth/refresh')
-      .send({ refreshToken: 'some-token' });
+    const res = await request(app).post('/auth/refresh').send({ refreshToken: 'some-token' });
 
     expect(res.status).toBe(401);
     expect(res.body.success).toBe(false);

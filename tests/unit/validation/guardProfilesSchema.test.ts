@@ -54,9 +54,7 @@ describe('guardProfilesSchema', () => {
       const result = CreateGuardProfileSchema.safeParse(invalidProfile);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain(
-          'valid email address'
-        );
+        expect(result.error.errors[0].message).toContain('valid email address');
       }
     });
 

@@ -24,7 +24,9 @@ describe('Architecture: no raw axios in packages', () => {
     const violations = output
       .split('\n')
       .filter(Boolean)
-      .filter((line) => !line.includes('.test.') && !line.includes('.spec.') && !line.includes('.d.ts'));
+      .filter(
+        (line) => !line.includes('.test.') && !line.includes('.spec.') && !line.includes('.d.ts')
+      );
 
     expect(violations).toEqual([]);
   });

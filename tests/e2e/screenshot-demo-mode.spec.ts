@@ -39,8 +39,8 @@ test.describe('Demo Mode Screenshots', () => {
           botCount: 3,
           conversationCount: 15,
           messageCount: 142,
-          isSimulationRunning: true
-        }
+          isSimulationRunning: true,
+        },
       })
     );
 
@@ -49,7 +49,10 @@ test.describe('Demo Mode Screenshots', () => {
       route.fulfill({ status: 200, json: { data: { bots: [] } } })
     );
     await page.route('**/api/dashboard/summary', async (route) =>
-      route.fulfill({ status: 200, json: { totalBots: 3, activeBots: 3, providers: { llms: 2, message: 2 } } })
+      route.fulfill({
+        status: 200,
+        json: { totalBots: 3, activeBots: 3, providers: { llms: 2, message: 2 } },
+      })
     );
     await page.route('**/api/dashboard/recent-activity*', async (route) =>
       route.fulfill({ status: 200, json: [] })

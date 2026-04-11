@@ -1,7 +1,7 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import authRouter from '../../src/server/routes/auth';
 import { globalErrorHandler } from '../../src/middleware/errorHandler';
+import authRouter from '../../src/server/routes/auth';
 
 /**
  * Creates a fresh Express app with the real authRouter mounted at /auth,

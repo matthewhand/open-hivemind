@@ -1,7 +1,7 @@
 import express from 'express';
 import request from 'supertest';
-import swarmRouter from '../../src/admin/swarmRoutes';
 import { SwarmInstaller } from '@integrations/openswarm/SwarmInstaller';
+import swarmRouter from '../../src/admin/swarmRoutes';
 import { providerRegistry } from '../../src/registries/ProviderRegistry';
 
 // Mock the SwarmInstaller to return successful responses

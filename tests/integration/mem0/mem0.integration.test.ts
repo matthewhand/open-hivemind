@@ -16,7 +16,10 @@ let mem0Available = false;
 
 beforeAll(async () => {
   try {
-    const res = await fetch(`${MEM0_BASE_URL}/`, { redirect: 'follow', signal: AbortSignal.timeout(3000) });
+    const res = await fetch(`${MEM0_BASE_URL}/`, {
+      redirect: 'follow',
+      signal: AbortSignal.timeout(3000),
+    });
     mem0Available = res.ok;
   } catch {
     mem0Available = false;
@@ -51,7 +54,9 @@ describe('Mem0 integration', () => {
 
   it('list memories returns array (even when empty)', async () => {
     if (!mem0Available) return;
-    const res = await fetch(`${MEM0_BASE_URL}/memories?user_id=${TEST_USER_ID}`, { headers: headers() });
+    const res = await fetch(`${MEM0_BASE_URL}/memories?user_id=${TEST_USER_ID}`, {
+      headers: headers(),
+    });
     expect(res.ok).toBe(true);
     const body = await res.json();
     expect(Array.isArray(body)).toBe(true);

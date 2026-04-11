@@ -1,11 +1,10 @@
 import express from 'express';
 import request from 'supertest';
+import { configureWebhookRoutes } from '../../src/webhook/routes/webhookRoutes';
 
 // Set actual environment variables that convict uses
 process.env.WEBHOOK_TOKEN = 'test-token';
 process.env.WEBHOOK_IP_WHITELIST = '127.0.0.1';
-
-import { configureWebhookRoutes } from '../../src/webhook/routes/webhookRoutes';
 
 describe('Slack Webhook Integration', () => {
   let app: express.Application;
@@ -35,7 +34,7 @@ describe('Slack Webhook Integration', () => {
     const payload = {
       text: 'Hello from Slack',
       username: 'SlackUser',
-      attachments: [{ text: 'Extra info' }]
+      attachments: [{ text: 'Extra info' }],
     };
 
     const res = await request(app)
@@ -48,7 +47,7 @@ describe('Slack Webhook Integration', () => {
     expect(mockMessageService.handleIncomingWebhook).toHaveBeenCalledWith(
       expect.objectContaining({
         text: 'Hello from Slack\n\nExtra info',
-        username: 'SlackUser'
+        username: 'SlackUser',
       }),
       'test-channel'
     );

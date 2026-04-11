@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { setupAuth } from './test-utils';
 
 /**
@@ -55,12 +55,18 @@ async function setupBotsMocks(page: import('@playwright/test').Page) {
     if (route.request().method() === 'GET') {
       await route.fulfill({ status: 200, json: { success: true, data: MOCK_BOTS } });
     } else {
-      await route.fulfill({ status: 201, json: { success: true, data: { id: 'new-bot', name: 'NewBot' } } });
+      await route.fulfill({
+        status: 201,
+        json: { success: true, data: { id: 'new-bot', name: 'NewBot' } },
+      });
     }
   });
 
   await page.route('**/api/onboarding/status', async (route) => {
-    await route.fulfill({ status: 200, json: { success: true, data: { completed: true, step: 5 } } });
+    await route.fulfill({
+      status: 200,
+      json: { success: true, data: { completed: true, step: 5 } },
+    });
   });
 
   await page.route('**/api/personas', async (route) => {
@@ -105,9 +111,9 @@ test.describe('Bots Page', () => {
     await page.waitForLoadState('domcontentloaded');
 
     // The page must not throw a React error boundary
-    const errorBoundary = page.locator('text=Something went wrong').or(
-      page.locator('text=React error')
-    );
+    const errorBoundary = page
+      .locator('text=Something went wrong')
+      .or(page.locator('text=React error'));
     await expect(errorBoundary).not.toBeVisible({ timeout: 8000 });
 
     // Bot names must be visible
@@ -160,9 +166,9 @@ test.describe('Bots Page', () => {
     await createButton.click();
 
     // The create modal or wizard should appear
-    await expect(
-      page.getByRole('dialog', { name: 'Create New Bot' })
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole('dialog', { name: 'Create New Bot' })).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test('clicking a bot opens the detail drawer', async ({ page }) => {
@@ -202,7 +208,7 @@ test.describe('Bots Page', () => {
     await expect(page.getByText('AlphaBot')).toBeVisible({ timeout: 10000 });
     await page.waitForTimeout(500);
 
-    const reactErrors = consoleErrors.filter(e => e.includes('React') || e.includes('Error #'));
+    const reactErrors = consoleErrors.filter((e) => e.includes('React') || e.includes('Error #'));
     expect(reactErrors, `React errors: ${reactErrors.join('\n')}`).toHaveLength(0);
   });
 });

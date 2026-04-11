@@ -1,8 +1,4 @@
-import type {
-  IMessengerService,
-  IMessage,
-  IServiceDependencies,
-} from '@hivemind/shared-types';
+import type { IMessage, IMessengerService, IServiceDependencies } from '@hivemind/shared-types';
 
 /**
  * Webhook implementation of IMessengerService.
@@ -12,7 +8,11 @@ import type {
  * that aren't natively supported.
  */
 export class WebhookService implements IMessengerService {
-  private messageHandler?: (message: IMessage, history: IMessage[], botConfig: any) => Promise<string>;
+  private messageHandler?: (
+    message: IMessage,
+    history: IMessage[],
+    botConfig: any
+  ) => Promise<string>;
   public providerName = 'webhook';
 
   constructor(private dependencies?: IServiceDependencies) {}

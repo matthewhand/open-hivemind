@@ -93,7 +93,11 @@ jest.mock('@hivemind/shared-types', () => ({
   http: {
     create: jest.fn().mockReturnValue({
       get: jest.fn().mockResolvedValue({}),
-      post: jest.fn().mockResolvedValue({ choices: [{ text: 'mocked text response', message: { content: 'mocked response' } }] }),
+      post: jest
+        .fn()
+        .mockResolvedValue({
+          choices: [{ text: 'mocked text response', message: { content: 'mocked response' } }],
+        }),
     }),
   },
   createHttpClient: jest.fn(),

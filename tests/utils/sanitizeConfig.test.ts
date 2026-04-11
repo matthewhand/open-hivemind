@@ -19,11 +19,15 @@ describe('sanitizeConfig', () => {
       webhookSecret: 'ws',
     };
     const result = sanitizeConfig(config);
-    Object.values(result).forEach(v => expect(v).toBe('••••••••'));
+    Object.values(result).forEach((v) => expect(v).toBe('••••••••'));
   });
 
   it('preserves non-sensitive fields', () => {
-    const result = sanitizeConfig({ model: 'gpt-4', baseUrl: 'https://api.openai.com', maxTokens: 1000 });
+    const result = sanitizeConfig({
+      model: 'gpt-4',
+      baseUrl: 'https://api.openai.com',
+      maxTokens: 1000,
+    });
     expect(result.model).toBe('gpt-4');
     expect(result.baseUrl).toBe('https://api.openai.com');
     expect(result.maxTokens).toBe(1000);
@@ -77,9 +81,7 @@ describe('sanitizeProfiles', () => {
   });
 
   it('preserves non-config profile fields', () => {
-    const profiles = [
-      { key: 'p1', name: 'Profile 1', config: { apiKey: 'secret' } },
-    ];
+    const profiles = [{ key: 'p1', name: 'Profile 1', config: { apiKey: 'secret' } }];
     const result = sanitizeProfiles(profiles);
     expect(result[0].key).toBe('p1');
     expect(result[0].name).toBe('Profile 1');

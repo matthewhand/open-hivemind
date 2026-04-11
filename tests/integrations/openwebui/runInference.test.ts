@@ -1,9 +1,9 @@
 import Debug from 'debug';
-import { resetAllCircuitBreakers } from '../../../src/common/CircuitBreaker';
+import { http } from '@hivemind/shared-types';
 import { generateChatCompletion } from '@integrations/openwebui/runInference';
 import * as sessionManager from '@integrations/openwebui/sessionManager';
 import * as uploadKnowledgeFile from '@integrations/openwebui/uploadKnowledgeFile';
-import { http } from '@hivemind/shared-types';
+import { resetAllCircuitBreakers } from '../../../src/common/CircuitBreaker';
 
 // Silence debug logs during tests
 jest.mock('debug', () => () => jest.fn());

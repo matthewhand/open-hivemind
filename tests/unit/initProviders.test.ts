@@ -69,11 +69,15 @@ jest.mock('../../src/registries/ProviderRegistry', () => {
   };
 });
 
-jest.mock('@integrations/openswarm/SwarmInstaller', () => ({
-  SwarmInstaller: jest.fn().mockImplementation(() => ({
-    id: 'swarm-installer',
-  })),
-}), { virtual: true });
+jest.mock(
+  '@integrations/openswarm/SwarmInstaller',
+  () => ({
+    SwarmInstaller: jest.fn().mockImplementation(() => ({
+      id: 'swarm-installer',
+    })),
+  }),
+  { virtual: true }
+);
 
 const mockedFsPromises = fs.promises as jest.Mocked<typeof fs.promises>;
 const mockedLoadMemoryProfiles = loadMemoryProfiles as jest.MockedFunction<

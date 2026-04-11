@@ -63,7 +63,9 @@ describe('Semantic Guardrails Integration', () => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { toolAugmentedCompletion } = require('@src/services/toolAugmentedCompletion');
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { shouldReplyToMessage } = require('@src/message/helpers/processing/shouldReplyToMessage');
+    const {
+      shouldReplyToMessage,
+    } = require('@src/message/helpers/processing/shouldReplyToMessage');
 
     getMessengerProvider.mockResolvedValue([
       {

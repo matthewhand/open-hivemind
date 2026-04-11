@@ -134,7 +134,9 @@ export function configureWebhookRoutes(
       const input = text || message || content;
 
       if (!input) {
-        return res.status(400).json({ error: 'Missing message content (text, message, or content)' });
+        return res
+          .status(400)
+          .json({ error: 'Missing message content (text, message, or content)' });
       }
 
       debug('Received generic webhook message:', input);
@@ -142,7 +144,10 @@ export function configureWebhookRoutes(
       try {
         // If the service has a direct handler for incoming webhooks, use it
         if (typeof (messageService as any).handleIncomingWebhook === 'function') {
-          const result = await (messageService as any).handleIncomingWebhook(req.body, targetChannel);
+          const result = await (messageService as any).handleIncomingWebhook(
+            req.body,
+            targetChannel
+          );
           return res.status(200).json({ success: true, result });
         }
 

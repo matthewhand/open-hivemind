@@ -8,7 +8,7 @@
  */
 
 import request from 'supertest';
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
 
 describe('LLM Test Endpoint Contract', () => {
   let app: any;
@@ -77,11 +77,11 @@ describe('LLM Test Endpoint Contract', () => {
       Array.from({ length: 150 }, () =>
         request(app)
           .post('/api/admin/llm-providers/providers/test-key/test')
-          .send({ message: 'rate limit test' }),
-      ),
+          .send({ message: 'rate limit test' })
+      )
     );
 
-    const rateLimited = responses.filter(r => r.status === 429);
+    const rateLimited = responses.filter((r) => r.status === 429);
     expect(rateLimited.length).toBeGreaterThan(0);
   });
 });

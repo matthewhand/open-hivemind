@@ -1,3 +1,6 @@
+import { DatabaseManager } from '../../src/database/DatabaseManager';
+import { ConfigurationVersionService } from '../../src/server/services/ConfigurationVersionService';
+
 /**
  * Integration tests for configuration version deletion functionality
  *
@@ -30,9 +33,6 @@ jest.mock('../../src/server/services/ConfigurationVersionService', () => {
     })),
   };
 });
-
-import { DatabaseManager } from '../../src/database/DatabaseManager';
-import { ConfigurationVersionService } from '../../src/server/services/ConfigurationVersionService';
 
 describe('Configuration Version Deletion', () => {
   let databaseManager: any;
@@ -69,7 +69,6 @@ describe('Configuration Version Deletion', () => {
   it('should validate version exists before deletion', async () => {
     // Test validation of version existence
     const nonExistentId = 'non-existent-version';
-    await expect(versionService.deleteVersion(nonExistentId))
-      .rejects.toThrow();
+    await expect(versionService.deleteVersion(nonExistentId)).rejects.toThrow();
   });
 });

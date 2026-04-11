@@ -32,10 +32,9 @@ describe('useRealTimeValidation', () => {
   it('should not call API when disabled', async () => {
     const mockPost = apiService.post as jest.MockedFunction<typeof apiService.post>;
 
-    const { unmount } = renderHook(
-      ({ data }) => useRealTimeValidation(data, { enabled: false }),
-      { initialProps: { data: { name: 'test' } } }
-    );
+    const { unmount } = renderHook(({ data }) => useRealTimeValidation(data, { enabled: false }), {
+      initialProps: { data: { name: 'test' } },
+    });
 
     // Flush any pending React state updates before asserting
     await act(async () => {});
@@ -94,10 +93,9 @@ describe('useRealTimeValidation', () => {
       },
     });
 
-    renderHook(
-      ({ data }) => useRealTimeValidation(data, { debounceMs: 0, profileId: 'strict' }),
-      { initialProps: { data: { name: 'test' } } }
-    );
+    renderHook(({ data }) => useRealTimeValidation(data, { debounceMs: 0, profileId: 'strict' }), {
+      initialProps: { data: { name: 'test' } },
+    });
 
     // Wait for the debounced validation to fire and complete
     await act(async () => {

@@ -1,3 +1,6 @@
+import request from 'supertest';
+import { createAuthApp } from '../../helpers/authTestApp';
+
 // Use `var` so the declaration is hoisted above the jest.mock factory calls.
 // eslint-disable-next-line no-var
 var mockLogin: jest.Mock;
@@ -37,9 +40,6 @@ jest.mock('../../../src/auth/AuthManager', () => {
 jest.mock('../../../src/middleware/rateLimiter', () => ({
   authRateLimiter: (_req: any, _res: any, next: any) => next(),
 }));
-
-import request from 'supertest';
-import { createAuthApp } from '../../helpers/authTestApp';
 
 describe('POST /auth/login', () => {
   const app = createAuthApp();
