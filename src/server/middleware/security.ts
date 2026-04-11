@@ -666,13 +666,29 @@ export function isIPInCIDR(ip: string, cidr: string): boolean {
 
 /**
  * Check whether the request originates from a trusted admin IP.
- * Returns true when ALLOW_LOCALHOST_ADMIN is 'true' AND the client IP
- * matches an entry in ADMIN_IP_WHITELIST (defaults to localhost).
+ *
+ * Returns true when ANY of the following conditions is met:
+ *  1. FORCE_TRUSTED_LOGIN=true  — bypasses all IP checks (development convenience)
+ *  2. ALLOW_LOCALHOST_ADMIN=true AND the client IP matches an entry in
+ *     ADMIN_IP_WHITELIST (defaults to 127.0.0.1, ::1, ::ffff:127.0.0.1)
+ *
+ * IPv4 CIDR ranges (e.g. 0.0.0.0/0, 10.0.0.0/8) are supported.
+ * IPv6 addresses must be listed explicitly (e.g. ::1).
+ *
+ * ⚠️  FORCE_TRUSTED_LOGIN=true is intended for local dev only — never set
+ *     it in production, as it allows passwordless admin login from any IP.
  */
 export function isTrustedAdminIP(req: Request): boolean {
+  // Escape hatch for local development — skips all IP checks
+  if (process.env.FORCE_TRUSTED_LOGIN === 'true') {
+    debug('FORCE_TRUSTED_LOGIN is set — granting trusted admin access');
+    return true;
+  }
+
   if (process.env.ALLOW_LOCALHOST_ADMIN !== 'true') {
     return false;
   }
+
   const clientIP = getClientIP(req);
   const whitelistEnv = process.env.ADMIN_IP_WHITELIST;
   const whitelist = whitelistEnv
@@ -681,8 +697,14 @@ export function isTrustedAdminIP(req: Request): boolean {
         .map((ip) => ip.trim())
         .filter(Boolean)
     : ['127.0.0.1', '::1', '::ffff:127.0.0.1'];
+
   return whitelist.some((allowed) => {
     if (allowed.includes('/')) {
+      // isIPInCIDR only handles IPv4 CIDRs; for IPv6 addresses (e.g. ::1)
+      // fall through to the exact-match check below
+      if (clientIP.includes(':') && !clientIP.startsWith('::ffff:')) {
+        return false;
+      }
       return isIPInCIDR(clientIP, allowed);
     }
     return clientIP === allowed || clientIP === `::ffff:${allowed}`;
