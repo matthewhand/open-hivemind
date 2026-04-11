@@ -190,7 +190,7 @@ export function handleUncaughtException(error: Error): void {
   MetricsCollector.getInstance().incrementErrors();
 
   // In production, use ShutdownCoordinator for graceful shutdown
-  if (process.env.NODE_ENV === 'production' && process.env.NODE_ENV !== 'test') {
+  if (process.env.NODE_ENV === 'production') {
     debug('ERROR:', 'Uncaught Exception:', error);
     // Give the ShutdownCoordinator 5 seconds to handle this, then force exit
     // The ShutdownCoordinator should already have handlers registered via setupSignalHandlers()
@@ -198,7 +198,7 @@ export function handleUncaughtException(error: Error): void {
       debug('ERROR:', 'Uncaught exception handler timeout - forcing exit');
       process.exit(1);
     }, 5000).unref();
-  } else if (process.env.NODE_ENV !== 'test') {
+  } else {
     // In development, re-throw for debugging
     throw error;
   }
@@ -221,7 +221,7 @@ export function handleUnhandledRejection(reason: unknown, promise: Promise<unkno
   MetricsCollector.getInstance().incrementErrors();
 
   // In production, use ShutdownCoordinator for graceful shutdown
-  if (process.env.NODE_ENV === 'production' && process.env.NODE_ENV !== 'test') {
+  if (process.env.NODE_ENV === 'production') {
     debug('ERROR:', 'Unhandled Rejection at:', promise, 'reason:', reason);
     // Give the ShutdownCoordinator 5 seconds to handle this, then force exit
     // The ShutdownCoordinator should already have handlers registered via setupSignalHandlers()
@@ -229,7 +229,7 @@ export function handleUnhandledRejection(reason: unknown, promise: Promise<unkno
       debug('ERROR:', 'Unhandled rejection handler timeout - forcing exit');
       process.exit(1);
     }, 5000).unref();
-  } else if (process.env.NODE_ENV !== 'test') {
+  } else {
     // In development, log but don't exit
     debug('ERROR:', 'Unhandled Rejection:', reason);
   }
