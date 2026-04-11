@@ -4,12 +4,13 @@ import { createHttpClient, http, HttpError, isHttpError } from './httpClient';
 jest.mock('./ssrfGuard', () => ({
   isSafeUrl: jest.fn(async (url: string) => {
     // Treat localhost and private IPs as unsafe, everything else safe
-    return (
+    const safe = (
       !url.includes('localhost') &&
       !url.includes('127.0.0.1') &&
       !url.includes('169.254') &&
       !url.includes('internal')
     );
+    return { safe, reason: safe ? undefined : 'Mock unsafe' };
   }),
 }));
 
