@@ -198,8 +198,9 @@ describe('openAiProvider', () => {
       });
 
       try {
-        await expect(openAiProvider.generateChatCompletion('test', [])).rejects.toThrow(
-          ConfigurationError
+        // Should throw when trying to use the provider without API key
+        await expect(providerWithoutKey.generateChatCompletion('test', [])).rejects.toThrow(
+          /API key/i
         );
       } finally {
         // Restore environment variable

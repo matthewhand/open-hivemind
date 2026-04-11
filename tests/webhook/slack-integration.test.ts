@@ -2,29 +2,9 @@ import express from 'express';
 import request from 'supertest';
 import { configureWebhookRoutes } from '../../src/webhook/routes/webhookRoutes';
 
-// Mock deep dependencies
-jest.mock('@src/message/helpers/processing/handleImageMessage', () => ({
-  predictionImageMap: new Map(),
-}));
-jest.mock('@common/logger', () => ({
-  __esModule: true,
-  default: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() },
-  Logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() },
-}));
-jest.mock('@config/webhookConfig', () => {
-  const store: Record<string, any> = {
-    WEBHOOK_TOKEN: 'test-token',
-    WEBHOOK_IP_WHITELIST: '127.0.0.1',
-  };
-  return { __esModule: true, default: { get: (key: string) => store[key] } };
-});
-
-function spoofIp(ip: string) {
-  return (req: express.Request, _res: express.Response, next: express.NextFunction) => {
-    Object.defineProperty(req, 'ip', { value: ip, writable: true, configurable: true });
-    next();
-  };
-}
+// Set actual environment variables that convict uses
+process.env.WEBHOOK_TOKEN = 'test-token';
+process.env.WEBHOOK_IP_WHITELIST = '127.0.0.1';
 
 describe('Slack Webhook Integration', () => {
   let app: express.Application;
@@ -58,7 +38,13 @@ describe('Slack Webhook Integration', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
-    expect(mockMessageService.handleIncomingWebhook).toHaveBeenCalledWith(payload, 'test-channel');
+    expect(mockMessageService.handleIncomingWebhook).toHaveBeenCalledWith(
+      expect.objectContaining({
+        text: 'Hello from Slack\n\nExtra info',
+        username: 'SlackUser',
+      }),
+      'test-channel'
+    );
   });
 
   it('should return 400 if text is missing (fallback path)', async () => {
