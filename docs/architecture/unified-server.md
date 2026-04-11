@@ -41,18 +41,20 @@ SKIP_MESSENGERS=true npm run start:dev
 ## 📁 Architecture
 
 ### Single Process Design
-```
-┌─────────────────────────────────────┐
-│        Open Hivemind Server         │
-├─────────────────────────────────────┤
-│  ┌─────────────┐  ┌──────────────┐  │
-│  │ Bot Services│  │  HTTP Server │  │
-│  │             │  │              │  │
-│  │ • Discord  │  │ • WebUI      │  │
-│  │ • Slack     │  │ • API        │  │
-│  │ • Webhooks  │  │ • WebSocket  │  │
-│  └─────────────┘  └──────────────┘  │
-└─────────────────────────────────────┘
+```mermaid
+graph LR
+    subgraph Server["Open Hivemind Server"]
+        subgraph BS["Bot Services"]
+            Discord
+            Slack
+            Webhooks
+        end
+        subgraph HS["HTTP Server"]
+            WebUI
+            API
+            WebSocket
+        end
+    end
 ```
 
 ### Key Components

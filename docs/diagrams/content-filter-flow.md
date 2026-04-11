@@ -2,391 +2,107 @@
 
 ## Message Processing Pipeline
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    Incoming Message                              │
-└─────────────────┬───────────────────────────────────────────────┘
-                  │
-                  ▼
-         ┌────────────────┐
-         │ Input Sanitize │
-         └────────┬───────┘
-                  │
-                  ▼
-         ┌─────────────────┐
-         │ Input Validate  │
-         └────────┬────────┘
-                  │
-                  ▼
-    ┌─────────────────────────────┐
-    │  Content Filter Check       │◄──── ContentFilterService
-    │  (if enabled)               │
-    └────────┬────────────────────┘
-             │
-             ├─ allowed = false ───┐
-             │                     │
-             │                     ▼
-             │              ┌──────────────┐
-             │              │ Audit Log    │
-             │              └──────┬───────┘
-             │                     │
-             │                     ▼
-             │              ┌──────────────┐
-             │              │ Send Notify  │
-             │              │ (optional)   │
-             │              └──────┬───────┘
-             │                     │
-             │                     ▼
-             │              ┌──────────────┐
-             │              │ Return null  │
-             │              └──────────────┘
-             │
-             └─ allowed = true
-                  │
-                  ▼
-         ┌────────────────┐
-         │ Command Check  │
-         └────────┬───────┘
-                  │
-                  ▼
-         ┌────────────────┐
-         │ Should Reply?  │
-         └────────┬───────┘
-                  │
-                  ▼
-         ┌────────────────┐
-         │ LLM Inference  │
-         └────────┬───────┘
-                  │
-                  ▼
-         ┌────────────────┐
-         │ Format Response│
-         └────────┬───────┘
-                  │
-                  ▼
-    ┌─────────────────────────────┐
-    │  Bot Response Filter        │◄──── ContentFilterService
-    │  (if enabled)               │
-    └────────┬────────────────────┘
-             │
-             ├─ allowed = false ───┐
-             │                     │
-             │                     ▼
-             │              ┌──────────────┐
-             │              │ Audit Log    │
-             │              └──────┬───────┘
-             │                     │
-             │                     ▼
-             │              ┌──────────────┐
-             │              │ Return null  │
-             │              └──────────────┘
-             │
-             └─ allowed = true
-                  │
-                  ▼
-         ┌────────────────┐
-         │ Send to Channel│
-         └────────┬───────┘
-                  │
-                  ▼
-         ┌────────────────┐
-         │  Store Memory  │
-         └────────┬───────┘
-                  │
-                  ▼
-         ┌────────────────┐
-         │ Return Response│
-         └────────────────┘
+```mermaid
+flowchart TD
+    A([Incoming Message]) --> B[Input Sanitize]
+    B --> C[Input Validate]
+    C --> D["Content Filter Check\n(if enabled)"]
+    D -->|"allowed = false"| E[Audit Log]
+    E --> F["Send Notify\n(optional)"]
+    F --> G([Return null])
+    D -->|"allowed = true"| H[Command Check]
+    H --> I[Should Reply?]
+    I --> J[LLM Inference]
+    J --> K[Format Response]
+    K --> L["Bot Response Filter\n(if enabled)"]
+    L -->|"allowed = false"| M[Audit Log]
+    M --> N([Return null])
+    L -->|"allowed = true"| O[Send to Channel]
+    O --> P[Store Memory]
+    P --> Q([Return Response])
+    CF([ContentFilterService]) -. checks .-> D
+    CF -. checks .-> L
 ```
 
 ## Content Filter Decision Flow
 
-```
-┌─────────────────────────────────────┐
-│  checkContent(content, config, role)│
-└─────────────────┬───────────────────┘
-                  │
-                  ▼
-        ┌──────────────────┐
-        │ role == 'system'?│
-        └────┬──────────────┘
-             │
-             ├─ YES ──► return { allowed: true }
-             │
-             └─ NO
-                  │
-                  ▼
-        ┌──────────────────┐
-        │ filter.enabled? │
-        └────┬─────────────┘
-             │
-             ├─ NO ──► return { allowed: true }
-             │
-             └─ YES
-                  │
-                  ▼
-        ┌──────────────────┐
-        │ blockedTerms     │
-        │ exists & length? │
-        └────┬─────────────┘
-             │
-             ├─ NO ──► return { allowed: true }
-             │
-             └─ YES
-                  │
-                  ▼
-        ┌──────────────────┐
-        │ Normalize content│
-        │ (toLowerCase)    │
-        └────┬─────────────┘
-             │
-             ▼
-    ┌────────────────────────┐
-    │ For each blocked term: │
-    └────────┬───────────────┘
-             │
-             ▼
-    ┌────────────────────────┐
-    │  Check strictness:     │
-    ├────────────────────────┤
-    │ • low → matchWholeWord │
-    │ • medium → includes    │
-    │ • high → matchPattern  │
-    └────────┬───────────────┘
-             │
-             ├─ MATCH ──► Add to matchedTerms[]
-             │
-             └─ NO MATCH ──► Continue
-                  │
-                  ▼
-        ┌──────────────────┐
-        │ Any matches?     │
-        └────┬─────────────┘
-             │
-             ├─ YES ──► return {
-             │            allowed: false,
-             │            reason: "...",
-             │            matchedTerms: [...]
-             │          }
-             │
-             └─ NO ──► return { allowed: true }
+```mermaid
+flowchart TD
+    A["checkContent(content, config, role)"] --> B{"role == 'system'?"}
+    B -->|YES| C([return: allowed true])
+    B -->|NO| D{filter.enabled?}
+    D -->|NO| E([return: allowed true])
+    D -->|YES| F{"blockedTerms exists & length > 0?"}
+    F -->|NO| G([return: allowed true])
+    F -->|YES| H["Normalize content (toLowerCase)"]
+    H --> I[For each blocked term]
+    I --> J["Check strictness:\nlow → matchWholeWord\nmedium → includes\nhigh → matchPattern"]
+    J -->|MATCH| K[Add to matchedTerms]
+    K --> I
+    J -->|NO MATCH| I
+    I -->|all terms checked| L{Any matches?}
+    L -->|YES| M(["return: allowed false\nreason, matchedTerms"])
+    L -->|NO| N([return: allowed true])
 ```
 
 ## Strictness Level Matching
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        LOW STRICTNESS                            │
-├─────────────────────────────────────────────────────────────────┤
-│  matchWholeWord(content, term)                                   │
-│    1. Escape regex special chars                                │
-│    2. Create pattern: \b{term}\b                                │
-│    3. Test with case-insensitive flag                           │
-│                                                                  │
-│  Example: term = "spam"                                         │
-│    "spam here" ────► MATCH (whole word)                         │
-│    "spammy" ───────► NO MATCH (partial)                         │
-│    "SPAM" ─────────► MATCH (case-insensitive)                   │
-└─────────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────┐
-│                      MEDIUM STRICTNESS                           │
-├─────────────────────────────────────────────────────────────────┤
-│  content.includes(term)                                         │
-│    1. Normalize both to lowercase                               │
-│    2. Check if term exists in content                           │
-│                                                                  │
-│  Example: term = "spam"                                         │
-│    "spam here" ────► MATCH                                      │
-│    "spammy" ───────► MATCH (substring)                          │
-│    "SPAM" ─────────► MATCH (case-insensitive)                   │
-└─────────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────┐
-│                       HIGH STRICTNESS                            │
-├─────────────────────────────────────────────────────────────────┤
-│  matchPattern(content, term)                                    │
-│    1. Check direct substring match                              │
-│    2. Deobfuscate content:                                      │
-│       • 0→o, 1→i, 3→e, 4→a, 5→s, 7→t, 8→b                      │
-│       • $→s, @→a, !→i                                           │
-│       • Remove *, _, -, spaces                                  │
-│    3. Deobfuscate term                                          │
-│    4. Check if deobfuscated term in deobfuscated content       │
-│                                                                  │
-│  Example: term = "spam"                                         │
-│    "spam here" ────► MATCH                                      │
-│    "sp4m" ─────────► MATCH (4→a)                                │
-│    "$pam" ─────────► MATCH ($→s)                                │
-│    "s p a m" ──────► MATCH (spaces removed)                     │
-└─────────────────────────────────────────────────────────────────┘
-```
+| Strictness | Function | Match Logic | Example term: `spam` |
+|---|---|---|---|
+| **LOW** | `matchWholeWord` | Word-boundary regex `\b{term}\b`, case-insensitive | ✅ `"spam here"` · ❌ `"spammy"` · ✅ `"SPAM"` |
+| **MEDIUM** | `content.includes` | Case-insensitive substring | ✅ `"spam here"` · ✅ `"spammy"` · ✅ `"SPAM"` |
+| **HIGH** | `matchPattern` | Substring + deobfuscation (`0→o`, `1→i`, `3→e`, `4→a`, `5→s`, `7→t`, `8→b`, `$→s`, `@→a`, `!→i`, strips `*_- `) | ✅ `"sp4m"` · ✅ `"$pam"` · ✅ `"s p a m"` |
 
 ## Configuration Flow
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    Guardrail Profile JSON                        │
-│  {                                                               │
-│    "guards": {                                                   │
-│      "contentFilter": {                                          │
-│        "enabled": true,                                          │
-│        "strictness": "medium",                                   │
-│        "blockedTerms": ["spam", "scam"]                          │
-│      }                                                           │
-│    }                                                             │
-│  }                                                               │
-└─────────────────┬───────────────────────────────────────────────┘
-                  │
-                  ▼
-         ┌────────────────┐
-         │ loadProfiles() │
-         └────────┬───────┘
-                  │
-                  ▼
-    ┌─────────────────────────┐
-    │ BotConfigurationManager │
-    │ .applyGuardrailProfile()│
-    └────────┬────────────────┘
-             │
-             ▼
-    ┌────────────────────────┐
-    │  config.contentFilter  │◄──── Applied to botConfig
-    │  = profile.guards      │
-    │     .contentFilter     │
-    └────────┬───────────────┘
-             │
-             ▼
-    ┌────────────────────────┐
-    │   handleMessage()      │
-    │   checks contentFilter │
-    └────────────────────────┘
+```mermaid
+flowchart TD
+    A["Guardrail Profile JSON\nguards.contentFilter:\n  enabled, strictness, blockedTerms"] --> B["loadProfiles()"]
+    B --> C["BotConfigurationManager\n.applyGuardrailProfile()"]
+    C --> D["config.contentFilter =\nprofile.guards.contentFilter"]
+    D --> E["handleMessage()\nchecks contentFilter"]
 ```
 
 ## System Message Bypass
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     Message Type Check                           │
-└─────────────────┬───────────────────────────────────────────────┘
-                  │
-                  ▼
-         ┌────────────────┐
-         │ message.role?  │
-         └────┬───────────┘
-              │
-              ├─ 'user' ──────► Apply content filter
-              │
-              ├─ 'assistant' ──► Apply content filter
-              │
-              └─ 'system' ─────► BYPASS (always allowed)
-                                  │
-                                  ▼
-                          ┌──────────────┐
-                          │ No filtering │
-                          │ No logging   │
-                          │ No blocking  │
-                          └──────────────┘
+```mermaid
+flowchart TD
+    A([Message Type Check]) --> B{"message.role?"}
+    B -->|user| C[Apply content filter]
+    B -->|assistant| D[Apply content filter]
+    B -->|system| E["BYPASS — always allowed\n(no filtering · no logging · no blocking)"]
 ```
 
 ## Audit Logging Flow
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    Content Filter Block                          │
-└─────────────────┬───────────────────────────────────────────────┘
-                  │
-                  ▼
-         ┌────────────────┐
-         │ Block Type?    │
-         └────┬───────────┘
-              │
-              ├─ Incoming Message Block
-              │         │
-              │         ▼
-              │  ┌──────────────────────┐
-              │  │ AuditLogger.log()    │
-              │  │ type: CONTENT_       │
-              │  │   FILTER_BLOCK       │
-              │  │ action: BLOCK        │
-              │  │ metadata:            │
-              │  │   - matchedTerms     │
-              │  │   - strictness       │
-              │  │   - channelId        │
-              │  │   - userId           │
-              │  └──────────────────────┘
-              │
-              └─ Bot Response Block
-                        │
-                        ▼
-                 ┌──────────────────────┐
-                 │ AuditLogger.log()    │
-                 │ type: BOT_RESPONSE_  │
-                 │   FILTER_BLOCK       │
-                 │ action: BLOCK        │
-                 │ metadata:            │
-                 │   - matchedTerms     │
-                 │   - strictness       │
-                 │   - channelId        │
-                 │   - userId           │
-                 └──────────────────────┘
+```mermaid
+flowchart TD
+    A([Content Filter Block]) --> B{Block Type?}
+    B -->|Incoming Message Block| C["AuditLogger.log()\ntype: CONTENT_FILTER_BLOCK\naction: BLOCK\nmetadata: matchedTerms,\nstrictness, channelId, userId"]
+    B -->|Bot Response Block| D["AuditLogger.log()\ntype: BOT_RESPONSE_FILTER_BLOCK\naction: BLOCK\nmetadata: matchedTerms,\nstrictness, channelId, userId"]
 ```
 
 ## Performance Profile
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    Processing Time (per message)                 │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  Filter disabled:    ~0.001ms (single if check)                 │
-│                                                                  │
-│  Low strictness:     ~0.1-0.5ms (10 terms)                      │
-│                      ~0.5-2ms (100 terms)                       │
-│                                                                  │
-│  Medium strictness:  ~0.2-0.8ms (10 terms)                      │
-│                      ~0.8-3ms (100 terms)                       │
-│                                                                  │
-│  High strictness:    ~0.5-1.5ms (10 terms)                      │
-│                      ~1.5-5ms (100 terms)                       │
-│                                                                  │
-│  Notes:                                                          │
-│  • Times are per message                                        │
-│  • Linear O(n) complexity                                       │
-│  • No database queries                                          │
-│  • No network calls                                             │
-│  • Minimal memory overhead                                      │
-└─────────────────────────────────────────────────────────────────┘
-```
+Processing time per message:
+
+| Configuration | 10 terms | 100 terms |
+|---|---|---|
+| Filter disabled | ~0.001 ms | ~0.001 ms |
+| Low strictness | ~0.1–0.5 ms | ~0.5–2 ms |
+| Medium strictness | ~0.2–0.8 ms | ~0.8–3 ms |
+| High strictness | ~0.5–1.5 ms | ~1.5–5 ms |
+
+> **Notes:** O(n) complexity — no database queries, no network calls, minimal memory overhead.
 
 ## Integration Points
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        System Components                         │
-└─────────────────┬───────────────────────────────────────────────┘
-                  │
-    ┌─────────────┼─────────────────────────────────────┐
-    │             │                                     │
-    ▼             ▼                                     ▼
-┌────────┐  ┌──────────┐  ┌──────────────┐  ┌────────────────┐
-│Guardrail│  │  Bot     │  │   Message    │  │ ContentFilter  │
-│Profiles │─►│  Config  │─►│   Handler    │─►│    Service     │
-└────────┘  └──────────┘  └──────────────┘  └────────────────┘
-                                  │
-                                  │ (blocked)
-                                  │
-                         ┌────────┴────────┐
-                         │                 │
-                         ▼                 ▼
-                  ┌────────────┐    ┌───────────┐
-                  │ Audit Log  │    │ Messenger │
-                  │  Service   │    │  Provider │
-                  └────────────┘    └───────────┘
-                                          │
-                                          ▼
-                                    ┌──────────┐
-                                    │   User   │
-                                    │  Notify  │
-                                    └──────────┘
+```mermaid
+flowchart LR
+    GP[Guardrail Profiles] --> BC[Bot Config]
+    BC --> MH[Message Handler]
+    MH --> CF[ContentFilter Service]
+    CF -->|blocked| AL[Audit Log Service]
+    CF -->|blocked| MP[Messenger Provider]
+    MP --> UN[User Notify]
 ```

@@ -5,21 +5,17 @@
 ### 🧠 The Hivemind Concept
 Open-Hivemind operates as a **digital consciousness** where each bot instance functions as a neuron in a vast, interconnected brain.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      HIVEMIND                               │
-├─────────────────┬─────────────────┬─────────────────────────┤
-│   Discord Bot   │   Slack Bot     │   Mattermost Bot        │
-│   Instance #1   │   Instance #1   │   Instance #1           │
-├─────────────────┼─────────────────┼─────────────────────────┤
-│   Discord Bot   │   Slack Bot     │   Mattermost Bot        │
-│   Instance #2   │   Instance #2   │   Instance #2           │
-└─────────────────┴─────────────────┴─────────────────────────┘
-                           │
-                    ┌─────────────┐
-                    │ LLM Provider │
-                    │ OpenAI/Flowise │
-                    └─────────────┘
+```mermaid
+graph TD
+    subgraph HIVEMIND["🧠 HIVEMIND"]
+        D1[Discord Bot Instance #1]
+        D2[Discord Bot Instance #2]
+        S1[Slack Bot Instance #1]
+        S2[Slack Bot Instance #2]
+        M1[Mattermost Bot Instance #1]
+        M2[Mattermost Bot Instance #2]
+    end
+    HIVEMIND --> LLM["LLM Provider\nOpenAI / Flowise"]
 ```
 
 ### 🔄 Message Flow Architecture

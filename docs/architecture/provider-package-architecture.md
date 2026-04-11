@@ -8,39 +8,27 @@ The core application has **zero knowledge** of any specific provider or adapter.
 
 ## Runtime discovery flow
 
-```
-packages/provider-openai   ──┐
-packages/provider-letta    ──┤──► GET /api/admin/available-provider-types
-packages/provider-flowise  ──┘         │
-packages/adapter-discord   ──┐         │  backend probes require.resolve()
-packages/adapter-slack     ──┤──► GET /api/admin/available-adapter-types
-packages/adapter-mattermost──┘         │
-                                        ▼
-                               { providers: [
-                                 { key: "openai",  label: "OpenAI",  type: "llm", fields: [
-                                     { name: "apiKey", type: "password", label: "API Key",  required: true },
-                                     { name: "model",  type: "text",     label: "Model",    default: "gpt-4o" }
-                                 ]},
-                                 { key: "letta", label: "Letta", type: "llm", fields: [
-                                     { name: "apiUrl",  type: "text", label: "API URL",  required: true },
-                                     { name: "agentId", type: "text", label: "Agent ID", required: true }
-                                 ]}
-                               ]}
-                                        │
-                                        ▼
-                               useProviders() / useAvailableProviderTypes()
-                                        │
-                                        ▼
-                               <DynamicProviderForm
-                                 fields={selectedProvider.fields}
-                                 values={formState}
-                                 onChange={setFormState}
-                               />
-                                 renders generically:
-                                 type="password" → <input type="password" className="input input-bordered" />
-                                 type="text"     → <input type="text"     className="input input-bordered" />
-                                 type="select"   → <select className="select select-bordered">
-                                 type="number"   → <input type="number"   className="input input-bordered" />
+```mermaid
+flowchart TD
+    subgraph llm["LLM Provider Packages"]
+        po[packages/provider-openai]
+        pl[packages/provider-letta]
+        pf[packages/provider-flowise]
+    end
+    subgraph ada["Adapter Packages"]
+        ad[packages/adapter-discord]
+        as[packages/adapter-slack]
+        am[packages/adapter-mattermost]
+    end
+    llm -->|"require.resolve probe"| ep1["GET /api/admin/available-provider-types"]
+    ada -->|"require.resolve probe"| ep2["GET /api/admin/available-adapter-types"]
+    ep1 & ep2 --> json["{ providers: [\n  { key, label, type,\n    fields: [{ name, type, label, required }] }\n]}"]
+    json --> hook["useProviders()\nuseAvailableProviderTypes()"]
+    hook --> form["&lt;DynamicProviderForm\n  fields={selectedProvider.fields}\n  values={formState}\n  onChange={setFormState}\n/&gt;"]
+    form --> r1["type='password' → input[type=password]"]
+    form --> r2["type='text'     → input[type=text]"]
+    form --> r3["type='select'   → select"]
+    form --> r4["type='number'   → input[type=number]"]
 ```
 
 The UI **never** has a hardcoded list of provider names. It asks the backend what is available, and renders whatever comes back.
