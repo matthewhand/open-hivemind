@@ -120,4 +120,41 @@ export function configureWebhookRoutes(
       return res.status(200).json({ success: true, processed: predictionId });
     }
   );
+
+  /**
+   * Simple text endpoint for generic messaging.
+   * Format: { "text": "Hello bot" } or { "message": "Hello bot" }
+   */
+  app.post(
+    '/webhook/message',
+    verifyWebhookToken,
+    verifyIpWhitelist,
+    async (req: Request, res: Response) => {
+      const { text, message, content } = req.body;
+      const input = text || message || content;
+
+      if (!input) {
+        return res.status(400).json({ error: 'Missing message content (text, message, or content)' });
+      }
+
+      debug('Received generic webhook message:', input);
+
+      try {
+        // If the service has a direct handler for incoming webhooks, use it
+        if (typeof (messageService as any).handleIncomingWebhook === 'function') {
+          const result = await (messageService as any).handleIncomingWebhook(req.body, targetChannel);
+          return res.status(200).json({ success: true, result });
+        }
+
+        // Fallback: Just broadcast it as an announcement
+        const channelId = targetChannel || messageService.getDefaultChannel?.() || '';
+        await messageService.sendPublicAnnouncement(channelId, input);
+        return res.status(200).json({ success: true, mode: 'announcement' });
+      } catch (error: unknown) {
+        const msg = error instanceof Error ? error.message : String(error);
+        debug('Failed to process generic webhook message:', msg);
+        return res.status(500).json({ error: 'Failed to process message', details: msg });
+      }
+    }
+  );
 }

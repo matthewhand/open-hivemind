@@ -131,7 +131,7 @@ Stores a **Persona ID string**. At runtime, PersonaManager resolves this ID to a
 
 - `id`, `name`, `description`, `category`, `traits`
 - `systemPrompt` — the full prompt template for this bot's voice and character
-- `responseBehavior` — optional embedded response-behaviour settings (baseChance, mentionBonus, penalties, onlyWhenSpokenTo, etc.)
+- `responseProfileId` — optional reference to a response profile (overrides bot-level settings)
 - `avatarStyle`, `isBuiltIn`
 
 Personas are reusable templates — the same persona can be assigned to multiple bots. They are managed in the Web UI under **Personas** or defined in `config/personas/`.
@@ -186,15 +186,17 @@ BOTS_ALPHA_MCP_SERVER_PROFILE=internal-tools
 Configures the bot's memory/context backend.
 
 **Variable:** `BOTS_{n}_MEMORY_PROFILE`
+**Applied by:** `MemoryManager` at runtime.
 **Profile file:** `config/memory-profiles.json`
 
-> **Note:** `MEMORY_PROFILE` is not applied at runtime yet. The variable is parsed and stored but `applyMemoryProfile()` is not called during bot initialisation. This is a known TODO.
+Memory profiles define which provider (e.g., `mem0`, `mem4ai`) and configuration (API keys, URLs) a bot uses to persist and retrieve long-term conversation context.
 
 ### Response Profile (`RESPONSE_PROFILE`)
 
 Overrides per-bot `MESSAGE_*` settings (unsolicited response chance, typing delays, response length, etc.). This is **not** the same as a persona — response profiles contain only messaging-behaviour overrides, not character or prompt data.
 
 **Variable:** `BOTS_{n}_RESPONSE_PROFILE`
+**Applied by:** `getMessageSetting()` at runtime.
 
 Built-in profiles: `eager` (higher response chance, shorter delays) and `cautious` (lower chance, longer delays). Custom profiles can be defined in `config/response-profiles.json`.
 
@@ -202,11 +204,9 @@ Built-in profiles: `eager` (higher response chance, shorter delays) and `cautiou
 
 | Level | Mechanism | Where defined |
 |---|---|---|
-| Per-persona | `Persona.responseBehavior` fields (baseChance, mentionBonus, onlyWhenSpokenTo, etc.) | Embedded in the Persona object; editable via Web UI → Personas |
+| Per-persona | `Persona.responseProfileId` | Reference to a profile; editable via Web UI → Personas |
 | Per-bot | `BOTS_{n}_RESPONSE_PROFILE` → response profile key | `config/response-profiles.json` or built-ins |
 | Global | `MESSAGE_UNSOLICITED_BASE_CHANCE`, `MESSAGE_UNSOLICITED_ADDRESSED`, etc. | Environment variables / `.env` |
-
-> **Note:** `RESPONSE_PROFILE` is not fully materialised yet. The variable is recognised but the apply step is incomplete. This is a known TODO.
 
 ---
 
@@ -275,8 +275,8 @@ BOTS_SLACK_SUPPORT_SLACK_JOIN_CHANNELS=C01234567,C09876543
 | LLM | `BOTS_{n}_LLM_PROFILE` | `config/llm-profiles.json` | `applyLlmProfile()` | Fully applied |
 | MCP Guard | `BOTS_{n}_MCP_GUARD_PROFILE` | `config/guardrail-profiles.json` | `applyGuardrailProfile()` | Fully applied |
 | MCP Server | `BOTS_{n}_MCP_SERVER_PROFILE` | `config/mcp-server-profiles.json` | `applyMcpServerProfile()` | Fully applied |
-| Memory | `BOTS_{n}_MEMORY_PROFILE` | `config/memory-profiles.json` | `applyMemoryProfile()` | TODO: not applied at runtime |
-| Response | `BOTS_{n}_RESPONSE_PROFILE` | `config/response-profiles.json` | _(pending)_ | TODO: not fully materialised; built-ins: `eager`, `cautious` |
+| Memory | `BOTS_{n}_MEMORY_PROFILE` | `config/memory-profiles.json` | `MemoryManager` | Fully applied |
+| Response | `BOTS_{n}_RESPONSE_PROFILE` | `config/response-profiles.json` | `getMessageSetting()` | Fully applied; built-ins: `eager`, `cautious` |
 
 ---
 

@@ -1,4 +1,5 @@
 import Debug from 'debug';
+import ipaddr from 'ipaddr.js';
 import type { NextFunction, Request, Response } from 'express';
 import { RateLimitError } from '../../types/errorClasses';
 
@@ -611,55 +612,40 @@ function ipToLong(ip: string): number {
 
 /**
  * Check if an IP address is in a CIDR range
- * Supports both IPv4 and IPv4-mapped IPv6 addresses
- * Note: IPv6 CIDR ranges are not currently supported
+ * Supports both IPv4 and IPv6, including cross-version matching via IPv4-mapping.
  */
 export function isIPInCIDR(ip: string, cidr: string): boolean {
   try {
-    // Handle IPv4-mapped IPv6 addresses
-    let cleanIP = ip;
-    const ipv4Match = ip.match(/^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/);
-    if (ipv4Match) {
-      cleanIP = ipv4Match[1];
+    if (!cidr || !cidr.includes('/')) return false;
+    const [range, bitsStr] = cidr.split('/');
+    const bits = parseInt(bitsStr, 10);
+
+    if (isNaN(bits) || bits < 0) return false;
+    if (bits === 0) return true;
+
+    let addr = ipaddr.parse(ip);
+    let network = ipaddr.parse(range);
+
+    // If versions match, use standard match
+    if (addr.kind() === network.kind()) {
+      return (addr as any).match(network, bits);
     }
 
-    // Only support IPv4 CIDR for now - warn if IPv6 CIDR is provided
-    if (!cleanIP.includes('.') || cleanIP.includes(':')) {
-      return false;
+    // If versions differ, attempt to normalize to IPv6 for comparison
+    if (addr.kind() === 'ipv4') {
+      addr = (addr as ipaddr.IPv4).toIPv4MappedAddress();
     }
 
-    // Validate CIDR network part is IPv4
-    const [network, prefixStr] = cidr.split('/');
-    if (!network.match(/^(\d{1,3}\.){3}\d{1,3}$/)) {
-      debug('Warning: IPv6 CIDR not supported:', cidr);
-      return false;
+    if (network.kind() === 'ipv4') {
+      // An IPv4 /24 becomes an IPv6 /120 (96 + 24)
+      network = (network as ipaddr.IPv4).toIPv4MappedAddress();
+      return (addr as any).match(network, 96 + bits);
     }
 
-    const prefix = parseInt(prefixStr, 10);
-
-    if (isNaN(prefix) || prefix < 0 || prefix > 32) {
-      return false;
-    }
-
-    const ipLong = ipToLong(cleanIP);
-    const networkLong = ipToLong(network);
-
-    // Validate IP conversions succeeded
-    if (isNaN(ipLong) || isNaN(networkLong)) {
-      return false;
-    }
-
-    // Handle /0 prefix specially - it should match all IPs
-    // Note: JavaScript shift is modulo 32, so -1 << 32 === -1, not 0
-    if (prefix === 0) {
-      return true;
-    }
-
-    const mask = -1 << (32 - prefix);
-
-    return (ipLong & mask) === (networkLong & mask);
-  } catch (e) {
-    debug('CIDR parsing error:', e);
+    // Both are now IPv6
+    return (addr as any).match(network, bits);
+  } catch (err) {
+    // Parsing or matching failed
     return false;
   }
 }
@@ -672,8 +658,7 @@ export function isIPInCIDR(ip: string, cidr: string): boolean {
  *  2. ALLOW_LOCALHOST_ADMIN=true AND the client IP matches an entry in
  *     ADMIN_IP_WHITELIST (defaults to 127.0.0.1, ::1, ::ffff:127.0.0.1)
  *
- * IPv4 CIDR ranges (e.g. 0.0.0.0/0, 10.0.0.0/8) are supported.
- * IPv6 addresses must be listed explicitly (e.g. ::1).
+ * Both IPv4 and IPv6 CIDR ranges (e.g. 0.0.0.0/0, fc00::/7) are supported.
  *
  * ⚠️  FORCE_TRUSTED_LOGIN=true is intended for local dev only — never set
  *     it in production, as it allows passwordless admin login from any IP.

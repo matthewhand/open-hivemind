@@ -64,11 +64,39 @@ export class WebhookService implements IMessengerService {
   /**
    * Method called by the webhook route handler when an incoming request is received.
    */
-  async handleIncomingWebhook(payload: any): Promise<string> {
-    if (!this.messageHandler) return 'No handler';
-    
-    // Convert raw webhook payload to IMessage and call handler
-    // This is a simplified stub.
-    return 'Handled';
+  async handleIncomingWebhook(payload: any, channelId?: string): Promise<string> {
+    if (!this.messageHandler) {
+      return 'No message handler registered';
+    }
+
+    const text = payload.text || payload.message || payload.content || '';
+    if (!text) {
+      return 'No text content found in payload';
+    }
+
+    const userId = payload.userId || payload.user || 'webhook-user';
+    const userName = payload.userName || payload.username || 'Webhook User';
+    const effectiveChannelId = channelId || payload.channelId || payload.channel || this.getDefaultChannel();
+
+    // Construct a minimal IMessage-compatible object
+    const mockMessage: IMessage = {
+      getText: () => text,
+      getAuthorId: () => userId,
+      getAuthorName: () => userName,
+      getChannelId: () => effectiveChannelId,
+      getTimestamp: () => new Date(),
+      isFromBot: () => false,
+      platform: 'webhook',
+      raw: payload,
+    } as any;
+
+    try {
+      // Trigger the handler (which usually emits to the pipeline bus)
+      const response = await this.messageHandler(mockMessage, [], {});
+      return response || 'Processed';
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      return `Error processing webhook message: ${msg}`;
+    }
   }
 }

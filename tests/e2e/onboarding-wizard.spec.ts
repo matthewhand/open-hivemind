@@ -382,4 +382,56 @@ test.describe('Onboarding Wizard', () => {
     await expect(page.getByText('Connect a Messenger')).toBeVisible({ timeout: 10000 });
     expect(completeCallCount).toBe(0);
   });
+
+  test('completes full wizard and navigates to dashboard', async ({ page }) => {
+    await setupOnboardingMocks(page);
+
+    let onboardingDone = false;
+    await page.route('**/api/onboarding/status', async (route) => {
+      await route.fulfill({
+        status: 200,
+        json: { success: true, data: { completed: onboardingDone, step: onboardingDone ? 5 : 1 } },
+      });
+    });
+
+    await page.route('**/api/onboarding/complete', async (route) => {
+      onboardingDone = true;
+      await route.fulfill({ status: 200, json: { success: true, data: { completed: true, step: 5 } } });
+    });
+
+    // Mock dashboard config status
+    await page.route('**/api/dashboard/config-status', async (route) => {
+      await route.fulfill({
+        status: 200,
+        json: { data: { llmConfigured: true, botConfigured: true, messengerConfigured: true } },
+      });
+    });
+
+    await page.goto('/onboarding');
+    await page.waitForLoadState('domcontentloaded');
+
+    const nextButton = page.locator('button', { hasText: 'Next' });
+
+    // Step 1 -> 2
+    await nextButton.click();
+    // Step 2 -> 3
+    await nextButton.click();
+    // Step 3 -> 4
+    await nextButton.click();
+    // Step 4 -> 5
+    await nextButton.click();
+
+    // Final step: Done
+    await expect(page.getByText('You are All Set!')).toBeVisible({ timeout: 10000 });
+
+    // Click Go to Dashboard
+    const finishButton = page.locator('button', { hasText: 'Go to Dashboard' }).first();
+    await finishButton.click();
+
+    // Should land on /admin/overview
+    await page.waitForURL('**/admin/overview', { timeout: 10000 });
+    await expect(page.url()).toContain('/admin/overview');
+
+    await page.screenshot({ path: 'test-results/onboarding-11-complete-to-dashboard.png', fullPage: true });
+  });
 });
