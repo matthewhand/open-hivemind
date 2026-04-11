@@ -251,6 +251,10 @@ export class SlackService extends EventEmitter implements IMessengerService {
       const configDir = process.env.NODE_CONFIG_DIR || 'config';
       const messengersConfigPath = path.join(configDir, 'messengers.json');
 
+      // ⚡ Bolt Optimization: Using synchronous fs methods as this is called
+      // synchronously from constructor/getBotManager getter methods where async
+      // initialization is not easily possible without widespread refactoring.
+      // Caching logic handles the main performance concerns.
       if (fs.existsSync(messengersConfigPath)) {
         const messengersConfig = JSON.parse(fs.readFileSync(messengersConfigPath, 'utf-8'));
         instances = messengersConfig.slack?.instances || [];

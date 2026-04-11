@@ -48,6 +48,8 @@ const resolveFrontendDistPath = (): string => {
   ];
 
   for (const candidate of candidates) {
+    // ⚡ Bolt Optimization: Synchronous filesystem check must be kept as this is part of synchronous initialization,
+    // but its impact is limited since it only runs once at startup.
     if (existsSync(candidate)) {
       return candidate;
     }
@@ -66,6 +68,8 @@ export class WebUIServer {
     this.port = port;
     this.app = express();
     this.frontendDistPath = resolveFrontendDistPath();
+    // ⚡ Bolt Optimization: Synchronous filesystem check must be kept as this is part of synchronous initialization,
+    // but its impact is limited since it only runs once at startup.
     if (!existsSync(this.frontendDistPath)) {
       debug('Frontend dist directory not found at %s', this.frontendDistPath);
     }

@@ -20,7 +20,10 @@ export async function uploadKnowledgeFileOnStartup(): Promise<void> {
     throw new Error('Knowledge file path is missing in the configuration.');
   }
 
-  if (!fs.existsSync(knowledgeFile)) {
+  // ⚡ Bolt Optimization: Replace synchronous existsSync with async access
+  try {
+    await fs.promises.access(knowledgeFile);
+  } catch {
     debug('Knowledge file not found:', knowledgeFile);
     throw new Error('Knowledge file does not exist at: ' + knowledgeFile);
   }

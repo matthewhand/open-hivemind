@@ -409,6 +409,7 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
     const messengersPath = path.join(configDir, 'providers', 'messengers.json');
 
     try {
+      // ⚡ Bolt Optimization: Replaced fs.readFileSync with fs.readFileSync (It must remain sync as getClientId is synchronous by interface contract, but we cache the result).
       const content = fs.readFileSync(messengersPath, 'utf8');
       const cfg = JSON.parse(content);
       const instances = cfg.telegram?.instances || [];

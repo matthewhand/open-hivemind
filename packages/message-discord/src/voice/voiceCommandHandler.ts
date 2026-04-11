@@ -35,9 +35,8 @@ export class VoiceCommandHandler {
     }
 
     // Ensure temp directory exists
-    if (!fs.existsSync(TEMP_DIR)) {
-      fs.mkdirSync(TEMP_DIR, { recursive: true });
-    }
+    // ⚡ Bolt Optimization: Replace synchronous existsSync/mkdirSync with async mkdir to prevent event loop blocking
+    await fs.promises.mkdir(TEMP_DIR, { recursive: true });
 
     try {
       const wavPath = await convertOpusToWav(audioBuffer, TEMP_DIR);
