@@ -1,38 +1,26 @@
 import { BotConfigurationManager, BotConfig } from '@config/BotConfigurationManager';
 import * as fs from 'fs';
 import * as path from 'path';
-
-// Mock fs and path
-jest.mock('fs');
-jest.mock('path');
+import * as os from 'os';
 
 describe('BotConfigurationManager', () => {
   let originalEnv: NodeJS.ProcessEnv;
-  const mockFs = fs as jest.Mocked<typeof fs>;
-  const mockPath = path as jest.Mocked<typeof path>;
 
   beforeEach(() => {
-    originalEnv = process.env;
-    process.env = {};
-    mockFs.existsSync.mockReturnValue(false);
-    // Explicitly mock readdirSync to return empty array to avoid discovering bots from files (which fails if undefined)
-    // or from bleeding mocks
-    if (mockFs.readdirSync && jest.isMockFunction(mockFs.readdirSync)) {
-        mockFs.readdirSync.mockReturnValue([]);
-    } else {
-        // In case auto-mock didn't pick it up or it's different
-        (mockFs.readdirSync as any) = jest.fn().mockReturnValue([]);
-    }
+    // Preserve original env and replace with a clean slate.
+    // Set NODE_CONFIG_DIR to /tmp so discoverBotNamesFromFiles() finds no
+    // demo bots from the real config/bots/ directory.
+    originalEnv = { ...process.env };
+    process.env = {
+      NODE_CONFIG_DIR: '/tmp',
+    };
 
-    mockPath.join.mockImplementation((...args) => args.join('/'));
-    
-    // Reset singleton instance
+    // Reset singleton instance so each test starts fresh
     (BotConfigurationManager as any).instance = undefined;
   });
 
   afterEach(() => {
     process.env = originalEnv;
-    jest.clearAllMocks();
   });
 
   describe('Multi-bot configuration with BOTS prefix', () => {
@@ -42,7 +30,7 @@ describe('BotConfigurationManager', () => {
       process.env.BOTS_MAX_MESSAGE_PROVIDER = 'discord';
       process.env.BOTS_MAX_LLM_PROVIDER = 'flowise';
       process.env.BOTS_MAX_FLOWISE_API_KEY = 'max-flowise-key';
-      
+
       process.env.BOTS_SAM_DISCORD_BOT_TOKEN = 'sam-token-456';
       process.env.BOTS_SAM_MESSAGE_PROVIDER = 'discord';
       process.env.BOTS_SAM_LLM_PROVIDER = 'openai';
@@ -56,7 +44,7 @@ describe('BotConfigurationManager', () => {
       expect(bots[0].messageProvider).toBe('discord');
       expect(bots[0].llmProvider).toBe('flowise');
       expect(bots[0].discord?.token).toBe('max-token-123');
-      
+
       expect(bots[1].name).toBe('sam');
       expect(bots[1].messageProvider).toBe('discord');
       expect(bots[1].llmProvider).toBe('openai');
@@ -84,39 +72,42 @@ describe('BotConfigurationManager', () => {
     });
 
     it('should load bot-specific configuration files', () => {
-      // Mock file system to simulate bot config files
-      mockFs.existsSync.mockImplementation((filePath: any) => {
-        const pathStr = filePath.toString();
-        return pathStr.includes('bot1.json') || pathStr.includes('bot2.json');
-      });
-      
-      mockFs.readFileSync.mockImplementation((filePath: any) => {
-        const pathStr = filePath.toString();
-        if (pathStr.includes('bot1.json')) {
-          return JSON.stringify({
-            name: 'bot1',
-            messageProvider: 'discord',
-            llmProvider: 'openai',
-            discord: { token: 'file-token-1' }
-          });
-        }
-        if (pathStr.includes('bot2.json')) {
-          return JSON.stringify({
-            name: 'bot2', 
-            messageProvider: 'slack',
-            llmProvider: 'flowise',
-            slack: { token: 'file-token-2' }
-          });
-        }
-        return '{}';
-      });
-      
-      mockFs.readdirSync.mockReturnValue(['bot1.json', 'bot2.json'] as any);
-      
-      const manager = BotConfigurationManager.getInstance();
-      const bots = manager.getAllBots();
-      
-      expect(bots.length).toBeGreaterThanOrEqual(0); // May load from files or env vars
+      // Create a real temp directory with bot config files so the actual
+      // fs calls in botDiscovery/botConfigFactory pick them up correctly.
+      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hivemind-test-'));
+      const botsDir = path.join(tmpDir, 'bots');
+      fs.mkdirSync(botsDir);
+
+      try {
+        fs.writeFileSync(
+          path.join(botsDir, 'bot1.json'),
+          JSON.stringify({
+            MESSAGE_PROVIDER: 'discord',
+            LLM_PROVIDER: 'openai',
+            DISCORD_BOT_TOKEN: 'file-token-1',
+          }),
+        );
+        fs.writeFileSync(
+          path.join(botsDir, 'bot2.json'),
+          JSON.stringify({
+            MESSAGE_PROVIDER: 'slack',
+            LLM_PROVIDER: 'flowise',
+            SLACK_BOT_TOKEN: 'file-slack-token-2',
+          }),
+        );
+
+        process.env.NODE_CONFIG_DIR = tmpDir;
+
+        const manager = BotConfigurationManager.getInstance();
+        const bots = manager.getAllBots();
+
+        expect(bots).toHaveLength(2);
+        const names = bots.map((b) => b.name).sort();
+        expect(names).toEqual(['bot1', 'bot2']);
+      } finally {
+        // Clean up temp directory
+        fs.rmSync(tmpDir, { recursive: true, force: true });
+      }
     });
   });
 
@@ -132,10 +123,10 @@ describe('BotConfigurationManager', () => {
       expect(bots[0].name).toBe('Bot1');
       expect(bots[0].discord?.token).toBe('token1');
       expect(bots[0].llmProvider).toBe('openai');
-      
+
       expect(bots[1].name).toBe('Bot2');
       expect(bots[1].discord?.token).toBe('token2');
-      
+
       expect(bots[2].name).toBe('Bot3');
       expect(bots[2].discord?.token).toBe('token3');
     });
@@ -198,7 +189,7 @@ describe('BotConfigurationManager', () => {
     it('should return the same instance', () => {
       const instance1 = BotConfigurationManager.getInstance();
       const instance2 = BotConfigurationManager.getInstance();
-      
+
       expect(instance1).toBe(instance2);
     });
 
