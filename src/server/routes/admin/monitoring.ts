@@ -2,11 +2,11 @@ import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { ErrorUtils } from '../../../common/ErrorUtils';
 import { DatabaseManager } from '../../../database/DatabaseManager';
-import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import { HTTP_STATUS } from '../../../types/constants';
 import { isSafeUrl } from '../../../utils/ssrfGuard';
 import { TestConnectionSchema } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
+import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import {
   getChatModels,
   getEmbeddingModels,

@@ -3,7 +3,6 @@ import { Router, type Request, type Response } from 'express';
 import { AuthManager } from '../../auth/AuthManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest, LoginCredentials, RegisterData } from '../../auth/types';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { authRateLimiter } from '../../middleware/rateLimiter';
 import { HTTP_STATUS } from '../../types/constants';
 import { validateRequest as validate } from '../../validation/validateRequest';
@@ -18,6 +17,7 @@ import {
   VerifyTokenSchema,
 } from '../schemas/auth.schemas';
 import { ApiResponse } from '../utils/apiResponse';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:AuthRoutes');
 const router = Router();

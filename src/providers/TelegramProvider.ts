@@ -38,6 +38,7 @@ function validateTelegramToken(token: string): void {
 
 export class TelegramProvider implements IMessageProvider<TelegramConfig> {
   private reconManagers: Map<string, ReconnectionManager> = new Map();
+  private cachedClientId: string | null = null;
   id = 'telegram';
   label = 'Telegram';
   type = 'messenger' as const;
@@ -243,6 +244,7 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
   }
 
   async reload(): Promise<{ added: number }> {
+    this.cachedClientId = null;
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const messengersPath = path.join(configDir, 'providers', 'messengers.json');
     let cfg: Record<string, Record<string, unknown>>;
@@ -395,6 +397,13 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
   }
 
   getClientId(): string {
+    // ⚡ Bolt Optimization: Cache the computed client ID to prevent
+    // expensive synchronous file reads (fs.readFileSync) and JSON parsing
+    // on every invocation, which blocks the Node.js event loop.
+    if (this.cachedClientId) {
+      return this.cachedClientId;
+    }
+
     // Return the bot ID from the first configured instance
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const messengersPath = path.join(configDir, 'providers', 'messengers.json');
@@ -407,12 +416,14 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
       if (instances.length > 0 && instances[0].token) {
         // Extract bot ID from token (format: <bot_id>:<token>)
         const botId = instances[0].token.split(':')[0];
+        this.cachedClientId = botId;
         return botId;
       }
     } catch (e) {
       // Fallback to generic ID if config cannot be read
     }
 
+    this.cachedClientId = 'telegram';
     return 'telegram';
   }
 

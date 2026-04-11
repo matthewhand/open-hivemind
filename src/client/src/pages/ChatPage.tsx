@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { apiService } from '../services/api';
 import { useQuery } from '@tanstack/react-query';
 import ChatInterface, { ChatMessage } from '../components/DaisyUI/Chat';
@@ -224,15 +224,17 @@ const ChatPage: React.FC = () => {
   };
 
   // Map ChatMessages to BotChatBubbles format for the sidebar preview
-  const bubbleMessages = messages.slice(-5).map(m => ({
-    id: m.id,
-    role: (m.sender?.type === 'bot' || m.sender?.type === 'system' ? (m.sender.type === 'system' ? 'system' as const : 'assistant' as const) : 'user' as const),
-    content: m.content,
-    timestamp: m.timestamp,
-    sender: m.sender?.name,
-  }));
+  const bubbleMessages = useMemo(() => {
+    return messages.slice(-5).map(m => ({
+      id: m.id,
+      role: (m.sender?.type === 'bot' || m.sender?.type === 'system' ? (m.sender.type === 'system' ? 'system' as const : 'assistant' as const) : 'user' as const),
+      content: m.content,
+      timestamp: m.timestamp,
+      sender: m.sender?.name,
+    }));
+  }, [messages]);
 
-  const botListContent = (
+  const botListContent = useMemo(() => (
     <>
       <div className="p-4 font-bold text-sm text-base-content/50 uppercase tracking-wide">
         Active Bots ({bots.length})
@@ -271,7 +273,7 @@ const ChatPage: React.FC = () => {
         </div>
       )}
     </>
-  );
+  ), [bots, loading, selectedBotId, llmProviders, swappingProvider, showProviderDropdown, selectedBot, bubbleMessages, historyLoading, handleSwapProvider]);
 
   return (
     <div className="flex flex-col h-full bg-base-200">

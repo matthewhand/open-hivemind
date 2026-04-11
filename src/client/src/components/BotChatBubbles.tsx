@@ -14,7 +14,7 @@ interface BotChatBubblesProps {
     loading?: boolean;
 }
 
-const BotChatBubbles: React.FC<BotChatBubblesProps> = ({ messages, botName = 'Bot', loading = false }) => {
+const BotChatBubbles: React.FC<BotChatBubblesProps> = React.memo(({ messages, botName = 'Bot', loading = false }) => {
     if (loading) {
         return (
             <div className="flex flex-col gap-4 p-4">
@@ -67,6 +67,8 @@ const BotChatBubbles: React.FC<BotChatBubblesProps> = ({ messages, botName = 'Bo
             })}
         </div>
     );
-};
+});
+
+BotChatBubbles.displayName = 'BotChatBubbles';
 
 export default BotChatBubbles;

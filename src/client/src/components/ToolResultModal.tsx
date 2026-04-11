@@ -221,7 +221,7 @@ const ToolResultModal: React.FC<ToolResultModalProps> = ({ isOpen, onClose, resu
                   </details>
                 )}
               </div>
-            </div>
+            </Alert>
           </div>
         ) : (
           <div>

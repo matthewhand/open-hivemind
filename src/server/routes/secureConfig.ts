@@ -2,7 +2,6 @@ import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { SecureConfigManager, type SecureConfig } from '@config/SecureConfigManager';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { HTTP_STATUS } from '../../types/constants';
 import { ConfigBackupSchema } from '../../validation/schemas/configSchema';
 import {
@@ -12,6 +11,7 @@ import {
 } from '../../validation/schemas/secureConfigSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { auditMiddleware, logConfigChange, type AuditedRequest } from '../middleware/audit';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const debug = Debug('app:SecureConfigRoutes');
 const router = Router();

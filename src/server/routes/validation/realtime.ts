@@ -2,10 +2,10 @@ import Debug from 'debug';
 import { Router, type Response } from 'express';
 import { param, query } from 'express-validator';
 import type { AuthMiddlewareRequest } from '../../../auth/types';
-import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import { HTTP_STATUS } from '../../../types/constants';
 import { ErrorUtils } from '../../../types/errors';
 import { RealTimeValidationService } from '../../services/RealTimeValidationService';
+import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import {
   getErrorResponse,
   handleValidationErrors,
@@ -27,8 +27,7 @@ export function createRealtimeRoutes(): Router {
   router.post(
     '/api/validation/validate',
     validateConfigurationValidation,
-    handleValidationErrors,
-    asyncErrorHandler(async (req, res) => {
+    handleValidationErrors, asyncErrorHandler(async (req, res) => {
       try {
         const { configId, profileId = 'standard', clientId } = req.body;
 
@@ -57,8 +56,7 @@ export function createRealtimeRoutes(): Router {
   router.post(
     '/api/validation/validate-data',
     validateConfigurationData,
-    handleValidationErrors,
-    asyncErrorHandler(async (req, res) => {
+    handleValidationErrors, asyncErrorHandler(async (req, res) => {
       try {
         const { configData, profileId = 'standard' } = req.body;
 
@@ -98,8 +96,7 @@ export function createRealtimeRoutes(): Router {
   router.post(
     '/api/validation/subscribe',
     validateSubscription,
-    handleValidationErrors,
-    asyncErrorHandler(async (req, res) => {
+    handleValidationErrors, asyncErrorHandler(async (req, res) => {
       try {
         const { configId, clientId, profileId = 'standard' } = req.body;
 
@@ -234,35 +231,32 @@ export function createRealtimeRoutes(): Router {
    * GET /api/validation/statistics
    * Get validation statistics
    */
-  router.get(
-    '/api/validation/statistics',
-    asyncErrorHandler(async (req, res) => {
-      try {
-        const statistics = validationService.getValidationStatistics();
+  router.get('/api/validation/statistics', asyncErrorHandler(async (req, res) => {
+    try {
+      const statistics = validationService.getValidationStatistics();
 
-        return res.json({
-          success: true,
-          data: statistics,
-        });
-      } catch (error: unknown) {
-        const hivemindError = ErrorUtils.toHivemindError(
-          error,
-          'Failed to get validation statistics',
-          'VALIDATION_ERROR'
-        );
+      return res.json({
+        success: true,
+        data: statistics,
+      });
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(
+        error,
+        'Failed to get validation statistics',
+        'VALIDATION_ERROR'
+      );
 
-        debug('ERROR:', 'Error in', 'Get validation statistics endpoint');
+      debug('ERROR:', 'Error in', 'Get validation statistics endpoint');
 
-        const { message, code, timestamp } = getErrorResponse(hivemindError);
-        return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-          success: false,
-          error: message,
-          code,
-          timestamp,
-        });
-      }
-    })
-  );
+      const { message, code, timestamp } = getErrorResponse(hivemindError);
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        error: message,
+        code,
+        timestamp,
+      });
+    }
+  }));
 
   return router;
 }

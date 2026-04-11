@@ -2,7 +2,6 @@ import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { container } from 'tsyringe';
 import { ErrorUtils } from '../../../common/ErrorUtils';
-import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import ApiMonitorService from '../../../services/ApiMonitorService';
 import { webUIStorage } from '../../../storage/webUIStorage';
 import { HTTP_STATUS } from '../../../types/constants';
@@ -15,6 +14,7 @@ import {
   UpdateLlmProviderSchema,
 } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
+import { asyncErrorHandler } from '../../../middleware/errorHandler';
 
 const router = Router();
 const debug = Debug('app:webui:admin:llm-providers');

@@ -204,7 +204,9 @@ const BotCard: React.FC<BotCardProps> = ({
             )}
             {bot.error && (
               <Alert status="error" className="py-2 mt-2">
-                <span className="text-xs">{bot.error}</span>
+                <span className="text-xs" id="bot-error-message">
+                  {bot.error}
+                </span>
               </Alert>
             )}
           </div>
@@ -402,10 +404,10 @@ const BotCard: React.FC<BotCardProps> = ({
         {/* Warning for missing providers */}
         {!hasProviders && (
           <Alert status="warning" className="py-3 mt-4">
-            <span className="text-xs">
-              This bot has no providers configured. Add message and LLM providers before starting.
+            <span className="text-xs" id="missing-providers-warning">
+              ⚠️ This bot has no providers configured. Add message and LLM providers before starting.
             </span>
-          </div>
+          </Alert>
         )}
 
         {/* Provider Configuration Modal */}
