@@ -21,6 +21,12 @@ const SENSITIVE_KEYS = new Set([
   'private_key',
   'webhookSecret',
   'webhook_secret',
+  'signingSecret',
+  'signing_secret',
+  'botToken',
+  'bot_token',
+  'appToken',
+  'app_token',
 ]);
 
 export function sanitizeConfig(config: Record<string, unknown>): Record<string, unknown> {

@@ -29,6 +29,15 @@ router.get('/api/config', (_req, res) => {
         if (botClone.openswarm && botClone.openswarm.apiKey) {
           botClone.openswarm.apiKey = '***';
         }
+        if (botClone.slack && botClone.slack.botToken) {
+          botClone.slack.botToken = '***';
+        }
+        if (botClone.slack && botClone.slack.appToken) {
+          botClone.slack.appToken = '***';
+        }
+        if (botClone.slack && botClone.slack.signingSecret) {
+          botClone.slack.signingSecret = '***';
+        }
 
         // Compatibility fields for tests
         botClone.provider = botClone.messageProvider;
