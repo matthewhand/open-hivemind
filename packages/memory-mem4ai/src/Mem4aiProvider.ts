@@ -297,12 +297,7 @@ export class Mem4aiProvider implements IMemoryProvider {
       throw new Error(`Mem4aiProvider: baseUrl is not safe: ${this.baseUrl}`);
     }
 
-
     const url = `${this.baseUrl}${path}`;
-
-    if (!(await isSafeUrl(url))) {
-      throw new Error(`Mem4aiProvider: url is not safe: ${url}`);
-    }
 
     const headers: Record<string, string> = {
       Authorization: `Bearer ${this.apiKey}`,

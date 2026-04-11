@@ -74,6 +74,15 @@ module.exports = [
       'curly': ['warn', 'all'],
       'no-console': 'warn',
 
+      // Security — prefer crypto.randomUUID()/getRandomValues() over Math.random()
+      'no-restricted-properties': [
+        'warn',
+        { object: 'Math', property: 'random', message: 'Use crypto.randomUUID() or shared randomId() instead.' },
+      ],
+
+      // Maintainability — flag oversized files for refactoring
+      'max-lines': ['warn', { max: 400, skipBlankLines: true, skipComments: true }],
+
       // Off - handled elsewhere
       'no-unused-vars': 'off', // Handled by @typescript-eslint/no-unused-vars
       'no-empty-function': 'off', // Handled by @typescript-eslint/no-empty-function
