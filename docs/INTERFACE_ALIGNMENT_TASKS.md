@@ -49,7 +49,7 @@ export interface ILlmProvider {
 
 #### Option B: Add Missing Interface Methods
 - [ ] Add `validateCredentials(): Promise<boolean>` to `ILlmProvider` interface
-- [ ] Implement in [`OpenAiProvider`](../packages/provider-openai/src/openAiProvider.ts)
+- [ ] Implement in [`OpenAiProvider`](../packages/llm-openai/src/openAiProvider.ts)
 - [ ] Implement in [`FlowiseProvider`](../packages/llm-flowise/src/flowiseProvider.ts)
 - [ ] Implement in [`OpenWebUI`](../packages/llm-openwebui/src/openWebUIProvider.ts)
 - [ ] Add `generateResponse()` as alias to `generateChatCompletion()` for backward compatibility
@@ -68,7 +68,7 @@ export interface ILlmProvider {
 |------|--------|
 | `AGENTS.md` | Update interface documentation |
 | `src/llm/interfaces/ILlmProvider.ts` | Add methods (Option B) |
-| `packages/provider-openai/src/openAiProvider.ts` | Implement new methods (Option B) |
+| `packages/llm-openai/src/openAiProvider.ts` | Implement new methods (Option B) |
 | `packages/llm-flowise/src/flowiseProvider.ts` | Implement new methods (Option B) |
 | `packages/llm-openwebui/src/openWebUIProvider.ts` | Implement new methods (Option B) |
 
@@ -92,9 +92,9 @@ src/integrations/{discord,slack,mattermost}/
 
 **Actual Structure (as of PR #2393 — `src/integrations/` has been removed):**
 ```
-packages/adapter-discord/src/DiscordService.ts    # Main Discord implementation
-packages/adapter-slack/src/SlackService.ts        # Main Slack implementation
-packages/adapter-mattermost/src/MattermostService.ts  # Main Mattermost implementation
+packages/message-discord/src/DiscordService.ts    # Main Discord implementation
+packages/message-slack/src/SlackService.ts        # Main Slack implementation
+packages/message-mattermost/src/MattermostService.ts  # Main Mattermost implementation
 packages/llm-flowise/src/                         # Flowise LLM provider
 packages/llm-openwebui/src/                       # OpenWebUI LLM provider
 packages/llm-openswarm/src/                       # OpenSwarm LLM provider
@@ -102,22 +102,22 @@ packages/llm-openswarm/src/                       # OpenSwarm LLM provider
 
 **Import Pattern Used:**
 ```typescript
-import { Discord } from '@hivemind/adapter-discord';
+import { Discord } from '@hivemind/message-discord';
 import SlackService from '@integrations/slack/SlackService';
 ```
 
 ### Remediation Options
 
 #### Option A: Update Documentation Only
-- [ ] Change `src/integrations/{discord,slack,mattermost}/` to `packages/adapter-{discord,slack,mattermost}/`
+- [ ] Change `src/integrations/{discord,slack,mattermost}/` to `packages/message-{discord,slack,mattermost}/`
 - [ ] Update Key Files Reference table in AGENTS.md
 - [ ] Add section explaining monorepo package architecture
-- [ ] Document `@hivemind/adapter-*` import aliases
+- [ ] Document `@hivemind/message-*` import aliases
 
 #### Option B: Create Re-export Shims
 - [ ] Create `src/integrations/discord/index.ts`:
   ```typescript
-  export { Discord, DiscordService, DiscordMessage } from '@hivemind/adapter-discord';
+  export { Discord, DiscordService, DiscordMessage } from '@hivemind/message-discord';
   ```
 - [ ] Update imports in `src/admin/adminRoutes.ts` to use consistent paths
 - [ ] Update imports in `src/mcp/MCPService.ts` to use consistent paths
@@ -126,7 +126,7 @@ import SlackService from '@integrations/slack/SlackService';
 #### Option C: Build Integration Registry System
 - [ ] Create `src/integrations/IntegrationRegistry.ts`
 - [ ] Define `IIntegrationAdapter` interface
-- [ ] Auto-discover adapters from `packages/adapter-*`
+- [ ] Auto-discover adapters from `packages/message-*`
 - [ ] Add `/api/webui/integrations` endpoint listing available adapters
 - [ ] Add WebUI page showing installed integrations with status
 
@@ -225,7 +225,7 @@ docs: remove outdated analytics module documentation
 |---------|-----------|
 | LLM Provider Interface | `src/llm/interfaces/ILlmProvider.ts` |
 | LLM Provider Factory | `src/llm/getLlmProvider.ts` |
-| Discord Adapter Package | `packages/adapter-discord/src/DiscordService.ts` |
-| Slack Integration | `packages/adapter-slack/src/SlackService.ts` |
+| Discord Adapter Package | `packages/message-discord/src/DiscordService.ts` |
+| Slack Integration | `packages/message-slack/src/SlackService.ts` |
 | Agent Instructions | `AGENTS.md` |
 | Architecture Docs | `docs/ARCHITECTURE.md` |

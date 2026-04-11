@@ -348,7 +348,7 @@ cat .env.new
 cp .env.new .env
 
 # Test with debug logging
-DEBUG=app:* npm start
+DEBUG=app:* npm run dev
 
 # Check bot registration
 node -e "
@@ -379,7 +379,7 @@ If you need to rollback:
 cp .env.backup.* .env
 
 # Restart application
-npm start
+npm run dev
 ```
 
 ## Utility Function Migration: `executeCommand` to `executeCommandSafe`

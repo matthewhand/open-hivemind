@@ -274,7 +274,7 @@ Consider alerting on:
 Enable debug logging to troubleshoot issues:
 
 ```bash
-DEBUG=app:semanticGuardrail npm start
+DEBUG=app:semanticGuardrail npm run dev
 ```
 
 This will log detailed information about guardrail evaluations, including:

@@ -202,7 +202,7 @@ DEBUG=app:BotConfigurationManager npm run dev
 3. **Test the new configuration**
    ```bash
    # Run with debug logging
-   DEBUG=app:* npm start
+   DEBUG=app:* npm run dev
    ```
 
 ### Platform-Specific Migration Examples

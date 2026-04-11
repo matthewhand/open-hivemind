@@ -148,12 +148,12 @@ console.log(synthetic.isFromBot()); // true
 ## Platform-Specific Implementations
 
 ### DiscordMessage
-**Location:** `packages/adapter-discord/src/DiscordMessage.ts`
+**Location:** `packages/message-discord/src/DiscordMessage.ts`
 
 Discord-specific implementation of IMessage that wraps Discord.js Message objects.
 
 ### SlackMessage
-**Location:** `packages/adapter-slack/src/SlackMessage.ts`
+**Location:** `packages/message-slack/src/SlackMessage.ts`
 
 Slack-specific implementation of IMessage (currently a placeholder for full Slack integration).
 

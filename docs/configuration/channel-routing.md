@@ -122,7 +122,7 @@ Enable DEBUG logs to inspect routing decisions:
 
 Example:
 DEBUG=app:ChannelRouter* npm test
-DEBUG=app:ChannelRouter,app:discordService node dist/src/index.js
+DEBUG=app:ChannelRouter,app:discordService npm run dev
 
 Troubleshooting
 Common misconfigurations:

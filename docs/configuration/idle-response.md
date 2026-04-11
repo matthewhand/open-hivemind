@@ -53,13 +53,13 @@ You can override configuration values using environment variables:
 **Example usage for testing:**
 ```bash
 # Set short delays for quick testing
-IDLE_RESPONSE_MIN_DELAY=5000 IDLE_RESPONSE_MAX_DELAY=10000 npm start
+IDLE_RESPONSE_MIN_DELAY=5000 IDLE_RESPONSE_MAX_DELAY=10000 npm run dev
 
 # Disable idle responses
-IDLE_RESPONSE_ENABLED=false npm start
+IDLE_RESPONSE_ENABLED=false npm run dev
 
 # Use timeout for testing
-timeout 30 IDLE_RESPONSE_MIN_DELAY=2000 IDLE_RESPONSE_MAX_DELAY=5000 npm start
+timeout 30 IDLE_RESPONSE_MIN_DELAY=2000 IDLE_RESPONSE_MAX_DELAY=5000 npm run dev
 ```
 
 ## How It Works

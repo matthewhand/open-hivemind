@@ -56,9 +56,9 @@ export abstract class IMessage {
 ```
 
 **Implementations**:
-- ✅ `DiscordMessage` - [`packages/adapter-discord/src/DiscordMessage.ts`](packages/adapter-discord/src/DiscordMessage.ts)
-- ✅ `SlackMessage` - [`packages/adapter-slack/src/SlackMessage.ts`](packages/adapter-slack/src/SlackMessage.ts)
-- ✅ `MattermostMessage` - [`packages/adapter-mattermost/src/MattermostMessage.ts`](packages/adapter-mattermost/src/MattermostMessage.ts)
+- ✅ `DiscordMessage` - [`packages/message-discord/src/DiscordMessage.ts`](packages/message-discord/src/DiscordMessage.ts)
+- ✅ `SlackMessage` - [`packages/message-slack/src/SlackMessage.ts`](packages/message-slack/src/SlackMessage.ts)
+- ✅ `MattermostMessage` - [`packages/message-mattermost/src/MattermostMessage.ts`](packages/message-mattermost/src/MattermostMessage.ts)
 
 ---
 
@@ -93,9 +93,9 @@ export interface IMessengerService {
 ```
 
 **Implementations**:
-- ✅ `DiscordService` - [`packages/adapter-discord/src/DiscordService.ts`](packages/adapter-discord/src/DiscordService.ts)
-- ✅ `SlackService` - [`packages/adapter-slack/src/SlackService.ts`](packages/adapter-slack/src/SlackService.ts)
-- ✅ `MattermostService` - [`packages/adapter-mattermost/src/MattermostService.ts`](packages/adapter-mattermost/src/MattermostService.ts)
+- ✅ `DiscordService` - [`packages/message-discord/src/DiscordService.ts`](packages/message-discord/src/DiscordService.ts)
+- ✅ `SlackService` - [`packages/message-slack/src/SlackService.ts`](packages/message-slack/src/SlackService.ts)
+- ✅ `MattermostService` - [`packages/message-mattermost/src/MattermostService.ts`](packages/message-mattermost/src/MattermostService.ts)
 
 ---
 
@@ -120,10 +120,10 @@ export interface ILlmProvider {
 ```
 
 **Implementations**:
-- ✅ `OpenAiProvider` - [`packages/provider-openai/src/openAiProvider.ts`](packages/provider-openai/src/openAiProvider.ts)
-- ✅ `FlowiseProvider` - [`packages/provider-flowise/src/flowiseProvider.ts`](packages/provider-flowise/src/flowiseProvider.ts)
-- ✅ `OpenWebUIProvider` - [`packages/provider-openwebui/src/openWebUIProvider.ts`](packages/provider-openwebui/src/openWebUIProvider.ts)
-- ✅ `OpenSwarmProvider` - [`packages/provider-openswarm/src/OpenSwarmProvider.ts`](packages/provider-openswarm/src/OpenSwarmProvider.ts)
+- ✅ `OpenAiProvider` - [`packages/llm-openai/src/openAiProvider.ts`](packages/llm-openai/src/openAiProvider.ts)
+- ✅ `FlowiseProvider` - [`packages/llm-flowise/src/flowiseProvider.ts`](packages/llm-flowise/src/flowiseProvider.ts)
+- ✅ `OpenWebUIProvider` - [`packages/llm-openwebui/src/openWebUIProvider.ts`](packages/llm-openwebui/src/openWebUIProvider.ts)
+- ✅ `OpenSwarmProvider` - [`packages/llm-openswarm/src/OpenSwarmProvider.ts`](packages/llm-openswarm/src/OpenSwarmProvider.ts)
 
 ---
 
@@ -142,71 +142,71 @@ export interface IMessageProvider {
 ```
 
 **Implementations**:
-- ✅ `DiscordMessageProvider` - [`packages/adapter-discord/src/providers/DiscordMessageProvider.ts`](packages/adapter-discord/src/providers/DiscordMessageProvider.ts)
-- ✅ `SlackMessageProvider` - [`packages/adapter-slack/src/providers/SlackMessageProvider.ts`](packages/adapter-slack/src/providers/SlackMessageProvider.ts)
+- ✅ `DiscordMessageProvider` - [`packages/message-discord/src/providers/DiscordMessageProvider.ts`](packages/message-discord/src/providers/DiscordMessageProvider.ts)
+- ✅ `SlackMessageProvider` - [`packages/message-slack/src/providers/SlackMessageProvider.ts`](packages/message-slack/src/providers/SlackMessageProvider.ts)
 
 ---
 
 ## Platform Adapters
 
 ### Discord Adapter
-**Package**: `packages/adapter-discord/`
+**Package**: `packages/message-discord/`
 
 | File | Purpose | Status |
 |------|---------|--------|
-| [`DiscordService.ts`](packages/adapter-discord/src/DiscordService.ts) | Main service implementing IMessengerService | ✅ Complete |
-| [`DiscordMessage.ts`](packages/adapter-discord/src/DiscordMessage.ts) | IMessage implementation | ✅ Complete |
-| [`DiscordMessageProvider.ts`](packages/adapter-discord/src/providers/DiscordMessageProvider.ts) | Low-level transport | ✅ Complete |
-| [`voiceCommandHandler.ts`](packages/adapter-discord/src/voice/voiceCommandHandler.ts) | Voice command processing | ⚠️ Experimental |
-| [`audioRecorder.ts`](packages/adapter-discord/src/voice/audioRecorder.ts) | Audio recording | ⚠️ Experimental |
+| [`DiscordService.ts`](packages/message-discord/src/DiscordService.ts) | Main service implementing IMessengerService | ✅ Complete |
+| [`DiscordMessage.ts`](packages/message-discord/src/DiscordMessage.ts) | IMessage implementation | ✅ Complete |
+| [`DiscordMessageProvider.ts`](packages/message-discord/src/providers/DiscordMessageProvider.ts) | Low-level transport | ✅ Complete |
+| [`voiceCommandHandler.ts`](packages/message-discord/src/voice/voiceCommandHandler.ts) | Voice command processing | ⚠️ Experimental |
+| [`audioRecorder.ts`](packages/message-discord/src/voice/audioRecorder.ts) | Audio recording | ⚠️ Experimental |
 
 ### Slack Adapter
-**Package**: `packages/adapter-slack/`
+**Package**: `packages/message-slack/`
 
 | File | Purpose | Status |
 |------|---------|--------|
-| [`SlackService.ts`](packages/adapter-slack/src/SlackService.ts) | Main service implementing IMessengerService | ✅ Complete |
-| [`SlackMessage.ts`](packages/adapter-slack/src/SlackMessage.ts) | IMessage implementation | ✅ Complete |
-| [`SlackBotManager.ts`](packages/adapter-slack/src/SlackBotManager.ts) | Multi-bot management | ✅ Complete |
-| [`SlackWelcomeHandler.ts`](packages/adapter-slack/src/SlackWelcomeHandler.ts) | Welcome message handling | ✅ Complete |
+| [`SlackService.ts`](packages/message-slack/src/SlackService.ts) | Main service implementing IMessengerService | ✅ Complete |
+| [`SlackMessage.ts`](packages/message-slack/src/SlackMessage.ts) | IMessage implementation | ✅ Complete |
+| [`SlackBotManager.ts`](packages/message-slack/src/SlackBotManager.ts) | Multi-bot management | ✅ Complete |
+| [`SlackWelcomeHandler.ts`](packages/message-slack/src/SlackWelcomeHandler.ts) | Welcome message handling | ✅ Complete |
 
 ### Mattermost Adapter
-**Package**: `packages/adapter-mattermost/`
+**Package**: `packages/message-mattermost/`
 
 | File | Purpose | Status |
 |------|---------|--------|
-| [`MattermostService.ts`](packages/adapter-mattermost/src/MattermostService.ts) | Main service implementing IMessengerService | ✅ Complete |
-| [`MattermostMessage.ts`](packages/adapter-mattermost/src/MattermostMessage.ts) | IMessage implementation | ✅ Complete |
-| [`mattermostClient.ts`](packages/adapter-mattermost/src/mattermostClient.ts) | API client | ✅ Complete |
+| [`MattermostService.ts`](packages/message-mattermost/src/MattermostService.ts) | Main service implementing IMessengerService | ✅ Complete |
+| [`MattermostMessage.ts`](packages/message-mattermost/src/MattermostMessage.ts) | IMessage implementation | ✅ Complete |
+| [`mattermostClient.ts`](packages/message-mattermost/src/mattermostClient.ts) | API client | ✅ Complete |
 
 ---
 
 ## LLM Providers
 
 ### OpenAI Provider
-**Package**: `packages/provider-openai/`
+**Package**: `packages/llm-openai/`
 
 | File | Purpose | Status |
 |------|---------|--------|
-| [`openAiProvider.ts`](packages/provider-openai/src/openAiProvider.ts) | ILlmProvider implementation | ✅ Complete |
-| [`OpenAiService.ts`](packages/provider-openai/src/OpenAiService.ts) | Service wrapper | ✅ Complete |
-| [`completion/generateCompletion.ts`](packages/provider-openai/src/completion/generateCompletion.ts) | Completion generation | ✅ Complete |
+| [`openAiProvider.ts`](packages/llm-openai/src/openAiProvider.ts) | ILlmProvider implementation | ✅ Complete |
+| [`OpenAiService.ts`](packages/llm-openai/src/OpenAiService.ts) | Service wrapper | ✅ Complete |
+| [`completion/generateCompletion.ts`](packages/llm-openai/src/completion/generateCompletion.ts) | Completion generation | ✅ Complete |
 
 ### Flowise Provider
-**Package**: `packages/provider-flowise/`
+**Package**: `packages/llm-flowise/`
 
 | File | Purpose | Status |
 |------|---------|--------|
-| [`flowiseProvider.ts`](packages/provider-flowise/src/flowiseProvider.ts) | ILlmProvider implementation | ✅ Complete |
-| [`flowiseRestClient.ts`](packages/provider-flowise/src/flowiseRestClient.ts) | REST API client | ✅ Complete |
+| [`flowiseProvider.ts`](packages/llm-flowise/src/flowiseProvider.ts) | ILlmProvider implementation | ✅ Complete |
+| [`flowiseRestClient.ts`](packages/llm-flowise/src/flowiseRestClient.ts) | REST API client | ✅ Complete |
 
 ### OpenWebUI Provider
-**Package**: `packages/provider-openwebui/`
+**Package**: `packages/llm-openwebui/`
 
 | File | Purpose | Status |
 |------|---------|--------|
-| [`openWebUIProvider.ts`](packages/provider-openwebui/src/openWebUIProvider.ts) | ILlmProvider implementation | ✅ Complete |
-| [`runInference.ts`](packages/provider-openwebui/src/runInference.ts) | Inference execution | ✅ Complete |
+| [`openWebUIProvider.ts`](packages/llm-openwebui/src/openWebUIProvider.ts) | ILlmProvider implementation | ✅ Complete |
+| [`runInference.ts`](packages/llm-openwebui/src/runInference.ts) | Inference execution | ✅ Complete |
 
 ---
 
@@ -257,7 +257,7 @@ export interface MCPServer {
 **Status**: 🔴 Not Started
 **Estimated Effort**: Medium (4-8 hours)
 **Files to Modify**:
-- [`packages/adapter-slack/src/SlackService.ts`](packages/adapter-slack/src/SlackService.ts)
+- [`packages/message-slack/src/SlackService.ts`](packages/message-slack/src/SlackService.ts)
 - [`src/message/handlers/messageHandler.ts`](src/message/handlers/messageHandler.ts)
 
 **Description**: Implement context caching for Slack similar to Discord's implementation. This improves response times by caching channel context.
@@ -273,7 +273,7 @@ export interface MCPServer {
 **Status**: 🔴 Not Started
 **Estimated Effort**: Small (2-4 hours)
 **Files to Modify**:
-- [`packages/adapter-mattermost/src/MattermostService.ts`](packages/adapter-mattermost/src/MattermostService.ts)
+- [`packages/message-mattermost/src/MattermostService.ts`](packages/message-mattermost/src/MattermostService.ts)
 - [`src/message/handlers/messageHandler.ts`](src/message/handlers/messageHandler.ts)
 
 **Description**: Add wakeword detection support for Mattermost matching Discord/Slack functionality.
@@ -289,9 +289,9 @@ export interface MCPServer {
 **Status**: 🟡 Experimental
 **Estimated Effort**: Large (16-24 hours)
 **Files to Modify**:
-- [`packages/adapter-discord/src/voice/voiceCommandHandler.ts`](packages/adapter-discord/src/voice/voiceCommandHandler.ts)
-- [`packages/adapter-discord/src/voice/audioRecorder.ts`](packages/adapter-discord/src/voice/audioRecorder.ts)
-- [`packages/adapter-discord/src/voice/speechToText.ts`](packages/adapter-discord/src/voice/speechToText.ts)
+- [`packages/message-discord/src/voice/voiceCommandHandler.ts`](packages/message-discord/src/voice/voiceCommandHandler.ts)
+- [`packages/message-discord/src/voice/audioRecorder.ts`](packages/message-discord/src/voice/audioRecorder.ts)
+- [`packages/message-discord/src/voice/speechToText.ts`](packages/message-discord/src/voice/speechToText.ts)
 
 **Description**: Complete or remove the experimental Discord voice pipeline. Currently in incomplete state.
 
@@ -304,17 +304,17 @@ export interface MCPServer {
 
 ### Priority 2: Provider Package Roadmap (MEDIUM)
 
-The following providers are descoped stubs — no implementation exists. Each should become a proper `packages/provider-*` or `packages/adapter-*` package tagged for the community marketplace.
+The following providers are descoped stubs — no implementation exists. Each should become a proper `packages/llm-*` or `packages/message-*` package tagged for the community marketplace.
 
 | Provider | Type | Package name | Marketplace tag |
 |---|---|---|---|
-| Ollama | `llm` | `packages/provider-ollama` | `open-hivemind-provider-llm` |
-| Anthropic (Claude) | `llm` | `packages/provider-anthropic` | `open-hivemind-provider-llm` |
-| Google Gemini | `llm` | `packages/provider-gemini` | `open-hivemind-provider-llm` |
-| Groq | `llm` | `packages/provider-groq` | `open-hivemind-provider-llm` |
-| Mistral | `llm` | `packages/provider-mistral` | `open-hivemind-provider-llm` |
-| Cohere | `llm` | `packages/provider-cohere` | `open-hivemind-provider-llm` |
-| WhatsApp | `message` | `packages/adapter-whatsapp` | `open-hivemind-adapter-message` |
+| Ollama | `llm` | `packages/llm-ollama` | `open-hivemind-provider-llm` |
+| Anthropic (Claude) | `llm` | `packages/llm-anthropic` | `open-hivemind-provider-llm` |
+| Google Gemini | `llm` | `packages/llm-gemini` | `open-hivemind-provider-llm` |
+| Groq | `llm` | `packages/llm-groq` | `open-hivemind-provider-llm` |
+| Mistral | `llm` | `packages/llm-mistral` | `open-hivemind-provider-llm` |
+| Cohere | `llm` | `packages/llm-cohere` | `open-hivemind-provider-llm` |
+| WhatsApp | `message` | `packages/message-whatsapp` | `open-hivemind-adapter-message` |
 
 Each package must implement `ILlmProvider` (llm) or `IMessengerService` (message) and include a `src/client/src/provider-configs/schemas/<name>.ts` WebUI schema file.
 
@@ -556,12 +556,12 @@ Each package must implement `ILlmProvider` (llm) or `IMessengerService` (message
 | Category | Location |
 |----------|----------|
 | Core Interfaces | `packages/shared-types/src/` |
-| Discord Adapter | `packages/adapter-discord/src/` |
-| Slack Adapter | `packages/adapter-slack/src/` |
-| Mattermost Adapter | `packages/adapter-mattermost/src/` |
-| OpenAI Provider | `packages/provider-openai/src/` |
-| Flowise Provider | `packages/provider-flowise/src/` |
-| OpenWebUI Provider | `packages/provider-openwebui/src/` |
+| Discord Adapter | `packages/message-discord/src/` |
+| Slack Adapter | `packages/message-slack/src/` |
+| Mattermost Adapter | `packages/message-mattermost/src/` |
+| OpenAI Provider | `packages/llm-openai/src/` |
+| Flowise Provider | `packages/llm-flowise/src/` |
+| OpenWebUI Provider | `packages/llm-openwebui/src/` |
 | MCP Service | `src/mcp/` |
 | Message Handlers | `src/message/handlers/` |
 | Server Routes | `src/server/routes/` |

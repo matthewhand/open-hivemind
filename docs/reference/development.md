@@ -55,7 +55,7 @@ Open-Hivemind is an advanced, multi-agent bot ecosystem built with TypeScript. T
 - **Debugging:**  
   Enable extended logging via:
   ```bash
-  DEBUG=app:* npm start
+  DEBUG=app:* npm run dev
   ```
 - **Iterative Testing:**  
   Utilize comprehensive unit tests and integration tests to validate all changes. Maintain high code coverage and continuously monitor logs for irregularities.

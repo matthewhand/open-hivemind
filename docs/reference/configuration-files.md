@@ -68,8 +68,8 @@ Production path mapping used by `module-alias` package at runtime:
   "@llm": "dist/src/llm",
   "@message": "dist/src/message",
   "@integrations": "dist/src/integrations",
-  "@hivemind/provider-openai": "dist/packages/provider-openai/src",
-  "@hivemind/adapter-discord": "dist/packages/adapter-discord/src"
+  "@hivemind/llm-openai": "dist/packages/llm-openai/src",
+  "@hivemind/message-discord": "dist/packages/message-discord/src"
 }
 ```
 
@@ -144,8 +144,8 @@ Production path mapping used by `module-alias` package at runtime:
 | `@llm/*` | `src/llm/*` |
 | `@message/*` | `src/message/*` |
 | `@integrations/*` | `src/integrations/*` |
-| `@hivemind/adapter-*` | `packages/adapter-*/src/*` |
-| `@hivemind/provider-openai` | `packages/provider-openai/src/*` |
+| `@hivemind/message-*` | `packages/message-*/src/*` |
+| `@hivemind/llm-openai` | `packages/llm-openai/src/*` |
 
 **When to Modify**:
 - Enabling stricter type checking (change `strict` to `true`)

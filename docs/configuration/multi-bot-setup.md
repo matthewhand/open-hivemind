@@ -194,7 +194,7 @@ BOTS=max,sam
 3. **Test the new configuration**:
    ```bash
    # Run with new configuration
-   npm start
+   npm run dev
    ```
 
 ### Hybrid Approach During Migration
@@ -262,7 +262,7 @@ Replace `{name}` with your bot name (case-insensitive):
 
 Enable debug logging:
 ```bash
-DEBUG=app:* npm start
+DEBUG=app:* npm run dev
 ```
 
 ### Configuration Validation

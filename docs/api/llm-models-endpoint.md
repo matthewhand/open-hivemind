@@ -6,7 +6,6 @@ The LLM Models API provides endpoints to retrieve available models for different
 
 ## Base URLs
 
-- **Config Route**: `/api/config/llm-providers/:type/models`
 - **Admin Route**: `/api/admin/llm-providers/:type/models`
 
 ## Supported Providers
@@ -20,7 +19,7 @@ The LLM Models API provides endpoints to retrieve available models for different
 
 ### List Models for Provider
 
-**GET** `/api/config/llm-providers/:type/models`
+**GET** `/api/admin/llm-providers/:type/models`
 
 Returns a list of available models for the specified provider with comprehensive metadata.
 
@@ -86,7 +85,7 @@ Returns a list of available models for the specified provider with comprehensive
 ### Get All OpenAI Models
 
 ```bash
-curl http://localhost:3000/api/config/llm-providers/openai/models
+curl http://localhost:3000/api/admin/llm-providers/openai/models
 ```
 
 **Response:**
@@ -124,7 +123,7 @@ curl http://localhost:3000/api/config/llm-providers/openai/models
 ### Get Only Chat Models
 
 ```bash
-curl http://localhost:3000/api/config/llm-providers/openai/models?modelType=chat
+curl http://localhost:3000/api/admin/llm-providers/openai/models?modelType=chat
 ```
 
 **Response:**
@@ -148,7 +147,7 @@ curl http://localhost:3000/api/config/llm-providers/openai/models?modelType=chat
 ### Get Only Embedding Models
 
 ```bash
-curl http://localhost:3000/api/config/llm-providers/openai/models?modelType=embedding
+curl http://localhost:3000/api/admin/llm-providers/openai/models?modelType=embedding
 ```
 
 **Response:**
@@ -172,7 +171,7 @@ curl http://localhost:3000/api/config/llm-providers/openai/models?modelType=embe
 ### Get Anthropic Models
 
 ```bash
-curl http://localhost:3000/api/config/llm-providers/anthropic/models
+curl http://localhost:3000/api/admin/llm-providers/anthropic/models
 ```
 
 **Response:**
@@ -202,7 +201,7 @@ curl http://localhost:3000/api/config/llm-providers/anthropic/models
 ### List Supported Providers
 
 ```bash
-curl http://localhost:3000/api/config/llm-providers-supported
+curl http://localhost:3000/api/admin/llm-providers-supported
 ```
 
 **Response:**
@@ -214,22 +213,22 @@ curl http://localhost:3000/api/config/llm-providers-supported
     {
       "id": "openai",
       "name": "Openai",
-      "modelsEndpoint": "/api/config/llm-providers/openai/models"
+      "modelsEndpoint": "/api/admin/llm-providers/openai/models"
     },
     {
       "id": "anthropic",
       "name": "Anthropic",
-      "modelsEndpoint": "/api/config/llm-providers/anthropic/models"
+      "modelsEndpoint": "/api/admin/llm-providers/anthropic/models"
     },
     {
       "id": "google",
       "name": "Google",
-      "modelsEndpoint": "/api/config/llm-providers/google/models"
+      "modelsEndpoint": "/api/admin/llm-providers/google/models"
     },
     {
       "id": "perplexity",
       "name": "Perplexity",
-      "modelsEndpoint": "/api/config/llm-providers/perplexity/models"
+      "modelsEndpoint": "/api/admin/llm-providers/perplexity/models"
     }
   ]
 }
@@ -264,7 +263,7 @@ The frontend `ModelAutocomplete` component can fetch models from these endpoints
 ```typescript
 // In LLMProvidersPage.tsx
 const fetchModels = async (providerType: string) => {
-  const response = await fetch(`/api/config/llm-providers/${providerType}/models`);
+  const response = await fetch(`/api/admin/llm-providers/${providerType}/models`);
   const data = await response.json();
   return data.models;
 };
@@ -283,7 +282,7 @@ function ModelSelector({ providerType }: { providerType: string }) {
     const loadModels = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`/api/config/llm-providers/${providerType}/models?modelType=chat`);
+        const response = await fetch(`/api/admin/llm-providers/${providerType}/models?modelType=chat`);
         const data = await response.json();
         setModels(data.models);
       } catch (error) {
