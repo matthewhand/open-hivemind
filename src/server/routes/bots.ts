@@ -43,14 +43,12 @@ const getWsService = () => {
  *       200:
  *         description: List of bots
  */
-router.get(
-  '/',
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const manager = await managerPromise;
-      const bots = await manager.getAllBots();
-      const statuses = await manager.getBotsStatus();
-      const statusMap = new Map(statuses.map((s) => [s.id, s.isRunning]));
+router.get('/', async (req, res) => {
+  try {
+    const manager = await managerPromise;
+    const bots = await manager.getAllBots();
+    const statuses = await manager.getBotsStatus();
+    const statusMap = new Map(statuses.map((s) => [s.id, s.isRunning]));
 
       const result = bots.map((bot) => {
         // WebSocketService tracks metrics by bot name, not ID
@@ -74,18 +72,17 @@ router.get(
         };
       });
 
-      return res.json(ApiResponse.success(result));
-    } catch (error: unknown) {
-      logger.error(
-        'Failed to retrieve bots',
-        error instanceof Error ? error : new Error(String(error))
-      );
-      return res
-        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error('Failed to retrieve bots'));
-    }
-  })
-);
+    return res.json(ApiResponse.success(result));
+  } catch (error: unknown) {
+    logger.error(
+      'Failed to retrieve bots',
+      error instanceof Error ? error : new Error(String(error))
+    );
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(ApiResponse.error('Failed to retrieve bots'));
+  }
+});
 
 /**
  * @openapi
@@ -109,12 +106,9 @@ router.get(
  *       200:
  *         description: Bots reordered
  */
-router.put(
-  '/reorder',
-  validateRequest(ReorderSchema),
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const { ids } = req.body;
+router.put('/reorder', validateRequest(ReorderSchema), async (req, res) => {
+  try {
+    const { ids } = req.body;
 
       const fsModule = await import('fs');
       const pathModule = await import('path');
@@ -123,18 +117,17 @@ router.put(
       await fsModule.promises.mkdir(orderDir, { recursive: true });
       await fsModule.promises.writeFile(orderFilePath, JSON.stringify(ids, null, 2));
 
-      return res.json(ApiResponse.success());
-    } catch (error: unknown) {
-      logger.error(
-        'Failed to reorder bots',
-        error instanceof Error ? error : new Error(String(error))
-      );
-      return res
-        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error('Failed to reorder bots'));
-    }
-  })
-);
+    return res.json(ApiResponse.success());
+  } catch (error: unknown) {
+    logger.error(
+      'Failed to reorder bots',
+      error instanceof Error ? error : new Error(String(error))
+    );
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(ApiResponse.error('Failed to reorder bots'));
+  }
+});
 
 // ── Export / Import ─────────────────────────────────────────────────────
 
@@ -217,16 +210,46 @@ router.get('/export', async (_req, res) => {
  *       200:
  *         description: Import report
  */
-router.post(
-  '/import',
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const manager = await managerPromise;
-      const { bots: incoming } = req.body;
-      if (!Array.isArray(incoming) || incoming.length === 0) {
-        return res
-          .status(HTTP_STATUS.BAD_REQUEST)
-          .json(ApiResponse.error('Request body must contain a non-empty "bots" array'));
+router.post('/import', async (req, res) => {
+  try {
+    const manager = await managerPromise;
+    const { bots: incoming } = req.body;
+    if (!Array.isArray(incoming) || incoming.length === 0) {
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json(ApiResponse.error('Request body must contain a non-empty "bots" array'));
+    }
+
+    const existingBots = await manager.getAllBots();
+    const existingByName = new Map(existingBots.map((b) => [b.name.toLowerCase(), b]));
+
+    const report = {
+      created: [] as string[],
+      updated: [] as string[],
+      skipped: [] as string[],
+      errors: [] as string[],
+    };
+
+    for (const bot of incoming) {
+      try {
+        if (!bot.name) {
+          report.errors.push('Skipped bot with no name');
+          continue;
+        }
+        // Strip fields that should not be imported directly
+        const { id: _id, status: _status, messageCount: _mc, errorCount: _ec, ...importData } = bot;
+
+        const existing = existingByName.get(bot.name.toLowerCase());
+        if (existing) {
+          await manager.updateBot(existing.id, importData);
+          report.updated.push(bot.name);
+        } else {
+          await manager.createBot(importData as CreateBotRequest);
+          report.created.push(bot.name);
+        }
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        report.errors.push(`${bot.name || 'unknown'}: ${msg}`);
       }
 
       const existingBots = await manager.getAllBots();
@@ -284,8 +307,24 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to import bots'));
     }
-  })
-);
+
+    logger.info('import_bots', {
+      created: report.created.length,
+      updated: report.updated.length,
+      errors: report.errors.length,
+    });
+
+    return res.json(ApiResponse.success());
+  } catch (error: unknown) {
+    logger.error(
+      'Failed to import bots',
+      error instanceof Error ? error : new Error(String(error))
+    );
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(ApiResponse.error('Failed to import bots'));
+  }
+});
 
 /**
  * @openapi
@@ -305,56 +344,26 @@ router.post(
  *       404:
  *         description: Bot not found
  */
-router.get(
-  '/:id',
-  validateRequest(BotIdParamSchema),
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const manager = await managerPromise;
-      const { id } = req.params;
-      const bot = await manager.getBot(id);
-      if (!bot) {
-        return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Bot not found'));
-      }
-
-      // Get bot status and stats
-      const statuses = await manager.getBotsStatus();
-      const statusMap = new Map(statuses.map((s) => [s.id, s.isRunning]));
-      const stats = getWsService()?.getBotStats(bot.name) || {
-        messageCount: 0,
-        errors: [],
-        errorCount: 0,
-      };
-
-      const result = {
-        id: bot.id,
-        name: bot.name,
-        provider: bot.messageProvider,
-        messageProvider: bot.messageProvider,
-        llmProvider: bot.llmProvider,
-        persona: bot.persona,
-        status: bot.isActive ? 'active' : 'disabled',
-        connected: statusMap.get(bot.id) || false,
-        messageCount: stats.messageCount,
-        errorCount: stats.errorCount,
-        config: bot.config,
-        isActive: bot.isActive,
-        // Note: envOverrides intentionally excluded to avoid exposing sensitive data
-      };
-
-      return res.json(ApiResponse.success(result));
-    } catch (error: unknown) {
-      logger.error(
-        'Failed to retrieve bot',
-        error instanceof Error ? error : new Error(String(error)),
-        { id: req.params.id }
-      );
-      return res
-        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error('Failed to retrieve bot'));
+router.get('/:id', validateRequest(BotIdParamSchema), async (req, res) => {
+  try {
+    const manager = await managerPromise;
+    const { id } = req.params;
+    const bot = await manager.getBot(id);
+    if (!bot) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Bot not found'));
     }
-  })
-);
+    return res.json(ApiResponse.success());
+  } catch (error: unknown) {
+    logger.error(
+      'Failed to retrieve bot',
+      error instanceof Error ? error : new Error(String(error)),
+      { id: req.params.id }
+    );
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(ApiResponse.error('Failed to retrieve bot'));
+  }
+});
 
 /**
  * @openapi
@@ -375,28 +384,24 @@ router.get(
  *       201:
  *         description: Bot created
  */
-router.post(
-  '/',
-  validateRequest(CreateBotSchema),
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const manager = await managerPromise;
-      const request = req.body as CreateBotRequest;
-      // Idempotency check: see if bot with same name exists
-      const allBots = await manager.getAllBots();
-      const existingBot = allBots.find((b) => b.name === request.name);
-      if (existingBot) {
-        return res.status(HTTP_STATUS.OK).json(ApiResponse.success());
-      }
-
-      await manager.createBot(request);
-      return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success());
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : String(error);
-      return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error(msg));
+router.post('/', validateRequest(CreateBotSchema), async (req, res) => {
+  try {
+    const manager = await managerPromise;
+    const request = req.body as CreateBotRequest;
+    // Idempotency check: see if bot with same name exists
+    const allBots = await manager.getAllBots();
+    const existingBot = allBots.find((b) => b.name === request.name);
+    if (existingBot) {
+      return res.status(HTTP_STATUS.OK).json(ApiResponse.success());
     }
-  })
-);
+
+    await manager.createBot(request);
+    return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success());
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error(msg));
+  }
+});
 
 /**
  * @openapi
@@ -426,25 +431,21 @@ router.post(
  *       200:
  *         description: Bot updated
  */
-router.put(
-  '/:id',
-  validateRequest(UpdateBotSchema),
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const manager = await managerPromise;
-      const { id } = req.params;
-      const updates = req.body;
-      await manager.updateBot(id, updates);
-      return res.json(ApiResponse.success());
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : String(error);
-      const status = msg.includes(ERROR_CODES.NOT_FOUND)
-        ? HTTP_STATUS.NOT_FOUND
-        : HTTP_STATUS.BAD_REQUEST;
-      return res.status(status).json(ApiResponse.error(msg));
-    }
-  })
-);
+router.put('/:id', validateRequest(UpdateBotSchema), async (req, res) => {
+  try {
+    const manager = await managerPromise;
+    const { id } = req.params;
+    const updates = req.body;
+    await manager.updateBot(id, updates);
+    return res.json(ApiResponse.success());
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    const status = msg.includes(ERROR_CODES.NOT_FOUND)
+      ? HTTP_STATUS.NOT_FOUND
+      : HTTP_STATUS.BAD_REQUEST;
+    return res.status(status).json(ApiResponse.error(msg));
+  }
+});
 
 /**
  * @openapi
@@ -462,30 +463,26 @@ router.put(
  *       200:
  *         description: Bot deleted
  */
-router.delete(
-  '/:id',
-  validateRequest(BotIdParamSchema),
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const manager = await managerPromise;
-      const { id } = req.params;
-      // Idempotency: return 200/204 even if resource already gone
-      const existingBot = await manager.getBot(id);
-      if (!existingBot) {
-        return res.json(ApiResponse.success());
-      }
-
-      await manager.deleteBot(id);
+router.delete('/:id', validateRequest(BotIdParamSchema), async (req, res) => {
+  try {
+    const manager = await managerPromise;
+    const { id } = req.params;
+    // Idempotency: return 200/204 even if resource already gone
+    const existingBot = await manager.getBot(id);
+    if (!existingBot) {
       return res.json(ApiResponse.success());
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : String(error);
-      const status = msg.includes(ERROR_CODES.NOT_FOUND)
-        ? HTTP_STATUS.NOT_FOUND
-        : HTTP_STATUS.BAD_REQUEST;
-      return res.status(status).json(ApiResponse.error(msg));
     }
-  })
-);
+
+    await manager.deleteBot(id);
+    return res.json(ApiResponse.success());
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    const status = msg.includes(ERROR_CODES.NOT_FOUND)
+      ? HTTP_STATUS.NOT_FOUND
+      : HTTP_STATUS.BAD_REQUEST;
+    return res.status(status).json(ApiResponse.error(msg));
+  }
+});
 
 /**
  * @openapi
@@ -512,14 +509,11 @@ router.delete(
  *       201:
  *         description: Bot cloned
  */
-router.post(
-  '/:id/clone',
-  validateRequest(CloneBotSchema),
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const manager = await managerPromise;
-      const { id } = req.params;
-      const { newName } = req.body;
+router.post('/:id/clone', validateRequest(CloneBotSchema), async (req, res) => {
+  try {
+    const manager = await managerPromise;
+    const { id } = req.params;
+    const { newName } = req.body;
 
       // Idempotency check: see if cloned bot already exists
       const allBots = await manager.getAllBots();
@@ -537,8 +531,17 @@ router.post(
         : HTTP_STATUS.BAD_REQUEST;
       return res.status(status).json(ApiResponse.error(msg));
     }
-  })
-);
+
+    await manager.cloneBot(id, newName);
+    return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success());
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    const status = msg.includes(ERROR_CODES.NOT_FOUND)
+      ? HTTP_STATUS.NOT_FOUND
+      : HTTP_STATUS.BAD_REQUEST;
+    return res.status(status).json(ApiResponse.error(msg));
+  }
+});
 
 /**
  * @openapi
@@ -556,24 +559,20 @@ router.post(
  *       200:
  *         description: Bot started
  */
-router.post(
-  '/:id/start',
-  validateRequest(BotIdParamSchema),
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const manager = await managerPromise;
-      const { id } = req.params;
-      await manager.startBot(id);
-      return res.json(ApiResponse.success());
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : String(error);
-      const status = msg.includes(ERROR_CODES.NOT_FOUND)
-        ? HTTP_STATUS.NOT_FOUND
-        : HTTP_STATUS.BAD_REQUEST;
-      return res.status(status).json(ApiResponse.error(msg));
-    }
-  })
-);
+router.post('/:id/start', validateRequest(BotIdParamSchema), async (req, res) => {
+  try {
+    const manager = await managerPromise;
+    const { id } = req.params;
+    await manager.startBot(id);
+    return res.json(ApiResponse.success());
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    const status = msg.includes(ERROR_CODES.NOT_FOUND)
+      ? HTTP_STATUS.NOT_FOUND
+      : HTTP_STATUS.BAD_REQUEST;
+    return res.status(status).json(ApiResponse.error(msg));
+  }
+});
 
 /**
  * @openapi
@@ -591,24 +590,20 @@ router.post(
  *       200:
  *         description: Bot stopped
  */
-router.post(
-  '/:id/stop',
-  validateRequest(BotIdParamSchema),
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const manager = await managerPromise;
-      const { id } = req.params;
-      await manager.stopBot(id);
-      return res.json(ApiResponse.success());
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : String(error);
-      const status = msg.includes(ERROR_CODES.NOT_FOUND)
-        ? HTTP_STATUS.NOT_FOUND
-        : HTTP_STATUS.BAD_REQUEST;
-      return res.status(status).json(ApiResponse.error(msg));
-    }
-  })
-);
+router.post('/:id/stop', validateRequest(BotIdParamSchema), async (req, res) => {
+  try {
+    const manager = await managerPromise;
+    const { id } = req.params;
+    await manager.stopBot(id);
+    return res.json(ApiResponse.success());
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    const status = msg.includes(ERROR_CODES.NOT_FOUND)
+      ? HTTP_STATUS.NOT_FOUND
+      : HTTP_STATUS.BAD_REQUEST;
+    return res.status(status).json(ApiResponse.error(msg));
+  }
+});
 
 /**
  * @openapi
@@ -634,27 +629,23 @@ router.post(
  *       200:
  *         description: Bot history
  */
-router.get(
-  '/:id/history',
-  validateRequest(BotHistoryQuerySchema),
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const manager = await managerPromise;
-      const { id } = req.params;
-      const limit = Math.min(Math.max(parseInt(String(req.query.limit || '20')) || 20, 1), 100);
-      const channelId = req.query.channelId as string;
+router.get('/:id/history', validateRequest(BotHistoryQuerySchema), async (req, res) => {
+  try {
+    const manager = await managerPromise;
+    const { id } = req.params;
+    const limit = Math.min(Math.max(parseInt(String(req.query.limit || '20')) || 20, 1), 100);
+    const channelId = req.query.channelId as string;
 
-      const history = await manager.getBotHistory(id, channelId, limit);
-      return res.json(ApiResponse.success({ history }));
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : String(error);
-      const status = msg.includes(ERROR_CODES.NOT_FOUND)
-        ? HTTP_STATUS.NOT_FOUND
-        : HTTP_STATUS.BAD_REQUEST;
-      return res.status(status).json(ApiResponse.error(msg));
-    }
-  })
-);
+    const history = await manager.getBotHistory(id, channelId, limit);
+    return res.json(ApiResponse.success({ history }));
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    const status = msg.includes(ERROR_CODES.NOT_FOUND)
+      ? HTTP_STATUS.NOT_FOUND
+      : HTTP_STATUS.BAD_REQUEST;
+    return res.status(status).json(ApiResponse.error(msg));
+  }
+});
 
 /**
  * Redacts a string by fully masking short strings and partially masking longer ones.
@@ -686,14 +677,11 @@ function redactString(val: string | undefined): string | undefined {
  *       200:
  *         description: Bot activity
  */
-router.get(
-  '/:id/activity',
-  validateRequest(BotActivityQuerySchema),
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const manager = await managerPromise;
-      const { id } = req.params;
-      const limit = Math.min(Math.max(parseInt(String(req.query.limit || '20')) || 20, 1), 100);
+router.get('/:id/activity', validateRequest(BotActivityQuerySchema), async (req, res) => {
+  try {
+    const manager = await managerPromise;
+    const { id } = req.params;
+    const limit = Math.min(Math.max(parseInt(String(req.query.limit || '20')) || 20, 1), 100);
 
       const bot = await manager.getBot(id);
       if (!bot) {
@@ -731,8 +719,39 @@ router.get(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to retrieve bot activity'));
     }
-  })
-);
+
+    const events = await ActivityLogger.getInstance().getEvents({
+      botName: bot.name,
+      limit,
+    });
+
+    const activity = events
+      .map((event) => ({
+        id: event.id,
+        timestamp: event.timestamp,
+        action: event.messageType.toUpperCase(),
+        details: event.errorMessage || `Message length: ${event.contentLength}`,
+        result: event.status,
+        metadata: {
+          type: 'MESSAGE',
+          channelId: redactString(event.channelId),
+          userId: redactString(event.userId),
+        },
+      }))
+      .reverse();
+
+    return res.json(ApiResponse.success({ activity }));
+  } catch (error: unknown) {
+    logger.error(
+      'Failed to retrieve bot activity',
+      error instanceof Error ? error : new Error(String(error)),
+      { id: req.params.id }
+    );
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(ApiResponse.error('Failed to retrieve bot activity'));
+  }
+});
 
 /**
  * @openapi
@@ -752,36 +771,29 @@ router.get(
  *       404:
  *         description: Bot not found
  */
-router.get(
-  '/:id/export',
-  validateRequest(BotIdParamSchema),
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const manager = await managerPromise;
-      const bot = await manager.getBot(req.params.id);
-      if (!bot) {
-        return res
-          .status(HTTP_STATUS.NOT_FOUND)
-          .json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
-      }
-      const sanitized = sanitizeBotForExport(bot);
-      return res.json(
-        ApiResponse.success({
-          schemaVersion: EXPORT_SCHEMA_VERSION,
-          exportedAt: new Date().toISOString(),
-          bots: [sanitized],
-        })
-      );
-    } catch (error: unknown) {
-      logger.error(
-        'Failed to export bot',
-        error instanceof Error ? error : new Error(String(error))
-      );
+router.get('/:id/export', validateRequest(BotIdParamSchema), async (req, res) => {
+  try {
+    const manager = await managerPromise;
+    const bot = await manager.getBot(req.params.id);
+    if (!bot) {
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to export bot'));
     }
-  })
-);
+    const sanitized = sanitizeBotForExport(bot);
+    return res.json(
+      ApiResponse.success({
+        schemaVersion: EXPORT_SCHEMA_VERSION,
+        exportedAt: new Date().toISOString(),
+        bots: [sanitized],
+      })
+    );
+  } catch (error: unknown) {
+    logger.error('Failed to export bot', error instanceof Error ? error : new Error(String(error)));
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(ApiResponse.error('Failed to export bot'));
+  }
+});
 
 export default router;

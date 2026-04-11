@@ -23,12 +23,10 @@ const router = Router();
  *       200:
  *         description: List of personas
  */
-router.get(
-  '/personas',
-  asyncErrorHandler(async (req, res) => {
-    try {
-      // Get personas from persistent storage
-      const storedPersonas = await webUIStorage.getPersonas();
+router.get('/personas', async (req: Request, res: Response) => {
+  try {
+    // Get personas from persistent storage
+    const storedPersonas = await webUIStorage.getPersonas();
 
       // Default personas - in a real implementation, these would be stored in a database
       const defaultPersonas = [
@@ -52,15 +50,14 @@ router.get(
       // Combine stored and default personas
       const allPersonas = [...storedPersonas, ...defaultPersonas];
 
-      return res.json(ApiResponse.success({ personas: allPersonas }));
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
-      return res
-        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error('Failed to retrieve personas'));
-    }
-  })
-);
+    return res.json(ApiResponse.success({ personas: allPersonas }));
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(ApiResponse.error('Failed to retrieve personas'));
+  }
+});
 
 /**
  * @openapi

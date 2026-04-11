@@ -15,7 +15,6 @@ import {
   UpdateLlmProviderSchema,
 } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
-import { sanitizeProfiles } from '../../utils/sanitizeConfig';
 
 const router = Router();
 const debug = Debug('app:webui:admin:llm-providers');
@@ -77,7 +76,7 @@ router.post(
   '/llm-providers',
   configRateLimit,
   validateRequest(LlmProviderSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { name, type, config } = req.body;
 
@@ -116,14 +115,14 @@ router.post(
         message: hivemindError.message || 'An error occurred while creating LLM provider',
       });
     }
-  })
+  }
 );
 
 // PUT /llm-providers/:id - Update an existing LLM provider
 router.put(
   '/llm-providers/:id',
   validateRequest(UpdateLlmProviderSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { name, type, config } = req.body;
@@ -158,7 +157,7 @@ router.put(
         message: hivemindError.message || 'An error occurred while updating LLM provider',
       });
     }
-  })
+  }
 );
 
 /**
@@ -180,7 +179,7 @@ router.put(
 router.delete(
   '/llm-providers/:id',
   validateRequest(ToggleIdParamSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
 
@@ -201,14 +200,14 @@ router.delete(
         message: hivemindError.message || 'An error occurred while deleting LLM provider',
       });
     }
-  })
+  }
 );
 
 // POST /llm-providers/:id/toggle - Toggle LLM provider active status
 router.post(
   '/llm-providers/:id/toggle',
   validateRequest(ToggleProviderSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { isActive } = req.body;
@@ -240,7 +239,7 @@ router.post(
         message: hivemindError.message || 'An error occurred while updating provider status',
       });
     }
-  })
+  }
 );
 
 // POST /providers/test-connection - Test connection to an LLM provider
@@ -248,7 +247,7 @@ router.post(
   '/providers/test-connection',
   configRateLimit,
   validateRequest(TestConnectionSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { providerType, config } = req.body;
 
@@ -475,7 +474,7 @@ router.post(
         message: hivemindError.message || 'An error occurred while testing connection',
       });
     }
-  })
+  }
 );
 
 // POST /providers/:key/test — send a test message to a specific LLM profile

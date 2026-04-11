@@ -197,20 +197,18 @@ router.post('/api/integrations', validateRequest(CreateEnterpriseIntegrationSche
 });
 
 // Get audit events — supports composable query-param filters
-router.get(
-  '/api/audit',
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const {
-        limit = '200',
-        offset = '0',
-        search,
-        action,
-        resource,
-        user,
-        dateFrom,
-        dateTo,
-      } = req.query as Record<string, string | undefined>;
+router.get('/api/audit', async (req, res) => {
+  try {
+    const {
+      limit = '200',
+      offset = '0',
+      search,
+      action,
+      resource,
+      user,
+      dateFrom,
+      dateTo,
+    } = req.query as Record<string, string | undefined>;
 
       const auditLogger = AuditLogger.getInstance();
 
@@ -225,25 +223,22 @@ router.get(
 
       const auditEvents = await auditLogger.getAuditEvents(Number(limit), Number(offset), filter);
 
-      return res.json(ApiResponse.success());
-    } catch (error) {
-      debug('Audit API error:', error);
-      return res
-        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
-    }
-  })
-);
+    return res.json(ApiResponse.success());
+  } catch (error) {
+    debug('Audit API error:', error);
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
+  }
+});
 
 // Export audit events as CSV (no pagination cap)
-router.get(
-  '/api/audit/export',
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const { search, action, resource, user, dateFrom, dateTo } = req.query as Record<
-        string,
-        string | undefined
-      >;
+router.get('/api/audit/export', async (req, res) => {
+  try {
+    const { search, action, resource, user, dateFrom, dateTo } = req.query as Record<
+      string,
+      string | undefined
+    >;
 
       const auditLogger = AuditLogger.getInstance();
 
@@ -284,20 +279,19 @@ router.get(
 
       const csv = [header, ...rows].join('\n');
 
-      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-      res.setHeader(
-        'Content-Disposition',
-        `attachment; filename="audit-log-${new Date().toISOString().slice(0, 10)}.csv"`
-      );
-      return res.send(csv);
-    } catch (error) {
-      debug('Audit export API error:', error);
-      return res
-        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
-    }
-  })
-);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="audit-log-${new Date().toISOString().slice(0, 10)}.csv"`
+    );
+    return res.send(csv);
+  } catch (error) {
+    debug('Audit export API error:', error);
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
+  }
+});
 
 // Get performance metrics
 router.get('/api/performance', (req, res) => {

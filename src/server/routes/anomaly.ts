@@ -91,7 +91,7 @@ router.get('/history', async (req: AuthMiddlewareRequest, res) => {
 router.post(
   '/:id/resolve',
   validateRequest(AnomalyResolveSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: AuthMiddlewareRequest, res) => {
     try {
       const service = AnomalyDetectionService.getInstance();
 
@@ -109,7 +109,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to resolve anomaly'));
     }
-  })
+  }
 );
 
 export default router;

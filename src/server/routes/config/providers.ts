@@ -22,12 +22,11 @@ import { validateRequest } from '../../../validation/validateRequest';
 import { ApiResponse } from '../../utils/apiResponse';
 import { configLimiter } from '../../../middleware/rateLimiter';
 import { broadcastConfigUpdate } from './utils';
-import { asyncErrorHandler } from '../../../middleware/errorHandler';
 
 const router = Router();
 
 // GET /api/config/llm-status - Get LLM configuration status
-router.get('/llm-status', asyncErrorHandler(async (req, res) => {
+router.get('/llm-status', (req, res) => {
   try {
     const status = getLlmDefaultStatus();
     return res.json(status);
@@ -44,10 +43,10 @@ router.get('/llm-status', asyncErrorHandler(async (req, res) => {
         )
       );
   }
-}));
+});
 
 // GET /api/config/llm-profiles - List all LLM profiles
-router.get('/llm-profiles', asyncErrorHandler(async (req, res) => {
+router.get('/llm-profiles', (req, res) => {
   try {
     const profiles = getLlmProfiles();
     return res.json({ ...profiles, llm: sanitizeProfiles(profiles.llm) });
@@ -64,9 +63,9 @@ router.get('/llm-profiles', asyncErrorHandler(async (req, res) => {
         )
       );
   }
-}));
+});
 
-router.post('/llm-profiles', configLimiter, validateRequest(CreateLlmProfileSchema), asyncErrorHandler(async (req, res) => {
+router.post('/llm-profiles', configLimiter, validateRequest(CreateLlmProfileSchema), (req, res) => {
   try {
     const newProfile = req.body;
 
@@ -119,10 +118,10 @@ router.post('/llm-profiles', configLimiter, validateRequest(CreateLlmProfileSche
         )
       );
   }
-}));
+});
 
 // PUT /api/config/llm-profiles/:key - Update an LLM profile
-router.put('/llm-profiles/:key', configLimiter, validateRequest(UpdateLlmProfileSchema), asyncErrorHandler(async (req, res) => {
+router.put('/llm-profiles/:key', configLimiter, validateRequest(UpdateLlmProfileSchema), (req, res) => {
   try {
     const { key } = req.params;
     const updates = req.body;
@@ -161,9 +160,9 @@ router.put('/llm-profiles/:key', configLimiter, validateRequest(UpdateLlmProfile
         )
       );
   }
-}));
+});
 
-router.delete('/llm-profiles/:key', configLimiter, validateRequest(LlmProfileKeyParamSchema), asyncErrorHandler(async (req, res) => {
+router.delete('/llm-profiles/:key', configLimiter, validateRequest(LlmProfileKeyParamSchema), (req, res) => {
   try {
     const { key } = req.params;
     const profiles = getLlmProfiles();
@@ -195,9 +194,9 @@ router.delete('/llm-profiles/:key', configLimiter, validateRequest(LlmProfileKey
         )
       );
   }
-}));
+});
 
-router.get('/message-profiles', asyncErrorHandler(async (req, res) => {
+router.get('/message-profiles', (req, res) => {
   try {
     const profiles = getMessageProfiles();
     return res.json({ ...profiles, message: sanitizeProfiles(profiles.message) });
@@ -214,9 +213,9 @@ router.get('/message-profiles', asyncErrorHandler(async (req, res) => {
         )
       );
   }
-}));
+});
 
-router.post('/message-profiles', configLimiter, validateRequest(CreateMessageProfileSchema), asyncErrorHandler(async (req, res) => {
+router.post('/message-profiles', configLimiter, validateRequest(CreateMessageProfileSchema), (req, res) => {
   try {
     const newProfile = req.body;
 
@@ -253,7 +252,7 @@ router.post('/message-profiles', configLimiter, validateRequest(CreateMessagePro
         )
       );
   }
-}));
+});
 
 // -- Memory Profiles CRUD --
 
@@ -261,7 +260,7 @@ const memoryProfilesModule = require('../../../config/memoryProfiles');
 
 const toolProfilesModule = require('../../../config/toolProfiles');
 
-router.get('/memory-profiles', asyncErrorHandler(async (req, res) => {
+router.get('/memory-profiles', (_req, res) => {
   try {
     const profiles = memoryProfilesModule.getMemoryProfiles();
     return res.json(ApiResponse.success(profiles));
@@ -277,9 +276,9 @@ router.get('/memory-profiles', asyncErrorHandler(async (req, res) => {
         )
       );
   }
-}));
+});
 
-router.post('/memory-profiles', configLimiter, validateRequest(CreateMemoryProfileSchema), asyncErrorHandler(async (req, res) => {
+router.post('/memory-profiles', configLimiter, validateRequest(CreateMemoryProfileSchema), (req, res) => {
   try {
     const newProfile = req.body;
     const profiles = memoryProfilesModule.getMemoryProfiles();
@@ -308,9 +307,9 @@ router.post('/memory-profiles', configLimiter, validateRequest(CreateMemoryProfi
         )
       );
   }
-}));
+});
 
-router.put('/memory-profiles/:key', configLimiter, validateRequest(MemoryProfileKeyParamSchema), asyncErrorHandler(async (req, res) => {
+router.put('/memory-profiles/:key', configLimiter, validateRequest(MemoryProfileKeyParamSchema), (req, res) => {
   try {
     const { key } = req.params;
     const profiles = memoryProfilesModule.getMemoryProfiles();
@@ -335,9 +334,9 @@ router.put('/memory-profiles/:key', configLimiter, validateRequest(MemoryProfile
         )
       );
   }
-}));
+});
 
-router.delete('/memory-profiles/:key', configLimiter, validateRequest(MemoryProfileKeyParamSchema), asyncErrorHandler(async (req, res) => {
+router.delete('/memory-profiles/:key', configLimiter, validateRequest(MemoryProfileKeyParamSchema), (req, res) => {
   try {
     const { key } = req.params;
     const profiles = memoryProfilesModule.getMemoryProfiles();
@@ -362,10 +361,11 @@ router.delete('/memory-profiles/:key', configLimiter, validateRequest(MemoryProf
         )
       );
   }
-}));
+});
+
 // -- Tool Profiles CRUD --
 
-router.get('/tool-profiles', asyncErrorHandler(async (req, res) => {
+router.get('/tool-profiles', (_req, res) => {
   try {
     const profiles = toolProfilesModule.getToolProfiles();
     return res.json(profiles);
@@ -382,116 +382,9 @@ router.get('/tool-profiles', asyncErrorHandler(async (req, res) => {
         )
       );
   }
-}));
+});
 
-// -- Response Profiles CRUD --
-
-const responseProfileManager = require('../../../config/responseProfileManager');
-
-router.get('/response-profiles', asyncErrorHandler(async (req, res) => {
-  try {
-    const profiles = responseProfileManager.getResponseProfiles();
-    return res.json(ApiResponse.success(profiles));
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
-    return res
-      .status(500)
-      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'RESPONSE_PROFILES_GET_ERROR'));
-  }
-}));
-
-router.post('/response-profiles', configLimiter, validateRequest(CreateResponseProfileSchema), asyncErrorHandler(async (req, res) => {
-  try {
-    const profile = responseProfileManager.createResponseProfile(req.body);
-    broadcastConfigUpdate('response-profiles' as any, 'create', profile.key);
-    return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success({ profile }));
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
-    return res
-      .status(500)
-      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'RESPONSE_PROFILE_CREATE_ERROR'));
-  }
-}));
-
-router.put('/response-profiles/:key', configLimiter, validateRequest(UpdateResponseProfileSchema), asyncErrorHandler(async (req, res) => {
-  try {
-    const profile = responseProfileManager.updateResponseProfile(req.params.key, req.body);
-    broadcastConfigUpdate('response-profiles' as any, 'update', req.params.key);
-    return res.json(ApiResponse.success({ profile }));
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
-    return res
-      .status(500)
-      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'RESPONSE_PROFILE_UPDATE_ERROR'));
-  }
-}));
-
-router.delete('/response-profiles/:key', configLimiter, validateRequest(ResponseProfileKeyParamSchema), asyncErrorHandler(async (req, res) => {
-  try {
-    responseProfileManager.deleteResponseProfile(req.params.key);
-    broadcastConfigUpdate('response-profiles' as any, 'delete', req.params.key);
-    return res.json(ApiResponse.success());
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
-    return res.status(500).json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'RESPONSE_PROFILE_DELETE_ERROR'));
-    }
-    }));
-
-    router.get('/response-profiles/:key/dry-run', asyncErrorHandler(async (req, res) => {
-  try {
-    const { key } = req.params;
-    const { messageText = '' } = req.query;
-
-    const profile = responseProfileManager.getResponseProfileByKey(key);
-    if (!profile) {
-      return res.status(404).json(ApiResponse.error(`Profile '${key}' not found`));
-    }
-
-    const settings = profile.settings || {};
-    const baseChance = Number(settings.MESSAGE_UNSOLICITED_BASE_CHANCE ?? 0.05);
-
-    let chance = baseChance;
-    const mods: string[] = [`Base(${baseChance.toFixed(2)})`];
-
-    const text = String(messageText);
-    if (text.includes('?')) {
-      chance += 0.2;
-      mods.push('Question(+0.20)');
-    }
-    if (text.includes('!')) {
-      chance += 0.1;
-      mods.push('Exclamation(+0.10)');
-    }
-    if (text.length > 0 && text.length < 10) {
-      const penalty = Number(settings.MESSAGE_SHORT_LENGTH_PENALTY ?? 0);
-      if (penalty > 0) {
-        chance -= penalty;
-        mods.push(`Short(-${penalty.toFixed(2)})`);
-      }
-    }
-
-    chance = Math.max(0, Math.min(1, chance));
-    const roll = Math.random();
-    const shouldReply = roll < chance;
-
-    return res.json(ApiResponse.success({
-      shouldReply,
-      roll: Number(roll.toFixed(3)),
-      threshold: Number(chance.toFixed(3)),
-      reason: shouldReply
-        ? `Chance roll success: ${mods.join(', ')}`
-        : `Chance roll failure: ${mods.join(', ')}`,
-      appliedSettings: settings
-    }));
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
-    return res
-      .status(500)
-      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DRY_RUN_ERROR'));
-  }
-}));
-
-router.post('/tool-profiles', configLimiter, validateRequest(CreateToolProfileSchema), asyncErrorHandler(async (req, res) => {
+router.post('/tool-profiles', configLimiter, validateRequest(CreateToolProfileSchema), (req, res) => {
   try {
     const newProfile = req.body;
     const profiles = toolProfilesModule.getToolProfiles();
@@ -522,9 +415,9 @@ router.post('/tool-profiles', configLimiter, validateRequest(CreateToolProfileSc
         )
       );
   }
-}));
+});
 
-router.put('/tool-profiles/:key', configLimiter, validateRequest(ToolProfileKeyParamSchema), asyncErrorHandler(async (req, res) => {
+router.put('/tool-profiles/:key', configLimiter, validateRequest(ToolProfileKeyParamSchema), (req, res) => {
   try {
     const { key } = req.params;
     const profiles = toolProfilesModule.getToolProfiles();
@@ -550,9 +443,9 @@ router.put('/tool-profiles/:key', configLimiter, validateRequest(ToolProfileKeyP
         )
       );
   }
-}));
+});
 
-router.delete('/tool-profiles/:key', configLimiter, validateRequest(ToolProfileKeyParamSchema), asyncErrorHandler(async (req, res) => {
+router.delete('/tool-profiles/:key', configLimiter, validateRequest(ToolProfileKeyParamSchema), (req, res) => {
   try {
     const { key } = req.params;
     const profiles = toolProfilesModule.getToolProfiles();
@@ -578,6 +471,6 @@ router.delete('/tool-profiles/:key', configLimiter, validateRequest(ToolProfileK
         )
       );
   }
-}));
+});
 
 export default router;

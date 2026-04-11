@@ -21,28 +21,25 @@ router.options('*', (req, res) => {
 });
 
 // Frontend error reporting endpoint
-router.post(
-  '/frontend',
-  validateRequest(ErrorLogSchema),
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const errorReport = req.body as {
-        name: string;
-        message: string;
-        stack?: string;
-        status?: number;
-        code?: string;
-        details?: Record<string, any>;
-        correlationId?: string;
-        severity?: 'low' | 'medium' | 'high' | 'critical';
-        timestamp?: string;
-        componentStack?: string;
-        userAgent?: string;
-        url?: string;
-        localStorage?: Record<string, string>;
-        sessionStorage?: Record<string, string>;
-        performance?: any;
-      };
+router.post('/frontend', validateRequest(ErrorLogSchema), async (req: Request, res: Response) => {
+  try {
+    const errorReport = req.body as {
+      name: string;
+      message: string;
+      stack?: string;
+      status?: number;
+      code?: string;
+      details?: Record<string, any>;
+      correlationId?: string;
+      severity?: 'low' | 'medium' | 'high' | 'critical';
+      timestamp?: string;
+      componentStack?: string;
+      userAgent?: string;
+      url?: string;
+      localStorage?: Record<string, string>;
+      sessionStorage?: Record<string, string>;
+      performance?: any;
+    };
 
       // Validate required fields
       if (!errorReport.message || !errorReport.correlationId) {
@@ -92,16 +89,11 @@ router.post(
         userAgent: req.headers['user-agent'],
       });
 
-      // Set correlation ID in response header
-      const correlationId = (req.headers['x-correlation-id'] as string) || 'unknown';
-      res.setHeader('X-Correlation-ID', correlationId);
-
-      return res
-        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error('Failed to process error report'));
-    }
-  })
-);
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(ApiResponse.error('Failed to process error report'));
+  }
+});
 
 // Get error statistics (for monitoring)
 router.get('/stats', authenticateToken, async (req: Request, res: Response) => {

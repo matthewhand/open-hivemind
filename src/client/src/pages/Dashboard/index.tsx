@@ -3,12 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Cpu, Rocket, X, HelpCircle } from 'lucide-react';
 import Dashboard from '../../components/Dashboard';
 import { apiService } from '../../services/api';
-import { Alert } from '../../components/DaisyUI/Alert';
-import Button from '../../components/DaisyUI/Button';
-import Card from '../../components/DaisyUI/Card';
-import { LoadingSpinner } from '../../components/DaisyUI/Loading';
-import Tabs from '../../components/DaisyUI/Tabs';
-import Toggle from '../../components/DaisyUI/Toggle';
+
 import Carousel from '../../components/DaisyUI/Carousel';
 import DashboardWidgetSystem from '../../components/DaisyUI/DashboardWidgetSystem';
 import WelcomeSplash from '../../components/WelcomeSplash';
@@ -137,14 +132,14 @@ const DashboardPage: React.FC = () => {
 
   return (
     <div>
-      <div className="p-6">
-      <Card className="shadow-xl">
-        <Tabs
-          variant="lifted"
-          tabs={dashboardTabs}
-          activeTab={activeTab}
-          onChange={(tab) => setTab(tab)}
-          className="mb-6"
+      <div className="flex justify-end items-center mb-4 px-4 gap-3 bg-base-100/50 p-2 rounded-lg shadow-sm w-fit ml-auto">
+        <span className="text-sm font-medium opacity-80">Static Layout</span>
+        <input
+          type="checkbox"
+          className="toggle toggle-primary"
+          checked={useWidgetLayout}
+          onChange={(e) => setUseWidgetLayout(e.target.checked)}
+          aria-label="Toggle widget dashboard layout"
         />
         <div className="mt-4">
 

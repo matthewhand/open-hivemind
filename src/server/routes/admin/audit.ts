@@ -34,47 +34,44 @@ const configRateLimit = isTestEnv
  *       200:
  *         description: List of tool usage guards
  */
-router.get(
-  '/tool-usage-guards',
-  asyncErrorHandler(async (req, res) => {
-    try {
-      // Mock data for tool usage guards
-      const guards = [
-        {
-          id: 'guard1',
-          name: 'Owner Only for Summarize',
-          toolName: 'summarize',
-          guardType: 'owner_only',
-          config: { ownerOnly: true },
-          isActive: true,
-        },
-        {
-          id: 'guard2',
-          name: 'Specific Users for Translate',
-          toolName: 'translate',
-          guardType: 'user_list',
-          config: { allowedUsers: ['user1', 'user2'] },
-          isActive: false,
-        },
-        {
-          id: 'guard3',
-          name: 'Role-based for Generate',
-          toolName: 'generate',
-          guardType: 'role_based',
-          config: { allowedRoles: ['admin', 'moderator'] },
-          isActive: true,
-        },
-      ];
+router.get('/tool-usage-guards', (req: Request, res: Response) => {
+  try {
+    // Mock data for tool usage guards
+    const guards = [
+      {
+        id: 'guard1',
+        name: 'Owner Only for Summarize',
+        toolName: 'summarize',
+        guardType: 'owner_only',
+        config: { ownerOnly: true },
+        isActive: true,
+      },
+      {
+        id: 'guard2',
+        name: 'Specific Users for Translate',
+        toolName: 'translate',
+        guardType: 'user_list',
+        config: { allowedUsers: ['user1', 'user2'] },
+        isActive: false,
+      },
+      {
+        id: 'guard3',
+        name: 'Role-based for Generate',
+        toolName: 'generate',
+        guardType: 'role_based',
+        config: { allowedRoles: ['admin', 'moderator'] },
+        isActive: true,
+      },
+    ];
 
-      return res.json(ApiResponse.success({ guards }));
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
-      return res
-        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error('Failed to retrieve tool usage guards'));
-    }
-  })
-);
+    return res.json(ApiResponse.success({ guards }));
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(ApiResponse.error('Failed to retrieve tool usage guards'));
+  }
+});
 
 /**
  * @openapi
@@ -101,7 +98,7 @@ router.post(
   '/tool-usage-guards',
   configRateLimit,
   validateRequest(ToolUsageGuardSchema),
-  asyncErrorHandler(async (req, res) => {
+  (req: Request, res: Response) => {
     try {
       const { name, description, toolId, guardType, allowedUsers, allowedRoles, isActive } =
         req.body;
@@ -125,7 +122,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to create tool usage guard'));
     }
-  })
+  }
 );
 
 // PUT /tool-usage-guards/:id - Update an existing tool usage guard
@@ -133,7 +130,7 @@ router.put(
   '/tool-usage-guards/:id',
   configRateLimit,
   validateRequest(UpdateToolUsageGuardSchema),
-  asyncErrorHandler(async (req, res) => {
+  (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { name, description, toolId, guardType, allowedUsers, allowedRoles, isActive } =
@@ -158,7 +155,7 @@ router.put(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to update tool usage guard'));
     }
-  })
+  }
 );
 
 /**
@@ -181,7 +178,7 @@ router.delete(
   '/tool-usage-guards/:id',
   configRateLimit,
   validateRequest(ToggleIdParamSchema),
-  asyncErrorHandler(async (req, res) => {
+  (req: Request, res: Response) => {
     try {
       const { id } = req.params;
 
@@ -195,7 +192,7 @@ router.delete(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to delete tool usage guard'));
     }
-  })
+  }
 );
 
 // POST /tool-usage-guards/:id/toggle - Toggle tool usage guard active status
@@ -203,7 +200,7 @@ router.post(
   '/tool-usage-guards/:id/toggle',
   configRateLimit,
   validateRequest(ToggleProviderSchema),
-  asyncErrorHandler(async (req, res) => {
+  (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { isActive } = req.body;
@@ -218,15 +215,12 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to update guard status'));
     }
-  })
+  }
 );
 
 // Placeholder for audit log queries
-router.get(
-  '/audit-logs',
-  asyncErrorHandler(async (req, res) => {
-    res.json(ApiResponse.success({ logs: [] }));
-  })
-);
+router.get('/audit-logs', (req, res) => {
+  res.json(ApiResponse.success({ logs: [] }));
+});
 
 export default router;

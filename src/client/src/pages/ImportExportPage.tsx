@@ -10,10 +10,7 @@ import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotif
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import ProgressBar from '../components/DaisyUI/ProgressBar';
 import { apiService } from '../services/api';
-import { useQuery } from '@tanstack/react-query';
-import Card from '../components/DaisyUI/Card';
-import Input from '../components/DaisyUI/Input';
-import Select from '../components/DaisyUI/Select';
+import { useApiQuery } from '../hooks/useApiQuery';
 
 interface ExportOptions {
   configIds: number[];
@@ -68,11 +65,10 @@ const ImportExportPage: React.FC = () => {
   const [importResult, setImportResult] = useState<any>(null);
 
   // Fetch available configurations
-  const { data: botsData, isLoading: botsLoading } = useQuery({
-    queryKey: ['bots'],
-    queryFn: () => apiService.getBots(),
-    staleTime: 30_000,
-  });
+  const { data: botsData, isLoading: botsLoading } = useApiQuery(
+    ['bots'],
+    () => apiService.getBots()
+  );
   const bots = botsData || [];
 
   const handleExport = useCallback(async () => {

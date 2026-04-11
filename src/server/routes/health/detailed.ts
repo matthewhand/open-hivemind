@@ -122,17 +122,14 @@ router.get('/detailed', optionalAuth, (req: Request, res: Response) => {
 });
 
 // Service-level health check endpoint for the health check widget
-router.get(
-  '/detailed/services',
-  optionalAuth,
-  asyncErrorHandler(async (req, res) => {
-    const services: Array<{
-      name: string;
-      status: 'healthy' | 'degraded' | 'down';
-      latencyMs: number;
-      lastChecked: string;
-      details: string;
-    }> = [];
+router.get('/detailed/services', optionalAuth, async (_req: Request, res: Response) => {
+  const services: Array<{
+    name: string;
+    status: 'healthy' | 'degraded' | 'down';
+    latencyMs: number;
+    lastChecked: string;
+    details: string;
+  }> = [];
 
     const now = new Date().toISOString();
 
@@ -264,9 +261,8 @@ router.get(
       });
     }
 
-    return res.json({ services });
-  })
-);
+  return res.json({ services });
+});
 
 // API endpoints monitoring
 router.get('/api-endpoints', (req, res) => {

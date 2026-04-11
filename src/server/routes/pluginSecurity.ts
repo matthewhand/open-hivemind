@@ -107,12 +107,10 @@ router.get('/security', (req: Request, res: Response) => {
  *       500:
  *         description: Verification failed
  */
-router.post(
-  '/:name/verify',
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const { name } = req.params;
-      debug('Verifying plugin: %s', name);
+router.post('/:name/verify', async (req: Request, res: Response) => {
+  try {
+    const { name } = req.params;
+    debug('Verifying plugin: %s', name);
 
       // Load the plugin to get its manifest
       const mod = await loadPlugin(name);
@@ -146,8 +144,29 @@ router.post(
         message: hivemindError.message || 'An error occurred while verifying the plugin',
       });
     }
-  })
-);
+
+    // Re-verify the plugin
+    const policy = getSecurityPolicy();
+    const trustLevel = policy.verifyAndSetTrust(name, manifest);
+
+    const status = policy.getPluginSecurityStatus(name);
+
+    debug('Plugin %s verified with trust level: %s', name, trustLevel);
+
+    return res.json({
+      success: true,
+      data: { trustLevel, status },
+      message: `Plugin '${name}' verified successfully`,
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    debug('Error verifying plugin %s:', req.params.name, hivemindError);
+    return res.status(500).json({
+      error: 'Failed to verify plugin',
+      message: hivemindError.message || 'An error occurred while verifying the plugin',
+    });
+  }
+});
 
 /**
  * @openapi

@@ -29,20 +29,14 @@ router.use(authenticateToken, requireAdmin);
  *       200:
  *         description: Cache cleared successfully
  */
-router.post(
-  '/clear',
-  validateRequest(ClearCacheSchema),
-  asyncErrorHandler(async (req, res) => {
-    try {
-      await clearAllSystemCaches();
-      res.json(ApiResponse.success());
-    } catch (error) {
-      debug('ERROR:', 'Failed to clear cache:', error);
-      res
-        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error('Failed to clear cache'));
-    }
-  })
-);
+router.post('/clear', validateRequest(ClearCacheSchema), async (req, res) => {
+  try {
+    await clearAllSystemCaches();
+    res.json(ApiResponse.success());
+  } catch (error) {
+    debug('ERROR:', 'Failed to clear cache:', error);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to clear cache'));
+  }
+});
 
 export default router;

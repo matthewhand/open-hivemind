@@ -233,7 +233,7 @@ router.post(
   validateRequest(ExportConfigSchema),
   validateExportOptions,
   handleValidationErrors,
-  asyncErrorHandler(async (req, res) => {
+  async (req: AuthMiddlewareRequest, res: Response) => {
     try {
       const createdBy = req.user?.username || 'unknown';
 
@@ -263,7 +263,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error(error instanceof Error ? error.message : String(error)));
     }
-  })
+  }
 );
 
 /**
@@ -278,7 +278,7 @@ router.post(
   handleUploadError,
   validateImportOptions,
   handleValidationErrors,
-  asyncErrorHandler(async (req, res) => {
+  async (req: AuthMulterRequest, res: Response) => {
     try {
       if (!req.file) {
         return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('No file uploaded'));
@@ -316,7 +316,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error(error instanceof Error ? error.message : String(error)));
     }
-  })
+  }
 );
 
 /**
@@ -330,7 +330,7 @@ router.post(
   validateRequest(BackupCreateSchema),
   validateBackupCreation,
   handleValidationErrors,
-  asyncErrorHandler(async (req, res) => {
+  async (req: AuthMiddlewareRequest, res: Response) => {
     try {
       const createdBy = req.user?.username || 'unknown';
 
@@ -368,28 +368,24 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error(error instanceof Error ? error.message : String(error)));
     }
-  })
+  }
 );
 
 /**
  * GET /api/import-export/backups
  * List all available backups
  */
-router.get(
-  '/backups',
-  requireAdmin,
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const backups = await ConfigurationImportExportService.getInstance().listBackups();
-      return res.json({ ...ApiResponse.success(backups), count: backups.length });
-    } catch (error) {
-      logger.error('Error listing backups:', error);
-      return res
-        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error(error instanceof Error ? error.message : String(error)));
-    }
-  })
-);
+router.get('/backups', requireAdmin, async (req: AuthMiddlewareRequest, res: Response) => {
+  try {
+    const backups = await importExportService.listBackups();
+    return res.json(ApiResponse.success(backups));
+  } catch (error) {
+    logger.error('Error listing backups:', error);
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(ApiResponse.error(error instanceof Error ? error.message : String(error)));
+  }
+});
 
 /**
  * POST /api/import-export/backups/:backupId/restore
@@ -402,7 +398,7 @@ router.post(
   validateRequest(BackupRestoreSchema),
   validateBackupRestore,
   handleValidationErrors,
-  asyncErrorHandler(async (req, res) => {
+  async (req: AuthMiddlewareRequest, res: Response) => {
     try {
       const { backupId } = req.params;
       const restoredBy = req.user?.username || 'unknown';
@@ -436,7 +432,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error(error instanceof Error ? error.message : String(error)));
     }
-  })
+  }
 );
 
 /**
@@ -447,7 +443,7 @@ router.delete(
   '/backups/:backupId',
   configLimiter,
   requireAdmin,
-  asyncErrorHandler(async (req, res) => {
+  async (req: AuthMiddlewareRequest, res: Response) => {
     try {
       const { backupId } = req.params;
       const success = await ConfigurationImportExportService.getInstance().deleteBackup(backupId);
@@ -463,7 +459,7 @@ router.delete(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error(error instanceof Error ? error.message : String(error)));
     }
-  })
+  }
 );
 
 /**
@@ -473,7 +469,7 @@ router.delete(
 router.get(
   '/backups/:backupId/download',
   requireAdmin,
-  asyncErrorHandler(async (req, res) => {
+  async (req: AuthMiddlewareRequest, res: Response) => {
     try {
       const { backupId } = req.params;
 
@@ -506,7 +502,7 @@ router.get(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error(error instanceof Error ? error.message : String(error)));
     }
-  })
+  }
 );
 
 /**
@@ -520,7 +516,7 @@ router.post(
   upload.single('file'),
   validateRequest(ValidateImportSchema),
   handleUploadError,
-  asyncErrorHandler(async (req, res) => {
+  async (req: AuthMulterRequest, res: Response) => {
     try {
       if (!req.file) {
         return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('No file uploaded'));
@@ -560,7 +556,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error(error instanceof Error ? error.message : String(error)));
     }
-  })
+  }
 );
 
 export default router;
