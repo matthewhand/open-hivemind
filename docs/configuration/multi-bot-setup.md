@@ -269,8 +269,8 @@ DEBUG=app:* npm start
 
 Test your configuration:
 ```bash
-# Check loaded bots
-node -e "const {BotConfigurationManager} = require('./dist/config/BotConfigurationManager'); console.log(BotConfigurationManager.getInstance().getAllBots())"
+# List all configured bots (server must be running: npm run dev)
+curl -s http://localhost:3028/api/config/bots
 ```
 
 ## API Reference

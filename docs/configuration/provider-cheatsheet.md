@@ -111,23 +111,23 @@ DISCORD_BOT_TOKEN=test-token
 
 ### Check Provider Configuration
 ```bash
-# List configured providers
-node -e "console.log(require('./src/llm/getLlmProvider')().map(p => p.constructor.name))"
+# List configured LLM providers (server must be running: npm run dev)
+curl -s http://localhost:3028/api/admin/llm-providers | npx fx .
 
-# Test OpenAI connection
-node -e "require('./src/integrations/openai/openAiProvider').openAiProvider.generateChatCompletion('test', []).then(console.log)"
+# Test OpenAI connection via health endpoint
+curl -s http://localhost:3028/api/health | npx fx .system
 
-# Test Flowise connection
-node -e "require('./src/integrations/flowise/flowiseProvider').default.generateChatCompletion('test', [], {channelId: 'test'}).then(console.log)"
+# View full server health including provider status
+curl -s http://localhost:3028/api/health
 ```
 
 ### Check Discord Configuration
 ```bash
-# List configured bots
-node -e "const {Discord} = require('./src/integrations/discord/DiscordService'); console.log(Discord.DiscordService.getInstance().getAllBots().map(b => b.botUserName))"
+# List configured bots (server must be running: npm run dev)
+curl -s http://localhost:3028/api/config/bots
 
-# Test Discord connection
-node -e "const {Discord} = require('./src/integrations/discord/DiscordService'); Discord.DiscordService.getInstance().initialize().then(() => console.log('Connected!'))"
+# Check bot connection status
+curl -s http://localhost:3028/api/health
 ```
 
 ## Error Messages and Solutions

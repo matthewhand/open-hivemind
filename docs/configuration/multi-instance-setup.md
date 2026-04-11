@@ -166,32 +166,15 @@ BOTS_MATTERMOST_BOT_MATTERMOST_TOKEN=mattermost_token
 ### Check Current Configuration
 
 ```bash
-# Run configuration validation
-node -e "
-const BotConfigurationManager = require('./dist/config/BotConfigurationManager').default;
-const config = BotConfigurationManager.getInstance();
-console.log('Configured bots:', config.getAllBots().map(b => b.name));
-console.log('Discord bots:', config.getAllBots().filter(b => b.messageProvider === 'discord').length);
-console.log('Slack bots:', config.getAllBots().filter(b => b.messageProvider === 'slack').length);
-console.log('Mattermost bots:', config.getAllBots().filter(b => b.messageProvider === 'mattermost').length);
-"
+# List all configured bots (server must be running: npm run dev)
+curl -s http://localhost:3028/api/config/bots
 ```
 
 ### Debug Configuration Issues
 
 ```bash
 # Enable debug logging
-DEBUG=app:BotConfigurationManager node your-app.js
-
-# Check for warnings
-node -e "
-const BotConfigurationManager = require('./dist/config/BotConfigurationManager').default;
-const config = BotConfigurationManager.getInstance();
-const warnings = config.getWarnings();
-if (warnings.length > 0) {
-  console.warn('Configuration warnings:', warnings);
-}
-"
+DEBUG=app:BotConfigurationManager npm run dev
 ```
 
 ## Migration Guide
@@ -324,21 +307,8 @@ You can also use JSON configuration files:
 ### Debug Commands
 
 ```bash
-# Check configuration
-node -e "
-const BotConfigurationManager = require('./dist/config/BotConfigurationManager').default;
-const config = BotConfigurationManager.getInstance();
-console.log('All bots:', config.getAllBots());
-console.log('Discord:', config.getDiscordBotConfigs());
-"
-
-# Test individual bot
-node -e "
-const BotConfigurationManager = require('./dist/config/BotConfigurationManager').default;
-const config = BotConfigurationManager.getInstance();
-const bot = config.getBot('mybot');
-console.log('Bot config:', bot);
-"
+# List all configured bots (server must be running: npm run dev)
+curl -s http://localhost:3028/api/config/bots
 ```
 
 ## API Endpoints

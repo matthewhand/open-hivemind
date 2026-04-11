@@ -11,14 +11,14 @@ The core application has **zero knowledge** of any specific provider or adapter.
 ```mermaid
 flowchart TD
     subgraph llm["LLM Provider Packages"]
-        po[packages/provider-openai]
-        pl[packages/provider-letta]
-        pf[packages/provider-flowise]
+        po[packages/llm-openai]
+        pl[packages/llm-letta]
+        pf[packages/llm-flowise]
     end
-    subgraph ada["Adapter Packages"]
-        ad[packages/adapter-discord]
-        as[packages/adapter-slack]
-        am[packages/adapter-mattermost]
+    subgraph ada["Messaging Adapter Packages"]
+        ad[packages/message-discord]
+        as[packages/message-slack]
+        am[packages/message-mattermost]
     end
     llm -->|"require.resolve probe"| ep1["GET /api/admin/available-provider-types"]
     ada -->|"require.resolve probe"| ep2["GET /api/admin/available-adapter-types"]
@@ -50,8 +50,8 @@ The UI **never** has a hardcoded list of provider names. It asks the backend wha
 ### 1. Create the package
 
 ```
-packages/provider-myprovider/
-├── package.json          # name: "@hivemind/provider-myprovider"
+packages/llm-myprovider/
+├── package.json          # name: "@hivemind/llm-myprovider"
 ├── tsconfig.json         # extends ../../tsconfig.json
 └── src/
     ├── index.ts          # exports MyProvider, MyProviderConfig
@@ -85,7 +85,7 @@ In `src/llm/getLlmProvider.ts`, add a case to both the configured-providers swit
 
 ```typescript
 case 'myprovider':
-  const { MyProvider } = require('@hivemind/provider-myprovider');
+  const { MyProvider } = require('@hivemind/llm-myprovider');
   instance = new MyProvider(config.config);
   break;
 ```
@@ -126,7 +126,7 @@ const PROVIDER_SCHEMAS = {
 In `src/server/routes/admin/llmProviders.ts`, add your provider to the `KNOWN_LLM_TYPES` array in `GET /available-provider-types`:
 
 ```typescript
-{ key: 'myprovider', label: 'My Provider', pkg: '@hivemind/provider-myprovider' }
+{ key: 'myprovider', label: 'My Provider', pkg: '@hivemind/llm-myprovider' }
 ```
 
 The endpoint uses `require.resolve(pkg)` to check if the package is actually installed before including it in the response. If the package isn't present, it won't appear in the UI.

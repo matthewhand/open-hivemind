@@ -81,7 +81,7 @@ graph LR
 | `NODE_ENV` | `development` | Environment mode |
 | `HTTP_ENABLED` | `true` | Enable/disable HTTP server |
 | `SKIP_MESSENGERS` | `false` | Skip bot initialization |
-| `MESSAGE_PROVIDER` | `slack` | Default messenger platform |
+| `MESSAGE_PROVIDER` | `discord` | Default messenger platform |
 
 ### Usage Examples
 
@@ -146,19 +146,21 @@ The server provides detailed startup logging:
 
 ```
 🚀 Starting Open Hivemind Server
-🔧 Configuration { nodeEnv: "development", httpEnabled: true, skipMessengers: false, port: "3028" }
+✅ Production Mode - Credentials detected
+🔍 Anomaly Detection Service initialized
 🤖 Resolved LLM providers { providers: ["OpenAIProvider"] }
 📡 Initializing messenger services
-📡 Message providers configured { providers: ["slack"] }
-🤖 Starting messenger bots { services: "slack" }
-✅ Bot started { provider: "slack" }
+📡 Message providers configured { providers: ["discord"] }
+🤖 Starting messenger bots { services: "discord" }
+✅ Bot started { provider: "discord" }
+🔀 Pipeline mode active (set USE_LEGACY_HANDLER=true to revert)
+🪝 Webhook service is disabled
 🌐 Starting HTTP server { port: 3028, host: "0.0.0.0" }
 ✅ HTTP server listening { port: 3028 }
 🔌 WebSocket service ready { endpoint: "/webui/socket.io" }
 🌍 WebUI available { url: "http://localhost:3028" }
 📡 API endpoints available { baseUrl: "http://localhost:3028/api" }
-📱 Frontend assets served from { path: "dist/client/dist" }
-🪝 Webhook service is disabled
+📱 Frontend assets served from { path: "src/client/dist" }
 🎉 Open Hivemind Server startup complete!
 ```
 

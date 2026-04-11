@@ -74,5 +74,5 @@ RUN mkdir -p config/uploads data logs
 RUN chown -R node:node /app
 USER node
 
-EXPOSE 3000
+EXPOSE 3028
 CMD ["node", "dist/src/index.js"]

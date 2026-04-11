@@ -21,10 +21,8 @@ DISCORD_BOT_TOKEN=token1,token2,token3
 
 Run this command to check Swarm Mode status:
 ```bash
-node -e "
-const {SwarmModeManager} = require('./dist/config/SwarmModeManager');
-console.log('Swarm Mode Enabled:', SwarmModeManager.isSwarmModeEnabled());
-"
+# Check swarm configuration (server must be running: npm run dev)
+curl -s http://localhost:3028/api/config/bots
 ```
 
 ---

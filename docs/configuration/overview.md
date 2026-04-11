@@ -80,14 +80,11 @@ MCP_TOOL_GUARD_ALLOWLIST=1234567890,9876543210
 
 ## Debugging Configuration
 ```bash
-# Inspect resolved configuration for a bot
-node -e "
-const manager = require('./dist/config/BotConfigurationManager').default.getInstance();
-console.log(manager.getAllBots());
-"
+# Inspect resolved configuration for all bots (server must be running: npm run dev)
+curl -s http://localhost:3028/api/config/bots
 
-# Show warnings emitted during resolution
-DEBUG=app:BotConfigurationManager npm start
+# Show debug logs during startup
+DEBUG=app:BotConfigurationManager npm run dev
 ```
 
 For deeper dives into multi-instance orchestration, read

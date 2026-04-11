@@ -16,13 +16,13 @@ Open-Hivemind uses a **plugin-based architecture** where messaging adapters and 
 
 ```
 packages/
-├── adapter-discord/      # Discord messaging adapter
-├── adapter-slack/        # Slack messaging adapter
-├── adapter-mattermost/   # Mattermost messaging adapter
-├── provider-openai/      # OpenAI LLM provider
-├── provider-flowise/     # Flowise LLM provider
-├── provider-openwebui/   # OpenWebUI LLM provider
-├── provider-openswarm/   # OpenSwarm LLM provider
+├── message-discord/      # Discord messaging adapter
+├── message-slack/        # Slack messaging adapter
+├── message-mattermost/   # Mattermost messaging adapter
+├── llm-openai/           # OpenAI LLM provider
+├── llm-flowise/          # Flowise LLM provider
+├── llm-openwebui/        # OpenWebUI LLM provider
+├── llm-openswarm/        # OpenSwarm LLM provider
 └── shared-types/         # Common interfaces (ILlmProvider, IAdapterFactory)
 ```
 
@@ -34,7 +34,7 @@ Adapters and providers are loaded dynamically via `require()` based on configura
 ```typescript
 switch (config.type.toLowerCase()) {
   case 'openai':
-    const { OpenAiProvider } = require('@hivemind/provider-openai');
+    const { OpenAiProvider } = require('@hivemind/llm-openai');
     instance = new OpenAiProvider(config.config);
     break;
   case 'flowise':
@@ -46,7 +46,7 @@ switch (config.type.toLowerCase()) {
 
 **Adapter Loading** ([`src/message/management/getMessengerProvider.ts`](src/message/management/getMessengerProvider.ts:91)):
 ```typescript
-const DiscordMgr = require('@hivemind/adapter-discord');
+const DiscordMgr = require('@hivemind/message-discord');
 const svc = DiscordMgr?.DiscordService?.getInstance;
 ```
 
@@ -88,15 +88,15 @@ The [`ProviderConfigManager`](src/config/ProviderConfigManager.ts) maintains a r
 
 Short summary:
 
-1. **Create a new package** under `packages/adapter-<name>` or `packages/provider-<name>`
+1. **Create a new package** under `packages/message-<name>` or `packages/llm-<name>`
 2. **Implement the interface** – Extend `ILlmProvider` or `IAdapterFactory` from `@hivemind/shared-types`
 3. **Register in loader** – Add a case to [`getLlmProvider.ts`](src/llm/getLlmProvider.ts) or [`getMessengerProvider.ts`](src/message/management/getMessengerProvider.ts)
 4. **Add frontend field schema** – Add a schema file under `src/client/src/provider-configs/schemas/` and register it in `index.ts`
 5. **Register in available-types endpoint** – Add an entry to `GET /api/admin/available-provider-types` in `src/server/routes/admin/llmProviders.ts` so the WebUI discovers it automatically
 
 See existing packages for implementation patterns:
-- **Discord adapter**: [`packages/adapter-discord/src/DiscordService.ts`](packages/adapter-discord/src/DiscordService.ts)
-- **OpenAI provider**: [`packages/provider-openai/src/openAiProvider.ts`](packages/provider-openai/src/openAiProvider.ts)
+- **Discord adapter**: [`packages/message-discord/src/DiscordService.ts`](packages/message-discord/src/DiscordService.ts)
+- **OpenAI provider**: [`packages/llm-openai/src/openAiProvider.ts`](packages/llm-openai/src/openAiProvider.ts)
 
 ## Core Architecture and Integration Details
 
