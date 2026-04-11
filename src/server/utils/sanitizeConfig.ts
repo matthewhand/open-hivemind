@@ -5,12 +5,22 @@
  */
 
 const SENSITIVE_KEYS = new Set([
-  'apiKey', 'api_key', 'apikey',
-  'password', 'passwd',
-  'secret', 'clientSecret', 'client_secret',
-  'token', 'accessToken', 'access_token', 'refreshToken',
-  'privateKey', 'private_key',
-  'webhookSecret', 'webhook_secret',
+  'apiKey',
+  'api_key',
+  'apikey',
+  'password',
+  'passwd',
+  'secret',
+  'clientSecret',
+  'client_secret',
+  'token',
+  'accessToken',
+  'access_token',
+  'refreshToken',
+  'privateKey',
+  'private_key',
+  'webhookSecret',
+  'webhook_secret',
 ]);
 
 export function sanitizeConfig(config: Record<string, unknown>): Record<string, unknown> {
@@ -28,7 +38,7 @@ export function sanitizeConfig(config: Record<string, unknown>): Record<string, 
 }
 
 export function sanitizeProfiles(profiles: any[]): any[] {
-  return profiles.map(profile => ({
+  return profiles.map((profile) => ({
     ...profile,
     config: profile.config ? sanitizeConfig(profile.config) : profile.config,
   }));

@@ -7,7 +7,6 @@ import ApiMonitorService from '../../../services/ApiMonitorService';
 import { webUIStorage } from '../../../storage/webUIStorage';
 import { HTTP_STATUS } from '../../../types/constants';
 import { isSafeUrl } from '../../../utils/ssrfGuard';
-import { sanitizeProfiles } from '../../utils/sanitizeConfig';
 import {
   LlmProviderSchema,
   TestConnectionSchema,
@@ -16,6 +15,7 @@ import {
   UpdateLlmProviderSchema,
 } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
+import { sanitizeProfiles } from '../../utils/sanitizeConfig';
 
 const router = Router();
 const debug = Debug('app:webui:admin:llm-providers');
@@ -32,22 +32,25 @@ const configRateLimit = isTestEnv
     });
 
 // GET /llm-providers - Get all LLM providers
-router.get('/llm-providers', asyncErrorHandler(async (req: Request, res: Response) => {
-  try {
-    const providers = await webUIStorage.getLlmProviders();
-    return res.json({
-      success: true,
-      data: { providers: sanitizeProfiles(providers) },
-      message: 'LLM providers retrieved successfully',
-    });
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      error: 'Failed to retrieve LLM providers',
-      message: hivemindError.message || 'An error occurred while retrieving LLM providers',
-    });
-  }
-}));
+router.get(
+  '/llm-providers',
+  asyncErrorHandler(async (req: Request, res: Response) => {
+    try {
+      const providers = await webUIStorage.getLlmProviders();
+      return res.json({
+        success: true,
+        data: { providers: sanitizeProfiles(providers) },
+        message: 'LLM providers retrieved successfully',
+      });
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        error: 'Failed to retrieve LLM providers',
+        message: hivemindError.message || 'An error occurred while retrieving LLM providers',
+      });
+    }
+  })
+);
 
 /**
  * @openapi
