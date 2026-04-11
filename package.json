@@ -334,6 +334,9 @@
         "GHSA-2g4f-4pwh-qvx6",
         "GHSA-vpq2-c234-7xj6"
       ]
-    }
+    },
+    "ignoredBuiltDependencies": [
+      "sqlite3"
+    ]
   }
 }
