@@ -48,24 +48,6 @@ test.describe('System Health Page Screenshots', () => {
       })
     );
 
-    await page.route('**/health/detailed', (route) =>
-      route.fulfill({
-        status: 200,
-        json: {
-          status: 'healthy',
-          version: '1.0.0',
-          uptime: 86400,
-          services: { database: 'healthy', cache: 'healthy' },
-          system: {
-            platform: 'linux',
-            memory: { total: 8000000000, used: 4000000000, free: 4000000000 },
-            cpu: { cores: 4, usage: 25 },
-            loadAverage: [1.0, 0.8, 0.5],
-          },
-        },
-      })
-    );
-
     await page.route('**/api/health/detailed', (route) =>
       route.fulfill({
         status: 200,
@@ -118,8 +100,8 @@ test.describe('System Health Page Screenshots', () => {
     await expect(page.getByText('System Health', { exact: true })).toBeVisible();
     await expect(page.getByText('Service Health')).toBeVisible();
 
-    // Give it a moment to render widgets
-    await page.waitForTimeout(500);
+    // Wait for health data to fully render
+    await page.waitForLoadState('networkidle');
 
     // Take screenshot
     await page.screenshot({ path: 'docs/screenshots/admin-health-page.png', fullPage: true });
