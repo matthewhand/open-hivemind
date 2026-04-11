@@ -142,7 +142,7 @@ const ActivityPage: React.FC = () => {
     setEndDate('');
   };
 
-  // Quick time range presets (salvaged from dead Admin/ActivityMonitor)
+  // Quick time range presets
   const handleQuickTimeRange = (range: '1h' | '6h' | '24h' | '7d' | '30d') => {
     const now = new Date();
     const toDate = now.toISOString().split('T')[0];

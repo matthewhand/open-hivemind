@@ -6,6 +6,20 @@ import { WebSocketProvider } from '../../contexts/WebSocketContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi } from 'vitest';
 import ActivityPage from '../ActivityPage';
+
+
+vi.mock('../../hooks/useWebSocket', () => ({
+  useWebSocket: () => ({
+    isConnected: true,
+    lastMessage: null,
+    sendMessage: vi.fn(),
+    subscribe: vi.fn(() => vi.fn()),
+    getConnectionStatus: () => 'connected',
+    connect: vi.fn(),
+    socket: null
+  })
+}));
+
 import { apiService } from '../../services/api';
 
 vi.mock('../../hooks/useWebSocket', () => ({
