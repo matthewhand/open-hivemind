@@ -23,6 +23,7 @@ class ProviderConfigManager {
   private static instance: ProviderConfigManager;
   private configPath: string;
   private store: ProviderStore = { message: [], llm: [] };
+  private providerMap: Map<string, ProviderInstance> = new Map();
   private initialized = false;
 
   private constructor() {
@@ -84,6 +85,7 @@ class ProviderConfigManager {
         this.store = { message: [], llm: [] };
         this.saveConfig();
       }
+      this.initializeProviderMap();
       this.initialized = true;
     } catch (error) {
       debug('Error loading provider config:', error);
@@ -97,6 +99,19 @@ class ProviderConfigManager {
       debug('Saved provider config');
     } catch (error) {
       debug('Error saving provider config:', error);
+    }
+  }
+
+  /**
+   * Initialize the internal provider map for O(1) lookups.
+   */
+  private initializeProviderMap(): void {
+    this.providerMap.clear();
+    for (const p of this.store.message) {
+      this.providerMap.set(p.id, p);
+    }
+    for (const p of this.store.llm) {
+      this.providerMap.set(p.id, p);
     }
   }
 
@@ -162,6 +177,7 @@ class ProviderConfigManager {
 
     if (changed) {
       this.saveConfig();
+      this.initializeProviderMap();
       debug('Migration complete');
     }
   }
@@ -176,7 +192,7 @@ class ProviderConfigManager {
   }
 
   public getProvider(id: string): ProviderInstance | undefined {
-    return [...this.store.message, ...this.store.llm].find(p => p.id === id);
+    return this.providerMap.get(id);
   }
 
   public createProvider(data: Omit<ProviderInstance, 'id'>): ProviderInstance {
@@ -191,18 +207,17 @@ class ProviderConfigManager {
       this.store.llm.push(newInstance);
     }
 
+    this.providerMap.set(newInstance.id, newInstance);
     this.saveConfig();
     return newInstance;
   }
 
   public updateProvider(id: string, updates: Partial<ProviderInstance>): ProviderInstance | null {
-    let target = this.store.message.find(p => p.id === id);
+    const target = this.providerMap.get(id);
 
     if (!target) {
-      target = this.store.llm.find(p => p.id === id);
+      return null;
     }
-
-    if (!target) {return null;}
 
     // Merge updates
     Object.assign(target, updates);
@@ -214,21 +229,26 @@ class ProviderConfigManager {
   }
 
   public deleteProvider(id: string): boolean {
-    const msgIdx = this.store.message.findIndex(p => p.id === id);
-    if (msgIdx !== -1) {
-      this.store.message.splice(msgIdx, 1);
-      this.saveConfig();
-      return true;
+    const target = this.providerMap.get(id);
+    if (!target) {
+      return false;
     }
 
-    const llmIdx = this.store.llm.findIndex(p => p.id === id);
-    if (llmIdx !== -1) {
-      this.store.llm.splice(llmIdx, 1);
-      this.saveConfig();
-      return true;
+    if (target.category === 'message') {
+      const msgIdx = this.store.message.findIndex(p => p.id === id);
+      if (msgIdx !== -1) {
+        this.store.message.splice(msgIdx, 1);
+      }
+    } else {
+      const llmIdx = this.store.llm.findIndex(p => p.id === id);
+      if (llmIdx !== -1) {
+        this.store.llm.splice(llmIdx, 1);
+      }
     }
 
-    return false;
+    this.providerMap.delete(id);
+    this.saveConfig();
+    return true;
   }
 }
 

@@ -28,6 +28,7 @@ export class UserConfigStore {
     generalSettings?: GeneralSettings;
   } = {};
   private configPath: string;
+  private botMap: Map<string, BotConfiguration> = new Map();
 
   public constructor() {
     this.configPath = path.join(process.cwd(), 'config', 'user-config.json');
@@ -43,6 +44,7 @@ export class UserConfigStore {
         botDisabledStates: {},
       };
     }
+    this.initializeBotMap();
   }
 
   public static getInstance(): UserConfigStore {
@@ -63,6 +65,21 @@ export class UserConfigStore {
         bots: [],
         botDisabledStates: {},
       };
+    }
+    this.initializeBotMap();
+  }
+
+  /**
+   * Initialize the internal bot map for O(1) lookups.
+   */
+  private initializeBotMap(): void {
+    this.botMap.clear();
+    if (this.config.bots) {
+      for (const bot of this.config.bots) {
+        if (bot.name) {
+          this.botMap.set(bot.name, bot);
+        }
+      }
     }
   }
 
@@ -138,10 +155,8 @@ export class UserConfigStore {
    * @returns A BotOverride object if found, otherwise undefined.
    */
   public getBotOverride(botName: string): BotOverride | undefined {
-    if (!this.config.bots) {
-      return undefined;
-    }
-    const botConfig = this.config.bots.find(bot => bot.name === botName);
+    // Use the O(1) Map lookup
+    const botConfig = this.botMap.get(botName);
     if (!botConfig) {
       return undefined;
     }
@@ -204,15 +219,16 @@ export class UserConfigStore {
     const existingBotIndex = this.config.bots.findIndex(bot => bot.name === botName);
     const botConfig: BotConfiguration = {
       name: botName,
-      messageProvider: overrides.messageProvider || 'discord' as MessageProvider,
-      llmProvider: overrides.llmProvider || 'flowise' as LlmProvider,
+      messageProvider: overrides.messageProvider || ('discord' as MessageProvider),
+      llmProvider: overrides.llmProvider || ('flowise' as LlmProvider),
       llmProfile: 'llmProfile' in overrides ? (overrides.llmProfile as string | undefined) : undefined,
       responseProfile: overrides.responseProfile,
       persona: overrides.persona,
       systemInstruction: overrides.systemInstruction,
       mcpServers: overrides.mcpServers,
       mcpGuard: overrides.mcpGuard,
-      mcpGuardProfile: 'mcpGuardProfile' in overrides ? (overrides.mcpGuardProfile as string | undefined) : undefined,
+      mcpGuardProfile:
+        'mcpGuardProfile' in overrides ? (overrides.mcpGuardProfile as string | undefined) : undefined,
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -223,6 +239,9 @@ export class UserConfigStore {
     } else {
       this.config.bots.push(botConfig);
     }
+
+    // Update the map for O(1) lookup
+    this.botMap.set(botName, botConfig);
   }
 
   /**
