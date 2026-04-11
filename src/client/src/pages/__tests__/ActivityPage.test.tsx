@@ -7,6 +7,18 @@ import { vi } from 'vitest';
 import ActivityPage from '../ActivityPage';
 import { apiService } from '../../services/api';
 
+vi.mock('../../hooks/useWebSocket', () => ({
+  useWebSocket: () => ({
+    socket: null,
+    connected: false,
+    error: null,
+    lastMessage: null,
+    sendMessage: vi.fn(),
+    subscribe: vi.fn(),
+    unsubscribe: vi.fn()
+  })
+}));
+
 // Mock components to avoid deep rendering issues and dependency on child implementations
 vi.mock('../../components/DaisyUI/Alert', () => ({
   Alert: ({ message }: any) => <div data-testid="alert">{message}</div>,
