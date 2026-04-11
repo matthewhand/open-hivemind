@@ -532,13 +532,13 @@ const OnboardingPage: React.FC = () => {
 
       if (msgResult.status === 'fulfilled') {
         const data: any = msgResult.value;
-        const profiles = data?.profiles || data?.data?.profiles || data?.data || [];
+        const profiles = data?.message || data?.profiles || data?.data?.profiles || data?.data || [];
         setMessageProfiles(Array.isArray(profiles) ? profiles : []);
       }
 
       if (personasResult.status === 'fulfilled') {
         const data: any = personasResult.value;
-        const list = data?.personas || data?.data?.personas || data?.data || [];
+        const list = Array.isArray(data) ? data : data?.personas || data?.data?.personas || data?.data || [];
         setPersonas(Array.isArray(list) ? list : []);
       }
     };
@@ -651,7 +651,7 @@ const OnboardingPage: React.FC = () => {
           value={progressPercent}
           max={100}
           color="primary"
-          label="Setup Progress"
+          label="Setup"
           showPercentage={true}
         />
       </div>
@@ -732,17 +732,6 @@ const OnboardingPage: React.FC = () => {
               </Button>
             )}
 
-            {step === TOTAL_STEPS && (
-              <Button
-                variant="primary"
-                onClick={handleFinish}
-                loading={saving}
-                className="btn-wide"
-              >
-                {!saving && <CheckCircle2 className="w-4 h-4 mr-1" />}
-                Go to Dashboard
-              </Button>
-            )}
           </div>
         </div>
       </div>
