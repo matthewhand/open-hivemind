@@ -18,7 +18,8 @@ overrides:
   hono: ^4.12.12
   '@hono/node-server': ^1.19.13
   basic-ftp: ^5.2.1
-  minimatch: '>=10.2.3'
+  minimatch: ^10.0.0
+  test-exclude>minimatch: ^10.0.0
   serialize-javascript: ^7.0.3
   brace-expansion: ^5.0.5
   smol-toml: ^1.6.1
@@ -83,6 +84,9 @@ importers:
       '@hivemind/message-slack':
         specifier: workspace:*
         version: link:packages/message-slack
+      '@hivemind/message-webhook':
+        specifier: workspace:*
+        version: link:packages/message-webhook
       '@hivemind/shared-types':
         specifier: workspace:*
         version: link:packages/shared-types
@@ -236,6 +240,9 @@ importers:
       ioredis:
         specifier: ^5.8.2
         version: 5.10.1
+      ipaddr.js:
+        specifier: ^2.3.0
+        version: 2.3.0
       jsdom:
         specifier: ^28.1.0
         version: 28.1.0(@noble/hashes@1.8.0)
@@ -846,6 +853,16 @@ importers:
         version: 4.1.13
       typescript:
         specifier: ^5.9.2
+        version: 5.9.3
+
+  packages/message-webhook:
+    dependencies:
+      '@hivemind/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
+    devDependencies:
+      typescript:
+        specifier: ^5.9.3
         version: 5.9.3
 
   packages/shared-types:
@@ -6116,6 +6133,10 @@ packages:
   ipaddr.js@1.9.1:
     resolution: {integrity: sha512-0KI/607xoxSToH7GjN1FfSbLoU0+btTicjsQSWQlh/hZykN8KpmMf7uYwPW3R+akZ6R/w18ZlXSHBYXiYUPO3g==}
     engines: {node: '>= 0.10'}
+
+  ipaddr.js@2.3.0:
+    resolution: {integrity: sha512-Zv/pA+ciVFbCSBBjGfaKUya/CcGmUHzTydLMaTwrUUEM2DIEO3iZvueGxmacvmN50fGpGVKeTXpb2LcYQxeVdg==}
+    engines: {node: '>= 10'}
 
   is-alphabetical@2.0.1:
     resolution: {integrity: sha512-FWyyY60MeTNyeSRpkM2Iry0G9hpr7/9kD40mD/cGQEuilcZYS4okz8SN2Q6rLCJ8gbCt6fN+rC+6tMGS99LaxQ==}
@@ -14740,6 +14761,8 @@ snapshots:
   ip-address@10.1.0: {}
 
   ipaddr.js@1.9.1: {}
+
+  ipaddr.js@2.3.0: {}
 
   is-alphabetical@2.0.1: {}
 

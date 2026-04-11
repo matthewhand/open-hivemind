@@ -516,15 +516,12 @@ router.post(
       }
 
       const start = Date.now();
-      const messages: any[] = systemPrompt
-        ? [{ role: 'system', content: systemPrompt }]
-        : [];
+      const messages: any[] = systemPrompt ? [{ role: 'system', content: systemPrompt }] : [];
       const response: any = await provider.generateChatCompletion(message.trim(), messages);
       const latency = Date.now() - start;
 
-      const reply = typeof response === 'string'
-        ? response
-        : (response?.content || response?.message || '');
+      const reply =
+        typeof response === 'string' ? response : response?.content || response?.message || '';
 
       return res.json({
         reply,

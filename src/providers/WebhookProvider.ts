@@ -3,8 +3,8 @@ import type {
   IMessengerService,
   IServiceDependencies,
 } from '@hivemind/shared-types';
-import { schema } from '@webhook/schema';
-import { WebhookService } from '@webhook/WebhookService';
+import { schema } from '../../packages/message-webhook/src/schema';
+import { WebhookService } from '../../packages/message-webhook/src/WebhookService';
 
 /**
  * WebhookProvider
