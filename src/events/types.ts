@@ -97,4 +97,31 @@ export type MessageEvents = {
     threshold: number;
     meta?: Record<string, unknown>;
   };
+
+  /** A security-related event or potential threat was detected. */
+  'security:alert': {
+    type: 'ssrf' | 'auth' | 'rate-limit' | 'other';
+    reason: string;
+    severity: 'low' | 'medium' | 'high' | 'critical';
+    url?: string;
+    ip?: string;
+    metadata?: Record<string, unknown>;
+  };
+
+  /** HITL: A tool execution requires admin approval. */
+  'tool:approval_requested': {
+    id: string;
+    botName: string;
+    toolName: string;
+    args: Record<string, unknown>;
+    timestamp: string;
+    context?: any;
+  };
+
+  /** HITL: A tool execution was approved or denied by an admin. */
+  'tool:approval_resolved': {
+    id: string;
+    status: 'approved' | 'denied' | 'expired';
+    approved: boolean;
+  };
 };

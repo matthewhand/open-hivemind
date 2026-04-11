@@ -85,10 +85,13 @@ async function validateLettaUrl(url: string): Promise<{ isValid: boolean; error?
     }
 
     // 4. For non-local URLs also run full isSafeUrl check
-    if (!allowLocal && !(await isSafeUrl(url))) {
+    const check = await isSafeUrl(url);
+    if (!allowLocal && !check.safe) {
       return {
         isValid: false,
-        error: 'Target URL is blocked for security reasons (private/local network access).',
+        error:
+          check.reason ||
+          'Target URL is blocked for security reasons (private/local network access).',
       };
     }
 

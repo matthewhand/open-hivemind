@@ -3,6 +3,7 @@ import { MCPService } from '@src/mcp/MCPService';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { getMcpServerProfileByKey } from '@config/mcpServerProfiles';
 import { withTimeout } from '@common/withTimeout';
+import { PendingActionManager } from '@src/managers/PendingActionManager';
 
 const debug = Debug('app:ToolManager');
 
@@ -131,6 +132,24 @@ export class ToolManager {
         const msg = `Tool "${toolName}" not found on any MCP server for bot "${botName}"`;
         debug(msg);
         return { toolName, success: false, error: msg };
+      }
+
+      // HITL Action Guardrail check
+      const botConfig = BotConfigurationManager.getInstance().getBot(botName);
+      const mcpGuard = botConfig?.mcpGuard;
+      const isSensitive = mcpGuard?.enabled && mcpGuard.sensitiveTools?.includes(toolName);
+
+      if (isSensitive) {
+        debug(`[${botName}] Tool "${toolName}" is sensitive. Requesting admin approval...`);
+        const pendingMgr = PendingActionManager.getInstance();
+        const approved = await pendingMgr.requestApproval(botName, toolName, args, context);
+
+        if (!approved) {
+          const msg = `Tool execution denied: "${toolName}" requires administrator approval.`;
+          debug(`[${botName}] ${msg}`);
+          return { toolName, success: false, error: msg };
+        }
+        debug(`[${botName}] Tool "${toolName}" approved by admin.`);
       }
 
       // Execute with AbortController-based timeout.

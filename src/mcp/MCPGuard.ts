@@ -15,6 +15,11 @@ export interface MCPGuardConfig {
    * List of user IDs allowed to use MCP tools (used when type is 'custom')
    */
   allowedUserIds?: string[];
+
+  /**
+   * List of tool names that require manual administrator approval before execution.
+   */
+  sensitiveTools?: string[];
 }
 
 export class MCPGuard {

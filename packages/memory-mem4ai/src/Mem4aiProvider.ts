@@ -1,10 +1,10 @@
 import Debug from 'debug';
-import { isSafeUrl } from '@hivemind/shared-types';
-import type {
-  IMemoryProvider,
-  MemoryEntry,
-  MemoryScopeOptions,
-  MemorySearchResult,
+import {
+  isSafeUrl,
+  type IMemoryProvider,
+  type MemoryEntry,
+  type MemoryScopeOptions,
+  type MemorySearchResult,
 } from '@hivemind/shared-types';
 import { getCircuitBreaker, type CircuitBreaker as CircuitBreakerType } from './CircuitBreaker';
 import {
@@ -291,13 +291,17 @@ export class Mem4aiProvider implements IMemoryProvider {
 
   private async doRequest<T>(method: string, path: string, body?: unknown): Promise<T> {
     if (this.isBaseUrlSafe === undefined) {
-      this.isBaseUrlSafe = await isSafeUrl(this.baseUrl);
+      this.isBaseUrlSafe = (await isSafeUrl(this.baseUrl)).safe;
     }
     if (!this.isBaseUrlSafe) {
       throw new Error(`Mem4aiProvider: baseUrl is not safe: ${this.baseUrl}`);
     }
 
     const url = `${this.baseUrl}${path}`;
+
+    if (!(await isSafeUrl(url)).safe) {
+      throw new Error(`Mem4aiProvider: url is not safe: ${url}`);
+    }
 
     const headers: Record<string, string> = {
       Authorization: `Bearer ${this.apiKey}`,

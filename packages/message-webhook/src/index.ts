@@ -3,20 +3,14 @@
  *
  * Webhook adapter for Open Hivemind.
  */
-import type {
-  IMessengerService,
-  IServiceDependencies,
-} from '@hivemind/shared-types';
+import type { IMessengerService, IServiceDependencies } from '@hivemind/shared-types';
 import { WebhookService } from './WebhookService';
 
 export { WebhookService };
 export { schema } from './schema';
 
 /** Standard factory alias — PluginLoader uses create() as the single entry point */
-export const create = (
-  _config: any,
-  dependencies: IServiceDependencies
-): IMessengerService => {
+export const create = (_config: any, dependencies: IServiceDependencies): IMessengerService => {
   return new WebhookService(dependencies);
 };
 

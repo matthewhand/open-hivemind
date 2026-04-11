@@ -403,7 +403,7 @@ router.get('/response-profiles', asyncErrorHandler(async (req, res) => {
 router.post('/response-profiles', configLimiter, validateRequest(CreateResponseProfileSchema), asyncErrorHandler(async (req, res) => {
   try {
     const profile = responseProfileManager.createResponseProfile(req.body);
-    broadcastConfigUpdate('response-profiles', 'create', profile.key);
+    broadcastConfigUpdate('response-profiles' as any, 'create', profile.key);
     return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success({ profile }));
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
@@ -416,7 +416,7 @@ router.post('/response-profiles', configLimiter, validateRequest(CreateResponseP
 router.put('/response-profiles/:key', configLimiter, validateRequest(UpdateResponseProfileSchema), asyncErrorHandler(async (req, res) => {
   try {
     const profile = responseProfileManager.updateResponseProfile(req.params.key, req.body);
-    broadcastConfigUpdate('response-profiles', 'update', req.params.key);
+    broadcastConfigUpdate('response-profiles' as any, 'update', req.params.key);
     return res.json(ApiResponse.success({ profile }));
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
@@ -429,13 +429,65 @@ router.put('/response-profiles/:key', configLimiter, validateRequest(UpdateRespo
 router.delete('/response-profiles/:key', configLimiter, validateRequest(ResponseProfileKeyParamSchema), asyncErrorHandler(async (req, res) => {
   try {
     responseProfileManager.deleteResponseProfile(req.params.key);
-    broadcastConfigUpdate('response-profiles', 'delete', req.params.key);
+    broadcastConfigUpdate('response-profiles' as any, 'delete', req.params.key);
     return res.json(ApiResponse.success());
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res.status(500).json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'RESPONSE_PROFILE_DELETE_ERROR'));
+    }
+    }));
+
+    router.get('/response-profiles/:key/dry-run', asyncErrorHandler(async (req, res) => {
+  try {
+    const { key } = req.params;
+    const { messageText = '' } = req.query;
+
+    const profile = responseProfileManager.getResponseProfileByKey(key);
+    if (!profile) {
+      return res.status(404).json(ApiResponse.error(`Profile '${key}' not found`));
+    }
+
+    const settings = profile.settings || {};
+    const baseChance = Number(settings.MESSAGE_UNSOLICITED_BASE_CHANCE ?? 0.05);
+
+    let chance = baseChance;
+    const mods: string[] = [`Base(${baseChance.toFixed(2)})`];
+
+    const text = String(messageText);
+    if (text.includes('?')) {
+      chance += 0.2;
+      mods.push('Question(+0.20)');
+    }
+    if (text.includes('!')) {
+      chance += 0.1;
+      mods.push('Exclamation(+0.10)');
+    }
+    if (text.length > 0 && text.length < 10) {
+      const penalty = Number(settings.MESSAGE_SHORT_LENGTH_PENALTY ?? 0);
+      if (penalty > 0) {
+        chance -= penalty;
+        mods.push(`Short(-${penalty.toFixed(2)})`);
+      }
+    }
+
+    chance = Math.max(0, Math.min(1, chance));
+    const roll = Math.random();
+    const shouldReply = roll < chance;
+
+    return res.json(ApiResponse.success({
+      shouldReply,
+      roll: Number(roll.toFixed(3)),
+      threshold: Number(chance.toFixed(3)),
+      reason: shouldReply
+        ? `Chance roll success: ${mods.join(', ')}`
+        : `Chance roll failure: ${mods.join(', ')}`,
+      appliedSettings: settings
+    }));
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     return res
       .status(500)
-      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'RESPONSE_PROFILE_DELETE_ERROR'));
+      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DRY_RUN_ERROR'));
   }
 }));
 

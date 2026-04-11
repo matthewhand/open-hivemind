@@ -99,10 +99,9 @@ describe('useRealTimeValidation', () => {
       }) as any;
     });
 
-    const { result } = renderHook(
-      ({ data }) => useRealTimeValidation(data, { debounceMs: 100 }),
-      { initialProps: { data: { name: 'test' } } }
-    );
+    const { result } = renderHook(({ data }) => useRealTimeValidation(data, { debounceMs: 100 }), {
+      initialProps: { data: { name: 'test' } },
+    });
 
     // Fast-forward past debounce, flush React state updates
     await act(async () => {
@@ -145,10 +144,9 @@ describe('useRealTimeValidation', () => {
       },
     });
 
-    const { result } = renderHook(
-      ({ data }) => useRealTimeValidation(data, { debounceMs: 100 }),
-      { initialProps: { data: { name: '' } } }
-    );
+    const { result } = renderHook(({ data }) => useRealTimeValidation(data, { debounceMs: 100 }), {
+      initialProps: { data: { name: '' } },
+    });
 
     // Fast-forward past debounce, flush React state updates
     await act(async () => {
@@ -187,10 +185,9 @@ describe('useRealTimeValidation', () => {
       },
     });
 
-    const { result } = renderHook(
-      ({ data }) => useRealTimeValidation(data, { debounceMs: 100 }),
-      { initialProps: { data: { apiKey: 'sk-12345' } } }
-    );
+    const { result } = renderHook(({ data }) => useRealTimeValidation(data, { debounceMs: 100 }), {
+      initialProps: { data: { apiKey: 'sk-12345' } },
+    });
 
     // Fast-forward past debounce, flush React state updates
     await act(async () => {
@@ -252,10 +249,9 @@ describe('useRealTimeValidation', () => {
 
     mockPost.mockRejectedValue(new Error('Network error'));
 
-    const { result } = renderHook(
-      ({ data }) => useRealTimeValidation(data, { debounceMs: 100 }),
-      { initialProps: { data: { name: 'test' } } }
-    );
+    const { result } = renderHook(({ data }) => useRealTimeValidation(data, { debounceMs: 100 }), {
+      initialProps: { data: { name: 'test' } },
+    });
 
     // Fast-forward past debounce
     jest.advanceTimersByTime(100);

@@ -1,5 +1,5 @@
-import { generateChatCompletionDirect } from '@integrations/openwebui/directClient';
 import { http } from '@hivemind/shared-types';
+import { generateChatCompletionDirect } from '@integrations/openwebui/directClient';
 
 jest.mock('@hivemind/shared-types', () => ({
   http: {
@@ -41,23 +41,17 @@ describe('generateChatCompletionDirect', () => {
     );
 
     expect(result).toBe('ok response');
-    expect(mockHttp.create).toHaveBeenCalledWith(
-      'http://localhost:3000/api',
-      {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer abc',
-      }
-    );
-    expect(mockPost).toHaveBeenCalledWith(
-      '/chat/completions',
-      {
-        model: 'llama3.2',
-        messages: [
-          { role: 'system', content: 'system prompt' },
-          { role: 'assistant', content: 'prev-1' },
-          { role: 'user', content: 'hello' },
-        ],
-      }
-    );
+    expect(mockHttp.create).toHaveBeenCalledWith('http://localhost:3000/api', {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer abc',
+    });
+    expect(mockPost).toHaveBeenCalledWith('/chat/completions', {
+      model: 'llama3.2',
+      messages: [
+        { role: 'system', content: 'system prompt' },
+        { role: 'assistant', content: 'prev-1' },
+        { role: 'user', content: 'hello' },
+      ],
+    });
   });
 });

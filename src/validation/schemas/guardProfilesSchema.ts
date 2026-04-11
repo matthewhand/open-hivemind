@@ -37,6 +37,10 @@ const mcpGuardSchema = z
       .array(toolNameString)
       .optional()
       .transform((arr) => (arr ? arr.filter(Boolean) : arr)),
+    sensitiveTools: z
+      .array(toolNameString)
+      .optional()
+      .transform((arr) => (arr ? arr.filter(Boolean) : arr)),
   })
   .optional();
 

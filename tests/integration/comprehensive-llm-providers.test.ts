@@ -10,6 +10,8 @@
  */
 
 import { FlowiseProvider } from '../../packages/llm-flowise/src/flowiseProvider';
+import { getFlowiseResponse } from '../../packages/llm-flowise/src/flowiseRestClient';
+import { getFlowiseSdkResponse } from '../../packages/llm-flowise/src/flowiseSdkClient';
 // ---------------------------------------------------------------------------
 // Now import the providers
 // ---------------------------------------------------------------------------
@@ -18,8 +20,6 @@ import { OpenSwarmProvider } from '../../packages/llm-openswarm/src/OpenSwarmPro
 import { getCircuitBreaker } from '../../src/common/CircuitBreaker';
 import type { ILlmProvider } from '../../src/llm/interfaces/ILlmProvider';
 import { LLMResponse } from '../../src/llm/interfaces/LLMResponse';
-import { getFlowiseSdkResponse } from '../../packages/llm-flowise/src/flowiseSdkClient';
-import { getFlowiseResponse } from '../../packages/llm-flowise/src/flowiseRestClient';
 
 // ---------------------------------------------------------------------------
 // Mock external dependencies BEFORE importing providers
@@ -81,7 +81,6 @@ jest.mock('../../packages/llm-flowise/src/flowiseRestClient', () => ({
   getFlowiseResponseFallback: jest.fn().mockResolvedValue('flowise rest response'),
 }));
 
-
 // Mock config modules
 jest.mock('@config/openaiConfig', () => ({
   __esModule: true,
@@ -101,11 +100,11 @@ jest.mock('@config/flowiseConfig', () => ({
 
 // Mock shared-types isSafeUrl
 jest.mock('@hivemind/shared-types', () => ({
-  isSafeUrl: jest.fn().mockResolvedValue(true),
+  isSafeUrl: jest.fn().mockResolvedValue({ safe: true }),
 }));
 
 jest.mock('../../src/utils/ssrfGuard', () => ({
-  isSafeUrl: jest.fn().mockResolvedValue(true),
+  isSafeUrl: jest.fn().mockResolvedValue({ safe: true }),
 }));
 
 describe('COMPREHENSIVE LLM PROVIDER TESTS - PHASE 3', () => {

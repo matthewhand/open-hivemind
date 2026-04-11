@@ -13,6 +13,7 @@ import Carousel from '../../components/DaisyUI/Carousel';
 import DashboardWidgetSystem from '../../components/DaisyUI/DashboardWidgetSystem';
 import WelcomeSplash from '../../components/WelcomeSplash';
 import QuickActions from '../../components/QuickActions';
+import PendingActions from '../../components/PendingActions';
 
 const SystemHealth = lazy(() => import('../../components/SystemHealth'));
 
@@ -194,6 +195,8 @@ const DashboardPage: React.FC = () => {
           <Carousel items={carouselItems} autoplay={true} interval={6000} variant="full-width" onSlideClick={handleSlideClick} />
         </div>
       )}
+
+      <PendingActions />
 
       <div className="divider mx-4" />
 

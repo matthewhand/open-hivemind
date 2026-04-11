@@ -194,8 +194,9 @@ describe('openAiProvider', () => {
 
       try {
         // Should throw when trying to use the provider without API key
-        await expect(providerWithoutKey.generateChatCompletion('test', []))
-          .rejects.toThrow(/API key/i);
+        await expect(providerWithoutKey.generateChatCompletion('test', [])).rejects.toThrow(
+          /API key/i
+        );
       } finally {
         // Restore env var so other tests are not affected
         if (savedEnvKey !== undefined) process.env.OPENAI_API_KEY = savedEnvKey;

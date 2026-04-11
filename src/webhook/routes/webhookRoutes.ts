@@ -4,7 +4,11 @@ import type express from 'express';
 import { predictionImageMap } from '@src/message/helpers/processing/handleImageMessage';
 import type { IMessengerService } from '@message/interfaces/IMessengerService';
 // Import after jest.doMock of config to allow per-test overrides
-import { verifyIpWhitelist, verifyWebhookToken } from '@webhook/security/webhookSecurity';
+import {
+  verifyIpWhitelist,
+  verifySlackSignature,
+  verifyWebhookToken,
+} from '@webhook/security/webhookSecurity';
 
 const debug = Debug('app:webhookRoutes');
 
@@ -171,6 +175,7 @@ export function configureWebhookRoutes(
     '/webhook/slack',
     verifyWebhookToken,
     verifyIpWhitelist,
+    verifySlackSignature,
     async (req: Request, res: Response) => {
       debug('Received Slack-compatible webhook message:', req.body);
 

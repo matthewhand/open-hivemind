@@ -6,7 +6,8 @@ const originalCorsOrigin = process.env.CORS_ORIGIN;
 delete process.env.CORS_ORIGIN;
 
 jest.resetModules();
-const { applyCors, getCorsOrigins } = require('../../src/middleware/corsMiddleware') as typeof import('../../src/middleware/corsMiddleware');
+const { applyCors, getCorsOrigins } =
+  require('../../src/middleware/corsMiddleware') as typeof import('../../src/middleware/corsMiddleware');
 
 afterAll(() => {
   // Restore the env var after all tests

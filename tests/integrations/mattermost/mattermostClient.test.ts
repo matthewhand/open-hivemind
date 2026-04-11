@@ -1,5 +1,5 @@
-import MattermostClient from '../../../packages/message-mattermost/src/mattermostClient';
 import { http } from '@hivemind/shared-types';
+import MattermostClient from '../../../packages/message-mattermost/src/mattermostClient';
 
 jest.mock('@hivemind/shared-types', () => ({
   http: {

@@ -34,6 +34,56 @@ if (typeof HTMLCanvasElement !== 'undefined') {
 
 process.env.SESSION_SECRET = 'testsecretlongenoughstringtoavoidwarning32chars';
 
+// Env-Var Isolation & Interceptor
+const PROTECTED_PREFIXES = ['OPENAI_', 'SLACK_', 'DISCORD_', 'MATTERMOST_', 'DATABASE_'];
+const originalEnv = process.env;
+
+beforeEach(() => {
+  const envSnapshot = { ...originalEnv };
+  const mockedInTest = new Set<string>();
+
+  // Use a proxy to intercept access to "secret" variables
+  // @ts-ignore - process.env type is strict
+  process.env = new Proxy(envSnapshot, {
+    get(target, prop) {
+      if (typeof prop === 'string') {
+        const isProtected = PROTECTED_PREFIXES.some((prefix) => prop.startsWith(prefix));
+        if (isProtected && !mockedInTest.has(prop) && target[prop]) {
+          console.error(
+            `\x1b[31m[SECURITY WARNING]\x1b[0m Accessing protected env var "${prop}" without explicit mock in test.`
+          );
+          return undefined; // Block access to real secret
+        }
+      }
+      return target[prop];
+    },
+    set(target, prop, value) {
+      if (typeof prop === 'string') {
+        mockedInTest.add(prop);
+      }
+      target[prop] = value as string;
+      return true;
+    },
+    deleteProperty(target, prop) {
+      if (typeof prop === 'string') {
+        mockedInTest.delete(prop);
+      }
+      delete target[prop];
+      return true;
+    },
+    ownKeys(target) {
+      return Reflect.ownKeys(target);
+    },
+    getOwnPropertyDescriptor(target, prop) {
+      return Reflect.getOwnPropertyDescriptor(target, prop);
+    },
+  });
+});
+
+afterEach(() => {
+  process.env = originalEnv;
+});
+
 // Set default timeout for all tests
 jest.setTimeout(60000);
 

@@ -1,15 +1,18 @@
 import express from 'express';
 import request from 'supertest';
+import router from '../../../../src/server/routes/config/providers';
 import { ApiResponse } from '../../../../src/types/apiResponse';
 
 // Mock responseProfileManager
 jest.mock('../../../../src/config/responseProfileManager', () => ({
   getResponseProfiles: jest.fn().mockReturnValue([
     { key: 'eager', name: 'Eager', isBuiltIn: true, settings: {} },
-    { key: 'test', name: 'Test', isBuiltIn: false, settings: {} }
+    { key: 'test', name: 'Test', isBuiltIn: false, settings: {} },
   ]),
   createResponseProfile: jest.fn().mockImplementation((data) => ({ ...data, isBuiltIn: false })),
-  updateResponseProfile: jest.fn().mockImplementation((key, data) => ({ ...data, key, isBuiltIn: false })),
+  updateResponseProfile: jest
+    .fn()
+    .mockImplementation((key, data) => ({ ...data, key, isBuiltIn: false })),
   deleteResponseProfile: jest.fn().mockReturnValue(true),
 }));
 
@@ -22,8 +25,6 @@ jest.mock('../../../../src/server/middleware/audit', () => ({
 jest.mock('../../../../src/server/routes/config/store', () => ({
   broadcastConfigUpdate: jest.fn(),
 }));
-
-import router from '../../../../src/server/routes/config/providers';
 
 describe('Response Profiles API', () => {
   let app: express.Application;
@@ -53,10 +54,8 @@ describe('Response Profiles API', () => {
 
   it('PUT /api/config/response-profiles/:key should update a profile', async () => {
     const updates = { name: 'Updated', settings: {} };
-    const res = await request(app)
-      .put('/api/config/response-profiles/test')
-      .send(updates);
-    
+    const res = await request(app).put('/api/config/response-profiles/test').send(updates);
+
     expect(res.status).toBe(200);
     expect(res.body.data.profile.name).toBe('Updated');
   });

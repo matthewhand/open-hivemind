@@ -55,9 +55,7 @@ describe('POST /auth/verify', () => {
     mockAuthManager.verifyAccessToken.mockReturnValue(decoded);
     mockAuthManager.getUser.mockReturnValue(mockUser);
 
-    const res = await request(app)
-      .post('/auth/verify')
-      .send({ token: 'valid-access-token' });
+    const res = await request(app).post('/auth/verify').send({ token: 'valid-access-token' });
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
@@ -73,9 +71,7 @@ describe('POST /auth/verify', () => {
       throw new Error('Invalid token');
     });
 
-    const res = await request(app)
-      .post('/auth/verify')
-      .send({ token: 'bad-token' });
+    const res = await request(app).post('/auth/verify').send({ token: 'bad-token' });
 
     expect(res.status).toBe(401);
     expect(res.body.success).toBe(false);
@@ -86,9 +82,7 @@ describe('POST /auth/verify', () => {
     mockAuthManager.verifyAccessToken.mockReturnValue(decoded);
     mockAuthManager.getUser.mockReturnValue(null);
 
-    const res = await request(app)
-      .post('/auth/verify')
-      .send({ token: 'valid-token-no-user' });
+    const res = await request(app).post('/auth/verify').send({ token: 'valid-token-no-user' });
 
     expect(res.status).toBe(401);
     expect(res.body.success).toBe(false);
@@ -96,9 +90,7 @@ describe('POST /auth/verify', () => {
   });
 
   it('returns 400 with VALIDATION_ERROR when token field is missing', async () => {
-    const res = await request(app)
-      .post('/auth/verify')
-      .send({});
+    const res = await request(app).post('/auth/verify').send({});
 
     expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);
@@ -107,9 +99,7 @@ describe('POST /auth/verify', () => {
   });
 
   it('returns 400 with VALIDATION_ERROR when token is an empty string', async () => {
-    const res = await request(app)
-      .post('/auth/verify')
-      .send({ token: '' });
+    const res = await request(app).post('/auth/verify').send({ token: '' });
 
     expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);
@@ -127,13 +117,16 @@ describe('GET /auth/verify', () => {
 
   it('returns 200 with tokenValid === true for a valid Bearer token', async () => {
     const token = createAuthToken({ id: 'user1', username: 'user1', role: 'user' });
-    const decoded = { userId: 'user1', username: 'user1', role: 'user', exp: Math.floor(Date.now() / 1000) + 3600 };
+    const decoded = {
+      userId: 'user1',
+      username: 'user1',
+      role: 'user',
+      exp: Math.floor(Date.now() / 1000) + 3600,
+    };
     mockAuthManager.verifyAccessToken.mockReturnValue(decoded);
     mockAuthManager.getUser.mockReturnValue(mockUser);
 
-    const res = await request(app)
-      .get('/auth/verify')
-      .set('Authorization', `Bearer ${token}`);
+    const res = await request(app).get('/auth/verify').set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);

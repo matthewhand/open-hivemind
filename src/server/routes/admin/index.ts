@@ -6,6 +6,7 @@ import agentsRouter from '../agents';
 import guardProfilesRouter from '../guardProfiles';
 import mcpRouter from '../mcp';
 import auditRouter from './audit';
+import approvalsRouter from './approvals';
 import backupRouter from './backup';
 import configRouter from './config';
 import llmProvidersRouter from './llmProviders';
@@ -52,6 +53,7 @@ router.use('/guard-profiles', guardProfilesRouter);
 // calls them without the /users, /system, etc. prefixes.
 // We mount them on '/' so paths like /api/admin/llm-providers still work correctly.
 router.use('/', auditRouter);
+router.use('/', approvalsRouter);
 router.use('/', monitoringRouter);
 router.use('/', backupRouter);
 router.use('/', configRouter);

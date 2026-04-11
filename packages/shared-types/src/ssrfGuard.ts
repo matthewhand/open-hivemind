@@ -1,5 +1,52 @@
 import dns from 'dns';
 import net from 'net';
+import ipaddr from 'ipaddr.js';
+
+export interface SafeUrlResult {
+  safe: boolean;
+  ip?: string;
+  reason?: string;
+}
+
+/**
+ * Check if an IP address is in a CIDR range.
+ * Supports both IPv4 and IPv6, including cross-version matching via IPv4-mapping.
+ */
+export function isIPInCIDR(ip: string, cidr: string): boolean {
+  try {
+    if (!cidr || !cidr.includes('/')) return false;
+    const [range, bitsStr] = cidr.split('/');
+    const bits = parseInt(bitsStr, 10);
+
+    if (isNaN(bits) || bits < 0) return false;
+    if (bits === 0) return true;
+
+    let addr = ipaddr.parse(ip);
+    let network = ipaddr.parse(range);
+
+    // If versions match, use standard match
+    if (addr.kind() === network.kind()) {
+      return (addr as any).match(network, bits);
+    }
+
+    // If versions differ, attempt to normalize to IPv6 for comparison
+    if (addr.kind() === 'ipv4') {
+      addr = (addr as ipaddr.IPv4).toIPv4MappedAddress();
+    }
+
+    if (network.kind() === 'ipv4') {
+      // An IPv4 /24 becomes an IPv6 /120 (96 + 24)
+      network = (network as ipaddr.IPv4).toIPv4MappedAddress();
+      return (addr as any).match(network, 96 + bits);
+    }
+
+    // Both are now IPv6
+    return (addr as any).match(network, bits);
+  } catch (err) {
+    // Parsing or matching failed
+    return false;
+  }
+}
 
 /**
  * Checks if a URL is safe to connect to (SSRF protection).
@@ -10,11 +57,12 @@ import net from 'net';
  * 3. IP address is not in private/reserved ranges.
  *
  * Can be bypassed by setting ALLOW_LOCAL_NETWORK_ACCESS=true environment variable.
+ * Supports MCP_INTERNAL_CIDR_ALLOWLIST for internal service communication.
  *
  * @param url The URL to check
- * @returns Promise resolving to true if safe, false otherwise
+ * @returns Promise resolving to SafeUrlResult
  */
-export async function isSafeUrl(url: string): Promise<boolean> {
+export async function isSafeUrl(url: string): Promise<SafeUrlResult> {
   // 1. Protocol Check
   try {
     const parsedUrl = new URL(url);
@@ -22,34 +70,50 @@ export async function isSafeUrl(url: string): Promise<boolean> {
 
     // Only allow HTTP/S and WS/S protocols
     if (!['http:', 'https:', 'ws:', 'wss:'].includes(protocol)) {
-      return false;
+      return { safe: false, reason: `Forbidden protocol: ${protocol}` };
     }
 
     const hostname = parsedUrl.hostname;
 
     // Check if hostname is an IP literal
     if (net.isIP(hostname)) {
-      if (isPrivateIP(hostname)) {
-        return process.env.ALLOW_LOCAL_NETWORK_ACCESS === 'true';
-      }
-      return true;
+      return validateIP(hostname);
     }
 
     // Resolve hostname to IP - ALWAYS resolve to prevent DNS rebinding/bypass
     try {
       const { address } = await dns.promises.lookup(hostname);
-      if (isPrivateIP(address)) {
-        return process.env.ALLOW_LOCAL_NETWORK_ACCESS === 'true';
-      }
-      return true;
+      return validateIP(address);
     } catch (error) {
       // DNS resolution failed - treat as unsafe
-      return false;
+      return { safe: false, reason: `DNS resolution failed for ${hostname}` };
     }
   } catch (error) {
     // Invalid URL format
-    return false;
+    return { safe: false, reason: 'Invalid URL format' };
   }
+}
+
+function validateIP(ip: string): SafeUrlResult {
+  // Check against Internal CIDR Allowlist first
+  const internalAllowlist = process.env.MCP_INTERNAL_CIDR_ALLOWLIST;
+  if (internalAllowlist) {
+    const ranges = internalAllowlist.split(',').map((r) => r.trim());
+    if (ranges.some((range) => isIPInCIDR(ip, range))) {
+      return { safe: true, ip };
+    }
+  }
+
+  if (isPrivateIP(ip)) {
+    const allowed = process.env.ALLOW_LOCAL_NETWORK_ACCESS === 'true';
+    return {
+      safe: allowed,
+      ip,
+      reason: allowed ? undefined : `Private IP address blocked: ${ip}`,
+    };
+  }
+
+  return { safe: true, ip };
 }
 
 /**

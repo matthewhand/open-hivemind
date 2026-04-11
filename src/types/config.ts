@@ -166,6 +166,8 @@ export interface McpGuardConfig {
   allowedUsers?: string[];
   /** List of allowed MCP tools (by name) */
   allowedTools?: string[];
+  /** List of tool names requiring administrator approval */
+  sensitiveTools?: string[];
   /** Additional guard settings */
   settings?: Record<string, unknown>;
 }

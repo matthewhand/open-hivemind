@@ -1,3 +1,4 @@
+import fs from 'fs';
 import express from 'express';
 import request from 'supertest';
 
@@ -45,8 +46,6 @@ jest.mock('../../src/monitoring/MetricsCollector', () => ({
     }),
   },
 }));
-
-import fs from 'fs';
 
 describe('Onboarding Routes', () => {
   let app: express.Application;
@@ -192,7 +191,7 @@ describe('Onboarding Routes', () => {
       // The router loaded state from the mock file — GET /status should return completed: true
       return request(testApp)
         .get('/status')
-        .then(res => {
+        .then((res) => {
           expect(res.status).toBe(200);
           expect(res.body.data.completed).toBe(true);
         });

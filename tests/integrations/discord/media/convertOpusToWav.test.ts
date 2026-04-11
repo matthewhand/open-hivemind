@@ -30,7 +30,10 @@ describe('convertOpusToWav', () => {
     const result = await convertOpusToWav(opusBuffer, outputDir);
 
     expect(result).toBe(path.join('/temp', 'output.wav'));
-    expect(mockFs.promises.writeFile).toHaveBeenCalledWith(path.join('/temp', 'input.opus'), opusBuffer);
+    expect(mockFs.promises.writeFile).toHaveBeenCalledWith(
+      path.join('/temp', 'input.opus'),
+      opusBuffer
+    );
     expect(mockFs.promises.unlink).toHaveBeenCalledWith(path.join('/temp', 'input.opus'));
   });
 

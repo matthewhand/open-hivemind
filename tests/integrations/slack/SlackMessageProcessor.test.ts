@@ -6,7 +6,7 @@ jest.mock('@hivemind/shared-types', () => ({
   http: {
     get: jest.fn(),
   },
-  isSafeUrl: jest.fn().mockResolvedValue(true),
+  isSafeUrl: jest.fn().mockResolvedValue({ safe: true }),
   isHttpError: jest.fn().mockReturnValue(false),
 }));
 

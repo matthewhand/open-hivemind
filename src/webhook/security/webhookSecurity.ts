@@ -145,3 +145,67 @@ export const verifyIpWhitelist = (req: Request, res: Response, next: NextFunctio
 
   next();
 };
+
+/**
+ * Verify Slack signature for incoming webhooks.
+ *
+ * Uses crypto.createHmac('sha256', SLACK_SIGNING_SECRET) to verify the X-Slack-Signature
+ * and X-Slack-Request-Timestamp headers.
+ *
+ * Note: Requires the raw request body (added by setupMiddleware via verify function).
+ */
+export const verifySlackSignature = (req: Request, res: Response, next: NextFunction): void => {
+  const signature = req.headers['x-slack-signature'] as string;
+  const timestamp = req.headers['x-slack-request-timestamp'] as string;
+  const signingSecret = process.env.SLACK_SIGNING_SECRET;
+
+  if (!signingSecret) {
+    Logger.warn('SLACK_SIGNING_SECRET is not configured, skipping signature verification');
+    return next();
+  }
+
+  if (!signature || !timestamp) {
+    Logger.warn('Missing Slack signature headers', { path: req.path });
+    res.status(401).send('Unauthorized: Missing Slack headers');
+    return;
+  }
+
+  // Prevent replay attacks (5 minute window)
+  const fiveMinutesAgo = Math.floor(Date.now() / 1000) - 60 * 5;
+  if (parseInt(timestamp, 10) < fiveMinutesAgo) {
+    Logger.warn('Slack request timestamp is too old', { timestamp, path: req.path });
+    res.status(401).send('Unauthorized: Request too old');
+    return;
+  }
+
+  const rawBody = (req as any).rawBody;
+  if (rawBody === undefined) {
+    Logger.error(
+      'Raw body not found for Slack signature verification. Ensure setupMiddleware is configured.'
+    );
+    res.status(500).send('Internal Server Error: Missing raw body');
+    return;
+  }
+
+  const sigBaseString = `v0:${timestamp}:${rawBody}`;
+  const hmac = crypto.createHmac('sha256', signingSecret);
+  const mySignature = 'v0=' + hmac.update(sigBaseString).digest('hex');
+
+  try {
+    const signatureBuffer = Buffer.from(signature, 'utf8');
+    const mySignatureBuffer = Buffer.from(mySignature, 'utf8');
+
+    if (
+      signatureBuffer.length === mySignatureBuffer.length &&
+      crypto.timingSafeEqual(signatureBuffer, mySignatureBuffer)
+    ) {
+      next();
+    } else {
+      Logger.warn('Invalid Slack signature', { path: req.path });
+      res.status(401).send('Unauthorized: Invalid Slack signature');
+    }
+  } catch (error) {
+    Logger.error('Error during Slack signature verification', { error });
+    res.status(401).send('Unauthorized: Signature verification error');
+  }
+};

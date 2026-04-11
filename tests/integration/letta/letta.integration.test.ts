@@ -97,7 +97,10 @@ describeIfLetta('Letta memory', () => {
       embedding: models.embedding,
       memory_blocks: [
         { label: 'human', value: 'Name: Unknown' },
-        { label: 'persona', value: 'I am a helpful assistant. I always update my memory when I learn new facts.' },
+        {
+          label: 'persona',
+          value: 'I am a helpful assistant. I always update my memory when I learn new facts.',
+        },
       ],
     });
     agentId = agent.id;
@@ -109,12 +112,14 @@ describeIfLetta('Letta memory', () => {
 
   it('emits memory tool calls and successful returns when given new facts', async () => {
     const response = await client.agents.messages.create(agentId, {
-      input: 'IMPORTANT: My name is Alice. I have a cat named Whiskers. Please save this to your memory.',
+      input:
+        'IMPORTANT: My name is Alice. I have a cat named Whiskers. Please save this to your memory.',
     });
 
     // Check for memory tool calls OR verify the block was updated (model may batch internally)
     const toolCalls = response.messages.filter(
-      (m: any) => m.message_type === 'tool_call_message' && MEMORY_TOOL_NAMES.includes(m.tool_call?.name)
+      (m: any) =>
+        m.message_type === 'tool_call_message' && MEMORY_TOOL_NAMES.includes(m.tool_call?.name)
     );
     const successReturns = response.messages.filter(
       (m: any) => m.message_type === 'tool_return_message' && m.status === 'success'

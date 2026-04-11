@@ -13,14 +13,12 @@ beforeEach(() => jest.clearAllMocks());
 afterEach(() => jest.restoreAllMocks());
 
 function mockFetch(status: number, body: unknown) {
-  return jest
-    .spyOn(global, 'fetch')
-    .mockResolvedValue(
-      new Response(status === 204 ? null : JSON.stringify(body), {
-        status,
-        headers: { 'content-type': 'application/json' },
-      })
-    );
+  return jest.spyOn(global, 'fetch').mockResolvedValue(
+    new Response(status === 204 ? null : JSON.stringify(body), {
+      status,
+      headers: { 'content-type': 'application/json' },
+    })
+  );
 }
 
 function mockFetchSequence(...responses: Array<{ status: number; body: unknown }>) {
@@ -243,14 +241,12 @@ describe('legacy convenience methods', () => {
   });
 
   it('get() returns null on 404', async () => {
-    jest
-      .spyOn(global, 'fetch')
-      .mockResolvedValue(
-        new Response(JSON.stringify({}), {
-          status: 404,
-          headers: { 'content-type': 'application/json' },
-        })
-      );
+    jest.spyOn(global, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({}), {
+        status: 404,
+        headers: { 'content-type': 'application/json' },
+      })
+    );
     const p = new Mem0Provider(BASE_CONFIG);
     expect(await p.get('missing')).toBeNull();
   });
@@ -274,15 +270,24 @@ describe('SSRF protection', () => {
 
   it('blocks requests when isSafeUrl returns false', async () => {
     isSafeUrl.mockResolvedValue(false);
-    const p = new Mem0Provider({ ...BASE_CONFIG, baseUrl: 'http://169.254.169.254', maxRetries: 0 });
-    await expect(p.addMemory({ userId: 'u1', content: 'x', role: 'user' }))
-      .rejects.toThrow('url is not safe');
+    const p = new Mem0Provider({
+      ...BASE_CONFIG,
+      baseUrl: 'http://169.254.169.254',
+      maxRetries: 0,
+    });
+    await expect(p.addMemory({ userId: 'u1', content: 'x', role: 'user' })).rejects.toThrow(
+      'url is not safe'
+    );
   });
 
   it('allows requests when isSafeUrl returns true', async () => {
     isSafeUrl.mockResolvedValue(true);
-    mockFetch(200, { results: [{ id: 'ssrf-ok', memory: 'safe', created_at: '2024-01-01T00:00:00Z' }] });
+    mockFetch(200, {
+      results: [{ id: 'ssrf-ok', memory: 'safe', created_at: '2024-01-01T00:00:00Z' }],
+    });
     const p = new Mem0Provider(BASE_CONFIG);
-    await expect(p.addMemory({ userId: 'u1', content: 'safe', role: 'user' })).resolves.toBeDefined();
+    await expect(
+      p.addMemory({ userId: 'u1', content: 'safe', role: 'user' })
+    ).resolves.toBeDefined();
   });
 });

@@ -127,10 +127,11 @@ router.post(
             if (config.baseUrl) {
               try {
                 new URL(config.baseUrl);
-                if (!(await isSafeUrl(config.baseUrl))) {
+                const check = await isSafeUrl(config.baseUrl);
+                if (!check.safe) {
                   testResult = {
                     success: false,
-                    message: 'Base URL is blocked for security reasons',
+                    message: check.reason || 'Base URL is blocked for security reasons',
                   };
                   break;
                 }
@@ -166,10 +167,11 @@ router.post(
 
             try {
               new URL(config.baseUrl);
-              if (!(await isSafeUrl(config.baseUrl))) {
+              const check = await isSafeUrl(config.baseUrl);
+              if (!check.safe) {
                 testResult = {
                   success: false,
-                  message: 'Base URL is blocked for security reasons',
+                  message: check.reason || 'Base URL is blocked for security reasons',
                 };
                 break;
               }
@@ -204,10 +206,11 @@ router.post(
             if (config.baseUrl) {
               try {
                 new URL(config.baseUrl);
-                if (!(await isSafeUrl(config.baseUrl))) {
+                const check = await isSafeUrl(config.baseUrl);
+                if (!check.safe) {
                   testResult = {
                     success: false,
-                    message: 'Base URL is blocked for security reasons',
+                    message: check.reason || 'Base URL is blocked for security reasons',
                   };
                   break;
                 }

@@ -116,14 +116,12 @@ describe('getMemories', () => {
 
 describe('getMemory', () => {
   it('returns null on 404', async () => {
-    jest
-      .spyOn(global, 'fetch')
-      .mockResolvedValue(
-        new Response(JSON.stringify({}), {
-          status: 404,
-          headers: { 'content-type': 'application/json' },
-        })
-      );
+    jest.spyOn(global, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({}), {
+        status: 404,
+        headers: { 'content-type': 'application/json' },
+      })
+    );
     const p = new Mem4aiProvider(BASE_CONFIG);
     expect(await p.getMemory('missing')).toBeNull();
   });
@@ -252,14 +250,12 @@ describe('legacy convenience methods', () => {
   });
 
   it('get() returns null on 404', async () => {
-    jest
-      .spyOn(global, 'fetch')
-      .mockResolvedValue(
-        new Response(JSON.stringify({}), {
-          status: 404,
-          headers: { 'content-type': 'application/json' },
-        })
-      );
+    jest.spyOn(global, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({}), {
+        status: 404,
+        headers: { 'content-type': 'application/json' },
+      })
+    );
     const p = new Mem4aiProvider(BASE_CONFIG);
     expect(await p.get('missing')).toBeNull();
   });

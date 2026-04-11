@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 /**
  * Standard API response envelope.
  *
@@ -25,6 +27,14 @@ export const ApiResponse = {
    */
   success<T = unknown>(data?: T): ApiSuccessEnvelope<T> {
     return { success: true, data: data as T };
+  },
+
+  /**
+   * Wrap a successful payload in the standard envelope after validating with a schema.
+   */
+  validatedSuccess<T>(schema: z.ZodType<T>, data: unknown): ApiSuccessEnvelope<T> {
+    const validated = schema.parse(data);
+    return { success: true, data: validated };
   },
 
   /**

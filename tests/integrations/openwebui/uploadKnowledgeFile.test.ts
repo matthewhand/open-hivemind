@@ -45,10 +45,14 @@ describe('openwebui/uploadKnowledgeFile', () => {
     }));
 
     // Mock sessionManager.getSessionKey to return a stable token
-    jest.doMock('@integrations/openwebui/sessionManager', () => ({
-      __esModule: true,
-      getSessionKey: jest.fn().mockResolvedValue('sk-abc'),
-    }), { virtual: true });
+    jest.doMock(
+      '@integrations/openwebui/sessionManager',
+      () => ({
+        __esModule: true,
+        getSessionKey: jest.fn().mockResolvedValue('sk-abc'),
+      }),
+      { virtual: true }
+    );
 
     // Mock fs with existsSync and createReadStream
     jest.doMock('fs', () => {

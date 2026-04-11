@@ -56,10 +56,13 @@ router.post(
       }
 
       // Security Check: SSRF Protection
-      if (!(await isSafeUrl(serverUrl))) {
+      const check = await isSafeUrl(serverUrl);
+      if (!check.safe) {
         return res.status(HTTP_STATUS.FORBIDDEN).json({
           error: 'Security Warning',
-          message: 'Target URL is blocked for security reasons (private/local network access).',
+          message:
+            check.reason ||
+            'Target URL is blocked for security reasons (private/local network access).',
         });
       }
 
@@ -115,10 +118,13 @@ router.post(
       }
 
       // Security Check: SSRF Protection
-      if (!(await isSafeUrl(serverUrl))) {
+      const check = await isSafeUrl(serverUrl);
+      if (!check.safe) {
         return res.status(HTTP_STATUS.FORBIDDEN).json({
           error: 'Security Warning',
-          message: 'Target URL is blocked for security reasons (private/local network access).',
+          message:
+            check.reason ||
+            'Target URL is blocked for security reasons (private/local network access).',
         });
       }
 
@@ -363,10 +369,13 @@ router.post(
       }
 
       // Security Check: SSRF Protection
-      if (!(await isSafeUrl(String(storedConfig.serverUrl)))) {
+      const check = await isSafeUrl(String(storedConfig.serverUrl));
+      if (!check.safe) {
         return res.status(HTTP_STATUS.FORBIDDEN).json({
           error: 'Security Warning',
-          message: 'Target URL is blocked for security reasons (private/local network access).',
+          message:
+            check.reason ||
+            'Target URL is blocked for security reasons (private/local network access).',
         });
       }
 

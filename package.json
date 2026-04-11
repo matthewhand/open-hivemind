@@ -16,6 +16,7 @@
     "packages/*"
   ],
   "scripts": {
+    "prepare": "husky install",
     "lint": "node ./node_modules/eslint/bin/eslint.js src/",
     "lint:fix": "node ./node_modules/eslint/bin/eslint.js src/ --fix",
     "format": "node ./node_modules/prettier/bin/prettier.cjs --write \"src/**/*.ts\" \"src/**/*.tsx\" \"tests/**/*.ts\" \"packages/**/*.ts\"",
@@ -40,6 +41,7 @@
     "dev:status": "ps aux | grep -E '(node|ts-node)' | grep -v grep",
     "validate": "./node_modules/.bin/concurrently \"npm run lint\" \"npm run test\"",
     "test": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test node -r dotenv/config ./node_modules/jest/bin/jest.js --runInBand",
+    "test:parallel": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test node -r dotenv/config ./node_modules/jest/bin/jest.js --maxWorkers=50%",
     "test:coverage": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test node ./node_modules/jest/bin/jest.js --coverage --runInBand",
     "test:real": "NODE_ENV=test jest --config jest.real.config.js",
     "test:real:legacy": "bash scripts/run-real-tests.sh",
@@ -279,11 +281,13 @@
     "fast-check": "^3.22.0",
     "glob": "^11.0.0",
     "globals": "^16.3.0",
+    "husky": "^9.1.7",
     "identity-obj-proxy": "^3.0.0",
     "jest": "^29.7.0",
     "jest-axe": "^10.0.0",
     "jest-environment-jsdom": "^29.7.0",
     "jest-snapshot": "^29.7.0",
+    "lint-staged": "^15.4.3",
     "mocha": "^10.7.3",
     "npm-run-all": "^4.1.5",
     "prettier": "^3.8.1",
@@ -346,6 +350,13 @@
     },
     "ignoredBuiltDependencies": [
       "sqlite3"
+    ],
+    "patchedDependencies": {}
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js}": [
+      "prettier --write",
+      "eslint --fix"
     ]
   }
 }

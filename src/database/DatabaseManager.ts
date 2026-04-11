@@ -10,6 +10,7 @@ import { AIFeedbackRepository } from './AIFeedbackRepository';
 import { AnomalyRepository } from './AnomalyRepository';
 import { ApprovalRepository } from './ApprovalRepository';
 import { BotConfigRepository } from './BotConfigRepository';
+import { DecisionRepository } from './DecisionRepository';
 import { MessageRepository } from './MessageRepository';
 import type {
   Anomaly,
@@ -20,6 +21,7 @@ import type {
   BotMetrics,
   ConversationSummary,
   DatabaseConfig,
+  DecisionRecord,
   MessageRecord,
 } from './types';
 
@@ -70,6 +72,7 @@ export class DatabaseManager {
   private anomalyRepo!: AnomalyRepository;
   private approvalRepo!: ApprovalRepository;
   private aiFeedbackRepo!: AIFeedbackRepository;
+  private decisionRepo!: DecisionRepository;
 
   constructor(config?: DatabaseConfig) {
     if (config) {
@@ -207,6 +210,7 @@ export class DatabaseManager {
     this.anomalyRepo = new AnomalyRepository(getDb, isConn);
     this.approvalRepo = new ApprovalRepository(getDb, ensure);
     this.aiFeedbackRepo = new AIFeedbackRepository(getDb, ensure);
+    this.decisionRepo = new DecisionRepository(getDb, isConn);
   }
 
   // ---------------------------------------------------------------------------
@@ -467,6 +471,19 @@ export class DatabaseManager {
         feedback TEXT NOT NULL,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
         metadata TEXT
+      )
+    `);
+
+    // Decisions table
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS decisions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        botName TEXT,
+        shouldReply BOOLEAN,
+        reason TEXT,
+        probabilityRoll REAL,
+        threshold REAL,
+        timestamp TEXT
       )
     `);
 
@@ -795,5 +812,17 @@ export class DatabaseManager {
 
   async clearAIFeedback(): Promise<number> {
     return this.aiFeedbackRepo.clearAIFeedback();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Decision operations -- delegated to DecisionRepository
+  // ---------------------------------------------------------------------------
+
+  async saveDecision(decision: DecisionRecord): Promise<void> {
+    return this.decisionRepo.saveDecision(decision);
+  }
+
+  async getRecentDecisions(limit = 100): Promise<any[]> {
+    return this.decisionRepo.getRecentDecisions(limit);
   }
 }

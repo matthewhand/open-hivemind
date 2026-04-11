@@ -213,7 +213,8 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
                 if (!inst.serverUrl || !inst.token) return false;
 
                 const targetUrl = `${inst.serverUrl}/api/v4/users/me`;
-                if (!(await isSafeUrl(targetUrl))) {
+                const check = await isSafeUrl(targetUrl);
+                if (!check.safe) {
                   return false;
                 }
 

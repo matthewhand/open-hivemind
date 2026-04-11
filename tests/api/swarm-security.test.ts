@@ -2,9 +2,9 @@ import fs from 'fs';
 import path from 'path';
 import express from 'express';
 import request from 'supertest';
+import { SwarmInstaller } from '@integrations/openswarm/SwarmInstaller';
 import swarmRouter from '../../src/admin/swarmRoutes';
 import { AuthManager } from '../../src/auth/AuthManager';
-import { SwarmInstaller } from '@integrations/openswarm/SwarmInstaller';
 import { providerRegistry } from '../../src/registries/ProviderRegistry';
 import { authenticateToken } from '../../src/server/middleware/auth';
 

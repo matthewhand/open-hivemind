@@ -1,17 +1,17 @@
 import axios from 'axios';
 import { ConfigurationManager } from '@config/ConfigurationManager';
+import { resetAllCircuitBreakers } from '@common/CircuitBreaker';
 import flowiseConfig from '../../../packages/llm-flowise/src/flowiseConfig';
 import {
   getFlowiseResponse,
   getFlowiseResponseFallback,
 } from '../../../packages/llm-flowise/src/flowiseRestClient';
-import { resetAllCircuitBreakers } from '@common/CircuitBreaker';
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 jest.mock('../../../src/utils/ssrfGuard', () => ({
-  isSafeUrl: jest.fn().mockResolvedValue(true),
+  isSafeUrl: jest.fn().mockResolvedValue({ safe: true }),
 }));
 
 jest.mock('../../../packages/llm-flowise/src/flowiseConfig', () => {

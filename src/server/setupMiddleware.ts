@@ -24,7 +24,13 @@ export function setupMiddleware(app: express.Application, ctx: MiddlewareContext
   const { frontendDistPath, frontendAssetsPath, viteServerRef } = ctx;
 
   // Body parsing
-  app.use(express.json());
+  app.use(
+    express.json({
+      verify: (req: any, _res, buf) => {
+        req.rawBody = buf.toString();
+      },
+    })
+  );
   app.use(express.urlencoded({ extended: true }));
 
   // Rate limiting middleware

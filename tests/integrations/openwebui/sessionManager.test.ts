@@ -17,10 +17,14 @@ const mockedConfig = {
     return this.props;
   },
 };
-jest.mock('@integrations/openwebui/openWebUIConfig', () => ({
-  __esModule: true,
-  default: mockedConfig,
-}), { virtual: true });
+jest.mock(
+  '@integrations/openwebui/openWebUIConfig',
+  () => ({
+    __esModule: true,
+    default: mockedConfig,
+  }),
+  { virtual: true }
+);
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
@@ -57,7 +61,7 @@ function loadIsolated(prime: (deps: { axiosPost: jest.Mock }) => void) {
   });
 
   jest.doMock('../../../src/utils/ssrfGuard', () => ({
-    isSafeUrl: jest.fn().mockResolvedValue(true),
+    isSafeUrl: jest.fn().mockResolvedValue({ safe: true }),
   }));
 
   let mod: any;

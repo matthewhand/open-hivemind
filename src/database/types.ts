@@ -98,6 +98,7 @@ export interface MCPCGuardConfig {
   enabled: boolean;
   type: 'owner' | 'custom';
   allowedUserIds?: string[];
+  sensitiveTools?: string[];
 }
 
 // Union type for all provider configs
@@ -295,4 +296,14 @@ export interface AIFeedback {
   feedback: string;
   timestamp: Date;
   metadata?: Record<string, unknown>;
+}
+
+export interface DecisionRecord {
+  id?: number;
+  botName: string;
+  shouldReply: boolean;
+  reason: string;
+  probabilityRoll: number;
+  threshold: number;
+  timestamp?: Date;
 }

@@ -283,7 +283,7 @@ export class Mem0Provider implements IMemoryProvider {
   private async doRequest<T>(method: string, path: string, body?: unknown): Promise<T> {
     const url = `${this.baseUrl}${path}`;
 
-    if (!(await isSafeUrl(url))) {
+    if (!(await isSafeUrl(url)).safe) {
       throw new Error(`Mem0Provider: url is not safe: ${url}`);
     }
 

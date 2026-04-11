@@ -46,8 +46,13 @@ async function request<T>(
     fullUrl = `${url}?${qs}`;
   }
 
-  if (!(await isSafeUrl(fullUrl))) {
-    throw new HttpError(0, null, `SSRF protection: URL is not safe to connect to: ${fullUrl}`);
+  const ssrfCheck = await isSafeUrl(fullUrl);
+  if (!ssrfCheck.safe) {
+    throw new HttpError(
+      0,
+      null,
+      `SSRF protection: ${ssrfCheck.reason || 'URL is not safe to connect to'}: ${fullUrl}`
+    );
   }
 
   const controller = new AbortController();

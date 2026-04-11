@@ -286,7 +286,10 @@ test.describe('Onboarding Wizard', () => {
     });
     await page.route('**/api/onboarding/complete', async (route) => {
       onboardingDone = true;
-      await route.fulfill({ status: 200, json: { success: true, data: { completed: true, step: 5 } } });
+      await route.fulfill({
+        status: 200,
+        json: { success: true, data: { completed: true, step: 5 } },
+      });
     });
 
     // Additional routes OverviewPage fetches after onboarding check passes
@@ -314,10 +317,15 @@ test.describe('Onboarding Wizard', () => {
     await page.waitForTimeout(1000);
     expect(page.url()).not.toContain('/onboarding');
 
-    await page.screenshot({ path: 'test-results/onboarding-09-skip-stays-on-overview.png', fullPage: true });
+    await page.screenshot({
+      path: 'test-results/onboarding-09-skip-stays-on-overview.png',
+      fullPage: true,
+    });
   });
 
-  test('OverviewPage does not redirect to onboarding when completed flag is set', async ({ page }) => {
+  test('OverviewPage does not redirect to onboarding when completed flag is set', async ({
+    page,
+  }) => {
     await setupAuth(page);
 
     // Status returns completed (wrapped in ApiResponse envelope)
@@ -358,7 +366,10 @@ test.describe('Onboarding Wizard', () => {
     expect(page.url()).not.toContain('/onboarding');
     expect(page.url()).toContain('/admin/overview');
 
-    await page.screenshot({ path: 'test-results/onboarding-10-no-redirect-when-complete.png', fullPage: true });
+    await page.screenshot({
+      path: 'test-results/onboarding-10-no-redirect-when-complete.png',
+      fullPage: true,
+    });
   });
 
   test('step Skip button advances without marking complete', async ({ page }) => {
@@ -367,7 +378,10 @@ test.describe('Onboarding Wizard', () => {
     let completeCallCount = 0;
     await page.route('**/api/onboarding/complete', async (route) => {
       completeCallCount++;
-      await route.fulfill({ status: 200, json: { success: true, data: { completed: true, step: 5 } } });
+      await route.fulfill({
+        status: 200,
+        json: { success: true, data: { completed: true, step: 5 } },
+      });
     });
 
     await page.goto('/onboarding');
@@ -379,7 +393,9 @@ test.describe('Onboarding Wizard', () => {
     await expect(page.getByText('Configure LLM Provider')).toBeVisible({ timeout: 10000 });
 
     // Click the per-step Skip (not "Skip Setup")
-    const stepSkipButton = page.locator('button', { hasText: 'Skip' }).filter({ hasNotText: 'Setup' });
+    const stepSkipButton = page
+      .locator('button', { hasText: 'Skip' })
+      .filter({ hasNotText: 'Setup' });
     await stepSkipButton.click();
 
     // Should advance to step 3 (Messenger), not trigger complete
@@ -400,7 +416,10 @@ test.describe('Onboarding Wizard', () => {
 
     await page.route('**/api/onboarding/complete', async (route) => {
       onboardingDone = true;
-      await route.fulfill({ status: 200, json: { success: true, data: { completed: true, step: 5 } } });
+      await route.fulfill({
+        status: 200,
+        json: { success: true, data: { completed: true, step: 5 } },
+      });
     });
 
     // Mock dashboard config status
@@ -436,6 +455,9 @@ test.describe('Onboarding Wizard', () => {
     await page.waitForURL('**/admin/overview', { timeout: 10000 });
     await expect(page.url()).toContain('/admin/overview');
 
-    await page.screenshot({ path: 'test-results/onboarding-11-complete-to-dashboard.png', fullPage: true });
+    await page.screenshot({
+      path: 'test-results/onboarding-11-complete-to-dashboard.png',
+      fullPage: true,
+    });
   });
 });

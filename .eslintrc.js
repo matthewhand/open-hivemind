@@ -22,6 +22,13 @@ module.exports = {
       rules: {
         'no-console': 'off'
       }
+    },
+    {
+      // Strict types for core logic
+      files: ['src/services/**/*.ts', 'src/managers/**/*.ts'],
+      rules: {
+        '@typescript-eslint/no-explicit-any': 'error'
+      }
     }
   ]
 };

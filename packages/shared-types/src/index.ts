@@ -51,7 +51,7 @@ export {
   defaultErrorFactory,
   type IErrorFactory,
 } from './errors';
-export { isSafeUrl, isPrivateIP } from './ssrfGuard';
+export { isSafeUrl, isPrivateIP, type SafeUrlResult } from './ssrfGuard';
 export { http, createHttpClient, HttpError, isHttpError } from './httpClient';
 export type { RequestOptions, HttpClientInstance } from './httpClient';
 export { randomId, randomUuid, cryptoJitter } from './randomId';

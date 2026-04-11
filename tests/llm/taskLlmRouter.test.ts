@@ -71,13 +71,17 @@ jest.mock('@src/config/UserConfigStore', () => ({
 
 // Mock getLlmProvider - return a dummy provider so the router doesn't throw
 jest.mock('@llm/getLlmProvider', () => ({
-  getLlmProvider: jest.fn(() => Promise.resolve([{
-    name: 'dummy-fallback',
-    supportsChatCompletion: () => false,
-    supportsCompletion: () => false,
-    generateChatCompletion: async () => '',
-    generateCompletion: async () => '',
-  }])),
+  getLlmProvider: jest.fn(() =>
+    Promise.resolve([
+      {
+        name: 'dummy-fallback',
+        supportsChatCompletion: () => false,
+        supportsCompletion: () => false,
+        generateChatCompletion: async () => '',
+        generateCompletion: async () => '',
+      },
+    ])
+  ),
 }));
 
 describe('taskLlmRouter.getTaskLlm', () => {
@@ -101,7 +105,10 @@ describe('taskLlmRouter.getTaskLlm', () => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { getTaskLlm } = require('@llm/taskLlmRouter');
 
-    const sel = await getTaskLlm('semantic', { fallbackProviders: [fallback], baseMetadata: { x: 1 } });
+    const sel = await getTaskLlm('semantic', {
+      fallbackProviders: [fallback],
+      baseMetadata: { x: 1 },
+    });
     expect(sel.provider).toBe(fallback);
     expect(sel.metadata).toEqual({ x: 1 });
   });

@@ -68,6 +68,20 @@ export class BroadcastService {
         });
       }
     });
+
+    MessageBus.getInstance().on('tool:approval_requested', (action) => {
+      const currentIo = this.io();
+      if (currentIo && this.connectedClients() > 0) {
+        currentIo.emit('pending_action_created', action);
+      }
+    });
+
+    MessageBus.getInstance().on('tool:approval_resolved', (payload) => {
+      const currentIo = this.io();
+      if (currentIo && this.connectedClients() > 0) {
+        currentIo.emit('pending_action_resolved', payload);
+      }
+    });
   }
 
   // Used strictly by test mocks that inject a mock ApiMonitorService

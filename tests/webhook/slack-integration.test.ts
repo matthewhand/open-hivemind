@@ -1,5 +1,6 @@
 import express from 'express';
 import request from 'supertest';
+import { configureWebhookRoutes } from '../../src/webhook/routes/webhookRoutes';
 
 // Mock deep dependencies
 jest.mock('@src/message/helpers/processing/handleImageMessage', () => ({
@@ -17,8 +18,6 @@ jest.mock('@config/webhookConfig', () => {
   };
   return { __esModule: true, default: { get: (key: string) => store[key] } };
 });
-
-import { configureWebhookRoutes } from '../../src/webhook/routes/webhookRoutes';
 
 function spoofIp(ip: string) {
   return (req: express.Request, _res: express.Response, next: express.NextFunction) => {
