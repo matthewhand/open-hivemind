@@ -23,35 +23,32 @@ export function createRuleRoutes(): Router {
    * GET /api/validation/rules
    * Get all validation rules
    */
-  router.get(
-    '/rules',
-    asyncErrorHandler(async (req, res) => {
-      try {
-        const rules = validationService.getAllRules();
-        return res.json({
-          success: true,
-          data: rules,
-          count: rules.length,
-        });
-      } catch (error: unknown) {
-        const hivemindError = ErrorUtils.toHivemindError(
-          error,
-          'Failed to get validation rules',
-          'VALIDATION_ERROR'
-        );
+  router.get('/api/validation/rules', async (req: AuthMiddlewareRequest, res: Response) => {
+    try {
+      const rules = validationService.getAllRules();
+      return res.json({
+        success: true,
+        data: rules,
+        count: rules.length,
+      });
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(
+        error,
+        'Failed to get validation rules',
+        'VALIDATION_ERROR'
+      );
 
         debug('ERROR:', 'Error in', 'Get validation rules endpoint');
 
-        const { message, code, timestamp } = getErrorResponse(hivemindError);
-        return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-          success: false,
-          error: message,
-          code,
-          timestamp,
-        });
-      }
-    })
-  );
+      const { message, code, timestamp } = getErrorResponse(hivemindError);
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        error: message,
+        code,
+        timestamp,
+      });
+    }
+  });
 
   /**
    * GET /api/validation/rules/:ruleId
@@ -61,7 +58,7 @@ export function createRuleRoutes(): Router {
     '/rules/:ruleId',
     param('ruleId').trim().notEmpty(),
     handleValidationErrors,
-    asyncErrorHandler(async (req, res) => {
+    async (req: AuthMiddlewareRequest, res: Response) => {
       try {
         const { ruleId } = req.params;
         const rule = validationService.getRule(ruleId);
@@ -96,7 +93,7 @@ export function createRuleRoutes(): Router {
               : new Date(),
         });
       }
-    })
+    }
   );
 
   /**
@@ -108,7 +105,7 @@ export function createRuleRoutes(): Router {
     requireAdmin,
     validateRuleCreation,
     handleValidationErrors,
-    asyncErrorHandler(async (req, res) => {
+    async (req: AuthMiddlewareRequest, res: Response) => {
       try {
         // Check if rule already exists
         const existingRule = validationService.getRule(req.body.id);
@@ -158,7 +155,7 @@ export function createRuleRoutes(): Router {
               : new Date(),
         });
       }
-    })
+    }
   );
 
   /**
@@ -170,7 +167,7 @@ export function createRuleRoutes(): Router {
     requireAdmin,
     param('ruleId').trim().notEmpty(),
     handleValidationErrors,
-    asyncErrorHandler(async (req, res) => {
+    async (req: AuthMiddlewareRequest, res: Response) => {
       try {
         const { ruleId } = req.params;
         const success = validationService.removeRule(ruleId);
@@ -205,42 +202,39 @@ export function createRuleRoutes(): Router {
               : new Date(),
         });
       }
-    })
+    }
   );
 
   /**
    * GET /api/validation/profiles
    * Get all validation profiles
    */
-  router.get(
-    '/profiles',
-    asyncErrorHandler(async (req, res) => {
-      try {
-        const profiles = validationService.getAllProfiles();
-        return res.json({
-          success: true,
-          data: profiles,
-          count: profiles.length,
-        });
-      } catch (error: unknown) {
-        const hivemindError = ErrorUtils.toHivemindError(
-          error,
-          'Failed to get validation profiles',
-          'VALIDATION_ERROR'
-        );
+  router.get('/api/validation/profiles', async (req: AuthMiddlewareRequest, res: Response) => {
+    try {
+      const profiles = validationService.getAllProfiles();
+      return res.json({
+        success: true,
+        data: profiles,
+        count: profiles.length,
+      });
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(
+        error,
+        'Failed to get validation profiles',
+        'VALIDATION_ERROR'
+      );
 
         debug('ERROR:', 'Error in', 'Get validation profiles endpoint');
 
-        const { message, code, timestamp } = getErrorResponse(hivemindError);
-        return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-          success: false,
-          error: message,
-          code,
-          timestamp,
-        });
-      }
-    })
-  );
+      const { message, code, timestamp } = getErrorResponse(hivemindError);
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        error: message,
+        code,
+        timestamp,
+      });
+    }
+  });
 
   /**
    * GET /api/validation/profiles/:profileId
@@ -250,7 +244,7 @@ export function createRuleRoutes(): Router {
     '/profiles/:profileId',
     param('profileId').trim().notEmpty(),
     handleValidationErrors,
-    asyncErrorHandler(async (req, res) => {
+    async (req: AuthMiddlewareRequest, res: Response) => {
       try {
         const { profileId } = req.params;
         const profile = validationService.getProfile(profileId);
@@ -285,7 +279,7 @@ export function createRuleRoutes(): Router {
               : new Date(),
         });
       }
-    })
+    }
   );
 
   /**
@@ -297,7 +291,7 @@ export function createRuleRoutes(): Router {
     requireAdmin,
     validateProfileCreation,
     handleValidationErrors,
-    asyncErrorHandler(async (req, res) => {
+    async (req: AuthMiddlewareRequest, res: Response) => {
       try {
         const createdBy = req.user?.username || 'unknown';
 
@@ -355,7 +349,7 @@ export function createRuleRoutes(): Router {
               : new Date(),
         });
       }
-    })
+    }
   );
 
   /**
@@ -367,7 +361,7 @@ export function createRuleRoutes(): Router {
     requireAdmin,
     param('profileId').trim().notEmpty(),
     handleValidationErrors,
-    asyncErrorHandler(async (req, res) => {
+    async (req: AuthMiddlewareRequest, res: Response) => {
       try {
         const { profileId } = req.params;
         const success = validationService.removeProfile(profileId);
@@ -402,7 +396,7 @@ export function createRuleRoutes(): Router {
               : new Date(),
         });
       }
-    })
+    }
   );
 
   return router;

@@ -38,11 +38,13 @@ const MarketplacePage: React.FC = () => {
   const [actionMessage, setActionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [ratings, setRatings] = useState<Record<string, number>>({});
 
-  // Check if any community (non-built-in) packages exist
-  const hasCommunityPackages = useMemo(
-    () => packages.some((pkg) => pkg.status !== 'built-in'),
-    [packages]
-  );
+  const fetchPackages = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data: any = await apiService.get('/api/marketplace/packages');
+      setPackages(data);
+    } catch (err: any) {
 
   // Handle star rating click
   const handleRating = (pkgName: string, starValue: number) => {

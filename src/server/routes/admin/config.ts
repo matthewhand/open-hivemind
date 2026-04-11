@@ -72,7 +72,7 @@ router.post(
   '/llm-providers',
   configRateLimit,
   validateRequest(LlmProviderSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { name, type, config } = req.body;
 
@@ -111,14 +111,14 @@ router.post(
         message: hivemindError.message || 'An error occurred while creating LLM provider',
       });
     }
-  })
+  }
 );
 
 // PUT /llm-providers/:id - Update an existing LLM provider
 router.put(
   '/llm-providers/:id',
   validateRequest(UpdateLlmProviderSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { name, type, config } = req.body;
@@ -153,7 +153,7 @@ router.put(
         message: hivemindError.message || 'An error occurred while updating LLM provider',
       });
     }
-  })
+  }
 );
 
 /**
@@ -175,7 +175,7 @@ router.put(
 router.delete(
   '/llm-providers/:id',
   validateRequest(ToggleIdParamSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
 
@@ -196,14 +196,14 @@ router.delete(
         message: hivemindError.message || 'An error occurred while deleting LLM provider',
       });
     }
-  })
+  }
 );
 
 // POST /llm-providers/:id/toggle - Toggle LLM provider active status
 router.post(
   '/llm-providers/:id/toggle',
   validateRequest(ToggleProviderSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { isActive } = req.body;
@@ -235,7 +235,7 @@ router.post(
         message: hivemindError.message || 'An error occurred while updating provider status',
       });
     }
-  })
+  }
 );
 
 // GET /messenger-providers - Get all messenger providers
@@ -280,7 +280,7 @@ router.get('/messenger-providers', (req: Request, res: Response) => {
 router.post(
   '/messenger-providers',
   validateRequest(MessengerProviderSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { name, type, config } = req.body;
 
@@ -319,14 +319,14 @@ router.post(
         message: hivemindError.message || 'An error occurred while creating messenger provider',
       });
     }
-  })
+  }
 );
 
 // PUT /messenger-providers/:id - Update an existing messenger provider
 router.put(
   '/messenger-providers/:id',
   validateRequest(UpdateMessengerProviderSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { name, type, config } = req.body;
@@ -378,7 +378,7 @@ router.put(
         message: hivemindError.message || 'An error occurred while updating messenger provider',
       });
     }
-  })
+  }
 );
 
 /**
@@ -400,7 +400,7 @@ router.put(
 router.delete(
   '/messenger-providers/:id',
   validateRequest(ToggleIdParamSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
 
@@ -418,14 +418,14 @@ router.delete(
         message: hivemindError.message || 'An error occurred while deleting messenger provider',
       });
     }
-  })
+  }
 );
 
 // POST /messenger-providers/:id/toggle - Toggle messenger provider active status
 router.post(
   '/messenger-providers/:id/toggle',
   validateRequest(ToggleProviderSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { isActive } = req.body;
@@ -454,7 +454,7 @@ router.post(
         message: hivemindError.message || 'An error occurred while updating provider status',
       });
     }
-  })
+  }
 );
 
 // Get environment variable overrides

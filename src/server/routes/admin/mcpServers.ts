@@ -33,7 +33,7 @@ router.post(
   '/mcp-servers/test',
   configRateLimit,
   validateRequest(McpServerTestSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { serverUrl, apiKey, name } = req.body;
 
@@ -87,7 +87,7 @@ router.post(
         message: hivemindError.message || 'An error occurred while connecting to MCP server',
       });
     }
-  })
+  }
 );
 
 // Connect to an MCP server
@@ -95,7 +95,7 @@ router.post(
   '/mcp-servers/connect',
   configRateLimit,
   validateRequest(McpServerConnectSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { serverUrl, apiKey, name } = req.body;
 
@@ -149,14 +149,14 @@ router.post(
         message: hivemindError.message || 'An error occurred while connecting to MCP server',
       });
     }
-  })
+  }
 );
 
 // Disconnect from an MCP server
 router.post(
   '/mcp-servers/disconnect',
   validateRequest(McpServerDisconnectSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { name } = req.body;
 
@@ -182,14 +182,14 @@ router.post(
         message: hivemindError.message || 'An error occurred while disconnecting from MCP server',
       });
     }
-  })
+  }
 );
 
 // Delete an MCP server
 router.delete(
   '/mcp-servers/:name',
   validateRequest(ServerNameParamSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { name } = req.params;
 
@@ -210,7 +210,7 @@ router.delete(
         message: hivemindError.message || 'An error occurred while deleting MCP server',
       });
     }
-  })
+  }
 );
 
 // Get all connected MCP servers
@@ -294,7 +294,7 @@ router.get(
 router.get(
   '/mcp-servers/:name/status',
   validateRequest(ServerNameParamSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { name } = req.params;
 
@@ -335,7 +335,7 @@ router.get(
         message: hivemindError.message || 'An error occurred while retrieving server status',
       });
     }
-  })
+  }
 );
 
 // Restart an MCP server (disconnect and reconnect)
@@ -343,7 +343,7 @@ router.post(
   '/mcp-servers/:name/restart',
   configRateLimit,
   validateRequest(ServerNameParamSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { name } = req.params;
 
@@ -409,14 +409,14 @@ router.post(
         message: hivemindError.message || 'An error occurred while restarting MCP server',
       });
     }
-  })
+  }
 );
 
 // Bulk disconnect multiple servers
 router.post(
   '/mcp-servers/bulk-disconnect',
   validateRequest(McpServerBulkDisconnectSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { names } = req.body;
 
@@ -464,7 +464,7 @@ router.post(
         message: hivemindError.message || 'An error occurred while disconnecting servers',
       });
     }
-  })
+  }
 );
 
 export default router;

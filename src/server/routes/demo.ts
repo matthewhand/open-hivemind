@@ -14,7 +14,6 @@ import { HTTP_STATUS } from '../../types/constants';
 import { ErrorUtils } from '../../types/errors';
 import { ChatGenerateSchema, EmptySchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { WebSocketService } from '../services/WebSocketService';
 
 const router = Router();
 
@@ -25,111 +24,60 @@ router.use(authenticate, requireAdmin);
  * GET /api/demo/status
  * Get demo mode status
  */
-router.get(
-  '/status',
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const demoService = container.resolve(DemoModeService);
-      const status = demoService.getDemoStatus();
+router.get('/status', (req, res) => {
+  try {
+    const demoService = container.resolve(DemoModeService);
+    const status = demoService.getDemoStatus();
 
-      res.json(
-        ApiResponse.success({
-          ...status,
-          message: status.isDemoMode
-            ? 'Running in demo mode - no real credentials configured'
-            : 'Running in production mode with real credentials',
-        })
-      );
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
-      const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
-      res
-        .status(statusCode)
-        .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DEMO_STATUS_ERROR'));
-    }
-  })
-);
-
-/**
- * POST /api/demo/toggle
- * Toggle demo mode on or off at runtime
- */
-router.post(
-  '/toggle',
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const demoService = container.resolve(DemoModeService);
-      const wasEnabled = demoService.isInDemoMode();
-      demoService.setDemoMode(!wasEnabled);
-      const isNowEnabled = demoService.isInDemoMode();
-
-      // Broadcast configuration change to update all connected clients
-      try {
-        const wsService = WebSocketService.getInstance();
-        wsService.broadcastConfigChange({
-          type: 'demo_mode',
-          action: isNowEnabled ? 'enabled' : 'disabled',
-          key: 'demo_mode_toggle',
-        });
-      } catch (wsError) {
-        // WebSocket service might not be available, continue anyway
-        console.warn('Failed to broadcast demo mode change:', wsError);
-      }
-
-      res.json(
-        ApiResponse.success({
-          enabled: isNowEnabled,
-          message: isNowEnabled ? 'Demo mode enabled' : 'Demo mode disabled',
-        })
-      );
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
-      const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
-      res
-        .status(statusCode)
-        .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DEMO_TOGGLE_ERROR'));
-    }
-  })
-);
+    res.json(
+      ApiResponse.success({
+        ...status,
+        message: status.isDemoMode
+          ? 'Running in demo mode - no real credentials configured'
+          : 'Running in production mode with real credentials',
+      })
+    );
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
+    res
+      .status(statusCode)
+      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DEMO_STATUS_ERROR'));
+  }
+});
 
 /**
  * GET /api/demo/bots
  * Get demo bots
  */
-router.get(
-  '/bots',
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const demoService = container.resolve(DemoModeService);
-      const bots = demoService.getDemoBots();
+router.get('/bots', (req, res) => {
+  try {
+    const demoService = container.resolve(DemoModeService);
+    const bots = demoService.getDemoBots();
 
-      res.json(
-        ApiResponse.success({
-          bots,
-          count: bots.length,
-          isDemo: demoService.isInDemoMode(),
-        })
-      );
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
-      const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
-      res
-        .status(statusCode)
-        .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DEMO_BOTS_ERROR'));
-    }
-  })
-);
+    res.json(
+      ApiResponse.success({
+        bots,
+        count: bots.length,
+        isDemo: demoService.isInDemoMode(),
+      })
+    );
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
+    res
+      .status(statusCode)
+      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DEMO_BOTS_ERROR'));
+  }
+});
 
 /**
  * POST /api/demo/chat
  * Send a message to a demo bot and get a simulated response
  */
-router.post(
-  '/chat',
-  validateRequest(ChatGenerateSchema),
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const { message, botName, channelId, userId, userName } = req.body;
+router.post('/chat', validateRequest(ChatGenerateSchema), (req, res) => {
+  try {
+    const { message, botName, channelId, userId, userName } = req.body;
 
       if (!message) {
         res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('message is required'));
@@ -193,47 +141,80 @@ router.post(
         .status(statusCode)
         .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DEMO_CHAT_ERROR'));
     }
-  })
-);
+
+    // Add user message
+    const userMsg = demoService.addMessage(
+      channelId || 'demo-channel',
+      botName,
+      message,
+      'incoming',
+      userId || 'demo-user',
+      userName || 'Demo User'
+    );
+
+    // Generate bot response
+    const responseText = demoService.generateDemoResponse(message, botName);
+
+    // Add bot response
+    const botMsg = demoService.addMessage(
+      channelId || 'demo-channel',
+      botName,
+      responseText,
+      'outgoing',
+      botName,
+      botName
+    );
+
+    res.json(
+      ApiResponse.success({
+        success: true,
+        userMessage: userMsg,
+        botResponse: botMsg,
+        isDemo: true,
+      })
+    );
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
+    res
+      .status(statusCode)
+      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DEMO_CHAT_ERROR'));
+  }
+});
 
 /**
  * GET /api/demo/conversations
  * Get all demo conversations
  */
-router.get(
-  '/conversations',
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const demoService = container.resolve(DemoModeService);
-      const conversations = demoService.getAllConversations();
+router.get('/conversations', (req, res) => {
+  try {
+    const demoService = container.resolve(DemoModeService);
+    const conversations = demoService.getAllConversations();
 
-      res.json(
-        ApiResponse.success({
-          conversations,
-          count: conversations.length,
-        })
-      );
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
-      const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
-      res
-        .status(statusCode)
-        .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DEMO_CONVERSATIONS_ERROR'));
-    }
-  })
-);
+    res.json(
+      ApiResponse.success({
+        conversations,
+        count: conversations.length,
+      })
+    );
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
+    res
+      .status(statusCode)
+      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DEMO_CONVERSATIONS_ERROR'));
+  }
+});
 
 /**
  * GET /api/demo/conversations/:channelId/:botName
  * Get conversation history for a specific channel and bot
  */
-router.get(
-  '/conversations/:channelId/:botName',
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const { channelId, botName } = req.params;
-      const demoService = container.resolve(DemoModeService);
-      const messages = demoService.getConversationHistory(channelId, botName);
+router.get('/conversations/:channelId/:botName', (req, res) => {
+  try {
+    const { channelId, botName } = req.params;
+    const demoService = container.resolve(DemoModeService);
+    const messages = demoService.getConversationHistory(channelId, botName);
 
       res.json(
         ApiResponse.success({
@@ -243,59 +224,44 @@ router.get(
           count: messages.length,
         })
       );
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
-      const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
-      res
-        .status(statusCode)
-        .json(
-          ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DEMO_CONVERSATION_HISTORY_ERROR')
-        );
-    }
-  })
-);
+  }
+});
 
 /**
  * POST /api/demo/reset
  * Reset demo mode (clear all conversations)
  */
-router.post(
-  '/reset',
-  validateRequest(EmptySchema),
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const demoService = container.resolve(DemoModeService);
-      demoService.reset();
+router.post('/reset', validateRequest(EmptySchema), (req, res) => {
+  try {
+    const demoService = container.resolve(DemoModeService);
+    demoService.reset();
 
-      res.json(ApiResponse.success());
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
-      const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
-      res
-        .status(statusCode)
-        .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DEMO_RESET_ERROR'));
-    }
-  })
-);
+    res.json(ApiResponse.success());
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
+    res
+      .status(statusCode)
+      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'DEMO_RESET_ERROR'));
+  }
+});
 
 /**
  * GET /api/demo/info
  * Get information about demo mode features
  */
-router.get(
-  '/info',
-  asyncErrorHandler(async (req, res) => {
-    res.json(
-      ApiResponse.success({
-        title: 'Open-Hivemind Demo Mode',
-        description: 'Experience the platform without configuring credentials',
-        features: [
-          'Simulated bot conversations',
-          'Multi-platform demonstration (Discord, Slack)',
-          'WebUI dashboard preview',
-          'Configuration management UI',
-          'Activity monitoring simulation',
-        ],
+router.get('/info', (req, res) => {
+  res.json(
+    ApiResponse.success({
+      title: 'Open-Hivemind Demo Mode',
+      description: 'Experience the platform without configuring credentials',
+      features: [
+        'Simulated bot conversations',
+        'Multi-platform demonstration (Discord, Slack)',
+        'WebUI dashboard preview',
+        'Configuration management UI',
+        'Activity monitoring simulation',
+      ],
 
         limitations: [
           'No real AI responses (simulated)',
@@ -308,13 +274,12 @@ router.get(
           'Or set DEMO_MODE=true environment variable',
         ],
 
-        howToDisable: [
-          'Configure at least one API key or token',
-          'Or set DEMO_MODE=false environment variable',
-        ],
-      })
-    );
-  })
-);
+      howToDisable: [
+        'Configure at least one API key or token',
+        'Or set DEMO_MODE=false environment variable',
+      ],
+    })
+  );
+});
 
 export default router;

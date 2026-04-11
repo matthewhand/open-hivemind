@@ -288,7 +288,7 @@ router.post(
   authenticate,
   requireAdmin,
   validateRequest(DashboardFeedbackSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req, res) => {
     const { recommendationId, feedback, metadata } = req.body;
     try {
       const db = DatabaseManager.getInstance();
@@ -300,7 +300,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to store feedback'));
     }
-  })
+  }
 );
 
 // Root route removed - dashboard is now served from public/index.html

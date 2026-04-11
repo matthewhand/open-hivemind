@@ -324,33 +324,28 @@ function invalidateCache(): void {
  * GET /api/marketplace/packages
  * List all available packages (built-in + installed)
  */
-router.get(
-  '/packages',
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const packages = await getPackages();
-      debug('Returning %d packages', packages.length);
+router.get('/packages', async (req, res) => {
+  try {
+    const packages = await getPackages();
+    debug('Returning %d packages', packages.length);
 
-      return res.json(ApiResponse.success(packages));
-    } catch (err: unknown) {
-      debug('Error listing packages: %s', err);
-      return res
-        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error('Failed to list packages'));
-    }
-  })
-);
+    return res.json(ApiResponse.success(packages));
+  } catch (err: any) {
+    debug('Error listing packages: %s', err);
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(ApiResponse.error('Failed to list packages'));
+  }
+});
 
 /**
  * GET /api/marketplace/packages/:name
  * Get single package details
  */
-router.get(
-  '/packages/:name',
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const name = req.params.name;
-      const packages = await getPackages();
+router.get('/packages/:name', async (req, res) => {
+  try {
+    const name = req.params.name;
+    const packages = await getPackages();
 
       const pkg = packages.find((p) => p.name === name);
 
@@ -365,8 +360,15 @@ router.get(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to get package'));
     }
-  })
-);
+
+    return res.json(ApiResponse.success(pkg));
+  } catch (err: any) {
+    debug('Error getting package: %s', err);
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(ApiResponse.error('Failed to get package'));
+  }
+});
 
 /**
  * POST /api/marketplace/install

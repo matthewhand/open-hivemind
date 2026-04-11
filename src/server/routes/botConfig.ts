@@ -38,22 +38,91 @@ router.use(authenticate, auditMiddleware);
  * GET /webui/api/bot-config
  * Get all bot configurations with full details
  */
-router.get(
-  '/',
-  asyncErrorHandler(async (req, res) => {
+router.get('/', async (req: Request, res: Response) => {
+  const authReq = req as AuthMiddlewareRequest;
+  try {
+    const botConfigService = BotConfigService.getInstance();
+    const bots = await botConfigService.getAllBotConfigs();
+    const warnings = botConfigManager.getWarnings();
+
+    // Get all user overrides at once to avoid N+1 queries
+    const allOverrides = userConfigStore.getAllBotOverrides();
+
+    // Apply user overrides for each bot
+    const botsWithOverrides = bots.map((bot) => {
+      const overrides = allOverrides.get(bot.name);
+      return {
+        ...bot,
+        overrides: overrides || {},
+        metadata: {
+          source: overrides ? 'user_override' : 'default',
+          lastModified: overrides?.updatedAt || new Date().toISOString(),
+          isActive: true,
+        },
+      };
+    });
+
+    return res.json(
+      ApiResponse.success({
+        bots: botsWithOverrides,
+        warnings,
+        total: botsWithOverrides.length,
+        legacyMode: botConfigManager.isLegacyMode(),
+      })
+    );
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const errorMessage = ErrorUtils.getMessage(hivemindError);
+    debug('Error getting bot configurations:', hivemindError);
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(ApiResponse.error('Failed to get bot configurations', undefined, 500));
+  }
+});
+
+/**
+ * GET /webui/api/bot-config/templates
+ * Get bot configuration templates
+ */
+router.get('/templates', async (req: Request, res: Response) => {
+  try {
     const authReq = req as AuthMiddlewareRequest;
     try {
       const botConfigService = BotConfigService.getInstance();
       const bots = await botConfigService.getAllBotConfigs();
       const warnings = botConfigManager.getWarnings();
 
-      // Get all user overrides at once to avoid N+1 queries
-      const allOverrides = userConfigStore.getAllBotOverrides();
+    res.json(ApiResponse.success(templates));
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    debug('Error fetching templates:', hivemindError);
+    res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(ApiResponse.error('Failed to fetch templates', undefined, 500));
+  }
+});
 
-      // Apply user overrides for each bot
-      const botsWithOverrides = bots.map((bot) => {
-        const overrides = allOverrides.get(bot.name);
-        return {
+/**
+ * GET /webui/api/bot-config/:botId
+ * Get a specific bot configuration
+ */
+router.get('/:botId', async (req: Request, res: Response) => {
+  const authReq = req as AuthMiddlewareRequest;
+  try {
+    const { botId } = req.params;
+    const bot = botConfigManager.getBot(botId);
+
+    if (!bot) {
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Bot configuration not found', undefined, 404));
+    }
+
+    const overrides = userConfigStore.getBotOverride(bot.name);
+
+    return res.json(
+      ApiResponse.success({
+        bot: {
           ...bot,
           overrides: overrides || {},
           metadata: {
@@ -109,95 +178,17 @@ router.get(
             },
           },
         },
-        slack_flowise: {
-          name: 'Slack + Flowise Bot',
-          description: 'A Slack bot using Flowise for AI responses',
-          messageProvider: 'slack',
-          llmProvider: 'flowise',
-          config: {
-            slack: {
-              botToken: '',
-              signingSecret: '',
-              appToken: '',
-            },
-            flowise: {
-              apiKey: '',
-              endpoint: '',
-            },
-          },
-        },
-        mattermost_openwebui: {
-          name: 'Mattermost + OpenWebUI Bot',
-          description: 'A Mattermost bot using OpenWebUI for responses',
-          messageProvider: 'mattermost',
-          llmProvider: 'openwebui',
-          config: {
-            mattermost: {
-              serverUrl: '',
-              token: '',
-            },
-            openwebui: {
-              apiKey: '',
-              endpoint: '',
-            },
-          },
-        },
-      };
-
-      res.json(ApiResponse.success(templates));
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
-      debug('Error fetching templates:', hivemindError);
-      res
-        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error('Failed to fetch templates', undefined, 500));
-    }
-  })
-);
-
-/**
- * GET /webui/api/bot-config/:botId
- * Get a specific bot configuration
- */
-router.get(
-  '/:botId',
-  asyncErrorHandler(async (req, res) => {
-    const authReq = req as AuthMiddlewareRequest;
-    try {
-      const { botId } = req.params;
-      const bot = botConfigManager.getBot(botId);
-
-      if (!bot) {
-        return res
-          .status(HTTP_STATUS.NOT_FOUND)
-          .json(ApiResponse.error('Bot configuration not found', undefined, 404));
-      }
-
-      const overrides = userConfigStore.getBotOverride(bot.name);
-
-      return res.json(
-        ApiResponse.success({
-          bot: {
-            ...bot,
-            overrides: overrides || {},
-            metadata: {
-              source: overrides ? 'user_override' : 'default',
-              lastModified: overrides?.updatedAt || new Date().toISOString(),
-              isActive: true,
-            },
-          },
-        })
-      );
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
-      const errorMessage = ErrorUtils.getMessage(hivemindError);
-      debug('Error getting bot configuration:', hivemindError);
-      return res
-        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error('Failed to get bot configuration', undefined, 500));
-    }
-  })
-);
+      })
+    );
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const errorMessage = ErrorUtils.getMessage(hivemindError);
+    debug('Error getting bot configuration:', hivemindError);
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(ApiResponse.error('Failed to get bot configuration', undefined, 500));
+  }
+});
 
 /**
  * POST /webui/api/bot-config
@@ -209,7 +200,7 @@ router.post(
   requireAdmin,
   validateBotConfigCreation,
   sanitizeBotConfig,
-  asyncErrorHandler(async (req, res) => {
+  async (req: AuditedRequest, res: Response) => {
     const authReq = req as AuthMiddlewareRequest;
     try {
       const configData = req.body;
@@ -253,7 +244,7 @@ router.post(
         .status(HTTP_STATUS.BAD_REQUEST)
         .json(ApiResponse.error('Failed to create bot configuration', undefined, 400));
     }
-  })
+  }
 );
 
 /**
@@ -266,7 +257,7 @@ router.put(
   requireAdmin,
   validateBotConfigUpdate,
   sanitizeBotConfig,
-  asyncErrorHandler(async (req, res) => {
+  async (req: AuditedRequest, res: Response) => {
     const authReq = req as AuthMiddlewareRequest;
     try {
       const { botId } = req.params;
@@ -380,7 +371,7 @@ router.put(
         .status(HTTP_STATUS.BAD_REQUEST)
         .json(ApiResponse.error('Failed to update bot configuration', undefined, 400));
     }
-  })
+  }
 );
 
 router.post(
@@ -388,7 +379,7 @@ router.post(
   configLimiter,
   requireRole('admin'),
   validateRequest(BotApplyUpdateSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: AuditedRequest, res: Response) => {
     const { botId } = req.params;
     const { approvalId } = req.body;
 
@@ -553,7 +544,7 @@ router.post(
         .status(HTTP_STATUS.BAD_REQUEST)
         .json(ApiResponse.error('Failed to apply bot configuration update', undefined, 400));
     }
-  })
+  }
 );
 
 export default router;

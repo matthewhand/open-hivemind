@@ -132,12 +132,10 @@ const getEnvOverrides = (): Record<string, { isOverridden: boolean; redactedValu
 // Routes
 
 // GET /api/agents - Get all agents
-router.get(
-  '/',
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const agents = await loadJsonConfig<AgentConfig[]>(AGENTS_CONFIG_FILE, []);
-      const envOverrides = getEnvOverrides();
+router.get('/', async (req, res) => {
+  try {
+    const agents = await loadJsonConfig<AgentConfig[]>(AGENTS_CONFIG_FILE, []);
+    const envOverrides = getEnvOverrides();
 
       // Add environment override information to each agent
       const agentsWithEnvInfo = agents.map((agent) => ({
@@ -170,25 +168,21 @@ router.get(
         severity: errorInfo.severity,
       });
 
-      return res
-        .status(ErrorUtils.getStatusCode(hivemindError) || 500)
-        .json(
-          ApiResponse.error(
-            ErrorUtils.getMessage(hivemindError),
-            ErrorUtils.getCode(hivemindError) || 'AGENTS_FETCH_ERROR'
-          )
-        );
-    }
-  })
-);
+    return res
+      .status(ErrorUtils.getStatusCode(hivemindError) || 500)
+      .json(
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          ErrorUtils.getCode(hivemindError) || 'AGENTS_FETCH_ERROR'
+        )
+      );
+  }
+});
 
 // POST /api/agents - Create new agent
-router.post(
-  '/',
-  validateRequest(CreateAgentSchema),
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const agentData: Omit<AgentConfig, 'id' | 'createdAt' | 'updatedAt'> = req.body;
+router.post('/', validateRequest(CreateAgentSchema), async (req, res) => {
+  try {
+    const agentData: Omit<AgentConfig, 'id' | 'createdAt' | 'updatedAt'> = req.body;
 
       const agents = await loadJsonConfig<AgentConfig[]>(AGENTS_CONFIG_FILE, []);
 
@@ -230,17 +224,46 @@ router.post(
           )
         );
     }
-  })
-);
+
+    const newAgent: AgentConfig = {
+      ...agentData,
+      id: `agent_${Date.now()}_${randomUUID()}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    agents.push(newAgent);
+    await saveJsonConfig(AGENTS_CONFIG_FILE, agents);
+
+    debug(`Created new agent: ${newAgent.name}`);
+    return res.json(ApiResponse.success({ agent: newAgent }));
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+
+    debug('Error creating agent:', {
+      message: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError),
+      type: errorInfo.type,
+      severity: errorInfo.severity,
+    });
+
+    return res
+      .status(ErrorUtils.getStatusCode(hivemindError) || 500)
+      .json(
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          ErrorUtils.getCode(hivemindError) || 'AGENT_CREATE_ERROR'
+        )
+      );
+  }
+});
 
 // PUT /api/agents/:id - Update agent
-router.put(
-  '/:id',
-  validateRequest(UpdateAgentSchema),
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const { id } = req.params;
-      const updates: Partial<AgentConfig> = req.body;
+router.put('/:id', validateRequest(UpdateAgentSchema), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates: Partial<AgentConfig> = req.body;
 
       const agents = await loadJsonConfig<AgentConfig[]>(AGENTS_CONFIG_FILE, []);
       const agentIndex = agents.findIndex((agent) => agent.id === id);
@@ -274,16 +297,38 @@ router.put(
           )
         );
     }
-  })
-);
+
+    agents[agentIndex] = { ...agents[agentIndex], ...updates };
+    await saveJsonConfig(AGENTS_CONFIG_FILE, agents);
+
+    debug(`Updated agent: ${agents[agentIndex].name}`);
+    return res.json(ApiResponse.success({ agent: agents[agentIndex] }));
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+
+    debug('Error updating agent:', {
+      message: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError),
+      type: errorInfo.type,
+      severity: errorInfo.severity,
+    });
+
+    return res
+      .status(ErrorUtils.getStatusCode(hivemindError) || 500)
+      .json(
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          ErrorUtils.getCode(hivemindError) || 'AGENT_UPDATE_ERROR'
+        )
+      );
+  }
+});
 
 // DELETE /api/agents/:id - Delete agent
-router.delete(
-  '/:id',
-  validateRequest(AgentIdParamSchema),
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const { id } = req.params;
+router.delete('/:id', validateRequest(AgentIdParamSchema), async (req, res) => {
+  try {
+    const { id } = req.params;
 
       const agents = await loadJsonConfig<AgentConfig[]>(AGENTS_CONFIG_FILE, []);
       const filteredAgents = agents.filter((agent) => agent.id !== id);
@@ -316,34 +361,56 @@ router.delete(
           )
         );
     }
-  })
-);
+
+    await saveJsonConfig(AGENTS_CONFIG_FILE, filteredAgents);
+
+    debug(`Deleted agent: ${id}`);
+    return res.json(ApiResponse.success());
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+
+    debug('Error deleting agent:', {
+      message: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError),
+      type: errorInfo.type,
+      severity: errorInfo.severity,
+    });
+
+    return res
+      .status(ErrorUtils.getStatusCode(hivemindError) || 500)
+      .json(
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          ErrorUtils.getCode(hivemindError) || 'AGENT_DELETE_ERROR'
+        )
+      );
+  }
+});
 
 // GET /api/agents/personas - Get all personas
-router.get(
-  '/personas',
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const personas = await loadJsonConfig<Persona[]>(PERSONAS_CONFIG_FILE, [
-        {
-          key: 'default',
-          name: 'Default Assistant',
-          systemPrompt:
-            'You are a helpful AI assistant. Be concise, accurate, and helpful in your responses.',
-        },
-        {
-          key: 'friendly',
-          name: 'Friendly Helper',
-          systemPrompt:
-            'You are a friendly and enthusiastic AI assistant. Use a warm, conversational tone and always try to be encouraging and supportive.',
-        },
-        {
-          key: 'technical',
-          name: 'Technical Expert',
-          systemPrompt:
-            'You are a technical expert AI assistant. Provide detailed, accurate technical information. Use precise terminology and include relevant examples when helpful.',
-        },
-      ]);
+router.get('/personas', async (req, res) => {
+  try {
+    const personas = await loadJsonConfig<Persona[]>(PERSONAS_CONFIG_FILE, [
+      {
+        key: 'default',
+        name: 'Default Assistant',
+        systemPrompt:
+          'You are a helpful AI assistant. Be concise, accurate, and helpful in your responses.',
+      },
+      {
+        key: 'friendly',
+        name: 'Friendly Helper',
+        systemPrompt:
+          'You are a friendly and enthusiastic AI assistant. Use a warm, conversational tone and always try to be encouraging and supportive.',
+      },
+      {
+        key: 'technical',
+        name: 'Technical Expert',
+        systemPrompt:
+          'You are a technical expert AI assistant. Provide detailed, accurate technical information. Use precise terminology and include relevant examples when helpful.',
+      },
+    ]);
 
       return res.json(ApiResponse.success({ personas }));
     } catch (error: unknown) {
@@ -357,25 +424,21 @@ router.get(
         severity: errorInfo.severity,
       });
 
-      return res
-        .status(ErrorUtils.getStatusCode(hivemindError) || 500)
-        .json(
-          ApiResponse.error(
-            ErrorUtils.getMessage(hivemindError),
-            ErrorUtils.getCode(hivemindError) || 'PERSONAS_FETCH_ERROR'
-          )
-        );
-    }
-  })
-);
+    return res
+      .status(ErrorUtils.getStatusCode(hivemindError) || 500)
+      .json(
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          ErrorUtils.getCode(hivemindError) || 'PERSONAS_FETCH_ERROR'
+        )
+      );
+  }
+});
 
 // POST /api/agents/personas - Create new persona
-router.post(
-  '/personas',
-  validateRequest(CreateAgentPersonaSchema),
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const { name, systemPrompt } = req.body;
+router.post('/personas', validateRequest(CreateAgentPersonaSchema), async (req, res) => {
+  try {
+    const { name, systemPrompt } = req.body;
 
       const personas = await loadJsonConfig<Persona[]>(PERSONAS_CONFIG_FILE, []);
       const key = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
@@ -413,17 +476,41 @@ router.post(
           )
         );
     }
-  })
-);
+
+    const newPersona: Persona = { key, name, systemPrompt };
+    personas.push(newPersona);
+
+    await saveJsonConfig(PERSONAS_CONFIG_FILE, personas);
+
+    debug(`Created new persona: ${name}`);
+    return res.json(ApiResponse.success({ persona: newPersona }));
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+
+    debug('Error creating persona:', {
+      message: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError),
+      type: errorInfo.type,
+      severity: errorInfo.severity,
+    });
+
+    return res
+      .status(ErrorUtils.getStatusCode(hivemindError) || 500)
+      .json(
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          ErrorUtils.getCode(hivemindError) || 'PERSONA_CREATE_ERROR'
+        )
+      );
+  }
+});
 
 // PUT /api/agents/personas/:key - Update persona
-router.put(
-  '/personas/:key',
-  validateRequest(UpdateAgentPersonaSchema),
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const { key } = req.params;
-      const { name, systemPrompt } = req.body;
+router.put('/personas/:key', validateRequest(UpdateAgentPersonaSchema), async (req, res) => {
+  try {
+    const { key } = req.params;
+    const { name, systemPrompt } = req.body;
 
       const personas = await loadJsonConfig<Persona[]>(PERSONAS_CONFIG_FILE, []);
       const personaIndex = personas.findIndex((p) => p.key === key);
@@ -457,44 +544,38 @@ router.put(
           )
         );
     }
-  })
-);
+
+    personas[personaIndex] = { key, name, systemPrompt };
+    await saveJsonConfig(PERSONAS_CONFIG_FILE, personas);
+
+    debug(`Updated persona: ${name}`);
+    return res.json(ApiResponse.success({ persona: personas[personaIndex] }));
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+
+    debug('Error updating persona:', {
+      message: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError),
+      type: errorInfo.type,
+      severity: errorInfo.severity,
+    });
+
+    return res
+      .status(ErrorUtils.getStatusCode(hivemindError) || 500)
+      .json(
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          ErrorUtils.getCode(hivemindError) || 'PERSONA_UPDATE_ERROR'
+        )
+      );
+  }
+});
 
 // DELETE /api/agents/personas/:key - Delete persona
-router.delete(
-  '/personas/:key',
-  validateRequest(AgentPersonaKeyParamSchema),
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const { key } = req.params;
-
-      if (key === 'default') {
-        return res
-          .status(HTTP_STATUS.BAD_REQUEST)
-          .json(ApiResponse.error('Cannot delete default persona'));
-      }
-
-      const personas = await loadJsonConfig<Persona[]>(PERSONAS_CONFIG_FILE, []);
-      const filteredPersonas = personas.filter((p) => p.key !== key);
-
-      if (filteredPersonas.length === personas.length) {
-        return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Persona not found'));
-      }
-
-      await saveJsonConfig(PERSONAS_CONFIG_FILE, filteredPersonas);
-
-      debug(`Deleted persona: ${key}`);
-      return res.json(ApiResponse.success());
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
-      const errorInfo = ErrorUtils.classifyError(hivemindError);
-
-      debug('Error deleting persona:', {
-        message: ErrorUtils.getMessage(hivemindError),
-        code: ErrorUtils.getCode(hivemindError),
-        type: errorInfo.type,
-        severity: errorInfo.severity,
-      });
+router.delete('/personas/:key', validateRequest(AgentPersonaKeyParamSchema), async (req, res) => {
+  try {
+    const { key } = req.params;
 
       return res
         .status(ErrorUtils.getStatusCode(hivemindError) || 500)
@@ -505,7 +586,38 @@ router.delete(
           )
         );
     }
-  })
-);
+
+    const personas = await loadJsonConfig<Persona[]>(PERSONAS_CONFIG_FILE, []);
+    const filteredPersonas = personas.filter((p) => p.key !== key);
+
+    if (filteredPersonas.length === personas.length) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Persona not found'));
+    }
+
+    await saveJsonConfig(PERSONAS_CONFIG_FILE, filteredPersonas);
+
+    debug(`Deleted persona: ${key}`);
+    return res.json(ApiResponse.success());
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const errorInfo = ErrorUtils.classifyError(hivemindError);
+
+    debug('Error deleting persona:', {
+      message: ErrorUtils.getMessage(hivemindError),
+      code: ErrorUtils.getCode(hivemindError),
+      type: errorInfo.type,
+      severity: errorInfo.severity,
+    });
+
+    return res
+      .status(ErrorUtils.getStatusCode(hivemindError) || 500)
+      .json(
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          ErrorUtils.getCode(hivemindError) || 'PERSONA_DELETE_ERROR'
+        )
+      );
+  }
+});
 
 export default router;

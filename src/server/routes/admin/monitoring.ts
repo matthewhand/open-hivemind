@@ -34,7 +34,7 @@ router.post(
   '/providers/test-connection',
   configRateLimit,
   validateRequest(TestConnectionSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const { providerType, config } = req.body;
 
@@ -261,7 +261,7 @@ router.post(
         message: hivemindError.message || 'An error occurred while testing connection',
       });
     }
-  })
+  }
 );
 
 // GET /providers - Get available providers

@@ -7,6 +7,7 @@ import Card from '../../components/DaisyUI/Card';
 import { Badge } from '../../components/DaisyUI/Badge';
 import PersonaAvatar from '../../components/PersonaAvatar';
 import { type Persona } from './hooks/usePersonasData';
+import Checkbox from '../../components/DaisyUI/Checkbox';
 
 interface PersonaListProps {
   filteredPersonas: Persona[];
@@ -43,8 +44,7 @@ export const PersonaList: React.FC<PersonaListProps> = ({
     <>
       <div className="flex items-center gap-2 mb-2">
         <Checkbox
-          variant="primary"
-          size="sm"
+          className="checkbox checkbox-sm checkbox-primary"
           checked={bulk.isAllSelected}
           onChange={() => bulk.toggleAll(filteredPersonaIds)}
           aria-label="Select all personas"

@@ -163,7 +163,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.post(
   '/:id/apply',
   validateRequest(ApplyTemplateSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const templateService = ConfigurationTemplateService.getInstance();
       const botConfigService = BotConfigService.getInstance();
@@ -244,7 +244,7 @@ router.post(
         message: hivemindError.message || 'An error occurred while applying template',
       });
     }
-  })
+  }
 );
 
 /**
@@ -270,13 +270,10 @@ router.post(
  *       200:
  *         description: Created template
  */
-router.post(
-  '/',
-  validateRequest(CreateTemplateSchema),
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const templateService = ConfigurationTemplateService.getInstance();
-      const { name, description, category, tags, config } = req.body;
+router.post('/', validateRequest(CreateTemplateSchema), async (req: Request, res: Response) => {
+  try {
+    const templateService = ConfigurationTemplateService.getInstance();
+    const { name, description, category, tags, config } = req.body;
 
       const template = await templateService.createTemplate({
         name,
@@ -286,22 +283,21 @@ router.post(
         config,
       });
 
-      return res.json({
-        success: true,
-        data: { template },
-        message: 'Template created successfully',
-      });
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
-      debug('Error creating template:', hivemindError);
-      return res.status(400).json({
-        success: false,
-        error: 'Failed to create template',
-        message: hivemindError.message || 'An error occurred while creating template',
-      });
-    }
-  })
-);
+    return res.json({
+      success: true,
+      data: { template },
+      message: 'Template created successfully',
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    debug('Error creating template:', hivemindError);
+    return res.status(400).json({
+      success: false,
+      error: 'Failed to create template',
+      message: hivemindError.message || 'An error occurred while creating template',
+    });
+  }
+});
 
 /**
  * @openapi
@@ -324,7 +320,7 @@ router.post(
 router.delete(
   '/:id',
   validateRequest(DeleteTemplateSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req: Request, res: Response) => {
     try {
       const templateService = ConfigurationTemplateService.getInstance();
       const { id } = req.params;
@@ -353,7 +349,7 @@ router.delete(
         message: hivemindError.message || 'An error occurred while deleting template',
       });
     }
-  })
+  }
 );
 
 export default router;
