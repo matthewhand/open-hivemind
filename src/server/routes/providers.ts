@@ -1,4 +1,5 @@
 import Debug from 'debug';
+import { Router } from 'express';
 import { Router, type Request, type Response } from 'express';
 import { providerRegistry } from '../../registries/ProviderRegistry';
 import { HTTP_STATUS } from '../../types/constants';

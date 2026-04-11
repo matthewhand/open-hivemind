@@ -1,4 +1,5 @@
 import Debug from 'debug';
+import { Router } from 'express';
 import { Router, type Response } from 'express';
 import type { AuthMiddlewareRequest } from '../../../auth/types';
 import { HTTP_STATUS } from '../../../types/constants';
