@@ -28,10 +28,7 @@ import { openWebUIProvider } from './openWebUIProvider';
 
 function mockFetch(body: unknown, status = 200) {
   jest.spyOn(global, 'fetch').mockResolvedValue(
-    new Response(JSON.stringify(body), {
-      status,
-      headers: { 'content-type': 'application/json' },
-    })
+    new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
   );
 }
 
@@ -74,17 +71,5 @@ describe('openWebUIProvider', () => {
   it('generateCompletion throws on HTTP error', async () => {
     mockFetch({ error: 'fail' }, 500);
     await expect(openWebUIProvider.generateCompletion('prompt')).rejects.toThrow('Non-chat completion failed');
-  });
-
-  it('generateCompletion returns text string', async () => {
-    mockFetch({ choices: [{ text: 'completion reply' }] });
-    expect(await openWebUIProvider.generateCompletion('prompt')).toBe('completion reply');
-  });
-
-  it('generateCompletion throws on HTTP error', async () => {
-    mockFetch({ error: 'fail' }, 500);
-    await expect(openWebUIProvider.generateCompletion('prompt')).rejects.toThrow(
-      'Non-chat completion failed'
-    );
   });
 });

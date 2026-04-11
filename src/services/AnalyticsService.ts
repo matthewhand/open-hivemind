@@ -103,11 +103,16 @@ export class AnalyticsService {
   /**
    * Get behavior patterns based on actual usage data
    */
-  public async getBehaviorPatterns(options: ActivityFilter = {}): Promise<BehaviorPattern[]> {
-    const events = await this.activityLogger.getEvents({
-      ...options,
-      limit: options.limit || DEFAULT_PAGE_LIMIT,
-    });
+  public async getBehaviorPatterns(
+    options: ActivityFilter = {},
+    providedEvents?: MessageFlowEvent[]
+  ): Promise<BehaviorPattern[]> {
+    const events =
+      providedEvents ||
+      (await this.activityLogger.getEvents({
+        ...options,
+        limit: options.limit || DEFAULT_PAGE_LIMIT,
+      }));
 
     if (events.length === 0) {
       return this.getDefaultBehaviorPatterns();
@@ -167,11 +172,16 @@ export class AnalyticsService {
   /**
    * Get user segments based on actual activity
    */
-  public async getUserSegments(options: ActivityFilter = {}): Promise<UserSegment[]> {
-    const events = await this.activityLogger.getEvents({
-      ...options,
-      limit: options.limit || DEFAULT_PAGE_LIMIT,
-    });
+  public async getUserSegments(
+    options: ActivityFilter = {},
+    providedEvents?: MessageFlowEvent[]
+  ): Promise<UserSegment[]> {
+    const events =
+      providedEvents ||
+      (await this.activityLogger.getEvents({
+        ...options,
+        limit: options.limit || DEFAULT_PAGE_LIMIT,
+      }));
 
     if (events.length === 0) {
       return this.getDefaultUserSegments();
@@ -265,8 +275,9 @@ export class AnalyticsService {
       ...options,
       limit: options.limit || DEFAULT_PAGE_LIMIT,
     });
-    const patterns = await this.getBehaviorPatterns(options);
-    const segments = await this.getUserSegments(options);
+    const patterns = await this.getBehaviorPatterns(options, events);
+    // getUserSegments currently also takes events, lets pass them
+    const segments = await this.getUserSegments(options, events);
 
     const recommendations: DashboardRecommendation[] = [];
 
@@ -360,8 +371,8 @@ export class AnalyticsService {
       ...options,
       limit: options.limit || LARGE_PAGE_LIMIT,
     });
-    const patterns = await this.getBehaviorPatterns(options);
-    const segments = await this.getUserSegments(options);
+    const patterns = await this.getBehaviorPatterns(options, events);
+    const segments = await this.getUserSegments(options, events);
 
     const totalMessages = events.length;
     const totalErrors = events.filter((e) => e.status === 'error' || e.status === 'timeout').length;

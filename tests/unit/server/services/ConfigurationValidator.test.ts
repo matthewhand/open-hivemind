@@ -365,19 +365,6 @@ describe('ConfigurationValidator', () => {
       // Should not crash, string configs are handled
       expect(result).toBeDefined();
     });
-
-    it('should validate string-based provider configs', () => {
-      const result = validator.validateBotConfig({
-        name: 'test-bot',
-        messageProvider: 'discord',
-        llmProvider: 'openai',
-        discord: 'string-config',
-        openai: 'string-config',
-      });
-
-      // Should not crash, string configs are handled
-      expect(result).toBeDefined();
-    });
   });
 
   describe('validateBotConfigWithSchema', () => {
