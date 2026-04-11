@@ -83,7 +83,44 @@ describe('BotConfigurationManager', () => {
       expect(discordBots[0].discord?.channelId).toBe('channel-789');
     });
 
-    it.todo("should load bot-specific configuration files" /* TODO: Re-enable for CI after fix */);
+    it('should load bot-specific configuration files', () => {
+      const botName = 'filebot';
+      const configDir = 'config';
+      const botsDir = `${configDir}/bots`;
+      const botConfigPath = `${botsDir}/${botName}.json`;
+
+      mockFs.existsSync.mockImplementation((path) => {
+        if (path === botsDir) return true;
+        if (path === botConfigPath) return true;
+        return false;
+      });
+
+      mockFs.readdirSync.mockImplementation((path) => {
+        if (path === botsDir) return [`${botName}.json`] as any;
+        return [];
+      });
+
+      const fileConfig = {
+        DISCORD_BOT_TOKEN: 'file-token-123',
+        MESSAGE_PROVIDER: 'discord',
+        LLM_PROVIDER: 'openai',
+        OPENAI_API_KEY: 'file-openai-key',
+      };
+
+      mockFs.readFileSync.mockImplementation((path) => {
+        if (path === botConfigPath) return JSON.stringify(fileConfig);
+        throw new Error(`File not found: ${path}`);
+      });
+
+      const manager = BotConfigurationManager.getInstance();
+      const bot = manager.getBot(botName);
+
+      expect(bot).toBeDefined();
+      expect(bot?.name).toBe(botName);
+      expect(bot?.discord?.token).toBe('file-token-123');
+      expect(bot?.llmProvider).toBe('openai');
+      expect(bot?.openai?.apiKey).toBe('file-openai-key');
+    });
   });
 
   describe('Legacy configuration compatibility', () => {

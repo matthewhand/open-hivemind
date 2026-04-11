@@ -50,7 +50,83 @@ describe('SlackBotManager', () => {
     );
   });
 
-  it.todo(
-    'should handle initialization, configuration, and message handling' /* TODO: Fix and re-enable */
-  );
+  it('should handle initialization, configuration, and message handling', async () => {
+    const mockConfigs = [
+      {
+        token: 'xoxb-bot-token',
+        appToken: 'xapp-app-token',
+        signingSecret: 'secret',
+        name: 'testbot',
+      },
+    ];
+
+    const manager = new SlackBotManager(mockConfigs, 'socket');
+    const mockHandler = jest.fn().mockResolvedValue('bot response');
+    manager.setMessageHandler(mockHandler);
+
+    // Mock successful authentication
+    const mockAuthTest = jest.fn().mockResolvedValue({
+      ok: true,
+      user_id: 'U12345',
+      user: 'testbot',
+    });
+
+    MockWebClient.mockImplementation(
+      () =>
+        ({
+          auth: {
+            test: mockAuthTest,
+          },
+        }) as any
+    );
+
+    // Mock SocketModeClient
+    let socketEventHandlers: Record<string, Function> = {};
+    const mockSocketStart = jest.fn().mockImplementation(async () => {
+      // Simulate connection success
+      if (socketEventHandlers['connected']) {
+        socketEventHandlers['connected']();
+      }
+    });
+
+    MockSocketModeClient.mockImplementation(
+      () =>
+        ({
+          on: jest.fn((event, handler) => {
+            socketEventHandlers[event] = handler;
+          }),
+          start: mockSocketStart,
+        }) as any
+    );
+
+    // Initialize
+    await manager.initialize();
+
+    expect(mockAuthTest).toHaveBeenCalled();
+    expect(mockSocketStart).toHaveBeenCalled();
+
+    // Simulate receiving a message
+    if (socketEventHandlers['message']) {
+      await socketEventHandlers['message']({
+        event: {
+          type: 'message',
+          text: 'hello bot',
+          user: 'U999',
+          channel: 'C123',
+          event_ts: '123456789.000001',
+        },
+      });
+    }
+
+    expect(mockHandler).toHaveBeenCalledWith(
+      expect.objectContaining({
+        getText: expect.any(Function),
+      }),
+      expect.any(Array),
+      expect.objectContaining({ name: 'testbot' })
+    );
+
+    const receivedMessage = mockHandler.mock.calls[0][0];
+    expect(receivedMessage.getText()).toBe('hello bot');
+  });
 });

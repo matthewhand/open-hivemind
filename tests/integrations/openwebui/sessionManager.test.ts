@@ -69,7 +69,7 @@ function loadIsolated(prime: (deps: { axiosPost: jest.Mock }) => void) {
   return { mod, axiosPost };
 }
 
-describe.skip('openwebui/sessionManager', () => {
+describe('openwebui/sessionManager', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });

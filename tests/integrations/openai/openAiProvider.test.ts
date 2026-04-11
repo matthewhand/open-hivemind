@@ -1,6 +1,7 @@
 import { OpenAI } from 'openai';
 import { OpenAiProvider, openAiProvider } from '@hivemind/llm-openai';
 import openaiConfig from '@config/openaiConfig';
+import { ConfigurationError } from '@src/types/errorClasses';
 import { IMessage } from '@message/interfaces/IMessage';
 import { resetAllCircuitBreakers } from '@common/CircuitBreaker';
 
@@ -178,11 +179,39 @@ describe('openAiProvider', () => {
       expect(response).toBe('');
     });
 
-    // Skipped: Testing missing API key requires clearing process.env.OPENAI_API_KEY
-    // which is complex in Jest. The error handling code path is covered by other tests.
-    it.todo(
-      'should throw ConfigurationError when API key is missing' /* TODO: Fix and re-enable */
-    );
+    it('should throw ConfigurationError when API key is missing', async () => {
+      const originalApiKey = process.env.OPENAI_API_KEY;
+      const originalMockImplementation = (mockedConfig.get as jest.Mock).getMockImplementation();
+
+      delete process.env.OPENAI_API_KEY;
+      (mockedConfig.get as jest.Mock).mockImplementation((key: string) => {
+        if (key === 'OPENAI_API_KEY') return undefined;
+        const config: { [key: string]: any } = {
+          OPENAI_BASE_URL: 'https://api.openai.com/v1',
+          OPENAI_TIMEOUT: 10000,
+          OPENAI_MODEL: 'gpt-test',
+          OPENAI_SYSTEM_PROMPT: 'You are a test assistant.',
+          OPENAI_MAX_TOKENS: 50,
+          OPENAI_TEMPERATURE: 0.7,
+        };
+        return config[key];
+      });
+
+      try {
+        await expect(openAiProvider.generateChatCompletion('test', [])).rejects.toThrow(
+          ConfigurationError
+        );
+      } finally {
+        // Restore environment variable
+        if (originalApiKey !== undefined) {
+          process.env.OPENAI_API_KEY = originalApiKey;
+        } else {
+          delete process.env.OPENAI_API_KEY;
+        }
+        // Restore mock implementation to prevent leak
+        (mockedConfig.get as jest.Mock).mockImplementation(originalMockImplementation);
+      }
+    });
 
     it('should retry on failure and eventually throw', async () => {
       mockChatCreate.mockRejectedValue(new Error('API Error'));
