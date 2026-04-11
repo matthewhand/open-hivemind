@@ -9,7 +9,6 @@ import { Alert } from './DaisyUI/Alert';
 import Toggle from './DaisyUI/Toggle';
 import { LoadingSpinner } from './DaisyUI/Loading';
 import Select from './DaisyUI/Select';
-import type { UIState } from '../store/uiStore';
 
 const Settings: React.FC = () => {
   const ui = useUIStore((s) => s);

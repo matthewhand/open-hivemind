@@ -1,14 +1,6 @@
-import {
-  asyncErrorHandler,
-  globalErrorHandler,
-  rateLimitErrorHandler,
-} from '../../../src/middleware/errorHandler';
+import { globalErrorHandler, asyncErrorHandler, rateLimitErrorHandler } from '../../../src/middleware/errorHandler';
+import { BaseHivemindError, NetworkError, ConfigurationError } from '../../../src/types/errorClasses';
 import { MetricsCollector } from '../../../src/monitoring/MetricsCollector';
-import {
-  BaseHivemindError,
-  ConfigurationError,
-  NetworkError,
-} from '../../../src/types/errorClasses';
 
 // Mock MetricsCollector
 jest.mock('../../../src/monitoring/MetricsCollector', () => ({
@@ -162,7 +154,7 @@ describe('Error Handler Middleware', () => {
       handler(mockReq, mockRes, mockNext);
 
       // Wait for promise to resolve
-      await new Promise((resolve) => setImmediate(resolve));
+      await new Promise(resolve => setImmediate(resolve));
 
       expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
     });
@@ -173,7 +165,7 @@ describe('Error Handler Middleware', () => {
 
       handler(mockReq, mockRes, mockNext);
 
-      await new Promise((resolve) => setImmediate(resolve));
+      await new Promise(resolve => setImmediate(resolve));
 
       expect(mockNext).not.toHaveBeenCalled();
     });

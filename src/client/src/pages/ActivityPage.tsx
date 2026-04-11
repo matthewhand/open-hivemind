@@ -404,6 +404,66 @@ const ActivityPage: React.FC = () => {
         </div>
       )}
 
+      {/* Header */}
+
+      {/* Header */}
+
+      {/* Header */}
+      <PageHeader
+        title="Activity Feed"
+        description="Real-time message flow and events"
+        icon={Clock}
+        actions={
+          <div className="flex items-center gap-2">
+            {/* View Toggle */}
+            <Join>
+              <Button
+                size="sm"
+                variant={viewMode === 'table' ? 'primary' : 'ghost'}
+                className="join-item"
+                onClick={() => setViewMode('table')}
+              >
+                <LayoutList className="w-4 h-4" /> Table
+              </Button>
+              <Button
+                size="sm"
+                variant={viewMode === 'timeline' ? 'primary' : 'ghost'}
+                className="join-item"
+                onClick={() => setViewMode('timeline')}
+              >
+                <GitBranch className="w-4 h-4" /> Timeline
+              </Button>
+            </Join>
+
+            {/* Auto Refresh Toggle */}
+            <Toggle
+              label="Auto"
+              checked={autoRefresh}
+              onChange={(e) => setAutoRefresh(e.target.checked)}
+              size="sm"
+            />
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={fetchActivity}
+              disabled={loading} aria-busy={loading}
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleExport}
+              disabled={events.length === 0}
+            >
+              <Download className="w-4 h-4" /> Export
+            </Button>
+          </div>
+        }
+      />
+
       {/* Stats Cards */}
       <StatsCards stats={stats} isLoading={loading && !data} />
 

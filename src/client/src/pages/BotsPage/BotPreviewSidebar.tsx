@@ -4,7 +4,6 @@ import {
 } from 'lucide-react';
 import type { BotConfig } from '../../types/bot';
 import Button from '../../components/DaisyUI/Button';
-import Input from '../../components/DaisyUI/Input';
 import Select from '../../components/DaisyUI/Select';
 import Tabs from '../../components/DaisyUI/Tabs';
 import ConfigurationValidation from '../../components/ConfigurationValidation';
@@ -12,8 +11,6 @@ import { Stat, Stats } from '../../components/DaisyUI/Stat';
 import Tooltip from '../../components/DaisyUI/Tooltip';
 import Card from '../../components/DaisyUI/Card';
 import Join from '../../components/DaisyUI/Join';
-import Figure from '../../components/DaisyUI/Figure';
-import BotResponseTimeline from '../../components/BotResponseTimeline';
 
 interface BotPreviewSidebarProps {
   previewBot: BotConfig | null;
@@ -133,26 +130,28 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
           </div>
 
           <Stats className="bg-base-200 w-full shadow-sm">
-            <Stat
-              className="p-3"
-              title={<span className="text-xs uppercase font-bold">Messages</span>}
-              value={previewBot.messageCount ?? 0}
-              valueClassName="text-xl text-primary"
-            />
-            <Stat
-              className="p-3"
-              title={<span className="text-xs uppercase font-bold">Errors</span>}
-              value={previewBot.errorCount ?? 0}
-              valueClassName={`text-xl ${(previewBot.errorCount ?? 0) > 0 ? 'text-error' : ''}`}
-            />
+            <Stat className="p-3">
+              <div className="stat-title text-xs uppercase font-bold">Messages</div>
+              <div className="stat-value text-xl text-primary">{previewBot.messageCount ?? 0}</div>
+            </Stat>
+            <Stat className="p-3">
+              <div className="stat-title text-xs uppercase font-bold">Errors</div>
+              <div
+                className={`stat-value text-xl ${
+                  (previewBot.errorCount ?? 0) > 0 ? 'text-error' : ''
+                }`}
+              >
+                {previewBot.errorCount ?? 0}
+              </div>
+            </Stat>
           </Stats>
 
           {/* Tabs Navigation */}
           <Tabs
             tabs={[
-              { key: 'activity', label: <span className="text-xs uppercase font-bold">Activity</span>, icon: <Activity className="w-3 h-3" />, color: 'info' as const },
-              { key: 'chat', label: <span className="text-xs uppercase font-bold">Chat</span>, icon: <MessageSquare className="w-3 h-3" />, color: 'primary' as const },
-              { key: 'validation', label: <span className="text-xs uppercase font-bold">Validation</span>, icon: <ShieldCheck className="w-3 h-3" />, color: 'success' as const },
+              { key: 'activity', label: <span className="text-xs uppercase font-bold">Activity</span>, icon: <Activity className="w-3 h-3" /> },
+              { key: 'chat', label: <span className="text-xs uppercase font-bold">Chat</span>, icon: <MessageSquare className="w-3 h-3" /> },
+              { key: 'validation', label: <span className="text-xs uppercase font-bold">Validation</span>, icon: <ShieldCheck className="w-3 h-3" /> },
             ]}
             activeTab={previewTab}
             onChange={(key) => setPreviewTab(key as 'activity' | 'chat' | 'validation')}
@@ -236,12 +235,45 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
 
           {/* Chat History Panel — Response Timeline */}
           {previewTab === 'chat' && (
-            <BotResponseTimeline
-              chatHistory={chatHistory}
-              chatError={chatError}
-              onRetry={() => previewBot && fetchPreviewChat(previewBot.id)}
-              onRefresh={() => previewBot && fetchPreviewChat(previewBot.id)}
-            />
+            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+              {chatError ? (
+                <div className="text-center py-6">
+                  <AlertCircle className="w-8 h-8 mx-auto mb-2 text-error" />
+                  <p className="text-xs text-error mb-2">{chatError}</p>
+                  <button
+                    className="btn btn-ghost btn-xs"
+                    onClick={() => previewBot && fetchPreviewChat(previewBot.id)}
+                  >
+                    <RefreshCw className="w-3 h-3 mr-1" /> Retry
+                  </button>
+                </div>
+              ) : chatHistory.length === 0 ? (
+                <div className="text-center py-8 opacity-40">
+                  <MessageSquare className="w-8 h-8 mx-auto mb-2" />
+                  <p className="text-xs">No recent chat history</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {chatHistory.map((msg, idx) => (
+                    <div
+                      key={idx}
+                      className={`chat ${msg.role === 'user' ? 'chat-end' : 'chat-start'}`}
+                    >
+                      <div
+                        className={`chat-bubble text-xs min-h-0 py-1.5 px-3 ${
+                          msg.role === 'user' ? 'chat-bubble-primary' : 'chat-bubble-secondary'
+                        }`}
+                      >
+                        {msg.content}
+                      </div>
+                      <div className="chat-footer opacity-50 text-[10px] mt-0.5">
+                        {new Date(msg.timestamp).toLocaleTimeString()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
 
           <Card.Actions className="mt-2 pt-4 border-t border-base-200">

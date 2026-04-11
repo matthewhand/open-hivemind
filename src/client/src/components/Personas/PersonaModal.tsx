@@ -288,17 +288,6 @@ export const PersonaModal: React.FC<PersonaModalProps> = ({
           </div>
         </div>
 
-        {/* Response Behavior overrides */}
-        {onResponseBehaviorChange && (
-          <ResponseBehaviorSection
-            value={responseBehavior}
-            onChange={onResponseBehaviorChange}
-            globalDefaults={globalDefaults}
-            disabled={!!isEnvLocked || isViewMode}
-          />
-        )}
-      </div>
-
     </Modal>
   );
 };

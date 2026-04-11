@@ -128,7 +128,7 @@ See existing packages for implementation patterns:
 - **Test Execution:**  
   Run tests with:
   ```bash
-  npm test
+  pnpm run test
   ```
   Additional tests exist to simulate edge cases and verify recovery from error conditions.
 
@@ -142,11 +142,11 @@ See existing packages for implementation patterns:
 
 ### Development Workflow
 - **Environment Setup:**  
-  **Node.js ≥ 22 is required** (declared in `engines` in `package.json`; tested on v22 and v24). Ensure environment variables like `DISCORD_BOT_TOKEN` are correctly set in your `.env` file.
+  Use Node.js v22 or later (required). Ensure environment variables like `DISCORD_BOT_TOKEN` are correctly set in your `.env` files.
 - **Debugging:**  
   Enable extended logging via:
   ```bash
-  DEBUG=app:* npm run dev
+  DEBUG=app:* pnpm start
   ```
 - **Iterative Testing:**  
   Utilize comprehensive unit tests and integration tests to validate all changes. Maintain high code coverage and continuously monitor logs for irregularities.

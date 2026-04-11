@@ -1,9 +1,9 @@
 import {
   CircuitBreaker,
-  CircuitBreakerError,
   CircuitBreakerState,
-  clearCircuitBreakerRegistry,
+  CircuitBreakerError,
   getCircuitBreaker,
+  clearCircuitBreakerRegistry,
   resetAllCircuitBreakers,
 } from './CircuitBreaker';
 
@@ -32,6 +32,7 @@ describe('CircuitBreaker — CLOSED state', () => {
     await expect(cb.execute(() => Promise.reject(new Error('fail')))).rejects.toThrow();
     await expect(cb.execute(() => Promise.reject(new Error('fail')))).rejects.toThrow();
     await cb.execute(() => Promise.resolve('ok'));
+    // Should still be CLOSED — success reset the counter
     expect(cb.getState()).toBe(CircuitBreakerState.CLOSED);
   });
 });
@@ -47,72 +48,51 @@ describe('CircuitBreaker — OPEN state', () => {
   it('rejects immediately when OPEN', async () => {
     const cb = new CircuitBreaker({ name: 'test', failureThreshold: 1, resetTimeoutMs: 60000 });
     await expect(cb.execute(() => Promise.reject(new Error('e')))).rejects.toThrow();
-    await expect(cb.execute(() => Promise.resolve('ok'))).rejects.toBeInstanceOf(
-      CircuitBreakerError
-    );
+    await expect(cb.execute(() => Promise.resolve('ok'))).rejects.toBeInstanceOf(CircuitBreakerError);
   });
 
   it('transitions to HALF_OPEN after resetTimeoutMs', async () => {
-    jest.useFakeTimers();
-    const cb = new CircuitBreaker({ name: 'test', failureThreshold: 1, resetTimeoutMs: 100 });
+    const cb = new CircuitBreaker({ name: 'test', failureThreshold: 1, resetTimeoutMs: 1 });
     await expect(cb.execute(() => Promise.reject(new Error('e')))).rejects.toThrow();
-    expect(cb.getState()).toBe(CircuitBreakerState.OPEN);
-    jest.advanceTimersByTime(100);
+    await new Promise((r) => setTimeout(r, 10));
     expect(cb.getState()).toBe(CircuitBreakerState.HALF_OPEN);
-    jest.useRealTimers();
   });
 });
 
 describe('CircuitBreaker — HALF_OPEN state', () => {
-  beforeEach(() => jest.useFakeTimers());
-  afterEach(() => jest.useRealTimers());
-
-  async function openAndAdvance(cb: CircuitBreaker, ms: number) {
-    await cb.execute(() => Promise.reject(new Error('e'))).catch(() => {});
-    jest.advanceTimersByTime(ms);
+  async function openAndWait(cb: CircuitBreaker) {
+    await expect(cb.execute(() => Promise.reject(new Error('e')))).rejects.toThrow();
+    await new Promise((r) => setTimeout(r, 10));
   }
 
   it('closes after halfOpenMaxAttempts successes', async () => {
-    const cb = new CircuitBreaker({
-      name: 'test',
-      failureThreshold: 1,
-      resetTimeoutMs: 100,
-      halfOpenMaxAttempts: 2,
-    });
-    await openAndAdvance(cb, 100);
+    const cb = new CircuitBreaker({ name: 'test', failureThreshold: 1, resetTimeoutMs: 1, halfOpenMaxAttempts: 2 });
+    await openAndWait(cb);
     await cb.execute(() => Promise.resolve('ok'));
     await cb.execute(() => Promise.resolve('ok'));
     expect(cb.getState()).toBe(CircuitBreakerState.CLOSED);
   });
 
   it('re-opens on failure in HALF_OPEN', async () => {
-    const cb = new CircuitBreaker({
-      name: 'test',
-      failureThreshold: 1,
-      resetTimeoutMs: 100,
-      halfOpenMaxAttempts: 3,
-    });
-    await openAndAdvance(cb, 100);
+    const cb = new CircuitBreaker({ name: 'test', failureThreshold: 1, resetTimeoutMs: 1, halfOpenMaxAttempts: 3 });
+    await openAndWait(cb);
     await expect(cb.execute(() => Promise.reject(new Error('e')))).rejects.toThrow();
-    // Check internal state directly — getState() would auto-transition
-    expect((cb as any).state).toBe(CircuitBreakerState.OPEN);
+    expect(cb.getState()).toBe(CircuitBreakerState.OPEN);
   });
 
   it('rejects after halfOpenMaxAttempts probe limit reached before success', async () => {
-    const cb = new CircuitBreaker({
-      name: 'test',
-      failureThreshold: 1,
-      resetTimeoutMs: 100,
-      halfOpenMaxAttempts: 2,
-    });
-    await openAndAdvance(cb, 100);
-    // First probe — fails, re-opens
+    // With halfOpenMaxAttempts=2: first probe allowed, second probe allowed,
+    // third probe rejected because limit reached
+    const cb = new CircuitBreaker({ name: 'test', failureThreshold: 1, resetTimeoutMs: 1, halfOpenMaxAttempts: 2 });
+    await openAndWait(cb);
+    // First probe — allowed but fails, re-opens
     await expect(cb.execute(() => Promise.reject(new Error('e')))).rejects.toThrow();
-    expect((cb as any).state).toBe(CircuitBreakerState.OPEN);
-    // Advance past resetTimeout for HALF_OPEN again
-    jest.advanceTimersByTime(100);
-    // Two successes → closes
+    expect(cb.getState()).toBe(CircuitBreakerState.OPEN);
+    // Wait again for HALF_OPEN
+    await new Promise((r) => setTimeout(r, 10));
+    // First probe — allowed, succeeds
     await cb.execute(() => Promise.resolve('ok'));
+    // Second probe — allowed, succeeds → closes
     await cb.execute(() => Promise.resolve('ok'));
     expect(cb.getState()).toBe(CircuitBreakerState.CLOSED);
   });

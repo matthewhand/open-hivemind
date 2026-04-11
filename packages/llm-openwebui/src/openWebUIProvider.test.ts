@@ -1,6 +1,3 @@
-import { create, manifest } from './index';
-import { openWebUIProvider } from './openWebUIProvider';
-
 // Mock DNS so isSafeUrl always resolves to a public IP in tests
 jest.mock('dns', () => ({
   promises: { lookup: jest.fn().mockResolvedValue({ address: '1.2.3.4', family: 4 }) },
@@ -17,12 +14,7 @@ jest.mock('convict', () => {
     }),
     set: jest.fn(),
     validate: jest.fn(),
-    getProperties: jest.fn(() => ({
-      apiUrl: 'https://openwebui.example.com',
-      model: 'test-model',
-      username: 'u',
-      password: 'p',
-    })),
+    getProperties: jest.fn(() => ({ apiUrl: 'https://openwebui.example.com', model: 'test-model', username: 'u', password: 'p' })),
   }));
 });
 
@@ -31,12 +23,12 @@ jest.mock('@hivemind/shared-types', () => {
   return { ...actual, isSafeUrl: jest.fn().mockResolvedValue(true) };
 });
 
+import { create, manifest } from './index';
+import { openWebUIProvider } from './openWebUIProvider';
+
 function mockFetch(body: unknown, status = 200) {
   jest.spyOn(global, 'fetch').mockResolvedValue(
-    new Response(JSON.stringify(body), {
-      status,
-      headers: { 'content-type': 'application/json' },
-    })
+    new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
   );
 }
 
@@ -68,9 +60,17 @@ describe('openWebUIProvider', () => {
 
   it('generateChatCompletion throws on HTTP error', async () => {
     mockFetch({ error: 'fail' }, 500);
-    await expect(openWebUIProvider.generateChatCompletion('hello', [])).rejects.toThrow(
-      'Chat completion failed'
-    );
+    await expect(openWebUIProvider.generateChatCompletion('hello', [])).rejects.toThrow('Chat completion failed');
+  });
+
+  it('generateCompletion returns text string', async () => {
+    mockFetch({ choices: [{ text: 'completion reply' }] });
+    expect(await openWebUIProvider.generateCompletion('prompt')).toBe('completion reply');
+  });
+
+  it('generateCompletion throws on HTTP error', async () => {
+    mockFetch({ error: 'fail' }, 500);
+    await expect(openWebUIProvider.generateCompletion('prompt')).rejects.toThrow('Non-chat completion failed');
   });
 
   it('generateCompletion returns text string', async () => {

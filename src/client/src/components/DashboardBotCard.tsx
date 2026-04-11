@@ -66,6 +66,9 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
               {bot.persona}
             </Badge>
           )}
+          <Badge variant="neutral" style="outline" className="text-xs">
+            📱 {bot.messageProvider.toUpperCase()}
+          </Badge>
         </div>
 
         {/* Error alert (only when errors exist) */}

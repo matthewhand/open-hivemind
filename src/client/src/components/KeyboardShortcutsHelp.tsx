@@ -70,35 +70,23 @@ const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
 
         {/* Shortcut list grouped by category */}
         <div className="max-h-[60vh] overflow-y-auto py-2">
-          {(['global', 'navigation', 'actions'] as const).map(category => {
-            const categoryShortcuts = shortcuts.filter(s => (s.category || 'global') === category);
-            if (categoryShortcuts.length === 0) return null;
-            const labels = { global: 'Global', navigation: 'Navigation', actions: 'Actions' };
-            return (
-              <div key={category}>
-                <div className="px-5 py-1.5 text-xs font-bold uppercase tracking-wider text-base-content/40">
-                  {labels[category]}
-                </div>
-                <SimpleTable size="sm" className="w-full">
-                  <tbody>
-                    {categoryShortcuts.map((s, idx) => (
-                      <tr key={idx} className="hover">
-                        <td className="text-base-content/80 py-2 pl-5">{s.description}</td>
-                        <td className="text-right py-2 pr-5">
-                          {formatKey(s).split(' + ').map((part, i) => (
-                            <React.Fragment key={i}>
-                              {i > 0 && <span className="text-base-content/40 mx-0.5">+</span>}
-                              <Kbd size="sm">{part}</Kbd>
-                            </React.Fragment>
-                          ))}
-                        </td>
-                      </tr>
+          <SimpleTable size="sm" className="w-full">
+            <tbody>
+              {shortcuts.map((s, idx) => (
+                <tr key={idx} className="hover">
+                  <td className="text-base-content/80 py-2 pl-5">{s.description}</td>
+                  <td className="text-right py-2 pr-5">
+                    {formatKey(s).split(' + ').map((part, i) => (
+                      <React.Fragment key={i}>
+                        {i > 0 && <span className="text-base-content/40 mx-0.5">+</span>}
+                        <Kbd size="sm">{part}</Kbd>
+                      </React.Fragment>
                     ))}
-                  </tbody>
-                </SimpleTable>
-              </div>
-            );
-          })}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </SimpleTable>
         </div>
 
         {/* Footer */}

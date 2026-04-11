@@ -72,42 +72,42 @@ describe('BotConfigurationManager', () => {
     });
 
     it('should load bot-specific configuration files', () => {
-      // Create a real temp directory with bot config files so the actual
-      // fs calls in botDiscovery/botConfigFactory pick them up correctly.
-      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'hivemind-test-'));
-      const botsDir = path.join(tmpDir, 'bots');
-      fs.mkdirSync(botsDir);
+      const botName = 'filebot';
+      const configDir = 'config';
+      const botsDir = `${configDir}/bots`;
+      const botConfigPath = `${botsDir}/${botName}.json`;
 
-      try {
-        fs.writeFileSync(
-          path.join(botsDir, 'bot1.json'),
-          JSON.stringify({
-            MESSAGE_PROVIDER: 'discord',
-            LLM_PROVIDER: 'openai',
-            DISCORD_BOT_TOKEN: 'file-token-1',
-          }),
-        );
-        fs.writeFileSync(
-          path.join(botsDir, 'bot2.json'),
-          JSON.stringify({
-            MESSAGE_PROVIDER: 'slack',
-            LLM_PROVIDER: 'flowise',
-            SLACK_BOT_TOKEN: 'file-slack-token-2',
-          }),
-        );
+      mockFs.existsSync.mockImplementation((path) => {
+        if (path === botsDir) return true;
+        if (path === botConfigPath) return true;
+        return false;
+      });
 
-        process.env.NODE_CONFIG_DIR = tmpDir;
+      mockFs.readdirSync.mockImplementation((path) => {
+        if (path === botsDir) return [`${botName}.json`] as any;
+        return [];
+      });
 
-        const manager = BotConfigurationManager.getInstance();
-        const bots = manager.getAllBots();
+      const fileConfig = {
+        DISCORD_BOT_TOKEN: 'file-token-123',
+        MESSAGE_PROVIDER: 'discord',
+        LLM_PROVIDER: 'openai',
+        OPENAI_API_KEY: 'file-openai-key',
+      };
 
-        expect(bots).toHaveLength(2);
-        const names = bots.map((b) => b.name).sort();
-        expect(names).toEqual(['bot1', 'bot2']);
-      } finally {
-        // Clean up temp directory
-        fs.rmSync(tmpDir, { recursive: true, force: true });
-      }
+      mockFs.readFileSync.mockImplementation((path) => {
+        if (path === botConfigPath) return JSON.stringify(fileConfig);
+        throw new Error(`File not found: ${path}`);
+      });
+
+      const manager = BotConfigurationManager.getInstance();
+      const bot = manager.getBot(botName);
+
+      expect(bot).toBeDefined();
+      expect(bot?.name).toBe(botName);
+      expect(bot?.discord?.token).toBe('file-token-123');
+      expect(bot?.llmProvider).toBe('openai');
+      expect(bot?.openai?.apiKey).toBe('file-openai-key');
     });
   });
 

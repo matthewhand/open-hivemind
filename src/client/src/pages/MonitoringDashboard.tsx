@@ -4,26 +4,9 @@ const MetricChart = lazy(() => import('../components/Monitoring/MetricChart'));
 import AlertPanel from '../components/Monitoring/AlertPanel';
 import EventStream from '../components/Monitoring/EventStream';
 import PerformanceMonitor from '../components/PerformanceMonitor';
-import StatsCards from '../components/DaisyUI/StatsCards';
-import RadialProgress from '../components/DaisyUI/RadialProgress';
-import { SkeletonPage } from '../components/DaisyUI/Skeleton';
-import { LoadingSpinner } from '../components/DaisyUI/Loading';
-import PageHeader from '../components/DaisyUI/PageHeader';
-import Button from '../components/DaisyUI/Button';
-import { Alert } from '../components/DaisyUI/Alert';
 import Select from '../components/DaisyUI/Select';
-import {
-  Activity,
-  Server,
-  Zap,
-  Bell,
-  Wifi,
-  RefreshCw,
-  Cpu,
-  MemoryStick,
-  TriangleAlert,
-  MessageSquare,
-} from 'lucide-react';
+import Debug from 'debug';
+const debug = Debug('app:client:pages:MonitoringDashboard');
 
 const MonitoringDashboard: React.FC = () => {
   const { isConnected, connect, disconnect, performanceMetrics, alerts } = useWebSocket();
@@ -86,18 +69,22 @@ const MonitoringDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <PageHeader
-        title="Monitoring Dashboard"
-        description="Real-time system monitoring and performance metrics"
-        icon={Activity}
-        gradient="primary"
-        actions={
-          <div className="flex gap-2 items-center">
-            <span className={`text-sm ${isConnected ? 'text-success' : 'text-error'}`}>
-              {isConnected ? '● Live' : '● Disconnected'}
-            </span>
+      <div className="mb-8">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-4xl font-bold mb-2">Monitoring Dashboard</h1>
+            <p className="text-lg text-neutral-content/70">
+              Real-time system monitoring and performance metrics
+              {isConnected ? (
+                <span className="text-success ml-2">● Live</span>
+              ) : (
+                <span className="text-error ml-2">● Disconnected</span>
+              )}
+            </p>
+          </div>
+          <div className="flex gap-4">
             <Select
-              className="select-bordered select-sm"
+              className="select-bordered"
               value={refreshInterval}
               onChange={(e) => setRefreshInterval(Number(e.target.value))}
             >
@@ -106,134 +93,63 @@ const MonitoringDashboard: React.FC = () => {
               <option value={10000}>10s</option>
               <option value={30000}>30s</option>
             </Select>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => { disconnect(); connect(); }}
-            >
-              <RefreshCw className="w-4 h-4" />
-            </Button>
-          </div>
-        }
-      />
-
-      {/* Connection Error Alert */}
-      {!isConnected && (
-        <Alert status="error">
-          <TriangleAlert className="w-5 h-5" />
-          <span>WebSocket disconnected. Attempting to reconnect...</span>
-        </Alert>
-      )}
-
-      {/* Status Cards */}
-      <StatsCards stats={stats} />
-
-      {/* System Details Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-base-100 rounded-box p-4 shadow">
-          <h3 className="font-semibold mb-3 flex items-center gap-2">
-            <Cpu className="w-4 h-4 text-primary" /> CPU Usage
-          </h3>
-          <div className="flex items-center gap-4">
-            <RadialProgress
-              value={currentMetric.cpuUsage}
-              size="4rem"
-              thickness="0.3rem"
-              color="primary"
-              className="text-sm font-bold"
-            >
-              {currentMetric.cpuUsage}%
-            </RadialProgress>
-            <div className="text-sm text-base-content/70">
-              <p>Current CPU load</p>
-              <p className="text-xs text-base-content/50">Threshold: 80%</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-base-100 rounded-box p-4 shadow">
-          <h3 className="font-semibold mb-3 flex items-center gap-2">
-            <MemoryStick className="w-4 h-4 text-secondary" /> Memory Usage
-          </h3>
-          <div className="flex items-center gap-4">
-            <RadialProgress
-              value={currentMetric.memoryUsage}
-              size="4rem"
-              thickness="0.3rem"
-              color="secondary"
-              className="text-sm font-bold"
-            >
-              {currentMetric.memoryUsage}%
-            </RadialProgress>
-            <div className="text-sm text-base-content/70">
-              <p>Current memory allocation</p>
-              <p className="text-xs text-base-content/50">Threshold: 90%</p>
-            </div>
           </div>
         </div>
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Suspense fallback={<LoadingSpinner size="lg" />}>
-          <MetricChart
-            title="CPU Usage"
-            data={performanceMetrics.map(m => ({
-              timestamp: m.timestamp,
-              value: m.cpuUsage,
-              label: 'CPU',
-            }))}
-            type="area"
-            color="var(--fallback-er,oklch(var(--er)/1))"
-            unit="%"
-            refreshInterval={refreshInterval}
-          />
-        </Suspense>
-        <Suspense fallback={<LoadingSpinner size="lg" />}>
-          <MetricChart
-            title="Memory Usage"
-            data={performanceMetrics.map(m => ({
-              timestamp: m.timestamp,
-              value: m.memoryUsage,
-              label: 'Memory',
-            }))}
-            type="line"
-            color="var(--fallback-p,oklch(var(--p)/1))"
-            unit="%"
-            refreshInterval={refreshInterval}
-          />
-        </Suspense>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <MetricChart
+          title="CPU Usage"
+          data={performanceMetrics.map(m => ({
+            timestamp: m.timestamp,
+            value: m.cpuUsage,
+            label: 'CPU'
+          }))}
+          type="area"
+          color="var(--fallback-er,oklch(var(--er)/1))"
+          unit="%"
+          refreshInterval={refreshInterval}
+        />
+        <MetricChart
+          title="Memory Usage"
+          data={performanceMetrics.map(m => ({
+            timestamp: m.timestamp,
+            value: m.memoryUsage,
+            label: 'Memory'
+          }))}
+          type="line"
+          color="var(--fallback-p,oklch(var(--p)/1))"
+          unit="%"
+          refreshInterval={refreshInterval}
+        />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Suspense fallback={<LoadingSpinner size="lg" />}>
-          <MetricChart
-            title="Message Rate"
-            data={performanceMetrics.map(m => ({
-              timestamp: m.timestamp,
-              value: m.messageRate,
-              label: 'Messages',
-            }))}
-            type="bar"
-            color="var(--fallback-su,oklch(var(--su)/1))"
-            unit="msgs/sec"
-            refreshInterval={refreshInterval}
-          />
-        </Suspense>
-        <Suspense fallback={<LoadingSpinner size="lg" />}>
-          <MetricChart
-            title="Error Rate"
-            data={performanceMetrics.map(m => ({
-              timestamp: m.timestamp,
-              value: m.errorRate,
-              label: 'Errors',
-            }))}
-            type="line"
-            color="var(--fallback-wa,oklch(var(--wa)/1))"
-            unit="%"
-            refreshInterval={refreshInterval}
-          />
-        </Suspense>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <MetricChart
+          title="Message Rate"
+          data={performanceMetrics.map(m => ({
+            timestamp: m.timestamp,
+            value: m.messageRate,
+            label: 'Messages'
+          }))}
+          type="bar"
+          color="var(--fallback-su,oklch(var(--su)/1))"
+          unit="msgs/sec"
+          refreshInterval={refreshInterval}
+        />
+        <MetricChart
+          title="Error Rate"
+          data={performanceMetrics.map(m => ({
+            timestamp: m.timestamp,
+            value: m.errorRate,
+            label: 'Errors'
+          }))}
+          type="line"
+          color="var(--fallback-wa,oklch(var(--wa)/1))"
+          unit="%"
+          refreshInterval={refreshInterval}
+        />
       </div>
 
       {/* Performance Monitor */}

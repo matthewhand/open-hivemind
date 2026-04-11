@@ -1,4 +1,9 @@
-import { CircuitBreaker, RetryHandler, type RetryConfig } from '../../../src/utils/errorRecovery';
+import {
+  CircuitBreaker,
+  RetryHandler,
+  type RetryConfig,
+  type CircuitBreakerConfig,
+} from '../../../src/utils/errorRecovery';
 
 describe('CircuitBreaker', () => {
   let breaker: CircuitBreaker;
@@ -108,6 +113,7 @@ describe('CircuitBreaker', () => {
 });
 
 describe('RetryHandler', () => {
+  let handler: RetryHandler;
   const defaultConfig: RetryConfig = {
     maxRetries: 3,
     baseDelay: 100,
@@ -118,19 +124,23 @@ describe('RetryHandler', () => {
     retryableStatusCodes: [429, 500, 502, 503],
   };
 
-  describe('executeWithRetry', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    handler = new RetryHandler(defaultConfig);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  describe('execute', () => {
     it('should return result on first success', async () => {
-      jest.useFakeTimers();
-      const handler = new RetryHandler(defaultConfig);
       const operation = jest.fn().mockResolvedValue('success');
-      const promise = handler.executeWithRetry(operation);
-      jest.advanceTimersByTime(1000);
-      const result = await promise;
+      const result = await handler.execute(operation);
 
       expect(result.success).toBe(true);
       expect(result.result).toBe('success');
       expect(result.attempts).toBe(1);
-      jest.useRealTimers();
     });
   });
 });

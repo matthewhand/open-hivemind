@@ -8,7 +8,7 @@ import { SkeletonTimeline } from '../DaisyUI/Skeleton';
 import { Loading } from '../DaisyUI/Loading';
 import Select from '../DaisyUI/Select';
 import Input from '../DaisyUI/Input';
-import { RefreshCw } from 'lucide-react';
+import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
 import { useGetActivityQuery } from '../../store/slices/apiSlice';
 import type { ActivityResponse } from '../../services/api';

@@ -445,56 +445,50 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
         </div>
       </div>
 
-      {/* Mandatory Fields */}
-      {Object.keys(groupedMandatoryFields).length > 0 && (
-        <Card className="shadow-sm border border-primary/20 bg-primary/5">
+      {/* Form Fields by Group */}
+      {Object.entries(groupedFields).map(([groupName, fields]) => (
+        <Card key={groupName} className="shadow-sm border border-base-200">
           <Card.Body className="p-6">
-            <Card.Title tag="h3" className="text-lg border-b border-primary/20 pb-3 mb-4 flex items-center gap-2">
-              <Badge variant="error" size="sm">Required</Badge>
-              Essential Configuration
+            <Card.Title tag="h3" className="text-lg border-b border-base-200 pb-3 mb-4">
+              {groupName}
             </Card.Title>
-            <div className="space-y-6">
-              {Object.entries(groupedMandatoryFields).map(([groupName, fields]) => (
-                <div key={groupName}>
-                  {Object.keys(groupedMandatoryFields).length > 1 && (
-                    <h4 className="text-md font-semibold text-base-content/80 mb-3">{groupName}</h4>
-                  )}
-                  <div className="overflow-x-auto">
-                    <SimpleTable className="w-full">
-                      <thead>
-                        <tr>
-                          <th className="w-1/3 text-sm font-semibold text-base-content/70">Setting</th>
-                          <th className="w-2/3 text-sm font-semibold text-base-content/70">Value</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {fields.map(field => (
-                          <tr key={field.name} className="hover:bg-base-200/50 transition-colors">
-                            <td className="align-top py-4">
-                              <div className="flex flex-col gap-1">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-semibold text-base-content/90">
-                                    {field.label}
-                                  </span>
-                                  <Badge variant="error" size="sm" className="text-xs h-4">Required</Badge>
-                                </div>
-                                {field.description && (
-                                  <span className="text-xs text-base-content/60 leading-tight">
-                                    {field.description}
-                                  </span>
-                                )}
-                              </div>
-                            </td>
-                            <td className="align-top py-4">
-                              {renderField(field)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </SimpleTable>
-                  </div>
-                </div>
-              ))}
+            <div className="overflow-x-auto">
+              <SimpleTable className="w-full">
+                <thead>
+                  <tr>
+                    <th className="w-1/3 text-sm font-semibold text-base-content/70">Setting</th>
+                    <th className="w-2/3 text-sm font-semibold text-base-content/70">Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {fields.map(field => (
+                    <tr key={field.name} className="hover:bg-base-200/50 transition-colors">
+                      <td className="align-top py-4">
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-base-content/90">
+                              {field.label}
+                            </span>
+                            {field.required ? (
+                              <Badge variant="error" size="sm" className="text-xs h-4">Required</Badge>
+                            ) : (
+                              <Badge variant="ghost" size="sm" className="text-xs h-4">Optional</Badge>
+                            )}
+                          </div>
+                          {field.description && (
+                            <span className="text-xs text-base-content/60 leading-tight">
+                              {field.description}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="align-top py-4">
+                        {renderField(field)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </SimpleTable>
             </div>
           </Card.Body>
         </Card>

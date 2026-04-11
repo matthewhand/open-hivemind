@@ -179,16 +179,6 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose }) => {
           <Kbd size="sm" className="shrink-0">Esc</Kbd>
         </div>
 
-        {/* Live region — announces result count to screen readers */}
-        <div
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-          className="sr-only"
-        >
-          {resultCountLabel}
-        </div>
-
         {/* Results list */}
         <ul
           id="command-palette-results"

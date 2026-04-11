@@ -51,23 +51,82 @@ describe('SlackBotManager', () => {
   });
 
   it('should handle initialization, configuration, and message handling', async () => {
-    const config = {
-      token: 'test-token',
-      appToken: 'test-app-token',
-      signingSecret: 'test-signing-secret',
-    };
+    const mockConfigs = [
+      {
+        token: 'xoxb-bot-token',
+        appToken: 'xapp-app-token',
+        signingSecret: 'secret',
+        name: 'testbot',
+      },
+    ];
 
-    const slackBotManager = new SlackBotManager([config], 'socket');
+    const manager = new SlackBotManager(mockConfigs, 'socket');
+    const mockHandler = jest.fn().mockResolvedValue('bot response');
+    manager.setMessageHandler(mockHandler);
 
-    // Test initialization
-    expect(slackBotManager).toBeDefined();
-
-    // Test configuration
-    expect(MockSocketModeClient).toHaveBeenCalledWith({
-      appToken: 'test-app-token',
+    // Mock successful authentication
+    const mockAuthTest = jest.fn().mockResolvedValue({
+      ok: true,
+      user_id: 'U12345',
+      user: 'testbot',
     });
 
-    // Test that the socket client was instantiated (event handlers registered on start/initialize)
-    expect(MockSocketModeClient).toHaveBeenCalledTimes(1);
+    MockWebClient.mockImplementation(
+      () =>
+        ({
+          auth: {
+            test: mockAuthTest,
+          },
+        }) as any
+    );
+
+    // Mock SocketModeClient
+    let socketEventHandlers: Record<string, Function> = {};
+    const mockSocketStart = jest.fn().mockImplementation(async () => {
+      // Simulate connection success
+      if (socketEventHandlers['connected']) {
+        socketEventHandlers['connected']();
+      }
+    });
+
+    MockSocketModeClient.mockImplementation(
+      () =>
+        ({
+          on: jest.fn((event, handler) => {
+            socketEventHandlers[event] = handler;
+          }),
+          start: mockSocketStart,
+        }) as any
+    );
+
+    // Initialize
+    await manager.initialize();
+
+    expect(mockAuthTest).toHaveBeenCalled();
+    expect(mockSocketStart).toHaveBeenCalled();
+
+    // Simulate receiving a message
+    if (socketEventHandlers['message']) {
+      await socketEventHandlers['message']({
+        event: {
+          type: 'message',
+          text: 'hello bot',
+          user: 'U999',
+          channel: 'C123',
+          event_ts: '123456789.000001',
+        },
+      });
+    }
+
+    expect(mockHandler).toHaveBeenCalledWith(
+      expect.objectContaining({
+        getText: expect.any(Function),
+      }),
+      expect.any(Array),
+      expect.objectContaining({ name: 'testbot' })
+    );
+
+    const receivedMessage = mockHandler.mock.calls[0][0];
+    expect(receivedMessage.getText()).toBe('hello bot');
   });
 });

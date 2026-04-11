@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Debug from 'debug';
 import Card from './Card';
-import RadialProgress from './RadialProgress';
 const debug = Debug('app:client:components:DaisyUI:DashboardWidgetSystem');
 
 interface Widget {
@@ -198,7 +197,7 @@ const SystemHealthWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate
         </ul>
       </div>
     ) : undefined}>
-      <div className="grid grid-cols-2 gap-4 justify-items-center">
+      <div className="space-y-3">
         {Object.entries(health).map(([key, value]) => (
           <div key={key} className="flex flex-col items-center gap-1">
             <RadialProgress
@@ -457,7 +456,7 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
 
       {/* Widget Palette */}
       {showWidgetPalette && (
-        <Card className="fixed top-20 right-4 z-40 w-80 bg-base-100 shadow-xl border border-base-300" title="Add Widget">
+        <Card className="fixed top-20 right-4 z-40 w-80" title="Add Widget">
           <div className="grid grid-cols-1 gap-2">
             {widgetTypes.map(type => (
               <button

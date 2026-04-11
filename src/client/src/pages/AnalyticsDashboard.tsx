@@ -12,7 +12,10 @@ import { SkeletonPage } from '../components/DaisyUI/Skeleton';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import Button from '../components/DaisyUI/Button';
-import { BarChart3, RefreshCw, ArrowDown, ArrowUp, MessageSquare, Users, Bot, CheckCircle2, XCircle, Clock, Activity } from 'lucide-react';
+import { BarChart3, RefreshCw } from 'lucide-react';
+import { useErrorToast } from '../components/DaisyUI/ToastNotification';
+import Card from '../components/DaisyUI/Card';
+import Select from '../components/DaisyUI/Select';
 
 const AnalyticsDashboard: React.FC = () => {
   const { messageFlow, performanceMetrics } = useWebSocket();
@@ -108,12 +111,8 @@ const AnalyticsDashboard: React.FC = () => {
     },
   ];
 
-  if (isLoading && !activityData) {
-    return <SkeletonPage statsCount={4} />;
-  }
-
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen bg-base-200 p-6">
       {/* Header */}
       <PageHeader
         title="Analytics Dashboard"
@@ -121,24 +120,25 @@ const AnalyticsDashboard: React.FC = () => {
         icon={BarChart3}
         gradient="secondary"
         actions={
-          <div className="flex gap-2">
+          <div className="flex gap-4">
             <Select
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
-              className="select-sm select-bordered"
-            >
-              <option value="1h">Last Hour</option>
-              <option value="24h">Last 24 Hours</option>
-              <option value="7d">Last 7 Days</option>
-              <option value="30d">Last 30 Days</option>
-            </Select>
+              options={[
+                { label: 'Last Hour', value: '1h' },
+                { label: 'Last 24 Hours', value: '24h' },
+                { label: 'Last 7 Days', value: '7d' },
+                { label: 'Last 30 Days', value: '30d' },
+              ]}
+              className="w-auto"
+            />
             <Button
               variant="ghost"
               size="sm"
               onClick={fetchAnalyticsData}
-              disabled={isLoading}
+              loading={isLoading}
             >
-              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className="w-4 h-4" /> Refresh
             </Button>
           </div>
         }
@@ -148,31 +148,27 @@ const AnalyticsDashboard: React.FC = () => {
       <StatsCards stats={usageMetricsCards} isLoading={isLoading} />
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Suspense fallback={<LoadingSpinner size="lg" />}>
-          <MetricChart
-            title="Message Volume"
-            data={messageVolumeData}
-            type="area"
-            color="var(--fallback-p,oklch(var(--p)/1))"
-            unit="msgs"
-            height={350}
-          />
-        </Suspense>
-        <Suspense fallback={<LoadingSpinner size="lg" />}>
-          <MetricChart
-            title="Response Time (Live)"
-            data={performanceMetrics.map(m => ({
-              timestamp: m.timestamp,
-              value: m.responseTime,
-              label: 'Latency',
-            }))}
-            type="line"
-            color="var(--fallback-er,oklch(var(--er)/1))"
-            unit="ms"
-            height={350}
-          />
-        </Suspense>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <MetricChart
+          title="Message Volume"
+          data={messageVolumeData}
+          type="area"
+          color="var(--fallback-p,oklch(var(--p)/1))"
+          unit="msgs"
+          height={350}
+        />
+        <MetricChart
+          title="Response Time (Live)"
+          data={performanceMetrics.map(m => ({
+            timestamp: m.timestamp,
+            value: m.responseTime,
+            label: 'Latency'
+          }))}
+          type="line"
+          color="var(--fallback-er,oklch(var(--er)/1))"
+          unit="ms"
+          height={350}
+        />
       </div>
 
       {/* Detailed Analytics Tables */}

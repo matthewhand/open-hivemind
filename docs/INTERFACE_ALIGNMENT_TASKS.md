@@ -49,7 +49,7 @@ export interface ILlmProvider {
 
 #### Option B: Add Missing Interface Methods
 - [ ] Add `validateCredentials(): Promise<boolean>` to `ILlmProvider` interface
-- [ ] Implement in [`OpenAiProvider`](../packages/llm-openai/src/openAiProvider.ts)
+- [ ] Implement in [`OpenAiProvider`](../packages/provider-openai/src/openAiProvider.ts)
 - [ ] Implement in [`FlowiseProvider`](../packages/llm-flowise/src/flowiseProvider.ts)
 - [ ] Implement in [`OpenWebUI`](../packages/llm-openwebui/src/openWebUIProvider.ts)
 - [ ] Add `generateResponse()` as alias to `generateChatCompletion()` for backward compatibility
@@ -68,7 +68,7 @@ export interface ILlmProvider {
 |------|--------|
 | `AGENTS.md` | Update interface documentation |
 | `src/llm/interfaces/ILlmProvider.ts` | Add methods (Option B) |
-| `packages/llm-openai/src/openAiProvider.ts` | Implement new methods (Option B) |
+| `packages/provider-openai/src/openAiProvider.ts` | Implement new methods (Option B) |
 | `packages/llm-flowise/src/flowiseProvider.ts` | Implement new methods (Option B) |
 | `packages/llm-openwebui/src/openWebUIProvider.ts` | Implement new methods (Option B) |
 
@@ -92,9 +92,9 @@ src/integrations/{discord,slack,mattermost}/
 
 **Actual Structure (as of PR #2393 — `src/integrations/` has been removed):**
 ```
-packages/message-discord/src/DiscordService.ts    # Main Discord implementation
-packages/message-slack/src/SlackService.ts        # Main Slack implementation
-packages/message-mattermost/src/MattermostService.ts  # Main Mattermost implementation
+packages/adapter-discord/src/DiscordService.ts    # Main Discord implementation
+packages/adapter-slack/src/SlackService.ts        # Main Slack implementation
+packages/adapter-mattermost/src/MattermostService.ts  # Main Mattermost implementation
 packages/llm-flowise/src/                         # Flowise LLM provider
 packages/llm-openwebui/src/                       # OpenWebUI LLM provider
 packages/llm-openswarm/src/                       # OpenSwarm LLM provider

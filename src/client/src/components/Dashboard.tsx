@@ -232,37 +232,11 @@ const Dashboard: React.FC = () => {
         {/* System Status Footer */}
         {status && (
           <Card title="🖥️ System Information">
-            <Stats className="w-full shadow-sm bg-base-200/50">
-              <Stat
-                title="Active Bots"
-                value={`${activeBots}/${bots.length}`}
-                description="currently active"
-                valueClassName="text-lg"
-                figure={
-                  <RadialProgress
-                    value={bots.length > 0 ? Math.round((activeBots / bots.length) * 100) : 0}
-                    size="3rem"
-                    thickness="0.25rem"
-                    color={activeBots === bots.length ? 'success' : activeBots > 0 ? 'warning' : 'error'}
-                    className="text-[0.65rem] font-bold"
-                  >
-                    {bots.length > 0 ? Math.round((activeBots / bots.length) * 100) : 0}%
-                  </RadialProgress>
-                }
-              />
-              <Stat
-                title="System Uptime"
-                value={<>{uptimeHours}h {uptimeMinutes}m</>}
-                description="System running smoothly"
-                valueClassName="text-lg"
-              />
-              <Stat
-                title="Message Volume"
-                value={totalMessages.toLocaleString()}
-                description="processed successfully"
-                valueClassName="text-lg"
-              />
-            </Stats>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Stat title="Uptime" value={<>{uptimeHours}h {uptimeMinutes}m</>} valueClassName="text-lg" description="System running smoothly" />
+              <Stat title="Total Bots" value={bots.length} valueClassName="text-lg" description={`${activeBots} currently active`} />
+              <Stat title="Message Volume" value={totalMessages.toLocaleString()} valueClassName="text-lg" description="processed successfully" />
+            </div>
           </Card>
         )}
       </div>

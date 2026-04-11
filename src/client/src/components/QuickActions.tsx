@@ -249,7 +249,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
         onClose={() => { setExportDialog(false); setIncludeSensitive(false); }}
         title="Export Configuration"
         actions={[
-          { label: 'Cancel', onClick: () => { setExportDialog(false); setIncludeSensitive(false); }, variant: 'ghost' },
+          { label: 'Cancel', onClick: () => setExportDialog(false), variant: 'ghost' },
           { label: 'Export', onClick: handleExportConfig, variant: 'primary', disabled: !exportFilename.trim() || isLoading('export'), loading: isLoading('export') },
         ]}
       >
@@ -266,22 +266,6 @@ const QuickActions: React.FC<QuickActionsProps> = ({ onRefresh }) => {
             />
             <label className="label">
               <span className="label-text-alt">File will be saved as .json</span>
-            </label>
-          </div>
-
-          <div className="form-control">
-            <label className="label cursor-pointer">
-              <div>
-                <span className="label-text font-medium">Include Sensitive Values</span>
-                <p className="text-xs text-base-content/60">
-                  Export API keys, tokens, and secrets in plaintext. By default, these are redacted.
-                </p>
-              </div>
-              <Toggle
-                color="warning"
-                checked={includeSensitive}
-                onChange={(e) => setIncludeSensitive(e.target.checked)}
-              />
             </label>
           </div>
         </div>

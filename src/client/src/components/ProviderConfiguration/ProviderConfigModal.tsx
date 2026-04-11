@@ -26,9 +26,6 @@ import { apiService } from '../../services/api';
 import { useConfigDiff } from '../../hooks/useConfigDiff';
 import { ConfigDiffConfirmDialog } from '../ConfigDiffViewer';
 import Select from '../DaisyUI/Select';
-import { useAvailableProviderTypes } from '../../hooks/useAvailableProviderTypes';
-import type { ProviderSchema as ApiProviderSchema } from '../../hooks/useAvailableProviderTypes';
-import { DynamicSchemaForm } from '../DynamicSchemaForm';
 
 interface ProviderConfigModalProps {
   modalState: ProviderModalState;
@@ -485,11 +482,14 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value as LLMProviderType)}
             >
-              {providerTypes.map(type => (
-                <option key={type} value={type}>
-                  {getProviderDisplayName(type)}
-                </option>
-              ))}
+              {providerTypes.map(type => {
+                const typeConfig = (configs as any)[type];
+                return (
+                  <option key={type} value={type}>
+                    {typeConfig.displayName || typeConfig.name}
+                  </option>
+                );
+              })}
             </Select>
           </div>
         ) : (
