@@ -25,6 +25,7 @@ import { apiService } from '../../services/api';
 import { useConfigDiff } from '../../hooks/useConfigDiff';
 import { ConfigDiffConfirmDialog } from '../ConfigDiffViewer';
 import Select from '../DaisyUI/Select';
+import { Alert } from '../DaisyUI/Alert';
 import { useAvailableProviderTypes } from '../../hooks/useAvailableProviderTypes';
 import type { ProviderSchema as ApiProviderSchema } from '../../hooks/useAvailableProviderTypes';
 import { DynamicSchemaForm } from '../DynamicSchemaForm';
