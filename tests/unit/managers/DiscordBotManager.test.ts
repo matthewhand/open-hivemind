@@ -23,11 +23,23 @@ jest.mock('discord.js', () => ({
 }));
 
 function makeManager(): DiscordBotManager {
-  return new DiscordBotManager({
-    errorTypes: { ConfigError: class extends Error {}, NetworkError: class extends Error {} },
-    getAllBotConfigs: () => [],
-    isBotDisabled: () => false,
-  } as any);
+  // Clear env vars that might cause auto-loading of bots in constructor
+  const oldToken = process.env.DISCORD_BOT_TOKEN;
+  const oldProvider = process.env.MESSAGE_PROVIDER;
+  delete process.env.DISCORD_BOT_TOKEN;
+  delete process.env.MESSAGE_PROVIDER;
+
+  try {
+    return new DiscordBotManager({
+      errorTypes: { ConfigError: class extends Error {}, NetworkError: class extends Error {} },
+      getAllBotConfigs: () => [],
+      isBotDisabled: () => false,
+    } as any);
+  } finally {
+    // Restore env vars if needed, though usually tests should be isolated
+    process.env.DISCORD_BOT_TOKEN = oldToken;
+    process.env.MESSAGE_PROVIDER = oldProvider;
+  }
 }
 
 function injectBot(manager: DiscordBotManager, name: string, wsStatus = 0): Bot {
