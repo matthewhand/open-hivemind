@@ -86,8 +86,11 @@ describe('IdleResponseManager Integration Tests', () => {
   let idleResponseManager: IdleResponseManager;
   let mockMessengerService: jest.Mocked<IMessengerService>;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.clearAllMocks();
+
+    // Ensure idle responses are enabled for all integration tests regardless of .env
+    process.env.IDLE_RESPONSE_ENABLED = 'true';
 
     // Reset singleton instance
     (IdleResponseManager as any).instance = undefined;
@@ -103,7 +106,7 @@ describe('IdleResponseManager Integration Tests', () => {
     (handleMessage as jest.Mock).mockResolvedValue('Integration test response');
 
     idleResponseManager = IdleResponseManager.getInstance();
-    idleResponseManager.initialize(['integration-messenger']);
+    await idleResponseManager.initialize(['integration-messenger']);
   });
 
   afterEach(() => {

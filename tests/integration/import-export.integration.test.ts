@@ -496,6 +496,7 @@ describe('Import/Export Integration Tests', () => {
       };
 
       mockDbManager.getBotConfiguration.mockResolvedValue(complexConfig);
+      mockDbManager.getBotConfigurationsBulk.mockResolvedValue([complexConfig]);
 
       const exportResult = await service.exportConfigurations(
         [1],
