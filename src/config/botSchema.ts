@@ -33,14 +33,14 @@ export const botSchema = {
 
   // Persona configuration
   PERSONA: {
-    doc: 'Bot persona key',
+    doc: 'Persona ID (UUID) to use for this bot. The ID is resolved at runtime by PersonaManager to a full Persona object containing a system-prompt template, response-behaviour settings, traits, and category.',
     format: String,
     default: 'default',
     env: 'BOTS_{name}_PERSONA',
   },
 
   SYSTEM_INSTRUCTION: {
-    doc: 'Bot system instruction/prompt',
+    doc: 'Optional system instruction that overrides the system-prompt template supplied by the selected Persona. When set this value replaces Persona.systemPrompt entirely, so the bot still inherits all other Persona fields (responseBehavior, traits, etc.).',
     format: String,
     default: '',
     env: 'BOTS_{name}_SYSTEM_INSTRUCTION',
