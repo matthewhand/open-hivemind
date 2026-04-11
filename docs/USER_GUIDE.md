@@ -33,6 +33,7 @@ Welcome to the Open-Hivemind User Guide. This document provides a detailed walkt
 - [AI & Analytics](#ai--analytics)
   - [Integrations](#integrations)
 - [Developer & Tools](#developer--tools)
+  - [API Documentation](#api-documentation)
 - [Documentation Maintenance](#documentation-maintenance)
 
 ---
@@ -203,7 +204,6 @@ Browse, install, and manage extensions and packages for your application.
 *   **Install from URL**: Manually install a custom package by providing its GitHub repository URL.
 ![Install from URL Modal](screenshots/marketplace-install-modal.png)
 *   **Filter & Manage**: Easily filter available packages by type (e.g., LLM, Tool) and update or uninstall existing ones.
-
 ---
 
 ## System
@@ -370,6 +370,15 @@ A detailed view of all system integrations and configurations.
 ### [UI Components](/admin/showcase)
 A reference for developers extending the WebUI.
 *   **Component Library**: View available UI elements (buttons, inputs, cards) and their usage.
+
+### [API Documentation](/admin/api-docs)
+View dynamic API documentation generated from route introspection.
+
+![API Docs Page](screenshots/api-docs-page.png)
+
+*   **Endpoint Browser**: Navigate through available API endpoints categorized by groups.
+*   **Live Testing**: Test API calls directly from the browser with request bodies and parameters.
+*   **cURL Examples**: Automatically generated cURL commands for each endpoint.
 
 ### [System Backups & Export](/admin/export)
 Manage system configuration backups and download API documentation.
