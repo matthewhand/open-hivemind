@@ -29,6 +29,8 @@ describe('shouldReplyToMessage', () => {
     global.Date.now = originalDateNow;
     jest.restoreAllMocks();
     jest.clearAllMocks();
+    SwarmCoordinator.getInstance().clearCache();
+
     process.env.FORCE_REPLY = 'false';
     clearBotActivity();
 
