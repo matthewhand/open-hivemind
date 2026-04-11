@@ -184,13 +184,22 @@ describe('openAiProvider', () => {
         if (key === 'OPENAI_API_KEY') return undefined;
         return 'default-value';
       });
-      
+
+      // Also clear the process.env fallback so the provider has no key source
+      const savedEnvKey = process.env.OPENAI_API_KEY;
+      delete process.env.OPENAI_API_KEY;
+
       // Create a new provider instance to trigger the configuration check
       const providerWithoutKey = new OpenAiProvider();
-      
-      // Should throw when trying to use the provider without API key
-      await expect(providerWithoutKey.generateChatCompletion('test', []))
-        .rejects.toThrow(/API key/i);
+
+      try {
+        // Should throw when trying to use the provider without API key
+        await expect(providerWithoutKey.generateChatCompletion('test', []))
+          .rejects.toThrow(/API key/i);
+      } finally {
+        // Restore env var so other tests are not affected
+        if (savedEnvKey !== undefined) process.env.OPENAI_API_KEY = savedEnvKey;
+      }
     });
 
     it('should retry on failure and eventually throw', async () => {
