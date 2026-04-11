@@ -588,16 +588,20 @@ router.post(
       res.setHeader('Connection', 'keep-alive');
       res.flushHeaders();
 
-      const messages: any[] = systemPrompt
-        ? [{ role: 'system', content: systemPrompt }]
-        : [];
+      const messages: any[] = systemPrompt ? [{ role: 'system', content: systemPrompt }] : [];
 
       const start = Date.now();
       let fullReply = '';
 
       // If the provider supports streaming, use it
-      if ('generateChatCompletionStream' in provider && typeof (provider as any).generateChatCompletionStream === 'function') {
-        const stream = await (provider as any).generateChatCompletionStream(message.trim(), messages);
+      if (
+        'generateChatCompletionStream' in provider &&
+        typeof (provider as any).generateChatCompletionStream === 'function'
+      ) {
+        const stream = await (provider as any).generateChatCompletionStream(
+          message.trim(),
+          messages
+        );
         for await (const chunk of stream) {
           // Check if client disconnected
           if (res.writableEnded) return;
@@ -611,7 +615,8 @@ router.post(
       } else {
         // Fallback: non-streaming provider
         const response: any = await provider.generateChatCompletion(message.trim(), messages);
-        fullReply = typeof response === 'string' ? response : (response?.content || response?.message || '');
+        fullReply =
+          typeof response === 'string' ? response : response?.content || response?.message || '';
         // Send the full response as a single chunk
         res.write(`data: ${JSON.stringify({ token: fullReply, done: true })}\n\n`);
       }
@@ -619,11 +624,13 @@ router.post(
       const latency = Date.now() - start;
 
       // Send final metadata
-      res.write(`data: ${JSON.stringify({
-        done: true,
-        model: (config.model as string) || profile.provider,
-        latency,
-      })}\n\n`);
+      res.write(
+        `data: ${JSON.stringify({
+          done: true,
+          model: (config.model as string) || profile.provider,
+          latency,
+        })}\n\n`
+      );
 
       res.end();
       return;
@@ -631,7 +638,10 @@ router.post(
       const hivemindError = ErrorUtils.toHivemindError(err);
 
       // Handle 429 rate-limit specifically
-      if (hivemindError.message?.includes('429') || hivemindError.message?.toLowerCase().includes('rate limit')) {
+      if (
+        hivemindError.message?.includes('429') ||
+        hivemindError.message?.toLowerCase().includes('rate limit')
+      ) {
         const retryAfter = 60; // default
         res.status(HTTP_STATUS.TOO_MANY_REQUESTS).json({
           error: 'Rate limited',
