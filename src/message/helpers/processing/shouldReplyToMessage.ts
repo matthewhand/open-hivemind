@@ -1,5 +1,6 @@
 import Debug from 'debug';
 import messageConfig from '@config/messageConfig';
+import { MessageBus } from '../../../events/MessageBus';
 import { PersonaManager, type PersonaResponseBehavior } from '../../../managers/PersonaManager';
 import TypingMonitor from '../monitoring/TypingMonitor';
 import { shouldReplyToUnsolicitedMessage } from '../unsolicitedMessageHandler';
@@ -549,6 +550,20 @@ export async function shouldReplyToMessage(
     isDirectlyAddressed,
     hasPostedRecently
   );
+
+  // Emit orchestration decision for live thinking stream
+  const bus = MessageBus.getInstance();
+  bus.emit('pipeline:decision', {
+    botName: nameCandidates[0] || 'Unknown',
+    shouldReply: decision,
+    reason: prose,
+    probabilityRoll: Number(roll.toPrecision(3)),
+    threshold: Number(chance.toPrecision(3)),
+    meta: {
+      ...modsObject,
+      channelId: message.getChannelId(),
+    },
+  });
 
   return {
     shouldReply: decision,

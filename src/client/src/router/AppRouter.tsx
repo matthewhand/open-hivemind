@@ -48,6 +48,7 @@ const MessageProvidersPage = lazy(() => import('../pages/MessageProvidersPage'))
 const LLMProvidersPage = lazy(() => import('../pages/LLMProvidersPage'));
 const MemoryProvidersPage = lazy(() => import('../pages/MemoryProvidersPage'));
 const ToolProvidersPage = lazy(() => import('../pages/ToolProvidersPage'));
+const ResponseProfilesPage = lazy(() => import('../pages/ResponseProfilesPage'));
 const SpecsPage = lazy(() => import('../pages/SpecsPage'));
 const SpecDetailPage = lazy(() => import('../pages/SpecDetailPage'));
 const AuditPage = lazy(() => import('../pages/AuditPage'));
@@ -136,6 +137,7 @@ const AppRouter: React.FC = () => {
           <Route path="message" element={<RouteErrorBoundary pageName="Message"><MessageProvidersPage /></RouteErrorBoundary>} />
           <Route path="memory" element={<RouteErrorBoundary pageName="Memory"><MemoryProvidersPage /></RouteErrorBoundary>} />
           <Route path="tool" element={<RouteErrorBoundary pageName="Tool"><ToolProvidersPage /></RouteErrorBoundary>} />
+          <Route path="config/response-profiles" element={<RouteErrorBoundary pageName="Response Profiles"><ResponseProfilesPage /></RouteErrorBoundary>} />
 
           {/* Personas and Guards are standalone pages */}
           <Route path="personas" element={<RouteErrorBoundary pageName="Personas"><PersonasPage /></RouteErrorBoundary>} />

@@ -86,4 +86,15 @@ export type MessageEvents = {
 
   /** An error occurred at some stage of processing. */
   'message:error': MessageContext & { error: Error; stage: string };
+
+  /** Orchestration decision details for live thinking stream. */
+  'pipeline:decision': {
+    botName: string;
+    shouldReply: boolean;
+    reason: string;
+    confidenceScore?: number;
+    probabilityRoll: number;
+    threshold: number;
+    meta?: Record<string, unknown>;
+  };
 };

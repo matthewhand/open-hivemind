@@ -79,6 +79,13 @@ export const hivemindNavItems: NavItem[] = [
     visible: true,
   },
   {
+    id: 'response-profiles',
+    label: 'Response Profiles',
+    icon: <NavIcon><MessageSquare className="w-4 h-4" /></NavIcon>,
+    path: '/admin/config/response-profiles',
+    visible: true,
+  },
+  {
     id: 'guards',
     label: 'Guards',
     icon: <NavIcon><HeartPulse className="w-4 h-4" /></NavIcon>,

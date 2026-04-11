@@ -19,6 +19,7 @@ import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService, ActivityEvent, ActivityResponse } from '../services/api';
 import useUrlParams from '../hooks/useUrlParams';
 import { useQuery } from '@tanstack/react-query';
+import { useWebSocket } from '../hooks/useWebSocket';
 
 const ActivityPage: React.FC = () => {
   const [data, setData] = useState<ActivityResponse | null>(null);
@@ -26,6 +27,26 @@ const ActivityPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'table' | 'timeline'>('table');
   const [autoRefresh, setAutoRefresh] = useState(false);
+
+  // Live Orchestration State
+  const [orchestrationLogs, setOrchestrationLogs] = useState<any[]>([]);
+  const { socket, connect } = useWebSocket();
+
+  useEffect(() => {
+    connect();
+    if (socket) {
+      const handleDecision = (decision: any) => {
+        setOrchestrationLogs(prev => [
+          { ...decision, timestamp: new Date().toISOString() },
+          ...prev
+        ].slice(0, 50));
+      };
+      socket.on('pipeline_decision', handleDecision);
+      return () => {
+        socket.off('pipeline_decision', handleDecision);
+      };
+    }
+  }, [socket, connect]);
 
   // Filter State (URL-persisted)
   const { values: urlParams, setValue: setUrlParam } = useUrlParams({
@@ -431,6 +452,31 @@ const ActivityPage: React.FC = () => {
           )}
         </div>
       </SearchFilterBar>
+
+      {/* Live Orchestration Log (New Feature) */}
+      <Card title="Live Orchestration Log" icon={<RefreshCw className={`w-5 h-5 ${orchestrationLogs.length > 0 ? 'animate-spin-slow' : ''}`} />}>
+        <div className="max-h-60 overflow-y-auto bg-base-300 rounded-lg p-4 font-mono text-xs space-y-1">
+          {orchestrationLogs.length === 0 ? (
+            <div className="text-base-content/30 italic">Waiting for orchestration events...</div>
+          ) : (
+            orchestrationLogs.map((log, i) => (
+              <div key={i} className="flex gap-4 border-b border-base-100/10 pb-1">
+                <span className="text-base-content/40 w-24 shrink-0">{new Date(log.timestamp).toLocaleTimeString()}</span>
+                <span className="text-secondary w-20 shrink-0 font-bold">[{log.botName}]</span>
+                <span className={`w-16 shrink-0 ${log.shouldReply ? 'text-success' : 'text-error'}`}>
+                  {log.shouldReply ? 'REPLY' : 'IGNORE'}
+                </span>
+                <span className="text-base-content/70">{log.reason}</span>
+                {log.probabilityRoll !== undefined && (
+                  <span className="text-base-content/40 ml-auto">
+                    (Roll: {(log.probabilityRoll * 100).toFixed(0)}% / Thr: {(log.threshold * 100).toFixed(0)}%)
+                  </span>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </Card>
 
       {/* Content */}
       {loading && !data ? (

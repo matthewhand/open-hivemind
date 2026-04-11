@@ -63,20 +63,36 @@ export class WebhookService implements IMessengerService {
 
   /**
    * Method called by the webhook route handler when an incoming request is received.
+   * Supports both generic and Slack-formatted payloads.
    */
   async handleIncomingWebhook(payload: any, channelId?: string): Promise<string> {
     if (!this.messageHandler) {
       return 'No message handler registered';
     }
 
-    const text = payload.text || payload.message || payload.content || '';
+    let text = payload.text || payload.message || payload.content || '';
+
+    // Handle Slack attachments if present
+    if (payload.attachments && Array.isArray(payload.attachments)) {
+      const attachmentText = payload.attachments
+        .map((a: any) => a.text || a.fallback || '')
+        .filter(Boolean)
+        .join('\n');
+
+      if (attachmentText) {
+        text = text ? `${text}\n${attachmentText}` : attachmentText;
+      }
+    }
+
     if (!text) {
       return 'No text content found in payload';
     }
 
+    // Mapping Slack 'username' to author name (already supported, but kept for clarity)
     const userId = payload.userId || payload.user || 'webhook-user';
     const userName = payload.userName || payload.username || 'Webhook User';
-    const effectiveChannelId = channelId || payload.channelId || payload.channel || this.getDefaultChannel();
+    const effectiveChannelId =
+      channelId || payload.channelId || payload.channel || this.getDefaultChannel();
 
     // Construct a minimal IMessage-compatible object
     const mockMessage: IMessage = {

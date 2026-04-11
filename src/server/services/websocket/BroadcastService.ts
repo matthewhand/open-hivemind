@@ -4,6 +4,7 @@ import Debug from 'debug';
 import type { Socket, Server as SocketIOServer } from 'socket.io';
 import { inject, injectable, singleton } from 'tsyringe';
 import { BotConfigurationManager } from '../../../config/BotConfigurationManager';
+import { MessageBus } from '../../../events/MessageBus';
 import ApiMonitorService, { type EndpointStatus } from '../../../services/ApiMonitorService';
 import DemoModeService from '../../../services/DemoModeService';
 import type { BotConfig } from '../../../types/config';
@@ -54,6 +55,19 @@ export class BroadcastService {
     @inject(DemoModeService) private demoModeService: DemoModeService
   ) {
     this.setupApiMonitoring();
+    this.setupMessageBus();
+  }
+
+  private setupMessageBus(): void {
+    MessageBus.getInstance().on('pipeline:decision', (decision) => {
+      const currentIo = this.io();
+      if (currentIo && this.connectedClients() > 0) {
+        currentIo.emit('pipeline_decision', {
+          ...decision,
+          timestamp: new Date().toISOString(),
+        });
+      }
+    });
   }
 
   // Used strictly by test mocks that inject a mock ApiMonitorService

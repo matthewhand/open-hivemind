@@ -360,7 +360,6 @@ router.delete('/memory-profiles/:key', configLimiter, validateRequest(MemoryProf
       );
   }
 }));
-
 // -- Tool Profiles CRUD --
 
 router.get('/tool-profiles', asyncErrorHandler(async (req, res) => {
@@ -382,6 +381,62 @@ router.get('/tool-profiles', asyncErrorHandler(async (req, res) => {
   }
 }));
 
+// -- Response Profiles CRUD --
+
+const responseProfileManager = require('../../../config/responseProfileManager');
+
+router.get('/response-profiles', asyncErrorHandler(async (req, res) => {
+  try {
+    const profiles = responseProfileManager.getResponseProfiles();
+    return res.json(ApiResponse.success(profiles));
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res
+      .status(500)
+      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'RESPONSE_PROFILES_GET_ERROR'));
+  }
+}));
+
+router.post('/response-profiles', configLimiter, asyncErrorHandler(async (req, res) => {
+  try {
+    const profile = responseProfileManager.createResponseProfile(req.body);
+    broadcastConfigUpdate('response-profiles', 'create', profile.key);
+    return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success({ profile }));
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res
+      .status(500)
+      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'RESPONSE_PROFILE_CREATE_ERROR'));
+  }
+}));
+
+router.put('/response-profiles/:key', configLimiter, asyncErrorHandler(async (req, res) => {
+  try {
+    const profile = responseProfileManager.updateResponseProfile(req.params.key, req.body);
+    broadcastConfigUpdate('response-profiles', 'update', req.params.key);
+    return res.json(ApiResponse.success({ profile }));
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res
+      .status(500)
+      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'RESPONSE_PROFILE_UPDATE_ERROR'));
+  }
+}));
+
+router.delete('/response-profiles/:key', configLimiter, asyncErrorHandler(async (req, res) => {
+  try {
+    responseProfileManager.deleteResponseProfile(req.params.key);
+    broadcastConfigUpdate('response-profiles', 'delete', req.params.key);
+    return res.json(ApiResponse.success());
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res
+      .status(500)
+      .json(ApiResponse.error(ErrorUtils.getMessage(hivemindError), 'RESPONSE_PROFILE_DELETE_ERROR'));
+  }
+}));
+
+export default router;
 router.post('/tool-profiles', configLimiter, validateRequest(CreateToolProfileSchema), asyncErrorHandler(async (req, res) => {
   try {
     const newProfile = req.body;

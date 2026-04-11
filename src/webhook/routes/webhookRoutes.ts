@@ -157,4 +157,54 @@ export function configureWebhookRoutes(
       }
     }
   );
+
+  /**
+   * Slack-compatible webhook endpoint.
+   * Format: { "text": "...", "username": "...", "icon_emoji": "...", "attachments": [...] }
+   */
+  app.post(
+    '/webhook/slack',
+    verifyWebhookToken,
+    verifyIpWhitelist,
+    async (req: Request, res: Response) => {
+      debug('Received Slack-compatible webhook message:', req.body);
+
+      try {
+        // If the service has a direct handler for incoming webhooks, use it
+        if (typeof (messageService as any).handleIncomingWebhook === 'function') {
+          const result = await (messageService as any).handleIncomingWebhook(
+            req.body,
+            targetChannel
+          );
+          return res.status(200).json({ success: true, result });
+        }
+
+        // Fallback: Generic processing (if service doesn't handle webhooks directly)
+        const { text, username, attachments } = req.body;
+        let content = text || '';
+
+        if (!content && attachments && Array.isArray(attachments)) {
+          content = attachments
+            .map((a: any) => a.text || a.fallback || '')
+            .filter(Boolean)
+            .join('\n');
+        }
+
+        if (!content) {
+          return res
+            .status(400)
+            .json({ error: 'Missing Slack message content (text or attachments)' });
+        }
+
+        const channelId = targetChannel || messageService.getDefaultChannel?.() || '';
+        const author = username || 'Slack Webhook';
+        await messageService.sendPublicAnnouncement(channelId, `[${author}] ${content}`);
+        return res.status(200).json({ success: true, mode: 'announcement' });
+      } catch (error: unknown) {
+        const msg = error instanceof Error ? error.message : String(error);
+        debug('Failed to process Slack webhook message:', msg);
+        return res.status(500).json({ error: 'Failed to process Slack message', details: msg });
+      }
+    }
+  );
 }
