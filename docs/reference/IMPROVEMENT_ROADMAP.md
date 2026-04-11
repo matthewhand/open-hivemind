@@ -39,7 +39,7 @@ Low impact, low urgency - Address within 10-12 weeks
 
 **Issues Identified:**
 - Hardcoded default admin password in `src/auth/AuthManager.ts`
-- Command injection vulnerabilities in `src/integrations/openswarm/SwarmInstaller.ts`
+- Command injection vulnerabilities in `packages/llm-openswarm/src/SwarmInstaller.ts`
 - Insecure localhost authentication bypass
 - Missing input sanitization middleware
 

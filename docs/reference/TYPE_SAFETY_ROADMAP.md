@@ -43,11 +43,11 @@ ErrorUtils.getStatusCode(hivemindError) // instead of hivemindError.statusCode
 
 | File | Lines | Cast Pattern |
 |------|-------|--------------|
-| `src/integrations/slack/SlackBot.ts` | 47, 64, 81 | `ErrorUtils.toHivemindError(error) as unknown` |
-| `src/integrations/slack/SlackEventListener.ts` | 75 | `ErrorUtils.toHivemindError(error) as unknown` |
-| `src/integrations/slack/SlackBotManager.ts` | 80, 269 | `(hivemindError as unknown as Record<string, unknown>).code` |
-| `src/integrations/slack/SlackEventProcessor.ts` | 135, 233, 263, 285 | `(hivemindError as unknown as Record<string, unknown>).code` |
-| `src/integrations/slack/SlackMessageProcessor.ts` | 152, 194, 245 | `(hivemindError as unknown as Record<string, unknown>).code` |
+| `packages/message-slack/src/SlackBot.ts` | 47, 64, 81 | `ErrorUtils.toHivemindError(error) as unknown` |
+| `packages/message-slack/src/SlackEventListener.ts` | 75 | `ErrorUtils.toHivemindError(error) as unknown` |
+| `packages/message-slack/src/SlackBotManager.ts` | 80, 269 | `(hivemindError as unknown as Record<string, unknown>).code` |
+| `packages/message-slack/src/SlackEventProcessor.ts` | 135, 233, 263, 285 | `(hivemindError as unknown as Record<string, unknown>).code` |
+| `packages/message-slack/src/SlackMessageProcessor.ts` | 152, 194, 245 | `(hivemindError as unknown as Record<string, unknown>).code` |
 | `src/common/ErrorUtils.ts` | 29 | `(error as unknown).code` |
 | `src/utils/errorResponse.ts` | 190 | `(error.details as unknown).response` |
 
@@ -73,9 +73,9 @@ export interface IConfigAccessor {
 | File | Lines | Cast Pattern |
 |------|-------|--------------|
 | `src/llm/getLlmProvider.ts` | 99 | `llmConfig.get('LLM_PROVIDER') as unknown` |
-| `src/integrations/mattermost/MattermostService.ts` | 347 | `(messageConfig as unknown).get(...)` |
+| `packages/message-mattermost/src/MattermostService.ts` | 347 | `(messageConfig as unknown).get(...)` |
 | `src/config/messageConfig.ts` | various | config value typed as `unknown` |
-| `src/integrations/slack/SlackEventListener.ts` | 32 | `'configuration' as unknown` |
+| `packages/message-slack/src/SlackEventListener.ts` | 32 | `'configuration' as unknown` |
 
 ---
 
@@ -87,7 +87,7 @@ export interface IConfigAccessor {
 
 **Proposed interface**:
 ```typescript
-// NEW or MODIFY: src/types/botInfo.ts or src/integrations/slack/types.ts
+// NEW or MODIFY: src/types/botInfo.ts or packages/message-slack/src/types.ts
 export interface IBotInfo {
   botUserId?: string;
   webClient?: WebClient;  // from @slack/web-api
@@ -105,9 +105,9 @@ export interface IBotInfo {
 | File | Lines | Cast Pattern |
 |------|-------|--------------|
 | `src/admin/adminRoutes.ts` | 68–69, 228, 279–280 | `(Discord as unknown).DiscordService.getInstance()`, `bots as unknown[]` |
-| `src/integrations/slack/modules/ISlackMessageIO.ts` | 179, 243, 346 | `bots[0] as unknown as BotInfo` |
-| `src/integrations/slack/modules/ISlackBotFacade.ts` | 33 | `botInfo as unknown as { botUserId?; webClient? }` |
-| `src/integrations/slack/SlackService.ts` | 989, 999 | `new (SlackBotManager as unknown)(...)`, `{} as unknown as SlackBotManager` |
+| `packages/message-slack/src/modules/ISlackMessageIO.ts` | 179, 243, 346 | `bots[0] as unknown as BotInfo` |
+| `packages/message-slack/src/modules/ISlackBotFacade.ts` | 33 | `botInfo as unknown as { botUserId?; webClient? }` |
+| `packages/message-slack/src/SlackService.ts` | 989, 999 | `new (SlackBotManager as unknown)(...)`, `{} as unknown as SlackBotManager` |
 
 ---
 
@@ -131,11 +131,11 @@ if (isSlackMessage(message)) { /* message is now SlackMessage */ }
 
 | File | Lines | Cast Pattern |
 |------|-------|--------------|
-| `src/integrations/slack/SlackService.ts` | 406, 452, 463 | `message as unknown as SlackMessage`, `historyMessages as unknown as IMessage[]` |
-| `src/integrations/slack/events/SlackMessageHandler.ts` | 101 | `historyMessages as unknown as IMessage[]` |
-| `src/integrations/openwebui/directClient.ts` | 35 | `h as unknown as { role?: string }` |
-| `src/integrations/slack/SlackSignatureVerifier.ts` | 49 | `req as unknown as { rawBody?: string }` |
-| `src/integrations/slack/SlackWelcomeHandler.ts` | 346 | `options as unknown as Parameters<...>` |
+| `packages/message-slack/src/SlackService.ts` | 406, 452, 463 | `message as unknown as SlackMessage`, `historyMessages as unknown as IMessage[]` |
+| `packages/message-slack/src/events/SlackMessageHandler.ts` | 101 | `historyMessages as unknown as IMessage[]` |
+| `packages/llm-openwebui/src/directClient.ts` | 35 | `h as unknown as { role?: string }` |
+| `packages/message-slack/src/SlackSignatureVerifier.ts` | 49 | `req as unknown as { rawBody?: string }` |
+| `packages/message-slack/src/SlackWelcomeHandler.ts` | 346 | `options as unknown as Parameters<...>` |
 
 ---
 
@@ -167,7 +167,7 @@ if (isSlackMessage(message)) { /* message is now SlackMessage */ }
 | `src/services/ApiMonitorService.ts` | 11, 15 | `fetch as unknown as FetchImplementation` |
 | `src/common/logger.ts` | 67 | `error as unknown as Record<string, unknown>` |
 | `src/common/StructuredLogger.ts` | 73 | `error as unknown as Record<string, unknown>` |
-| `src/integrations/slack/modules/ISlackMessageIO.ts` | 79 | `next as unknown as Promise<unknown>` |
+| `packages/message-slack/src/modules/ISlackMessageIO.ts` | 79 | `next as unknown as Promise<unknown>` |
 | Various route files | multiple | `(statuses as any)[provider.id]` patterns |
 
 ---
