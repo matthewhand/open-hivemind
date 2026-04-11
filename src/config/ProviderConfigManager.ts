@@ -85,20 +85,12 @@ class ProviderConfigManager {
         this.store = { message: [], llm: [] };
         this.saveConfig();
       }
-      this.initializeProviderMap();
       this.initialized = true;
     } catch (error) {
       debug('Error loading provider config:', error);
       this.store = { message: [], llm: [] };
-    }
-  }
-
-  private saveConfig(): void {
-    try {
-      fs.writeFileSync(this.configPath, JSON.stringify(this.store, null, 2));
-      debug('Saved provider config');
-    } catch (error) {
-      debug('Error saving provider config:', error);
+    } finally {
+      this.initializeProviderMap();
     }
   }
 
@@ -112,6 +104,15 @@ class ProviderConfigManager {
     }
     for (const p of this.store.llm) {
       this.providerMap.set(p.id, p);
+    }
+  }
+
+  private saveConfig(): void {
+    try {
+      fs.writeFileSync(this.configPath, JSON.stringify(this.store, null, 2));
+      debug('Saved provider config');
+    } catch (error) {
+      debug('Error saving provider config:', error);
     }
   }
 
@@ -219,10 +220,9 @@ class ProviderConfigManager {
       return null;
     }
 
-    // Merge updates
-    Object.assign(target, updates);
-    // Ensure category/id/type are immutable if needed? For now allow update except ID
-    target.id = id;
+    // Merge updates but protect immutable fields
+    const { id: _id, category: _category, type: _type, ...safeUpdates } = updates as any;
+    Object.assign(target, safeUpdates);
 
     this.saveConfig();
     return target;

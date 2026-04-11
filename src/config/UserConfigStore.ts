@@ -47,6 +47,20 @@ export class UserConfigStore {
     this.initializeBotMap();
   }
 
+  /**
+   * Initialize the internal bot map for O(1) lookups.
+   */
+  private initializeBotMap(): void {
+    this.botMap.clear();
+    if (this.config.bots) {
+      for (const bot of this.config.bots) {
+        if (bot.name) {
+          this.botMap.set(bot.name, bot);
+        }
+      }
+    }
+  }
+
   public static getInstance(): UserConfigStore {
     if (!UserConfigStore.instance) {
       UserConfigStore.instance = new UserConfigStore();
@@ -67,20 +81,6 @@ export class UserConfigStore {
       };
     }
     this.initializeBotMap();
-  }
-
-  /**
-   * Initialize the internal bot map for O(1) lookups.
-   */
-  private initializeBotMap(): void {
-    this.botMap.clear();
-    if (this.config.bots) {
-      for (const bot of this.config.bots) {
-        if (bot.name) {
-          this.botMap.set(bot.name, bot);
-        }
-      }
-    }
   }
 
   /**
@@ -155,6 +155,9 @@ export class UserConfigStore {
    * @returns A BotOverride object if found, otherwise undefined.
    */
   public getBotOverride(botName: string): BotOverride | undefined {
+    if (!this.config.bots) {
+      return undefined;
+    }
     // Use the O(1) Map lookup
     const botConfig = this.botMap.get(botName);
     if (!botConfig) {
@@ -216,7 +219,10 @@ export class UserConfigStore {
     if (!this.config.bots) {
       this.config.bots = [];
     }
-    const existingBotIndex = this.config.bots.findIndex(bot => bot.name === botName);
+
+    // Use the map to find existing config in O(1)
+    const existingBot = this.botMap.get(botName);
+
     const botConfig: BotConfiguration = {
       name: botName,
       messageProvider: overrides.messageProvider || ('discord' as MessageProvider),
@@ -230,18 +236,17 @@ export class UserConfigStore {
       mcpGuardProfile:
         'mcpGuardProfile' in overrides ? (overrides.mcpGuardProfile as string | undefined) : undefined,
       isActive: true,
-      createdAt: new Date(),
+      createdAt: existingBot?.createdAt || new Date(),
       updatedAt: new Date(),
     };
 
-    if (existingBotIndex >= 0) {
-      this.config.bots[existingBotIndex] = botConfig;
+    if (existingBot) {
+      // Update existing object in-place in both the array and the map
+      Object.assign(existingBot, botConfig);
     } else {
       this.config.bots.push(botConfig);
+      this.botMap.set(botName, botConfig);
     }
-
-    // Update the map for O(1) lookup
-    this.botMap.set(botName, botConfig);
   }
 
   /**

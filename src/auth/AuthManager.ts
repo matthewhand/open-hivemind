@@ -112,7 +112,7 @@ export class AuthManager {
         lastLogin: null,
         passwordHash: 'test-admin-hash',
       };
-      this.users.set('admin', defaultAdmin);
+      this.users.set(defaultAdmin.id, defaultAdmin);
       this.usernameMap.set(defaultAdmin.username, defaultAdmin.id);
       this.emailMap.set(defaultAdmin.email, defaultAdmin.id);
       return;
@@ -141,7 +141,7 @@ export class AuthManager {
       passwordHash: bcrypt.hashSync(password, this.bcryptRounds),
     };
 
-    this.users.set('admin', defaultAdmin);
+    this.users.set(defaultAdmin.id, defaultAdmin);
     this.usernameMap.set(defaultAdmin.username, defaultAdmin.id);
     this.emailMap.set(defaultAdmin.email, defaultAdmin.id);
     debug('Default admin user created');
@@ -233,7 +233,7 @@ export class AuthManager {
    */
   public async login(credentials: LoginCredentials): Promise<AuthToken> {
     const userId = this.usernameMap.get(credentials.username);
-    const user = userId ? this.users.get(userId) : undefined;
+    const user = userId !== undefined ? this.users.get(userId) : undefined;
 
     if (!user || !user.isActive) {
       throw new AuthenticationError('Invalid credentials', 'INVALID_CREDENTIALS');
@@ -409,9 +409,17 @@ export class AuthManager {
     const oldUsername = user.username;
     const oldEmail = user.email;
 
+    // Validate both before updating any maps to ensure consistency
+    if (updates.username && updates.username !== oldUsername && this.usernameMap.has(updates.username)) {
+      throw new ValidationError('Username already exists', 'USER_ALREADY_EXISTS');
+    }
+    if (updates.email && updates.email !== oldEmail && this.emailMap.has(updates.email)) {
+      throw new ValidationError('Email already exists', 'USER_ALREADY_EXISTS');
+    }
+
     const updatedUser = { ...user, ...updates };
 
-    // Update maps if username or email changed
+    // Perform Map updates only after validation passes
     if (updates.username && updates.username !== oldUsername) {
       this.usernameMap.delete(oldUsername);
       this.usernameMap.set(updates.username, userId);
