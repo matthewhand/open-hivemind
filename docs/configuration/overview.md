@@ -34,6 +34,7 @@ DISCORD_BOT_TOKEN=token1,token2,token3
 BOTS=discord-alpha,slack-support
 BOTS_DISCORD_ALPHA_MESSAGE_PROVIDER=discord
 BOTS_DISCORD_ALPHA_DISCORD_BOT_TOKEN=token1
+BOTS_DISCORD_ALPHA_LLM_PROFILE=production-gpt4o   # reference profile instead of raw key
 BOTS_SLACK_SUPPORT_MESSAGE_PROVIDER=slack
 BOTS_SLACK_SUPPORT_SLACK_BOT_TOKEN=xoxb-...
 
