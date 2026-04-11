@@ -72,5 +72,8 @@ USER node
 # Ensure runtime directories exist (config/ is excluded by .dockerignore)
 RUN mkdir -p config/uploads data logs
 
+# Ensure runtime directories exist (config/ is excluded by .dockerignore)
+RUN mkdir -p config/uploads data logs
+
 EXPOSE 3028
 CMD ["node", "--import", "tsx", "src/index.ts"]
