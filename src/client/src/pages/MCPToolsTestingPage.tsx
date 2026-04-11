@@ -440,15 +440,16 @@ const MCPToolsTestingPage: React.FC = () => {
                       className="btn btn-primary"
                       onClick={handleTestTool}
                       disabled={testing}
+                      aria-label={testing ? "Testing tool" : "Test tool"}
                     >
                       {testing ? (
                         <>
-                          <span className="loading loading-spinner loading-sm"></span>
+                          <span className="loading loading-spinner loading-sm" aria-hidden="true"></span>
                           Testing...
                         </>
                       ) : (
                         <>
-                          <PlayIcon className="w-5 h-5" />
+                          <PlayIcon className="w-5 h-5" aria-hidden="true" />
                           Test Tool
                         </>
                       )}

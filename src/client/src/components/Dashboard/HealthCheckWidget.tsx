@@ -165,8 +165,9 @@ const HealthCheckWidget: React.FC<HealthCheckWidgetProps> = ({
               onClick={fetchHealth}
               disabled={isRefreshing}
               title="Refresh now"
+              aria-label="Refresh service health"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} aria-hidden="true" />
             </button>
           </div>
         </div>
