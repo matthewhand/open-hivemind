@@ -22,12 +22,19 @@ services:
       - HTTP_ALLOW_ALL_IPS=true
       - ALLOW_LOCALHOST_ADMIN=true
       - FORCE_TRUSTED_LOGIN=true
+      - PORT=3028
     env_file:
       - .env
     restart: unless-stopped
     depends_on:
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3028/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
     volumes:
       # Bind-mount source so tsx hot-reloads on file changes
       - ./src:/app/src

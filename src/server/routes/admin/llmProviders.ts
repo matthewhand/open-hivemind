@@ -7,6 +7,7 @@ import ApiMonitorService from '../../../services/ApiMonitorService';
 import { webUIStorage } from '../../../storage/webUIStorage';
 import { HTTP_STATUS } from '../../../types/constants';
 import { isSafeUrl } from '../../../utils/ssrfGuard';
+import { sanitizeProfiles } from '../../utils/sanitizeConfig';
 import {
   LlmProviderSchema,
   TestConnectionSchema,
@@ -31,12 +32,12 @@ const configRateLimit = isTestEnv
     });
 
 // GET /llm-providers - Get all LLM providers
-router.get('/llm-providers', (req: Request, res: Response) => {
+router.get('/llm-providers', asyncErrorHandler(async (req: Request, res: Response) => {
   try {
-    const providers = webUIStorage.getLlmProviders();
+    const providers = await webUIStorage.getLlmProviders();
     return res.json({
       success: true,
-      data: { providers },
+      data: { providers: sanitizeProfiles(providers) },
       message: 'LLM providers retrieved successfully',
     });
   } catch (error: unknown) {
@@ -46,7 +47,7 @@ router.get('/llm-providers', (req: Request, res: Response) => {
       message: hivemindError.message || 'An error occurred while retrieving LLM providers',
     });
   }
-});
+}));
 
 /**
  * @openapi

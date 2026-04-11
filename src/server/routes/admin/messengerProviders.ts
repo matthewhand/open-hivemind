@@ -3,6 +3,7 @@ import { ErrorUtils } from '../../../common/ErrorUtils';
 import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import { webUIStorage } from '../../../storage/webUIStorage';
 import { HTTP_STATUS } from '../../../types/constants';
+import { sanitizeProfiles } from '../../utils/sanitizeConfig';
 import {
   MessengerProviderSchema,
   ToggleIdParamSchema,
@@ -14,12 +15,12 @@ import { validateRequest } from '../../../validation/validateRequest';
 const router = Router();
 
 // GET /messenger-providers - Get all messenger providers
-router.get('/messenger-providers', (req: Request, res: Response) => {
+router.get('/messenger-providers', asyncErrorHandler(async (req: Request, res: Response) => {
   try {
-    const providers = webUIStorage.getMessengerProviders();
+    const providers = await webUIStorage.getMessengerProviders();
     return res.json({
       success: true,
-      data: { providers },
+      data: { providers: sanitizeProfiles(providers) },
       message: 'Messenger providers retrieved successfully',
     });
   } catch (error: unknown) {
@@ -29,7 +30,7 @@ router.get('/messenger-providers', (req: Request, res: Response) => {
       message: hivemindError.message || 'An error occurred while retrieving messenger providers',
     });
   }
-});
+}));
 
 /**
  * @openapi

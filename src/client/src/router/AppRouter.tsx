@@ -18,17 +18,16 @@ const StandaloneActivity = lazy(() => import('../pages/StandaloneActivity'));
 
 // Uber pages
 const OverviewPage = lazy(() => import('../pages/OverviewPage'));
-const BotsManagementPage = lazy(() => import('../pages/BotsManagementPage'));
+const BotsPage = lazy(() => import('../pages/BotsPage'));
+const PersonasPage = lazy(() => import('../pages/PersonasPage'));
+const GuardsPage = lazy(() => import('../pages/GuardsPage'));
 const BotCreatePage = lazy(() => import('../pages/BotCreatePage'));
 const BotTemplatesPage = lazy(() => import('../pages/BotTemplatesPage'));
 const ChatPage = lazy(() => import('../pages/ChatPage'));
 const MCPServerManager = lazy(() => import('../components/MCPServerManager'));
 const MCPServersPage = lazy(() => import('../pages/MCPServersPage'));
 const MCPToolsPage = lazy(() => import('../pages/MCPToolsPage'));
-const MonitoringPage = lazy(() => import('../pages/MonitoringPage'));
 const ActivityPage = lazy(() => import('../pages/ActivityPage'));
-const ProvidersManagementPage = lazy(() => import('../pages/ProvidersManagementPage'));
-const ActivityManagementPage = lazy(() => import('../pages/ActivityManagementPage'));
 const DeveloperPage = lazy(() => import('../pages/DeveloperPage'));
 
 // Monitoring Dashboard pages
@@ -127,26 +126,32 @@ const AppRouter: React.FC = () => {
 
 
           {/* Bot Management Routes */}
-          <Route path="bots" element={<RouteErrorBoundary pageName="Bots"><BotsManagementPage /></RouteErrorBoundary>} />
+          <Route path="bots" element={<RouteErrorBoundary pageName="Bots"><BotsPage /></RouteErrorBoundary>} />
           <Route path="bots/create" element={<RouteErrorBoundary pageName="Create Bot"><BotCreatePage /></RouteErrorBoundary>} />
           <Route path="bots/templates" element={<RouteErrorBoundary pageName="Bot Templates"><BotTemplatesPage /></RouteErrorBoundary>} />
           <Route path="chat" element={<RouteErrorBoundary pageName="Chat"><ChatPage /></RouteErrorBoundary>} />
 
-          {/* Integrations Routes */}
-          <Route path="integrations" element={<Navigate to="/admin/integrations/llm" replace />} />
-          <Route path="integrations/:type" element={<RouteErrorBoundary pageName="Integrations"><IntegrationsPage /></RouteErrorBoundary>} />
+          {/* Each provider type gets its own top-level page with tabs */}
+          <Route path="llm" element={<RouteErrorBoundary pageName="LLM"><LLMProvidersPage /></RouteErrorBoundary>} />
+          <Route path="message" element={<RouteErrorBoundary pageName="Message"><MessageProvidersPage /></RouteErrorBoundary>} />
+          <Route path="memory" element={<RouteErrorBoundary pageName="Memory"><MemoryProvidersPage /></RouteErrorBoundary>} />
+          <Route path="tool" element={<RouteErrorBoundary pageName="Tool"><ToolProvidersPage /></RouteErrorBoundary>} />
 
-          {/* Providers — tabbed page (LLM, Message, Memory, Tool) */}
-          <Route path="providers" element={<RouteErrorBoundary pageName="Providers"><ProvidersManagementPage /></RouteErrorBoundary>} />
-          <Route path="providers/llm" element={<Navigate to="/admin/providers?tab=llm" replace />} />
-          <Route path="providers/message" element={<Navigate to="/admin/providers?tab=message" replace />} />
-          <Route path="providers/memory" element={<Navigate to="/admin/providers?tab=memory" replace />} />
-          <Route path="providers/tool" element={<Navigate to="/admin/providers?tab=tool" replace />} />
+          {/* Personas and Guards are standalone pages */}
+          <Route path="personas" element={<RouteErrorBoundary pageName="Personas"><PersonasPage /></RouteErrorBoundary>} />
+          <Route path="guards" element={<RouteErrorBoundary pageName="Guards"><GuardsPage /></RouteErrorBoundary>} />
+
+          {/* Legacy redirects */}
+          <Route path="providers" element={<Navigate to="/admin/llm" replace />} />
+          <Route path="providers/llm" element={<Navigate to="/admin/llm" replace />} />
+          <Route path="providers/message" element={<Navigate to="/admin/message" replace />} />
+          <Route path="providers/memory" element={<Navigate to="/admin/memory" replace />} />
+          <Route path="providers/tool" element={<Navigate to="/admin/tool" replace />} />
+          <Route path="integrations" element={<Navigate to="/admin/llm" replace />} />
+          <Route path="integrations/:type" element={<RouteErrorBoundary pageName="Integrations"><IntegrationsPage /></RouteErrorBoundary>} />
 
           {/* Marketplace Route */}
           <Route path="marketplace" element={<RouteErrorBoundary pageName="Marketplace"><MarketplacePage /></RouteErrorBoundary>} />
-
-          <Route path="personas" element={<Navigate to="/admin/bots?tab=personas" replace />} />
 
           {/* MCP Routes */}
           <Route
@@ -180,7 +185,7 @@ const AppRouter: React.FC = () => {
             }
           />
 
-          <Route path="guards" element={<Navigate to="/admin/bots?tab=guards" replace />} />
+          {/* guards is now a standalone route above */}
 
           {/* Activity & Monitoring — now consolidated into Overview tabs */}
           <Route path="activity" element={<Navigate to="/admin/overview?tab=activity" replace />} />

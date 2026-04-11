@@ -217,7 +217,7 @@ test.describe('Onboarding Wizard', () => {
 
     // Wait for either the redirect or the onboarding content
     await expect(
-      page.getByText('Welcome to Open-Hivemind').or(page.getByText('Open-Hivemind Setup'))
+      page.getByText('Welcome to Open-Hivemind').or(page.getByText('Open-Hivemind Setup')).first()
     ).toBeVisible({ timeout: 15000 });
 
     await page.screenshot({ path: 'test-results/onboarding-06-redirect.png', fullPage: true });
@@ -267,5 +267,119 @@ test.describe('Onboarding Wizard', () => {
     await expect(skipButton).toBeVisible();
 
     await page.screenshot({ path: 'test-results/onboarding-08-skip-setup.png', fullPage: true });
+  });
+
+  test('Skip Setup navigates to /admin/overview and does not bounce back', async ({ page }) => {
+    await setupOnboardingMocks(page);
+
+    // After complete is posted, status must return completed: true so OverviewPage doesn't loop
+    let onboardingDone = false;
+    await page.route('**/api/onboarding/status', async (route) => {
+      await route.fulfill({
+        status: 200,
+        json: { success: true, data: { completed: onboardingDone, step: onboardingDone ? 5 : 1 } },
+      });
+    });
+    await page.route('**/api/onboarding/complete', async (route) => {
+      onboardingDone = true;
+      await route.fulfill({ status: 200, json: { success: true, data: { completed: true, step: 5 } } });
+    });
+
+    // Additional routes OverviewPage fetches after onboarding check passes
+    await page.route('**/api/dashboard/config-status', async (route) => {
+      await route.fulfill({
+        status: 200,
+        json: { data: { llmConfigured: true, botConfigured: true, messengerConfigured: true } },
+      });
+    });
+    await page.route('**/api/admin/**', async (route) => route.fulfill({ status: 200, json: {} }));
+
+    await page.goto('/onboarding');
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.getByText('Welcome to Open-Hivemind')).toBeVisible({ timeout: 10000 });
+
+    // Click Skip Setup
+    const skipButton = page.locator('button', { hasText: 'Skip Setup' });
+    await skipButton.click();
+
+    // Should land on /admin/overview and STAY there
+    await page.waitForURL('**/admin/overview', { timeout: 10000 });
+    await expect(page.url()).toContain('/admin/overview');
+
+    // Wait a moment and verify we haven't been bounced back to onboarding
+    await page.waitForTimeout(1000);
+    expect(page.url()).not.toContain('/onboarding');
+
+    await page.screenshot({ path: 'test-results/onboarding-09-skip-stays-on-overview.png', fullPage: true });
+  });
+
+  test('OverviewPage does not redirect to onboarding when completed flag is set', async ({ page }) => {
+    await setupAuth(page);
+
+    // Status returns completed (wrapped in ApiResponse envelope)
+    await page.route('**/api/onboarding/status', async (route) => {
+      await route.fulfill({
+        status: 200,
+        json: { success: true, data: { completed: true, step: 5 } },
+      });
+    });
+
+    // Stub other endpoints OverviewPage needs
+    await page.route('**/api/dashboard/config-status', async (route) => {
+      await route.fulfill({
+        status: 200,
+        json: { data: { llmConfigured: true, botConfigured: true, messengerConfigured: true } },
+      });
+    });
+    await page.route('**/api/bots', async (route) => {
+      await route.fulfill({ status: 200, json: { data: { bots: [] } } });
+    });
+    await page.route('**/api/health/detailed', async (route) => {
+      await route.fulfill({ status: 200, json: { status: 'healthy' } });
+    });
+    await page.route('**/api/csrf-token', async (route) => {
+      await route.fulfill({ status: 200, json: { token: 'mock-csrf-token' } });
+    });
+    await page.route('**/api/demo/status', async (route) => {
+      await route.fulfill({ status: 200, json: { active: false } });
+    });
+    await page.route('**/api/admin/**', async (route) => route.fulfill({ status: 200, json: {} }));
+    await page.route('**/api/config/**', async (route) => route.fulfill({ status: 200, json: {} }));
+
+    await page.goto('/admin/overview');
+    await page.waitForLoadState('domcontentloaded');
+
+    // Wait for page to settle — should NOT redirect to /onboarding
+    await page.waitForTimeout(2000);
+    expect(page.url()).not.toContain('/onboarding');
+    expect(page.url()).toContain('/admin/overview');
+
+    await page.screenshot({ path: 'test-results/onboarding-10-no-redirect-when-complete.png', fullPage: true });
+  });
+
+  test('step Skip button advances without marking complete', async ({ page }) => {
+    await setupOnboardingMocks(page);
+
+    let completeCallCount = 0;
+    await page.route('**/api/onboarding/complete', async (route) => {
+      completeCallCount++;
+      await route.fulfill({ status: 200, json: { success: true, data: { completed: true, step: 5 } } });
+    });
+
+    await page.goto('/onboarding');
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.getByText('Welcome to Open-Hivemind')).toBeVisible({ timeout: 10000 });
+
+    // Advance to step 2
+    await page.locator('button', { hasText: 'Next' }).click();
+    await expect(page.getByText('Configure LLM Provider')).toBeVisible({ timeout: 10000 });
+
+    // Click the per-step Skip (not "Skip Setup")
+    const stepSkipButton = page.locator('button', { hasText: 'Skip' }).filter({ hasNotText: 'Setup' });
+    await stepSkipButton.click();
+
+    // Should advance to step 3 (Messenger), not trigger complete
+    await expect(page.getByText('Connect a Messenger')).toBeVisible({ timeout: 10000 });
+    expect(completeCallCount).toBe(0);
   });
 });

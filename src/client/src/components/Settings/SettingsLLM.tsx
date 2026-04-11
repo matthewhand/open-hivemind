@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { logger } from '../../utils/logger';
+import { useLLMProfiles } from '../../hooks/useProvidersCache';
 import { Alert } from '../DaisyUI/Alert';
 import Badge from '../DaisyUI/Badge';
 import Card from '../DaisyUI/Card';
@@ -46,7 +47,7 @@ const isEmbeddingCapable = (profile: any): boolean => {
 };
 
 const SettingsLLM: React.FC = () => {
-  const [profiles, setProfiles] = useState<any[]>([]);
+  const { profiles, loading: profilesLoading } = useLLMProfiles();
   const [defaultStatus, setDefaultStatus] = useState<any>(null);
   const [webuiIntelligenceProvider, setWebuiIntelligenceProvider] = useState<string>('');
   const [defaultChatbotProfile, setDefaultChatbotProfile] = useState<string>('');
@@ -59,22 +60,20 @@ const SettingsLLM: React.FC = () => {
     LLM_TASK_IDLE_PROVIDER: '',
     LLM_TASK_WEBUI_PROVIDER: '',
   });
-  const [loading, setLoading] = useState(true);
+  const [dataLoading, setLoading] = useState(true);
+  const loading = dataLoading || profilesLoading;
   const [alert, setAlert] = useState<{ type: 'success' | 'error' | 'warning'; message: string } | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [profilesResult, statusResult, globalResult] = await Promise.allSettled([
-        apiService.get('/api/config/llm-profiles'),
+      const [statusResult, globalResult] = await Promise.allSettled([
         apiService.get('/api/config/llm-status'),
         apiService.get('/api/config/global'),
       ]);
-      const profilesRes = profilesResult.status === 'fulfilled' ? profilesResult.value : {};
       const statusRes = statusResult.status === 'fulfilled' ? statusResult.value : {};
       const globalRes = globalResult.status === 'fulfilled' ? globalResult.value : {};
 
-      setProfiles((profilesRes as any).llm || (profilesRes as any).profiles?.llm || []);
       setDefaultStatus(statusRes);
 
       const gs = (globalRes as any)._userSettings?.values || {};

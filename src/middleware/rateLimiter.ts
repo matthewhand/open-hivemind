@@ -462,21 +462,35 @@ function getClientKey(req: Request): string {
   return validatedConnectionIP;
 }
 
+// When RATE_LIMIT_SOFT=true, violations are logged but requests are allowed through.
+// Use this to diagnose request loops without breaking the UI.
+const isSoftMode = process.env.RATE_LIMIT_SOFT === 'true';
+
 /**
- * Standard rate limit handler
+ * Standard rate limit handler.
+ * In soft mode: logs the violation and passes the request through (no 429).
+ * In hard mode (default): returns 429 Too Many Requests.
  */
 function createRateLimitHandler(type: string) {
-  return (req: Request & { rateLimit?: { resetTime?: number; limit?: number } }, res: Response) => {
+  return (req: Request & { rateLimit?: { resetTime?: number; limit?: number } }, res: Response, next: NextFunction) => {
     const retryAfter = req.rateLimit?.resetTime
       ? Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000)
       : 60;
 
-    logger.warn(`Rate limit exceeded for ${type}`, {
+    logger.warn(`Rate limit exceeded for ${type}${isSoftMode ? ' [SOFT — allowing through]' : ''}`, {
       ip: getClientKey(req),
       path: req.originalUrl,
       method: req.method,
       userAgent: req.headers['user-agent']?.substring(0, 100),
+      limit: req.rateLimit?.limit,
+      softMode: isSoftMode,
     });
+
+    if (isSoftMode) {
+      // Soft mode: let the request through so the UI stays functional
+      // while we diagnose the loop. Check server logs for repeated violations.
+      return next();
+    }
 
     // Set Retry-After and legacy X-RateLimit headers for frontend consumption
     res.setHeader('Retry-After', String(retryAfter));

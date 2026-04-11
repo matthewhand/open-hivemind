@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { Router } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { createLogger } from '../../common/StructuredLogger';
@@ -10,11 +12,39 @@ import { validateRequest } from '../../validation/validateRequest';
 const router = Router();
 const logger = createLogger('onboardingRouter');
 
-// In-memory flag (persisted per server process). A production implementation
-// would store this in a database or config file, but for the initial feature
-// this keeps things simple and dependency-free.
-let onboardingCompleted = false;
-let onboardingStep = 1;
+// Persist onboarding state to data/onboarding.json so it survives server restarts.
+const DATA_DIR = path.resolve(process.cwd(), 'data');
+const STATE_FILE = path.join(DATA_DIR, 'onboarding.json');
+
+interface OnboardingState {
+  completed: boolean;
+  step: number;
+}
+
+function loadState(): OnboardingState {
+  try {
+    if (fs.existsSync(STATE_FILE)) {
+      const raw = fs.readFileSync(STATE_FILE, 'utf8');
+      return JSON.parse(raw) as OnboardingState;
+    }
+  } catch (err) {
+    logger.warn('Could not read onboarding state file, using defaults', { error: String(err) });
+  }
+  return { completed: false, step: 1 };
+}
+
+async function saveState(state: OnboardingState): Promise<void> {
+  try {
+    await fs.promises.mkdir(DATA_DIR, { recursive: true });
+    await fs.promises.writeFile(STATE_FILE, JSON.stringify(state, null, 2), 'utf8');
+  } catch (err) {
+    logger.warn('Could not persist onboarding state', { error: String(err) });
+  }
+}
+
+const initial = loadState();
+let onboardingCompleted = initial.completed;
+let onboardingStep = initial.step;
 
 /**
  * @openapi
@@ -66,12 +96,17 @@ router.get(
  *       200:
  *         description: Onboarding marked as completed
  */
-router.post('/complete', validateRequest(EmptyBodySchema), (_req, res) => {
-  onboardingCompleted = true;
-  onboardingStep = 5;
-  logger.info('Onboarding marked as completed');
-  return res.json(ApiResponse.success({ completed: true, step: 5 }));
-});
+router.post(
+  '/complete',
+  validateRequest(EmptyBodySchema),
+  asyncErrorHandler(async (_req, res) => {
+    onboardingCompleted = true;
+    onboardingStep = 5;
+    await saveState({ completed: true, step: 5 });
+    logger.info('Onboarding marked as completed');
+    return res.json(ApiResponse.success({ completed: true, step: 5 }));
+  })
+);
 
 /**
  * @openapi
@@ -83,12 +118,17 @@ router.post('/complete', validateRequest(EmptyBodySchema), (_req, res) => {
  *       200:
  *         description: Onboarding reset successfully
  */
-router.post('/reset', validateRequest(EmptyBodySchema), (_req, res) => {
-  onboardingCompleted = false;
-  onboardingStep = 1;
-  logger.info('Onboarding reset');
-  return res.json(ApiResponse.success({ completed: false, step: 1 }));
-});
+router.post(
+  '/reset',
+  validateRequest(EmptyBodySchema),
+  asyncErrorHandler(async (_req, res) => {
+    onboardingCompleted = false;
+    onboardingStep = 1;
+    await saveState({ completed: false, step: 1 });
+    logger.info('Onboarding reset');
+    return res.json(ApiResponse.success({ completed: false, step: 1 }));
+  })
+);
 
 /**
  * @openapi
@@ -108,10 +148,15 @@ router.post('/reset', validateRequest(EmptyBodySchema), (_req, res) => {
  *       200:
  *         description: Step updated
  */
-router.post('/step', validateRequest(OnboardingStepSchema), (req, res) => {
-  const { step } = req.body;
-  onboardingStep = step;
-  return res.json(ApiResponse.success({ completed: false, step: onboardingStep }));
-});
+router.post(
+  '/step',
+  validateRequest(OnboardingStepSchema),
+  asyncErrorHandler(async (req, res) => {
+    const { step } = req.body;
+    onboardingStep = step;
+    await saveState({ completed: onboardingCompleted, step: onboardingStep });
+    return res.json(ApiResponse.success({ completed: false, step: onboardingStep }));
+  })
+);
 
 export default router;

@@ -272,7 +272,7 @@ const SitemapPage: React.FC = () => {
                     </div>
 
                     <div className="text-xs text-base-content/50 mt-auto">
-                      Last modified: {new Date(url.lastmod).toLocaleDateString()}
+                      Last modified: {url.lastmod ? new Date(url.lastmod).toLocaleDateString() : 'N/A'}
                     </div>
                 </Card>
               ))}

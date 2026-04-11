@@ -16,6 +16,7 @@ import Button from '../DaisyUI/Button';
 import Modal from '../DaisyUI/Modal';
 import Tabs from '../DaisyUI/Tabs';
 import type { TabItem } from '../DaisyUI/Tabs';
+import { Alert } from '../DaisyUI/Alert';
 import { X as XIcon, RotateCcw } from 'lucide-react';
 import { logger } from '../../utils/logger';
 import { ProviderConfigForm } from '../ProviderConfigForm';
@@ -25,7 +26,6 @@ import { apiService } from '../../services/api';
 import { useConfigDiff } from '../../hooks/useConfigDiff';
 import { ConfigDiffConfirmDialog } from '../ConfigDiffViewer';
 import Select from '../DaisyUI/Select';
-import { Alert } from '../DaisyUI/Alert';
 import { useAvailableProviderTypes } from '../../hooks/useAvailableProviderTypes';
 import type { ProviderSchema as ApiProviderSchema } from '../../hooks/useAvailableProviderTypes';
 import { DynamicSchemaForm } from '../DynamicSchemaForm';
@@ -72,7 +72,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   // Merged LLM provider type list: hardcoded list + any extra API keys not already present
   const mergedLlmProviderTypes = useMemo<string[]>(() => {
     const hardcoded = Object.keys(LLM_PROVIDER_CONFIGS);
-    if (apiProviderTypes.llm.length === 0) return hardcoded;
+    if (!apiProviderTypes.llm || apiProviderTypes.llm.length === 0) return hardcoded;
     const apiKeys = apiProviderTypes.llm.map((s) => s.key);
     const extra = apiKeys.filter((k) => !hardcoded.includes(k));
     return [...hardcoded, ...extra];
@@ -81,7 +81,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   // Merged message provider type list: hardcoded list + any extra API keys not already present
   const mergedMessageProviderTypes = useMemo<string[]>(() => {
     const hardcoded = Object.keys(MESSAGE_PROVIDER_CONFIGS);
-    if (apiProviderTypes.messenger.length === 0) return hardcoded;
+    if (!apiProviderTypes.messenger || apiProviderTypes.messenger.length === 0) return hardcoded;
     const apiKeys = apiProviderTypes.messenger.map((s) => s.key);
     const extra = apiKeys.filter((k) => !hardcoded.includes(k));
     return [...hardcoded, ...extra];

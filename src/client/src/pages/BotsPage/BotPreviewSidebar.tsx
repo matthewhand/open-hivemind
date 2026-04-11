@@ -4,6 +4,7 @@ import {
 } from 'lucide-react';
 import type { BotConfig } from '../../types/bot';
 import Button from '../../components/DaisyUI/Button';
+import Input from '../../components/DaisyUI/Input';
 import Select from '../../components/DaisyUI/Select';
 import Tabs from '../../components/DaisyUI/Tabs';
 import ConfigurationValidation from '../../components/ConfigurationValidation';

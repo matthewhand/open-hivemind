@@ -552,31 +552,37 @@ const MessageProvidersPage: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6">
-      <Tabs
-        tabs={tabs}
-        variant="lifted"
-        activeTab={activeTab}
-        onChange={setActiveTab}
-      />
+    <div>
+      <div className="px-6 pt-6 pb-2">
+        <h1 className="text-2xl font-bold">Message Providers</h1>
+        <p className="text-base-content/60 text-sm mt-1">Manage messaging platform connections and profiles</p>
+      </div>
+      <div className="px-6 pb-6">
+        <Tabs
+          tabs={tabs}
+          variant="lifted"
+          activeTab={activeTab}
+          onChange={setActiveTab}
+        />
 
-      <ProviderConfigModal
-        modalState={{ ...modalState, providerType: 'message' }}
-        existingProviders={profiles}
-        onClose={closeModal}
-        onSubmit={handleProviderSubmit}
-      />
+        <ProviderConfigModal
+          modalState={{ ...modalState, providerType: 'message' }}
+          existingProviders={profiles}
+          onClose={closeModal}
+          onSubmit={handleProviderSubmit}
+        />
 
-      <ConfirmModal
-        isOpen={confirmModal.isOpen}
-        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
-        title={confirmModal.title}
-        message={confirmModal.message}
-        onConfirm={confirmModal.onConfirm}
-        confirmVariant="error"
-        confirmText="Delete"
-        cancelText="Cancel"
-      />
+        <ConfirmModal
+          isOpen={confirmModal.isOpen}
+          onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+          title={confirmModal.title}
+          message={confirmModal.message}
+          onConfirm={confirmModal.onConfirm}
+          confirmVariant="error"
+          confirmText="Delete"
+          cancelText="Cancel"
+        />
+      </div>
     </div>
   );
 };

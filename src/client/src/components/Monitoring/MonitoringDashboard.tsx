@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import { useWebSocket } from '../../contexts/WebSocketContext';
 import Card from '../DaisyUI/Card';
 import Badge from '../DaisyUI/Badge';
@@ -8,8 +8,8 @@ import PageHeader from '../DaisyUI/PageHeader';
 import StatsCards from '../DaisyUI/StatsCards';
 import Tabs from '../DaisyUI/Tabs';
 import type { TabItem } from '../DaisyUI/Tabs';
-import LLMUsageChart from '../Dashboard/LLMUsageChart';
-import MessageVolumeChart from '../Dashboard/MessageVolumeChart';
+const LLMUsageChart = lazy(() => import('../Dashboard/LLMUsageChart'));
+const MessageVolumeChart = lazy(() => import('../Dashboard/MessageVolumeChart'));
 import {
   Activity,
   RotateCcw,
@@ -24,7 +24,7 @@ import { LoadingSpinner } from '../DaisyUI/Loading';
 import Select from '../DaisyUI/Select';
 import BotStatusCard from '../BotStatusCard';
 import ActivityMonitor from './ActivityMonitor';
-import ActivityCharts from './ActivityCharts';
+const ActivityCharts = lazy(() => import('./ActivityCharts'));
 import DistributedTraceWaterfall, { TraceSpan } from './DistributedTraceWaterfall';
 import BotActivityWaterfallMonitor from './BotActivityWaterfallMonitor';
 import { apiService } from '../../services/api';
@@ -391,8 +391,12 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
         <TabPanel value={activeTab} index="health">
           <SystemHealth refreshInterval={refreshInterval} />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-            <MessageVolumeChart />
-            <LLMUsageChart />
+            <Suspense fallback={<LoadingSpinner size="lg" />}>
+              <MessageVolumeChart />
+            </Suspense>
+            <Suspense fallback={<LoadingSpinner size="lg" />}>
+              <LLMUsageChart />
+            </Suspense>
           </div>
         </TabPanel>
 
@@ -416,7 +420,9 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
 
         <TabPanel value={activeTab} index="activity">
           <ActivityMonitor />
-          <ActivityCharts />
+          <Suspense fallback={<LoadingSpinner size="lg" />}>
+            <ActivityCharts />
+          </Suspense>
         </TabPanel>
 
         <TabPanel value={activeTab} index="tracing">

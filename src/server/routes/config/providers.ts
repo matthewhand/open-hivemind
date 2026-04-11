@@ -4,6 +4,7 @@ import { getLlmProfiles, saveLlmProfiles } from '../../../config/llmProfiles';
 import { getMessageProfiles, saveMessageProfiles } from '../../../config/messageProfiles';
 import { HTTP_STATUS } from '../../../types/constants';
 import { ErrorUtils } from '../../../types/errors';
+import { sanitizeProfiles } from '../../utils/sanitizeConfig';
 import {
   CreateLlmProfileSchema,
   CreateMemoryProfileSchema,
@@ -46,7 +47,7 @@ router.get('/llm-status', asyncErrorHandler(async (req, res) => {
 router.get('/llm-profiles', asyncErrorHandler(async (req, res) => {
   try {
     const profiles = getLlmProfiles();
-    return res.json(profiles);
+    return res.json({ ...profiles, llm: sanitizeProfiles(profiles.llm) });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
@@ -196,7 +197,7 @@ router.delete('/llm-profiles/:key', configLimiter, validateRequest(LlmProfileKey
 router.get('/message-profiles', asyncErrorHandler(async (req, res) => {
   try {
     const profiles = getMessageProfiles();
-    return res.json(profiles);
+    return res.json({ ...profiles, message: sanitizeProfiles(profiles.message) });
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;

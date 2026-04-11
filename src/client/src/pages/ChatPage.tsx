@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { apiService } from '../services/api';
 import { useQuery } from '@tanstack/react-query';
+import { useLLMProfiles } from '../hooks/useProvidersCache';
 import ChatInterface, { ChatMessage } from '../components/DaisyUI/Chat';
 import BotChatBubbles from '../components/BotChatBubbles';
 import { RefreshCw, MessageSquare, Menu as LucideMenuIcon, X } from 'lucide-react';
@@ -42,7 +43,8 @@ const ChatPage: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
-  const [llmProviders, setLlmProviders] = useState<LlmProviderOption[]>([]);
+  const { profiles: llmProfiles } = useLLMProfiles();
+  const llmProviders = llmProfiles as LlmProviderOption[];
   const [swappingProvider, setSwappingProvider] = useState<string | null>(null);
   const [showProviderDropdown, setShowProviderDropdown] = useState<string | null>(null);
 
@@ -65,16 +67,6 @@ const ChatPage: React.FC = () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
-
-  // Fetch LLM providers
-  const fetchLlmProviders = useCallback(async () => {
-    try {
-      const data = await apiService.get('/api/admin/llm-profiles');
-      setLlmProviders((data as any).data || []);
-    } catch (_err) {
-      showError('Failed to fetch LLM providers');
-    }
   }, []);
 
   // ⚡ Bolt Optimization: Memoize inline functions to prevent BotListItem re-renders
@@ -162,8 +154,7 @@ const ChatPage: React.FC = () => {
 
   useEffect(() => {
     fetchBots();
-    fetchLlmProviders();
-  }, [fetchBots, fetchLlmProviders]);
+  }, [fetchBots]);
 
   useEffect(() => {
     if (selectedBotId) {

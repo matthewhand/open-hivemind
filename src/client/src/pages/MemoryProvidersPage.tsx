@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Card from '../components/DaisyUI/Card';
 import Button from '../components/DaisyUI/Button';
 import Badge from '../components/DaisyUI/Badge';
+import Tabs from '../components/DaisyUI/Tabs';
 import { Alert } from '../components/DaisyUI/Alert';
 import StatsCards from '../components/DaisyUI/StatsCards';
 import EmptyState from '../components/DaisyUI/EmptyState';
@@ -10,6 +12,7 @@ import { SkeletonTableLayout } from '../components/DaisyUI/Skeleton';
 import SearchFilterBar from '../components/SearchFilterBar';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import { useErrorToast } from '../components/DaisyUI/ToastNotification';
+import { MarketplaceGrid } from '../components/Marketplace';
 import {
   Database as MemoryIcon,
   Plus as AddIcon,
@@ -261,7 +264,11 @@ const MemoryProvidersPage: React.FC = () => {
     return healthMap[profile.key] || healthMap[profile.provider];
   };
 
-  return (
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'profiles';
+  const handleTabChange = (tabId: string) => setSearchParams({ tab: tabId });
+
+  const profilesContent = useMemo(() => (
     <div className="space-y-6">
       <div className="flex justify-end mb-4">
         <div className="flex gap-2">
@@ -445,6 +452,34 @@ const MemoryProvidersPage: React.FC = () => {
       </Modal>
 
       <ConfirmModal isOpen={confirmModal.isOpen} onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))} title={confirmModal.title} message={confirmModal.message} onConfirm={confirmModal.onConfirm} confirmVariant="error" confirmText="Delete" cancelText="Cancel" />
+    </div>
+  ), [
+    profiles, filteredProfiles, providerTypes, stats, loading, error, healthLoading,
+    searchQuery, filterType, expandedProfile, healthMap, testResults,
+    formModal, formData, selectedProvider, currentSchema, memorySchemas, confirmModal,
+    fetchHealth, fetchProfiles, handleAddProfile, handleEditProfile, handleDeleteProfile,
+    handleFormSubmit, handleTestProfile, toggleExpand, setSearchQuery, setFilterType,
+  ]);
+
+  const memoryTabs = useMemo(() => [
+    { id: 'profiles', label: 'Profiles', icon: <MemoryIcon className="w-4 h-4" />, content: profilesContent },
+    { id: 'community', label: 'Community', icon: <UrlIcon className="w-4 h-4" />, content: <MarketplaceGrid filter="memory" /> },
+  ], [profilesContent]);
+
+  return (
+    <div>
+      <div className="px-6 pt-6 pb-2">
+        <h1 className="text-2xl font-bold">Memory Providers</h1>
+        <p className="text-base-content/60 text-sm mt-1">Configure vector stores and memory backends for your bots</p>
+      </div>
+      <div className="px-6 pb-6">
+        <Tabs
+          variant="lifted"
+          activeTab={activeTab}
+          onChange={handleTabChange}
+          tabs={memoryTabs}
+        />
+      </div>
     </div>
   );
 };

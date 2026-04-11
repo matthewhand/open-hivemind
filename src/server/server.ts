@@ -92,7 +92,7 @@ export class WebUIServer {
 
         // In production, only allow specific origins
         if (process.env.NODE_ENV === 'production') {
-          if (!origin || allowedOrigins.includes(origin)) {
+          if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
             callback(null, origin);
           } else {
             callback(new Error('Not allowed by CORS'));

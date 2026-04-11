@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { logger } from '../../utils/logger';
 import { usePersonas } from '../../hooks/usePersonas';
 import { useProviders } from '../../hooks/useProviders';
+import { useLLMProfiles } from '../../hooks/useProvidersCache';
 import { getMCPServers } from '../../services/agentService';
 import { apiService } from '../../services/api';
 import type { Bot, StatusResponse } from '../../services/api';
@@ -70,7 +71,7 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
     Array<{ value: string; label: string; description?: string }>
   >([]);
   const [guardrailProfileMap, setGuardrailProfileMap] = useState<Record<string, GuardState>>({});
-  const [llmProfiles, setLlmProfiles] = useState<ProviderProfile[]>([]);
+  const { profiles: llmProfiles } = useLLMProfiles();
   const [mcpServerProfileOptions, setMcpServerProfileOptions] = useState<
     Array<{ value: string; label: string }>
   >([]);
@@ -94,13 +95,11 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
           mcpServersResult,
           responseProfilesResult,
           guardrailProfilesResult,
-          llmProfilesResult,
           mcpServerProfilesResult
         ] = await Promise.allSettled([
           apiService.get('/api/admin/mcp-servers'),
           apiService.get('/api/config/response-profiles'),
           apiService.get('/api/config/guardrails'),
-          apiService.get('/api/config/llm-profiles'),
           apiService.get('/api/config/mcp-server-profiles')
         ]);
 
@@ -170,17 +169,6 @@ const AgentConfigurator: React.FC<AgentConfiguratorProps> = ({ title = 'Agent Co
           }
           setGuardrailProfileOptions(options);
           setGuardrailProfileMap(map);
-        }
-
-        // Process LLM profiles
-        if (llmProfilesResult.status === 'fulfilled') {
-          const data: any = llmProfilesResult.value;
-          const llmProfilesList = Array.isArray(data?.llm)
-            ? data.llm
-            : Array.isArray(data?.profiles?.llm)
-              ? data.profiles.llm
-              : [];
-          setLlmProfiles(llmProfilesList);
         }
 
         // Process MCP server profiles

@@ -9,7 +9,6 @@ import Button from '../components/DaisyUI/Button';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import Tabs from '../components/DaisyUI/Tabs';
 import Card from '../components/DaisyUI/Card';
-import HiddenFeatureToggle from '../components/HiddenFeatureToggle';
 import { Cog, RotateCcw } from 'lucide-react';
 import { apiService } from '../services/api';
 
@@ -32,7 +31,7 @@ const SystemSettings: React.FC = () => {
     { id: 'general', label: 'General', component: <SettingsGeneral /> },
     { id: 'messaging', label: 'Messaging', component: <SettingsMessaging /> },
     { id: 'llm', label: 'LLM', component: <SettingsLLM /> },
-{ id: 'security', label: 'Security', component: <HiddenFeatureToggle fallback="hide"><SettingsSecurity /></HiddenFeatureToggle> },
+{ id: 'security', label: 'Security', component: <SettingsSecurity /> },
   ];
 
   // Determine active tab index, default to 0 (General) if not found or not specified

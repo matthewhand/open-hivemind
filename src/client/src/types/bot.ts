@@ -16,7 +16,7 @@ export interface BotInstance {
   envOverrides?: Record<string, any>;
 }
 
-export const BOT_STATUSES = ['active', 'inactive', 'error', 'starting', 'stopping'] as const;
+export const BOT_STATUSES = ['active', 'inactive', 'error', 'starting', 'stopping', 'running', 'stopped', 'disabled'] as const;
 export type BotStatus = typeof BOT_STATUSES[number];
 
 export const MESSAGE_PROVIDER_TYPES = ['discord', 'slack', 'mattermost', 'webhook'] as const;

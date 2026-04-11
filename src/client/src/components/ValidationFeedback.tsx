@@ -83,7 +83,7 @@ export const ValidationFeedback: React.FC<ValidationFeedbackProps> = ({
                 </ul>
               )}
             </div>
-          </Alert>
+          </div>
         ))}
 
         {filteredWarnings.map((warning, idx) => (

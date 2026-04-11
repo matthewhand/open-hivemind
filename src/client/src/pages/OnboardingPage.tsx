@@ -14,7 +14,6 @@ import Steps from '../components/DaisyUI/Steps';
 import Button from '../components/DaisyUI/Button';
 import FormField from '../components/DaisyUI/FormField';
 import ProgressBar from '../components/DaisyUI/ProgressBar';
-import StepWizard from '../components/DaisyUI/StepWizard';
 import { Alert } from '../components/DaisyUI/Alert';
 import { Badge } from '../components/DaisyUI/Badge';
 import { apiService } from '../services/api';
@@ -22,9 +21,6 @@ import Card from '../components/DaisyUI/Card';
 import Link from '../components/DaisyUI/Link';
 import Select from '../components/DaisyUI/Select';
 import Textarea from '../components/DaisyUI/Textarea';
-import Carousel from '../components/DaisyUI/Carousel';
-import Countdown from '../components/DaisyUI/Countdown';
-import Figure from '../components/DaisyUI/Figure';
 import Stack from '../components/DaisyUI/Stack';
 
 // ---------------------------------------------------------------------------
@@ -89,27 +85,21 @@ const WelcomeStep: React.FC = () => (
       and connect them to messaging platforms like Discord, Slack, and Mattermost.
     </p>
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto pt-4">
-      <Figure
-        caption={<span className="text-xs text-base-content/60">Connect OpenAI, Anthropic, and more</span>}
-        className="bg-base-200 rounded-xl p-4 text-center"
-      >
-        <Cpu className="w-8 h-8 mx-auto mb-2 text-primary" />
+      <div className="bg-base-200 rounded-xl p-4 text-center space-y-1">
+        <Cpu className="w-8 h-8 mx-auto text-primary" />
         <h4 className="font-semibold text-sm">LLM Providers</h4>
-      </Figure>
-      <Figure
-        caption={<span className="text-xs text-base-content/60">Create specialized agents</span>}
-        className="bg-base-200 rounded-xl p-4 text-center"
-      >
-        <Bot className="w-8 h-8 mx-auto mb-2 text-secondary" />
+        <p className="text-xs text-base-content/60">Connect OpenAI, Anthropic, and more</p>
+      </div>
+      <div className="bg-base-200 rounded-xl p-4 text-center space-y-1">
+        <Bot className="w-8 h-8 mx-auto text-secondary" />
         <h4 className="font-semibold text-sm">AI Bots</h4>
-      </Figure>
-      <Figure
-        caption={<span className="text-xs text-base-content/60">Discord, Slack, Mattermost</span>}
-        className="bg-base-200 rounded-xl p-4 text-center"
-      >
-        <MessageSquare className="w-8 h-8 mx-auto mb-2 text-accent" />
+        <p className="text-xs text-base-content/60">Create specialized agents</p>
+      </div>
+      <div className="bg-base-200 rounded-xl p-4 text-center space-y-1">
+        <MessageSquare className="w-8 h-8 mx-auto text-accent" />
         <h4 className="font-semibold text-sm">Messengers</h4>
-      </Figure>
+        <p className="text-xs text-base-content/60">Discord, Slack, Mattermost</p>
+      </div>
     </div>
     <p className="text-sm text-base-content/50">
       This wizard will guide you through initial setup in just a few minutes.
@@ -140,7 +130,7 @@ const modelSuggestions: Record<string, string[]> = {
 };
 
 const ConfigureLlmStep: React.FC<ConfigureLlmStepProps> = ({ form, llmProfiles }) => {
-  const { register, control, watch, formState: { errors } } = form;
+  const { control, watch, formState: { errors } } = form;
   const llmProvider = watch('llmProvider');
 
   return (
@@ -149,78 +139,39 @@ const ConfigureLlmStep: React.FC<ConfigureLlmStepProps> = ({ form, llmProfiles }
         <h3 className="text-xl font-bold">Configure LLM Provider</h3>
         <p className="text-base-content/70 text-sm">
           {llmProfiles.length > 0
-            ? 'Select one of your configured LLM providers, or add a new one.'
-            : 'No LLM providers configured yet. Add one below or configure via the LLM Providers page.'}
+            ? 'Select one of your installed LLM providers.'
+            : 'No LLM providers installed yet. Add one via the LLM Providers page, then return here.'}
         </p>
       </div>
 
-      {llmProfiles.length > 0 ? (
-        <FormField label="LLM Provider" error={errors.llmProvider}>
-          <Controller
-            name="llmProvider"
-            control={control}
-            render={({ field }) => (
-              <Select
-                id="onboarding-llm-provider"
-                className="select-bordered"
-                value={field.value}
-                onChange={(e) => {
-                  field.onChange(e.target.value);
-                  form.setValue('model', '');
-                }}
-              >
-                <option value="">Select a configured provider...</option>
-                {llmProfiles.map((p) => (
-                  <option key={p.key} value={p.provider || p.key}>{p.name || p.key}</option>
-                ))}
-              </Select>
-            )}
-          />
-        </FormField>
-      ) : (
-        <FormField label="LLM Provider" error={errors.llmProvider}>
-          <Controller
-            name="llmProvider"
-            control={control}
-            render={({ field }) => (
-              <Select
-                id="onboarding-llm-provider"
-                className="select-bordered"
-                value={field.value}
-                onChange={(e) => {
-                  field.onChange(e.target.value);
-                  form.setValue('model', '');
-                }}
-              >
-                {providerOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </Select>
-            )}
-          />
-        </FormField>
-      )}
+      <FormField label="LLM Provider" error={errors.llmProvider}>
+        <Controller
+          name="llmProvider"
+          control={control}
+          render={({ field }) => (
+            <Select
+              id="onboarding-llm-provider"
+              className="select-bordered"
+              value={field.value}
+              onChange={(e) => {
+                field.onChange(e.target.value);
+                form.setValue('model', '');
+              }}
+            >
+              <option value="">{llmProfiles.length > 0 ? 'Select a provider...' : 'No providers available'}</option>
+              {llmProfiles.map((p) => (
+                <option key={p.key} value={p.provider || p.key}>{p.name || p.key}</option>
+              ))}
+            </Select>
+          )}
+        />
+      </FormField>
 
       <div className="text-center">
         <a href="/admin/providers/llm" target="_blank" rel="noopener noreferrer" className="link link-primary text-sm">
           Manage LLM Providers ↗
         </a>
       </div>
-
-      {llmProvider && llmProvider !== 'ollama' && (
-        <FormField label="API Key" error={errors.apiKey} hint="Your key is stored securely and never leaves this server.">
-          <Validator>
-            <Input
-              id="onboarding-api-key"
-              type="password"
-              placeholder={`Enter your ${llmProvider} API key`}
-              required
-              {...register('apiKey')}
-            />
-            <ValidatorHint>An API key is required for {llmProvider}</ValidatorHint>
-          </Validator>
-        </FormField>
-      )}
 
       {llmProvider && (
         <FormField label="Model" error={errors.model}>
@@ -250,19 +201,52 @@ const ConfigureLlmStep: React.FC<ConfigureLlmStepProps> = ({ form, llmProfiles }
 interface CreateBotStepProps {
   form: UseFormReturn<BotStepValues>;
   llmProvider: string;
+  personas: Array<{ name: string; systemPrompt?: string }>;
 }
 
-const CreateBotStep: React.FC<CreateBotStepProps> = ({ form, llmProvider }) => {
-  const { register, formState: { errors } } = form;
+const CreateBotStep: React.FC<CreateBotStepProps> = ({ form, llmProvider, personas }) => {
+  const { register, setValue, formState: { errors } } = form;
+  const [useCustomPrompt, setUseCustomPrompt] = useState(personas.length === 0);
+  const [selectedPersona, setSelectedPersona] = useState('');
+
+  const handlePersonaSelect = (personaName: string) => {
+    setSelectedPersona(personaName);
+    if (personaName) {
+      const persona = personas.find((p) => p.name === personaName);
+      if (persona) {
+        setValue('botName', persona.name);
+        setValue('persona', persona.systemPrompt || '');
+      }
+      setUseCustomPrompt(false);
+    } else {
+      setUseCustomPrompt(true);
+    }
+  };
 
   return (
     <div className="space-y-6">
       <div className="text-center mb-4">
         <h3 className="text-xl font-bold">Create Your First Bot</h3>
         <p className="text-base-content/70 text-sm">
-          Give your bot a name and personality. You can always change these later.
+          Pick an existing persona or create a custom one.
         </p>
       </div>
+
+      {personas.length > 0 && (
+        <FormField label="Use Existing Persona" hint="Select a persona to populate bot name and prompt automatically.">
+          <Select
+            id="onboarding-persona-select"
+            className="select-bordered"
+            value={selectedPersona}
+            onChange={(e) => handlePersonaSelect(e.target.value)}
+          >
+            <option value="">Custom (enter details below)</option>
+            {personas.map((p) => (
+              <option key={p.name} value={p.name}>{p.name}</option>
+            ))}
+          </Select>
+        </FormField>
+      )}
 
       <FormField label="Bot Name" error={errors.botName} required>
         <Validator>
@@ -278,23 +262,33 @@ const CreateBotStep: React.FC<CreateBotStepProps> = ({ form, llmProvider }) => {
         </Validator>
       </FormField>
 
-      <FormField
-        label="Persona / System Prompt"
-        error={errors.persona}
-        hint="Describe how the bot should behave. Leave blank for a general-purpose assistant."
-      >
-        <Textarea
-          id="onboarding-persona"
-          className="h-28 w-full"
-          placeholder="You are a helpful assistant that..."
-          {...register('persona')}
-        />
-      </FormField>
+      {personas.length > 0 && !useCustomPrompt && selectedPersona && (
+        <div className="text-center">
+          <button type="button" className="link link-primary text-sm" onClick={() => setUseCustomPrompt(true)}>
+            Customize system prompt instead
+          </button>
+        </div>
+      )}
+
+      {(useCustomPrompt || personas.length === 0) && (
+        <FormField
+          label="System Prompt"
+          error={errors.persona}
+          hint="Describe how the bot should behave. Leave blank for a general-purpose assistant."
+        >
+          <Textarea
+            id="onboarding-persona"
+            className="h-28 w-full"
+            placeholder="You are a helpful assistant that..."
+            {...register('persona')}
+          />
+        </FormField>
+      )}
 
       {llmProvider && (
         <Alert status="info" icon={<Cpu className="w-5 h-5 text-primary" />} className="bg-base-200">
           <span>
-            This bot will use <strong className="capitalize">{llmProvider}</strong> as its LLM provider (configured in the previous step).
+            This bot will use <strong className="capitalize">{llmProvider}</strong> as its LLM provider.
           </span>
         </Alert>
       )}
@@ -309,6 +303,12 @@ interface ConnectMessengerStepProps {
 const ConnectMessengerStep: React.FC<ConnectMessengerStepProps & { messageProfiles?: any[] }> = ({ form, messageProfiles = [] }) => {
   const { register, control, watch, formState: { errors } } = form;
   const messenger = watch('messenger');
+
+  const platformColors: Record<string, string> = {
+    discord: 'bg-[#5865F2]',
+    slack: 'bg-[#4A154B]',
+    mattermost: 'bg-[#0058CC]',
+  };
 
   const instructions: Record<string, React.ReactNode> = {
     discord: (
@@ -344,39 +344,55 @@ const ConnectMessengerStep: React.FC<ConnectMessengerStepProps & { messageProfil
         <h3 className="text-xl font-bold">Connect a Messenger</h3>
         <p className="text-base-content/70 text-sm">
           {messageProfiles.length > 0
-            ? 'Select a configured messenger, or set up a new one.'
-            : 'Choose a messaging platform to connect your bot to.'}
+            ? 'Select one of your installed messenger providers.'
+            : 'No messenger providers installed yet. Add one via the Message Providers page, then return here.'}
         </p>
       </div>
 
-      {messageProfiles.length > 0 && (
-        <Alert status="info" className="mb-2">
-          <MessageSquare className="w-5 h-5" />
-          <span>You have {messageProfiles.length} messenger(s) configured. Select one below or add a new platform.</span>
-        </Alert>
-      )}
-
-      <Controller
-        name="messenger"
-        control={control}
-        render={({ field }) => (
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { id: 'discord', label: 'Discord', color: 'bg-[#5865F2]' },
-              { id: 'slack', label: 'Slack', color: 'bg-[#4A154B]' },
-              { id: 'mattermost', label: 'Mattermost', color: 'bg-[#0058CC]' },
-            ].map((m) => (
-              <button
-                key={m.id}
-                className={`card p-4 text-center cursor-pointer transition-all border-2 ${
-                  field.value === m.id
-                    ? 'border-primary bg-primary/5 shadow-lg'
-                    : 'border-base-300 hover:border-primary/30'
-                }`}
-                onClick={() => field.onChange(m.id)}
-                type="button"
+      {messageProfiles.length > 0 ? (
+        <FormField label="Messenger Provider" error={errors.messenger}>
+          <Controller
+            name="messenger"
+            control={control}
+            render={({ field }) => (
+              <Select
+                id="onboarding-messenger"
+                className="select-bordered"
+                value={field.value}
+                onChange={(e) => field.onChange(e.target.value)}
               >
-                <div className={`w-10 h-10 ${m.color} rounded-lg mx-auto mb-2 flex items-center justify-center`}>
+                <option value="">Select a messenger...</option>
+                {messageProfiles.map((p: any) => (
+                  <option key={p.key || p.name} value={p.provider || p.key || p.name}>
+                    {p.name || p.key} ({p.provider || p.type || 'unknown'})
+                  </option>
+                ))}
+              </Select>
+            )}
+          />
+        </FormField>
+      ) : (
+        <Controller
+          name="messenger"
+          control={control}
+          render={({ field }) => (
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { id: 'discord', label: 'Discord', color: 'bg-[#5865F2]' },
+                { id: 'slack', label: 'Slack', color: 'bg-[#4A154B]' },
+                { id: 'mattermost', label: 'Mattermost', color: 'bg-[#0058CC]' },
+              ].map((m) => (
+                <button
+                  key={m.id}
+                  className={`card p-4 text-center cursor-pointer transition-all border-2 ${
+                    field.value === m.id
+                      ? 'border-primary bg-primary/5 shadow-lg'
+                      : 'border-base-300 hover:border-primary/30'
+                  }`}
+                  onClick={() => field.onChange(m.id)}
+                  type="button"
+                >
+                  <div className={`w-10 h-10 ${m.color} rounded-lg mx-auto mb-2 flex items-center justify-center`}>
                   <MessageSquare className="w-5 h-5 text-white" />
                 </div>
                 <span className="font-semibold text-sm">{m.label}</span>
@@ -385,6 +401,7 @@ const ConnectMessengerStep: React.FC<ConnectMessengerStepProps & { messageProfil
           </div>
         )}
       />
+      )}
 
       {messenger && (
         <>
@@ -422,8 +439,8 @@ interface DoneStepProps {
 
 const DONE_STEP_COUNTDOWN_MS = 30_000; // 30 seconds auto-redirect
 
-const DoneStep: React.FC<DoneStepProps> = ({ llmProvider, botName, messenger, onAutoRedirect }) => {
-  const [redirectTarget] = useState(() => Date.now() + DONE_STEP_COUNTDOWN_MS);
+const DoneStep: React.FC<DoneStepProps> = ({ llmProvider, botName, messenger }) => {
+  const navigate = useNavigate();
 
   return (
     <div className="text-center space-y-6 py-4">
@@ -455,10 +472,9 @@ const DoneStep: React.FC<DoneStepProps> = ({ llmProvider, botName, messenger, on
           </div>
       </Card>
 
-      <div className="flex items-center justify-center gap-2 text-sm text-base-content/50">
-        <span>Redirecting to dashboard in</span>
-        <Countdown targetDate={redirectTarget} size="sm" compact onComplete={onAutoRedirect} />
-      </div>
+      <Button variant="primary" size="lg" onClick={() => navigate('/admin/overview')}>
+        Go to Dashboard <ArrowRight className="w-5 h-5 ml-1" />
+      </Button>
 
       <p className="text-sm text-base-content/50">
         You can change any of these settings from the admin dashboard at any time.
@@ -503,24 +519,42 @@ const OnboardingPage: React.FC = () => {
     defaultValues: { messenger: '', messengerToken: '' },
   });
 
-  // Existing LLM profiles (fetched on mount)
+  // Existing profiles (fetched on mount)
   const [llmProfiles, setLlmProfiles] = useState<LlmProfile[]>([]);
+  const [messageProfiles, setMessageProfiles] = useState<any[]>([]);
+  const [personas, setPersonas] = useState<Array<{ name: string; systemPrompt?: string }>>([]);
 
   // UI state
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch existing LLM profiles on mount
+  // Fetch existing profiles on mount
   useEffect(() => {
-    const fetchProfiles = async () => {
-      try {
-        const data: any = await apiService.get('/api/config/llm-profiles');
+    const fetchAll = async () => {
+      const [llmResult, msgResult, personasResult] = await Promise.allSettled([
+        apiService.get('/api/config/llm-profiles'),
+        apiService.get('/api/config/message-profiles'),
+        apiService.get('/api/personas'),
+      ]);
+
+      if (llmResult.status === 'fulfilled') {
+        const data: any = llmResult.value;
         setLlmProfiles(data?.llm || data?.profiles?.llm || data?.data || []);
-      } catch {
-        // Non-critical, ignore
+      }
+
+      if (msgResult.status === 'fulfilled') {
+        const data: any = msgResult.value;
+        const profiles = data?.profiles || data?.data?.profiles || data?.data || [];
+        setMessageProfiles(Array.isArray(profiles) ? profiles : []);
+      }
+
+      if (personasResult.status === 'fulfilled') {
+        const data: any = personasResult.value;
+        const list = data?.personas || data?.data?.personas || data?.data || [];
+        setPersonas(Array.isArray(list) ? list : []);
       }
     };
-    fetchProfiles();
+    fetchAll();
   }, []);
 
   // Persist step progress to backend
@@ -555,29 +589,29 @@ const OnboardingPage: React.FC = () => {
     const messengerValues = messengerForm.getValues();
 
     try {
-      // Save LLM config if provided
-      if (llmValues.llmProvider && llmValues.apiKey) {
-        await apiService.put('/api/config/global', {
-          configName: llmValues.llmProvider,
-          updates: {
-            [`${llmValues.llmProvider}.apiKey`]: llmValues.apiKey,
-            ...(llmValues.model ? { [`${llmValues.llmProvider}.model`]: llmValues.model } : {}),
-          },
-        });
-      }
+      // Save LLM config and create bot in parallel (both are independent)
+      await Promise.all([
+        llmValues.llmProvider && llmValues.apiKey
+          ? apiService.put('/api/config/global', {
+              configName: llmValues.llmProvider,
+              updates: {
+                [`${llmValues.llmProvider}.apiKey`]: llmValues.apiKey,
+                ...(llmValues.model ? { [`${llmValues.llmProvider}.model`]: llmValues.model } : {}),
+              },
+            })
+          : Promise.resolve(),
+        botValues.botName.trim()
+          ? apiService.post('/api/bots', {
+              name: botValues.botName,
+              description: botValues.persona || 'Created during onboarding',
+              messageProvider: messengerValues.messenger || 'discord',
+              ...(llmValues.llmProvider ? { llmProvider: llmValues.llmProvider } : {}),
+              persona: 'default',
+            })
+          : Promise.resolve(),
+      ]);
 
-      // Create bot if name provided
-      if (botValues.botName.trim()) {
-        await apiService.post('/api/bots', {
-          name: botValues.botName,
-          description: botValues.persona || 'Created during onboarding',
-          messageProvider: messengerValues.messenger || 'discord',
-          ...(llmValues.llmProvider ? { llmProvider: llmValues.llmProvider } : {}),
-          persona: 'default',
-        });
-      }
-
-      // Mark onboarding complete
+      // Mark onboarding complete only after config and bot are saved
       await apiService.post('/api/onboarding/complete');
 
       navigate('/admin/overview');
@@ -638,16 +672,10 @@ const OnboardingPage: React.FC = () => {
       <div className="px-6 py-4 max-w-4xl mx-auto w-full">
         <Steps
           className="w-full"
-          items={stepMeta.map((s, i) => {
-            const stepNum = i + 1;
-            const isCompleted = step > stepNum;
-            const isActive = step === stepNum;
-            return {
-              color: isCompleted || isActive ? 'primary' : undefined,
-              dataContent: isCompleted ? '\u2713' : String(stepNum),
-              label: <span className={`text-xs ${isActive ? 'font-bold' : ''}`}>{s.label}</span>,
-            };
-          })}
+          currentStep={step - 1}
+          steps={stepMeta.map((s) => ({
+            title: s.label,
+          }))}
         />
       </div>
 
@@ -671,12 +699,14 @@ const OnboardingPage: React.FC = () => {
             {step === 3 && (
               <ConnectMessengerStep
                 form={messengerForm}
+                messageProfiles={messageProfiles}
               />
             )}
             {step === 4 && (
               <CreateBotStep
                 form={botForm}
                 llmProvider={llmProvider}
+                personas={personas}
               />
             )}
             {step === 5 && (
@@ -684,7 +714,6 @@ const OnboardingPage: React.FC = () => {
                 llmProvider={llmProvider}
                 botName={botName}
                 messenger={messenger}
-                onAutoRedirect={handleFinish}
               />
             )}
           </div>

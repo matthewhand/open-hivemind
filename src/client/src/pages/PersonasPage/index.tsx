@@ -251,7 +251,12 @@ const PersonasPage: React.FC = () => {
   const displayError = error || dataError;
 
   return (
-    <div className="space-y-6">
+    <div>
+      <div className="px-6 pt-6 pb-2">
+        <h1 className="text-2xl font-bold">Personas</h1>
+        <p className="text-base-content/60 text-sm mt-1">Define bot personalities, system prompts, and response styles</p>
+      </div>
+      <div className="px-6 pb-6 space-y-6">
       {displayError && (
         <Alert status="error" message={displayError} onClose={() => setError(null)} />
       )}
@@ -446,6 +451,7 @@ const PersonasPage: React.FC = () => {
         confirmVariant="error"
         loading={deleting}
       />
+      </div>
     </div>
   );
 };

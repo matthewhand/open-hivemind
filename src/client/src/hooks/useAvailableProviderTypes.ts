@@ -41,8 +41,12 @@ export function useAvailableProviderTypes() {
     { ttl: 60_000 },
   );
 
-  const providerData: AvailableProviderTypes =
-    data?.success && data.data ? data.data : EMPTY;
+  const rawData = data?.success && data.data ? data.data : null;
+  const providerData: AvailableProviderTypes = {
+    llm: Array.isArray(rawData?.llm) ? rawData.llm : [],
+    messenger: Array.isArray(rawData?.messenger) ? rawData.messenger : [],
+    memory: Array.isArray(rawData?.memory) ? rawData.memory : [],
+  };
 
   return {
     data: providerData,

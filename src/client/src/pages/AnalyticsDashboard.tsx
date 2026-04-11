@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import { apiService, ActivityResponse } from '../services/api';
-import MetricChart from '../components/Monitoring/MetricChart';
+const MetricChart = lazy(() => import('../components/Monitoring/MetricChart'));
 import StatsCards from '../components/DaisyUI/StatsCards';
 import { useErrorToast } from '../components/DaisyUI/ToastNotification';
 import Card from '../components/DaisyUI/Card';
@@ -9,6 +9,7 @@ import Select from '../components/DaisyUI/Select';
 import DataTable from '../components/DaisyUI/DataTable';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { SkeletonPage } from '../components/DaisyUI/Skeleton';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import Button from '../components/DaisyUI/Button';
 import { BarChart3, RefreshCw, ArrowDown, ArrowUp, MessageSquare, Users, Bot, CheckCircle2, XCircle, Clock, Activity } from 'lucide-react';
@@ -148,26 +149,30 @@ const AnalyticsDashboard: React.FC = () => {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <MetricChart
-          title="Message Volume"
-          data={messageVolumeData}
-          type="area"
-          color="var(--fallback-p,oklch(var(--p)/1))"
-          unit="msgs"
-          height={350}
-        />
-        <MetricChart
-          title="Response Time (Live)"
-          data={performanceMetrics.map(m => ({
-            timestamp: m.timestamp,
-            value: m.responseTime,
-            label: 'Latency',
-          }))}
-          type="line"
-          color="var(--fallback-er,oklch(var(--er)/1))"
-          unit="ms"
-          height={350}
-        />
+        <Suspense fallback={<LoadingSpinner size="lg" />}>
+          <MetricChart
+            title="Message Volume"
+            data={messageVolumeData}
+            type="area"
+            color="var(--fallback-p,oklch(var(--p)/1))"
+            unit="msgs"
+            height={350}
+          />
+        </Suspense>
+        <Suspense fallback={<LoadingSpinner size="lg" />}>
+          <MetricChart
+            title="Response Time (Live)"
+            data={performanceMetrics.map(m => ({
+              timestamp: m.timestamp,
+              value: m.responseTime,
+              label: 'Latency',
+            }))}
+            type="line"
+            color="var(--fallback-er,oklch(var(--er)/1))"
+            unit="ms"
+            height={350}
+          />
+        </Suspense>
       </div>
 
       {/* Detailed Analytics Tables */}

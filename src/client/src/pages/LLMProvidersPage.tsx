@@ -248,13 +248,14 @@ const ProfilesTab: React.FC<{
                     </div>
                   </div>
                   <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                    <Button size="sm" variant="outline" onClick={() => onEditProfile(profile)}>
+                    <Button size="sm" variant="outline" aria-label={`Edit ${profile.name} profile`} onClick={() => onEditProfile(profile)}>
                       <EditIcon className="w-4 h-4" />
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
                       className="text-error hover:bg-error/10"
+                      aria-label={`Delete ${profile.name} profile`}
                       onClick={() => onDeleteProfile(profile.key)}
                     >
                       <DeleteIcon className="w-4 h-4" />
@@ -262,6 +263,7 @@ const ProfilesTab: React.FC<{
                     <Button
                       size="sm"
                       variant="ghost"
+                      aria-label={expandedProfile === profile.key ? 'Collapse details' : 'Expand details'}
                       onClick={() => onToggleExpand(profile.key)}
                     >
                       {expandedProfile === profile.key ? (
@@ -889,20 +891,26 @@ const LLMProvidersPage: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6">
-      <Tabs
-        tabs={tabs}
-        variant="lifted"
-        activeTab={activeTab}
-        onChange={handleTabChange}
-      />
+    <div>
+      <div className="px-6 pt-6 pb-2">
+        <h1 className="text-2xl font-bold">LLM Providers</h1>
+        <p className="text-base-content/60 text-sm mt-1">Manage language model provider profiles and settings</p>
+      </div>
+      <div className="px-6 pb-6">
+        <Tabs
+          tabs={tabs}
+          variant="lifted"
+          activeTab={activeTab}
+          onChange={handleTabChange}
+        />
 
-      <ProviderConfigModal
-        modalState={{ ...modalState, providerType: 'llm' }}
-        existingProviders={profiles}
-        onClose={closeModal}
-        onSubmit={handleProviderSubmit}
-      />
+        <ProviderConfigModal
+          modalState={{ ...modalState, providerType: 'llm' }}
+          existingProviders={profiles}
+          onClose={closeModal}
+          onSubmit={handleProviderSubmit}
+        />
+      </div>
     </div>
   );
 };

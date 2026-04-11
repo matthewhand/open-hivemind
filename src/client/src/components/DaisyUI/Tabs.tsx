@@ -4,7 +4,7 @@
 
 import React, { useState } from 'react';
 
-interface Tab {
+export interface TabItem {
   /** Tab identifier — `id` is canonical; `key` is accepted as an alias for backward compatibility */
   id?: string;
   key?: string;
@@ -16,6 +16,9 @@ interface Tab {
   badge?: string | number;
   icon?: React.ReactNode;
 }
+
+/** @deprecated Use TabItem */
+type Tab = TabItem;
 
 interface TabsProps {
   tabs: Tab[];
@@ -96,13 +99,13 @@ const Tabs: React.FC<TabsProps> = ({
       </div>
       
       {variant === 'lifted' && (
-        <div className="tab-content bg-base-100 border-base-300 rounded-box p-6">
+        <div className="bg-base-100 border border-base-300 rounded-b-box rounded-tr-box p-6">
           {activeTabContent}
         </div>
       )}
-      
+
       {variant !== 'lifted' && (
-        <div className="tab-content p-4">
+        <div className="p-4">
           {activeTabContent}
         </div>
       )}

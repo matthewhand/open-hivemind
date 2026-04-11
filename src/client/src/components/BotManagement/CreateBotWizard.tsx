@@ -91,7 +91,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
         const fetchGuardProfiles = async () => {
             try {
                 const data: any = await apiService.get('/api/admin/guard-profiles');
-                setGuardProfiles(data.data || []);
+                setGuardProfiles(Array.isArray(data.data) ? data.data : []);
             } catch (e) {
                 debug('ERROR:', 'Failed to fetch guard profiles', e);
             }

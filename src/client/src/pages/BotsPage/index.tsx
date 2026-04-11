@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Bot as BotIcon, Download, LayoutGrid, List, RefreshCw, Settings, Trash2, Upload as UploadIcon } from 'lucide-react';
+import { Bot as BotIcon, Download, LayoutGrid, List, Pause, Play, Plus, RefreshCw, Settings, Trash2, Upload as UploadIcon } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import Tabs from '../../components/DaisyUI/Tabs';
@@ -167,11 +167,7 @@ const BotsPage: React.FC = () => {
     });
   };
 
-  if (loading && bots.length === 0 && !error) {
-    return <SkeletonPage variant="cards" statsCount={4} showFilters />;
-  }
-
-  const instancesContent = (
+  const instancesContent = useMemo(() => (
     <div className="space-y-4">
       <SearchFilterBar
           searchValue={searchQuery}
@@ -211,7 +207,7 @@ const BotsPage: React.FC = () => {
                 {viewMode === 'swarm3d' ? (
                   <LayoutGrid className="w-4 h-4" />
                 ) : viewMode === 'compact' ? (
-                  <Bot className="w-4 h-4" />
+                  <BotIcon className="w-4 h-4" />
                 ) : (
                   <List className="w-4 h-4" />
                 )}
@@ -219,7 +215,7 @@ const BotsPage: React.FC = () => {
             </Tooltip>
             <Tooltip content="Refresh list">
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={fetchBots}
                 className="btn-square"
@@ -316,28 +312,52 @@ const BotsPage: React.FC = () => {
           )
         )}
       </div>
-  );
+  ), [
+    searchQuery, setSearchQuery, filterType, setFilterType, viewMode, setViewMode,
+    botsLoading, error, bots, filteredBots, filteredBotIds, setIsCreateModalOpen,
+    handlePreviewBot, handleToggleBotStatus, bulk, isMobile,
+    onBotDragStart, onBotDragOver, onBotDragEnd, onBotDrop, getBotItemStyle,
+    onBotMoveUp, onBotMoveDown, previewBot, setEditingBot, setDeletingBot,
+    handleExportAll, setIsImportModalOpen, handleBulkExport, handleBulkDelete, bulkDeleting,
+  ]);
+
+  const botsTabs = useMemo(() => [
+    {
+      id: 'instances',
+      label: 'Instances',
+      icon: <BotIcon className="w-4 h-4" />,
+      content: instancesContent,
+    },
+    {
+      id: 'settings',
+      label: 'Settings',
+      icon: <Settings className="w-4 h-4" />,
+      content: <BotSettingsTab />,
+    },
+  ], [instancesContent]);
+
+  // Early return AFTER all hooks — hooks must never be called after a conditional return
+  if (loading && bots.length === 0 && !error) {
+    return <SkeletonPage variant="cards" statsCount={4} showFilters />;
+  }
 
   return (
-    <div className="space-y-6">
+    <div>
+      <div className="px-6 pt-6 pb-2 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Bots</h1>
+          <p className="text-base-content/60 text-sm mt-1">Create and manage your AI bot instances</p>
+        </div>
+        <Button variant="primary" onClick={() => setIsCreateModalOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" /> Create Bot
+        </Button>
+      </div>
+      <div className="px-6 pb-6 space-y-6">
       <Tabs
         variant="lifted"
         activeTab={activeTab}
         onChange={handleTabChange}
-        tabs={[
-          {
-            id: 'instances',
-            label: 'Instances',
-            icon: <BotIcon className="w-4 h-4" />,
-            content: instancesContent,
-          },
-          {
-            id: 'settings',
-            label: 'Settings',
-            icon: <Settings className="w-4 h-4" />,
-            content: <BotSettingsTab />,
-          },
-        ]}
+        tabs={botsTabs}
       />
 
       {/* Bot Detail Drawer — slides in from right when a bot is selected */}
@@ -440,6 +460,7 @@ const BotsPage: React.FC = () => {
           fetchBots();
         }}
       />
+      </div>
     </div>
   );
 };

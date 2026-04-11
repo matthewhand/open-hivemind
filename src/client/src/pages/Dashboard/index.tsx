@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Cpu, Rocket, X, HelpCircle } from 'lucide-react';
 import Dashboard from '../../components/Dashboard';
@@ -56,7 +56,8 @@ const DashboardPage: React.FC = () => {
     const checkOnboarding = async (): Promise<void> => {
       try {
         const data = await apiService.get<any>('/api/onboarding/status');
-        if (!data.completed) {
+        const completed = data?.completed ?? data?.data?.completed ?? false;
+        if (!completed) {
           navigate('/onboarding', { replace: true });
           return;
         }
@@ -83,6 +84,11 @@ const DashboardPage: React.FC = () => {
     const interval = setInterval(checkOnboarding, 5000);
     return () => clearInterval(interval);
   }, [navigate]);
+
+  const dashboardTabs = useMemo(() => [
+    { key: 'dashboard', label: 'Dashboard' },
+    { key: 'health', label: 'Health' },
+  ], []);
 
   if (!checked) {
     return null; // brief blank while checking onboarding status
@@ -134,10 +140,7 @@ const DashboardPage: React.FC = () => {
       <Card className="shadow-xl">
         <Tabs
           variant="lifted"
-          tabs={[
-            { key: 'dashboard', label: 'Dashboard' },
-            { key: 'health', label: 'Health' },
-          ]}
+          tabs={dashboardTabs}
           activeTab={activeTab}
           onChange={(tab) => setTab(tab)}
           className="mb-6"

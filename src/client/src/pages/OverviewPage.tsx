@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Cpu, Rocket, X, HelpCircle } from 'lucide-react';
 import Dashboard from '../components/Dashboard';
@@ -64,7 +64,8 @@ const OverviewPage: React.FC = () => {
     const checkOnboarding = async (): Promise<void> => {
       try {
         const data = await apiService.get<any>('/api/onboarding/status');
-        if (!data.completed) {
+        const completed = data?.completed ?? data?.data?.completed ?? false;
+        if (!completed) {
           navigate('/onboarding', { replace: true });
           return;
         }
@@ -100,6 +101,18 @@ const OverviewPage: React.FC = () => {
     return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
+  const gettingStartedVisible = showGettingStarted || needsSetup;
+
+  // Build tab list dynamically — Getting Started tab is conditional
+  const tabs = useMemo(() => [
+    ...(gettingStartedVisible
+      ? [{ key: 'getting-started', label: 'Getting Started' }]
+      : []),
+    { key: 'overview', label: 'Overview' },
+    { key: 'activity', label: 'Activity' },
+    { key: 'monitoring', label: 'Monitoring' },
+  ], [gettingStartedVisible]);
+
   if (!checked) {
     return null;
   }
@@ -133,8 +146,6 @@ const OverviewPage: React.FC = () => {
     }
   };
 
-  const gettingStartedVisible = showGettingStarted || needsSetup;
-
   const setTab = (tab: string) => {
     if (tab === 'overview') {
       searchParams.delete('tab');
@@ -143,16 +154,6 @@ const OverviewPage: React.FC = () => {
       setSearchParams({ tab });
     }
   };
-
-  // Build tab list dynamically — Getting Started tab is conditional
-  const tabs = [
-    ...(gettingStartedVisible
-      ? [{ key: 'getting-started', label: 'Getting Started' }]
-      : []),
-    { key: 'overview', label: 'Overview' },
-    { key: 'activity', label: 'Activity' },
-    { key: 'monitoring', label: 'Monitoring' },
-  ];
 
   return (
     <div>

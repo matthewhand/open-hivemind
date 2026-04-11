@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { authFetch } from '../utils/authFetch';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -341,6 +341,7 @@ const GuardsPage: React.FC = () => {
   };
 
   const handleSaveProfileForm = (formData: Record<string, any>) => {
+    if (createMutation.isPending || updateMutation.isPending) return;
     if (editingProfile?.id) {
       updateMutation.mutate({ id: editingProfile.id, profile: formData });
     } else {
@@ -570,6 +571,124 @@ const GuardsPage: React.FC = () => {
     }
   ];
 
+  const guardsTabs = useMemo(() => [
+    {
+      id: 'profiles',
+      label: 'Profiles',
+      icon: <Users className="w-4 h-4" />,
+      content: (
+        <>
+          {profiles.length === 0 ? (
+            <div className="text-center py-16 bg-base-200 rounded-box">
+              <Shield className="w-16 h-16 mx-auto text-base-content/30 mb-4" />
+              <h3 className="text-xl font-bold mb-2">No Guard Profiles</h3>
+              <p className="text-base-content/70 mb-6">Create your first guard profile to secure your bots.</p>
+              <Button color="primary" onClick={() => setEditingProfile(defaultNewProfile as any)}>
+                <Plus className="w-4 h-4 mr-2" /> Create Profile
+              </Button>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {paginatedProfiles.map(profile => (
+                  <Card
+                    key={profile.id}
+                    className="hover:shadow-lg transition-shadow cursor-pointer border border-base-200"
+                    onClick={() => setSelectedProfileId(profile.id)}
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-lg font-bold">{profile.name}</h3>
+                        <p className="text-sm text-base-content/70 line-clamp-2 min-h-[2.5rem] mt-1">
+                          {profile.description || 'No description'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 mb-6">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="flex items-center gap-2">
+                          <Shield className="w-4 h-4 opacity-70" /> Access Control
+                        </span>
+                        <div className={`badge ${profile.guards.mcpGuard.enabled ? 'badge-primary badge-outline' : 'badge-ghost'}`}>
+                          {profile.guards.mcpGuard.enabled ? profile.guards.mcpGuard.type : 'Disabled'}
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="flex items-center gap-2">
+                          <RefreshCw className="w-4 h-4 opacity-70" /> Rate Limit
+                        </span>
+                        <div className={`badge ${profile.guards.rateLimit?.enabled ? 'badge-primary badge-outline' : 'badge-ghost'}`}>
+                          {profile.guards.rateLimit?.enabled ? `${profile.guards.rateLimit.maxRequests}/${profile.guards.rateLimit.windowMs / 1000}s` : 'Disabled'}
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="flex items-center gap-2">
+                          <AlertTriangle className="w-4 h-4 opacity-70" /> Content Filter
+                        </span>
+                        <div className={`badge ${profile.guards.contentFilter?.enabled ? 'badge-error badge-outline' : 'badge-ghost'}`}>
+                          {profile.guards.contentFilter?.enabled ? profile.guards.contentFilter.strictness : 'Disabled'}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-2 mt-auto">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => { e.stopPropagation(); handleDuplicate(profile); }}
+                        title="Duplicate Profile"
+                        aria-label={`Duplicate ${profile.name} guard`}
+                      >
+                        <Copy className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => { e.stopPropagation(); setEditingProfile(profile); }}
+                        title="Edit Profile"
+                        aria-label={`Edit ${profile.name} guard`}
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        color="error"
+                        onClick={(e) => { e.stopPropagation(); setDeleteConfirm(profile); }}
+                        title="Delete Profile"
+                        aria-label={`Delete ${profile.name} guard`}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+              <div className="flex justify-center mt-6">
+                <Pagination
+                  currentPage={currentPage}
+                  totalItems={profiles.length}
+                  pageSize={pageSize}
+                  onPageChange={setCurrentPage}
+                  style="standard"
+                />
+              </div>
+            </>
+          )}
+        </>
+      ),
+    },
+    {
+      id: 'settings',
+      label: 'Settings',
+      icon: <Settings className="w-4 h-4" />,
+      content: <GuardSettingsTab />,
+    },
+  ], [profiles, paginatedProfiles, currentPage, setEditingProfile, setDeleteConfirm, setSelectedProfileId, handleDuplicate]);
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[50vh]">
@@ -579,127 +698,19 @@ const GuardsPage: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto p-4 max-w-7xl">
+    <div>
+      <div className="px-6 pt-6 pb-2">
+        <h1 className="text-2xl font-bold">Guards</h1>
+        <p className="text-base-content/60 text-sm mt-1">Set up access control, rate limits, and content filters</p>
+      </div>
+      <div className="px-6 pb-6">
       <Tabs
         variant="lifted"
         activeTab={activeTab}
         onChange={handleTabChange}
-        tabs={[
-          {
-            id: 'profiles',
-            label: 'Profiles',
-            icon: <Users className="w-4 h-4" />,
-            content: (
-              <>
-                {profiles.length === 0 ? (
-                  <div className="text-center py-16 bg-base-200 rounded-box">
-                    <Shield className="w-16 h-16 mx-auto text-base-content/30 mb-4" />
-                    <h3 className="text-xl font-bold mb-2">No Guard Profiles</h3>
-                    <p className="text-base-content/70 mb-6">Create your first guard profile to secure your bots.</p>
-                    <Button color="primary" onClick={() => setEditingProfile(defaultNewProfile as any)}>
-                      <Plus className="w-4 h-4 mr-2" /> Create Profile
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {paginatedProfiles.map(profile => (
-                        <Card
-                          key={profile.id}
-                          className="hover:shadow-lg transition-shadow cursor-pointer border border-base-200"
-                          onClick={() => setSelectedProfileId(profile.id)}
-                        >
-                          <div className="flex justify-between items-start mb-4">
-                            <div>
-                              <h3 className="text-lg font-bold">{profile.name}</h3>
-                              <p className="text-sm text-base-content/70 line-clamp-2 min-h-[2.5rem] mt-1">
-                                {profile.description || 'No description'}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="space-y-3 mb-6">
-                            <div className="flex justify-between items-center text-sm">
-                              <span className="flex items-center gap-2">
-                                <Shield className="w-4 h-4 opacity-70" /> Access Control
-                              </span>
-                              <div className={`badge ${profile.guards.mcpGuard.enabled ? 'badge-primary badge-outline' : 'badge-ghost'}`}>
-                                {profile.guards.mcpGuard.enabled ? profile.guards.mcpGuard.type : 'Disabled'}
-                              </div>
-                            </div>
-
-                            <div className="flex justify-between items-center text-sm">
-                              <span className="flex items-center gap-2">
-                                <RefreshCw className="w-4 h-4 opacity-70" /> Rate Limit
-                              </span>
-                              <div className={`badge ${profile.guards.rateLimit?.enabled ? 'badge-primary badge-outline' : 'badge-ghost'}`}>
-                                {profile.guards.rateLimit?.enabled ? `${profile.guards.rateLimit.maxRequests}/${profile.guards.rateLimit.windowMs / 1000}s` : 'Disabled'}
-                              </div>
-                            </div>
-
-                            <div className="flex justify-between items-center text-sm">
-                              <span className="flex items-center gap-2">
-                                <AlertTriangle className="w-4 h-4 opacity-70" /> Content Filter
-                              </span>
-                              <div className={`badge ${profile.guards.contentFilter?.enabled ? 'badge-error badge-outline' : 'badge-ghost'}`}>
-                                {profile.guards.contentFilter?.enabled ? profile.guards.contentFilter.strictness : 'Disabled'}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="flex justify-end gap-2 mt-auto">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={(e) => { e.stopPropagation(); handleDuplicate(profile); }}
-                              title="Duplicate Profile"
-                              aria-label="Duplicate profile"
-                            >
-                              <Copy className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={(e) => { e.stopPropagation(); setEditingProfile(profile); }}
-                              title="Edit Profile"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              color="error"
-                              onClick={(e) => { e.stopPropagation(); setDeleteConfirm(profile); }}
-                              title="Delete Profile"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </Card>
-                      ))}
-                    </div>
-                    <div className="flex justify-center mt-6">
-                      <Pagination
-                        currentPage={currentPage}
-                        totalItems={profiles.length}
-                        pageSize={pageSize}
-                        onPageChange={setCurrentPage}
-                        style="standard"
-                      />
-                    </div>
-                  </>
-                )}
-              </>
-            ),
-          },
-          {
-            id: 'settings',
-            label: 'Settings',
-            icon: <Settings className="w-4 h-4" />,
-            content: <GuardSettingsTab />,
-          },
-        ]}
+        tabs={guardsTabs}
       />
+
 
       {/* Guard Profile Detail Drawer */}
       <DetailDrawer
@@ -841,6 +852,7 @@ const GuardsPage: React.FC = () => {
             handleSaveProfileForm(data);
           }}
           submitText={editingProfile.id ? 'Save Changes' : 'Create Profile'}
+          loading={createMutation.isPending || updateMutation.isPending}
         />
       )}
 
@@ -853,6 +865,7 @@ const GuardsPage: React.FC = () => {
         onConfirm={confirmDelete}
         onClose={() => setDeleteConfirm(null)}
       />
+      </div>
     </div>
   );
 };

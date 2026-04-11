@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Card from '../components/DaisyUI/Card';
 import Button from '../components/DaisyUI/Button';
 import Badge from '../components/DaisyUI/Badge';
+import Tabs from '../components/DaisyUI/Tabs';
 import { Alert } from '../components/DaisyUI/Alert';
 import StatsCards from '../components/DaisyUI/StatsCards';
 import EmptyState from '../components/DaisyUI/EmptyState';
@@ -10,6 +12,7 @@ import { SkeletonTableLayout } from '../components/DaisyUI/Skeleton';
 import SearchFilterBar from '../components/SearchFilterBar';
 import Modal, { ConfirmModal } from '../components/DaisyUI/Modal';
 import { useErrorToast } from '../components/DaisyUI/ToastNotification';
+import { MarketplaceGrid } from '../components/Marketplace';
 import {
   Wrench as ToolIcon,
   Plus as AddIcon,
@@ -21,6 +24,7 @@ import {
   ChevronRight as CollapseIcon,
   Search,
   RefreshCw,
+  Store as StoreIcon,
 } from 'lucide-react';
 import { apiService } from '../services/api';
 import { getProviderSchema, getProviderSchemasByType } from '../provider-configs';
@@ -155,7 +159,11 @@ const ToolProvidersPage: React.FC = () => {
 
   const currentSchema = useMemo(() => getProviderSchema(selectedProvider), [selectedProvider]);
 
-  return (
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'profiles';
+  const handleTabChange = (tabId: string) => setSearchParams({ tab: tabId });
+
+  const profilesContent = useMemo(() => (
     <div className="space-y-6">
       <div className="flex justify-end mb-4">
         <div className="flex gap-2">
@@ -259,6 +267,34 @@ const ToolProvidersPage: React.FC = () => {
       </Modal>
 
       <ConfirmModal isOpen={confirmModal.isOpen} onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))} title={confirmModal.title} message={confirmModal.message} onConfirm={confirmModal.onConfirm} confirmVariant="error" confirmText="Delete" cancelText="Cancel" />
+    </div>
+  ), [
+    profiles, filteredProfiles, providerTypes, stats, loading, error,
+    searchQuery, filterType, expandedProfile,
+    formModal, formData, selectedProvider, currentSchema, toolSchemas, confirmModal,
+    fetchProfiles, handleAddProfile, handleEditProfile, handleDeleteProfile,
+    handleFormSubmit, toggleExpand, setSearchQuery, setFilterType,
+  ]);
+
+  const toolTabs = useMemo(() => [
+    { id: 'profiles', label: 'Profiles', icon: <ToolIcon className="w-4 h-4" />, content: profilesContent },
+    { id: 'community', label: 'Community', icon: <StoreIcon className="w-4 h-4" />, content: <MarketplaceGrid filter="tool" /> },
+  ], [profilesContent]);
+
+  return (
+    <div>
+      <div className="px-6 pt-6 pb-2">
+        <h1 className="text-2xl font-bold">Tool Providers</h1>
+        <p className="text-base-content/60 text-sm mt-1">Connect tool providers and external integrations</p>
+      </div>
+      <div className="px-6 pb-6">
+        <Tabs
+          variant="lifted"
+          activeTab={activeTab}
+          onChange={handleTabChange}
+          tabs={toolTabs}
+        />
+      </div>
     </div>
   );
 };

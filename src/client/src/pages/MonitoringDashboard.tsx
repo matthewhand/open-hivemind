@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useWebSocket } from '../contexts/WebSocketContext';
-import MetricChart from '../components/Monitoring/MetricChart';
+const MetricChart = lazy(() => import('../components/Monitoring/MetricChart'));
 import AlertPanel from '../components/Monitoring/AlertPanel';
 import EventStream from '../components/Monitoring/EventStream';
 import PerformanceMonitor from '../components/PerformanceMonitor';
 import StatsCards from '../components/DaisyUI/StatsCards';
 import RadialProgress from '../components/DaisyUI/RadialProgress';
 import { SkeletonPage } from '../components/DaisyUI/Skeleton';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import Button from '../components/DaisyUI/Button';
 import { Alert } from '../components/DaisyUI/Alert';
@@ -174,57 +175,65 @@ const MonitoringDashboard: React.FC = () => {
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <MetricChart
-          title="CPU Usage"
-          data={performanceMetrics.map(m => ({
-            timestamp: m.timestamp,
-            value: m.cpuUsage,
-            label: 'CPU',
-          }))}
-          type="area"
-          color="var(--fallback-er,oklch(var(--er)/1))"
-          unit="%"
-          refreshInterval={refreshInterval}
-        />
-        <MetricChart
-          title="Memory Usage"
-          data={performanceMetrics.map(m => ({
-            timestamp: m.timestamp,
-            value: m.memoryUsage,
-            label: 'Memory',
-          }))}
-          type="line"
-          color="var(--fallback-p,oklch(var(--p)/1))"
-          unit="%"
-          refreshInterval={refreshInterval}
-        />
+        <Suspense fallback={<LoadingSpinner size="lg" />}>
+          <MetricChart
+            title="CPU Usage"
+            data={performanceMetrics.map(m => ({
+              timestamp: m.timestamp,
+              value: m.cpuUsage,
+              label: 'CPU',
+            }))}
+            type="area"
+            color="var(--fallback-er,oklch(var(--er)/1))"
+            unit="%"
+            refreshInterval={refreshInterval}
+          />
+        </Suspense>
+        <Suspense fallback={<LoadingSpinner size="lg" />}>
+          <MetricChart
+            title="Memory Usage"
+            data={performanceMetrics.map(m => ({
+              timestamp: m.timestamp,
+              value: m.memoryUsage,
+              label: 'Memory',
+            }))}
+            type="line"
+            color="var(--fallback-p,oklch(var(--p)/1))"
+            unit="%"
+            refreshInterval={refreshInterval}
+          />
+        </Suspense>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <MetricChart
-          title="Message Rate"
-          data={performanceMetrics.map(m => ({
-            timestamp: m.timestamp,
-            value: m.messageRate,
-            label: 'Messages',
-          }))}
-          type="bar"
-          color="var(--fallback-su,oklch(var(--su)/1))"
-          unit="msgs/sec"
-          refreshInterval={refreshInterval}
-        />
-        <MetricChart
-          title="Error Rate"
-          data={performanceMetrics.map(m => ({
-            timestamp: m.timestamp,
-            value: m.errorRate,
-            label: 'Errors',
-          }))}
-          type="line"
-          color="var(--fallback-wa,oklch(var(--wa)/1))"
-          unit="%"
-          refreshInterval={refreshInterval}
-        />
+        <Suspense fallback={<LoadingSpinner size="lg" />}>
+          <MetricChart
+            title="Message Rate"
+            data={performanceMetrics.map(m => ({
+              timestamp: m.timestamp,
+              value: m.messageRate,
+              label: 'Messages',
+            }))}
+            type="bar"
+            color="var(--fallback-su,oklch(var(--su)/1))"
+            unit="msgs/sec"
+            refreshInterval={refreshInterval}
+          />
+        </Suspense>
+        <Suspense fallback={<LoadingSpinner size="lg" />}>
+          <MetricChart
+            title="Error Rate"
+            data={performanceMetrics.map(m => ({
+              timestamp: m.timestamp,
+              value: m.errorRate,
+              label: 'Errors',
+            }))}
+            type="line"
+            color="var(--fallback-wa,oklch(var(--wa)/1))"
+            unit="%"
+            refreshInterval={refreshInterval}
+          />
+        </Suspense>
       </div>
 
       {/* Performance Monitor */}

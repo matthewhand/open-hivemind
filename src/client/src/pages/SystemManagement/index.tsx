@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useWebSocket } from '../../contexts/WebSocketContext';
 import { apiService } from '../../services/api';
 import StatusCard from '../../components/Monitoring/StatusCard';
@@ -246,6 +246,13 @@ const SystemManagement: React.FC = () => {
     },
   ];
 
+  const systemManagementTabs = useMemo(() => [
+    { key: 'alerts', label: 'Alert Management', color: 'warning' as const },
+    { key: 'config', label: 'System Configuration' },
+    { key: 'backups', label: 'Backup Management', color: 'info' as const },
+    { key: 'performance', label: 'Performance Tuning', color: 'accent' as const },
+  ], []);
+
   return (
     <div className="min-h-screen bg-base-200 p-6">
       {/* Header */}
@@ -281,12 +288,7 @@ const SystemManagement: React.FC = () => {
       {/* Management Tabs */}
       <Card className="shadow-xl">
         <Tabs variant="lifted"
-            tabs={[
-              { key: 'alerts', label: 'Alert Management', color: 'warning' as const },
-              { key: 'config', label: 'System Configuration' },
-              { key: 'backups', label: 'Backup Management', color: 'info' as const },
-              { key: 'performance', label: 'Performance Tuning', color: 'accent' as const },
-            ]}
+            tabs={systemManagementTabs}
             activeTab={activeTab}
             onChange={setActiveTab}
             className="mb-6"

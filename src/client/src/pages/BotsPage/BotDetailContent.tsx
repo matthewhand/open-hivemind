@@ -186,7 +186,7 @@ export const BotDetailContent: React.FC<BotDetailContentProps> = ({
               <AlertCircle className="w-8 h-8 mx-auto mb-2 text-error" />
               <p className="text-xs text-error mb-2">{activityError}</p>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="xs"
                 onClick={() => previewBot && fetchPreviewActivity(previewBot.id)}
               >

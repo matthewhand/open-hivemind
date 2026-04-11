@@ -66,7 +66,7 @@ const ActivityPage: React.FC = () => {
     if (startDate) query.append('from', new Date(startDate).toISOString());
     if (endDate) query.append('to', new Date(endDate).toISOString());
     const search = query.toString();
-    return `/api/dashboard/api/activity${search ? `?${search}` : ''}`;
+    return `/api/dashboard/activity${search ? `?${search}` : ''}`;
   }, [selectedBot, selectedProvider, selectedLlmProvider, startDate, endDate]);
 
   // Use cached query with optional polling

@@ -1,6 +1,6 @@
 import React from 'react';
 import { GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
-import BotCard from '../../components/BotManagement/BotCard';
+import BotConfigCard from './BotConfigCard';
 import Button from '../../components/DaisyUI/Button';
 import type { BotConfig } from '../../types/bot';
 import Checkbox from '../../components/DaisyUI/Checkbox';
@@ -96,7 +96,7 @@ export const BotListGrid: React.FC<BotListGridProps> = ({
               </span>
             )}
           </div>
-          <BotCard
+          <BotConfigCard
             bot={bot}
             isSelected={previewBot?.id === bot.id}
             onPreview={() => handlePreviewBot(bot)}
