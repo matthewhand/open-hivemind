@@ -10,6 +10,13 @@
 [dev]
   command = "npm run dev"
 
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/server"
