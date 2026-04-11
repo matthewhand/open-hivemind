@@ -125,9 +125,3 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 }
 
 export default ErrorBoundary;
-
-/**
- * @deprecated Use `ErrorBoundary` directly. This alias exists for backward
- * compatibility with route-level imports.
- */
-export { ErrorBoundary as RouteErrorBoundary };
