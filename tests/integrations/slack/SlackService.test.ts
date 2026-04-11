@@ -151,6 +151,20 @@ describe('SlackService', () => {
     delete process.env.SLACK_SIGNING_SECRET;
     process.env.SLACK_BOT_TOKEN = 'xoxb-test-token';
 
+    // Remove any BOTS_* env vars loaded from .env so BotConfigurationManager
+    // finds no multi-bot config and falls through to legacy configuration,
+    // which reads the mocked messengers.json (containing 'LegacyBot1').
+    for (const key of Object.keys(process.env)) {
+      if (key.startsWith('BOTS_')) {
+        delete process.env[key];
+      }
+    }
+
+    // Reset BotConfigurationManager singleton so it re-runs loadConfiguration()
+    // without the BOTS_* env vars, ensuring the legacy path is taken.
+    const BotConfigMgr = require('@src/config/BotConfigurationManager');
+    (BotConfigMgr.BotConfigurationManager as any).instance = undefined;
+
     (fs.readFileSync as jest.Mock).mockReturnValue(
       JSON.stringify({
         slack: {
