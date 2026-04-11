@@ -482,7 +482,7 @@ router.post(
   asyncErrorHandler(async (req, res) => {
     try {
       const { key } = req.params;
-      const { message } = req.body as { message?: string };
+      const { message, systemPrompt } = req.body as { message?: string; systemPrompt?: string };
 
       if (!message?.trim()) {
         return res.status(HTTP_STATUS.BAD_REQUEST).json({
@@ -516,7 +516,10 @@ router.post(
       }
 
       const start = Date.now();
-      const response: any = await provider.generateChatCompletion(message.trim(), []);
+      const messages: any[] = systemPrompt
+        ? [{ role: 'system', content: systemPrompt }]
+        : [];
+      const response: any = await provider.generateChatCompletion(message.trim(), messages);
       const latency = Date.now() - start;
 
       const reply = typeof response === 'string'

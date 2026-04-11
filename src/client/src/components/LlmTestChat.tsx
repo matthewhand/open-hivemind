@@ -1,8 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { X, Send, Loader2, Sparkles } from 'lucide-react';
+import { X, Send, Loader2, Sparkles, Settings2 } from 'lucide-react';
 import Button from '../DaisyUI/Button';
-import Card from '../DaisyUI/Card';
 import Input from '../DaisyUI/Input';
+import Textarea from '../DaisyUI/Textarea';
+import Toggle from '../DaisyUI/Toggle';
 import { useSuccessToast, useErrorToast } from '../DaisyUI/ToastNotification';
 
 interface LlmTestChatProps {
@@ -23,11 +24,14 @@ interface ChatMsg {
 /**
  * Inline test chat drawer for LLM provider profiles.
  * Opens on the right side when the user clicks "Test" on a profile card.
+ * Supports optional custom system prompt and unified error display.
  */
 const LlmTestChat: React.FC<LlmTestChatProps> = ({ providerKey, providerType, onClose }) => {
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  const [showSystemPrompt, setShowSystemPrompt] = useState(false);
+  const [systemPrompt, setSystemPrompt] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
   const showSuccess = useSuccessToast();
   const showError = useErrorToast();
@@ -51,13 +55,22 @@ const LlmTestChat: React.FC<LlmTestChatProps> = ({ providerKey, providerType, on
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userMsg.content,
-          llmProviderKey: providerKey,
+          systemPrompt: systemPrompt.trim() || undefined,
         }),
       });
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || err.error || `HTTP ${res.status}`);
+        const errMsg = err.message || err.error || `HTTP ${res.status}`;
+        const assistantMsg: ChatMsg = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: `⚠️ ${errMsg}`,
+          timestamp: Date.now(),
+        };
+        setMessages(prev => [...prev, assistantMsg]);
+        showError('Test failed', errMsg);
+        return;
       }
 
       const data = await res.json();
@@ -72,20 +85,20 @@ const LlmTestChat: React.FC<LlmTestChatProps> = ({ providerKey, providerType, on
       setMessages(prev => [...prev, assistantMsg]);
       showSuccess('Test successful', `${assistantMsg.latency}ms`);
     } catch (err: any) {
-      const errMsg: ChatMsg = {
+      const errMsg = err.message || 'Network error';
+      const assistantMsg: ChatMsg = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `⚠️ Error: ${err.message}`,
+        content: `⚠️ ${errMsg}`,
         timestamp: Date.now(),
       };
-      setMessages(prev => [...prev, errMsg]);
-      showError('Test failed', err.message);
+      setMessages(prev => [...prev, assistantMsg]);
+      showError('Test failed', errMsg);
     } finally {
       setSending(false);
     }
   };
 
-  // Auto-scroll to bottom
   React.useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, sending]);
@@ -110,6 +123,30 @@ const LlmTestChat: React.FC<LlmTestChatProps> = ({ providerKey, providerType, on
         </button>
       </div>
 
+      {/* System prompt toggle */}
+      <div className="px-4 py-2 border-b border-base-300 bg-base-100">
+        <div className="flex items-center justify-between">
+          <label className="flex items-center gap-2 cursor-pointer text-xs text-base-content/60">
+            <Settings2 className="w-3 h-3" />
+            Custom system prompt
+          </label>
+          <Toggle
+            size="sm"
+            checked={showSystemPrompt}
+            onChange={(e) => setShowSystemPrompt(e.target.checked)}
+          />
+        </div>
+        {showSystemPrompt && (
+          <Textarea
+            size="sm"
+            className="mt-2 h-16 resize-none"
+            placeholder="You are a helpful assistant..."
+            value={systemPrompt}
+            onChange={e => setSystemPrompt(e.target.value)}
+          />
+        )}
+      </div>
+
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.length === 0 && (
@@ -128,11 +165,13 @@ const LlmTestChat: React.FC<LlmTestChatProps> = ({ providerKey, providerType, on
               className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${
                 msg.role === 'user'
                   ? 'bg-primary text-primary-content rounded-br-md'
+                  : msg.content.startsWith('⚠️')
+                  ? 'bg-error/10 text-error rounded-bl-md border border-error/20'
                   : 'bg-base-200 rounded-bl-md'
               }`}
             >
               <p className="whitespace-pre-wrap break-words">{msg.content}</p>
-              {msg.role === 'assistant' && msg.latency != null && (
+              {msg.role === 'assistant' && msg.latency != null && !msg.content.startsWith('⚠️') && (
                 <p className="text-[10px] opacity-50 mt-1">
                   {msg.model ? `${msg.model} · ` : ''}{msg.latency}ms
                 </p>
