@@ -45,11 +45,12 @@ COPY packages/tool-mcp/package.json         packages/tool-mcp/
 COPY src/client/package.json                src/client/
 RUN pnpm install --frozen-lockfile
 
-# Rebuild sqlite3 native module for Alpine (cached with install layer)
-RUN cd /app/node_modules/.pnpm/sqlite3@*/node_modules/sqlite3 && \
-    npm run build-release 2>&1 || \
-    (npx --yes node-gyp rebuild 2>&1 && echo "sqlite3 rebuilt via node-gyp") || \
-    echo "WARN: sqlite3 native build failed"
+# Rebuild sqlite3 native module for Alpine (skipped by pnpm ignoredBuiltDependencies)
+# Install node-gyp globally so it's on PATH, then rebuild the native binding.
+RUN npm install -g node-gyp 2>/dev/null && \
+    cd /app/node_modules/.pnpm/sqlite3@*/node_modules/sqlite3 && \
+    node-gyp rebuild 2>&1 && echo "sqlite3 rebuilt OK" || \
+    { echo "ERROR: sqlite3 native build failed — cannot continue"; exit 1; }
 
 # ── Layer 4: Source → build (only busted on source/config changes) ────────────
 COPY . .
@@ -74,43 +75,5 @@ RUN mkdir -p config/uploads data logs
 RUN chown -R node:node /app
 USER node
 
-# Bootstrap script that configures tsconfig-paths for the dist output
-RUN cat > /app/dist/bootstrap.js <<'BOOTSCRIPT'
-const { register } = require("tsconfig-paths");
-register({
-  baseUrl: __dirname,
-  paths: {
-    "@src/*": ["src/*"],
-    "@config/*": ["src/config/*"],
-    "@common/*": ["src/common/*"],
-    "@llm/*": ["src/llm/*"],
-    "@message/*": ["src/message/*"],
-    "@webhook/*": ["src/webhook/*"],
-    "@command/*": ["src/command/*"],
-    "@types/*": ["src/types/*"],
-    "@integrations/flowise/*": ["../packages/llm-flowise/dist/*"],
-    "@integrations/openwebui/*": ["../packages/llm-openwebui/dist/*"],
-    "@integrations/openswarm/*": ["../packages/llm-openswarm/dist/*"],
-    "@src/integrations/slack/*": ["../packages/message-slack/dist/*"],
-    "@src/integrations/mattermost/*": ["../packages/message-mattermost/dist/*"],
-    "@hivemind/shared-types": ["../packages/shared-types/src/index.js"],
-    "@hivemind/shared-types/*": ["../packages/shared-types/src/*"],
-    "@hivemind/llm-openai": ["../packages/llm-openai/dist/index.js"],
-    "@hivemind/llm-openai/*": ["../packages/llm-openai/dist/*"],
-    "@hivemind/llm-letta": ["../packages/llm-letta/dist/index.js"],
-    "@hivemind/llm-letta/*": ["../packages/llm-letta/dist/*"],
-    "@hivemind/message-discord": ["../packages/message-discord/dist/index.js"],
-    "@hivemind/message-discord/*": ["../packages/message-discord/dist/*"],
-    "@hivemind/message-slack": ["../packages/message-slack/dist/index.js"],
-    "@hivemind/message-slack/*": ["../packages/message-slack/dist/*"],
-    "@hivemind/message-mattermost": ["../packages/message-mattermost/dist/index.js"],
-    "@hivemind/message-mattermost/*": ["../packages/message-mattermost/dist/*"],
-    "@hivemind/memory-mem0": ["../packages/memory-mem0/dist/index.js"],
-    "@hivemind/memory-mem0/*": ["../packages/memory-mem0/dist/*"],
-  },
-});
-require("./src/index.js");
-BOOTSCRIPT
-
 EXPOSE 3028
-CMD ["node", "dist/bootstrap.js"]
+CMD ["node", "--import", "tsx", "src/index.ts"]
