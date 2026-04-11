@@ -21,14 +21,10 @@ const MESSENGER_PACKAGES = [
   '@hivemind/message-mattermost',
 ];
 
-const MEMORY_PACKAGES = [
-  '@hivemind/memory-mem0',
-  '@hivemind/memory-mem4ai',
-];
+const MEMORY_PACKAGES = ['@hivemind/memory-mem0', '@hivemind/memory-mem4ai'];
 
 function tryLoadSchema(pkg: string): unknown | null {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const mod = require(pkg);
     if (mod.schema != null) {
       return mod.schema;
@@ -65,8 +61,7 @@ router.get('/available-provider-types', (_req: Request, res: Response) => {
       error: 'Failed to retrieve available provider types',
       code: 'PROVIDER_TYPES_ERROR',
       message:
-        hivemindError.message ||
-        'An error occurred while retrieving available provider types',
+        hivemindError.message || 'An error occurred while retrieving available provider types',
     });
   }
 });

@@ -96,13 +96,10 @@ export class ConfigurationImportExportService {
       let filePath = path.join(this.exportsDir, `${baseFileName}.${options.format}`);
 
       // Get configurations
-      const configs = [];
-      for (const id of configIds) {
-        const config = await this.dbManager.getBotConfiguration(id);
-        if (config) {
-          configs.push(config);
-        }
-      }
+      // ⚡ Bolt Optimization: Replace N+1 queries with a single bulk query
+      // using getBotConfigurationsBulk to prevent database bottlenecks.
+      const rawConfigs = await this.dbManager.getBotConfigurationsBulk(configIds);
+      const configs = rawConfigs.filter((config) => config !== null && config !== undefined);
 
       if (configs.length === 0) {
         return {
