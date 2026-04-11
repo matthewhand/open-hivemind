@@ -6,6 +6,7 @@ import type {
   ILlmProvider,
   IMemoryProvider,
   IMessengerService,
+  IServiceDependencies,
   IToolProvider,
 } from '@hivemind/shared-types';
 import type { AnyConfig } from '../types/config';
@@ -42,8 +43,8 @@ export interface PluginManifest {
 
 export interface PluginModule {
   manifest?: PluginManifest;
-  create?: (config?: AnyConfig | unknown) => unknown;
-  default?: (config?: AnyConfig | unknown) => unknown;
+  create?: (config?: AnyConfig | unknown, dependencies?: IServiceDependencies) => unknown;
+  default?: (config?: AnyConfig | unknown, dependencies?: IServiceDependencies) => unknown;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 }
