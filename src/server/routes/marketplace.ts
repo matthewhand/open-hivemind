@@ -283,6 +283,9 @@ async function getPackages(): Promise<MarketplacePackage[]> {
     packageMap.set(pkg.name, pkg);
   }
 
+  // TODO: Replace with a real community tool example once the first
+  // community-contributed MCP tool plugin is published. The weather tool
+  // below is a placeholder to demonstrate the community tool listing UI.
   // Add example community package if no community packages exist
   if (!packageMap.has('hivemind-plugin-weather')) {
     packageMap.set('hivemind-plugin-weather', {

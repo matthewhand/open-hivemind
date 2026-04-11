@@ -45,21 +45,6 @@
     }
   },
   {
-    "name": "github-tools",
-    "displayName": "GitHub Tools",
-    "description": "Comprehensive GitHub integration tools. Create issues, pull requests, manage repositories, search code, and automate workflows.",
-    "type": "tool",
-    "version": "1.5.0",
-    "status": "available",
-    "repoUrl": "https://github.com/open-hivemind/github-tools",
-    "downloadUrl": "https://github.com/open-hivemind/github-tools/archive/refs/heads/main.zip",
-    "author": "OpenHivemind Community",
-    "tags": ["github", "tools", "automation", "ci-cd"],
-    "requirements": {
-      "node": ">=18.0.0"
-    }
-  },
-  {
     "name": "telegram-provider",
     "displayName": "Telegram",
     "description": "Connect agents to Telegram with full bot API support. Handle messages, commands, inline queries, and callbacks.",
@@ -105,21 +90,6 @@
     }
   },
   {
-    "name": "jira-tools",
-    "displayName": "Jira Tools",
-    "description": "Comprehensive Jira integration. Create and manage issues, projects, sprints, and boards. Automate workflows and track progress.",
-    "type": "tool",
-    "version": "2.1.0",
-    "status": "available",
-    "repoUrl": "https://github.com/open-hivemind/jira-tools",
-    "downloadUrl": "https://github.com/open-hivemind/jira-tools/archive/refs/heads/main.zip",
-    "author": "OpenHivemind Community",
-    "tags": ["jira", "tools", "project-management", "atlassian"],
-    "requirements": {
-      "node": ">=18.0.0"
-    }
-  },
-  {
     "name": "weaviate-memory",
     "displayName": "Weaviate Memory",
     "description": "Vector memory provider using Weaviate. GraphQL API, auto-schema, and built-in vectorization options.",
@@ -135,21 +105,6 @@
     }
   },
   {
-    "name": "web-scraper-tools",
-    "displayName": "Web Scraper Tools",
-    "description": "Advanced web scraping capabilities. Extract content, handle dynamic pages, bypass bot detection, and parse structured data.",
-    "type": "tool",
-    "version": "1.4.0",
-    "status": "available",
-    "repoUrl": "https://github.com/open-hivemind/web-scraper-tools",
-    "downloadUrl": "https://github.com/open-hivemind/web-scraper-tools/archive/refs/heads/main.zip",
-    "author": "OpenHivemind Community",
-    "tags": ["web-scraping", "tools", "automation", "data-extraction"],
-    "requirements": {
-      "node": ">=18.0.0"
-    }
-  },
-  {
     "name": "cohere-provider",
     "displayName": "Cohere",
     "description": "Cohere LLM provider with Command models. Includes embeddings, reranking, and classification capabilities.",
@@ -160,21 +115,6 @@
     "downloadUrl": "https://github.com/open-hivemind/cohere-provider/archive/refs/heads/main.zip",
     "author": "OpenHivemind Community",
     "tags": ["cohere", "llm", "embeddings", "reranking"],
-    "requirements": {
-      "node": ">=18.0.0"
-    }
-  },
-  {
-    "name": "notion-tools",
-    "displayName": "Notion Tools",
-    "description": "Full Notion integration. Create and update pages, databases, and blocks. Query and sync workspace content.",
-    "type": "tool",
-    "version": "1.3.0",
-    "status": "available",
-    "repoUrl": "https://github.com/open-hivemind/notion-tools",
-    "downloadUrl": "https://github.com/open-hivemind/notion-tools/archive/refs/heads/main.zip",
-    "author": "OpenHivemind Community",
-    "tags": ["notion", "tools", "productivity", "knowledge-base"],
     "requirements": {
       "node": ">=18.0.0"
     }
