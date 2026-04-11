@@ -341,6 +341,7 @@ describe('getMessengerProvider additional branch coverage', () => {
   });
 
   it('resets cache and rereads config after reset', async () => {
+    delete process.env.MESSAGE_PROVIDER;
     mockFsPromises.readFile.mockResolvedValueOnce(
       JSON.stringify({ providers: [{ type: 'discord', enabled: true }] }) as any
     );
