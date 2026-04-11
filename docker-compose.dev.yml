@@ -1,0 +1,39 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  hivemind:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3028:3028"
+    environment:
+      - NODE_ENV=development
+      - REDIS_URL=redis://redis:6379
+      - HTTP_ALLOW_ALL_IPS=true
+      - ALLOW_LOCALHOST_ADMIN=true
+      - FORCE_TRUSTED_LOGIN=true
+    env_file:
+      - .env
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      # Bind-mount source so tsx hot-reloads on file changes
+      - ./src:/app/src
+      - ./packages:/app/packages
+      - ./config:/app/config
+      - ./logs:/app/logs
+      - ./data:/app/data
+      # Exclude host node_modules — use the container's installed copy
+      - /app/node_modules
