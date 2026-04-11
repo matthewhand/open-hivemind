@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test';
-import { setupAuth } from './test-utils';
+import { navigateAndWaitReady, setupAuth, setupTestWithErrorDetection } from './test-utils';
 
-test.describe('API Docs Screenshots', () => {
-  test('Capture API Docs page screenshot', async ({ page }) => {
+test.describe('API Documentation Page', () => {
+  test.beforeEach(async ({ page }) => {
     // Setup authentication
     await setupAuth(page);
 
@@ -10,20 +10,70 @@ test.describe('API Docs Screenshots', () => {
     await page.route('**/api/health/**', async (route) =>
       route.fulfill({ status: 200, json: { status: 'ok' } })
     );
-    await page.route('**/api/config/**', async (route) => route.fulfill({ status: 200, json: {} }));
 
-    // Go to API Docs page
-    await page.setViewportSize({ width: 1280, height: 800 });
-    await page.goto('/admin/api-docs');
+    // Mock API Docs endpoint
+    await page.route('**/api/docs', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: {
+            groups: [
+              {
+                prefix: '/api/bots',
+                routes: [
+                  {
+                    method: 'GET',
+                    path: '/api/bots',
+                    middleware: ['auth'],
+                    description: 'Get all bots',
+                    tag: 'bots'
+                  },
+                  {
+                    method: 'POST',
+                    path: '/api/bots',
+                    middleware: ['auth', 'validate'],
+                    description: 'Create a new bot',
+                    tag: 'bots'
+                  }
+                ]
+              },
+              {
+                prefix: '/api/config',
+                routes: [
+                  {
+                    method: 'GET',
+                    path: '/api/config',
+                    middleware: ['auth'],
+                    description: 'Get system config',
+                    tag: 'config'
+                  }
+                ]
+              }
+            ]
+          }
+        })
+      });
+    });
+  });
 
-    // Wait for the page to load
-    // The page uses a Swagger UI element which might not use an h1 heading with 'API Documentation'
-    // when loaded inside an iframe or dynamically. Wait for a known element or wait for load state.
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(1000); // Wait for potential iframe/swagger initialization
+  test('Capture API Docs Page', async ({ page }) => {
+    await setupTestWithErrorDetection(page);
 
-    // Screenshot
-    await page.waitForLoadState('domcontentloaded');
+    // Navigate to API Docs page (from AppRouter.tsx path)
+    await navigateAndWaitReady(page, '/admin/api-docs');
+
+    // Wait for the header to appear
+    await page.waitForSelector('h1:has-text("API Documentation")', { timeout: 10000 });
+
+    // Wait for route cards to appear
+    await page.waitForSelector('.collapse-title');
+
+    // Take screenshot
     await page.screenshot({ path: 'docs/screenshots/api-docs-page.png', fullPage: true });
+
+    // Verify content exists
+    await expect(page.locator('h2 code').first()).toHaveText('/api/bots');
   });
 });
