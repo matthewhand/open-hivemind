@@ -69,6 +69,15 @@ A comprehensive view of all message processing events and system actions.
 
 ## Configuration
 
+
+### [Onboarding](/onboarding)
+A guided setup experience to help you configure your first AI agent.
+
+![Onboarding Page](screenshots/onboarding-page.png)
+
+*   **Guided Flow**: Step-by-step configuration of LLMs, message platforms, and bot persona.
+*   **Intelligent Defaults**: Suggests starting configurations for standard setups.
+
 ### Bots & Bot Management
 Create and manage individual bot instances. Connect your AI assistants to platforms like Discord, Slack, Mattermost, and Telegram.
 
@@ -240,6 +249,16 @@ A comprehensive dashboard for tracking ecosystem status, bot status, and real-ti
 *   **Ecosystem Status**: Overall health of the bot ecosystem and performance metrics.
 *   **Infrastructure Health**: Real-time metrics for CPU, Memory, and API endpoint status.
 *   **Bot Status**: Detailed connectivity and health scores for all configured bots.
+
+
+### [System Health](/admin/health)
+Monitor real-time service status and infrastructure health.
+
+![System Health Page](screenshots/admin-health-page.png)
+
+*   **Service Health**: View detailed health status, latency, and details for connected services like Database, LLM Providers, Memory Providers, and Message Providers.
+*   **Infrastructure Health**: Overall system status and API endpoint checks.
+*   **Resources**: Quick glance at memory usage, CPU load average, and API network status.
 
 ### [System Management](/admin/system-management)
 Manage configuration, alerts, and system health.
