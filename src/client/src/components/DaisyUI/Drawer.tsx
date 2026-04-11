@@ -245,7 +245,21 @@ const Drawer: React.FC<DrawerProps> = ({
         <span>v1.0.0</span>
 
         {/* Theme Toggle */}
-        <ThemeDropdown position="top" align="start" />
+        <button
+          onClick={() => {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('hivemind-theme', newTheme);
+          }}
+          className="bg-base-content/5 border-none rounded-md py-1.5 px-2.5 cursor-pointer flex items-center gap-1 text-base-content transition-colors duration-150 hover:bg-base-content/10"
+          aria-label="Toggle theme"
+        >
+          <Sun size={14} className="theme-sun hidden" aria-hidden="true" />
+          <Moon size={14} aria-hidden="true" />
+          <span className="text-xs">Theme</span>
+        </button>
 
         <span className="flex items-center gap-1.5 text-success" role="status" aria-label="Connection status: Online">
           <span className="w-1.5 h-1.5 bg-success rounded-full" aria-hidden="true"></span>

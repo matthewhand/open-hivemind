@@ -82,14 +82,10 @@ describe('executeCommandSafe', () => {
     });
 
     it('should pass custom env and cwd options to command execution', async () => {
-      const output = await executeCommandSafe(
-        'node',
-        ['-e', 'process.stdout.write(process.env.CUSTOM_ENV || "")'],
-        {
-          env: { ...process.env, CUSTOM_ENV: 'custom-value' } as NodeJS.ProcessEnv,
-          cwd: process.cwd(),
-        }
-      );
+      const output = await executeCommandSafe('node', ['-e', 'process.stdout.write(process.env.CUSTOM_ENV || "")'], {
+        env: { ...process.env, CUSTOM_ENV: 'custom-value' } as NodeJS.ProcessEnv,
+        cwd: process.cwd(),
+      });
       expect(output).toBe('custom-value');
     });
 

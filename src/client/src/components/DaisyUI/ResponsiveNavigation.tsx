@@ -9,7 +9,6 @@ import Breadcrumbs from './Breadcrumbs';
 import RateLimitIndicator from './RateLimitIndicator';
 import { useRateLimitToast } from '../../hooks/useRateLimitToast';
 import Card from './Card';
-import AppFooter from '../AppFooter';
 
 interface NavItem {
   id: string;
@@ -92,10 +91,16 @@ const ResponsiveNavigation: React.FC<ResponsiveNavigationProps> = ({
         )}
         <DemoModeBanner />
 
-        {/* MAIN CONTENT — zero padding, content owns its own spacing */}
-        <main className="flex-1">
-          <LlmStatusBanner />
-          {children}
+        {/* MAIN CONTENT - With padding */}
+        <main className="flex-1 p-6">
+          {/* White content card */}
+          <Card className="rounded-xl border border-base-content/10 shadow-sm min-h-[calc(100vh-48px)] p-6">
+            <Breadcrumbs />
+            <div className="mb-4">
+              <LlmStatusBanner />
+            </div>
+            {children}
+          </Card>
         </main>
 
         <AppFooter />

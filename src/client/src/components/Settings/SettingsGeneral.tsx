@@ -15,8 +15,6 @@ import Debug from 'debug';
 import { apiService } from '../../services/api';
 import { useSavedStamp } from '../../contexts/SavedStampContext';
 import Textarea from '../DaisyUI/Textarea';
-import { useToast } from '../DaisyUI/ToastNotification';
-import { useDemoModeWarning } from '../../hooks/useDemoModeWarning';
 const debug = Debug('app:client:components:Settings:SettingsGeneral');
 
 const generalSettingsSchema = z.object({

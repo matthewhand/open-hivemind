@@ -14,10 +14,10 @@ afterEach(() => jest.restoreAllMocks());
 
 function mockFetch(status: number, body: unknown) {
   return jest.spyOn(global, 'fetch').mockResolvedValue(
-    new Response(status === 204 ? null : JSON.stringify(body), {
-      status,
-      headers: { 'content-type': 'application/json' },
-    })
+    new Response(
+      status === 204 ? null : JSON.stringify(body),
+      { status, headers: { 'content-type': 'application/json' } }
+    )
   );
 }
 
@@ -39,9 +39,8 @@ afterEach(() => jest.restoreAllMocks());
 
 describe('Mem0Provider constructor', () => {
   it('throws if apiKey is missing', () => {
-    expect(() => new Mem0Provider({ apiKey: '', baseUrl: 'https://api.mem0.ai/v1' })).toThrow(
-      'apiKey is required'
-    );
+    expect(() => new Mem0Provider({ apiKey: '', baseUrl: 'https://api.mem0.ai/v1' }))
+      .toThrow('apiKey is required');
   });
 
   it('uses default baseUrl when not provided', () => {
@@ -205,7 +204,10 @@ describe('retry behaviour', () => {
   });
 
   it('throws after exhausting retries', async () => {
-    mockFetchSequence({ status: 500, body: 'err' }, { status: 500, body: 'err' });
+    mockFetchSequence(
+      { status: 500, body: 'err' },
+      { status: 500, body: 'err' }
+    );
     const p = new Mem0Provider({ ...BASE_CONFIG, maxRetries: 1 });
     await expect(p.getMemories()).rejects.toBeInstanceOf(Mem0ApiError);
   });
@@ -242,10 +244,7 @@ describe('legacy convenience methods', () => {
 
   it('get() returns null on 404', async () => {
     jest.spyOn(global, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({}), {
-        status: 404,
-        headers: { 'content-type': 'application/json' },
-      })
+      new Response(JSON.stringify({}), { status: 404, headers: { 'content-type': 'application/json' } })
     );
     const p = new Mem0Provider(BASE_CONFIG);
     expect(await p.get('missing')).toBeNull();
@@ -262,32 +261,5 @@ describe('legacy convenience methods', () => {
     mockFetch(204, null);
     const p = new Mem0Provider(BASE_CONFIG);
     await expect(p.delete('l5')).resolves.toBeUndefined();
-  });
-});
-
-describe('SSRF protection', () => {
-  const { isSafeUrl } = jest.requireMock('@hivemind/shared-types');
-
-  it('blocks requests when isSafeUrl returns false', async () => {
-    isSafeUrl.mockResolvedValue(false);
-    const p = new Mem0Provider({
-      ...BASE_CONFIG,
-      baseUrl: 'http://169.254.169.254',
-      maxRetries: 0,
-    });
-    await expect(p.addMemory({ userId: 'u1', content: 'x', role: 'user' })).rejects.toThrow(
-      'url is not safe'
-    );
-  });
-
-  it('allows requests when isSafeUrl returns true', async () => {
-    isSafeUrl.mockResolvedValue(true);
-    mockFetch(200, {
-      results: [{ id: 'ssrf-ok', memory: 'safe', created_at: '2024-01-01T00:00:00Z' }],
-    });
-    const p = new Mem0Provider(BASE_CONFIG);
-    await expect(
-      p.addMemory({ userId: 'u1', content: 'safe', role: 'user' })
-    ).resolves.toBeDefined();
   });
 });

@@ -19,35 +19,29 @@ RUN if [ "$INCLUDE_NODE_TOOLS" = "true" ]; then \
 
 WORKDIR /app
 
-# ── Layer 2: pnpm setup (rarely changes) ─────────────────────────────────────
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
-# ── Layer 3: Manifests only → install (cached unless lockfile/deps change) ────
-# Copy workspace config and every package.json without any source files.
-# pnpm install only needs the dependency graph — not the TS source.
-# None of the workspace packages have "prepare" scripts, so install is safe
-# without source present.
+# ---------- Stage 1: Install deps (cached until package.json/lockfile changes) ----------
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY tsconfig*.json ./
-# Root-level config files needed by the build
-COPY packages/llm-flowise/package.json      packages/llm-flowise/
-COPY packages/llm-letta/package.json        packages/llm-letta/
-COPY packages/llm-openai/package.json       packages/llm-openai/
-COPY packages/llm-openswarm/package.json    packages/llm-openswarm/
-COPY packages/llm-openwebui/package.json    packages/llm-openwebui/
-COPY packages/memory-mem0/package.json      packages/memory-mem0/
-COPY packages/memory-mem4ai/package.json    packages/memory-mem4ai/
-COPY packages/message-discord/package.json  packages/message-discord/
+COPY src/client/package.json src/client/
+COPY packages/llm-flowise/package.json packages/llm-flowise/
+COPY packages/llm-letta/package.json packages/llm-letta/
+COPY packages/llm-openai/package.json packages/llm-openai/
+COPY packages/llm-openswarm/package.json packages/llm-openswarm/
+COPY packages/llm-openwebui/package.json packages/llm-openwebui/
+COPY packages/memory-mem0/package.json packages/memory-mem0/
+COPY packages/memory-mem4ai/package.json packages/memory-mem4ai/
+COPY packages/message-discord/package.json packages/message-discord/
 COPY packages/message-mattermost/package.json packages/message-mattermost/
-COPY packages/message-slack/package.json    packages/message-slack/
-COPY packages/shared-types/package.json     packages/shared-types/
-COPY packages/tool-mcp/package.json         packages/tool-mcp/
-COPY src/client/package.json                src/client/
-RUN pnpm install --frozen-lockfile
+COPY packages/message-slack/package.json packages/message-slack/
+COPY packages/shared-types/package.json packages/shared-types/
+COPY packages/tool-mcp/package.json packages/tool-mcp/
 
-# Rebuild sqlite3 native module for Alpine (skipped by pnpm ignoredBuiltDependencies)
-# Install node-gyp globally so it's on PATH, then rebuild the native binding.
-RUN npm install -g node-gyp 2>/dev/null && \
+RUN corepack enable && corepack prepare pnpm@latest --activate && pnpm install --no-frozen-lockfile
+
+# ---------- Stage 2: Copy source and build (only re-runs on code changes) ----------
+COPY . .
+
+# Rebuild sqlite3 native module for Alpine Linux
+RUN apk add --no-cache sqlite-dev make g++ python3 && \
     cd /app/node_modules/.pnpm/sqlite3@*/node_modules/sqlite3 && \
     node-gyp rebuild 2>&1 && echo "sqlite3 rebuilt OK" || \
     { echo "ERROR: sqlite3 native build failed — cannot continue"; exit 1; }
@@ -74,6 +68,9 @@ RUN mkdir -p config/uploads data logs
 
 RUN chown -R node:node /app
 USER node
+
+# Ensure runtime directories exist (config/ is excluded by .dockerignore)
+RUN mkdir -p config/uploads data logs
 
 EXPOSE 3028
 CMD ["node", "--import", "tsx", "src/index.ts"]

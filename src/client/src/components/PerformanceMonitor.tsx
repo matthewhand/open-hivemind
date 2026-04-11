@@ -85,7 +85,7 @@ const PerformanceMonitor: React.FC = () => {
           loading={isFetching}
           className="btn-outline flex items-center gap-2"
         >
-          <RefreshCw className="w-5 h-5" />
+          <ArrowPathIcon className="w-5 h-5" />
           Refresh
         </Button>
       </div>

@@ -10,8 +10,11 @@ import {
   CheckCircle as CheckIcon,
   X as CloseIcon,
 } from 'lucide-react';
-import { MarketplaceCard } from '../components/Marketplace';
-import type { MarketplacePackage } from '../components/Marketplace';
+import PageHeader from '../components/DaisyUI/PageHeader';
+import { ConfirmModal } from '../components/DaisyUI/Modal';
+import { Alert } from '../components/DaisyUI/Alert';
+import Input from '../components/DaisyUI/Input';
+import { apiService } from '../services/api';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -184,10 +187,10 @@ const MarketplacePage: React.FC = () => {
         {/* Search */}
         <div className="flex-1 relative">
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/50" />
-          <input
+          <Input
             type="text"
             placeholder="Search packages..."
-            className="input input-bordered w-full pl-10"
+            className="pl-10"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -225,11 +228,18 @@ const MarketplacePage: React.FC = () => {
 
       {/* Package Grid */}
       {!loading && filteredPackages.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredPackages.map((pkg) => {
-            const isBusy = actionInProgress?.startsWith(pkg.name) ||
-                          actionInProgress === `update-${pkg.name}` ||
-                          actionInProgress === `uninstall-${pkg.name}`;
+        shouldVirtualizePackages ? (
+          <div ref={packagesParentRef} className="max-h-[800px] overflow-auto">
+            <div
+              style={{
+                height: `${packagesGridRowVirtualizer.getTotalSize()}px`,
+                width: '100%',
+                position: 'relative',
+              }}
+            >
+              {packagesGridRowVirtualizer.getVirtualItems().map((virtualRow) => {
+                const startIndex = virtualRow.index * 3;
+                const rowPackages = filteredPackages.slice(startIndex, startIndex + 3);
 
             return (
               <MarketplaceCard
@@ -258,10 +268,9 @@ const MarketplacePage: React.FC = () => {
               <label className="label">
                 <span className="label-text">GitHub Repository URL</span>
               </label>
-              <input
+              <Input
                 type="text"
                 placeholder="https://github.com/user/provider-package"
-                className="input input-bordered w-full"
                 value={githubUrl}
                 onChange={(e) => setGithubUrl(e.target.value)}
               />

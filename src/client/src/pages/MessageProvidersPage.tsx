@@ -7,7 +7,7 @@ import { Alert } from '../components/DaisyUI/Alert';
 import StatsCards from '../components/DaisyUI/StatsCards';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import ConfigKeyValueCard from '../components/DaisyUI/ConfigKeyValueCard';
-import { SkeletonTableLayout, SkeletonList } from '../components/DaisyUI/Skeleton';
+import { SkeletonTableLayout } from '../components/DaisyUI/Skeleton';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { ConfirmModal } from '../components/DaisyUI/Modal';
 import Tabs from '../components/DaisyUI/Tabs';

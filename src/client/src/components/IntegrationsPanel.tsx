@@ -368,7 +368,7 @@ const IntegrationsPanel: React.FC = () => {
                         </div>
                         <div className="min-w-0">
                           <h3 className="font-bold text-sm truncate" title={profile.name}>{profile.name}</h3>
-                          <Badge variant="ghost" size="sm" className="gap-1 p-0 text-xs">{profile.provider}</Badge>
+                          <Badge variant="ghost" size="small" className="gap-1 p-0 text-xs">{profile.provider}</Badge>
                         </div>
                       </div>
                       <div className="flex gap-1">

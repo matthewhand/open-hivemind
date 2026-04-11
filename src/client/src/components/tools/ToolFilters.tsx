@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search as SearchIcon } from 'lucide-react';
+import { MagnifyingGlassIcon as SearchIcon } from '@heroicons/react/24/outline';
 import Input from '../DaisyUI/Input';
 import Select from '../DaisyUI/Select';
 

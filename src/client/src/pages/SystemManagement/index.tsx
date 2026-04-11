@@ -13,9 +13,7 @@ import BackupsTab from './BackupsTab';
 import PerformanceTab from './PerformanceTab';
 import type { SystemConfig, BackupRecord } from './types';
 import { LoadingSpinner } from '../../components/DaisyUI/Loading';
-import Button from '../../components/DaisyUI/Button';
 import Input from '../../components/DaisyUI/Input';
-import PageHeader from '../../components/DaisyUI/PageHeader';
 
 const SystemManagement: React.FC = () => {
   const { alerts, performanceMetrics } = useWebSocket();

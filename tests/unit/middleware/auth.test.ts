@@ -1,12 +1,7 @@
-import express from 'express';
 import request from 'supertest';
+import express from 'express';
+import { authenticateToken, requirePermission, requireRole, optionalAuth } from '../../../src/server/middleware/auth';
 import { AuthManager } from '../../../src/auth/AuthManager';
-import {
-  authenticateToken,
-  optionalAuth,
-  requirePermission,
-  requireRole,
-} from '../../../src/server/middleware/auth';
 
 // Mock AuthManager
 jest.mock('../../../src/auth/AuthManager', () => ({
@@ -51,7 +46,9 @@ describe('Auth Middleware', () => {
       app.use(authenticateToken);
       app.get('/test', (req, res) => res.json({ ok: true }));
 
-      const res = await request(app).get('/test').set('Authorization', 'Bearer invalid-token');
+      const res = await request(app)
+        .get('/test')
+        .set('Authorization', 'Bearer invalid-token');
 
       expect(res.status).toBe(403);
       expect(res.body.error).toBe('Invalid or expired token');
@@ -63,7 +60,9 @@ describe('Auth Middleware', () => {
       app.use(authenticateToken);
       app.get('/test', (req, res) => res.json({ ok: true }));
 
-      const res = await request(app).get('/test').set('Authorization', 'Bearer null-token');
+      const res = await request(app)
+        .get('/test')
+        .set('Authorization', 'Bearer null-token');
 
       expect(res.status).toBe(403);
       expect(res.body.error).toBe('Invalid or expired token');
@@ -76,7 +75,9 @@ describe('Auth Middleware', () => {
       app.use(authenticateToken);
       app.get('/test', (req, res) => res.json({ user: req.user }));
 
-      const res = await request(app).get('/test').set('Authorization', 'Bearer valid-token');
+      const res = await request(app)
+        .get('/test')
+        .set('Authorization', 'Bearer valid-token');
 
       expect(res.status).toBe(200);
       expect(res.body.user).toEqual(mockPayload);
@@ -201,7 +202,9 @@ describe('Auth Middleware', () => {
       app.use(optionalAuth);
       app.get('/test', (req, res) => res.json({ user: req.user }));
 
-      const res = await request(app).get('/test').set('Authorization', 'Bearer valid-token');
+      const res = await request(app)
+        .get('/test')
+        .set('Authorization', 'Bearer valid-token');
 
       expect(res.status).toBe(200);
       expect(res.body.user).toEqual(mockPayload);
@@ -215,7 +218,9 @@ describe('Auth Middleware', () => {
       app.use(optionalAuth);
       app.get('/test', (req, res) => res.json({ user: req.user || null }));
 
-      const res = await request(app).get('/test').set('Authorization', 'Bearer invalid-token');
+      const res = await request(app)
+        .get('/test')
+        .set('Authorization', 'Bearer invalid-token');
 
       expect(res.status).toBe(200);
       expect(res.body.user).toBeNull();

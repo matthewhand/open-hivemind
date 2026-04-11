@@ -74,6 +74,7 @@
     "@llm": "dist/src/llm",
     "@message": "dist/src/message",
     "@webhook": "dist/src/webhook",
+    "@integrations": "dist/src/integrations",
     "@integrations/openswarm": "dist/packages/llm-openswarm/src",
     "@integrations/flowise": "dist/packages/llm-flowise/src",
     "@integrations/openwebui": "dist/packages/llm-openwebui/src",
@@ -325,45 +326,7 @@
       "@modelcontextprotocol/sdk": "^1.25.2",
       "tar": "^7.5.11",
       "undici": "^6.24.0",
-      "fast-xml-parser": "^4.5.5",
-      "axios": "^1.15.0",
-      "hono": "^4.12.12",
-      "@hono/node-server": "^1.19.13",
-      "basic-ftp": "^5.2.1",
-      "minimatch": "^10.0.0",
-      "test-exclude>minimatch": "^10.0.0",
-      "serialize-javascript": "^7.0.3",
-      "brace-expansion": "^5.0.5",
-      "smol-toml": "^1.6.1",
-      "diff": "^8.0.3",
-      "@tootallnate/once": "^3.0.1",
-      "babel-plugin-istanbul": "^8.0.0",
-      "glob": "^10.3.16",
-      "@vercel/static-config>ajv": ">=8.18.0"
-    },
-    "auditConfig": {
-      "ignoreCves": [
-        "GHSA-2g4f-4pwh-qvx6",
-        "GHSA-vpq2-c234-7xj6"
-      ]
-    },
-    "ignoredBuiltDependencies": [
-      "sqlite3"
-    ],
-    "patchedDependencies": {}
-  },
-  "lint-staged": {
-    "src/**/*.{ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "tests/**/*.{ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "packages/**/*.{ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ]
+      "fast-xml-parser": "^4.5.5"
+    }
   }
 }

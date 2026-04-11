@@ -1,9 +1,31 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useState, useCallback } from 'react';
-import { apiService } from '../services/api';
-import { RefreshCw, Filter, AlertCircle, ShieldCheck } from 'lucide-react';
-import PageHeader from '../components/DaisyUI/PageHeader';
+import React, { useState, useMemo, useCallback } from 'react';
+import {
+  Shield,
+  Download,
+  ChevronDown,
+  ChevronRight,
+  Search,
+  X,
+  RefreshCw,
+} from 'lucide-react';
+import Badge from '../components/DaisyUI/Badge';
 import Button from '../components/DaisyUI/Button';
+import Card from '../components/DaisyUI/Card';
+import CodeBlock from '../components/DaisyUI/CodeBlock';
+import Input from '../components/DaisyUI/Input';
+import Select from '../components/DaisyUI/Select';
+import PageHeader from '../components/DaisyUI/PageHeader';
+import { SkeletonPage } from '../components/DaisyUI/Skeleton';
+import EmptyState from '../components/DaisyUI/EmptyState';
+import { Alert } from '../components/DaisyUI/Alert';
+import useUrlParams from '../hooks/useUrlParams';
+import { useQuery } from '@tanstack/react-query';
+import { apiService } from '../services/api';
+import Diff from '../components/DaisyUI/Diff';
+import SimpleTable from '../components/DaisyUI/SimpleTable';
+import Debug from 'debug';
+const debug = Debug('app:client:pages:AuditPage');
 
 interface AuditEvent {
   id: string;
@@ -15,6 +37,152 @@ interface AuditEvent {
   details: string;
   ipAddress?: string;
 }
+
+interface AuditResponse {
+  success: boolean;
+  auditEvents: AuditEvent[];
+  total: number;
+}
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+const ACTION_OPTIONS = [
+  { label: 'All Actions', value: '' },
+  { label: 'Config Create', value: 'CONFIG_CREATE' },
+  { label: 'Config Update', value: 'CONFIG_UPDATE' },
+  { label: 'Config Delete', value: 'CONFIG_DELETE' },
+  { label: 'Config Reload', value: 'CONFIG_RELOAD' },
+  { label: 'Bot Create', value: 'BOT_CREATE' },
+  { label: 'Bot Update', value: 'BOT_UPDATE' },
+  { label: 'Bot Delete', value: 'BOT_DELETE' },
+  { label: 'Bot Start', value: 'BOT_START' },
+  { label: 'Bot Stop', value: 'BOT_STOP' },
+  { label: 'Bot Clone', value: 'BOT_CLONE' },
+];
+
+const RESOURCE_OPTIONS = [
+  { label: 'All Resources', value: '' },
+  { label: 'Bots', value: 'bots' },
+  { label: 'Config', value: 'config' },
+  { label: 'Providers', value: 'providers' },
+  { label: 'System', value: 'system' },
+];
+
+const RESULT_BADGE: Record<string, 'success' | 'error'> = {
+  success: 'success',
+  failure: 'error',
+};
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+}
+
+function renderJson(value: any): string {
+  if (value === undefined || value === null) return '-';
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
+
+const ExpandedRow: React.FC<{ event: AuditEvent }> = ({ event }) => {
+  const showDiff =
+    event.oldValue !== undefined &&
+    event.newValue !== undefined;
+
+  return (
+    <tr>
+      <td colSpan={6} className="bg-base-200 px-6 py-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          {event.ipAddress && (
+            <div>
+              <span className="font-semibold">IP Address:</span> {event.ipAddress}
+            </div>
+          )}
+          {event.userAgent && (
+            <div>
+              <span className="font-semibold">User Agent:</span> {event.userAgent}
+            </div>
+          )}
+          <div className="col-span-full">
+            <span className="font-semibold">Details:</span> {event.details}
+          </div>
+
+          {showDiff ? (
+            <div className="col-span-full">
+              <span className="font-semibold mb-2 block">Value Changes (Before / After):</span>
+              <Diff
+                className="rounded border border-base-300 w-full"
+                aspectRatio="aspect-auto min-h-[16rem]"
+                item1={
+                  <CodeBlock variant="error" maxHeight="max-h-none">
+                    {renderJson(event.oldValue)}
+                  </CodeBlock>
+                }
+                item2={
+                  <CodeBlock variant="success" maxHeight="max-h-none">
+                    {renderJson(event.newValue)}
+                  </CodeBlock>
+                }
+              />
+            </div>
+          ) : (
+            <>
+              {event.oldValue !== undefined && (
+                <div>
+                  <span className="font-semibold">Previous Value:</span>
+                  <CodeBlock>
+                    {renderJson(event.oldValue)}
+                  </CodeBlock>
+                </div>
+              )}
+              {event.newValue !== undefined && (
+                <div>
+                  <span className="font-semibold">New Value:</span>
+                  <CodeBlock>
+                    {renderJson(event.newValue)}
+                  </CodeBlock>
+                </div>
+              )}
+            </>
+          )}
+
+          {event.metadata && Object.keys(event.metadata).length > 0 && (
+            <div className="col-span-full">
+              <span className="font-semibold">Metadata:</span>
+              <CodeBlock>
+                {renderJson(event.metadata)}
+              </CodeBlock>
+            </div>
+          )}
+        </div>
+      </td>
+    </tr>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Main Component
+// ---------------------------------------------------------------------------
 
 const AuditPage: React.FC = () => {
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
@@ -170,42 +338,57 @@ const AuditPage: React.FC = () => {
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto bg-base-100 rounded-box shadow">
-          <table className="table table-zebra w-full">
-            <thead>
-              <tr>
-                <th>Timestamp</th>
-                <th>User</th>
-                <th>Action</th>
-                <th>Resource</th>
-                <th>Details</th>
-                <th>Result</th>
-                <th>IP Address</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredEvents.map((event) => (
-                <tr key={event.id}>
-                  <td className="text-sm">{new Date(event.timestamp).toLocaleString()}</td>
-                  <td>{event.user}</td>
-                  <td>
-                    <div className="badge badge-ghost badge-sm">{event.action}</div>
-                  </td>
-                  <td>{event.resource}</td>
-                  <td className="text-xs max-w-xs truncate" title={event.details}>
-                    {event.details}
-                  </td>
-                  <td>
-                    <div className={`badge ${getResultColor(event.result)} badge-sm`}>
-                      {event.result}
-                    </div>
-                  </td>
-                  <td className="font-mono text-xs">{event.ipAddress ?? '-'}</td>
+        <Card>
+          <div className="overflow-x-auto">
+            <SimpleTable size="sm" className="w-full">
+              <thead>
+                <tr>
+                  <th className="w-8"></th>
+                  <th>Timestamp</th>
+                  <th>User</th>
+                  <th>Action</th>
+                  <th>Resource</th>
+                  <th>Result</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filteredEvents.map((event) => {
+                  const isExpanded = expandedRows.has(event.id);
+                  return (
+                    <React.Fragment key={event.id}>
+                      <tr
+                        className="cursor-pointer hover:bg-base-200 transition-colors"
+                        onClick={() => toggleRow(event.id)}
+                      >
+                        <td>
+                          {isExpanded ? (
+                            <ChevronDown className="w-4 h-4" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4" />
+                          )}
+                        </td>
+                        <td className="whitespace-nowrap text-xs">{formatDate(event.timestamp)}</td>
+                        <td className="font-mono text-xs">{event.user}</td>
+                        <td>
+                          <Badge variant="ghost" size="sm">
+                            {event.action}
+                          </Badge>
+                        </td>
+                        <td className="font-mono text-xs">{event.resource}</td>
+                        <td>
+                          <Badge variant={RESULT_BADGE[event.result] ?? 'ghost'} size="sm">
+                            {event.result}
+                          </Badge>
+                        </td>
+                      </tr>
+                      {isExpanded && <ExpandedRow event={event} />}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </SimpleTable>
+          </div>
+        </Card>
       )}
     </div>
   );

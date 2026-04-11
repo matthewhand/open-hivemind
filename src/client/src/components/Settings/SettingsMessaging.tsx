@@ -17,8 +17,6 @@ import { apiService } from '../../services/api';
 import { useSavedStamp } from '../../contexts/SavedStampContext';
 import Textarea from '../DaisyUI/Textarea';
 import SimpleTable from '../DaisyUI/SimpleTable';
-import { useToast } from '../DaisyUI/ToastNotification';
-import { useDemoModeWarning } from '../../hooks/useDemoModeWarning';
 
 const messagingSettingsSchema = z.object({
   onlyWhenSpokenTo: z.boolean(),

@@ -66,12 +66,7 @@ test.describe('Bot Search Screenshots', () => {
     await page.route('**/api/config/llm-status', async (route) => {
       await route.fulfill({
         status: 200,
-        json: {
-          defaultConfigured: true,
-          defaultProviders: [],
-          botsMissingLlmProvider: [],
-          hasMissing: false,
-        },
+        json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
       });
     });
 
@@ -91,9 +86,7 @@ test.describe('Bot Search Screenshots', () => {
     await page.goto('/admin/bots');
 
     // Wait for the bots to load and the search input to be visible
-    await page.waitForSelector(
-      'input[placeholder="Search..."], input[placeholder="Search agents..."]'
-    );
+    await page.waitForSelector('input[placeholder="Search..."], input[placeholder="Search agents..."]');
 
     // Set viewport
     await page.setViewportSize({ width: 1280, height: 800 });
@@ -105,9 +98,7 @@ test.describe('Bot Search Screenshots', () => {
     await page.screenshot({ path: 'docs/screenshots/bots-page.png', fullPage: true });
 
     // Type in the search box
-    const searchInput = page
-      .locator('input[placeholder="Search..."], input[placeholder="Search agents..."]')
-      .first();
+    const searchInput = page.locator('input[placeholder="Search..."], input[placeholder="Search agents..."]').first();
     await searchInput.fill('Support');
 
     // Wait for the UI to update
@@ -125,8 +116,7 @@ test.describe('Bot Search Screenshots', () => {
       {
         id: 'bot-1',
         name: 'Support Agent',
-        description:
-          'Handles customer support queries across multiple channels with context-aware responses.',
+        description: 'Handles customer support queries across multiple channels with context-aware responses.',
         status: 'active',
         connected: true,
         messageProvider: 'discord',
@@ -184,12 +174,7 @@ test.describe('Bot Search Screenshots', () => {
     await page.route('**/api/config/llm-status', async (route) => {
       await route.fulfill({
         status: 200,
-        json: {
-          defaultConfigured: true,
-          defaultProviders: [],
-          botsMissingLlmProvider: [],
-          hasMissing: false,
-        },
+        json: { defaultConfigured: true, defaultProviders: [], botsMissingLlmProvider: [], hasMissing: false },
       });
     });
 
@@ -212,24 +197,9 @@ test.describe('Bot Search Screenshots', () => {
         json: {
           data: {
             activity: [
-              {
-                id: 'log-1',
-                timestamp: new Date().toISOString(),
-                action: 'message_received',
-                details: 'Received message from user',
-              },
-              {
-                id: 'log-2',
-                timestamp: new Date().toISOString(),
-                action: 'message_sent',
-                details: 'Replied with support response',
-              },
-              {
-                id: 'log-3',
-                timestamp: new Date().toISOString(),
-                action: 'message_received',
-                details: 'Follow-up question received',
-              },
+              { id: 'log-1', timestamp: new Date().toISOString(), action: 'message_received', details: 'Received message from user' },
+              { id: 'log-2', timestamp: new Date().toISOString(), action: 'message_sent', details: 'Replied with support response' },
+              { id: 'log-3', timestamp: new Date().toISOString(), action: 'message_received', details: 'Follow-up question received' },
             ],
           },
         },

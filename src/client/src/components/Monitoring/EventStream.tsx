@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Card from '../DaisyUI/Card';
 import Button from '../DaisyUI/Button';
-import Input from '../DaisyUI/Input';
 import Select from '../DaisyUI/Select';
 import { useWebSocket } from '../../contexts/WebSocketContext';
 

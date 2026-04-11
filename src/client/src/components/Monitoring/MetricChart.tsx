@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Line, Bar, Area, Pie, LineChart, BarChart, AreaChart, PieChart, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
-import { BarChart3 as ChartBarIcon } from 'lucide-react';
+import { ChartBarIcon } from '@heroicons/react/24/outline';
 import { Alert } from '../DaisyUI/Alert';
 import Card from '../DaisyUI/Card';
 import EmptyState from '../DaisyUI/EmptyState';

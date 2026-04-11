@@ -8,10 +8,7 @@ import { Badge } from '../components/DaisyUI/Badge';
 import { apiService } from '../services/api';
 import Input from '../components/DaisyUI/Input';
 import Textarea from '../components/DaisyUI/Textarea';
-import PageHeader from '../components/DaisyUI/PageHeader';
 import Accordion from '../components/DaisyUI/Accordion';
-import { Code as CodeBracketIcon } from 'lucide-react';
-import Button from '../components/DaisyUI/Button';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -409,22 +406,24 @@ const ApiDocsPage: React.FC = () => {
   return (
     <div className="p-4 space-y-4">
       {/* Header */}
-      <PageHeader
-        title="API Documentation"
-        description={`${totalRoutes} endpoints across ${groups.length} groups — auto-generated from route introspection`}
-        icon={CodeBracketIcon}
-        actions={
-          <div className="form-control w-full sm:w-64">
-            <Input
-              type="text"
-              placeholder="Search endpoints..."
-              size="sm"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-        }
-      />
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">API Documentation</h1>
+          <p className="text-sm text-base-content/60">
+            {totalRoutes} endpoints across {groups.length} groups — auto-generated from route
+            introspection
+          </p>
+        </div>
+        <div className="form-control w-full sm:w-64">
+          <Input
+            type="text"
+            placeholder="Search endpoints..."
+            size="sm"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      </div>
 
       {/* Content */}
       <div className="flex flex-col lg:flex-row gap-4">

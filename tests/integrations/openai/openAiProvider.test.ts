@@ -1,6 +1,7 @@
 import { OpenAI } from 'openai';
 import { OpenAiProvider, openAiProvider } from '@hivemind/llm-openai';
 import openaiConfig from '@config/openaiConfig';
+import { ConfigurationError } from '@src/types/errorClasses';
 import { IMessage } from '@message/interfaces/IMessage';
 import { resetAllCircuitBreakers } from '@common/CircuitBreaker';
 
@@ -179,27 +180,36 @@ describe('openAiProvider', () => {
     });
 
     it('should throw ConfigurationError when API key is missing', async () => {
-      // Mock config to return undefined for API key
+      const originalApiKey = process.env.OPENAI_API_KEY;
+      const originalMockImplementation = (mockedConfig.get as jest.Mock).getMockImplementation();
+
+      delete process.env.OPENAI_API_KEY;
       (mockedConfig.get as jest.Mock).mockImplementation((key: string) => {
         if (key === 'OPENAI_API_KEY') return undefined;
-        return 'default-value';
+        const config: { [key: string]: any } = {
+          OPENAI_BASE_URL: 'https://api.openai.com/v1',
+          OPENAI_TIMEOUT: 10000,
+          OPENAI_MODEL: 'gpt-test',
+          OPENAI_SYSTEM_PROMPT: 'You are a test assistant.',
+          OPENAI_MAX_TOKENS: 50,
+          OPENAI_TEMPERATURE: 0.7,
+        };
+        return config[key];
       });
 
-      // Also clear the process.env fallback so the provider has no key source
-      const savedEnvKey = process.env.OPENAI_API_KEY;
-      delete process.env.OPENAI_API_KEY;
-
-      // Create a new provider instance to trigger the configuration check
-      const providerWithoutKey = new OpenAiProvider();
-
       try {
-        // Should throw when trying to use the provider without API key
-        await expect(providerWithoutKey.generateChatCompletion('test', [])).rejects.toThrow(
-          /API key/i
+        await expect(openAiProvider.generateChatCompletion('test', [])).rejects.toThrow(
+          ConfigurationError
         );
       } finally {
-        // Restore env var so other tests are not affected
-        if (savedEnvKey !== undefined) process.env.OPENAI_API_KEY = savedEnvKey;
+        // Restore environment variable
+        if (originalApiKey !== undefined) {
+          process.env.OPENAI_API_KEY = originalApiKey;
+        } else {
+          delete process.env.OPENAI_API_KEY;
+        }
+        // Restore mock implementation to prevent leak
+        (mockedConfig.get as jest.Mock).mockImplementation(originalMockImplementation);
       }
     });
 

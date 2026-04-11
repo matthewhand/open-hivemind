@@ -18,10 +18,8 @@ import { Alert } from '../components/DaisyUI/Alert';
 import { Badge } from '../components/DaisyUI/Badge';
 import { apiService } from '../services/api';
 import Card from '../components/DaisyUI/Card';
-import Link from '../components/DaisyUI/Link';
 import Select from '../components/DaisyUI/Select';
 import Textarea from '../components/DaisyUI/Textarea';
-import Stack from '../components/DaisyUI/Stack';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -262,28 +260,18 @@ const CreateBotStep: React.FC<CreateBotStepProps> = ({ form, llmProvider, person
         </Validator>
       </FormField>
 
-      {personas.length > 0 && !useCustomPrompt && selectedPersona && (
-        <div className="text-center">
-          <button type="button" className="link link-primary text-sm" onClick={() => setUseCustomPrompt(true)}>
-            Customize system prompt instead
-          </button>
-        </div>
-      )}
-
-      {(useCustomPrompt || personas.length === 0) && (
-        <FormField
-          label="System Prompt"
-          error={errors.persona}
-          hint="Describe how the bot should behave. Leave blank for a general-purpose assistant."
-        >
-          <Textarea
-            id="onboarding-persona"
-            className="h-28 w-full"
-            placeholder="You are a helpful assistant that..."
-            {...register('persona')}
-          />
-        </FormField>
-      )}
+      <FormField
+        label="Persona / System Prompt"
+        error={errors.persona}
+        hint="Describe how the bot should behave. Leave blank for a general-purpose assistant."
+      >
+        <Textarea
+          id="onboarding-persona"
+          className="h-28 w-full"
+          placeholder="You are a helpful assistant that..."
+          {...register('persona')}
+        />
+      </FormField>
 
       {llmProvider && (
         <Alert status="info" icon={<Cpu className="w-5 h-5 text-primary" />} className="bg-base-200">

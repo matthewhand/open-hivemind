@@ -2,12 +2,11 @@ import React, { useRef, useMemo } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { MCPTool, RecentToolUsage } from './types';
 import {
-  Wrench as ToolIcon,
-  Play as RunIcon,
-  Clock as ClockIcon,
-  Search,
-  Star as StarOutlineIcon,
-} from 'lucide-react';
+  WrenchScrewdriverIcon as ToolIcon,
+  PlayIcon as RunIcon,
+  ClockIcon,
+} from '@heroicons/react/24/outline';
+import { Search } from 'lucide-react';
 import { ToolFilters } from '../tools/ToolFilters';
 
 // For the filled star, use the same Star icon with fill prop

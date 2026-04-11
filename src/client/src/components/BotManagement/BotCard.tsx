@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useUIStore } from '../../store/uiStore';
-import PersonaAvatar from '../PersonaAvatar';
 import type {
   BotInstance,
   MessageProvider,
@@ -70,7 +68,6 @@ const BotCard: React.FC<BotCardProps> = ({
   onRemoveProvider,
   onPersonaChange,
 }) => {
-  const showDescriptions = useUIStore((s) => s.showDescriptions);
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showPersonaSelector, setShowPersonaSelector] = useState(false);
@@ -205,11 +202,7 @@ const BotCard: React.FC<BotCardProps> = ({
   };
 
   return (
-    <Card
-      className={`shadow-xl border transition-shadow duration-200 cursor-pointer
-        ${isSelected ? 'border-primary ring-2 ring-primary/20' : 'border-base-300 hover:shadow-2xl'}`}
-      onClick={onPreview ? () => onPreview(bot) : undefined}
-    >
+    <Card className="shadow-xl border border-base-300 hover:shadow-2xl transition-shadow duration-200">
       <Card.Body className="p-6">
         {/* Header */}
         <div className="flex justify-between items-start mb-4">
@@ -248,7 +241,6 @@ const BotCard: React.FC<BotCardProps> = ({
             isOpen={isDropdownOpen}
             onToggle={(open) => setIsDropdownOpen(open)}
             hideArrow
-            aria-label={`Options for ${bot.name}`}
           >
             <li>
               <a onClick={handleConfigureBot} className="flex items-center gap-2" role="menuitem">
