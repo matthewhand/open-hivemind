@@ -59,12 +59,16 @@ Mattermost.
   Discord, Slack, or Mattermost conversations.
 
 ## Persona & System Instructions
-- Persona templates live in `config/personas/` and can be assigned per agent from
-  the WebUI or via `BOTS_{NAME}_PERSONA` variables.
-- Custom system prompts override persona defaults when present, enabling
-  targeted behaviour for specific channels or tenants.
-- The PersonaEngine merges persona, system instructions, channel hints, and
-  recent history into a single prompt payload before calling the LLM provider.
+- Personas live in `config/personas/` and are assigned per agent from the WebUI or
+  via `BOTS_{NAME}_PERSONA`. A persona is a full object — not just a name — containing
+  a `systemPrompt` template, `traits`, `responseBehavior` fields, and other metadata.
+  The same persona can be shared across multiple bots.
+- `BOTS_{NAME}_SYSTEM_INSTRUCTION` provides an independent system instruction that
+  overrides the persona's built-in `systemPrompt` when set, enabling targeted
+  behaviour for specific bots without replacing the persona itself.
+- The PersonaEngine merges the resolved persona, any system instruction override,
+  channel hints, and recent history into a single prompt payload before calling the
+  LLM provider.
 
 ## Model Context Protocol Integration
 - Open-Hivemind can connect to one or more MCP servers using the WebUI or JSON

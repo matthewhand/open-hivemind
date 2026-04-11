@@ -115,9 +115,30 @@ BOTS_ALPHA_DISCORD_BOT_TOKEN=your-discord-token-here
 BOTS_ALPHA_DISCORD_CLIENT_ID=your-client-id
 BOTS_ALPHA_DISCORD_GUILD_ID=your-guild-id
 
-# Identity
+# Identity — Persona ID string (resolved by PersonaManager to a full Persona object)
 BOTS_ALPHA_PERSONA=helpful-assistant
+# Optional: override the persona's built-in systemPrompt with a standalone instruction
+# BOTS_ALPHA_SYSTEM_INSTRUCTION=You are a helpful assistant focused on internal tooling.
 ```
+
+---
+
+## Persona and system instruction
+
+### `BOTS_{n}_PERSONA`
+
+Stores a **Persona ID string**. At runtime, PersonaManager resolves this ID to a full Persona object containing:
+
+- `id`, `name`, `description`, `category`, `traits`
+- `systemPrompt` — the full prompt template for this bot's voice and character
+- `responseBehavior` — optional embedded response-behaviour settings (baseChance, mentionBonus, penalties, onlyWhenSpokenTo, etc.)
+- `avatarStyle`, `isBuiltIn`
+
+Personas are reusable templates — the same persona can be assigned to multiple bots. They are managed in the Web UI under **Personas** or defined in `config/personas/`.
+
+### `BOTS_{n}_SYSTEM_INSTRUCTION`
+
+An **independent system instruction** that can override or supplement the persona's `systemPrompt`. When both a persona and a system instruction are set, the system instruction takes precedence over the persona's built-in `systemPrompt`. Use this when you need to give a specific bot a custom prompt without creating an entirely new persona.
 
 ---
 
@@ -171,9 +192,19 @@ Configures the bot's memory/context backend.
 
 ### Response Profile (`RESPONSE_PROFILE`)
 
-Overrides message-behaviour settings (typing delays, response length, etc.).
+Overrides per-bot `MESSAGE_*` settings (unsolicited response chance, typing delays, response length, etc.). This is **not** the same as a persona — response profiles contain only messaging-behaviour overrides, not character or prompt data.
 
 **Variable:** `BOTS_{n}_RESPONSE_PROFILE`
+
+Built-in profiles: `eager` (higher response chance, shorter delays) and `cautious` (lower chance, longer delays). Custom profiles can be defined in `config/response-profiles.json`.
+
+**Unsolicited response configuration operates at three levels** (highest priority wins):
+
+| Level | Mechanism | Where defined |
+|---|---|---|
+| Per-persona | `Persona.responseBehavior` fields (baseChance, mentionBonus, onlyWhenSpokenTo, etc.) | Embedded in the Persona object; editable via Web UI → Personas |
+| Per-bot | `BOTS_{n}_RESPONSE_PROFILE` → response profile key | `config/response-profiles.json` or built-ins |
+| Global | `MESSAGE_UNSOLICITED_BASE_CHANCE`, `MESSAGE_UNSOLICITED_ADDRESSED`, etc. | Environment variables / `.env` |
 
 > **Note:** `RESPONSE_PROFILE` is not fully materialised yet. The variable is recognised but the apply step is incomplete. This is a known TODO.
 
@@ -245,7 +276,7 @@ BOTS_SLACK_SUPPORT_SLACK_JOIN_CHANNELS=C01234567,C09876543
 | MCP Guard | `BOTS_{n}_MCP_GUARD_PROFILE` | `config/guardrail-profiles.json` | `applyGuardrailProfile()` | Fully applied |
 | MCP Server | `BOTS_{n}_MCP_SERVER_PROFILE` | `config/mcp-server-profiles.json` | `applyMcpServerProfile()` | Fully applied |
 | Memory | `BOTS_{n}_MEMORY_PROFILE` | `config/memory-profiles.json` | `applyMemoryProfile()` | TODO: not applied at runtime |
-| Response | `BOTS_{n}_RESPONSE_PROFILE` | _(pending)_ | _(pending)_ | TODO: not fully materialised |
+| Response | `BOTS_{n}_RESPONSE_PROFILE` | `config/response-profiles.json` | _(pending)_ | TODO: not fully materialised; built-ins: `eager`, `cautious` |
 
 ---
 

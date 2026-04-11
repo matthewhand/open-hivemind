@@ -14,8 +14,9 @@ the WebUI.
    `config/user/bot-overrides.json`.
 3. **Static configuration files** – defaults under `config/` (e.g.
    `config/default.json`, `config/bots/*.json`).
-4. **Personas and templates** – JSON/YAML content in `config/personas/` that can
-   be referenced by name.
+4. **Personas** – full persona objects in `config/personas/` referenced by Persona ID
+   (e.g. via `BOTS_{NAME}_PERSONA`); each carries a `systemPrompt`, `traits`,
+   `responseBehavior`, and other metadata resolved at runtime by PersonaManager.
 
 Convict provides schema validation and sensible defaults at each layer.
 
@@ -54,14 +55,17 @@ MCP_TOOL_GUARD_ALLOWLIST=1234567890,9876543210
 ```
 
 ## Personas & System Instructions
-- Personas are stored in `config/personas/`. Each file exposes a `key`,
-  `displayName`, and prompt content.
-- Assign a persona globally with `MESSAGE_PERSONA_KEY=<key>` or per agent via
-  `BOTS_{NAME}_PERSONA_KEY`.
-- Provide ad-hoc system instructions using `MESSAGE_SYSTEM_INSTRUCTIONS` or
-  `BOTS_{NAME}_SYSTEM_INSTRUCTIONS`.
-- When both are supplied, the persona template loads first and system
-  instructions append additional guidance.
+- Personas are managed in `config/personas/` and via the Web UI. Each persona is a
+  full object containing an `id`, `name`, `systemPrompt` (the prompt template for
+  that bot's voice), optional `responseBehavior` fields, `traits`, `category`, and
+  `avatarStyle`. Personas are reusable — the same persona can be assigned to
+  multiple bots.
+- Assign a persona to a bot via `BOTS_{NAME}_PERSONA=<persona-id>`. The ID is
+  resolved at runtime by PersonaManager to the full Persona object.
+- Provide an independent system instruction per bot using
+  `BOTS_{NAME}_SYSTEM_INSTRUCTION`. When both a persona and a system instruction
+  are set, the system instruction takes precedence over the persona's built-in
+  `systemPrompt`.
 
 ## WebUI Overrides & Guardrails
 - The WebUI shows which fields are locked by environment variables. Locked
