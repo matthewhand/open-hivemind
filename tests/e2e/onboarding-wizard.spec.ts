@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { setupAuth } from './test-utils';
+import { setupAuth, registerViteSourceBypass } from './test-utils';
 
 /**
  * Onboarding Wizard E2E Tests
@@ -99,6 +99,10 @@ test.describe('Onboarding Wizard', () => {
     await page.route('**/api/demo/status', async (route) => {
       await route.fulfill({ status: 200, json: { active: false } });
     });
+
+    // Must be last — lets Vite source-module requests pass through so they are
+    // not intercepted by the broad API mock patterns above.
+    await registerViteSourceBypass(page);
   }
 
   test('navigates through all 5 wizard steps in correct order', async ({ page }) => {

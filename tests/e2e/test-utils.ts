@@ -132,6 +132,23 @@ export async function setupTestWithErrorDetection(page: Page): Promise<string[]>
 }
 
 /**
+ * Register a catch-all route that lets Vite source-module requests pass through
+ * to the dev server unchanged.
+ *
+ * WHY: Playwright route patterns like `**\/api\/bots**` also match Vite module
+ * URLs such as `/src/services/api/bots.ts`.  When those are fulfilled with JSON
+ * the browser rejects them as module scripts (wrong MIME type) and the React app
+ * fails to boot.
+ *
+ * USAGE: call this AFTER registering all API mock routes in beforeEach so it is
+ * the last-registered handler and therefore runs first (Playwright: last-wins).
+ * Only needed when PLAYWRIGHT_BASE_URL points at the Vite dev server (port 5173).
+ */
+export async function registerViteSourceBypass(page: Page): Promise<void> {
+  await page.route('**/src/**', (r) => r.continue());
+}
+
+/**
  * Wait for page to be fully loaded and stable
  */
 export async function waitForPageReady(page: Page, timeout = 5000) {

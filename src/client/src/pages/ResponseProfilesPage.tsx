@@ -164,10 +164,21 @@ const ResponseProfilesPage: React.FC = () => {
 
   const handleFormSubmit = async () => {
     try {
-      const key = formModal.isEdit 
-        ? formModal.profile!.key 
-        : formData.name!.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-      
+      let key: string;
+      if (formModal.isEdit) {
+        key = formModal.profile!.key;
+      } else {
+        key = (formData.name ?? '')
+          .toLowerCase()
+          .replace(/\s+/g, '-')
+          .replace(/[^a-z0-9-]/g, '')
+          .replace(/^-+|-+$/g, ''); // strip leading/trailing hyphens
+        if (!key) {
+          setError('Profile name must contain at least one letter or digit');
+          return;
+        }
+      }
+
       const payload = { ...formData, key };
 
       if (formModal.isEdit) {
@@ -326,7 +337,17 @@ const ResponseProfilesPage: React.FC = () => {
                 </h4>
                 <div className="space-y-3 bg-base-200/30 p-4 rounded-xl">
                   {group.keys.map(key => {
-                    const isBool = key.includes('UNSOLICITED_ADDRESSED') || key.includes('UNSOLICITED_UNADDRESSED') || key.includes('ONLY_WHEN_SPOKEN_TO');
+                    // Derive boolean/number type from the existing default value or
+                    // well-known key suffixes — avoids hardcoding individual names.
+                    const existingValue = formData.settings?.[key];
+                    const isBool =
+                      typeof existingValue === 'boolean' ||
+                      (existingValue === undefined &&
+                        (key.endsWith('_ADDRESSED') ||
+                          key.endsWith('_UNADDRESSED') ||
+                          key.endsWith('_SPOKEN_TO') ||
+                          key.endsWith('_ENABLED') ||
+                          key.endsWith('_ACTIVE')));
                     return (
                       <div key={key} className="form-control">
                         <label className="label cursor-pointer flex justify-between">
@@ -345,10 +366,14 @@ const ResponseProfilesPage: React.FC = () => {
                               className="input-xs w-24 text-right"
                               step={key.includes('MULTIPLIER') || key.includes('CHANCE') ? 0.01 : 1}
                               value={formData.settings?.[key] ?? ''}
-                              onChange={(e) => setFormData(prev => ({
-                                ...prev,
-                                settings: { ...prev.settings, [key]: parseFloat(e.target.value) }
-                              }))}
+                              onChange={(e) => {
+                                const parsed = parseFloat(e.target.value);
+                                if (!isFinite(parsed)) return; // reject Infinity / NaN
+                                setFormData(prev => ({
+                                  ...prev,
+                                  settings: { ...prev.settings, [key]: parsed },
+                                }));
+                              }}
                             />
                           )}
                         </label>

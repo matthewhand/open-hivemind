@@ -685,11 +685,10 @@ export function isTrustedAdminIP(req: Request): boolean {
 
   return whitelist.some((allowed) => {
     if (allowed.includes('/')) {
-      // isIPInCIDR only handles IPv4 CIDRs; for IPv6 addresses (e.g. ::1)
-      // fall through to the exact-match check below
-      if (clientIP.includes(':') && !clientIP.startsWith('::ffff:')) {
-        return false;
-      }
+      // isIPInCIDR supports both IPv4 and IPv6 CIDRs including cross-version
+      // matching via IPv4-mapped addresses (::ffff:x.x.x.x). The previous
+      // early-return for native IPv6 was wrong — it blocked legitimate IPv6
+      // CIDR entries like fc00::/7 or ::1/128 from ever matching.
       return isIPInCIDR(clientIP, allowed);
     }
     return clientIP === allowed || clientIP === `::ffff:${allowed}`;

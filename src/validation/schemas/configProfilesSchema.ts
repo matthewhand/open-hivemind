@@ -102,3 +102,37 @@ export const ToolProfileKeyParamSchema = z.object({
     key: z.string().min(1, { message: 'Profile key is required' }),
   }),
 });
+
+// ── Response Profile Schemas ─────────────────────────────────────────────────
+
+const responseSettingValue = z.union([z.string(), z.number(), z.boolean()]);
+
+export const CreateResponseProfileSchema = z.object({
+  body: z.object({
+    key: z
+      .string()
+      .min(1, { message: 'Profile key is required' })
+      .max(100)
+      .regex(/^[a-z0-9-]+$/, { message: 'Key must be lowercase alphanumeric with hyphens only' }),
+    name: profileNameField,
+    description: z.string().max(500).optional(),
+    settings: z.record(responseSettingValue).optional(),
+  }),
+});
+
+export const UpdateResponseProfileSchema = z.object({
+  params: z.object({
+    key: z.string().min(1, { message: 'Profile key is required' }),
+  }),
+  body: z.object({
+    name: profileNameField.optional(),
+    description: z.string().max(500).optional(),
+    settings: z.record(responseSettingValue).optional(),
+  }),
+});
+
+export const ResponseProfileKeyParamSchema = z.object({
+  params: z.object({
+    key: z.string().min(1, { message: 'Profile key is required' }),
+  }),
+});

@@ -9,11 +9,14 @@ import {
   CreateLlmProfileSchema,
   CreateMemoryProfileSchema,
   CreateMessageProfileSchema,
+  CreateResponseProfileSchema,
   CreateToolProfileSchema,
   LlmProfileKeyParamSchema,
   MemoryProfileKeyParamSchema,
+  ResponseProfileKeyParamSchema,
   ToolProfileKeyParamSchema,
   UpdateLlmProfileSchema,
+  UpdateResponseProfileSchema,
 } from '../../../validation/schemas/configProfilesSchema';
 import { validateRequest } from '../../../validation/validateRequest';
 import { ApiResponse } from '../../utils/apiResponse';
@@ -397,7 +400,7 @@ router.get('/response-profiles', asyncErrorHandler(async (req, res) => {
   }
 }));
 
-router.post('/response-profiles', configLimiter, asyncErrorHandler(async (req, res) => {
+router.post('/response-profiles', configLimiter, validateRequest(CreateResponseProfileSchema), asyncErrorHandler(async (req, res) => {
   try {
     const profile = responseProfileManager.createResponseProfile(req.body);
     broadcastConfigUpdate('response-profiles', 'create', profile.key);
@@ -410,7 +413,7 @@ router.post('/response-profiles', configLimiter, asyncErrorHandler(async (req, r
   }
 }));
 
-router.put('/response-profiles/:key', configLimiter, asyncErrorHandler(async (req, res) => {
+router.put('/response-profiles/:key', configLimiter, validateRequest(UpdateResponseProfileSchema), asyncErrorHandler(async (req, res) => {
   try {
     const profile = responseProfileManager.updateResponseProfile(req.params.key, req.body);
     broadcastConfigUpdate('response-profiles', 'update', req.params.key);
@@ -423,7 +426,7 @@ router.put('/response-profiles/:key', configLimiter, asyncErrorHandler(async (re
   }
 }));
 
-router.delete('/response-profiles/:key', configLimiter, asyncErrorHandler(async (req, res) => {
+router.delete('/response-profiles/:key', configLimiter, validateRequest(ResponseProfileKeyParamSchema), asyncErrorHandler(async (req, res) => {
   try {
     responseProfileManager.deleteResponseProfile(req.params.key);
     broadcastConfigUpdate('response-profiles', 'delete', req.params.key);
