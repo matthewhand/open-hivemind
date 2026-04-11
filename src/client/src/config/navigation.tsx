@@ -109,10 +109,10 @@ export const hivemindNavItems: NavItem[] = [
     visible: true,
   },
 
-  // === OTHER ===
+  // === RESOURCES ===
   {
-    id: 'divider-other',
-    label: 'Other',
+    id: 'divider-resources',
+    label: 'Resources',
     icon: null as unknown as React.ReactNode,
     divider: true,
     visible: true,

@@ -74,5 +74,43 @@ RUN mkdir -p config/uploads data logs
 RUN chown -R node:node /app
 USER node
 
+# Bootstrap script that configures tsconfig-paths for the dist output
+RUN cat > /app/dist/bootstrap.js <<'BOOTSCRIPT'
+const { register } = require("tsconfig-paths");
+register({
+  baseUrl: __dirname,
+  paths: {
+    "@src/*": ["src/*"],
+    "@config/*": ["src/config/*"],
+    "@common/*": ["src/common/*"],
+    "@llm/*": ["src/llm/*"],
+    "@message/*": ["src/message/*"],
+    "@webhook/*": ["src/webhook/*"],
+    "@command/*": ["src/command/*"],
+    "@types/*": ["src/types/*"],
+    "@integrations/flowise/*": ["../packages/llm-flowise/dist/*"],
+    "@integrations/openwebui/*": ["../packages/llm-openwebui/dist/*"],
+    "@integrations/openswarm/*": ["../packages/llm-openswarm/dist/*"],
+    "@src/integrations/slack/*": ["../packages/message-slack/dist/*"],
+    "@src/integrations/mattermost/*": ["../packages/message-mattermost/dist/*"],
+    "@hivemind/shared-types": ["../packages/shared-types/src/index.js"],
+    "@hivemind/shared-types/*": ["../packages/shared-types/src/*"],
+    "@hivemind/llm-openai": ["../packages/llm-openai/dist/index.js"],
+    "@hivemind/llm-openai/*": ["../packages/llm-openai/dist/*"],
+    "@hivemind/llm-letta": ["../packages/llm-letta/dist/index.js"],
+    "@hivemind/llm-letta/*": ["../packages/llm-letta/dist/*"],
+    "@hivemind/message-discord": ["../packages/message-discord/dist/index.js"],
+    "@hivemind/message-discord/*": ["../packages/message-discord/dist/*"],
+    "@hivemind/message-slack": ["../packages/message-slack/dist/index.js"],
+    "@hivemind/message-slack/*": ["../packages/message-slack/dist/*"],
+    "@hivemind/message-mattermost": ["../packages/message-mattermost/dist/index.js"],
+    "@hivemind/message-mattermost/*": ["../packages/message-mattermost/dist/*"],
+    "@hivemind/memory-mem0": ["../packages/memory-mem0/dist/index.js"],
+    "@hivemind/memory-mem0/*": ["../packages/memory-mem0/dist/*"],
+  },
+});
+require("./src/index.js");
+BOOTSCRIPT
+
 EXPOSE 3028
-CMD ["node", "dist/src/index.js"]
+CMD ["node", "dist/bootstrap.js"]

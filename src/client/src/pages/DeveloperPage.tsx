@@ -7,10 +7,12 @@ import { LoadingSpinner } from '../components/DaisyUI/Loading';
 const SitemapPage = lazy(() => import('./SitemapPage'));
 const DaisyUIShowcase = lazy(() => import('./DaisyUIShowcase'));
 const StaticPagesPage = lazy(() => import('./StaticPagesPage'));
+const SpecsPage = lazy(() => import('./SpecsPage'));
 
 const TABS = [
   { key: 'sitemap', label: 'Sitemap' },
   { key: 'showcase', label: 'UI Components' },
+  { key: 'specs', label: 'Specs' },
   { key: 'static-pages', label: 'Static Pages' },
 ];
 
@@ -36,6 +38,7 @@ const DeveloperPage: React.FC = () => {
           <Suspense fallback={<div className="flex justify-center items-center min-h-[200px]"><LoadingSpinner size="lg" /></div>}>
             {activeTab === 'sitemap' && <SitemapPage />}
             {activeTab === 'showcase' && <DaisyUIShowcase />}
+            {activeTab === 'specs' && <SpecsPage />}
             {activeTab === 'static-pages' && <StaticPagesPage />}
           </Suspense>
         </div>

@@ -15,10 +15,13 @@ services:
     ports:
       - "3028:3028"
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
       - REDIS_URL=redis://redis:6379
       - HTTP_ALLOW_ALL_IPS=true
       - PORT=3028
+      - SESSION_SECRET=dev-session-secret-for-testing
+      - JWT_SECRET=dev-jwt-secret-for-testing
+      - JWT_REFRESH_SECRET=dev-jwt-refresh-secret-for-testing
     env_file:
       - .env
     restart: unless-stopped
