@@ -31,12 +31,12 @@ describe('llmDefaultStatus', () => {
 
   it('should return configured: true when enabled providers exist', () => {
     mockGetAllProviders.mockReturnValue([
-      { id: '1', name: 'OpenAI', type: 'openai', enabled: true },
+      { id: '1', name: 'OpenAI', type: 'openai', enabled: true, source: 'system' },
     ]);
     const status = getLlmDefaultStatus();
     expect(status.configured).toBe(true);
     expect(status.providers).toHaveLength(1);
-    expect(status.providers[0]).toEqual({ id: '1', name: 'OpenAI', type: 'openai' });
+    expect(status.providers[0]).toEqual({ id: '1', name: 'OpenAI', type: 'openai', source: 'system', hasApiKey: false });
   });
 
   it('should filter out disabled providers', () => {

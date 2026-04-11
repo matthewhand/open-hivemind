@@ -1,9 +1,18 @@
+import fs from 'fs';
+import path from 'path';
 import { redactSensitiveInfo } from '../../../src/common/redactSensitiveInfo';
 import { SecureConfigManager } from '../../../src/config/SecureConfigManager';
 
 describe('Credential Management and Secret Handling', () => {
   describe('Secure Config Manager', () => {
     let configManager: SecureConfigManager;
+    const testSecureDir = path.join(process.cwd(), 'config', 'secure');
+
+    beforeAll(() => {
+      if (!fs.existsSync(testSecureDir)) {
+        fs.mkdirSync(testSecureDir, { recursive: true });
+      }
+    });
 
     beforeEach(() => {
       configManager = new SecureConfigManager();

@@ -299,134 +299,136 @@ const PluginSecurityPage: React.FC = () => {
           className="py-12"
         />
       ) : (
-        <div className="grid grid-cols-1 gap-4">
-          {paginatedPlugins.map((plugin) => (
-            <Card key={plugin.pluginName} className="hover:shadow-lg transition-shadow">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <Package className="w-5 h-5 text-primary" />
-                    <h3 className="text-lg font-semibold">{plugin.pluginName}</h3>
-                    {getTrustBadge(plugin.trustLevel, plugin.isBuiltIn)}
-                    {getSignatureStatusBadge(plugin.signatureValid)}
+        <>
+          <div className="grid grid-cols-1 gap-4">
+            {paginatedPlugins.map((plugin) => (
+              <Card key={plugin.pluginName} className="hover:shadow-lg transition-shadow">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <Package className="w-5 h-5 text-primary" />
+                      <h3 className="text-lg font-semibold">{plugin.pluginName}</h3>
+                      {getTrustBadge(plugin.trustLevel, plugin.isBuiltIn)}
+                      {getSignatureStatusBadge(plugin.signatureValid)}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                      <div>
+                        <div className="font-semibold text-base-content/70 mb-1">
+                          Granted Capabilities
+                        </div>
+                        {plugin.grantedCapabilities.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {plugin.grantedCapabilities.map((cap) => (
+                              <Badge key={cap} color="success" size="sm">
+                                {cap}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-base-content/50">None</span>
+                        )}
+                      </div>
+
+                      <div>
+                        <div className="font-semibold text-base-content/70 mb-1">
+                          Denied Capabilities
+                        </div>
+                        {plugin.deniedCapabilities.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {plugin.deniedCapabilities.map((cap) => (
+                              <Badge key={cap} color="error" size="sm">
+                                {cap}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-base-content/50">None</span>
+                        )}
+                      </div>
+
+                      <div>
+                        <div className="font-semibold text-base-content/70 mb-1">
+                          Required Capabilities
+                        </div>
+                        {plugin.requiredCapabilities.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {plugin.requiredCapabilities.map((cap) => (
+                              <Badge key={cap} color="neutral" size="sm">
+                                {cap}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-base-content/50">None</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                    <div>
-                      <div className="font-semibold text-base-content/70 mb-1">
-                        Granted Capabilities
-                      </div>
-                      {plugin.grantedCapabilities.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {plugin.grantedCapabilities.map((cap) => (
-                            <Badge key={cap} color="success" size="sm">
-                              {cap}
-                            </Badge>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-base-content/50">None</span>
-                      )}
-                    </div>
+                  <div className="flex flex-col gap-2 lg:w-48">
+                    {!plugin.isBuiltIn && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleVerifyPlugin(plugin.pluginName)}
+                          disabled={actionInProgress === plugin.pluginName}
+                          aria-label={`Verify ${plugin.pluginName}`}
+                        >
+                          <RefreshCw
+                            className={`w-4 h-4 mr-2 ${
+                              actionInProgress === plugin.pluginName ? 'animate-spin' : ''
+                            }`}
+                          />
+                          Re-verify
+                        </Button>
 
-                    <div>
-                      <div className="font-semibold text-base-content/70 mb-1">
-                        Denied Capabilities
+                        {plugin.trustLevel === 'untrusted' ? (
+                          <Button
+                            size="sm"
+                            color="success"
+                            onClick={() => openTrustConfirmModal(plugin.pluginName, true)}
+                            disabled={actionInProgress === plugin.pluginName}
+                            aria-label={`Trust ${plugin.pluginName}`}
+                          >
+                            <Unlock className="w-4 h-4 mr-2" />
+                            Trust Plugin
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            color="warning"
+                            onClick={() => openTrustConfirmModal(plugin.pluginName, false)}
+                            disabled={actionInProgress === plugin.pluginName}
+                            aria-label={`Revoke trust from ${plugin.pluginName}`}
+                          >
+                            <Lock className="w-4 h-4 mr-2" />
+                            Revoke Trust
+                          </Button>
+                        )}
+                      </>
+                    )}
+                    {plugin.isBuiltIn && (
+                      <div className="text-xs text-base-content/50 text-center py-2">
+                        Built-in plugins are always trusted
                       </div>
-                      {plugin.deniedCapabilities.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {plugin.deniedCapabilities.map((cap) => (
-                            <Badge key={cap} color="error" size="sm">
-                              {cap}
-                            </Badge>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-base-content/50">None</span>
-                      )}
-                    </div>
-
-                    <div>
-                      <div className="font-semibold text-base-content/70 mb-1">
-                        Required Capabilities
-                      </div>
-                      {plugin.requiredCapabilities.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {plugin.requiredCapabilities.map((cap) => (
-                            <Badge key={cap} color="neutral" size="sm">
-                              {cap}
-                            </Badge>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-base-content/50">None</span>
-                      )}
-                    </div>
+                    )}
                   </div>
                 </div>
-
-                <div className="flex flex-col gap-2 lg:w-48">
-                  {!plugin.isBuiltIn && (
-                    <>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleVerifyPlugin(plugin.pluginName)}
-                        disabled={actionInProgress === plugin.pluginName}
-                        aria-label={`Verify ${plugin.pluginName}`}
-                      >
-                        <RefreshCw
-                          className={`w-4 h-4 mr-2 ${
-                            actionInProgress === plugin.pluginName ? 'animate-spin' : ''
-                          }`}
-                        />
-                        Re-verify
-                      </Button>
-
-                      {plugin.trustLevel === 'untrusted' ? (
-                        <Button
-                          size="sm"
-                          color="success"
-                          onClick={() => openTrustConfirmModal(plugin.pluginName, true)}
-                          disabled={actionInProgress === plugin.pluginName}
-                          aria-label={`Trust ${plugin.pluginName}`}
-                        >
-                          <Unlock className="w-4 h-4 mr-2" />
-                          Trust Plugin
-                        </Button>
-                      ) : (
-                        <Button
-                          size="sm"
-                          color="warning"
-                          onClick={() => openTrustConfirmModal(plugin.pluginName, false)}
-                          disabled={actionInProgress === plugin.pluginName}
-                          aria-label={`Revoke trust from ${plugin.pluginName}`}
-                        >
-                          <Lock className="w-4 h-4 mr-2" />
-                          Revoke Trust
-                        </Button>
-                      )}
-                    </>
-                  )}
-                  {plugin.isBuiltIn && (
-                    <div className="text-xs text-base-content/50 text-center py-2">
-                      Built-in plugins are always trusted
-                    </div>
-                  )}
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-        <div className="flex justify-center mt-6">
-          <Pagination
-            currentPage={currentPage}
-            totalItems={filteredPlugins.length}
-            pageSize={pageSize}
-            onPageChange={setCurrentPage}
-            style="standard"
-          />
-        </div>
+              </Card>
+            ))}
+          </div>
+          <div className="flex justify-center mt-6">
+            <Pagination
+              currentPage={currentPage}
+              totalItems={filteredPlugins.length}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              style="standard"
+            />
+          </div>
+        </>
       )}
 
       {/* Confirm Modal */}

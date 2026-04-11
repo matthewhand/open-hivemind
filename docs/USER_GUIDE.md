@@ -23,6 +23,7 @@ Welcome to the Open-Hivemind User Guide. This document provides a detailed walkt
 - [System](#system)
   - [Settings Overview](#settings-overview)
   - [Audit & Governance](#audit--governance)
+  - [Plugin Security](#plugin-security)
   - [Webhook](#webhook)
   - [Monitoring](#monitoring)
   - [System Management](#system-management)
@@ -212,6 +213,17 @@ General system configuration.
 ![Settings Saving](screenshots/settings-general-loading.png)
 
 *   **Saving Changes**: When updating settings, click "Save Settings". The button will show a loading state while applying changes.
+
+
+### [Plugin Security](/admin/plugin-security)
+Monitor and manage security settings for all installed plugins.
+
+![Plugin Security Dashboard](screenshots/plugin-security-dashboard.png)
+
+*   **Plugin Overview**: View a list of all installed plugins, their trust level, signature validity, and capabilities.
+*   **Trust Management**: Trust or revoke trust from community plugins. Trusted plugins are granted their required capabilities.
+*   **Capability Inspection**: See exactly which system capabilities (e.g., network, filesystem) are granted, denied, or required by each plugin.
+*   **Filtering**: Quickly filter plugins by their status (Trusted, Untrusted, Built-in, Verification Failed).
 
 ### [Audit & Governance](/admin/audit)
 The Enterprise Manager provides an interface to monitor security, compliance, multi-cloud setups, integrations, and crucially, audit events.

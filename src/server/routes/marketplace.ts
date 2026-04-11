@@ -55,20 +55,15 @@ let githubSearchCacheTime = 0;
  * Load the allowlist of visible packages from config/community.json.
  * Returns null if the file doesn't exist (show all packages).
  */
-async function loadCommunityAllowlist(): Promise<Set<string> | null> {
+function loadCommunityAllowlist(): Set<string> | null {
   try {
-    // ⚡ Bolt Optimization: Replaced synchronous fs.existsSync and fs.readFileSync
-    // with async fs.promises.readFile to prevent event loop blocking.
-    const fileContent = await fs.promises.readFile(COMMUNITY_CONFIG_PATH, 'utf8');
-    const data = JSON.parse(fileContent);
+    if (!fs.existsSync(COMMUNITY_CONFIG_PATH)) return null;
+    const data = JSON.parse(fs.readFileSync(COMMUNITY_CONFIG_PATH, 'utf8'));
     if (Array.isArray(data.packages)) {
       return new Set(data.packages as string[]);
     }
     return null;
-  } catch (err: any) {
-    if (err.code !== 'ENOENT') {
-      debug('Failed to read community.json: %s', err);
-    }
+  } catch {
     return null;
   }
 }
@@ -277,7 +272,7 @@ async function getPackages(): Promise<MarketplacePackage[]> {
   let allPackages = Array.from(packageMap.values());
 
   // Filter by community.json allowlist (if it exists)
-  const allowlist = await loadCommunityAllowlist();
+  const allowlist = loadCommunityAllowlist();
   if (allowlist) {
     allPackages = allPackages.filter(
       (pkg) => allowlist.has(pkg.name) || pkg.status === 'installed'

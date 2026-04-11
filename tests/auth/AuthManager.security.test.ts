@@ -68,6 +68,7 @@ describe('AuthManager Security Fix', () => {
     process.env.NODE_ENV = 'test';
     delete process.env.ADMIN_PASSWORD;
 
+    (bcrypt.hashSync as jest.Mock).mockClear();
     authManager = AuthManager.getInstance();
 
     // In test environment, it doesn't use bcrypt.hashSync, it uses 'test-admin-hash' directly

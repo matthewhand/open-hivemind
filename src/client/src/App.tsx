@@ -66,7 +66,7 @@ function App() {
               </ThemeSync>
             </ReduxProvider>
           </Provider>
-          {import.meta.env.DEV && import.meta.env.VITE_SHOW_DEVTOOLS === 'true' && <ReactQueryDevtools initialIsOpen={false} />}
+          {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
         </QueryClientProvider>
       </HydrationErrorBoundary>
     </ErrorBoundary>

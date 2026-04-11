@@ -122,6 +122,13 @@ export const hivemindNavItems: NavItem[] = [
     visible: true,
   },
   {
+    id: 'plugin-security',
+    label: 'Plugin Security',
+    icon: <NavIcon><Shield className="w-4 h-4" /></NavIcon>,
+    path: '/admin/plugin-security',
+    visible: true,
+  },
+  {
     id: 'system-health',
     label: 'System Health',
     icon: <NavIcon><HeartPulse className="w-4 h-4" /></NavIcon>,

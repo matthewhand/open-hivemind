@@ -7,6 +7,7 @@ import { ApiResponse } from '@src/server/utils/apiResponse';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import { createLogger } from '../../common/StructuredLogger';
+import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 import { container } from '../../di/container';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { AnalyticsService } from '../../services/AnalyticsService';
@@ -19,7 +20,6 @@ import {
 } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { ActivityLogger } from '../services/ActivityLogger';
-import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 
 type AnnotatedEvent = MessageFlowEvent & { llmProvider: string };
 
@@ -364,11 +364,11 @@ router.get('/tips', async (_req, res): Promise<any> => {
 router.get('/config-status', async (_req, res): Promise<any> => {
   try {
     const manager = BotConfigurationManager.getInstance();
-    
+
     // Check if LLM is configured
     const llmStatus = getLlmDefaultStatus();
     const llmConfigured = llmStatus.configured;
-    
+
     // Check if any bots are configured
     let botConfigured = false;
     try {
@@ -377,21 +377,23 @@ router.get('/config-status', async (_req, res): Promise<any> => {
     } catch {
       botConfigured = false;
     }
-    
+
     // Check if any messenger is configured
     let messengerConfigured = false;
     try {
       const bots = manager.getAllBots();
-      messengerConfigured = Array.isArray(bots) && bots.some(bot => bot.messageProvider);
+      messengerConfigured = Array.isArray(bots) && bots.some((bot) => bot.messageProvider);
     } catch {
       messengerConfigured = false;
     }
-    
-    return res.json(ApiResponse.success({
-      llmConfigured,
-      botConfigured,
-      messengerConfigured,
-    }));
+
+    return res.json(
+      ApiResponse.success({
+        llmConfigured,
+        botConfigured,
+        messengerConfigured,
+      })
+    );
   } catch (error) {
     logger.error('Config status API error:', error);
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(

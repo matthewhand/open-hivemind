@@ -10,15 +10,29 @@ jest.mock('@config/llmTaskConfig', () => ({
   },
 }));
 
+// Mock UserConfigStore
+jest.mock('@src/config/UserConfigStore', () => {
+  return {
+    __esModule: true,
+    UserConfigStore: {
+      getInstance: () => ({
+        getGeneralSettings: () => ({}),
+      }),
+    },
+  };
+});
+
 // Mock ProviderConfigManager
-jest.mock('@src/config/ProviderConfigManager', () => ({
-  __esModule: true,
-  default: {
-    getInstance: () => ({
-      getAllProviders: () => mockProviderInstances,
-    }),
-  },
-}));
+jest.mock('@src/config/ProviderConfigManager', () => {
+  return {
+    __esModule: true,
+    default: {
+      getInstance: () => ({
+        getAllProviders: () => mockProviderInstances,
+      }),
+    },
+  };
+});
 
 // Mock MetricsCollector so token counting wrapper stays inert
 jest.mock('@src/monitoring/MetricsCollector', () => ({
@@ -68,7 +82,7 @@ describe('taskLlmRouter.getTaskLlm', () => {
     delete process.env.LLM_SEMANTIC_MODEL;
   });
 
-  it('uses provided fallback provider when no overrides', () => {
+  it('uses provided fallback provider when no overrides', async () => {
     const fallback: ILlmProvider = {
       name: 'fallback',
       supportsChatCompletion: () => true,
@@ -81,12 +95,12 @@ describe('taskLlmRouter.getTaskLlm', () => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { getTaskLlm } = require('@llm/taskLlmRouter');
 
-    const sel = getTaskLlm('semantic', { fallbackProviders: [fallback], baseMetadata: { x: 1 } });
+    const sel = await getTaskLlm('semantic', { fallbackProviders: [fallback], baseMetadata: { x: 1 } });
     expect(sel.provider).toBe(fallback);
     expect(sel.metadata).toEqual({ x: 1 });
   });
 
-  it('applies model override via metadata without provider override', () => {
+  it('applies model override via metadata without provider override', async () => {
     const fallback: ILlmProvider = {
       name: 'fallback',
       supportsChatCompletion: () => true,
@@ -100,7 +114,7 @@ describe('taskLlmRouter.getTaskLlm', () => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { getTaskLlm } = require('@llm/taskLlmRouter');
 
-    const sel = getTaskLlm('semantic', { fallbackProviders: [fallback] });
+    const sel = await getTaskLlm('semantic', { fallbackProviders: [fallback] });
     expect(sel.provider).toBe(fallback);
     expect(sel.metadata.modelOverride).toBe('gpt-5.1-nano');
   });
@@ -123,14 +137,14 @@ describe('taskLlmRouter.getTaskLlm', () => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { getTaskLlm } = require('@llm/taskLlmRouter');
 
-    const sel = getTaskLlm('semantic');
+    const sel = await getTaskLlm('semantic');
     expect(sel.provider.name).toBe('openai');
 
     const out = await sel.provider.generateChatCompletion('hi', [], sel.metadata);
     expect(out).toBe('openai:override-model:override-model');
   });
 
-  it('selects provider instance by type when ref is a type string', () => {
+  it('selects provider instance by type when ref is a type string', async () => {
     mockProviderInstances = [
       {
         id: 'flowise-1',
@@ -155,7 +169,7 @@ describe('taskLlmRouter.getTaskLlm', () => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { getTaskLlm } = require('@llm/taskLlmRouter');
 
-    const sel = getTaskLlm('semantic');
+    const sel = await getTaskLlm('semantic');
     expect(sel.provider.name).toBe('openai');
   });
 });
