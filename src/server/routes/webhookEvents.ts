@@ -147,12 +147,15 @@ router.get('/events/:id', (req, res) => {
 
 // ── POST /api/webhooks/events/:id/retry — replay a failed event ─────────────
 
-router.post('/events/:id/retry', validateRequest(WebhookRetrySchema), async (req, res) => {
-  try {
-    const original = events.find((e) => e.id === req.params.id);
-    if (!original) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Event not found'));
-    }
+router.post(
+  '/events/:id/retry',
+  validateRequest(WebhookRetrySchema),
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const original = events.find((e) => e.id === req.params.id);
+      if (!original) {
+        return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Event not found'));
+      }
 
       // Only allow retrying failed events
       if (original.statusCode < 400) {
@@ -187,33 +190,7 @@ router.post('/events/:id/retry', validateRequest(WebhookRetrySchema), async (req
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to retry webhook event'));
     }
-
-    // Record a retry attempt with a simulated 202 Accepted
-    const retryEvent = recordWebhookEvent({
-      source: original.source,
-      endpoint: original.endpoint,
-      method: original.method,
-      statusCode: 202,
-      duration: 0,
-      payload: original.payload,
-      headers: { ...original.headers, 'x-retry-of': original.id },
-    });
-
-    debug('Retried webhook event %s → %s', original.id, retryEvent.id);
-
-    return res.json(
-      ApiResponse.success({
-        originalId: original.id,
-        retryId: retryEvent.id,
-        message: 'Event queued for retry',
-      })
-    );
-  } catch (error) {
-    debug('Error retrying webhook event:', error);
-    return res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json(ApiResponse.error('Failed to retry webhook event'));
-  }
-});
+  })
+);
 
 export default router;

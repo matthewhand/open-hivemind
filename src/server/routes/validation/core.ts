@@ -179,7 +179,7 @@ export function createCoreRoutes(): Router {
   router.post(
     '/test',
     validateRequest(ValidationTestSchema),
-    async (req: AuthMiddlewareRequest, res: Response) => {
+    asyncErrorHandler(async (req, res) => {
       try {
         const { config } = req.body ?? {};
 
@@ -227,7 +227,7 @@ export function createCoreRoutes(): Router {
           .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
           .json({ error: 'Internal server error' });
       }
-    }
+    })
   );
 
   /**

@@ -4,7 +4,7 @@ import { ErrorUtils } from '@src/types/errors';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { McpToolTestSchema } from '../../validation/schemas/mcpSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { connectedClients, loadMCPServers } from './mcp';
+import { connectedClients, loadMCPServers } from './mcp/shared';
 
 const debug = Debug('app:webui:mcpToolsTesting');
 const router = Router();
@@ -13,10 +13,12 @@ const router = Router();
  * GET /api/admin/mcp-tools/list
  * List all available MCP tools from all connected servers
  */
-router.get('/list', async (req, res) => {
-  try {
-    // Load MCP servers configuration directly instead of HTTP fetch
-    const servers = await loadMCPServers();
+router.get(
+  '/list',
+  asyncErrorHandler(async (req, res) => {
+    try {
+      // Load MCP servers configuration directly instead of HTTP fetch
+      const servers = await loadMCPServers();
 
       const tools: any[] = [];
 
@@ -62,14 +64,15 @@ router.get('/list', async (req, res) => {
         severity: errorInfo.severity,
       });
 
-    return res.status(hivemindError.statusCode || 500).json({
-      success: false,
-      error: hivemindError.message,
-      code: hivemindError.code || 'MCP_TOOLS_LIST_ERROR',
-      timestamp: new Date().toISOString(),
-    });
-  }
-});
+      return res.status(hivemindError.statusCode || 500).json({
+        success: false,
+        error: hivemindError.message,
+        code: hivemindError.code || 'MCP_TOOLS_LIST_ERROR',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  })
+);
 
 /**
  * POST /api/admin/mcp-tools/test
@@ -82,9 +85,12 @@ router.get('/list', async (req, res) => {
  *   arguments: Record<string, any>
  * }
  */
-router.post('/test', validateRequest(McpToolTestSchema), async (req, res) => {
-  try {
-    const { serverName, toolName, arguments: toolArgs } = req.body;
+router.post(
+  '/test',
+  validateRequest(McpToolTestSchema),
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const { serverName, toolName, arguments: toolArgs } = req.body;
 
       if (!serverName || !toolName) {
         return res.status(400).json({
@@ -141,41 +147,7 @@ router.post('/test', validateRequest(McpToolTestSchema), async (req, res) => {
         timestamp: new Date().toISOString(),
       });
     }
-
-    // Call the tool directly using the MCP client
-    const result = await mcpClient.client.callTool({
-      name: toolName,
-      arguments: toolArgs || {},
-    });
-
-    const executionTime = Date.now() - startTime;
-
-    return res.json({
-      success: true,
-      data: {
-        result,
-        executionTime,
-        timestamp: new Date().toISOString(),
-      },
-    });
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error) as any;
-    const errorInfo = ErrorUtils.classifyError(hivemindError);
-
-    debug('Error testing MCP tool:', {
-      message: hivemindError.message,
-      code: hivemindError.code,
-      type: errorInfo.type,
-      severity: errorInfo.severity,
-    });
-
-    return res.status(hivemindError.statusCode || 500).json({
-      success: false,
-      error: hivemindError.message,
-      code: hivemindError.code || 'MCP_TOOL_TEST_ERROR',
-      timestamp: new Date().toISOString(),
-    });
-  }
-});
+  })
+);
 
 export default router;

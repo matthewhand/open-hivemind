@@ -14,25 +14,22 @@ import { validateRequest } from '../../../validation/validateRequest';
 const router = Router();
 
 // GET /messenger-providers - Get all messenger providers
-router.get(
-  '/messenger-providers',
-  asyncErrorHandler(async (req: Request, res: Response) => {
-    try {
-      const providers = await webUIStorage.getMessengerProviders();
-      return res.json({
-        success: true,
-        data: { providers: sanitizeProfiles(providers) },
-        message: 'Messenger providers retrieved successfully',
-      });
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        error: 'Failed to retrieve messenger providers',
-        message: hivemindError.message || 'An error occurred while retrieving messenger providers',
-      });
-    }
-  })
-);
+router.get('/messenger-providers', (req: Request, res: Response) => {
+  try {
+    const providers = webUIStorage.getMessengerProviders();
+    return res.json({
+      success: true,
+      data: { providers },
+      message: 'Messenger providers retrieved successfully',
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      error: 'Failed to retrieve messenger providers',
+      message: hivemindError.message || 'An error occurred while retrieving messenger providers',
+    });
+  }
+});
 
 /**
  * @openapi
@@ -58,7 +55,7 @@ router.get(
 router.post(
   '/messenger-providers',
   validateRequest(MessengerProviderSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { name, type, config } = req.body;
 
@@ -97,14 +94,14 @@ router.post(
         message: hivemindError.message || 'An error occurred while creating messenger provider',
       });
     }
-  }
+  })
 );
 
 // PUT /messenger-providers/:id - Update an existing messenger provider
 router.put(
   '/messenger-providers/:id',
   validateRequest(UpdateMessengerProviderSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { id } = req.params;
       const { name, type, config } = req.body;
@@ -156,7 +153,7 @@ router.put(
         message: hivemindError.message || 'An error occurred while updating messenger provider',
       });
     }
-  }
+  })
 );
 
 /**
@@ -178,7 +175,7 @@ router.put(
 router.delete(
   '/messenger-providers/:id',
   validateRequest(ToggleIdParamSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { id } = req.params;
 
@@ -196,14 +193,14 @@ router.delete(
         message: hivemindError.message || 'An error occurred while deleting messenger provider',
       });
     }
-  }
+  })
 );
 
 // POST /messenger-providers/:id/toggle - Toggle messenger provider active status
 router.post(
   '/messenger-providers/:id/toggle',
   validateRequest(ToggleProviderSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { id } = req.params;
       const { isActive } = req.body;
@@ -232,7 +229,7 @@ router.post(
         message: hivemindError.message || 'An error occurred while updating provider status',
       });
     }
-  }
+  })
 );
 
 export default router;

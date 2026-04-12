@@ -85,13 +85,10 @@ async function validateLettaUrl(url: string): Promise<{ isValid: boolean; error?
     }
 
     // 4. For non-local URLs also run full isSafeUrl check
-    const check = await isSafeUrl(url);
-    if (!allowLocal && !check.safe) {
+    if (!allowLocal && !(await isSafeUrl(url))) {
       return {
         isValid: false,
-        error:
-          check.reason ||
-          'Target URL is blocked for security reasons (private/local network access).',
+        error: 'Target URL is blocked for security reasons (private/local network access).',
       };
     }
 
@@ -104,13 +101,15 @@ async function validateLettaUrl(url: string): Promise<{ isValid: boolean; error?
 /**
  * GET /api/letta/agents - List available Letta agents
  */
-router.get('/agents', async (req: Request, res: Response) => {
-  try {
-    const apiKey = req.headers['x-letta-api-key'] as string;
-    const apiUrl =
-      (req.headers['x-letta-api-url'] as string) ||
-      (req.query.apiUrl as string) ||
-      'https://api.letta.com/v1';
+router.get(
+  '/agents',
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const apiKey = req.headers['x-letta-api-key'] as string;
+      const apiUrl =
+        (req.headers['x-letta-api-url'] as string) ||
+        (req.query.apiUrl as string) ||
+        'https://api.letta.com/v1';
 
       if (!apiKey) {
         // No API key configured — return empty results gracefully
@@ -134,36 +133,22 @@ router.get('/agents', async (req: Request, res: Response) => {
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ErrorResponses.internalServerError(message).build());
     }
-
-    const validation = await validateLettaUrl(apiUrl);
-    if (!validation.isValid) {
-      return res
-        .status(HTTP_STATUS.BAD_REQUEST)
-        .json(ErrorResponses.badRequest(validation.error || 'Invalid Letta API URL').build());
-    }
-
-    const agents = await listAgents(apiKey, apiUrl);
-    return res.json(ApiResponse.success(agents));
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    debug('ERROR:', 'Letta agents lookup error:', error);
-    return res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json(ErrorResponses.internalServerError(message).build());
-  }
-});
+  })
+);
 
 /**
  * GET /api/letta/agents/:id - Get a specific agent details
  */
-router.get('/agents/:id', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const apiKey = req.headers['x-letta-api-key'] as string;
-    const apiUrl =
-      (req.headers['x-letta-api-url'] as string) ||
-      (req.query.apiUrl as string) ||
-      'https://api.letta.com/v1';
+router.get(
+  '/agents/:id',
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const { id } = req.params;
+      const apiKey = req.headers['x-letta-api-key'] as string;
+      const apiUrl =
+        (req.headers['x-letta-api-url'] as string) ||
+        (req.query.apiUrl as string) ||
+        'https://api.letta.com/v1';
 
       if (!apiKey) {
         // No API key configured — return empty results gracefully
@@ -187,23 +172,7 @@ router.get('/agents/:id', async (req: Request, res: Response) => {
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ErrorResponses.internalServerError(message).build());
     }
-
-    const validation = await validateLettaUrl(apiUrl);
-    if (!validation.isValid) {
-      return res
-        .status(HTTP_STATUS.BAD_REQUEST)
-        .json(ErrorResponses.badRequest(validation.error || 'Invalid Letta API URL').build());
-    }
-
-    const agent = await getAgent(id, apiKey, apiUrl);
-    return res.json(ApiResponse.success(agent));
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    debug('ERROR:', 'Letta agent details error:', error);
-    return res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json(ErrorResponses.internalServerError(message).build());
-  }
-});
+  })
+);
 
 export default router;

@@ -29,23 +29,29 @@ if (!isTestEnv) {
 }
 
 // GET / - List all profiles
-router.get('/', (req: Request, res: Response) => {
-  try {
-    const profiles = loadGuardrailProfiles();
-    return res.json(ApiResponse.success(profiles));
-  } catch (error: unknown) {
-    return res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json(ApiResponse.error('Failed to load guardrail profiles'));
-  }
-});
+router.get(
+  '/',
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const profiles = loadGuardrailProfiles();
+      return res.json(ApiResponse.success(profiles));
+    } catch (error: unknown) {
+      return res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error('Failed to load guardrail profiles'));
+    }
+  })
+);
 
 // GET /:id - Get a specific profile
-router.get('/:id', validateRequest(GuardProfileIdParamSchema), (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const profiles = loadGuardrailProfiles();
-    const profile = profiles.find((p) => p.id === id);
+router.get(
+  '/:id',
+  validateRequest(GuardProfileIdParamSchema),
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const { id } = req.params;
+      const profiles = loadGuardrailProfiles();
+      const profile = profiles.find((p) => p.id === id);
 
       if (!profile) {
         return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Profile not found'));
@@ -57,14 +63,8 @@ router.get('/:id', validateRequest(GuardProfileIdParamSchema), (req: Request, re
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to retrieve profile'));
     }
-
-    return res.json(ApiResponse.success(profile));
-  } catch (error: unknown) {
-    return res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json(ApiResponse.error('Failed to retrieve profile'));
-  }
-});
+  })
+);
 
 interface GuardBody {
   name: string;
@@ -90,9 +90,12 @@ interface GuardBody {
 }
 
 // POST / - Create a new profile
-router.post('/', validateRequest(CreateGuardProfileSchema), (req: Request, res: Response) => {
-  try {
-    const { name, description, guards } = req.body as GuardBody;
+router.post(
+  '/',
+  validateRequest(CreateGuardProfileSchema),
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const { name, description, guards } = req.body as GuardBody;
 
       const profiles = loadGuardrailProfiles();
 
@@ -155,67 +158,17 @@ router.post('/', validateRequest(CreateGuardProfileSchema), (req: Request, res: 
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to create guard profile'));
     }
-
-    const newProfile: GuardrailProfile = {
-      id: uuidv4(),
-      name,
-      description: description || '',
-      guards: {
-        mcpGuard:
-          guards.mcpGuard &&
-          typeof guards.mcpGuard === 'object' &&
-          ['owner', 'custom'].includes(guards.mcpGuard.type)
-            ? {
-                enabled: Boolean(guards.mcpGuard.enabled),
-                type: guards.mcpGuard.type as 'owner' | 'custom',
-                ...(guards.mcpGuard.allowedUsers && Array.isArray(guards.mcpGuard.allowedUsers)
-                  ? { allowedUsers: guards.mcpGuard.allowedUsers }
-                  : {}),
-                ...(guards.mcpGuard.allowedTools && Array.isArray(guards.mcpGuard.allowedTools)
-                  ? { allowedTools: guards.mcpGuard.allowedTools }
-                  : {}),
-              }
-            : { enabled: false, type: 'owner' },
-        rateLimit:
-          guards.rateLimit && typeof guards.rateLimit === 'object'
-            ? {
-                enabled: Boolean(guards.rateLimit.enabled),
-                maxRequests: Number(guards.rateLimit.maxRequests) || 100,
-                windowMs: Number(guards.rateLimit.windowMs) || 60000,
-              }
-            : { enabled: false, maxRequests: 100, windowMs: 60000 },
-        contentFilter:
-          guards.contentFilter && typeof guards.contentFilter === 'object'
-            ? {
-                enabled: Boolean(guards.contentFilter.enabled),
-                strictness: ['low', 'medium', 'high'].includes(guards.contentFilter.strictness)
-                  ? (guards.contentFilter.strictness as 'low' | 'medium' | 'high')
-                  : 'low',
-                ...(guards.contentFilter.blockedTerms &&
-                Array.isArray(guards.contentFilter.blockedTerms)
-                  ? { blockedTerms: guards.contentFilter.blockedTerms }
-                  : {}),
-              }
-            : { enabled: false, strictness: 'low' },
-      },
-    };
-
-    profiles.push(newProfile);
-    saveGuardrailProfiles(profiles);
-
-    return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success(newProfile));
-  } catch (error: unknown) {
-    return res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json(ApiResponse.error('Failed to create guard profile'));
-  }
-});
+  })
+);
 
 // PUT /:id - Update a profile
-router.put('/:id', validateRequest(UpdateGuardProfileSchema), (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { name, description, guards } = req.body as Partial<GuardBody>;
+router.put(
+  '/:id',
+  validateRequest(UpdateGuardProfileSchema),
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { name, description, guards } = req.body as Partial<GuardBody>;
 
       const profiles = loadGuardrailProfiles();
       const profileIndex = profiles.findIndex((p) => p.id === id);
@@ -269,60 +222,18 @@ router.put('/:id', validateRequest(UpdateGuardProfileSchema), (req: Request, res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to update guard profile'));
     }
-
-    // Merge updates with validation to prevent prototype pollution
-    const safeGuards =
-      guards && typeof guards === 'object'
-        ? (Object.keys(guards) as Array<keyof typeof guards>)
-            .filter((key) => !['__proto__', 'constructor', 'prototype'].includes(key))
-            .reduce(
-              (acc, key) => {
-                const existingValue =
-                  profiles[profileIndex].guards[
-                    key as keyof (typeof profiles)[typeof profileIndex]['guards']
-                  ];
-
-                const newValue = guards[key as keyof typeof guards];
-                if (
-                  typeof newValue === 'object' &&
-                  newValue !== null &&
-                  typeof existingValue === 'object' &&
-                  existingValue !== null
-                ) {
-                  acc[key] = { ...existingValue, ...newValue };
-                } else {
-                  acc[key] = newValue;
-                }
-                return acc;
-              },
-              {} as Record<string, unknown>
-            )
-        : profiles[profileIndex].guards;
-
-    const updatedProfile = {
-      ...profiles[profileIndex],
-      name: name && typeof name === 'string' ? name : profiles[profileIndex].name,
-      description: description !== undefined ? description : profiles[profileIndex].description,
-      guards: safeGuards as (typeof profiles)[typeof profileIndex]['guards'],
-    };
-
-    profiles[profileIndex] = updatedProfile;
-    saveGuardrailProfiles(profiles);
-
-    return res.json(ApiResponse.success(updatedProfile));
-  } catch (error: unknown) {
-    return res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json(ApiResponse.error('Failed to update guard profile'));
-  }
-});
+  })
+);
 
 // DELETE /:id - Delete a profile
-router.delete('/:id', validateRequest(GuardProfileIdParamSchema), (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const profiles = loadGuardrailProfiles();
-    const profileExists = profiles.some((p) => p.id === id);
+router.delete(
+  '/:id',
+  validateRequest(GuardProfileIdParamSchema),
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const { id } = req.params;
+      const profiles = loadGuardrailProfiles();
+      const profileExists = profiles.some((p) => p.id === id);
 
       if (!profileExists) {
         return res.status(HTTP_STATUS.OK).json(ApiResponse.success());
@@ -337,23 +248,14 @@ router.delete('/:id', validateRequest(GuardProfileIdParamSchema), (req: Request,
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to delete guard profile'));
     }
-
-    const filteredProfiles = profiles.filter((p) => p.id !== id);
-    saveGuardrailProfiles(filteredProfiles);
-
-    return res.json(ApiResponse.success());
-  } catch (error: unknown) {
-    return res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json(ApiResponse.error('Failed to delete guard profile'));
-  }
-});
+  })
+);
 
 // POST /bulk/delete - Delete multiple profiles atomically
 router.post(
   '/bulk/delete',
   validateRequest(BulkDeleteGuardProfilesSchema),
-  (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { ids } = req.body as { ids: string[] };
       const profiles = loadGuardrailProfiles();
@@ -376,14 +278,14 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to delete guard profiles'));
     }
-  }
+  })
 );
 
 // POST /bulk/toggle - Toggle multiple profiles atomically
 router.post(
   '/bulk/toggle',
   validateRequest(BulkToggleGuardProfilesSchema),
-  (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { ids, enabled } = req.body as { ids: string[]; enabled: boolean };
       const profiles = loadGuardrailProfiles();
@@ -428,7 +330,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to toggle guard profiles'));
     }
-  }
+  })
 );
 
 // POST /test - Evaluate guard behavior against synthetic input

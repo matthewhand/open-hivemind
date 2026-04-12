@@ -6,7 +6,8 @@ import type { AuthMiddlewareRequest, LoginCredentials, RegisterData } from '../.
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { authRateLimiter } from '../../middleware/rateLimiter';
 import { HTTP_STATUS } from '../../types/constants';
-import { validate } from '../middleware/validate';
+import { validateRequest as validate } from '../../validation/validateRequest';
+import { isTrustedAdminIP } from '../middleware/security';
 import {
   ChangePasswordSchema,
   LoginSchema,
@@ -49,7 +50,7 @@ router.post(
   '/login',
   authRateLimiter,
   validate(LoginSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const credentials: LoginCredentials = req.body;
       // Normal authentication flow
@@ -64,7 +65,7 @@ router.post(
         .status(HTTP_STATUS.UNAUTHORIZED)
         .json(ApiResponse.error(errMsg || 'Invalid credentials', undefined, 401));
     }
-  }
+  })
 );
 
 /**
@@ -98,7 +99,7 @@ router.post(
   authenticate,
   requireAdmin,
   validate(RegisterSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const registerData: RegisterData = req.body;
 
@@ -112,7 +113,7 @@ router.post(
         .status(HTTP_STATUS.BAD_REQUEST)
         .json(ApiResponse.error(errMsg || 'Failed to register user', undefined, 400));
     }
-  }
+  })
 );
 
 /**
@@ -138,9 +139,8 @@ router.post(
  */
 router.post(
   '/refresh',
-  authRateLimiter,
   validate(RefreshTokenSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { refreshToken } = req.body;
 
@@ -154,7 +154,7 @@ router.post(
         .status(HTTP_STATUS.UNAUTHORIZED)
         .json(ApiResponse.error(errMsg || 'Invalid refresh token', undefined, 401));
     }
-  }
+  })
 );
 
 /**
@@ -183,7 +183,7 @@ router.post(
   '/logout',
   authenticate,
   validate(LogoutSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { refreshToken } = req.body;
 
@@ -199,7 +199,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Logout failed', undefined, 500));
     }
-  }
+  })
 );
 
 /**
@@ -218,9 +218,8 @@ router.post(
  */
 router.post(
   '/verify',
-  authRateLimiter,
   validate(VerifyTokenSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { token } = req.body;
       const payload = authManager.verifyAccessToken(token);
@@ -235,11 +234,12 @@ router.post(
         .status(HTTP_STATUS.UNAUTHORIZED)
         .json(ApiResponse.error('Invalid token', undefined, 401));
     }
-  }
+  })
 );
 
 // GET /api/auth/verify - Verify JWT token from Authorization header
-router.get('/verify', authRateLimiter, async (req: Request, res: Response) => {
+// No rate limiter — frontend calls this on every page load
+router.get('/verify', async (req: Request, res: Response) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -262,7 +262,8 @@ router.get('/verify', authRateLimiter, async (req: Request, res: Response) => {
 });
 
 // GET /api/auth/trusted-status — check if request comes from trusted IP
-router.get('/trusted-status', authRateLimiter, (req: Request, res: Response) => {
+// No rate limiter — read-only status check, called on every page load
+router.get('/trusted-status', (req: Request, res: Response) => {
   const trusted = isTrustedAdminIP(req);
   return res.json(ApiResponse.success({ trusted }));
 });
@@ -295,7 +296,7 @@ router.put(
   '/password',
   authenticate,
   validate(ChangePasswordSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { currentPassword, newPassword } = req.body;
 
@@ -355,7 +356,7 @@ router.put(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Password change failed', undefined, 500));
     }
-  }
+  })
 );
 
 /**

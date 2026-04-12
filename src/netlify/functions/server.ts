@@ -1,6 +1,6 @@
-import * as cors from 'cors';
-import * as express from 'express';
-import * as serverless from 'serverless-http';
+import cors from 'cors';
+import express from 'express';
+import serverless from 'serverless-http';
 
 // Create Express app
 const app = express();

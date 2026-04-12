@@ -3,6 +3,7 @@ import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { SitemapStream, streamToPromise } from 'sitemap';
 import { ApiResponse } from '@src/server/utils/apiResponse';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { HTTP_STATUS } from '../../types/constants';
 
 const debug = Debug('app:server:routes:sitemap');
@@ -378,10 +379,12 @@ const getRouteDefinitions = (): SitemapUrl[] => {
 };
 
 // Generate XML sitemap
-router.get('/sitemap.xml', async (req: Request, res: Response) => {
-  try {
-    const routes = getRouteDefinitions();
-    const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+router.get(
+  '/sitemap.xml',
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const routes = getRouteDefinitions();
+      const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
 
       // Filter routes based on access level if needed
       const accessLevel = req.query.access as string;
@@ -414,31 +417,8 @@ router.get('/sitemap.xml', async (req: Request, res: Response) => {
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to generate sitemap'));
     }
-
-    // Create sitemap stream
-    const sitemap = new SitemapStream({ hostname: baseUrl });
-
-    // Add URLs to sitemap
-    const sitemapXml = await streamToPromise(
-      Readable.from(
-        filteredRoutes.map((route) => ({
-          url: route.url,
-          changefreq: route.changefreq,
-          priority: route.priority,
-          lastmod: route.lastmod,
-        }))
-      ).pipe(sitemap)
-    );
-
-    res.header('Content-Type', 'application/xml');
-    res.send(sitemapXml.toString());
-  } catch (error) {
-    debug('ERROR:', 'Error generating sitemap:', error);
-    res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json(ApiResponse.error('Failed to generate sitemap'));
-  }
-});
+  })
+);
 
 // Generate JSON sitemap for API consumption
 router.get('/sitemap.json', (req: Request, res: Response) => {

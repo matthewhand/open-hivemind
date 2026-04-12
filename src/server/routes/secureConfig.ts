@@ -84,7 +84,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.post(
   '/',
   validateRequest(CreateSecureConfigSchema),
-  async (req: AuditedRequest, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { id, name, type, data } = req.body;
 
@@ -133,7 +133,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to store configuration'));
     }
-  }
+  })
 );
 
 /**
@@ -143,7 +143,7 @@ router.post(
 router.put(
   '/:id',
   validateRequest(UpdateSecureConfigSchema),
-  async (req: AuditedRequest, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { id } = req.params;
       const { name, type, data } = req.body;
@@ -204,7 +204,7 @@ router.put(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to update configuration'));
     }
-  }
+  })
 );
 
 /**
@@ -259,7 +259,7 @@ router.delete('/:id', async (req: AuditedRequest, res: Response) => {
 router.post(
   '/backup',
   validateRequest(ConfigBackupSchema),
-  async (req: AuditedRequest, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const backupId = await (await secureConfigManagerPromise).createBackup();
 
@@ -285,7 +285,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to create backup'));
     }
-  }
+  })
 );
 
 /**
@@ -312,7 +312,7 @@ router.get('/backups/list', async (req: Request, res: Response) => {
 router.post(
   '/restore/:backupId',
   validateRequest(BackupIdParamSchema),
-  async (req: AuditedRequest, res: Response) => {
+  asyncErrorHandler(async (req, res) => {
     try {
       const { backupId } = req.params;
       await (await secureConfigManagerPromise).restoreBackup(backupId);
@@ -339,7 +339,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to restore from backup'));
     }
-  }
+  })
 );
 
 export default router;
