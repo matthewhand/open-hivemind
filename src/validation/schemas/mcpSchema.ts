@@ -26,10 +26,18 @@ const McpNestedValueSchema: z.ZodType<unknown> = z.lazy(() =>
 );
 
 // Config schema for MCP providers - allows structured configuration
-const McpConfigSchema = z.record(z.string().max(256), McpNestedValueSchema).refine((val) => Object.keys(val).length <= 100, { message: 'Config exceeds maximum of 100 keys' });
+const McpConfigSchema = z
+  .record(z.string().max(256), McpNestedValueSchema)
+  .refine((val) => Object.keys(val).length <= 100, {
+    message: 'Config exceeds maximum of 100 keys',
+  });
 
 // Arguments schema for MCP tools - allows structured arguments
-const McpArgumentsSchema = z.record(z.string().max(256), McpNestedValueSchema).refine((val) => Object.keys(val).length <= 50, { message: 'Arguments exceed maximum of 50 keys' });
+const McpArgumentsSchema = z
+  .record(z.string().max(256), McpNestedValueSchema)
+  .refine((val) => Object.keys(val).length <= 50, {
+    message: 'Arguments exceed maximum of 50 keys',
+  });
 
 // API Key schema with security constraints
 const McpApiKeySchema = z

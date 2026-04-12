@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { setupAuth, registerViteSourceBypass } from './test-utils';
+import { registerViteSourceBypass, setupAuth } from './test-utils';
 
 /**
  * Swarm Orchestration Mode E2E Tests
@@ -46,15 +46,9 @@ test.describe('Swarm Orchestration Mode', () => {
           },
         })
       ),
-      page.route('**/api/config/global', (route) =>
-        route.fulfill({ status: 200, json: {} })
-      ),
-      page.route('**/api/config', (route) =>
-        route.fulfill({ status: 200, json: { bots: [] } })
-      ),
-      page.route('**/api/personas', (route) =>
-        route.fulfill({ status: 200, json: [] })
-      ),
+      page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} })),
+      page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots: [] } })),
+      page.route('**/api/personas', (route) => route.fulfill({ status: 200, json: [] })),
       page.route('**/api/dashboard/api/status', (route) =>
         route.fulfill({ status: 200, json: { bots: [], uptime: 100 } })
       ),
@@ -89,7 +83,12 @@ test.describe('Swarm Orchestration Mode', () => {
         await route.fulfill({ status: 200, json: { profiles: store, data: store } });
       } else if (method === 'POST') {
         const body = route.request().postDataJSON();
-        const key = body.key || body.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        const key =
+          body.key ||
+          body.name
+            .toLowerCase()
+            .replace(/\s+/g, '-')
+            .replace(/[^a-z0-9-]/g, '');
         const newProfile = {
           key,
           name: body.name || 'Unnamed',
@@ -184,10 +183,7 @@ test.describe('Swarm Orchestration Mode', () => {
   /**
    * Fill the profile name in the modal.
    */
-  async function fillProfileName(
-    page: import('@playwright/test').Page,
-    name: string
-  ) {
+  async function fillProfileName(page: import('@playwright/test').Page, name: string) {
     // The name input is inside the modal; find it by placeholder
     const nameInput = page.getByRole('textbox', { name: /profile name/i }).first();
     if (await nameInput.count()) {
@@ -202,7 +198,10 @@ test.describe('Swarm Orchestration Mode', () => {
   /**
    * Click the Create/Update button in the modal.
    */
-  async function submitModal(page: import('@playwright/test').Page, action: 'Create' | 'Update' = 'Create') {
+  async function submitModal(
+    page: import('@playwright/test').Page,
+    action: 'Create' | 'Update' = 'Create'
+  ) {
     const submitBtn = page.getByRole('button', { name: action });
     await submitBtn.click();
     // Give the API a moment to respond
@@ -252,7 +251,10 @@ test.describe('Swarm Orchestration Mode', () => {
       // Verify the profile card appears with the correct mode badge
       // The badge shows the emoji + the short label (before the parenthesis)
       const shortLabel = mode.label.split('(')[0].trim();
-      const profileCard = page.locator('.card, [class*="bg-base-100"]').filter({ hasText: mode.icon }).first();
+      const profileCard = page
+        .locator('.card, [class*="bg-base-100"]')
+        .filter({ hasText: mode.icon })
+        .first();
 
       // Also verify via store
       const createdProfile = store.find((p) => p.name === `Test ${mode.label}`);
@@ -292,7 +294,10 @@ test.describe('Swarm Orchestration Mode', () => {
     await page.waitForLoadState('networkidle').catch(() => {});
 
     // Wait for the profile card to appear
-    const profileCard = page.locator('.card, [class*="bg-base-100"]').filter({ hasText: 'Edit Mode Test' }).first();
+    const profileCard = page
+      .locator('.card, [class*="bg-base-100"]')
+      .filter({ hasText: 'Edit Mode Test' })
+      .first();
     await expect(profileCard).toBeVisible({ timeout: 15000 });
 
     // Screenshot: before mode change (should show Exclusive badge)
@@ -312,7 +317,7 @@ test.describe('Swarm Orchestration Mode', () => {
       const btn = editButtons.nth(i);
       const text = await btn.textContent().catch(() => '');
       // Edit button might not have text, look for svg icon
-      if (await btn.locator('svg').count() > 0) {
+      if ((await btn.locator('svg').count()) > 0) {
         // Try clicking and see if modal opens
         await btn.click();
         const modal = page.locator('[role="dialog"], dialog.modal[open], .modal[open], .modal-box');
@@ -358,7 +363,10 @@ test.describe('Swarm Orchestration Mode', () => {
     expect(updatedProfile.swarmMode).toBe('broadcast');
 
     // Verify the page reflects the change - broadcast badge should be visible
-    const broadcastBadge = page.locator('.card, [class*="bg-base-100"]').filter({ hasText: '\u{1F4E1}' }).first();
+    const broadcastBadge = page
+      .locator('.card, [class*="bg-base-100"]')
+      .filter({ hasText: '\u{1F4E1}' })
+      .first();
     if (await broadcastBadge.isVisible().catch(() => false)) {
       await expect(broadcastBadge).toContainText('Broadcast');
     }
@@ -494,7 +502,10 @@ test.describe('Swarm Orchestration Mode', () => {
         .first();
 
       // Also look for the badge element specifically
-      const badge = page.locator('[class*="Badge"], .badge').filter({ hasText: shortLabel }).first();
+      const badge = page
+        .locator('[class*="Badge"], .badge')
+        .filter({ hasText: shortLabel })
+        .first();
 
       // At least one of these should be visible
       const cardVisible = await cardWithEmoji.isVisible().catch(() => false);

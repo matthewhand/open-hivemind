@@ -83,7 +83,7 @@ test.describe('Integrations Page CRUD', () => {
 
       // Should show add button or form
       const addButton = page.getByRole('button', { name: /add|create|new/i });
-      if (await addButton.count() > 0) {
+      if ((await addButton.count()) > 0) {
         await addButton.first().click();
       }
     });
@@ -190,7 +190,7 @@ test.describe('Integrations Page Accessibility', () => {
 
     // Basic accessibility checks
     const mainLandmark = page.locator('main, [role="main"]');
-    if (await mainLandmark.count() > 0) {
+    if ((await mainLandmark.count()) > 0) {
       await expect(mainLandmark.first()).toBeVisible();
     }
   });

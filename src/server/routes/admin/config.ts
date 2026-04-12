@@ -1,7 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import { container } from 'tsyringe';
 import { ErrorUtils } from '../../../common/ErrorUtils';
-import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import ApiMonitorService from '../../../services/ApiMonitorService';
 import { webUIStorage } from '../../../storage/webUIStorage';
 import { HTTP_STATUS } from '../../../types/constants';

@@ -142,8 +142,10 @@ test.describe('Overview Page CRUD', () => {
       await page.waitForLoadState('networkidle');
 
       // Look for stat cards or metrics
-      const statsSection = page.locator('[class*="stat"], [class*="metric"], [class*="card"]').first();
-      if (await statsSection.count() > 0) {
+      const statsSection = page
+        .locator('[class*="stat"], [class*="metric"], [class*="card"]')
+        .first();
+      if ((await statsSection.count()) > 0) {
         await expect(statsSection).toBeVisible();
       }
     });
@@ -154,7 +156,7 @@ test.describe('Overview Page CRUD', () => {
 
       // Should show bots section if any exist
       const botsSection = page.locator('[class*="bot"]').first();
-      if (await botsSection.count() > 0) {
+      if ((await botsSection.count()) > 0) {
         await expect(botsSection).toBeVisible();
       }
     });
@@ -165,7 +167,7 @@ test.describe('Overview Page CRUD', () => {
 
       // Quick actions should be visible
       const quickActions = page.getByRole('button').filter({ hasText: /create|new|add/i });
-      if (await quickActions.count() > 0) {
+      if ((await quickActions.count()) > 0) {
         await expect(quickActions.first()).toBeVisible();
       }
     });
@@ -177,8 +179,10 @@ test.describe('Overview Page CRUD', () => {
       await page.waitForLoadState('networkidle');
 
       // Check if announcement is displayed
-      const announcement = page.locator('[class*="announcement"], [class*="banner"], [class*="alert"]').first();
-      if (await announcement.count() > 0) {
+      const announcement = page
+        .locator('[class*="announcement"], [class*="banner"], [class*="alert"]')
+        .first();
+      if ((await announcement.count()) > 0) {
         await expect(announcement).toBeVisible();
       }
     });
@@ -188,8 +192,11 @@ test.describe('Overview Page CRUD', () => {
       await page.waitForLoadState('networkidle');
 
       // Look for dismiss button on announcement
-      const dismissBtn = page.locator('button').filter({ has: page.locator('[class*="close"], [class*="x"], svg') }).first();
-      if (await dismissBtn.count() > 0) {
+      const dismissBtn = page
+        .locator('button')
+        .filter({ has: page.locator('[class*="close"], [class*="x"], svg') })
+        .first();
+      if ((await dismissBtn.count()) > 0) {
         await dismissBtn.click();
       }
     });
@@ -202,7 +209,7 @@ test.describe('Overview Page CRUD', () => {
 
       // Check for layout toggle
       const toggle = page.locator('[class*="toggle"], [class*="switch"]').first();
-      if (await toggle.count() > 0) {
+      if ((await toggle.count()) > 0) {
         await toggle.click();
       }
     });
@@ -268,7 +275,7 @@ test.describe('Overview Page CRUD', () => {
 
       // Check for sidebar or nav
       const sidebar = page.locator('nav, [class*="sidebar"], [class*="drawer"]').first();
-      if (await sidebar.count() > 0) {
+      if ((await sidebar.count()) > 0) {
         await expect(sidebar).toBeVisible();
       }
     });
@@ -277,11 +284,11 @@ test.describe('Overview Page CRUD', () => {
       await page.goto('/');
       await page.waitForLoadState('networkidle');
 
-      const botsLink = page.getByRole('link', { name: /bots/i }).or(
-        page.locator('a[href*="/bots"]').first()
-      );
+      const botsLink = page
+        .getByRole('link', { name: /bots/i })
+        .or(page.locator('a[href*="/bots"]').first());
 
-      if (await botsLink.count() > 0) {
+      if ((await botsLink.count()) > 0) {
         await botsLink.click();
         await page.waitForLoadState('networkidle');
         await expect(page).toHaveURL(/bots/);
@@ -321,7 +328,7 @@ test.describe('Overview Page Accessibility', () => {
 
     // Check for h1
     const h1 = page.locator('h1').first();
-    if (await h1.count() > 0) {
+    if ((await h1.count()) > 0) {
       await expect(h1).toBeVisible();
     }
   });
@@ -338,7 +345,7 @@ test.describe('Overview Page Accessibility', () => {
 
     // Check for main landmark
     const main = page.locator('main, [role="main"]').first();
-    if (await main.count() > 0) {
+    if ((await main.count()) > 0) {
       await expect(main).toBeVisible();
     }
   });

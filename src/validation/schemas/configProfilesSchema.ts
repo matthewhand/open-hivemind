@@ -105,8 +105,14 @@ export const ToolProfileKeyParamSchema = z.object({
 
 // ── Response Profile Schemas ─────────────────────────────────────────────────
 
-export const SWARM_MODES = ['exclusive', 'broadcast', 'rotating', 'priority', 'collaborative'] as const;
-export type SwarmMode = typeof SWARM_MODES[number];
+export const SWARM_MODES = [
+  'exclusive',
+  'broadcast',
+  'rotating',
+  'priority',
+  'collaborative',
+] as const;
+export type SwarmMode = (typeof SWARM_MODES)[number];
 
 const responseSettingValue = z.union([z.string(), z.number(), z.boolean()]);
 

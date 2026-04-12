@@ -83,8 +83,10 @@ test.describe('Plugin Security Page CRUD', () => {
       await page.waitForLoadState('networkidle');
 
       // Should show summary stats
-      const summary = page.locator('[class*="stat"], [class*="summary"], [class*="overview"]').first();
-      if (await summary.count() > 0) {
+      const summary = page
+        .locator('[class*="stat"], [class*="summary"], [class*="overview"]')
+        .first();
+      if ((await summary.count()) > 0) {
         await expect(summary).toBeVisible();
       }
     });
@@ -95,7 +97,7 @@ test.describe('Plugin Security Page CRUD', () => {
 
       // Should show plugin cards or list
       const pluginList = page.locator('[class*="plugin"], [class*="card"]').first();
-      if (await pluginList.count() > 0) {
+      if ((await pluginList.count()) > 0) {
         await expect(pluginList).toBeVisible();
       }
     });
@@ -107,8 +109,10 @@ test.describe('Plugin Security Page CRUD', () => {
       await page.waitForLoadState('networkidle');
 
       // Look for secure/insecure badges
-      const secureBadge = page.locator('[class*="secure"], [class*="passed"], [class*="success"]').first();
-      if (await secureBadge.count() > 0) {
+      const secureBadge = page
+        .locator('[class*="secure"], [class*="passed"], [class*="success"]')
+        .first();
+      if ((await secureBadge.count()) > 0) {
         await expect(secureBadge).toBeVisible();
       }
     });
@@ -118,7 +122,7 @@ test.describe('Plugin Security Page CRUD', () => {
       await page.waitForLoadState('networkidle');
 
       const warningBadge = page.locator('[class*="warning"], [class*="warn"]').first();
-      if (await warningBadge.count() > 0) {
+      if ((await warningBadge.count()) > 0) {
         await expect(warningBadge).toBeVisible();
       }
     });
@@ -127,8 +131,10 @@ test.describe('Plugin Security Page CRUD', () => {
       await page.goto('/admin/plugins/security');
       await page.waitForLoadState('networkidle');
 
-      const criticalBadge = page.locator('[class*="critical"], [class*="error"], [class*="danger"]').first();
-      if (await criticalBadge.count() > 0) {
+      const criticalBadge = page
+        .locator('[class*="critical"], [class*="error"], [class*="danger"]')
+        .first();
+      if ((await criticalBadge.count()) > 0) {
         await expect(criticalBadge).toBeVisible();
       }
     });
@@ -146,7 +152,7 @@ test.describe('Plugin Security Page CRUD', () => {
       await page.waitForLoadState('networkidle');
 
       const scanBtn = page.getByRole('button', { name: /scan|check|update/i });
-      if (await scanBtn.count() > 0) {
+      if ((await scanBtn.count()) > 0) {
         await expect(scanBtn.first()).toBeVisible();
       }
     });
@@ -169,7 +175,7 @@ test.describe('Plugin Security Page CRUD', () => {
       await page.waitForLoadState('networkidle');
 
       const pluginItem = page.locator('[class*="plugin"]').first();
-      if (await pluginItem.count() > 0) {
+      if ((await pluginItem.count()) > 0) {
         await pluginItem.click();
       }
     });
@@ -185,7 +191,7 @@ test.describe('Plugin Security Page CRUD', () => {
       await page.waitForLoadState('networkidle');
 
       const exportBtn = page.getByRole('button', { name: /export|download/i });
-      if (await exportBtn.count() > 0) {
+      if ((await exportBtn.count()) > 0) {
         await expect(exportBtn.first()).toBeVisible();
       }
     });
@@ -196,8 +202,10 @@ test.describe('Plugin Security Page CRUD', () => {
       await page.goto('/admin/plugins/security');
       await page.waitForLoadState('networkidle');
 
-      const statusFilter = page.locator('select').filter({ hasText: /status|secure|warning|critical/i });
-      if (await statusFilter.count() > 0) {
+      const statusFilter = page
+        .locator('select')
+        .filter({ hasText: /status|secure|warning|critical/i });
+      if ((await statusFilter.count()) > 0) {
         await statusFilter.selectOption('warning');
       }
     });
@@ -206,8 +214,10 @@ test.describe('Plugin Security Page CRUD', () => {
       await page.goto('/admin/plugins/security');
       await page.waitForLoadState('networkidle');
 
-      const searchInput = page.locator('input[type="search"], input[placeholder*="search" i]').first();
-      if (await searchInput.count() > 0) {
+      const searchInput = page
+        .locator('input[type="search"], input[placeholder*="search" i]')
+        .first();
+      if ((await searchInput.count()) > 0) {
         await searchInput.fill('example');
       }
     });
@@ -216,11 +226,11 @@ test.describe('Plugin Security Page CRUD', () => {
       await page.goto('/admin/plugins/security');
       await page.waitForLoadState('networkidle');
 
-      const sortBtn = page.getByRole('button', { name: /sort|score/i }).or(
-        page.locator('th').filter({ hasText: /score/i })
-      );
+      const sortBtn = page
+        .getByRole('button', { name: /sort|score/i })
+        .or(page.locator('th').filter({ hasText: /score/i }));
 
-      if (await sortBtn.count() > 0) {
+      if ((await sortBtn.count()) > 0) {
         await sortBtn.first().click();
       }
     });
@@ -233,7 +243,7 @@ test.describe('Plugin Security Page CRUD', () => {
 
       // Click on a plugin with issues
       const warningPlugin = page.locator('[class*="warning"]').first();
-      if (await warningPlugin.count() > 0) {
+      if ((await warningPlugin.count()) > 0) {
         await warningPlugin.click();
       }
     });
@@ -243,8 +253,10 @@ test.describe('Plugin Security Page CRUD', () => {
       await page.waitForLoadState('networkidle');
 
       // Look for remediation or suggestion text
-      const remediation = page.locator('[class*="remedy"], [class*="suggestion"], [class*="fix"]').first();
-      if (await remediation.count() > 0) {
+      const remediation = page
+        .locator('[class*="remedy"], [class*="suggestion"], [class*="fix"]')
+        .first();
+      if ((await remediation.count()) > 0) {
         await expect(remediation).toBeVisible();
       }
     });
@@ -293,7 +305,7 @@ test.describe('Plugin Security Accessibility', () => {
     await page.waitForLoadState('networkidle');
 
     const h1 = page.locator('h1').first();
-    if (await h1.count() > 0) {
+    if ((await h1.count()) > 0) {
       await expect(h1).toBeVisible();
     }
   });

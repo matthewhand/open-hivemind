@@ -89,8 +89,10 @@ test.describe('System Management Page CRUD', () => {
       await page.waitForLoadState('networkidle');
 
       // Should show some status metrics
-      const statsSection = page.locator('[class*="stat"], [class*="metric"], [class*="status"]').first();
-      if (await statsSection.count() > 0) {
+      const statsSection = page
+        .locator('[class*="stat"], [class*="metric"], [class*="status"]')
+        .first();
+      if ((await statsSection.count()) > 0) {
         await expect(statsSection).toBeVisible();
       }
     });
@@ -128,7 +130,7 @@ test.describe('System Management Page CRUD', () => {
       await page.waitForLoadState('networkidle');
 
       const createBtn = page.getByRole('button', { name: /create|new|backup/i });
-      if (await createBtn.count() > 0) {
+      if ((await createBtn.count()) > 0) {
         await createBtn.first().click();
       }
     });
@@ -146,11 +148,11 @@ test.describe('System Management Page CRUD', () => {
       await page.waitForLoadState('networkidle');
 
       // Look for delete button
-      const deleteBtn = page.getByRole('button', { name: /delete|remove/i }).or(
-        page.locator('button').filter({ has: page.locator('[class*="trash"]') })
-      );
+      const deleteBtn = page
+        .getByRole('button', { name: /delete|remove/i })
+        .or(page.locator('button').filter({ has: page.locator('[class*="trash"]') }));
 
-      if (await deleteBtn.count() > 0) {
+      if ((await deleteBtn.count()) > 0) {
         await deleteBtn.first().click();
       }
     });
@@ -166,7 +168,7 @@ test.describe('System Management Page CRUD', () => {
       await page.waitForLoadState('networkidle');
 
       const restoreBtn = page.getByRole('button', { name: /restore/i });
-      if (await restoreBtn.count() > 0) {
+      if ((await restoreBtn.count()) > 0) {
         await restoreBtn.first().click();
       }
     });
@@ -175,11 +177,11 @@ test.describe('System Management Page CRUD', () => {
       await page.goto('/admin/system/backups');
       await page.waitForLoadState('networkidle');
 
-      const downloadBtn = page.getByRole('button', { name: /download/i }).or(
-        page.locator('a[download]')
-      );
+      const downloadBtn = page
+        .getByRole('button', { name: /download/i })
+        .or(page.locator('a[download]'));
 
-      if (await downloadBtn.count() > 0) {
+      if ((await downloadBtn.count()) > 0) {
         // Don't actually download, just verify button exists
         await expect(downloadBtn.first()).toBeVisible();
       }
@@ -208,7 +210,7 @@ test.describe('System Management Page CRUD', () => {
 
       // Look for editable fields
       const input = page.locator('input, textarea').first();
-      if (await input.count() > 0) {
+      if ((await input.count()) > 0) {
         await input.fill('test-value');
       }
     });
@@ -227,7 +229,7 @@ test.describe('System Management Page CRUD', () => {
       await page.waitForLoadState('networkidle');
 
       const filterSelect = page.locator('select').filter({ hasText: /level|info|warn|error/i });
-      if (await filterSelect.count() > 0) {
+      if ((await filterSelect.count()) > 0) {
         await filterSelect.selectOption('error');
       }
     });
@@ -236,8 +238,10 @@ test.describe('System Management Page CRUD', () => {
       await page.goto('/admin/system/logs');
       await page.waitForLoadState('networkidle');
 
-      const searchInput = page.locator('input[type="search"], input[placeholder*="search" i]').first();
-      if (await searchInput.count() > 0) {
+      const searchInput = page
+        .locator('input[type="search"], input[placeholder*="search" i]')
+        .first();
+      if ((await searchInput.count()) > 0) {
         await searchInput.fill('error');
       }
     });
@@ -256,8 +260,10 @@ test.describe('System Management Page CRUD', () => {
       await page.waitForLoadState('networkidle');
 
       // Look for resource cards
-      const resourceCard = page.locator('[class*="cpu"], [class*="memory"], [class*="disk"]').first();
-      if (await resourceCard.count() > 0) {
+      const resourceCard = page
+        .locator('[class*="cpu"], [class*="memory"], [class*="disk"]')
+        .first();
+      if ((await resourceCard.count()) > 0) {
         await expect(resourceCard).toBeVisible();
       }
     });
@@ -275,7 +281,7 @@ test.describe('System Management Page CRUD', () => {
       await page.waitForLoadState('networkidle');
 
       const exportBtn = page.getByRole('button', { name: /export/i });
-      if (await exportBtn.count() > 0) {
+      if ((await exportBtn.count()) > 0) {
         await expect(exportBtn.first()).toBeVisible();
       }
     });
@@ -285,7 +291,7 @@ test.describe('System Management Page CRUD', () => {
       await page.waitForLoadState('networkidle');
 
       const importBtn = page.getByRole('button', { name: /import/i });
-      if (await importBtn.count() > 0) {
+      if ((await importBtn.count()) > 0) {
         await expect(importBtn.first()).toBeVisible();
       }
     });
@@ -334,7 +340,7 @@ test.describe('System Management Accessibility', () => {
     await page.waitForLoadState('networkidle');
 
     const h1 = page.locator('h1').first();
-    if (await h1.count() > 0) {
+    if ((await h1.count()) > 0) {
       await expect(h1).toBeVisible();
     }
   });

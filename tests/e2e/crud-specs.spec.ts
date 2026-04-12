@@ -60,7 +60,7 @@ test.describe('Specs Page CRUD', () => {
 
       // Should show spec items
       const specCard = page.locator('[class*="spec"], [class*="card"]').first();
-      if (await specCard.count() > 0) {
+      if ((await specCard.count()) > 0) {
         await expect(specCard).toBeVisible();
       }
     });
@@ -71,7 +71,7 @@ test.describe('Specs Page CRUD', () => {
 
       // Look for status indicators
       const statusBadge = page.locator('[class*="badge"], [class*="status"]').first();
-      if (await statusBadge.count() > 0) {
+      if ((await statusBadge.count()) > 0) {
         await expect(statusBadge).toBeVisible();
       }
     });
@@ -114,8 +114,10 @@ test.describe('Specs Page CRUD', () => {
       await page.waitForLoadState('networkidle');
 
       // Should show step details
-      const stepsSection = page.locator('[class*="step"], [class*="test"], [class*="result"]').first();
-      if (await stepsSection.count() > 0) {
+      const stepsSection = page
+        .locator('[class*="step"], [class*="test"], [class*="result"]')
+        .first();
+      if ((await stepsSection.count()) > 0) {
         await expect(stepsSection).toBeVisible();
       }
     });
@@ -126,7 +128,7 @@ test.describe('Specs Page CRUD', () => {
 
       // Check for metadata display
       const metadata = page.locator('[class*="meta"], [class*="info"], time').first();
-      if (await metadata.count() > 0) {
+      if ((await metadata.count()) > 0) {
         await expect(metadata).toBeVisible();
       }
     });
@@ -138,7 +140,7 @@ test.describe('Specs Page CRUD', () => {
       await page.waitForLoadState('networkidle');
 
       const filterBtn = page.getByRole('button', { name: /filter/i });
-      if (await filterBtn.count() > 0) {
+      if ((await filterBtn.count()) > 0) {
         await filterBtn.click();
       }
     });
@@ -147,8 +149,10 @@ test.describe('Specs Page CRUD', () => {
       await page.goto('/specs');
       await page.waitForLoadState('networkidle');
 
-      const typeFilter = page.locator('select').filter({ hasText: /type|functional|integration|security/i });
-      if (await typeFilter.count() > 0) {
+      const typeFilter = page
+        .locator('select')
+        .filter({ hasText: /type|functional|integration|security/i });
+      if ((await typeFilter.count()) > 0) {
         await typeFilter.selectOption('functional');
       }
     });
@@ -157,8 +161,10 @@ test.describe('Specs Page CRUD', () => {
       await page.goto('/specs');
       await page.waitForLoadState('networkidle');
 
-      const searchInput = page.locator('input[type="search"], input[placeholder*="search" i]').first();
-      if (await searchInput.count() > 0) {
+      const searchInput = page
+        .locator('input[type="search"], input[placeholder*="search" i]')
+        .first();
+      if ((await searchInput.count()) > 0) {
         await searchInput.fill('bot');
       }
     });
@@ -176,7 +182,7 @@ test.describe('Specs Page CRUD', () => {
       await page.waitForLoadState('networkidle');
 
       const runBtn = page.getByRole('button', { name: /run|execute|start/i });
-      if (await runBtn.count() > 0) {
+      if ((await runBtn.count()) > 0) {
         await expect(runBtn.first()).toBeVisible();
       }
     });
@@ -211,7 +217,7 @@ test.describe('Specs Page CRUD', () => {
       await page.waitForLoadState('networkidle');
 
       const createBtn = page.getByRole('button', { name: /create|new|add/i });
-      if (await createBtn.count() > 0) {
+      if ((await createBtn.count()) > 0) {
         await createBtn.first().click();
       }
     });
@@ -232,7 +238,7 @@ test.describe('Specs Page CRUD', () => {
       await page.waitForLoadState('networkidle');
 
       const createBtn = page.getByRole('button', { name: /create|new/i });
-      if (await createBtn.count() > 0) {
+      if ((await createBtn.count()) > 0) {
         await createBtn.first().click();
       }
     });
@@ -252,7 +258,7 @@ test.describe('Specs Page CRUD', () => {
       await page.waitForLoadState('networkidle');
 
       const deleteBtn = page.getByRole('button', { name: /delete|remove/i });
-      if (await deleteBtn.count() > 0) {
+      if ((await deleteBtn.count()) > 0) {
         await deleteBtn.first().click();
       }
     });
@@ -262,12 +268,12 @@ test.describe('Specs Page CRUD', () => {
       await page.waitForLoadState('networkidle');
 
       const deleteBtn = page.getByRole('button', { name: /delete/i }).first();
-      if (await deleteBtn.count() > 0) {
+      if ((await deleteBtn.count()) > 0) {
         await deleteBtn.click();
 
         // Look for confirmation modal
         const confirmModal = page.locator('[role="dialog"], .modal').first();
-        if (await confirmModal.count() > 0) {
+        if ((await confirmModal.count()) > 0) {
           await expect(confirmModal).toBeVisible();
         }
       }
@@ -317,7 +323,7 @@ test.describe('Specs Page Accessibility', () => {
     await page.waitForLoadState('networkidle');
 
     const h1 = page.locator('h1').first();
-    if (await h1.count() > 0) {
+    if ((await h1.count()) > 0) {
       await expect(h1).toBeVisible();
     }
   });
