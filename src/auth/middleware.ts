@@ -36,14 +36,20 @@ export class AuthMiddleware {
         clientIP === '127.0.0.1' || clientIP === '::1' || clientIP === '::ffff:127.0.0.1';
 
       // Strict check for host header to prevent host header injection
+      // Includes IPv6 loopback variants for comprehensive protection
       const isLocalhostHost =
         host &&
         (host === 'localhost' ||
           host.startsWith('localhost:') ||
           host === '127.0.0.1' ||
-          host.startsWith('127.0.0.1:'));
+          host.startsWith('127.0.0.1:') ||
+          host === '[::1]' ||
+          host.startsWith('[::1]:') ||
+          host === '[0:0:0:0:0:0:0:1]' ||
+          host.startsWith('[0:0:0:0:0:0:0:1]:'));
 
       // Strict check for origin header
+      // Includes IPv6 loopback variants for comprehensive protection
       const isLocalhostOrigin =
         origin &&
         (origin === 'http://localhost' ||
@@ -53,9 +59,30 @@ export class AuthMiddleware {
           origin === 'http://127.0.0.1' ||
           origin.startsWith('http://127.0.0.1:') ||
           origin === 'https://127.0.0.1' ||
-          origin.startsWith('https://127.0.0.1:'));
+          origin.startsWith('https://127.0.0.1:') ||
+          origin === 'http://[::1]' ||
+          origin.startsWith('http://[::1]:') ||
+          origin === 'https://[::1]' ||
+          origin.startsWith('https://[::1]:'));
 
-      return !!(isLocalhostIp || isLocalhostHost || isLocalhostOrigin);
+      // SECURITY: Must strictly be a localhost IP.
+      if (!isLocalhostIp) {
+        debug('SECURITY: Non-localhost IP attempted bypass: %s', clientIP);
+        return false;
+      }
+
+      // If Host or Origin headers are provided, they must also be localhost
+      // to protect against DNS rebinding and CSRF spoofing.
+      if (host && !isLocalhostHost) {
+        debug('SECURITY: Localhost IP with non-localhost Host header: %s from %s', host, clientIP);
+        return false;
+      }
+      if (origin && !isLocalhostOrigin) {
+        debug('SECURITY: Localhost IP with non-localhost Origin header: %s from %s', origin, clientIP);
+        return false;
+      }
+
+      return true;
     };
 
     const allowLocalBypass = process.env.ALLOW_LOCALHOST_ADMIN === 'true';
