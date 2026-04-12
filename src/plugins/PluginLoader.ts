@@ -79,10 +79,50 @@ export async function loadPlugin(name: string): Promise<PluginModule> {
   try {
     await fs.promises.access(pluginPath);
     try {
-      // Dynamic import doesn't use require cache, so no need to bust cache
-      const mod = await import(pluginPath);
-      debug('Loaded community plugin: %s', pluginPath);
-      return mod;
+      if (process.env.USE_PLUGIN_SANDBOX !== 'false') {
+        debug('Loading community plugin in VM sandbox: %s', pluginPath);
+        const vm = await import('node:vm');
+
+        // Simple CJS sandbox wrapper
+        let entryPath = path.join(pluginPath, 'dist', 'index.js');
+        let code = '';
+        try {
+          code = await fs.promises.readFile(entryPath, 'utf8');
+        } catch {
+          entryPath = path.join(pluginPath, 'index.js');
+          code = await fs.promises.readFile(entryPath, 'utf8');
+        }
+
+        const sandbox = {
+          require: (modName: string) => {
+            const allowed = ['events', 'crypto', 'path', 'url', 'debug', 'util'];
+            if (allowed.includes(modName) || modName.startsWith('@hivemind/')) {
+              return require(modName);
+            }
+            throw new Error(`Sandbox restricted require: ${modName}`);
+          },
+          module: { exports: {} },
+          exports: {},
+          console: console,
+          process: { env: { NODE_ENV: process.env.NODE_ENV } },
+          setTimeout,
+          clearTimeout,
+          setInterval,
+          clearInterval,
+        };
+
+        vm.createContext(sandbox);
+        vm.runInContext(code, sandbox, { filename: entryPath });
+        return sandbox.module.exports as PluginModule;
+      } else {
+        console.warn(
+          `\x1b[1;33m⚠️ WARNING: USE_PLUGIN_SANDBOX is false. Loading community plugin WITHOUT isolation: ${name}\x1b[0m`
+        );
+        // Dynamic import doesn't use require cache, so no need to bust cache
+        const mod = await import(pluginPath);
+        debug('Loaded community plugin: %s', pluginPath);
+        return mod;
+      }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       throw new Error(`Failed to load community plugin '${name}': ${msg}`);
