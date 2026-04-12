@@ -10,7 +10,7 @@ import StatsCards from '../DaisyUI/StatsCards';
 import SearchFilterBar from '../SearchFilterBar';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import { apiService, ActivityEvent, ActivityResponse } from '../../services/api';
-import { Clock, Activity, AlertTriangle, MessageSquare, RefreshCw } from 'lucide-react';
+import { Activity, AlertTriangle, MessageSquare, RefreshCw } from 'lucide-react';
 import Debug from 'debug';
 const debug = Debug('app:client:components:Monitoring:ActivityMonitor');
 

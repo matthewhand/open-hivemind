@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Download, Upload, FileJson, AlertCircle, CheckCircle, X, Settings, Lock, Unlock, Package } from 'lucide-react';
+import { Download, Upload, FileJson, AlertCircle, CheckCircle, Settings, Lock, Unlock, Package } from 'lucide-react';
 import Button from '../components/DaisyUI/Button';
 import Checkbox from '../components/DaisyUI/Checkbox';
 import PageHeader from '../components/DaisyUI/PageHeader';

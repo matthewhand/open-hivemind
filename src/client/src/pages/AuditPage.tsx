@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Shield,
   Download,
@@ -16,11 +16,9 @@ import CodeBlock from '../components/DaisyUI/CodeBlock';
 import Input from '../components/DaisyUI/Input';
 import Select from '../components/DaisyUI/Select';
 import PageHeader from '../components/DaisyUI/PageHeader';
-import { SkeletonPage } from '../components/DaisyUI/Skeleton';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import { Alert } from '../components/DaisyUI/Alert';
 import useUrlParams from '../hooks/useUrlParams';
-import { useQuery } from '@tanstack/react-query';
 import { apiService } from '../services/api';
 import Diff from '../components/DaisyUI/Diff';
 import SimpleTable from '../components/DaisyUI/SimpleTable';

@@ -28,7 +28,7 @@ export const openWebUiProviderSchema: ProviderConfigSchema = {
             placeholder: 'sk-...',
             group: 'Authentication',
             validation: {
-                pattern: '^sk-[A-Za-z0-9]{32,}$',
+                pattern: '^sk-[A-Za-z0-9]{32 }$',
                 custom: (value: string) => {
                     if (!value) return null; // Optional field
                     const result = validateApiKey('openwebui', value, false);

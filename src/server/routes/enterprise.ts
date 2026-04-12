@@ -2,7 +2,6 @@ import Debug from 'debug';
 import { Router } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { AuditLogger } from '../../common/auditLogger';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { HTTP_STATUS } from '../../types/constants';
 import {
   CreateCloudProviderSchema,

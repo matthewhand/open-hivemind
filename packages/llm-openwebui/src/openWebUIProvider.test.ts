@@ -23,7 +23,7 @@ jest.mock('@hivemind/shared-types', () => {
   return { ...actual, isSafeUrl: jest.fn().mockResolvedValue(true) };
 });
 
-import { create, manifest } from './index';
+import { manifest } from './index';
 import { openWebUIProvider } from './openWebUIProvider';
 
 function mockFetch(body: unknown, status = 200) {

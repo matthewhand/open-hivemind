@@ -4,7 +4,7 @@ import Accordion from '../components/DaisyUI/Accordion';
 import Card from '../components/DaisyUI/Card';
 import Kbd from '../components/DaisyUI/Kbd';
 import Badge from '../components/DaisyUI/Badge';
-import { HelpCircle, BookOpen, Keyboard, MessageSquare, Shield, Bot, Cpu, Settings } from 'lucide-react';
+import { HelpCircle, BookOpen, Keyboard, Settings } from 'lucide-react';
 
 const faqItems = [
   {

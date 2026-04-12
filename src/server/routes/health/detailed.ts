@@ -1,7 +1,6 @@
 import os from 'os';
 import process from 'process';
 import { Router, type NextFunction, type Request, type Response } from 'express';
-import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import { MetricsCollector } from '../../../monitoring/MetricsCollector';
 import ApiMonitorService from '../../../services/ApiMonitorService';
 import { HTTP_STATUS } from '../../../types/constants';

@@ -2,7 +2,6 @@ import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import { ErrorUtils } from '../../common/ErrorUtils';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
 import {
   ApplyTemplateSchema,
   CreateTemplateSchema,

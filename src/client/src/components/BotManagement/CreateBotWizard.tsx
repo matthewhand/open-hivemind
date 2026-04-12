@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Bot, MessageSquare, Cpu, User, Shield, Check, AlertCircle } from 'lucide-react';
+import { Bot, User, Shield, Check, AlertCircle } from 'lucide-react';
 import Button from '../DaisyUI/Button';
 import Divider from '../DaisyUI/Divider';
 import Input from '../DaisyUI/Input';
@@ -7,7 +7,7 @@ import StepWizard, { Step } from '../DaisyUI/StepWizard';
 import Modal from '../DaisyUI/Modal';
 import Radio from '../DaisyUI/Radio';
 import { useConfigDiff } from '../../hooks/useConfigDiff';
-import { ConfigDiffViewer, ConfigDiffConfirmDialog } from '../ConfigDiffViewer';
+import { ConfigDiffConfirmDialog } from '../ConfigDiffViewer';
 import { Alert } from '../DaisyUI/Alert';
 import { Badge } from '../DaisyUI/Badge';
 import Card from '../DaisyUI/Card';

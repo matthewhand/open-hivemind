@@ -2,7 +2,6 @@ import Debug from 'debug';
 import { Router } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { requireAdmin } from '../../auth/middleware';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { HTTP_STATUS } from '../../types/constants';
 import { ClearCacheSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';

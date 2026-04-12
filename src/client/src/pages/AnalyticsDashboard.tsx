@@ -8,8 +8,6 @@ import Card from '../components/DaisyUI/Card';
 import Select from '../components/DaisyUI/Select';
 import DataTable from '../components/DaisyUI/DataTable';
 import EmptyState from '../components/DaisyUI/EmptyState';
-import { SkeletonPage } from '../components/DaisyUI/Skeleton';
-import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import Button from '../components/DaisyUI/Button';
 import { BarChart3, RefreshCw } from 'lucide-react';
