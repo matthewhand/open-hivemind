@@ -241,6 +241,23 @@ router.post(
 // No rate limiter — frontend calls this on every page load
 router.get('/verify', async (req: Request, res: Response) => {
   try {
+    // Server-side test bypass — return a fake admin user when ALLOW_TEST_BYPASS is set
+    if (process.env.ALLOW_TEST_BYPASS === 'true') {
+      return res.json(
+        ApiResponse.success({
+          user: {
+            id: 'test-admin',
+            username: 'admin',
+            email: 'test@open-hivemind.local',
+            role: 'owner',
+            permissions: ['*'],
+          },
+          tokenValid: true,
+          expiresAt: new Date(Date.now() + 3600000).toISOString(),
+        })
+      );
+    }
+
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json(ApiResponse.error('Bearer token required'));
