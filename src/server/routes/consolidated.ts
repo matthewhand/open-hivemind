@@ -188,9 +188,12 @@ router.get('/env-status', async (req, res) => {
 });
 
 // POST /api/webui/validate-config - Validate bot configuration
-router.post('/validate-config', validateRequest(ValidateConfigSchema), async (req, res) => {
-  try {
-    const { botConfig } = req.body;
+router.post(
+  '/validate-config',
+  validateRequest(ValidateConfigSchema),
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const { botConfig } = req.body;
 
       if (!botConfig) {
         return res
@@ -278,88 +281,8 @@ router.post('/validate-config', validateRequest(ValidateConfigSchema), async (re
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to validate configuration'));
     }
-
-    const validation = {
-      isValid: true,
-      errors: [] as string[],
-      warnings: [] as string[],
-    };
-
-    // Validate required fields
-    if (!botConfig.name) {
-      validation.errors.push('Bot name is required');
-      validation.isValid = false;
-    }
-
-    if (!botConfig.messageProvider) {
-      validation.errors.push('Message provider is required');
-      validation.isValid = false;
-    }
-
-    if (!botConfig.llmProvider) {
-      validation.errors.push('LLM provider is required');
-      validation.isValid = false;
-    }
-
-    // Check environment variable availability
-    const providerEnvMap: Record<string, string[]> = {
-      discord: ['DISCORD_TOKEN'],
-      slack: ['SLACK_BOT_TOKEN', 'SLACK_APP_TOKEN'],
-      telegram: ['TELEGRAM_BOT_TOKEN'],
-      mattermost: ['MATTERMOST_TOKEN', 'MATTERMOST_SERVER_URL'],
-      openai: ['OPENAI_API_KEY'],
-      flowise: ['FLOWISE_BASE_URL'],
-      openwebui: ['OPENWEBUI_BASE_URL'],
-    };
-
-    if (botConfig.messageProvider && providerEnvMap[botConfig.messageProvider]) {
-      const requiredVars = providerEnvMap[botConfig.messageProvider];
-      const missingVars = requiredVars.filter((varName) => !process.env[varName]);
-
-      if (missingVars.length > 0) {
-        validation.warnings.push(
-          `Missing environment variables for ${botConfig.messageProvider}: ${missingVars.join(', ')}`
-        );
-      }
-    }
-
-    if (botConfig.llmProvider && providerEnvMap[botConfig.llmProvider]) {
-      const requiredVars = providerEnvMap[botConfig.llmProvider];
-      const missingVars = requiredVars.filter((varName) => !process.env[varName]);
-
-      if (missingVars.length > 0) {
-        validation.warnings.push(
-          `Missing environment variables for ${botConfig.llmProvider}: ${missingVars.join(', ')}`
-        );
-      }
-    }
-
-    // Validate MCP guard configuration
-    if (botConfig.mcpGuard?.enabled) {
-      if (
-        botConfig.mcpGuard.type === 'custom' &&
-        (!botConfig.mcpGuard.allowedUserIds || botConfig.mcpGuard.allowedUserIds.length === 0)
-      ) {
-        validation.warnings.push('Custom MCP guard enabled but no allowed user IDs specified');
-      }
-    }
-
-    logAdminAction(
-      req as AuditedRequest,
-      'VALIDATE',
-      'bot-config',
-      'success',
-      `Config validation: ${validation.isValid ? 'valid' : 'invalid'}`
-    );
-    return res.json(ApiResponse.success(validation));
-  } catch (error) {
-    debug('Error validating config:', error);
-    logAdminAction(req as AuditedRequest, 'VALIDATE', 'bot-config', 'failure', `Error: ${error}`);
-    return res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json(ApiResponse.error('Failed to validate configuration'));
-  }
-});
+  })
+);
 
 // GET /api/webui/health - Comprehensive health check
 router.get('/health', async (req, res) => {

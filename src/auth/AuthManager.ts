@@ -18,8 +18,6 @@ const debug = Debug('app:AuthManager');
 export class AuthManager {
   private static instance: AuthManager;
   private users = new Map<string, User>();
-  private usernameMap = new Map<string, string>(); // username -> userId
-  private emailMap = new Map<string, string>(); // email -> userId
   private generatedPassword: string | null = null;
   private refreshTokens = new Set<string>();
   private readonly jwtSecret: string;
@@ -112,9 +110,7 @@ export class AuthManager {
         lastLogin: null,
         passwordHash: 'test-admin-hash',
       };
-      this.users.set(defaultAdmin.id, defaultAdmin);
-      this.usernameMap.set(defaultAdmin.username, defaultAdmin.id);
-      this.emailMap.set(defaultAdmin.email, defaultAdmin.id);
+      this.users.set('admin', defaultAdmin);
       return;
     }
 
@@ -141,9 +137,7 @@ export class AuthManager {
       passwordHash: bcrypt.hashSync(password, this.bcryptRounds),
     };
 
-    this.users.set(defaultAdmin.id, defaultAdmin);
-    this.usernameMap.set(defaultAdmin.username, defaultAdmin.id);
-    this.emailMap.set(defaultAdmin.email, defaultAdmin.id);
+    this.users.set('admin', defaultAdmin);
     debug('Default admin user created');
   }
 
@@ -196,12 +190,16 @@ export class AuthManager {
     }
 
     // Check if user already exists by username
-    if (this.usernameMap.has(data.username)) {
+    const existingUserByUsername = Array.from(this.users.values()).find(
+      (u) => u.username === data.username
+    );
+    if (existingUserByUsername) {
       throw new ValidationError('User already exists', 'USER_ALREADY_EXISTS');
     }
 
     // Check if user already exists by email
-    if (this.emailMap.has(data.email)) {
+    const existingUserByEmail = Array.from(this.users.values()).find((u) => u.email === data.email);
+    if (existingUserByEmail) {
       throw new ValidationError('User already exists', 'USER_ALREADY_EXISTS');
     }
 
@@ -217,8 +215,6 @@ export class AuthManager {
     };
 
     this.users.set(user.id, user);
-    this.usernameMap.set(user.username, user.id);
-    this.emailMap.set(user.email, user.id);
     debug(`User registered: ${user.username}`);
 
     // Destructure to omit passwordHash — setting it to undefined leaves the
@@ -232,10 +228,11 @@ export class AuthManager {
    * Authenticate user and generate tokens
    */
   public async login(credentials: LoginCredentials): Promise<AuthToken> {
-    const userId = this.usernameMap.get(credentials.username);
-    const user = userId !== undefined ? this.users.get(userId) : undefined;
+    const user = Array.from(this.users.values()).find(
+      (u) => u.username === credentials.username && u.isActive
+    );
 
-    if (!user || !user.isActive) {
+    if (!user || !user.passwordHash) {
       throw new AuthenticationError('Invalid credentials', 'INVALID_CREDENTIALS');
     }
 
@@ -426,29 +423,7 @@ export class AuthManager {
       return null;
     }
 
-    const oldUsername = user.username;
-    const oldEmail = user.email;
-
-    // Validate both before updating any maps to ensure consistency
-    if (updates.username && updates.username !== oldUsername && this.usernameMap.has(updates.username)) {
-      throw new ValidationError('Username already exists', 'USER_ALREADY_EXISTS');
-    }
-    if (updates.email && updates.email !== oldEmail && this.emailMap.has(updates.email)) {
-      throw new ValidationError('Email already exists', 'USER_ALREADY_EXISTS');
-    }
-
     const updatedUser = { ...user, ...updates };
-
-    // Perform Map updates only after validation passes
-    if (updates.username && updates.username !== oldUsername) {
-      this.usernameMap.delete(oldUsername);
-      this.usernameMap.set(updates.username, userId);
-    }
-    if (updates.email && updates.email !== oldEmail) {
-      this.emailMap.delete(oldEmail);
-      this.emailMap.set(updates.email, userId);
-    }
-
     this.users.set(userId, updatedUser);
 
     const { passwordHash: _ph, ...safeUser } = updatedUser;
@@ -459,11 +434,6 @@ export class AuthManager {
    * Delete user
    */
   public deleteUser(userId: string): boolean {
-    const user = this.users.get(userId);
-    if (user) {
-      this.usernameMap.delete(user.username);
-      this.emailMap.delete(user.email);
-    }
     return this.users.delete(userId);
   }
 

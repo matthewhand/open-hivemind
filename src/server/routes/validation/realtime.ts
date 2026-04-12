@@ -28,7 +28,7 @@ export function createRealtimeRoutes(): Router {
     '/validate',
     validateConfigurationValidation,
     handleValidationErrors,
-    async (req: AuthMiddlewareRequest, res: Response) => {
+    asyncErrorHandler(async (req, res) => {
       try {
         const { configId, profileId = 'standard', clientId } = req.body;
 
@@ -47,7 +47,7 @@ export function createRealtimeRoutes(): Router {
           error: ErrorUtils.getMessage(error as any),
         });
       }
-    }
+    })
   );
 
   /**
@@ -58,7 +58,7 @@ export function createRealtimeRoutes(): Router {
     '/validate-data',
     validateConfigurationData,
     handleValidationErrors,
-    async (req: AuthMiddlewareRequest, res: Response) => {
+    asyncErrorHandler(async (req, res) => {
       try {
         const { configData, profileId = 'standard' } = req.body;
 
@@ -88,7 +88,7 @@ export function createRealtimeRoutes(): Router {
               : new Date(),
         });
       }
-    }
+    })
   );
 
   /**
@@ -99,7 +99,7 @@ export function createRealtimeRoutes(): Router {
     '/subscribe',
     validateSubscription,
     handleValidationErrors,
-    async (req: AuthMiddlewareRequest, res: Response) => {
+    asyncErrorHandler(async (req, res) => {
       try {
         const { configId, clientId, profileId = 'standard' } = req.body;
 
@@ -129,7 +129,7 @@ export function createRealtimeRoutes(): Router {
               : new Date(),
         });
       }
-    }
+    })
   );
 
   /**
@@ -234,9 +234,11 @@ export function createRealtimeRoutes(): Router {
    * GET /api/validation/statistics
    * Get validation statistics
    */
-  router.get('/api/validation/statistics', async (req: AuthMiddlewareRequest, res: Response) => {
-    try {
-      const statistics = validationService.getValidationStatistics();
+  router.get(
+    '/statistics',
+    asyncErrorHandler(async (req, res) => {
+      try {
+        const statistics = validationService.getValidationStatistics();
 
         return res.json({
           success: true,
@@ -251,15 +253,16 @@ export function createRealtimeRoutes(): Router {
 
         debug('ERROR:', 'Error in', 'Get validation statistics endpoint');
 
-      const { message, code, timestamp } = getErrorResponse(hivemindError);
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        error: message,
-        code,
-        timestamp,
-      });
-    }
-  });
+        const { message, code, timestamp } = getErrorResponse(hivemindError);
+        return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+          success: false,
+          error: message,
+          code,
+          timestamp,
+        });
+      }
+    })
+  );
 
   return router;
 }

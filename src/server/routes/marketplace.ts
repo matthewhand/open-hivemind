@@ -283,18 +283,18 @@ async function getPackages(): Promise<MarketplacePackage[]> {
     packageMap.set(pkg.name, pkg);
   }
 
-  // Community-contributed MCP tool plugin examples
-  if (!packageMap.has('mcp-server-everything')) {
-    packageMap.set('mcp-server-everything', {
-      name: 'mcp-server-everything',
-      displayName: 'Everything MCP Server',
+  // Add example community package if no community packages exist
+  if (!packageMap.has('hivemind-plugin-weather')) {
+    packageMap.set('hivemind-plugin-weather', {
+      name: 'hivemind-plugin-weather',
+      displayName: 'Weather Tool',
       description:
-        'A comprehensive reference implementation for Model Context Protocol servers, providing a wide variety of tools and resources.',
+        'Gives bots the ability to check weather conditions and forecasts for any location. Community-contributed MCP tool plugin.',
       type: 'tool',
-      version: '1.0.0',
+      version: '1.2.0',
       status: 'available',
       trusted: false,
-      repoUrl: 'https://github.com/modelcontextprotocol/servers/tree/main/src/everything',
+      repoUrl: 'https://github.com/example/hivemind-plugin-weather',
     });
   }
 
@@ -324,28 +324,33 @@ function invalidateCache(): void {
  * GET /api/marketplace/packages
  * List all available packages (built-in + installed)
  */
-router.get('/packages', async (req, res) => {
-  try {
-    const packages = await getPackages();
-    debug('Returning %d packages', packages.length);
+router.get(
+  '/packages',
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const packages = await getPackages();
+      debug('Returning %d packages', packages.length);
 
-    return res.json(ApiResponse.success(packages));
-  } catch (err: any) {
-    debug('Error listing packages: %s', err);
-    return res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json(ApiResponse.error('Failed to list packages'));
-  }
-});
+      return res.json(ApiResponse.success(packages));
+    } catch (err: unknown) {
+      debug('Error listing packages: %s', err);
+      return res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error('Failed to list packages'));
+    }
+  })
+);
 
 /**
  * GET /api/marketplace/packages/:name
  * Get single package details
  */
-router.get('/packages/:name', async (req, res) => {
-  try {
-    const name = req.params.name;
-    const packages = await getPackages();
+router.get(
+  '/packages/:name',
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const name = req.params.name;
+      const packages = await getPackages();
 
       const pkg = packages.find((p) => p.name === name);
 
@@ -360,15 +365,8 @@ router.get('/packages/:name', async (req, res) => {
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to get package'));
     }
-
-    return res.json(ApiResponse.success(pkg));
-  } catch (err: any) {
-    debug('Error getting package: %s', err);
-    return res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json(ApiResponse.error('Failed to get package'));
-  }
-});
+  })
+);
 
 /**
  * POST /api/marketplace/install
