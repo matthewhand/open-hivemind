@@ -17,10 +17,22 @@ import { FormField } from '../components/DaisyUI/formTypes';
 import RangeSlider from '../components/DaisyUI/RangeSlider';
 import { Badge } from '../components/DaisyUI/Badge';
 import Accordion from '../components/DaisyUI/Accordion';
-import { GuardProfile } from '@shared/types/models/security';
+export interface GuardProfile {
+  id: string;
+  name: string;
+  description?: string;
+  guards: {
+    mcpGuard: { enabled: boolean; type: 'owner' | 'custom'; allowedUsers?: string[]; allowedTools?: string[] };
+    rateLimit?: { enabled: boolean; maxRequests: number; windowMs: number };
+    contentFilter?: { enabled: boolean; strictness: 'low' | 'medium' | 'high'; blockedTerms?: string[] };
+  };
+  createdAt?: string;
+  updatedAt?: string;
+}
 import { useToast } from '../components/DaisyUI/ToastNotification';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import Pagination from '../components/DaisyUI/Pagination';
+import DetailDrawer from '../components/DaisyUI/DetailDrawer';
 
 // Custom comma-separated input component
 const CommaSeparatedInput = ({
@@ -279,11 +291,11 @@ const GuardsPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['guardProfiles'] });
-      addToast({ type: 'success', message: 'Profile created successfully' });
+      addToast({ type: 'success', title: 'Success', message: 'Profile created successfully' });
       setEditingProfile(null);
     },
     onError: (error) => {
-      addToast({ type: 'error', message: error instanceof Error ? error.message : 'Failed to create profile' });
+      addToast({ type: 'error', title: 'Error', message: error instanceof Error ? error.message : 'Failed to create profile' });
     }
   });
 
@@ -298,11 +310,11 @@ const GuardsPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['guardProfiles'] });
-      addToast({ type: 'success', message: 'Profile updated successfully' });
+      addToast({ type: 'success', title: 'Success', message: 'Profile updated successfully' });
       setEditingProfile(null);
     },
     onError: (error) => {
-      addToast({ type: 'error', message: error instanceof Error ? error.message : 'Failed to update profile' });
+      addToast({ type: 'error', title: 'Error', message: error instanceof Error ? error.message : 'Failed to update profile' });
     }
   });
 
@@ -314,12 +326,12 @@ const GuardsPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['guardProfiles'] });
-      addToast({ type: 'success', message: 'Profile deleted successfully' });
+      addToast({ type: 'success', title: 'Success', message: 'Profile deleted successfully' });
       setDeleteConfirm(null);
       setSelectedProfileId(null);
     },
     onError: (error) => {
-      addToast({ type: 'error', message: error instanceof Error ? error.message : 'Failed to delete profile' });
+      addToast({ type: 'error', title: 'Error', message: error instanceof Error ? error.message : 'Failed to delete profile' });
       setDeleteConfirm(null);
     }
   });
@@ -550,11 +562,9 @@ const GuardsPage: React.FC = () => {
                       disabled={!guardsValue?.contentFilter?.enabled}
                     />
                   </div>
-                    </div>
-                  ),
-                },
-              ]}
-            />
+                </div>
+              </div>
+            </div>
           </>
         );
       }
@@ -573,7 +583,7 @@ const GuardsPage: React.FC = () => {
               <Shield className="w-16 h-16 mx-auto text-base-content/30 mb-4" />
               <h3 className="text-xl font-bold mb-2">No Guard Profiles</h3>
               <p className="text-base-content/70 mb-6">Create your first guard profile to secure your bots.</p>
-              <Button color="primary" onClick={() => setEditingProfile(defaultNewProfile as any)}>
+              <Button variant="primary" onClick={() => setEditingProfile(defaultNewProfile as any)}>
                 <Plus className="w-4 h-4 mr-2" /> Create Profile
               </Button>
             </div>
@@ -627,7 +637,7 @@ const GuardsPage: React.FC = () => {
                     <div className="flex justify-end gap-2 mt-auto">
                       <Button
                         size="sm"
-                        variant="outline"
+                        variant="ghost"
                         onClick={(e) => { e.stopPropagation(); handleDuplicate(profile); }}
                         title="Duplicate Profile"
                         aria-label={`Duplicate ${profile.name} guard`}
@@ -636,7 +646,7 @@ const GuardsPage: React.FC = () => {
                       </Button>
                       <Button
                         size="sm"
-                        variant="outline"
+                        variant="ghost"
                         onClick={(e) => { e.stopPropagation(); setEditingProfile(profile); }}
                         title="Edit Profile"
                         aria-label={`Edit ${profile.name} guard`}
@@ -645,8 +655,8 @@ const GuardsPage: React.FC = () => {
                       </Button>
                       <Button
                         size="sm"
-                        variant="outline"
-                        color="error"
+                        variant="ghost"
+                        className="text-error hover:bg-error/10 hover:text-error"
                         onClick={(e) => { e.stopPropagation(); setDeleteConfirm(profile); }}
                         title="Delete Profile"
                         aria-label={`Delete ${profile.name} guard`}

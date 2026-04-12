@@ -29,11 +29,11 @@ import { useBotActions } from './hooks/useBotActions';
 import { useBotExport } from './hooks/useBotExport';
 import { useBotPreview } from './hooks/useBotPreview';
 import { useBotsList } from './hooks/useBotsList';
-// Hooks
 import { useBotsPageData } from './hooks/useBotsPageData';
 import Checkbox from '../../components/DaisyUI/Checkbox';
 import { useSavedStamp } from '../../contexts/SavedStampContext';
 import Select from '../../components/DaisyUI/Select';
+import { BotDetailContent } from './BotDetailContent';
 
 const BotsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
@@ -359,51 +359,13 @@ const BotsPage: React.FC = () => {
         tabs={botsTabs}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content: Bot List */}
-        <div
-          className={`${error && bots.length === 0 ? 'lg:col-span-3' : 'lg:col-span-2'} space-y-4`}
-        >
-          <SearchFilterBar
-            searchValue={searchQuery}
-            onSearchChange={setSearchQuery}
-            searchPlaceholder="Search agents by name or purpose..."
-          >
-            <div className="flex gap-2">
-              <Select
-                className="select-bordered"
-                size="sm"
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value as any)}
-              >
-                <option value="all">All Status</option>
-                <option value="active">Active Only</option>
-                <option value="inactive">Inactive Only</option>
-              </Select>
-              <Tooltip content="Refresh list">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={fetchBots}
-                  className="btn-square"
-                  aria-label="Refresh list"
-                >
-                  <RefreshCw className={`w-4 h-4 ${botsLoading ? 'animate-spin' : ''}`} />
-                </Button>
-              </Tooltip>
-            </div>
-          </SearchFilterBar>
-
-          <BotListErrorState
-            error={error}
-            botsCount={bots.length}
-            fetchBots={fetchBots}
-            filteredBotsCount={filteredBots.length}
-            searchQuery={searchQuery}
-            setIsCreateModalOpen={setIsCreateModalOpen}
-          />
-
-          {!error && filteredBots.length > 0 && (
+      {/* Bot Detail Drawer — slides in from right when a bot is selected */}
+      <DetailDrawer
+        isOpen={!!previewBot}
+        onClose={() => setPreviewBot(null)}
+        title={previewBot?.name || 'Bot Details'}
+        renderDock={
+          previewBot && (
             <>
               <button
                 className="text-info hover:bg-info/10 transition-colors"

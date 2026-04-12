@@ -8,7 +8,7 @@ export interface TabItem {
   /** Tab identifier — `id` is canonical; `key` is accepted as an alias for backward compatibility */
   id?: string;
   key?: string;
-  label: string;
+  label: React.ReactNode;
   content?: React.ReactNode;
   disabled?: boolean;
   /** Optional color for the tab (e.g. 'error' for dangerous, 'success' for recommended) */
