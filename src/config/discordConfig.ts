@@ -1,238 +1,92 @@
-import convict from 'convict';
 import path from 'path';
+import fs from 'fs';
 import Debug from 'debug';
+import { DiscordSchema, type DiscordConfig } from './schemas/discordSchema';
 
 const debug = Debug('app:discordConfig');
 
 /**
- * Discord Configuration Module
- *
- * @module discordConfig
- * @description Centralized configuration for Discord integration. Handles:
- * - Bot tokens and authentication
- * - Guild and channel settings
- * - Voice and message configurations
- * - Channel-specific bonuses and priorities
- *
- * Features custom format validators for channel bonuses and supports:
- * - Environment variables
- * - JSON config file (config/providers/discord.json)
- * - Default values (fallback)
- *
- * @example
- * // Get configuration values
- * import discordConfig from './discordConfig';
- * const botToken = discordConfig.get('DISCORD_BOT_TOKEN');
- * const channelBonuses = discordConfig.get('DISCORD_CHANNEL_BONUSES');
+ * Loads and validates Discord configuration using Zod
  */
-
-export interface DiscordConfig {
-  DISCORD_BOT_TOKEN: string;
-  DISCORD_CLIENT_ID: string;
-  DISCORD_GUILD_ID: string;
-  DISCORD_AUDIO_FILE_PATH: string;
-  DISCORD_WELCOME_MESSAGE: string;
-  DISCORD_MESSAGE_HISTORY_LIMIT: number;
-  DISCORD_CHANNEL_ID: string;
-  DISCORD_DEFAULT_CHANNEL_ID: string;
-  DISCORD_CHANNEL_BONUSES: Record<string, number>;
-  DISCORD_UNSOLICITED_CHANCE_MODIFIER: number;
-  DISCORD_VOICE_CHANNEL_ID: string;
-  DISCORD_MAX_MESSAGE_LENGTH: number;
-  DISCORD_INTER_PART_DELAY_MS: number;
-  DISCORD_TYPING_DELAY_MAX_MS: number;
-  DISCORD_PRIORITY_CHANNEL: string;
-  DISCORD_PRIORITY_CHANNEL_BONUS: number;
-  DISCORD_LOGGING_ENABLED: boolean;
-  DISCORD_MESSAGE_PROCESSING_DELAY_MS: number;
-}
-
-convict.addFormat({
-  name: 'channel-bonuses',
-  validate: (val) => {
-    if (typeof val !== 'string' && typeof val !== 'object' && val !== undefined) {
-      throw new Error('Invalid bonuses: must be a string, object, or undefined.');
+function loadDiscordConfig(): DiscordConfig {
+  const configDir = process.env.NODE_CONFIG_DIR || './config/';
+  const configPath = path.join(configDir, 'providers/discord.json');
+  
+  let fileConfig: Record<string, any> = {};
+  
+  try {
+    if (fs.existsSync(configPath)) {
+      const data = fs.readFileSync(configPath, 'utf8');
+      fileConfig = JSON.parse(data);
+    } else {
+      debug(`Discord config file not found at ${configPath}, using environment variables and defaults`);
     }
-    // Validate numeric range for object values
-    if (typeof val === 'object' && val !== null) {
-      for (const [channelId, bonus] of Object.entries(val)) {
-        const numBonus = Number(bonus);
-        if (isNaN(numBonus) || numBonus < 0.0 || numBonus > 2.0) {
-          throw new Error(`Invalid bonus for channel ${channelId}: must be between 0.0 and 2.0`);
-        }
-      }
-    }
-  },
-  coerce: (val) => {
-    if (typeof val === 'object' && val !== null) {
-      // Validate numeric range for object values
-      for (const [channelId, bonus] of Object.entries(val)) {
-        const numericBonus = Number(bonus);
-        if (isNaN(numericBonus) || numericBonus < 0.0 || numericBonus > 2.0) {
-          throw new Error(`Invalid bonus value for channel ${channelId}: ${bonus}. Must be a number between 0.0 and 2.0.`);
-        }
-      }
-      return val;
-    }
-    if (!val) {return {};}
-    
-    // Auto-detect JSON format
-    if (typeof val === 'string' && val.trim().startsWith('{')) {
-      try {
-        const parsed = JSON.parse(val);
-        const result: Record<string, number> = {};
-        for (const [channelId, bonus] of Object.entries(parsed)) {
-          const numBonus = Number(bonus);
-          if (!isNaN(numBonus)) {
-            result[channelId] = Math.max(0.0, Math.min(2.0, numBonus)); // Clamp to valid range
-          }
-        }
-        return result;
-      } catch {
-        throw new Error('Invalid JSON format for channel bonuses');
-      }
-    }
-    
-    // Parse CSV format
-    return val.split(',').reduce((acc: Record<string, number>, kvp: string) => {
-      const [channelId, bonus] = kvp.split(':');
-      if (channelId && bonus) {
-        const numBonus = parseFloat(bonus);
-        if (!isNaN(numBonus)) {
-          acc[channelId] = Math.max(0.0, Math.min(2.0, numBonus)); // Clamp to valid range
-        }
-      }
-      return acc;
-    }, {});
-  },
-});
-
-const discordConfig = convict<DiscordConfig>({
-  DISCORD_BOT_TOKEN: {
-    doc: 'Comma-separated Discord bot tokens',
-    format: String,
-    default: '',
-    env: 'DISCORD_BOT_TOKEN',
-  },
-  DISCORD_CLIENT_ID: {
-    doc: 'Discord client ID',
-    format: String,
-    default: '',
-    env: 'DISCORD_CLIENT_ID',
-  },
-  DISCORD_GUILD_ID: {
-    doc: 'Discord guild ID',
-    format: String,
-    default: '',
-    env: 'DISCORD_GUILD_ID',
-  },
-  DISCORD_AUDIO_FILE_PATH: {
-    doc: 'Path to audio files for Discord commands',
-    format: String,
-    default: 'audio.wav',
-    env: 'DISCORD_AUDIO_FILE_PATH',
-  },
-  DISCORD_WELCOME_MESSAGE: {
-    doc: 'Welcome message for new users',
-    format: String,
-    default: 'Welcome to the server!',
-    env: 'DISCORD_WELCOME_MESSAGE',
-  },
-  DISCORD_MESSAGE_HISTORY_LIMIT: {
-    doc: 'Number of messages to keep in history',
-    format: 'int',
-    default: 10,
-    env: 'DISCORD_MESSAGE_HISTORY_LIMIT',
-  },
-  DISCORD_CHANNEL_ID: {
-    doc: 'Default channel ID',
-    format: String,
-    default: '',
-    env: 'DISCORD_CHANNEL_ID',
-  },
-  DISCORD_DEFAULT_CHANNEL_ID: {
-    doc: 'Default channel ID for outgoing messages',
-    format: String,
-    default: '',
-    env: 'DISCORD_DEFAULT_CHANNEL_ID',
-  },
-  DISCORD_CHANNEL_BONUSES: {
-    doc: 'Channel-specific bonuses. Supports CSV ("ch1:1.5,ch2:0.8") or JSON ({"ch1":1.5,"ch2":0.8}). Range: 0.0-2.0',
-    format: 'channel-bonuses',
-    default: {},
-    env: 'DISCORD_CHANNEL_BONUSES',
-  },
-  DISCORD_UNSOLICITED_CHANCE_MODIFIER: {
-    doc: 'Global unsolicited chance modifier',
-    format: Number,
-    default: 1.0,
-    env: 'DISCORD_UNSOLICITED_CHANCE_MODIFIER',
-  },
-  DISCORD_VOICE_CHANNEL_ID: {
-    doc: 'Voice channel ID for interactions',
-    format: String,
-    default: '',
-    env: 'DISCORD_VOICE_CHANNEL_ID',
-  },
-  DISCORD_MAX_MESSAGE_LENGTH: {
-    doc: 'Max message length',
-    format: 'int',
-    default: 2000,
-    env: 'DISCORD_MAX_MESSAGE_LENGTH',
-  },
-  DISCORD_INTER_PART_DELAY_MS: {
-    doc: 'Delay between multipart messages (ms)',
-    format: 'int',
-    default: 1000,
-    env: 'DISCORD_INTER_PART_DELAY_MS',
-  },
-  DISCORD_TYPING_DELAY_MAX_MS: {
-    doc: 'Max typing delay (ms)',
-    format: 'int',
-    default: 5000,
-    env: 'DISCORD_TYPING_DELAY_MAX_MS',
-  },
-  DISCORD_PRIORITY_CHANNEL: {
-    doc: 'Priority channel ID',
-    format: String,
-    default: '',
-    env: 'DISCORD_PRIORITY_CHANNEL',
-  },
-  DISCORD_PRIORITY_CHANNEL_BONUS: {
-    doc: 'Bonus chance for priority channel',
-    format: Number,
-    default: 1.1,
-    env: 'DISCORD_PRIORITY_CHANNEL_BONUS',
-  },
-  DISCORD_LOGGING_ENABLED: {
-    doc: 'Enable logging to files',
-    format: Boolean,
-    default: false,
-    env: 'DISCORD_LOGGING_ENABLED',
-  },
-  DISCORD_MESSAGE_PROCESSING_DELAY_MS: {
-    doc: 'Delay for processing messages (ms)',
-    format: 'int',
-    default: 0,
-    env: 'DISCORD_MESSAGE_PROCESSING_DELAY_MS',
-  },
-});
-
-const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
-const configPath = path.join(configDir, 'providers/discord.json');
-
-try {
-  discordConfig.loadFile(configPath);
-  debug(`Successfully loaded Discord config from ${configPath}`);
-} catch (error: unknown) {
-  if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
-    debug(`Error reading discord config from ${configPath}:`, (error instanceof Error ? error.message : String(error)));
-  } else {
-    debug(`Discord config file not found at ${configPath}, using environment variables and defaults`);
+  } catch (error) {
+    debug(`Error reading discord config from ${configPath}:`, error);
   }
+
+  // Map environment variables
+  const envConfig: Record<string, any> = {};
+  const mapEnv = (envKey: string, configKey: string, parser?: (val: string) => any) => {
+    if (process.env[envKey] !== undefined) {
+      const val = process.env[envKey]!;
+      envConfig[configKey] = parser ? parser(val) : val;
+    }
+  };
+
+  const parseIntBase10 = (v: string) => parseInt(v, 10);
+  const parseFloatBase10 = (v: string) => parseFloat(v);
+  const parseBool = (v: string) => v.toLowerCase() === 'true';
+  const parseJSON = (v: string) => {
+    try {
+      return JSON.parse(v);
+    } catch {
+      return undefined;
+    }
+  };
+
+  mapEnv('DISCORD_BOT_TOKEN', 'DISCORD_BOT_TOKEN');
+  mapEnv('DISCORD_CLIENT_ID', 'DISCORD_CLIENT_ID');
+  mapEnv('DISCORD_GUILD_ID', 'DISCORD_GUILD_ID');
+  mapEnv('DISCORD_AUDIO_FILE_PATH', 'DISCORD_AUDIO_FILE_PATH');
+  mapEnv('DISCORD_WELCOME_MESSAGE', 'DISCORD_WELCOME_MESSAGE');
+  mapEnv('DISCORD_MESSAGE_HISTORY_LIMIT', 'DISCORD_MESSAGE_HISTORY_LIMIT', parseIntBase10);
+  mapEnv('DISCORD_CHANNEL_ID', 'DISCORD_CHANNEL_ID');
+  mapEnv('DISCORD_DEFAULT_CHANNEL_ID', 'DISCORD_DEFAULT_CHANNEL_ID');
+  mapEnv('DISCORD_CHANNEL_BONUSES', 'DISCORD_CHANNEL_BONUSES', parseJSON);
+  mapEnv('DISCORD_UNSOLICITED_CHANCE_MODIFIER', 'DISCORD_UNSOLICITED_CHANCE_MODIFIER', parseFloatBase10);
+  mapEnv('DISCORD_VOICE_CHANNEL_ID', 'DISCORD_VOICE_CHANNEL_ID');
+  mapEnv('DISCORD_MAX_MESSAGE_LENGTH', 'DISCORD_MAX_MESSAGE_LENGTH', parseIntBase10);
+  mapEnv('DISCORD_INTER_PART_DELAY_MS', 'DISCORD_INTER_PART_DELAY_MS', parseIntBase10);
+  mapEnv('DISCORD_TYPING_DELAY_MAX_MS', 'DISCORD_TYPING_DELAY_MAX_MS', parseIntBase10);
+  mapEnv('DISCORD_PRIORITY_CHANNEL', 'DISCORD_PRIORITY_CHANNEL');
+  mapEnv('DISCORD_PRIORITY_CHANNEL_BONUS', 'DISCORD_PRIORITY_CHANNEL_BONUS', parseFloatBase10);
+  mapEnv('DISCORD_LOGGING_ENABLED', 'DISCORD_LOGGING_ENABLED', parseBool);
+  mapEnv('DISCORD_MESSAGE_PROCESSING_DELAY_MS', 'DISCORD_MESSAGE_PROCESSING_DELAY_MS', parseIntBase10);
+
+  const combinedConfig = {
+    ...fileConfig,
+    ...envConfig
+  };
+
+  const result = DiscordSchema.safeParse(combinedConfig);
+  
+  if (!result.success) {
+    debug('Discord configuration validation failed:', result.error.format());
+    return DiscordSchema.parse({});
+  }
+
+  return result.data;
 }
 
-// Validation must happen outside the generic try-catch to fail fast if config is malformed
-discordConfig.validate({ allowed: 'strict' });
+const config = loadDiscordConfig();
+
+const discordConfig = {
+  get: (key: keyof DiscordConfig) => config[key],
+  getProperties: () => config,
+  validate: (options: { allowed: 'strict' | 'warn' }) => {
+    DiscordSchema.parse(config);
+  }
+};
 
 export default discordConfig;
