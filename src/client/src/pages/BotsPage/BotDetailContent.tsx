@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Bot, Activity, MessageSquare, AlertCircle, RefreshCw, Globe, Cpu, Download, Play, Pause, Settings, ShieldCheck
+  Bot, Activity, MessageSquare, AlertCircle, RefreshCw, Globe, Cpu, Download, Play, Pause, Settings, ShieldCheck, FlaskConical
 } from 'lucide-react';
 import type { BotConfig } from '../../types/bot';
 import Button from '../../components/DaisyUI/Button';
@@ -13,11 +13,12 @@ import Figure from '../../components/DaisyUI/Figure';
 import Input from '../../components/DaisyUI/Input';
 import Join from '../../components/DaisyUI/Join';
 import BotResponseTimeline from '../../components/BotResponseTimeline';
+import BotTestDriveTab from './BotTestDriveTab';
 
 interface BotDetailContentProps {
   previewBot: BotConfig | null;
-  previewTab: 'activity' | 'chat' | 'validation';
-  setPreviewTab: (tab: 'activity' | 'chat' | 'validation') => void;
+  previewTab: 'activity' | 'chat' | 'validation' | 'testdrive';
+  setPreviewTab: (tab: 'activity' | 'chat' | 'validation' | 'testdrive') => void;
   activityLogs: any[];
   chatHistory: any[];
   logFilter: string;
@@ -142,10 +143,11 @@ export const BotDetailContent: React.FC<BotDetailContentProps> = ({
         tabs={[
           { key: 'activity', label: <span className="text-xs uppercase font-bold">Activity</span>, icon: <Activity className="w-3 h-3" />, color: 'info' as const },
           { key: 'chat', label: <span className="text-xs uppercase font-bold">Chat</span>, icon: <MessageSquare className="w-3 h-3" />, color: 'primary' as const },
+          { key: 'testdrive', label: <span className="text-xs uppercase font-bold">Test Drive</span>, icon: <FlaskConical className="w-3 h-3" />, color: 'warning' as const },
           { key: 'validation', label: <span className="text-xs uppercase font-bold">Validation</span>, icon: <ShieldCheck className="w-3 h-3" />, color: 'success' as const },
         ]}
         activeTab={previewTab}
-        onChange={(key) => setPreviewTab(key as 'activity' | 'chat' | 'validation')}
+        onChange={(key) => setPreviewTab(key as 'activity' | 'chat' | 'validation' | 'testdrive')}
         variant="boxed"
         size="sm"
         className="flex-nowrap"
@@ -232,6 +234,13 @@ export const BotDetailContent: React.FC<BotDetailContentProps> = ({
           onRetry={() => previewBot && fetchPreviewChat(previewBot.id)}
           onRefresh={() => previewBot && fetchPreviewChat(previewBot.id)}
         />
+      )}
+
+      {/* Test Drive Panel */}
+      {previewTab === 'testdrive' && (
+        <div className="max-h-[500px] overflow-y-auto pr-1 custom-scrollbar">
+          <BotTestDriveTab bot={previewBot} />
+        </div>
       )}
     </div>
   );

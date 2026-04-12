@@ -20,7 +20,7 @@ import {
   LayoutDashboard, Bot,
   Settings, Cog, Component, MessageSquare, Brain,
   Map, Webhook, FileText, Store, BarChart3, ClipboardList,
-  FileDown, HeartPulse, HelpCircle, FileCode, Info,
+  FileDown, HeartPulse, HelpCircle, FileCode, Info, Activity,
 } from 'lucide-react';
 import React from 'react';
 
@@ -130,6 +130,13 @@ export const hivemindNavItems: NavItem[] = [
     label: 'Settings',
     icon: <NavIcon><Settings className="w-4 h-4" /></NavIcon>,
     path: '/admin/settings',
+    visible: true,
+  },
+  {
+    id: 'provider-health',
+    label: 'Provider Health',
+    icon: <NavIcon><Activity className="w-4 h-4" /></NavIcon>,
+    path: '/admin/health/providers',
     visible: true,
   },
 

@@ -33,7 +33,7 @@ export class SwarmCoordinator extends EventEmitter {
 
   private constructor() {
     super();
-    this.cache = new TTLCache<SwarmClaim>(1000 * 60 * 5, 'SwarmCoordinator');
+    this.cache = new TTLCache<string, SwarmClaim>(1000 * 60 * 5, 'SwarmCoordinator');
   }
 
   public static getInstance(): SwarmCoordinator {

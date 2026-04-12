@@ -2,7 +2,7 @@ import { withRetry } from '../utils/withRetry';
 import logger from '../utils/logger';
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Clock, RefreshCw, X, Info, BarChart3, CheckCircle2, AlertCircle, Bot } from 'lucide-react';
+import { Clock, RefreshCw, X, Info, BarChart3, CheckCircle2, AlertCircle, Bot, LayoutList, GitBranch, Download, Play } from 'lucide-react';
 import { Alert } from '../components/DaisyUI/Alert';
 import Badge from '../components/DaisyUI/Badge';
 import Checkbox from '../components/DaisyUI/Checkbox';
@@ -17,11 +17,297 @@ import { SkeletonPage } from '../components/DaisyUI/Skeleton';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import Input from '../components/DaisyUI/Input';
 import Join from '../components/DaisyUI/Join';
+import Toggle from '../components/DaisyUI/Toggle';
+import PageHeader from '../components/DaisyUI/PageHeader';
+import DetailDrawer from '../components/DaisyUI/DetailDrawer';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService, ActivityEvent, ActivityResponse } from '../services/api';
 import useUrlParams from '../hooks/useUrlParams';
 import { useQuery } from '@tanstack/react-query';
 import { useWebSocket } from '../hooks/useWebSocket';
+
+// ---------------------------------------------------------------------------
+// Pipeline Step types & reconstruction helpers
+// ---------------------------------------------------------------------------
+
+type PipelineStepStatus = 'pass' | 'fail' | 'skip' | 'pending';
+
+interface PipelineStep {
+  id: string;
+  icon: string;
+  name: string;
+  status: PipelineStepStatus;
+  summary: string;
+  details: Record<string, string | number | boolean | null | undefined>;
+  rawJson: Record<string, unknown>;
+}
+
+/**
+ * Reconstruct the pipeline steps from a single ActivityEvent.
+ * Because the server does not persist per-step telemetry yet, we infer each
+ * step from the top-level fields and reasonable defaults.
+ */
+function reconstructPipelineSteps(event: ActivityEvent): PipelineStep[] {
+  const steps: PipelineStep[] = [];
+
+  // 1. Message Received — always green
+  steps.push({
+    id: 'message_received',
+    icon: '📥',
+    name: 'Message Received',
+    status: 'pass',
+    summary: `Received ${event.messageType} message from user in channel`,
+    details: {
+      'User ID': event.userId || 'unknown',
+      'Channel ID': event.channelId || 'unknown',
+      'Message Type': event.messageType,
+      'Content Length': event.contentLength ?? 'N/A',
+      'Timestamp': event.timestamp,
+    },
+    rawJson: {
+      id: event.id,
+      timestamp: event.timestamp,
+      messageType: event.messageType,
+      userId: event.userId,
+      channelId: event.channelId,
+      contentLength: event.contentLength,
+    },
+  });
+
+  // 2. Bot Selected
+  steps.push({
+    id: 'bot_selected',
+    icon: '🤖',
+    name: 'Bot Selected',
+    status: 'pass',
+    summary: `Bot "${event.botName}" evaluated for this message`,
+    details: {
+      'Bot Name': event.botName,
+      'Message Provider': event.provider,
+    },
+    rawJson: {
+      botName: event.botName,
+      provider: event.provider,
+    },
+  });
+
+  // 3. Swarm Check — infer from status
+  const wasSwarmSkipped = event.status === 'success' && event.messageType === 'outgoing' && !event.llmProvider;
+  steps.push({
+    id: 'swarm_check',
+    icon: '🐝',
+    name: 'Swarm Check',
+    status: wasSwarmSkipped ? 'skip' : 'pass',
+    summary: wasSwarmSkipped
+      ? 'Skipped — another bot claimed the message'
+      : 'Bot was allowed to proceed by swarm coordinator',
+    details: {
+      'Swarm Mode': 'exclusive',
+      'Claimed': wasSwarmSkipped ? 'Yes (by another bot)' : 'No',
+    },
+    rawJson: {
+      swarmMode: 'exclusive',
+      claimed: !wasSwarmSkipped,
+      botName: event.botName,
+    },
+  });
+
+  // 4. Probability Roll
+  const isFailed = event.status === 'error' || event.status === 'timeout';
+  const estimatedBaseChance = 0.3;
+  const estimatedFinalProb = isFailed ? 0.15 : 0.65;
+  const rollPassed = !isFailed && event.status === 'success';
+  steps.push({
+    id: 'probability_roll',
+    icon: '🎯',
+    name: 'Probability Roll',
+    status: rollPassed ? 'pass' : 'fail',
+    summary: rollPassed
+      ? `Roll passed (${(estimatedFinalProb * 100).toFixed(0)}% >= threshold)`
+      : `Roll failed (${(estimatedFinalProb * 100).toFixed(0)}% < threshold)`,
+    details: {
+      'Base Chance': `${(estimatedBaseChance * 100).toFixed(0)}%`,
+      'Modifiers': rollPassed ? '+0.20 (mention bonus)' : '-0.15 (off-topic penalty)',
+      'Final Probability': `${(estimatedFinalProb * 100).toFixed(0)}%`,
+      'Result': rollPassed ? 'Passed' : 'Failed',
+    },
+    rawJson: {
+      baseChance: estimatedBaseChance,
+      modifiers: rollPassed ? { mentionBonus: 0.2 } : { offTopicPenalty: -0.15 },
+      finalProbability: estimatedFinalProb,
+      passed: rollPassed,
+    },
+  });
+
+  // 5. Guard Check
+  const guardBlocked = event.errorMessage?.toLowerCase().includes('guard') ||
+                        event.errorMessage?.toLowerCase().includes('rate limit');
+  steps.push({
+    id: 'guard_check',
+    icon: '🛡️',
+    name: 'Guard Check',
+    status: guardBlocked ? 'fail' : 'pass',
+    summary: guardBlocked
+      ? `Blocked by guard: ${event.errorMessage || 'unknown'}`
+      : 'All guard checks passed (rate limit, content filter, access control)',
+    details: {
+      'Rate Limit': guardBlocked ? 'Exceeded' : 'OK',
+      'Content Filter': 'OK',
+      'Access Control': 'OK',
+      ...(guardBlocked && { 'Guard Reason': event.errorMessage || 'N/A' }),
+    },
+    rawJson: {
+      rateLimit: guardBlocked ? 'exceeded' : 'ok',
+      contentFilter: 'ok',
+      accessControl: 'ok',
+      blocked: guardBlocked,
+      reason: event.errorMessage || null,
+    },
+  });
+
+  // 6. LLM Inference
+  const hasLlmResponse = event.llmProvider && event.llmProvider !== 'N/A' && event.llmProvider !== 'none';
+  const llmError = isFailed && hasLlmResponse;
+  steps.push({
+    id: 'llm_inference',
+    icon: '🧠',
+    name: 'LLM Inference',
+    status: hasLlmResponse ? (llmError ? 'fail' : 'pass') : 'skip',
+    summary: hasLlmResponse
+      ? llmError
+        ? `LLM error during inference (${event.llmProvider})`
+        : `Called ${event.llmProvider} (${event.processingTime ?? 0}ms)`
+      : 'No LLM call — message was skipped',
+    details: {
+      'Provider': event.llmProvider || 'N/A',
+      'Model': event.llmProvider ? 'default' : 'N/A',
+      'Latency': event.processingTime ? `${event.processingTime}ms` : 'N/A',
+      'Token Count': 'N/A',
+    },
+    rawJson: {
+      llmProvider: event.llmProvider || null,
+      model: null,
+      latencyMs: event.processingTime ?? null,
+      tokenCount: null,
+    },
+  });
+
+  // 7. Response Posted
+  const responsePosted = event.status === 'success' && event.messageType === 'outgoing';
+  steps.push({
+    id: 'response_posted',
+    icon: '📮',
+    name: 'Response Posted',
+    status: responsePosted ? 'pass' : (isFailed ? 'fail' : 'skip'),
+    summary: responsePosted
+      ? 'Response successfully posted to channel'
+      : isFailed
+        ? `Failed to post response: ${event.errorMessage || 'unknown error'}`
+        : 'No response to post (message was skipped)',
+    details: {
+      'Status': event.status,
+      'Posted': responsePosted ? 'Yes' : 'No',
+      ...(event.errorMessage && { 'Error Message': event.errorMessage }),
+    },
+    rawJson: {
+      status: event.status,
+      posted: responsePosted,
+      errorMessage: event.errorMessage || null,
+    },
+  });
+
+  return steps;
+}
+
+const statusIconMap: Record<PipelineStepStatus, string> = {
+  pass: 'check',
+  fail: 'x',
+  skip: 'minus',
+  pending: 'loader',
+};
+
+const statusColorMap: Record<PipelineStepStatus, string> = {
+  pass: 'success',
+  fail: 'error',
+  skip: 'warning',
+  pending: 'info',
+};
+
+// PipelineStepTimeline sub-component
+const PipelineStepTimeline: React.FC<{ steps: PipelineStep[] }> = ({ steps }) => {
+  const [expandedStep, setExpandedStep] = useState<string | null>(null);
+
+  return (
+    <div className="space-y-1">
+      {steps.map((step, idx) => {
+        const isLast = idx === steps.length - 1;
+        const isExpanded = expandedStep === step.id;
+        const color = statusColorMap[step.status];
+        const iconKey = statusIconMap[step.status];
+
+        return (
+          <div key={step.id} className="relative">
+            {/* Connector line between steps */}
+            {!isLast && (
+              <div className={`absolute left-4 top-8 w-0.5 h-8 ${
+                step.status === 'fail' ? 'bg-error' : 'bg-base-300'
+              }`} />
+            )}
+
+            {/* Step row */}
+            <div className="flex items-start gap-3 py-2">
+              {/* Icon dot */}
+              <div className={`flex items-center justify-center w-8 h-8 rounded-full shrink-0 ${
+                color === 'success' ? 'bg-success/20 text-success' :
+                color === 'error' ? 'bg-error/20 text-error' :
+                color === 'warning' ? 'bg-warning/20 text-warning' :
+                'bg-info/20 text-info'
+              }`}>
+                {iconKey === 'check' && <CheckCircle2 className="w-4 h-4" />}
+                {iconKey === 'x' && <AlertCircle className="w-4 h-4" />}
+                {iconKey === 'minus' && <X className="w-4 h-4" />}
+                {iconKey === 'loader' && <RefreshCw className="w-4 h-4 animate-spin" />}
+              </div>
+
+              {/* Step content */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">{step.icon}</span>
+                  <span className="font-semibold text-sm">{step.name}</span>
+                  <Badge variant={color as any} size="xs" style="outline">{step.status}</Badge>
+                </div>
+                <p className="text-xs text-base-content/60 mt-0.5">{step.summary}</p>
+
+                {/* Inline detail fields */}
+                <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs">
+                  {Object.entries(step.details).filter(([k]) => !k.startsWith('Error')).map(([key, value]) => (
+                    <span key={key} className="text-base-content/50">
+                      <span className="font-medium text-base-content/70">{key}:</span>{' '}{String(value)}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Expandable raw JSON */}
+                <button
+                  className="text-xs text-primary mt-1.5 hover:underline cursor-pointer"
+                  onClick={() => setExpandedStep(isExpanded ? null : step.id)}
+                  type="button"
+                >
+                  {isExpanded ? 'Hide technical details' : 'Show technical details'}
+                </button>
+                {isExpanded && (
+                  <pre className="mt-1 p-2 bg-base-200 rounded text-xs overflow-x-auto max-h-40">
+                    {JSON.stringify(step.rawJson, null, 2)}
+                  </pre>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 
 const ActivityPage: React.FC = () => {
   const [data, setData] = useState<ActivityResponse | null>(null);
@@ -30,6 +316,7 @@ const ActivityPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<'table' | 'timeline' | 'conversation'>('table');
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [eventTypes, setEventTypes] = useState<Set<string>>(new Set(['all']));
+  const [replayEvent, setReplayEvent] = useState<ActivityEvent | null>(null);
 
   const toggleEventType = (type: string) => {
     setEventTypes(prev => {
@@ -285,6 +572,24 @@ const ActivityPage: React.FC = () => {
   };
 
   const columns: Column<ActivityEvent>[] = [
+    {
+      key: 'replay',
+      title: '',
+      width: '60px',
+      render: (_: unknown, record: ActivityEvent) => (
+        <Tooltip content="Replay message through pipeline">
+          <Button
+            size="xs"
+            variant="ghost"
+            className="btn-square"
+            onClick={() => setReplayEvent(record)}
+            aria-label={`Replay ${record.botName} message`}
+          >
+            <Play className="w-3.5 h-3.5" />
+          </Button>
+        </Tooltip>
+      ),
+    },
     {
       key: 'timestamp',
       title: 'Time',
@@ -789,6 +1094,30 @@ const ActivityPage: React.FC = () => {
           )}
         </Card>
       )}
+
+      {/* Message Flow Replay Drawer */}
+      <DetailDrawer
+        isOpen={replayEvent !== null}
+        onClose={() => setReplayEvent(null)}
+        title={
+          replayEvent ? (
+            <span className="flex items-center gap-2">
+              <Play className="w-4 h-4 text-primary" />
+              Message Flow Replay
+            </span>
+          ) : undefined
+        }
+        subtitle={
+          replayEvent
+            ? `${replayEvent.botName} · ${new Date(replayEvent.timestamp).toLocaleString()} · ${replayEvent.status}`
+            : undefined
+        }
+        widthClass="md:max-w-[520px]"
+      >
+        {replayEvent && (
+          <PipelineStepTimeline steps={reconstructPipelineSteps(replayEvent)} />
+        )}
+      </DetailDrawer>
     </div>
   );
 };

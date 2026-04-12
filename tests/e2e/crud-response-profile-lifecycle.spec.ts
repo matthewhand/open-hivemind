@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { setupAuth } from './test-utils';
+import { setupAuth, registerViteSourceBypass } from './test-utils';
 
 /**
  * Swarm Orchestration Mode E2E Tests

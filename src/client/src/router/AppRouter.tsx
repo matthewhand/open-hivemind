@@ -52,6 +52,7 @@ const SpecsPage = lazy(() => import('../pages/SpecsPage'));
 const SpecDetailPage = lazy(() => import('../pages/SpecDetailPage'));
 const AuditPage = lazy(() => import('../pages/AuditPage'));
 const AdminHealthPage = lazy(() => import('../pages/AdminHealthPage'));
+const ProviderHealthPage = lazy(() => import('../pages/ProviderHealthPage'));
 const WebhookEventsPage = lazy(() => import('../pages/WebhookEventsPage'));
 const OnboardingPage = lazy(() => import('../pages/OnboardingPage'));
 const AboutPage = lazy(() => import('../pages/AboutPage'));
@@ -225,6 +226,7 @@ const AppRouter: React.FC = () => {
           <Route path="specs/:id" element={<ErrorBoundary pageName="Spec Detail"><SpecDetailPage /></ErrorBoundary>} />
           <Route path="audit" element={<ErrorBoundary pageName="Audit"><AuditPage /></ErrorBoundary>} />
           <Route path="health" element={<ErrorBoundary pageName="Health"><AdminHealthPage /></ErrorBoundary>} />
+          <Route path="health/providers" element={<ErrorBoundary pageName="Provider Health"><ProviderHealthPage /></ErrorBoundary>} />
 
           <Route path="webhooks" element={<ErrorBoundary pageName="Webhook Events"><WebhookEventsPage /></ErrorBoundary>} />
           <Route path="api-docs" element={<ErrorBoundary pageName="API Docs"><ApiDocsPage /></ErrorBoundary>} />
