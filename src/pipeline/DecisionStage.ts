@@ -89,11 +89,11 @@ export class DecisionStage {
       const botName = ctx.botName;
 
       // --- Swarm claim check: skip if another bot already claimed ---
-      const alreadyClaimed = swarm.isClaimed(messageId);
+      const existingClaim = swarm.getClaim(messageId);
+      const alreadyClaimed = existingClaim !== undefined && existingClaim !== botId;
       if (alreadyClaimed) {
-        const claim = swarm.getClaim(messageId);
-        const reason = claim
-          ? `Message already claimed by bot ${claim.botId} in swarm`
+        const reason = existingClaim
+          ? `Message already claimed by bot ${existingClaim} in swarm`
           : 'Message already claimed by another bot in swarm';
 
         debug(
@@ -108,7 +108,7 @@ export class DecisionStage {
           channelId,
           shouldReply: false,
           reason,
-          claimedBy: claim?.botId,
+          claimedBy: existingClaim,
         });
 
         await this.bus.emitAsync('message:skipped', { ...ctx, reason });
@@ -120,7 +120,7 @@ export class DecisionStage {
 
       if (decision.shouldReply) {
         // Claim the message for this bot
-        swarm.claimMessage(messageId, botId, ctx.channelId);
+        swarm.claimMessage(messageId, botName);
         debug(
           '[DecisionStage] Message %s: claimed by %s',
           messageId,

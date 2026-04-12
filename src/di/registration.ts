@@ -84,7 +84,9 @@ export function registerServices(): void {
   container.registerSingleton('DemoModeService', DemoModeService);
 
   logger.debug('Registering SwarmCoordinator');
-  container.registerSingleton(TOKENS.SwarmCoordinator, SwarmCoordinator);
+  // SwarmCoordinator uses singleton pattern with private constructor
+  // Register the instance directly instead of the class
+  container.registerInstance(TOKENS.SwarmCoordinator, SwarmCoordinator.getInstance());
 
   logger.info('DI services registered');
 }
