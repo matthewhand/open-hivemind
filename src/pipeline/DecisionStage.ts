@@ -20,6 +20,7 @@
 import Debug from 'debug';
 import { type MessageBus } from '@src/events/MessageBus';
 import type { MessageContext, ReplyDecision } from '@src/events/types';
+import { SwarmCoordinator } from '@src/services/SwarmCoordinator';
 
 const debug = Debug('app:pipeline:decision');
 
@@ -80,12 +81,67 @@ export class DecisionStage {
    */
   async process(ctx: MessageContext): Promise<ReplyDecision> {
     try {
+      const messageId = ctx.message.getMessageId();
+      const botId = (ctx.botConfig.BOT_ID as string) || (ctx.botConfig.botId as string) || '';
+      const swarm = SwarmCoordinator.getInstance();
+      const channelId = ctx.channelId;
+      const botName = ctx.botName;
+
+      // --- Swarm claim check: skip if another bot already claimed ---
+      const existingClaim = swarm.getClaim(messageId);
+      const alreadyClaimed = existingClaim !== undefined && existingClaim.botId !== botId;
+      if (alreadyClaimed) {
+        const reason = existingClaim
+          ? `Message already claimed by bot ${existingClaim.botId} in swarm`
+          : 'Message already claimed by another bot in swarm';
+
+        debug('[DecisionStage] Message %s: skipped (claimed)', messageId);
+
+        // Broadcast decision to WebSocket for Live Orchestration Log
+        this.bus.emit('pipeline:decision', {
+          botName,
+          messageId,
+          channelId,
+          shouldReply: false,
+          reason,
+          claimedBy: existingClaim?.botId,
+        });
+
+        await this.bus.emitAsync('message:skipped', { ...ctx, reason });
+        return { shouldReply: false, reason };
+      }
+
+      // --- Run the decision strategy ---
       const decision = await this.strategy.shouldReply(ctx);
 
       if (decision.shouldReply) {
+        // Claim the message for this bot
+        swarm.claimMessage(messageId, botName);
+        debug('[DecisionStage] Message %s: claimed by %s', messageId, botId);
+
+        // Broadcast decision to WebSocket for Live Orchestration Log
+        this.bus.emit('pipeline:decision', {
+          botName,
+          messageId,
+          channelId,
+          shouldReply: true,
+          reason: decision.reason,
+          ...(decision.meta || {}),
+        });
+
         await this.bus.emitAsync('message:accepted', { ...ctx, decision });
         debug('Message accepted: bot=%s reason=%s', ctx.botName, decision.reason);
       } else {
+        // Broadcast decision to WebSocket for Live Orchestration Log
+        this.bus.emit('pipeline:decision', {
+          botName,
+          messageId,
+          channelId,
+          shouldReply: false,
+          reason: decision.reason,
+          ...(decision.meta || {}),
+        });
+
         await this.bus.emitAsync('message:skipped', { ...ctx, reason: decision.reason });
         debug('Message skipped: bot=%s reason=%s', ctx.botName, decision.reason);
       }
@@ -94,6 +150,15 @@ export class DecisionStage {
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
       debug('Decision strategy error: %O', error);
+
+      // Broadcast error decision to WebSocket for Live Orchestration Log
+      this.bus.emit('pipeline:decision', {
+        botName: ctx.botName,
+        messageId: ctx.message.getMessageId(),
+        channelId: ctx.channelId,
+        shouldReply: false,
+        reason: `error: ${error.message}`,
+      });
 
       await this.bus.emitAsync('message:error', { ...ctx, error, stage: 'decision' });
 

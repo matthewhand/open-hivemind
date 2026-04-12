@@ -6,7 +6,7 @@ import { withRetry } from '../../../utils/withRetry';
 
 export const useBotPreview = () => {
   const [previewBot, setPreviewBot] = useState<BotConfig | null>(null);
-  const [previewTab, setPreviewTab] = useState<'activity' | 'chat' | 'validation'>('activity');
+  const [previewTab, setPreviewTab] = useState<'activity' | 'chat' | 'validation' | 'testdrive'>('activity');
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [logFilter, setLogFilter] = useState('');

@@ -228,7 +228,7 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
             if (!response.ok) return false;
             const data = await response.json();
             return data.ok === true;
-          } catch (err) {
+          } catch {
             return false;
           }
         },
@@ -310,7 +310,7 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
               if (!response.ok) return false;
               const data = await response.json();
               return data.ok === true;
-            } catch (err) {
+            } catch {
               return false;
             }
           },
@@ -327,7 +327,7 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
     return { added };
   }
 
-  async sendMessage(channelId: string, message: string, senderName?: string): Promise<string> {
+  async sendMessage(channelId: string, message: string, _senderName?: string): Promise<string> {
     // Get the first configured bot instance to send the message
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const messengersPath = path.join(configDir, 'providers', 'messengers.json');
@@ -372,7 +372,7 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
     }
   }
 
-  async getMessages(channelId: string, limit?: number): Promise<Message[]> {
+  async getMessages(_channelId: string, _limit?: number): Promise<Message[]> {
     // Telegram Bot API doesn't provide a method to fetch message history
     // This would require storing messages in a local database or using a user client (not bot API)
     // For now, return empty array with a debug message
@@ -419,7 +419,7 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
         this.cachedClientId = botId;
         return botId;
       }
-    } catch (e) {
+    } catch {
       // Fallback to generic ID if config cannot be read
     }
 

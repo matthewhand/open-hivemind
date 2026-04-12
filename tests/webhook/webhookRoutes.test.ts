@@ -10,6 +10,7 @@ jest.mock('@webhook/security/webhookSecurity', () => {
     __esModule: true,
     verifyWebhookToken: jest.fn((req: Request, res: Response, next: Function) => next()),
     verifyIpWhitelist: jest.fn((req: Request, res: Response, next: Function) => next()),
+    verifySlackSignature: jest.fn((req: Request, res: Response, next: Function) => next()),
   };
 });
 

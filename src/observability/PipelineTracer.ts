@@ -262,7 +262,7 @@ export class PipelineTracer {
       for (const span of trace.spans) {
         // Skip the root "pipeline" span — it's the aggregate, not a stage.
         if (span.name === 'pipeline') continue;
-        if (span.durationMs == null) continue;
+        if (span.durationMs === null || span.durationMs === undefined) continue;
 
         stageTotals[span.name] = (stageTotals[span.name] ?? 0) + span.durationMs;
         stageCounts[span.name] = (stageCounts[span.name] ?? 0) + 1;
@@ -300,7 +300,8 @@ export class PipelineTracer {
   private findLastOpenSpan(trace: Trace): Span | undefined {
     // Walk backwards to find the most recently opened span without an endTime.
     for (let i = trace.spans.length - 1; i >= 0; i--) {
-      if (trace.spans[i].endTime == null) return trace.spans[i];
+      if (trace.spans[i].endTime === null || trace.spans[i].endTime === undefined)
+        return trace.spans[i];
     }
     return undefined;
   }

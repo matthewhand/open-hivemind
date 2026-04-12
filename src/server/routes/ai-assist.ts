@@ -46,7 +46,7 @@ class SimpleMessage extends IMessage {
   getChannelUsers(): string[] {
     return [];
   }
-  mentionsUsers(userId: string): boolean {
+  mentionsUsers(_userId: string): boolean {
     return false;
   }
   isFromBot(): boolean {

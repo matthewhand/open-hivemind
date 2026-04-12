@@ -34,7 +34,6 @@ interface ChatInterfaceProps {
   showTypingIndicator?: boolean;
   typingUsers?: string[];
   maxHeight?: string;
-  disabled?: boolean;
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({
@@ -48,7 +47,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   showTypingIndicator = false,
   typingUsers = [],
   maxHeight = '600px',
-  disabled = false,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -294,8 +292,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyPress}
             placeholder={placeholder}
-            className="flex-1"
-            disabled={isLoading || disabled}
+            className="input input-bordered flex-1"
+            disabled={isLoading}
           />
 
           <div className="flex gap-1">
@@ -304,7 +302,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               className="btn btn-ghost btn-square"
               title="Attach file"
               aria-label="Attach file"
-              disabled={disabled}
             >
               📎
             </button>
@@ -312,7 +309,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             <button
               type="submit"
               className="btn btn-primary"
-              disabled={!inputValue.trim() || isLoading || disabled}
+              disabled={!inputValue.trim() || isLoading}
             >
               {isLoading ? <span className="loading loading-spinner" aria-hidden="true"></span> : '➤'}
             </button>

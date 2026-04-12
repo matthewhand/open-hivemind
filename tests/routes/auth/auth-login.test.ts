@@ -2,11 +2,11 @@ import request from 'supertest';
 import { createAuthApp } from '../../helpers/authTestApp';
 
 // Use `var` so the declaration is hoisted above the jest.mock factory calls.
-// eslint-disable-next-line no-var
+
 var mockLogin: jest.Mock;
-// eslint-disable-next-line no-var
+
 var mockLogout: jest.Mock;
-// eslint-disable-next-line no-var
+
 var mockGetUserPermissions: jest.Mock;
 
 jest.mock('../../../src/auth/AuthManager', () => {

@@ -97,7 +97,7 @@ export async function fetchLatestVersionFromGit(
         // ⚡ Bolt Optimization: Replaced synchronous fs.existsSync with async fs.promises.access to prevent event loop blocking.
         await fs.promises.access(path.join(pluginPath, '.git'));
         gitExists = true;
-      } catch (e) {
+      } catch {
         // .git does not exist or is not accessible
       }
 
@@ -166,7 +166,7 @@ export async function fetchChangelog(
     try {
       // ⚡ Bolt Optimization: Replaced synchronous fs.existsSync with async fs.promises.access to prevent event loop blocking.
       await fs.promises.access(path.join(pluginPath, '.git'));
-    } catch (e) {
+    } catch {
       // .git does not exist or is not accessible
       return changelog;
     }

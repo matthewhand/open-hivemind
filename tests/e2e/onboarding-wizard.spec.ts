@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { setupAuth, registerViteSourceBypass } from './test-utils';
+import { registerViteSourceBypass, setupAuth } from './test-utils';
 
 /**
  * Onboarding Wizard E2E Tests

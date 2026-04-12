@@ -114,7 +114,7 @@ export function globalErrorHandler(
   error: unknown,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ): void {
   // Convert error to BaseHivemindError
   const hivemindError = ErrorFactory.createError(error, {

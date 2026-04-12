@@ -106,18 +106,17 @@ export const MCPServerModals: React.FC<MCPServerModalsProps> = ({
                     {tool.description || 'No description provided.'}
                   </p>
                   {tool.inputSchema && (
-                    <Accordion
-                      items={[{
-                        id: `schema-${idx}`,
-                        title: 'Input Schema',
-                        content: (
-                          <CodeBlock>
-                            {JSON.stringify(tool.inputSchema, null, 2)}
-                          </CodeBlock>
-                        ),
-                      }]}
-                      size="sm"
-                    />
+                    <div className="collapse collapse-arrow bg-base-200">
+                      <input type="checkbox" />
+                      <div className="collapse-title text-xs font-medium uppercase opacity-50">
+                        Input Schema
+                      </div>
+                      <div className="collapse-content">
+                        <pre className="text-xs bg-base-300 p-2 rounded overflow-x-auto">
+                          {JSON.stringify(tool.inputSchema, null, 2)}
+                        </pre>
+                      </div>
+                    </div>
                   )}
                 </div>
               ))}

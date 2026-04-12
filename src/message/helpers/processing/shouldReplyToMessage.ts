@@ -617,13 +617,14 @@ async function evaluateReplyDecision(
   const bus = MessageBus.getInstance();
   bus.emit('pipeline:decision', {
     botName: nameCandidates[0] || 'Unknown',
+    messageId: message.getMessageId(),
+    channelId: message.getChannelId(),
     shouldReply: decision,
     reason: prose,
     probabilityRoll: Number(roll.toPrecision(3)),
     threshold: Number(chance.toPrecision(3)),
     meta: {
       ...modsObject,
-      channelId: message.getChannelId(),
     },
   });
 

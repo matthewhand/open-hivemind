@@ -20,6 +20,7 @@ import { BotManager } from '../managers/BotManager';
 import { RealTimeValidationService } from '../server/services/RealTimeValidationService';
 import { WebSocketService } from '../server/services/WebSocketService';
 import DemoModeService from '../services/DemoModeService';
+import { SwarmCoordinator } from '../services/SwarmCoordinator';
 import { container, TOKENS } from './container';
 
 const logger = Logger.withContext('DI');
@@ -82,7 +83,12 @@ export function registerServices(): void {
   logger.debug('Registering DemoModeService');
   container.registerSingleton('DemoModeService', DemoModeService);
 
-  logger.info('✅ DI services registered');
+  logger.debug('Registering SwarmCoordinator');
+  // SwarmCoordinator uses singleton pattern with private constructor
+  // Register the instance directly instead of the class
+  container.registerInstance(TOKENS.SwarmCoordinator, SwarmCoordinator.getInstance());
+
+  logger.info('DI services registered');
 }
 
 /**
@@ -109,6 +115,7 @@ export function validateRegistrations(): void {
     'MCPProviderManager',
     TOKENS.WebSocketService,
     TOKENS.RealTimeValidationService,
+    TOKENS.SwarmCoordinator,
   ];
 
   let hasErrors = false;

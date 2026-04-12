@@ -13,14 +13,6 @@ import {
 import PageHeader from '../components/DaisyUI/PageHeader';
 import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
 import { Alert } from '../components/DaisyUI/Alert';
-import { Badge } from '../components/DaisyUI/Badge';
-import Toggle from '../components/DaisyUI/Toggle';
-import Divider from '../components/DaisyUI/Divider';
-import { LoadingSpinner } from '../components/DaisyUI/Loading';
-import Card from '../components/DaisyUI/Card';
-import Mockup from '../components/DaisyUI/Mockup';
-import Input from '../components/DaisyUI/Input';
-import Textarea from '../components/DaisyUI/Textarea';
 import Debug from 'debug';
 
 const debug = Debug('app:client:pages:MCPToolsTestingPage');
@@ -187,12 +179,12 @@ const MCPToolsTestingPage: React.FC = () => {
         </label>
 
         {type === 'boolean' ? (
-          <Toggle
-            color="primary"
+          <input
+            type="checkbox"
+            className="toggle toggle-primary"
             checked={formData[key] || false}
             onChange={(e) => handleInputChange(key, e.target.checked, type)}
             disabled={testing}
-            aria-label={`Toggle ${key}`}
           />
         ) : type === 'integer' || type === 'number' ? (
           <Input

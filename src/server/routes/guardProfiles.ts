@@ -35,7 +35,7 @@ router.get(
     try {
       const profiles = loadGuardrailProfiles();
       return res.json(ApiResponse.success(profiles));
-    } catch (error: unknown) {
+    } catch {
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to load guardrail profiles'));
@@ -58,7 +58,7 @@ router.get(
       }
 
       return res.json(ApiResponse.success(profile));
-    } catch (error: unknown) {
+    } catch {
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to retrieve profile'));
@@ -153,7 +153,7 @@ router.post(
       saveGuardrailProfiles(profiles);
 
       return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success(newProfile));
-    } catch (error: unknown) {
+    } catch {
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to create guard profile'));
@@ -217,7 +217,7 @@ router.put(
       saveGuardrailProfiles(profiles);
 
       return res.json(ApiResponse.success(updatedProfile));
-    } catch (error: unknown) {
+    } catch {
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to update guard profile'));
@@ -243,7 +243,7 @@ router.delete(
       saveGuardrailProfiles(filteredProfiles);
 
       return res.json(ApiResponse.success());
-    } catch (error: unknown) {
+    } catch {
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to delete guard profile'));
@@ -273,7 +273,7 @@ router.post(
           requestedCount: ids.length,
         })
       );
-    } catch (error: unknown) {
+    } catch {
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to delete guard profiles'));
@@ -325,7 +325,7 @@ router.post(
           enabled,
         })
       );
-    } catch (error: unknown) {
+    } catch {
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to toggle guard profiles'));
@@ -457,7 +457,7 @@ router.post(
       const overallResult = results.some((r) => r.result === 'blocked') ? 'blocked' : 'allowed';
 
       return res.json(ApiResponse.success({ overallResult, results }));
-    } catch (error: unknown) {
+    } catch {
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to test guard profile'));

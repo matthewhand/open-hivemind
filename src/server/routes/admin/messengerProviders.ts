@@ -10,30 +10,26 @@ import {
   UpdateMessengerProviderSchema,
 } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
-import { sanitizeProfiles } from '../../utils/sanitizeConfig';
 
 const router = Router();
 
 // GET /messenger-providers - Get all messenger providers
-router.get(
-  '/messenger-providers',
-  asyncErrorHandler(async (req: Request, res: Response) => {
-    try {
-      const providers = await webUIStorage.getMessengerProviders();
-      return res.json({
-        success: true,
-        data: { providers: sanitizeProfiles(providers) },
-        message: 'Messenger providers retrieved successfully',
-      });
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        error: 'Failed to retrieve messenger providers',
-        message: hivemindError.message || 'An error occurred while retrieving messenger providers',
-      });
-    }
-  })
-);
+router.get('/messenger-providers', (req: Request, res: Response) => {
+  try {
+    const providers = webUIStorage.getMessengerProviders();
+    return res.json({
+      success: true,
+      data: { providers },
+      message: 'Messenger providers retrieved successfully',
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      error: 'Failed to retrieve messenger providers',
+      message: hivemindError.message || 'An error occurred while retrieving messenger providers',
+    });
+  }
+});
 
 /**
  * @openapi

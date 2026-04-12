@@ -230,7 +230,7 @@ router.get('/export', asyncErrorHandler(async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Content-Disposition', `attachment; filename="config-export-${new Date().toISOString().slice(0, 10)}.json"`);
     return res.send(json);
-  } catch (error: unknown) {
+  } catch {
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to export configuration'));
@@ -411,7 +411,7 @@ router.put('/global', configLimiter, validateRequest(ConfigUpdateSchema), async 
     try {
       const data = await fs.promises.readFile(targetPath, 'utf8');
       fileContent = JSON.parse(data);
-    } catch (e) {
+    } catch {
       // ignore
     }
 
@@ -464,7 +464,7 @@ router.get('/system-status', async (_req, res) => {
       providers: providers.map((p: any) => ({ id: p.id, name: p.name, type: p.type })),
       nodeVersion: process.version,
     });
-  } catch (error: unknown) {
+  } catch {
     return res.status(500).json({ error: 'Failed to retrieve system status' });
   }
 });

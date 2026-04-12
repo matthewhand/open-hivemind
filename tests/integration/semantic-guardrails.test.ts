@@ -56,13 +56,13 @@ describe('Semantic Guardrails Integration', () => {
     (SemanticGuardrailService.getInstance as jest.Mock).mockReturnValue(mockSemanticService);
 
     // Set up default mocks for pipeline dependencies
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+
     const { getMessengerProvider } = require('@message/management/getMessengerProvider');
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+
     const { getLlmProviderForBot } = require('@src/llm/getLlmProvider');
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+
     const { toolAugmentedCompletion } = require('@src/services/toolAugmentedCompletion');
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+
     const {
       shouldReplyToMessage,
     } = require('@src/message/helpers/processing/shouldReplyToMessage');
@@ -157,9 +157,9 @@ describe('Semantic Guardrails Integration', () => {
       });
 
       // Mock other dependencies to allow message processing to continue
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+
       const { getMessengerProvider } = require('@message/management/getMessengerProvider');
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+
       const { getLlmProviderForBot } = require('@src/llm/getLlmProvider');
 
       const mockMessageProvider = {
@@ -214,9 +214,9 @@ describe('Semantic Guardrails Integration', () => {
       });
 
       // Mock other dependencies
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+
       const { getMessengerProvider } = require('@message/management/getMessengerProvider');
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+
       const { getLlmProviderForBot } = require('@src/llm/getLlmProvider');
 
       const mockMessageProvider = {
@@ -279,9 +279,9 @@ describe('Semantic Guardrails Integration', () => {
       mockSemanticService.evaluateInput.mockRejectedValue(new Error('LLM service unavailable'));
 
       // Mock other dependencies
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+
       const { getMessengerProvider } = require('@message/management/getMessengerProvider');
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+
       const { getLlmProviderForBot } = require('@src/llm/getLlmProvider');
 
       const mockMessageProvider = {

@@ -52,7 +52,7 @@ export async function initProviders() {
                 ) {
                   providerRegistry.register(instance);
                 }
-              } catch (e) {
+              } catch {
                 // Ignore instantiation errors (e.g. requires args, or abstract class)
               }
             }

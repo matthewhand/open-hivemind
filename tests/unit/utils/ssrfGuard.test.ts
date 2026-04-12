@@ -41,30 +41,30 @@ describe('ssrfGuard', () => {
 
   describe('isSafeUrl', () => {
     it('should reject invalid URLs', async () => {
-      expect(await isSafeUrl('not-a-url')).toBe(false);
-      expect(await isSafeUrl('')).toBe(false);
+      expect((await isSafeUrl('not-a-url')).safe).toBe(false);
+      expect((await isSafeUrl('')).safe).toBe(false);
     });
 
     it('should reject non-HTTP protocols', async () => {
-      expect(await isSafeUrl('ftp://example.com')).toBe(false);
-      expect(await isSafeUrl('file:///etc/passwd')).toBe(false);
-      expect(await isSafeUrl('javascript:alert(1)')).toBe(false);
+      expect((await isSafeUrl('ftp://example.com')).safe).toBe(false);
+      expect((await isSafeUrl('file:///etc/passwd')).safe).toBe(false);
+      expect((await isSafeUrl('javascript:alert(1)')).safe).toBe(false);
     });
 
     it('should allow HTTP/HTTPS/WS/WSS protocols', async () => {
-      expect(await isSafeUrl('http://example.com')).toBe(true);
-      expect(await isSafeUrl('https://example.com')).toBe(true);
-      expect(await isSafeUrl('ws://example.com')).toBe(true);
-      expect(await isSafeUrl('wss://example.com')).toBe(true);
+      expect((await isSafeUrl('http://example.com')).safe).toBe(true);
+      expect((await isSafeUrl('https://example.com')).safe).toBe(true);
+      expect((await isSafeUrl('ws://example.com')).safe).toBe(true);
+      expect((await isSafeUrl('wss://example.com')).safe).toBe(true);
     });
 
     it('should reject private IP URLs when ALLOW_LOCAL_NETWORK_ACCESS is not set', async () => {
       const originalEnv = process.env.ALLOW_LOCAL_NETWORK_ACCESS;
       delete process.env.ALLOW_LOCAL_NETWORK_ACCESS;
 
-      expect(await isSafeUrl('http://127.0.0.1')).toBe(false);
-      expect(await isSafeUrl('http://192.168.1.1')).toBe(false);
-      expect(await isSafeUrl('http://10.0.0.1')).toBe(false);
+      expect((await isSafeUrl('http://127.0.0.1')).safe).toBe(false);
+      expect((await isSafeUrl('http://192.168.1.1')).safe).toBe(false);
+      expect((await isSafeUrl('http://10.0.0.1')).safe).toBe(false);
 
       process.env.ALLOW_LOCAL_NETWORK_ACCESS = originalEnv;
     });
@@ -73,15 +73,17 @@ describe('ssrfGuard', () => {
       const originalEnv = process.env.ALLOW_LOCAL_NETWORK_ACCESS;
       process.env.ALLOW_LOCAL_NETWORK_ACCESS = 'true';
 
-      expect(await isSafeUrl('http://127.0.0.1')).toBe(true);
-      expect(await isSafeUrl('http://192.168.1.1')).toBe(true);
+      expect((await isSafeUrl('http://127.0.0.1')).safe).toBe(true);
+      expect((await isSafeUrl('http://192.168.1.1')).safe).toBe(true);
 
       process.env.ALLOW_LOCAL_NETWORK_ACCESS = originalEnv;
     });
 
     it('should reject DNS resolution failures', async () => {
       // Non-existent domain will fail DNS resolution
-      expect(await isSafeUrl('http://this-domain-definitely-does-not-exist-12345.com')).toBe(false);
+      expect((await isSafeUrl('http://this-domain-definitely-does-not-exist-12345.com')).safe).toBe(
+        false
+      );
     });
   });
 });

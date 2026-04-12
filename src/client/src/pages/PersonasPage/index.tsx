@@ -14,6 +14,7 @@ import Join from '../../components/DaisyUI/Join';
 import Card from '../../components/DaisyUI/Card';
 import DetailDrawer from '../../components/DaisyUI/DetailDrawer';
 import Divider from '../../components/DaisyUI/Divider';
+import { ConfirmModal } from '../../components/DaisyUI/Modal';
 import Tabs from '../../components/DaisyUI/Tabs';
 import Toggle from '../../components/DaisyUI/Toggle';
 import { PersonaModal } from '../../components/Personas/PersonaModal';
@@ -24,6 +25,7 @@ import { usePersonaActions } from './hooks/usePersonaActions';
 import { usePersonasData, type Persona } from './hooks/usePersonasData';
 import { PersonaList } from './PersonaList';
 import { PersonaStats } from './PersonaStats';
+import { useSavedStamp } from '../../contexts/SavedStampContext';
 
 const CATEGORIES = [
   { id: 'all', label: 'All Categories' },
@@ -156,6 +158,7 @@ const PersonasPage: React.FC = () => {
   const successToast = useSuccessToast();
   const errorToast = useErrorToast();
   const infoToast = useInfoToast();
+  const { showStamp } = useSavedStamp();
   const isMobile = useIsBelowBreakpoint('md');
   const [searchParams, setSearchParams] = useSearchParams();
   const [error, setError] = useState<string | null>(null);
@@ -221,7 +224,8 @@ const PersonasPage: React.FC = () => {
     successToast,
     errorToast,
     infoToast,
-    bulk
+    bulk,
+    showStamp
   );
 
   const [saving, setSaving] = useState(false);
@@ -251,15 +255,8 @@ const PersonasPage: React.FC = () => {
   const displayError = error || dataError;
 
   return (
-    <div>
-      <div className="px-6 pt-6 pb-2">
-        <h1 className="text-2xl font-bold">Personas</h1>
-        <p className="text-base-content/60 text-sm mt-1">Define bot personalities, system prompts, and response styles</p>
-      </div>
-      <div className="px-6 pb-6 space-y-6">
-      {displayError && (
-        <Alert status="error" message={displayError} onClose={() => setError(null)} />
-      )}
+    <div className="space-y-6">
+      {displayError && <Alert type="error" message={displayError} onClose={() => setError(null)} />}
 
       <Tabs
         variant="lifted"
@@ -313,66 +310,49 @@ const PersonasPage: React.FC = () => {
         ]}
       />
 
-      {/* Persona Detail Drawer */}
       <DetailDrawer
         isOpen={!!selectedPersona}
         onClose={() => setSelectedPersona(null)}
-        title={selectedPersona?.name}
-        subtitle={selectedPersona?.description}
+        title={selectedPersona?.name || 'Persona Details'}
         renderDock={
           selectedPersona && (
             <>
-              {!selectedPersona.isBuiltIn && (
-                <button
-                  className="text-info hover:bg-info/10 transition-colors"
-                  onClick={() => {
-                    setSelectedPersona(null);
-                    openEditModal(selectedPersona);
-                  }}
-                  title="Edit Persona"
-                >
-                  <Edit2 className="w-5 h-5" />
-                  <span className="dock-label text-[10px]">Edit</span>
-                </button>
-              )}
               <button
-                className="text-primary hover:bg-primary/10 transition-colors"
+                className="text-info hover:bg-info/10 transition-colors"
+                onClick={() => {
+                  setSelectedPersona(null);
+                  openEditModal(selectedPersona);
+                }}
+                title="Edit Persona"
+              >
+                <Edit2 className="w-5 h-5" />
+                <span className="dock-label text-[10px]">Edit</span>
+              </button>
+              <button
+                className="text-secondary hover:bg-secondary/10 transition-colors"
                 onClick={() => {
                   setSelectedPersona(null);
                   openCloneModal(selectedPersona);
                 }}
-                title="Duplicate Persona"
+                title="Clone Persona"
               >
                 <Copy className="w-5 h-5" />
-                <span className="dock-label text-[10px]">Duplicate</span>
+                <span className="dock-label text-[10px]">Clone</span>
               </button>
-              {!selectedPersona.isBuiltIn && (
-                <button
-                  className="text-error hover:bg-error/10 transition-colors"
-                  onClick={() => {
-                    setSelectedPersona(null);
-                    handleDeletePersona(selectedPersona.id, (msg) => setError(msg));
-                  }}
-                  title="Delete Persona"
-                >
-                  <Trash2 className="w-5 h-5" />
-                  <span className="dock-label text-[10px]">Delete</span>
-                </button>
-              )}
+              <button
+                className="text-error hover:bg-error/10 transition-colors"
+                onClick={() => handleDeletePersona(selectedPersona.id)}
+                title="Delete Persona"
+              >
+                <Trash2 className="w-5 h-5" />
+                <span className="dock-label text-[10px]">Delete</span>
+              </button>
             </>
           )
         }
       >
         {selectedPersona && (
           <div className="space-y-6">
-            {/* Category & Status */}
-            <div className="flex flex-wrap gap-2">
-              {selectedPersona.category && (
-                <Badge variant="neutral">{selectedPersona.category}</Badge>
-              )}
-              {selectedPersona.isBuiltIn && <Badge variant="info">Built-in</Badge>}
-            </div>
-
             {/* Assigned Bots */}
             {(selectedPersona.assignedBotNames?.length ?? 0) > 0 && (
               <Card className="bg-base-200">
@@ -451,7 +431,6 @@ const PersonasPage: React.FC = () => {
         confirmVariant="error"
         loading={deleting}
       />
-      </div>
     </div>
   );
 };

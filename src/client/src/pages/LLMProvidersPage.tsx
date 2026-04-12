@@ -125,7 +125,7 @@ const ProfilesTab: React.FC<{
   onTestProfile,
 }) => {
   const getProviderIcon = (type: string) => {
-    const config = LLM_PROVIDER_CONFIGS[type as LLMProviderType];
+    const config = (LLM_PROVIDER_CONFIGS as any)[type as any];
     return config?.icon || <BrainIcon className="w-5 h-5" />;
   };
 
@@ -146,7 +146,7 @@ const ProfilesTab: React.FC<{
     <div className="space-y-6">
       <div className="flex justify-end mb-4">
         <div className="flex gap-2">
-          <Button variant="outline" onClick={onRefresh} disabled={loading} aria-busy={loading}>
+          <Button variant="ghost" onClick={onRefresh} disabled={loading} aria-busy={loading}>
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
           </Button>
           <Button variant="primary" onClick={onAddProfile}>
@@ -264,7 +264,7 @@ const ProfilesTab: React.FC<{
                     {onTestProfile && (
                       <Button
                         size="sm"
-                        variant="outline"
+                        variant="ghost"
                         className="text-success hover:bg-success/10"
                         aria-label={`Test ${profile.name} provider`}
                         onClick={() => onTestProfile(profile.key, profile.provider)}
@@ -272,12 +272,12 @@ const ProfilesTab: React.FC<{
                         <ChatIcon className="w-4 h-4" />
                       </Button>
                     )}
-                    <Button size="sm" variant="outline" aria-label={`Edit ${profile.name} profile`} onClick={() => onEditProfile(profile)}>
+                    <Button size="sm" variant="ghost" aria-label={`Edit ${profile.name} profile`} onClick={() => onEditProfile(profile)}>
                       <EditIcon className="w-4 h-4" />
                     </Button>
                     <Button
                       size="sm"
-                      variant="outline"
+                      variant="ghost"
                       className="text-error hover:bg-error/10"
                       aria-label={`Delete ${profile.name} profile`}
                       onClick={() => onDeleteProfile(profile.key)}
@@ -375,7 +375,7 @@ const SettingsTab: React.FC<{
   const [advancedMode, setAdvancedMode] = useState(false);
 
   const getProviderIcon = (type: string) => {
-    const config = LLM_PROVIDER_CONFIGS[type as LLMProviderType];
+    const config = (LLM_PROVIDER_CONFIGS as any)[type as any];
     return config?.icon || <BrainIcon className="w-5 h-5" />;
   };
 
@@ -933,21 +933,23 @@ const LLMProvidersPage: React.FC = () => {
           activeTab={activeTab}
           onChange={handleTabChange}
         />
-
-        <ProviderConfigModal
-          modalState={{ ...modalState, providerType: 'llm' }}
-          existingProviders={profiles}
-          onClose={closeModal}
-          onSubmit={handleProviderSubmit}
-        />
       </div>
 
-      {/* Test Chat Drawer */}
+      <ProviderConfigModal
+        modalState={modalState}
+        onClose={closeModal}
+        onSubmit={handleProviderSubmit}
+        existingProviders={profiles}
+      />
+
       {testProfileKey && (
         <LlmTestChat
           providerKey={testProfileKey}
           providerType={testProviderType}
-          onClose={() => setTestProfileKey(null)}
+          onClose={() => {
+            setTestProfileKey(null);
+            setTestProviderType('');
+          }}
         />
       )}
     </div>

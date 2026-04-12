@@ -1,20 +1,45 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { HelpCircle } from 'lucide-react';
+import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Cpu, Rocket, X, HelpCircle } from 'lucide-react';
 import Dashboard from '../../components/Dashboard';
 import { apiService } from '../../services/api';
-import Toggle from '../../components/DaisyUI/Toggle';
+
+import Carousel from '../../components/DaisyUI/Carousel';
 import DashboardWidgetSystem from '../../components/DaisyUI/DashboardWidgetSystem';
-import GettingStarted from '../../components/GettingStarted';
+import WelcomeSplash from '../../components/WelcomeSplash';
 import QuickActions from '../../components/QuickActions';
 import PendingActions from '../../components/PendingActions';
+import { Alert } from '../../components/DaisyUI/Alert';
+import { LoadingSpinner } from '../../components/DaisyUI/Loading';
+import Button from '../../components/DaisyUI/Button';
+import Toggle from '../../components/DaisyUI/Toggle';
+
+const SystemHealth = lazy(() => import('../../components/SystemHealth'));
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'dashboard';
   const [checked, setChecked] = useState(false);
+  const [needsSetup, setNeedsSetup] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [announcementDesc, setAnnouncementDesc] = useState<string>('');
   const [showGettingStarted, setShowGettingStarted] = useState(
     () => localStorage.getItem('hivemind-hide-getting-started') !== 'true',
   );
+
+  // Fetch announcement text
+  useEffect(() => {
+    apiService.get<{ announcement?: string }>('/api/dashboard/announcement')
+      .then((data: any) => {
+        const text = data?.announcement || '';
+        if (text) {
+          const firstLine = text.split('\n').find((l: string) => l.trim()) || '';
+          setAnnouncementDesc(firstLine.length > 120 ? firstLine.slice(0, 120) + '...' : firstLine);
+        }
+      })
+      .catch(() => { /* no announcement */ });
+  }, []);
 
   // Track preference for widget vs static layout
   const [useWidgetLayout, setUseWidgetLayout] = useState(() => {
@@ -36,15 +61,34 @@ const DashboardPage: React.FC = () => {
           navigate('/onboarding', { replace: true });
           return;
         }
+
+        // Even if onboarding is "completed", check if LLM is actually configured.
+        // This catches the case where bots exist from env but no LLM key is set.
+        try {
+          const configStatus = await apiService.get<any>('/api/dashboard/config-status');
+          const status = configStatus?.data || configStatus;
+          const anyIncomplete = !status.llmConfigured || !status.botConfigured || !status.messengerConfigured;
+          setShowWelcome(anyIncomplete);
+          if (anyIncomplete) {
+            setNeedsSetup(true);
+          }
+        } catch { /* proceed normally */ }
       } catch {
         // If the endpoint is unavailable, proceed to dashboard normally
       }
       setChecked(true);
     };
-    // Check once on mount — no polling needed here.
-    // The GettingStarted component handles config-status on its own refresh cycle.
     checkOnboarding();
+
+    // Poll every 5 seconds to check if config has been updated
+    const interval = setInterval(checkOnboarding, 5000);
+    return () => clearInterval(interval);
   }, [navigate]);
+
+  const dashboardTabs = useMemo(() => [
+    { key: 'dashboard', label: 'Dashboard' },
+    { key: 'health', label: 'Health' },
+  ], []);
 
   if (!checked) {
     return null; // brief blank while checking onboarding status
@@ -60,23 +104,103 @@ const DashboardPage: React.FC = () => {
     setShowGettingStarted(true);
   };
 
-  const gettingStartedVisible = showGettingStarted;
+  const carouselItems = [
+    { image: '', title: '🤖 Configure Your First Bot', description: 'Set up an AI agent — assign a persona, connect a messaging platform, and choose an LLM provider.', bgGradient: 'linear-gradient(135deg, #4f46e5, #7c3aed)', link: '/admin/bots' },
+    { image: '', title: '🧠 Connect an LLM Provider', description: 'Add your OpenAI, Anthropic, Flowise, or Ollama API key to power bot responses.', bgGradient: 'linear-gradient(135deg, #059669, #10b981)', link: '/admin/providers/llm' },
+    { image: '', title: '🎭 Create a Persona', description: 'Give your bot a unique personality — name, system prompt, response behavior, and avatar.', bgGradient: 'linear-gradient(135deg, #0891b2, #06b6d4)', link: '/admin/personas' },
+    { image: '', title: '🛡️ Set Up Guard Profiles', description: 'Add safety rules — access control, rate limiting, and content filtering for your bots.', bgGradient: 'linear-gradient(135deg, #d97706, #f59e0b)', link: '/admin/guards' },
+    { image: '', title: '📊 Real-time Monitoring', description: 'Monitor bot performance, message volume, response times, and system health.', bgGradient: 'linear-gradient(135deg, #7c3aed, #a855f7)', link: '/admin/monitoring' },
+    { image: '', title: '📋 Announcements', description: announcementDesc || 'Check out what\'s new and what\'s coming next.', bgGradient: 'linear-gradient(135deg, #1e40af, #3b82f6)', link: 'https://github.com/matthewhand/open-hivemind/blob/main/ANNOUNCEMENT.md' },
+  ];
+
+  const handleSlideClick = (item: { link?: string }) => {
+    if (item.link) {
+      if (item.link.startsWith('http')) {
+        window.open(item.link, '_blank');
+      } else {
+        navigate(item.link);
+      }
+    }
+  };
+
+  const gettingStartedVisible = showGettingStarted || needsSetup;
+
+  const setTab = (tab: string) => {
+    if (tab === 'dashboard') {
+      searchParams.delete('tab');
+      setSearchParams(searchParams);
+    } else {
+      setSearchParams({ tab });
+    }
+  };
 
   return (
     <div>
-      {/* Getting Started checklist — visible until user dismisses */}
+      <div className="flex justify-end items-center mb-4 px-4 gap-3 bg-base-100/50 p-2 rounded-lg shadow-sm w-fit ml-auto">
+        <span className="text-sm font-medium opacity-80">Static Layout</span>
+        <input
+          type="checkbox"
+          className="toggle toggle-primary"
+          checked={useWidgetLayout}
+          onChange={(e) => setUseWidgetLayout(e.target.checked)}
+          aria-label="Toggle widget dashboard layout"
+        />
+        <div className="mt-4">
+
+      {activeTab === 'health' ? (
+          <Suspense fallback={<LoadingSpinner size="lg" />}>
+            <SystemHealth refreshInterval={30000} />
+          </Suspense>
+      ) : (
+      <div>
+      {/* Getting Started section — visible when user hasn't dismissed or setup is incomplete */}
       {gettingStartedVisible && (
-        <div className="mb-6">
-          <GettingStarted onDismiss={dismissGettingStarted} />
+        <div className="mx-4 mb-6 rounded-xl bg-base-200/50 border border-base-300 p-5">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-base-content/60">Getting Started</h3>
+            <button
+              className="btn btn-ghost btn-xs gap-1 text-base-content/40 hover:text-base-content/70"
+              onClick={dismissGettingStarted}
+              title="Hide Getting Started"
+            >
+              <X className="w-4 h-4" />
+              Hide
+            </button>
+          </div>
+
+          {/* Welcome Splash - shown when config is incomplete */}
+          {showWelcome && (
+            <div className="max-w-7xl mx-auto mb-4">
+              <WelcomeSplash />
+            </div>
+          )}
+
+          {/* Incomplete setup prompt - shown when needs setup but not showing welcome */}
+          {needsSetup && !showWelcome && (
+            <div className="max-w-7xl mx-auto mb-4">
+              <Alert status="warning" className="shadow-lg" onClose={() => setNeedsSetup(false)}>
+                <Cpu className="w-5 h-5 shrink-0" />
+                <div className="flex-1">
+                  <strong>Setup incomplete</strong> — no LLM provider is configured yet. Your bots won't be able to generate responses.
+                </div>
+                <Button variant="primary" size="sm" onClick={() => navigate('/onboarding')}>
+                  <Rocket className="w-4 h-4 mr-1" />
+                  Run Setup Wizard
+                </Button>
+              </Alert>
+            </div>
+          )}
+
+          <Carousel items={carouselItems} autoplay={true} interval={6000} variant="full-width" onSlideClick={handleSlideClick} />
         </div>
       )}
 
       <PendingActions />
 
-      <div className="divider" />
+      <div className="divider mx-4" />
 
       {/* Overview heading + controls */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 px-4">
         <div className="flex items-center gap-3">
           <h3 className="text-sm font-bold uppercase tracking-wider text-base-content/60">Overview</h3>
           {!gettingStartedVisible && (
@@ -113,6 +237,10 @@ const DashboardPage: React.FC = () => {
           <Dashboard />
         </div>
       )}
+    </div>
+      )}
+    </div>
+      </div>
     </div>
   );
 };

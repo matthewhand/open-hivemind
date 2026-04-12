@@ -43,8 +43,7 @@ export const PersonaList: React.FC<PersonaListProps> = ({
     <>
       <div className="flex items-center gap-2 mb-2">
         <Checkbox
-          variant="primary"
-          size="sm"
+          className="checkbox checkbox-sm checkbox-primary"
           checked={bulk.isAllSelected}
           onChange={() => bulk.toggleAll(filteredPersonaIds)}
           aria-label="Select all personas"

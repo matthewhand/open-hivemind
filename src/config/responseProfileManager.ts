@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
 import type { ResponseProfileOverrideKey} from './responseProfiles';
+import type { SwarmMode } from '../validation/schemas/configProfilesSchema';
 
 const debug = Debug('app:responseProfileManager');
 
@@ -11,7 +12,8 @@ export interface ResponseProfile {
     description?: string;
     enabled?: boolean;
     isBuiltIn?: boolean;
-    settings: Partial<Record<ResponseProfileOverrideKey, number | boolean>>;
+    swarmMode?: SwarmMode;
+    settings: Partial<Record<ResponseProfileOverrideKey, number | boolean>> & { SWARM_MODE?: SwarmMode };
 }
 
 // Built-in profiles that cannot be deleted
@@ -49,46 +51,62 @@ const getProfilesPath = (): string => {
   return path.join(configDir, 'response-profiles.json');
 };
 
+let cachedProfiles: ResponseProfile[] | null = null;
+let profileMap: Map<string, ResponseProfile> = new Map();
+
 export const loadResponseProfiles = (): ResponseProfile[] => {
+  if (cachedProfiles) {
+    return cachedProfiles;
+  }
+
   const filePath = getProfilesPath();
+  let result: ResponseProfile[] = [];
+
   try {
     if (!fs.existsSync(filePath)) {
       // Return built-in profiles as defaults
-      return BUILT_IN_PROFILES.map(p => ({ ...p, settings: { ...p.settings } }));
-    }
-    const raw = fs.readFileSync(filePath, 'utf8');
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) {
-      throw new Error('response profiles must be an array');
-    }
-
-    // Merge with built-ins, ensuring built-ins always exist
-    const userProfiles = parsed as ResponseProfile[];
-    const result: ResponseProfile[] = [];
-
-    // Add built-ins first
-    for (const builtIn of BUILT_IN_PROFILES) {
-      const userVersion = userProfiles.find(p => p.key === builtIn.key);
-      if (userVersion) {
-        // Allow customization of built-in but mark it
-        result.push({ ...userVersion, isBuiltIn: true });
-      } else {
-        result.push({ ...builtIn, settings: { ...builtIn.settings } });
+      result = BUILT_IN_PROFILES.map((p) => ({ ...p, settings: { ...p.settings } }));
+    } else {
+      const raw = fs.readFileSync(filePath, 'utf8');
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) {
+        throw new Error('response profiles must be an array');
       }
-    }
 
-    // Add user profiles (non-built-in)
-    for (const profile of userProfiles) {
-      if (!BUILT_IN_PROFILES.some(b => b.key === profile.key)) {
-        result.push({ ...profile, isBuiltIn: false });
+      // Merge with built-ins, ensuring built-ins always exist
+      const userProfiles = parsed as ResponseProfile[];
+      const merged: ResponseProfile[] = [];
+
+      // Add built-ins first
+      for (const builtIn of BUILT_IN_PROFILES) {
+        const userVersion = userProfiles.find((p) => p.key === builtIn.key);
+        if (userVersion) {
+          // Allow customization of built-in but mark it
+          merged.push({ ...userVersion, isBuiltIn: true });
+        } else {
+          merged.push({ ...builtIn, settings: { ...builtIn.settings } });
+        }
       }
-    }
 
-    return result;
+      // Add user profiles (non-built-in)
+      for (const profile of userProfiles) {
+        if (!BUILT_IN_PROFILES.some((b) => b.key === profile.key)) {
+          merged.push({ ...profile, isBuiltIn: false });
+        }
+      }
+      result = merged;
+    }
   } catch (error) {
     debug('Failed to load response profiles, using defaults:', error);
-    return BUILT_IN_PROFILES.map(p => ({ ...p, settings: { ...p.settings } }));
+    result = BUILT_IN_PROFILES.map((p) => ({ ...p, settings: { ...p.settings } }));
   }
+
+  cachedProfiles = result;
+  profileMap.clear();
+  for (const p of result) {
+    profileMap.set(p.key.toLowerCase(), p);
+  }
+  return result;
 };
 
 export const saveResponseProfiles = (profiles: ResponseProfile[]): void => {
@@ -99,11 +117,21 @@ export const saveResponseProfiles = (profiles: ResponseProfile[]): void => {
   }
   // Save all profiles, including built-ins (in case they were customized)
   fs.writeFileSync(filePath, JSON.stringify(profiles, null, 2));
+
+  // Invalidate cache
+  cachedProfiles = profiles;
+  profileMap.clear();
+  for (const p of profiles) {
+    profileMap.set(p.key.toLowerCase(), p);
+  }
 };
 
 export const getResponseProfileByKey = (key: string): ResponseProfile | undefined => {
+  if (!cachedProfiles) {
+    loadResponseProfiles();
+  }
   const normalized = key.trim().toLowerCase();
-  return loadResponseProfiles().find(profile => profile.key.toLowerCase() === normalized);
+  return profileMap.get(normalized);
 };
 
 export const getResponseProfiles = (): ResponseProfile[] => loadResponseProfiles();

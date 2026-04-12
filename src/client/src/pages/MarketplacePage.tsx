@@ -10,8 +10,12 @@ import {
   CheckCircle as CheckIcon,
   X as CloseIcon,
 } from 'lucide-react';
-import { MarketplaceCard } from '../components/Marketplace';
-import type { MarketplacePackage } from '../components/Marketplace';
+import PageHeader from '../components/DaisyUI/PageHeader';
+import { ConfirmModal } from '../components/DaisyUI/Modal';
+import { Alert } from '../components/DaisyUI/Alert';
+import Input from '../components/DaisyUI/Input';
+import MarketplaceCard from '../components/Marketplace/MarketplaceCard';
+import { MarketplacePackage } from '../components/Marketplace/MarketplaceCard';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -34,12 +38,6 @@ const MarketplacePage: React.FC = () => {
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [ratings, setRatings] = useState<Record<string, number>>({});
-
-  // Check if any community (non-built-in) packages exist
-  const hasCommunityPackages = useMemo(
-    () => packages.some((pkg) => pkg.status !== 'built-in'),
-    [packages]
-  );
 
   // Handle star rating click
   const handleRating = (pkgName: string, starValue: number) => {
@@ -76,6 +74,8 @@ const MarketplacePage: React.FC = () => {
       return matchesType && matchesSearch;
     });
   }, [packages, filter, searchQuery]);
+
+  const hasCommunityPackages = filteredPackages.some(pkg => (pkg as any).repository?.includes('community') || (pkg as any).author === 'community');
 
   // Install from GitHub URL
   const handleInstallFromUrl = async () => {
@@ -173,7 +173,7 @@ const MarketplacePage: React.FC = () => {
         <div className="alert alert-error mb-4">
           <AlertIcon className="w-5 h-5" />
           <span>{error}</span>
-          <Button variant="outline" size="xs" onClick={fetchPackages}>
+          <Button variant="ghost" size="xs" onClick={fetchPackages}>
             Retry
           </Button>
         </div>
@@ -184,10 +184,10 @@ const MarketplacePage: React.FC = () => {
         {/* Search */}
         <div className="flex-1 relative">
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/50" />
-          <input
+          <Input
             type="text"
             placeholder="Search packages..."
-            className="input input-bordered w-full pl-10"
+            className="pl-10"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -225,26 +225,20 @@ const MarketplacePage: React.FC = () => {
 
       {/* Package Grid */}
       {!loading && filteredPackages.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredPackages.map((pkg) => {
-            const isBusy = actionInProgress?.startsWith(pkg.name) ||
-                          actionInProgress === `update-${pkg.name}` ||
-                          actionInProgress === `uninstall-${pkg.name}`;
-
-            return (
-              <MarketplaceCard
-                key={pkg.name}
-                pkg={pkg}
-                isBusy={!!isBusy}
-                actionInProgress={actionInProgress}
-                userRating={ratings[pkg.name]}
-                onRate={handleRating}
-                onInstall={handleInstall}
-                onUpdate={handleUpdate}
-                onUninstall={handleUninstall}
-              />
-            );
-          })}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {filteredPackages.map((pkg) => (
+            <MarketplaceCard
+              key={pkg.name}
+              pkg={pkg}
+              isBusy={actionInProgress === `install-${pkg.name}` || actionInProgress === `update-${pkg.name}` || actionInProgress === `uninstall-${pkg.name}`}
+              actionInProgress={actionInProgress}
+              userRating={ratings[pkg.name]}
+              onRate={handleRating}
+              onInstall={handleInstall}
+              onUpdate={handleUpdate}
+              onUninstall={handleUninstall}
+            />
+          ))}
         </div>
       )}
 
@@ -258,10 +252,9 @@ const MarketplacePage: React.FC = () => {
               <label className="label">
                 <span className="label-text">GitHub Repository URL</span>
               </label>
-              <input
+              <Input
                 type="text"
                 placeholder="https://github.com/user/provider-package"
-                className="input input-bordered w-full"
                 value={githubUrl}
                 onChange={(e) => setGithubUrl(e.target.value)}
               />

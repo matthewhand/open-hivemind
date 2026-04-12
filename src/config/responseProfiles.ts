@@ -19,11 +19,12 @@ export const RESPONSE_PROFILE_OVERRIDE_KEYS = [
   'MESSAGE_BOT_RESPONSE_MODIFIER',
   'MESSAGE_OTHERS_TYPING_WINDOW_MS',
   'MESSAGE_OTHERS_TYPING_MAX_WAIT_MS',
+  'SWARM_MODE',
 ] as const;
 
 export type ResponseProfileOverrideKey = typeof RESPONSE_PROFILE_OVERRIDE_KEYS[number];
 
-export const RESPONSE_PROFILE_KEY_TYPES: Record<ResponseProfileOverrideKey, 'number' | 'boolean'> = {
+export const RESPONSE_PROFILE_KEY_TYPES: Record<ResponseProfileOverrideKey, 'number' | 'boolean' | 'string'> = {
   MESSAGE_DELAY_MULTIPLIER: 'number',
   MESSAGE_MIN_DELAY: 'number',
   MESSAGE_MAX_DELAY: 'number',
@@ -44,6 +45,7 @@ export const RESPONSE_PROFILE_KEY_TYPES: Record<ResponseProfileOverrideKey, 'num
   MESSAGE_BOT_RESPONSE_MODIFIER: 'number',
   MESSAGE_OTHERS_TYPING_WINDOW_MS: 'number',
   MESSAGE_OTHERS_TYPING_MAX_WAIT_MS: 'number',
+  SWARM_MODE: 'string',
 };
 
 export const isResponseProfileOverrideKey = (key: string): key is ResponseProfileOverrideKey =>

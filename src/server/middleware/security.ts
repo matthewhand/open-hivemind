@@ -649,7 +649,7 @@ export function isIPInCIDR(ip: string, cidr: string): boolean {
 
     // Both are now IPv6
     return (addr as any).match(network, bits);
-  } catch (err) {
+  } catch {
     // Parsing or matching failed
     return false;
   }

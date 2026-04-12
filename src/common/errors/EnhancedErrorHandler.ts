@@ -427,7 +427,7 @@ export class EnhancedErrorHandler {
   private static getSuggestions(
     errorType: ErrorType,
     error: Error,
-    context?: ErrorContext
+    _context?: ErrorContext
   ): string[] {
     switch (errorType) {
       case 'network_error':

@@ -11,6 +11,7 @@ export interface Migration {
 
 export class MigrationManager {
   private migrations: Migration[] = [];
+  private migrationsMap: Map<string, Migration> = new Map();
   private executedMigrations = new Set<string>();
   private db: Database;
 
@@ -314,12 +315,17 @@ export class MigrationManager {
             "ALTER TABLE bot_data_purging_schedules ADD COLUMN timezone TEXT DEFAULT 'UTC'"
           );
         },
-        down: async (db: Database): Promise<void> => {
+        down: async (_db: Database): Promise<void> => {
           // SQLite doesn't support DROP COLUMN cleanly in all versions. We omit down or leave empty for safety,
           // or ideally we would recreate the table without the column. For simplicity, we'll leave it as a no-op down.
         },
       },
     ];
+
+    this.migrationsMap.clear();
+    for (const m of this.migrations) {
+      this.migrationsMap.set(m.id, m);
+    }
   }
 
   async createMigrationsTable(): Promise<void> {

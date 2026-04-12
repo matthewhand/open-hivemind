@@ -105,6 +105,15 @@ export const ToolProfileKeyParamSchema = z.object({
 
 // ── Response Profile Schemas ─────────────────────────────────────────────────
 
+export const SWARM_MODES = [
+  'exclusive',
+  'broadcast',
+  'rotating',
+  'priority',
+  'collaborative',
+] as const;
+export type SwarmMode = (typeof SWARM_MODES)[number];
+
 const responseSettingValue = z.union([z.string(), z.number(), z.boolean()]);
 
 export const CreateResponseProfileSchema = z.object({
@@ -116,6 +125,7 @@ export const CreateResponseProfileSchema = z.object({
       .regex(/^[a-z0-9-]+$/, { message: 'Key must be lowercase alphanumeric with hyphens only' }),
     name: profileNameField,
     description: z.string().max(500).optional(),
+    swarmMode: z.enum(SWARM_MODES).optional().default('exclusive'),
     settings: z.record(responseSettingValue).optional(),
   }),
 });
@@ -127,6 +137,7 @@ export const UpdateResponseProfileSchema = z.object({
   body: z.object({
     name: profileNameField.optional(),
     description: z.string().max(500).optional(),
+    swarmMode: z.enum(SWARM_MODES).optional(),
     settings: z.record(responseSettingValue).optional(),
   }),
 });
