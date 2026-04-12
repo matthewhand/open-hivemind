@@ -14,3 +14,6 @@
 ## 2024-05-21 - AuthManager Array.find Bottleneck
 **Learning:** `AuthManager.ts` was using `Array.from(this.users.values()).find(...)` for authentication paths (`register`, `login`, `trustedLogin`). This operation iterates over all user records for every auth check, making the time complexity $O(N)$ and creating a significant bottleneck for applications scaling to many users.
 **Action:** Replace $O(N)$ array searches with $O(1)$ `Map`-based lookups (`usernameMap` and `emailMap`). Ensure the internal maps strictly mirror the `users` collection during creation, updates, and deletion to prevent lookup inconsistencies or collision-hijacking in `updateUser`.
+## 2024-05-22 - Marketplace List Rendering Optimization
+**Learning:** `MarketplaceGrid` was mapping `MarketplaceCard` components inside the list without `React.memo` or stable prop references, causing the entire grid to re-render when basic state like `actionInProgress` or `searchQuery` changed.
+**Action:** When adding `React.memo` to complex list children, always trace the event handlers passed from the parent component and wrap them in `useCallback` to ensure reference equality, otherwise the `React.memo` optimization is defeated.

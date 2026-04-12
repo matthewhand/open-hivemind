@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { apiService } from '../services/api';
 import Button from '../components/DaisyUI/Button';
 import {
@@ -40,16 +40,11 @@ const MarketplacePage: React.FC = () => {
   const [ratings, setRatings] = useState<Record<string, number>>({});
 
   // Handle star rating click
-  const handleRating = (pkgName: string, starValue: number) => {
+  const handleRating = useCallback((pkgName: string, starValue: number) => {
     setRatings((prev) => ({ ...prev, [pkgName]: starValue }));
-  };
-
-  // Fetch packages
-  useEffect(() => {
-    fetchPackages();
   }, []);
 
-  const fetchPackages = async () => {
+  const fetchPackages = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -61,7 +56,12 @@ const MarketplacePage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Fetch packages
+  useEffect(() => {
+    fetchPackages();
+  }, [fetchPackages]);
 
   // Filter packages
   const filteredPackages = useMemo(() => {
@@ -78,7 +78,7 @@ const MarketplacePage: React.FC = () => {
   const hasCommunityPackages = filteredPackages.some(pkg => (pkg as any).repository?.includes('community') || (pkg as any).author === 'community');
 
   // Install from GitHub URL
-  const handleInstallFromUrl = async () => {
+  const handleInstallFromUrl = useCallback(async () => {
     if (!githubUrl.trim()) return;
 
     setActionInProgress('install-url');
@@ -97,16 +97,16 @@ const MarketplacePage: React.FC = () => {
     } finally {
       setActionInProgress(null);
     }
-  };
+  }, [githubUrl, fetchPackages]);
 
   // Install a specific package (from card button)
-  const handleInstall = (pkg: MarketplacePackage) => {
+  const handleInstall = useCallback((pkg: MarketplacePackage) => {
     setGithubUrl(pkg.repoUrl || '');
     setInstallModalOpen(true);
-  };
+  }, []);
 
   // Update package
-  const handleUpdate = async (name: string) => {
+  const handleUpdate = useCallback(async (name: string) => {
     setActionInProgress(`update-${name}`);
     setActionMessage(null);
 
@@ -121,10 +121,10 @@ const MarketplacePage: React.FC = () => {
     } finally {
       setActionInProgress(null);
     }
-  };
+  }, [fetchPackages]);
 
   // Uninstall package
-  const handleUninstall = async (name: string) => {
+  const handleUninstall = useCallback(async (name: string) => {
     if (!confirm(`Are you sure you want to uninstall ${name}?`)) return;
 
     setActionInProgress(`uninstall-${name}`);
@@ -139,7 +139,7 @@ const MarketplacePage: React.FC = () => {
     } finally {
       setActionInProgress(null);
     }
-  };
+  }, [fetchPackages]);
 
   return (
     <div className="p-6">

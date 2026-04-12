@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { apiService } from '../../services/api';
 import Button from '../DaisyUI/Button';
 import {
@@ -51,7 +51,7 @@ const MarketplaceGrid: React.FC<MarketplaceGridProps> = ({
     [packages],
   );
 
-  const fetchPackages = async () => {
+  const fetchPackages = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -64,11 +64,11 @@ const MarketplaceGrid: React.FC<MarketplaceGridProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchPackages();
-  }, []);
+  }, [fetchPackages]);
 
   const filteredPackages = useMemo(() => {
     return packages.filter((pkg) => {
@@ -82,11 +82,11 @@ const MarketplaceGrid: React.FC<MarketplaceGridProps> = ({
     });
   }, [packages, filter, searchQuery]);
 
-  const handleRating = (pkgName: string, starValue: number) => {
+  const handleRating = useCallback((pkgName: string, starValue: number) => {
     setRatings((prev) => ({ ...prev, [pkgName]: starValue }));
-  };
+  }, []);
 
-  const handleInstall = (pkg: MarketplacePackage) => {
+  const handleInstall = useCallback((pkg: MarketplacePackage) => {
     if (externalOnInstall) {
       externalOnInstall(pkg);
       return;
@@ -114,9 +114,9 @@ const MarketplaceGrid: React.FC<MarketplaceGridProps> = ({
         setActionInProgress(null);
       }
     })();
-  };
+  }, [externalOnInstall, fetchPackages]);
 
-  const handleUpdate = async (name: string) => {
+  const handleUpdate = useCallback(async (name: string) => {
     if (externalOnUpdate) {
       externalOnUpdate(name);
       return;
@@ -139,9 +139,9 @@ const MarketplaceGrid: React.FC<MarketplaceGridProps> = ({
     } finally {
       setActionInProgress(null);
     }
-  };
+  }, [externalOnUpdate, fetchPackages]);
 
-  const handleUninstall = async (name: string) => {
+  const handleUninstall = useCallback(async (name: string) => {
     if (externalOnUninstall) {
       externalOnUninstall(name);
       return;
@@ -161,7 +161,7 @@ const MarketplaceGrid: React.FC<MarketplaceGridProps> = ({
     } finally {
       setActionInProgress(null);
     }
-  };
+  }, [externalOnUninstall, fetchPackages]);
 
   return (
     <div>
@@ -266,4 +266,6 @@ const MarketplaceGrid: React.FC<MarketplaceGridProps> = ({
   );
 };
 
-export default MarketplaceGrid;
+// ⚡ Bolt Optimization: Added React.memo() to prevent unnecessary re-renders of the MarketplaceGrid when parent route components update.
+// Handler functions were also wrapped in useCallback to maintain reference equality for memoized child components.
+export default memo(MarketplaceGrid);

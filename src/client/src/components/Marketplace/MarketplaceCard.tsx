@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React from 'react';
+import React, { memo } from 'react';
 import Card from '../DaisyUI/Card';
 import Button from '../DaisyUI/Button';
 import Badge from '../DaisyUI/Badge';
@@ -214,4 +214,5 @@ const MarketplaceCard: React.FC<MarketplaceCardProps> = ({
   );
 };
 
-export default MarketplaceCard;
+// ⚡ Bolt Optimization: Added React.memo() to prevent unnecessary re-renders of the MarketplaceCard in large grids.
+export default memo(MarketplaceCard);
