@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { setupAuth, registerViteSourceBypass } from './test-utils';
+import { setupAuth, registerViteSourceBypass, waitForPageReady } from './test-utils';
 
 /**
  * Swarm Orchestration Mode E2E Tests
@@ -26,6 +26,15 @@ test.describe('Swarm Orchestration Mode', () => {
    */
   function mockCommonEndpoints(page: import('@playwright/test').Page) {
     return Promise.all([
+      page.route('**/api/auth/verify', (route) => {
+        console.log('INTERCEPTED: /api/auth/verify');
+        return route.fulfill({
+          status: 200,
+          json: {
+            user: { id: 'admin', username: 'admin', email: 'admin@open-hivemind.com', role: 'owner', permissions: ['*'] },
+          },
+        });
+      }),
       page.route('**/api/health', (route) =>
         route.fulfill({ status: 200, json: { status: 'ok' } })
       ),
@@ -214,6 +223,7 @@ test.describe('Swarm Orchestration Mode', () => {
   test.beforeEach(async ({ page }) => {
     await setupAuth(page);
     await mockCommonEndpoints(page);
+    await registerViteSourceBypass(page);
     await page.setViewportSize({ width: 1280, height: 800 });
   });
 
@@ -226,7 +236,12 @@ test.describe('Swarm Orchestration Mode', () => {
       const { store } = mockResponseProfilesApi(page);
 
       await page.goto('/admin/config/response-profiles');
-      await page.waitForLoadState('networkidle').catch(() => {});
+      await waitForPageReady(page, 20000);
+
+      // Debug
+      console.log(`URL after nav: ${page.url()}`);
+      const bodyText = await page.textContent('body');
+      console.log(`Body preview: ${(bodyText || '').substring(0, 200)}`);
 
       // Open create modal
       const modal = await openCreateModal(page);
