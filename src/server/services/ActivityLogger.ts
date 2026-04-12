@@ -124,6 +124,7 @@ export class ActivityLogger {
 
   public async getEvents(options: ActivityFilter = {}): Promise<MessageFlowEvent[]> {
     // Try to satisfy from cache if possible
+    // Only cache if offset is 0 and limit is within cache size
     if (this.canSatisfyFromCache(options)) {
       debug('Satisfying activity request from tail cache');
       return this.filterEvents(this.tailCache, options);
@@ -142,14 +143,10 @@ export class ActivityLogger {
         crlfDelay: Infinity,
       });
 
-      const bufferSize = options.limit ? options.limit : Infinity;
-      const isBufferLimited = bufferSize !== Infinity;
+      const limit = options.limit || 100;
       const offset = options.offset || 0;
-      const events: MessageFlowEvent[] = isBufferLimited
-        ? new Array<MessageFlowEvent>(bufferSize)
-        : [];
-      let count = 0;
-      let matchedCount = 0;
+      const matchedEvents: MessageFlowEvent[] = [];
+      let matchIndex = 0;
 
       const startTimeMs = options.startTime ? options.startTime.getTime() : 0;
       const endTimeMs = options.endTime ? options.endTime.getTime() : Infinity;
@@ -183,38 +180,21 @@ export class ActivityLogger {
             continue;
           }
 
-          // Skip events before the offset
-          if (matchedCount < offset) {
-            matchedCount++;
-            continue;
+          // We have a match
+          if (matchIndex >= offset) {
+            matchedEvents.push(event);
+            if (matchedEvents.length >= limit) {
+              break; // We have enough
+            }
           }
-
-          if (isBufferLimited) {
-            events[count % bufferSize] = event;
-          } else {
-            // We know it is a dynamic array here
-            (events as MessageFlowEvent[]).push(event);
-          }
-          count++;
-          matchedCount++;
+          matchIndex++;
         } catch (e) {
           debug('Failed to parse activity log line: %O', e);
           continue;
         }
       }
 
-      // Convert circular buffer [Oldest ... Newest]
-      if (isBufferLimited) {
-        const results: MessageFlowEvent[] = [];
-        const totalElements = Math.min(count, bufferSize);
-        for (let i = 0; i < totalElements; i++) {
-          const index = count > bufferSize ? (count + i) % bufferSize : i;
-          results.push(events[index]);
-        }
-        return results;
-      }
-
-      return events;
+      return matchedEvents;
     } catch (error) {
       debug('Failed to read activity log: %O', error);
       return [];
@@ -222,13 +202,13 @@ export class ActivityLogger {
   }
 
   private canSatisfyFromCache(options: ActivityFilter): boolean {
-    // If no limit or limit > cache size, we need to read from disk
-    if (!options.limit || options.limit > this.MAX_CACHE_SIZE) {
+    // We can only satisfy from cache if offset is 0
+    if (options.offset && options.offset > 0) {
       return false;
     }
 
-    // If offset is provided and limit + offset > cache size, we need to read from disk
-    if (options.offset && options.offset + options.limit > this.MAX_CACHE_SIZE) {
+    // If no limit or limit > cache size, we need to read from disk
+    if (!options.limit || options.limit > this.MAX_CACHE_SIZE) {
       return false;
     }
 

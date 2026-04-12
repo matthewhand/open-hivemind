@@ -497,12 +497,14 @@ router.get('/activity', authenticate, requireAdmin, async (req, res) => {
     const llmFilter = parseMultiParam(req.query.llmProvider);
     const from = parseDate(req.query.from);
     const to = parseDate(req.query.to);
+    const limit = parseInt(req.query.limit as string) || 200;
+    const offset = parseInt(req.query.offset as string) || 0;
 
     // Fetch events from persistent storage
     const storedEvents = await ActivityLogger.getInstance().getEvents({
       startTime: from || undefined,
       endTime: to || undefined,
-      limit: 5000,
+      limit: limit + offset, // Fetch enough to cover the current page
     });
 
     const botFilterSet = new Set(botFilter);
@@ -522,11 +524,7 @@ router.get('/activity', authenticate, requireAdmin, async (req, res) => {
 
     const hasAnyFilter = hasBotFilter || hasProviderFilter || hasLlmFilter || fromTime || toTime;
 
-    // ⚡ Bolt Optimization: Apply .filter() before .map()
-    // This avoids allocating, transforming, and garbage-collecting thousands
-    // of unnecessary intermediate annotated event objects (and redactString computations),
-    // significantly reducing memory overhead when filtering large datasets (up to 5000 items).
-    // Build filter options from all events, not just filtered results
+    // Build filter options from all events
     storedEvents.forEach((event) => {
       const bot = botMap.get(event.botName);
       agents.add(event.botName);
@@ -558,14 +556,24 @@ router.get('/activity', authenticate, requireAdmin, async (req, res) => {
           return false;
         }
         return true;
-      })
+      });
+
+    // Apply pagination to filtered results
+    const paginatedEvents = filteredEvents
+      .slice(offset, offset + limit)
       .map((event) => annotateEvent(event, botMap));
 
-    const { timeline, agentMetrics } = buildTimelineAndMetrics(filteredEvents, ws.getAllBotStats());
+    const { timeline, agentMetrics } = buildTimelineAndMetrics(paginatedEvents, ws.getAllBotStats());
 
     res.json(
       ApiResponse.success({
-        events: filteredEvents.slice(-200),
+        events: paginatedEvents,
+        pagination: {
+          total: filteredEvents.length,
+          limit,
+          offset,
+          hasMore: offset + limit < filteredEvents.length
+        },
         filters: {
           agents: Array.from(agents).sort(),
           messageProviders: Array.from(messageProviders).sort(),
