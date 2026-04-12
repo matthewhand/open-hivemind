@@ -1,7 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { ErrorUtils } from '../../../common/ErrorUtils';
-import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import { HTTP_STATUS } from '../../../types/constants';
 import {
   ToggleIdParamSchema,
@@ -66,7 +65,7 @@ router.get('/tool-usage-guards', (req: Request, res: Response) => {
 
     return res.json(ApiResponse.success({ guards }));
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const _hivemindError = ErrorUtils.toHivemindError(error);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to retrieve tool usage guards'));
@@ -117,7 +116,7 @@ router.post(
 
       return res.json(ApiResponse.success({ guard: newGuard }));
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const _hivemindError = ErrorUtils.toHivemindError(error);
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to create tool usage guard'));
@@ -150,7 +149,7 @@ router.put(
 
       return res.json(ApiResponse.success({ guard: updatedGuard }));
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const _hivemindError = ErrorUtils.toHivemindError(error);
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to update tool usage guard'));
@@ -180,14 +179,14 @@ router.delete(
   validateRequest(ToggleIdParamSchema),
   (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
+      const { _id } = req.params;
 
       // In a real implementation, this would delete from database
       // For now, just return success
 
       return res.json(ApiResponse.success());
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const _hivemindError = ErrorUtils.toHivemindError(error);
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to delete tool usage guard'));
@@ -202,15 +201,15 @@ router.post(
   validateRequest(ToggleProviderSchema),
   (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
-      const { isActive } = req.body;
+      const { _id } = req.params;
+      const { _isActive } = req.body;
 
       // In a real implementation, this would update in database
       // For now, just return success
 
       return res.json(ApiResponse.success());
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const _hivemindError = ErrorUtils.toHivemindError(error);
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to update guard status'));

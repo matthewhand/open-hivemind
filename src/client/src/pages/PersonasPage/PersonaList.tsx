@@ -7,7 +7,6 @@ import Card from '../../components/DaisyUI/Card';
 import { Badge } from '../../components/DaisyUI/Badge';
 import PersonaAvatar from '../../components/PersonaAvatar';
 import { type Persona } from './hooks/usePersonasData';
-import Checkbox from '../../components/DaisyUI/Checkbox';
 
 interface PersonaListProps {
   filteredPersonas: Persona[];

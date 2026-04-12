@@ -315,7 +315,7 @@ export class MigrationManager {
             "ALTER TABLE bot_data_purging_schedules ADD COLUMN timezone TEXT DEFAULT 'UTC'"
           );
         },
-        down: async (db: Database): Promise<void> => {
+        down: async (_db: Database): Promise<void> => {
           // SQLite doesn't support DROP COLUMN cleanly in all versions. We omit down or leave empty for safety,
           // or ideally we would recreate the table without the column. For simplicity, we'll leave it as a no-op down.
         },

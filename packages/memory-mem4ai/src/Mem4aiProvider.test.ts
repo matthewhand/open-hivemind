@@ -1,6 +1,11 @@
 import { Mem4aiProvider } from './Mem4aiProvider';
 import { Mem4aiApiError } from './types';
-import { clearCircuitBreakerRegistry } from './CircuitBreaker';
+
+// Mock isSafeUrl so test URLs don't trigger SSRF guard failures
+jest.mock('@hivemind/shared-types', () => ({
+  ...jest.requireActual('@hivemind/shared-types'),
+  isSafeUrl: jest.fn().mockResolvedValue({ safe: true }),
+}));
 
 const BASE_CONFIG = {
   apiKey: 'test-key',

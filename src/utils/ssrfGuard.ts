@@ -32,7 +32,7 @@ export async function isSafeUrl(url: string): Promise<SafeUrlResult> {
           context: 'src/utils/ssrfGuard',
         },
       });
-    } catch (err) {
+    } catch {
       // Don't let alerting failure block the guard (though MessageBus.emit is usually safe)
     }
   }

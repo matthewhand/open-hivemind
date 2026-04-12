@@ -161,7 +161,7 @@ router.post(
   validateRequest(CIRollbackSchema),
   asyncErrorHandler(async (req, res) => {
     try {
-      const { id } = req.params;
+      const { _id } = req.params;
 
       // In a real implementation, this would trigger a rollback
       // For now, simulate rollback

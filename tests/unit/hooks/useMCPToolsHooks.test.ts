@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { act, renderHook } from '@testing-library/react';
 import { useToolExecution } from '../../../src/client/src/pages/MCPToolsPage/hooks/useToolExecution';
 import { useToolHistory } from '../../../src/client/src/pages/MCPToolsPage/hooks/useToolHistory';
@@ -35,7 +35,6 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-// eslint-disable-next-line jest/no-disabled-tests
 describe.skip('useToolHistory (skipped: OOM when loading hooks + jsdom)', () => {
   it('initialises with empty history and showHistory=false', () => {
     const { result } = renderHook(() => useToolHistory({ setAlert: jest.fn() }));
@@ -82,7 +81,6 @@ describe.skip('useToolHistory (skipped: OOM when loading hooks + jsdom)', () => 
   });
 });
 
-// eslint-disable-next-line jest/no-disabled-tests
 describe.skip('useToolExecution (skipped: OOM when loading hooks + jsdom)', () => {
   const mockProps = {
     setAlert: jest.fn(),
@@ -145,7 +143,6 @@ describe.skip('useToolExecution (skipped: OOM when loading hooks + jsdom)', () =
   });
 });
 
-// eslint-disable-next-line jest/no-disabled-tests
 describe.skip('useToolRegistry (skipped: OOM when loading hooks + jsdom)', () => {
   it('initialises with empty tools and loading=true', () => {
     (apiService.get as jest.Mock).mockResolvedValue({ servers: [] });

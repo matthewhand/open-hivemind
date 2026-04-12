@@ -1,7 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { ErrorUtils } from '../../../common/ErrorUtils';
-import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import { webUIStorage } from '../../../storage/webUIStorage';
 import { HTTP_STATUS } from '../../../types/constants';
 import {
@@ -28,31 +27,31 @@ router.get('/personas', async (req: Request, res: Response) => {
     // Get personas from persistent storage
     const storedPersonas = await webUIStorage.getPersonas();
 
-      // Default personas - in a real implementation, these would be stored in a database
-      const defaultPersonas = [
-        {
-          key: 'default',
-          name: 'Default Assistant',
-          systemPrompt: 'You are a helpful AI assistant.',
-        },
-        {
-          key: 'developer',
-          name: 'Developer Assistant',
-          systemPrompt: 'You are an expert software developer assistant.',
-        },
-        {
-          key: 'support',
-          name: 'Support Agent',
-          systemPrompt: 'You are a customer support agent.',
-        },
-      ];
+    // Default personas - in a real implementation, these would be stored in a database
+    const defaultPersonas = [
+      {
+        key: 'default',
+        name: 'Default Assistant',
+        systemPrompt: 'You are a helpful AI assistant.',
+      },
+      {
+        key: 'developer',
+        name: 'Developer Assistant',
+        systemPrompt: 'You are an expert software developer assistant.',
+      },
+      {
+        key: 'support',
+        name: 'Support Agent',
+        systemPrompt: 'You are a customer support agent.',
+      },
+    ];
 
-      // Combine stored and default personas
-      const allPersonas = [...storedPersonas, ...defaultPersonas];
+    // Combine stored and default personas
+    const allPersonas = [...storedPersonas, ...defaultPersonas];
 
     return res.json(ApiResponse.success({ personas: allPersonas }));
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const _hivemindError = ErrorUtils.toHivemindError(error);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to retrieve personas'));
@@ -89,7 +88,7 @@ router.post('/personas', validateRequest(PersonaSchema), (req: Request, res: Res
 
     return res.json(ApiResponse.success());
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const _hivemindError = ErrorUtils.toHivemindError(error);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to create persona'));
@@ -110,7 +109,7 @@ router.put(
 
       return res.json(ApiResponse.success());
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const _hivemindError = ErrorUtils.toHivemindError(error);
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to update persona'));
@@ -131,7 +130,7 @@ router.delete(
 
       return res.json(ApiResponse.success());
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const _hivemindError = ErrorUtils.toHivemindError(error);
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to delete persona'));

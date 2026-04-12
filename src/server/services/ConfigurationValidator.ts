@@ -302,7 +302,7 @@ export class ConfigurationValidator {
     config: BotConfig,
     errors: string[],
     warnings: string[],
-    suggestions: string[]
+    _suggestions: string[]
   ): void {
     switch (config.messageProvider) {
       case 'discord': {

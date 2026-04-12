@@ -31,7 +31,7 @@ async function getSpecsIndex(): Promise<SpecMetadata[]> {
     const indexPath = path.join(specsDirectory, 'index.json');
     const data = await fs.readFile(indexPath, 'utf-8');
     return JSON.parse(data);
-  } catch (error) {
+  } catch {
     return [];
   }
 }
@@ -92,7 +92,7 @@ router.get('/', async (req, res) => {
   try {
     const index = await getSpecsIndex();
     return res.json(ApiResponse.success(index));
-  } catch (error) {
+  } catch {
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to retrieve specifications'));
@@ -131,7 +131,7 @@ router.get('/:id', async (req, res) => {
     const specWithVersions = { ...spec, versions };
 
     return res.json(ApiResponse.success(specWithVersions));
-  } catch (error) {
+  } catch {
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to retrieve specification'));

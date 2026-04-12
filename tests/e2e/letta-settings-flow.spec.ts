@@ -21,7 +21,11 @@
  *   Provider Type dropdown (it is not in the hardcoded LLM_PROVIDER_CONFIGS list).
  */
 import { expect, test } from '@playwright/test';
-import { setupTestWithErrorDetection, navigateAndWaitReady, registerViteSourceBypass } from './test-utils';
+import {
+  navigateAndWaitReady,
+  registerViteSourceBypass,
+  setupTestWithErrorDetection,
+} from './test-utils';
 
 const FAKE_AGENT_ID = 'agent-e2fa86a3-cea2-4645-acd7-d12f0dc2efd5';
 
@@ -36,7 +40,10 @@ test.describe('Letta Provider Settings Flow', () => {
       r.fulfill({
         json: {
           success: true,
-          data: { valid: true, user: { id: 'admin', username: 'admin', role: 'owner', permissions: ['*'] } },
+          data: {
+            valid: true,
+            user: { id: 'admin', username: 'admin', role: 'owner', permissions: ['*'] },
+          },
         },
       })
     );
@@ -105,9 +112,7 @@ test.describe('Letta Provider Settings Flow', () => {
     // Letta agent lookup (backend proxy — never hits Letta Cloud directly)
     await page.route('**/api/letta/agents', (r) =>
       r.fulfill({
-        json: [
-          { id: FAKE_AGENT_ID, name: 'test-companion', description: 'Playwright test agent' },
-        ],
+        json: [{ id: FAKE_AGENT_ID, name: 'test-companion', description: 'Playwright test agent' }],
       })
     );
 
@@ -132,7 +137,10 @@ test.describe('Letta Provider Settings Flow', () => {
 
     // ── Open modal ────────────────────────────────────────────────────────
     // Two "Create Profile" buttons exist (toolbar + empty-state); click the toolbar one
-    await page.getByRole('button', { name: /Create Profile/i }).first().click();
+    await page
+      .getByRole('button', { name: /Create Profile/i })
+      .first()
+      .click();
     // Modal is a native <dialog> element opened via showModal() — not role="dialog"
     const modal = page.locator('dialog.modal[open]');
     await expect(modal).toBeVisible({ timeout: 5_000 });

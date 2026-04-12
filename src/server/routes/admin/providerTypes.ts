@@ -26,7 +26,7 @@ const MEMORY_PACKAGES = ['@hivemind/memory-mem0', '@hivemind/memory-mem4ai'];
 function tryLoadSchema(pkg: string): unknown | null {
   try {
     const mod = require(pkg);
-    if (mod.schema != null) {
+    if (mod.schema !== null && mod.schema !== undefined) {
       return mod.schema;
     }
     debug('Package %s loaded but has no exported schema', pkg);

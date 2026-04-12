@@ -82,8 +82,7 @@ export class DecisionStage {
   async process(ctx: MessageContext): Promise<ReplyDecision> {
     try {
       const messageId = ctx.message.getMessageId();
-      const botId =
-        (ctx.botConfig.BOT_ID as string) || (ctx.botConfig.botId as string) || '';
+      const botId = (ctx.botConfig.BOT_ID as string) || (ctx.botConfig.botId as string) || '';
       const swarm = SwarmCoordinator.getInstance();
       const channelId = ctx.channelId;
       const botName = ctx.botName;
@@ -96,10 +95,7 @@ export class DecisionStage {
           ? `Message already claimed by bot ${existingClaim.botId} in swarm`
           : 'Message already claimed by another bot in swarm';
 
-        debug(
-          '[DecisionStage] Message %s: skipped (claimed)',
-          messageId
-        );
+        debug('[DecisionStage] Message %s: skipped (claimed)', messageId);
 
         // Broadcast decision to WebSocket for Live Orchestration Log
         this.bus.emit('pipeline:decision', {
@@ -121,11 +117,7 @@ export class DecisionStage {
       if (decision.shouldReply) {
         // Claim the message for this bot
         swarm.claimMessage(messageId, botName);
-        debug(
-          '[DecisionStage] Message %s: claimed by %s',
-          messageId,
-          botId
-        );
+        debug('[DecisionStage] Message %s: claimed by %s', messageId, botId);
 
         // Broadcast decision to WebSocket for Live Orchestration Log
         this.bus.emit('pipeline:decision', {

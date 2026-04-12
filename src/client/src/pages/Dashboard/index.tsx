@@ -9,6 +9,10 @@ import DashboardWidgetSystem from '../../components/DaisyUI/DashboardWidgetSyste
 import WelcomeSplash from '../../components/WelcomeSplash';
 import QuickActions from '../../components/QuickActions';
 import PendingActions from '../../components/PendingActions';
+import { Alert } from '../../components/DaisyUI/Alert';
+import { LoadingSpinner } from '../../components/DaisyUI/Loading';
+import Button from '../../components/DaisyUI/Button';
+import Toggle from '../../components/DaisyUI/Toggle';
 
 const SystemHealth = lazy(() => import('../../components/SystemHealth'));
 
@@ -233,6 +237,10 @@ const DashboardPage: React.FC = () => {
           <Dashboard />
         </div>
       )}
+    </div>
+      )}
+    </div>
+      </div>
     </div>
   );
 };

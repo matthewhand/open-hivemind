@@ -220,7 +220,7 @@ export class PerformanceProfiler {
 
     try {
       heapStatistics = v8.getHeapStatistics();
-    } catch (error) {
+    } catch {
       heapStatistics = {
         total_heap_size: memoryUsage.heapTotal,
         used_heap_size: memoryUsage.heapUsed,

@@ -9,7 +9,6 @@ import { authenticate, requireAdmin } from '../../auth/middleware';
 import { createLogger } from '../../common/StructuredLogger';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 import { container } from '../../di/container';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { AnalyticsService } from '../../services/AnalyticsService';
 import DemoModeService from '../../services/DemoModeService';
 import { HTTP_STATUS } from '../../types/constants';

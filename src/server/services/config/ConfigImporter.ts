@@ -50,7 +50,7 @@ export class ConfigImporter {
   async importMainConfig(
     filePath: string,
     options: ImportOptions,
-    importedBy?: string
+    _importedBy?: string
   ): Promise<ImportResult> {
     try {
       let data: Buffer | string = await fs.readFile(filePath);
@@ -194,7 +194,7 @@ export class ConfigImporter {
       // Bulk-fetch existing configs to avoid N+1 queries
       const configIds = importData.configurations
         .map((c: { id?: unknown }) => c.id)
-        .filter((id: unknown) => id != null);
+        .filter((id: unknown) => id !== null && id !== undefined);
 
       const existingConfigsMap = new Map<number, unknown>();
       let bulkFetchSucceeded = false;

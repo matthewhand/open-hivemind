@@ -14,7 +14,8 @@ import PageHeader from '../components/DaisyUI/PageHeader';
 import { ConfirmModal } from '../components/DaisyUI/Modal';
 import { Alert } from '../components/DaisyUI/Alert';
 import Input from '../components/DaisyUI/Input';
-import { apiService } from '../services/api';
+import MarketplaceCard from '../components/Marketplace/MarketplaceCard';
+import { MarketplacePackage } from '../components/Marketplace/MarketplaceCard';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -37,14 +38,6 @@ const MarketplacePage: React.FC = () => {
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [ratings, setRatings] = useState<Record<string, number>>({});
-
-  const fetchPackages = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data: any = await apiService.get('/api/marketplace/packages');
-      setPackages(data);
-    } catch (err: any) {
 
   // Handle star rating click
   const handleRating = (pkgName: string, starValue: number) => {
@@ -81,6 +74,8 @@ const MarketplacePage: React.FC = () => {
       return matchesType && matchesSearch;
     });
   }, [packages, filter, searchQuery]);
+
+  const hasCommunityPackages = filteredPackages.some(pkg => (pkg as any).repository?.includes('community') || (pkg as any).author === 'community');
 
   // Install from GitHub URL
   const handleInstallFromUrl = async () => {
@@ -178,7 +173,7 @@ const MarketplacePage: React.FC = () => {
         <div className="alert alert-error mb-4">
           <AlertIcon className="w-5 h-5" />
           <span>{error}</span>
-          <Button variant="outline" size="xs" onClick={fetchPackages}>
+          <Button variant="ghost" size="xs" onClick={fetchPackages}>
             Retry
           </Button>
         </div>
@@ -230,33 +225,20 @@ const MarketplacePage: React.FC = () => {
 
       {/* Package Grid */}
       {!loading && filteredPackages.length > 0 && (
-        shouldVirtualizePackages ? (
-          <div ref={packagesParentRef} className="max-h-[800px] overflow-auto">
-            <div
-              style={{
-                height: `${packagesGridRowVirtualizer.getTotalSize()}px`,
-                width: '100%',
-                position: 'relative',
-              }}
-            >
-              {packagesGridRowVirtualizer.getVirtualItems().map((virtualRow) => {
-                const startIndex = virtualRow.index * 3;
-                const rowPackages = filteredPackages.slice(startIndex, startIndex + 3);
-
-            return (
-              <MarketplaceCard
-                key={pkg.name}
-                pkg={pkg}
-                isBusy={!!isBusy}
-                actionInProgress={actionInProgress}
-                userRating={ratings[pkg.name]}
-                onRate={handleRating}
-                onInstall={handleInstall}
-                onUpdate={handleUpdate}
-                onUninstall={handleUninstall}
-              />
-            );
-          })}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {filteredPackages.map((pkg) => (
+            <MarketplaceCard
+              key={pkg.name}
+              pkg={pkg}
+              isBusy={actionInProgress === `install-${pkg.name}` || actionInProgress === `update-${pkg.name}` || actionInProgress === `uninstall-${pkg.name}`}
+              actionInProgress={actionInProgress}
+              userRating={ratings[pkg.name]}
+              onRate={handleRating}
+              onInstall={handleInstall}
+              onUpdate={handleUpdate}
+              onUninstall={handleUninstall}
+            />
+          ))}
         </div>
       )}
 
