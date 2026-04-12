@@ -1,51 +1,59 @@
-import convict from 'convict';
 import path from 'path';
-
-export interface MattermostConfig {
-  MATTERMOST_SERVER_URL: string;
-  MATTERMOST_TOKEN: string;
-  MATTERMOST_CHANNEL: string;
-}
-
-const mattermostConfig = convict<MattermostConfig>({
-  MATTERMOST_SERVER_URL: {
-    doc: 'Mattermost server endpoint',
-    format: String,
-    default: '',
-    env: 'MATTERMOST_SERVER_URL',
-  },
-  MATTERMOST_TOKEN: {
-    doc: 'Mattermost authentication token',
-    format: String,
-    default: '',
-    env: 'MATTERMOST_TOKEN',
-  },
-  MATTERMOST_CHANNEL: {
-    doc: 'Default Mattermost channel for messages',
-    format: String,
-    default: '',
-    env: 'MATTERMOST_CHANNEL',
-  },
-});
-
-const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
-const configPath = path.join(configDir, 'providers/mattermost.json');
-
+import fs from 'fs';
 import Debug from 'debug';
+import { MattermostSchema, type MattermostConfig } from './schemas/mattermostSchema';
+
 const debug = Debug('app:mattermostConfig');
 
-try {
-  mattermostConfig.loadFile(configPath);
-  debug(`Successfully loaded Mattermost config from ${configPath}`);
-} catch (error: unknown) {
-  if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
-    debug(`Error reading mattermost config from ${configPath}:`, (error instanceof Error ? error.message : String(error)));
-  } else {
-    debug(`Mattermost config file not found at ${configPath}, using environment variables and defaults`);
+/**
+ * Loads and validates Mattermost configuration using Zod
+ */
+function loadMattermostConfig(): MattermostConfig {
+  const configDir = process.env.NODE_CONFIG_DIR || './config/';
+  const configPath = path.join(configDir, 'providers/mattermost.json');
+  
+  let fileConfig: Record<string, any> = {};
+  
+  try {
+    if (fs.existsSync(configPath)) {
+      const data = fs.readFileSync(configPath, 'utf8');
+      fileConfig = JSON.parse(data);
+    } else {
+      debug(`Mattermost config file not found at ${configPath}, using environment variables and defaults`);
+    }
+  } catch (error) {
+    debug(`Error reading Mattermost config from ${configPath}:`, error);
   }
+
+  // Map environment variables
+  const envConfig: Record<string, any> = {};
+  if (process.env.MATTERMOST_SERVER_URL) envConfig.MATTERMOST_SERVER_URL = process.env.MATTERMOST_SERVER_URL;
+  if (process.env.MATTERMOST_TOKEN) envConfig.MATTERMOST_TOKEN = process.env.MATTERMOST_TOKEN;
+  if (process.env.MATTERMOST_CHANNEL) envConfig.MATTERMOST_CHANNEL = process.env.MATTERMOST_CHANNEL;
+
+  const combinedConfig = {
+    ...fileConfig,
+    ...envConfig
+  };
+
+  const result = MattermostSchema.safeParse(combinedConfig);
+  
+  if (!result.success) {
+    debug('Mattermost configuration validation failed:', result.error.format());
+    return MattermostSchema.parse({});
+  }
+
+  return result.data;
 }
 
-// Validation must happen outside the generic try-catch to fail fast if config is malformed
-mattermostConfig.validate({ allowed: 'strict' });
+const config = loadMattermostConfig();
+
+const mattermostConfig = {
+  get: (key: keyof MattermostConfig) => config[key],
+  getProperties: () => config,
+  validate: (options: { allowed: 'strict' | 'warn' }) => {
+    MattermostSchema.parse(config);
+  }
+};
 
 export default mattermostConfig;
