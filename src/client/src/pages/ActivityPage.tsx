@@ -385,6 +385,9 @@ const ActivityPage: React.FC = () => {
   const [_maxRetries, setMaxRetries] = useState(3);
   const [_retryDelay, setRetryDelay] = useState(1000); // 1 second initial delay
 
+  const [limit, setLimit] = useState(200);
+  const [offset, setOffset] = useState(0);
+
   // Build activity endpoint URL from filter state
   const activityUrl = useMemo(() => {
     const query = new URLSearchParams();
@@ -393,9 +396,11 @@ const ActivityPage: React.FC = () => {
     if (selectedLlmProvider !== 'all') query.append('llmProvider', selectedLlmProvider);
     if (startDate) query.append('from', new Date(startDate).toISOString());
     if (endDate) query.append('to', new Date(endDate).toISOString());
+    query.append('limit', limit.toString());
+    query.append('offset', offset.toString());
     const search = query.toString();
     return `/api/dashboard/activity${search ? `?${search}` : ''}`;
-  }, [selectedBot, selectedProvider, selectedLlmProvider, startDate, endDate]);
+  }, [selectedBot, selectedProvider, selectedLlmProvider, startDate, endDate, limit, offset]);
 
   // Use cached query with optional polling
   const {
@@ -411,9 +416,16 @@ const ActivityPage: React.FC = () => {
     refetchInterval: autoRefresh ? 5000 : undefined,
   });
 
+  const [allEvents, setAllEvents] = useState<ActivityEvent[]>([]);
+
   // Sync into local state
   useEffect(() => {
     if (activityResult) {
+      if (offset === 0) {
+        setAllEvents(activityResult.events);
+      } else {
+        setAllEvents(prev => [...prev, ...activityResult.events]);
+      }
       setData(activityResult);
       if (activityResult.filters) {
         setAvailableFilters(prev => prev || activityResult.filters);
@@ -421,7 +433,7 @@ const ActivityPage: React.FC = () => {
       setRetryCount(0);
       setRetryDelay(1000);
     }
-  }, [activityResult]);
+  }, [activityResult, offset]);
 
   useEffect(() => {
     if (!autoRefresh) setLoading(activityLoading);
@@ -436,8 +448,13 @@ const ActivityPage: React.FC = () => {
   }, [activityError]);
 
   const fetchActivity = useCallback(async () => {
+    setOffset(0);
     await refetchActivity();
   }, [refetchActivity]);
+
+  const handleLoadMore = () => {
+    setOffset(prev => prev + limit);
+  };
 
   const handleClearFilters = () => {
     setSearchQuery('');
@@ -446,6 +463,7 @@ const ActivityPage: React.FC = () => {
     setSelectedLlmProvider('all');
     setStartDate('');
     setEndDate('');
+    setOffset(0);
   };
 
   // Quick time range presets
@@ -515,7 +533,7 @@ const ActivityPage: React.FC = () => {
     }
   };
 
-  const events = data?.events || [];
+  const events = allEvents;
 
   // Filter events client-side based on search query
   const filteredEvents = useMemo(() => {
@@ -1118,6 +1136,21 @@ const ActivityPage: React.FC = () => {
           <PipelineStepTimeline steps={reconstructPipelineSteps(replayEvent)} />
         )}
       </DetailDrawer>
+
+      {/* Pagination Load More */}
+      {data?.pagination?.hasMore && (
+        <div className="flex justify-center mt-8 pb-8">
+          <Button 
+            onClick={handleLoadMore} 
+            loading={loading}
+            variant="outline"
+            className="gap-2"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            Load More Activity
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
