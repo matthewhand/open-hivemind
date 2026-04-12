@@ -28,16 +28,16 @@ test.describe('API Documentation Page', () => {
                     path: '/api/bots',
                     middleware: ['auth'],
                     description: 'Get all bots',
-                    tag: 'bots'
+                    tag: 'bots',
                   },
                   {
                     method: 'POST',
                     path: '/api/bots',
                     middleware: ['auth', 'validate'],
                     description: 'Create a new bot',
-                    tag: 'bots'
-                  }
-                ]
+                    tag: 'bots',
+                  },
+                ],
               },
               {
                 prefix: '/api/config',
@@ -47,13 +47,13 @@ test.describe('API Documentation Page', () => {
                     path: '/api/config',
                     middleware: ['auth'],
                     description: 'Get system config',
-                    tag: 'config'
-                  }
-                ]
-              }
-            ]
-          }
-        })
+                    tag: 'config',
+                  },
+                ],
+              },
+            ],
+          },
+        }),
       });
     });
   });

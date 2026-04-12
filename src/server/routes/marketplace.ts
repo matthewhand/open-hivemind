@@ -173,7 +173,7 @@ async function scanBuiltInPackages(): Promise<MarketplacePackage[]> {
           status: 'built-in',
           trusted: true,
         });
-      } catch (e: unknown) {
+      } catch {
         // Even without package.json, list the directory as a package
         const namePrefix = dir.split('-')[0];
         const validTypes = ['llm', 'message', 'memory', 'tool'] as const;

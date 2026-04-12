@@ -21,7 +21,6 @@ app.use(express.json());
 app.use('/api/mcp', mcpRouter);
 
 // Routes not yet implemented in the MCP router
-// eslint-disable-next-line jest/no-disabled-tests
 describe.skip('MCP Tool Preferences API', () => {
   const testDataFile = path.join(process.cwd(), 'data', 'tool-preferences.json');
 

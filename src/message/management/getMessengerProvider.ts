@@ -38,7 +38,7 @@ export async function getMessengerProvider() {
     try {
       const messengersConfigRaw = await fs.promises.readFile(messengersConfigPath, 'utf-8');
       messengersConfig = messengersConfigRaw ? JSON.parse(messengersConfigRaw) : {};
-    } catch (_error) {
+    } catch {
       // If file doesn't exist or JSON is invalid, use empty config
       messengersConfig = {};
     }
@@ -127,7 +127,7 @@ export async function getMessengerProvider() {
           }
           messengerServices.push(svc);
         }
-      } catch (_e) {
+      } catch {
         // As a last resort in tests, return a recognizable Slack sentinel
         messengerServices.push({
           provider: 'slack',

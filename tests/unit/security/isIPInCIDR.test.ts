@@ -65,29 +65,29 @@ describe('isIPInCIDR', () => {
   });
 });
 
-  // Regression: isTrustedAdminIP previously short-circuited for native IPv6
-  // before calling isIPInCIDR, meaning IPv6 CIDRs in ADMIN_IP_WHITELIST were
-  // silently ignored. Verify isIPInCIDR itself handles these correctly so the
-  // fixed isTrustedAdminIP can rely on it.
-  describe('IPv6 CIDR regression — isTrustedAdminIP guard', () => {
-    it('matches loopback ::1 against /128 prefix', () => {
-      expect(isIPInCIDR('::1', '::1/128')).toBe(true);
-    });
-
-    it('does not match a different IPv6 address against /128', () => {
-      expect(isIPInCIDR('::2', '::1/128')).toBe(false);
-    });
-
-    it('matches an address inside a ULA fc00::/7 range', () => {
-      expect(isIPInCIDR('fc00::1', 'fc00::/7')).toBe(true);
-    });
-
-    it('matches a documentation prefix 2001:db8::/32', () => {
-      expect(isIPInCIDR('2001:db8::1', '2001:db8::/32')).toBe(true);
-      expect(isIPInCIDR('2001:db9::1', '2001:db8::/32')).toBe(false);
-    });
-
-    it('rejects an out-of-range prefix length for IPv6', () => {
-      expect(isIPInCIDR('::1', '::1/129')).toBe(false);
-    });
+// Regression: isTrustedAdminIP previously short-circuited for native IPv6
+// before calling isIPInCIDR, meaning IPv6 CIDRs in ADMIN_IP_WHITELIST were
+// silently ignored. Verify isIPInCIDR itself handles these correctly so the
+// fixed isTrustedAdminIP can rely on it.
+describe('IPv6 CIDR regression — isTrustedAdminIP guard', () => {
+  it('matches loopback ::1 against /128 prefix', () => {
+    expect(isIPInCIDR('::1', '::1/128')).toBe(true);
   });
+
+  it('does not match a different IPv6 address against /128', () => {
+    expect(isIPInCIDR('::2', '::1/128')).toBe(false);
+  });
+
+  it('matches an address inside a ULA fc00::/7 range', () => {
+    expect(isIPInCIDR('fc00::1', 'fc00::/7')).toBe(true);
+  });
+
+  it('matches a documentation prefix 2001:db8::/32', () => {
+    expect(isIPInCIDR('2001:db8::1', '2001:db8::/32')).toBe(true);
+    expect(isIPInCIDR('2001:db9::1', '2001:db8::/32')).toBe(false);
+  });
+
+  it('rejects an out-of-range prefix length for IPv6', () => {
+    expect(isIPInCIDR('::1', '::1/129')).toBe(false);
+  });
+});

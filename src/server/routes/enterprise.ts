@@ -2,7 +2,6 @@ import Debug from 'debug';
 import { Router } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { AuditLogger } from '../../common/auditLogger';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { HTTP_STATUS } from '../../types/constants';
 import {
   CreateCloudProviderSchema,
@@ -210,18 +209,18 @@ router.get('/api/audit', async (req, res) => {
       dateTo,
     } = req.query as Record<string, string | undefined>;
 
-      const auditLogger = AuditLogger.getInstance();
+    const auditLogger = AuditLogger.getInstance();
 
-      const filter = auditLogger.buildFilter({
-        search,
-        action,
-        resource,
-        user,
-        dateFrom,
-        dateTo,
-      });
+    const filter = auditLogger.buildFilter({
+      search,
+      action,
+      resource,
+      user,
+      dateFrom,
+      dateTo,
+    });
 
-      const auditEvents = await auditLogger.getAuditEvents(Number(limit), Number(offset), filter);
+    const auditEvents = await auditLogger.getAuditEvents(Number(limit), Number(offset), filter);
 
     return res.json(ApiResponse.success());
   } catch (error) {
@@ -240,44 +239,44 @@ router.get('/api/audit/export', async (req, res) => {
       string | undefined
     >;
 
-      const auditLogger = AuditLogger.getInstance();
+    const auditLogger = AuditLogger.getInstance();
 
-      const filter = auditLogger.buildFilter({
-        search,
-        action,
-        resource,
-        user,
-        dateFrom,
-        dateTo,
-      });
+    const filter = auditLogger.buildFilter({
+      search,
+      action,
+      resource,
+      user,
+      dateFrom,
+      dateTo,
+    });
 
-      const events = await auditLogger.getAllMatchingEvents(filter);
+    const events = await auditLogger.getAllMatchingEvents(filter);
 
-      // Build CSV
-      const header = 'id,timestamp,user,action,resource,result,details,ipAddress';
-      const escCsv = (v: string | undefined) => {
-        if (!v) return '';
-        // Escape double-quotes and wrap in quotes if the value contains commas, quotes, or newlines
-        if (/[",\n\r]/.test(v)) {
-          return `"${v.replace(/"/g, '""')}"`;
-        }
-        return v;
-      };
+    // Build CSV
+    const header = 'id,timestamp,user,action,resource,result,details,ipAddress';
+    const escCsv = (v: string | undefined) => {
+      if (!v) return '';
+      // Escape double-quotes and wrap in quotes if the value contains commas, quotes, or newlines
+      if (/[",\n\r]/.test(v)) {
+        return `"${v.replace(/"/g, '""')}"`;
+      }
+      return v;
+    };
 
-      const rows = events.map((e) =>
-        [
-          escCsv(e.id),
-          escCsv(e.timestamp),
-          escCsv(e.user),
-          escCsv(e.action),
-          escCsv(e.resource),
-          escCsv(e.result),
-          escCsv(e.details),
-          escCsv(e.ipAddress),
-        ].join(',')
-      );
+    const rows = events.map((e) =>
+      [
+        escCsv(e.id),
+        escCsv(e.timestamp),
+        escCsv(e.user),
+        escCsv(e.action),
+        escCsv(e.resource),
+        escCsv(e.result),
+        escCsv(e.details),
+        escCsv(e.ipAddress),
+      ].join(',')
+    );
 
-      const csv = [header, ...rows].join('\n');
+    const csv = [header, ...rows].join('\n');
 
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader(

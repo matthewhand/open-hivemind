@@ -38,7 +38,7 @@ jest.mock('../../../src/middleware/rateLimiter', () => ({
 }));
 
 // Obtain the mock singleton that the factory created
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+
 const { AuthManager } = require('../../../src/auth/AuthManager');
 const mockAuthManager = AuthManager.getInstance() as ReturnType<
   typeof import('../../helpers/authMocks').getMockAuthManager

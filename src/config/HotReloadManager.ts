@@ -83,7 +83,7 @@ export class HotReloadManager {
     });
   }
 
-  private handleFileChange(eventType: string, filename: string): void {
+  private handleFileChange(_eventType: string, _filename: string): void {
     // Debounce file changes to avoid multiple reloads
     setTimeout(() => {
       this.detectConfigurationChanges();

@@ -1,7 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { createLogger } from '../../common/StructuredLogger';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { HTTP_STATUS } from '../../types/constants';
 import { ErrorFactory } from '../../types/errorClasses';
 import { errorLogger } from '../../utils/errorLogger';
@@ -41,53 +40,53 @@ router.post('/frontend', validateRequest(ErrorLogSchema), async (req: Request, r
       performance?: any;
     };
 
-      // Validate required fields
-      if (!errorReport.message || !errorReport.correlationId) {
-        return res
-          .status(HTTP_STATUS.BAD_REQUEST)
-          .json(ApiResponse.error('Invalid error report: missing required fields'));
-      }
+    // Validate required fields
+    if (!errorReport.message || !errorReport.correlationId) {
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json(ApiResponse.error('Invalid error report: missing required fields'));
+    }
 
-      // Set correlation ID in response header
-      res.setHeader('X-Correlation-ID', errorReport.correlationId);
+    // Set correlation ID in response header
+    res.setHeader('X-Correlation-ID', errorReport.correlationId);
 
-      // Create a structured error object
-      const frontendError = ErrorFactory.createError(new Error(errorReport.message), {
+    // Create a structured error object
+    const frontendError = ErrorFactory.createError(new Error(errorReport.message), {
+      source: 'frontend',
+      componentStack: errorReport.componentStack,
+      userAgent: errorReport.userAgent,
+      url: errorReport.url,
+      localStorage: errorReport.localStorage,
+      sessionStorage: errorReport.sessionStorage,
+      performance: errorReport.performance,
+      ...errorReport.details,
+    });
+
+    // Log the frontend error
+    await errorLogger.logError(frontendError, {
+      correlationId: errorReport.correlationId,
+      path: errorReport.url || '/unknown',
+      method: 'POST',
+      userAgent: errorReport.userAgent,
+      body: {
         source: 'frontend',
         componentStack: errorReport.componentStack,
-        userAgent: errorReport.userAgent,
-        url: errorReport.url,
-        localStorage: errorReport.localStorage,
-        sessionStorage: errorReport.sessionStorage,
         performance: errorReport.performance,
-        ...errorReport.details,
-      });
+      },
+    });
 
-      // Log the frontend error
-      await errorLogger.logError(frontendError, {
-        correlationId: errorReport.correlationId,
-        path: errorReport.url || '/unknown',
-        method: 'POST',
-        userAgent: errorReport.userAgent,
-        body: {
-          source: 'frontend',
-          componentStack: errorReport.componentStack,
-          performance: errorReport.performance,
-        },
-      });
+    // Return success response
+    return res.status(HTTP_STATUS.OK).json(ApiResponse.success());
+  } catch (error) {
+    logger.error('Failed to process frontend error report:', error);
 
-      // Return success response
-      return res.status(HTTP_STATUS.OK).json(ApiResponse.success());
-    } catch (error) {
-      logger.error('Failed to process frontend error report:', error);
-
-      // Log the processing error
-      await errorLogger.logError(error as Error, {
-        correlationId: (req.headers['x-correlation-id'] as string) || 'unknown',
-        path: req.path,
-        method: req.method,
-        userAgent: req.headers['user-agent'],
-      });
+    // Log the processing error
+    await errorLogger.logError(error as Error, {
+      correlationId: (req.headers['x-correlation-id'] as string) || 'unknown',
+      path: req.path,
+      method: req.method,
+      userAgent: req.headers['user-agent'],
+    });
 
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)

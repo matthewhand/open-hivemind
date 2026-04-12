@@ -102,7 +102,7 @@ async function discoverProviders(): Promise<void> {
           });
           debug(`Discovered provider: ${providerName} -> ${serviceFileName}`);
           break;
-        } catch (err: unknown) {
+        } catch {
           // File doesn't exist, try next path
           continue;
         }

@@ -36,7 +36,7 @@ export class UserConfigStore {
     try {
       const data = require('fs').readFileSync(this.configPath, 'utf-8');
       this.config = JSON.parse(data);
-    } catch (error) {
+    } catch {
       // If config file doesn't exist, use default empty config
       this.config = {
         toolSettings: {},
@@ -72,7 +72,7 @@ export class UserConfigStore {
     try {
       const data = await fs.readFile(this.configPath, 'utf-8');
       this.config = JSON.parse(data);
-    } catch (error) {
+    } catch {
       // If config file doesn't exist, use default empty config
       this.config = {
         toolSettings: {},

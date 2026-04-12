@@ -126,7 +126,9 @@ export class ConfigurationImportExportService {
       // Include versions if requested
       if (options.includeVersions) {
         // ⚡ Bolt Optimization: Replace N DB queries with batched bulk queries
-        const configIds = configs.filter((c) => c.id != null).map((c) => c.id as number);
+        const configIds = configs
+          .filter((c) => c.id !== null && c.id !== undefined)
+          .map((c) => c.id as number);
 
         const versions: BotConfigurationVersion[] = [];
         const BATCH_SIZE = 50;
@@ -300,7 +302,7 @@ export class ConfigurationImportExportService {
   async importMainConfig(
     filePath: string,
     options: ImportOptions,
-    importedBy?: string
+    _importedBy?: string
   ): Promise<ImportResult> {
     try {
       // Read file
@@ -458,7 +460,7 @@ export class ConfigurationImportExportService {
       // Bulk fetch existing configurations to prevent N+1 queries
       const configIds = importData.configurations
         .map((c: any) => c.id)
-        .filter((id: any) => id != null);
+        .filter((id: any) => id !== null && id !== undefined);
 
       const existingConfigsMap = new Map<number, any>();
       let bulkFetchSucceeded = false;

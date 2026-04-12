@@ -2,7 +2,6 @@ import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { ErrorUtils } from '../../../common/ErrorUtils';
 import { DatabaseManager } from '../../../database/DatabaseManager';
-import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import { HTTP_STATUS } from '../../../types/constants';
 import { getRelevantEnvVars } from '../../../utils/envUtils';
 import {
@@ -112,19 +111,19 @@ router.get('/system-info', async (req: Request, res: Response) => {
   try {
     const dbManager = DatabaseManager.getInstance();
 
-      const systemInfo = {
-        uptime: process.uptime(),
-        memory: process.memoryUsage(),
-        nodeVersion: process.version,
-        platform: process.platform,
-        arch: process.arch,
-        pid: process.pid,
-        database: {
-          connected: dbManager.isConnected(),
-          stats: dbManager.isConnected() ? await dbManager.getStats() : null,
-        },
-        environment: process.env.NODE_ENV || 'development',
-      };
+    const systemInfo = {
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+      nodeVersion: process.version,
+      platform: process.platform,
+      arch: process.arch,
+      pid: process.pid,
+      database: {
+        connected: dbManager.isConnected(),
+        stats: dbManager.isConnected() ? await dbManager.getStats() : null,
+      },
+      environment: process.env.NODE_ENV || 'development',
+    };
 
     return res.json({ systemInfo });
   } catch (error) {

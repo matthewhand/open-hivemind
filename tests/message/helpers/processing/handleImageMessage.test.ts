@@ -14,7 +14,6 @@ jest.mock('@src/utils/httpClient', () => ({
   isHttpError: jest.fn(() => false),
 }));
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { http } = require('@src/utils/httpClient');
 const mockedHttpPost = http.post as jest.Mock;
 

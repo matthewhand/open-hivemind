@@ -26,7 +26,7 @@ jest.mock('@common/logger', () => {
   };
 });
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+ 
 const { __warnMock: loggerWarnMock } = require('@common/logger');
 
 const mockedLoadProfiles = profileUtils.loadProfiles as jest.MockedFunction<typeof profileUtils.loadProfiles>;
