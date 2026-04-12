@@ -402,8 +402,15 @@ const BotsPage: React.FC = () => {
             searchQuery={searchQuery}
             setIsCreateModalOpen={setIsCreateModalOpen}
           />
+        </div>
+      </div>
 
-          {!error && filteredBots.length > 0 && (
+      <DetailDrawer
+        isOpen={!!previewBot}
+        onClose={() => setPreviewBot(null)}
+        title={previewBot?.name || 'Bot Details'}
+        renderDock={
+          previewBot && !error && (
             <>
               <button
                 className="text-info hover:bg-info/10 transition-colors"
@@ -433,23 +440,25 @@ const BotsPage: React.FC = () => {
           )
         }
       >
-        <BotDetailContent
-          previewBot={previewBot}
-          previewTab={previewTab}
-          setPreviewTab={setPreviewTab}
-          activityLogs={activityLogs}
-          chatHistory={chatHistory}
-          logFilter={logFilter}
-          setLogFilter={setLogFilter}
-          activityError={activityError}
-          chatError={chatError}
-          fetchPreviewActivity={fetchPreviewActivity}
-          fetchPreviewChat={fetchPreviewChat}
-          setEditingBot={setEditingBot}
-          handleExportSingleBot={handleExportSingleBot}
-          handleToggleBotStatus={handleToggleBotStatus}
-          onClose={() => setPreviewBot(null)}
-        />
+        {previewBot && (
+          <BotDetailContent
+            previewBot={previewBot}
+            previewTab={previewTab}
+            setPreviewTab={setPreviewTab}
+            activityLogs={activityLogs}
+            chatHistory={chatHistory}
+            logFilter={logFilter}
+            setLogFilter={setLogFilter}
+            activityError={activityError}
+            chatError={chatError}
+            fetchPreviewActivity={fetchPreviewActivity}
+            fetchPreviewChat={fetchPreviewChat}
+            setEditingBot={setEditingBot}
+            handleExportSingleBot={handleExportSingleBot}
+            handleToggleBotStatus={handleToggleBotStatus}
+            onClose={() => setPreviewBot(null)}
+          />
+        )}
       </DetailDrawer>
 
       {/* Modals */}

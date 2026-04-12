@@ -14,14 +14,8 @@ import Join from '../../components/DaisyUI/Join';
 import Card from '../../components/DaisyUI/Card';
 import DetailDrawer from '../../components/DaisyUI/DetailDrawer';
 import Divider from '../../components/DaisyUI/Divider';
-import Join from '../../components/DaisyUI/Join';
-import Select from '../../components/DaisyUI/Select';
-import { SkeletonPage } from '../../components/DaisyUI/Skeleton';
 import Tabs from '../../components/DaisyUI/Tabs';
 import Toggle from '../../components/DaisyUI/Toggle';
-import { useSuccessToast, useErrorToast, useInfoToast } from '../../components/DaisyUI/ToastNotification';
-import Tooltip from '../../components/DaisyUI/Tooltip';
-import SearchFilterBar from '../../components/SearchFilterBar';
 import { PersonaModal } from '../../components/Personas/PersonaModal';
 import { useIsBelowBreakpoint } from '../../hooks/useBreakpoint';
 import { useBulkSelection } from '../../hooks/useBulkSelection';
@@ -319,29 +313,64 @@ const PersonasPage: React.FC = () => {
         ]}
       />
 
-      <PersonaStats personas={personas} />
-
-      <Card className="shadow-xl border border-base-200">
-          <SearchFilterBar
-            searchValue={searchQuery}
-            onSearchChange={setSearchQuery}
-            searchPlaceholder="Search personas by name or description..."
-          >
-            <div className="flex gap-2">
-              <Join>
-                <Tooltip content="Filter by Category">
-                  <Button variant="primary" size="sm" className="btn-square join-item pointer-events-none" aria-label="Filter by category" tabIndex={-1}>
-                    <Filter className="w-4 h-4" aria-hidden="true" />
-                  </Button>
-                </Tooltip>
-                <Select
-                  size="sm"
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  options={CATEGORIES.map((cat) => ({ label: cat.label, value: cat.id }))}
-                  className="join-item"
-                />
-              </Join>
+      {/* Persona Detail Drawer */}
+      <DetailDrawer
+        isOpen={!!selectedPersona}
+        onClose={() => setSelectedPersona(null)}
+        title={selectedPersona?.name}
+        subtitle={selectedPersona?.description}
+        renderDock={
+          selectedPersona && (
+            <>
+              {!selectedPersona.isBuiltIn && (
+                <button
+                  className="text-info hover:bg-info/10 transition-colors"
+                  onClick={() => {
+                    setSelectedPersona(null);
+                    openEditModal(selectedPersona);
+                  }}
+                  title="Edit Persona"
+                >
+                  <Edit2 className="w-5 h-5" />
+                  <span className="dock-label text-[10px]">Edit</span>
+                </button>
+              )}
+              <button
+                className="text-primary hover:bg-primary/10 transition-colors"
+                onClick={() => {
+                  setSelectedPersona(null);
+                  openCloneModal(selectedPersona);
+                }}
+                title="Duplicate Persona"
+              >
+                <Copy className="w-5 h-5" />
+                <span className="dock-label text-[10px]">Duplicate</span>
+              </button>
+              {!selectedPersona.isBuiltIn && (
+                <button
+                  className="text-error hover:bg-error/10 transition-colors"
+                  onClick={() => {
+                    setSelectedPersona(null);
+                    handleDeletePersona(selectedPersona.id, (msg) => setError(msg));
+                  }}
+                  title="Delete Persona"
+                >
+                  <Trash2 className="w-5 h-5" />
+                  <span className="dock-label text-[10px]">Delete</span>
+                </button>
+              )}
+            </>
+          )
+        }
+      >
+        {selectedPersona && (
+          <div className="space-y-6">
+            {/* Category & Status */}
+            <div className="flex flex-wrap gap-2">
+              {selectedPersona.category && (
+                <Badge variant="neutral">{selectedPersona.category}</Badge>
+              )}
+              {selectedPersona.isBuiltIn && <Badge variant="info">Built-in</Badge>}
             </div>
 
             {/* Assigned Bots */}

@@ -13,9 +13,6 @@ import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import Button from '../components/DaisyUI/Button';
 import { BarChart3, RefreshCw } from 'lucide-react';
-import { useErrorToast } from '../components/DaisyUI/ToastNotification';
-import Card from '../components/DaisyUI/Card';
-import Select from '../components/DaisyUI/Select';
 
 const AnalyticsDashboard: React.FC = () => {
   const { messageFlow, performanceMetrics } = useWebSocket();

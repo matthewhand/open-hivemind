@@ -12,6 +12,7 @@ import StatsCards from '../components/DaisyUI/StatsCards';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import ConfigKeyValueCard from '../components/DaisyUI/ConfigKeyValueCard';
 import { SkeletonTableLayout } from '../components/DaisyUI/Skeleton';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { MarketplaceGrid } from '../components/Marketplace';
 import LlmTestChat from '../components/LlmTestChat';
@@ -49,7 +50,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useBulkSelection } from '../hooks/useBulkSelection';
 import BulkActionBar from '../components/BulkActionBar';
 import Checkbox from '../components/DaisyUI/Checkbox';
-import Toggle from '../components/DaisyUI/Toggle';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import { useSavedStamp } from '../contexts/SavedStampContext';
 import Select from '../components/DaisyUI/Select';
@@ -934,322 +934,21 @@ const LLMProvidersPage: React.FC = () => {
           onChange={handleTabChange}
         />
 
-      <StatsCards stats={stats} isLoading={loading} />
-
-      {error && <Alert status="error" icon={<XIcon />} message={error} onClose={() => setError(null)} />}
-
-      {/* ── Use-case assignment cards ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
-
-        {/* 1. System Default (env-var fallback) */}
-        <Card compact className={`bg-base-100 shadow-sm border ${defaultStatus?.configured ? 'border-success/20' : 'border-warning/20'}`}>
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="font-bold flex items-center gap-2">
-                <ConfigIcon className="w-4 h-4" /> System Default
-              </h3>
-              {defaultStatus?.configured
-                ? <Badge variant="success" size="small">Active</Badge>
-                : <Badge variant="warning" size="small">Not Set</Badge>}
-            </div>
-            <p className="text-xs opacity-60 mb-3">
-              Fallback loaded from environment variables. Used when no profile is assigned.
-            </p>
-            {defaultStatus?.providers?.map((p: any) => (
-              <div key={p?.id} className="flex items-center gap-2 p-2 bg-base-200/50 rounded text-sm">
-                {getProviderIcon(p?.type)}
-                <span className="font-medium">{p?.name || 'Unnamed'}</span>
-                <Badge variant="neutral" size="small" className="ml-auto">Read-Only</Badge>
-              </div>
-            ))}
-            {(!defaultStatus?.providers?.length) && (
-              <Alert status="warning" className="text-xs p-2">
-                <WarningIcon className="w-4 h-4" />
-                <span>No default provider in .env. Bots without a profile will fail.</span>
-              </Alert>
-            )}
-        </Card>
-
-        {/* 2. Default Chatbot LLM Profile */}
-        <Card compact className="bg-base-100 shadow-sm border border-base-200">
-            <h3 className="font-bold flex items-center gap-2 mb-1">
-              <ChatIcon className="w-4 h-4 text-primary" /> Default Chatbot Profile
-            </h3>
-            <p className="text-xs opacity-60 mb-3">
-              Profile used for all bot chat responses when per-use-case mode is off.
-            </p>
-            <div className="form-control w-full">
-              <Select
-                className="select-bordered"
-                size="sm"
-                value={defaultChatbotProfile}
-                onChange={async (e) => {
-                  setDefaultChatbotProfile(e.target.value);
-                  await saveGlobal({ defaultChatbotProfile: e.target.value }).catch(() => {});
-                }}
-                disabled={loading} aria-busy={loading}
-              >
-                <option value="">Use System Default</option>
-                {chatProfiles.map((p) => (
-                  <option key={p?.key} value={p?.key}>{p?.name || 'Unnamed'} ({p?.provider || 'Unknown'})</option>
-                ))}
-              </Select>
-            </div>
-        </Card>
-
-        {/* 3. WebUI Intelligence */}
-        <Card compact className="bg-base-100 shadow-sm border border-base-200">
-            <h3 className="font-bold flex items-center gap-2 mb-1">
-              <ZapIcon className="w-4 h-4 text-warning" /> WebUI Intelligence
-            </h3>
-            <p className="text-xs opacity-60 mb-3">
-              Powers AI assistance features inside the WebUI (e.g. generating bot names).
-            </p>
-            <div className="form-control w-full">
-              <Select
-                className="select-bordered"
-                size="sm"
-                value={webuiIntelligenceProvider}
-                onChange={async (e) => {
-                  setWebuiIntelligenceProvider(e.target.value);
-                  await saveGlobal({ webuiIntelligenceProvider: e.target.value }).catch(() => {});
-                }}
-                disabled={loading} aria-busy={loading}
-              >
-                <option value="">None (Disabled)</option>
-                {chatProfiles.map((p) => (
-                  <option key={p?.key} value={p?.key}>{p?.name || 'Unnamed'} ({p?.provider || 'Unknown'})</option>
-                ))}
-              </Select>
-            </div>
-        </Card>
-
-        <Card compact className="bg-base-100 shadow-sm border border-base-200">
-            <h3 className="font-bold flex items-center gap-2 mb-1">
-              <CpuIcon className="w-4 h-4 text-secondary" /> Default Embedding Provider
-            </h3>
-            <p className="text-xs opacity-60 mb-3">
-              Embedding-capable provider/profile used by memory and semantic search features when embeddings are needed.
-            </p>
-            <div className="form-control w-full">
-              <Select
-                className="select-bordered"
-                size="sm"
-                value={defaultEmbeddingProvider}
-                onChange={async (e) => {
-                  setDefaultEmbeddingProvider(e.target.value);
-                  await saveLlmConfig({ DEFAULT_EMBEDDING_PROVIDER: e.target.value }).catch(() => {});
-                }}
-                disabled={loading} aria-busy={loading}
-              >
-                <option value="">None Selected</option>
-                {embeddingProfiles.map((p) => (
-                  <option key={p?.key} value={p?.key}>{p?.name || 'Unnamed'} ({p?.provider || 'Unknown'})</option>
-                ))}
-              </Select>
-            </div>
-        </Card>
+        <ProviderConfigModal
+          modalState={{ ...modalState, providerType: 'llm' }}
+          existingProviders={profiles}
+          onClose={closeModal}
+          onSubmit={handleProviderSubmit}
+        />
       </div>
 
-      {/* ── Per-use-case toggle ── */}
-      <Card compact className="bg-base-100 shadow-sm border border-base-200">
-        <div className="flex flex-row items-center justify-between">
-          <div>
-            <h3 className="font-bold flex items-center gap-2">
-              {perUseCaseEnabled
-                ? <ToggleOnIcon className="w-5 h-5 text-primary" />
-                : <ToggleOffIcon className="w-5 h-5 opacity-40" />}
-              Per-Use-Case LLM Profiles
-            </h3>
-            <p className="text-xs opacity-60 mt-0.5">
-              When enabled, assign different profiles to summarisation, moderation, and other tasks independently.
-            </p>
-          </div>
-          <Toggle
-            color="primary"
-            checked={perUseCaseEnabled}
-            onChange={async (e) => {
-              setPerUseCaseEnabled(e.target.checked);
-              await saveGlobal({ perUseCaseEnabled: e.target.checked }).catch(() => {});
-            }}
-          />
-        </div>
-      </Card>
-
-      {perUseCaseEnabled && (
-        <Card compact className="bg-base-100 shadow-sm border border-base-200">
-          <div className="space-y-3">
-            <h3 className="font-bold text-sm">Task Profile Assignments</h3>
-            <p className="text-xs opacity-60">
-              Assign a profile to each task. Tasks without a profile will use the default provider.
-            </p>
-            {(['semantic', 'summary', 'followup', 'idle'] as const).map((task) => (
-              <div key={task} className="flex items-center gap-3">
-                <label className="w-28 text-sm capitalize">{task}</label>
-                <Select
-                  className="select-bordered flex-1"
-                  size="sm"
-                  value={taskProfiles[task] || ''}
-                  onChange={async (e) => {
-                    const updated = { ...taskProfiles, [task]: e.target.value || undefined };
-                    if (!e.target.value) delete updated[task];
-                    setTaskProfiles(updated);
-                    await saveGlobal({ taskProfiles: updated }).catch(() => {});
-                  }}
-                >
-                  <option value="">— Default —</option>
-                  {profiles.map((p: any) => (
-                    <option key={p.key} value={p.key}>{p.name}</option>
-                  ))}
-                </Select>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      <Divider>Custom Profiles</Divider>
-
-      <SearchFilterBar
-        searchValue={searchQuery}
-        onSearchChange={setSearchQuery}
-        searchPlaceholder="Search profiles..."
-        filters={[{
-          key: 'type',
-          value: filterType,
-          onChange: setFilterType,
-          options: [{ label: 'All Types', value: 'all' }, ...providerTypes],
-          className: 'w-48',
-        }]}
-      />
-
-      {loading ? (
-        <SkeletonTableLayout rows={6} columns={4} />
-      ) : profiles.length === 0 ? (
-        <EmptyState
-          icon={BrainIcon}
-          title="No Profiles Created"
-          description="Create a custom profile to override system defaults for specific bots."
-          actionLabel="Create Profile"
-          actionIcon={AddIcon}
-          onAction={handleAddProfile}
-          variant="noData"
+      {/* Test Chat Drawer */}
+      {testProfileKey && (
+        <LlmTestChat
+          providerKey={testProfileKey}
+          providerType={testProviderType}
+          onClose={() => setTestProfileKey(null)}
         />
-      ) : filteredProfiles.length === 0 ? (
-        <EmptyState
-          icon={Search}
-          title="No matching profiles"
-          description="Try adjusting your search or filters."
-          actionLabel="Clear Filters"
-          onAction={() => { setSearchQuery(''); setFilterType('all'); }}
-          variant="noResults"
-        />
-      ) : (
-        <>
-          <div className="flex items-center gap-2 mb-2">
-            <Checkbox
-              variant="primary"
-              size="sm"
-              checked={bulk.isAllSelected}
-              onChange={() => bulk.toggleAll(filteredProfileKeys)}
-              aria-label="Select all profiles"
-            />
-            <span className="text-xs text-base-content/60">Select all</span>
-          </div>
-          <BulkActionBar
-            selectedCount={bulk.selectedCount}
-            onClearSelection={bulk.clearSelection}
-            actions={[
-              {
-                key: 'delete',
-                label: 'Delete',
-                icon: <DeleteIcon className="w-4 h-4" />,
-                variant: 'error',
-                onClick: handleBulkDeleteProfiles,
-                loading: bulkDeleting,
-              },
-            ]}
-          />
-        <div className="grid grid-cols-1 gap-4">
-          {filteredProfiles.map((profile) => (
-            <Card key={profile.key} className="bg-base-100 shadow-sm border border-base-200 transition-all hover:shadow-md">
-              <div>
-                <div className="p-4 flex items-center justify-between cursor-pointer" onClick={() => toggleExpand(profile.key)}>
-                  <div className="flex items-center gap-4">
-                    <Checkbox
-                      variant="primary"
-                      size="sm"
-                      checked={bulk.isSelected(profile.key)}
-                      onChange={(e) => { e.stopPropagation(); bulk.toggleItem(profile.key, e as any); }}
-                      onClick={(e) => e.stopPropagation()}
-                      aria-label={`Select ${profile.name}`}
-                    />
-                    <div className="p-3 bg-primary/10 text-primary rounded-xl">
-                      {getProviderIcon(profile.provider)}
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-lg flex items-center gap-2">
-                        {profile.name}
-                        <span className="text-xs font-normal opacity-50 px-2 py-0.5 bg-base-200 rounded-full font-mono">{profile.key}</span>
-                      </h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="secondary" size="small" style="outline">{profile.provider}</Badge>
-                        <Badge
-                          variant={
-                            normalizeModelType(profile.modelType) === 'embedding'
-                              ? 'warning'
-                              : normalizeModelType(profile.modelType) === 'both'
-                                ? 'info'
-                                : 'neutral'
-                          }
-                          size="small"
-                        >
-                          {normalizeModelType(profile.modelType)}
-                        </Badge>
-                        {renderLibraryCheck(profile.provider)}
-                        {profile.key === defaultChatbotProfile && (
-                          <Badge variant="primary" size="small">Default Chatbot</Badge>
-                        )}
-                        {profile.key === webuiIntelligenceProvider && (
-                          <Badge variant="warning" size="small">WebUI AI</Badge>
-                        )}
-                        {profile.key === defaultEmbeddingProvider && (
-                          <Badge variant="secondary" size="small">Default Embedding</Badge>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                    <Button size="sm" variant="ghost" onClick={() => handleEditProfile(profile)} aria-label={`Edit ${profile.name} profile`}>
-                      <EditIcon className="w-4 h-4" />
-                    </Button>
-                    <Button size="sm" variant="ghost" className="text-error hover:bg-error/10" onClick={() => handleDeleteProfile(profile.key)} aria-label={`Delete ${profile.name} profile`}>
-                      <DeleteIcon className="w-4 h-4" />
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => toggleExpand(profile.key)} aria-label={expandedProfile === profile.key ? 'Collapse details' : 'Expand details'}>
-                      {expandedProfile === profile.key ? <CollapseIcon className="w-4 h-4" /> : <ExpandIcon className="w-4 h-4" />}
-                    </Button>
-                  </div>
-                </div>
-
-                {expandedProfile === profile.key && (
-                  <div className="px-4 pb-4 pt-0">
-                    <div className="bg-base-200/50 rounded-xl p-4 border border-base-200">
-                      <h4 className="text-xs font-bold uppercase opacity-50 mb-3 flex items-center gap-2">
-                        <ConfigIcon className="w-3 h-3" /> Configuration
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {Object.entries(profile.config || {}).map(([k, v]) => (
-                          <ConfigKeyValueCard key={k} configKey={k} value={v} />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </Card>
-          ))}
-        </div>
-        </>
       )}
     </div>
   );

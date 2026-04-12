@@ -64,7 +64,6 @@ const TemplatesPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 12;
   const [drawerTemplate, setDrawerTemplate] = useState<ConfigurationTemplate | null>(null);
-  const [drawerTab, setDrawerTab] = useState('details');
 
   const toastError = useErrorToast();
   const toastSuccess = useSuccessToast();
@@ -182,7 +181,6 @@ const TemplatesPage: React.FC = () => {
 
   const handleOpenDrawer = (template: ConfigurationTemplate) => {
     setDrawerTemplate(template);
-    setDrawerTab('details');
   };
 
   const handleCloseDrawer = () => {
@@ -690,99 +688,82 @@ const TemplatesPage: React.FC = () => {
       >
         {drawerTemplate && (
           <div className="space-y-4">
-            {/* Drawer Tabs */}
-            <Tabs
-              tabs={[
-                { key: 'details', label: 'Details' },
-                { key: 'config', label: 'Configuration' },
-              ]}
-              activeTab={drawerTab}
-              onChange={setDrawerTab}
-              variant="boxed"
-              size="sm"
-            />
+            {/* Category & Built-in Badge */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge variant="primary" className="capitalize">{drawerTemplate.category}</Badge>
+              {drawerTemplate.isBuiltIn && (
+                <Badge variant="info" size="sm">Built-in</Badge>
+              )}
+            </div>
 
-            {drawerTab === 'details' && (
-              <div className="space-y-4">
-                {/* Category & Built-in Badge */}
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Badge variant="primary" className="capitalize">{drawerTemplate.category}</Badge>
-                  {drawerTemplate.isBuiltIn && (
-                    <Badge variant="info" size="sm">Built-in</Badge>
-                  )}
+            {/* Description */}
+            <div>
+              <label className="text-xs font-bold uppercase opacity-50 mb-1 block">Description</label>
+              <p className="text-sm">{drawerTemplate.description || 'No description provided.'}</p>
+            </div>
+
+            <Divider />
+
+            {/* Tags */}
+            <div>
+              <label className="text-xs font-bold uppercase opacity-50 mb-1 block">Tags</label>
+              {drawerTemplate.tags.length > 0 ? (
+                <div className="flex flex-wrap gap-1">
+                  {drawerTemplate.tags.map((tag, idx) => (
+                    <Badge key={idx} variant="ghost" size="sm" className="gap-1">
+                      <Tag className="w-3 h-3" />
+                      {tag}
+                    </Badge>
+                  ))}
                 </div>
+              ) : (
+                <p className="text-sm text-base-content/50 italic">No tags</p>
+              )}
+            </div>
 
-                {/* Description */}
-                <div>
-                  <label className="text-xs font-bold uppercase opacity-50 mb-1 block">Description</label>
-                  <p className="text-sm">{drawerTemplate.description || 'No description provided.'}</p>
-                </div>
+            <Divider />
 
-                <Divider />
-
-                {/* Tags */}
-                <div>
-                  <label className="text-xs font-bold uppercase opacity-50 mb-1 block">Tags</label>
-                  {drawerTemplate.tags.length > 0 ? (
-                    <div className="flex flex-wrap gap-1">
-                      {drawerTemplate.tags.map((tag, idx) => (
-                        <Badge key={idx} variant="ghost" size="sm" className="gap-1">
-                          <Tag className="w-3 h-3" />
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-base-content/50 italic">No tags</p>
-                  )}
-                </div>
-
-                <Divider />
-
-                {/* Usage & Author Info */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-base-200 rounded-lg p-3 text-center">
-                    <div className="text-2xl font-bold text-primary">{drawerTemplate.usageCount}</div>
-                    <div className="text-xs text-base-content/60">Bots Created</div>
-                  </div>
-                  <div className="bg-base-200 rounded-lg p-3 text-center">
-                    <div className="text-2xl font-bold text-secondary">
-                      {Object.keys(drawerTemplate.config || {}).length}
-                    </div>
-                    <div className="text-xs text-base-content/60">Config Keys</div>
-                  </div>
-                </div>
-
-                {/* Author / Creation Info */}
-                <div className="space-y-2 text-sm">
-                  {drawerTemplate.createdBy && (
-                    <div className="flex items-center gap-2 text-base-content/70">
-                      <User className="w-4 h-4" />
-                      <span>Created by <strong>{drawerTemplate.createdBy}</strong></span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2 text-base-content/70">
-                    <Calendar className="w-4 h-4" />
-                    <span>Created {new Date(drawerTemplate.createdAt).toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-base-content/70">
-                    <Clock className="w-4 h-4" />
-                    <span>Updated {new Date(drawerTemplate.updatedAt).toLocaleDateString()}</span>
-                  </div>
-                </div>
+            {/* Usage & Author Info */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-base-200 rounded-lg p-3 text-center">
+                <div className="text-2xl font-bold text-primary">{drawerTemplate.usageCount}</div>
+                <div className="text-xs text-base-content/60">Bots Created</div>
               </div>
-            )}
-
-            {drawerTab === 'config' && (
-              <div className="space-y-3">
-                <label className="text-xs font-bold uppercase opacity-50 block">
-                  Full Configuration
-                </label>
-                <CodeBlock className="bg-base-200 p-4" maxHeight="max-h-[60vh]">
-                  {JSON.stringify(drawerTemplate.config, null, 2)}
-                </CodeBlock>
+              <div className="bg-base-200 rounded-lg p-3 text-center">
+                <div className="text-2xl font-bold text-secondary">
+                  {Object.keys(drawerTemplate.config || {}).length}
+                </div>
+                <div className="text-xs text-base-content/60">Config Keys</div>
               </div>
-            )}
+            </div>
+
+            {/* Author / Creation Info */}
+            <div className="space-y-2 text-sm">
+              {drawerTemplate.createdBy && (
+                <div className="flex items-center gap-2 text-base-content/70">
+                  <User className="w-4 h-4" />
+                  <span>Created by <strong>{drawerTemplate.createdBy}</strong></span>
+                </div>
+              )}
+              <div className="flex items-center gap-2 text-base-content/70">
+                <Calendar className="w-4 h-4" />
+                <span>Created {new Date(drawerTemplate.createdAt).toLocaleDateString()}</span>
+              </div>
+              <div className="flex items-center gap-2 text-base-content/70">
+                <Clock className="w-4 h-4" />
+                <span>Updated {new Date(drawerTemplate.updatedAt).toLocaleDateString()}</span>
+              </div>
+            </div>
+
+            <Divider />
+
+            {/* Configuration */}
+            <div className="space-y-3">
+              <label className="text-xs font-bold uppercase opacity-50 block">Configuration</label>
+              <CodeBlock className="bg-base-200 p-4" maxHeight="max-h-[60vh]">
+                {JSON.stringify(drawerTemplate.config, null, 2)}
+              </CodeBlock>
+            </div>
           </div>
         )}
       </DetailDrawer>
