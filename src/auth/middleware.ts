@@ -55,7 +55,15 @@ export class AuthMiddleware {
           origin === 'https://127.0.0.1' ||
           origin.startsWith('https://127.0.0.1:'));
 
-      return !!(isLocalhostIp || isLocalhostHost || isLocalhostOrigin);
+      // SECURITY: Must strictly be a localhost IP.
+      if (!isLocalhostIp) return false;
+
+      // If Host or Origin headers are provided, they must also be localhost
+      // to protect against DNS rebinding and CSRF spoofing.
+      if (host && !isLocalhostHost) return false;
+      if (origin && !isLocalhostOrigin) return false;
+
+      return true;
     };
 
     const allowLocalBypass = process.env.ALLOW_LOCALHOST_ADMIN === 'true';

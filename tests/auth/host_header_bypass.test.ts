@@ -78,6 +78,9 @@ describe('AuthMiddleware Security Vulnerability', () => {
   });
 
   it('should ALLOW valid localhost Host header', async () => {
+    mockRequest.ip = '127.0.0.1';
+    mockRequest.connection = { remoteAddress: '127.0.0.1' } as any;
+
     // Mock Host to be valid localhost
     (mockRequest.get as jest.Mock).mockImplementation((header: string) => {
       if (header === 'host') return 'localhost:3000';
@@ -97,6 +100,9 @@ describe('AuthMiddleware Security Vulnerability', () => {
   });
 
   it('should ALLOW valid localhost IP Host header', async () => {
+    mockRequest.ip = '127.0.0.1';
+    mockRequest.connection = { remoteAddress: '127.0.0.1' } as any;
+
     // Mock Host to be valid IP
     (mockRequest.get as jest.Mock).mockImplementation((header: string) => {
       if (header === 'host') return '127.0.0.1:8080';
