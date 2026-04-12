@@ -16,7 +16,7 @@
     "packages/*"
   ],
   "scripts": {
-    "prepare": "husky install",
+    "prepare": "git config core.hooksPath .githooks || true",
     "lint": "node ./node_modules/eslint/bin/eslint.js src/",
     "lint:fix": "node ./node_modules/eslint/bin/eslint.js src/ --fix",
     "format": "node ./node_modules/prettier/bin/prettier.cjs --write \"src/**/*.ts\" \"src/**/*.tsx\" \"tests/**/*.ts\" \"packages/**/*.ts\"",
@@ -63,8 +63,7 @@
     "build:only:frontend": "npm run build:frontend",
     "test:only": "npm run test",
     "test:only:backend": "npm run test",
-    "test:only:frontend": "cd src/client && npx vitest run",
-    "prepare": "git config core.hooksPath .githooks || true"
+    "test:only:frontend": "cd src/client && npx vitest run"
   },
   "_moduleAliases": {
     "@src": "dist/src",
@@ -202,7 +201,7 @@
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "sqlite": "^5.1.1",
-    "sqlite3": "^5.1.7",
+    "sqlite3": "^6.0.1",
     "tailwind-merge": "^3.3.1",
     "tough-cookie": "^6.0.0",
     "ts-essentials": "^10.0.2",
@@ -271,6 +270,7 @@
     "baseline-browser-mapping": "^2.9.6",
     "chai": "^5.1.1",
     "concurrently": "^8.2.2",
+    "cross-env": "^10.1.0",
     "eslint": "^9.34.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
