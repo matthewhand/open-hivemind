@@ -10,7 +10,6 @@ jest.mock('@hivemind/shared-types', () => ({
   isHttpError: jest.fn().mockReturnValue(false),
 }));
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const mockHttpGet: jest.Mock = require('@hivemind/shared-types').http.get;
 
 // Helper to create a mock webClient with only what we need per test

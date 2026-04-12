@@ -25,7 +25,7 @@ export class DecisionRepository {
 
     try {
       const timestamp = new Date().toISOString();
-      
+
       // 1. Insert the new decision
       await db.run(
         `INSERT INTO decisions (botName, shouldReply, reason, probabilityRoll, threshold, timestamp)
@@ -66,10 +66,7 @@ export class DecisionRepository {
     }
 
     try {
-      const rows = await db.all(
-        `SELECT * FROM decisions ORDER BY timestamp DESC LIMIT ?`,
-        [limit]
-      );
+      const rows = await db.all(`SELECT * FROM decisions ORDER BY timestamp DESC LIMIT ?`, [limit]);
 
       return rows.map((row: any) => ({
         id: row.id,

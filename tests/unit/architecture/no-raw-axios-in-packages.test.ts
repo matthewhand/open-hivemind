@@ -12,8 +12,7 @@ import path from 'path';
  * Excluded: test files, declaration files, node_modules, dist/
  */
 
-const AXIOS_IMPORT_PATTERN =
-  `"from 'axios'\\|from \\"axios\\"\\|require('axios')\\|require(\\"axios\\")"`;
+const AXIOS_IMPORT_PATTERN = `"from 'axios'\\|from \\"axios\\"\\|require('axios')\\|require(\\"axios\\")"`;
 
 const DIRS_TO_GUARD = [
   ['packages', path.resolve(__dirname, '../../../packages')],
@@ -50,8 +49,8 @@ describe('Architecture: no raw axios imports', () => {
       if (violations.length > 0) {
         throw new Error(
           `Found ${violations.length} raw axios import(s) in ${label}/.\n` +
-          `Use the SSRF-safe http client from @hivemind/shared-types instead:\n\n` +
-          violations.join('\n')
+            `Use the SSRF-safe http client from @hivemind/shared-types instead:\n\n` +
+            violations.join('\n')
         );
       }
       expect(violations).toEqual([]);

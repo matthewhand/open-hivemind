@@ -15,7 +15,7 @@ router.get(
       // Requires importing DatabaseManager at the top
       const dbManager = require('../../../database/DatabaseManager').DatabaseManager.getInstance();
       dbStatus = dbManager.isConnected() ? 'healthy' : 'unhealthy';
-    } catch (error) {
+    } catch {
       dbStatus = 'error';
     }
 
@@ -106,7 +106,7 @@ router.get('/ready', (req, res) => {
   try {
     const dbManager = require('../../../database/DatabaseManager').DatabaseManager.getInstance();
     dbReady = dbManager.isConnected();
-  } catch (error) {
+  } catch {
     dbReady = false;
   }
 

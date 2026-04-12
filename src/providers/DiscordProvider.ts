@@ -53,7 +53,7 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
           status: reconManager ? reconManager.getStatus() : { state: 'connected' },
         };
       });
-    } catch (e) {
+    } catch {
       // Ignore if not initialized
     }
     return {
@@ -87,7 +87,7 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
     try {
       const fileContent = await fs.promises.readFile(messengersPath, 'utf8');
       cfg = JSON.parse(fileContent);
-    } catch (_e: unknown) {
+    } catch {
       // Ignore
     }
     cfg.discord = cfg.discord || {};
@@ -123,7 +123,7 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const client = bot?.client as any;
               return client?.isReady?.() === true;
-            } catch (err) {
+            } catch {
               return false;
             }
           },
@@ -147,7 +147,7 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
     try {
       const content = await fs.promises.readFile(messengersPath, 'utf8');
       cfg = JSON.parse(content);
-    } catch (_e: unknown) {
+    } catch {
       return { added: 0 };
     }
 
@@ -175,7 +175,7 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   const client = bot?.client as any;
                   return client?.isReady?.() === true;
-                } catch (err) {
+                } catch {
                   return false;
                 }
               },

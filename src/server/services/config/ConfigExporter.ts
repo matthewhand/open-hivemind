@@ -101,7 +101,7 @@ export class ConfigExporter {
       if (options.includeVersions) {
         // ⚡ Bolt Optimization: Replace N DB queries with batched bulk queries
         const configIds = configs
-          .filter((c) => c.id != null)
+          .filter((c) => c.id !== null && c.id !== undefined)
           .map((c) => c.id as number);
 
         const versions: BotConfigurationVersion[] = [];

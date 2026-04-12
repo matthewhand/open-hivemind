@@ -43,7 +43,7 @@ function parseKeyNumberMap(
       .filter(Boolean);
     for (const p of parts) {
       const [k, vs] = p.split(':').map((s) => s.trim());
-      if (!k || vs == null) {
+      if (!k || vs === null || vs === undefined) {
         continue;
       }
       const num = coerce(vs);

@@ -95,7 +95,7 @@ export class IdleResponseManager {
           `Environment variables used: IDLE_RESPONSE_MIN_DELAY=${envMinDelay}, IDLE_RESPONSE_MAX_DELAY=${envMaxDelay}, IDLE_RESPONSE_ENABLED=${envEnabled}`
         );
       }
-    } catch (error) {
+    } catch {
       log('Using default idle response configuration');
     }
   }

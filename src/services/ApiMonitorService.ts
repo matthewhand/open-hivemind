@@ -256,7 +256,7 @@ export class ApiMonitorService extends EventEmitter {
   }
 
   public stopAllMonitoring(): void {
-    this.monitoringIntervals.forEach((interval, id) => {
+    this.monitoringIntervals.forEach((interval, _id) => {
       clearInterval(interval);
     });
     this.monitoringIntervals.clear();

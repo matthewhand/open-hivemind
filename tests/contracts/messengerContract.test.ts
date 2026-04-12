@@ -184,7 +184,6 @@ jest.mock('tsyringe', () => ({
 
 describe('IMessengerService structural conformance', () => {
   it('DiscordService class prototype has required IMessengerService methods', () => {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { DiscordService } = require('@integrations/discord/DiscordService');
     const proto = DiscordService.prototype;
 
@@ -199,7 +198,6 @@ describe('IMessengerService structural conformance', () => {
   });
 
   it('SlackService class prototype has required IMessengerService methods', () => {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { SlackService } = require('@integrations/slack/SlackService');
     const proto = SlackService.prototype;
 
@@ -214,7 +212,6 @@ describe('IMessengerService structural conformance', () => {
   });
 
   it('MattermostService class prototype has required IMessengerService methods', () => {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { MattermostService } = require('@integrations/mattermost/MattermostService');
     const proto = MattermostService.prototype;
 

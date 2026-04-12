@@ -1,5 +1,5 @@
-import { EventEmitter } from 'events';
 import { randomUUID } from 'crypto';
+import { EventEmitter } from 'events';
 import Debug from 'debug';
 import { MessageBus } from '@src/events/MessageBus';
 
@@ -79,7 +79,11 @@ export class PendingActionManager extends EventEmitter {
   /**
    * Resolve a pending action (approve or deny).
    */
-  public resolveAction(id: string, approved: boolean, finalStatus?: 'approved' | 'denied' | 'expired'): void {
+  public resolveAction(
+    id: string,
+    approved: boolean,
+    finalStatus?: 'approved' | 'denied' | 'expired'
+  ): void {
     const action = this.pendingActions.get(id);
     const pendingPromise = this.promises.get(id);
 
@@ -89,10 +93,10 @@ export class PendingActionManager extends EventEmitter {
     }
 
     clearTimeout(pendingPromise.timer);
-    
+
     const status = finalStatus || (approved ? 'approved' : 'denied');
     action.status = status;
-    
+
     debug(`Action ${id} resolved as: ${status}`);
 
     // Resolve the original requester
@@ -112,7 +116,7 @@ export class PendingActionManager extends EventEmitter {
    * Get all currently pending actions.
    */
   public getPendingActions(): PendingAction[] {
-    return Array.from(this.pendingActions.values()).filter(a => a.status === 'pending');
+    return Array.from(this.pendingActions.values()).filter((a) => a.status === 'pending');
   }
 
   /**
