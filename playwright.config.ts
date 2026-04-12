@@ -96,8 +96,8 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'export NODE_OPTIONS="--max-old-space-size=4096"; export DISABLE_RATE_LIMIT=true; ALLOW_LOCALHOST_ADMIN=true; ALLOW_TEST_BYPASS=true; npm run dev',
-    url: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3028',
+    command: 'export NODE_OPTIONS="--max-old-space-size=4096"; export DISABLE_RATE_LIMIT=true; ALLOW_LOCALHOST_ADMIN=true; ALLOW_TEST_BYPASS=true; PORT=3029; npm run start:dev',
+    url: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3029',
     reuseExistingServer: false,
     timeout: 120 * 1000,
   },
