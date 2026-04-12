@@ -4,7 +4,7 @@ import { AuthManager } from '../../auth/AuthManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest, LoginCredentials, RegisterData } from '../../auth/types';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
-import { authRateLimiter } from '../../middleware/rateLimiter';
+import { apiRateLimiter, authRateLimiter } from '../../middleware/rateLimiter';
 import { HTTP_STATUS } from '../../types/constants';
 import { validateRequest as validate } from '../../validation/validateRequest';
 import { isTrustedAdminIP } from '../middleware/security';
@@ -263,7 +263,8 @@ router.get('/verify', authRateLimiter, async (req: Request, res: Response) => {
 });
 
 // GET /api/auth/trusted-status — check if request comes from trusted IP
-router.get('/trusted-status', authRateLimiter, (req: Request, res: Response) => {
+// Uses apiRateLimiter (not authRateLimiter) — this is a lightweight status check, not a credential endpoint
+router.get('/trusted-status', apiRateLimiter, (req: Request, res: Response) => {
   const trusted = isTrustedAdminIP(req);
   return res.json(ApiResponse.success({ trusted }));
 });

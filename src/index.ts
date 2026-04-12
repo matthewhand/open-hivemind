@@ -4,18 +4,63 @@ import './utils/alias';
 import fs from 'fs';
 import { createServer } from 'http';
 import path from 'path';
-import express from 'express';
+import debug from 'debug';
+import express, { type NextFunction, type Request, type Response } from 'express';
 import { container } from '@src/di/container';
 import { RealTimeValidationService } from '@src/server/services/RealTimeValidationService';
 import WebSocketService from '@src/server/services/WebSocketService';
 import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
 import AnomalyDetectionService from '@src/services/AnomalyDetectionService';
+import * as debugEnvVarsModule from '@config/debugEnvVars';
+import { IdleResponseManager } from '@message/management/IdleResponseManager';
 import Logger from '@common/logger';
+import { applyRateLimiting } from './middleware/rateLimiter';
 import { initServices, initWebhooks } from './server/initServices';
+import { authenticateToken } from './server/middleware/auth';
+import { csrfTokenHandler } from './server/middleware/csrf';
+import { ipWhitelist } from './server/middleware/security';
+import activityRouter from './server/routes/activity';
+import adminApiRouter from './server/routes/admin';
+import agentsRouter from './server/routes/agents';
+import anomalyRouter from './server/routes/anomaly';
+import apiDocsRouter from './server/routes/apiDocs';
+import authRouter from './server/routes/auth';
+import botConfigRouter from './server/routes/botConfig';
+import botsRouter from './server/routes/bots';
+import ciRouter from './server/routes/ci';
+import webuiConfigRouter from './server/routes/config';
+import dashboardRouter from './server/routes/dashboard';
+import demoRouter from './server/routes/demo';
+import enterpriseRouter from './server/routes/enterprise';
+import errorsRouter from './server/routes/errors';
+import guardsRouter from './server/routes/guards';
+import healthRoute from './server/routes/health';
+import hotReloadRouter from './server/routes/hotReload';
+import importExportRouter from './server/routes/importExport';
+import integrationsRouter from './server/routes/integrations';
+import lettaRouter from './server/routes/letta';
+import marketplaceRouter from './server/routes/marketplace';
+import mcpRouter from './server/routes/mcp';
+import mcpToolsRouter from './server/routes/mcpTools';
+import onboardingRouter from './server/routes/onboarding';
+import openapiRouter from './server/routes/openapi';
+import personasRouter from './server/routes/personas';
+import pluginSecurityRouter from './server/routes/pluginSecurity';
+import secureConfigRouter from './server/routes/secureConfig';
+import sitemapRouter from './server/routes/sitemap';
+import specsRouter from './server/routes/specs';
+import templatesRouter from './server/routes/templates';
+import usageTrackingRouter from './server/routes/usage-tracking';
+import validationRouter from './server/routes/validation';
+import webhooksRouter from './server/routes/webhooks';
+import webuiRouter from './server/routes/webui';
 import { setupMiddleware } from './server/setupMiddleware';
+import startupDiagnostics from './utils/startupDiagnostics';
 
 const appLogger = Logger.withContext('app:index');
 const frontendLogger = Logger.withContext('frontend');
+const httpLogger = Logger.withContext('http');
+const indexLog = debug('app:index');
 
 const resolveFrontendDistPath = (): string => {
   const candidates = [
@@ -165,7 +210,7 @@ if (process.env.NODE_ENV !== 'development') {
         path.join(process.cwd(), 'src/client/index.html'),
         'utf-8'
       );
-      template = await viteServer.transformIndexHtml(url, template);
+      template = await viteServerRef.current?.transformIndexHtml(url, template);
       res
         .status(200)
         .set({
@@ -177,7 +222,7 @@ if (process.env.NODE_ENV !== 'development') {
         .end(template);
     } catch (e: unknown) {
       if (e instanceof Error) {
-        viteServer.ssrFixStacktrace(e);
+        viteServerRef.current?.ssrFixStacktrace(e);
       }
       appLogger.error('Vite SSR Error', e);
       res.status(500).end(e instanceof Error ? e.message : String(e));
@@ -212,7 +257,7 @@ app.get('/api/csrf-token', csrfTokenHandler);
 // API routes - all on same port, no separation
 app.use('/api/activity', activityRouter);
 app.use('/api/agents', agentsRouter);
-app.use('/api/swarm', authenticateToken, swarmRouter);
+// swarmRouter not implemented — route omitted
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/config', webuiConfigRouter);
 app.use('/api/bots', botsRouter);
@@ -262,17 +307,17 @@ app.get('*', (req: Request, res: Response, next: NextFunction) => {
   if (req.path.startsWith('/api') || req.path.startsWith('/health') || req.path.includes('.')) {
     return next();
   }
-  if (process.env.NODE_ENV === 'development' && viteServer) {
+  if (process.env.NODE_ENV === 'development' && viteServerRef.current) {
     // In dev mode, serve through Vite's HTML transform
     const url = req.originalUrl;
     fs.promises
       .readFile(path.join(process.cwd(), 'src/client/index.html'), 'utf-8')
-      .then((template) => viteServer.transformIndexHtml(url, template))
+      .then((template) => viteServerRef.current?.transformIndexHtml(url, template))
       .then((html) => {
         res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
       })
       .catch((e: unknown) => {
-        if (e instanceof Error) viteServer.ssrFixStacktrace(e);
+        if (e instanceof Error) viteServerRef.current?.ssrFixStacktrace(e);
         next(e);
       });
   } else {
@@ -282,8 +327,8 @@ app.get('*', (req: Request, res: Response, next: NextFunction) => {
 
 // Vite Proxy Middleware for Development (Must be before 404 handler)
 app.use((req: Request, res: Response, next: NextFunction) => {
-  if (process.env.NODE_ENV === 'development' && viteServer) {
-    viteServer.middlewares(req, res, next);
+  if (process.env.NODE_ENV === 'development' && viteServerRef.current) {
+    viteServerRef.current?.middlewares(req, res, next);
   } else {
     next();
   }
