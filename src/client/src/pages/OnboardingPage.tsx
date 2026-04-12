@@ -64,18 +64,16 @@ type MessengerStepValues = z.infer<typeof messengerStepSchema>;
 
 const WelcomeStep: React.FC = () => (
   <div className="text-center space-y-6 py-4">
-    <div className="flex justify-center">
-      <Stack>
-        <div className="p-6 bg-primary/10 rounded-full">
-          <Sparkles className="w-16 h-16 text-primary" />
-        </div>
-        <div className="p-6 bg-secondary/10 rounded-full">
-          <Bot className="w-16 h-16 text-secondary" />
-        </div>
-        <div className="p-6 bg-accent/10 rounded-full">
-          <MessageSquare className="w-16 h-16 text-accent" />
-        </div>
-      </Stack>
+    <div className="flex justify-center gap-4">
+      <div className="p-6 bg-primary/10 rounded-full">
+        <Sparkles className="w-16 h-16 text-primary" />
+      </div>
+      <div className="p-6 bg-secondary/10 rounded-full">
+        <Bot className="w-16 h-16 text-secondary" />
+      </div>
+      <div className="p-6 bg-accent/10 rounded-full">
+        <MessageSquare className="w-16 h-16 text-accent" />
+      </div>
     </div>
     <h2 className="text-3xl font-bold">Welcome to Open-Hivemind</h2>
     <p className="text-lg text-base-content/70 max-w-xl mx-auto">
@@ -301,7 +299,7 @@ const ConnectMessengerStep: React.FC<ConnectMessengerStepProps & { messageProfil
   const instructions: Record<string, React.ReactNode> = {
     discord: (
       <div className="space-y-2 text-sm">
-        <p>1. Go to the <Link href="https://discord.com/developers/applications" target="_blank" rel="noreferrer" color="primary">Discord Developer Portal</Link></p>
+        <p>1. Go to the <a href="https://discord.com/developers/applications" target="_blank" rel="noreferrer" className="link link-primary">Discord Developer Portal</a></p>
         <p>2. Create a New Application, then go to the Bot section</p>
         <p>3. Click &quot;Reset Token&quot; to generate a bot token</p>
         <p>4. Enable Message Content Intent under Privileged Gateway Intents</p>
@@ -310,7 +308,7 @@ const ConnectMessengerStep: React.FC<ConnectMessengerStepProps & { messageProfil
     ),
     slack: (
       <div className="space-y-2 text-sm">
-        <p>1. Go to <Link href="https://api.slack.com/apps" target="_blank" rel="noreferrer" color="primary">Slack API Apps</Link></p>
+        <p>1. Go to <a href="https://api.slack.com/apps" target="_blank" rel="noreferrer" className="link link-primary">Slack API Apps</a></p>
         <p>2. Create a New App from scratch</p>
         <p>3. Under OAuth &amp; Permissions, add bot scopes: <Badge size="sm">chat:write</Badge>, <Badge size="sm">channels:read</Badge>, <Badge size="sm">app_mentions:read</Badge></p>
         <p>4. Install to your workspace and copy the Bot User OAuth Token</p>
