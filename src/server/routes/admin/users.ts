@@ -50,14 +50,15 @@ router.get('/personas', async (req: Request, res: Response) => {
       // Combine stored and default personas
       const allPersonas = [...storedPersonas, ...defaultPersonas];
 
-    return res.json(ApiResponse.success({ personas: allPersonas }));
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
-    return res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json(ApiResponse.error('Failed to retrieve personas'));
-  }
-});
+      return res.json(ApiResponse.success({ personas: allPersonas }));
+    } catch (error: unknown) {
+      const _hivemindError = ErrorUtils.toHivemindError(error);
+      return res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error('Failed to retrieve personas'));
+    }
+  })
+);
 
 /**
  * @openapi
@@ -89,7 +90,7 @@ router.post('/personas', validateRequest(PersonaSchema), (req: Request, res: Res
 
     return res.json(ApiResponse.success());
   } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
+    const _hivemindError = ErrorUtils.toHivemindError(error);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error('Failed to create persona'));
@@ -110,7 +111,7 @@ router.put(
 
       return res.json(ApiResponse.success());
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const _hivemindError = ErrorUtils.toHivemindError(error);
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to update persona'));
@@ -131,7 +132,7 @@ router.delete(
 
       return res.json(ApiResponse.success());
     } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
+      const _hivemindError = ErrorUtils.toHivemindError(error);
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to delete persona'));

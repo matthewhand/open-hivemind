@@ -23,7 +23,7 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
   try {
     const authManager = AuthManager.getInstance();
     payload = authManager.verifyAccessToken(token);
-  } catch (err) {
+  } catch {
     res.status(403).json({ error: 'Invalid or expired token' });
     return;
   }
@@ -100,7 +100,7 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction): v
       if (payload) {
         req.user = payload;
       }
-    } catch (e) {
+    } catch {
       // Ignore invalid tokens in optional auth
     }
   }

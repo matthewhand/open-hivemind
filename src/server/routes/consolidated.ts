@@ -326,7 +326,7 @@ router.get('/health', async (req, res) => {
       const botManager = BotConfigurationManager.getInstance();
       const bots = botManager.getAllBots();
       health.checks.botManager.botsLoaded = bots.length;
-    } catch (error) {
+    } catch {
       health.checks.botManager.status = 'error';
     }
 

@@ -148,7 +148,7 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
 
               const data = await response.json();
               return data.ok === true;
-            } catch (err) {
+            } catch {
               return false;
             }
           },
@@ -172,7 +172,7 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
     try {
       const content = await fs.promises.readFile(messengersPath, 'utf8');
       cfg = JSON.parse(content);
-    } catch (e: unknown) {
+    } catch {
       return { added: 0 };
     }
 
@@ -220,7 +220,7 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
 
                   const data = await response.json();
                   return data.ok === true;
-                } catch (err) {
+                } catch {
                   return false;
                 }
               },

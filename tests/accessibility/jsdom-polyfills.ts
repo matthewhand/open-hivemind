@@ -5,7 +5,7 @@
  * HTMLElement.scrollIntoView: used by CommandPalette, not implemented in jsdom.
  * HTMLCanvasElement.getContext: used by axe-core color-contrast checks.
  */
-/* eslint-disable @typescript-eslint/no-var-requires, @typescript-eslint/no-explicit-any */
+
 const util = require('util');
 
 if (typeof globalThis.TextEncoder === 'undefined') {

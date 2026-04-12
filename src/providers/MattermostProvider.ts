@@ -91,7 +91,7 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
 
     // This will immediately fail until the underlying implementation is written,
     // but fulfills the ReconnectionManager interface requirements.
-    reconManager.start().catch((err) => {
+    reconManager.start().catch((_err) => {
       // debug(`Failed to start Mattermost bot ${name}: ${err.message}`);
     });
 
@@ -173,7 +173,7 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
     try {
       const content = await fs.promises.readFile(messengersPath, 'utf8');
       cfg = JSON.parse(content);
-    } catch (e: unknown) {
+    } catch {
       return { added: 0 };
     }
 
@@ -227,7 +227,7 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
                 });
 
                 return response.ok;
-              } catch (err) {
+              } catch {
                 return false;
               }
             },
@@ -236,7 +236,7 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
         );
 
         this.reconManagers.set(nameToUse, reconManager);
-        reconManager.start().catch((err) => {
+        reconManager.start().catch((_err) => {
           // Errors are handled by ReconnectionManager
         });
         added++;

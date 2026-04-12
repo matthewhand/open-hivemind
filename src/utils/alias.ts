@@ -3,7 +3,7 @@
 if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'test') {
   try {
     require('module-alias/register');
-  } catch (e) {
+  } catch {
     // Ignore if module-alias is not found (e.g. in some dev setups)
     // although it should be there in production.
   }

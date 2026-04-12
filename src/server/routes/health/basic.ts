@@ -5,16 +5,18 @@ import { HTTP_STATUS } from '../../../types/constants';
 const router = Router();
 
 // Basic health check
-router.get('/', async (req, res) => {
-  const memoryUsage = process.memoryUsage();
-  let dbStatus = 'unknown';
-  try {
-    // Requires importing DatabaseManager at the top
-    const dbManager = require('../../../database/DatabaseManager').DatabaseManager.getInstance();
-    dbStatus = dbManager.isConnected() ? 'healthy' : 'unhealthy';
-  } catch (error) {
-    dbStatus = 'error';
-  }
+router.get(
+  '/',
+  asyncErrorHandler(async (req, res) => {
+    const memoryUsage = process.memoryUsage();
+    let dbStatus = 'unknown';
+    try {
+      // Requires importing DatabaseManager at the top
+      const dbManager = require('../../../database/DatabaseManager').DatabaseManager.getInstance();
+      dbStatus = dbManager.isConnected() ? 'healthy' : 'unhealthy';
+    } catch {
+      dbStatus = 'error';
+    }
 
     // Check memory providers
     let memoryProvidersStatus: Record<string, unknown> = { status: 'none_configured' };
@@ -102,7 +104,7 @@ router.get('/ready', (req, res) => {
   try {
     const dbManager = require('../../../database/DatabaseManager').DatabaseManager.getInstance();
     dbReady = dbManager.isConnected();
-  } catch (error) {
+  } catch {
     dbReady = false;
   }
 

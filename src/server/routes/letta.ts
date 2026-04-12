@@ -93,7 +93,7 @@ async function validateLettaUrl(url: string): Promise<{ isValid: boolean; error?
     }
 
     return { isValid: true };
-  } catch (error) {
+  } catch {
     return { isValid: false, error: 'Invalid URL format' };
   }
 }

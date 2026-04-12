@@ -13,23 +13,12 @@ module.exports = function ({ types: t }) {
     visitor: {
       MetaProperty(path) {
         // Match `import.meta`
-        if (
-          path.node.meta.name === 'import' &&
-          path.node.property.name === 'meta'
-        ) {
+        if (path.node.meta.name === 'import' && path.node.property.name === 'meta') {
           const parent = path.parentPath;
           // Match `import.meta.env` (MemberExpression with property `env`)
-          if (
-            parent.isMemberExpression() &&
-            parent.node.property.name === 'env'
-          ) {
+          if (parent.isMemberExpression() && parent.node.property.name === 'env') {
             // Replace `import.meta.env` with `process.env`
-            parent.replaceWith(
-              t.memberExpression(
-                t.identifier('process'),
-                t.identifier('env')
-              )
-            );
+            parent.replaceWith(t.memberExpression(t.identifier('process'), t.identifier('env')));
           }
         }
       },

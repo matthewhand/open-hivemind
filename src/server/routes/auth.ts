@@ -229,7 +229,7 @@ router.post(
           .status(HTTP_STATUS.UNAUTHORIZED)
           .json(ApiResponse.error('User not found', undefined, 401));
       return res.json(ApiResponse.success({ user }));
-    } catch (error: unknown) {
+    } catch {
       return res
         .status(HTTP_STATUS.UNAUTHORIZED)
         .json(ApiResponse.error('Invalid token', undefined, 401));

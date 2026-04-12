@@ -110,7 +110,7 @@ export class HealthChecker {
         status: 'connected',
         responseTime: Math.round(responseTime),
       };
-    } catch (error) {
+    } catch {
       return {
         status: 'error',
       };
@@ -212,7 +212,7 @@ export class HealthChecker {
         total: Math.round(total),
         percentage: Math.round((used / total) * 100),
       };
-    } catch (error) {
+    } catch {
       return {
         used: 0,
         total: 100,

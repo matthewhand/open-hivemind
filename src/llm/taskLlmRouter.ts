@@ -44,7 +44,7 @@ function readOverride(task: LlmTask): { providerRef: string; modelRef: string } 
   };
 }
 
-function withTokenCounting(provider: ILlmProvider, instanceId: string): ILlmProvider {
+function withTokenCounting(provider: ILlmProvider, _instanceId: string): ILlmProvider {
   const metrics = MetricsCollector.getInstance();
   return {
     name: provider.name,

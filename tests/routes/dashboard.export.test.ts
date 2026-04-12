@@ -52,7 +52,6 @@ const mockAnalyticsInstance = {
 };
 
 // Export routes not yet implemented in the dashboard router
-// eslint-disable-next-line jest/no-disabled-tests
 describe.skip('dashboard export endpoints', () => {
   let app: express.Application;
 
