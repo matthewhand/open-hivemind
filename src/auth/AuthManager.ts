@@ -18,6 +18,8 @@ const debug = Debug('app:AuthManager');
 export class AuthManager {
   private static instance: AuthManager;
   private users = new Map<string, User>();
+  private usernameMap = new Map<string, string>();
+  private emailMap = new Map<string, string>();
   private generatedPassword: string | null = null;
   private refreshTokens = new Set<string>();
   private readonly jwtSecret: string;
@@ -111,6 +113,8 @@ export class AuthManager {
         passwordHash: 'test-admin-hash',
       };
       this.users.set('admin', defaultAdmin);
+      this.usernameMap.set(defaultAdmin.username, defaultAdmin.id);
+      this.emailMap.set(defaultAdmin.email, defaultAdmin.id);
       return;
     }
 
@@ -138,6 +142,8 @@ export class AuthManager {
     };
 
     this.users.set('admin', defaultAdmin);
+    this.usernameMap.set(defaultAdmin.username, defaultAdmin.id);
+    this.emailMap.set(defaultAdmin.email, defaultAdmin.id);
     debug('Default admin user created');
   }
 
@@ -190,16 +196,12 @@ export class AuthManager {
     }
 
     // Check if user already exists by username
-    const existingUserByUsername = Array.from(this.users.values()).find(
-      (u) => u.username === data.username
-    );
-    if (existingUserByUsername) {
+    if (this.usernameMap.has(data.username)) {
       throw new ValidationError('User already exists', 'USER_ALREADY_EXISTS');
     }
 
     // Check if user already exists by email
-    const existingUserByEmail = Array.from(this.users.values()).find((u) => u.email === data.email);
-    if (existingUserByEmail) {
+    if (this.emailMap.has(data.email)) {
       throw new ValidationError('User already exists', 'USER_ALREADY_EXISTS');
     }
 
@@ -215,6 +217,8 @@ export class AuthManager {
     };
 
     this.users.set(user.id, user);
+    this.usernameMap.set(user.username, user.id);
+    this.emailMap.set(user.email, user.id);
     debug(`User registered: ${user.username}`);
 
     // Destructure to omit passwordHash — setting it to undefined leaves the
@@ -228,11 +232,10 @@ export class AuthManager {
    * Authenticate user and generate tokens
    */
   public async login(credentials: LoginCredentials): Promise<AuthToken> {
-    const user = Array.from(this.users.values()).find(
-      (u) => u.username === credentials.username && u.isActive
-    );
+    const userId = this.usernameMap.get(credentials.username);
+    const user = userId ? this.users.get(userId) : undefined;
 
-    if (!user || !user.passwordHash) {
+    if (!user || !user.isActive || !user.passwordHash) {
       throw new AuthenticationError('Invalid credentials', 'INVALID_CREDENTIALS');
     }
 
@@ -269,7 +272,8 @@ export class AuthManager {
    */
   public async trustedLogin(username?: string): Promise<AuthToken> {
     const name = username || 'admin';
-    const user = Array.from(this.users.values()).find((u) => u.username === name);
+    const userId = this.usernameMap.get(name);
+    const user = userId ? this.users.get(userId) : undefined;
     if (!user) throw new AuthenticationError('User not found', 'USER_NOT_FOUND');
     if (!user.isActive) throw new AuthenticationError('User is not active', 'USER_INACTIVE');
     if (user.role !== 'admin') throw new AuthenticationError('User is not an admin', 'NOT_ADMIN');
@@ -423,6 +427,31 @@ export class AuthManager {
       return null;
     }
 
+    // Collision check for username (validate only)
+    if (updates.username && updates.username !== user.username) {
+      if (this.usernameMap.has(updates.username)) {
+        throw new ValidationError('Username already exists', 'USER_ALREADY_EXISTS');
+      }
+    }
+
+    // Collision check for email (validate only)
+    if (updates.email && updates.email !== user.email) {
+      if (this.emailMap.has(updates.email)) {
+        throw new ValidationError('Email already exists', 'USER_ALREADY_EXISTS');
+      }
+    }
+
+    // Validation passed, safely perform mutations
+    if (updates.username && updates.username !== user.username) {
+      this.usernameMap.delete(user.username);
+      this.usernameMap.set(updates.username, userId);
+    }
+
+    if (updates.email && updates.email !== user.email) {
+      this.emailMap.delete(user.email);
+      this.emailMap.set(updates.email, userId);
+    }
+
     const updatedUser = { ...user, ...updates };
     this.users.set(userId, updatedUser);
 
@@ -434,6 +463,11 @@ export class AuthManager {
    * Delete user
    */
   public deleteUser(userId: string): boolean {
+    const user = this.users.get(userId);
+    if (user) {
+      this.usernameMap.delete(user.username);
+      this.emailMap.delete(user.email);
+    }
     return this.users.delete(userId);
   }
 

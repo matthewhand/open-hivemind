@@ -11,3 +11,6 @@
 ## 2024-05-20 - BotConfigCard rendering in BotListGrid
 **Learning:** `BotConfigCard` was mapping inside `BotListGrid` without `React.memo`, meaning that standard React state changes in the parent component (like checking the bulk action checkbox, drag-and-drop operations, or opening an individual card's preview drawer) forced a complete re-render of every complex configuration card on the page.
 **Action:** Always wrap repeating, complex item list components in `React.memo()`. I applied `memo` to both `BotConfigCard` and the parent list `BotListGrid` so that interacting with one item does not re-render the entire grid unless the data specifically changes.
+## 2024-05-21 - AuthManager Array.find Bottleneck
+**Learning:** `AuthManager.ts` was using `Array.from(this.users.values()).find(...)` for authentication paths (`register`, `login`, `trustedLogin`). This operation iterates over all user records for every auth check, making the time complexity $O(N)$ and creating a significant bottleneck for applications scaling to many users.
+**Action:** Replace $O(N)$ array searches with $O(1)$ `Map`-based lookups (`usernameMap` and `emailMap`). Ensure the internal maps strictly mirror the `users` collection during creation, updates, and deletion to prevent lookup inconsistencies or collision-hijacking in `updateUser`.
