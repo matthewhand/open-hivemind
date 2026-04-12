@@ -5,7 +5,7 @@ import { Mem4aiApiError } from './types';
 // Mock isSafeUrl so test URLs don't trigger SSRF guard failures
 jest.mock('@hivemind/shared-types', () => ({
   ...jest.requireActual('@hivemind/shared-types'),
-  isSafeUrl: jest.fn().mockResolvedValue(true),
+  isSafeUrl: jest.fn().mockResolvedValue({ safe: true }),
 }));
 
 const BASE_CONFIG = {

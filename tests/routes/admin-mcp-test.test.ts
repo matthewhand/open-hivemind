@@ -31,6 +31,10 @@ jest.mock('../../src/utils/envUtils', () => ({
   getRelevantEnvVars: jest.fn(() => ({})),
 }));
 
+jest.mock('../../src/utils/ssrfGuard', () => ({
+  isSafeUrl: jest.fn(async () => ({ safe: true })),
+}));
+
 const app = express();
 app.use(express.json());
 app.use('/api/admin', adminRoutes);

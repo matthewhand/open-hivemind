@@ -57,50 +57,50 @@ describe('SSRF Guard', () => {
   describe('isSafeUrl', () => {
     test('should allow safe public URLs', async () => {
       mockLookup.mockResolvedValue({ address: '93.184.216.34' }); // example.com
-      expect(await isSafeUrl('https://example.com')).toBe(true);
+      expect((await isSafeUrl('https://example.com')).safe).toBe(true);
     });
 
     test('should block private IP literals', async () => {
-      expect(await isSafeUrl('http://192.168.1.1')).toBe(false);
+      expect((await isSafeUrl('http://192.168.1.1')).safe).toBe(false);
       expect(mockLookup).not.toHaveBeenCalled(); // Should handle literals without DNS
     });
 
     test('should block localhost literal', async () => {
-      expect(await isSafeUrl('http://127.0.0.1')).toBe(false);
+      expect((await isSafeUrl('http://127.0.0.1')).safe).toBe(false);
     });
 
     test('should block domains resolving to private IP', async () => {
       mockLookup.mockResolvedValue({ address: '10.0.0.5' });
-      expect(await isSafeUrl('http://internal.service')).toBe(false);
+      expect((await isSafeUrl('http://internal.service')).safe).toBe(false);
     });
 
     test('should block unsafe protocols', async () => {
-      expect(await isSafeUrl('file:///etc/passwd')).toBe(false);
-      expect(await isSafeUrl('ftp://example.com')).toBe(false);
-      expect(await isSafeUrl('javascript:alert(1)')).toBe(false);
-      expect(await isSafeUrl('stdio://cmd')).toBe(false);
+      expect((await isSafeUrl('file:///etc/passwd')).safe).toBe(false);
+      expect((await isSafeUrl('ftp://example.com')).safe).toBe(false);
+      expect((await isSafeUrl('javascript:alert(1)')).safe).toBe(false);
+      expect((await isSafeUrl('stdio://cmd')).safe).toBe(false);
     });
 
     test('should allow WS/WSS protocols', async () => {
       mockLookup.mockResolvedValue({ address: '93.184.216.34' });
-      expect(await isSafeUrl('wss://example.com')).toBe(true);
+      expect((await isSafeUrl('wss://example.com')).safe).toBe(true);
     });
 
     test('should allow localhost if env var is set', async () => {
       process.env.ALLOW_LOCAL_NETWORK_ACCESS = 'true';
-      expect(await isSafeUrl('http://127.0.0.1')).toBe(true);
+      expect((await isSafeUrl('http://127.0.0.1')).safe).toBe(true);
 
       mockLookup.mockResolvedValue({ address: '127.0.0.1' });
-      expect(await isSafeUrl('http://localhost:3000')).toBe(true);
+      expect((await isSafeUrl('http://localhost:3000')).safe).toBe(true);
     });
 
     test('should fail safely on invalid URLs', async () => {
-      expect(await isSafeUrl('not-a-url')).toBe(false);
+      expect((await isSafeUrl('not-a-url')).safe).toBe(false);
     });
 
     test('should fail safely on DNS error', async () => {
       mockLookup.mockRejectedValue(new Error('DNS Error'));
-      expect(await isSafeUrl('http://nonexistent.domain')).toBe(false);
+      expect((await isSafeUrl('http://nonexistent.domain')).safe).toBe(false);
     });
   });
 });

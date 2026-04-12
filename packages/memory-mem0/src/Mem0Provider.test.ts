@@ -4,7 +4,7 @@ import { Mem0ApiError } from './types';
 // Mock isSafeUrl to avoid real DNS lookups in tests
 jest.mock('@hivemind/shared-types', () => ({
   ...jest.requireActual('@hivemind/shared-types'),
-  isSafeUrl: jest.fn(async () => true),
+  isSafeUrl: jest.fn(async () => ({ safe: true })),
 }));
 
 const BASE_CONFIG = { apiKey: 'test-key', baseUrl: 'https://api.mem0.ai/v1', maxRetries: 0 };
@@ -281,7 +281,7 @@ describe('SSRF protection', () => {
   });
 
   it('allows requests when isSafeUrl returns true', async () => {
-    isSafeUrl.mockResolvedValue(true);
+    isSafeUrl.mockResolvedValue({ safe: true });
     mockFetch(200, {
       results: [{ id: 'ssrf-ok', memory: 'safe', created_at: '2024-01-01T00:00:00Z' }],
     });

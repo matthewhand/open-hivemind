@@ -5,7 +5,6 @@ import express from 'express';
 import { RealTimeValidationService } from '../src/server/services/RealTimeValidationService';
 import { WebSocketService } from '../src/server/services/WebSocketService';
 
-/* eslint-disable @typescript-eslint/no-var-requires, @typescript-eslint/no-explicit-any */
 const _polyfillUtil = require('util');
 if (typeof globalThis.TextEncoder === 'undefined') {
   (globalThis as any).TextEncoder = _polyfillUtil.TextEncoder;
@@ -33,6 +32,7 @@ if (typeof HTMLCanvasElement !== 'undefined') {
 }
 
 process.env.SESSION_SECRET = 'testsecretlongenoughstringtoavoidwarning32chars';
+process.env.NODE_CONFIG_DIR = 'config/test/';
 
 // Env-Var Isolation & Interceptor
 const PROTECTED_PREFIXES = ['OPENAI_', 'SLACK_', 'DISCORD_', 'MATTERMOST_', 'DATABASE_'];
@@ -133,7 +133,7 @@ if (!allow) {
   // Preserve original methods in case a suite wants to restore them.
   const noop = () => {};
   // Commonly used console methods in the repo
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
+
   global.console = {
     ...console,
     log: noop,
