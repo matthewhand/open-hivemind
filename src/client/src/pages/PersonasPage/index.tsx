@@ -14,7 +14,6 @@ import Join from '../../components/DaisyUI/Join';
 import Card from '../../components/DaisyUI/Card';
 import DetailDrawer from '../../components/DaisyUI/DetailDrawer';
 import Divider from '../../components/DaisyUI/Divider';
-import Join from '../../components/DaisyUI/Join';
 import Select from '../../components/DaisyUI/Select';
 import { SkeletonPage } from '../../components/DaisyUI/Skeleton';
 import Tabs from '../../components/DaisyUI/Tabs';

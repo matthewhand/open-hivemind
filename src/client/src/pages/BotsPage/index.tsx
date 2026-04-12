@@ -402,8 +402,18 @@ const BotsPage: React.FC = () => {
             searchQuery={searchQuery}
             setIsCreateModalOpen={setIsCreateModalOpen}
           />
+        </div>
+      </div>
 
-          {!error && filteredBots.length > 0 && (
+      {previewBot && (
+      <DetailDrawer
+        isOpen={!!previewBot}
+        onClose={() => setPreviewBot(null)}
+        title={previewBot.name}
+        subtitle={previewBot.persona || 'No persona'}
+        icon={<Bot className="w-5 h-5 text-primary" />}
+        sideAction={
+          !error && filteredBots.length > 0 && (
             <>
               <button
                 className="text-info hover:bg-info/10 transition-colors"
@@ -451,6 +461,7 @@ const BotsPage: React.FC = () => {
           onClose={() => setPreviewBot(null)}
         />
       </DetailDrawer>
+      )}
 
       {/* Modals */}
       {isCreateModalOpen && (

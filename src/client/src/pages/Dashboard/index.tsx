@@ -234,11 +234,6 @@ const DashboardPage: React.FC = () => {
         </div>
       )}
     </div>
-      )}
-    </div>
-      </Card>
-      </div>
-    </div>
   );
 };
 
