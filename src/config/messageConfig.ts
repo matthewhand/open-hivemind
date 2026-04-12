@@ -11,9 +11,9 @@ const debug = Debug('app:messageConfig');
 function loadMessageConfig(): MessageConfig {
   const configDir = process.env.NODE_CONFIG_DIR || './config/';
   const configPath = path.join(configDir, 'providers/message.json');
-  
+
   let fileConfig: Record<string, any> = {};
-  
+
   try {
     if (fs.existsSync(configPath)) {
       const data = fs.readFileSync(configPath, 'utf8');
@@ -27,7 +27,7 @@ function loadMessageConfig(): MessageConfig {
 
   // Map environment variables
   const envConfig: Record<string, any> = {};
-  
+
   // Basic mapping helper
   const mapEnv = (envKey: string, configKey: string, parser?: (val: string) => any) => {
     if (process.env[envKey] !== undefined) {
@@ -137,7 +137,7 @@ function loadMessageConfig(): MessageConfig {
   };
 
   const result = MessageSchema.safeParse(combinedConfig);
-  
+
   if (!result.success) {
     debug('Configuration validation failed:', result.error.format());
     // Fallback to defaults by parsing empty object
@@ -153,6 +153,10 @@ const config = loadMessageConfig();
 const messageConfig = {
   get: (key: string) => (config as any)[key],
   getProperties: () => config,
+  getSchema: () => require('zod-to-json-schema').zodToJsonSchema(MessageSchema as any),
+  validate: (options: { allowed: 'strict' | 'warn' }) => {
+    MessageSchema.parse(config);
+  }
 };
 
 export default messageConfig;

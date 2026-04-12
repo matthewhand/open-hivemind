@@ -26,7 +26,8 @@ export async function sendFollowUpRequest(
     return;
   }
 
-  const bonuses = (discordConfig.get('DISCORD_CHANNEL_BONUSES' as any) as Record<string, number>) || {};
+  const bonuses =
+    (discordConfig.get('DISCORD_CHANNEL_BONUSES' as any) as Record<string, number>) || {};
   const globalModifier = discordConfig.get('DISCORD_UNSOLICITED_CHANCE_MODIFIER') || 1.0;
   const bonus = bonuses[channelId] ?? globalModifier;
   const baseChance = 0.1;

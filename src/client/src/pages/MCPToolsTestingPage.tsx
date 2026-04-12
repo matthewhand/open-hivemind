@@ -13,6 +13,14 @@ import {
 import PageHeader from '../components/DaisyUI/PageHeader';
 import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
 import { Alert } from '../components/DaisyUI/Alert';
+import Card from '../components/DaisyUI/Card';
+import Input from '../components/DaisyUI/Input';
+import Textarea from '../components/DaisyUI/Textarea';
+import Mockup from '../components/DaisyUI/Mockup';
+import Badge from '../components/DaisyUI/Badge';
+import Divider from '../components/DaisyUI/Divider';
+import Button from '../components/DaisyUI/Button';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import Debug from 'debug';
 
 const debug = Debug('app:client:pages:MCPToolsTestingPage');
@@ -364,36 +372,35 @@ const MCPToolsTestingPage: React.FC = () => {
         {/* Left: Tool Selection */}
         <div className="lg:col-span-1">
           <Card className="shadow-xl">
-              <Card.Title>
-                <WrenchScrewdriverIcon className="w-5 h-5" />
-                Available Tools
-              </Card.Title>
+            <Card.Title>
+              <WrenchScrewdriverIcon className="w-5 h-5" />
+              Available Tools
+            </Card.Title>
 
-              {tools.length === 0 ? (
-                <Alert status="warning">
-                  <InformationCircleIcon className="w-5 h-5" />
-                  <span>No tools available. Connect MCP servers first.</span>
-                </Alert>
-              ) : (
-                <div className="space-y-2">
-                  {tools.map((tool) => (
-                    <button
-                      key={`${tool.serverId}-${tool.name}`}
-                      className={`btn btn-sm w-full justify-start ${
-                        selectedTool?.name === tool.name && selectedTool?.serverId === tool.serverId
-                          ? 'btn-primary'
-                          : 'btn-ghost'
+            {tools.length === 0 ? (
+              <Alert status="warning">
+                <InformationCircleIcon className="w-5 h-5" />
+                <span>No tools available. Connect MCP servers first.</span>
+              </Alert>
+            ) : (
+              <div className="space-y-2">
+                {tools.map((tool) => (
+                  <button
+                    key={`${tool.serverId}-${tool.name}`}
+                    className={`btn btn-sm w-full justify-start ${selectedTool?.name === tool.name && selectedTool?.serverId === tool.serverId
+                      ? 'btn-primary'
+                      : 'btn-ghost'
                       }`}
-                      onClick={() => handleSelectTool(tool)}
-                    >
-                      <div className="text-left truncate w-full">
-                        <div className="font-semibold truncate">{tool.name}</div>
-                        <div className="text-xs opacity-70 truncate">{tool.serverName}</div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
+                    onClick={() => handleSelectTool(tool)}
+                  >
+                    <div className="text-left truncate w-full">
+                      <div className="font-semibold truncate">{tool.name}</div>
+                      <div className="text-xs opacity-70 truncate">{tool.serverName}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </Card>
         </div>
 
@@ -403,37 +410,37 @@ const MCPToolsTestingPage: React.FC = () => {
             <>
               {/* Tool Information */}
               <Card className="shadow-xl" title={selectedTool.name}>
-                  <p className="text-sm text-base-content/70">{selectedTool.description}</p>
-                  <Badge style="outline">{selectedTool.serverName}</Badge>
+                <p className="text-sm text-base-content/70">{selectedTool.description}</p>
+                <Badge style="outline">{selectedTool.serverName}</Badge>
 
-                  <Divider />
+                <Divider />
 
-                  {renderToolSchema()}
+                {renderToolSchema()}
               </Card>
 
               {/* Parameter Form */}
               <Card className="shadow-xl" title="Test Parameters">
-                  {renderParameterForm()}
+                {renderParameterForm()}
 
-                  <Card.Actions className="mt-4">
-                    <Button
-                      variant="primary"
-                      onClick={handleTestTool}
-                      disabled={testing}
-                    >
-                      {testing ? (
-                        <>
-                          <LoadingSpinner size="sm" />
-                          Testing...
-                        </>
-                      ) : (
-                        <>
-                          <PlayIcon className="w-5 h-5" />
-                          Test Tool
-                        </>
-                      )}
-                    </Button>
-                  </Card.Actions>
+                <Card.Actions className="mt-4">
+                  <Button
+                    variant="primary"
+                    onClick={handleTestTool}
+                    disabled={testing}
+                  >
+                    {testing ? (
+                      <>
+                        <LoadingSpinner size="sm" />
+                        Testing...
+                      </>
+                    ) : (
+                      <>
+                        <PlayIcon className="w-5 h-5" />
+                        Test Tool
+                      </>
+                    )}
+                  </Button>
+                </Card.Actions>
               </Card>
 
               {/* Test Results */}
@@ -443,16 +450,16 @@ const MCPToolsTestingPage: React.FC = () => {
             </>
           ) : (
             <Card className="shadow-xl">
-                <div className="text-center py-12">
-                  <WrenchScrewdriverIcon className="w-16 h-16 mx-auto text-base-content/30 mb-4" />
-                  <h3 className="text-lg font-medium text-base-content/70">
-                    Select a tool to test
-                  </h3>
-                  <p className="text-sm text-base-content/50 mt-2">
-                    Choose a tool from the list on the left to view its schema and test it with
-                    custom parameters
-                  </p>
-                </div>
+              <div className="text-center py-12">
+                <WrenchScrewdriverIcon className="w-16 h-16 mx-auto text-base-content/30 mb-4" />
+                <h3 className="text-lg font-medium text-base-content/70">
+                  Select a tool to test
+                </h3>
+                <p className="text-sm text-base-content/50 mt-2">
+                  Choose a tool from the list on the left to view its schema and test it with
+                  custom parameters
+                </p>
+              </div>
             </Card>
           )}
         </div>

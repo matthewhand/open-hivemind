@@ -11,6 +11,13 @@ import { Stat, Stats } from '../../components/DaisyUI/Stat';
 import Tooltip from '../../components/DaisyUI/Tooltip';
 import Card from '../../components/DaisyUI/Card';
 import Join from '../../components/DaisyUI/Join';
+<<<<<<< HEAD
+||||||| 963172efc
+import Figure from '../../components/DaisyUI/Figure';
+=======
+import Figure from '../../components/DaisyUI/Figure';
+import BotResponseTimeline from '../../components/BotResponseTimeline';
+>>>>>>> feat/bot-response-timeline
 
 interface BotPreviewSidebarProps {
   previewBot: BotConfig | null;
@@ -235,45 +242,12 @@ export const BotPreviewSidebar: React.FC<BotPreviewSidebarProps> = ({
 
           {/* Chat History Panel — Response Timeline */}
           {previewTab === 'chat' && (
-            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
-              {chatError ? (
-                <div className="text-center py-6">
-                  <AlertCircle className="w-8 h-8 mx-auto mb-2 text-error" />
-                  <p className="text-xs text-error mb-2">{chatError}</p>
-                  <button
-                    className="btn btn-ghost btn-xs"
-                    onClick={() => previewBot && fetchPreviewChat(previewBot.id)}
-                  >
-                    <RefreshCw className="w-3 h-3 mr-1" /> Retry
-                  </button>
-                </div>
-              ) : chatHistory.length === 0 ? (
-                <div className="text-center py-8 opacity-40">
-                  <MessageSquare className="w-8 h-8 mx-auto mb-2" />
-                  <p className="text-xs">No recent chat history</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {chatHistory.map((msg, idx) => (
-                    <div
-                      key={idx}
-                      className={`chat ${msg.role === 'user' ? 'chat-end' : 'chat-start'}`}
-                    >
-                      <div
-                        className={`chat-bubble text-xs min-h-0 py-1.5 px-3 ${
-                          msg.role === 'user' ? 'chat-bubble-primary' : 'chat-bubble-secondary'
-                        }`}
-                      >
-                        {msg.content}
-                      </div>
-                      <div className="chat-footer opacity-50 text-[10px] mt-0.5">
-                        {new Date(msg.timestamp).toLocaleTimeString()}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <BotResponseTimeline
+              chatHistory={chatHistory}
+              chatError={chatError}
+              onRetry={() => previewBot && fetchPreviewChat(previewBot.id)}
+              onRefresh={() => previewBot && fetchPreviewChat(previewBot.id)}
+            />
           )}
 
           <Card.Actions className="mt-2 pt-4 border-t border-base-200">

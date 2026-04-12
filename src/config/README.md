@@ -9,9 +9,10 @@ The `ConfigurationManager` class serves as a centralized manager for environment
 - **perplexityConfig**: Manages Perplexity AI settings.
 - **N8NConfig**: Manages N8N API settings.
 - **flowiseConfig**: Manages Flowise API settings.
-- **discordConfig**: Handles Discord-related settings.
-- **messageConfig**: Messaging-related toggles (e.g., username override).
-- Additional provider configs under `src/config/*Config.ts`
+- **discordConfig**: Handles Discord-related settings (backed by `schemas/discordSchema.ts`).
+- **slackConfig**: Handles Slack-related settings (backed by `schemas/slackSchema.ts`).
+- **messageConfig**: Messaging-related global behaviors (backed by `schemas/messageSchema.ts`).
+- Additional provider configs under `src/config/*Config.ts` (e.g., mattermostConfig backed by `mattermostSchema.ts`).
 
 
 ## Dynamic Loading
@@ -128,8 +129,8 @@ Order of resolution during initialization:
    - Throw “No Discord bot tokens provided in configuration”.
 
 Auxiliary settings:
-- `messageConfig.get('MESSAGE_USERNAME_OVERRIDE')` may override the displayed name, used by certain send/log routines.
-- `discordConfig.get('DISCORD_DEFAULT_CHANNEL_ID')` and `discordConfig.get('DISCORD_MESSAGE_HISTORY_LIMIT')` are used by channel operations and message fetching.
+- `MessageConfig` (via `schemas/messageSchema.ts`) may override the displayed name using `MESSAGE_USERNAME_OVERRIDE` during certain send/log routines.
+- `DiscordConfig` (via `schemas/discordSchema.ts`) defines `DISCORD_DEFAULT_CHANNEL_ID` and `DISCORD_MESSAGE_HISTORY_LIMIT`, used by channel operations and message fetching.
 - The service enforces a hard cap on fetched message history equal to `DISCORD_MESSAGE_HISTORY_LIMIT`.
 
 

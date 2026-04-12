@@ -1,9 +1,9 @@
 import { type Server as HttpServer } from 'http';
 import Debug from 'debug';
-import { Server as SocketIOServer } from 'socket.io';
-import { createAdapter } from '@socket.io/redis-adapter';
 import { createClient } from 'redis';
+import { Server as SocketIOServer } from 'socket.io';
 import { injectable, singleton } from 'tsyringe';
+import { createAdapter } from '@socket.io/redis-adapter';
 
 const debug = Debug('app:WebSocketService:ConnectionManager');
 
