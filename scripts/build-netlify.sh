@@ -23,18 +23,7 @@ else
 fi
 
 # 4. Netlify Configuration Files
-echo "🔹 Generating Netlify config files..."
-cat << 'EOF' > dist/client/_redirects
-/api/*  /.netlify/functions/server  200!
-/*      /index.html                 200
-EOF
-
-cat << 'EOF' > dist/client/_headers
-/*
-  X-Frame-Options: DENY
-  X-XSS-Protection: 1; mode=block
-  X-Content-Type-Options: nosniff
-EOF
+# Skipped intentionally: Redundant configs clash with netlify.toml and cause Header/Redirect rules checks to fail.
 
 # 5. Compiling Serverless Function
 echo "🔹 Compiling serverless function..."
