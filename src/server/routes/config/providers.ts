@@ -473,4 +473,102 @@ router.delete('/tool-profiles/:key', configLimiter, validateRequest(ToolProfileK
   }
 });
 
+// -- Response Profiles CRUD --
+
+const responseProfileManager = require('../../../config/responseProfileManager');
+
+router.get('/response-profiles', (_req, res) => {
+  try {
+    const profiles = responseProfileManager.getResponseProfiles();
+    return res.json(ApiResponse.success(profiles));
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
+    return res
+      .status(statusCode)
+      .json(
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          'RESPONSE_PROFILES_GET_ERROR',
+        )
+      );
+  }
+});
+
+router.post('/response-profiles', configLimiter, validateRequest(CreateResponseProfileSchema), (req, res) => {
+  try {
+    const { key, name, description, swarmMode, settings } = req.body;
+    const newProfile = responseProfileManager.createResponseProfile({
+      key,
+      name,
+      description,
+      swarmMode: swarmMode || 'exclusive',
+      settings: { ...settings, SWARM_MODE: swarmMode || 'exclusive' },
+    });
+    broadcastConfigUpdate('response-profiles', 'create', newProfile.key);
+    return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success({ profile: newProfile }));
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
+    return res
+      .status(statusCode)
+      .json(
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          'RESPONSE_PROFILES_CREATE_ERROR',
+        )
+      );
+  }
+});
+
+router.put('/response-profiles/:key', configLimiter, validateRequest(UpdateResponseProfileSchema), (req, res) => {
+  try {
+    const { key } = req.params;
+    const { name, description, swarmMode, settings } = req.body;
+    const updates: Record<string, unknown> = {};
+    if (name !== undefined) updates.name = name;
+    if (description !== undefined) updates.description = description;
+    if (swarmMode !== undefined) {
+      updates.swarmMode = swarmMode;
+      updates.settings = { ...(settings || {}), SWARM_MODE: swarmMode };
+    } else if (settings !== undefined) {
+      updates.settings = settings;
+    }
+    const updatedProfile = responseProfileManager.updateResponseProfile(key, updates);
+    broadcastConfigUpdate('response-profiles', 'update', key);
+    return res.json(ApiResponse.success({ profile: updatedProfile }));
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
+    return res
+      .status(statusCode)
+      .json(
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          'RESPONSE_PROFILES_UPDATE_ERROR',
+        )
+      );
+  }
+});
+
+router.delete('/response-profiles/:key', configLimiter, validateRequest(ResponseProfileKeyParamSchema), (req, res) => {
+  try {
+    const { key } = req.params;
+    responseProfileManager.deleteResponseProfile(key);
+    broadcastConfigUpdate('response-profiles', 'delete', key);
+    return res.json(ApiResponse.success());
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    const statusCode = ErrorUtils.getStatusCode(hivemindError) || 500;
+    return res
+      .status(statusCode)
+      .json(
+        ApiResponse.error(
+          ErrorUtils.getMessage(hivemindError),
+          'RESPONSE_PROFILES_DELETE_ERROR',
+        )
+      );
+  }
+});
+
 export default router;

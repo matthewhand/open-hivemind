@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
 import type { ResponseProfileOverrideKey} from './responseProfiles';
+import type { SwarmMode } from '../validation/schemas/configProfilesSchema';
 
 const debug = Debug('app:responseProfileManager');
 
@@ -11,7 +12,8 @@ export interface ResponseProfile {
     description?: string;
     enabled?: boolean;
     isBuiltIn?: boolean;
-    settings: Partial<Record<ResponseProfileOverrideKey, number | boolean>>;
+    swarmMode?: SwarmMode;
+    settings: Partial<Record<ResponseProfileOverrideKey, number | boolean>> & { SWARM_MODE?: SwarmMode };
 }
 
 // Built-in profiles that cannot be deleted

@@ -24,6 +24,7 @@ import {
   Zap,
   Shield,
   Clock,
+  Users,
 } from 'lucide-react';
 import { apiService } from '../services/api';
 import useUrlParams from '../hooks/useUrlParams';
@@ -38,8 +39,19 @@ interface ResponseProfile {
   description?: string;
   enabled?: boolean;
   isBuiltIn?: boolean;
-  settings: Record<string, number | boolean>;
+  swarmMode?: SwarmMode;
+  settings: Record<string, number | boolean | string>;
 }
+
+type SwarmMode = 'exclusive' | 'broadcast' | 'rotating' | 'priority' | 'collaborative';
+
+const SWARM_MODES: { value: SwarmMode; label: string; icon: string; description: string }[] = [
+  { value: 'exclusive', label: 'Exclusive (First Bot Wins)', icon: '🏆', description: 'First bot to decide to respond claims the message. Others skip.' },
+  { value: 'broadcast', label: 'Broadcast (All Respond)', icon: '📡', description: 'All bots independently decide whether to respond. Multiple replies possible.' },
+  { value: 'rotating', label: 'Rotating (Round Robin)', icon: '🔄', description: 'Bots take turns. Only the designated bot for this cycle responds.' },
+  { value: 'priority', label: 'Priority (Ranked)', icon: '🎯', description: 'Bots ranked by priority. Highest priority bot that wants to respond gets it.' },
+  { value: 'collaborative', label: 'Collaborative (Combine)', icon: '🤝', description: 'Multiple bots contribute tokens to a single combined response.' },
+];
 
 const SETTING_GROUPS = [
   {
@@ -109,11 +121,12 @@ const ResponseProfilesPage: React.FC = () => {
     isOpen: boolean; isEdit: boolean; profile: ResponseProfile | null;
   }>({ isOpen: false, isEdit: false, profile: null });
   
-  const [formData, setFormData] = useState<Partial<ResponseProfile>>({ 
-    name: '', 
-    key: '', 
-    description: '', 
-    settings: {} 
+  const [formData, setFormData] = useState<Partial<ResponseProfile>>({
+    name: '',
+    key: '',
+    description: '',
+    swarmMode: 'exclusive',
+    settings: {}
   });
 
   const fetchProfiles = useCallback(async () => {
@@ -139,7 +152,7 @@ const ResponseProfilesPage: React.FC = () => {
   }, [configVersion, lastConfigChange, fetchProfiles]);
 
   const handleAddProfile = () => {
-    setFormData({ name: '', key: '', description: '', settings: {} });
+    setFormData({ name: '', key: '', description: '', swarmMode: 'exclusive', settings: {} });
     setFormModal({ isOpen: true, isEdit: false, profile: null });
   };
 
@@ -264,7 +277,22 @@ const ResponseProfilesPage: React.FC = () => {
                       {profile.isBuiltIn && <Badge variant="secondary" size="xs">Built-in</Badge>}
                       <span className="text-xs font-normal opacity-50 px-2 py-0.5 bg-base-200 rounded-full font-mono">{profile.key}</span>
                     </h3>
-                    <p className="text-sm opacity-60">{profile.description || 'No description provided'}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <p className="text-sm opacity-60">{profile.description || 'No description provided'}</p>
+                      {(() => {
+                        const currentMode = profile.swarmMode || (profile.settings?.SWARM_MODE as string) || 'exclusive';
+                        const modeInfo = SWARM_MODES.find(m => m.value === currentMode);
+                        if (modeInfo) {
+                          return (
+                            <Badge variant="ghost" size="xs" className="flex items-center gap-1">
+                              <span>{modeInfo.icon}</span>
+                              <span className="truncate max-w-[120px]">{modeInfo.label.split('(')[0].trim()}</span>
+                            </Badge>
+                          );
+                        }
+                        return null;
+                      })()}
+                    </div>
                   </div>
                 </div>
                 <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
@@ -310,19 +338,50 @@ const ResponseProfilesPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="form-control">
               <label className="label"><span className="label-text font-bold">Profile Name</span></label>
-              <Input 
-                placeholder="e.g. Cautious Lurker" 
-                value={formData.name} 
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))} 
+              <Input
+                placeholder="e.g. Cautious Lurker"
+                value={formData.name}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               />
             </div>
             <div className="form-control">
               <label className="label"><span className="label-text font-bold">Description</span></label>
-              <Input 
-                placeholder="Briefly describe this behavior..." 
-                value={formData.description} 
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))} 
+              <Input
+                placeholder="Briefly describe this behavior..."
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
               />
+            </div>
+          </div>
+
+          {/* Swarm Orchestration Section */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-bold flex items-center gap-2 opacity-70 uppercase tracking-wider">
+              <Users className="w-4 h-4" />
+              Swarm Orchestration
+            </h4>
+            <div className="bg-base-200/30 p-4 rounded-xl space-y-3">
+              <p className="text-xs opacity-70">Choose how bots coordinate when deciding to respond to messages.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {SWARM_MODES.map(mode => (
+                  <button
+                    key={mode.value}
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, swarmMode: mode.value }))}
+                    className={`flex items-start gap-3 p-3 rounded-lg border-2 text-left transition-all ${
+                      formData.swarmMode === mode.value
+                        ? 'border-primary bg-primary/10'
+                        : 'border-base-300 hover:border-base-content/20'
+                    }`}
+                  >
+                    <span className="text-xl">{mode.icon}</span>
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold">{mode.label}</div>
+                      <div className="text-xs opacity-60 leading-tight">{mode.description}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
