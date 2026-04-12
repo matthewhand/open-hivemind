@@ -648,7 +648,12 @@ const ActivityPage: React.FC = () => {
                   {log.shouldReply ? 'REPLY' : 'IGNORE'}
                 </span>
                 <span className="text-base-content/70">{log.reason}</span>
-                {log.probabilityRoll !== undefined && (
+                {log.claimedBy && (
+                  <span className="text-warning shrink-0">
+                    (Claimed by: {log.claimedBy})
+                  </span>
+                )}
+                {log.probabilityRoll !== undefined && log.threshold !== undefined && (
                   <span className="text-base-content/40 ml-auto">
                     (Roll: {(log.probabilityRoll * 100).toFixed(0)}% / Thr: {(log.threshold * 100).toFixed(0)}%)
                   </span>

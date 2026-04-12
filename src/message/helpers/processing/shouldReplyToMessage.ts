@@ -3,7 +3,6 @@ import messageConfig from '@config/messageConfig';
 import { DatabaseManager } from '../../../database/DatabaseManager';
 import { MessageBus } from '../../../events/MessageBus';
 import { PersonaManager, type PersonaResponseBehavior } from '../../../managers/PersonaManager';
-import { SwarmCoordinator } from '../../../services/SwarmCoordinator';
 import TypingMonitor from '../monitoring/TypingMonitor';
 import { shouldReplyToUnsolicitedMessage } from '../unsolicitedMessageHandler';
 import { getLastBotActivity } from './ChannelActivity';
@@ -604,41 +603,40 @@ async function evaluateReplyDecision(
 
   chance = Math.max(0, Math.min(1, chance));
   const roll = Math.random();
-  let decision = roll < chance;
-  let prose = generateProseExplanation(
+  const decision = roll < chance;
+
+  // Generate human-readable prose explanation
+  const prose = generateProseExplanation(
     modsObject,
     decision,
     isDirectlyAddressed,
     hasPostedRecently
   );
 
-  const botName = nameCandidates[0] || 'Unknown';
-
-  if (decision) {
-    const claimed = SwarmCoordinator.getInstance().claimMessage(message.getId(), botName);
-    if (!claimed) {
-      decision = false;
-      prose = 'Skipping: Message already claimed by another bot in the swarm.';
-    }
-  }
-
   // Emit orchestration decision for live thinking stream
   const bus = MessageBus.getInstance();
   bus.emit('pipeline:decision', {
-    botName,
+    botName: nameCandidates[0] || 'Unknown',
+    messageId: message.getMessageId(),
+    channelId: message.getChannelId(),
     shouldReply: decision,
     reason: prose,
     probabilityRoll: Number(roll.toPrecision(3)),
     threshold: Number(chance.toPrecision(3)),
     meta: {
       ...modsObject,
-      channelId: message.getChannelId(),
     },
   });
 
   return {
     shouldReply: decision,
-    reason: prose,
+    reason: isDirectlyAddressed
+      ? decision
+        ? 'Directly addressed (chance roll success)'
+        : 'Directly addressed (chance roll failure)'
+      : decision
+        ? 'Chance roll success'
+        : 'Chance roll failure',
     meta: {
       probability: `<${Number(chance.toPrecision(3))}`,
       rolled: Number(roll.toPrecision(3)),

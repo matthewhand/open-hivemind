@@ -90,11 +90,14 @@ export type MessageEvents = {
   /** Orchestration decision details for live thinking stream. */
   'pipeline:decision': {
     botName: string;
+    messageId: string;
+    channelId: string;
     shouldReply: boolean;
     reason: string;
     confidenceScore?: number;
-    probabilityRoll: number;
-    threshold: number;
+    probabilityRoll?: number;
+    threshold?: number;
+    claimedBy?: string;
     meta?: Record<string, unknown>;
   };
 
