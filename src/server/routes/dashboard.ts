@@ -532,38 +532,40 @@ router.get('/activity', authenticate, requireAdmin, async (req, res) => {
       llmProviders.add(bot?.llmProvider || 'unknown');
     });
 
-    const filteredEvents = storedEvents
-      .filter((event) => {
-        const bot = botMap.get(event.botName);
-        const eventLlmProvider = bot?.llmProvider || 'unknown';
+    const filteredEvents = storedEvents.filter((event) => {
+      const bot = botMap.get(event.botName);
+      const eventLlmProvider = bot?.llmProvider || 'unknown';
 
-        if (!hasAnyFilter) return true;
+      if (!hasAnyFilter) return true;
 
-        if (hasBotFilter && !botFilterSet.has(event.botName)) {
-          return false;
-        }
-        if (hasProviderFilter && !providerFilterSet.has(event.provider)) {
-          return false;
-        }
-        if (hasLlmFilter && !llmFilterSet.has(eventLlmProvider)) {
-          return false;
-        }
-        const ts = new Date(event.timestamp).getTime();
-        if (fromTime && ts < fromTime) {
-          return false;
-        }
-        if (toTime && ts > toTime) {
-          return false;
-        }
-        return true;
-      });
+      if (hasBotFilter && !botFilterSet.has(event.botName)) {
+        return false;
+      }
+      if (hasProviderFilter && !providerFilterSet.has(event.provider)) {
+        return false;
+      }
+      if (hasLlmFilter && !llmFilterSet.has(eventLlmProvider)) {
+        return false;
+      }
+      const ts = new Date(event.timestamp).getTime();
+      if (fromTime && ts < fromTime) {
+        return false;
+      }
+      if (toTime && ts > toTime) {
+        return false;
+      }
+      return true;
+    });
 
     // Apply pagination to filtered results
     const paginatedEvents = filteredEvents
       .slice(offset, offset + limit)
       .map((event) => annotateEvent(event, botMap));
 
-    const { timeline, agentMetrics } = buildTimelineAndMetrics(paginatedEvents, ws.getAllBotStats());
+    const { timeline, agentMetrics } = buildTimelineAndMetrics(
+      paginatedEvents,
+      ws.getAllBotStats()
+    );
 
     res.json(
       ApiResponse.success({
@@ -572,7 +574,7 @@ router.get('/activity', authenticate, requireAdmin, async (req, res) => {
           total: filteredEvents.length,
           limit,
           offset,
-          hasMore: offset + limit < filteredEvents.length
+          hasMore: offset + limit < filteredEvents.length,
         },
         filters: {
           agents: Array.from(agents).sort(),

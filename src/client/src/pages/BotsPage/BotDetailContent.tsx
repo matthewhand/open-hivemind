@@ -12,8 +12,13 @@ import Tooltip from '../../components/DaisyUI/Tooltip';
 import Figure from '../../components/DaisyUI/Figure';
 import Input from '../../components/DaisyUI/Input';
 import Join from '../../components/DaisyUI/Join';
+<<<<<<< HEAD
 import BotResponseTimeline from '../../components/BotResponseTimeline';
 import BotTestDriveTab from './BotTestDriveTab';
+||||||| 963172efc
+=======
+import BotResponseTimeline from '../../components/BotResponseTimeline';
+>>>>>>> feat/bot-response-timeline
 
 interface BotDetailContentProps {
   previewBot: BotConfig | null;

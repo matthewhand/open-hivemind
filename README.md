@@ -139,7 +139,8 @@ Open-Hivemind leverages a myriad of environment variables for system configurati
 *   **System Controls**: `PORT`, `BASE_URL`, `LOG_LEVEL`, `REDIS_URL`, `DEMO_MODE`
 *   **Security & Network Limits**: `ADMIN_IP_WHITELIST`, `ALLOW_LOCALHOST_ADMIN`, `ALLOW_LOCAL_NETWORK_ACCESS`, `CORS_ORIGIN`, `TRUST_PROXY`, `RATE_LIMIT_API_MAX`
 *   **Bot Registries (Multi-bot setup)**: Prefix dynamically instantiated bots via `BOTS_<NAME>_DISCORD_BOT_TOKEN` etc.
-*   **Global Fallbacks**: `DISCORD_BOT_TOKEN`, `SLACK_BOT_TOKEN`, `OPENAI_API_KEY`, `LLM_PROVIDER`, `MESSAGE_PROVIDER`
-*   **Behavior Tuning**: `MESSAGE_ACTIVITY_TIME_WINDOW`, `MESSAGE_MENTION_BONUS`, `MESSAGE_RECENT_ACTIVITY_DECAY_RATE`
+*   **Platform Configuration**: Platform-specific schemas (`discordSchema.ts`, `slackSchema.ts`, etc.) validate your bot tokens (`DISCORD_BOT_TOKEN`, `SLACK_BOT_TOKEN`) and options.
+*   **Message Configuration**: Core behavior (e.g. `MESSAGE_ACTIVITY_TIME_WINDOW`, `MESSAGE_MENTION_BONUS`) is validated in `messageSchema.ts`.
+*   **Global Fallbacks**: Unprefixed keys act as system-wide defaults (e.g., `LLM_PROVIDER`, `MESSAGE_PROVIDER`).
 
 For a comprehensive, documented list of every supported variable, consult the `.env.sample` file included in the root of the repository.

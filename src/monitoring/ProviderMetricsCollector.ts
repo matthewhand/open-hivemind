@@ -77,7 +77,7 @@ export class ProviderMetricsCollector extends EventEmitter {
   private messagesSent: prom.Counter<string>;
   private messagesFailed: prom.Counter<string>;
   private messageLatency: prom.Gauge<string>;
-  
+
   private llmStatus: prom.Gauge<string>;
   private llmRequests: prom.Counter<string>;
   private llmTokens: prom.Counter<string>;
@@ -93,72 +93,72 @@ export class ProviderMetricsCollector extends EventEmitter {
     };
 
     this.registry = prom.register;
-    
+
     // Initialize standard metrics
     this.messageStatus = new prom.Gauge({
       name: 'hivemind_message_provider_status',
       help: 'Status of message provider (0=unknown, 1=healthy, 2=degraded, 3=unhealthy)',
-      labelNames: ['provider']
+      labelNames: ['provider'],
     });
 
     this.messagesReceived = new prom.Counter({
       name: 'hivemind_messages_received_total',
       help: 'Total messages received',
-      labelNames: ['provider']
+      labelNames: ['provider'],
     });
 
     this.messagesSent = new prom.Counter({
       name: 'hivemind_messages_sent_total',
       help: 'Total messages sent',
-      labelNames: ['provider']
+      labelNames: ['provider'],
     });
 
     this.messagesFailed = new prom.Counter({
       name: 'hivemind_messages_failed_total',
       help: 'Total messages failed',
-      labelNames: ['provider']
+      labelNames: ['provider'],
     });
 
     this.messageLatency = new prom.Gauge({
       name: 'hivemind_message_response_time_ms',
       help: 'Average response time in ms',
-      labelNames: ['provider']
+      labelNames: ['provider'],
     });
 
     this.llmStatus = new prom.Gauge({
       name: 'hivemind_llm_provider_status',
       help: 'Status of LLM provider (0=unknown, 1=healthy, 2=degraded, 3=unhealthy)',
-      labelNames: ['provider']
+      labelNames: ['provider'],
     });
 
     this.llmRequests = new prom.Counter({
       name: 'hivemind_llm_requests_total',
       help: 'Total LLM requests',
-      labelNames: ['provider', 'status']
+      labelNames: ['provider', 'status'],
     });
 
     this.llmTokens = new prom.Counter({
       name: 'hivemind_llm_tokens_total',
       help: 'Total tokens used',
-      labelNames: ['provider', 'type']
+      labelNames: ['provider', 'type'],
     });
 
     this.llmLatency = new prom.Gauge({
       name: 'hivemind_llm_latency_ms',
       help: 'Average latency in ms',
-      labelNames: ['provider']
+      labelNames: ['provider'],
     });
 
     this.llmLatencyP95 = new prom.Gauge({
       name: 'hivemind_llm_latency_p95_ms',
       help: 'P95 latency in ms',
-      labelNames: ['provider']
+      labelNames: ['provider'],
     });
 
     this.llmCost = new prom.Gauge({
       name: 'hivemind_llm_cost_total_usd',
       help: 'Total cost in USD',
-      labelNames: ['provider']
+      labelNames: ['provider'],
     });
 
     this.initializeProviders();
@@ -170,7 +170,7 @@ export class ProviderMetricsCollector extends EventEmitter {
   static getInstance(config?: Partial<ProviderMonitoringConfig>): ProviderMetricsCollector {
     if (!ProviderMetricsCollector.instance) {
       ProviderMetricsCollector.instance = new ProviderMetricsCollector(config);
-      
+
       // Register for graceful shutdown
       try {
         const { ShutdownCoordinator } = require('../server/ShutdownCoordinator');
@@ -317,7 +317,7 @@ export class ProviderMetricsCollector extends EventEmitter {
       if (tokens.total) {
         metrics.tokensUsed += tokens.total;
       }
-      
+
       if (cost !== undefined) {
         metrics.totalCost += cost;
         metrics.averageCost = metrics.totalCost / metrics.requestsTotal;
@@ -391,7 +391,7 @@ export class ProviderMetricsCollector extends EventEmitter {
       metrics.p50Latency = this.percentile(sorted, 50);
       metrics.p95Latency = this.percentile(sorted, 95);
       metrics.p99Latency = this.percentile(sorted, 99);
-      
+
       this.llmLatency.set({ provider }, metrics.averageLatency);
       this.llmLatencyP95.set({ provider }, metrics.p95Latency);
     }
@@ -428,8 +428,9 @@ export class ProviderMetricsCollector extends EventEmitter {
         if (errorRate > 0.5) metrics.status = 'unhealthy';
         else if (errorRate > 0.1) metrics.status = 'degraded';
         else metrics.status = 'healthy';
-        
-        const statusValue = metrics.status === 'healthy' ? 1 : metrics.status === 'degraded' ? 2 : 3;
+
+        const statusValue =
+          metrics.status === 'healthy' ? 1 : metrics.status === 'degraded' ? 2 : 3;
         this.messageStatus.set({ provider }, statusValue);
       }
     } else {
@@ -438,8 +439,9 @@ export class ProviderMetricsCollector extends EventEmitter {
         if (metrics.errorRate > 0.5) metrics.status = 'unhealthy';
         else if (metrics.errorRate > 0.1) metrics.status = 'degraded';
         else metrics.status = 'healthy';
-        
-        const statusValue = metrics.status === 'healthy' ? 1 : metrics.status === 'degraded' ? 2 : 3;
+
+        const statusValue =
+          metrics.status === 'healthy' ? 1 : metrics.status === 'degraded' ? 2 : 3;
         this.llmStatus.set({ provider }, statusValue);
       }
     }

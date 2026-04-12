@@ -1,5 +1,3 @@
-import { type Config } from 'convict';
-
 export interface IProvider<TConfig = any> {
   /**
    * Unique identifier for the provider (e.g., 'slack', 'discord', 'openai').

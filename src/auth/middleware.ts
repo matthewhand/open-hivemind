@@ -78,7 +78,11 @@ export class AuthMiddleware {
         return false;
       }
       if (origin && !isLocalhostOrigin) {
-        debug('SECURITY: Localhost IP with non-localhost Origin header: %s from %s', origin, clientIP);
+        debug(
+          'SECURITY: Localhost IP with non-localhost Origin header: %s from %s',
+          origin,
+          clientIP
+        );
         return false;
       }
 

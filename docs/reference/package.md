@@ -186,9 +186,8 @@
   - ✅ Configuration file loading hierarchy
 
 - ✅ **Configuration Components**
-  - ✅ Discord configuration (`discordConfig.ts`)
-  - ✅ Slack configuration (`slackConfig.ts`)
-  - ✅ Message configuration (`messageConfig.ts`)
+  - ✅ Discord configuration (`slackSchema.ts`, `discordSchema.ts`, `mattermostSchema.ts`)
+  - ✅ Message configuration schemas (`messageSchema.ts`)
   - ✅ LLM configuration (`llmConfig.ts`)
   - ✅ Webhook configuration (`webhookConfig.ts`)
   - ✅ Mattermost configuration (`mattermostConfig.ts`)
