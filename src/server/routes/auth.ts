@@ -4,7 +4,7 @@ import { AuthManager } from '../../auth/AuthManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest, LoginCredentials, RegisterData } from '../../auth/types';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
-import { authRateLimiter } from '../../middleware/rateLimiter';
+import { apiRateLimiter, authRateLimiter } from '../../middleware/rateLimiter';
 import { HTTP_STATUS } from '../../types/constants';
 import { validateRequest as validate } from '../../validation/validateRequest';
 import { isTrustedAdminIP } from '../middleware/security';
@@ -139,6 +139,7 @@ router.post(
  */
 router.post(
   '/refresh',
+  authRateLimiter,
   validate(RefreshTokenSchema),
   asyncErrorHandler(async (req, res) => {
     try {
@@ -218,6 +219,7 @@ router.post(
  */
 router.post(
   '/verify',
+  authRateLimiter,
   validate(VerifyTokenSchema),
   asyncErrorHandler(async (req, res) => {
     try {
@@ -229,7 +231,7 @@ router.post(
           .status(HTTP_STATUS.UNAUTHORIZED)
           .json(ApiResponse.error('User not found', undefined, 401));
       return res.json(ApiResponse.success({ user }));
-    } catch {
+    } catch (error: unknown) {
       return res
         .status(HTTP_STATUS.UNAUTHORIZED)
         .json(ApiResponse.error('Invalid token', undefined, 401));
@@ -238,8 +240,7 @@ router.post(
 );
 
 // GET /api/auth/verify - Verify JWT token from Authorization header
-// No rate limiter — frontend calls this on every page load
-router.get('/verify', async (req: Request, res: Response) => {
+router.get('/verify', authRateLimiter, async (req: Request, res: Response) => {
   try {
     // Server-side test bypass — return a fake admin user when ALLOW_TEST_BYPASS is set
     if (process.env.ALLOW_TEST_BYPASS === 'true') {
@@ -279,8 +280,8 @@ router.get('/verify', async (req: Request, res: Response) => {
 });
 
 // GET /api/auth/trusted-status — check if request comes from trusted IP
-// No rate limiter — read-only status check, called on every page load
-router.get('/trusted-status', (req: Request, res: Response) => {
+// Uses apiRateLimiter (not authRateLimiter) — this is a lightweight status check, not a credential endpoint
+router.get('/trusted-status', apiRateLimiter, (req: Request, res: Response) => {
   const trusted = isTrustedAdminIP(req);
   return res.json(ApiResponse.success({ trusted }));
 });
