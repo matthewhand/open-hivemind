@@ -16,6 +16,7 @@ export const SlackSchema = z.object({
   SLACK_BUTTON_MAPPINGS: z.string().default('{"learn_objectives_C08BC0X4DFD": "Learning Objectives", "how_to_C08BC0X4DFD": "How-To", "contact_support_C08BC0X4DFD": "Contact Support", "report_issue_C08BC0X4DFD": "Report Issue", "start_C08BC0X4DFD": "Get Started"}'),
   WELCOME_RESOURCE_URL: z.string().default('https://university.example.com/resources'),
   REPORT_ISSUE_URL: z.string().default('https://university.example.com/report-issue'),
+  SLACK_HELP_COMMAND_TOKEN: z.string().default(''),
 });
 
 export type SlackConfig = z.infer<typeof SlackSchema>;

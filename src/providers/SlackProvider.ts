@@ -26,7 +26,7 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
     return slackConfig.getSchema();
   }
 
-  getConfig(): typeof slackConfig {
+  getConfig(): any {
     return slackConfig;
   }
 

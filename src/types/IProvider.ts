@@ -17,14 +17,14 @@ export interface IProvider<TConfig = any> {
   type: 'messenger' | 'llm';
 
   /**
-   * Returns the Convict schema object for this provider's configuration.
+   * Returns the configuration schema object for this provider.
    */
   getSchema(): any;
 
   /**
-   * Returns the Convict configuration instance.
+   * Returns the configuration instance or properties.
    */
-  getConfig(): Config<TConfig>;
+  getConfig(): any;
 
   /**
    * Returns a list of sensitive configuration keys (e.g., tokens, secrets) that should be redacted.

@@ -209,7 +209,6 @@ export class IntegrationAnomalyDetector extends EventEmitter {
     if (this.checkInterval) {
       clearInterval(this.checkInterval);
       this.checkInterval = null;
-      // debug: anomaly detection stopped
     }
     this.emit('detectionStopped');
   }
@@ -220,7 +219,6 @@ export class IntegrationAnomalyDetector extends EventEmitter {
   public shutdown(): void {
     this.stopDetection();
     this.removeAllListeners();
-    // debug: IntegrationAnomalyDetector shutdown completed
   }
 
   /**
@@ -270,7 +268,7 @@ export class IntegrationAnomalyDetector extends EventEmitter {
    * Detect anomalies for Mattermost
    */
   private detectForMattermost(): void {
-    const metrics = this.providerMetrics.getMessageProviderMetrics('mattermost');
+    const metrics = this.providerMetrics.getMessageMetrics('mattermost');
     if (!metrics) return;
 
     // Response time spike
@@ -285,9 +283,10 @@ export class IntegrationAnomalyDetector extends EventEmitter {
     }
 
     // Error rate spike
-    if (metrics.errorRate > 0) {
-      this.checkThreshold('mattermost', 'mattermost', 'error_rate_spike', metrics.errorRate, {
-        error_rate: metrics.errorRate,
+    const errorRate = metrics.messagesSent > 0 ? (metrics.messagesFailed / metrics.messagesSent) * 100 : 0;
+    if (errorRate > 0) {
+      this.checkThreshold('mattermost', 'mattermost', 'error_rate_spike', errorRate, {
+        error_rate: errorRate,
       });
     }
 
@@ -316,7 +315,7 @@ export class IntegrationAnomalyDetector extends EventEmitter {
    * Detect anomalies for Discord
    */
   private detectForDiscord(): void {
-    const metrics = this.providerMetrics.getMessageProviderMetrics('discord');
+    const metrics = this.providerMetrics.getMessageMetrics('discord');
     if (!metrics) return;
 
     if (metrics.averageResponseTime > 0) {
@@ -329,9 +328,10 @@ export class IntegrationAnomalyDetector extends EventEmitter {
       );
     }
 
-    if (metrics.errorRate > 0) {
-      this.checkThreshold('discord', 'discord', 'error_rate_spike', metrics.errorRate, {
-        error_rate: metrics.errorRate,
+    const errorRate = metrics.messagesSent > 0 ? (metrics.messagesFailed / metrics.messagesSent) * 100 : 0;
+    if (errorRate > 0) {
+      this.checkThreshold('discord', 'discord', 'error_rate_spike', errorRate, {
+        error_rate: errorRate,
       });
     }
 
@@ -346,7 +346,7 @@ export class IntegrationAnomalyDetector extends EventEmitter {
    * Detect anomalies for Slack
    */
   private detectForSlack(): void {
-    const metrics = this.providerMetrics.getMessageProviderMetrics('slack');
+    const metrics = this.providerMetrics.getMessageMetrics('slack');
     if (!metrics) return;
 
     if (metrics.averageResponseTime > 0) {
@@ -355,9 +355,10 @@ export class IntegrationAnomalyDetector extends EventEmitter {
       });
     }
 
-    if (metrics.errorRate > 0) {
-      this.checkThreshold('slack', 'slack', 'error_rate_spike', metrics.errorRate, {
-        error_rate: metrics.errorRate,
+    const errorRate = metrics.messagesSent > 0 ? (metrics.messagesFailed / metrics.messagesSent) * 100 : 0;
+    if (errorRate > 0) {
+      this.checkThreshold('slack', 'slack', 'error_rate_spike', errorRate, {
+        error_rate: errorRate,
       });
     }
 
@@ -372,18 +373,16 @@ export class IntegrationAnomalyDetector extends EventEmitter {
    * Detect anomalies for LLM providers
    */
   private detectForLlmProviders(): void {
-    const llmProviders = [
+    const llmProviders: ProviderType[] = [
       'openai',
       'flowise',
       'openwebui',
       'openswarm',
-      'perplexity',
-      'replicate',
-      'n8n',
+      'letta',
     ];
 
     for (const provider of llmProviders) {
-      const metrics = this.providerMetrics.getLlmProviderMetrics(provider as ProviderType);
+      const metrics = this.providerMetrics.getLlmMetrics(provider);
       if (!metrics) continue;
 
       // Latency degradation
@@ -395,8 +394,8 @@ export class IntegrationAnomalyDetector extends EventEmitter {
 
       // Error rate spike
       if (metrics.errorRate > 0) {
-        this.checkThreshold(provider, 'llm', 'error_rate_spike', metrics.errorRate, {
-          error_rate: metrics.errorRate,
+        this.checkThreshold(provider, 'llm', 'error_rate_spike', metrics.errorRate * 100, {
+          error_rate: metrics.errorRate * 100,
         });
       }
 
@@ -428,8 +427,6 @@ export class IntegrationAnomalyDetector extends EventEmitter {
    * Detect anomalies for MCP
    */
   private detectForMcp(): void {
-    // MCP metrics would come from MCPService
-    // For now, emit event for external data
     this.emit('mcpAnomalyCheck');
   }
 
@@ -437,7 +434,6 @@ export class IntegrationAnomalyDetector extends EventEmitter {
    * Detect anomalies for database
    */
   private detectForDatabase(): void {
-    // Database metrics would come from DatabaseManager
     this.emit('databaseAnomalyCheck');
   }
 
@@ -457,7 +453,7 @@ export class IntegrationAnomalyDetector extends EventEmitter {
     // Calculate expected value (simple moving average)
     const window = this.getDataWindow(
       integrationType,
-      type.replace('_spike', '').replace('_degradation', '')
+      type.replace('_spike', '').replace('_degradation', '').replace('_exceeded', '').replace('_drop', '').replace('_anomaly', '')
     );
     const expectedValue = window.length > 0 ? window.reduce((a, b) => a + b, 0) / window.length : 0;
 
@@ -496,7 +492,7 @@ export class IntegrationAnomalyDetector extends EventEmitter {
     // Add to data window
     this.addToDataWindow(
       integrationType,
-      type.replace('_spike', '').replace('_degradation', ''),
+      type.replace('_spike', '').replace('_degradation', '').replace('_exceeded', '').replace('_drop', '').replace('_anomaly', ''),
       value
     );
   }

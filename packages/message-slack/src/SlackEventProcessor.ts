@@ -146,7 +146,7 @@ export class SlackEventProcessor {
       user_id: req.body.user_id,
     });
     const token = req.body.token;
-    const expectedToken = slackConfig.get<any>('SLACK_HELP_COMMAND_TOKEN') as string;
+    const expectedToken = slackConfig.get('SLACK_HELP_COMMAND_TOKEN' as any) as string;
 
     if (!token || token !== expectedToken) {
       debug(

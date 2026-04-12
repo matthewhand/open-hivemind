@@ -1,8 +1,10 @@
 import path from 'path';
 import fs from 'fs';
 import Debug from 'debug';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 import { MattermostSchema, type MattermostConfig } from './schemas/mattermostSchema';
 
+export { MattermostConfig };
 const debug = Debug('app:mattermostConfig');
 
 /**
@@ -22,7 +24,7 @@ function loadMattermostConfig(): MattermostConfig {
       debug(`Mattermost config file not found at ${configPath}, using environment variables and defaults`);
     }
   } catch (error) {
-    debug(`Error reading Mattermost config from ${configPath}:`, error);
+    debug(`Error reading mattermost config from ${configPath}:`, error);
   }
 
   // Map environment variables
@@ -51,6 +53,7 @@ const config = loadMattermostConfig();
 const mattermostConfig = {
   get: (key: keyof MattermostConfig) => config[key],
   getProperties: () => config,
+  getSchema: () => zodToJsonSchema(MattermostSchema as any),
   validate: (options: { allowed: 'strict' | 'warn' }) => {
     MattermostSchema.parse(config);
   }

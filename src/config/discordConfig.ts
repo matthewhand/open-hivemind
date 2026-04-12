@@ -1,8 +1,10 @@
 import path from 'path';
 import fs from 'fs';
 import Debug from 'debug';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 import { DiscordSchema, type DiscordConfig } from './schemas/discordSchema';
 
+export { DiscordConfig };
 const debug = Debug('app:discordConfig');
 
 /**
@@ -84,6 +86,7 @@ const config = loadDiscordConfig();
 const discordConfig = {
   get: (key: keyof DiscordConfig) => config[key],
   getProperties: () => config,
+  getSchema: () => zodToJsonSchema(DiscordSchema as any),
   validate: (options: { allowed: 'strict' | 'warn' }) => {
     DiscordSchema.parse(config);
   }

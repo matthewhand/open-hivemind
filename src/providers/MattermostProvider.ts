@@ -21,7 +21,7 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
     return mattermostConfig.getSchema();
   }
 
-  getConfig(): typeof mattermostConfig {
+  getConfig(): any {
     return mattermostConfig;
   }
 

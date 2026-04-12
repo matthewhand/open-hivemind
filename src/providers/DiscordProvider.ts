@@ -27,7 +27,7 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
     return discordConfig.getSchema();
   }
 
-  getConfig(): typeof discordConfig {
+  getConfig(): any {
     return discordConfig;
   }
 

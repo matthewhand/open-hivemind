@@ -30,6 +30,7 @@ export interface MessageProviderMetrics {
   averageResponseTime: number;
   lastMessageTime?: number;
   lastErrorTime?: number;
+  rateLimitHits: number;
   status: 'healthy' | 'degraded' | 'unhealthy' | 'unknown';
 }
 
@@ -48,6 +49,7 @@ export interface LlmProviderMetrics {
   p99Latency: number;
   lastRequestTime?: number;
   lastErrorTime?: number;
+  rateLimitHits: number;
   errorRate: number;
   status: 'healthy' | 'degraded' | 'unhealthy' | 'unknown';
   modelName?: string;
@@ -208,6 +210,7 @@ export class ProviderMetricsCollector extends EventEmitter {
       messagesSent: 0,
       messagesFailed: 0,
       averageResponseTime: 0,
+      rateLimitHits: 0,
       status: 'unknown',
     };
   }
@@ -229,6 +232,7 @@ export class ProviderMetricsCollector extends EventEmitter {
       p50Latency: 0,
       p95Latency: 0,
       p99Latency: 0,
+      rateLimitHits: 0,
       errorRate: 0,
       status: 'unknown',
       averageCost: 0,

@@ -1,8 +1,10 @@
 import path from 'path';
 import fs from 'fs';
 import Debug from 'debug';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 import { SlackSchema, type SlackConfig } from './schemas/slackSchema';
 
+export { SlackConfig };
 const debug = Debug('app:slackConfig');
 
 /**
@@ -68,6 +70,7 @@ const config = loadSlackConfig();
 const slackConfig = {
   get: (key: keyof SlackConfig) => config[key],
   getProperties: () => config,
+  getSchema: () => zodToJsonSchema(SlackSchema as any),
   validate: (options: { allowed: 'strict' | 'warn' }) => {
     SlackSchema.parse(config);
   }
