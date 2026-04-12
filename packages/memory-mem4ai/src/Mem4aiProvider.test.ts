@@ -7,6 +7,12 @@ jest.mock('@hivemind/shared-types', () => ({
   isSafeUrl: jest.fn().mockResolvedValue({ safe: true }),
 }));
 
+// Mock isSafeUrl so test URLs don't trigger SSRF guard failures
+jest.mock('@hivemind/shared-types', () => ({
+  ...jest.requireActual('@hivemind/shared-types'),
+  isSafeUrl: jest.fn().mockResolvedValue({ safe: true }),
+}));
+
 const BASE_CONFIG = {
   apiKey: 'test-key',
   apiUrl: 'https://api.mem4ai.example.com',

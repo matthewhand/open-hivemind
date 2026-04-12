@@ -268,7 +268,7 @@ describe('SSRF protection', () => {
   const { isSafeUrl } = jest.requireMock('@hivemind/shared-types');
 
   it('blocks requests when isSafeUrl returns false', async () => {
-    isSafeUrl.mockResolvedValue(false);
+    isSafeUrl.mockResolvedValue({ safe: false });
     const p = new Mem0Provider({
       ...BASE_CONFIG,
       baseUrl: 'http://169.254.169.254',
