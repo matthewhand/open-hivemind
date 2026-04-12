@@ -184,7 +184,7 @@ const PluginSecurityPage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 max-w-7xl">
+    <div className="container mx-auto p-4 max-w-7xl" data-testid="plugin-security-page">
       <PageHeader
         title="Plugin Security Dashboard"
         description="Monitor and manage security settings for all installed plugins"
@@ -193,7 +193,7 @@ const PluginSecurityPage: React.FC = () => {
       />
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6" data-testid="plugin-stats">
         <Card className="bg-base-200">
           <div className="flex items-center justify-between">
             <div>
@@ -300,7 +300,7 @@ const PluginSecurityPage: React.FC = () => {
         />
       ) : (
         <>
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 gap-4" data-testid="plugins-list">
           {paginatedPlugins.map((plugin) => (
             <Card key={plugin.pluginName} className="hover:shadow-lg transition-shadow">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">

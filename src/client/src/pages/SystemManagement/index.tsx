@@ -7,6 +7,8 @@ import { useSuccessToast, useErrorToast, useWarningToast } from '../../component
 import Checkbox from '../../components/DaisyUI/Checkbox';
 import Tabs from '../../components/DaisyUI/Tabs';
 import Card from '../../components/DaisyUI/Card';
+import Button from '../../components/DaisyUI/Button';
+import PageHeader from '../../components/DaisyUI/PageHeader';
 import AlertsTab from './AlertsTab';
 import ConfigTab from './ConfigTab';
 import BackupsTab from './BackupsTab';
@@ -252,7 +254,7 @@ const SystemManagement: React.FC = () => {
   ], []);
 
   return (
-    <div className="min-h-screen bg-base-200 p-6">
+    <div className="min-h-screen bg-base-200 p-6" data-testid="system-management-page">
       {/* Header */}
       <PageHeader
         title="System Management"
@@ -263,6 +265,7 @@ const SystemManagement: React.FC = () => {
             className="btn-success"
             onClick={openBackupModal}
             disabled={isCreatingBackup}
+            data-testid="create-backup-btn"
           >
             {isCreatingBackup ? <LoadingSpinner size="sm" /> : '💾'} Create Backup
           </Button>
@@ -270,7 +273,7 @@ const SystemManagement: React.FC = () => {
       />
 
       {/* System Status Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8" data-testid="system-status-cards">
         {systemMetricsCards.map((card, index) => (
           <StatusCard
             key={index}
@@ -284,7 +287,7 @@ const SystemManagement: React.FC = () => {
       </div>
 
       {/* Management Tabs */}
-      <Card className="shadow-xl">
+      <Card className="shadow-xl" data-testid="management-tabs-card">
         <Tabs variant="lifted"
             tabs={systemManagementTabs}
             activeTab={activeTab}

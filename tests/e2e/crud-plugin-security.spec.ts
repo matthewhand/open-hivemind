@@ -2,333 +2,217 @@ import { expect, test } from '@playwright/test';
 import { setupTestWithErrorDetection } from './test-utils';
 
 /**
- * CRUD E2E Tests for Plugin Security Page
- * Tests for plugin security scanning and management
+ * Quality E2E Tests for Plugin Security Page
+ * Tests plugin security status display, filtering, and trust management
  */
 
-test.describe('Plugin Security Page CRUD', () => {
+test.describe('Plugin Security Page', () => {
   test.beforeEach(async ({ page }) => {
     await setupTestWithErrorDetection(page);
 
-    // Mock plugin security status
-    await page.route('**/api/plugins/security', async (route) => {
+    // Mock plugin security status - matches actual API response
+    await page.route('**/api/admin/plugins/security', async (route) => {
       await route.fulfill({
         json: {
           success: true,
           data: {
-            lastScan: new Date().toISOString(),
-            totalPlugins: 10,
-            securePlugins: 8,
-            warnings: 2,
-            critical: 0,
+            plugins: [
+              {
+                pluginName: 'example-plugin',
+                trustLevel: 'trusted',
+                isBuiltIn: false,
+                signatureValid: true,
+                grantedCapabilities: ['read', 'write'],
+                deniedCapabilities: [],
+                requiredCapabilities: ['read', 'write'],
+              },
+              {
+                pluginName: 'legacy-plugin',
+                trustLevel: 'untrusted',
+                isBuiltIn: false,
+                signatureValid: false,
+                grantedCapabilities: [],
+                deniedCapabilities: ['execute'],
+                requiredCapabilities: ['execute'],
+              },
+              {
+                pluginName: 'core-plugin',
+                trustLevel: 'trusted',
+                isBuiltIn: true,
+                signatureValid: null,
+                grantedCapabilities: ['all'],
+                deniedCapabilities: [],
+                requiredCapabilities: [],
+              },
+            ],
           },
         },
       });
     });
-
-    // Mock plugins list
-    await page.route('**/api/plugins', async (route) => {
-      await route.fulfill({
-        json: {
-          success: true,
-          data: [
-            {
-              id: 'plugin-1',
-              name: 'Example Plugin',
-              version: '1.0.0',
-              security: {
-                status: 'secure',
-                score: 95,
-                lastChecked: new Date().toISOString(),
-              },
-            },
-            {
-              id: 'plugin-2',
-              name: 'Legacy Plugin',
-              version: '0.5.0',
-              security: {
-                status: 'warning',
-                score: 60,
-                issues: ['Outdated dependencies', 'Missing integrity check'],
-                lastChecked: new Date().toISOString(),
-              },
-            },
-            {
-              id: 'plugin-3',
-              name: 'Insecure Plugin',
-              version: '0.1.0',
-              security: {
-                status: 'critical',
-                score: 25,
-                issues: ['Code injection vulnerability', 'Unvalidated inputs'],
-                lastChecked: new Date().toISOString(),
-              },
-            },
-          ],
-        },
-      });
-    });
   });
 
-  test.describe('Page Load', () => {
-    test('loads plugin security page successfully', async ({ page }) => {
-      await page.goto('/admin/plugins/security');
-      await page.waitForLoadState('networkidle');
-
-      await expect(page.locator('body')).toBeVisible();
-    });
-
-    test('displays security summary', async ({ page }) => {
-      await page.goto('/admin/plugins/security');
-      await page.waitForLoadState('networkidle');
-
-      // Should show summary stats
-      const summary = page
-        .locator('[class*="stat"], [class*="summary"], [class*="overview"]')
-        .first();
-      if ((await summary.count()) > 0) {
-        await expect(summary).toBeVisible();
-      }
-    });
-
-    test('displays plugins list', async ({ page }) => {
-      await page.goto('/admin/plugins/security');
-      await page.waitForLoadState('networkidle');
-
-      // Should show plugin cards or list
-      const pluginList = page.locator('[class*="plugin"], [class*="card"]').first();
-      if ((await pluginList.count()) > 0) {
-        await expect(pluginList).toBeVisible();
-      }
-    });
-  });
-
-  test.describe('Security Status Display', () => {
-    test('shows secure plugin indicator', async ({ page }) => {
-      await page.goto('/admin/plugins/security');
-      await page.waitForLoadState('networkidle');
-
-      // Look for secure/insecure badges
-      const secureBadge = page
-        .locator('[class*="secure"], [class*="passed"], [class*="success"]')
-        .first();
-      if ((await secureBadge.count()) > 0) {
-        await expect(secureBadge).toBeVisible();
-      }
-    });
-
-    test('shows warning indicators', async ({ page }) => {
-      await page.goto('/admin/plugins/security');
-      await page.waitForLoadState('networkidle');
-
-      const warningBadge = page.locator('[class*="warning"], [class*="warn"]').first();
-      if ((await warningBadge.count()) > 0) {
-        await expect(warningBadge).toBeVisible();
-      }
-    });
-
-    test('shows critical alerts', async ({ page }) => {
-      await page.goto('/admin/plugins/security');
-      await page.waitForLoadState('networkidle');
-
-      const criticalBadge = page
-        .locator('[class*="critical"], [class*="error"], [class*="danger"]')
-        .first();
-      if ((await criticalBadge.count()) > 0) {
-        await expect(criticalBadge).toBeVisible();
-      }
-    });
-  });
-
-  test.describe('Plugin Security Actions', () => {
-    test('can trigger security scan', async ({ page }) => {
-      await page.route('**/api/plugins/security/scan', async (route) => {
-        await route.fulfill({
-          json: { success: true, data: { scanId: 'scan-1' } },
-        });
-      });
-
-      await page.goto('/admin/plugins/security');
-      await page.waitForLoadState('networkidle');
-
-      const scanBtn = page.getByRole('button', { name: /scan|check|update/i });
-      if ((await scanBtn.count()) > 0) {
-        await expect(scanBtn.first()).toBeVisible();
-      }
-    });
-
-    test('can view plugin details', async ({ page }) => {
-      await page.route('**/api/plugins/plugin-1', async (route) => {
-        await route.fulfill({
-          json: {
-            success: true,
-            data: {
-              id: 'plugin-1',
-              name: 'Example Plugin',
-              security: { status: 'secure', score: 95 },
-            },
-          },
-        });
-      });
-
-      await page.goto('/admin/plugins/security');
-      await page.waitForLoadState('networkidle');
-
-      const pluginItem = page.locator('[class*="plugin"]').first();
-      if ((await pluginItem.count()) > 0) {
-        await pluginItem.click();
-      }
-    });
-
-    test('can export security report', async ({ page }) => {
-      await page.route('**/api/plugins/security/export', async (route) => {
-        await route.fulfill({
-          json: { success: true, data: { report: {} } },
-        });
-      });
-
-      await page.goto('/admin/plugins/security');
-      await page.waitForLoadState('networkidle');
-
-      const exportBtn = page.getByRole('button', { name: /export|download/i });
-      if ((await exportBtn.count()) > 0) {
-        await expect(exportBtn.first()).toBeVisible();
-      }
-    });
-  });
-
-  test.describe('Plugin Filtering', () => {
-    test('can filter by security status', async ({ page }) => {
-      await page.goto('/admin/plugins/security');
-      await page.waitForLoadState('networkidle');
-
-      const statusFilter = page
-        .locator('select')
-        .filter({ hasText: /status|secure|warning|critical/i });
-      if ((await statusFilter.count()) > 0) {
-        await statusFilter.selectOption('warning');
-      }
-    });
-
-    test('can search plugins', async ({ page }) => {
-      await page.goto('/admin/plugins/security');
-      await page.waitForLoadState('networkidle');
-
-      const searchInput = page
-        .locator('input[type="search"], input[placeholder*="search" i]')
-        .first();
-      if ((await searchInput.count()) > 0) {
-        await searchInput.fill('example');
-      }
-    });
-
-    test('can sort by security score', async ({ page }) => {
-      await page.goto('/admin/plugins/security');
-      await page.waitForLoadState('networkidle');
-
-      const sortBtn = page
-        .getByRole('button', { name: /sort|score/i })
-        .or(page.locator('th').filter({ hasText: /score/i }));
-
-      if ((await sortBtn.count()) > 0) {
-        await sortBtn.first().click();
-      }
-    });
-  });
-
-  test.describe('Security Issues', () => {
-    test('displays issue details', async ({ page }) => {
-      await page.goto('/admin/plugins/security');
-      await page.waitForLoadState('networkidle');
-
-      // Click on a plugin with issues
-      const warningPlugin = page.locator('[class*="warning"]').first();
-      if ((await warningPlugin.count()) > 0) {
-        await warningPlugin.click();
-      }
-    });
-
-    test('shows remediation suggestions', async ({ page }) => {
-      await page.goto('/admin/plugins/security');
-      await page.waitForLoadState('networkidle');
-
-      // Look for remediation or suggestion text
-      const remediation = page
-        .locator('[class*="remedy"], [class*="suggestion"], [class*="fix"]')
-        .first();
-      if ((await remediation.count()) > 0) {
-        await expect(remediation).toBeVisible();
-      }
-    });
-  });
-
-  test.describe('Error Handling', () => {
-    test('handles API errors gracefully', async ({ page }) => {
-      await page.route('**/api/plugins/**', async (route) => {
-        await route.fulfill({
-          status: 500,
-          json: { error: 'Server error' },
-        });
-      });
-
-      await page.goto('/admin/plugins/security');
-      await page.waitForLoadState('networkidle');
-
-      await expect(page.locator('body')).toBeVisible();
-    });
-
-    test('handles empty plugin list', async ({ page }) => {
-      await page.route('**/api/plugins', async (route) => {
-        await route.fulfill({
-          json: { success: true, data: [] },
-        });
-      });
-
-      await page.goto('/admin/plugins/security');
-      await page.waitForLoadState('networkidle');
-
-      // Should show empty state
-      await expect(page.locator('body')).toBeVisible();
-    });
-  });
-});
-
-test.describe('Plugin Security Accessibility', () => {
-  test('has proper heading structure', async ({ page }) => {
-    await setupTestWithErrorDetection(page);
-
-    await page.route('**/api/plugins/**', async (route) => {
-      await route.fulfill({ json: { success: true, data: [] } });
-    });
-
+  test('displays plugin security page with correct structure', async ({ page }) => {
     await page.goto('/admin/plugins/security');
     await page.waitForLoadState('networkidle');
 
-    const h1 = page.locator('h1').first();
-    if ((await h1.count()) > 0) {
-      await expect(h1).toBeVisible();
+    // Verify page container
+    await expect(page.getByTestId('plugin-security-page')).toBeVisible();
+
+    // Verify title
+    await expect(page.getByRole('heading', { name: /plugin security/i })).toBeVisible();
+  });
+
+  test('displays plugin statistics', async ({ page }) => {
+    await page.goto('/admin/plugins/security');
+    await page.waitForLoadState('networkidle');
+
+    // Should show stats section
+    await expect(page.getByTestId('plugin-stats')).toBeVisible();
+  });
+
+  test('displays plugins list', async ({ page }) => {
+    await page.goto('/admin/plugins/security');
+    await page.waitForLoadState('networkidle');
+
+    // Should show plugins
+    await expect(page.getByTestId('plugins-list')).toBeVisible();
+
+    // Should show plugin names
+    await expect(page.getByText('example-plugin')).toBeVisible();
+    await expect(page.getByText('legacy-plugin')).toBeVisible();
+    await expect(page.getByText('core-plugin')).toBeVisible();
+  });
+
+  test('displays trust badges correctly', async ({ page }) => {
+    await page.goto('/admin/plugins/security');
+    await page.waitForLoadState('networkidle');
+
+    // Should show Trusted badge
+    await expect(page.getByText('Trusted', { exact: true }).first()).toBeVisible();
+
+    // Should show Untrusted badge
+    await expect(page.getByText('Untrusted', { exact: true })).toBeVisible();
+
+    // Should show Built-in badge
+    await expect(page.getByText('Built-in', { exact: true })).toBeVisible();
+  });
+
+  test('displays signature status badges', async ({ page }) => {
+    await page.goto('/admin/plugins/security');
+    await page.waitForLoadState('networkidle');
+
+    // Should show Valid badge
+    await expect(page.getByText('Valid', { exact: true })).toBeVisible();
+
+    // Should show Invalid badge
+    await expect(page.getByText('Invalid', { exact: true })).toBeVisible();
+
+    // Should show No Signature badge
+    await expect(page.getByText('No Signature', { exact: true })).toBeVisible();
+  });
+
+  test('has filter tabs functional', async ({ page }) => {
+    await page.goto('/admin/plugins/security');
+    await page.waitForLoadState('networkidle');
+
+    // Click on Untrusted filter
+    await page.getByRole('button', { name: 'Untrusted' }).click();
+
+    // Should only show untrusted plugin
+    await expect(page.getByText('legacy-plugin')).toBeVisible();
+    await expect(page.getByText('example-plugin')).not.toBeVisible();
+  });
+
+  test('has refresh button', async ({ page }) => {
+    await page.goto('/admin/plugins/security');
+    await page.waitForLoadState('networkidle');
+
+    // Refresh button should exist
+    const refreshBtn = page.getByRole('button', { name: /refresh/i });
+    if (await refreshBtn.count() > 0) {
+      await expect(refreshBtn).toBeEnabled();
     }
   });
 
-  test('security badges are distinguishable', async ({ page }) => {
-    await setupTestWithErrorDetection(page);
+  test('shows capabilities correctly', async ({ page }) => {
+    await page.goto('/admin/plugins/security');
+    await page.waitForLoadState('networkidle');
 
-    await page.route('**/api/plugins', async (route) => {
+    // Should show granted capabilities
+    await expect(page.getByText('read', { exact: true })).toBeVisible();
+    await expect(page.getByText('write', { exact: true })).toBeVisible();
+
+    // Should show denied capabilities
+    await expect(page.getByText('execute', { exact: true })).toBeVisible();
+  });
+
+  test('handles API errors gracefully', async ({ page }) => {
+    await page.route('**/api/admin/plugins/security', async (route) => {
       await route.fulfill({
-        json: {
-          success: true,
-          data: [
-            { id: 'p1', name: 'Test', security: { status: 'secure', score: 90 } },
-            { id: 'p2', name: 'Test2', security: { status: 'warning', score: 50 } },
-          ],
-        },
+        status: 500,
+        json: { success: false, error: 'Server error' },
       });
     });
 
     await page.goto('/admin/plugins/security');
     await page.waitForLoadState('networkidle');
 
-    // Different status badges should be visually distinct
-    await expect(page.locator('body')).toBeVisible();
+    // Page should still render
+    await expect(page.getByTestId('plugin-security-page')).toBeVisible();
+  });
+});
+
+test.describe('Plugin Security Trust Actions', () => {
+  test.beforeEach(async ({ page }) => {
+    await setupTestWithErrorDetection(page);
+
+    await page.route('**/api/admin/plugins/security', async (route) => {
+      await route.fulfill({
+        json: {
+          success: true,
+          data: {
+            plugins: [
+              {
+                pluginName: 'test-plugin',
+                trustLevel: 'untrusted',
+                isBuiltIn: false,
+                signatureValid: true,
+                grantedCapabilities: [],
+                deniedCapabilities: [],
+                requiredCapabilities: ['read'],
+              },
+            ],
+          },
+        },
+      });
+    });
+  });
+
+  test('shows trust button for untrusted plugins', async ({ page }) => {
+    await page.goto('/admin/plugins/security');
+    await page.waitForLoadState('networkidle');
+
+    // Should show Trust Plugin button
+    await expect(page.getByRole('button', { name: /trust plugin/i })).toBeVisible();
+  });
+
+  test('shows re-verify button', async ({ page }) => {
+    await page.goto('/admin/plugins/security');
+    await page.waitForLoadState('networkidle');
+
+    // Should show Re-verify button
+    await expect(page.getByRole('button', { name: /re-verify/i })).toBeVisible();
+  });
+
+  test('opens confirmation modal on trust click', async ({ page }) => {
+    await page.goto('/admin/plugins/security');
+    await page.waitForLoadState('networkidle');
+
+    // Click trust button
+    await page.getByRole('button', { name: /trust plugin/i }).click();
+
+    // Should open confirmation modal
+    await expect(page.locator('[role="dialog"], .modal')).toBeVisible();
+    await expect(page.getByText(/are you sure/i)).toBeVisible();
   });
 });

@@ -2,15 +2,15 @@ import { expect, test } from '@playwright/test';
 import { setupTestWithErrorDetection } from './test-utils';
 
 /**
- * CRUD E2E Tests for Specs Page
- * Tests for testing/specification management
+ * Quality E2E Tests for Specs Page
+ * Tests specification browsing, search, and navigation
  */
 
-test.describe('Specs Page CRUD', () => {
+test.describe('Specs Page', () => {
   test.beforeEach(async ({ page }) => {
     await setupTestWithErrorDetection(page);
 
-    // Mock specs list
+    // Mock specs list - matches actual Spec type
     await page.route('**/api/specs', async (route) => {
       await route.fulfill({
         json: {
@@ -18,27 +18,24 @@ test.describe('Specs Page CRUD', () => {
           data: [
             {
               id: 'spec-1',
-              name: 'Bot Creation Specification',
-              type: 'functional',
-              status: 'passed',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
+              topic: 'Bot Creation Specification',
+              tags: ['functional', 'integration', 'testing'],
+              author: 'admin',
+              timestamp: new Date().toISOString(),
             },
             {
               id: 'spec-2',
-              name: 'MCP Integration Test',
-              type: 'integration',
-              status: 'running',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
+              topic: 'MCP Integration Test',
+              tags: ['integration', 'mcp'],
+              author: 'developer',
+              timestamp: new Date(Date.now() - 86400000).toISOString(),
             },
             {
               id: 'spec-3',
-              name: 'Security Validation',
-              type: 'security',
-              status: 'failed',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
+              topic: 'Security Validation',
+              tags: ['security', 'audit'],
+              author: 'security-team',
+              timestamp: new Date(Date.now() - 172800000).toISOString(),
             },
           ],
         },
@@ -46,305 +43,199 @@ test.describe('Specs Page CRUD', () => {
     });
   });
 
-  test.describe('Page Load', () => {
-    test('loads specs page successfully', async ({ page }) => {
-      await page.goto('/specs');
-      await page.waitForLoadState('networkidle');
+  test('displays specs page with correct structure', async ({ page }) => {
+    await page.goto('/admin/specs');
+    await page.waitForLoadState('networkidle');
 
-      await expect(page.locator('body')).toBeVisible();
-    });
+    // Verify page container
+    await expect(page.getByTestId('specs-page')).toBeVisible();
 
-    test('displays specs list', async ({ page }) => {
-      await page.goto('/specs');
-      await page.waitForLoadState('networkidle');
-
-      // Should show spec items
-      const specCard = page.locator('[class*="spec"], [class*="card"]').first();
-      if ((await specCard.count()) > 0) {
-        await expect(specCard).toBeVisible();
-      }
-    });
-
-    test('displays spec status badges', async ({ page }) => {
-      await page.goto('/specs');
-      await page.waitForLoadState('networkidle');
-
-      // Look for status indicators
-      const statusBadge = page.locator('[class*="badge"], [class*="status"]').first();
-      if ((await statusBadge.count()) > 0) {
-        await expect(statusBadge).toBeVisible();
-      }
-    });
+    // Verify title
+    await expect(page.getByRole('heading', { name: /specifications/i })).toBeVisible();
   });
 
-  test.describe('Spec Detail View', () => {
-    test.beforeEach(async ({ page }) => {
-      await page.route('**/api/specs/spec-1', async (route) => {
-        await route.fulfill({
-          json: {
-            success: true,
-            data: {
-              id: 'spec-1',
-              name: 'Bot Creation Specification',
-              type: 'functional',
-              status: 'passed',
-              description: 'Tests for bot creation functionality',
-              steps: [
-                { name: 'Initialize bot', status: 'passed', duration: 100 },
-                { name: 'Configure bot', status: 'passed', duration: 200 },
-                { name: 'Validate bot', status: 'passed', duration: 150 },
-              ],
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            },
-          },
-        });
-      });
-    });
+  test('displays specs list with data', async ({ page }) => {
+    await page.goto('/admin/specs');
+    await page.waitForLoadState('networkidle');
 
-    test('opens spec detail view', async ({ page }) => {
-      await page.goto('/specs/spec-1');
-      await page.waitForLoadState('networkidle');
+    // Should show spec cards
+    await expect(page.getByTestId('specs-grid')).toBeVisible();
 
-      await expect(page.locator('body')).toBeVisible();
-    });
-
-    test('displays spec steps', async ({ page }) => {
-      await page.goto('/specs/spec-1');
-      await page.waitForLoadState('networkidle');
-
-      // Should show step details
-      const stepsSection = page
-        .locator('[class*="step"], [class*="test"], [class*="result"]')
-        .first();
-      if ((await stepsSection.count()) > 0) {
-        await expect(stepsSection).toBeVisible();
-      }
-    });
-
-    test('displays spec metadata', async ({ page }) => {
-      await page.goto('/specs/spec-1');
-      await page.waitForLoadState('networkidle');
-
-      // Check for metadata display
-      const metadata = page.locator('[class*="meta"], [class*="info"], time').first();
-      if ((await metadata.count()) > 0) {
-        await expect(metadata).toBeVisible();
-      }
-    });
+    // Should show spec topics
+    await expect(page.getByText('Bot Creation Specification')).toBeVisible();
+    await expect(page.getByText('MCP Integration Test')).toBeVisible();
   });
 
-  test.describe('Spec Filtering', () => {
-    test('can filter by status', async ({ page }) => {
-      await page.goto('/specs');
-      await page.waitForLoadState('networkidle');
+  test('displays spec count summary', async ({ page }) => {
+    await page.goto('/admin/specs');
+    await page.waitForLoadState('networkidle');
 
-      const filterBtn = page.getByRole('button', { name: /filter/i });
-      if ((await filterBtn.count()) > 0) {
-        await filterBtn.click();
-      }
-    });
-
-    test('can filter by type', async ({ page }) => {
-      await page.goto('/specs');
-      await page.waitForLoadState('networkidle');
-
-      const typeFilter = page
-        .locator('select')
-        .filter({ hasText: /type|functional|integration|security/i });
-      if ((await typeFilter.count()) > 0) {
-        await typeFilter.selectOption('functional');
-      }
-    });
-
-    test('can search specs', async ({ page }) => {
-      await page.goto('/specs');
-      await page.waitForLoadState('networkidle');
-
-      const searchInput = page
-        .locator('input[type="search"], input[placeholder*="search" i]')
-        .first();
-      if ((await searchInput.count()) > 0) {
-        await searchInput.fill('bot');
-      }
-    });
+    // Should show spec count
+    const countEl = page.getByTestId('specs-count');
+    await expect(countEl).toBeVisible();
+    await expect(countEl).toContainText('3 specification');
   });
 
-  test.describe('Spec Execution', () => {
-    test('can run spec', async ({ page }) => {
-      await page.route('**/api/specs/spec-1/run', async (route) => {
-        await route.fulfill({
-          json: { success: true, data: { runId: 'run-1' } },
-        });
-      });
+  test('has search input functional', async ({ page }) => {
+    await page.goto('/admin/specs');
+    await page.waitForLoadState('networkidle');
 
-      await page.goto('/specs/spec-1');
-      await page.waitForLoadState('networkidle');
+    // Search input should be visible
+    const searchInput = page.getByTestId('specs-search-input');
+    await expect(searchInput).toBeVisible();
+    await expect(searchInput).toBeEnabled();
 
-      const runBtn = page.getByRole('button', { name: /run|execute|start/i });
-      if ((await runBtn.count()) > 0) {
-        await expect(runBtn.first()).toBeVisible();
-      }
-    });
+    // Type search term
+    await searchInput.fill('security');
+    await page.waitForTimeout(350); // debounce
 
-    test('displays running status', async ({ page }) => {
-      await page.route('**/api/specs', async (route) => {
-        await route.fulfill({
-          json: {
-            success: true,
-            data: [
-              {
-                id: 'spec-running',
-                name: 'Running Spec',
-                status: 'running',
-                progress: 50,
-              },
-            ],
-          },
-        });
-      });
-
-      await page.goto('/specs');
-      await page.waitForLoadState('networkidle');
-
-      await expect(page.locator('body')).toBeVisible();
-    });
+    // Should filter results
+    await expect(page.getByTestId('specs-count')).toContainText('1 specification');
   });
 
-  test.describe('Spec Creation', () => {
-    test('can open create spec modal', async ({ page }) => {
-      await page.goto('/specs');
-      await page.waitForLoadState('networkidle');
+  test('has add specification button', async ({ page }) => {
+    await page.goto('/admin/specs');
+    await page.waitForLoadState('networkidle');
 
-      const createBtn = page.getByRole('button', { name: /create|new|add/i });
-      if ((await createBtn.count()) > 0) {
-        await createBtn.first().click();
-      }
-    });
-
-    test('can create new spec', async ({ page }) => {
-      await page.route('**/api/specs', async (route) => {
-        if (route.request().method() === 'POST') {
-          await route.fulfill({
-            json: {
-              success: true,
-              data: { id: 'new-spec', name: 'New Spec' },
-            },
-          });
-        }
-      });
-
-      await page.goto('/specs');
-      await page.waitForLoadState('networkidle');
-
-      const createBtn = page.getByRole('button', { name: /create|new/i });
-      if ((await createBtn.count()) > 0) {
-        await createBtn.first().click();
-      }
-    });
+    // Add button should be visible
+    const addBtn = page.getByTestId('add-spec-button');
+    await expect(addBtn).toBeVisible();
+    await expect(addBtn).toBeEnabled();
   });
 
-  test.describe('Spec Deletion', () => {
-    test('can delete spec', async ({ page }) => {
-      await page.route('**/api/specs/**', async (route) => {
-        if (route.request().method() === 'DELETE') {
-          await route.fulfill({
-            json: { success: true },
-          });
-        }
-      });
+  test('can navigate to spec detail', async ({ page }) => {
+    await page.goto('/admin/specs');
+    await page.waitForLoadState('networkidle');
 
-      await page.goto('/specs');
-      await page.waitForLoadState('networkidle');
+    // Click view details on first spec
+    const viewBtn = page.getByRole('button', { name: /view details/i }).first();
+    await viewBtn.click();
 
-      const deleteBtn = page.getByRole('button', { name: /delete|remove/i });
-      if ((await deleteBtn.count()) > 0) {
-        await deleteBtn.first().click();
-      }
-    });
-
-    test('shows confirmation before delete', async ({ page }) => {
-      await page.goto('/specs');
-      await page.waitForLoadState('networkidle');
-
-      const deleteBtn = page.getByRole('button', { name: /delete/i }).first();
-      if ((await deleteBtn.count()) > 0) {
-        await deleteBtn.click();
-
-        // Look for confirmation modal
-        const confirmModal = page.locator('[role="dialog"], .modal').first();
-        if ((await confirmModal.count()) > 0) {
-          await expect(confirmModal).toBeVisible();
-        }
-      }
-    });
+    // Should navigate to detail page
+    await expect(page).toHaveURL(/\/admin\/specs\/spec-\d/);
   });
 
-  test.describe('Error Handling', () => {
-    test('handles API errors gracefully', async ({ page }) => {
-      await page.route('**/api/specs', async (route) => {
-        await route.fulfill({
-          status: 500,
-          json: { error: 'Server error' },
-        });
+  test('shows empty state when no specs', async ({ page }) => {
+    await page.route('**/api/specs', async (route) => {
+      await route.fulfill({
+        json: { success: true, data: [] },
       });
-
-      await page.goto('/specs');
-      await page.waitForLoadState('networkidle');
-
-      await expect(page.locator('body')).toBeVisible();
     });
 
-    test('handles empty specs list', async ({ page }) => {
-      await page.route('**/api/specs', async (route) => {
-        await route.fulfill({
-          json: { success: true, data: [] },
-        });
+    await page.goto('/admin/specs');
+    await page.waitForLoadState('networkidle');
+
+    // Should show empty state
+    await expect(page.getByTestId('specs-empty-state')).toBeVisible();
+    await expect(page.getByText(/no specifications found/i)).toBeVisible();
+
+    // Should have create button
+    await expect(page.getByTestId('create-spec-button')).toBeVisible();
+  });
+
+  test('displays tags on spec cards', async ({ page }) => {
+    await page.goto('/admin/specs');
+    await page.waitForLoadState('networkidle');
+
+    // Should show tag badges
+    await expect(page.getByText('functional', { exact: true })).toBeVisible();
+    await expect(page.getByText('integration', { exact: true })).toBeVisible();
+  });
+
+  test('handles API errors gracefully', async ({ page }) => {
+    await page.route('**/api/specs', async (route) => {
+      await route.fulfill({
+        status: 500,
+        json: { success: false, error: 'Server error' },
       });
-
-      await page.goto('/specs');
-      await page.waitForLoadState('networkidle');
-
-      // Should show empty state
-      await expect(page.locator('body')).toBeVisible();
     });
+
+    await page.goto('/admin/specs');
+    await page.waitForLoadState('networkidle');
+
+    // Should show error state with try again button
+    await expect(page.getByText(/error loading/i)).toBeVisible();
+    await expect(page.getByRole('button', { name: /try again/i })).toBeVisible();
+  });
+});
+
+test.describe('Specs Page Filtering', () => {
+  test.beforeEach(async ({ page }) => {
+    await setupTestWithErrorDetection(page);
+  });
+
+  test('search filters by topic', async ({ page }) => {
+    await page.route('**/api/specs', async (route) => {
+      await route.fulfill({
+        json: {
+          success: true,
+          data: [
+            { id: '1', topic: 'Alpha Feature', tags: [], author: 'test', timestamp: new Date().toISOString() },
+            { id: '2', topic: 'Beta Feature', tags: [], author: 'test', timestamp: new Date().toISOString() },
+          ],
+        },
+      });
+    });
+
+    await page.goto('/admin/specs');
+    await page.waitForLoadState('networkidle');
+
+    // Search for alpha
+    await page.getByTestId('specs-search-input').fill('alpha');
+    await page.waitForTimeout(350);
+
+    // Should only show alpha
+    await expect(page.getByText('Alpha Feature')).toBeVisible();
+    await expect(page.getByText('Beta Feature')).not.toBeVisible();
+  });
+
+  test('search filters by tag', async ({ page }) => {
+    await page.route('**/api/specs', async (route) => {
+      await route.fulfill({
+        json: {
+          success: true,
+          data: [
+            { id: '1', topic: 'Spec A', tags: ['important'], author: 'test', timestamp: new Date().toISOString() },
+            { id: '2', topic: 'Spec B', tags: ['optional'], author: 'test', timestamp: new Date().toISOString() },
+          ],
+        },
+      });
+    });
+
+    await page.goto('/admin/specs');
+    await page.waitForLoadState('networkidle');
+
+    // Search for tag
+    await page.getByTestId('specs-search-input').fill('important');
+    await page.waitForTimeout(350);
+
+    // Should only show spec with that tag
+    await expect(page.getByText('Spec A')).toBeVisible();
+    await expect(page.getByText('Spec B')).not.toBeVisible();
   });
 });
 
 test.describe('Specs Page Accessibility', () => {
-  test('has proper heading structure', async ({ page }) => {
+  test('all interactive elements are focusable', async ({ page }) => {
     await setupTestWithErrorDetection(page);
 
     await page.route('**/api/specs', async (route) => {
-      await route.fulfill({ json: { success: true, data: [] } });
+      await route.fulfill({
+        json: { success: true, data: [{ id: '1', topic: 'Test', tags: [], author: 'a', timestamp: new Date().toISOString() }] },
+      });
     });
 
-    await page.goto('/specs');
+    await page.goto('/admin/specs');
     await page.waitForLoadState('networkidle');
 
-    const h1 = page.locator('h1').first();
-    if ((await h1.count()) > 0) {
-      await expect(h1).toBeVisible();
-    }
-  });
+    // Search input should be focusable
+    const searchInput = page.getByTestId('specs-search-input');
+    await searchInput.focus();
+    await expect(searchInput).toBeFocused();
 
-  test('interactive elements are focusable', async ({ page }) => {
-    await setupTestWithErrorDetection(page);
-
-    await page.route('**/api/specs', async (route) => {
-      await route.fulfill({ json: { success: true, data: [] } });
-    });
-
-    await page.goto('/specs');
-    await page.waitForLoadState('networkidle');
-
-    // Tab through focusable elements
-    const buttons = page.locator('button, a, input, select');
-    const count = await buttons.count();
-
-    if (count > 0) {
-      await buttons.first().focus();
-      await expect(buttons.first()).toBeFocused();
-    }
+    // Add button should be focusable
+    const addBtn = page.getByTestId('add-spec-button');
+    await addBtn.focus();
+    await expect(addBtn).toBeFocused();
   });
 });

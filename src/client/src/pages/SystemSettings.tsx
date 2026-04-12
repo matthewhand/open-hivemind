@@ -46,7 +46,7 @@ const SystemSettings: React.FC = () => {
   };
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-6 space-y-4" data-testid="system-settings-page">
       <PageHeader
         title="Settings"
         description="Configure your Open-Hivemind instance settings and preferences"
@@ -67,13 +67,13 @@ const SystemSettings: React.FC = () => {
       )}
 
       <div className="flex justify-end">
-        <Button variant="ghost" size="sm" onClick={handleRestartWizard} className="gap-2">
+        <Button variant="ghost" size="sm" onClick={handleRestartWizard} className="gap-2" data-testid="rerun-setup-wizard-btn">
           <RotateCw className="w-4 h-4" />
           Rerun Setup Wizard
         </Button>
       </div>
 
-      <Card className="shadow-xl">
+      <Card className="shadow-xl" data-testid="settings-card">
         <Tabs variant="lifted"
           tabs={tabs.map((tab) => ({ key: tab.id, label: tab.label }))}
           activeTab={activeTabId}
@@ -81,7 +81,7 @@ const SystemSettings: React.FC = () => {
           className="mb-6"
         />
 
-        <div className="mt-4">
+        <div className="mt-4" data-testid="settings-content">
           {tabs[activeIndex].component}
         </div>
       </Card>

@@ -71,7 +71,7 @@ const SpecsPage: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto p-6" data-testid="specs-page">
       <PageHeader
         title="Specifications"
         description="View, search, and manage persisted specifications"
@@ -87,23 +87,24 @@ const SpecsPage: React.FC = () => {
             placeholder="Search specifications..."
             value={searchTerm}
             onChange={handleSearch}
+            data-testid="specs-search-input"
           />
         </div>
-        <Button className="btn-primary" onClick={handleNotImplemented}>
+        <Button className="btn-primary" onClick={handleNotImplemented} data-testid="add-spec-button">
           <Plus className="w-4 h-4 mr-2" />
           Add Specification
         </Button>
       </div>
 
       {/* Results Summary */}
-      <div className="mb-4">
+      <div className="mb-4" data-testid="specs-count">
         <p className="text-sm opacity-70">
           {filteredSpecs.length} specification{filteredSpecs.length !== 1 ? 's' : ''} found
         </p>
       </div>
 
       {/* Specifications Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8" data-testid="specs-grid">
         {paginatedSpecs.map((spec) => (
           <Card key={spec.id} className="shadow-lg hover:shadow-xl transition-shadow">
               <div className="flex items-start justify-between mb-3">
@@ -149,7 +150,7 @@ const SpecsPage: React.FC = () => {
 
       {/* Empty State */}
       {filteredSpecs.length === 0 && (
-        <div className="text-center py-12">
+        <div className="text-center py-12" data-testid="specs-empty-state">
           <BookOpen className="w-16 h-16 mx-auto text-primary mb-4 opacity-50" />
           <h3 className="text-xl font-semibold mb-2">No specifications found</h3>
           <p className="opacity-70 mb-4">
@@ -157,7 +158,7 @@ const SpecsPage: React.FC = () => {
               ? 'Try adjusting your search terms'
               : 'Get started by creating your first specification'}
           </p>
-          <Button className="btn-primary" onClick={handleNotImplemented}>
+          <Button className="btn-primary" onClick={handleNotImplemented} data-testid="create-spec-button">
             <Plus className="w-4 h-4 mr-2" />
             Create Specification
           </Button>
