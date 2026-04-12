@@ -26,7 +26,7 @@ const checkLibraryAvailability = (): Record<string, { installed: boolean; packag
     try {
       require.resolve(packageName);
       status[provider] = { installed: true, package: packageName };
-    } catch (e) {
+    } catch {
       status[provider] = { installed: false, package: packageName };
     }
   });

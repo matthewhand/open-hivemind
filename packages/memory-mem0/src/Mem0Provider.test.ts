@@ -4,7 +4,7 @@ import { Mem0ApiError } from './types';
 // Mock isSafeUrl to avoid real DNS lookups in tests
 jest.mock('@hivemind/shared-types', () => ({
   ...jest.requireActual('@hivemind/shared-types'),
-  isSafeUrl: jest.fn(async () => true),
+  isSafeUrl: jest.fn(async () => ({ safe: true })),
 }));
 
 const BASE_CONFIG = { apiKey: 'test-key', baseUrl: 'https://api.mem0.ai/v1', maxRetries: 0 };
@@ -14,10 +14,10 @@ afterEach(() => jest.restoreAllMocks());
 
 function mockFetch(status: number, body: unknown) {
   return jest.spyOn(global, 'fetch').mockResolvedValue(
-    new Response(status === 204 ? null : JSON.stringify(body), {
-      status,
-      headers: { 'content-type': 'application/json' },
-    })
+    new Response(
+      status === 204 ? null : JSON.stringify(body),
+      { status, headers: { 'content-type': 'application/json' } }
+    )
   );
 }
 
@@ -244,10 +244,7 @@ describe('legacy convenience methods', () => {
 
   it('get() returns null on 404', async () => {
     jest.spyOn(global, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({}), {
-        status: 404,
-        headers: { 'content-type': 'application/json' },
-      })
+      new Response(JSON.stringify({}), { status: 404, headers: { 'content-type': 'application/json' } })
     );
     const p = new Mem0Provider(BASE_CONFIG);
     expect(await p.get('missing')).toBeNull();
@@ -283,7 +280,7 @@ describe('SSRF protection', () => {
   });
 
   it('allows requests when isSafeUrl returns true', async () => {
-    isSafeUrl.mockResolvedValue(true);
+    isSafeUrl.mockResolvedValue({ safe: true });
     mockFetch(200, {
       results: [{ id: 'ssrf-ok', memory: 'safe', created_at: '2024-01-01T00:00:00Z' }],
     });

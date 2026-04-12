@@ -136,7 +136,7 @@ export class SecureConfigManager {
       };
 
       // Calculate checksum before encryption (exclude checksum field itself)
-      const { checksum, ...configForChecksum } = secureConfig;
+      const { checksum: _checksum, ...configForChecksum } = secureConfig;
       secureConfig.checksum = this.calculateChecksum(configForChecksum);
 
       const filePath = this.getSecureFilePath(config.id);
@@ -285,7 +285,7 @@ export class SecureConfigManager {
           const id = file.replace('.enc', '');
           const config = await this.getConfig(id);
           if (config) {
-            const { data, ...metadata } = config;
+            const { data: _data, ...metadata } = config;
             return metadata;
           }
           return null;
@@ -357,7 +357,7 @@ export class SecureConfigManager {
       };
 
       // Calculate backup checksum on metadata
-      const { checksum, ...metadataWithoutChecksum } = fullBackupData.metadata;
+      const { checksum: _checksum, ...metadataWithoutChecksum } = fullBackupData.metadata;
       fullBackupData.metadata.checksum = this.calculateChecksum(metadataWithoutChecksum);
 
       // Encrypt and store backup

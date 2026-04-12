@@ -61,6 +61,10 @@ jest.mock('../../src/utils/envUtils', () => ({
   getRelevantEnvVars: jest.fn(() => ({})),
 }));
 
+jest.mock('../../src/utils/ssrfGuard', () => ({
+  isSafeUrl: jest.fn(async () => ({ safe: true })),
+}));
+
 jest.mock('../../src/config/trustedMcpRepos', () => ({
   getTrustedMcpReposConfig: jest.fn(() => ({ repos: [] })),
 }));
@@ -208,8 +212,8 @@ describe('Admin Routes', () => {
         .expect(400);
 
       expect(response.body.error).toBe('Validation failed');
-      expect(Array.isArray(response.body.details)).toBe(true);
-      expect(response.body.details.length).toBeGreaterThan(0);
+      expect(Array.isArray(response.body.issues)).toBe(true);
+      expect(response.body.issues.length).toBeGreaterThan(0);
     });
 
     test('PUT /api/admin/llm-providers/:id should update provider', async () => {
@@ -289,8 +293,8 @@ describe('Admin Routes', () => {
         .expect(400);
 
       expect(response.body.error).toBe('Validation failed');
-      expect(Array.isArray(response.body.details)).toBe(true);
-      expect(response.body.details.length).toBeGreaterThan(0);
+      expect(Array.isArray(response.body.issues)).toBe(true);
+      expect(response.body.issues.length).toBeGreaterThan(0);
     });
   });
 
@@ -324,8 +328,8 @@ describe('Admin Routes', () => {
       const response = await request(app).post('/api/admin/personas').send(invalidData).expect(400);
 
       expect(response.body.error).toBe('Validation failed');
-      expect(Array.isArray(response.body.details)).toBe(true);
-      expect(response.body.details.length).toBeGreaterThan(0);
+      expect(Array.isArray(response.body.issues)).toBe(true);
+      expect(response.body.issues.length).toBeGreaterThan(0);
     });
 
     test('PUT /api/admin/personas/:key should update persona', async () => {
@@ -385,8 +389,8 @@ describe('Admin Routes', () => {
         .expect(400);
 
       expect(response.body.error).toBe('Validation failed');
-      expect(Array.isArray(response.body.details)).toBe(true);
-      expect(response.body.details.length).toBeGreaterThan(0);
+      expect(Array.isArray(response.body.issues)).toBe(true);
+      expect(response.body.issues.length).toBeGreaterThan(0);
     });
 
     test('POST /api/admin/mcp-servers/disconnect should disconnect from server', async () => {
@@ -443,8 +447,8 @@ describe('Admin Routes', () => {
         .expect(400);
 
       expect(response.body.error).toBe('Validation failed');
-      expect(Array.isArray(response.body.details)).toBe(true);
-      expect(response.body.details.length).toBeGreaterThan(0);
+      expect(Array.isArray(response.body.issues)).toBe(true);
+      expect(response.body.issues.length).toBeGreaterThan(0);
     });
 
     test('PUT /api/admin/tool-usage-guards/:id should update guard', async () => {

@@ -9,7 +9,6 @@ import { authenticate, requireAdmin } from '../../auth/middleware';
 import { createLogger } from '../../common/StructuredLogger';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 import { container } from '../../di/container';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { AnalyticsService } from '../../services/AnalyticsService';
 import DemoModeService from '../../services/DemoModeService';
 import { HTTP_STATUS } from '../../types/constants';
@@ -288,7 +287,7 @@ router.post(
   authenticate,
   requireAdmin,
   validateRequest(DashboardFeedbackSchema),
-  asyncErrorHandler(async (req, res) => {
+  async (req, res) => {
     const { recommendationId, feedback, metadata } = req.body;
     try {
       const db = DatabaseManager.getInstance();
@@ -300,7 +299,7 @@ router.post(
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to store feedback'));
     }
-  })
+  }
 );
 
 // Root route removed - dashboard is now served from public/index.html

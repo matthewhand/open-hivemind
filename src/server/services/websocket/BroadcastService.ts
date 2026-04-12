@@ -29,6 +29,7 @@ export class BroadcastService {
   private messageFlow: MessageFlowEvent[] = [];
   private performanceMetrics: PerformanceMetric[] = [];
   private alerts: AlertEvent[] = [];
+  private alertsMap: Map<string, AlertEvent> = new Map();
   private messageRateHistory: number[] = new Array(60).fill(0);
   private errorRateHistory: number[] = new Array(60).fill(0);
 
@@ -193,6 +194,7 @@ export class BroadcastService {
     };
 
     this.alerts.push(alertEvent);
+    this.alertsMap.set(alertEvent.id, alertEvent);
 
     const key = alertEvent.botName || 'unknown';
     const list = this.botErrors.get(key) || [];
@@ -203,7 +205,10 @@ export class BroadcastService {
     this.botErrors.set(key, list);
 
     if (this.alerts.length > 500) {
-      this.alerts = this.alerts.slice(-500);
+      const removed = this.alerts.splice(0, this.alerts.length - 500);
+      for (const r of removed) {
+        this.alertsMap.delete(r.id);
+      }
     }
 
     if (alert.level === 'error' || alert.level === 'critical') {
@@ -232,7 +237,7 @@ export class BroadcastService {
   }
 
   public acknowledgeAlert(id: string): boolean {
-    const alert = this.alerts.find((a) => a.id === id);
+    const alert = this.alertsMap.get(id);
     if (alert) {
       alert.status = 'acknowledged';
       alert.acknowledgedAt = new Date().toISOString();
@@ -247,7 +252,7 @@ export class BroadcastService {
   }
 
   public resolveAlert(id: string): boolean {
-    const alert = this.alerts.find((a) => a.id === id);
+    const alert = this.alertsMap.get(id);
     if (alert) {
       alert.status = 'resolved';
       alert.resolvedAt = new Date().toISOString();
@@ -884,6 +889,7 @@ export class BroadcastService {
 
   public shutdown(): void {
     this.botErrors.clear();
+    this.alertsMap.clear();
 
     for (const timer of this.ackTimeoutTimers.values()) {
       if (typeof clearTimeout === 'function') {

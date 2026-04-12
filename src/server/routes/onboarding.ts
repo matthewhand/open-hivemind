@@ -56,35 +56,32 @@ let onboardingStep = initial.step;
  *       200:
  *         description: Onboarding completion status
  */
-router.get(
-  '/status',
-  asyncErrorHandler(async (req, res) => {
-    try {
-      // If already marked complete, return immediately
-      if (onboardingCompleted) {
-        return res.json(ApiResponse.success({ completed: true, step: 5 }));
-      }
-
-      // Auto-detect completion: require BOTH bots AND a configured LLM provider.
-      // This prevents marking as "done" when env-var bots exist but no LLM key is set.
-      const manager = await BotManager.getInstance();
-      const bots = await manager.getAllBots();
-      const llmStatus = getLlmDefaultStatus();
-      if (bots.length > 0 && llmStatus.configured) {
-        onboardingCompleted = true;
-        return res.json(ApiResponse.success({ completed: true, step: 5 }));
-      }
-
-      return res.json(ApiResponse.success({ completed: false, step: onboardingStep }));
-    } catch (err) {
-      logger.error(
-        'Failed to get onboarding status',
-        err instanceof Error ? err : new Error(String(err))
-      );
-      return res.json(ApiResponse.success({ completed: false, step: 1 }));
+router.get('/status', async (_req, res) => {
+  try {
+    // If already marked complete, return immediately
+    if (onboardingCompleted) {
+      return res.json(ApiResponse.success({ completed: true, step: 5 }));
     }
-  })
-);
+
+    // Auto-detect completion: require BOTH bots AND a configured LLM provider.
+    // This prevents marking as "done" when env-var bots exist but no LLM key is set.
+    const manager = await BotManager.getInstance();
+    const bots = await manager.getAllBots();
+    const llmStatus = getLlmDefaultStatus();
+    if (bots.length > 0 && llmStatus.configured) {
+      onboardingCompleted = true;
+      return res.json(ApiResponse.success({ completed: true, step: 5 }));
+    }
+
+    return res.json(ApiResponse.success({ completed: false, step: onboardingStep }));
+  } catch (err) {
+    logger.error(
+      'Failed to get onboarding status',
+      err instanceof Error ? err : new Error(String(err))
+    );
+    return res.json(ApiResponse.success({ completed: false, step: 1 }));
+  }
+});
 
 /**
  * @openapi

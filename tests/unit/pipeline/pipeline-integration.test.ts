@@ -21,6 +21,7 @@ import {
   type MessageSender,
   type PromptBuilder,
 } from '@src/pipeline';
+import { SwarmCoordinator } from '@src/services/SwarmCoordinator';
 import { IMessage } from '@message/interfaces/IMessage';
 
 // ---------------------------------------------------------------------------
@@ -32,9 +33,9 @@ class StubMessage extends IMessage {
   private text: string;
   private timestamp: Date;
 
-  constructor(text = 'hello', id = 'msg-1') {
+  constructor(text = 'hello', id?: string) {
     super({}, 'user');
-    this.id = id;
+    this.id = id ?? `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     this.text = text;
     this.content = text;
     this.channelId = 'ch-1';
@@ -204,6 +205,7 @@ describe('Pipeline integration', () => {
 
   beforeEach(() => {
     MessageBus.getInstance().reset();
+    SwarmCoordinator.resetInstance();
     bus = MessageBus.getInstance();
   });
 

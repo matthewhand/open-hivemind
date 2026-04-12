@@ -92,7 +92,7 @@ export function convertToCSV(data: any): string {
 /**
  * Parse YAML (simplified implementation)
  */
-export function parseYAML(yamlString: string): any {
+export function parseYAML(_yamlString: string): any {
   // This is a simplified YAML parser
   // In production, use a proper YAML library like js-yaml
   throw new Error('YAML parsing not implemented in this version');

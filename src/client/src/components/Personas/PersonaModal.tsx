@@ -287,6 +287,7 @@ export const PersonaModal: React.FC<PersonaModalProps> = ({
             )}
           </div>
         </div>
+      </div>
 
     </Modal>
   );

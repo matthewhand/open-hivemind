@@ -323,7 +323,7 @@ function isIPInCIDR(ip: string, cidr: string): boolean {
     const mask = (-1 << (32 - prefix)) >>> 0;
 
     return (ipLong & mask) === (networkLong & mask);
-  } catch (e) {
+  } catch {
     return false;
   }
 }

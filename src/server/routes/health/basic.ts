@@ -15,68 +15,68 @@ router.get(
       // Requires importing DatabaseManager at the top
       const dbManager = require('../../../database/DatabaseManager').DatabaseManager.getInstance();
       dbStatus = dbManager.isConnected() ? 'healthy' : 'unhealthy';
-    } catch (error) {
+    } catch {
       dbStatus = 'error';
     }
 
-    // Check memory providers
-    let memoryProvidersStatus: Record<string, unknown> = { status: 'none_configured' };
-    let anyMemoryProviderUnhealthy = false;
-    try {
-      const { ProviderRegistry } = require('../../../registries/ProviderRegistry');
-      const registry = ProviderRegistry.getInstance();
-      const memProviders: Map<
-        string,
-        { healthCheck(): Promise<{ status: string; details?: Record<string, unknown> }> }
-      > = registry.getMemoryProviders();
-      if (memProviders.size > 0) {
-        const providers: Record<string, { status: string; details?: Record<string, unknown> }> = {};
-        const entries = Array.from(memProviders.entries());
-        const results = await Promise.allSettled(
-          entries.map(([, provider]) => provider.healthCheck())
-        );
-        for (let i = 0; i < entries.length; i++) {
-          const [name] = entries[i];
-          const result = results[i];
-          if (result.status === 'fulfilled') {
-            providers[name] = result.value;
-            if (result.value.status !== 'ok') {
-              anyMemoryProviderUnhealthy = true;
-            }
-          } else {
-            providers[name] = {
-              status: 'error',
-              details: { error: result.reason?.message || 'Unknown error' },
-            };
+  // Check memory providers
+  let memoryProvidersStatus: Record<string, unknown> = { status: 'none_configured' };
+  let anyMemoryProviderUnhealthy = false;
+  try {
+    const { ProviderRegistry } = require('../../../registries/ProviderRegistry');
+    const registry = ProviderRegistry.getInstance();
+    const memProviders: Map<
+      string,
+      { healthCheck(): Promise<{ status: string; details?: Record<string, unknown> }> }
+    > = registry.getMemoryProviders();
+    if (memProviders.size > 0) {
+      const providers: Record<string, { status: string; details?: Record<string, unknown> }> = {};
+      const entries = Array.from(memProviders.entries());
+      const results = await Promise.allSettled(
+        entries.map(([, provider]) => provider.healthCheck())
+      );
+      for (let i = 0; i < entries.length; i++) {
+        const [name] = entries[i];
+        const result = results[i];
+        if (result.status === 'fulfilled') {
+          providers[name] = result.value;
+          if (result.value.status !== 'ok') {
             anyMemoryProviderUnhealthy = true;
           }
+        } else {
+          providers[name] = {
+            status: 'error',
+            details: { error: result.reason?.message || 'Unknown error' },
+          };
+          anyMemoryProviderUnhealthy = true;
         }
-        memoryProvidersStatus = {
-          status: anyMemoryProviderUnhealthy ? 'unhealthy' : 'healthy',
-          providers,
-        };
       }
-    } catch {
-      // Registry not available — treat as none configured
+      memoryProvidersStatus = {
+        status: anyMemoryProviderUnhealthy ? 'unhealthy' : 'healthy',
+        providers,
+      };
     }
+  } catch {
+    // Registry not available — treat as none configured
+  }
 
-    // SyncProviderRegistry counts (if initialized)
-    let registryCounts: Record<string, number> | undefined;
-    try {
-      const { SyncProviderRegistry } = require('../../../registries/SyncProviderRegistry');
-      const syncRegistry = SyncProviderRegistry.getInstance();
-      if (syncRegistry.isInitialized()) {
-        registryCounts = syncRegistry.getProviderCount();
-      }
-    } catch {
-      // SyncProviderRegistry not available — omit from response
+  // SyncProviderRegistry counts (if initialized)
+  let registryCounts: Record<string, number> | undefined;
+  try {
+    const { SyncProviderRegistry } = require('../../../registries/SyncProviderRegistry');
+    const syncRegistry = SyncProviderRegistry.getInstance();
+    if (syncRegistry.isInitialized()) {
+      registryCounts = syncRegistry.getProviderCount();
     }
+  } catch {
+    // SyncProviderRegistry not available — omit from response
+  }
 
-    let status = dbStatus === 'healthy' ? 'healthy' : 'degraded';
-    if (status === 'healthy' && anyMemoryProviderUnhealthy) {
-      status = 'degraded';
-    }
-    const statusCode = HTTP_STATUS.OK; // Even degraded, we return 200 for basic health. /ready will return HTTP_STATUS.SERVICE_UNAVAILABLE if not ready.
+  let status = dbStatus === 'healthy' ? 'healthy' : 'degraded';
+  if (status === 'healthy' && anyMemoryProviderUnhealthy) {
+    status = 'degraded';
+  }
+  const statusCode = HTTP_STATUS.OK; // Even degraded, we return 200 for basic health. /ready will return HTTP_STATUS.SERVICE_UNAVAILABLE if not ready.
 
     return res.status(statusCode).json({
       status: status,
@@ -106,7 +106,7 @@ router.get('/ready', (req, res) => {
   try {
     const dbManager = require('../../../database/DatabaseManager').DatabaseManager.getInstance();
     dbReady = dbManager.isConnected();
-  } catch (error) {
+  } catch {
     dbReady = false;
   }
 

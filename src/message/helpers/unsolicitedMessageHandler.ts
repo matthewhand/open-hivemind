@@ -19,7 +19,7 @@ const logger = Logger.withContext('unsolicitedMessageHandler');
 export function shouldReplyToUnsolicitedMessage(
   msg: any,
   botId: string,
-  integration: string
+  _integration: string
 ): boolean {
   // Logic Refactor: All hard blocks removed.
   // Decisions are now handled by probability modifiers in `shouldReplyToMessage`.

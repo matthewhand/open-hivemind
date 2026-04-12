@@ -28,12 +28,12 @@ async function loadWebhookRoutes(): Promise<void> {
     const webhookRoutesModule = await import('@webhook/routes/webhookRoutes');
     configureWebhookRoutes =
       webhookRoutesModule.configureWebhookRoutes ||
-      ((app: express.Application) => {
+      ((_app: express.Application) => {
         return;
       });
   } catch (error) {
     log('Failed to load webhook routes:', error);
-    configureWebhookRoutes = (app: express.Application) => {
+    configureWebhookRoutes = (_app: express.Application) => {
       return;
     };
   }

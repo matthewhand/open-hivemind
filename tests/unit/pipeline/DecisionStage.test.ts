@@ -12,6 +12,7 @@
 import { MessageBus } from '@src/events/MessageBus';
 import type { MessageContext, ReplyDecision } from '@src/events/types';
 import { DecisionStage, type DecisionStrategy } from '@src/pipeline/DecisionStage';
+import { SwarmCoordinator } from '@src/services/SwarmCoordinator';
 import { IMessage } from '@message/interfaces/IMessage';
 
 // ---------------------------------------------------------------------------
@@ -74,8 +75,11 @@ class StubMessage extends IMessage {
 }
 
 function makeCtx(overrides: Partial<MessageContext> = {}): MessageContext {
+  // Generate a unique message ID per call so swarm claim state doesn't leak
+  // between multiple makeCtx() calls within a single test.
+  const msgId = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   return {
-    message: new StubMessage(),
+    message: new StubMessage('hello', msgId),
     history: [],
     botConfig: {},
     botName: 'TestBot',
@@ -102,6 +106,7 @@ describe('DecisionStage', () => {
 
   beforeEach(() => {
     MessageBus.getInstance().reset();
+    SwarmCoordinator.resetInstance();
     bus = MessageBus.getInstance();
   });
 

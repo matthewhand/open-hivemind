@@ -243,7 +243,7 @@ export const auditMiddlewareWithChanges = (
     if (getBeforeValue) {
       try {
         beforeValue = await getBeforeValue(req);
-      } catch (error) {
+      } catch {
         // Ignore errors in before value capture
       }
     }

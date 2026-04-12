@@ -9,6 +9,7 @@ import Breadcrumbs from './Breadcrumbs';
 import RateLimitIndicator from './RateLimitIndicator';
 import { useRateLimitToast } from '../../hooks/useRateLimitToast';
 import Card from './Card';
+import AppFooter from '../AppFooter';
 
 interface NavItem {
   id: string;

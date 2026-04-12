@@ -54,7 +54,7 @@ function parseCSVMap(input: string): [string, string][] {
 convict.addFormat({
   name: 'channel-bonuses',
   validate: (val: unknown) => {
-    if (val == null) { return; } // allow undefined/null
+    if (val === null || val === undefined) { return; } // allow undefined/null
     if (typeof val === 'string') {
       // If looks like JSON object, validate JSON strictly here to surface errors early
       const s = val.trim();
@@ -86,7 +86,7 @@ convict.addFormat({
     throw new Error('CHANNEL_BONUSES must be JSON object map or CSV string "chan:bonus,..."');
   },
   coerce: (val: unknown) => {
-    if (val == null) { return {}; }
+    if (val === null || val === undefined) { return {}; }
     if (typeof val === 'object' && !Array.isArray(val)) {
       const out: Record<string, number> = {};
       for (const [k, v] of Object.entries(val as Record<string, unknown>)) {
@@ -119,7 +119,7 @@ convict.addFormat({
 convict.addFormat({
   name: 'channel-priorities',
   validate: (val: unknown) => {
-    if (val == null) { return; }
+    if (val === null || val === undefined) { return; }
     if (typeof val === 'string') {
       const s = val.trim();
       if (s.startsWith('{')) {
@@ -143,7 +143,7 @@ convict.addFormat({
     throw new Error('CHANNEL_PRIORITIES must be JSON object map or CSV string "chan:priority,..."');
   },
   coerce: (val: unknown) => {
-    if (val == null) { return {}; }
+    if (val === null || val === undefined) { return {}; }
     if (typeof val === 'object' && !Array.isArray(val)) {
       const out: Record<string, number> = {};
       for (const [k, v] of Object.entries(val as Record<string, unknown>)) {
@@ -203,7 +203,7 @@ function coerceResponseProfileValue(key: string, value: unknown): number | boole
 convict.addFormat({
   name: 'response-profiles',
   validate: (val: unknown) => {
-    if (val == null) { return; }
+    if (val === null || val === undefined) { return; }
     if (typeof val === 'string' && val.trim() === '') { return; }
     const parsed = typeof val === 'string' ? strictParseJSON(val.trim()) : val;
     if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
@@ -230,7 +230,7 @@ convict.addFormat({
     }
   },
   coerce: (val: unknown) => {
-    if (val == null) { return {}; }
+    if (val === null || val === undefined) { return {}; }
     if (typeof val === 'string' && val.trim() === '') { return {}; }
     const parsed = typeof val === 'string' ? strictParseJSON(val.trim()) : val;
     if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {

@@ -16,7 +16,7 @@
     "packages/*"
   ],
   "scripts": {
-    "prepare": "husky",
+    "prepare": "git config core.hooksPath .githooks || true",
     "lint": "node ./node_modules/eslint/bin/eslint.js src/",
     "lint:fix": "node ./node_modules/eslint/bin/eslint.js src/ --fix",
     "format": "node ./node_modules/prettier/bin/prettier.cjs --write \"src/**/*.ts\" \"src/**/*.tsx\" \"tests/**/*.ts\" \"packages/**/*.ts\"",
@@ -33,7 +33,7 @@
     "start:test": "NODE_ENV=test bash scripts/start-runtime.sh",
     "start:headless": "NODE_ENV=production HTTP_ENABLED=false bash scripts/start-runtime.sh",
     "start:dev:headless": "NODE_ENV=development HTTP_ENABLED=false node --import tsx src/index.ts",
-    "start:dev": "cross-env NODE_ENV=development node DOTENV_CONFIG_PATH=.env.sample -r dotenv/config --import tsx src/index.ts",
+    "start:dev": "cross-env NODE_ENV=development DOTENV_CONFIG_PATH=.env.sample node -r dotenv/config --import tsx src/index.ts",
     "dev:frontend-only": "cd src/client && ../../node_modules/.bin/vite --port 3028 --host",
     "dev:webui-only": "SKIP_MESSENGERS=true npm run start:dev",
     "dev": "npm run start:dev",
@@ -202,7 +202,7 @@
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "sqlite": "^5.1.1",
-    "sqlite3": "^5.1.7",
+    "sqlite3": "^6.0.1",
     "tailwind-merge": "^3.3.1",
     "tough-cookie": "^6.0.0",
     "ts-essentials": "^10.0.2",
@@ -271,6 +271,7 @@
     "baseline-browser-mapping": "^2.9.6",
     "chai": "^5.1.1",
     "concurrently": "^8.2.2",
+    "cross-env": "^10.1.0",
     "eslint": "^9.34.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
@@ -326,40 +327,7 @@
       "@modelcontextprotocol/sdk": "^1.25.2",
       "tar": "^7.5.11",
       "undici": "^6.24.0",
-      "fast-xml-parser": "^4.5.5",
-      "axios": "^1.15.0",
-      "hono": "^4.12.12",
-      "@hono/node-server": "^1.19.13",
-      "basic-ftp": "^5.2.1",
-      "minimatch": "^10.0.0",
-      "test-exclude>minimatch": "^10.0.0",
-      "@test/minimatch": "REQUIRED: CVE-2026-27903/CVE-2026-26996 — babel-plugin-istanbul@8 and glob@10 support v10 natively",
-      "serialize-javascript": "^7.0.3",
-      "brace-expansion": "^5.0.5",
-      "smol-toml": "^1.6.1",
-      "diff": "^8.0.3",
-      "@tootallnate/once": "^3.0.1",
-      "babel-plugin-istanbul": "^8.0.0",
-      "glob": "^10.3.16",
-      "@vercel/static-config>ajv": ">=8.18.0"
-    },
-    "auditConfig": {
-      "ignoreCves": [
-        "GHSA-2g4f-4pwh-qvx6",
-        "GHSA-vpq2-c234-7xj6"
-      ]
-    },
-    "ignoredBuiltDependencies": [
-      "sqlite3"
-    ]
-  },
-  "lint-staged": {
-    "*.{ts,tsx}": [
-      "node ./node_modules/prettier/bin/prettier.cjs --write",
-      "node ./node_modules/eslint/bin/eslint.js --fix"
-    ],
-    "*.{js,json,md,yml,yaml}": [
-      "node ./node_modules/prettier/bin/prettier.cjs --write"
-    ]
+      "fast-xml-parser": "^4.5.5"
+    }
   }
 }

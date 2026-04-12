@@ -71,7 +71,7 @@ flowiseConfig.get = ((key: any) => {
   }
   try {
     return originalGet(key as any);
-  } catch (error) {
+  } catch {
     return undefined;
   }
 }) as any;

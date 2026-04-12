@@ -39,6 +39,7 @@ export const TOKENS = {
   // Services
   WebSocketService: 'WebSocketService',
   RealTimeValidationService: 'RealTimeValidationService',
+  SwarmCoordinator: 'SwarmCoordinator',
 } as const;
 
 /**

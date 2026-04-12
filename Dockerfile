@@ -35,6 +35,7 @@ COPY packages/message-slack/package.json packages/message-slack/
 COPY packages/message-webhook/package.json packages/message-webhook/
 COPY packages/shared-types/package.json packages/shared-types/
 COPY packages/tool-mcp/package.json packages/tool-mcp/
+COPY src/client/package.json src/client/
 
 RUN corepack enable && corepack prepare pnpm@latest --activate && pnpm install --no-frozen-lockfile
 
@@ -70,6 +71,9 @@ RUN mkdir -p config/uploads data logs
 
 RUN chown -R node:node /app
 USER node
+
+# Ensure runtime directories exist (config/ is excluded by .dockerignore)
+RUN mkdir -p config/uploads data logs
 
 # Ensure runtime directories exist (config/ is excluded by .dockerignore)
 RUN mkdir -p config/uploads data logs

@@ -87,7 +87,7 @@ import { getMemoryProfileByKey } from '../../../src/config/memoryProfiles';
 import { getToolProfileByKey } from '../../../src/config/toolProfiles';
 
 // We import the module-under-test path so tests fail until the real class exists.
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+ 
 const modulePath = '../../../src/config/ConfigStore';
 
 // Helper: dynamically import so singleton can be reset between tests.

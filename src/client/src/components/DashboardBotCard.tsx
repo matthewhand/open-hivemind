@@ -61,11 +61,6 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
               {bot.llmProvider}
             </Badge>
           )}
-          {bot.persona && (
-            <Badge variant="ghost" size="small">
-              {bot.persona}
-            </Badge>
-          )}
           <Badge variant="neutral" style="outline" className="text-xs">
             📱 {bot.messageProvider.toUpperCase()}
           </Badge>

@@ -15,7 +15,6 @@ import {
   UpdateLlmProviderSchema,
 } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
-import { sanitizeProfiles } from '../../utils/sanitizeConfig';
 
 const router = Router();
 const debug = Debug('app:webui:admin:llm-providers');
@@ -32,25 +31,22 @@ const configRateLimit = isTestEnv
     });
 
 // GET /llm-providers - Get all LLM providers
-router.get(
-  '/llm-providers',
-  asyncErrorHandler(async (req: Request, res: Response) => {
-    try {
-      const providers = await webUIStorage.getLlmProviders();
-      return res.json({
-        success: true,
-        data: { providers: sanitizeProfiles(providers) },
-        message: 'LLM providers retrieved successfully',
-      });
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        error: 'Failed to retrieve LLM providers',
-        message: hivemindError.message || 'An error occurred while retrieving LLM providers',
-      });
-    }
-  })
-);
+router.get('/llm-providers', (req: Request, res: Response) => {
+  try {
+    const providers = webUIStorage.getLlmProviders();
+    return res.json({
+      success: true,
+      data: { providers },
+      message: 'LLM providers retrieved successfully',
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      error: 'Failed to retrieve LLM providers',
+      message: hivemindError.message || 'An error occurred while retrieving LLM providers',
+    });
+  }
+});
 
 /**
  * @openapi
@@ -341,11 +337,10 @@ router.post(
             if (config.baseUrl) {
               try {
                 new URL(config.baseUrl);
-                const check = await isSafeUrl(config.baseUrl);
-                if (!check.safe) {
+                if (!(await isSafeUrl(config.baseUrl))) {
                   testResult = {
                     success: false,
-                    message: check.reason || 'Base URL is blocked for security reasons',
+                    message: 'Base URL is blocked for security reasons',
                   };
                   break;
                 }
@@ -381,11 +376,10 @@ router.post(
 
             try {
               new URL(config.baseUrl);
-              const check = await isSafeUrl(config.baseUrl);
-              if (!check.safe) {
+              if (!(await isSafeUrl(config.baseUrl))) {
                 testResult = {
                   success: false,
-                  message: check.reason || 'Base URL is blocked for security reasons',
+                  message: 'Base URL is blocked for security reasons',
                 };
                 break;
               }
@@ -420,11 +414,10 @@ router.post(
             if (config.baseUrl) {
               try {
                 new URL(config.baseUrl);
-                const check = await isSafeUrl(config.baseUrl);
-                if (!check.safe) {
+                if (!(await isSafeUrl(config.baseUrl))) {
                   testResult = {
                     success: false,
-                    message: check.reason || 'Base URL is blocked for security reasons',
+                    message: 'Base URL is blocked for security reasons',
                   };
                   break;
                 }
@@ -475,187 +468,6 @@ router.post(
         message: hivemindError.message || 'An error occurred while testing connection',
       });
     }
-  })
-);
-
-// POST /providers/:key/test — send a test message to a specific LLM profile
-router.post(
-  '/providers/:key/test',
-  configRateLimit,
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const { key } = req.params;
-      const { message, systemPrompt } = req.body as { message?: string; systemPrompt?: string };
-
-      if (!message?.trim()) {
-        return res.status(HTTP_STATUS.BAD_REQUEST).json({
-          error: 'Invalid request',
-          message: 'message is required',
-        });
-      }
-
-      const profiles = await webUIStorage.getLlmProviders();
-      const profile = profiles.find((p: any) => p.key === key) as any;
-
-      if (!profile) {
-        return res.status(HTTP_STATUS.NOT_FOUND).json({
-          error: 'Profile not found',
-          message: `No LLM profile with key "${key}"`,
-        });
-      }
-
-      const { instantiateLlmProvider, loadPlugin } = await import('../../../plugins/PluginLoader');
-      const config: Record<string, unknown> = profile.config || {};
-
-      let provider;
-      try {
-        const mod = await loadPlugin(`llm-${profile.provider.toLowerCase()}`);
-        provider = instantiateLlmProvider(mod, config);
-      } catch {
-        return res.status(HTTP_STATUS.BAD_REQUEST).json({
-          error: 'Failed to load provider',
-          message: `Could not load provider plugin: llm-${profile.provider}`,
-        });
-      }
-
-      const start = Date.now();
-      const messages: any[] = systemPrompt ? [{ role: 'system', content: systemPrompt }] : [];
-      const response: any = await provider.generateChatCompletion(message.trim(), messages);
-      const latency = Date.now() - start;
-
-      const reply =
-        typeof response === 'string' ? response : response?.content || response?.message || '';
-
-      return res.json({
-        reply,
-        model: (config.model as string) || profile.provider,
-        latency,
-      });
-    } catch (err: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(err);
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        error: 'Test failed',
-        message: hivemindError.message,
-      });
-    }
-  })
-);
-
-// POST /providers/:key/test-stream — streaming test with SSE
-// Supports: token-by-token streaming, client-side cancel, 429 retry-after
-router.post(
-  '/providers/:key/test-stream',
-  configRateLimit,
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const { key } = req.params;
-      const { message, systemPrompt } = req.body as { message?: string; systemPrompt?: string };
-
-      if (!message?.trim()) {
-        return res.status(HTTP_STATUS.BAD_REQUEST).json({
-          error: 'Invalid request',
-          message: 'message is required',
-        });
-      }
-
-      const profiles = await webUIStorage.getLlmProviders();
-      const profile = profiles.find((p: any) => p.key === key) as any;
-
-      if (!profile) {
-        return res.status(HTTP_STATUS.NOT_FOUND).json({
-          error: 'Profile not found',
-          message: `No LLM profile with key "${key}"`,
-        });
-      }
-
-      const { instantiateLlmProvider, loadPlugin } = await import('../../../plugins/PluginLoader');
-      const config: Record<string, unknown> = profile.config || {};
-
-      let provider;
-      try {
-        const mod = await loadPlugin(`llm-${profile.provider.toLowerCase()}`);
-        provider = instantiateLlmProvider(mod, config);
-      } catch {
-        return res.status(HTTP_STATUS.BAD_REQUEST).json({
-          error: 'Failed to load provider',
-          message: `Could not load provider plugin: llm-${profile.provider}`,
-        });
-      }
-
-      // Set up SSE headers
-      res.setHeader('Content-Type', 'text/event-stream');
-      res.setHeader('Cache-Control', 'no-cache');
-      res.setHeader('Connection', 'keep-alive');
-      res.flushHeaders();
-
-      const messages: any[] = systemPrompt ? [{ role: 'system', content: systemPrompt }] : [];
-
-      const start = Date.now();
-      let fullReply = '';
-
-      // If the provider supports streaming, use it
-      if (
-        'generateChatCompletionStream' in provider &&
-        typeof (provider as any).generateChatCompletionStream === 'function'
-      ) {
-        const stream = await (provider as any).generateChatCompletionStream(
-          message.trim(),
-          messages
-        );
-        for await (const chunk of stream) {
-          // Check if client disconnected
-          if (res.writableEnded) return;
-
-          const token = chunk?.choices?.[0]?.delta?.content || chunk?.content || '';
-          if (token) {
-            fullReply += token;
-            res.write(`data: ${JSON.stringify({ token, done: false })}\n\n`);
-          }
-        }
-      } else {
-        // Fallback: non-streaming provider
-        const response: any = await provider.generateChatCompletion(message.trim(), messages);
-        fullReply =
-          typeof response === 'string' ? response : response?.content || response?.message || '';
-        // Send the full response as a single chunk
-        res.write(`data: ${JSON.stringify({ token: fullReply, done: true })}\n\n`);
-      }
-
-      const latency = Date.now() - start;
-
-      // Send final metadata
-      res.write(
-        `data: ${JSON.stringify({
-          done: true,
-          model: (config.model as string) || profile.provider,
-          latency,
-        })}\n\n`
-      );
-
-      res.end();
-      return;
-    } catch (err: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(err);
-
-      // Handle 429 rate-limit specifically
-      if (
-        hivemindError.message?.includes('429') ||
-        hivemindError.message?.toLowerCase().includes('rate limit')
-      ) {
-        const retryAfter = 60; // default
-        res.status(HTTP_STATUS.TOO_MANY_REQUESTS).json({
-          error: 'Rate limited',
-          message: hivemindError.message,
-          retryAfter,
-        });
-      } else {
-        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-          error: 'Test failed',
-          message: hivemindError.message,
-        });
-      }
-    }
-    return;
   })
 );
 

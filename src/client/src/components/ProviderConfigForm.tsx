@@ -492,7 +492,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             </div>
           </Card.Body>
         </Card>
-      )}
+      ))}
 
       {/* Advanced Settings (Collapsible) */}
       {Object.keys(groupedAdvancedFields).length > 0 && (

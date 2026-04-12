@@ -198,7 +198,7 @@ const Settings: React.FC = () => {
             <label className="label cursor-pointer justify-start gap-4">
               <span className="label-text">Auto Refresh</span>
               <Toggle
-                color="primary"
+                className="toggle toggle-primary"
                 checked={ui.autoRefreshEnabled}
                 onChange={handleAutoRefreshToggle}
               />
@@ -236,7 +236,7 @@ const Settings: React.FC = () => {
             <label className="label cursor-pointer justify-start gap-4">
               <span className="label-text">Reduced Motion</span>
               <Toggle
-                color="primary"
+                className="toggle toggle-primary"
                 checked={!ui.animationsEnabled}
                 onChange={(event) => setAnimationsEnabled(!event.target.checked)}
               />
@@ -247,9 +247,9 @@ const Settings: React.FC = () => {
             <label className="label cursor-pointer justify-start gap-4">
               <span className="label-text">Disable 3D Hover Effects</span>
               <Toggle
-                color="primary"
-                checked={ui.disable3dEffects}
-                onChange={(event) => setDisable3dEffects(event.target.checked)}
+                className="toggle toggle-primary"
+                checked={ui.showTooltips}
+                onChange={(event) => setShowTooltips(event.target.checked)}
               />
             </label>
             <p className="text-xs text-base-content/60 mt-1">Remove 3D perspective tilt on hover cards.</p>
@@ -258,9 +258,9 @@ const Settings: React.FC = () => {
             <label className="label cursor-pointer justify-start gap-4">
               <span className="label-text">Compact Density</span>
               <Toggle
-                color="primary"
-                checked={ui.compactDensity}
-                onChange={(event) => setCompactDensity(event.target.checked)}
+                className="toggle toggle-primary"
+                checked={ui.showKeyboardShortcuts}
+                onChange={(event) => setShowKeyboardShortcuts(event.target.checked)}
               />
             </label>
             <p className="text-xs text-base-content/60 mt-1">Reduce card padding and spacing for more content per screen.</p>

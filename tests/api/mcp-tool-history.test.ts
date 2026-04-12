@@ -16,7 +16,6 @@ jest.mock('../../src/auth/middleware', () => ({
 }));
 
 // Routes not yet implemented in the MCP router
-// eslint-disable-next-line jest/no-disabled-tests
 describe.skip('MCP Tool Execution History API', () => {
   let app: Express;
   const testLogFile = path.join(process.cwd(), 'data', 'tool-execution-history.jsonl');

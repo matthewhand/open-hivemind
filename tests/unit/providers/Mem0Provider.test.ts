@@ -660,12 +660,12 @@ describe('Mem0Provider — SSRF guard (per-request)', () => {
     // are scoped to the current test only.
     isSafeUrlMock = require('@hivemind/shared-types').isSafeUrl as jest.Mock;
     isSafeUrlMock.mockClear();
-    isSafeUrlMock.mockResolvedValue(true); // safe default; individual tests override
+    isSafeUrlMock.mockResolvedValue({ safe: true }); // safe default; individual tests override
     fetchMock.mockClear();
   });
 
   it('calls isSafeUrl on every request, not just at construction time', async () => {
-    isSafeUrlMock.mockResolvedValue(true);
+    isSafeUrlMock.mockResolvedValue({ safe: true });
     const provider = makeProvider();
     fetchMock.mockResolvedValue(jsonResponse({ results: [] }));
 
@@ -677,7 +677,7 @@ describe('Mem0Provider — SSRF guard (per-request)', () => {
   });
 
   it('throws and never calls fetch when isSafeUrl returns false', async () => {
-    isSafeUrlMock.mockResolvedValue(false);
+    isSafeUrlMock.mockResolvedValue({ safe: false });
     const provider = makeProvider();
 
     await expect(provider.search('query', 'user-1')).rejects.toThrow(/not safe/i);
@@ -685,7 +685,7 @@ describe('Mem0Provider — SSRF guard (per-request)', () => {
   });
 
   it('passes the full resolved URL (baseUrl + path) to isSafeUrl', async () => {
-    isSafeUrlMock.mockResolvedValue(true);
+    isSafeUrlMock.mockResolvedValue({ safe: true });
     fetchMock.mockResolvedValue(jsonResponse({ results: [] }));
 
     const provider = makeProvider(); // uses TEST_BASE_URL

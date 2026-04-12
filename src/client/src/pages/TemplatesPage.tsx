@@ -21,9 +21,7 @@ import Input from '../components/DaisyUI/Input';
 import Textarea from '../components/DaisyUI/Textarea';
 import { apiService } from '../services/api';
 import { ErrorService } from '../services/ErrorService';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import Carousel from '../components/DaisyUI/Carousel';
-import Pagination from '../components/DaisyUI/Pagination';
+import { useApiQuery } from '../hooks/useApiQuery';
 
 interface ConfigurationTemplate {
   id: string;
@@ -69,20 +67,13 @@ const TemplatesPage: React.FC = () => {
   const toastError = useErrorToast();
   const toastSuccess = useSuccessToast();
 
-  const _queryClient = useQueryClient();
-
   // Fetch templates
   const {
     data: templatesResponse,
-    isLoading: templatesLoading,
+    loading: templatesLoading,
     error: templatesError,
     refetch: refetchTemplates,
-  } = useQuery<any>({
-    queryKey: ['apiQuery', '/api/admin/templates'],
-    queryFn: () => apiService.get('/api/admin/templates'),
-    staleTime: 60_000,
-    gcTime: 120_000,
-  });
+  } = useApiQuery<any>('/api/admin/templates', { ttl: 60_000 });
 
   // Sync cached query results into local state
   useEffect(() => {

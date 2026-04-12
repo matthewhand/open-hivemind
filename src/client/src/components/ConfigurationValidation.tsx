@@ -122,7 +122,7 @@ const ConfigurationValidation: React.FC<ConfigurationValidationProps> = ({ bot }
     setLoading(true);
     setBackendError(null);
     try {
-      const data = await apiService.get<ValidationResponse>('/api/validation');
+      const data = await apiService.get('/api/validation') as ValidationResponse;
       setBackendData(data);
     } catch (err) {
       setBackendError(err instanceof Error ? err.message : 'Failed to fetch validation');
