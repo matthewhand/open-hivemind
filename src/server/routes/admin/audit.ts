@@ -1,7 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { ErrorUtils } from '../../../common/ErrorUtils';
-import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import { HTTP_STATUS } from '../../../types/constants';
 import {
   ToggleIdParamSchema,
@@ -64,15 +63,14 @@ router.get('/tool-usage-guards', (req: Request, res: Response) => {
       },
     ];
 
-      return res.json(ApiResponse.success({ guards }));
-    } catch (error: unknown) {
-      const _hivemindError = ErrorUtils.toHivemindError(error);
-      return res
-        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error('Failed to retrieve tool usage guards'));
-    }
-  })
-);
+    return res.json(ApiResponse.success({ guards }));
+  } catch (error: unknown) {
+    const _hivemindError = ErrorUtils.toHivemindError(error);
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(ApiResponse.error('Failed to retrieve tool usage guards'));
+  }
+});
 
 /**
  * @openapi

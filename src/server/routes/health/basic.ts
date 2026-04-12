@@ -1,5 +1,6 @@
 import process from 'process';
 import { Router } from 'express';
+import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import { HTTP_STATUS } from '../../../types/constants';
 
 const router = Router();
@@ -77,25 +78,26 @@ router.get(
     }
     const statusCode = HTTP_STATUS.OK; // Even degraded, we return 200 for basic health. /ready will return HTTP_STATUS.SERVICE_UNAVAILABLE if not ready.
 
-  return res.status(statusCode).json({
-    status: status,
-    timestamp: new Date().toISOString(),
-    version: '1.0.0',
-    uptime: process.uptime(),
-    memory: {
-      used: Math.round(memoryUsage.heapUsed / 1024 / 1024),
-      total: Math.round(memoryUsage.heapTotal / 1024 / 1024),
-      percentage: Math.round((memoryUsage.heapUsed / memoryUsage.heapTotal) * 100),
-    },
-    system: {
-      platform: process.platform,
-      nodeVersion: process.version,
-      processId: process.pid,
-    },
-    memoryProviders: memoryProvidersStatus,
-    ...(registryCounts ? { providerRegistry: registryCounts } : {}),
-  });
-});
+    return res.status(statusCode).json({
+      status: status,
+      timestamp: new Date().toISOString(),
+      version: '1.0.0',
+      uptime: process.uptime(),
+      memory: {
+        used: Math.round(memoryUsage.heapUsed / 1024 / 1024),
+        total: Math.round(memoryUsage.heapTotal / 1024 / 1024),
+        percentage: Math.round((memoryUsage.heapUsed / memoryUsage.heapTotal) * 100),
+      },
+      system: {
+        platform: process.platform,
+        nodeVersion: process.version,
+        processId: process.pid,
+      },
+      memoryProviders: memoryProvidersStatus,
+      ...(registryCounts ? { providerRegistry: registryCounts } : {}),
+    });
+  })
+);
 
 // Readiness probe
 router.get('/ready', (req, res) => {
