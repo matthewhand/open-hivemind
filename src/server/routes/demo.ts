@@ -4,6 +4,7 @@
  * API endpoints for demo/simulation mode functionality
  */
 
+import { Logger } from '@common/logger';
 import { Router } from 'express';
 import { container } from 'tsyringe';
 import { ApiResponse } from '@src/server/utils/apiResponse';
@@ -73,9 +74,8 @@ router.post(
         });
       } catch (wsError) {
         // WebSocket service might not be available, continue anyway
-        console.warn('Failed to broadcast demo mode change:', wsError);
+        Logger.warn('Failed to broadcast demo mode change:', wsError);
       }
-
       res.json(
         ApiResponse.success({
           enabled: isNowEnabled,

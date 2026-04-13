@@ -11,13 +11,8 @@ import { Stat, Stats } from '../../components/DaisyUI/Stat';
 import Tooltip from '../../components/DaisyUI/Tooltip';
 import Card from '../../components/DaisyUI/Card';
 import Join from '../../components/DaisyUI/Join';
-<<<<<<< HEAD
-||||||| 963172efc
-import Figure from '../../components/DaisyUI/Figure';
-=======
 import Figure from '../../components/DaisyUI/Figure';
 import BotResponseTimeline from '../../components/BotResponseTimeline';
->>>>>>> feat/bot-response-timeline
 
 interface BotPreviewSidebarProps {
   previewBot: BotConfig | null;

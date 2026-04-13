@@ -264,16 +264,21 @@ export class ApiService {
       this.extractRateLimitHeaders(response);
 
       if (!response.ok) {
-        // Auto-heal on 401: clear stale auth tokens and redirect to login
-        if (response.status === 401 && !endpoint.includes('/auth/login')) {
-          console.warn('[API] 401 Unauthorized — clearing stale auth tokens');
+        // Auto-heal on 401/403: clear stale auth tokens and redirect to login.
+        // The server returns 403 "Invalid or expired token" when verifyAccessToken() throws,
+        // so both status codes indicate a broken session that cannot be recovered.
+        if ((response.status === 401 || response.status === 403) && !endpoint.includes('/auth/')) {
+          console.warn(`[API] ${response.status} — clearing stale auth tokens`);
           localStorage.removeItem('auth_tokens');
           localStorage.removeItem('auth_user');
+          sessionStorage.removeItem('auth_tokens');
+          sessionStorage.removeItem('auth_user');
           if (!window.location.pathname.includes('/login')) {
             window.location.href = '/login';
             return undefined as unknown as T;
           }
         }
+
 
         // Special handling for 429 Too Many Requests
         if (response.status === 429) {

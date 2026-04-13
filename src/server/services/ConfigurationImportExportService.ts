@@ -1,6 +1,7 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
+import { Logger } from '@common/logger';
 import { SecureConfigManager } from '../../config/SecureConfigManager';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { type BotConfigurationVersion } from '../../database/types';
@@ -143,9 +144,8 @@ export class ConfigurationImportExportService {
           } catch (error) {
             // Replicate original Promise.allSettled behavior by catching and logging
             // errors without aborting the entire export.
-            console.error(`Failed to fetch versions for batch: ${batch}`, error);
-          }
-        }
+            Logger.error(`Failed to fetch versions for batch: ${batch}`, error);
+          }        }
 
         exportData.versions = versions;
         (exportData.metadata as Record<string, unknown>).versionCount = versions.length;

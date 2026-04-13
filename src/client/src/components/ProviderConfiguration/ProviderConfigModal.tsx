@@ -23,6 +23,9 @@ import { ProviderConfigForm } from '../ProviderConfigForm';
 import type { ProviderConfigSchema } from '../../provider-configs';
 import { getProviderSchema } from '../../provider-configs';
 import { apiService } from '../../services/api';
+import type { ProviderSchema } from '../../hooks/useAvailableProviderTypes';
+import { useAvailableProviderTypes } from '../../hooks/useAvailableProviderTypes';
+import { DynamicSchemaForm } from '../DynamicSchemaForm';
 import { useConfigDiff } from '../../hooks/useConfigDiff';
 import { ConfigDiffConfirmDialog } from '../ConfigDiffViewer';
 import Select from '../DaisyUI/Select';
@@ -57,7 +60,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   const { data: apiProviderTypes } = useAvailableProviderTypes();
 
   // Build a lookup of API schemas by key for the current provider category
-  const apiSchemasByKey = useMemo<Record<string, ApiProviderSchema>>(() => {
+  const apiSchemasByKey = useMemo<Record<string, ProviderSchema>>(() => {
     const list = modalState.providerType === 'message'
       ? apiProviderTypes.messenger
       : modalState.providerType === 'llm'
@@ -309,9 +312,9 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     const s = apiSchemasByKey[selectedType];
     if (!s) return [];
     return [
-      ...s.fields.required.map(f => ({ ...f, required: true })),
-      ...s.fields.optional.map(f => ({ ...f, required: false })),
-      ...s.fields.advanced.map(f => ({ ...f, required: false })),
+      ...s.fields.required.map((f: any) => ({ ...f, required: true })),
+      ...s.fields.optional.map((f: any) => ({ ...f, required: false })),
+      ...s.fields.advanced.map((f: any) => ({ ...f, required: false })),
     ];
   };
 
@@ -445,7 +448,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   }));
 
   // API schema for the currently selected provider type (used as fallback form renderer)
-  const apiSchemaForSelected: ApiProviderSchema | undefined = apiSchemasByKey[selectedType];
+  const apiSchemaForSelected: ProviderSchema | undefined = apiSchemasByKey[selectedType];
 
   return (
     <Modal
@@ -462,7 +465,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
             if (hasChanges && modalState.isEdit) {
               setShowDiffConfirm(true);
             } else {
-              const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
+              const syntheticEvent = { preventDefault: () => { } } as React.FormEvent;
               handleSubmit(syntheticEvent);
             }
           },
@@ -471,160 +474,160 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
       ]}
     >
 
-        {modalState.providerType === 'llm' ? (
-          <div className="form-control mb-6">
+      {modalState.providerType === 'llm' ? (
+        <div className="form-control mb-6">
+          <label className="label">
+            <span className="label-text font-medium">Provider Type</span>
+            <span className="label-text-alt text-error">*</span>
+          </label>
+          <Select
+            className="select-bordered"
+            value={selectedType}
+            onChange={(e) => setSelectedType(e.target.value as LLMProviderType)}
+          >
+            {providerTypes.map(type => {
+              const typeConfig = (configs as any)[type];
+              return (
+                <option key={type} value={type}>
+                  {typeConfig.displayName || typeConfig.name}
+                </option>
+              );
+            })}
+          </Select>
+        </div>
+      ) : (
+        <div className="form-control mb-6">
+          <label className="label pb-0">
+            <span className="label-text font-medium">Provider Type</span>
+            <span className="label-text-alt text-error">*</span>
+          </label>
+          <Tabs
+            tabs={messageProviderTabs}
+            activeTab={selectedType}
+            onChange={(key) => setSelectedType(key as MessageProviderType | LLMProviderType)}
+            variant="boxed"
+            size="sm"
+            className="flex-wrap gap-1"
+            aria-label="Select a message provider type"
+          />
+        </div>
+      )}
+
+      {/* Form */}
+      <form onSubmit={handleSubmit}>
+        {/* Provider Name */}
+        <div className="form-control mb-4">
+          <label className="label">
+            <span className="label-text font-medium">Provider Name</span>
+            <span className="label-text-alt text-error">*</span>
+          </label>
+          <input
+            type="text"
+            name="name"
+            className={`input input-bordered w-full ${errors.name ? 'input-error' : ''}`}
+            placeholder="Enter a descriptive name for this provider"
+            value={formData.name || ''}
+            onChange={(e) => handleFieldChange('name', e.target.value)}
+          />
+          {errors.name && <label className="label"><span className="label-text-alt text-error">{errors.name}</span></label>}
+        </div>
+
+        {modalState.providerType === 'llm' && (
+          <div className="form-control mb-4">
             <label className="label">
-              <span className="label-text font-medium">Provider Type</span>
+              <span className="label-text font-medium">Model Type</span>
               <span className="label-text-alt text-error">*</span>
             </label>
-            <Select
-              className="select-bordered"
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value as LLMProviderType)}
+            <select
+              name="modelType"
+              className={`select select-bordered w-full ${errors.modelType ? 'select-error' : ''}`}
+              value={formData.modelType || 'chat'}
+              onChange={(e) => handleFieldChange('modelType', e.target.value)}
             >
-              {providerTypes.map(type => {
-                const typeConfig = (configs as any)[type];
-                return (
-                  <option key={type} value={type}>
-                    {typeConfig.displayName || typeConfig.name}
-                  </option>
-                );
-              })}
-            </Select>
-          </div>
-        ) : (
-          <div className="form-control mb-6">
-            <label className="label pb-0">
-              <span className="label-text font-medium">Provider Type</span>
-              <span className="label-text-alt text-error">*</span>
+              <option value="chat">Chat</option>
+              <option value="embedding">Embedding</option>
+              <option value="both">Both</option>
+            </select>
+            <label className="label">
+              <span className="label-text-alt">
+                Mark embedding-only profiles so they can be used by memory/search without appearing as chat models.
+              </span>
             </label>
-            <Tabs
-              tabs={messageProviderTabs}
-              activeTab={selectedType}
-              onChange={(key) => setSelectedType(key as MessageProviderType | LLMProviderType)}
-              variant="boxed"
-              size="sm"
-              className="flex-wrap gap-1"
-              aria-label="Select a message provider type"
-            />
+            {errors.modelType && <label className="label"><span className="label-text-alt text-error">{errors.modelType}</span></label>}
           </div>
         )}
 
-        {/* Form */}
-        <form onSubmit={handleSubmit}>
-          {/* Provider Name */}
-          <div className="form-control mb-4">
-            <label className="label">
-              <span className="label-text font-medium">Provider Name</span>
-              <span className="label-text-alt text-error">*</span>
-            </label>
-            <input
-              type="text"
-              name="name"
-              className={`input input-bordered w-full ${errors.name ? 'input-error' : ''}`}
-              placeholder="Enter a descriptive name for this provider"
-              value={formData.name || ''}
-              onChange={(e) => handleFieldChange('name', e.target.value)}
+        {modalState.providerType === 'llm' &&
+          selectedType === 'openai' &&
+          (formData.modelType || 'chat') === 'embedding' &&
+          openAiEmbeddingModels.length > 0 && (
+            <Alert status="info" className="mb-4 text-sm" message="Select an embedding-capable OpenAI provider first, then choose one of the configured embedding models." />
+          )}
+
+        {/* Provider-specific fields */}
+        <div className="space-y-4 mb-6">
+          {currentSchema ? (
+            /* Preferred: rich local schema via ProviderConfigForm */
+            <ProviderConfigForm
+              providerType={selectedType}
+              schema={currentSchema}
+              initialConfig={formData}
+              onConfigChange={handleProviderConfigChange}
+              externalErrors={errors}
+              onTestConnection={async (config) => {
+                // Enhanced test connection with provider-specific validation
+                try {
+                  await apiService.post('/api/admin/providers/test-connection', {
+                    providerType: selectedType,
+                    config,
+                  });
+                  return true;
+                } catch (err) {
+                  logger.error('Test connection failed:', err);
+                  // Fallback: basic validation if endpoint not available
+                  const hasRequiredFields = ['apiKey', 'endpoint', 'baseUrl', 'botToken'].some(
+                    key => config[key] && config[key].toString().trim() !== ''
+                  );
+                  return hasRequiredFields;
+                }
+              }}
             />
-            {errors.name && <label className="label"><span className="label-text-alt text-error">{errors.name}</span></label>}
+          ) : apiSchemaForSelected ? (
+            /* Fallback: dynamic form driven by self-documenting API schema */
+            <DynamicSchemaForm
+              schema={apiSchemaForSelected}
+              values={formData as Record<string, string>}
+              onChange={(name: string, value: any) => handleFieldChange(name, value)}
+            />
+          ) : null}
+        </div>
+
+        {/* Undo button (left-aligned above actions) */}
+        {hasChanges && (
+          <div className="mt-4">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={handleUndoAll}
+              className="gap-1"
+            >
+              <RotateCcw className="w-4 h-4" /> Undo all changes
+            </Button>
           </div>
+        )}
+      </form>
 
-          {modalState.providerType === 'llm' && (
-            <div className="form-control mb-4">
-              <label className="label">
-                <span className="label-text font-medium">Model Type</span>
-                <span className="label-text-alt text-error">*</span>
-              </label>
-              <select
-                name="modelType"
-                className={`select select-bordered w-full ${errors.modelType ? 'select-error' : ''}`}
-                value={formData.modelType || 'chat'}
-                onChange={(e) => handleFieldChange('modelType', e.target.value)}
-              >
-                <option value="chat">Chat</option>
-                <option value="embedding">Embedding</option>
-                <option value="both">Both</option>
-              </select>
-              <label className="label">
-                <span className="label-text-alt">
-                  Mark embedding-only profiles so they can be used by memory/search without appearing as chat models.
-                </span>
-              </label>
-              {errors.modelType && <label className="label"><span className="label-text-alt text-error">{errors.modelType}</span></label>}
-            </div>
-          )}
-
-          {modalState.providerType === 'llm' &&
-            selectedType === 'openai' &&
-            (formData.modelType || 'chat') === 'embedding' &&
-            openAiEmbeddingModels.length > 0 && (
-              <Alert status="info" className="mb-4 text-sm" message="Select an embedding-capable OpenAI provider first, then choose one of the configured embedding models." />
-            )}
-
-          {/* Provider-specific fields */}
-          <div className="space-y-4 mb-6">
-            {currentSchema ? (
-              /* Preferred: rich local schema via ProviderConfigForm */
-              <ProviderConfigForm
-                providerType={selectedType}
-                schema={currentSchema}
-                initialConfig={formData}
-                onConfigChange={handleProviderConfigChange}
-                externalErrors={errors}
-                onTestConnection={async (config) => {
-                  // Enhanced test connection with provider-specific validation
-                  try {
-                    await apiService.post('/api/admin/providers/test-connection', {
-                      providerType: selectedType,
-                      config,
-                    });
-                    return true;
-                  } catch (err) {
-                    logger.error('Test connection failed:', err);
-                    // Fallback: basic validation if endpoint not available
-                    const hasRequiredFields = ['apiKey', 'endpoint', 'baseUrl', 'botToken'].some(
-                      key => config[key] && config[key].toString().trim() !== ''
-                    );
-                    return hasRequiredFields;
-                  }
-                }}
-              />
-            ) : apiSchemaForSelected ? (
-              /* Fallback: dynamic form driven by self-documenting API schema */
-              <DynamicSchemaForm
-                schema={apiSchemaForSelected}
-                values={formData as Record<string, string>}
-                onChange={(name, value) => handleFieldChange(name, value)}
-              />
-            ) : null}
-          </div>
-
-          {/* Undo button (left-aligned above actions) */}
-          {hasChanges && (
-            <div className="mt-4">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={handleUndoAll}
-                className="gap-1"
-              >
-                <RotateCcw className="w-4 h-4" /> Undo all changes
-              </Button>
-            </div>
-          )}
-        </form>
-
-        <ConfigDiffConfirmDialog
-          isOpen={showDiffConfirm}
-          diff={diff}
-          onConfirm={() => {
-            setShowDiffConfirm(false);
-            const syntheticEvent = { preventDefault: () => { } } as React.FormEvent;
-            handleSubmit(syntheticEvent);
-          }}
-          onCancel={() => setShowDiffConfirm(false)}
-          title="Confirm Provider Changes"
-        />
+      <ConfigDiffConfirmDialog
+        isOpen={showDiffConfirm}
+        diff={diff}
+        onConfirm={() => {
+          setShowDiffConfirm(false);
+          const syntheticEvent = { preventDefault: () => { } } as React.FormEvent;
+          handleSubmit(syntheticEvent);
+        }}
+        onCancel={() => setShowDiffConfirm(false)}
+        title="Confirm Provider Changes"
+      />
     </Modal>
   );
 };

@@ -14,13 +14,13 @@ import {
   LogoutSchema,
   RefreshTokenSchema,
   RegisterSchema,
-  UpdateUserSchema,
-  UserIdParamSchema,
+  UpdateProfileSchema,
   VerifyTokenSchema,
 } from '../schemas/auth.schemas';
 import { ApiResponse } from '../utils/apiResponse';
+import { ErrorUtils } from '../../types/errors';
 
-const debug = Debug('app:AuthRoutes');
+const debug = Debug('app:api:auth');
 const router = Router();
 const authManager = AuthManager.getInstance();
 
@@ -54,16 +54,14 @@ router.post(
     try {
       const credentials: LoginCredentials = req.body;
       // Normal authentication flow
-
       const authResult = await authManager.login(credentials);
-
       return res.json(ApiResponse.success(authResult));
     } catch (error: unknown) {
       const errMsg = error instanceof Error ? error.message : String(error);
       debug('Login error:', errMsg);
       return res
         .status(HTTP_STATUS.UNAUTHORIZED)
-        .json(ApiResponse.error(errMsg || 'Invalid credentials', undefined, 401));
+        .json(ApiResponse.error(ErrorUtils.getMessage(error)));
     }
   })
 );
@@ -72,7 +70,7 @@ router.post(
  * @openapi
  * /webui/api/auth/register:
  *   post:
- *     summary: User registration (admin only)
+ *     summary: Register a new user (Admin only)
  *     tags: [Auth]
  *     security:
  *       - bearerAuth: []
@@ -107,11 +105,7 @@ router.post(
 
       return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success({ user }));
     } catch (error: unknown) {
-      const errMsg = error instanceof Error ? error.message : String(error);
-      debug('Registration error:', errMsg);
-      return res
-        .status(HTTP_STATUS.BAD_REQUEST)
-        .json(ApiResponse.error(errMsg || 'Failed to register user', undefined, 400));
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error(ErrorUtils.getMessage(error)));
     }
   })
 );
@@ -153,7 +147,7 @@ router.post(
       debug('Token refresh error:', errMsg);
       return res
         .status(HTTP_STATUS.UNAUTHORIZED)
-        .json(ApiResponse.error(errMsg || 'Invalid refresh token', undefined, 401));
+        .json(ApiResponse.error(ErrorUtils.getMessage(error)));
     }
   })
 );
@@ -167,7 +161,7 @@ router.post(
  *     security:
  *       - bearerAuth: []
  *     requestBody:
- *       required: false
+ *       required: true
  *       content:
  *         application/json:
  *           schema:
@@ -194,11 +188,7 @@ router.post(
 
       return res.json(ApiResponse.success());
     } catch (error: unknown) {
-      const errMsg = error instanceof Error ? error.message : String(error);
-      debug('Logout error:', errMsg);
-      return res
-        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error('Logout failed', undefined, 500));
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error(ErrorUtils.getMessage(error)));
     }
   })
 );
@@ -211,6 +201,40 @@ router.post(
  *     tags: [Auth]
  *     security:
  *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Current user profile
+ *       401:
+ *         description: Unauthorized
+ */
+router.get(
+  '/me',
+  authenticate,
+  asyncErrorHandler(async (req: Request, res: Response) => {
+    const authReq = req as AuthMiddlewareRequest;
+    if (!authReq.user) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json(ApiResponse.error('Not authenticated'));
+    }
+
+    return res.json(ApiResponse.success({ user: authReq.user }));
+  })
+);
+
+/**
+ * @openapi
+ * /webui/api/auth/verify:
+ *   post:
+ *     summary: Verify a token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               token: { type: string }
+ *             required: [token]
  *     responses:
  *       200:
  *         description: Current user profile
@@ -249,31 +273,27 @@ router.get('/verify', authRateLimiter, async (req: Request, res: Response) => {
           user: {
             id: 'test-admin',
             username: 'admin',
-            email: 'test@open-hivemind.local',
-            role: 'owner',
+            role: 'admin',
             permissions: ['*'],
           },
-          tokenValid: true,
-          expiresAt: new Date(Date.now() + 3600000).toISOString(),
         })
       );
     }
 
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json(ApiResponse.error('Bearer token required'));
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json(ApiResponse.error('No token provided'));
     }
-    const token = authHeader.slice(7);
-    const payload = authManager.verifyAccessToken(token) as any;
-    const user = authManager.getUser(payload.userId);
-    if (!user) return res.status(401).json(ApiResponse.error('User not found'));
-    return res.json(
-      ApiResponse.success({
-        user,
-        tokenValid: true,
-        expiresAt: payload.exp ? new Date(payload.exp * 1000).toISOString() : null,
-      })
-    );
+
+    const token = authHeader.split(' ')[1];
+    const payload = authManager.verifyAccessToken(token);
+    const user = authManager.getUser((payload as Record<string, unknown>).userId as string);
+
+    if (!user) {
+      return res.status(401).json(ApiResponse.error('User not found'));
+    }
+
+    return res.json(ApiResponse.success({ user }));
   } catch {
     return res.status(401).json(ApiResponse.error('Invalid or expired token'));
   }
@@ -296,234 +316,105 @@ router.post('/trusted-login', authRateLimiter, async (req: Request, res: Respons
     const authResult = await authManager.trustedLogin(username);
     return res.json(ApiResponse.success(authResult));
   } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : 'Trusted login failed';
-    return res.status(401).json(ApiResponse.error(msg));
+    return res.status(401).json(ApiResponse.error(ErrorUtils.getMessage(error)));
   }
 });
 
-router.get('/me', authenticate, (req: Request, res: Response) => {
-  const authReq = req as AuthMiddlewareRequest;
-  return res.json(ApiResponse.success({ user: authReq.user }));
-});
-
 /**
- * PUT /webui/api/auth/password
- * Change user password
+ * @openapi
+ * /webui/api/auth/profile:
+ *   patch:
+ *     summary: Update current user profile
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email: { type: string }
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
  */
-router.put(
-  '/password',
+router.patch(
+  '/profile',
   authenticate,
-  validate(ChangePasswordSchema),
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const { currentPassword, newPassword } = req.body;
-
-      if (!req.user) {
-        return res
-          .status(HTTP_STATUS.UNAUTHORIZED)
-          .json(ApiResponse.error('Authentication required', undefined, 401));
-      }
-
-      if (!currentPassword || !newPassword) {
-        return res
-          .status(HTTP_STATUS.BAD_REQUEST)
-          .json(ApiResponse.error('Validation error', undefined, 400));
-      }
-
-      // Get user with password hash for verification
-      const userWithHash = authManager.getUserWithHash(req.user.id);
-
-      if (!userWithHash || !userWithHash.passwordHash) {
-        return res
-          .status(HTTP_STATUS.NOT_FOUND)
-          .json(ApiResponse.error('User not found', undefined, 404));
-      }
-
-      // Verify current password
-      const isValidCurrentPassword = await authManager.verifyPassword(
-        currentPassword,
-        userWithHash.passwordHash
-      );
-
-      if (!isValidCurrentPassword) {
-        return res
-          .status(HTTP_STATUS.BAD_REQUEST)
-          .json(ApiResponse.error('Validation error', undefined, 400));
-      }
-
-      // Validate new password
-      if (newPassword.length < 8) {
-        return res
-          .status(HTTP_STATUS.BAD_REQUEST)
-          .json(ApiResponse.error('Validation error', undefined, 400));
-      }
-
-      const success = await authManager.changePassword(req.user.id, newPassword);
-
-      if (success) {
-        return res.json(ApiResponse.success());
-      } else {
-        return res
-          .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-          .json(ApiResponse.error('Password change failed', undefined, 500));
-      }
-    } catch (error: unknown) {
-      const errMsg = error instanceof Error ? error.message : String(error);
-      debug('Password change error:', errMsg);
-      return res
-        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error('Password change failed', undefined, 500));
+  validate(UpdateProfileSchema),
+  asyncErrorHandler(async (req: Request, res: Response) => {
+    const authReq = req as AuthMiddlewareRequest;
+    if (!authReq.user) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json(ApiResponse.error('Not authenticated'));
     }
+
+    const user = await authManager.updateUser(authReq.user.id, req.body);
+    return res.json(ApiResponse.success({ user }));
   })
 );
 
 /**
- * GET /webui/api/auth/users
- * Get all users (admin only)
+ * @openapi
+ * /webui/api/auth/password:
+ *   post:
+ *     summary: Change user password
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               oldPassword: { type: string }
+ *               newPassword: { type: string }
+ *             required: [oldPassword, newPassword]
+ *     responses:
+ *       200:
+ *         description: Password changed successfully
  */
-router.get('/users', authenticate, requireAdmin, (_req: Request, res: Response) => {
-  try {
-    const users = authManager.getAllUsers();
-
-    return res.json(ApiResponse.success({ users }));
-  } catch (error: unknown) {
-    const errMsg = error instanceof Error ? error.message : String(error);
-    debug('Get users error:', errMsg);
-    return res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json(ApiResponse.error('Failed to get users', undefined, 500));
-  }
-});
-
-/**
- * GET /webui/api/auth/users/:userId
- * Get specific user (admin only)
- */
-router.get(
-  '/users/:userId',
+router.post(
+  '/password',
   authenticate,
-  requireAdmin,
-  validate(UserIdParamSchema),
-  (req: Request, res: Response) => {
-    try {
-      const { userId } = req.params;
-      const user = authManager.getUser(userId);
-
-      if (!user) {
-        return res
-          .status(HTTP_STATUS.NOT_FOUND)
-          .json(ApiResponse.error('User not found', undefined, 404));
-      }
-
-      return res.json(ApiResponse.success({ user }));
-    } catch (error: unknown) {
-      const errMsg = error instanceof Error ? error.message : String(error);
-      debug('Get user error:', errMsg);
-      return res
-        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error('Failed to get user', undefined, 500));
-    }
-  }
-);
-
-/**
- * PUT /webui/api/auth/users/:userId
- * Update user (admin only)
- */
-router.put(
-  '/users/:userId',
-  authenticate,
-  requireAdmin,
-  validate(UserIdParamSchema.merge(UpdateUserSchema)),
-  async (req: Request, res: Response) => {
-    try {
-      const { userId } = req.params;
-      const updates = req.body;
-
-      // Don't allow password updates through this endpoint
-      delete updates.password;
-      delete updates.passwordHash;
-
-      const updatedUser = authManager.updateUser(userId, updates);
-
-      if (!updatedUser) {
-        return res
-          .status(HTTP_STATUS.NOT_FOUND)
-          .json(ApiResponse.error('User not found', undefined, 404));
-      }
-
-      return res.json(ApiResponse.success({ user: updatedUser }));
-    } catch (error: unknown) {
-      const errMsg = error instanceof Error ? error.message : String(error);
-      debug('Update user error:', errMsg);
-      return res
-        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error('Failed to update user', undefined, 500));
-    }
-  }
-);
-
-/**
- * DELETE /webui/api/auth/users/:userId
- * Delete user (admin only)
- */
-router.delete(
-  '/users/:userId',
-  authenticate,
-  requireAdmin,
-  validate(UserIdParamSchema),
-  (req: Request, res: Response) => {
+  validate(ChangePasswordSchema),
+  asyncErrorHandler(async (req: Request, res: Response) => {
     const authReq = req as AuthMiddlewareRequest;
+    if (!authReq.user) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json(ApiResponse.error('Not authenticated'));
+    }
+
+    const { oldPassword, newPassword } = req.body;
+
     try {
-      const { userId } = req.params;
-
-      // Prevent deleting self
-      if (authReq.user && authReq.user.id === userId) {
-        return res
-          .status(HTTP_STATUS.BAD_REQUEST)
-          .json(ApiResponse.error('Invalid operation', undefined, 400));
+      // Verify old password first
+      const userWithHash = authManager.getUserWithHash(authReq.user.id);
+      if (!userWithHash || !userWithHash.passwordHash) {
+        return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('User not found'));
       }
 
-      const deleted = authManager.deleteUser(userId);
-
-      if (!deleted) {
-        return res
-          .status(HTTP_STATUS.NOT_FOUND)
-          .json(ApiResponse.error('User not found', undefined, 404));
+      const isPasswordValid = await authManager.verifyPassword(oldPassword, userWithHash.passwordHash);
+      if (!isPasswordValid) {
+        return res.status(HTTP_STATUS.UNAUTHORIZED).json(ApiResponse.error('Invalid old password'));
       }
 
-      return res.json(ApiResponse.success());
+      const success = await authManager.changePassword(authReq.user.id, newPassword);
+      if (success) {
+        return res.json(ApiResponse.success({ message: 'Password changed successfully' }));
+      } else {
+        return res
+          .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+          .json(ApiResponse.error('Failed to change password'));
+      }
     } catch (error: unknown) {
-      const errMsg = error instanceof Error ? error.message : String(error);
-      debug('Delete user error:', errMsg);
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error('Failed to delete user', undefined, 500));
+        .json(ApiResponse.error(ErrorUtils.getMessage(error)));
     }
-  }
+  })
 );
-
-/**
- * GET /webui/api/auth/permissions
- * Get current user permissions
- */
-router.get('/permissions', authenticate, (req: Request, res: Response) => {
-  const authReq = req as AuthMiddlewareRequest;
-  if (!authReq.user) {
-    return res
-      .status(HTTP_STATUS.UNAUTHORIZED)
-      .json(ApiResponse.error('Authentication required', undefined, 401));
-  }
-
-  const permissions = authManager.getUserPermissions(authReq.user.role);
-
-  return res.json(
-    ApiResponse.success({
-      role: authReq.user.role,
-      permissions,
-      user: authReq.user,
-    })
-  );
-});
 
 export default router;
