@@ -6,6 +6,7 @@ import type { AuthMiddlewareRequest, LoginCredentials, RegisterData } from '../.
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { apiRateLimiter, authRateLimiter } from '../../middleware/rateLimiter';
 import { HTTP_STATUS } from '../../types/constants';
+import { ErrorUtils } from '../../types/errors';
 import { validateRequest as validate } from '../../validation/validateRequest';
 import { isTrustedAdminIP } from '../middleware/security';
 import {
@@ -18,7 +19,6 @@ import {
   VerifyTokenSchema,
 } from '../schemas/auth.schemas';
 import { ApiResponse } from '../utils/apiResponse';
-import { ErrorUtils } from '../../types/errors';
 
 const debug = Debug('app:api:auth');
 const router = Router();
@@ -105,7 +105,9 @@ router.post(
 
       return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success({ user }));
     } catch (error: unknown) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error(ErrorUtils.getMessage(error)));
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json(ApiResponse.error(ErrorUtils.getMessage(error)));
     }
   })
 );
@@ -188,7 +190,9 @@ router.post(
 
       return res.json(ApiResponse.success());
     } catch (error: unknown) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error(ErrorUtils.getMessage(error)));
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json(ApiResponse.error(ErrorUtils.getMessage(error)));
     }
   })
 );
@@ -255,7 +259,7 @@ router.post(
           .status(HTTP_STATUS.UNAUTHORIZED)
           .json(ApiResponse.error('User not found', undefined, 401));
       return res.json(ApiResponse.success({ user }));
-    } catch (error: unknown) {
+    } catch (_: unknown) {
       return res
         .status(HTTP_STATUS.UNAUTHORIZED)
         .json(ApiResponse.error('Invalid token', undefined, 401));
@@ -396,7 +400,10 @@ router.post(
         return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('User not found'));
       }
 
-      const isPasswordValid = await authManager.verifyPassword(oldPassword, userWithHash.passwordHash);
+      const isPasswordValid = await authManager.verifyPassword(
+        oldPassword,
+        userWithHash.passwordHash
+      );
       if (!isPasswordValid) {
         return res.status(HTTP_STATUS.UNAUTHORIZED).json(ApiResponse.error('Invalid old password'));
       }

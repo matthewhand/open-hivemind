@@ -88,7 +88,9 @@ class MemoryStoreWithCleanup {
     if (record && record.count > 0) record.count--;
   }
 
-  resetKey(key: string): void { this.hits.delete(key); }
+  resetKey(key: string): void {
+    this.hits.delete(key);
+  }
 
   shutdown(): void {
     if (this.cleanupInterval) clearInterval(this.cleanupInterval);
@@ -125,7 +127,12 @@ function shouldSkipRateLimit(req: Request): boolean {
   if (process.env.NODE_ENV === 'test') return true;
   if (process.env.DISABLE_RATE_LIMIT === 'true') return true;
   if (req.path === '/health' || req.path === '/api/health') return true;
-  if (req.path.startsWith('/src/') || req.path.startsWith('/node_modules/') || req.path.startsWith('/@')) return true;
+  if (
+    req.path.startsWith('/src/') ||
+    req.path.startsWith('/node_modules/') ||
+    req.path.startsWith('/@')
+  )
+    return true;
 
   if (!isProduction) {
     const ip = getClientKey(req);
@@ -159,7 +166,8 @@ function createRateLimitHandler(type: string) {
     res.setHeader('Retry-After', String(retryAfter));
     res.setHeader('X-RateLimit-Limit', String(req.rateLimit?.limit ?? 0));
     res.setHeader('X-RateLimit-Remaining', '0');
-    if (req.rateLimit?.resetTime) res.setHeader('X-RateLimit-Reset', String(req.rateLimit.resetTime));
+    if (req.rateLimit?.resetTime)
+      res.setHeader('X-RateLimit-Reset', String(req.rateLimit.resetTime));
 
     res.status(429).json({
       error: 'Too many requests',
@@ -200,7 +208,8 @@ export const authRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   store: createStore('auth', RATE_LIMIT_CONFIG.auth.windowMs),
-  keyGenerator: (req: Request) => `${getClientKey(req)}:${req.body?.username || req.body?.email || ''}`,
+  keyGenerator: (req: Request) =>
+    `${getClientKey(req)}:${req.body?.username || req.body?.email || ''}`,
   skip: shouldSkipRateLimit,
   handler: createRateLimitHandler('authentication'),
   skipFailedRequests: false,
@@ -262,9 +271,17 @@ async function initializeRedis(): Promise<void> {
       disableOfflineQueue: true,
     });
 
-    redisClient.on('error', (err: Error) => { logger.error('Redis error:', err); redisAvailable = false; });
-    redisClient.on('connect', () => { debug('Redis connected'); redisAvailable = true; });
-    redisClient.on('disconnect', () => { redisAvailable = false; });
+    redisClient.on('error', (err: Error) => {
+      logger.error('Redis error:', err);
+      redisAvailable = false;
+    });
+    redisClient.on('connect', () => {
+      debug('Redis connected');
+      redisAvailable = true;
+    });
+    redisClient.on('disconnect', () => {
+      redisAvailable = false;
+    });
 
     await redisClient.connect();
     redisAvailable = true;
@@ -296,7 +313,8 @@ function validateIP(ip: string): string | null {
     }
     return ip;
   }
-  const ipv6Regex = /^([0-9a-fA-F]{1,4}:){2,7}[0-9a-fA-F]{1,4}$|^([0-9a-fA-F]{1,4}:){1,7}:$|^([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}$|^([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}$|^([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}$|^([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}$|^([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}$|^[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})$|^:((:[0-9a-fA-F]{1,4}){1,7}|:)$|^::1$/;
+  const ipv6Regex =
+    /^([0-9a-fA-F]{1,4}:){2,7}[0-9a-fA-F]{1,4}$|^([0-9a-fA-F]{1,4}:){1,7}:$|^([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}$|^([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}$|^([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}$|^([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}$|^([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}$|^[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})$|^:((:[0-9a-fA-F]{1,4}){1,7}|:)$|^::1$/;
   return ipv6Regex.test(ip) ? ip : null;
 }
 
@@ -323,14 +341,22 @@ function isIPInCIDR(ip: string, cidr: string): boolean {
     if (prefix === 0) return true;
     const mask = (-1 << (32 - prefix)) >>> 0;
     return (ipLong & mask) === (networkLong & mask);
-  } catch { return false; }
+  } catch {
+    return false;
+  }
 }
 
 let _trustedProxiesCache: { envValue: string | undefined; proxies: string[] } | null = null;
 function getTrustedProxies(): string[] {
   const envValue = process.env.TRUSTED_PROXIES;
-  if (_trustedProxiesCache && _trustedProxiesCache.envValue === envValue) return _trustedProxiesCache.proxies;
-  let proxies = envValue ? envValue.split(',').map((ip) => ip.trim()).filter(Boolean) : ['127.0.0.1', '::1', '::ffff:127.0.0.1', '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'];
+  if (_trustedProxiesCache && _trustedProxiesCache.envValue === envValue)
+    return _trustedProxiesCache.proxies;
+  let proxies = envValue
+    ? envValue
+        .split(',')
+        .map((ip) => ip.trim())
+        .filter(Boolean)
+    : ['127.0.0.1', '::1', '::ffff:127.0.0.1', '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'];
   _trustedProxiesCache = { envValue, proxies };
   return proxies;
 }
@@ -387,12 +413,24 @@ export const applyRateLimiting = async (req: Request, res: Response, next: NextF
     if (botLimiter) return botLimiter(req, res, next);
   }
   if (path.startsWith('/api/config')) return configRateLimiter(req, res, next);
-  if (path === '/api/auth/login' || path === '/api/auth/register' || path === '/api/auth/trusted-login' || path.startsWith('/api/login')) return authRateLimiter(req, res, next);
-  if (path.startsWith('/api/auth') || path.startsWith('/api/admin') || path.startsWith('/api/')) return apiRateLimiter(req, res, next);
+  if (
+    path === '/api/auth/login' ||
+    path === '/api/auth/register' ||
+    path === '/api/auth/trusted-login' ||
+    path.startsWith('/api/login')
+  )
+    return authRateLimiter(req, res, next);
+  if (path.startsWith('/api/auth') || path.startsWith('/api/admin') || path.startsWith('/api/'))
+    return apiRateLimiter(req, res, next);
   return defaultRateLimiter(req, res, next);
 };
 
-export function createRateLimiter(options: { windowMs: number; max: number; prefix: string; message?: string; }) {
+export function createRateLimiter(options: {
+  windowMs: number;
+  max: number;
+  prefix: string;
+  message?: string;
+}) {
   return rateLimit({
     windowMs: options.windowMs,
     max: options.max,
@@ -412,7 +450,9 @@ export function createRateLimiter(options: { windowMs: number; max: number; pref
   });
 }
 
-export async function createBotRateLimiter(botName: string): Promise<ReturnType<typeof rateLimit> | null> {
+export async function createBotRateLimiter(
+  botName: string
+): Promise<ReturnType<typeof rateLimit> | null> {
   try {
     const { getBotRateLimitSettings } = await import('../config/rateLimitConfig');
     const settings = getBotRateLimitSettings(botName);
@@ -425,30 +465,52 @@ export async function createBotRateLimiter(botName: string): Promise<ReturnType<
       store: createStore(`bot:${botName}`, settings.windowMs),
       keyGenerator: (req: Request) => `${getClientKey(req)}:${botName}`,
       skip: shouldSkipRateLimit,
-      handler: (req: Request & { rateLimit?: { resetTime?: number; limit?: number } }, res: Response) => {
-        const retryAfter = req.rateLimit?.resetTime ? Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000) : Math.ceil(settings.windowMs / 1000);
+      handler: (
+        req: Request & { rateLimit?: { resetTime?: number; limit?: number } },
+        res: Response
+      ) => {
+        const retryAfter = req.rateLimit?.resetTime
+          ? Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000)
+          : Math.ceil(settings.windowMs / 1000);
         res.setHeader('Retry-After', String(retryAfter));
         res.setHeader('X-RateLimit-Limit', String(settings.maxRequests));
         res.setHeader('X-RateLimit-Remaining', '0');
-        if (req.rateLimit?.resetTime) res.setHeader('X-RateLimit-Reset', String(req.rateLimit.resetTime));
-        res.status(429).json({ error: 'Too many requests', message: `Rate limit exceeded for bot "${botName}".`, retryAfter, code: 'BOT_RATE_LIMIT_EXCEEDED', botName });
+        if (req.rateLimit?.resetTime)
+          res.setHeader('X-RateLimit-Reset', String(req.rateLimit.resetTime));
+        res.status(429).json({
+          error: 'Too many requests',
+          message: `Rate limit exceeded for bot "${botName}".`,
+          retryAfter,
+          code: 'BOT_RATE_LIMIT_EXCEEDED',
+          botName,
+        });
       },
     });
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 const botRateLimiters = new Map<string, ReturnType<typeof rateLimit>>();
-export async function getBotRateLimiter(botName: string): Promise<ReturnType<typeof rateLimit> | null> {
+export async function getBotRateLimiter(
+  botName: string
+): Promise<ReturnType<typeof rateLimit> | null> {
   if (botRateLimiters.has(botName)) return botRateLimiters.get(botName)!;
   const limiter = await createBotRateLimiter(botName);
   if (limiter) botRateLimiters.set(botName, limiter);
   return limiter;
 }
 
-export function clearBotRateLimiters(): void { botRateLimiters.clear(); }
+export function clearBotRateLimiters(): void {
+  botRateLimiters.clear();
+}
 
 export function getRateLimitStats() {
-  return { redisAvailable, environment: process.env.NODE_ENV || 'development', config: RATE_LIMIT_CONFIG };
+  return {
+    redisAvailable,
+    environment: process.env.NODE_ENV || 'development',
+    config: RATE_LIMIT_CONFIG,
+  };
 }
 
 export function shutdownRateLimiter(): void {
@@ -459,4 +521,12 @@ export function shutdownRateLimiter(): void {
   }
 }
 
-export { validateIP, isIPInCIDR, isTrustedProxy, getClientKey, ipToLong, getTrustedProxies, getBotNameFromRequest };
+export {
+  validateIP,
+  isIPInCIDR,
+  isTrustedProxy,
+  getClientKey,
+  ipToLong,
+  getTrustedProxies,
+  getBotNameFromRequest,
+};

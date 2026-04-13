@@ -211,12 +211,12 @@ export class ErrorLogger {
         },
       },
       recovery:
-        error instanceof BaseHivemindError
+        error && typeof error === 'object' && 'getRecoveryStrategy' in error && typeof (error as any).getRecoveryStrategy === 'function'
           ? {
-              canRecover: error.getRecoveryStrategy().canRecover,
-              retryDelay: error.getRecoveryStrategy().retryDelay,
-              maxRetries: error.getRecoveryStrategy().maxRetries,
-              steps: error.getRecoveryStrategy().recoverySteps,
+              canRecover: (error as any).getRecoveryStrategy().canRecover,
+              retryDelay: (error as any).getRecoveryStrategy().retryDelay,
+              maxRetries: (error as any).getRecoveryStrategy().maxRetries,
+              steps: (error as any).getRecoveryStrategy().recoverySteps,
             }
           : undefined,
     };
@@ -525,6 +525,21 @@ export class ErrorLogger {
    */
   getConfig(): LoggerConfig {
     return { ...this.config };
+  }
+
+  /**
+   * Get current error summary
+   */
+  getErrorSummary(): Record<string, number> {
+    return Object.fromEntries(this.errorCounts);
+  }
+
+  /**
+   * Clear all error counts
+   */
+  clearErrorCounts(): void {
+    this.errorCounts.clear();
+    this.debug('Error counts cleared');
   }
 
   /**

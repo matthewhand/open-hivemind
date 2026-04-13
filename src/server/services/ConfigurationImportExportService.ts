@@ -145,7 +145,8 @@ export class ConfigurationImportExportService {
             // Replicate original Promise.allSettled behavior by catching and logging
             // errors without aborting the entire export.
             Logger.error(`Failed to fetch versions for batch: ${batch}`, error);
-          }        }
+          }
+        }
 
         exportData.versions = versions;
         (exportData.metadata as Record<string, unknown>).versionCount = versions.length;

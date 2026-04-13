@@ -5,9 +5,8 @@
  * HTTP status codes, error codes, and structured data.
  */
 
-import type { Response } from 'express';
-import { HTTP_STATUS, type HttpStatus } from '../types/constants';
-import { BaseHivemindError } from '../types/errorClasses';
+import { type Response } from 'express';
+import { HTTP_STATUS } from '../types/constants';
 import { ErrorUtils, type HivemindError } from '../types/errors';
 
 /**
@@ -76,9 +75,14 @@ export class ErrorResponseBuilder {
       this.response.error.details = error.details as Record<string, unknown>;
     }
 
-    // Add recovery information if it's a BaseHivemindError
-    if (error instanceof BaseHivemindError) {
-      const recovery = error.getRecoveryStrategy();
+    // Add recovery information if available (duck typing to avoid circular dependency)
+    if (
+      error &&
+      typeof error === 'object' &&
+      'getRecoveryStrategy' in error &&
+      typeof (error as any).getRecoveryStrategy === 'function'
+    ) {
+      const recovery = (error as any).getRecoveryStrategy();
       this.response.error.recovery = {
         canRecover: recovery.canRecover,
         retryDelay: recovery.retryDelay,
@@ -133,7 +137,12 @@ export class ErrorResponseBuilder {
    * Build the final error response
    */
   build(): StandardErrorResponse {
-    return { ...this.response };
+    const result = { ...this.response };
+    // Provide details as an alias for compatibility
+    if (result.error && (result.error as any).issues) {
+      (result.error as any).details = (result.error as any).issues;
+    }
+    return result;
   }
 
   /**

@@ -82,7 +82,7 @@ describe('DI Service Registration Logging', () => {
     expect(mockLogger.debug).toHaveBeenCalledWith('Registering ProviderConfigManager');
 
     // Verify completion log (info level)
-    expect(mockLogger.info).toHaveBeenCalledWith('✅ DI services registered');
+    expect(mockLogger.info).toHaveBeenCalledWith('DI services registered');
   });
 
   it('should check if services are registered', () => {

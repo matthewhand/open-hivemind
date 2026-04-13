@@ -21,6 +21,7 @@ export const validateRequest =
           success: false,
           error: 'Validation failed',
           issues: error.issues,
+          details: error.issues, // Alias for backward compatibility
         });
       }
       next(error);

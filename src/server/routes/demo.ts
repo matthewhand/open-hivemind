@@ -4,10 +4,10 @@
  * API endpoints for demo/simulation mode functionality
  */
 
-import { Logger } from '@common/logger';
 import { Router } from 'express';
 import { container } from 'tsyringe';
 import { ApiResponse } from '@src/server/utils/apiResponse';
+import { Logger } from '@common/logger';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 import DemoModeService from '../../services/DemoModeService';
