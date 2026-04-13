@@ -3,11 +3,14 @@ import { DatabaseManager } from '../../../../src/database/DatabaseManager';
 import { ConfigurationValidator } from '../../../../src/server/services/ConfigurationValidator';
 
 // Mock DatabaseManager
-jest.mock('../../../../src/database/DatabaseManager', () => ({
-  DatabaseManager: {
-    getInstance: jest.fn(),
-  },
-}));
+jest.mock('../../../../src/database/DatabaseManager', () => {
+  return {
+    DatabaseManager: {
+      getInstance: jest.fn(),
+    },
+    __esModule: true
+  };
+});
 
 // Mock ConfigurationValidator
 jest.mock('../../../../src/server/services/ConfigurationValidator', () => ({
@@ -21,8 +24,6 @@ describe('BotConfigService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // Reset singleton instance
-    (BotConfigService as any).instance = undefined;
 
     mockDbManager = {
       isConfigured: jest.fn().mockReturnValue(true),
@@ -38,6 +39,11 @@ describe('BotConfigService', () => {
     };
 
     (DatabaseManager.getInstance as jest.Mock).mockReturnValue(mockDbManager);
+
+    // Ensure the service instance uses our current mocks
+    const service = BotConfigService.getInstance();
+    (service as any).dbManager = mockDbManager;
+    (service as any).configValidator = new ConfigurationValidator();
   });
 
   describe('getInstance', () => {

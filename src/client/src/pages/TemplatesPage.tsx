@@ -8,6 +8,7 @@ import { useErrorToast, useSuccessToast } from '../components/DaisyUI/ToastNotif
 import { usePageLifecycle } from '../hooks/usePageLifecycle';
 import PageHeader from '../components/DaisyUI/PageHeader';
 import CodeBlock from '../components/DaisyUI/CodeBlock';
+import Button from '../components/DaisyUI/Button';
 import Tabs from '../components/DaisyUI/Tabs';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import SearchFilterBar from '../components/SearchFilterBar';

@@ -15,6 +15,8 @@ import Debug from 'debug';
 import { apiService } from '../../services/api';
 import { useSavedStamp } from '../../contexts/SavedStampContext';
 import Textarea from '../DaisyUI/Textarea';
+import { useToast } from '../DaisyUI/ToastNotification';
+import { useDemoModeWarning } from '../../hooks/useDemoModeWarning';
 const debug = Debug('app:client:components:Settings:SettingsGeneral');
 
 const generalSettingsSchema = z.object({
@@ -73,7 +75,7 @@ const SettingsGeneral: React.FC = () => {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const { showStamp } = useSavedStamp();
   const { addToast } = useToast();
-  const warnIfDemo = useDemoModeWarning(addToast);
+  const warnIfDemo = useDemoModeWarning(addToast as any);
 
   const enableHealthChecks = watch('enableHealthChecks');
 
@@ -351,7 +353,7 @@ const SettingsGeneral: React.FC = () => {
                   checked={field.value}
                   onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
                     field.onChange(e.target.checked);
-                    await saveGlobalSetting({ 'logging.enabled': e.target.checked }).catch(() => {});
+                    await saveGlobalSetting({ 'logging.enabled': e.target.checked }).catch(() => { });
                   }}
                   size="sm"
                 />
@@ -366,7 +368,7 @@ const SettingsGeneral: React.FC = () => {
                   checked={field.value}
                   onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
                     field.onChange(e.target.checked);
-                    await saveGlobalSetting({ 'webui.notifications': e.target.checked }).catch(() => {});
+                    await saveGlobalSetting({ 'webui.notifications': e.target.checked }).catch(() => { });
                   }}
                   size="sm"
                 />
@@ -409,7 +411,7 @@ const SettingsGeneral: React.FC = () => {
                   checked={field.value}
                   onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
                     field.onChange(e.target.checked);
-                    await saveGlobalSetting({ 'health.enabled': e.target.checked }).catch(() => {});
+                    await saveGlobalSetting({ 'health.enabled': e.target.checked }).catch(() => { });
                   }}
                   size="sm"
                 />
@@ -435,7 +437,7 @@ const SettingsGeneral: React.FC = () => {
                   checked={field.value}
                   onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
                     field.onChange(e.target.checked);
-                    await saveGlobalSetting({ 'webui.advancedMode': e.target.checked }).catch(() => {});
+                    await saveGlobalSetting({ 'webui.advancedMode': e.target.checked }).catch(() => { });
                   }}
                   size="sm"
                 />

@@ -56,7 +56,10 @@ export interface StandardSuccessResponse<T = any> {
 export class ErrorResponseBuilder {
   private response: StandardErrorResponse;
 
+  private originalError: any;
+
   constructor(error: HivemindError | Record<string, unknown>, correlationId?: string) {
+    this.originalError = error;
     this.response = {
       success: false,
       error: {
@@ -109,6 +112,16 @@ export class ErrorResponseBuilder {
   }
 
   /**
+   * Include stack trace in the response (useful for development)
+   */
+  withStack(enabled = true): ErrorResponseBuilder {
+    if (enabled && this.originalError && this.originalError.stack) {
+      this.response.stack = this.originalError.stack;
+    }
+    return this;
+  }
+
+  /**
    * Override the error message (useful for security in production)
    */
   withMessage(message: string): ErrorResponseBuilder {
@@ -126,10 +139,15 @@ export class ErrorResponseBuilder {
   /**
    * Get the appropriate HTTP status code for this error
    */
-  getStatusCode(): HttpStatus | number {
+  getStatusCode(): number {
+    // If the error object has a statusCode, use it
+    if (this.response.error && (this.response.error as any).statusCode) {
+      return (this.response.error as any).statusCode;
+    }
+
     const error = this.response.error;
 
-    // Check for specific status codes
+    // Check for specific status codes based on error code
     switch (error.code) {
       case 'VALIDATION_ERROR':
         return HTTP_STATUS.BAD_REQUEST;
@@ -162,6 +180,21 @@ export class ErrorResponseBuilder {
       default:
         return HTTP_STATUS.INTERNAL_SERVER_ERROR;
     }
+  }
+
+  /**
+   * Alias for getStatusCode to match some test expectations
+   */
+  getHttpStatusCode(): number {
+    return this.getStatusCode();
+  }
+
+  /**
+   * Send the error response using an Express Response object
+   */
+  send(res: Response): Response {
+    const statusCode = this.getStatusCode();
+    return res.status(statusCode).json(this.build());
   }
 
   /**

@@ -498,8 +498,8 @@ export class BotConfigService {
       const nextVersion =
         versions.length > 0
           ? (
-              versions.reduce((max, v) => Math.max(max, parseInt(v.version)), -Infinity) + 1
-            ).toString()
+            versions.reduce((max, v) => Math.max(max, parseInt(v.version)), -Infinity) + 1
+          ).toString()
           : '1';
 
       // Create version
