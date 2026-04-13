@@ -25,10 +25,18 @@ const CONFIG_DIR = path.join(process.cwd(), 'config');
 const PROFILES_FILE = path.join(CONFIG_DIR, 'mcp-server-profiles.json');
 
 let profilesCache: McpServerProfile[] | null = null;
+const profileMap: Map<string, McpServerProfile> = new Map();
 
 function ensureConfigDir(): void {
   if (!fs.existsSync(CONFIG_DIR)) {
     fs.mkdirSync(CONFIG_DIR, { recursive: true });
+  }
+}
+
+function updateProfileMap(profiles: McpServerProfile[]): void {
+  profileMap.clear();
+  for (const profile of profiles) {
+    profileMap.set(profile.key, profile);
   }
 }
 
@@ -49,6 +57,7 @@ function loadProfiles(): McpServerProfile[] {
     profilesCache = [];
   }
 
+  updateProfileMap(profilesCache);
   return profilesCache;
 }
 
@@ -57,6 +66,7 @@ function saveProfiles(profiles: McpServerProfile[]): void {
   const data: McpServerProfilesData = { profiles };
   fs.writeFileSync(PROFILES_FILE, JSON.stringify(data, null, 2), 'utf-8');
   profilesCache = profiles;
+  updateProfileMap(profilesCache);
   debug(`Saved ${profiles.length} MCP server profiles`);
 }
 
@@ -65,7 +75,10 @@ export function getMcpServerProfiles(): McpServerProfile[] {
 }
 
 export function getMcpServerProfileByKey(key: string): McpServerProfile | undefined {
-  return loadProfiles().find(p => p.key === key);
+  if (!profilesCache) {
+    loadProfiles();
+  }
+  return profileMap.get(key);
 }
 
 export function createMcpServerProfile(profile: McpServerProfile): McpServerProfile {

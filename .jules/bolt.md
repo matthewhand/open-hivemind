@@ -14,3 +14,6 @@
 ## 2024-05-21 - AuthManager Array.find Bottleneck
 **Learning:** `AuthManager.ts` was using `Array.from(this.users.values()).find(...)` for authentication paths (`register`, `login`, `trustedLogin`). This operation iterates over all user records for every auth check, making the time complexity $O(N)$ and creating a significant bottleneck for applications scaling to many users.
 **Action:** Replace $O(N)$ array searches with $O(1)$ `Map`-based lookups (`usernameMap` and `emailMap`). Ensure the internal maps strictly mirror the `users` collection during creation, updates, and deletion to prevent lookup inconsistencies or collision-hijacking in `updateUser`.
+## 2024-05-22 - McpServerProfiles Array.find Bottleneck
+**Learning:** `src/config/mcpServerProfiles.ts` was using `loadProfiles().find(p => p.key === key)` for profile lookups in `getMcpServerProfileByKey`. This does an O(N) array search on every lookup, creating a bottleneck.
+**Action:** Replace $O(N)$ array searches with $O(1)$ `Map`-based lookups (`profileMap`). Ensure the internal maps strictly mirror the `profilesCache` during creation and updates to prevent lookup inconsistencies.
