@@ -2,20 +2,18 @@ import Debug from 'debug';
 import type { NextFunction, Request, Response } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import logger from '../common/logger';
-import { RATE_LIMIT_CONFIG } from '../config/rateLimitConfig';
 import {
-  getClientKey,
-  shouldSkipRateLimit,
   createRateLimitHandler,
-  setRedisAvailable,
-  MemoryStoreWithCleanup,
-  memoryStores,
   createStore,
-  validateIP,
+  getClientKey,
+  getTrustedProxies,
+  ipToLong,
   isIPInCIDR,
   isTrustedProxy,
-  ipToLong,
-  getTrustedProxies,
+  memoryStores,
+  setRedisAvailable,
+  shouldSkipRateLimit,
+  validateIP,
 } from './rateLimiterCore';
 
 const debug = Debug('app:rateLimiter');
@@ -35,7 +33,9 @@ async function initializeRedis(): Promise<void> {
   try {
     const redis = await import('redis');
     const rateLimitRedis = await import('rate-limit-redis');
-    const RedisStore = rateLimitRedis.RedisStore as unknown as new (opts: Record<string, unknown>) => any;
+    const RedisStore = rateLimitRedis.RedisStore as unknown as new (
+      opts: Record<string, unknown>
+    ) => any;
 
     const redisUrl = process.env.REDIS_URL;
     if (!redisUrl) {
@@ -127,7 +127,10 @@ export async function createBotRateLimiter(
       store: createStore(`bot:${botName}`, settings.windowMs),
       keyGenerator: (req: Request) => `${getClientKey(req)}:${botName}`,
       skip: shouldSkipRateLimit,
-      handler: (req: Request & { rateLimit?: { resetTime?: number; limit?: number } }, res: Response) => {
+      handler: (
+        req: Request & { rateLimit?: { resetTime?: number; limit?: number } },
+        res: Response
+      ) => {
         const retryAfter = req.rateLimit?.resetTime
           ? Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000)
           : Math.ceil(settings.windowMs / 1000);
@@ -137,7 +140,7 @@ export async function createBotRateLimiter(
         res.setHeader('X-RateLimit-Remaining', '0');
         if (req.rateLimit?.resetTime)
           res.setHeader('X-RateLimit-Reset', String(req.rateLimit.resetTime));
-          
+
         res.status(429).json({
           error: 'Too many requests',
           message: `Rate limit exceeded for bot "${botName}".`,
@@ -169,7 +172,13 @@ export async function getBotRateLimiter(
 export const applyRateLimiting = async (req: Request, res: Response, next: NextFunction) => {
   if (shouldSkipRateLimit(req)) return next();
 
-  const { defaultRateLimiter, configRateLimiter, authRateLimiter, adminRateLimiter, apiRateLimiter } = await import('./rateLimiters');
+  const {
+    defaultRateLimiter,
+    configRateLimiter,
+    authRateLimiter,
+    adminRateLimiter,
+    apiRateLimiter,
+  } = await import('./rateLimiters');
 
   const path = req.baseUrl ? req.baseUrl + req.path : req.path;
   const botName = getBotNameFromRequest(req);
@@ -179,12 +188,18 @@ export const applyRateLimiting = async (req: Request, res: Response, next: NextF
   }
 
   if (path.startsWith('/api/config')) return configRateLimiter(req, res, next);
-  if (path === '/api/auth/login' || path === '/api/auth/register' || path === '/api/auth/trusted-login' || path.startsWith('/api/login')) {
+  if (
+    path === '/api/auth/login' ||
+    path === '/api/auth/register' ||
+    path === '/api/auth/trusted-login' ||
+    path.startsWith('/api/login')
+  ) {
     return authRateLimiter(req, res, next);
   }
-  if (path.startsWith('/api/auth') || path.startsWith('/api/')) return apiRateLimiter(req, res, next);
+  if (path.startsWith('/api/auth') || path.startsWith('/api/'))
+    return apiRateLimiter(req, res, next);
   if (path.startsWith('/api/admin')) return adminRateLimiter(req, res, next);
-  
+
   return defaultRateLimiter(req, res, next);
 };
 

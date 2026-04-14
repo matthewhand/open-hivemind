@@ -171,7 +171,10 @@ export class ErrorLogger {
     const memoryUsage = process.memoryUsage();
 
     let recovery = undefined;
-    if (error instanceof BaseHivemindError && typeof (error as any).getRecoveryStrategy === 'function') {
+    if (
+      error instanceof BaseHivemindError &&
+      typeof (error as any).getRecoveryStrategy === 'function'
+    ) {
       const strategy = error.getRecoveryStrategy();
       if (strategy) {
         recovery = {

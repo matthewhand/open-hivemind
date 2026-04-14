@@ -1,12 +1,12 @@
+import type { Request } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { RATE_LIMIT_CONFIG } from '../config/rateLimitConfig';
 import {
+  createRateLimitHandler,
   createStore,
   getClientKey,
   shouldSkipRateLimit,
-  createRateLimitHandler,
 } from './rateLimiterCore';
-import type { Request } from 'express';
 
 // Default rate limiter - 50k requests per 15 minutes
 export const defaultRateLimiter = rateLimit({

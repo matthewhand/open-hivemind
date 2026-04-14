@@ -5,7 +5,7 @@ import Card from './DaisyUI/Card';
 import { LoadingSpinner } from './DaisyUI/Loading';
 import Button from './DaisyUI/Button';
 import { SkeletonGrid } from './DaisyUI/Skeleton';
-import { ArrowPathIcon } from 'lucide-react';
+import { RefreshCcw } from 'lucide-react';
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import type { SerializedError } from '@reduxjs/toolkit';
 import { useGetPerformanceMetricsQuery } from '../store/slices/apiSlice';
@@ -85,7 +85,7 @@ const PerformanceMonitor: React.FC = () => {
           loading={isFetching}
           className="btn-outline flex items-center gap-2"
         >
-          <ArrowPathIcon className="w-5 h-5" />
+          <RefreshCcw className="w-5 h-5" />
           Refresh
         </Button>
       </div>

@@ -244,7 +244,9 @@ export class PipelineTracer {
   /**
    * Return the in-progress trace for a specific message context or channel ID.
    */
-  getActiveTrace(target: string | { channelId: string; message?: { getMessageId(): string } }): Trace | undefined {
+  getActiveTrace(
+    target: string | { channelId: string; message?: { getMessageId(): string } }
+  ): Trace | undefined {
     if (typeof target === 'string') {
       return this.activeTraces.get(target);
     }
@@ -331,7 +333,10 @@ export class PipelineTracer {
     return undefined;
   }
 
-  private completeTrace(ctx: { channelId: string; message?: { getMessageId(): string } }, trace: Trace): void {
+  private completeTrace(
+    ctx: { channelId: string; message?: { getMessageId(): string } },
+    trace: Trace
+  ): void {
     closeSpan(trace.rootSpan, trace.rootSpan.status);
     trace.endTime = trace.rootSpan.endTime;
     trace.totalDurationMs = trace.rootSpan.durationMs;
@@ -339,7 +344,7 @@ export class PipelineTracer {
     const key = this.getTraceKey(ctx);
     this.activeTraces.delete(key);
     this.activeTraces.delete(ctx.channelId); // Clean up both possible keys
-    
+
     this.completedTraces.push(trace);
 
     // Ring buffer: evict oldest when over capacity.

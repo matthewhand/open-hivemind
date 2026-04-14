@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import path from 'path';
 
 // Define mocks on global object to make them accessible to hoisted jest.mock()

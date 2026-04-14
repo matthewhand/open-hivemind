@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import type { Request, Response } from 'express';
-import { RATE_LIMIT_CONFIG } from '../config/rateLimitConfig';
 import logger from '../common/logger';
+import { RATE_LIMIT_CONFIG } from '../config/rateLimitConfig';
 
 const debug = Debug('app:rateLimiterCore');
 
@@ -22,19 +22,22 @@ export class MemoryStoreWithCleanup {
   private startCleanup(): void {
     if (this.cleanupInterval) return;
 
-    this.cleanupInterval = setInterval(() => {
-      const now = Date.now();
-      let cleaned = 0;
-      for (const [key, data] of this.hits.entries()) {
-        if (now > data.resetTime) {
-          this.hits.delete(key);
-          cleaned++;
+    this.cleanupInterval = setInterval(
+      () => {
+        const now = Date.now();
+        let cleaned = 0;
+        for (const [key, data] of this.hits.entries()) {
+          if (now > data.resetTime) {
+            this.hits.delete(key);
+            cleaned++;
+          }
         }
-      }
-      if (cleaned > 0) {
-        debug(`Cleaned ${cleaned} expired rate limit entries`);
-      }
-    }, Math.min(this.windowMs, 60000)); // Clean at most every minute
+        if (cleaned > 0) {
+          debug(`Cleaned ${cleaned} expired rate limit entries`);
+        }
+      },
+      Math.min(this.windowMs, 60000)
+    ); // Clean at most every minute
 
     if (this.cleanupInterval.unref) {
       this.cleanupInterval.unref();
@@ -84,10 +87,10 @@ export const memoryStores = new Map<string, MemoryStoreWithCleanup>();
  */
 export function validateIP(ip: string): string | null {
   if (!ip || typeof ip !== 'string') return null;
-  
+
   // CRITICAL: Reject any IP that contains newline or carriage return characters to prevent header injection
   if (/[\r\n\0]/.test(ip)) return null;
-  
+
   ip = ip.trim();
 
   const ipv4Match = ip.match(/^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/);
@@ -106,7 +109,8 @@ export function validateIP(ip: string): string | null {
   }
 
   // Simplified but robust IPv6 validation
-  const ipv6Regex = /^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/;
+  const ipv6Regex =
+    /^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/;
   if (ipv6Regex.test(ip)) return ip;
 
   return null;
@@ -118,14 +122,14 @@ export function validateIP(ip: string): string | null {
 export function ipToLong(ip: string): number {
   const validated = validateIP(ip);
   if (!validated) return NaN;
-  
+
   const ipv4Match = validated.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
   if (!ipv4Match) return NaN;
-  
+
   return (
     (parseInt(ipv4Match[1], 10) >>> 0) * 256 * 256 * 256 +
-    (parseInt(ipv4Match[2], 10) << 16 >>> 0) +
-    (parseInt(ipv4Match[3], 10) << 8 >>> 0) +
+    ((parseInt(ipv4Match[2], 10) << 16) >>> 0) +
+    ((parseInt(ipv4Match[3], 10) << 8) >>> 0) +
     (parseInt(ipv4Match[4], 10) >>> 0)
   );
 }
@@ -150,18 +154,18 @@ export function ipv6ToBigInt(ip: string): bigint {
   // Handle IPv4-mapped IPv6
   const ipv4Match = ip.match(/^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/);
   if (ipv4Match) {
-    const octets = ipv4Match[1].split('.').map(o => parseInt(o, 10));
+    const octets = ipv4Match[1].split('.').map((o) => parseInt(o, 10));
     // ::ffff:0:0/96 prefix is 0...0ffff (80 zeros, 16 ones)
-    let result = (BigInt(0xffff) << BigInt(32));
-    result += (BigInt(octets[0]) << BigInt(24));
-    result += (BigInt(octets[1]) << BigInt(16));
-    result += (BigInt(octets[2]) << BigInt(8));
+    let result = BigInt(0xffff) << BigInt(32);
+    result += BigInt(octets[0]) << BigInt(24);
+    result += BigInt(octets[1]) << BigInt(16);
+    result += BigInt(octets[2]) << BigInt(8);
     result += BigInt(octets[3]);
     return result;
   }
 
   const expanded = expandIPv6(ip);
-  const parts = expanded.split(':').map(p => p.padStart(4, '0'));
+  const parts = expanded.split(':').map((p) => p.padStart(4, '0'));
   let result = BigInt(0);
   for (const part of parts) {
     result = (result << BigInt(16)) + BigInt(parseInt(part, 16));
@@ -183,7 +187,7 @@ export function isIPInCIDR(ip: string, cidr: string): boolean {
 
     const prefixLen = parseInt(prefix, 10);
     if (isNaN(prefixLen)) return false;
-    
+
     // Check if both are simple IPv4
     const isRawIPv4 = (addr: string) => addr.includes('.') && !addr.includes(':');
     const ipIsV4 = isRawIPv4(validatedIp);
@@ -197,14 +201,14 @@ export function isIPInCIDR(ip: string, cidr: string): boolean {
       const mask = ~(Math.pow(2, 32 - prefixLen) - 1) >>> 0;
       return (ipLong & mask) === (rangeLong & mask);
     }
-    
+
     // Handle IPv6 (including mapped IPv4)
     if (prefixLen < 0 || prefixLen > 128) return false;
     if (prefixLen === 0) return true;
-    
+
     const ipBI = ipv6ToBigInt(ip); // use original ip to detect ::ffff:
     const rangeBI = ipv6ToBigInt(range);
-    
+
     // Create BigInt mask
     const mask = ((BigInt(1) << BigInt(prefixLen)) - BigInt(1)) << BigInt(128 - prefixLen);
     return (ipBI & mask) === (rangeBI & mask);
@@ -219,9 +223,12 @@ export function isIPInCIDR(ip: string, cidr: string): boolean {
 export function getTrustedProxies(): string[] {
   const env = process.env.TRUSTED_PROXIES;
   if (env) {
-    return env.split(',').map(p => p.trim()).filter(Boolean);
+    return env
+      .split(',')
+      .map((p) => p.trim())
+      .filter(Boolean);
   }
-  
+
   // Default to common private network ranges and loopback
   return ['127.0.0.1', '::1', '::ffff:127.0.0.1', '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'];
 }
@@ -235,13 +242,16 @@ export function isTrustedProxy(ip: string): boolean {
 
   const proxies = getTrustedProxies();
   if (proxies.includes('*')) return true;
-  
+
   for (const proxy of proxies) {
     if (proxy.includes('/')) {
       if (isIPInCIDR(validatedIp, proxy)) return true;
     } else {
       const validatedProxy = validateIP(proxy);
-      if (validatedProxy && (validatedIp === validatedProxy || validatedIp === `::ffff:${validatedProxy}`)) {
+      if (
+        validatedProxy &&
+        (validatedIp === validatedProxy || validatedIp === `::ffff:${validatedProxy}`)
+      ) {
         return true;
       }
     }
@@ -261,20 +271,23 @@ export function getClientKey(req: Request): string {
   };
 
   // CONNECTION IP: The address of the machine directly connecting to us
-  const connectionIP = validateIP(req.socket?.remoteAddress || (req as any).ip || '') || '127.0.0.1';
-  
+  const connectionIP =
+    validateIP(req.socket?.remoteAddress || (req as any).ip || '') || '127.0.0.1';
+
   // If the direct connection is NOT from a trusted proxy, use it as the client IP (ignores headers)
   if (!isTrustedProxy(connectionIP)) {
     return connectionIP;
   }
-  
+
   // If it's from a trusted proxy, we can trust the X-Forwarded-For chain
   const forwardedFor = getHeader('x-forwarded-for');
   if (forwardedFor) {
-    const ips = (typeof forwardedFor === 'string' ? forwardedFor.split(',') : (forwardedFor as string[]))
-      .map(ip => ip.trim())
+    const ips = (
+      typeof forwardedFor === 'string' ? forwardedFor.split(',') : (forwardedFor as string[])
+    )
+      .map((ip) => ip.trim())
       .filter(Boolean);
-    
+
     // X-Forwarded-For order is [client, proxy1, proxy2]
     // Find the right-most IP that is NOT a trusted proxy
     for (let i = ips.length - 1; i >= 0; i--) {
@@ -283,7 +296,7 @@ export function getClientKey(req: Request): string {
         return validated;
       }
     }
-    
+
     // If all IPs in the list are trusted proxies, the original client is the left-most one
     const leftmost = validateIP(ips[0]);
     if (leftmost) return leftmost;
@@ -305,7 +318,8 @@ export function getClientKey(req: Request): string {
  * Check if rate limiting should be skipped
  */
 export function shouldSkipRateLimit(req: Request): boolean {
-  if (process.env.NODE_ENV === 'test' && process.env.ENABLE_RATE_LIMIT_TESTS !== 'true') return true;
+  if (process.env.NODE_ENV === 'test' && process.env.ENABLE_RATE_LIMIT_TESTS !== 'true')
+    return true;
   if (req.path === '/health' || req.path === '/metrics') return true;
   return false;
 }

@@ -1,6 +1,8 @@
 import Debug from 'debug';
 import type { NextFunction, Request, Response } from 'express';
-export { getClientKey, isIPInCIDR, validateIP } from '../../middleware/rateLimiterCore';
+import { getClientKey, isIPInCIDR, validateIP } from '../../middleware/rateLimiterCore';
+
+export { getClientKey, isIPInCIDR, validateIP };
 
 const debug = Debug('app:security');
 
@@ -27,7 +29,10 @@ export function isTrustedAdminIP(req: Request): boolean {
   const clientIP = getClientKey(req);
   const whitelistEnv = process.env.ADMIN_IP_WHITELIST;
   const whitelist = whitelistEnv
-    ? whitelistEnv.split(',').map((ip) => ip.trim()).filter(Boolean)
+    ? whitelistEnv
+        .split(',')
+        .map((ip) => ip.trim())
+        .filter(Boolean)
     : ['127.0.0.1', '::1', '::ffff:127.0.0.1'];
 
   return whitelist.some((allowed) => {
@@ -54,6 +59,9 @@ export function adminIPGuard(req: Request, res: Response, next: NextFunction): v
   });
 }
 
+// Alias for compatibility
+export const ipWhitelist = adminIPGuard;
+
 /**
  * CORS middleware with security considerations
  */
@@ -71,7 +79,10 @@ export function secureCORS(req: Request, res: Response, next: NextFunction): voi
   }
 
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-Bot-Name');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'Content-Type, Authorization, X-Requested-With, X-Bot-Name'
+  );
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Max-Age', '86400');
 
@@ -91,6 +102,9 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self';");
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self';"
+  );
   next();
 }

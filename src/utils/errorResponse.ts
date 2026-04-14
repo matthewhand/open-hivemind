@@ -155,7 +155,11 @@ export class ErrorResponseBuilder {
    */
   getStatusCode(): number {
     // If the error object has a statusCode, use it
-    if (this.originalError && typeof this.originalError === 'object' && 'statusCode' in this.originalError) {
+    if (
+      this.originalError &&
+      typeof this.originalError === 'object' &&
+      'statusCode' in this.originalError
+    ) {
       return Number(this.originalError.statusCode);
     }
 

@@ -137,6 +137,7 @@ router.post(
   })
 );
 
+/**
  * @openapi
  * /webui/api/auth/logout:
  *   post:
