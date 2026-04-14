@@ -6,6 +6,17 @@ import { configureWebhookRoutes } from '../../src/webhook/routes/webhookRoutes';
 process.env.WEBHOOK_TOKEN = 'test-token';
 process.env.WEBHOOK_IP_WHITELIST = '127.0.0.1';
 
+// Helper to spoof the source IP for testing whitelist logic
+const spoofIp = (ip: string) => (req: any, res: any, next: any) => {
+  req.ip = ip;
+  req.connection = req.connection || {};
+  Object.defineProperty(req.connection, 'remoteAddress', {
+    value: ip,
+    configurable: true,
+  });
+  next();
+};
+
 describe('Slack Webhook Integration', () => {
   let app: express.Application;
   let mockMessageService: any;
@@ -16,7 +27,7 @@ describe('Slack Webhook Integration', () => {
     app.use(spoofIp('127.0.0.1'));
 
     mockMessageService = {
-      handleIncomingWebhook: jest.fn().mockResolvedValue('Processed'),
+      handleIncomingWebhook: jest.fn().mockResolvedValue({ success: true }),
       sendPublicAnnouncement: jest.fn().mockResolvedValue(undefined),
       getDefaultChannel: jest.fn().mockReturnValue('general'),
     };

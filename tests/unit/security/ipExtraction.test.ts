@@ -6,7 +6,7 @@ import {
   isIPInCIDR,
   isTrustedProxy,
   validateIP,
-} from '../../../src/middleware/rateLimiter';
+} from '@src/middleware/rateLimiter';
 
 describe('Rate Limiter IP Extraction Security', () => {
   let mockReq: Partial<Request>;

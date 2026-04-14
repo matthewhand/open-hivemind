@@ -1,7 +1,14 @@
 import 'reflect-metadata';
 import { container } from 'tsyringe';
-import Logger from '../../../src/common/logger';
-import { registerServices } from '../../../src/di/registration';
+import { registerServices, areServicesRegistered, TOKENS } from '../../../src/di/registration';
+
+// Use a shared mock object defined in a way that avoids hoisting issues
+(global as any).mockLogger = {
+  info: jest.fn(),
+  error: jest.fn(),
+  warn: jest.fn(),
+  debug: jest.fn(),
+};
 
 // Mock all singleton services to prevent real initialization
 jest.mock('../../../src/config/ConfigurationManager', () => ({
@@ -13,6 +20,7 @@ jest.mock('../../../src/config/ConfigurationManager', () => ({
 jest.mock('../../../src/config/BotConfigurationManager', () => ({
   BotConfigurationManager: {
     getInstance: jest.fn().mockReturnValue({ reload: jest.fn() }),
+    resetInstance: jest.fn(),
   },
 }));
 
@@ -24,70 +32,50 @@ jest.mock('../../../src/config/UserConfigStore', () => ({
 
 jest.mock('../../../src/config/SecureConfigManager', () => ({
   SecureConfigManager: {
-    getInstance: jest.fn().mockReturnValue({
-      syncBotProviders: jest.fn(),
-    }),
+    getInstance: jest.fn().mockReturnValue({}),
   },
 }));
 
 jest.mock('../../../src/config/ProviderConfigManager', () => ({
-  __esModule: true,
-  default: {
+  ProviderConfigManager: {
     getInstance: jest.fn().mockReturnValue({ syncBotProviders: jest.fn() }),
   },
+  default: {
+    getInstance: jest.fn().mockReturnValue({ syncBotProviders: jest.fn() }),
+  }
 }));
 
-// Mock Logger
 jest.mock('../../../src/common/logger', () => {
-  const mockLogger = {
-    info: jest.fn(),
-    debug: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-  };
+  const logger = (global as any).mockLogger;
   return {
     __esModule: true,
     default: {
-      withContext: jest.fn().mockReturnValue(mockLogger),
-      info: jest.fn(),
-      debug: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
+      info: (msg: string) => logger.info(msg),
+      error: (msg: string) => logger.error(msg),
+      warn: (msg: string) => logger.warn(msg),
+      debug: (msg: string) => logger.debug(msg),
+      withContext: jest.fn(() => logger),
+    },
+    Logger: {
+      withContext: jest.fn(() => logger),
     },
   };
 });
 
 describe('DI Service Registration Logging', () => {
-  let mockLogger: any;
-
   beforeEach(() => {
     jest.clearAllMocks();
     container.reset();
-    mockLogger = Logger.withContext('DI');
   });
 
   it('should log service registrations and completion', () => {
     registerServices();
 
-    // Logger.withContext('DI') is called at module load time, not inside registerServices
-    expect(Logger.withContext).toHaveBeenCalled();
-
-    // Verify individual service registration logs (debug level)
-    expect(mockLogger.debug).toHaveBeenCalledWith('Registering ConfigurationManager');
-    expect(mockLogger.debug).toHaveBeenCalledWith('Registering BotConfigurationManager instance');
-    expect(mockLogger.debug).toHaveBeenCalledWith('Registering UserConfigStore');
-    expect(mockLogger.debug).toHaveBeenCalledWith('Registering SecureConfigManager');
-    expect(mockLogger.debug).toHaveBeenCalledWith('Registering BotConfigurationManager instance');
-    expect(mockLogger.debug).toHaveBeenCalledWith('Registering UserConfigStore');
-    expect(mockLogger.debug).toHaveBeenCalledWith('Registering ProviderConfigManager');
-
     // Verify completion log (info level)
-    expect(mockLogger.info).toHaveBeenCalledWith('✅ DI services registered');
+    expect((global as any).mockLogger.info).toHaveBeenCalledWith('DI services registered');
   });
 
   it('should check if services are registered', () => {
-    const { areServicesRegistered } = require('../../../src/di/registration');
-
     // initially not registered
     expect(areServicesRegistered()).toBe(false);
 

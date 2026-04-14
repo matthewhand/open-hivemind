@@ -283,7 +283,8 @@ export class IntegrationAnomalyDetector extends EventEmitter {
     }
 
     // Error rate spike
-    const errorRate = metrics.messagesSent > 0 ? (metrics.messagesFailed / metrics.messagesSent) * 100 : 0;
+    const errorRate =
+      metrics.messagesSent > 0 ? (metrics.messagesFailed / metrics.messagesSent) * 100 : 0;
     if (errorRate > 0) {
       this.checkThreshold('mattermost', 'mattermost', 'error_rate_spike', errorRate, {
         error_rate: errorRate,
@@ -328,7 +329,8 @@ export class IntegrationAnomalyDetector extends EventEmitter {
       );
     }
 
-    const errorRate = metrics.messagesSent > 0 ? (metrics.messagesFailed / metrics.messagesSent) * 100 : 0;
+    const errorRate =
+      metrics.messagesSent > 0 ? (metrics.messagesFailed / metrics.messagesSent) * 100 : 0;
     if (errorRate > 0) {
       this.checkThreshold('discord', 'discord', 'error_rate_spike', errorRate, {
         error_rate: errorRate,
@@ -355,7 +357,8 @@ export class IntegrationAnomalyDetector extends EventEmitter {
       });
     }
 
-    const errorRate = metrics.messagesSent > 0 ? (metrics.messagesFailed / metrics.messagesSent) * 100 : 0;
+    const errorRate =
+      metrics.messagesSent > 0 ? (metrics.messagesFailed / metrics.messagesSent) * 100 : 0;
     if (errorRate > 0) {
       this.checkThreshold('slack', 'slack', 'error_rate_spike', errorRate, {
         error_rate: errorRate,
@@ -373,13 +376,7 @@ export class IntegrationAnomalyDetector extends EventEmitter {
    * Detect anomalies for LLM providers
    */
   private detectForLlmProviders(): void {
-    const llmProviders: ProviderType[] = [
-      'openai',
-      'flowise',
-      'openwebui',
-      'openswarm',
-      'letta',
-    ];
+    const llmProviders: ProviderType[] = ['openai', 'flowise', 'openwebui', 'openswarm', 'letta'];
 
     for (const provider of llmProviders) {
       const metrics = this.providerMetrics.getLlmMetrics(provider);
@@ -453,7 +450,12 @@ export class IntegrationAnomalyDetector extends EventEmitter {
     // Calculate expected value (simple moving average)
     const window = this.getDataWindow(
       integrationType,
-      type.replace('_spike', '').replace('_degradation', '').replace('_exceeded', '').replace('_drop', '').replace('_anomaly', '')
+      type
+        .replace('_spike', '')
+        .replace('_degradation', '')
+        .replace('_exceeded', '')
+        .replace('_drop', '')
+        .replace('_anomaly', '')
     );
     const expectedValue = window.length > 0 ? window.reduce((a, b) => a + b, 0) / window.length : 0;
 
@@ -492,7 +494,12 @@ export class IntegrationAnomalyDetector extends EventEmitter {
     // Add to data window
     this.addToDataWindow(
       integrationType,
-      type.replace('_spike', '').replace('_degradation', '').replace('_exceeded', '').replace('_drop', '').replace('_anomaly', ''),
+      type
+        .replace('_spike', '')
+        .replace('_degradation', '')
+        .replace('_exceeded', '')
+        .replace('_drop', '')
+        .replace('_anomaly', ''),
       value
     );
   }

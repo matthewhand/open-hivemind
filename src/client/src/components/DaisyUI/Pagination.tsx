@@ -22,7 +22,7 @@ interface PaginationProps {
   maxVisiblePages?: number;
 }
 
-const Pagination: React.FC<PaginationProps> = ({
+export const Pagination: React.FC<PaginationProps> = ({
   currentPage,
   totalItems,
   pageSize = 10,

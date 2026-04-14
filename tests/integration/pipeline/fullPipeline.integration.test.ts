@@ -24,6 +24,7 @@ import {
   type PromptBuilder,
 } from '@src/pipeline';
 import { IMessage } from '@message/interfaces/IMessage';
+import { SwarmCoordinator } from '@src/services/SwarmCoordinator';
 
 // ---------------------------------------------------------------------------
 // StubMessage
@@ -255,6 +256,7 @@ describe('Full 5-stage pipeline integration', () => {
   beforeEach(() => {
     MessageBus.getInstance().reset();
     bus = MessageBus.getInstance();
+    SwarmCoordinator.resetInstance();
   });
 
   afterEach(() => {

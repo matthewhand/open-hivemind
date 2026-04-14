@@ -79,13 +79,15 @@ export class SwarmCoordinator extends EventEmitter {
 
   private decideExclusive(messageId: string, botId: string, channel: string): SwarmDecision {
     const existingClaim = this.cache.get(messageId);
-    if (existingClaim === undefined) {
+    if (existingClaim === undefined || existingClaim.botId === botId) {
       const claim: SwarmClaim = { messageId, botId, channel, timestamp: Date.now() };
       this.cache.set(messageId, claim);
       this.claimsMap.set(messageId, claim);
       this.emit('claim:created', claim);
       const shouldReply = true;
-      const reason = 'Exclusive mode — claim acquired';
+      const reason = existingClaim === undefined 
+        ? 'Exclusive mode — claim acquired'
+        : 'Exclusive mode — already claimed by self';
       debug(
         `[SwarmCoordinator] exclusive: ${botId} → ${shouldReply ? 'reply' : 'skip'} (${reason})`
       );

@@ -55,6 +55,7 @@ export interface StandardSuccessResponse<T = any> {
  */
 export class ErrorResponseBuilder {
   private response: StandardErrorResponse;
+  private includeStack = false;
 
   constructor(error: HivemindError | Record<string, unknown>, correlationId?: string) {
     this.response = {
@@ -73,6 +74,11 @@ export class ErrorResponseBuilder {
       this.response.error.details = error.details as Record<string, unknown>;
     }
 
+    // Capture stack trace if available
+    if (error instanceof Error && error.stack) {
+      this.response.stack = error.stack;
+    }
+
     // Add recovery information if it's a BaseHivemindError
     if (error instanceof BaseHivemindError) {
       const recovery = error.getRecoveryStrategy();
@@ -83,6 +89,14 @@ export class ErrorResponseBuilder {
         steps: recovery.recoverySteps,
       };
     }
+  }
+
+  /**
+   * Set whether to include the stack trace in the built response
+   */
+  withStack(include = true): ErrorResponseBuilder {
+    this.includeStack = include;
+    return this;
   }
 
   /**
@@ -120,13 +134,17 @@ export class ErrorResponseBuilder {
    * Build the final error response
    */
   build(): StandardErrorResponse {
-    return { ...this.response };
+    const finalResponse = { ...this.response };
+    if (!this.includeStack) {
+      delete finalResponse.stack;
+    }
+    return finalResponse;
   }
 
   /**
    * Get the appropriate HTTP status code for this error
    */
-  getStatusCode(): HttpStatus | number {
+  getHttpStatusCode(): HttpStatus | number {
     const error = this.response.error;
 
     // Check for specific status codes
@@ -134,8 +152,10 @@ export class ErrorResponseBuilder {
       case 'VALIDATION_ERROR':
         return HTTP_STATUS.BAD_REQUEST;
       case 'AUTH_ERROR':
+      case 'AUTHENTICATION_ERROR':
         return HTTP_STATUS.UNAUTHORIZED;
       case 'AUTHZ_ERROR':
+      case 'AUTHORIZATION_ERROR':
         return HTTP_STATUS.FORBIDDEN;
       case 'NOT_FOUND':
         return HTTP_STATUS.NOT_FOUND;
@@ -144,7 +164,8 @@ export class ErrorResponseBuilder {
       case 'TIMEOUT_ERROR':
         return HTTP_STATUS.REQUEST_TIMEOUT;
       case 'CONFIG_ERROR':
-        return HTTP_STATUS.INTERNAL_SERVER_ERROR;
+      case 'CONFIGURATION_ERROR':
+        return HTTP_STATUS.BAD_REQUEST; // Configuration errors often mean bad inputs
       case 'DATABASE_ERROR':
         return HTTP_STATUS.INTERNAL_SERVER_ERROR;
       case 'NETWORK_ERROR':
@@ -162,6 +183,29 @@ export class ErrorResponseBuilder {
       default:
         return HTTP_STATUS.INTERNAL_SERVER_ERROR;
     }
+  }
+
+  /**
+   * Send the error response using an Express Response object
+   */
+  send(res: Response): Response {
+    const statusCode = this.getHttpStatusCode();
+    const finalResponse = this.build();
+
+    // Ensure correlation ID is in headers
+    const correlationId = finalResponse.error.correlationId;
+    if (correlationId && !res.getHeader('X-Correlation-ID')) {
+      res.setHeader('X-Correlation-ID', correlationId);
+    }
+
+    return res.status(statusCode).json(finalResponse);
+  }
+
+  /**
+   * Alias for getHttpStatusCode for backward compatibility
+   */
+  getStatusCode(): HttpStatus | number {
+    return this.getHttpStatusCode();
   }
 
   /**
@@ -246,15 +290,7 @@ export function sendErrorResponse(
     builder.withRequest(requestInfo.path, requestInfo.method, correlationId);
   }
 
-  const errorResponse = builder.build();
-  const statusCode = builder.getStatusCode();
-
-  // Set correlation ID header if not already set
-  if (correlationId && !res.getHeader('X-Correlation-ID')) {
-    res.setHeader('X-Correlation-ID', correlationId);
-  }
-
-  return res.status(statusCode).json(errorResponse);
+  return builder.send(res);
 }
 
 /**

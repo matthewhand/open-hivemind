@@ -362,4 +362,61 @@ export const InfoModal: React.FC<Omit<BaseModalProps, 'children'> & {
   );
 };
 
+// Detail Drawer Component
+export interface DetailDrawerProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+  width?: string;
+}
+
+export const DetailDrawer: React.FC<DetailDrawerProps> = ({
+  isOpen,
+  onClose,
+  title,
+  children,
+  width = 'max-w-xl',
+}) => {
+  return (
+    <div className={`fixed inset-0 z-50 overflow-hidden ${isOpen ? 'visible' : 'invisible'}`} aria-labelledby="drawer-title" role="dialog" aria-modal="true">
+      <div className="absolute inset-0 overflow-hidden">
+        {/* Backdrop */}
+        <div 
+          className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'}`} 
+          onClick={onClose}
+          aria-hidden="true"
+        ></div>
+
+        <div className={`pointer-events-none fixed inset-y-0 right-0 flex pl-10 transition-transform duration-300 transform ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+          <div className={`pointer-events-auto w-screen ${width}`}>
+            <div className="flex h-full flex-col overflow-y-scroll bg-base-100 shadow-xl">
+              <div className="px-4 py-6 sm:px-6 border-b border-base-300">
+                <div className="flex items-start justify-between">
+                  <h2 className="text-xl font-semibold leading-6 text-base-content" id="drawer-title">
+                    {title}
+                  </h2>
+                  <div className="ml-3 flex h-7 items-center">
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-circle btn-ghost"
+                      onClick={onClose}
+                    >
+                      <span className="sr-only">Close panel</span>
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div className="relative flex-1 px-4 py-6 sm:px-6">
+                {children}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default Modal;

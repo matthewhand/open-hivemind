@@ -7,7 +7,7 @@ export interface DividerProps extends React.HTMLAttributes<HTMLDivElement> {
     color?: 'primary' | 'secondary' | 'accent' | 'neutral' | 'info' | 'success' | 'warning' | 'error';
 }
 
-const Divider: React.FC<DividerProps> = ({
+export const Divider: React.FC<DividerProps> = ({
   children,
   vertical = false,
   color,

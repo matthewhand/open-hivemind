@@ -1,4 +1,4 @@
-import { isIPInCIDR } from '../../../src/server/middleware/security';
+import { isIPInCIDR } from '@src/server/middleware/security';
 
 describe('isIPInCIDR', () => {
   describe('IPv4', () => {

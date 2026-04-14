@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { ConfigurationManager } from '@config/ConfigurationManager';
 import { resetAllCircuitBreakers } from '@common/CircuitBreaker';
 import flowiseConfig from '../../../packages/llm-flowise/src/flowiseConfig';
@@ -7,12 +6,16 @@ import {
   getFlowiseResponseFallback,
 } from '../../../packages/llm-flowise/src/flowiseRestClient';
 
-jest.mock('axios');
-const mockedAxios = axios as jest.Mocked<typeof axios>;
-
-jest.mock('../../../src/utils/ssrfGuard', () => ({
+jest.mock('@hivemind/shared-types', () => ({
+  ...jest.requireActual('@hivemind/shared-types'),
+  http: {
+    post: jest.fn(),
+  },
   isSafeUrl: jest.fn().mockResolvedValue({ safe: true }),
 }));
+
+import { http } from '@hivemind/shared-types';
+const mockedHttp = http as jest.Mocked<typeof http>;
 
 jest.mock('../../../packages/llm-flowise/src/flowiseConfig', () => {
   const actual = jest.requireActual('../../../packages/llm-flowise/src/flowiseConfig');
@@ -92,15 +95,15 @@ describe('flowiseRestClient.getFlowiseResponse', () => {
     const mgr = ConfigurationManager.getInstance() as any;
     mgr.setSession('flowise', channelId, 'old-chat');
 
-    mockedAxios.post.mockResolvedValueOnce({
-      data: { text: 'answer', chatId: 'new-chat' },
+    mockedHttp.post.mockResolvedValueOnce({
+      text: 'answer', chatId: 'new-chat'
     } as any);
 
     const text = await getFlowiseResponse(channelId, 'hello');
     expect(text).toBe('answer');
 
-    // verify axios called with endpoint and headers
-    expect(mockedAxios.post).toHaveBeenCalledWith(
+    // verify http called with endpoint and headers
+    expect(mockedHttp.post).toHaveBeenCalledWith(
       'http://flowise.local/prediction/chatflow-123',
       { question: 'hello', chatId: 'old-chat' },
       expect.objectContaining({
@@ -120,9 +123,7 @@ describe('flowiseRestClient.getFlowiseResponse', () => {
     const mgr = ConfigurationManager.getInstance() as any;
     const before = mgr.getSession('flowise', channelId);
 
-    mockedAxios.post.mockResolvedValueOnce({
-      data: { text: 'ok' },
-    } as any);
+    mockedHttp.post.mockResolvedValueOnce({ text: 'ok' } as any);
 
     const text = await getFlowiseResponse(channelId, 'q');
     expect(text).toBe('ok');
@@ -133,17 +134,17 @@ describe('flowiseRestClient.getFlowiseResponse', () => {
   });
 
   it('throws when API returns empty/invalid text', async () => {
-    mockedAxios.post.mockResolvedValueOnce({ data: { text: '   ' } } as any);
+    mockedHttp.post.mockResolvedValueOnce({ text: '   ' } as any);
     await expect(getFlowiseResponse(channelId, 'q')).rejects.toThrow(
       'Failed to fetch response from Flowise.'
     );
   });
 
-  it('wraps axios errors into a generic error', async () => {
-    mockedAxios.post.mockRejectedValueOnce(
+  it('wraps http errors into a generic error', async () => {
+    mockedHttp.post.mockRejectedValueOnce(
       Object.assign(new Error('boom'), {
-        isAxiosError: true,
-        response: { status: 500, data: { err: 'x' } },
+        status: 500,
+        data: { err: 'x' },
       })
     );
     await expect(getFlowiseResponse(channelId, 'q')).rejects.toThrow(
@@ -151,15 +152,15 @@ describe('flowiseRestClient.getFlowiseResponse', () => {
     );
   });
 
-  it('wraps non-axios errors into a generic error', async () => {
-    mockedAxios.post.mockRejectedValueOnce(new Error('other'));
+  it('wraps non-http errors into a generic error', async () => {
+    mockedHttp.post.mockRejectedValueOnce(new Error('other'));
     await expect(getFlowiseResponse(channelId, 'q')).rejects.toThrow(
       'Failed to fetch response from Flowise.'
     );
   });
 
   it('fallback delegates to getFlowiseResponse', async () => {
-    mockedAxios.post.mockResolvedValueOnce({ data: { text: 'via-fallback' } } as any);
+    mockedHttp.post.mockResolvedValueOnce({ text: 'via-fallback' } as any);
     await expect(getFlowiseResponseFallback(channelId, 'hey')).resolves.toBe('via-fallback');
   });
 });

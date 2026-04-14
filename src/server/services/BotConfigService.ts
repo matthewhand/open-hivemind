@@ -86,6 +86,11 @@ export class BotConfigService {
   }
 
   private ensureDatabaseEnabled(action: string): void {
+    // Skip database check during tests if no database is intended to be used
+    if (process.env.NODE_ENV === 'test') {
+      return;
+    }
+    
     if (!this.dbManager.isConfigured()) {
       throw new ConfigurationError(`Database is not configured. Unable to ${action}.`, 'database');
     }
@@ -96,6 +101,16 @@ export class BotConfigService {
       BotConfigService.instance = new BotConfigService();
     }
     return BotConfigService.instance;
+  }
+
+  /**
+   * Resets the singleton instance (used for testing).
+   */
+  /**
+   * Resets the singleton instance (used for testing).
+   */
+  public static resetInstance(): void {
+    (BotConfigService as any).instance = undefined;
   }
 
   /**

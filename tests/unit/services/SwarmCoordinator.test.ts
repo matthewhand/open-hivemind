@@ -24,7 +24,7 @@ describe('SwarmCoordinator', () => {
 
   it('should be able to get the claim of a message', () => {
     coordinator.claimMessage('msg-1', 'BotA');
-    expect(coordinator.getClaim('msg-1')).toBe('BotA');
+    expect(coordinator.getClaim('msg-1')).toMatchObject({ botId: 'BotA' });
   });
 
   it('should return undefined when getting claim of an unknown message', () => {

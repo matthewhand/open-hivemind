@@ -3,6 +3,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
+jest.mock('fs');
+const mockFs = fs as jest.Mocked<typeof fs>;
+
 describe('BotConfigurationManager', () => {
   let originalEnv: NodeJS.ProcessEnv;
 
@@ -100,6 +103,7 @@ describe('BotConfigurationManager', () => {
         throw new Error(`File not found: ${path}`);
       });
 
+      process.env.NODE_CONFIG_DIR = configDir;
       const manager = BotConfigurationManager.getInstance();
       const bot = manager.getBot(botName);
 
