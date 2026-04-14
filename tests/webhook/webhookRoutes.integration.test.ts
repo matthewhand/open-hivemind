@@ -1,175 +1,287 @@
+/**
+ * Webhook Routes Integration Tests
+ *
+ * Tests the Express webhook routes (POST /webhook, /webhook/message, /webhook/slack)
+ * with real security middleware, validation, and concurrency handling.
+ *
+ * This replaces the old 175-line file that was entirely `describe.skip`
+ * and never executed a single assertion.
+ */
 import express from 'express';
-import { IMessengerService } from '@message/interfaces/IMessengerService';
-import { configureWebhookRoutes } from '@webhook/routes/webhookRoutes';
-import { runRoute } from '../helpers/expressRunner';
+import request from 'supertest';
+import { configureWebhookRoutes } from '../../src/webhook/routes/webhookRoutes';
 
-// Do NOT mock security middlewares here to test the real integration with Express
-// We mock webhookConfig instead to control the expected token/IP
+// ---------------------------------------------------------------------------
+// Mock config + messenger
+// ---------------------------------------------------------------------------
+
 jest.mock('@config/webhookConfig', () => ({
   get: jest.fn(),
 }));
 
-const mockWebhookConfig = require('@config/webhookConfig');
+const mockConfig = require('@config/webhookConfig');
 
-describe.skip('webhookRoutes (Integration)', () => {
+function makeApp() {
+  const app = express();
+  app.use(express.json());
+
+  const messageService = {
+    sendPublicAnnouncement: jest.fn().mockResolvedValue(undefined),
+    getDefaultChannel: jest.fn().mockReturnValue('general'),
+  };
+
+  configureWebhookRoutes(app, messageService as any);
+
+  return { app, messageService };
+}
+
+function validTokenConfig() {
+  mockConfig.get.mockImplementation((key: string) => {
+    if (key === 'WEBHOOK_TOKEN') return 'secret-token';
+    if (key === 'WEBHOOK_IP_WHITELIST') return '127.0.0.1';
+    return '';
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
+
+describe('Webhook Routes Integration', () => {
   let app: express.Application;
-  let messageService: jest.Mocked<IMessengerService>;
+  let messageService: any;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    app = express();
-    app.use(express.json());
-
-    messageService = {
-      sendPublicAnnouncement: jest.fn().mockResolvedValue(undefined),
-    } as any;
-
-    configureWebhookRoutes(app, messageService);
+    ({ app, messageService } = makeApp());
+    validTokenConfig();
   });
 
-  describe('Negative Security Integration', () => {
-    it('blocks request when WEBHOOK_TOKEN is required but missing', async () => {
-      mockWebhookConfig.get.mockImplementation((key: string) => {
-        if (key === 'WEBHOOK_TOKEN') return 'secret-token';
-        if (key === 'WEBHOOK_IP_WHITELIST') return '';
-        return '';
-      });
+  // ---- POST /webhook ----
 
-      const body = { id: 'pred-1', status: 'succeeded', output: [] };
-      const { res } = await runRoute(app, 'post', '/webhook', { body, headers: {} });
+  describe('POST /webhook', () => {
+    it('should block when token is missing', async () => {
+      const res = await request(app)
+        .post('/webhook')
+        .send({ id: 'pred-1', status: 'succeeded', output: [] });
 
-      expect(res.statusCode).toBe(403);
+      expect(res.status).toBe(403);
       expect(res.text).toBe('Forbidden: Invalid token');
       expect(messageService.sendPublicAnnouncement).not.toHaveBeenCalled();
     });
 
-    it('blocks request when WEBHOOK_TOKEN is invalid', async () => {
-      mockWebhookConfig.get.mockImplementation((key: string) => {
-        if (key === 'WEBHOOK_TOKEN') return 'secret-token';
-        if (key === 'WEBHOOK_IP_WHITELIST') return '';
-        return '';
-      });
+    it('should block when token is invalid', async () => {
+      const res = await request(app)
+        .post('/webhook')
+        .set('x-webhook-token', 'wrong-token')
+        .send({ id: 'pred-1', status: 'succeeded', output: [] });
 
-      const body = { id: 'pred-1', status: 'succeeded', output: [] };
-      const { res } = await runRoute(app, 'post', '/webhook', {
-        body,
-        headers: { 'x-webhook-token': 'wrong-token' },
-      });
-
-      expect(res.statusCode).toBe(403);
+      expect(res.status).toBe(403);
       expect(res.text).toBe('Forbidden: Invalid token');
-      expect(messageService.sendPublicAnnouncement).not.toHaveBeenCalled();
     });
 
-    it('blocks request when IP is not in whitelist', async () => {
-      mockWebhookConfig.get.mockImplementation((key: string) => {
+    it('should block when IP is not whitelisted', async () => {
+      mockConfig.get.mockImplementation((key: string) => {
         if (key === 'WEBHOOK_TOKEN') return 'secret-token';
-        if (key === 'WEBHOOK_IP_WHITELIST') return '10.0.0.1,10.0.0.2';
+        if (key === 'WEBHOOK_IP_WHITELIST') return '10.0.0.1';
         return '';
       });
 
-      const body = { id: 'pred-1', status: 'succeeded', output: [] };
-      const { res } = await runRoute(app, 'post', '/webhook', {
-        body,
-        headers: { 'x-webhook-token': 'secret-token' },
-        ip: '192.168.1.1',
-      });
+      const res = await request(app)
+        .post('/webhook')
+        .set('x-webhook-token', 'secret-token')
+        .send({ id: 'pred-1', status: 'succeeded', output: [] });
 
-      expect(res.statusCode).toBe(403);
+      // 127.0.0.1 is not in 10.0.0.1 whitelist
+      expect(res.status).toBe(403);
       expect(res.text).toBe('Forbidden: Unauthorized IP address');
-      expect(messageService.sendPublicAnnouncement).not.toHaveBeenCalled();
     });
 
-    it('allows request when token and IP are both valid', async () => {
-      mockWebhookConfig.get.mockImplementation((key: string) => {
-        if (key === 'WEBHOOK_TOKEN') return 'secret-token';
-        if (key === 'WEBHOOK_IP_WHITELIST') return '192.168.1.1';
-        return '';
-      });
+    it('should process valid webhook and announce to channel', async () => {
+      const res = await request(app)
+        .post('/webhook')
+        .set('x-webhook-token', 'secret-token')
+        .send({ id: 'pred-1', status: 'succeeded', output: ['Hello', 'World'] });
 
-      const body = { id: 'pred-1', status: 'succeeded', output: [] };
-      const { res } = await runRoute(app, 'post', '/webhook', {
-        body,
-        headers: { 'x-webhook-token': 'secret-token' },
-        ip: '192.168.1.1',
-      });
-
-      expect(res.statusCode).toBe(200);
-      expect(messageService.sendPublicAnnouncement).toHaveBeenCalled();
-    });
-  });
-
-  describe('Concurrency & Robustness Coverage', () => {
-    it('handles concurrent webhook requests properly', async () => {
-      mockWebhookConfig.get.mockImplementation((key: string) => {
-        if (key === 'WEBHOOK_TOKEN') return 'secret-token';
-        if (key === 'WEBHOOK_IP_WHITELIST') return '127.0.0.1';
-        return '';
-      });
-
-      const numRequests = 50;
-      const requests = Array.from({ length: numRequests }).map((_, i) => {
-        const body = { id: `pred-${i}`, status: 'succeeded', output: [`out-${i}`] };
-        return runRoute(app, 'post', '/webhook', {
-          body,
-          headers: { 'x-webhook-token': 'secret-token' },
-        });
-      });
-
-      const results = await Promise.all(requests);
-
-      // Verify all succeeded
-      for (const { res } of results) {
-        expect(res.statusCode).toBe(200);
-      }
-
-      // Verify the service was called the expected number of times
-      expect(messageService.sendPublicAnnouncement).toHaveBeenCalledTimes(numRequests);
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.processed).toBe('pred-1');
+      expect(messageService.sendPublicAnnouncement).toHaveBeenCalledWith(
+        'general',
+        expect.stringContaining('Hello')
+      );
     });
 
-    it('safely rejects excessively large arrays in payload to prevent memory exhaustion', async () => {
-      // Return empty token/IP whitelist to bypass security middleware checks
-      mockWebhookConfig.get.mockImplementation(() => '');
+    it('should reject missing prediction ID', async () => {
+      const res = await request(app)
+        .post('/webhook')
+        .set('x-webhook-token', 'secret-token')
+        .send({ status: 'succeeded' });
 
-      const largeArray = Array.from({ length: 1000 }).map(() => 'item');
-      const body = { id: 'pred-large', status: 'succeeded', output: largeArray };
-
-      // By supplying an empty token to the route runner, it triggers the missing WEBHOOK_TOKEN 500
-      // since we cleared the config. So we must mock it to return 'no-token' instead, so that
-      // we bypass the "missing config" error in security middleware when the token is missing/empty.
-      // Wait, if WEBHOOK_TOKEN is required in the environment but not set, verifyWebhookToken returns 500.
-      mockWebhookConfig.get.mockImplementation((key: string) => {
-        if (key === 'WEBHOOK_TOKEN') return 'secret-token';
-        if (key === 'WEBHOOK_IP_WHITELIST') return '127.0.0.1';
-        return '';
-      });
-
-      const { res } = await runRoute(app, 'post', '/webhook', {
-        body,
-        headers: { 'x-webhook-token': 'secret-token' },
-      });
-
-      expect(res.statusCode).toBe(400);
+      expect(res.status).toBe(400);
       expect(res.body.error).toBe('Invalid request body');
+      expect(res.body.details.some((d: string) => d.includes('Missing or invalid "id" field'))).toBe(true);
+    });
+
+    it('should reject invalid status values', async () => {
+      const res = await request(app)
+        .post('/webhook')
+        .set('x-webhook-token', 'secret-token')
+        .send({ id: 'pred-1', status: 'invalid-status' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.details.some((d: string) => d.includes('Invalid status "invalid-status"'))).toBe(true);
+    });
+
+    it('should reject output arrays exceeding 10 items', async () => {
+      const largeOutput = Array.from({ length: 11 }).map((_, i) => `item-${i}`);
+      const res = await request(app)
+        .post('/webhook')
+        .set('x-webhook-token', 'secret-token')
+        .send({ id: 'pred-1', status: 'succeeded', output: largeOutput });
+
+      expect(res.status).toBe(400);
       expect(res.body.details).toContain('"output" array cannot contain more than 10 items');
     });
 
-    it('gracefully handles malformed JSON parsing errors (simulated via string body)', async () => {
-      mockWebhookConfig.get.mockImplementation((key: string) => {
-        if (key === 'WEBHOOK_TOKEN') return 'secret-token';
-        if (key === 'WEBHOOK_IP_WHITELIST') return '127.0.0.1';
-        return '';
-      });
+    it('should reject payloads with malicious content', async () => {
+      const res = await request(app)
+        .post('/webhook')
+        .set('x-webhook-token', 'secret-token')
+        .send({ id: 'pred-1', status: 'succeeded', text: '<script>alert("xss")</script>' });
 
-      // In real express app, body-parser would throw before reaching route,
-      // but if an invalid object gets through, validation should catch it.
-      const { res } = await runRoute(app, 'post', '/webhook', {
-        body: 'not-an-object',
-        headers: { 'x-webhook-token': 'secret-token' },
-      });
+      expect(res.status).toBe(400);
+      expect(res.body.details).toContain('Request contains potentially malicious content');
+    });
 
-      expect(res.statusCode).toBe(400);
-      expect(res.body.details).toContain('Request body must be a valid JSON object');
+    it('should handle failed prediction status', async () => {
+      const res = await request(app)
+        .post('/webhook')
+        .set('x-webhook-token', 'secret-token')
+        .send({ id: 'pred-2', status: 'failed' });
+
+      expect(res.status).toBe(200);
+      expect(messageService.sendPublicAnnouncement).toHaveBeenCalledWith(
+        'general',
+        expect.stringContaining('failed')
+      );
+    });
+  });
+
+  // ---- POST /webhook/message ----
+
+  describe('POST /webhook/message', () => {
+    it('should broadcast text to channel', async () => {
+      const res = await request(app)
+        .post('/webhook/message')
+        .set('x-webhook-token', 'secret-token')
+        .send({ text: 'Hello from webhook' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(messageService.sendPublicAnnouncement).toHaveBeenCalledWith(
+        'general',
+        'Hello from webhook'
+      );
+    });
+
+    it('should accept "message" field as alternative', async () => {
+      const res = await request(app)
+        .post('/webhook/message')
+        .set('x-webhook-token', 'secret-token')
+        .send({ message: 'Alternative field' });
+
+      expect(res.status).toBe(200);
+      expect(messageService.sendPublicAnnouncement).toHaveBeenCalledWith(
+        'general',
+        'Alternative field'
+      );
+    });
+
+    it('should accept "content" field as alternative', async () => {
+      const res = await request(app)
+        .post('/webhook/message')
+        .set('x-webhook-token', 'secret-token')
+        .send({ content: 'Content field' });
+
+      expect(res.status).toBe(200);
+    });
+
+    it('should return 400 when no message content provided', async () => {
+      const res = await request(app)
+        .post('/webhook/message')
+        .set('x-webhook-token', 'secret-token')
+        .send({ other: 'field' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain('Missing message content');
+    });
+  });
+
+  // ---- POST /webhook/slack ----
+
+  describe('POST /webhook/slack', () => {
+    it('should broadcast Slack text to channel', async () => {
+      const res = await request(app)
+        .post('/webhook/slack')
+        .set('x-webhook-token', 'secret-token')
+        .send({ text: 'Slack message', username: 'bot' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(messageService.sendPublicAnnouncement).toHaveBeenCalledWith(
+        'general',
+        '[bot] Slack message'
+      );
+    });
+
+    it('should extract text from Slack attachments', async () => {
+      const res = await request(app)
+        .post('/webhook/slack')
+        .set('x-webhook-token', 'secret-token')
+        .send({
+          attachments: [
+            { text: 'Attachment 1', fallback: 'Fallback 1' },
+            { text: 'Attachment 2' },
+          ],
+        });
+
+      expect(res.status).toBe(200);
+      expect(messageService.sendPublicAnnouncement).toHaveBeenCalledWith(
+        'general',
+        expect.stringContaining('Attachment 1')
+      );
+    });
+
+    it('should return 400 when no text or attachments provided', async () => {
+      const res = await request(app)
+        .post('/webhook/slack')
+        .set('x-webhook-token', 'secret-token')
+        .send({ username: 'bot' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain('Missing Slack message content');
+    });
+  });
+
+  // ---- Concurrency ----
+
+  describe('concurrent requests', () => {
+    it('should handle 50 concurrent webhook requests', async () => {
+      const requests = Array.from({ length: 50 }, (_, i) =>
+        request(app)
+          .post('/webhook')
+          .set('x-webhook-token', 'secret-token')
+          .send({ id: `pred-${i}`, status: 'succeeded', output: [`out-${i}`] })
+      );
+
+      const results = await Promise.all(requests);
+
+      for (const res of results) {
+        expect(res.status).toBe(200);
+      }
+
+      expect(messageService.sendPublicAnnouncement).toHaveBeenCalledTimes(50);
     });
   });
 });

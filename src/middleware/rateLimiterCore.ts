@@ -189,7 +189,7 @@ export function isIPInCIDR(ip: string, cidr: string): boolean {
     if (isNaN(prefixLen)) return false;
 
     // Check if both are simple IPv4
-    const isRawIPv4 = (addr: string): boolean => addr.includes('.') && !addr.includes(':');
+    const isRawIPv4 = (addr: string) => addr.includes('.') && !addr.includes(':');
     const ipIsV4 = isRawIPv4(validatedIp);
     const rangeIsV4 = isRawIPv4(validatedRange);
 
@@ -264,7 +264,7 @@ export function isTrustedProxy(ip: string): boolean {
  */
 export function getClientKey(req: Request): string {
   // Use .get() for headers to support various ways they might be defined in tests
-  const getHeader = (name: string): string | string[] | undefined => {
+  const getHeader = (name: string) => {
     if (typeof req.get === 'function') return req.get(name);
     if (req.headers) return req.headers[name.toLowerCase()];
     return undefined;
@@ -327,8 +327,8 @@ export function shouldSkipRateLimit(req: Request): boolean {
 /**
  * Create a standard rate limit handler
  */
-export function createRateLimitHandler(type: string): (req: Request, res: Response) => void {
-  return (req: Request, res: Response): void => {
+export function createRateLimitHandler(type: string) {
+  return (req: Request, res: Response) => {
     const ip = getClientKey(req);
     logger.warn(`${type} rate limit exceeded`, {
       ip,
@@ -353,11 +353,11 @@ export let redisClient: any = null;
 /**
  * Create a rate limit store (Redis or Memory)
  */
-export function createStore(prefix: string, windowMs: number): any {
+export function createStore(prefix: string, windowMs: number) {
   if (redisAvailable && RedisStore && redisClient) {
     debug(`Using Redis store for rate limit prefix: ${prefix}`);
     return new RedisStore({
-      sendCommand: (...args: string[]): any => redisClient.sendCommand(args),
+      sendCommand: (...args: string[]) => redisClient.sendCommand(args),
       prefix: `rl:${prefix}:`,
     });
   }
@@ -371,7 +371,7 @@ export function createStore(prefix: string, windowMs: number): any {
   return store;
 }
 
-export function setRedisAvailable(available: boolean, client?: unknown, store?: unknown): void {
+export function setRedisAvailable(available: boolean, client?: any, store?: any) {
   redisAvailable = available;
   if (client) redisClient = client;
   if (store) RedisStore = store;

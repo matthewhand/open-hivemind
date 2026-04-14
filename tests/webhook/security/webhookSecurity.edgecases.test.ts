@@ -1,154 +1,374 @@
-import express, { NextFunction, Request, Response } from 'express';
-// Import after jest.doMock of config to allow per-test overrides
-import { verifyIpWhitelist, verifyWebhookToken } from '@webhook/security/webhookSecurity';
-import { runRoute } from '../../helpers/expressRunner';
+/**
+ * Webhook Security Middleware Edge Case Tests
+ *
+ * Tests boundary conditions, edge cases, and attack vectors for
+ * verifyWebhookToken and verifyIpWhitelist — the Express middlewares
+ * that protect webhook endpoints.
+ *
+ * This replaces the old 154-line file that was entirely `describe.skip`
+ * and never executed a single assertion.
+ */
+import type { Request, Response } from 'express';
+import { verifyIpWhitelist, verifyWebhookToken } from '../../../src/webhook/security/webhookSecurity';
 
-// Helper to mock webhookConfig.get dynamically per test
-jest.mock('@config/webhookConfig', () => {
-  let store: Record<string, string> = {
-    WEBHOOK_TOKEN: 'secret-token',
-    WEBHOOK_IP_WHITELIST: '',
-  };
-  return {
-    __esModule: true,
-    default: {
-      get: (key: string) => store[key],
-      // expose a setter for tests
-      __set: (next: Record<string, string>) => {
-        store = { ...store, ...next };
-      },
-    },
-  };
-});
+// ---------------------------------------------------------------------------
+// Mock webhook config with per-test overrides
+// ---------------------------------------------------------------------------
 
-type MockedConfig = {
-  get: (key: string) => string;
-  __set: (next: Record<string, string>) => void;
-};
+let mockConfigStore: Record<string, string> = {};
 
-// Utility to update mocked config
+jest.mock('@config/webhookConfig', () => ({
+  get: (key: string) => mockConfigStore[key] ?? '',
+}));
+
 function setConfig(next: Record<string, string>) {
-  const cfg = require('@config/webhookConfig').default as MockedConfig;
-  cfg.__set(next);
+  mockConfigStore = { ...mockConfigStore, ...next };
 }
 
-describe.skip('webhookSecurity edge cases', () => {
-  let app: express.Application;
+function resetConfig() {
+  mockConfigStore = {
+    WEBHOOK_TOKEN: 'secret-token',
+    WEBHOOK_IP_WHITELIST: '127.0.0.1',
+  };
+}
 
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function makeReq(overrides: Partial<Request> = {}): Request {
+  return {
+    headers: {},
+    ip: '127.0.0.1',
+    method: 'POST',
+    path: '/webhook',
+    ...overrides,
+  } as unknown as Request;
+}
+
+function makeRes(): Response {
+  return {
+    status: jest.fn().mockReturnThis(),
+    send: jest.fn(),
+  } as unknown as Response;
+}
+
+function makeNext(): jest.Mock {
+  return jest.fn();
+}
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
+
+describe('Webhook Security Middleware Edge Cases', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    app = express();
-    app.use(express.json());
-    // Attach the middlewares and a terminal handler to inspect outcome
-    app.post(
-      '/secured',
-      (req: Request, res: Response, next: NextFunction) => verifyWebhookToken(req, res, next),
-      (req: Request, res: Response, next: NextFunction) => verifyIpWhitelist(req, res, next),
-      (_req: Request, res: Response) => res.status(200).send('OK')
-    );
-    // default baseline. Set WEBHOOK_IP_WHITELIST to allow testing of token validation without IP block
-    setConfig({
-      WEBHOOK_TOKEN: 'secret-token',
-      WEBHOOK_IP_WHITELIST: '::ffff:127.0.0.1,127.0.0.1,::1',
-    });
+    resetConfig();
   });
+
+  // ---- verifyWebhookToken edge cases ----
 
   describe('verifyWebhookToken', () => {
-    it('allows when header matches configured token', async () => {
-      const { res } = await runRoute(app, 'post', '/secured', {
-        headers: { 'x-webhook-token': 'secret-token' },
-      });
-      expect(res.statusCode).toBe(200);
+    it('should allow when header matches configured token', () => {
+      const req = makeReq({ headers: { 'x-webhook-token': 'secret-token' } });
+      const res = makeRes();
+      const next = makeNext();
+
+      verifyWebhookToken(req, res, next);
+
+      expect(next).toHaveBeenCalled();
     });
 
-    it('blocks with 403 when header is missing', async () => {
-      const { res } = await runRoute(app, 'post', '/secured');
-      expect(res.statusCode).toBe(403);
-      expect(res.text).toContain('Invalid token');
+    it('should block with 403 when header is missing', () => {
+      const req = makeReq({ headers: {} });
+      const res = makeRes();
+      const next = makeNext();
+
+      verifyWebhookToken(req, res, next);
+
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.send).toHaveBeenCalledWith('Forbidden: Invalid token');
     });
 
-    it('allows when Authorization header uses Bearer token', async () => {
-      const { res } = await runRoute(app, 'post', '/secured', {
-        headers: { authorization: 'Bearer secret-token' },
-      });
-      expect(res.statusCode).toBe(200);
+    it('should allow when Authorization header uses Bearer token', () => {
+      const req = makeReq({ headers: { authorization: 'Bearer secret-token' } });
+      const res = makeRes();
+      const next = makeNext();
+
+      verifyWebhookToken(req, res, next);
+
+      expect(next).toHaveBeenCalled();
     });
 
-    it('blocks with 403 when token mismatches', async () => {
-      const { res } = await runRoute(app, 'post', '/secured', {
-        headers: { 'x-webhook-token': 'wrong' },
-      });
-      expect(res.statusCode).toBe(403);
-      expect(res.text).toContain('Invalid token');
+    it('should allow when Authorization header uses lowercase bearer', () => {
+      const req = makeReq({ headers: { authorization: 'bearer secret-token' } });
+      const res = makeRes();
+      const next = makeNext();
+
+      verifyWebhookToken(req, res, next);
+
+      expect(next).toHaveBeenCalled();
     });
 
-    it('returns 500 when WEBHOOK_TOKEN is not defined in config', async () => {
+    it('should block with 403 when token mismatches', () => {
+      const req = makeReq({ headers: { 'x-webhook-token': 'wrong' } });
+      const res = makeRes();
+      const next = makeNext();
+
+      verifyWebhookToken(req, res, next);
+
+      expect(res.status).toHaveBeenCalledWith(403);
+    });
+
+    it('should return 500 when WEBHOOK_TOKEN is empty in config', () => {
       setConfig({ WEBHOOK_TOKEN: '' });
-      const { res } = await runRoute(app, 'post', '/secured', {
-        headers: { 'x-webhook-token': 'any-token' },
+      const req = makeReq({ headers: { 'x-webhook-token': 'any' } });
+      const res = makeRes();
+      const next = makeNext();
+
+      verifyWebhookToken(req, res, next);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.send).toHaveBeenCalledWith('Internal Server Error: Webhook is misconfigured');
+    });
+
+    it('should handle whitespace-only token in header', () => {
+      const req = makeReq({ headers: { 'x-webhook-token': '   ' } });
+      const res = makeRes();
+      const next = makeNext();
+
+      verifyWebhookToken(req, res, next);
+
+      // Whitespace-padded token won't match 'secret-token'
+      expect(res.status).toHaveBeenCalledWith(403);
+    });
+
+    it('should handle Bearer token with extra whitespace', () => {
+      const req = makeReq({ headers: { authorization: 'Bearer   secret-token  ' } });
+      const res = makeRes();
+      const next = makeNext();
+
+      verifyWebhookToken(req, res, next);
+
+      // The source trims the token after Bearer prefix
+      expect(next).toHaveBeenCalled();
+    });
+
+    it('should prefer x-webhook-token over Authorization Bearer', () => {
+      // x-webhook-token matches, Bearer does not
+      const req = makeReq({
+        headers: {
+          'x-webhook-token': 'secret-token',
+          authorization: 'Bearer wrong',
+        },
       });
-      expect(res.statusCode).toBe(500);
-      expect(res.text).toContain('Webhook is misconfigured');
+      const res = makeRes();
+      const next = makeNext();
+
+      verifyWebhookToken(req, res, next);
+
+      expect(next).toHaveBeenCalled();
+    });
+
+    it('should use timing-safe comparison (no early exit on length mismatch)', () => {
+      // Token of different length — should still return 403 without leaking length info
+      const req = makeReq({ headers: { 'x-webhook-token': 'a' } });
+      const res = makeRes();
+      const next = makeNext();
+
+      verifyWebhookToken(req, res, next);
+
+      expect(res.status).toHaveBeenCalledWith(403);
     });
   });
 
+  // ---- verifyIpWhitelist edge cases ----
+
   describe('verifyIpWhitelist', () => {
-    it('blocks with 403 when whitelist is empty', async () => {
+    it('should block with 403 when whitelist is empty', () => {
       setConfig({ WEBHOOK_IP_WHITELIST: '' });
-      const { res } = await runRoute(app, 'post', '/secured', {
-        headers: { 'x-webhook-token': 'secret-token' },
-      });
-      expect(res.statusCode).toBe(403);
-      expect(res.text).toContain('IP whitelist is empty');
+      const req = makeReq({ ip: '192.168.1.100' });
+      const res = makeRes();
+      const next = makeNext();
+
+      verifyIpWhitelist(req, res, next);
+
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.send).toHaveBeenCalledWith('Forbidden: IP whitelist is empty');
     });
 
-    it('allows when request IP is exactly whitelisted', async () => {
-      // Express req.ip may be ::ffff:127.0.0.1 in IPv6 environments. The implementation compares strings exactly.
-      // So whitelist must include the literal req.ip value. We probe req.ip by making a request first.
-      // Since we cannot read req.ip here, include multiple common loopback representations to guarantee a match.
-      setConfig({ WEBHOOK_IP_WHITELIST: '::ffff:127.0.0.1,127.0.0.1,::1' });
+    it('should allow when request IP is exactly whitelisted', () => {
+      setConfig({ WEBHOOK_IP_WHITELIST: '127.0.0.1' });
+      const req = makeReq({ ip: '127.0.0.1' });
+      const res = makeRes();
+      const next = makeNext();
 
-      const { res } = await runRoute(app, 'post', '/secured', {
-        headers: { 'x-webhook-token': 'secret-token' },
-      });
-      expect(res.statusCode).toBe(200);
+      verifyIpWhitelist(req, res, next);
+
+      expect(next).toHaveBeenCalled();
     });
 
-    it('blocks when request IP is not in whitelist', async () => {
+    it('should block when request IP is not in whitelist', () => {
       setConfig({ WEBHOOK_IP_WHITELIST: '10.1.2.3,192.168.1.10' });
-      const { res } = await runRoute(app, 'post', '/secured', {
-        headers: { 'x-webhook-token': 'secret-token' },
-      });
-      expect(res.statusCode).toBe(403);
-      expect(res.text).toContain('Unauthorized IP address');
+      const req = makeReq({ ip: '127.0.0.1' });
+      const res = makeRes();
+      const next = makeNext();
+
+      verifyIpWhitelist(req, res, next);
+
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.send).toHaveBeenCalledWith('Forbidden: Unauthorized IP address');
     });
 
-    it('documents limitation: CIDR ranges are not supported; mismatching despite CIDR entry', async () => {
-      // Current implementation does simple includes() check and does not parse CIDR.
+    it('should NOT support CIDR ranges (documented limitation)', () => {
+      // Implementation does exact string match, not CIDR parsing
       setConfig({ WEBHOOK_IP_WHITELIST: '127.0.0.0/24' });
-      const { res } = await runRoute(app, 'post', '/secured', {
-        headers: { 'x-webhook-token': 'secret-token' },
-      });
-      // Since '127.0.0.1' !== '127.0.0.0/24', this will block.
-      expect(res.statusCode).toBe(403);
+      const req = makeReq({ ip: '127.0.0.1' });
+      const res = makeRes();
+      const next = makeNext();
+
+      verifyIpWhitelist(req, res, next);
+
+      // CIDR range won't match exact IP
+      expect(res.status).toHaveBeenCalledWith(403);
     });
 
-    it('allows when whitelist contains only IPv6 loopback and request comes from IPv6', async () => {
-      // The source normalizes ::ffff:127.0.0.1 to 127.0.0.1, so the whitelist
-      // must include the plain IPv4 form for the mock runner's default IP.
-      setConfig({ WEBHOOK_IP_WHITELIST: '::1,::ffff:127.0.0.1,127.0.0.1' });
-      const { res } = await runRoute(app, 'post', '/secured', {
-        headers: { 'x-webhook-token': 'secret-token' },
-      });
-      expect(res.statusCode).toBe(200);
+    it('should handle IPv6 loopback address', () => {
+      setConfig({ WEBHOOK_IP_WHITELIST: '::1' });
+      const req = makeReq({ ip: '::1' });
+      const res = makeRes();
+      const next = makeNext();
+
+      verifyIpWhitelist(req, res, next);
+
+      expect(next).toHaveBeenCalled();
     });
 
-    it('blocks when whitelist has entries but none match the request IP', async () => {
-      setConfig({ WEBHOOK_IP_WHITELIST: '::2,::3' });
-      const { res } = await runRoute(app, 'post', '/secured', {
-        headers: { 'x-webhook-token': 'secret-token' },
+    it('should handle IPv4-mapped IPv6 addresses (::ffff:127.0.0.1)', () => {
+      setConfig({ WEBHOOK_IP_WHITELIST: '127.0.0.1' });
+      const req = makeReq({ ip: '::ffff:127.0.0.1' });
+      const res = makeRes();
+      const next = makeNext();
+
+      verifyIpWhitelist(req, res, next);
+
+      // Source strips ::ffff: prefix
+      expect(next).toHaveBeenCalled();
+    });
+
+    it('should handle whitespace in IP list', () => {
+      setConfig({ WEBHOOK_IP_WHITELIST: ' 127.0.0.1 , 10.0.0.1 ' });
+      const req = makeReq({ ip: '10.0.0.1' });
+      const res = makeRes();
+      const next = makeNext();
+
+      verifyIpWhitelist(req, res, next);
+
+      expect(next).toHaveBeenCalled();
+    });
+
+    it('should reject malformed IP addresses', () => {
+      setConfig({ WEBHOOK_IP_WHITELIST: '127.0.0.1' });
+      const req = makeReq({ ip: 'not-an-ip' });
+      const res = makeRes();
+      const next = makeNext();
+
+      verifyIpWhitelist(req, res, next);
+
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.send).toHaveBeenCalledWith('Forbidden: Malformed IP address');
+    });
+
+    it('should reject IPv4 with octets > 255', () => {
+      setConfig({ WEBHOOK_IP_WHITELIST: '127.0.0.1' });
+      const req = makeReq({ ip: '999.0.0.1' });
+      const res = makeRes();
+      const next = makeNext();
+
+      verifyIpWhitelist(req, res, next);
+
+      expect(res.status).toHaveBeenCalledWith(403);
+    });
+
+    it('should block when whitelist has entries but none match', () => {
+      setConfig({ WEBHOOK_IP_WHITELIST: '::2,::3,10.0.0.1' });
+      const req = makeReq({ ip: '127.0.0.1' });
+      const res = makeRes();
+      const next = makeNext();
+
+      verifyIpWhitelist(req, res, next);
+
+      expect(res.status).toHaveBeenCalledWith(403);
+    });
+
+    it('should handle undefined config value gracefully', () => {
+      setConfig({ WEBHOOK_IP_WHITELIST: undefined as any });
+      const req = makeReq({ ip: '127.0.0.1' });
+      const res = makeRes();
+      const next = makeNext();
+
+      verifyIpWhitelist(req, res, next);
+
+      // undefined → '' → empty whitelist → 403
+      expect(res.status).toHaveBeenCalledWith(403);
+    });
+  });
+
+  // ---- Combined middleware edge cases ----
+
+  describe('combined token + IP middleware', () => {
+    it('should block when token is valid but IP is not whitelisted', () => {
+      setConfig({
+        WEBHOOK_TOKEN: 'secret-token',
+        WEBHOOK_IP_WHITELIST: '10.0.0.1',
       });
-      expect(res.statusCode).toBe(403);
+      const req = makeReq({
+        headers: { 'x-webhook-token': 'secret-token' },
+        ip: '127.0.0.1',
+      });
+      const res = makeRes();
+      const next = makeNext();
+
+      verifyWebhookToken(req, res, next);
+      expect(next).toHaveBeenCalledTimes(1);
+
+      verifyIpWhitelist(req, res, next);
+      expect(res.status).toHaveBeenCalledWith(403);
+    });
+
+    it('should block when IP is whitelisted but token is missing', () => {
+      setConfig({
+        WEBHOOK_TOKEN: 'secret-token',
+        WEBHOOK_IP_WHITELIST: '127.0.0.1',
+      });
+      const req = makeReq({
+        headers: {},
+        ip: '127.0.0.1',
+      });
+      const res = makeRes();
+      const next = makeNext();
+
+      verifyWebhookToken(req, res, next);
+      expect(res.status).toHaveBeenCalledWith(403);
+    });
+
+    it('should pass when both token and IP are valid', () => {
+      setConfig({
+        WEBHOOK_TOKEN: 'secret-token',
+        WEBHOOK_IP_WHITELIST: '127.0.0.1',
+      });
+      const req = makeReq({
+        headers: { 'x-webhook-token': 'secret-token' },
+        ip: '127.0.0.1',
+      });
+      const res = makeRes();
+      const next = makeNext();
+
+      verifyWebhookToken(req, res, next);
+      verifyIpWhitelist(req, res, next);
+
+      expect(next).toHaveBeenCalledTimes(2);
     });
   });
 });

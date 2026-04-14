@@ -1,9 +1,9 @@
 import 'reflect-metadata';
 import { container } from 'tsyringe';
-import { registerServices, areServicesRegistered } from '../../../src/di/registration';
+import { registerServices, areServicesRegistered, TOKENS } from '../../../src/di/registration';
 
-// Use var to ensure hoisting and avoid initialization order issues
-var mockLoggerInstance = {
+// Use a shared mock object defined in a way that avoids hoisting issues
+(global as any).mockLogger = {
   info: jest.fn(),
   error: jest.fn(),
   warn: jest.fn(),
@@ -46,17 +46,18 @@ jest.mock('../../../src/config/ProviderConfigManager', () => ({
 }));
 
 jest.mock('../../../src/common/logger', () => {
+  const logger = (global as any).mockLogger;
   return {
     __esModule: true,
     default: {
-      withContext: jest.fn(() => mockLoggerInstance),
-      info: jest.fn(),
-      error: jest.fn(),
-      warn: jest.fn(),
-      debug: jest.fn(),
+      info: (msg: string) => logger.info(msg),
+      error: (msg: string) => logger.error(msg),
+      warn: (msg: string) => logger.warn(msg),
+      debug: (msg: string) => logger.debug(msg),
+      withContext: jest.fn(() => logger),
     },
     Logger: {
-      withContext: jest.fn(() => mockLoggerInstance),
+      withContext: jest.fn(() => logger),
     },
   };
 });
@@ -69,12 +70,13 @@ describe('DI Service Registration Logging', () => {
 
   it('should log service registrations and completion', () => {
     registerServices();
-    // Verify completion log (info level) - checking if any info was logged
-    expect(mockLoggerInstance.info).toHaveBeenCalled();
+
+    // Verify completion log (info level)
+    expect((global as any).mockLogger.info).toHaveBeenCalledWith('DI services registered');
   });
 
   it('should check if services are registered', () => {
-    // initially not registered (or reset)
+    // initially not registered
     expect(areServicesRegistered()).toBe(false);
 
     registerServices();

@@ -85,6 +85,7 @@ module.exports = {
         : '<rootDir>/tests/__mocks__/discord.js.ts',
     '^pg$': '<rootDir>/tests/mocks/pg.js',
     '^@modelcontextprotocol/sdk$': '<rootDir>/tests/mocks/modelcontextprotocol-sdk.ts',
+    '^@socket.io/redis-adapter$': '<rootDir>/tests/mocks/redisAdapter.js',
   },
   setupFiles: ["<rootDir>/tests/accessibility/jsdom-polyfills.ts"],
   setupFilesAfterEnv: ['<rootDir>/tests/jest.setup.ts'],

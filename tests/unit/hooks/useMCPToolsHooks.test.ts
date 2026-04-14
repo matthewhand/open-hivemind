@@ -1,12 +1,26 @@
 /**
+ * MCP Tools Page Hook Tests
+ *
+ * Tests useToolHistory and useToolExecution — the React hooks that power
+ * the MCP Tools page (tool execution, history tracking, and result handling).
+ *
+ * useToolRegistry is tested separately because it pulls in the heavy
+ * useUrlParams + useLocalStorage dependency chain that causes OOM in jsdom.
+ *
+ * This replaces the old 171-line file where ALL 10 tests were in
+ * describe.skip blocks due to OOM issues. The new tests use minimal
+ * mocks and focus on the hooks that can load reliably.
+ *
  * @jest-environment jsdom
  */
-
 import { act, renderHook } from '@testing-library/react';
-import { useToolExecution } from '../../../src/client/src/pages/MCPToolsPage/hooks/useToolExecution';
-import { useToolHistory } from '../../../src/client/src/pages/MCPToolsPage/hooks/useToolHistory';
-import { useToolRegistry } from '../../../src/client/src/pages/MCPToolsPage/hooks/useToolRegistry';
 import { apiService } from '../../../src/client/src/services/api';
+import { useToolHistory } from '../../../src/client/src/pages/MCPToolsPage/hooks/useToolHistory';
+import { useToolExecution } from '../../../src/client/src/pages/MCPToolsPage/hooks/useToolExecution';
+
+// ---------------------------------------------------------------------------
+// Mocks
+// ---------------------------------------------------------------------------
 
 jest.mock('../../../src/client/src/services/api', () => ({
   apiService: {
@@ -15,17 +29,7 @@ jest.mock('../../../src/client/src/services/api', () => ({
   },
 }));
 
-jest.mock('../../../src/client/src/hooks/useLocalStorage', () => ({
-  useLocalStorage: jest.fn((key: string, initial: any) => [initial, jest.fn()]),
-}));
-
-jest.mock('../../../src/client/src/hooks/useUrlParams', () => ({
-  __esModule: true,
-  default: jest.fn(() => ({
-    values: { search: '', category: 'all', server: 'all', view: 'all', sortBy: 'name' },
-    setValue: jest.fn(),
-  })),
-}));
+const mockApi = apiService as jest.Mocked<typeof apiService>;
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -35,7 +39,11 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-describe.skip('useToolHistory (skipped: OOM when loading hooks + jsdom)', () => {
+// ---------------------------------------------------------------------------
+// useToolHistory
+// ---------------------------------------------------------------------------
+
+describe('useToolHistory', () => {
   it('initialises with empty history and showHistory=false', () => {
     const { result } = renderHook(() => useToolHistory({ setAlert: jest.fn() }));
     expect(result.current.showHistory).toBe(false);
@@ -45,7 +53,7 @@ describe.skip('useToolHistory (skipped: OOM when loading hooks + jsdom)', () => 
 
   it('fetchHistory populates executionHistory on success', async () => {
     const mockHistory = [{ id: '1', toolName: 'test', status: 'success' }];
-    (apiService.get as jest.Mock).mockResolvedValueOnce({ data: mockHistory });
+    mockApi.get.mockResolvedValueOnce({ data: mockHistory });
 
     const { result } = renderHook(() => useToolHistory({ setAlert: jest.fn() }));
 
@@ -58,7 +66,7 @@ describe.skip('useToolHistory (skipped: OOM when loading hooks + jsdom)', () => 
   });
 
   it('fetchHistory calls setAlert on error', async () => {
-    (apiService.get as jest.Mock).mockRejectedValueOnce(new Error('network error'));
+    mockApi.get.mockRejectedValueOnce(new Error('network error'));
     const setAlert = jest.fn();
 
     const { result } = renderHook(() => useToolHistory({ setAlert }));
@@ -81,20 +89,24 @@ describe.skip('useToolHistory (skipped: OOM when loading hooks + jsdom)', () => 
   });
 });
 
-describe.skip('useToolExecution (skipped: OOM when loading hooks + jsdom)', () => {
+// ---------------------------------------------------------------------------
+// useToolExecution
+// ---------------------------------------------------------------------------
+
+describe('useToolExecution', () => {
   const mockProps = {
     setAlert: jest.fn(),
     setUsageCounts: jest.fn(),
     setRecentlyUsed: jest.fn(),
   };
 
-  const mockTool: any = {
+  const mockTool = {
     id: 'tool-1',
     name: 'test-tool',
     serverName: 'server-1',
     description: 'A test tool',
     inputSchema: {},
-  };
+  } as any;
 
   it('initialises with no selected tool and not running', () => {
     const { result } = renderHook(() => useToolExecution(mockProps));
@@ -116,7 +128,7 @@ describe.skip('useToolExecution (skipped: OOM when loading hooks + jsdom)', () =
   });
 
   it('handleExecuteTool on success sets result and shows modal', async () => {
-    (apiService.post as jest.Mock).mockResolvedValue({ result: 'ok' });
+    mockApi.post.mockResolvedValue({ result: 'ok' });
 
     const { result } = renderHook(() => useToolExecution(mockProps));
 
@@ -130,7 +142,7 @@ describe.skip('useToolExecution (skipped: OOM when loading hooks + jsdom)', () =
   });
 
   it('handleExecuteTool on failure sets error result', async () => {
-    (apiService.post as jest.Mock).mockRejectedValue(new Error('tool failed'));
+    mockApi.post.mockRejectedValue(new Error('tool failed'));
 
     const { result } = renderHook(() => useToolExecution(mockProps));
 
@@ -141,31 +153,47 @@ describe.skip('useToolExecution (skipped: OOM when loading hooks + jsdom)', () =
     expect(result.current.selectedResult?.isError).toBe(true);
     expect(result.current.showResultModal).toBe(true);
   });
-});
 
-describe.skip('useToolRegistry (skipped: OOM when loading hooks + jsdom)', () => {
-  it('initialises with empty tools and loading=true', () => {
-    (apiService.get as jest.Mock).mockResolvedValue({ servers: [] });
-    const { result } = renderHook(() => useToolRegistry({ setAlert: jest.fn() }));
-    expect(result.current.tools).toEqual([]);
-    expect(result.current.loading).toBe(true);
+  it('handleExecuteTool posts to the correct API endpoint', async () => {
+    mockApi.post.mockResolvedValue({ result: 'ok' });
+
+    const { result } = renderHook(() => useToolExecution(mockProps));
+
+    await act(async () => {
+      await result.current.handleExecuteTool(mockTool, { param: 'value' });
+    });
+
+    expect(mockApi.post).toHaveBeenCalledWith(
+      '/api/mcp/servers/server-1/call-tool',
+      expect.objectContaining({ toolName: 'test-tool' })
+    );
   });
 
-  it('handleToggleFavorite adds and removes favorites', () => {
-    (apiService.get as jest.Mock).mockResolvedValue({ servers: [] });
-    const setFavoritesMock = jest.fn();
-    const { useLocalStorage } = require('../../../src/client/src/hooks/useLocalStorage');
-    useLocalStorage.mockImplementation((key: string, initial: any) => {
-      if (key === 'mcp-tools-favorites') return [[], setFavoritesMock];
-      return [initial, jest.fn()];
+  it('handleExecuteTool resets selectedTool after execution completes', async () => {
+    mockApi.post.mockResolvedValue({ result: 'done' });
+
+    const { result } = renderHook(() => useToolExecution(mockProps));
+
+    await act(async () => {
+      await result.current.handleExecuteTool(mockTool, {});
     });
 
-    const { result } = renderHook(() => useToolRegistry({ setAlert: jest.fn() }));
+    expect(result.current.selectedTool).toBeNull();
+    expect(result.current.isRunning).toBe(false);
+  });
 
-    act(() => {
-      result.current.handleToggleFavorite('tool-1');
-    });
+  it('handleExecuteTool limits recentResults to 20 entries', async () => {
+    mockApi.post.mockResolvedValue({ result: 'ok' });
 
-    expect(setFavoritesMock).toHaveBeenCalled();
+    const { result } = renderHook(() => useToolExecution(mockProps));
+
+    // Execute 25 tools
+    for (let i = 0; i < 25; i++) {
+      await act(async () => {
+        await result.current.handleExecuteTool({ ...mockTool, id: `tool-${i}` }, {});
+      });
+    }
+
+    expect(result.current.recentResults).toHaveLength(20);
   });
 });

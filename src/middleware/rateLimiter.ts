@@ -35,7 +35,7 @@ async function initializeRedis(): Promise<void> {
     const rateLimitRedis = await import('rate-limit-redis');
     const RedisStore = rateLimitRedis.RedisStore as unknown as new (
       opts: Record<string, unknown>
-    ) => unknown;
+    ) => any;
 
     const redisUrl = process.env.REDIS_URL;
     if (!redisUrl) {
@@ -170,11 +170,7 @@ export async function getBotRateLimiter(
 /**
  * Middleware to apply rate limiting based on route type
  */
-export const applyRateLimiting = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const applyRateLimiting = async (req: Request, res: Response, next: NextFunction) => {
   if (shouldSkipRateLimit(req)) return next();
 
   const {

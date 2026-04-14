@@ -10,13 +10,8 @@ import { configureStore } from '@reduxjs/toolkit';
 import ImportExportPage from '../../../src/client/src/pages/ImportExportPage';
 
 // Mock DaisyUI components
-jest.mock('../../../src/client/src/components/DaisyUI', () => {
-  const MockCard: any = ({ children, className }: any) => <div className={className}>{children}</div>;
-  MockCard.Title = ({ children, className }: any) => <div className={className}>{children}</div>;
-  MockCard.Actions = ({ children, className }: any) => <div className={className}>{children}</div>;
-  
-  return {
-    Card: MockCard,
+jest.mock('../../../src/client/src/components/DaisyUI', () => ({
+  Card: ({ children, className }: any) => <div className={className}>{children}</div>,
   Badge: ({ children, className }: any) => <span className={className}>{children}</span>,
   Select: ({ children, className, onChange, value }: any) => (
     <select className={className} onChange={onChange} value={value}>{children}</select>
@@ -34,31 +29,7 @@ jest.mock('../../../src/client/src/components/DaisyUI', () => {
   Alert: ({ children, type }: any) => <div className={`alert-${type}`}>{children}</div>,
   LoadingSpinner: () => <div className="loading-spinner" />,
   ProgressBar: ({ value }: any) => <div className="progress-bar" data-value={value} />,
-  FileUpload: ({ onFileSelect }: any) => (
-    <div data-testid="file-upload">
-      Drag 'n' drop files here
-      <input type="file" onChange={(e) => {
-        if (e.target.files && e.target.files[0]) {
-          onFileSelect(e.target.files[0]);
-        }
-      }} />
-    </div>
-  ),
-  Modal: ({ isOpen, onClose, title, children, actions }: any) => {
-    if (!isOpen) return null;
-    return (
-      <div data-testid="modal">
-        <h2>{title}</h2>
-        {children}
-        <button onClick={onClose}>Close</button>
-        {actions && actions.map((a: any, i: number) => (
-          <button key={i} onClick={a.onClick} disabled={a.disabled}>{a.label}</button>
-        ))}
-      </div>
-    );
-  },
-  };
-});
+}));
 
 // Mock the API service
 jest.mock('../../../src/client/src/services/api', () => ({

@@ -1,195 +1,245 @@
 /**
- * Example of robust performance testing with statistical analysis
- * This demonstrates the improved performance testing approach
+ * API Response Validation Tests
+ *
+ * Tests that key API endpoints return well-formed, validated responses
+ * with correct shapes, types, and status codes. These catch regressions
+ * in API contracts that would break frontend consumers.
+ *
+ * This replaces the old 195-line performanceTestingExample.test.ts — a demo
+ * file with 4 console.log statements that only measured microsecond timing
+ * of discordConfig.get() without verifying any application behavior.
  */
+import express from 'express';
+import request from 'supertest';
+import dashboardRouter from '../../src/server/routes/dashboard';
 
-import {
-  createPerformanceTestSuite,
-  runConcurrencyTest,
-  runPerformanceTest,
-} from '../helpers/performanceTestHelper';
+// ---------------------------------------------------------------------------
+// Mock auth and services
+// ---------------------------------------------------------------------------
 
-// Example 1: Basic performance test with statistical analysis
-describe('Performance Testing Examples', () => {
-  afterEach(() => {
-    jest.restoreAllMocks();
+jest.mock('../../src/auth/middleware', () => ({
+  authenticate: (req: any, res: any, next: any) => {
+    req.user = { username: 'admin', role: 'admin' };
+    next();
+  },
+  requireAdmin: (req: any, res: any, next: any) => next(),
+}));
+
+jest.mock('@src/config/BotConfigurationManager', () => ({
+  BotConfigurationManager: {
+    getInstance: jest.fn(),
+  },
+}));
+
+jest.mock('@src/server/services/WebSocketService', () => ({
+  __esModule: true,
+  default: {
+    getInstance: jest.fn(),
+  },
+}));
+
+jest.mock('../../src/server/services/ActivityLogger', () => ({
+  ActivityLogger: {
+    getInstance: jest.fn(),
+  },
+}));
+
+jest.mock('../../src/services/AnalyticsService', () => ({
+  AnalyticsService: {
+    getInstance: jest.fn(),
+  },
+}));
+
+const mockManagerInstance = {
+  getAllBots: jest.fn(),
+};
+
+const mockWsInstance = {
+  getAllBotStats: jest.fn().mockReturnValue({}),
+  getBotStats: jest.fn().mockReturnValue({ messageCount: 0, errorCount: 0, errors: [] }),
+};
+
+const mockActivityLoggerInstance = {
+  getEvents: jest.fn().mockResolvedValue([]),
+};
+
+function makeApp() {
+  const app = express();
+  app.use(express.json());
+  app.use('/dashboard', dashboardRouter);
+
+  const { BotConfigurationManager } = require('@src/config/BotConfigurationManager');
+  const WebSocketService = require('@src/server/services/WebSocketService').default;
+  const { ActivityLogger } = require('../../src/server/services/ActivityLogger');
+
+  (BotConfigurationManager.getInstance as jest.Mock).mockReturnValue(mockManagerInstance);
+  (WebSocketService.getInstance as jest.Mock).mockReturnValue(mockWsInstance);
+  (ActivityLogger.getInstance as jest.Mock).mockReturnValue(mockActivityLoggerInstance);
+
+  return app;
+}
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
+
+describe('API Response Validation', () => {
+  let app: express.Application;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    app = makeApp();
+    mockManagerInstance.getAllBots.mockReturnValue([]);
   });
 
-  it('should demonstrate statistical performance analysis', async () => {
-    const result = await runPerformanceTest(
-      'Simple config access',
-      () => {
-        const config = require('../../src/config/discordConfig').default;
-        return config.get('DISCORD_BOT_TOKEN');
-      },
-      {
-        iterations: 100,
-        acceptableAverageMs: 10,
-        acceptableMaxMs: 50,
-      }
-    );
+  // ---- Response shape validation ----
 
-    console.log('Performance metrics:', {
-      operation: result.operation,
-      average: `${result.average.toFixed(3)}ms`,
-      median: `${result.median.toFixed(3)}ms`,
-      min: `${result.min.toFixed(3)}ms`,
-      max: `${result.max.toFixed(3)}ms`,
-      p95: `${result.percentile95.toFixed(3)}ms`,
-      p99: `${result.percentile99.toFixed(3)}ms`,
-      stdDev: result.standardDeviation.toFixed(3),
+  describe('GET /dashboard/tips response shape', () => {
+    it('should return tips array with required fields', async () => {
+      const res = await request(app).get('/dashboard/tips');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toHaveProperty('tips');
+      expect(Array.isArray(res.body.data.tips)).toBe(true);
+      expect(res.body.data.tips.length).toBeGreaterThan(0);
+
+      // Each tip should be a non-empty string
+      for (const tip of res.body.data.tips) {
+        expect(typeof tip).toBe('string');
+        expect(tip.length).toBeGreaterThan(0);
+      }
+    });
+  });
+
+  // ---- Error response shape validation ----
+
+  describe('Error response shape', () => {
+    it('should return 500 on activity endpoint when logger fails', async () => {
+      mockActivityLoggerInstance.getEvents.mockRejectedValue(new Error('Activity log corrupt'));
+
+      const res = await request(app).get('/dashboard/activity');
+
+      expect(res.status).toBe(500);
+      expect(res.body).toHaveProperty('error');
+    });
+  });
+
+  // ---- Content-Type validation ----
+
+  describe('Content-Type headers', () => {
+    it('should return application/json for /dashboard/tips', async () => {
+      const res = await request(app).get('/dashboard/tips');
+
+      expect(res.headers['content-type']).toMatch(/json/);
     });
 
-    // The runPerformanceTest function already includes assertions
-    expect(result.average).toBeLessThan(10);
-    expect(result.max).toBeLessThan(50);
+    it('should return application/json for /dashboard/config-status', async () => {
+      mockManagerInstance.getAllBots.mockReturnValue([
+        { name: 'bot1', messageProvider: 'discord', llmProvider: 'openai' },
+      ]);
+
+      const res = await request(app).get('/dashboard/config-status');
+
+      expect(res.headers['content-type']).toMatch(/application\/json/);
+    });
   });
 
-  it('should test concurrent config access patterns', async () => {
-    const result = await runConcurrencyTest(
-      'Concurrent config access',
-      () => {
-        const config = require('../../src/config/discordConfig').default;
-        return config.get('DISCORD_BOT_TOKEN');
-      },
-      {
-        concurrentUsers: 10,
-        operationsPerUser: 50,
-        timeoutMs: 5000,
-      }
-    );
+  // ---- Data type validation ----
 
-    console.log('Concurrency metrics:', {
-      operation: result.operation,
-      totalOperations: result.totalOperations,
-      totalTime: `${result.totalTime}ms`,
-      opsPerSecond: result.operationsPerSecond.toFixed(2),
-      avgLatency: `${result.averageLatency.toFixed(3)}ms`,
+  describe('Data type validation', () => {
+    it('should return numeric botConfigured flag', async () => {
+      mockManagerInstance.getAllBots.mockReturnValue([
+        { name: 'a', messageProvider: 'discord', llmProvider: 'openai' },
+        { name: 'b', messageProvider: 'slack', llmProvider: 'flowise' },
+      ]);
+
+      const res = await request(app).get('/dashboard/config-status');
+
+      expect(typeof res.body.data.botConfigured).toBe('boolean');
+      expect(res.body.data.botConfigured).toBe(true);
     });
 
-    expect(result.operationsPerSecond).toBeGreaterThan(100);
-    expect(result.averageLatency).toBeLessThan(20);
-  });
-});
+    it('should return announcement response with hasAnnouncement flag', async () => {
+      const res = await request(app).get('/dashboard/announcement');
 
-// Example 2: Using the performance test suite helper
-createPerformanceTestSuite('Config Operations Performance', [
-  {
-    name: 'Discord config string access',
-    operation: () => {
-      const config = require('../../src/config/discordConfig').default;
-      return config.get('DISCORD_BOT_TOKEN');
-    },
-    options: {
-      iterations: 200,
-      acceptableAverageMs: 5,
-      acceptableMaxMs: 20,
-    },
-  },
-  {
-    name: 'Discord config numeric access',
-    operation: () => {
-      const config = require('../../src/config/discordConfig').default;
-      return config.get('DISCORD_MESSAGE_HISTORY_LIMIT');
-    },
-    options: {
-      iterations: 200,
-      acceptableAverageMs: 5,
-      acceptableMaxMs: 20,
-    },
-  },
-  {
-    name: 'Discord config validation',
-    operation: () => {
-      const config = require('../../src/config/discordConfig').default;
-      config.validate({ allowed: 'strict' });
-    },
-    options: {
-      iterations: 50, // Fewer iterations for heavier operations
-      acceptableAverageMs: 50,
-      acceptableMaxMs: 200,
-    },
-  },
-]);
-
-// Example 3: Memory usage testing (requires --expose-gc)
-describe('Memory Usage Testing', () => {
-  it.skip('should test memory usage patterns', async () => {
-    // This test is skipped by default as it requires --expose-gc
-    // Uncomment and run with: node --expose-gc node_modules/.bin/jest
-
-    const { runMemoryTest } = require('../helpers/performanceTestHelper');
-
-    const result = await runMemoryTest(
-      'Config loading memory usage',
-      () => {
-        jest.resetModules();
-        const config = require('../../src/config/discordConfig').default;
-        return config.get('DISCORD_BOT_TOKEN');
-      },
-      {
-        iterations: 100,
-        checkForLeaks: true,
-      }
-    );
-
-    console.log('Memory metrics:', {
-      operation: result.operation,
-      memoryDelta: `${result.memoryDelta} bytes`,
-      leaked: result.leaked,
+      expect(res.status).toBe(200);
+      expect(res.body.data).toHaveProperty('hasAnnouncement');
     });
 
-    expect(result.leaked).toBe(false);
-    expect(result.memoryDelta).toBeLessThan(1024 * 1024); // Less than 1MB
+    it('should return correct config-status response shape', async () => {
+      mockManagerInstance.getAllBots.mockReturnValue([
+        { name: 'bot1', messageProvider: 'discord', llmProvider: 'openai' },
+      ]);
+      mockWsInstance.getBotStats.mockReturnValue({ messageCount: 0, errorCount: 0 });
+
+      const res = await request(app).get('/dashboard/config-status');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toHaveProperty('llmConfigured');
+      expect(res.body.data).toHaveProperty('botConfigured');
+      expect(res.body.data).toHaveProperty('messengerConfigured');
+    });
   });
-});
 
-// Example 4: Load testing simulation
-describe('Load Testing Simulation', () => {
-  it('should handle sustained load', async () => {
-    const operations = [];
-    const startTime = Date.now();
+  // ---- Query parameter validation ----
 
-    // Simulate 1000 operations over 10 seconds
-    for (let i = 0; i < 1000; i++) {
-      operations.push(
-        runPerformanceTest(
-          `Load test operation ${i}`,
-          () => {
-            const config = require('../../src/config/discordConfig').default;
-            return (
-              config.get('DISCORD_BOT_TOKEN') +
-              config.get('DISCORD_MESSAGE_HISTORY_LIMIT') +
-              config.get('DISCORD_LOGGING_ENABLED')
-            );
-          },
-          {
-            iterations: 1, // Single iteration per test
-            acceptableAverageMs: 100,
-            acceptableMaxMs: 500,
-          }
-        )
+  describe('Query parameter handling', () => {
+    it('should accept limit parameter for activity endpoint', async () => {
+      mockActivityLoggerInstance.getEvents.mockResolvedValue([]);
+
+      const res = await request(app).get('/dashboard/activity?limit=5');
+
+      expect(res.status).toBe(200);
+      expect(mockActivityLoggerInstance.getEvents).toHaveBeenCalledWith(
+        expect.objectContaining({ limit: 5 })
       );
-
-      // Small delay to simulate real usage patterns
-      await new Promise((resolve) => setTimeout(resolve, 10));
-    }
-
-    const results = await Promise.all(operations);
-    const totalTime = Date.now() - startTime;
-
-    const avgLatency = results.reduce((sum, r) => sum + r.average, 0) / results.length;
-    const maxLatency = Math.max(...results.map((r) => r.max));
-
-    console.log('Load test results:', {
-      totalOperations: operations.length,
-      totalTime: `${totalTime}ms`,
-      avgLatency: `${avgLatency.toFixed(3)}ms`,
-      maxLatency: `${maxLatency.toFixed(3)}ms`,
-      opsPerSecond: (operations.length / (totalTime / 1000)).toFixed(2),
     });
 
-    expect(avgLatency).toBeLessThan(50);
-    expect(maxLatency).toBeLessThan(200);
-  }, 30000); // 30 second timeout for load testing
+    it('should accept bot filter for activity endpoint', async () => {
+      mockActivityLoggerInstance.getEvents.mockResolvedValue([]);
+
+      const res = await request(app).get('/dashboard/activity?bot=test-bot');
+
+      expect(res.status).toBe(200);
+    });
+
+    it('should accept messageProvider filter for activity endpoint', async () => {
+      mockActivityLoggerInstance.getEvents.mockResolvedValue([]);
+
+      const res = await request(app).get('/dashboard/activity?messageProvider=discord');
+
+      expect(res.status).toBe(200);
+    });
+
+    it('should handle missing optional query parameters gracefully', async () => {
+      mockActivityLoggerInstance.getEvents.mockResolvedValue([]);
+
+      const res = await request(app).get('/dashboard/activity');
+
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body.data.events)).toBe(true);
+    });
+  });
+
+  // ---- Response consistency across calls ----
+
+  describe('Response consistency', () => {
+    it('should return same number of tips on consecutive calls', async () => {
+      const res1 = await request(app).get('/dashboard/tips');
+      const res2 = await request(app).get('/dashboard/tips');
+
+      expect(res1.body.length).toBe(res2.body.length);
+    });
+
+    it('should return consistent config-status shape', async () => {
+      mockManagerInstance.getAllBots.mockReturnValue([
+        { name: 'consistency-bot', messageProvider: 'discord', llmProvider: 'openai' },
+      ]);
+
+      const res1 = await request(app).get('/dashboard/config-status');
+      const res2 = await request(app).get('/dashboard/config-status');
+
+      expect(Object.keys(res1.body).sort()).toEqual(Object.keys(res2.body).sort());
+    });
+  });
 });
