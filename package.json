@@ -332,7 +332,10 @@
       "@modelcontextprotocol/sdk": "^1.25.2",
       "tar": "^7.5.11",
       "undici": "^6.24.0",
-      "fast-xml-parser": "^4.5.5"
+      "fast-xml-parser": "^4.5.5",
+      "minimatch": "^10.2.3",
+      "serialize-javascript": "^7.0.3",
+      "ajv": "^8.18.0"
     },
     "onlyBuiltDependencies": [
       "better-sqlite3"
