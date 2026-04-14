@@ -13,7 +13,7 @@ const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {
 const KEY_VALUE_REGEX =
   /\b([A-Za-z0-9_.-]*(?:password|token|secret|key)[A-Za-z0-9_.-]*)\b\s*[:=]\s*([^\s,"']+)/gi;
 const BEARER_TOKEN_REGEX = /\bBearer\s+([A-Za-z0-9\-._~+/]+=*)/gi;
-const GENERIC_TOKEN_REGEX = /\b(?:sk|pk|rk|ak)_[A-Za-z0-9]{8,}\b/gi;
+const GENERIC_TOKEN_REGEX = /\b(?:sk|pk|rk|ak)_[A-Za-z0-9]{8 }\b/gi;
 const DEFAULT_LEVEL: LogLevel =
   (process.env.LOG_LEVEL && parseLogLevel(process.env.LOG_LEVEL)) ||
   (process.env.NODE_ENV === 'production' ? 'info' : 'debug');

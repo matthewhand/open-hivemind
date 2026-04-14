@@ -2,10 +2,10 @@
 import React from 'react';
 import { Alert } from './DaisyUI/Alert';
 import Card from './DaisyUI/Card';
-import { Loading, LoadingSpinner } from './DaisyUI/Loading';
+import { LoadingSpinner } from './DaisyUI/Loading';
 import Button from './DaisyUI/Button';
 import { SkeletonGrid } from './DaisyUI/Skeleton';
-import { RefreshCw } from 'lucide-react';
+import { ArrowPathIcon } from 'lucide-react';
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import type { SerializedError } from '@reduxjs/toolkit';
 import { useGetPerformanceMetricsQuery } from '../store/slices/apiSlice';

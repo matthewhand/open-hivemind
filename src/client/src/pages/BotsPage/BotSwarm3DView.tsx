@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bot, Globe, Cpu, MessageSquare, AlertTriangle, Play, Pause } from 'lucide-react';
+import { Bot, Globe, MessageSquare, AlertTriangle, Play, Pause } from 'lucide-react';
 import { useUIStore } from '../../store/uiStore';
 import type { BotConfig } from '../../types/bot';
 import Card from '../../components/DaisyUI/Card';

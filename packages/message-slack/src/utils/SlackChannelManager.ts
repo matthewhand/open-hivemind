@@ -19,7 +19,7 @@ export class SlackChannelManager {
    */
   public static isValidChannelId(channelId: string): boolean {
     // Slack channel IDs start with 'C' for public channels, 'G' for private groups, 'D' for DMs
-    return /^[CGD][A-Z0-9]{8,}$/.test(channelId);
+    return /^[CGD][A-Z0-9]{8 }$/.test(channelId);
   }
 
   /**
