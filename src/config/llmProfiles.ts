@@ -1,6 +1,6 @@
 import llmConfig from './llmConfig';
 import { UserConfigStore } from './UserConfigStore';
-import { loadProfiles, saveProfiles, findProfileByKey } from './profileUtils';
+import { loadProfiles, saveProfiles, buildProfileMap } from './profileUtils';
 
 export type LlmModelType = 'chat' | 'embedding' | 'both';
 
@@ -19,6 +19,23 @@ export interface LlmProfiles {
 
 const DEFAULT_LLM_PROFILES: LlmProfiles = {
   llm: [],
+};
+
+// ⚡ Bolt Optimization: O(1) Map-based profile lookups
+let profilesCache: ProviderProfile[] | null = null;
+let profileMapCache: Map<string, ProviderProfile> | null = null;
+
+const invalidateProfileMap = (): void => {
+  profilesCache = null;
+  profileMapCache = null;
+};
+
+const ensureProfileMap = (): void => {
+  if (profileMapCache && profilesCache) {
+    return;
+  }
+  profilesCache = loadLlmProfiles().llm;
+  profileMapCache = buildProfileMap(profilesCache);
 };
 
 export const normalizeModelType = (value: unknown): LlmModelType => {
@@ -58,6 +75,7 @@ const normalizeProfile = (profile: unknown): ProviderProfile | null => {
 };
 
 export const loadLlmProfiles = (): LlmProfiles => {
+  invalidateProfileMap();
   return loadProfiles<LlmProfiles>({
     filename: 'llm-profiles.json',
     defaultData: DEFAULT_LLM_PROFILES,
@@ -79,11 +97,12 @@ export const loadLlmProfiles = (): LlmProfiles => {
 
 export const saveLlmProfiles = (profiles: LlmProfiles): void => {
   saveProfiles('llm-profiles.json', profiles);
+  invalidateProfileMap();
 };
 
 export const getLlmProfileByKey = (key: string): ProviderProfile | undefined => {
-  const profiles = loadLlmProfiles().llm;
-  return findProfileByKey(profiles, 'key', key);
+  ensureProfileMap();
+  return profileMapCache!.get(key.trim().toLowerCase());
 };
 
 export const getDefaultEmbeddingProfileKey = (): string | undefined => {

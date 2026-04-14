@@ -1,4 +1,4 @@
-import { loadProfiles, saveProfiles, findProfileByKey } from './profileUtils';
+import { loadProfiles, saveProfiles, buildProfileMap } from './profileUtils';
 
 export interface MessageProfile {
   key: string;
@@ -16,7 +16,25 @@ const DEFAULT_MESSAGE_PROFILES: MessageProfiles = {
   message: [],
 };
 
+// ⚡ Bolt Optimization: O(1) Map-based profile lookups
+let profilesCache: MessageProfile[] | null = null;
+let profileMapCache: Map<string, MessageProfile> | null = null;
+
+const invalidateProfileMap = (): void => {
+  profilesCache = null;
+  profileMapCache = null;
+};
+
+const ensureProfileMap = (): void => {
+  if (profileMapCache && profilesCache) {
+    return;
+  }
+  profilesCache = loadMessageProfiles().message;
+  profileMapCache = buildProfileMap(profilesCache);
+};
+
 export const loadMessageProfiles = (): MessageProfiles => {
+  invalidateProfileMap();
   return loadProfiles<MessageProfiles>({
     filename: 'message-profiles.json',
     defaultData: DEFAULT_MESSAGE_PROFILES,
@@ -34,11 +52,12 @@ export const loadMessageProfiles = (): MessageProfiles => {
 
 export const saveMessageProfiles = (profiles: MessageProfiles): void => {
   saveProfiles('message-profiles.json', profiles);
+  invalidateProfileMap();
 };
 
 export const getMessageProfileByKey = (key: string): MessageProfile | undefined => {
-  const profiles = loadMessageProfiles().message;
-  return findProfileByKey(profiles, 'key', key);
+  ensureProfileMap();
+  return profileMapCache!.get(key.trim().toLowerCase());
 };
 
 export const getMessageProfiles = (): MessageProfiles => loadMessageProfiles();
