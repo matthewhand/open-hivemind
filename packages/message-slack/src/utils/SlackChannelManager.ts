@@ -11,7 +11,7 @@ export class SlackChannelManager {
    * Get the default channel ID from configuration
    */
   public static getDefaultChannel(): string {
-    return slackConfig.get('SLACK_DEFAULT_CHANNEL_ID') || '';
+    return String(slackConfig.get('SLACK_DEFAULT_CHANNEL_ID') || '');
   }
 
   /**
