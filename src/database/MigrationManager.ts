@@ -1,5 +1,5 @@
-import type { Database } from './sqliteWrapper';
 import { Logger } from '@common/logger';
+import type { Database } from './sqliteWrapper';
 
 export interface Migration {
   id: string;

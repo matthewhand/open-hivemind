@@ -1,6 +1,7 @@
 import { EventEmitter } from 'events';
-import Database = require('better-sqlite3');
 import { Logger } from '@common/logger';
+
+import Database = require('better-sqlite3');
 
 interface ConnectionOptions {
   databasePath: string;
