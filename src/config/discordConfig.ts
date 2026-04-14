@@ -55,7 +55,27 @@ function loadDiscordConfig(): DiscordConfig {
   mapEnv('DISCORD_MESSAGE_HISTORY_LIMIT', 'DISCORD_MESSAGE_HISTORY_LIMIT', parseIntBase10);
   mapEnv('DISCORD_CHANNEL_ID', 'DISCORD_CHANNEL_ID');
   mapEnv('DISCORD_DEFAULT_CHANNEL_ID', 'DISCORD_DEFAULT_CHANNEL_ID');
-  mapEnv('DISCORD_CHANNEL_BONUSES', 'DISCORD_CHANNEL_BONUSES', parseJSON);
+  
+  // Handle both JSON and comma-separated string formats for channel bonuses
+  if (process.env.DISCORD_CHANNEL_BONUSES) {
+    const val = process.env.DISCORD_CHANNEL_BONUSES;
+    try {
+      envConfig['DISCORD_CHANNEL_BONUSES'] = JSON.parse(val);
+    } catch {
+      // Not JSON, try comma-separated format: channel1:1.5,channel2:2.0
+      const bonuses: Record<string, number> = {};
+      val.split(',').forEach(pair => {
+        const [id, weight] = pair.split(':');
+        if (id && weight) {
+          bonuses[id.trim()] = parseFloat(weight);
+        }
+      });
+      if (Object.keys(bonuses).length > 0) {
+        envConfig['DISCORD_CHANNEL_BONUSES'] = bonuses;
+      }
+    }
+  }
+
   mapEnv('DISCORD_UNSOLICITED_CHANCE_MODIFIER', 'DISCORD_UNSOLICITED_CHANCE_MODIFIER', parseFloatBase10);
   mapEnv('DISCORD_VOICE_CHANNEL_ID', 'DISCORD_VOICE_CHANNEL_ID');
   mapEnv('DISCORD_MAX_MESSAGE_LENGTH', 'DISCORD_MAX_MESSAGE_LENGTH', parseIntBase10);

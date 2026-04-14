@@ -12,11 +12,14 @@ import RangeSlider from '../DaisyUI/RangeSlider';
 import { SkeletonList } from '../DaisyUI/Skeleton';
 import { MessageSquare, Bot, Users, Zap, Info } from 'lucide-react';
 import Tooltip from '../DaisyUI/Tooltip';
+import { useToast } from '../DaisyUI/ToastNotification';
+import { useDemoModeWarning } from '../../hooks/useDemoModeWarning';
 import Accordion from '../DaisyUI/Accordion';
 import { apiService } from '../../services/api';
 import { useSavedStamp } from '../../contexts/SavedStampContext';
 import Textarea from '../DaisyUI/Textarea';
 import SimpleTable from '../DaisyUI/SimpleTable';
+import { useToast } from '../DaisyUI/ToastNotification';
 
 const messagingSettingsSchema = z.object({
   onlyWhenSpokenTo: z.boolean(),
@@ -61,7 +64,7 @@ const SettingsMessaging: React.FC = () => {
   const [alert, setAlert] = useState<{ type: 'success' | 'error' | 'warning', message: string } | null>(null);
   const { showStamp } = useSavedStamp();
   const { addToast } = useToast();
-  const warnIfDemo = useDemoModeWarning(addToast);
+  const warnIfDemo = useDemoModeWarning(addToast as any);
 
   const onlyWhenSpokenTo = watch('onlyWhenSpokenTo');
   const allowBotToBot = watch('allowBotToBot');

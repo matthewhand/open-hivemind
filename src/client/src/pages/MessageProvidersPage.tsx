@@ -69,7 +69,7 @@ const CommunityTab: React.FC = () => {
       } catch (err: unknown) {
         setError(
           (err instanceof Error ? err.message : String(err)) ||
-            'Failed to load community packages',
+          'Failed to load community packages',
         );
       } finally {
         setLoading(false);
@@ -153,11 +153,10 @@ const CommunityTab: React.FC = () => {
                   {[1, 2, 3, 4, 5].map((star) => (
                     <StarIcon
                       key={star}
-                      className={`w-4 h-4 ${
-                        (pkg.rating ?? 0) >= star
+                      className={`w-4 h-4 ${(pkg.rating ?? 0) >= star
                           ? 'fill-warning text-warning'
                           : 'text-base-content/30'
-                      }`}
+                        }`}
                     />
                   ))}
                 </div>
@@ -288,8 +287,6 @@ const ProfilesTab: React.FC<ProfilesTabProps> = ({
 
       <StatsCards stats={stats} isLoading={loading} />
 
-      {error && <Alert status="error" icon={<XIcon />} message={error} onClose={() => setError(null)} />}
-
       <SearchFilterBar
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
@@ -408,7 +405,7 @@ const MessageProvidersPage: React.FC = () => {
 
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean; title: string; message: string; onConfirm: () => void;
-  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => { } });
 
   const fetchProfiles = useCallback(async () => {
     try {
@@ -473,7 +470,7 @@ const MessageProvidersPage: React.FC = () => {
           try {
             await apiService.post('/api/config/message-profiles', payload);
           } catch (createErr: unknown) {
-            if (backup) await apiService.post('/api/config/message-profiles', backup).catch(() => {});
+            if (backup) await apiService.post('/api/config/message-profiles', backup).catch(() => { });
             throw createErr;
           }
         }
@@ -499,7 +496,7 @@ const MessageProvidersPage: React.FC = () => {
   const filteredProfiles = useMemo(() =>
     profiles.filter(p => {
       const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            p.provider.toLowerCase().includes(searchQuery.toLowerCase());
+        p.provider.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesType = filterType === 'all' || p.provider === filterType;
       return matchesSearch && matchesType;
     }), [profiles, searchQuery, filterType]);
@@ -558,6 +555,11 @@ const MessageProvidersPage: React.FC = () => {
         <p className="text-base-content/60 text-sm mt-1">Manage messaging platform connections and profiles</p>
       </div>
       <div className="px-6 pb-6">
+        {error && (
+          <div className="mb-6">
+            <Alert status="error" icon={<XIcon />} message={error} onClose={() => setError(null)} />
+          </div>
+        )}
         <Tabs
           tabs={tabs}
           variant="lifted"

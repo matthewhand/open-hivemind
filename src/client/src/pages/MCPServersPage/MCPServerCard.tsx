@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import Checkbox from '../../components/DaisyUI/Checkbox';
 import { Alert } from '../../components/DaisyUI/Alert';
 import Tooltip from '../../components/DaisyUI/Tooltip';
@@ -40,7 +40,7 @@ interface MCPServerCardProps {
   isSelected?: boolean;
 }
 
-export const MCPServerCard: React.FC<MCPServerCardProps> = ({
+export const MCPServerCard: React.FC<MCPServerCardProps> = memo(({
   server,
   bulk,
   getStatusColor,
@@ -181,4 +181,6 @@ export const MCPServerCard: React.FC<MCPServerCardProps> = ({
         </Card.Actions>
     </Card>
   );
-};
+});
+
+MCPServerCard.displayName = 'MCPServerCard';

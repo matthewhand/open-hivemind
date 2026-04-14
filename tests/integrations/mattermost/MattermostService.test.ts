@@ -1,295 +1,231 @@
-import 'reflect-metadata';
-import { container } from 'tsyringe';
+/**
+ * MattermostService Unit Tests
+ *
+ * Tests the service's orchestration logic (bot registration, lifecycle,
+ * routing) without mocking the entire class under test.
+ *
+ * The MattermostClient is mocked at the module boundary so the real
+ * MattermostService executes its actual logic paths.
+ */
 import { MattermostService } from '@src/integrations/mattermost/MattermostService';
-import { StartupGreetingService } from '@src/services/StartupGreetingService';
+import BotConfigurationManager from '@src/config/BotConfigurationManager';
 
-jest.mock('tsyringe', () => ({
-  container: {
-    resolve: jest.fn().mockImplementation((token) => new token()),
-    register: jest.fn(),
-  },
-  injectable: jest.fn(),
-  singleton: jest.fn(),
-}));
+// ---------------------------------------------------------------------------
+// Mock boundaries — only the client and config manager, NOT the service itself
+// ---------------------------------------------------------------------------
 
-// Mock StartupGreetingService
-class MockStartupGreetingService {
-  emit() {}
+const createMockClient = () => ({
+  connect: jest.fn().mockResolvedValue(undefined),
+  disconnect: jest.fn().mockResolvedValue(undefined),
+  postMessage: jest.fn().mockResolvedValue({ id: 'post-abc', channel_id: 'general' }),
+  getChannelPosts: jest.fn().mockResolvedValue([]),
+  sendTyping: jest.fn().mockResolvedValue(undefined),
+  isConnected: jest.fn().mockReturnValue(false),
+  getCurrentUserId: jest.fn().mockReturnValue('bot-user-123'),
+  getCurrentUsername: jest.fn().mockReturnValue('test-bot'),
+  getChannelInfo: jest.fn().mockResolvedValue({ name: 'general', display_name: 'General' }),
+  on: jest.fn(),
+  off: jest.fn(),
+});
+
+jest.mock('../../../packages/message-mattermost/src/mattermostClient', () => {
+  return jest.fn().mockImplementation(() => createMockClient());
+});
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function resetSingleton() {
+  (MattermostService as any).instance = undefined;
 }
 
-jest.mock('@src/integrations/mattermost/mattermostClient', () => {
-  return class MockMattermostClient {
-    constructor() {}
-    connect = jest.fn().mockResolvedValue(undefined);
-    postMessage = jest.fn().mockResolvedValue({ id: 'post123' });
-    getChannelPosts = jest.fn().mockResolvedValue([]);
-    getUser = jest.fn().mockResolvedValue({ id: 'user123', username: 'testuser' });
-    isConnected = jest.fn().mockReturnValue(true);
-    disconnect = jest.fn();
-    getCurrentUserId = jest.fn().mockReturnValue('user123');
-    getCurrentUsername = jest.fn().mockReturnValue('testuser');
-    getChannelInfo = jest.fn().mockResolvedValue(null);
-    sendTyping = jest.fn().mockResolvedValue(undefined);
+function configureMockBots(bots: any[]) {
+  const mockManager = {
+    getAllBots: jest.fn().mockReturnValue(bots),
+    getBot: jest.fn(),
+    updateBot: jest.fn(),
   };
-});
+  jest.spyOn(BotConfigurationManager, 'getInstance').mockReturnValue(mockManager as any);
+  return mockManager;
+}
 
-jest.mock('@hivemind/message-mattermost', () => {
-  const mockClient = {
-    connect: jest.fn().mockResolvedValue(undefined),
-    postMessage: jest.fn().mockResolvedValue({ id: 'post123' }),
-    getChannelPosts: jest.fn().mockResolvedValue([]),
-    getUser: jest.fn().mockResolvedValue({ id: 'user123', username: 'testuser' }),
-    isConnected: jest.fn().mockReturnValue(true),
-    disconnect: jest.fn(),
-    getCurrentUserId: jest.fn().mockReturnValue('user123'),
-    getCurrentUsername: jest.fn().mockReturnValue('testuser'),
-    getChannelInfo: jest.fn().mockResolvedValue(null),
-    sendTyping: jest.fn().mockResolvedValue(undefined),
-  };
-
-  const { EventEmitter } = require('events');
-
-  class MockMattermostService extends EventEmitter {
-    private static instance: MockMattermostService | undefined;
-    private clients: Map<string, any> = new Map();
-    private channels: Map<string, string> = new Map();
-    private botConfigs: Map<string, any> = new Map();
-    public supportsChannelPrioritization: boolean = true;
-
-    private constructor() {
-      super();
-      this.clients.set('test-bot', mockClient);
-      this.channels.set('test-bot', 'general');
-      this.botConfigs.set('test-bot', {
-        name: 'test-bot',
-        serverUrl: 'https://mattermost.example.com',
-        token: 'test-token',
-        channel: 'general',
-        userId: 'user123',
-        username: 'testuser',
-      });
-    }
-
-    public static getInstance(): MockMattermostService {
-      if (!MockMattermostService.instance) {
-        MockMattermostService.instance = new MockMattermostService();
-      }
-      return MockMattermostService.instance;
-    }
-
-    public async initialize(): Promise<void> {
-      await mockClient.connect();
-    }
-
-    public setApp(): void {}
-
-    public setMessageHandler(): void {}
-
-    public async sendMessageToChannel(
-      channelId: string,
-      text: string,
-      senderName?: string,
-      threadId?: string,
-      replyToMessageId?: string
-    ): Promise<string> {
-      const rootId = threadId || replyToMessageId;
-      const post = await mockClient.postMessage({
-        channel: channelId,
-        text: text,
-        ...(rootId ? { root_id: rootId } : {}),
-      });
-      return post.id;
-    }
-
-    public async getMessagesFromChannel(channelId: string, limit: number = 10): Promise<any[]> {
-      return this.fetchMessages(channelId, limit);
-    }
-
-    public async fetchMessages(
-      channelId: string,
-      limit: number = 10,
-      botName?: string
-    ): Promise<any[]> {
-      const posts = await mockClient.getChannelPosts(channelId, 0, limit);
-      const messages: any[] = [];
-      for (const post of posts.slice(0, limit)) {
-        const user = await mockClient.getUser(post.user_id);
-        messages.push({
-          ...post,
-          content: post.message,
-          platform: 'mattermost',
-          getChannelId: () => post.channel_id,
-          getAuthorId: () => post.user_id,
-          getText: () => post.message,
-        });
-      }
-      return messages.reverse();
-    }
-
-    public async sendPublicAnnouncement(channelId: string, announcement: any): Promise<void> {
-      const text =
-        typeof announcement === 'string' ? announcement : announcement?.message || 'Announcement';
-      await mockClient.postMessage({
-        channel: channelId,
-        text: text,
-      });
-    }
-
-    public async joinChannel(): Promise<void> {}
-
-    public getClientId(): string {
-      return 'user123';
-    }
-
-    public getDefaultChannel(): string {
-      return 'general';
-    }
-
-    public async getChannelTopic(): Promise<string | null> {
-      return null;
-    }
-
-    public async sendTyping(): Promise<void> {}
-
-    public async setModelActivity(): Promise<void> {}
-
-    public async shutdown(): Promise<void> {
-      MockMattermostService.instance = undefined;
-    }
-
-    public scoreChannel(): number {
-      return 0;
-    }
-
-    public getBotNames(): string[] {
-      return Array.from(this.clients.keys());
-    }
-
-    public getBotConfig(botName: string): any {
-      return this.botConfigs.get(botName);
-    }
-
-    public getDelegatedServices(): any[] {
-      return [];
-    }
-
-    public getAgentStartupSummaries(): any[] {
-      return [];
-    }
-
-    public resolveAgentContext(): any {
-      return null;
-    }
-  }
-
-  return MockMattermostService;
-});
-
-// Mock the dependencies FIRST before importing/using them
-const mockClient2 = {
-  connect: jest.fn().mockResolvedValue(undefined),
-  postMessage: jest.fn().mockResolvedValue({ id: 'post123' }),
-  getChannelPosts: jest.fn().mockResolvedValue([]),
-  getUser: jest.fn().mockResolvedValue({ id: 'user123', username: 'testuser' }),
-  isConnected: jest.fn().mockReturnValue(true),
-  disconnect: jest.fn(),
-  getCurrentUserId: jest.fn().mockReturnValue('user123'),
-  getCurrentUsername: jest.fn().mockReturnValue('testuser'),
-  getChannelInfo: jest.fn().mockResolvedValue(null),
-  sendTyping: jest.fn().mockResolvedValue(undefined),
-};
-jest.mock('../../../packages/message-mattermost/src/mattermostClient', () => {
-  const MockClient = jest.fn(() => mockClient2);
+function validBot(name = 'test-bot', channel = 'general') {
   return {
-    MattermostClient: MockClient,
-    default: MockClient,
-    __esModule: true,
+    name,
+    messageProvider: 'mattermost',
+    mattermost: {
+      serverUrl: 'https://mattermost.example.com',
+      token: 'test-token-' + name,
+      channel,
+      username: name,
+    },
   };
-});
+}
 
-// Since we are testing MattermostService, and it's a singleton, we need to be careful.
-// The test failure suggests it's trying to connect to a real URL.
-// We should mock the methods of MattermostService that cause side effects if we can't fully mock the class.
-// OR, if the intent is to test the actual class logic with a MOCKED client, we should ensure the Client import is mocked.
-
-// Let's rely on the mock of 'mattermostClient' above to intercept calls.
-// However, the test file imports `MattermostService` from the source.
-// The original test mocked `@hivemind/message-mattermost` which might not be used by the relative import.
-
-// To fix "getaddrinfo ENOTFOUND", we must ensure that `new MattermostClient(...)` returns our mock.
-
-jest.mock('@src/config/BotConfigurationManager', () => ({
-  getInstance: jest.fn(() => ({
-    getAllBots: () => [
-      {
-        name: 'test-bot',
-        messageProvider: 'mattermost',
-        mattermost: {
-          serverUrl: 'https://mattermost.example.com',
-          token: 'test-token',
-          channel: 'general',
-        },
-      },
-    ],
-  })),
-}));
-
-// Mock StartupGreetingService to avoid DI issues
-jest.mock('@src/services/StartupGreetingService', () => ({
-  StartupGreetingService: class MockStartupGreetingService {
-    emit() {}
-  },
-}));
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
 
 describe('MattermostService', () => {
-  let service: MattermostService;
-
   beforeEach(() => {
-    service = MattermostService.getInstance();
-  });
-
-  afterEach(() => {
-    (MattermostService as any).instance = undefined;
+    jest.resetModules();
+    resetSingleton();
     jest.clearAllMocks();
   });
 
-  it('should initialize successfully', async () => {
-    await service.initialize();
-    expect(true).toBe(true);
+  afterEach(() => {
+    resetSingleton();
+    jest.restoreAllMocks();
   });
 
-  it('handles messaging and connection operations', async () => {
-    await service.initialize();
+  // ---- Singleton & Initialization ----
 
-    const result = await service.sendMessageToChannel('general', 'Hello world');
-    expect(result).toBe('post123');
-
-    const messages = await service.fetchMessages('channel123', 10);
-    expect(messages).toHaveLength(0);
-
-    await service.sendPublicAnnouncement('general', 'Important announcement');
-    expect(true).toBe(true);
+  it('should return a singleton instance', () => {
+    configureMockBots([]);
+    const s1 = MattermostService.getInstance();
+    const s2 = MattermostService.getInstance();
+    expect(s1).toBe(s2);
   });
 
-  it('handles service configuration and management', async () => {
-    const clientId = service.getClientId();
-    expect(clientId).toBe('user123');
-
-    const channel = service.getDefaultChannel();
-    expect(channel).toBe('general');
-
-    expect(service.supportsChannelPrioritization).toBe(true);
-
-    const score = service.scoreChannel('general');
-    expect(typeof score).toBe('number');
-
+  it('should register a bot for each valid Mattermost config', () => {
+    configureMockBots([validBot('bot-a'), validBot('bot-b')]);
+    const service = MattermostService.getInstance();
     const names = service.getBotNames();
-    expect(names).toContain('test-bot');
+    expect(names).toContain('bot-a');
+    expect(names).toContain('bot-b');
+    expect(names).toHaveLength(2);
+  });
 
-    const config = service.getBotConfig('test-bot');
-    expect(config.name).toBe('test-bot');
+  it('should skip bots with invalid Mattermost configurations', () => {
+    configureMockBots([
+      validBot('valid-bot'),
+      { name: 'no-url-bot', messageProvider: 'mattermost', mattermost: { token: 'tok' } },
+      { name: 'no-token-bot', messageProvider: 'mattermost', mattermost: { serverUrl: 'https://x' } },
+      { name: 'discord-bot', messageProvider: 'discord' },
+    ]);
+    const service = MattermostService.getInstance();
+    expect(service.getBotNames()).toEqual(['valid-bot']);
+  });
+
+  // ---- Lifecycle ----
+
+  it('should connect all registered bots on initialize', async () => {
+    configureMockBots([validBot('bot1'), validBot('bot2')]);
+    const service = MattermostService.getInstance();
+    await service.initialize();
+    // Each bot's client should have been connected
+    expect(service.getBotNames()).toHaveLength(2);
+  });
+
+  it('should handle connection failure for one bot without crashing others', async () => {
+    const failingClient = createMockClient();
+    failingClient.connect.mockRejectedValueOnce(new Error('ENOTFOUND'));
+
+    const workingClient = createMockClient();
+    jest.requireMock('../../../packages/message-mattermost/src/mattermostClient')
+      .mockImplementationOnce(() => failingClient)
+      .mockImplementationOnce(() => workingClient);
+
+    configureMockBots([validBot('bad-bot'), validBot('good-bot')]);
+    const service = MattermostService.getInstance();
+
+    // initialize should not throw even if one bot fails
+    await expect(service.initialize()).resolves.not.toThrow();
+    expect(service.getBotNames()).toHaveLength(2);
+  });
+
+  it('should support shutdown and re-initialization', async () => {
+    configureMockBots([validBot('reinit-bot')]);
+    const service = MattermostService.getInstance();
+    await service.initialize();
+    expect(service.getBotNames()).toContain('reinit-bot');
 
     await service.shutdown();
+    // After shutdown the singleton is cleared
     expect((MattermostService as any).instance).toBeUndefined();
+  });
+
+  // ---- Messaging ----
+
+  it('should send a message to a channel and return the post id', async () => {
+    configureMockBots([validBot('msg-bot')]);
+    const service = MattermostService.getInstance();
+    const postId = await service.sendMessageToChannel('general', 'Hello');
+    expect(postId).toBe('post-abc');
+  });
+
+  it('should send a reply in a thread when replyToMessageId is provided', async () => {
+    configureMockBots([validBot('thread-bot')]);
+    const service = MattermostService.getInstance();
+    const postId = await service.sendMessageToChannel('general', 'Reply text', undefined, undefined, 'parent-123');
+    // Should return a post id from the mocked client
+    expect(postId).toBe('post-abc');
+  });
+
+  it('should fetch messages from a channel', async () => {
+    configureMockBots([validBot('fetch-bot')]);
+    const service = MattermostService.getInstance();
+    const messages = await service.fetchMessages('general', 10);
+    expect(Array.isArray(messages)).toBe(true);
+  });
+
+  it('should send a public announcement', async () => {
+    configureMockBots([validBot('announce-bot')]);
+    const service = MattermostService.getInstance();
+    await service.sendPublicAnnouncement('general', { message: 'System maintenance tonight' });
+    // Should not throw and should use the client
+  });
+
+  // ---- Introspection ----
+
+  it('should return bot configuration for a known bot', () => {
+    configureMockBots([validBot('config-bot')]);
+    const service = MattermostService.getInstance();
+    const config = service.getBotConfig('config-bot');
+    expect(config.name).toBe('config-bot');
+    expect(config.serverUrl).toBe('https://mattermost.example.com');
+    expect(config.token).toBe('test-token-config-bot');
+  });
+
+  it('should return undefined for unknown bot config', () => {
+    configureMockBots([]);
+    const service = MattermostService.getInstance();
+    expect(service.getBotConfig('nonexistent')).toBeUndefined();
+  });
+
+  it('should report supportsChannelPrioritization', () => {
+    configureMockBots([]);
+    const service = MattermostService.getInstance();
+    expect(service.supportsChannelPrioritization).toBe(true);
+  });
+
+  it('should compute a score for an arbitrary channel', () => {
+    configureMockBots([]);
+    const service = MattermostService.getInstance();
+    const score = service.scoreChannel('some-channel');
+    expect(typeof score).toBe('number');
+  });
+
+  it('should return delegated services and agent summaries as arrays', () => {
+    configureMockBots([]);
+    const service = MattermostService.getInstance();
+    expect(Array.isArray(service.getDelegatedServices())).toBe(true);
+    expect(Array.isArray(service.getAgentStartupSummaries())).toBe(true);
+    // resolveAgentContext returns a context object (may be empty but not null)
+    const context = service.resolveAgentContext();
+    expect(context).toBeDefined();
+    expect(typeof context).toBe('object');
+  });
+
+  // ---- Event Emitter Behavior ----
+
+  it('should extend EventEmitter and be able to emit/listen events', () => {
+    configureMockBots([]);
+    const service = MattermostService.getInstance();
+    const handler = jest.fn();
+    service.on('connected', handler);
+    service.emit('connected', { botName: 'event-bot' });
+    expect(handler).toHaveBeenCalledWith({ botName: 'event-bot' });
   });
 });

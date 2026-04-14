@@ -6,6 +6,7 @@ import type { AuthMiddlewareRequest, LoginCredentials, RegisterData } from '../.
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { apiRateLimiter, authRateLimiter } from '../../middleware/rateLimiters';
 import { HTTP_STATUS } from '../../types/constants';
+import { ErrorUtils } from '../../types/errors';
 import { validateRequest as validate } from '../../validation/validateRequest';
 import { isTrustedAdminIP } from '../middleware/security';
 import {
@@ -14,13 +15,14 @@ import {
   LogoutSchema,
   RefreshTokenSchema,
   RegisterSchema,
+  UpdateProfileSchema,
   UpdateUserSchema,
   UserIdParamSchema,
   VerifyTokenSchema,
 } from '../schemas/auth.schemas';
 import { ApiResponse } from '../utils/apiResponse';
 
-const debug = Debug('app:AuthRoutes');
+const debug = Debug('app:api:auth');
 const router = Router();
 const authManager = AuthManager.getInstance();
 
@@ -60,7 +62,7 @@ router.post(
       debug('Login error:', errMsg);
       return res
         .status(HTTP_STATUS.UNAUTHORIZED)
-        .json(ApiResponse.error(errMsg || 'Invalid credentials', undefined, 401));
+        .json(ApiResponse.error(ErrorUtils.getMessage(error)));
     }
   })
 );
@@ -69,7 +71,7 @@ router.post(
  * @openapi
  * /webui/api/auth/register:
  *   post:
- *     summary: User registration (admin only)
+ *     summary: Register a new user (Admin only)
  *     tags: [Auth]
  *     security:
  *       - bearerAuth: []
@@ -102,11 +104,9 @@ router.post(
       const user = await authManager.register(registerData);
       return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success({ user }));
     } catch (error: unknown) {
-      const errMsg = error instanceof Error ? error.message : String(error);
-      debug('Registration error:', errMsg);
       return res
         .status(HTTP_STATUS.BAD_REQUEST)
-        .json(ApiResponse.error(errMsg || 'Failed to register user', undefined, 400));
+        .json(ApiResponse.error(ErrorUtils.getMessage(error)));
     }
   })
 );
@@ -132,17 +132,31 @@ router.post(
       debug('Token refresh error:', errMsg);
       return res
         .status(HTTP_STATUS.UNAUTHORIZED)
-        .json(ApiResponse.error(errMsg || 'Invalid refresh token', undefined, 401));
+        .json(ApiResponse.error(ErrorUtils.getMessage(error)));
     }
   })
 );
 
-/**
  * @openapi
  * /webui/api/auth/logout:
  *   post:
  *     summary: User logout
  *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               refreshToken: { type: string }
+ *     responses:
+ *       200:
+ *         description: Logout successful
+ *       500:
+ *         description: Logout failed
  */
 router.post(
   '/logout',
@@ -156,11 +170,9 @@ router.post(
       }
       return res.json(ApiResponse.success());
     } catch (error: unknown) {
-      const errMsg = error instanceof Error ? error.message : String(error);
-      debug('Logout error:', errMsg);
       return res
-        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error('Logout failed', undefined, 500));
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json(ApiResponse.error(ErrorUtils.getMessage(error)));
     }
   })
 );
@@ -172,17 +184,39 @@ router.post(
  *     summary: Get current user profile
  *     tags: [Auth]
  */
-router.get('/me', authenticate, (req: Request, res: Response) => {
-  const authReq = req as AuthMiddlewareRequest;
-  return res.json(ApiResponse.success({ user: authReq.user }));
-});
+router.get(
+  '/me',
+  authenticate,
+  asyncErrorHandler(async (req: Request, res: Response) => {
+    const authReq = req as AuthMiddlewareRequest;
+    if (!authReq.user) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json(ApiResponse.error('Not authenticated'));
+    }
+
+    return res.json(ApiResponse.success({ user: authReq.user }));
+  })
+);
 
 /**
  * @openapi
  * /webui/api/auth/verify:
  *   post:
- *     summary: Verify token validity
+ *     summary: Verify a token
  *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               token: { type: string }
+ *             required: [token]
+ *     responses:
+ *       200:
+ *         description: Current user profile
+ *       401:
+ *         description: Unauthorized
  */
 router.post(
   '/verify',
@@ -198,7 +232,7 @@ router.post(
           .status(HTTP_STATUS.UNAUTHORIZED)
           .json(ApiResponse.error('User not found', undefined, 401));
       return res.json(ApiResponse.success({ user }));
-    } catch (error: unknown) {
+    } catch (_: unknown) {
       return res
         .status(HTTP_STATUS.UNAUTHORIZED)
         .json(ApiResponse.error('Invalid token', undefined, 401));
@@ -215,31 +249,27 @@ router.get('/verify', apiRateLimiter, async (req: Request, res: Response) => {
           user: {
             id: 'test-admin',
             username: 'admin',
-            email: 'test@open-hivemind.local',
-            role: 'owner',
+            role: 'admin',
             permissions: ['*'],
           },
-          tokenValid: true,
-          expiresAt: new Date(Date.now() + 3600000).toISOString(),
         })
       );
     }
 
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json(ApiResponse.error('Bearer token required'));
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json(ApiResponse.error('No token provided'));
     }
-    const token = authHeader.slice(7);
-    const payload = authManager.verifyAccessToken(token) as any;
-    const user = authManager.getUser(payload.userId);
-    if (!user) return res.status(401).json(ApiResponse.error('User not found'));
-    return res.json(
-      ApiResponse.success({
-        user,
-        tokenValid: true,
-        expiresAt: payload.exp ? new Date(payload.exp * 1000).toISOString() : null,
-      })
-    );
+
+    const token = authHeader.split(' ')[1];
+    const payload = authManager.verifyAccessToken(token);
+    const user = authManager.getUser((payload as Record<string, unknown>).userId as string);
+
+    if (!user) {
+      return res.status(401).json(ApiResponse.error('User not found'));
+    }
+
+    return res.json(ApiResponse.success({ user }));
   } catch {
     return res.status(401).json(ApiResponse.error('Invalid or expired token'));
   }
@@ -261,66 +291,106 @@ router.post('/trusted-login', authRateLimiter, async (req: Request, res: Respons
     const authResult = await authManager.trustedLogin(username);
     return res.json(ApiResponse.success(authResult));
   } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : 'Trusted login failed';
-    return res.status(401).json(ApiResponse.error(msg));
+    return res.status(401).json(ApiResponse.error(ErrorUtils.getMessage(error)));
   }
 });
 
 /**
- * PUT /webui/api/auth/password
- * Change user password
+ * @openapi
+ * /webui/api/auth/profile:
+ *   patch:
+ *     summary: Update current user profile
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email: { type: string }
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
  */
-router.put(
+router.patch(
+  '/profile',
+  authenticate,
+  validate(UpdateProfileSchema),
+  asyncErrorHandler(async (req: Request, res: Response) => {
+    const authReq = req as AuthMiddlewareRequest;
+    if (!authReq.user) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json(ApiResponse.error('Not authenticated'));
+    }
+
+    const user = await authManager.updateUser(authReq.user.id, req.body);
+    return res.json(ApiResponse.success({ user }));
+  })
+);
+
+/**
+ * @openapi
+ * /webui/api/auth/password:
+ *   post:
+ *     summary: Change user password
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               oldPassword: { type: string }
+ *               newPassword: { type: string }
+ *             required: [oldPassword, newPassword]
+ *     responses:
+ *       200:
+ *         description: Password changed successfully
+ */
+router.post(
   '/password',
   authenticate,
   validate(ChangePasswordSchema),
-  asyncErrorHandler(async (req, res) => {
+  asyncErrorHandler(async (req: Request, res: Response) => {
+    const authReq = req as AuthMiddlewareRequest;
+    if (!authReq.user) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json(ApiResponse.error('Not authenticated'));
+    }
+
+    const { oldPassword, newPassword } = req.body;
+
     try {
-      const { currentPassword, newPassword } = req.body;
-      if (!req.user) {
-        return res
-          .status(HTTP_STATUS.UNAUTHORIZED)
-          .json(ApiResponse.error('Authentication required', undefined, 401));
-      }
-      if (!currentPassword || !newPassword) {
-        return res
-          .status(HTTP_STATUS.BAD_REQUEST)
-          .json(ApiResponse.error('Validation error', undefined, 400));
-      }
-      const userWithHash = authManager.getUserWithHash(req.user.id);
+      // Verify old password first
+      const userWithHash = authManager.getUserWithHash(authReq.user.id);
       if (!userWithHash || !userWithHash.passwordHash) {
-        return res
-          .status(HTTP_STATUS.NOT_FOUND)
-          .json(ApiResponse.error('User not found', undefined, 404));
+        return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('User not found'));
       }
-      const isValidCurrentPassword = await authManager.verifyPassword(
-        currentPassword,
+
+      const isPasswordValid = await authManager.verifyPassword(
+        oldPassword,
         userWithHash.passwordHash
       );
-      if (!isValidCurrentPassword) {
-        return res
-          .status(HTTP_STATUS.BAD_REQUEST)
-          .json(ApiResponse.error('Validation error', undefined, 400));
+      if (!isPasswordValid) {
+        return res.status(HTTP_STATUS.UNAUTHORIZED).json(ApiResponse.error('Invalid old password'));
       }
-      if (newPassword.length < 8) {
-        return res
-          .status(HTTP_STATUS.BAD_REQUEST)
-          .json(ApiResponse.error('Validation error', undefined, 400));
-      }
-      const success = await authManager.changePassword(req.user.id, newPassword);
+
+      const success = await authManager.changePassword(authReq.user.id, newPassword);
       if (success) {
-        return res.json(ApiResponse.success());
+        return res.json(ApiResponse.success({ message: 'Password changed successfully' }));
       } else {
         return res
           .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-          .json(ApiResponse.error('Password change failed', undefined, 500));
+          .json(ApiResponse.error('Failed to change password'));
       }
     } catch (error: unknown) {
-      const errMsg = error instanceof Error ? error.message : String(error);
-      debug('Password change error:', errMsg);
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error('Password change failed', undefined, 500));
+        .json(ApiResponse.error(ErrorUtils.getMessage(error)));
     }
   })
 );
@@ -408,11 +478,15 @@ router.delete(
   authenticate,
   requireAdmin,
   validate(UserIdParamSchema),
-  (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
     const authReq = req as AuthMiddlewareRequest;
+    if (!authReq.user) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json(ApiResponse.error('Not authenticated'));
+    }
+
     try {
       const { userId } = req.params;
-      if (authReq.user && authReq.user.id === userId) {
+      if (authReq.user.id === userId) {
         return res
           .status(HTTP_STATUS.BAD_REQUEST)
           .json(ApiResponse.error('Invalid operation', undefined, 400));
@@ -425,11 +499,9 @@ router.delete(
       }
       return res.json(ApiResponse.success());
     } catch (error: unknown) {
-      const errMsg = error instanceof Error ? error.message : String(error);
-      debug('Delete user error:', errMsg);
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error('Failed to delete user', undefined, 500));
+        .json(ApiResponse.error(ErrorUtils.getMessage(error)));
     }
   }
 );
@@ -453,5 +525,4 @@ router.get('/permissions', authenticate, (req: Request, res: Response) => {
     })
   );
 });
-
 export default router;

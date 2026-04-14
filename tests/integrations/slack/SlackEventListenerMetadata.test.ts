@@ -1,117 +1,249 @@
-import express from 'express';
-import { SlackService } from '@hivemind/message-slack/SlackService';
-import { WebClient } from '@slack/web-api';
+/**
+ * Slack Metadata Extraction Tests
+ *
+ * Tests extractSlackMetadata() against the full spectrum of Slack event
+ * shapes: message events, button interactions, slash commands, file
+ * shares, thread replies, and edge cases (missing fields, nested payloads).
+ *
+ * This replaces the old 117-line skipped test file that mocked the entire
+ * SlackService and never ran a single assertion.
+ */
+import { extractSlackMetadata } from '@hivemind/message-slack/slackMetadata';
 
-interface SlackBotInfo {
-  botToken: string;
-  botUserId: string;
-  botUserName: string;
-  webClient: WebClient;
-}
+describe('Slack Metadata Extraction', () => {
+  describe('Standard message events', () => {
+    it('should extract user, channel, and timestamp from a basic message event', () => {
+      const event = {
+        type: 'message',
+        user: 'U12345',
+        channel: 'C67890',
+        ts: '1700000000.000100',
+        text: 'Hello!',
+      };
 
-interface SlackBotManagerMock {
-  initialize: jest.Mock<Promise<void>>;
-  getAllBots: jest.Mock<SlackBotInfo[]>;
-  getBotByName: jest.Mock<SlackBotInfo | undefined>;
-  setMessageHandler: jest.Mock<void>;
-}
+      const meta = extractSlackMetadata(event);
 
-jest.mock('@slack/web-api', () => ({
-  WebClient: jest.fn(() => ({
-    auth: { test: jest.fn().mockResolvedValue({ user_id: 'bot1', user: 'Madgwick AI' }) },
-    chat: { postMessage: jest.fn().mockResolvedValue({ ts: 'msg123' }) },
-    conversations: { join: jest.fn().mockResolvedValue({}), history: jest.fn() },
-  })),
-}));
+      expect(meta.slackUser).toBe('U12345');
+      expect(meta.slackChannel).toBe('C67890');
+      expect(meta.slackTimestamp).toBe('1700000000.000100');
+      expect(meta.slackThread).toBeUndefined();
+      expect(meta.slackTeam).toBeUndefined();
+    });
 
-jest.mock('@src/config/messageConfig', () => ({
-  default: {
-    get: jest.fn((key) => (key === 'MESSAGE_USERNAME_OVERRIDE' ? 'Madgwick AI' : undefined)),
-  },
-}));
+    it('should extract thread_ts when replying in a thread', () => {
+      const event = {
+        type: 'message',
+        user: 'U12345',
+        channel: 'C67890',
+        ts: '1700000001.000200',
+        thread_ts: '1700000000.000100',
+        text: 'Thread reply',
+      };
 
-jest.mock('@src/config/slackConfig', () => ({
-  default: {
-    get: jest.fn((key) => (key === 'SLACK_JOIN_CHANNELS' ? 'C123' : undefined)),
-  },
-}));
+      const meta = extractSlackMetadata(event);
 
-jest.mock('@src/services/StartupGreetingService', () => ({
-  StartupGreetingService: jest.fn(),
-}));
+      expect(meta.slackThread).toBe('1700000000.000100');
+    });
 
-jest.mock('tsyringe', () => {
-  const actual = jest.requireActual('tsyringe');
-  return {
-    ...actual,
-    container: {
-      ...actual.container,
-      resolve: jest.fn(() => ({
-        emit: jest.fn(),
-      })),
-      registerInstance: jest.fn(),
-    },
-  };
-});
+    it('should extract team ID when present', () => {
+      const event = {
+        type: 'message',
+        user: 'U12345',
+        channel: 'C67890',
+        ts: '1700000000.000100',
+        team: 'T99999',
+      };
 
-jest.mock('@hivemind/message-slack/SlackBotManager', () => {
-  return jest.fn().mockImplementation(
-    (): SlackBotManagerMock => ({
-      initialize: jest.fn().mockImplementation(async function (this: SlackBotManagerMock) {
-        const botInfo = this.getAllBots()[0];
-        await botInfo.webClient.auth.test();
-      }),
-      getAllBots: jest.fn().mockReturnValue([
-        {
-          botToken: 'xoxb-test-token',
-          botUserId: 'bot1',
-          botUserName: 'Madgwick AI',
-          webClient: new (require('@slack/web-api').WebClient)('xoxb-test-token'),
-        },
-      ]),
-      getBotByName: jest.fn(),
-      setMessageHandler: jest.fn(),
-    })
-  );
-});
-
-describe.skip('SlackEventListener with Metadata', () => {
-  let slackService: SlackService;
-  let app: express.Application;
-
-  beforeEach(async () => {
-    jest.clearAllMocks();
-
-    // Register mock StartupGreetingService in tsyringe container
-    const { container } = require('tsyringe');
-    const { StartupGreetingService } = require('@src/services/StartupGreetingService');
-    const mockStartupGreetingService = {
-      emit: jest.fn(),
-      on: jest.fn(),
-    };
-    container.registerInstance(StartupGreetingService, mockStartupGreetingService);
-
-    delete process.env.SLACK_USERNAME_OVERRIDE;
-    delete process.env.SLACK_BOT_TOKEN;
-    delete process.env.SLACK_APP_TOKEN;
-    delete process.env.SLACK_SIGNING_SECRET;
-    process.env.SLACK_BOT_TOKEN = 'xoxb-test-token';
-
-    (SlackService as any).instance = undefined;
-    slackService = SlackService.getInstance();
-    app = express();
-    slackService.setApp(app);
-    await slackService.initialize();
+      const meta = extractSlackMetadata(event);
+      expect(meta.slackTeam).toBe('T99999');
+    });
   });
 
-  it('includes metadata for message event', async () => {
-    jest.spyOn(slackService, 'sendMessageToChannel').mockResolvedValue('msg123');
-    await slackService.sendMessageToChannel('C123', 'Hello with metadata!', 'Madgwick AI', '123');
-    expect(slackService.sendMessageToChannel).toHaveBeenCalledWith(
-      'C123',
-      'Hello with metadata!',
-      'Madgwick AI',
-      '123'
-    );
+  describe('Message subtype events', () => {
+    it('should extract user from message.user_changed event', () => {
+      const event = {
+        type: 'message',
+        subtype: 'message_changed',
+        channel: 'C67890',
+        message: {
+          user: 'U11111',
+          ts: '1700000002.000300',
+          thread_ts: '1700000000.000100',
+          text: 'Edited message',
+          team: 'T99999',
+        },
+        event_ts: '1700000002.000301',
+      };
+
+      const meta = extractSlackMetadata(event);
+
+      expect(meta.slackUser).toBe('U11111');
+      // event_ts is the fallback chain: no event.ts → event.event_ts
+      expect(meta.slackTimestamp).toBe('1700000002.000301');
+      expect(meta.slackThread).toBe('1700000000.000100');
+      expect(meta.slackTeam).toBe('T99999');
+    });
+
+    it('should extract bot_id from bot_message subtype', () => {
+      const event = {
+        type: 'message',
+        subtype: 'bot_message',
+        bot_id: 'B12345',
+        channel: 'C67890',
+        ts: '1700000000.000400',
+        text: 'Bot said something',
+      };
+
+      const meta = extractSlackMetadata(event);
+
+      expect(meta.slackUser).toBe('B12345');
+    });
+
+    it('should extract user from message_deleted event', () => {
+      const event = {
+        type: 'message',
+        subtype: 'message_deleted',
+        channel: 'C67890',
+        message: {
+          user: 'U22222',
+          ts: '1700000000.000100',
+        },
+        event_ts: '1700000003.000500',
+      };
+
+      const meta = extractSlackMetadata(event);
+
+      expect(meta.slackUser).toBe('U22222');
+      // Falls back to event_ts since event.ts is not present
+      expect(meta.slackTimestamp).toBe('1700000003.000500');
+    });
+  });
+
+  describe('File share events', () => {
+    it('should extract metadata from file_share event', () => {
+      const event = {
+        type: 'message',
+        subtype: 'file_share',
+        user: 'U33333',
+        channel: 'C67890',
+        ts: '1700000004.000600',
+        files: [{ id: 'F12345', name: 'report.pdf' }],
+        team: 'T99999',
+      };
+
+      const meta = extractSlackMetadata(event);
+
+      expect(meta.slackUser).toBe('U33333');
+      expect(meta.slackChannel).toBe('C67890');
+      expect(meta.slackTimestamp).toBe('1700000004.000600');
+      expect(meta.slackTeam).toBe('T99999');
+    });
+  });
+
+  describe('Thread and message_ts edge cases', () => {
+    it('should fallback to event_ts when ts is missing', () => {
+      const event = {
+        type: 'message',
+        user: 'U44444',
+        channel: 'C67890',
+        event_ts: '1700000005.000700',
+      };
+
+      const meta = extractSlackMetadata(event);
+
+      expect(meta.slackTimestamp).toBe('1700000005.000700');
+    });
+
+    it('should fallback to message_ts when ts and event_ts are missing', () => {
+      const event = {
+        type: 'message',
+        user: 'U55555',
+        channel: 'C67890',
+        message_ts: '1700000006.000800',
+      };
+
+      const meta = extractSlackMetadata(event);
+
+      expect(meta.slackTimestamp).toBe('1700000006.000800');
+    });
+
+    it('should prefer ts over event_ts when both present', () => {
+      const event = {
+        type: 'message',
+        user: 'U66666',
+        channel: 'C67890',
+        ts: '1700000007.000900',
+        event_ts: '1700000008.001000',
+      };
+
+      const meta = extractSlackMetadata(event);
+
+      expect(meta.slackTimestamp).toBe('1700000007.000900');
+    });
+
+    it('should extract thread_ts from nested message object', () => {
+      const event = {
+        type: 'message',
+        channel: 'C67890',
+        message: {
+          user: 'U77777',
+          ts: '1700000009.001100',
+          thread_ts: '1700000000.000100',
+        },
+        event_ts: '1700000009.001101',
+      };
+
+      const meta = extractSlackMetadata(event);
+
+      expect(meta.slackThread).toBe('1700000000.000100');
+    });
+  });
+
+  describe('Null and undefined inputs', () => {
+    it('should return all undefined when event is null', () => {
+      const meta = extractSlackMetadata(null as any);
+
+      expect(meta.slackUser).toBeUndefined();
+      expect(meta.slackChannel).toBeUndefined();
+      expect(meta.slackTimestamp).toBeUndefined();
+      expect(meta.slackThread).toBeUndefined();
+      expect(meta.slackTeam).toBeUndefined();
+    });
+
+    it('should return all undefined when event is undefined', () => {
+      const meta = extractSlackMetadata(undefined as any);
+
+      expect(meta.slackUser).toBeUndefined();
+      expect(meta.slackChannel).toBeUndefined();
+      expect(meta.slackTimestamp).toBeUndefined();
+    });
+
+    it('should return all undefined when event is empty object', () => {
+      const meta = extractSlackMetadata({});
+
+      expect(meta.slackUser).toBeUndefined();
+      expect(meta.slackChannel).toBeUndefined();
+      expect(meta.slackTimestamp).toBeUndefined();
+      expect(meta.slackThread).toBeUndefined();
+      expect(meta.slackTeam).toBeUndefined();
+    });
+  });
+
+  describe('Interactive payload events', () => {
+    it('should extract metadata from block_actions payload', () => {
+      const event = {
+        type: 'block_actions',
+        user: { id: 'U88888' },
+        channel: { id: 'C67890' },
+        message_ts: '1700000010.001200',
+        team: { id: 'T99999' },
+      };
+
+      const meta = extractSlackMetadata(event);
+
+      // user is an object here, so extractSlackMetadata returns the object
+      expect(meta.slackUser).toEqual({ id: 'U88888' });
+      expect(meta.slackChannel).toEqual({ id: 'C67890' });
+    });
   });
 });

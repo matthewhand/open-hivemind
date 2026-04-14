@@ -3,6 +3,10 @@ import { useSearchParams } from 'react-router-dom';
 import { authFetch } from '../utils/authFetch';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Shield, RefreshCw, AlertTriangle, Plus, Copy, Trash2, Edit2, CheckCircle, XCircle, Settings, Users } from 'lucide-react';
+import { useToast } from '../components/DaisyUI/ToastNotification';
+import { LoadingSpinner } from '../components/DaisyUI/Loading';
+import Pagination from '../components/DaisyUI/Pagination';
+import DetailDrawer from '../components/DaisyUI/DetailDrawer';
 import Card from '../components/DaisyUI/Card';
 import Divider from '../components/DaisyUI/Divider';
 import Input from '../components/DaisyUI/Input';
@@ -29,10 +33,6 @@ export interface GuardProfile {
   createdAt?: string;
   updatedAt?: string;
 }
-import { useToast } from '../components/DaisyUI/ToastNotification';
-import { LoadingSpinner } from '../components/DaisyUI/Loading';
-import Pagination from '../components/DaisyUI/Pagination';
-import DetailDrawer from '../components/DaisyUI/DetailDrawer';
 
 // Custom comma-separated input component
 const CommaSeparatedInput = ({
@@ -704,167 +704,167 @@ const GuardsPage: React.FC = () => {
         <p className="text-base-content/60 text-sm mt-1">Set up access control, rate limits, and content filters</p>
       </div>
       <div className="px-6 pb-6">
-      <Tabs
-        variant="lifted"
-        activeTab={activeTab}
-        onChange={handleTabChange}
-        tabs={guardsTabs}
-      />
-
-
-      {/* Guard Profile Detail Drawer */}
-      <DetailDrawer
-        isOpen={!!selectedProfile}
-        onClose={() => setSelectedProfileId(null)}
-        title={selectedProfile?.name}
-        subtitle={selectedProfile?.description || 'No description'}
-        renderDock={
-          selectedProfile && (
-            <>
-              <button
-                className="text-info hover:bg-info/10 transition-colors"
-                onClick={() => {
-                  setSelectedProfileId(null);
-                  setEditingProfile(selectedProfile);
-                }}
-                title="Edit Profile"
-              >
-                <Edit2 className="w-5 h-5" />
-                <span className="dock-label text-[10px]">Edit</span>
-              </button>
-              <button
-                className="text-primary hover:bg-primary/10 transition-colors"
-                onClick={() => handleDuplicate(selectedProfile)}
-                title="Duplicate Profile"
-              >
-                <Copy className="w-5 h-5" />
-                <span className="dock-label text-[10px]">Duplicate</span>
-              </button>
-              <button
-                className="text-error hover:bg-error/10 transition-colors"
-                onClick={() => {
-                  setSelectedProfileId(null);
-                  setDeleteConfirm(selectedProfile);
-                }}
-                title="Delete Profile"
-              >
-                <Trash2 className="w-5 h-5" />
-                <span className="dock-label text-[10px]">Delete</span>
-              </button>
-            </>
-          )
-        }
-      >
-        {selectedProfile && (
-          <div className="space-y-6">
-            {/* Guard Rules */}
-            <Card className="bg-base-200">
-              <h4 className="font-semibold text-sm uppercase tracking-wide text-base-content/60 mb-3">Guard Rules</h4>
-              <div className="divide-y divide-base-300">
-                <GuardStatusRow
-                  icon={<Shield className="w-4 h-4 text-primary" />}
-                  label="Access Control"
-                  enabled={selectedProfile.guards.mcpGuard.enabled}
-                  detail={selectedProfile.guards.mcpGuard.enabled ? selectedProfile.guards.mcpGuard.type : 'Disabled'}
-                />
-                {selectedProfile.guards.mcpGuard.enabled && (
-                  <div className="py-2 pl-6 space-y-2">
-                    {selectedProfile.guards.mcpGuard.type === 'custom' && (selectedProfile.guards.mcpGuard.allowedUsers?.length ?? 0) > 0 && (
-                      <div>
-                        <span className="text-xs text-base-content/50">Allowed Users</span>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {selectedProfile.guards.mcpGuard.allowedUsers?.map((u: string) => (
-                            <Badge key={u} variant="neutral" size="sm">{u}</Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {(selectedProfile.guards.mcpGuard.allowedTools?.length ?? 0) > 0 && (
-                      <div>
-                        <span className="text-xs text-base-content/50">Allowed Tools</span>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {selectedProfile.guards.mcpGuard.allowedTools?.map((t: string) => (
-                            <Badge key={t} variant="info" size="sm">{t}</Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                <GuardStatusRow
-                  icon={<RefreshCw className="w-4 h-4 text-primary" />}
-                  label="Rate Limit"
-                  enabled={!!selectedProfile.guards.rateLimit?.enabled}
-                  detail={
-                    selectedProfile.guards.rateLimit?.enabled
-                      ? `${selectedProfile.guards.rateLimit.maxRequests} req / ${selectedProfile.guards.rateLimit.windowMs / 1000}s`
-                      : 'Disabled'
-                  }
-                />
-
-                <GuardStatusRow
-                  icon={<AlertTriangle className="w-4 h-4 text-error" />}
-                  label="Content Filter"
-                  enabled={!!selectedProfile.guards.contentFilter?.enabled}
-                  detail={
-                    selectedProfile.guards.contentFilter?.enabled
-                      ? selectedProfile.guards.contentFilter.strictness
-                      : 'Disabled'
-                  }
-                />
-                {selectedProfile.guards.contentFilter?.enabled && (selectedProfile.guards.contentFilter.blockedTerms?.length ?? 0) > 0 && (
-                  <div className="py-2 pl-6">
-                    <span className="text-xs text-base-content/50">Blocked Terms</span>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {selectedProfile.guards.contentFilter.blockedTerms?.map((t: string) => (
-                        <Badge key={t} variant="error" size="sm">{t}</Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </Card>
-
-            {/* Timestamps */}
-            {(selectedProfile.createdAt || selectedProfile.updatedAt) && (
-              <div className="text-xs text-base-content/50 space-y-1">
-                {selectedProfile.createdAt && (
-                  <p>Created: {new Date(selectedProfile.createdAt).toLocaleString()}</p>
-                )}
-                {selectedProfile.updatedAt && (
-                  <p>Updated: {new Date(selectedProfile.updatedAt).toLocaleString()}</p>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-      </DetailDrawer>
-
-      {editingProfile && (
-        <ModalForm
-          isOpen={true}
-          onClose={() => setEditingProfile(null)}
-          title={editingProfile.id ? 'Edit Profile' : 'Create Profile'}
-          fields={getModalFields()}
-          initialData={editingProfile}
-          onSubmit={async (data) => {
-            handleSaveProfileForm(data);
-          }}
-          submitText={editingProfile.id ? 'Save Changes' : 'Create Profile'}
-          loading={createMutation.isPending || updateMutation.isPending}
+        <Tabs
+          variant="lifted"
+          activeTab={activeTab}
+          onChange={handleTabChange}
+          tabs={guardsTabs}
         />
-      )}
 
-      <ConfirmModal
-        isOpen={!!deleteConfirm}
-        title="Delete Guard Profile"
-        message={`Are you sure you want to delete the profile "${deleteConfirm?.name}"? This action cannot be undone.`}
-        confirmText="Delete Profile"
-        confirmVariant="error"
-        onConfirm={confirmDelete}
-        onClose={() => setDeleteConfirm(null)}
-      />
+
+        {/* Guard Profile Detail Drawer */}
+        <DetailDrawer
+          isOpen={!!selectedProfile}
+          onClose={() => setSelectedProfileId(null)}
+          title={selectedProfile?.name}
+          subtitle={selectedProfile?.description || 'No description'}
+          renderDock={
+            selectedProfile && (
+              <>
+                <button
+                  className="text-info hover:bg-info/10 transition-colors"
+                  onClick={() => {
+                    setSelectedProfileId(null);
+                    setEditingProfile(selectedProfile);
+                  }}
+                  title="Edit Profile"
+                >
+                  <Edit2 className="w-5 h-5" />
+                  <span className="dock-label text-[10px]">Edit</span>
+                </button>
+                <button
+                  className="text-primary hover:bg-primary/10 transition-colors"
+                  onClick={() => handleDuplicate(selectedProfile)}
+                  title="Duplicate Profile"
+                >
+                  <Copy className="w-5 h-5" />
+                  <span className="dock-label text-[10px]">Duplicate</span>
+                </button>
+                <button
+                  className="text-error hover:bg-error/10 transition-colors"
+                  onClick={() => {
+                    setSelectedProfileId(null);
+                    setDeleteConfirm(selectedProfile);
+                  }}
+                  title="Delete Profile"
+                >
+                  <Trash2 className="w-5 h-5" />
+                  <span className="dock-label text-[10px]">Delete</span>
+                </button>
+              </>
+            )
+          }
+        >
+          {selectedProfile && (
+            <div className="space-y-6">
+              {/* Guard Rules */}
+              <Card className="bg-base-200">
+                <h4 className="font-semibold text-sm uppercase tracking-wide text-base-content/60 mb-3">Guard Rules</h4>
+                <div className="divide-y divide-base-300">
+                  <GuardStatusRow
+                    icon={<Shield className="w-4 h-4 text-primary" />}
+                    label="Access Control"
+                    enabled={selectedProfile.guards.mcpGuard.enabled}
+                    detail={selectedProfile.guards.mcpGuard.enabled ? selectedProfile.guards.mcpGuard.type : 'Disabled'}
+                  />
+                  {selectedProfile.guards.mcpGuard.enabled && (
+                    <div className="py-2 pl-6 space-y-2">
+                      {selectedProfile.guards.mcpGuard.type === 'custom' && (selectedProfile.guards.mcpGuard.allowedUsers?.length ?? 0) > 0 && (
+                        <div>
+                          <span className="text-xs text-base-content/50">Allowed Users</span>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {selectedProfile.guards.mcpGuard.allowedUsers?.map((u: string) => (
+                              <Badge key={u} variant="neutral" size="sm">{u}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {(selectedProfile.guards.mcpGuard.allowedTools?.length ?? 0) > 0 && (
+                        <div>
+                          <span className="text-xs text-base-content/50">Allowed Tools</span>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {selectedProfile.guards.mcpGuard.allowedTools?.map((t: string) => (
+                              <Badge key={t} variant="info" size="sm">{t}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <GuardStatusRow
+                    icon={<RefreshCw className="w-4 h-4 text-primary" />}
+                    label="Rate Limit"
+                    enabled={!!selectedProfile.guards.rateLimit?.enabled}
+                    detail={
+                      selectedProfile.guards.rateLimit?.enabled
+                        ? `${selectedProfile.guards.rateLimit.maxRequests} req / ${selectedProfile.guards.rateLimit.windowMs / 1000}s`
+                        : 'Disabled'
+                    }
+                  />
+
+                  <GuardStatusRow
+                    icon={<AlertTriangle className="w-4 h-4 text-error" />}
+                    label="Content Filter"
+                    enabled={!!selectedProfile.guards.contentFilter?.enabled}
+                    detail={
+                      selectedProfile.guards.contentFilter?.enabled
+                        ? selectedProfile.guards.contentFilter.strictness
+                        : 'Disabled'
+                    }
+                  />
+                  {selectedProfile.guards.contentFilter?.enabled && (selectedProfile.guards.contentFilter.blockedTerms?.length ?? 0) > 0 && (
+                    <div className="py-2 pl-6">
+                      <span className="text-xs text-base-content/50">Blocked Terms</span>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {selectedProfile.guards.contentFilter.blockedTerms?.map((t: string) => (
+                          <Badge key={t} variant="error" size="sm">{t}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </Card>
+
+              {/* Timestamps */}
+              {(selectedProfile.createdAt || selectedProfile.updatedAt) && (
+                <div className="text-xs text-base-content/50 space-y-1">
+                  {selectedProfile.createdAt && (
+                    <p>Created: {new Date(selectedProfile.createdAt).toLocaleString()}</p>
+                  )}
+                  {selectedProfile.updatedAt && (
+                    <p>Updated: {new Date(selectedProfile.updatedAt).toLocaleString()}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </DetailDrawer>
+
+        {editingProfile && (
+          <ModalForm
+            isOpen={true}
+            onClose={() => setEditingProfile(null)}
+            title={editingProfile.id ? 'Edit Profile' : 'Create Profile'}
+            fields={getModalFields()}
+            initialData={editingProfile}
+            onSubmit={async (data) => {
+              handleSaveProfileForm(data);
+            }}
+            submitText={editingProfile.id ? 'Save Changes' : 'Create Profile'}
+            loading={createMutation.isPending || updateMutation.isPending}
+          />
+        )}
+
+        <ConfirmModal
+          isOpen={!!deleteConfirm}
+          title="Delete Guard Profile"
+          message={`Are you sure you want to delete the profile "${deleteConfirm?.name}"? This action cannot be undone.`}
+          confirmText="Delete Profile"
+          confirmVariant="error"
+          onConfirm={confirmDelete}
+          onClose={() => setDeleteConfirm(null)}
+        />
       </div>
     </div>
   );

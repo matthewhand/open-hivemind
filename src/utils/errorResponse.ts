@@ -5,9 +5,8 @@
  * HTTP status codes, error codes, and structured data.
  */
 
-import type { Response } from 'express';
-import { HTTP_STATUS, type HttpStatus } from '../types/constants';
-import { BaseHivemindError } from '../types/errorClasses';
+import { type Response } from 'express';
+import { HTTP_STATUS } from '../types/constants';
 import { ErrorUtils, type HivemindError } from '../types/errors';
 
 /**
@@ -57,7 +56,10 @@ export class ErrorResponseBuilder {
   private response: StandardErrorResponse;
   private includeStack = false;
 
+  private originalError: any;
+
   constructor(error: HivemindError | Record<string, unknown>, correlationId?: string) {
+    this.originalError = error;
     this.response = {
       success: false,
       error: {
@@ -74,14 +76,14 @@ export class ErrorResponseBuilder {
       this.response.error.details = error.details as Record<string, unknown>;
     }
 
-    // Capture stack trace if available
-    if (error instanceof Error && error.stack) {
-      this.response.stack = error.stack;
-    }
-
-    // Add recovery information if it's a BaseHivemindError
-    if (error instanceof BaseHivemindError) {
-      const recovery = error.getRecoveryStrategy();
+    // Add recovery information if available (duck typing to avoid circular dependency)
+    if (
+      error &&
+      typeof error === 'object' &&
+      'getRecoveryStrategy' in error &&
+      typeof (error as any).getRecoveryStrategy === 'function'
+    ) {
+      const recovery = (error as any).getRecoveryStrategy();
       this.response.error.recovery = {
         canRecover: recovery.canRecover,
         retryDelay: recovery.retryDelay,
@@ -96,6 +98,9 @@ export class ErrorResponseBuilder {
    */
   withStack(include = true): ErrorResponseBuilder {
     this.includeStack = include;
+    if (include && this.originalError && this.originalError.stack) {
+      this.response.stack = this.originalError.stack;
+    }
     return this;
   }
 
@@ -138,16 +143,25 @@ export class ErrorResponseBuilder {
     if (!this.includeStack) {
       delete finalResponse.stack;
     }
+    // Provide details as an alias for compatibility
+    if (finalResponse.error && (finalResponse.error as any).issues) {
+      (finalResponse.error as any).details = (finalResponse.error as any).issues;
+    }
     return finalResponse;
   }
 
   /**
    * Get the appropriate HTTP status code for this error
    */
-  getHttpStatusCode(): HttpStatus | number {
+  getStatusCode(): number {
+    // If the error object has a statusCode, use it
+    if (this.originalError && typeof this.originalError === 'object' && 'statusCode' in this.originalError) {
+      return Number(this.originalError.statusCode);
+    }
+
     const error = this.response.error;
 
-    // Check for specific status codes
+    // Check for specific status codes based on error code
     switch (error.code) {
       case 'VALIDATION_ERROR':
         return HTTP_STATUS.BAD_REQUEST;
@@ -160,6 +174,7 @@ export class ErrorResponseBuilder {
       case 'NOT_FOUND':
         return HTTP_STATUS.NOT_FOUND;
       case 'RATE_LIMIT_ERROR':
+      case 'TOO_MANY_REQUESTS':
         return HTTP_STATUS.TOO_MANY_REQUESTS;
       case 'TIMEOUT_ERROR':
         return HTTP_STATUS.REQUEST_TIMEOUT;
@@ -189,7 +204,7 @@ export class ErrorResponseBuilder {
    * Send the error response using an Express Response object
    */
   send(res: Response): Response {
-    const statusCode = this.getHttpStatusCode();
+    const statusCode = this.getStatusCode();
     const finalResponse = this.build();
 
     // Ensure correlation ID is in headers
@@ -202,10 +217,10 @@ export class ErrorResponseBuilder {
   }
 
   /**
-   * Alias for getHttpStatusCode for backward compatibility
+   * Alias for getStatusCode for backward compatibility
    */
-  getStatusCode(): HttpStatus | number {
-    return this.getHttpStatusCode();
+  getHttpStatusCode(): number {
+    return this.getStatusCode();
   }
 
   /**

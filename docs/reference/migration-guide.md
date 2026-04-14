@@ -15,6 +15,9 @@ The new system uses a `BOTS_*` prefix pattern that works across all platforms (D
 - ✅ Backward compatibility with legacy configs
 - ✅ Better organization and scalability
 
+> [!NOTE]
+> **Configuration Schema Decoupling**: In recent updates, the monolithic `MessageConfig` has been split. Tokens and platform-specific logic are now validated against decoupled schemas (`discordSchema.ts`, `slackSchema.ts`, `mattermostSchema.ts`, and core behavior inside `messageSchema.ts`). Keep this in mind when debugging configuration overrides.
+
 ## Quick Migration Tool
 
 ### Automated Migration Script

@@ -87,3 +87,6 @@ export const UpdateUserSchema = z.object({
     role: z.enum(['user', 'admin']).optional(),
   }),
 });
+
+// Schema for profile updates (same as UpdateUserSchema but often more limited in real apps)
+export const UpdateProfileSchema = UpdateUserSchema;

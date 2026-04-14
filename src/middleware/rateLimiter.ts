@@ -22,7 +22,6 @@ const debug = Debug('app:rateLimiter');
 
 // Environment detection
 const isProduction = process.env.NODE_ENV === 'production';
-const isTest = process.env.NODE_ENV === 'test';
 
 /**
  * Initialize Redis connection for distributed rate limiting
@@ -134,6 +133,11 @@ export async function createBotRateLimiter(
           : Math.ceil(settings.windowMs / 1000);
 
         res.setHeader('Retry-After', String(retryAfter));
+        res.setHeader('X-RateLimit-Limit', String(settings.maxRequests));
+        res.setHeader('X-RateLimit-Remaining', '0');
+        if (req.rateLimit?.resetTime)
+          res.setHeader('X-RateLimit-Reset', String(req.rateLimit.resetTime));
+          
         res.status(429).json({
           error: 'Too many requests',
           message: `Rate limit exceeded for bot "${botName}".`,
@@ -143,18 +147,13 @@ export async function createBotRateLimiter(
         });
       },
     });
-  } catch (error) {
-    debug(`Failed to create bot rate limiter for ${botName}:`, error);
+  } catch {
     return null;
   }
 }
 
 // Cache for bot-specific rate limiters
 const botRateLimiters = new Map<string, ReturnType<typeof rateLimit>>();
-
-/**
- * Get or create a bot-specific rate limiter
- */
 export async function getBotRateLimiter(
   botName: string
 ): Promise<ReturnType<typeof rateLimit> | null> {
@@ -189,9 +188,10 @@ export const applyRateLimiting = async (req: Request, res: Response, next: NextF
   return defaultRateLimiter(req, res, next);
 };
 
-/**
- * Shutdown rate limiter and cleanup resources
- */
+export function clearBotRateLimiters(): void {
+  botRateLimiters.clear();
+}
+
 export function shutdownRateLimiter(): void {
   for (const store of memoryStores.values()) store.shutdown();
   memoryStores.clear();

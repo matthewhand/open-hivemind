@@ -7,6 +7,7 @@
 import { Router } from 'express';
 import { container } from 'tsyringe';
 import { ApiResponse } from '@src/server/utils/apiResponse';
+import { Logger } from '@common/logger';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 import DemoModeService from '../../services/DemoModeService';
@@ -73,9 +74,8 @@ router.post(
         });
       } catch (wsError) {
         // WebSocket service might not be available, continue anyway
-        console.warn('Failed to broadcast demo mode change:', wsError);
+        Logger.warn('Failed to broadcast demo mode change:', wsError);
       }
-
       res.json(
         ApiResponse.success({
           enabled: isNowEnabled,

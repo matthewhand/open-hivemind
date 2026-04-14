@@ -51,7 +51,7 @@ const ToolProvidersPage: React.FC = () => {
   const setFilterType = (v: string) => setUrlParam('type', v);
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean; title: string; message: string; onConfirm: () => void;
-  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => { } });
 
   const [formModal, setFormModal] = useState<{
     isOpen: boolean; isEdit: boolean; profile: any | null;
@@ -125,7 +125,7 @@ const ToolProvidersPage: React.FC = () => {
           const backup = profiles.find((p) => p.key === oldKey);
           await apiService.delete(`/api/config/tool-profiles/${oldKey}`);
           try { await apiService.post('/api/config/tool-profiles', payload); }
-          catch (e: unknown) { if (backup) await apiService.post('/api/config/tool-profiles', backup).catch(() => {}); throw e; }
+          catch (e: unknown) { if (backup) await apiService.post('/api/config/tool-profiles', backup).catch(() => { }); throw e; }
         }
       } else { await apiService.post('/api/config/tool-profiles', payload); }
       setFormModal({ isOpen: false, isEdit: false, profile: null });
@@ -176,7 +176,6 @@ const ToolProvidersPage: React.FC = () => {
         </div>
       </div>
       <StatsCards stats={stats} isLoading={loading} />
-      {error && <Alert status="error" icon={<XIcon />} message={error} onClose={() => setError(null)} />}
       <SearchFilterBar
         searchValue={searchQuery} onSearchChange={setSearchQuery} searchPlaceholder="Search profiles..."
         filters={[{ key: 'type', value: filterType, onChange: setFilterType, options: [{ label: 'All Types', value: 'all' }, ...providerTypes], className: 'w-48' }]}
@@ -202,7 +201,7 @@ const ToolProvidersPage: React.FC = () => {
                         {profile.name}
                         <span className="text-xs font-normal opacity-50 px-2 py-0.5 bg-base-200 rounded-full font-mono">{profile.key}</span>
                       </h3>
-                      <Badge variant="secondary" size="sm" style="outline">{profile.provider}</Badge>
+                      <Badge variant="secondary" size="sm" className="badge-outline">{profile.provider}</Badge>
                     </div>
                   </div>
                   <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
@@ -241,29 +240,29 @@ const ToolProvidersPage: React.FC = () => {
           { label: formModal.isEdit ? 'Update' : 'Create', onClick: handleFormSubmit, variant: 'primary', disabled: !formData.name.trim() },
         ]}
       >
-            <div className="form-control w-full mb-3">
-              <label className="label" htmlFor="tool-profile-name"><span className="label-text">Profile Name</span></label>
-              <Input id="tool-profile-name" type="text" placeholder="My Tool Provider" value={formData.name} onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))} />
-            </div>
-            <div className="form-control w-full mb-3">
-              <label className="label" htmlFor="tool-profile-provider"><span className="label-text">Provider Type</span></label>
-              <Select id="tool-profile-provider" className="select-bordered" value={selectedProvider} onChange={(e) => { setSelectedProvider(e.target.value); setFormData(prev => ({ ...prev, provider: e.target.value, config: {} })); }} disabled={formModal.isEdit}>
-                {toolSchemas.map((schema) => (<option key={schema.providerType} value={schema.providerType}>{schema.displayName}</option>))}
+        <div className="form-control w-full mb-3">
+          <label className="label" htmlFor="tool-profile-name"><span className="label-text">Profile Name</span></label>
+          <Input id="tool-profile-name" type="text" placeholder="My Tool Provider" value={formData.name} onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))} />
+        </div>
+        <div className="form-control w-full mb-3">
+          <label className="label" htmlFor="tool-profile-provider"><span className="label-text">Provider Type</span></label>
+          <Select id="tool-profile-provider" className="select-bordered" value={selectedProvider} onChange={(e) => { setSelectedProvider(e.target.value); setFormData(prev => ({ ...prev, provider: e.target.value, config: {} })); }} disabled={formModal.isEdit}>
+            {toolSchemas.map((schema) => (<option key={schema.providerType} value={schema.providerType}>{schema.displayName}</option>))}
+          </Select>
+        </div>
+        {currentSchema?.fields?.map((field) => (
+          <div key={field.name} className="form-control w-full mb-3">
+            <label className="label" htmlFor={`tool-field-${field.name}`}><span className="label-text">{field.label}{field.required && <span className="text-error ml-1">*</span>}</span></label>
+            {field.type === 'select' ? (
+              <Select id={`tool-field-${field.name}`} className="select-bordered" value={formData.config[field.name] ?? field.defaultValue ?? ''} onChange={(e) => setFormData(prev => ({ ...prev, config: { ...prev.config, [field.name]: e.target.value } }))}>
+                {field.options?.map((opt) => (<option key={typeof opt === 'string' ? opt : opt.value} value={typeof opt === 'string' ? opt : opt.value}>{typeof opt === 'string' ? opt : opt.label}</option>))}
               </Select>
-            </div>
-            {currentSchema?.fields?.map((field) => (
-              <div key={field.name} className="form-control w-full mb-3">
-                <label className="label" htmlFor={`tool-field-${field.name}`}><span className="label-text">{field.label}{field.required && <span className="text-error ml-1">*</span>}</span></label>
-                {field.type === 'select' ? (
-                  <Select id={`tool-field-${field.name}`} className="select-bordered" value={formData.config[field.name] ?? field.defaultValue ?? ''} onChange={(e) => setFormData(prev => ({ ...prev, config: { ...prev.config, [field.name]: e.target.value } }))}>
-                    {field.options?.map((opt) => (<option key={typeof opt === 'string' ? opt : opt.value} value={typeof opt === 'string' ? opt : opt.value}>{typeof opt === 'string' ? opt : opt.label}</option>))}
-                  </Select>
-                ) : (
-                  <Input id={`tool-field-${field.name}`} type={field.type === 'password' ? 'password' : 'text'} placeholder={field.placeholder || ''} value={formData.config[field.name] ?? ''} onChange={(e) => setFormData(prev => ({ ...prev, config: { ...prev.config, [field.name]: e.target.value } }))} />
-                )}
-                {field.description && <label className="label"><span className="label-text-alt opacity-60">{field.description}</span></label>}
-              </div>
-            ))}
+            ) : (
+              <Input id={`tool-field-${field.name}`} type={field.type === 'password' ? 'password' : 'text'} placeholder={field.placeholder || ''} value={formData.config[field.name] ?? ''} onChange={(e) => setFormData(prev => ({ ...prev, config: { ...prev.config, [field.name]: e.target.value } }))} />
+            )}
+            {field.description && <label className="label"><span className="label-text-alt opacity-60">{field.description}</span></label>}
+          </div>
+        ))}
       </Modal>
 
       <ConfirmModal isOpen={confirmModal.isOpen} onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))} title={confirmModal.title} message={confirmModal.message} onConfirm={confirmModal.onConfirm} confirmVariant="error" confirmText="Delete" cancelText="Cancel" />
@@ -288,6 +287,11 @@ const ToolProvidersPage: React.FC = () => {
         <p className="text-base-content/60 text-sm mt-1">Connect tool providers and external integrations</p>
       </div>
       <div className="px-6 pb-6">
+        {error && (
+          <div className="mb-6">
+            <Alert status="error" icon={<XIcon />} message={error} onClose={() => setError(null)} />
+          </div>
+        )}
         <Tabs
           variant="lifted"
           activeTab={activeTab}

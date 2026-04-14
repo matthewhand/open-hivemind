@@ -245,7 +245,7 @@ adminRouter.post(
       await fs.promises.writeFile(messengersPath, JSON.stringify(cfg, null, 2), 'utf8'); } catch (e) { debug('Failed writing messengers.json', e); }
 
     try { const slack = SlackService.getInstance();
-      const instanceCfg = { name, slack: { botToken, signingSecret, appToken: appToken || '', defaultChannelId: defaultChannelId || '', joinChannels: joinChannels || '', mode: mode || 'socket', }, llm, };
+      const instanceCfg = { name, slack: { botToken, signingSecret, appToken: appToken || '', defaultChannelId: defaultChannelId || '', joinChannels: joinChannels || '', mode: mode || 'socket' }, llm };
       await (slack as unknown as { addBot: (cfg: typeof instanceCfg) => Promise<void> }).addBot?.(
         instanceCfg
       ); } catch (e) { debug('Runtime addBot failed (continue, config was persisted):', e); }

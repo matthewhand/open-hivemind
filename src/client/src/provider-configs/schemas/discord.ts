@@ -24,7 +24,7 @@ export const discordProviderSchema: ProviderConfigSchema = {
       placeholder: 'MTk4NzA1MD... (Bot Token)',
       group: 'Authentication',
       validation: {
-        pattern: '^[A-Za-z0-9_\\-]{59,}$',
+        pattern: '^[A-Za-z0-9_\\-]{59 }$',
         custom: (value: string) => {
           const result = validateApiKey('discord', value, false);
           if (!result.isValid) {

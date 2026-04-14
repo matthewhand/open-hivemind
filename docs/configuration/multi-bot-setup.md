@@ -206,7 +206,7 @@ Built-in profiles: `eager` (higher response chance, shorter delays) and `cautiou
 |---|---|---|
 | Per-persona | `Persona.responseProfileId` | Reference to a profile; editable via Web UI → Personas |
 | Per-bot | `BOTS_{n}_RESPONSE_PROFILE` → response profile key | `config/response-profiles.json` or built-ins |
-| Global | `MESSAGE_UNSOLICITED_BASE_CHANCE`, `MESSAGE_UNSOLICITED_ADDRESSED`, etc. | Environment variables / `.env` |
+| Global | `MESSAGE_UNSOLICITED_BASE_CHANCE`, `MESSAGE_UNSOLICITED_ADDRESSED`, etc. | Environment variables / `.env` (via `schemas/messageSchema.ts`) |
 
 ---
 

@@ -82,6 +82,15 @@ const Dashboard: React.FC = () => {
     setShowToast(true);
   }, []);
 
+  // ⚡ Bolt Optimization: Pre-compute bot status lookups to change O(N*M) render to O(N+M)
+  const botStatusMap = useMemo(() => {
+    const map = new Map<string, any>();
+    if (status?.bots) {
+      status.bots.forEach(b => map.set(b.id, b));
+    }
+    return map;
+  }, [status]);
+
   // ⚡ Bolt Optimization: Combined multiple O(N) filtering and reduce passes into a single pass.
   const { activeBots, totalMessages, uptimeHours, uptimeMinutes } = useMemo(() => {
     if (!status) {
@@ -214,7 +223,7 @@ const Dashboard: React.FC = () => {
             <DashboardBotCard
               key={bot.name}
               bot={bot}
-              botStatusData={status?.bots?.find((b) => b.id === bot.id)}
+              botStatusData={botStatusMap.get(bot.id)}
               rating={botRatings[bot.name] || 0}
               onRatingChange={handleRatingChange}
               getProviderIcon={getProviderIcon}

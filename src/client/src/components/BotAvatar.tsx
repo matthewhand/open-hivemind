@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bot, User } from 'lucide-react';
-import { SkeletonAvatar } from '../components/DaisyUI/Skeleton';
+import { Bot } from 'lucide-react';
 import Avatar from './DaisyUI/Avatar';
 
 // Duplicate interface just for props, or import existing if possible

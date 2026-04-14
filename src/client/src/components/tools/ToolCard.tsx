@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import {
   Wrench as ToolIcon,
   Play as RunIcon,
@@ -22,7 +22,7 @@ interface ToolCardProps {
   getCategoryColor: (category: string) => string;
 }
 
-export const ToolCard: React.FC<ToolCardProps> = ({
+export const ToolCard: React.FC<ToolCardProps> = memo(({
   tool,
   isFavorite,
   onToggleFavorite,
@@ -152,4 +152,6 @@ export const ToolCard: React.FC<ToolCardProps> = ({
         </Card.Actions>
     </Card>
   );
-};
+});
+
+ToolCard.displayName = 'ToolCard';

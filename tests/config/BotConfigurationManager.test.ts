@@ -1,4 +1,4 @@
-import { BotConfigurationManager, BotConfig } from '@config/BotConfigurationManager';
+import { BotConfigurationManager, BotConfig } from '../../src/config/BotConfigurationManager';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -185,7 +185,7 @@ describe('BotConfigurationManager', () => {
       const bots = manager.getAllBots();
 
       expect(bots).toHaveLength(2);
-      expect(bots.map(b => b.name)).toEqual(['max', 'sam']);
+      expect(bots.map((b: BotConfig) => b.name)).toEqual(['max', 'sam']);
     });
   });
 

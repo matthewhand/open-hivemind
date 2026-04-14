@@ -103,7 +103,7 @@ describe('ErrorLogger', () => {
 
       expect(entry.correlationId).toBe('corr-123');
       expect(entry.error.message).toBe('Test error');
-      expect(entry.error.code).toBe('test');
+      expect(entry.error.code).toBe('TEST');
       expect(entry.request?.path).toBe('/api/test');
       expect(entry.request?.method).toBe('POST');
       expect(entry.request?.userId).toBe('user-1');

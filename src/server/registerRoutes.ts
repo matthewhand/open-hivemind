@@ -37,6 +37,7 @@ import onboardingRouter from '@src/server/routes/onboarding';
 import openapiRouter from '@src/server/routes/openapi';
 import personasRouter from '@src/server/routes/personas';
 import pluginSecurityRouter from '@src/server/routes/pluginSecurity';
+import providersRouter from '@src/server/routes/providers';
 import secureConfigRouter from '@src/server/routes/secureConfig';
 import sitemapRouter from '@src/server/routes/sitemap';
 import specsRouter from '@src/server/routes/specs';
@@ -135,6 +136,7 @@ export function registerRoutes(app: import('express').Application, ctx: RouteCon
   app.use('/api/mcp-tools', mcpToolsRouter);
   app.use('/api/onboarding', onboardingRouter);
   app.use('/api/personas', personasRouter);
+  app.use('/api/providers', providersRouter);
   app.use('/api/templates', templatesRouter);
   app.use('/api/usage-tracking', usageTrackingRouter);
   app.use('/api/webhooks', webhooksRouter);
