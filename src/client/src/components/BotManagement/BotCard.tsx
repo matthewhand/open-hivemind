@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type {
   BotInstance,
@@ -439,4 +439,5 @@ const BotCard: React.FC<BotCardProps> = ({
   );
 };
 
-export default BotCard;
+// ⚡ Bolt Optimization: Added memo() to prevent unnecessary re-renders in bot lists
+export default memo(BotCard);
