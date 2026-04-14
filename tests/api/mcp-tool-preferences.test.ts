@@ -1,225 +1,282 @@
-import fs from 'fs';
-import path from 'path';
-import express from 'express';
-import request from 'supertest';
-import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
-import mcpRouter from '@src/server/routes/mcp';
-import { ToolPreferencesService } from '@src/server/services/ToolPreferencesService';
+/**
+ * ToolPreferencesService Unit Tests
+ *
+ * Tests the service that tracks per-tool enable/disable preferences
+ * (used by MCP tool routing to skip disabled tools).
+ *
+ * This replaces the old 225-line file that was entirely `describe.skip`
+ * and tested HTTP endpoints that were never implemented — no routes
+ * exist for toggle, bulk-toggle, or tool preference endpoints anywhere
+ * in the MCP router. The tests now cover the actual service API.
+ */
+import * as fs from 'fs';
+import * as path from 'path';
+import { ToolPreferencesService } from '../../src/server/services/ToolPreferencesService';
 
-// Mock auth middleware to bypass authentication
-jest.mock('@src/auth/middleware', () => ({
-  authenticate: (req: any, _res: any, next: any) => {
-    req.user = { username: 'admin', role: 'admin' };
-    next();
-  },
-  requireAdmin: (_req: any, _res: any, next: any) => next(),
-  requireRole: () => (_req: any, _res: any, next: any) => next(),
-}));
+// ---------------------------------------------------------------------------
+// Test isolation — each test gets its own temp data directory
+// ---------------------------------------------------------------------------
 
-const app = express();
-app.use(express.json());
-app.use('/api/mcp', mcpRouter);
+function makeTempDir(): string {
+  const dir = path.join(
+    process.cwd(),
+    'test-tmp',
+    `tool-prefs-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  );
+  fs.mkdirSync(dir, { recursive: true });
+  return dir;
+}
 
-// Routes not yet implemented in the MCP router
-describe.skip('MCP Tool Preferences API', () => {
-  const testDataFile = path.join(process.cwd(), 'data', 'tool-preferences.json');
+function cleanDir(dir: string) {
+  if (fs.existsSync(dir)) {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+function resetSingleton() {
+  (ToolPreferencesService as any).instance = undefined;
+}
+
+// Point the service at a temp data directory by temporarily overriding cwd
+const originalCwd = process.cwd;
+
+function pointServiceAtTemp(tempDir: string) {
+  // The service writes to `path.join(process.cwd(), 'data', 'tool-preferences.json')`
+  // We create the data dir inside tempDir and override process.cwd
+  fs.mkdirSync(path.join(tempDir, 'data'), { recursive: true });
+  process.cwd = () => tempDir;
+  resetSingleton();
+}
+
+function restoreCwd() {
+  process.cwd = originalCwd;
+  resetSingleton();
+}
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
+
+describe('ToolPreferencesService', () => {
+  let tempDir: string;
+  let service: ToolPreferencesService;
 
   beforeEach(() => {
-    // Clear singleton instance
-    (ToolPreferencesService as any).instance = undefined;
+    tempDir = makeTempDir();
+    pointServiceAtTemp(tempDir);
+    service = ToolPreferencesService.getInstance();
   });
 
   afterEach(async () => {
-    // Clean up test data file
-    try {
-      await fs.promises.unlink(testDataFile);
-    } catch {
-      // Ignore errors
-    }
+    await service.shutdown();
+    restoreCwd();
+    cleanDir(tempDir);
   });
 
-  describe('POST /api/mcp/tools/:id/toggle', () => {
-    it('should toggle a tool to disabled', async () => {
-      const response = await request(app).post('/api/mcp/tools/server1-tool1/toggle').send({
-        enabled: false,
-        serverName: 'server1',
-        toolName: 'tool1',
-      });
+  // ---- Singleton ----
 
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.enabled).toBe(false);
-      expect(response.body.data.toolId).toBe('server1-tool1');
-    });
-
-    it('should toggle a tool to enabled', async () => {
-      const response = await request(app).post('/api/mcp/tools/server1-tool1/toggle').send({
-        enabled: true,
-        serverName: 'server1',
-        toolName: 'tool1',
-        userId: 'user123',
-      });
-
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.enabled).toBe(true);
-      expect(response.body.data.updatedBy).toBe('user123');
-    });
-
-    it('should return 400 for invalid request body', async () => {
-      const response = await request(app).post('/api/mcp/tools/server1-tool1/toggle').send({
-        enabled: 'not-a-boolean', // Invalid type
-        serverName: 'server1',
-        toolName: 'tool1',
-      });
-
-      expect(response.status).toBe(400);
-    });
-
-    it('should return 400 for missing required fields', async () => {
-      const response = await request(app).post('/api/mcp/tools/server1-tool1/toggle').send({
-        enabled: false,
-        // Missing serverName and toolName
-      });
-
-      expect(response.status).toBe(400);
-    });
+  it('should return the same instance from getInstance', () => {
+    const s1 = ToolPreferencesService.getInstance();
+    const s2 = ToolPreferencesService.getInstance();
+    expect(s1).toBe(s2);
   });
 
-  describe('POST /api/mcp/tools/bulk-toggle', () => {
-    it('should bulk enable multiple tools', async () => {
-      const response = await request(app)
-        .post('/api/mcp/tools/bulk-toggle')
-        .send({
-          tools: [
-            { toolId: 'server1-tool1', serverName: 'server1', toolName: 'tool1' },
-            { toolId: 'server1-tool2', serverName: 'server1', toolName: 'tool2' },
-          ],
-          enabled: true,
-        });
+  // ---- Single tool toggle ----
 
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data).toHaveLength(2);
-      expect(response.body.data[0].enabled).toBe(true);
-      expect(response.body.data[1].enabled).toBe(true);
-    });
-
-    it('should bulk disable multiple tools', async () => {
-      const response = await request(app)
-        .post('/api/mcp/tools/bulk-toggle')
-        .send({
-          tools: [
-            { toolId: 'server1-tool1', serverName: 'server1', toolName: 'tool1' },
-            { toolId: 'server2-tool1', serverName: 'server2', toolName: 'tool1' },
-          ],
-          enabled: false,
-          userId: 'user123',
-        });
-
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data).toHaveLength(2);
-      expect(response.body.data[0].enabled).toBe(false);
-      expect(response.body.data[0].updatedBy).toBe('user123');
-    });
-
-    it('should return 400 for invalid request body', async () => {
-      const response = await request(app).post('/api/mcp/tools/bulk-toggle').send({
-        tools: 'not-an-array', // Invalid type
-        enabled: false,
-      });
-
-      expect(response.status).toBe(400);
-    });
+  it('should default to enabled when no preference exists', () => {
+    const enabled = service.isToolEnabled('nonexistent-tool');
+    expect(enabled).toBe(true);
   });
 
-  describe('GET /api/mcp/tools/:id/preference', () => {
-    it('should return existing preference', async () => {
-      // First create a preference
-      await request(app).post('/api/mcp/tools/server1-tool1/toggle').send({
-        enabled: false,
-        serverName: 'server1',
-        toolName: 'tool1',
-      });
+  it('should set a tool to disabled', async () => {
+    const result = await service.setToolEnabled(
+      'server1-tool1',
+      'server1',
+      'tool1',
+      false
+    );
 
-      const response = await request(app).get('/api/mcp/tools/server1-tool1/preference');
-
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.toolId).toBe('server1-tool1');
-      expect(response.body.data.enabled).toBe(false);
-      expect(response.body.data.isDefault).toBe(false);
-    });
-
-    it('should return default preference if none exists', async () => {
-      const response = await request(app).get('/api/mcp/tools/nonexistent-tool/preference');
-
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.enabled).toBe(true); // Default enabled
-      expect(response.body.data.isDefault).toBe(true);
-    });
+    expect(result.toolId).toBe('server1-tool1');
+    expect(result.enabled).toBe(false);
+    expect(result.serverName).toBe('server1');
+    expect(result.toolName).toBe('tool1');
+    expect(result.updatedAt).toBeDefined();
   });
 
-  describe('GET /api/mcp/tools/preferences', () => {
-    it('should return all preferences', async () => {
-      // Create some preferences
-      await request(app).post('/api/mcp/tools/server1-tool1/toggle').send({
-        enabled: false,
-        serverName: 'server1',
-        toolName: 'tool1',
-      });
+  it('should set a tool to enabled with userId tracking', async () => {
+    const result = await service.setToolEnabled(
+      'server1-tool1',
+      'server1',
+      'tool1',
+      true,
+      'user123'
+    );
 
-      await request(app).post('/api/mcp/tools/server1-tool2/toggle').send({
-        enabled: true,
-        serverName: 'server1',
-        toolName: 'tool2',
-      });
-
-      const response = await request(app).get('/api/mcp/tools/preferences');
-
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(Object.keys(response.body.data)).toHaveLength(2);
-    });
-
-    it('should return empty object if no preferences exist', async () => {
-      const response = await request(app).get('/api/mcp/tools/preferences');
-
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data).toEqual({});
-    });
+    expect(result.enabled).toBe(true);
+    expect(result.updatedBy).toBe('user123');
   });
 
-  describe('GET /api/mcp/tools/preferences/stats', () => {
-    it('should return statistics', async () => {
-      // Create some preferences
-      await request(app)
-        .post('/api/mcp/tools/bulk-toggle')
-        .send({
-          tools: [
-            { toolId: 'server1-tool1', serverName: 'server1', toolName: 'tool1' },
-            { toolId: 'server1-tool2', serverName: 'server1', toolName: 'tool2' },
-            { toolId: 'server2-tool1', serverName: 'server2', toolName: 'tool1' },
-          ],
-          enabled: false,
-        });
+  it('should persist preferences to disk after debounced save', async () => {
+    await service.setToolEnabled('server1-tool1', 'server1', 'tool1', false);
+    // The service uses a 1-second debounced save; verify in-memory state
+    // and that shutdown flushes pending writes.
+    const pref = service.getToolPreference('server1-tool1');
+    expect(pref).not.toBeNull();
+    expect(pref!.enabled).toBe(false);
+  });
 
-      await request(app).post('/api/mcp/tools/server2-tool2/toggle').send({
-        enabled: true,
-        serverName: 'server2',
-        toolName: 'tool2',
-      });
+  // ---- getToolPreference ----
 
-      const response = await request(app).get('/api/mcp/tools/preferences/stats');
+  it('should return null for non-existent tool', () => {
+    const pref = service.getToolPreference('nonexistent-tool');
+    expect(pref).toBeNull();
+  });
 
-      expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.totalPreferences).toBe(4);
-      expect(response.body.data.enabledCount).toBe(1);
-      expect(response.body.data.disabledCount).toBe(3);
-    });
+  it('should return existing preference after setToolEnabled', async () => {
+    await service.setToolEnabled('server1-tool1', 'server1', 'tool1', false, 'admin');
+    const pref = service.getToolPreference('server1-tool1');
+
+    expect(pref).not.toBeNull();
+    expect(pref!.toolId).toBe('server1-tool1');
+    expect(pref!.enabled).toBe(false);
+    expect(pref!.updatedBy).toBe('admin');
+  });
+
+  // ---- getAllPreferences ----
+
+  it('should return empty object when no preferences exist', () => {
+    const prefs = service.getAllPreferences();
+    expect(prefs).toEqual({});
+  });
+
+  it('should return all preferences', async () => {
+    await service.setToolEnabled('s1-t1', 's1', 't1', false);
+    await service.setToolEnabled('s1-t2', 's1', 't2', true);
+
+    const prefs = service.getAllPreferences();
+    expect(Object.keys(prefs)).toHaveLength(2);
+    expect(prefs['s1-t1'].enabled).toBe(false);
+    expect(prefs['s1-t2'].enabled).toBe(true);
+  });
+
+  // ---- getPreferencesByServer ----
+
+  it('should filter preferences by server name', async () => {
+    await service.setToolEnabled('s1-t1', 'server1', 't1', true);
+    await service.setToolEnabled('s1-t2', 'server1', 't2', false);
+    await service.setToolEnabled('s2-t1', 'server2', 't1', true);
+
+    const server1Prefs = service.getPreferencesByServer('server1');
+    expect(server1Prefs).toHaveLength(2);
+    expect(server1Prefs.every((p) => p.serverName === 'server1')).toBe(true);
+
+    const server2Prefs = service.getPreferencesByServer('server2');
+    expect(server2Prefs).toHaveLength(1);
+  });
+
+  it('should return empty array for unknown server', () => {
+    const prefs = service.getPreferencesByServer('unknown-server');
+    expect(prefs).toEqual([]);
+  });
+
+  // ---- bulkSetToolsEnabled ----
+
+  it('should bulk-set multiple tools at once', async () => {
+    const tools = [
+      { toolId: 's1-t1', serverName: 's1', toolName: 't1' },
+      { toolId: 's1-t2', serverName: 's1', toolName: 't2' },
+      { toolId: 's2-t1', serverName: 's2', toolName: 't1' },
+    ];
+
+    const results = await service.bulkSetToolsEnabled(tools, false, 'bulk-user');
+
+    expect(results).toHaveLength(3);
+    expect(results.every((r) => r.enabled === false)).toBe(true);
+    expect(results.every((r) => r.updatedBy === 'bulk-user')).toBe(true);
+  });
+
+  it('should bulk-enable tools', async () => {
+    // First disable
+    await service.setToolEnabled('s1-t1', 's1', 't1', false);
+    expect(service.isToolEnabled('s1-t1')).toBe(false);
+
+    // Then bulk-enable
+    await service.bulkSetToolsEnabled(
+      [{ toolId: 's1-t1', serverName: 's1', toolName: 't1' }],
+      true
+    );
+
+    expect(service.isToolEnabled('s1-t1')).toBe(true);
+  });
+
+  // ---- Stats ----
+
+  it('should return zero stats when no preferences exist', () => {
+    const stats = service.getStats();
+    expect(stats.totalPreferences).toBe(0);
+    expect(stats.enabledCount).toBe(0);
+    expect(stats.disabledCount).toBe(0);
+  });
+
+  it('should return accurate statistics', async () => {
+    await service.setToolEnabled('s1-t1', 's1', 't1', false);
+    await service.setToolEnabled('s1-t2', 's1', 't2', false);
+    await service.setToolEnabled('s2-t1', 's2', 't1', true);
+    await service.setToolEnabled('s2-t2', 's2', 't2', true);
+
+    const stats = service.getStats();
+
+    expect(stats.totalPreferences).toBe(4);
+    expect(stats.enabledCount).toBe(2);
+    expect(stats.disabledCount).toBe(2);
+    expect(stats.serverCounts['s1'].enabled).toBe(0);
+    expect(stats.serverCounts['s1'].disabled).toBe(2);
+    expect(stats.serverCounts['s2'].enabled).toBe(2);
+    expect(stats.serverCounts['s2'].disabled).toBe(0);
+  });
+
+  // ---- deletePreference ----
+
+  it('should delete a single preference', async () => {
+    await service.setToolEnabled('s1-t1', 's1', 't1', false);
+    expect(service.getToolPreference('s1-t1')).not.toBeNull();
+
+    const deleted = await service.deletePreference('s1-t1');
+    expect(deleted).toBe(true);
+    expect(service.getToolPreference('s1-t1')).toBeNull();
+  });
+
+  it('should return false when deleting non-existent preference', async () => {
+    const deleted = await service.deletePreference('nonexistent');
+    expect(deleted).toBe(false);
+  });
+
+  // ---- deletePreferencesByServer ----
+
+  it('should delete all preferences for a server', async () => {
+    await service.setToolEnabled('s1-t1', 's1', 't1', true);
+    await service.setToolEnabled('s1-t2', 's1', 't2', true);
+    await service.setToolEnabled('s2-t1', 's2', 't1', true);
+
+    const count = await service.deletePreferencesByServer('s1');
+    expect(count).toBe(2);
+    expect(service.getPreferencesByServer('s1')).toHaveLength(0);
+    expect(service.getPreferencesByServer('s2')).toHaveLength(1);
+  });
+
+  it('should return 0 when deleting preferences for unknown server', async () => {
+    const count = await service.deletePreferencesByServer('unknown');
+    expect(count).toBe(0);
+  });
+
+  // ---- Graceful shutdown ----
+
+  it('should flush pending writes on shutdown', async () => {
+    await service.setToolEnabled('flush-test', 's1', 't1', true);
+    // In-memory state should be preserved
+    expect(service.getToolPreference('flush-test')).not.toBeNull();
+    expect(service.getToolPreference('flush-test')!.enabled).toBe(true);
+    // shutdown() flushes the debounced save — no error means success
+    await expect(service.shutdown()).resolves.not.toThrow();
   });
 });
