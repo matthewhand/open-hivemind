@@ -2,38 +2,48 @@
  * Contract tests for the LLM provider test endpoint.
  *
  * POST /api/admin/llm-providers/providers/:key/test
- *
- * These tests require the full app bootstrap (src/index exports a pre-built
- * Express app, not a factory function). They are skipped until the app
- * supports a test-friendly factory pattern like createApp({ skipMessenger }).
  */
 
 import request from 'supertest';
-import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
+import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 describe('LLM Test Endpoint Contract', () => {
   let app: any;
   let originalEnv: NodeJS.ProcessEnv;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     originalEnv = { ...process.env };
     process.env.NODE_ENV = 'test';
     process.env.NODE_CONFIG_DIR = 'config/test/';
+    process.env.ALLOW_TEST_BYPASS = 'true';
 
     // Clear require cache for the app
     jest.resetModules();
+    
+    // Lazy import to ensure env is set
+    const { default: createApp } = await import('../../src/index');
+    // If it's a factory, call it. If it's the app object, use it.
+    if (typeof createApp === 'function') {
+      app = await (createApp as any)({ skipMessenger: true, skipDemoMode: true });
+    } else {
+      app = createApp;
+    }
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     process.env = originalEnv;
+    
+    // Try to close if it's a server or has close method
+    if (app && typeof app.close === 'function') {
+      await new Promise<void>((resolve) => {
+        app.close(() => resolve());
+      });
+    }
+    
     jest.resetModules();
   });
 
   it('should reject missing message with 400', async () => {
-    // The app needs to be loaded after env is set
-    const { default: createApp } = await import('../../../../src/index');
-    app = await createApp({ skipMessenger: true, skipDemoMode: true });
-
     const res = await request(app)
       .post('/api/admin/llm-providers/providers/test-key/test')
       .send({});
@@ -44,9 +54,6 @@ describe('LLM Test Endpoint Contract', () => {
   });
 
   it('should return 404 for non-existent profile key', async () => {
-    const { default: createApp } = await import('../../../../src/index');
-    app = await createApp({ skipMessenger: true, skipDemoMode: true });
-
     const res = await request(app)
       .post('/api/admin/llm-providers/providers/nonexistent-key/test')
       .send({ message: 'hello' });
@@ -57,9 +64,6 @@ describe('LLM Test Endpoint Contract', () => {
   });
 
   it('should accept optional systemPrompt parameter', async () => {
-    const { default: createApp } = await import('../../../../src/index');
-    app = await createApp({ skipMessenger: true, skipDemoMode: true });
-
     // This will fail because no profile exists, but it validates the payload shape
     const res = await request(app)
       .post('/api/admin/llm-providers/providers/test-key/test')
@@ -70,9 +74,6 @@ describe('LLM Test Endpoint Contract', () => {
   });
 
   it('should rate-limit excessive requests', async () => {
-    const { default: createApp } = await import('../../../../src/index');
-    app = await createApp({ skipMessenger: true, skipDemoMode: true });
-
     // Send many requests quickly to trigger rate limiter
     const responses = await Promise.all(
       Array.from({ length: 150 }, () =>

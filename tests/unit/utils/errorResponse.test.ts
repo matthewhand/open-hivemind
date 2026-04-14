@@ -1,4 +1,4 @@
-import { ErrorResponseBuilder } from '../../../src/utils/errorResponse';
+import { ErrorResponseBuilder, createErrorResponse } from '../../../src/utils/errorResponse';
 import { ConfigurationError, AuthenticationError, NetworkError, ValidationError } from '../../../src/types/errorClasses';
 
 describe('ErrorResponseBuilder', () => {

@@ -48,6 +48,13 @@ export class BotConfigurationManager {
   }
 
   /**
+   * Resets the singleton instance (used for testing).
+   */
+  public static resetInstance(): void {
+    (BotConfigurationManager as any).instance = undefined;
+  }
+
+  /**
    * Load configuration from environment variables and config files
    */
   private loadConfiguration(): void {

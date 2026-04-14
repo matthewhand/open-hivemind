@@ -4,36 +4,33 @@
  * Integrates with guard profiles for per-bot rate limiting
  */
 
-import { Logger } from '@common/logger';
+import { Logger } from '../common/logger';
+
+console.log('Initializing src/config/rateLimitConfig.ts');
 
 const logger = Logger.withContext('rateLimitConfig');
 
 interface RateLimitConfig {
-  // Default rate limit: 100 requests per 15 minutes
   default: {
     windowMs: number;
     max: number;
   };
-
-  // Configuration endpoint rate limit: 10 requests per 5 minutes
-  config: {
-    windowMs: number;
-    max: number;
-  };
-
-  // Authentication rate limit: 5 attempts per hour
   auth: {
     windowMs: number;
     max: number;
   };
-
-  // Admin operations rate limit: 20 requests per 15 minutes
+  config: {
+    windowMs: number;
+    max: number;
+  };
   admin: {
     windowMs: number;
     max: number;
   };
-
-  // Redis connection configuration
+  api: {
+    windowMs: number;
+    max: number;
+  };
   redis: {
     url: string;
     prefix: string;
@@ -52,22 +49,26 @@ export interface BotRateLimitSettings {
   windowMs: number;
 }
 
-const rateLimitConfig: RateLimitConfig = {
+export const RATE_LIMIT_CONFIG: RateLimitConfig = {
   default: {
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100,
-  },
-  config: {
-    windowMs: 5 * 60 * 1000, // 5 minutes
-    max: 10,
+    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10), // 15 minutes
+    max: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
   },
   auth: {
-    windowMs: 60 * 60 * 1000, // 1 hour
-    max: 5,
+    windowMs: parseInt(process.env.RATE_LIMIT_AUTH_WINDOW_MS || '3600000', 10), // 1 hour
+    max: parseInt(process.env.RATE_LIMIT_AUTH_MAX || '5', 10),
+  },
+  config: {
+    windowMs: parseInt(process.env.RATE_LIMIT_CONFIG_WINDOW_MS || '300000', 10), // 5 minutes
+    max: parseInt(process.env.RATE_LIMIT_CONFIG_MAX || '10', 10),
   },
   admin: {
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 20,
+    windowMs: parseInt(process.env.RATE_LIMIT_ADMIN_WINDOW_MS || '900000', 10), // 15 minutes
+    max: parseInt(process.env.RATE_LIMIT_ADMIN_MAX || '20', 10),
+  },
+  api: {
+    windowMs: parseInt(process.env.RATE_LIMIT_API_WINDOW_MS || '60000', 10), // 1 minute
+    max: parseInt(process.env.RATE_LIMIT_API_MAX || '100', 10),
   },
   redis: {
     url: process.env.REDIS_URL || 'redis://localhost:6379',
@@ -160,4 +161,4 @@ export function getAllBotRateLimitSettings(): Map<string, BotRateLimitSettings> 
   return settings;
 }
 
-export default rateLimitConfig;
+export default RATE_LIMIT_CONFIG;

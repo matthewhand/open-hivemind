@@ -99,6 +99,16 @@ export class BotConfigService {
   }
 
   /**
+   * Resets the singleton instance (used for testing).
+   */
+  /**
+   * Resets the singleton instance (used for testing).
+   */
+  public static resetInstance(): void {
+    (BotConfigService as any).instance = undefined;
+  }
+
+  /**
    * Create a new bot configuration
    */
   async createBotConfig(
@@ -111,13 +121,19 @@ export class BotConfigService {
       // Validate configuration
       const validationResult = this.configValidator.validateBotConfig(configData);
       if (!validationResult.isValid) {
-        throw new Error(`Configuration validation failed: ${validationResult.errors.join(', ')}`);
+        throw new ConfigurationError(
+          `Configuration validation failed: ${validationResult.errors.join(', ')}`,
+          'botConfig'
+        );
       }
 
       // Check if bot name already exists
       const existingConfig = await this.dbManager.getBotConfigurationByName(configData.name);
       if (existingConfig) {
-        throw new Error(`Bot configuration with name '${configData.name}' already exists`);
+        throw new ConfigurationError(
+          `Bot configuration with name '${configData.name}' already exists`,
+          'name'
+        );
       }
 
       // Serialize configuration data
@@ -160,7 +176,7 @@ export class BotConfigService {
       // Get the created configuration
       const createdConfig = await this.dbManager.getBotConfiguration(configId);
       if (!createdConfig) {
-        throw new Error('Failed to retrieve created bot configuration');
+        throw new ConfigurationError('Failed to retrieve created bot configuration', 'botConfig');
       }
 
       debug(`Bot configuration created: ${configData.name} (ID: ${configId})`);
@@ -260,7 +276,7 @@ export class BotConfigService {
       // Get existing configuration
       const existingConfig = await this.dbManager.getBotConfiguration(id);
       if (!existingConfig) {
-        throw new Error(`Bot configuration with ID ${id} not found`);
+        throw new ConfigurationError(`Bot configuration with ID ${id} not found`, 'id');
       }
 
       // Validate updated configuration
@@ -300,7 +316,10 @@ export class BotConfigService {
 
       const validationResult = this.configValidator.validateBotConfig(updatedConfigData);
       if (!validationResult.isValid) {
-        throw new Error(`Configuration validation failed: ${validationResult.errors.join(', ')}`);
+        throw new ConfigurationError(
+          `Configuration validation failed: ${validationResult.errors.join(', ')}`,
+          'botConfig'
+        );
       }
 
       // Update configuration in database
@@ -361,7 +380,7 @@ export class BotConfigService {
       // Get updated configuration
       const updatedConfig = await this.dbManager.getBotConfiguration(id);
       if (!updatedConfig) {
-        throw new Error('Failed to retrieve updated bot configuration');
+        throw new ConfigurationError('Failed to retrieve updated bot configuration', 'botConfig');
       }
 
       debug(`Bot configuration updated: ${id}`);
@@ -382,7 +401,7 @@ export class BotConfigService {
       // Get existing configuration for audit log
       const existingConfig = await this.dbManager.getBotConfiguration(id);
       if (!existingConfig) {
-        throw new Error(`Bot configuration with ID ${id} not found`);
+        throw new ConfigurationError(`Bot configuration with ID ${id} not found`, 'id');
       }
 
       // Create audit log before deletion
@@ -431,7 +450,7 @@ export class BotConfigService {
 
       const config = await this.dbManager.getBotConfiguration(id);
       if (!config) {
-        throw new Error('Failed to retrieve activated bot configuration');
+        throw new ConfigurationError('Failed to retrieve activated bot configuration', 'id');
       }
 
       debug(`Bot configuration activated: ${id}`);
@@ -465,7 +484,7 @@ export class BotConfigService {
 
       const config = await this.dbManager.getBotConfiguration(id);
       if (!config) {
-        throw new Error('Failed to retrieve deactivated bot configuration');
+        throw new ConfigurationError('Failed to retrieve deactivated bot configuration', 'id');
       }
 
       debug(`Bot configuration deactivated: ${id}`);
@@ -490,7 +509,10 @@ export class BotConfigService {
       // Get current configuration
       const currentConfig = await this.dbManager.getBotConfiguration(botConfigurationId);
       if (!currentConfig) {
-        throw new Error(`Bot configuration with ID ${botConfigurationId} not found`);
+        throw new ConfigurationError(
+          `Bot configuration with ID ${botConfigurationId} not found`,
+          'botConfigurationId'
+        );
       }
 
       // Get next version number

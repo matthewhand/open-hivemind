@@ -225,6 +225,16 @@ export class RetryHandler {
   }
 
   /**
+   * Alias for executeWithRetry for backward compatibility
+   */
+  async execute<T>(
+    operation: () => Promise<T>,
+    context?: Record<string, unknown>
+  ): Promise<RecoveryResult<T>> {
+    return this.executeWithRetry(operation, context);
+  }
+
+  /**
    * Check if error is retryable
    */
   private isRetryableError(error: Error): boolean {

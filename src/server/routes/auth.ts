@@ -4,7 +4,7 @@ import { AuthManager } from '../../auth/AuthManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest, LoginCredentials, RegisterData } from '../../auth/types';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
-import { apiRateLimiter, authRateLimiter } from '../../middleware/rateLimiter';
+import { apiRateLimiter, authRateLimiter } from '../../middleware/rateLimiters';
 import { HTTP_STATUS } from '../../types/constants';
 import { ErrorUtils } from '../../types/errors';
 import { validateRequest as validate } from '../../validation/validateRequest';
@@ -16,6 +16,8 @@ import {
   RefreshTokenSchema,
   RegisterSchema,
   UpdateProfileSchema,
+  UpdateUserSchema,
+  UserIdParamSchema,
   VerifyTokenSchema,
 } from '../schemas/auth.schemas';
 import { ApiResponse } from '../utils/apiResponse';
@@ -53,7 +55,6 @@ router.post(
   asyncErrorHandler(async (req, res) => {
     try {
       const credentials: LoginCredentials = req.body;
-      // Normal authentication flow
       const authResult = await authManager.login(credentials);
       return res.json(ApiResponse.success(authResult));
     } catch (error: unknown) {
@@ -100,9 +101,7 @@ router.post(
   asyncErrorHandler(async (req, res) => {
     try {
       const registerData: RegisterData = req.body;
-
       const user = await authManager.register(registerData);
-
       return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success({ user }));
     } catch (error: unknown) {
       return res
@@ -118,31 +117,15 @@ router.post(
  *   post:
  *     summary: Refresh access token
  *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               refreshToken: { type: string }
- *             required: [refreshToken]
- *     responses:
- *       200:
- *         description: Token refreshed successfully
- *       401:
- *         description: Token refresh failed
  */
 router.post(
   '/refresh',
-  authRateLimiter,
+  apiRateLimiter,
   validate(RefreshTokenSchema),
   asyncErrorHandler(async (req, res) => {
     try {
       const { refreshToken } = req.body;
-
       const authResult = await authManager.refreshToken(refreshToken);
-
       return res.json(ApiResponse.success(authResult));
     } catch (error: unknown) {
       const errMsg = error instanceof Error ? error.message : String(error);
@@ -183,11 +166,9 @@ router.post(
   asyncErrorHandler(async (req, res) => {
     try {
       const { refreshToken } = req.body;
-
       if (refreshToken) {
         await authManager.logout(refreshToken);
       }
-
       return res.json(ApiResponse.success());
     } catch (error: unknown) {
       return res
@@ -203,13 +184,6 @@ router.post(
  *   get:
  *     summary: Get current user profile
  *     tags: [Auth]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Current user profile
- *       401:
- *         description: Unauthorized
  */
 router.get(
   '/me',
@@ -247,7 +221,7 @@ router.get(
  */
 router.post(
   '/verify',
-  authRateLimiter,
+  apiRateLimiter,
   validate(VerifyTokenSchema),
   asyncErrorHandler(async (req, res) => {
     try {
@@ -268,9 +242,8 @@ router.post(
 );
 
 // GET /api/auth/verify - Verify JWT token from Authorization header
-router.get('/verify', authRateLimiter, async (req: Request, res: Response) => {
+router.get('/verify', apiRateLimiter, async (req: Request, res: Response) => {
   try {
-    // Server-side test bypass — return a fake admin user when ALLOW_TEST_BYPASS is set
     if (process.env.ALLOW_TEST_BYPASS === 'true') {
       return res.json(
         ApiResponse.success({
@@ -304,7 +277,6 @@ router.get('/verify', authRateLimiter, async (req: Request, res: Response) => {
 });
 
 // GET /api/auth/trusted-status — check if request comes from trusted IP
-// Uses apiRateLimiter (not authRateLimiter) — this is a lightweight status check, not a credential endpoint
 router.get('/trusted-status', apiRateLimiter, (req: Request, res: Response) => {
   const trusted = isTrustedAdminIP(req);
   return res.json(ApiResponse.success({ trusted }));
@@ -424,4 +396,134 @@ router.post(
   })
 );
 
+/**
+ * GET /webui/api/auth/users
+ */
+router.get('/users', authenticate, requireAdmin, (_req: Request, res: Response) => {
+  try {
+    const users = authManager.getAllUsers();
+    return res.json(ApiResponse.success({ users }));
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    debug('Get users error:', errMsg);
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(ApiResponse.error('Failed to get users', undefined, 500));
+  }
+});
+
+/**
+ * GET /webui/api/auth/users/:userId
+ */
+router.get(
+  '/users/:userId',
+  authenticate,
+  requireAdmin,
+  validate(UserIdParamSchema),
+  (req: Request, res: Response) => {
+    try {
+      const { userId } = req.params;
+      const user = authManager.getUser(userId);
+      if (!user) {
+        return res
+          .status(HTTP_STATUS.NOT_FOUND)
+          .json(ApiResponse.error('User not found', undefined, 404));
+      }
+      return res.json(ApiResponse.success({ user }));
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      debug('Get user error:', errMsg);
+      return res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error('Failed to get user', undefined, 500));
+    }
+  }
+);
+
+/**
+ * PUT /webui/api/auth/users/:userId
+ */
+router.put(
+  '/users/:userId',
+  authenticate,
+  requireAdmin,
+  validate(UserIdParamSchema.merge(UpdateUserSchema)),
+  async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.params;
+      const updates = req.body;
+      delete updates.password;
+      delete updates.passwordHash;
+      const updatedUser = authManager.updateUser(userId, updates);
+      if (!updatedUser) {
+        return res
+          .status(HTTP_STATUS.NOT_FOUND)
+          .json(ApiResponse.error('User not found', undefined, 404));
+      }
+      return res.json(ApiResponse.success({ user: updatedUser }));
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      debug('Update user error:', errMsg);
+      return res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error('Failed to update user', undefined, 500));
+    }
+  }
+);
+
+/**
+ * DELETE /webui/api/auth/users/:userId
+ */
+router.delete(
+  '/users/:userId',
+  authenticate,
+  requireAdmin,
+  validate(UserIdParamSchema),
+  async (req: Request, res: Response) => {
+    const authReq = req as AuthMiddlewareRequest;
+    if (!authReq.user) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json(ApiResponse.error('Not authenticated'));
+    }
+
+    try {
+      const { userId } = req.params;
+      if (authReq.user.id === userId) {
+        return res
+          .status(HTTP_STATUS.BAD_REQUEST)
+          .json(ApiResponse.error('Invalid operation', undefined, 400));
+      }
+      const deleted = authManager.deleteUser(userId);
+      if (!deleted) {
+        return res
+          .status(HTTP_STATUS.NOT_FOUND)
+          .json(ApiResponse.error('User not found', undefined, 404));
+      }
+      return res.json(ApiResponse.success());
+    } catch (error: unknown) {
+      return res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error(ErrorUtils.getMessage(error)));
+    }
+  }
+);
+
+/**
+ * GET /webui/api/auth/permissions
+ */
+router.get('/permissions', authenticate, (req: Request, res: Response) => {
+  const authReq = req as AuthMiddlewareRequest;
+  if (!authReq.user) {
+    return res
+      .status(HTTP_STATUS.UNAUTHORIZED)
+      .json(ApiResponse.error('Authentication required', undefined, 401));
+  }
+  const permissions = authManager.getUserPermissions(authReq.user.role);
+  return res.json(
+    ApiResponse.success({
+      role: authReq.user.role,
+      permissions,
+      user: authReq.user,
+    })
+  );
+});
 export default router;

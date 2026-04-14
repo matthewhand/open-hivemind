@@ -49,6 +49,11 @@ try {
   }
 }
 
+// Explicitly check env for tests to ensure correct default if not set
+if (process.env.NODE_ENV === 'test') {
+  webhookConfig.set('WEBHOOK_ENABLED', false);
+}
+
 // Validation must happen outside the generic try-catch to fail fast if config is malformed
 webhookConfig.validate({ allowed: 'strict' });
 

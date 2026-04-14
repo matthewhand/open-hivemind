@@ -69,7 +69,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
         {Array.from({ length: lines }).map((_, index) => (
           <div
             key={index}
-            className={baseClasses}
+            className={`${baseClasses} skeleton`}
             style={{
               ...getSizeStyles(),
               height: height || '1rem',
@@ -85,7 +85,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
 
   return (
     <div
-      className={baseClasses}
+      className={`${baseClasses} skeleton`}
       style={getSizeStyles()}
       aria-hidden="true"
       role="presentation"
@@ -332,7 +332,7 @@ export const SkeletonPage: React.FC<SkeletonPageProps> = ({
   className = '',
   animate = true,
 }) => (
-  <div className={`space-y-6 ${className}`} role="status" aria-label="Loading page content">
+  <div className={`skeleton space-y-6 ${className}`} role="status" aria-label="Loading page content">
     {/* Header skeleton */}
     <div className="flex items-center justify-between">
       <div className="space-y-2">

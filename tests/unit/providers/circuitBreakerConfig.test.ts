@@ -9,20 +9,24 @@
 
 import { Mem0Provider } from '../../../packages/memory-mem0/src/Mem0Provider';
 import {
-  clearCircuitBreakerRegistry as clearMem4aiCircuitBreakerRegistry,
+  resetAllCircuitBreakers as resetAllMem4aiCircuitBreakers,
   CircuitBreakerError as Mem4aiCircuitBreakerError,
 } from '../../../packages/memory-mem4ai/src/CircuitBreaker';
 import { Mem4aiProvider } from '../../../packages/memory-mem4ai/src/Mem4aiProvider';
 import {
   CircuitBreakerError,
-  clearCircuitBreakerRegistry,
+  resetAllCircuitBreakers,
 } from '../../../src/common/CircuitBreaker';
+import * as sharedTypes from '@hivemind/shared-types';
 
 // Mock isSafeUrl so injected test URLs don't trigger SSRF guard failures
-jest.mock('@hivemind/shared-types', () => ({
-  ...jest.requireActual('@hivemind/shared-types'),
-  isSafeUrl: jest.fn().mockResolvedValue(true),
-}));
+jest.mock('@hivemind/shared-types', () => {
+  const actual = jest.requireActual('@hivemind/shared-types');
+  return {
+    ...actual,
+    isSafeUrl: jest.fn().mockResolvedValue({ safe: true }),
+  };
+});
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -42,10 +46,13 @@ function errorResponse(status: number, body = ''): Response {
 let fetchMock: jest.Mock;
 
 beforeEach(() => {
-  clearCircuitBreakerRegistry();
-  clearMem4aiCircuitBreakerRegistry();
+  resetAllCircuitBreakers();
+  resetAllMem4aiCircuitBreakers();
   fetchMock = jest.fn();
   global.fetch = fetchMock;
+  
+  // Ensure isSafeUrl mock is set up correctly for every test
+  (sharedTypes.isSafeUrl as jest.Mock).mockResolvedValue({ safe: true });
 });
 
 afterEach(() => {
@@ -62,21 +69,28 @@ describe('Mem0Provider injectable circuit breaker config', () => {
       apiKey: 'key',
       baseUrl: 'https://mem0.test/v1',
       userId: 'u1',
-      maxRetries: 0,
+      maxRetries: 0, // Disable internal retries for accurate counting
       circuitBreaker: {
+        name: 'mem0-custom',
         failureThreshold: 2,
         resetTimeoutMs: 60_000,
         halfOpenMaxAttempts: 1,
       },
     });
 
-    // Two 500 errors should trip the breaker (threshold = 2)
     fetchMock.mockResolvedValue(errorResponse(500, 'boom'));
 
     // First failure
     await expect(provider.search('q')).rejects.toThrow();
-    // Third call should be rejected by the circuit breaker itself
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    // Second failure - this should trip the circuit breaker
     await expect(provider.search('q')).rejects.toThrow();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    
+    // Third call should be rejected by the circuit breaker itself (fetch NOT called)
+    await expect(provider.search('q')).rejects.toThrow(CircuitBreakerError);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it('uses default thresholds when circuitBreaker config is omitted', async () => {
@@ -84,21 +98,20 @@ describe('Mem0Provider injectable circuit breaker config', () => {
       apiKey: 'key',
       baseUrl: 'https://mem0.test/v1',
       userId: 'u1',
-      maxRetries: 0,
+      maxRetries: 0, // Disable internal retries for accurate counting
     });
 
     fetchMock.mockResolvedValue(errorResponse(500, 'boom'));
 
-    // 4 failures should NOT trip the default threshold of 5
-    for (let i = 0; i < 4; i++) {
+    // 5 failures will trip the default threshold of 5
+    for (let i = 1; i <= 5; i++) {
       await expect(provider.search('q')).rejects.toThrow();
+      expect(fetchMock).toHaveBeenCalledTimes(i);
     }
 
-    // 5th call should still go through to fetch (not be rejected by CB)
-    // because the circuit opens *after* the 5th failure, not before it
-    fetchMock.mockClear();
-    await expect(provider.search('q')).rejects.toThrow();
-    expect(fetchMock).toHaveBeenCalled();
+    // 6th call should be rejected by CB (fetch NOT called)
+    await expect(provider.search('q')).rejects.toThrow(CircuitBreakerError);
+    expect(fetchMock).toHaveBeenCalledTimes(5);
   });
 });
 
@@ -112,8 +125,9 @@ describe('Mem4aiProvider injectable circuit breaker config', () => {
       apiKey: 'key',
       apiUrl: 'https://mem4ai.test/v1',
       userId: 'u1',
-      maxRetries: 0,
+      maxRetries: 0, // Disable internal retries for accurate counting
       circuitBreaker: {
+        name: 'mem4ai-custom',
         failureThreshold: 2,
         resetTimeoutMs: 60_000,
         halfOpenMaxAttempts: 1,
@@ -124,11 +138,15 @@ describe('Mem4aiProvider injectable circuit breaker config', () => {
 
     // First failure
     await expect(provider.search('q')).rejects.toThrow();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
     // Second failure — should trip the breaker
     await expect(provider.search('q')).rejects.toThrow();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
 
     // Third call should be rejected by the circuit breaker itself
     await expect(provider.search('q')).rejects.toThrow(Mem4aiCircuitBreakerError);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it('uses default thresholds when circuitBreaker config is omitted', async () => {
@@ -136,19 +154,19 @@ describe('Mem4aiProvider injectable circuit breaker config', () => {
       apiKey: 'key',
       apiUrl: 'https://mem4ai.test/v1',
       userId: 'u1',
-      maxRetries: 0,
+      maxRetries: 0, // Disable internal retries for accurate counting
     });
 
     fetchMock.mockResolvedValue(errorResponse(500, 'boom'));
 
-    // 4 failures should NOT trip the default threshold of 5
-    for (let i = 0; i < 4; i++) {
+    // 5 failures will trip the default threshold of 5
+    for (let i = 1; i <= 5; i++) {
       await expect(provider.search('q')).rejects.toThrow();
+      expect(fetchMock).toHaveBeenCalledTimes(i);
     }
 
-    // 5th call should still go through to fetch (not be rejected by CB)
-    fetchMock.mockClear();
-    await expect(provider.search('q')).rejects.toThrow();
-    expect(fetchMock).toHaveBeenCalled();
+    // 6th call should be rejected by CB
+    await expect(provider.search('q')).rejects.toThrow(Mem4aiCircuitBreakerError);
+    expect(fetchMock).toHaveBeenCalledTimes(5);
   });
 });

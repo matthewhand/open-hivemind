@@ -9,6 +9,28 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import ImportExportPage from '../../../src/client/src/pages/ImportExportPage';
 
+// Mock DaisyUI components
+jest.mock('../../../src/client/src/components/DaisyUI', () => ({
+  Card: ({ children, className }: any) => <div className={className}>{children}</div>,
+  Badge: ({ children, className }: any) => <span className={className}>{children}</span>,
+  Select: ({ children, className, onChange, value }: any) => (
+    <select className={className} onChange={onChange} value={value}>{children}</select>
+  ),
+  Divider: () => <hr />,
+  Button: ({ children, className, onClick, disabled }: any) => (
+    <button className={className} onClick={onClick} disabled={disabled}>{children}</button>
+  ),
+  Checkbox: ({ checked, onChange, label }: any) => (
+    <label><input type="checkbox" checked={checked} onChange={onChange} /> {label}</label>
+  ),
+  Input: ({ type, placeholder, value, onChange }: any) => (
+    <input type={type} placeholder={placeholder} value={value} onChange={onChange} />
+  ),
+  Alert: ({ children, type }: any) => <div className={`alert-${type}`}>{children}</div>,
+  LoadingSpinner: () => <div className="loading-spinner" />,
+  ProgressBar: ({ value }: any) => <div className="progress-bar" data-value={value} />,
+}));
+
 // Mock the API service
 jest.mock('../../../src/client/src/services/api', () => ({
   apiService: {

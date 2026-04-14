@@ -119,12 +119,25 @@ export class PipelineTracer {
 
   // -- Event handlers --------------------------------------------------------
 
+  /**
+   * Unique key for a trace, combining channel and message IDs to support
+   * concurrent processing in the same channel.
+   */
+  private getTraceKey(ctx: { channelId: string; message?: { getMessageId(): string } }): string {
+    if (ctx.message) {
+      return `${ctx.channelId}:${ctx.message.getMessageId()}`;
+    }
+    return ctx.channelId;
+  }
+
   private onIncoming(ctx: MessageContext): void {
     const traceId = randomUUID();
     const now = Date.now();
+    const key = this.getTraceKey(ctx);
 
     const rootSpan = createSpan('pipeline', {
       channelId: ctx.channelId,
+      messageId: ctx.message.getMessageId(),
       platform: ctx.platform,
       botName: ctx.botName,
     });
@@ -141,14 +154,19 @@ export class PipelineTracer {
       startTime: now,
     };
 
-    this.activeTraces.set(ctx.channelId, trace);
-    debug('Trace started %s for channel %s', traceId, ctx.channelId);
+    // Store by both specific key AND channelId for backward compatibility
+    this.activeTraces.set(key, trace);
+    if (key !== ctx.channelId) {
+      this.activeTraces.set(ctx.channelId, trace);
+    }
+    debug('Trace started %s for key %s', traceId, key);
   }
 
   private onStageComplete(ctx: MessageContext, closeName: string, openName: string): void {
-    const trace = this.activeTraces.get(ctx.channelId);
+    const key = this.getTraceKey(ctx);
+    const trace = this.activeTraces.get(key);
     if (!trace) {
-      debug('No active trace for channel %s (stage %s -> %s)', ctx.channelId, closeName, openName);
+      debug('No active trace for key %s (stage %s -> %s)', key, closeName, openName);
       return;
     }
 
@@ -164,10 +182,11 @@ export class PipelineTracer {
     debug('Span %s opened', openName);
   }
 
-  private onSkipped(ctx: MessageContext): void {
-    const trace = this.activeTraces.get(ctx.channelId);
+  private onSkipped(ctx: MessageContext & { reason: string }): void {
+    const key = this.getTraceKey(ctx);
+    const trace = this.activeTraces.get(key);
     if (!trace) {
-      debug('No active trace for channel %s (skipped)', ctx.channelId);
+      debug('No active trace for key %s (skipped)', key);
       return;
     }
 
@@ -175,16 +194,18 @@ export class PipelineTracer {
     if (decision) {
       closeSpan(decision);
       decision.attributes.skipped = true;
+      decision.attributes.reason = ctx.reason;
       debug('Span decision closed (skipped, %dms)', decision.durationMs);
     }
 
-    this.completeTrace(ctx.channelId, trace);
+    this.completeTrace(ctx, trace);
   }
 
   private onSent(ctx: MessageContext): void {
-    const trace = this.activeTraces.get(ctx.channelId);
+    const key = this.getTraceKey(ctx);
+    const trace = this.activeTraces.get(key);
     if (!trace) {
-      debug('No active trace for channel %s (sent)', ctx.channelId);
+      debug('No active trace for key %s (sent)', key);
       return;
     }
 
@@ -194,13 +215,14 @@ export class PipelineTracer {
       debug('Span send closed (%dms)', sendSpan.durationMs);
     }
 
-    this.completeTrace(ctx.channelId, trace);
+    this.completeTrace(ctx, trace);
   }
 
   private onError(ctx: MessageEvents['message:error']): void {
-    const trace = this.activeTraces.get(ctx.channelId);
+    const key = this.getTraceKey(ctx);
+    const trace = this.activeTraces.get(key);
     if (!trace) {
-      debug('No active trace for channel %s (error)', ctx.channelId);
+      debug('No active trace for key %s (error)', key);
       return;
     }
 
@@ -214,16 +236,21 @@ export class PipelineTracer {
     }
 
     trace.rootSpan.status = 'error';
-    this.completeTrace(ctx.channelId, trace);
+    this.completeTrace(ctx, trace);
   }
 
   // -- Query API -------------------------------------------------------------
 
   /**
-   * Return the in-progress trace for a channel, if any.
+   * Return the in-progress trace for a specific message context or channel ID.
    */
-  getActiveTrace(channelId: string): Trace | undefined {
-    return this.activeTraces.get(channelId);
+  getActiveTrace(
+    target: string | { channelId: string; message?: { getMessageId(): string } }
+  ): Trace | undefined {
+    if (typeof target === 'string') {
+      return this.activeTraces.get(target);
+    }
+    return this.activeTraces.get(this.getTraceKey(target));
   }
 
   /**
@@ -306,12 +333,18 @@ export class PipelineTracer {
     return undefined;
   }
 
-  private completeTrace(channelId: string, trace: Trace): void {
+  private completeTrace(
+    ctx: { channelId: string; message?: { getMessageId(): string } },
+    trace: Trace
+  ): void {
     closeSpan(trace.rootSpan, trace.rootSpan.status);
     trace.endTime = trace.rootSpan.endTime;
     trace.totalDurationMs = trace.rootSpan.durationMs;
 
-    this.activeTraces.delete(channelId);
+    const key = this.getTraceKey(ctx);
+    this.activeTraces.delete(key);
+    this.activeTraces.delete(ctx.channelId); // Clean up both possible keys
+
     this.completedTraces.push(trace);
 
     // Ring buffer: evict oldest when over capacity.

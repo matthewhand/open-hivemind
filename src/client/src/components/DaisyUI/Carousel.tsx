@@ -18,7 +18,7 @@ type CarouselProps = {
   visibleCount?: number;
 };
 
-const Carousel: React.FC<CarouselProps> = ({
+export const Carousel: React.FC<CarouselProps> = ({
   items,
   autoplay = true,
   interval = 5000,

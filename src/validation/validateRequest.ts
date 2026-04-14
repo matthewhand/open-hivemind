@@ -20,8 +20,10 @@ export const validateRequest =
         return res.status(400).json({
           success: false,
           error: 'Validation failed',
+          code: 'VALIDATION_ERROR',
+          data: error.issues,
           issues: error.issues,
-          details: error.issues, // Alias for backward compatibility
+          details: error.issues,
         });
       }
       next(error);

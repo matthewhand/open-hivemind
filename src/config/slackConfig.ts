@@ -59,6 +59,11 @@ function loadSlackConfig(): SlackConfig {
   
   if (!result.success) {
     debug('Slack configuration validation failed:', result.error.format());
+    if (process.env.NODE_ENV === 'test') {
+      const err = new Error(JSON.stringify(result.error.issues));
+      (err as any).issues = result.error.issues;
+      throw err;
+    }
     return SlackSchema.parse({});
   }
 

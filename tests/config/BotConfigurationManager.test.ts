@@ -103,6 +103,7 @@ describe('BotConfigurationManager', () => {
         throw new Error(`File not found: ${path}`);
       });
 
+      process.env.NODE_CONFIG_DIR = configDir;
       const manager = BotConfigurationManager.getInstance();
       const bot = manager.getBot(botName);
 

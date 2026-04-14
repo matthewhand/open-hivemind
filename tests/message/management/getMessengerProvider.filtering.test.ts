@@ -1,4 +1,15 @@
+import 'reflect-metadata';
 import path from 'path';
+
+// Define mocks on global object to make them accessible to hoisted jest.mock()
+(global as any).mockWSFunctions = {
+  broadcastBotStatus: jest.fn(),
+  broadcastConfigChange: jest.fn(),
+};
+
+(global as any).mockGreetingFunctions = {
+  greetAll: jest.fn(),
+};
 
 jest.mock('fs', () => ({
   readFileSync: jest.fn(() =>
@@ -6,6 +17,8 @@ jest.mock('fs', () => ({
       providers: [{ type: 'discord' }, { type: 'slack' }],
     })
   ),
+  existsSync: jest.fn(() => true),
+  readdirSync: jest.fn(() => []),
 }));
 
 jest.mock('@hivemind/message-discord', () => ({
@@ -18,7 +31,7 @@ jest.mock('@hivemind/message-discord', () => ({
   },
 }));
 
-jest.mock('@hivemind/message-slack/SlackService', () => ({
+jest.mock('@hivemind/message-slack', () => ({
   SlackService: {
     getInstance: jest.fn(() => ({
       provider: 'slack',
@@ -28,12 +41,48 @@ jest.mock('@hivemind/message-slack/SlackService', () => ({
   },
 }));
 
+// Use the global mocks in the hoisted mock factory
+jest.mock('../../../src/services/StartupGreetingService', () => {
+  return {
+    __esModule: true,
+    StartupGreetingService: {
+      getInstance: jest.fn(() => ({
+        greetAll: (...args: any[]) => (global as any).mockGreetingFunctions.greetAll(...args),
+      })),
+    },
+    default: {
+      getInstance: jest.fn(() => ({
+        greetAll: (...args: any[]) => (global as any).mockGreetingFunctions.greetAll(...args),
+      })),
+    },
+  };
+});
+
+jest.mock('../../../src/server/services/websocket', () => {
+  return {
+    __esModule: true,
+    WebSocketService: {
+      getInstance: jest.fn(() => ({
+        broadcastBotStatus: (...args: any[]) => (global as any).mockWSFunctions.broadcastBotStatus(...args),
+        broadcastConfigChange: (...args: any[]) => (global as any).mockWSFunctions.broadcastConfigChange(...args),
+      })),
+    },
+    default: {
+      getInstance: jest.fn(() => ({
+        broadcastBotStatus: (...args: any[]) => (global as any).mockWSFunctions.broadcastBotStatus(...args),
+        broadcastConfigChange: (...args: any[]) => (global as any).mockWSFunctions.broadcastConfigChange(...args),
+      })),
+    },
+  };
+});
+
+import { getMessengerProvider } from '../../../src/message/management/getMessengerProvider';
+
 describe('getMessengerProvider filtering', () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.resetModules();
     process.env = { ...originalEnv };
   });
 
@@ -41,53 +90,39 @@ describe('getMessengerProvider filtering', () => {
     process.env = originalEnv;
   });
 
-  test('a) MESSAGE_PROVIDER="discord": only Discord is initialized', async () => {
+  it('a) MESSAGE_PROVIDER="discord": only Discord is initialized', async () => {
     process.env.MESSAGE_PROVIDER = 'discord';
-    const { getMessengerProvider } =
-      await import('../../../src/message/management/getMessengerProvider');
     const providers = await getMessengerProvider();
-
-    expect(Array.isArray(providers)).toBe(true);
-    expect(providers.length).toBeGreaterThanOrEqual(0);
+    expect(providers.length).toBe(1);
+    expect(providers[0].provider).toBe('discord');
   });
 
-  test('b) MESSAGE_PROVIDER="slack": only Slack is initialized', async () => {
+  it('b) MESSAGE_PROVIDER="slack": only Slack is initialized', async () => {
     process.env.MESSAGE_PROVIDER = 'slack';
-    const { getMessengerProvider } =
-      await import('../../../src/message/management/getMessengerProvider');
     const providers = await getMessengerProvider();
-
-    expect(Array.isArray(providers)).toBe(true);
-    expect(providers.length).toBeGreaterThanOrEqual(0);
+    expect(providers.length).toBe(1);
+    expect(providers[0].provider).toBe('slack');
   });
 
-  test('c) MESSAGE_PROVIDER="discord,slack": both are initialized', async () => {
+  it('c) MESSAGE_PROVIDER="discord,slack": both are initialized', async () => {
     process.env.MESSAGE_PROVIDER = 'discord,slack';
-    const { getMessengerProvider } =
-      await import('../../../src/message/management/getMessengerProvider');
     const providers = await getMessengerProvider();
-
-    expect(Array.isArray(providers)).toBe(true);
-    expect(providers.length).toBeGreaterThanOrEqual(0);
+    expect(providers.length).toBe(2);
+    const names = providers.map((p) => p.provider);
+    expect(names).toContain('discord');
+    expect(names).toContain('slack');
   });
 
-  test('d) MESSAGE_PROVIDER set to unavailable provider: returns empty or default', async () => {
-    process.env.MESSAGE_PROVIDER = 'webhook';
-    const { getMessengerProvider } =
-      await import('../../../src/message/management/getMessengerProvider');
+  it('d) MESSAGE_PROVIDER set to unavailable provider: returns empty or default', async () => {
+    process.env.MESSAGE_PROVIDER = 'nonexistent';
     const providers = await getMessengerProvider();
-
+    // Implementation behavior for invalid provider varies, but should not crash
     expect(Array.isArray(providers)).toBe(true);
-    expect(providers.length).toBeGreaterThanOrEqual(0);
   });
 
-  test('e) MESSAGE_PROVIDER unset: defaults to available providers', async () => {
+  it('e) MESSAGE_PROVIDER unset: defaults to available providers', async () => {
     delete process.env.MESSAGE_PROVIDER;
-    const { getMessengerProvider } =
-      await import('../../../src/message/management/getMessengerProvider');
     const providers = await getMessengerProvider();
-
-    expect(Array.isArray(providers)).toBe(true);
-    expect(providers.length).toBeGreaterThanOrEqual(0);
+    expect(providers.length).toBeGreaterThan(0);
   });
 });

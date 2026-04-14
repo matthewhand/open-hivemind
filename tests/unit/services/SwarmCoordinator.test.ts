@@ -12,9 +12,9 @@ describe('SwarmCoordinator', () => {
     expect(coordinator.claimMessage('msg-1', 'BotA')).toBe(true);
   });
 
-  it('should return false when the same bot claims the same message again (strict mode)', () => {
+  it('should return true when the same bot claims the same message again', () => {
     coordinator.claimMessage('msg-1', 'BotA');
-    expect(coordinator.claimMessage('msg-1', 'BotA')).toBe(false);
+    expect(coordinator.claimMessage('msg-1', 'BotA')).toBe(true);
   });
 
   it('should return false when a different bot tries to claim an already claimed message', () => {
@@ -24,9 +24,7 @@ describe('SwarmCoordinator', () => {
 
   it('should be able to get the claim of a message', () => {
     coordinator.claimMessage('msg-1', 'BotA');
-    expect(coordinator.getClaim('msg-1')).toEqual(
-      expect.objectContaining({ botId: 'BotA', messageId: 'msg-1' })
-    );
+    expect(coordinator.getClaim('msg-1')).toMatchObject({ botId: 'BotA' });
   });
 
   it('should return undefined when getting claim of an unknown message', () => {

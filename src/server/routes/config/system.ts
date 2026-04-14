@@ -243,60 +243,67 @@ router.get('/global', (req, res) => {
     const response: Record<string, unknown> = {};
 
     Object.entries(globalConfigs).forEach(([key, config]) => {
-      // Get properties (values)
-      const props = config.getProperties();
-
-      // Get schema and deep clone it to avoid mutating the source
-      // Native structuredClone throws on convict schemas due to native functions,
-      // so we use a fast custom clone that strips them out like JSON.stringify would.
-      const schema = deepCloneSchema(config.getSchema()) as Record<string, any>;
-
-      // Check for environment variable overrides and mark as locked
-      const properties = schema.properties || schema;
-
-      for (const propKey in properties) {
-        const prop = properties[propKey];
-        if (typeof prop === 'object' && prop !== null) {
-          if (prop.env && process.env[prop.env] !== undefined && process.env[prop.env] !== '') {
-            prop.locked = true;
-          }
-        }
+      // Basic validation that config is an object we can work with
+      if (!config || typeof config !== 'object') {
+        return;
       }
 
-      // Redact sensitive values in props
-      const redactedProps = structuredClone(props); // Deep copy
+      try {
+        // Get properties (values) - fallback if not a convict object
+        const props = typeof config.getProperties === 'function' ? config.getProperties() : config;
 
-      // Helper to redact recursively using provider metadata if available
-      const provider = providerRegistry.get(key); // key is config name, e.g. 'slack'
+        // Get schema and deep clone it - fallback if not a convict object
+        const rawSchema = typeof config.getSchema === 'function' ? config.getSchema() : {};
+        const schema = deepCloneSchema(rawSchema) as Record<string, any>;
 
-      if (provider) {
-        const sensitive = new Set(provider.getSensitiveKeys());
-        // Simple redaction for provider props
-        for (const k in redactedProps) {
-          if (sensitive.has(k)) {
-            redactedProps[k] = '********';
-          }
-        }
-      } else {
-        // Fallback generic redaction
-        const redactObjectFallback = (obj: Record<string, unknown>) => {
-          for (const k in obj) {
-            if (typeof obj[k] === 'object' && obj[k] !== null) {
-              redactObjectFallback(obj[k] as Record<string, unknown>);
-            } else if (typeof k === 'string') {
-              if (isSensitiveKey(k)) {
-                obj[k] = '********';
-              }
+        // Check for environment variable overrides and mark as locked
+        const properties = schema.properties || schema;
+
+        for (const propKey in properties) {
+          const prop = properties[propKey];
+          if (typeof prop === 'object' && prop !== null) {
+            if (prop.env && process.env[prop.env] !== undefined && process.env[prop.env] !== '') {
+              prop.locked = true;
             }
           }
-        };
-        redactObjectFallback(redactedProps);
-      }
+        }
 
-      response[key] = {
-        values: redactedProps,
-        schema: schema,
-      };
+        // Redact sensitive values in props
+        const redactedProps = JSON.parse(JSON.stringify(props));
+
+        // Helper to redact recursively using provider metadata if available
+        const provider = providerRegistry.get(key);
+
+        if (provider) {
+          const sensitive = new Set(provider.getSensitiveKeys());
+          for (const k in redactedProps) {
+            if (sensitive.has(k)) {
+              redactedProps[k] = '********';
+            }
+          }
+        } else {
+          const redactObjectFallback = (obj: Record<string, unknown>) => {
+            for (const k in obj) {
+              if (typeof obj[k] === 'object' && obj[k] !== null) {
+                redactObjectFallback(obj[k] as Record<string, unknown>);
+              } else if (typeof k === 'string') {
+                if (isSensitiveKey(k)) {
+                  obj[k] = '********';
+                }
+              }
+            }
+          };
+          redactObjectFallback(redactedProps);
+        }
+
+        response[key] = {
+          values: redactedProps,
+          schema: schema,
+        };
+      } catch (err) {
+        console.error(`Error processing config key ${key}:`, err);
+        // Continue to next key instead of failing the whole request
+      }
     });
 
     // Include user's saved general settings from user-config.json
@@ -312,6 +319,7 @@ router.get('/global', (req, res) => {
 
     return res.json(response);
   } catch (error: unknown) {
+    console.error('Error in GET /api/config/global:', error);
     const hivemindError = ErrorUtils.toHivemindError(error);
     return res
       .status(ErrorUtils.getStatusCode(hivemindError) || 500)

@@ -9,6 +9,7 @@ jest.mock('../../../../../src/server/services/ActivityLogger');
 jest.mock('../../../../../src/server/services/BotMetricsService');
 
 describe('websocket/BroadcastService', () => {
+  let service: BroadcastService;
   let connectionManager: any;
   let apiMonitorService: any;
   let io: any;
@@ -31,6 +32,14 @@ describe('websocket/BroadcastService', () => {
     connectionManager = {
       getIo: jest.fn(() => io),
       getConnectedClients: jest.fn(() => 1),
+    };
+
+    const demoModeService = {
+      isInDemoMode: jest.fn(() => false),
+      getSimulatedMessageFlow: jest.fn(() => []),
+      getSimulatedAlerts: jest.fn(() => []),
+      getSimulatedPerformanceMetrics: jest.fn(() => []),
+      getDemoBots: jest.fn(() => []),
     };
 
     apiMonitorService = {
@@ -56,6 +65,9 @@ describe('websocket/BroadcastService', () => {
       getAllBots: jest.fn(() => []),
       getWarnings: jest.fn(() => []),
     });
+
+    // Create service instance for tests that need it
+    service = new BroadcastService(connectionManager, apiMonitorService, demoModeService as any);
   });
 
   afterEach(() => {
@@ -63,8 +75,7 @@ describe('websocket/BroadcastService', () => {
   });
 
   it('sets up API monitoring callbacks on construction', () => {
-    new BroadcastService(connectionManager, apiMonitorService);
-
+    // Already created in beforeEach
     expect(apiMonitorService.on).toHaveBeenCalledWith('statusUpdate', expect.any(Function));
     expect(apiMonitorService.on).toHaveBeenCalledWith('healthCheckResult', expect.any(Function));
     expect(apiMonitorService.syncLlmEndpoints).toHaveBeenCalled();
@@ -72,8 +83,6 @@ describe('websocket/BroadcastService', () => {
   });
 
   it('handles API status update and records alert for error/offline status', () => {
-    new BroadcastService(connectionManager, apiMonitorService);
-
     apiCallbacks.statusUpdate({
       id: 'ep-1',
       name: 'OpenAI',

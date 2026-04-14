@@ -198,6 +198,9 @@ describe('openAiProvider', () => {
       });
 
       try {
+        // Instantiate a new provider which will trigger the config check
+        const providerWithoutKey = new OpenAiProvider();
+
         // Should throw when trying to use the provider without API key
         await expect(providerWithoutKey.generateChatCompletion('test', [])).rejects.toThrow(
           /API key/i

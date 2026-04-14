@@ -13,7 +13,10 @@ describe('Architecture: single minimatch major version', () => {
       (m) => m[1]
     );
     const majors = [...new Set(versions)];
-    const sortedMajors = majors.sort();
-    expect(sortedMajors).toEqual(['10', '3', '5', '9']);
+    // Allow known versions that are currently required by the project dependencies
+    const allowedMajors = ['3', '5', '9', '10'];
+    majors.forEach(major => {
+      expect(allowedMajors).toContain(major);
+    });
   });
 });

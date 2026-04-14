@@ -54,6 +54,7 @@ export interface StandardSuccessResponse<T = any> {
  */
 export class ErrorResponseBuilder {
   private response: StandardErrorResponse;
+  private includeStack = false;
 
   private originalError: any;
 
@@ -93,6 +94,17 @@ export class ErrorResponseBuilder {
   }
 
   /**
+   * Set whether to include the stack trace in the built response
+   */
+  withStack(include = true): ErrorResponseBuilder {
+    this.includeStack = include;
+    if (include && this.originalError && this.originalError.stack) {
+      this.response.stack = this.originalError.stack;
+    }
+    return this;
+  }
+
+  /**
    * Add request information to the error response
    */
   withRequest(path?: string, method?: string, correlationId?: string): ErrorResponseBuilder {
@@ -116,16 +128,6 @@ export class ErrorResponseBuilder {
   }
 
   /**
-   * Include stack trace in the response (useful for development)
-   */
-  withStack(enabled = true): ErrorResponseBuilder {
-    if (enabled && this.originalError && this.originalError.stack) {
-      this.response.stack = this.originalError.stack;
-    }
-    return this;
-  }
-
-  /**
    * Override the error message (useful for security in production)
    */
   withMessage(message: string): ErrorResponseBuilder {
@@ -137,12 +139,15 @@ export class ErrorResponseBuilder {
    * Build the final error response
    */
   build(): StandardErrorResponse {
-    const result = { ...this.response };
-    // Provide details as an alias for compatibility
-    if (result.error && (result.error as any).issues) {
-      (result.error as any).details = (result.error as any).issues;
+    const finalResponse = { ...this.response };
+    if (!this.includeStack) {
+      delete finalResponse.stack;
     }
-    return result;
+    // Provide details as an alias for compatibility
+    if (finalResponse.error && (finalResponse.error as any).issues) {
+      (finalResponse.error as any).details = (finalResponse.error as any).issues;
+    }
+    return finalResponse;
   }
 
   /**
@@ -150,8 +155,12 @@ export class ErrorResponseBuilder {
    */
   getStatusCode(): number {
     // If the error object has a statusCode, use it
-    if (this.response.error && (this.response.error as any).statusCode) {
-      return (this.response.error as any).statusCode;
+    if (
+      this.originalError &&
+      typeof this.originalError === 'object' &&
+      'statusCode' in this.originalError
+    ) {
+      return Number(this.originalError.statusCode);
     }
 
     const error = this.response.error;
@@ -161,17 +170,21 @@ export class ErrorResponseBuilder {
       case 'VALIDATION_ERROR':
         return HTTP_STATUS.BAD_REQUEST;
       case 'AUTH_ERROR':
+      case 'AUTHENTICATION_ERROR':
         return HTTP_STATUS.UNAUTHORIZED;
       case 'AUTHZ_ERROR':
+      case 'AUTHORIZATION_ERROR':
         return HTTP_STATUS.FORBIDDEN;
       case 'NOT_FOUND':
         return HTTP_STATUS.NOT_FOUND;
       case 'RATE_LIMIT_ERROR':
+      case 'TOO_MANY_REQUESTS':
         return HTTP_STATUS.TOO_MANY_REQUESTS;
       case 'TIMEOUT_ERROR':
         return HTTP_STATUS.REQUEST_TIMEOUT;
       case 'CONFIG_ERROR':
-        return HTTP_STATUS.INTERNAL_SERVER_ERROR;
+      case 'CONFIGURATION_ERROR':
+        return HTTP_STATUS.BAD_REQUEST; // Configuration errors often mean bad inputs
       case 'DATABASE_ERROR':
         return HTTP_STATUS.INTERNAL_SERVER_ERROR;
       case 'NETWORK_ERROR':
@@ -192,18 +205,26 @@ export class ErrorResponseBuilder {
   }
 
   /**
-   * Alias for getStatusCode to match some test expectations
-   */
-  getHttpStatusCode(): number {
-    return this.getStatusCode();
-  }
-
-  /**
    * Send the error response using an Express Response object
    */
   send(res: Response): Response {
     const statusCode = this.getStatusCode();
-    return res.status(statusCode).json(this.build());
+    const finalResponse = this.build();
+
+    // Ensure correlation ID is in headers
+    const correlationId = finalResponse.error.correlationId;
+    if (correlationId && !res.getHeader('X-Correlation-ID')) {
+      res.setHeader('X-Correlation-ID', correlationId);
+    }
+
+    return res.status(statusCode).json(finalResponse);
+  }
+
+  /**
+   * Alias for getStatusCode for backward compatibility
+   */
+  getHttpStatusCode(): number {
+    return this.getStatusCode();
   }
 
   /**
@@ -288,15 +309,7 @@ export function sendErrorResponse(
     builder.withRequest(requestInfo.path, requestInfo.method, correlationId);
   }
 
-  const errorResponse = builder.build();
-  const statusCode = builder.getStatusCode();
-
-  // Set correlation ID header if not already set
-  if (correlationId && !res.getHeader('X-Correlation-ID')) {
-    res.setHeader('X-Correlation-ID', correlationId);
-  }
-
-  return res.status(statusCode).json(errorResponse);
+  return builder.send(res);
 }
 
 /**
