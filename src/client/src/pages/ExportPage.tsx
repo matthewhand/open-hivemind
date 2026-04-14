@@ -48,6 +48,7 @@ const ExportPage: React.FC = () => {
   const errorToast = useErrorToast();
   const [backups, setBackups] = useState<Backup[]>([]);
   const [loading, setLoading] = useState(false);
+  const [feedbackState, setFeedbackState] = useState<{ state: 'idle' | 'success' | 'error'; message: string }>({ state: 'idle', message: '' });
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [newBackupName, setNewBackupName] = useState('');
   const [newBackupDesc, setNewBackupDesc] = useState('');

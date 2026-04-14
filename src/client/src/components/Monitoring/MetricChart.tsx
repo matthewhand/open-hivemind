@@ -44,7 +44,7 @@ const MetricChart: React.FC<MetricChartProps> = ({
 }) => {
   const [chartData, setChartData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [_error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const formattedData = data.map(item => ({
