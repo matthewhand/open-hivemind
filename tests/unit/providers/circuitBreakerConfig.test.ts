@@ -17,16 +17,9 @@ import {
   CircuitBreakerError,
   clearCircuitBreakerRegistry,
 } from '../../../src/common/CircuitBreaker';
-import {
-  CircuitBreakerError as Mem4aiCircuitBreakerError,
-  clearCircuitBreakerRegistry as clearMem4aiCircuitBreakerRegistry,
-} from '../../../packages/memory-mem4ai/src/CircuitBreaker';
-
 // Mock isSafeUrl so injected test URLs don't trigger SSRF guard failures
 jest.mock('@hivemind/shared-types', () => ({
-  ...jest.requireActual('@hivemind/shared-types'),
   isSafeUrl: jest.fn().mockResolvedValue(true),
-}));
 
 // ---------------------------------------------------------------------------
 // Helpers

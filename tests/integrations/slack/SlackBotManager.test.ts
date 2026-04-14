@@ -12,6 +12,15 @@ const MockRTMClient = RTMClient as jest.MockedClass<typeof RTMClient>;
 const MockWebClient = WebClient as jest.MockedClass<typeof WebClient>;
 
 describe('SlackBotManager', () => {
+  const mockConfigs = [
+    {
+      token: 'test-token',
+      appToken: 'test-app-token',
+      signingSecret: 'test-signing-secret',
+      name: 'testbot',
+    },
+  ];
+
   beforeEach(() => {
     jest.clearAllMocks();
     // Reset mocks for each test
@@ -51,23 +60,7 @@ describe('SlackBotManager', () => {
   });
 
   it('should handle initialization, configuration, and message handling', async () => {
-    const config = {
-      token: 'test-token',
-      appToken: 'test-app-token',
-      signingSecret: 'test-signing-secret',
-    };
-
-    const manager = new SlackBotManager(mockConfigs, 'socket');
-    const mockHandler = jest.fn().mockResolvedValue('bot response');
-    manager.setMessageHandler(mockHandler);
-
-    // Test initialization
-    expect(slackBotManager).toBeDefined();
-
-    // Test configuration
-    expect(MockSocketModeClient).toHaveBeenCalledWith({
-      appToken: 'test-app-token',
-    });
+    const mockAuthTest = jest.fn(() => Promise.resolve({ user_id: 'U123', user: 'testbot' }));
 
     MockWebClient.mockImplementation(
       () =>
@@ -75,8 +68,23 @@ describe('SlackBotManager', () => {
           auth: {
             test: mockAuthTest,
           },
+          conversations: {
+            history: jest.fn(() => Promise.resolve({ messages: [] })),
+          },
         }) as any
     );
+
+    const manager = new SlackBotManager(mockConfigs, 'socket');
+    const mockHandler = jest.fn().mockResolvedValue('bot response');
+    manager.setMessageHandler(mockHandler);
+
+    // Test initialization
+    expect(manager).toBeDefined();
+
+    // Test configuration
+    expect(MockSocketModeClient).toHaveBeenCalledWith({
+      appToken: 'test-app-token',
+    });
 
     // Mock SocketModeClient
     let socketEventHandlers: Record<string, Function> = {};

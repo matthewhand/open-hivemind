@@ -199,6 +199,7 @@ describe('openAiProvider', () => {
 
       try {
         // Should throw when trying to use the provider without API key
+        const providerWithoutKey = new OpenAiProvider();
         await expect(providerWithoutKey.generateChatCompletion('test', [])).rejects.toThrow(
           /API key/i
         );

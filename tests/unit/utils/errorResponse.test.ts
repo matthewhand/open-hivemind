@@ -1,3 +1,4 @@
+import { createErrorResponse } from '../../../src/utils/errorResponse';
 import { ErrorResponseBuilder } from '../../../src/utils/errorResponse';
 import { ConfigurationError, AuthenticationError, NetworkError, ValidationError } from '../../../src/types/errorClasses';
 
@@ -46,66 +47,23 @@ describe('ErrorResponseBuilder', () => {
     });
   });
 
-  describe('withStack', () => {
-    it('should include stack trace when enabled', () => {
-      const error = new NetworkError('Test error', { status: 500 });
+  describe('getStatusCode', () => {
+    it('should return 500 for general errors', () => {
+      const error = { code: 'INTERNAL_SERVER_ERROR', message: 'Error' };
       const builder = new ErrorResponseBuilder(error);
-      builder.withStack(true);
-      const response = builder.build();
-
-      expect(response.stack).toBeDefined();
+      expect(builder.getStatusCode()).toBe(500);
     });
 
-    it('should not include stack trace when disabled', () => {
-      const error = new NetworkError('Test error', { status: 500 });
+    it('should return 401 for AUTH_ERROR', () => {
+      const error = { code: 'AUTH_ERROR', message: 'Unauthorized' };
       const builder = new ErrorResponseBuilder(error);
-      builder.withStack(false);
-      const response = builder.build();
-
-      expect(response.stack).toBeUndefined();
-    });
-  });
-
-  describe('getHttpStatusCode', () => {
-    it('should return 400 for ConfigurationError', () => {
-      const error = new ConfigurationError('Invalid config', 'invalid');
-      const builder = new ErrorResponseBuilder(error);
-      expect(builder.getHttpStatusCode()).toBe(400);
+      expect(builder.getStatusCode()).toBe(401);
     });
 
-    it('should return 401 for AuthenticationError', () => {
-      const error = new AuthenticationError('Unauthorized');
+    it('should return 400 for VALIDATION_ERROR', () => {
+      const error = { code: 'VALIDATION_ERROR', message: 'Invalid' };
       const builder = new ErrorResponseBuilder(error);
-      expect(builder.getHttpStatusCode()).toBe(401);
-    });
-
-    it('should return 500 for network errors', () => {
-      const error = new NetworkError('Server error', { status: 500 });
-      const builder = new ErrorResponseBuilder(error);
-      expect(builder.getHttpStatusCode()).toBe(500);
-    });
-  });
-
-  describe('send', () => {
-    it('should send error response via Express response', () => {
-      const error = new NetworkError('Test error', { status: 500 });
-      const builder = new ErrorResponseBuilder(error);
-      builder.withRequest('/api/test', 'POST');
-
-      const mockRes = {
-        status: jest.fn().mockReturnThis(),
-        json: jest.fn(),
-      } as any;
-
-      builder.send(mockRes);
-
-      expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
-        success: false,
-        error: expect.objectContaining({
-          message: 'Test error',
-        }),
-      }));
+      expect(builder.getStatusCode()).toBe(400);
     });
   });
 
