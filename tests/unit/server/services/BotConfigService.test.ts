@@ -21,7 +21,7 @@ jest.mock('../../../../src/database/DatabaseManager', () => {
   return {
     DatabaseManager: {
       getInstance: jest.fn(() => ({
-        isConfigured: () => true,
+        isConfigured: () => (global as any).mockDb.isConfigured(),
         configured: true, // Internal property used by some methods
         ensureConnected: () => {}, // Method used by repositories
         getBotConfigurationByName: (name: string) => (global as any).mockDb.getBotConfigurationByName(name),

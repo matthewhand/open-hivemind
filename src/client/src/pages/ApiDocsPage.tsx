@@ -311,7 +311,8 @@ const RouteCard: React.FC<{ route: RouteInfo }> = ({ route }) => {
         <TryItPanel route={route} />
             </div>
           ),
-        }]}
+        {']'}
+        {'}'}
         size="sm"
       />
     </div>

@@ -214,14 +214,18 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  appLogger.error('Unexpected error in main execution', { error });
-  // Use ShutdownCoordinator for graceful shutdown instead of hard exit
-  const coordinator = ShutdownCoordinator.getInstance();
-  coordinator.initiateShutdown('main_error', 1).catch((shutdownError) => {
-    appLogger.error('Error during shutdown after main failure', { shutdownError });
-    process.exit(1);
+// Start the server if this file is run directly
+if (require.main === module) {
+  main().catch((error) => {
+    appLogger.error('Unexpected error in main execution', { error });
+    // Use ShutdownCoordinator for graceful shutdown instead of hard exit
+    const coordinator = ShutdownCoordinator.getInstance();
+    coordinator.initiateShutdown('main_error', 1).catch((shutdownError) => {
+      appLogger.error('Error during shutdown after main failure', { shutdownError });
+      process.exit(1);
+    });
   });
-});
+}
 
+export { main };
 export default app;

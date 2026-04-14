@@ -9,8 +9,8 @@ export interface ToolExecutionRecord {
   id: string;
   serverName: string;
   toolName: string;
-  arguments: Record<string, any>;
-  result: any;
+  arguments: Record<string, unknown>;
+  result: unknown;
   error?: string;
   status: 'success' | 'error';
   executedAt: string;

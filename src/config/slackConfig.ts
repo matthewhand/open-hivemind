@@ -29,26 +29,32 @@ function loadSlackConfig(): SlackConfig {
 
   // Map environment variables
   const envConfig: Record<string, any> = {};
-  const mapEnv = (key: string) => {
-    if (process.env[key]) envConfig[key] = process.env[key];
+  
+  const mapEnv = (envKey: string, configKey: string, parser?: (val: string) => any) => {
+    if (process.env[envKey] !== undefined) {
+      const val = process.env[envKey]!;
+      envConfig[configKey] = parser ? parser(val) : val;
+    }
   };
 
-  const keys: (keyof SlackConfig)[] = [
-    'SLACK_BOT_TOKEN',
-    'SLACK_APP_TOKEN',
-    'SLACK_SIGNING_SECRET',
-    'SLACK_JOIN_CHANNELS',
-    'SLACK_DEFAULT_CHANNEL_ID',
-    'SLACK_MODE',
-    'SLACK_BOT_JOIN_CHANNEL_MESSAGE',
-    'SLACK_USER_JOIN_CHANNEL_MESSAGE',
-    'SLACK_BOT_LEARN_MORE_MESSAGE',
-    'SLACK_BUTTON_MAPPINGS',
-    'WELCOME_RESOURCE_URL',
-    'REPORT_ISSUE_URL'
-  ];
+  const parseIntBase10 = (v: string) => parseInt(v, 10);
+  const parseBool = (v: string) => v.toLowerCase() === 'true';
 
-  keys.forEach(mapEnv);
+  mapEnv('SLACK_BOT_TOKEN', 'SLACK_BOT_TOKEN');
+  mapEnv('SLACK_APP_TOKEN', 'SLACK_APP_TOKEN');
+  mapEnv('SLACK_SIGNING_SECRET', 'SLACK_SIGNING_SECRET');
+  mapEnv('SLACK_JOIN_CHANNELS', 'SLACK_JOIN_CHANNELS');
+  mapEnv('SLACK_DEFAULT_CHANNEL_ID', 'SLACK_DEFAULT_CHANNEL_ID');
+  mapEnv('SLACK_MODE', 'SLACK_MODE');
+  mapEnv('SLACK_BOT_JOIN_CHANNEL_MESSAGE', 'SLACK_BOT_JOIN_CHANNEL_MESSAGE');
+  mapEnv('SLACK_USER_JOIN_CHANNEL_MESSAGE', 'SLACK_USER_JOIN_CHANNEL_MESSAGE');
+  mapEnv('SLACK_BOT_LEARN_MORE_MESSAGE', 'SLACK_BOT_LEARN_MORE_MESSAGE');
+  mapEnv('SLACK_BUTTON_MAPPINGS', 'SLACK_BUTTON_MAPPINGS');
+  mapEnv('WELCOME_RESOURCE_URL', 'WELCOME_RESOURCE_URL');
+  mapEnv('REPORT_ISSUE_URL', 'REPORT_ISSUE_URL');
+  mapEnv('SLACK_HELP_COMMAND_TOKEN', 'SLACK_HELP_COMMAND_TOKEN');
+  mapEnv('SLACK_MAX_MESSAGE_LENGTH', 'SLACK_MAX_MESSAGE_LENGTH', parseIntBase10);
+  mapEnv('SLACK_SOCKET_MODE', 'SLACK_SOCKET_MODE', parseBool);
 
   const combinedConfig = {
     ...fileConfig,

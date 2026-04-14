@@ -32,6 +32,12 @@ createIntegrationSuite(slackConfig.name, slackConfig.requiredEnvVars, () => {
     console.log(`  APP_TOKEN: ${redactValue(process.env.SLACK_APP_TOKEN)}`);
   });
 
+  beforeAll(async () => {
+    process.env.SLACK_BOT_TOKEN = process.env.SLACK_BOT_TOKEN || 'xoxb-dummy-token';
+    process.env.SLACK_APP_TOKEN = process.env.SLACK_APP_TOKEN || 'xapp-dummy-token';
+    process.env.SLACK_SIGNING_SECRET = process.env.SLACK_SIGNING_SECRET || 'dummy-secret';
+  });
+
   describe('Connection', () => {
     afterEach(() => {
       jest.restoreAllMocks();

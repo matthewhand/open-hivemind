@@ -70,11 +70,11 @@ describe('messageConfig', () => {
       expect(config.get('MESSAGE_MIN_DELAY')).toBe(2000);
     });
 
-    it('gracefully falls back to default on invalid JSON in env override', () => {
+    it('throws on invalid JSON in env override', () => {
       process.env.CHANNEL_PRIORITIES = '{invalid-json';
-      const config = require('../../src/config/messageConfig').default;
-      const priorities = config.get('CHANNEL_PRIORITIES');
-      expect(priorities).toEqual({}); // falls back to Zod default
+      expect(() => {
+        require('../../src/config/messageConfig').default;
+      }).toThrow('Invalid JSON: {invalid-json');
     });
 
   });

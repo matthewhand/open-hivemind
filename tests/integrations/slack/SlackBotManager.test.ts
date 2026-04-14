@@ -1,113 +1,126 @@
 import { SlackBotManager } from '@src/integrations/slack/SlackBotManager';
 import { WebClient } from '@slack/web-api';
 import { SocketModeClient } from '@slack/socket-mode';
-import { RTMClient } from '@slack/rtm-api';
-
-// Silence debug logs during tests
-jest.mock('debug', () => () => jest.fn());
-
-// Use a shared mock object defined in a way that avoids hoisting issues
-(global as any).mockSlackFunctions = {
-  authTest: jest.fn(() => Promise.resolve({ user_id: 'U123', user: 'testuser' })),
-  history: jest.fn(() => Promise.resolve({ messages: [] })),
-};
 
 // Mock Slack SDKs
-jest.mock('@slack/web-api', () => ({
-  WebClient: jest.fn().mockImplementation(() => ({
-    auth: {
-      test: () => (global as any).mockSlackFunctions.authTest(),
-    },
-    conversations: {
-      history: () => (global as any).mockSlackFunctions.history(),
-    },
-  })),
-}));
-
-jest.mock('@slack/socket-mode', () => ({
-  SocketModeClient: jest.fn().mockImplementation(() => ({
-    on: jest.fn(),
-    start: jest.fn(() => Promise.resolve()),
-  })),
-}));
-
-jest.mock('@slack/rtm-api', () => ({
-  RTMClient: jest.fn().mockImplementation(() => ({
-    on: jest.fn(),
-    start: jest.fn(() => Promise.resolve()),
-  })),
-}));
-
-const MockWebClient = WebClient as jest.MockedClass<typeof WebClient>;
-const MockSocketModeClient = SocketModeClient as jest.MockedClass<typeof SocketModeClient>;
+jest.mock('@slack/web-api');
+jest.mock('@slack/socket-mode');
 
 describe('SlackBotManager', () => {
-  const mockConfigs = [
-    {
-      token: 'test-token',
-      appToken: 'test-app-token',
-      signingSecret: 'test-signing-secret',
-      name: 'testbot',
-    },
-  ];
+  let manager: SlackBotManager;
+  let mockConfigs: any[];
+  let mockHandler: jest.Mock;
 
   beforeEach(() => {
+    jest.useFakeTimers();
     jest.clearAllMocks();
+
+    mockConfigs = [
+      {
+        token: 'xoxb-test',
+        appToken: 'xapp-test',
+        name: 'test-bot',
+      }
+    ];
+
+    mockHandler = jest.fn().mockResolvedValue('response');
+
+    // Setup mocks
+    (WebClient as jest.Mock).mockImplementation(() => ({
+      auth: {
+        test: jest.fn().mockResolvedValue({ user_id: 'U123', user: 'test-bot' }),
+      },
+      conversations: {
+        history: jest.fn().mockResolvedValue({ messages: [] }),
+      },
+    }));
+
+    (SocketModeClient as jest.Mock).mockImplementation(() => {
+      let connectedHandler: Function | null = null;
+      return {
+        on: jest.fn((event, handler) => {
+          if (event === 'connected') connectedHandler = handler;
+        }),
+        start: jest.fn().mockImplementation(async () => {
+          if (connectedHandler) {
+            // Trigger connected immediately to resolve initialize() promise
+            connectedHandler();
+          }
+        }),
+        stop: jest.fn().mockResolvedValue(undefined),
+        disconnect: jest.fn().mockResolvedValue(undefined),
+      };
+    });
   });
 
-  it('should handle initialization, configuration, and message handling', async () => {
-    // Setup mock event handlers for SocketModeClient
-    const socketEventHandlers: Record<string, Function> = {};
-    MockSocketModeClient.mockImplementation(
-      () =>
-        ({
-          on: jest.fn((event, handler) => {
-            socketEventHandlers[event] = handler;
-          }),
-          start: jest.fn(async () => {
-            // Simulate connection success
-            if (socketEventHandlers['connected']) {
-              setTimeout(() => socketEventHandlers['connected'](), 0);
-            }
-            return Promise.resolve();
-          }),
-        }) as any
-    );
+  afterEach(async () => {
+    if (manager) {
+      await manager.shutdown();
+    }
+    jest.useRealTimers();
+  });
 
-    const manager = new SlackBotManager(mockConfigs as any, 'socket');
-    const mockHandler = jest.fn().mockResolvedValue('bot response');
+  it('should initialize and connect successfully', async () => {
+    manager = new SlackBotManager(mockConfigs, 'socket');
     manager.setMessageHandler(mockHandler);
 
-    // Initialize
     await manager.initialize();
-    
-    // Give some time for connected event
-    await new Promise(resolve => setTimeout(resolve, 50));
 
-    expect((global as any).mockSlackFunctions.authTest).toHaveBeenCalled();
-    expect(MockSocketModeClient).toHaveBeenCalled();
+    expect(WebClient).toHaveBeenCalledWith('xoxb-test');
+    expect(SocketModeClient).toHaveBeenCalledWith({ appToken: 'xapp-test' });
+  });
 
-    // Simulate receiving a message
-    if (socketEventHandlers['message']) {
-      await socketEventHandlers['message']({
-        event: {
-          type: 'message',
-          text: 'hello',
-          user: 'U999',
-          channel: 'C123',
-          event_ts: '123456789.000001',
-        },
-      });
-    }
+  it('should handle incoming messages correctly', async () => {
+    let messageHandler: Function = () => {};
+    (SocketModeClient as jest.Mock).mockImplementation(() => {
+      let connectedHandler: Function | null = null;
+      return {
+        on: jest.fn((event, handler) => {
+          if (event === 'message') messageHandler = handler;
+          if (event === 'connected') connectedHandler = handler;
+        }),
+        start: jest.fn().mockImplementation(async () => {
+          if (connectedHandler) {
+            connectedHandler();
+          }
+        }),
+        stop: jest.fn().mockResolvedValue(undefined),
+        disconnect: jest.fn().mockResolvedValue(undefined),
+      };
+    });
 
-    // Give some time for async message handling
-    await new Promise(resolve => setTimeout(resolve, 50));
+    manager = new SlackBotManager(mockConfigs, 'socket');
+    manager.setMessageHandler(mockHandler);
+    await manager.initialize();
+
+    // Simulate message event
+    const mockEvent = {
+      event: {
+        type: 'message',
+        text: 'hello bot',
+        user: 'U456',
+        channel: 'C789',
+        channel_type: 'im',
+        event_ts: '1234.56',
+      },
+      ack: jest.fn().mockResolvedValue(undefined),
+    };
+
+    await messageHandler(mockEvent);
 
     expect(mockHandler).toHaveBeenCalled();
-    const handlerCall = mockHandler.mock.calls[0];
-    // Check that first arg has a getText method that returns 'hello'
-    expect(handlerCall[0].getText()).toBe('hello');
-    // Check that bot info is passed as 3rd arg
-    expect(handlerCall[2]).toMatchObject({ name: 'testbot' });
+    const [msg] = mockHandler.mock.calls[0];
+    expect(msg.getText()).toBe('hello bot');
+    expect(msg.getAuthorId()).toBe('U456');
+  });
+
+  it('should cleanup on shutdown', async () => {
+    manager = new SlackBotManager(mockConfigs, 'socket');
+    await manager.initialize();
+    
+    await manager.shutdown();
+    
+    const socketInstance = (SocketModeClient as jest.Mock).mock.results[0].value;
+    expect(socketInstance.disconnect).toHaveBeenCalled();
   });
 });

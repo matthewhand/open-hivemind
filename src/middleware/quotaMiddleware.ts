@@ -46,7 +46,10 @@ export function getQuotaManager(): QuotaManager {
     debug('QuotaManager initialised with in-memory store');
   }
 
-  _quotaManager = new QuotaManager(_quotaStore!);
+  if (!_quotaStore) {
+    _quotaStore = new InMemoryQuotaStore();
+  }
+  _quotaManager = new QuotaManager(_quotaStore);
   return _quotaManager;
 }
 
@@ -73,7 +76,7 @@ interface IdentityResult {
  */
 function extractIdentity(req: Request): IdentityResult {
   // Authenticated user
-  const user = (req as any).user;
+  const user = (req as unknown as { user?: { id?: string | number } }).user;
   if (user?.id) {
     return { entityId: String(user.id), entityType: 'user' };
   }

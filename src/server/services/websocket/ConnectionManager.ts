@@ -59,7 +59,7 @@ export class ConnectionManager {
             this.io!.adapter(createAdapter(this.pubClient, this.subClient));
             debug('Redis adapter configured successfully');
           })
-          .catch((err) => {
+          .catch((err: unknown) => {
             debug('Failed to connect to Redis for socket.io adapter:', err);
           });
       } catch (err) {
@@ -99,11 +99,15 @@ export class ConnectionManager {
 
   public shutdown(): void {
     if (this.pubClient) {
-      this.pubClient.quit().catch(() => {});
+      this.pubClient.quit().catch((err: unknown) => {
+        debug('Error quitting pubClient:', err);
+      });
       this.pubClient = null;
     }
     if (this.subClient) {
-      this.subClient.quit().catch(() => {});
+      this.subClient.quit().catch((err: unknown) => {
+        debug('Error quitting subClient:', err);
+      });
       this.subClient = null;
     }
     if (this.io) {

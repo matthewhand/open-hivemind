@@ -54,11 +54,19 @@ export class ConfigurationImportExportService {
     this.ensureDirectories();
 
     this.backupManager = new BackupManager(this.backupsDir, {
-      getAllBotConfigurations: () => this.dbManager.getAllBotConfigurations(),
-      exportConfigurations: (configIds, options, fileName, createdBy) =>
+      getAllBotConfigurations: (): Promise<any[]> => this.dbManager.getAllBotConfigurations(),
+      exportConfigurations: (
+        configIds: number[],
+        options: ExportOptions,
+        fileName?: string,
+        createdBy?: string
+      ): Promise<ExportResult> =>
         this.exportConfigurations(configIds, options, fileName, createdBy),
-      importConfigurations: (filePath, options, importedBy) =>
-        this.importConfigurations(filePath, options, importedBy),
+      importConfigurations: (
+        filePath: string,
+        options: ImportOptions,
+        importedBy?: string
+      ): Promise<ImportResult> => this.importConfigurations(filePath, options, importedBy),
     });
   }
 
