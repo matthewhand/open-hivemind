@@ -319,8 +319,7 @@
     "picomatch": "^4.0.2",
     "@modelcontextprotocol/sdk": "^1.25.2",
     "minimatch": "^10.2.3",
-    "serialize-javascript": "^7.0.3",
-    "ajv": "^8.18.0"
+    "serialize-javascript": "^7.0.3"
   },
   "pnpm": {
     "overrides": {
@@ -334,8 +333,7 @@
       "undici": "^6.24.0",
       "fast-xml-parser": "^4.5.5",
       "minimatch": "^10.2.3",
-      "serialize-javascript": "^7.0.3",
-      "ajv": "^8.18.0"
+      "serialize-javascript": "^7.0.3"
     },
     "onlyBuiltDependencies": [
       "better-sqlite3"
