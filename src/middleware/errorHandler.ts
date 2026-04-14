@@ -7,6 +7,7 @@
 
 import Debug from 'debug';
 import type { NextFunction, Request, Response } from 'express';
+import type { AuthMiddlewareRequest } from '../auth/types';
 import { MetricsCollector } from '../monitoring/MetricsCollector';
 import { ErrorFactory, type BaseHivemindError } from '../types/errorClasses';
 import { errorLogger } from '../utils/errorLogger';
@@ -62,7 +63,7 @@ function extractErrorContext(req: Request): ErrorContext {
   return {
     correlationId: req.correlationId || 'unknown',
     requestId: req.headers['x-request-id'] as string,
-    userId: (req as import('../auth/types').AuthMiddlewareRequest).user?.id,
+    userId: (req as AuthMiddlewareRequest).user?.id,
     path: req.path,
     method: req.method,
     userAgent: req.headers['user-agent'],

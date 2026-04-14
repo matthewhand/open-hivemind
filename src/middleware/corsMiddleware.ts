@@ -120,7 +120,7 @@ export const corsMiddleware = cors(corsOptions);
  * Custom CORS middleware that handles rejections properly
  * Use this when you need more control over CORS handling
  */
-export const applyCors = (req: Request, res: Response, next: NextFunction) => {
+export const applyCors = (req: Request, res: Response, next: NextFunction): void | Response => {
   const origin = req.headers.origin;
 
   // Handle preflight requests

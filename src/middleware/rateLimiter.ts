@@ -160,7 +160,8 @@ const botRateLimiters = new Map<string, ReturnType<typeof rateLimit>>();
 export async function getBotRateLimiter(
   botName: string
 ): Promise<ReturnType<typeof rateLimit> | null> {
-  if (botRateLimiters.has(botName)) return botRateLimiters.get(botName)!;
+  const cached = botRateLimiters.get(botName);
+  if (cached) return cached;
   const limiter = await createBotRateLimiter(botName);
   if (limiter) botRateLimiters.set(botName, limiter);
   return limiter;

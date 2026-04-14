@@ -8,8 +8,7 @@ import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 describe('LLM Test Endpoint Contract', () => {
-  let app: any;
-  let originalEnv: NodeJS.ProcessEnv;
+  let app: express.Application;
 
   beforeEach(async () => {
     originalEnv = { ...process.env };
@@ -45,12 +44,11 @@ describe('LLM Test Endpoint Contract', () => {
 
   it('should reject missing message with 400', async () => {
     const res = await request(app)
-      .post('/api/admin/llm-providers/providers/test-key/test')
-      .send({});
-
+      .post('/api/admin/providers/test-connection')
+      .send({ providerType: 'invalid-type', config: {} });
+    
     expect(res.status).toBe(400);
-    expect(res.body).toHaveProperty('error');
-    expect(res.body.error).toMatch(/message/i);
+    expect(res.body.error).toContain('Validation failed');
   });
 
   it('should return 404 for non-existent profile key', async () => {

@@ -1,5 +1,5 @@
-import type { Database } from 'sqlite';
 import { Logger } from '@common/logger';
+import type { Database } from '../sqliteWrapper';
 import { type ISchemaModule } from './ISchemaModule';
 
 export class ActivitySchemas implements ISchemaModule {

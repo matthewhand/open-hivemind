@@ -218,14 +218,14 @@ export class BotConfigService {
       this.ensureDatabaseEnabled('retrieve bot configurations');
 
       const config = await this.dbManager.getBotConfigurationByName(name);
-      if (!config) {
+      if (!config || !config.id) {
         return null;
       }
 
       return {
         ...config,
-        versions: await this.dbManager.getBotConfigurationVersions(config.id!),
-        auditLog: await this.dbManager.getBotConfigurationAudit(config.id!),
+        versions: await this.dbManager.getBotConfigurationVersions(config.id),
+        auditLog: await this.dbManager.getBotConfigurationAudit(config.id),
       };
     } catch (error) {
       debug('Error getting bot configuration by name:', error);

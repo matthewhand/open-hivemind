@@ -29,9 +29,21 @@ function loadMattermostConfig(): MattermostConfig {
 
   // Map environment variables
   const envConfig: Record<string, any> = {};
-  if (process.env.MATTERMOST_SERVER_URL) envConfig.MATTERMOST_SERVER_URL = process.env.MATTERMOST_SERVER_URL;
-  if (process.env.MATTERMOST_TOKEN) envConfig.MATTERMOST_TOKEN = process.env.MATTERMOST_TOKEN;
-  if (process.env.MATTERMOST_CHANNEL) envConfig.MATTERMOST_CHANNEL = process.env.MATTERMOST_CHANNEL;
+  const mapEnv = (envKey: string, configKey: string, parser?: (val: string) => any) => {
+    if (process.env[envKey] !== undefined) {
+      const val = process.env[envKey]!;
+      envConfig[configKey] = parser ? parser(val) : val;
+    }
+  };
+
+  const parseIntBase10 = (v: string) => parseInt(v, 10);
+
+  mapEnv('MATTERMOST_SERVER_URL', 'MATTERMOST_SERVER_URL');
+  mapEnv('MATTERMOST_TOKEN', 'MATTERMOST_TOKEN');
+  mapEnv('MATTERMOST_CHANNEL', 'MATTERMOST_CHANNEL');
+  mapEnv('MATTERMOST_TEAM', 'MATTERMOST_TEAM');
+  mapEnv('MATTERMOST_WS_RECONNECT_INTERVAL', 'MATTERMOST_WS_RECONNECT_INTERVAL', parseIntBase10);
+  mapEnv('MATTERMOST_MAX_MESSAGE_LENGTH', 'MATTERMOST_MAX_MESSAGE_LENGTH', parseIntBase10);
 
   const combinedConfig = {
     ...fileConfig,
@@ -42,6 +54,9 @@ function loadMattermostConfig(): MattermostConfig {
   
   if (!result.success) {
     debug('Mattermost configuration validation failed:', result.error.format());
+    if (process.env.NODE_ENV === 'test') {
+      throw result.error;
+    }
     return MattermostSchema.parse({});
   }
 

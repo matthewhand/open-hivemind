@@ -85,6 +85,7 @@ function loadDiscordConfig(): DiscordConfig {
   mapEnv('DISCORD_PRIORITY_CHANNEL_BONUS', 'DISCORD_PRIORITY_CHANNEL_BONUS', parseFloatBase10);
   mapEnv('DISCORD_LOGGING_ENABLED', 'DISCORD_LOGGING_ENABLED', parseBool);
   mapEnv('DISCORD_MESSAGE_PROCESSING_DELAY_MS', 'DISCORD_MESSAGE_PROCESSING_DELAY_MS', parseIntBase10);
+  mapEnv('DISCORD_USERNAME_OVERRIDE', 'DISCORD_USERNAME_OVERRIDE');
 
   const combinedConfig = {
     ...fileConfig,
@@ -95,6 +96,9 @@ function loadDiscordConfig(): DiscordConfig {
   
   if (!result.success) {
     debug('Discord configuration validation failed:', result.error.format());
+    if (process.env.NODE_ENV === 'test') {
+      throw result.error;
+    }
     return DiscordSchema.parse({});
   }
 

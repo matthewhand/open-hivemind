@@ -2,8 +2,6 @@ import 'reflect-metadata';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import Debug from 'debug';
-import { open, type Database } from 'sqlite';
-import sqlite3 from 'sqlite3';
 import { injectable, singleton } from 'tsyringe';
 import { ConfigurationError, DatabaseError } from '@src/types/errorClasses';
 import { AIFeedbackRepository } from './AIFeedbackRepository';
@@ -12,6 +10,7 @@ import { ApprovalRepository } from './ApprovalRepository';
 import { BotConfigRepository } from './BotConfigRepository';
 import { DecisionRepository } from './DecisionRepository';
 import { MessageRepository } from './MessageRepository';
+import { SQLiteWrapper as Database } from './sqliteWrapper';
 import type {
   Anomaly,
   ApprovalRequest,
@@ -54,6 +53,8 @@ export type {
   ApprovalRequest,
   AIFeedback,
 } from './types';
+
+export type { Database } from './sqliteWrapper';
 
 const debug = Debug('app:DatabaseManager');
 
@@ -149,10 +150,7 @@ export class DatabaseManager {
           await fs.mkdir(dbDir, { recursive: true });
         }
 
-        this.db = await open({
-          filename: dbPath,
-          driver: sqlite3.Database,
-        });
+        this.db = new Database(dbPath);
 
         await this.createTables();
         await this.createIndexes();

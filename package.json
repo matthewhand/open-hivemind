@@ -137,6 +137,7 @@
     "async-mutex": "^0.5.0",
     "axios": "^1.15.0",
     "bcrypt": "^6.0.0",
+    "better-sqlite3": "^12.9.0",
     "chalk": "^5.6.2",
     "classnames": "^2.5.1",
     "commander": "^9.5.0",
@@ -203,8 +204,6 @@
     "sitemap": "^8.0.0",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
-    "sqlite": "^5.1.1",
-    "sqlite3": "^6.0.1",
     "tailwind-merge": "^3.3.1",
     "tough-cookie": "^6.0.0",
     "ts-essentials": "^10.0.2",
@@ -239,6 +238,7 @@
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.5.1",
     "@types/bcrypt": "^6.0.0",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/chai": "^4.3.19",
     "@types/config": "^3.3.4",
     "@types/convict": "^6.1.6",
@@ -330,7 +330,10 @@
       "tar": "^7.5.11",
       "undici": "^6.24.0",
       "fast-xml-parser": "^4.5.5"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "better-sqlite3"
+    ]
   },
   "lint-staged": {
     "src/**/*.{ts,tsx}": [

@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
-import { open, type Database } from 'sqlite';
-import sqlite3 from 'sqlite3';
 import { Logger } from '@common/logger';
+
+import Database = require('better-sqlite3');
 
 interface ConnectionOptions {
   databasePath: string;
@@ -19,7 +19,7 @@ export interface QueryResult {
 export type SqlParam = string | number | boolean | null | Buffer;
 
 export class ConnectionManager extends EventEmitter {
-  private db: Database | null = null;
+  private db: Database.Database | null = null;
   private isConnected = false;
   private options: ConnectionOptions;
 
@@ -35,14 +35,10 @@ export class ConnectionManager extends EventEmitter {
     }
 
     try {
-      this.db = await open({
-        filename: this.options.databasePath,
-        driver: sqlite3.Database,
+      this.db = new Database(this.options.databasePath, {
+        readonly: this.options.readonly,
+        timeout: this.options.timeout || 5000,
       });
-
-      if (this.options.timeout) {
-        await this.db.configure('busyTimeout', this.options.timeout);
-      }
 
       this.isConnected = true;
       Logger.info(`Connected to database: ${this.options.databasePath}`);
@@ -61,7 +57,7 @@ export class ConnectionManager extends EventEmitter {
       return;
     }
     try {
-      await this.db.close();
+      this.db.close();
       this.isConnected = false;
       this.db = null;
       Logger.info('Database connection closed');
@@ -74,7 +70,11 @@ export class ConnectionManager extends EventEmitter {
     }
   }
 
-  getDatabase(): Database | null {
+  getDatabase(): any {
+    // This used to return a sqlite Database promise wrapper.
+    // It's currently only used by SchemaManager, so it must return something that has exec(), run()
+    // To make it compatible without changing SchemaManager immediately, we return a mocked version
+    // or just the db instance if the schema manager is also updated.
     return this.db;
   }
 
@@ -88,10 +88,9 @@ export class ConnectionManager extends EventEmitter {
     }
 
     try {
-      const result = await (params && params.length > 0
-        ? this.db.run(query, params)
-        : this.db.run(query));
-      return { lastID: result.lastID ?? 0, changes: result.changes ?? 0 };
+      const stmt = this.db.prepare(query);
+      const result = params && params.length > 0 ? stmt.run(...params) : stmt.run();
+      return { lastID: result.lastInsertRowid as number, changes: result.changes };
     } catch (err) {
       Logger.error(`Query execution error: ${(err as Error).message}`);
       throw err;
@@ -104,10 +103,9 @@ export class ConnectionManager extends EventEmitter {
     }
 
     try {
-      const rows = await (params && params.length > 0
-        ? this.db.all<Record<string, unknown>[]>(query, params)
-        : this.db.all<Record<string, unknown>[]>(query));
-      return rows;
+      const stmt = this.db.prepare(query);
+      const rows = params && params.length > 0 ? stmt.all(...params) : stmt.all();
+      return rows as Record<string, unknown>[];
     } catch (err) {
       Logger.error(`Select query error: ${(err as Error).message}`);
       throw err;

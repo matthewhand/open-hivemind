@@ -1,5 +1,5 @@
-import type { Database } from 'sqlite';
 import { Logger } from '@common/logger';
+import type { Database } from '../sqliteWrapper';
 import type { BotConfiguration as TypesBotConfiguration } from '../types';
 
 // We map our type loosely for type flexibility (allowing parsed objects or stringified variants)

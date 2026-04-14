@@ -79,7 +79,11 @@ export const sessionMiddleware = session(sessionConfig);
 /**
  * Session security middleware - adds additional security checks
  */
-export const sessionSecurityMiddleware = (req: Request, res: Response, next: NextFunction) => {
+export const sessionSecurityMiddleware = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void | Response => {
   if (!req.session) {
     return next();
   }
@@ -128,7 +132,7 @@ export const sessionSecurityMiddleware = (req: Request, res: Response, next: Nex
 /**
  * Apply session management middleware with security checks
  */
-export const applySessionManagement = (req: Request, res: Response, next: NextFunction) => {
+export const applySessionManagement = (req: Request, res: Response, next: NextFunction): void => {
   sessionMiddleware(req, res, (err) => {
     if (err) {
       debug('Session middleware error:', err);
@@ -141,7 +145,11 @@ export const applySessionManagement = (req: Request, res: Response, next: NextFu
 /**
  * Require valid session middleware
  */
-export const requireSession = (req: Request, res: Response, next: NextFunction) => {
+export const requireSession = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void | Response => {
   if (!req.session || !(req.session as HivemindSessionData).userId) {
     return res.status(401).json({
       error: 'Authentication required',

@@ -62,7 +62,7 @@ function sanitizeObject(obj: unknown): unknown {
   return obj;
 }
 
-export const sanitizeInput = (req: Request, res: Response, next: NextFunction) => {
+export const sanitizeInput = (req: Request, res: Response, next: NextFunction): void => {
   if (req.body && typeof req.body === 'object') {
     req.body = sanitizeObject(req.body);
   }

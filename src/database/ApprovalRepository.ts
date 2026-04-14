@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import type { Database } from 'sqlite';
+import type { SQLiteWrapper as Database } from './sqliteWrapper';
 import type { ApprovalRequest } from './types';
 
 const debug = Debug('app:ApprovalRepository');

@@ -130,6 +130,6 @@ export class SlackConfigurationLoader {
    * Get default channel from configuration
    */
   public static getDefaultChannel(): string {
-    return slackConfig.get('SLACK_DEFAULT_CHANNEL_ID') || '';
+    return String(slackConfig.get('SLACK_DEFAULT_CHANNEL_ID') || '');
   }
 }

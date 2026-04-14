@@ -22,6 +22,7 @@ export const DiscordSchema = z.object({
   DISCORD_PRIORITY_CHANNEL_BONUS: z.number().default(1.1),
   DISCORD_LOGGING_ENABLED: z.boolean().default(false),
   DISCORD_MESSAGE_PROCESSING_DELAY_MS: z.number().int().default(0),
+  DISCORD_USERNAME_OVERRIDE: z.string().default(''),
 });
 
 export type DiscordConfig = z.infer<typeof DiscordSchema>;

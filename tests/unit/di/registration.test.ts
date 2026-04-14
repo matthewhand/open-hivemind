@@ -79,10 +79,7 @@ describe('DI Service Registration Logging', () => {
     // initially not registered
     expect(areServicesRegistered()).toBe(false);
 
-    // register
     registerServices();
-
-    // should be registered
     expect(areServicesRegistered()).toBe(true);
   });
 });

@@ -125,7 +125,9 @@ export class SlackWelcomeHandler {
     const resourceUrl = process.env.RESOURCE_URL || 'https://university.example.com/resources';
     const defaultMessage = `# Welcome, ${userName}, to the #${channelName} channel! :wave:\n\n## Purpose\nThis channel is designed to help you achieve your learning objectives through interactive discussions and AI-powered assistance.\n\n## How to Use\n- **Ask Questions**: Post your questions here and I'll respond in threads to keep discussions organized\n- **Get Help**: Request private assistance and I'll DM you directly\n- **Track Progress**: Ask for assessments to monitor your learning journey\n\n## Resources\n- [Learning Portal](${resourceUrl})\n- [Documentation](${resourceUrl}/docs)\n- [Support](${resourceUrl}/support)\n\n## Actions\n- [Learning Objectives](action:learn_objectives_${channel})\n- [How-To](action:how_to_${channel})\n- [Contact Support](action:contact_support_${channel})\n- [Report Issue](action:report_issue_${channel})`;
 
-    const welcomeMessage = slackConfig.get('SLACK_USER_JOIN_CHANNEL_MESSAGE') || defaultMessage;
+    const welcomeMessage = String(
+      slackConfig.get('SLACK_USER_JOIN_CHANNEL_MESSAGE') || defaultMessage
+    );
     const processedMessage = welcomeMessage
       .replace(/{user}/g, userName)
       .replace(/{channel}/g, channelName);
@@ -229,9 +231,11 @@ export class SlackWelcomeHandler {
     const reportIssueUrl =
       process.env.REPORT_ISSUE_URL || 'https://university.example.com/report-issue';
     const learnMoreDefault = "Here's more info about this channel!";
-    const learnMoreMessage = slackConfig.get('SLACK_BOT_LEARN_MORE_MESSAGE') || learnMoreDefault;
+    const learnMoreMessage = String(
+      slackConfig.get('SLACK_BOT_LEARN_MORE_MESSAGE') || learnMoreDefault
+    );
     const buttonMappingsRaw =
-      process.env.SLACK_BUTTON_MAPPINGS || slackConfig.get('SLACK_BUTTON_MAPPINGS') || '{}';
+      process.env.SLACK_BUTTON_MAPPINGS || String(slackConfig.get('SLACK_BUTTON_MAPPINGS')) || '{}';
 
     let buttonMappings: { [key: string]: string };
     try {
@@ -283,10 +287,10 @@ export class SlackWelcomeHandler {
    */
   public async joinConfiguredChannelsForBot(botInfo: any): Promise<void> {
     debug('Entering joinConfiguredChannelsForBot', { botUserId: botInfo.botUserId });
-    const channelsConfig = slackConfig.get('SLACK_JOIN_CHANNELS') || '';
+    const channelsConfig = String(slackConfig.get('SLACK_JOIN_CHANNELS') || '');
     const channelList = channelsConfig
       .split(',')
-      .map((c) => c.trim())
+      .map((c: string) => c.trim())
       .filter(Boolean);
 
     debug(`Joining ${channelList.length} channels: ${channelList.join(', ')}`);

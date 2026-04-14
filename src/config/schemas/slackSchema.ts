@@ -17,6 +17,8 @@ export const SlackSchema = z.object({
   WELCOME_RESOURCE_URL: z.string().default('https://university.example.com/resources'),
   REPORT_ISSUE_URL: z.string().default('https://university.example.com/report-issue'),
   SLACK_HELP_COMMAND_TOKEN: z.string().default(''),
+  SLACK_MAX_MESSAGE_LENGTH: z.number().int().default(3000),
+  SLACK_SOCKET_MODE: z.boolean().default(true),
 });
 
 export type SlackConfig = z.infer<typeof SlackSchema>;

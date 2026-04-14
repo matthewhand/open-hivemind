@@ -223,7 +223,7 @@ export class RealTimeNotificationService extends EventEmitter {
   public notifySystemEvent(
     event: 'startup' | 'shutdown' | 'config_reload' | 'error',
     details: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ): string {
     const severityMap = {
       startup: 'success' as const,
