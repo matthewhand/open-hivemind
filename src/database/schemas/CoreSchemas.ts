@@ -1,4 +1,4 @@
-import type { Database } from 'sqlite';
+import type { Database } from '../sqliteWrapper';
 import { Logger } from '@common/logger';
 import { type ISchemaModule } from './ISchemaModule';
 

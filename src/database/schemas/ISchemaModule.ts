@@ -1,4 +1,4 @@
-import type { Database } from 'sqlite';
+import type { Database } from '../sqliteWrapper';
 
 export interface ISchemaModule {
   createTables?(db: Database): Promise<void>;
