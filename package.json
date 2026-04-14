@@ -317,7 +317,10 @@
     "handlebars": "^4.7.9",
     "path-to-regexp": "^0.1.13",
     "picomatch": "^4.0.2",
-    "@modelcontextprotocol/sdk": "^1.25.2"
+    "@modelcontextprotocol/sdk": "^1.25.2",
+    "minimatch": "^10.2.3",
+    "serialize-javascript": "^7.0.3",
+    "ajv": "^8.18.0"
   },
   "pnpm": {
     "overrides": {
