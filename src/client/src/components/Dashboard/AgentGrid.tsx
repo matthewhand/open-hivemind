@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import AgentCard from './AgentCard';
 import { useAgents } from '../../hooks/useAgents';
 
@@ -26,4 +26,5 @@ const AgentGrid: React.FC<AgentGridProps> = ({ configurable }) => {
   );
 };
 
-export default AgentGrid;
+// ⚡ Bolt Optimization: Added memo() to prevent unnecessary re-renders when parent state changes
+export default memo(AgentGrid);
