@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { loadProfiles, saveProfiles, findProfileByKey } from './profileUtils';
+import { loadProfiles, saveProfiles, buildProfileMap } from './profileUtils';
 import { Logger } from '@common/logger';
 
 const logger = Logger.withContext('memoryProfiles');
@@ -125,7 +125,25 @@ const DEFAULT_MEMORY_PROFILES: MemoryProfiles = {
   memory: [],
 };
 
+// ⚡ Bolt Optimization: O(1) Map-based profile lookups
+let profilesCache: MemoryProfile[] | null = null;
+let profileMapCache: Map<string, MemoryProfile> | null = null;
+
+const invalidateProfileMap = (): void => {
+  profilesCache = null;
+  profileMapCache = null;
+};
+
+const ensureProfileMap = (): void => {
+  if (profileMapCache && profilesCache) {
+    return;
+  }
+  profilesCache = loadMemoryProfiles().memory;
+  profileMapCache = buildProfileMap(profilesCache);
+};
+
 export const loadMemoryProfiles = (): MemoryProfiles => {
+  invalidateProfileMap();
   return loadProfiles<MemoryProfiles>({
     filename: 'memory-profiles.json',
     defaultData: DEFAULT_MEMORY_PROFILES,
@@ -152,11 +170,12 @@ export const loadMemoryProfiles = (): MemoryProfiles => {
 
 export const saveMemoryProfiles = (profiles: MemoryProfiles): void => {
   saveProfiles('memory-profiles.json', profiles);
+  invalidateProfileMap();
 };
 
 export const getMemoryProfileByKey = (key: string): MemoryProfile | undefined => {
-  const profiles = loadMemoryProfiles().memory;
-  return findProfileByKey(profiles, 'key', key);
+  ensureProfileMap();
+  return profileMapCache!.get(key.trim().toLowerCase());
 };
 
 export const getMemoryProfiles = (): MemoryProfiles => loadMemoryProfiles();

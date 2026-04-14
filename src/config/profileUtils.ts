@@ -4,17 +4,17 @@ import Debug from 'debug';
 
 const debug = Debug('app:profileUtils');
 
+export const getProfilesPath = (filename: string): string => {
+  const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
+  return path.join(configDir, filename);
+};
+
 export interface ProfileLoaderOptions<T> {
   filename: string;
   defaultData: T;
   validateAndMigrate: (parsed: any) => T;
   profileType: string;
 }
-
-export const getProfilesPath = (filename: string): string => {
-  const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
-  return path.join(configDir, filename);
-};
 
 export const loadProfiles = <T>(options: ProfileLoaderOptions<T>): T => {
   const { filename, defaultData, validateAndMigrate, profileType } = options;
@@ -71,4 +71,38 @@ export const findProfileByKey = <T, K extends keyof T>(
     const pVal = profile[keyField];
     return typeof pVal === 'string' && pVal.toLowerCase() === normalized;
   });
+};
+
+/**
+ * Build a Map from an array of profiles for O(1) lookups.
+ * Keys are normalized to lowercase for case-insensitive matching.
+ */
+export const buildProfileMap = <T extends Record<string, any>>(
+  profiles: T[],
+  keyField: keyof T = 'key'
+): Map<string, T> => {
+  const map = new Map<string, T>();
+  for (const profile of profiles) {
+    const key = String(profile[keyField]).toLowerCase();
+    map.set(key, profile);
+  }
+  return map;
+};
+
+/**
+ * O(1) lookup using a pre-built profile Map.
+ * Falls back to O(n) scan if map is not provided.
+ */
+export const getProfileByKey = <T extends Record<string, any>>(
+  profiles: T[],
+  key: string,
+  keyField: keyof T = 'key',
+  profileMap?: Map<string, T>
+): T | undefined => {
+  const normalized = key.trim().toLowerCase();
+  if (profileMap) {
+    return profileMap.get(normalized);
+  }
+  // Fallback to O(n) scan for backwards compatibility
+  return findProfileByKey(profiles, keyField, key);
 };
