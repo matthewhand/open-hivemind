@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+
 const EMOJIS = [
   '😀',
   '😂',
@@ -18,5 +20,7 @@ const EMOJIS = [
 ];
 
 export function getEmoji(): string {
-  return EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+  const randomBytes = crypto.randomBytes(4);
+  const index = randomBytes.readUInt32BE() % EMOJIS.length;
+  return EMOJIS[index];
 }
