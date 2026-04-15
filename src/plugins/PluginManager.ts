@@ -48,11 +48,13 @@ export class PluginValidationError extends Error {
 // Registry helpers
 // ---------------------------------------------------------------------------
 
-const REGISTRY_FILE = path.join(PLUGINS_DIR, 'registry.json');
+function getRegistryFile(): string {
+  return path.join(PLUGINS_DIR, 'registry.json');
+}
 
 async function readRegistry(): Promise<PluginRegistryEntry[]> {
   try {
-    const content = await fs.promises.readFile(REGISTRY_FILE, 'utf-8');
+    const content = await fs.promises.readFile(getRegistryFile(), 'utf-8');
     return JSON.parse(content);
   } catch (e: unknown) {
     if ((e as NodeJS.ErrnoException).code === 'ENOENT') {
@@ -65,7 +67,7 @@ async function readRegistry(): Promise<PluginRegistryEntry[]> {
 
 async function writeRegistry(entries: PluginRegistryEntry[]): Promise<void> {
   await fs.promises.mkdir(PLUGINS_DIR, { recursive: true });
-  await fs.promises.writeFile(REGISTRY_FILE, JSON.stringify(entries, null, 2));
+  await fs.promises.writeFile(getRegistryFile(), JSON.stringify(entries, null, 2));
 }
 
 async function updateRegistry(entry: PluginRegistryEntry): Promise<void> {
