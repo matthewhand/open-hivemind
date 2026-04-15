@@ -263,7 +263,7 @@ export class ErrorUtils {
     } else if (classification.logLevel === 'warn') {
       debug('WARN:', 'Application warning:', hivemindError);
     } else {
-      console.info('Application info:', hivemindError);
+      debug('INFO:', 'Application info:', hivemindError);
     }
   }
 }
