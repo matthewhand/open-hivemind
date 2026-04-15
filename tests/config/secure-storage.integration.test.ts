@@ -20,17 +20,24 @@ describe('Secure Storage Integration', () => {
     expect(decrypted).toBe(originalValue);
   });
 
-  it('should protect sensitive fields in configuration', async () => {
-    const config = {
-      apiKey: 'real-key',
-      other: 'public'
-    };
+  it('should store and retrieve a secure config', async () => {
+    const configId = 'test-config-id';
+    const configData = { apiKey: 'secret-123', other: 'public' };
     
-    const protectedConfig = await manager.protectConfig(config, ['apiKey']);
-    expect(protectedConfig.apiKey).toContain('ENC:');
-    expect(protectedConfig.other).toBe('public');
+    await manager.storeConfig({
+      id: configId,
+      name: 'Test Config',
+      data: configData
+    });
     
-    const restoredConfig = await manager.revealConfig(protectedConfig);
-    expect(restoredConfig.apiKey).toBe('real-key');
+    const retrieved = await manager.getConfig(configId);
+    expect(retrieved).toBeDefined();
+    expect(retrieved?.data).toEqual(configData);
+  });
+
+  it('should list stored configs', async () => {
+    const configs = await manager.listConfigs();
+    expect(Array.isArray(configs)).toBe(true);
+    expect(configs.some(c => c.id === 'test-config-id')).toBe(true);
   });
 });

@@ -33,13 +33,23 @@ describe('Profile Discovery Integration', () => {
     
     fs.writeFileSync(fullPath, JSON.stringify(mockData));
     
-    const loaded = loadProfiles(filename, { items: [] });
+    const loaded = loadProfiles({
+      filename,
+      defaultData: { items: [] },
+      validateAndMigrate: (p) => p,
+      profileType: 'test'
+    });
     expect(loaded.items).toHaveLength(1);
     expect(loaded.items[0].key).toBe('val');
   });
 
   it('should return default data when file is missing', () => {
-    const loaded = loadProfiles('missing-file.json', { items: [{ key: 'default' }] });
+    const loaded = loadProfiles({
+      filename: 'missing-file.json',
+      defaultData: { items: [{ key: 'default' }] },
+      validateAndMigrate: (p) => p,
+      profileType: 'test'
+    });
     expect(loaded.items).toHaveLength(1);
     expect(loaded.items[0].key).toBe('default');
   });

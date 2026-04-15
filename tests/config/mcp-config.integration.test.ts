@@ -1,4 +1,10 @@
 import { MCPProviderManager } from '../../src/config/MCPProviderManager';
+import { ConfigLoader } from '../../src/config/mcp/configLoader';
+import { ServerLifecycle } from '../../src/config/mcp/serverLifecycle';
+import { ToolRegistry } from '../../src/config/mcp/toolRegistry';
+import { container } from 'tsyringe';
+import { registerServices } from '../../src/di/registration';
+import 'reflect-metadata';
 import path from 'path';
 import fs from 'fs';
 
@@ -7,9 +13,15 @@ describe('MCP Configuration Integration', () => {
   const testConfigDir = path.join(process.cwd(), 'config', 'mcp-test');
 
   beforeAll(() => {
-    // We use the singleton but we can't easily override its path without hacks
-    // so we'll test the logic via the public API
-    manager = MCPProviderManager.getInstance();
+    registerServices();
+    
+    // Explicitly register dependencies to avoid TypeInfo errors in tests
+    container.registerSingleton(ConfigLoader);
+    container.registerSingleton(ServerLifecycle);
+    container.registerSingleton(ToolRegistry);
+    container.registerSingleton(MCPProviderManager);
+
+    manager = container.resolve(MCPProviderManager);
   });
 
   it('should validate desktop providers correctly', () => {

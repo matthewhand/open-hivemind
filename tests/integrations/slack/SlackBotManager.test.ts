@@ -13,13 +13,16 @@ jest.mock('debug', () => () => jest.fn());
 };
 
 // Mock Slack SDKs
+const mockAuthTest = jest.fn().mockResolvedValue({ user_id: 'U123', user: 'testuser' });
+const mockConversationsHistory = jest.fn().mockResolvedValue({ messages: [] });
+
 jest.mock('@slack/web-api', () => ({
   WebClient: jest.fn().mockImplementation(() => ({
     auth: {
-      test: jest.fn().mockResolvedValue({ user_id: 'U123', user: 'testuser' }),
+      test: mockAuthTest,
     },
     conversations: {
-      history: jest.fn().mockResolvedValue({ messages: [] }),
+      history: mockConversationsHistory,
     },
   })),
 }));
@@ -82,8 +85,7 @@ describe('SlackBotManager', () => {
     await manager.initialize();
     
     // Check that auth.test was called on the web client
-    const webClientInstance = MockWebClient.mock.instances[0];
-    expect(webClientInstance.auth.test).toHaveBeenCalled();
+    expect(mockAuthTest).toHaveBeenCalled();
     expect(MockSocketModeClient).toHaveBeenCalled();
 
     // Simulate receiving a message

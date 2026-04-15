@@ -103,9 +103,6 @@ export class CircuitBreaker {
   }
 
   getState(): CircuitBreakerState {
-    if (this.state === CircuitBreakerState.OPEN && this.shouldTransitionToHalfOpen()) {
-      return CircuitBreakerState.HALF_OPEN;
-    }
     return this.state;
   }
 

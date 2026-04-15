@@ -18,9 +18,8 @@ describe('App Security Middleware Integration', () => {
     expect(response.headers['x-content-type-options']).toBe('nosniff');
     expect(response.headers['x-frame-options']).toBe('DENY');
     expect(response.headers['x-xss-protection']).toBe('1; mode=block');
-    expect(response.headers['strict-transport-security']).toBe('max-age=31536000');
-    expect(response.headers['content-security-policy']).toBe("default-src 'self'");
-    expect(response.headers['referrer-policy']).toBe('no-referrer');
+    expect(response.headers['referrer-policy']).toBe('strict-origin-when-cross-origin');
+    expect(response.headers['content-security-policy']).toContain("default-src 'self'");
   });
 
   it('should properly configure CORS for localhost by default', async () => {

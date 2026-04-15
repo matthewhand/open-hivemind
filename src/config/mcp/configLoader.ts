@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { isMCPProviderType } from '../../types/mcp';
 import type { MCPProviderConfig, MCPProviderValidationResult } from '../../types/mcp';
 

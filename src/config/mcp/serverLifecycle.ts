@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { spawn } from 'child_process';
 import type { ChildProcess } from 'child_process';
 import Debug from 'debug';

@@ -115,7 +115,7 @@ export class SyncProviderRegistry {
    * Calling `initialize()` a second time is a no-op. Call `reset()` first
    * if you need to re-initialize (e.g. after config changes).
    */
-  public async initialize(config: RegistryConfig): Promise<InitResult> {
+  public async initialize(config: RegistryConfig = {}): Promise<InitResult> {
     if (this._initialized) {
       debug('initialize() called but registry is already initialized; skipping');
       return {
@@ -128,7 +128,7 @@ export class SyncProviderRegistry {
     const failed: InitResult['failed'] = [];
 
     // -- LLM providers -------------------------------------------------------
-    for (const profile of config.llmProfiles ?? []) {
+    for (const profile of this._config.llmProfiles ?? []) {
       try {
         const mod = await loadPlugin(`llm-${profile.provider.toLowerCase()}`);
         const instance = instantiateLlmProvider(mod, profile.config);

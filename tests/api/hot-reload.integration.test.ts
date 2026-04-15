@@ -9,13 +9,14 @@ describe('Hot Reload API Integration', () => {
   beforeAll(() => {
     app = express();
     app.use(express.json());
-    app.use('/api/config/hot-reload', hotReloadRouter);
+    app.use('/api/hot-reload', hotReloadRouter);
   });
 
   it('should validate hot reload requests using real schema', async () => {
     // Missing required fields
     const res = await request(app)
-      .post('/api/config/hot-reload')
+      .post('/api/hot-reload')
+      .set('Origin', 'http://localhost:3000')
       .send({});
     
     expect(res.status).toBe(400);
@@ -24,7 +25,8 @@ describe('Hot Reload API Integration', () => {
 
   it('should reject hot reload with empty changes', async () => {
     const res = await request(app)
-      .post('/api/config/hot-reload')
+      .post('/api/hot-reload')
+      .set('Origin', 'http://localhost:3000')
       .send({
         type: 'update',
         botName: 'test-bot',
@@ -36,7 +38,9 @@ describe('Hot Reload API Integration', () => {
   });
 
   it('should return history from real manager', async () => {
-    const res = await request(app).get('/api/config/hot-reload/history');
+    const res = await request(app)
+      .get('/api/hot-reload/history')
+      .set('Origin', 'http://localhost:3000');
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body.data)).toBe(true);
   });
