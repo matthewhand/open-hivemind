@@ -3,6 +3,7 @@ import process from 'process';
 import { Router, type NextFunction, type Request, type Response } from 'express';
 import { MetricsCollector } from '../../../monitoring/MetricsCollector';
 import ApiMonitorService from '../../../services/ApiMonitorService';
+import { UserConfigStore } from '../../../config/UserConfigStore';
 import { HTTP_STATUS } from '../../../types/constants';
 import { ErrorLogger } from '../../../utils/errorLogger';
 import { globalRecoveryManager } from '../../../utils/errorRecovery';
@@ -27,12 +28,17 @@ router.get('/detailed', optionalAuth, (req: Request, res: Response) => {
   const recentErrors = ErrorLogger.getInstance().getRecentErrorCount(60000);
   const healthStatus = calculateHealthStatus(memoryUsage, recentErrors, metrics);
 
+  // Get maintenance mode status
+  const userConfigStore = UserConfigStore.getInstance();
+  const isMaintenanceMode = userConfigStore.isMaintenanceMode();
+
   // Sanitized response for unauthenticated users
   if (!req.user) {
     const sanitizedHealthData = {
       status: healthStatus.status,
       timestamp: new Date().toISOString(),
       uptime: uptime,
+      maintenanceMode: isMaintenanceMode,
     };
     return res.json(sanitizedHealthData);
   }
@@ -51,6 +57,7 @@ router.get('/detailed', optionalAuth, (req: Request, res: Response) => {
       configuration: { status: 'healthy' },
       services: { status: 'healthy' },
     },
+    maintenanceMode: isMaintenanceMode,
     uptime: uptime,
     memory: {
       used: Math.round(memoryUsage.heapUsed / 1024 / 1024), // MB

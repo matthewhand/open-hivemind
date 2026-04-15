@@ -8,6 +8,7 @@ import fs from 'fs';
 import path from 'path';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import { applyRateLimiting } from '@src/middleware/rateLimiter';
+import { maintenanceModeMiddleware } from '@src/middleware/maintenanceMiddleware';
 import Logger from '@common/logger';
 
 const appLogger = Logger.withContext('app:index');
@@ -35,6 +36,9 @@ export function setupMiddleware(app: express.Application, ctx: MiddlewareContext
 
   // Rate limiting middleware
   app.use(applyRateLimiting);
+
+  // Maintenance mode middleware - check if system is in maintenance mode
+  app.use(maintenanceModeMiddleware);
 
   // CORS middleware for localhost development
   app.use((req: Request, res: Response, next: NextFunction) => {

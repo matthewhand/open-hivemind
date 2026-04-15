@@ -169,10 +169,16 @@ test.describe('Settings CRUD Lifecycle', () => {
     await page.route('**/api/config/global', (route) =>
       route.fulfill({ status: 200, json: currentConfig })
     );
-    await page.route('**/api/config/update', async (route) => {
-      savedPayload = route.request().postDataJSON();
-      currentConfig = { ...currentConfig, ...savedPayload };
-      await route.fulfill({ status: 200, json: { success: true, message: 'Settings saved' } });
+    await page.route('**/api/config/global', async (route) => {
+      // Handle PUT request to save settings
+      if (route.request().method() === 'PUT') {
+        savedPayload = route.request().postDataJSON();
+        currentConfig = { ...currentConfig, ...savedPayload };
+        await route.fulfill({ status: 200, json: { success: true, message: 'Settings saved' } });
+      } else {
+        // Handle GET request
+        await route.fulfill({ status: 200, json: currentConfig });
+      }
     });
 
     await page.goto('/admin/settings');
@@ -210,6 +216,11 @@ test.describe('Settings CRUD Lifecycle', () => {
     if ((await saveBtn.count()) > 0) {
       await saveBtn.click();
     }
+
+    // Verify maintenance mode was toggled in the saved payload
+    await expect(savedPayload).not.toBeNull();
+    await expect(savedPayload).toHaveProperty('app.maintenanceMode', true);
+    await expect(currentConfig.maintenanceMode).toBe(true);
   });
 
   test('Messaging tab: view messaging provider settings', async ({ page }) => {
