@@ -16,6 +16,11 @@ export const useBotActions = (
   setBulkDeleting: (deleting: boolean) => void,
   showStamp?: () => void
 ) => {
+  /**
+   * Revert bots to previous state if reorder fails.
+   * Stores the previous order for rollback.
+   */
+  const previousBotsRef = { current: bots };
   const handleToggleBotStatus = async (bot: BotConfig) => {
     try {
       const newStatus = bot.status === 'active' ? 'inactive' : 'active';
@@ -58,6 +63,7 @@ export const useBotActions = (
       showStamp?.();
       setIsCreateModalOpen(false);
       fetchBots();
+      return response.data;
     } catch (err) {
       toastError(err instanceof Error ? err.message : 'Failed to create bot');
       throw err;
@@ -66,15 +72,19 @@ export const useBotActions = (
 
   const handleReorder = useCallback(
     async (reordered: BotConfig[]) => {
+      // Store previous state for rollback
+      previousBotsRef.current = bots;
       setBots(reordered);
       try {
         const ids = reordered.map((b) => b.id);
         await apiService.put('/api/bots/reorder', { ids });
-      } catch {
-        /* persist error ignored */
+      } catch (err) {
+        // Revert to previous order on failure to prevent UI desync
+        setBots(previousBotsRef.current);
+        toastError(err instanceof Error ? err.message : 'Failed to reorder bots');
       }
     },
-    [setBots]
+    [setBots, bots, toastError]
   );
 
   const handleBulkDelete = async () => {
