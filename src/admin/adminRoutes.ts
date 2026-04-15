@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { Discord } from '@hivemind/message-discord';

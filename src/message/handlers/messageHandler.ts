@@ -482,7 +482,7 @@ export async function handleMessage(
             // Prose explanation at info level with context
             let prose = replyDecision.meta?.prose || replyDecision.reason;
             prose = await summarizeLogWithLlm(String(prose));
-            debug(
+            logger(
               `\u{1F6AB} ${String(botConfig.name)} skips @${authorName} in ${channelName}: ${prose}`
             );
           }
@@ -820,7 +820,7 @@ export async function handleMessage(
         const modelInfo = botConfig
           ? ` | provider: ${botConfig.llmProvider} | model: ${botConfig.llmModel || 'default'}`
           : '';
-        debug(
+        logger(
           `\u274C INFERENCE/PROCESSING FAILED | error: ${error instanceof Error ? error.message : String(error)}${modelInfo}`
         );
         logger(
