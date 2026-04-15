@@ -31,10 +31,11 @@ export class SlackBotManager {
   private processedEvents: Set<string> = new Set();
   private lastEventTsByChannel: Map<string, string> = new Map();
 
-  constructor(instanceConfigs: any[], mode: 'socket' | 'rtm') {
+  constructor(instanceConfigs: any[] | any, mode: 'socket' | 'rtm') {
     debug('Entering constructor');
     this.mode = mode;
-    instanceConfigs.forEach((instanceConfig, index) => {
+    const configs = Array.isArray(instanceConfigs) ? instanceConfigs : [instanceConfigs];
+    configs.forEach((instanceConfig, index) => {
       const { token, appToken, signingSecret } = instanceConfig;
       const webClient = new WebClient(token);
       const botInfo: SlackBotInfo = {

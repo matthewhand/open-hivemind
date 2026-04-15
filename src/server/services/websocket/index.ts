@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import type { Server as HttpServer } from 'http';
 import Debug from 'debug';
 import type { Server as SocketIOServer } from 'socket.io';
@@ -61,10 +62,61 @@ export class WebSocketService {
   }
 
   public static getInstance(): WebSocketService {
-    if (!WebSocketService.instance) {
+    if (WebSocketService.instance) {
+      return WebSocketService.instance;
+    }
+    try {
+      // In tests, if not registered, try manual instantiation
+      if (!container.isRegistered(WebSocketService) && process.env.NODE_ENV === 'test') {
+        throw new Error('TypeInfo not known');
+      }
       WebSocketService.instance = container.resolve(WebSocketService);
+    } catch (error: any) {
+      if (error.message?.includes('TypeInfo not known')) {
+        // Direct manual instantiation as last resort
+        const { ConnectionManager } = require('./ConnectionManager');
+        const { BroadcastService } = require('./BroadcastService');
+        const { EventHandlers } = require('./EventHandlers');
+        const { default: ApiMonitorService } = require('../../../services/ApiMonitorService');
+        const { default: DemoModeService } = require('../../../services/DemoModeService');
+
+        const connectionManager = container.isRegistered(ConnectionManager)
+          ? container.resolve(ConnectionManager)
+          : new ConnectionManager();
+
+        const apiMonitor = container.isRegistered(ApiMonitorService)
+          ? container.resolve(ApiMonitorService)
+          : ApiMonitorService.getInstance();
+
+        const demoMode = container.isRegistered(DemoModeService)
+          ? container.resolve(DemoModeService)
+          : DemoModeService.getInstance();
+
+        const broadcastService = container.isRegistered(BroadcastService)
+          ? container.resolve(BroadcastService)
+          : new BroadcastService(connectionManager, apiMonitor, demoMode);
+
+        const eventHandlers = container.isRegistered(EventHandlers)
+          ? container.resolve(EventHandlers)
+          : new EventHandlers(connectionManager, broadcastService);
+
+        WebSocketService.instance = new WebSocketService(
+          connectionManager,
+          broadcastService,
+          eventHandlers
+        );
+      } else {
+        throw error;
+      }
     }
     return WebSocketService.instance;
+  }
+
+  /**
+   * Manually sets the singleton instance (primarily for testing)
+   */
+  public static setInstance(instance: WebSocketService): void {
+    WebSocketService.instance = instance;
   }
 
   public initialize(server: HttpServer): void {

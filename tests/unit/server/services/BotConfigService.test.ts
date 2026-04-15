@@ -49,6 +49,30 @@ describe('BotConfigService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    
+    // Create a mock instance
+    const mockDbManager = {
+      isConfigured: jest.fn().mockReturnValue(true),
+      configured: true,
+      ensureConnected: jest.fn(),
+      getBotConfigurationByName: jest.fn((name: string) => (global as any).mockDb.getBotConfigurationByName(name)),
+      createBotConfiguration: jest.fn((data: any) => (global as any).mockDb.createBotConfiguration(data)),
+      getBotConfiguration: jest.fn((id: any) => (global as any).mockDb.getBotConfiguration(id)),
+      getBotConfigurationVersions: jest.fn((id: any) => (global as any).mockDb.getBotConfigurationVersions(id)),
+      getBotConfigurationAudit: jest.fn((id: any) => (global as any).mockDb.getBotConfigurationAudit(id)),
+      createBotConfigurationAudit: jest.fn((data: any) => (global as any).mockDb.createBotConfigurationAudit(data)),
+      getAllBotConfigurations: jest.fn(() => (global as any).mockDb.getAllBotConfigurations()),
+      getAllBotConfigurationsWithDetails: jest.fn(() => (global as any).mockDb.getAllBotConfigurations()),
+      updateBotConfiguration: jest.fn((id: any, data: any) => (global as any).mockDb.updateBotConfiguration(id, data)),
+      deleteBotConfiguration: jest.fn((id: any) => (global as any).mockDb.deleteBotConfiguration(id)),
+    };
+
+    // Spy on getInstance and return our mock
+    jest.spyOn(DatabaseManager, 'getInstance').mockReturnValue({
+      ...mockDbManager,
+      isConfigured: () => true
+    } as any);
+
     BotConfigService.resetInstance();
     service = BotConfigService.getInstance();
   });

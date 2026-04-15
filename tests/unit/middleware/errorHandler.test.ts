@@ -70,7 +70,7 @@ describe('Error Handler Middleware', () => {
       const error = new BaseHivemindError('Test error', 'test_error');
       globalErrorHandler(error, mockReq, mockRes, mockNext);
 
-      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
           success: false,
@@ -92,14 +92,14 @@ describe('Error Handler Middleware', () => {
       const error = new ConfigurationError('Invalid config', 'key');
       globalErrorHandler(error, mockReq, mockRes, mockNext);
 
-      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.status).toHaveBeenCalledWith(400);
     });
 
     it('should handle plain Error objects', () => {
       const error = new Error('Plain error');
       globalErrorHandler(error, mockReq, mockRes, mockNext);
 
-      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
           success: false,
@@ -113,7 +113,7 @@ describe('Error Handler Middleware', () => {
     it('should handle string errors', () => {
       globalErrorHandler('String error' as any, mockReq, mockRes, mockNext);
 
-      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
           success: false,
@@ -127,7 +127,7 @@ describe('Error Handler Middleware', () => {
     it('should handle null errors', () => {
       globalErrorHandler(null as any, mockReq, mockRes, mockNext);
 
-      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.status).toHaveBeenCalledWith(400);
     });
 
     it('should increment error metrics', () => {

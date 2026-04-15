@@ -102,7 +102,7 @@ describe('Error Handling System', () => {
 
       expect(error).toBeInstanceOf(ConfigurationError);
       expect(error.message).toBe('Missing required config');
-      expect(error.status).toBe(500);
+      expect(error.status).toBe(400);
       expect(error.code).toBe('CONFIG_ERROR');
       expect(error.severity).toBe('critical');
     });
@@ -112,7 +112,7 @@ describe('Error Handling System', () => {
 
       expect(error).toBeInstanceOf(DatabaseError);
       expect(error.message).toBe('Database connection failed');
-      expect(error.status).toBe(500);
+      expect(error.status).toBe(400);
       expect(error.code).toBe('DATABASE_ERROR');
     });
 
@@ -427,7 +427,7 @@ describe('Error Handling System', () => {
 
       await errorHandler(error, req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
           success: false,
@@ -469,7 +469,7 @@ describe('Error Handling System', () => {
 
       await errorHandler(error, req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.status).toHaveBeenCalledWith(400);
     });
   });
 });

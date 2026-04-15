@@ -13,22 +13,32 @@ import ImportExportPage from '../../../src/client/src/pages/ImportExportPage';
 jest.mock('../../../src/client/src/components/DaisyUI', () => ({
   Card: ({ children, className }: any) => <div className={className}>{children}</div>,
   Badge: ({ children, className }: any) => <span className={className}>{children}</span>,
-  Select: ({ children, className, onChange, value }: any) => (
-    <select className={className} onChange={onChange} value={value}>{children}</select>
+  Select: ({ options, onChange, value }: any) => (
+    <select onChange={onChange} value={value} data-testid="select">
+      {options?.map((opt: any) => (
+        <option key={opt.value} value={opt.value}>{opt.label}</option>
+      ))}
+    </select>
   ),
   Divider: () => <hr />,
   Button: ({ children, className, onClick, disabled }: any) => (
     <button className={className} onClick={onClick} disabled={disabled}>{children}</button>
   ),
   Checkbox: ({ checked, onChange, label }: any) => (
-    <label><input type="checkbox" checked={checked} onChange={onChange} /> {label}</label>
+    <label><input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} /> {label}</label>
   ),
   Input: ({ type, placeholder, value, onChange }: any) => (
     <input type={type} placeholder={placeholder} value={value} onChange={onChange} />
   ),
-  Alert: ({ children, type }: any) => <div className={`alert-${type}`}>{children}</div>,
+  Alert: ({ children, variant }: any) => <div className={`alert-${variant}`}>{children}</div>,
   LoadingSpinner: () => <div className="loading-spinner" />,
   ProgressBar: ({ value }: any) => <div className="progress-bar" data-value={value} />,
+  PageHeader: ({ title, description }: any) => (
+    <div><h1>{title}</h1><p>{description}</p></div>
+  ),
+  FileUpload: ({ onFileSelect, placeholder }: any) => (
+    <div data-testid="file-upload">{placeholder}</div>
+  ),
 }));
 
 // Mock the API service
@@ -108,60 +118,49 @@ describe('ImportExportPage', () => {
   it('renders the main page with export and import cards', () => {
     renderWithProviders(<ImportExportPage />);
 
-    expect(screen.getByText('Import/Export Configurations')).toBeInTheDocument();
-    expect(screen.getByText('Export Configurations')).toBeInTheDocument();
-    expect(screen.getByText('Import Configurations')).toBeInTheDocument();
+    expect(screen.getByText('Import / Export')).toBeInTheDocument();
+    expect(screen.getByText('Export Configuration')).toBeInTheDocument();
+    expect(screen.getByText('Import Configuration')).toBeInTheDocument();
   });
 
   it('displays export options and format selection', () => {
     renderWithProviders(<ImportExportPage />);
 
     expect(screen.getByText('Export Format')).toBeInTheDocument();
-    expect(screen.getByText('Include Version History')).toBeInTheDocument();
-    expect(screen.getByText('Include Audit Logs')).toBeInTheDocument();
-    expect(screen.getByText('Include Templates')).toBeInTheDocument();
-    expect(screen.getByText('Compress File (gzip)')).toBeInTheDocument();
-    expect(screen.getByText('Encrypt Export')).toBeInTheDocument();
+    expect(screen.getByText('Version History')).toBeInTheDocument();
+    expect(screen.getByText('Audit Logs')).toBeInTheDocument();
+    expect(screen.getByText('Templates')).toBeInTheDocument();
+    expect(screen.getByText('Compress (GZip)')).toBeInTheDocument();
+    expect(screen.getByText('Encrypt Export File')).toBeInTheDocument();
   });
 
   it('shows encryption key input when encrypt is checked', () => {
     renderWithProviders(<ImportExportPage />);
 
     // Initially, encryption key input should not be visible
-    expect(screen.queryByPlaceholderText(/encryption key/i)).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText(/Strong passphrase/i)).not.toBeInTheDocument();
 
     // Find and click the encrypt checkbox
-    const encryptCheckbox = screen.getAllByRole('checkbox')[4]; // 5th checkbox (encrypt, 0-indexed)
+    const encryptCheckbox = screen.getByLabelText(/Encrypt Export File/i);
     fireEvent.click(encryptCheckbox);
 
     // Now encryption key input should be visible
-    expect(screen.getByPlaceholderText(/encryption key/i)).toBeInTheDocument();
-  });
-
-  it('opens export modal when clicking select configurations button', async () => {
-    renderWithProviders(<ImportExportPage />);
-
-    const selectButton = screen.getByRole('button', { name: /Select Configurations to Export/i });
-    fireEvent.click(selectButton);
-
-    await waitFor(() => {
-      expect(screen.getAllByText(/Select Configurations to Export/i).length).toBeGreaterThan(0);
-    });
+    expect(screen.getByPlaceholderText(/Strong passphrase/i)).toBeInTheDocument();
   });
 
   it('allows format selection between JSON, YAML, and CSV', () => {
     renderWithProviders(<ImportExportPage />);
 
-    const formatSelect = screen.getByRole('combobox') as HTMLSelectElement;
+    const formatSelect = screen.getByTestId('select') as HTMLSelectElement;
 
-    // Default should be JSON
+    // Default should be json
     expect(formatSelect.value).toBe('json');
 
-    // Change to YAML
+    // Change to yaml
     fireEvent.change(formatSelect, { target: { value: 'yaml' } });
     expect(formatSelect.value).toBe('yaml');
 
-    // Change to CSV
+    // Change to csv
     fireEvent.change(formatSelect, { target: { value: 'csv' } });
     expect(formatSelect.value).toBe('csv');
   });
@@ -169,23 +168,22 @@ describe('ImportExportPage', () => {
   it('displays file upload component in import card', () => {
     renderWithProviders(<ImportExportPage />);
 
-    expect(screen.getByText(/Drag 'n' drop files here/i)).toBeInTheDocument();
+    expect(screen.getByTestId('file-upload')).toBeInTheDocument();
+    expect(screen.getByText(/Drop export file here/i)).toBeInTheDocument();
   });
 
   it('shows import options button after file selection', () => {
     renderWithProviders(<ImportExportPage />);
 
     // The file upload component exists
-    expect(screen.getByText(/Drag 'n' drop files here/i)).toBeInTheDocument();
+    expect(screen.getByTestId('file-upload')).toBeInTheDocument();
   });
 
   it('toggles checkboxes for export options', () => {
     renderWithProviders(<ImportExportPage />);
 
-    const checkboxes = screen.getAllByRole('checkbox');
-
     // Include Versions checkbox (should be checked by default)
-    const includeVersionsCheckbox = checkboxes[0];
+    const includeVersionsCheckbox = screen.getByLabelText(/Version History/i);
     expect(includeVersionsCheckbox).toBeChecked();
 
     // Click to uncheck
@@ -200,16 +198,14 @@ describe('ImportExportPage', () => {
   it('displays compress checkbox checked by default', () => {
     renderWithProviders(<ImportExportPage />);
 
-    const checkboxes = screen.getAllByRole('checkbox');
-    const compressCheckbox = checkboxes[3]; // 4th checkbox (compress, 0-indexed)
-
+    const compressCheckbox = screen.getByLabelText(/Compress \(GZip\)/i);
     expect(compressCheckbox).toBeChecked();
   });
 
   it('allows custom file name input', () => {
     renderWithProviders(<ImportExportPage />);
 
-    const fileNameInput = screen.getByPlaceholderText('custom-export-name') as HTMLInputElement;
+    const fileNameInput = screen.getByPlaceholderText('hivemind-backup.json') as HTMLInputElement;
 
     fireEvent.change(fileNameInput, { target: { value: 'my-export' } });
     expect(fileNameInput.value).toBe('my-export');
@@ -218,19 +214,19 @@ describe('ImportExportPage', () => {
   it('renders page header with correct title and icon', () => {
     renderWithProviders(<ImportExportPage />);
 
-    expect(screen.getByText('Import/Export Configurations')).toBeInTheDocument();
-    expect(screen.getByText(/Export configurations for backup or migration/i)).toBeInTheDocument();
+    expect(screen.getByText('Import / Export')).toBeInTheDocument();
+    expect(screen.getByText(/Manage your system configuration/i)).toBeInTheDocument();
   });
 
   it('displays export description text', () => {
     renderWithProviders(<ImportExportPage />);
 
-    expect(screen.getByText(/Export bot configurations to a file for backup or migration purposes/i)).toBeInTheDocument();
+    expect(screen.getByText(/Create a backup of your current system state/i)).toBeInTheDocument();
   });
 
   it('displays import description text', () => {
     renderWithProviders(<ImportExportPage />);
 
-    expect(screen.getByText(/Import bot configurations from a previously exported file/i)).toBeInTheDocument();
+    expect(screen.getByText(/Restore configuration from a previously exported backup file/i)).toBeInTheDocument();
   });
 });

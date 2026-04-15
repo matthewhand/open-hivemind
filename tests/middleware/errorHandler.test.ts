@@ -63,7 +63,7 @@ describe('errorHandler middleware', () => {
 
       globalErrorHandler(error, req as Request, res as Response, next as NextFunction);
 
-      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
           success: false,

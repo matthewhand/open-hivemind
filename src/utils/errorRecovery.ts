@@ -162,6 +162,16 @@ export class RetryHandler {
   constructor(private config: RetryConfig) {}
 
   /**
+   * Execute operation with retry logic (alias for executeWithRetry)
+   */
+  async execute<T>(
+    operation: () => Promise<T>,
+    context?: Record<string, unknown>
+  ): Promise<RecoveryResult<T>> {
+    return this.executeWithRetry(operation, context);
+  }
+
+  /**
    * Execute operation with retry logic
    */
   async executeWithRetry<T>(
@@ -222,16 +232,6 @@ export class RetryHandler {
       totalDuration: Date.now() - startTime,
       strategy: 'retry',
     };
-  }
-
-  /**
-   * Alias for executeWithRetry for backward compatibility
-   */
-  async execute<T>(
-    operation: () => Promise<T>,
-    context?: Record<string, unknown>
-  ): Promise<RecoveryResult<T>> {
-    return this.executeWithRetry(operation, context);
   }
 
   /**

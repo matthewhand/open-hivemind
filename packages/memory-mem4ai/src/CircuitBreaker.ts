@@ -71,15 +71,15 @@ export class CircuitBreaker {
   }
 
   async execute<T>(fn: () => Promise<T>): Promise<T> {
+    if (this.state === CircuitBreakerState.OPEN && this.shouldTransitionToHalfOpen()) {
+      this.transitionTo(CircuitBreakerState.HALF_OPEN);
+      this.halfOpenAttempts = 0;
+      this.halfOpenSuccesses = 0;
+    }
+
     if (this.state === CircuitBreakerState.OPEN) {
-      if (this.shouldTransitionToHalfOpen()) {
-        this.transitionTo(CircuitBreakerState.HALF_OPEN);
-        this.halfOpenAttempts = 0;
-        this.halfOpenSuccesses = 0;
-      } else {
-        debug('[%s] Circuit is OPEN — rejecting request', this._name);
-        throw new CircuitBreakerError(this._name);
-      }
+      debug('[%s] Circuit is OPEN — rejecting request', this._name);
+      throw new CircuitBreakerError(this._name);
     }
 
     if (this.state === CircuitBreakerState.HALF_OPEN) {
@@ -104,9 +104,7 @@ export class CircuitBreaker {
 
   getState(): CircuitBreakerState {
     if (this.state === CircuitBreakerState.OPEN && this.shouldTransitionToHalfOpen()) {
-      this.transitionTo(CircuitBreakerState.HALF_OPEN);
-      this.halfOpenAttempts = 0;
-      this.halfOpenSuccesses = 0;
+      return CircuitBreakerState.HALF_OPEN;
     }
     return this.state;
   }

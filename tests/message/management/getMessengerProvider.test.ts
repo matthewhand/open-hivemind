@@ -1,8 +1,53 @@
+import 'reflect-metadata';
 import fs from 'fs';
+import { container } from 'tsyringe';
+import { ConnectionManager } from '@src/server/services/websocket/ConnectionManager';
+import { BroadcastService } from '@src/server/services/websocket/BroadcastService';
+import { EventHandlers } from '@src/server/services/websocket/EventHandlers';
+import { WebSocketService } from '@src/server/services/WebSocketService';
+import { StartupGreetingService } from '@src/services/StartupGreetingService';
+import { MetricsCollector } from '@src/monitoring/MetricsCollector';
 import {
   getMessengerProvider,
   resetMessengerProviderCache,
 } from '@src/message/management/getMessengerProvider';
+
+// Mock WebSocketService
+const mockWebSocketService = {
+  initialize: jest.fn(),
+  shutdown: jest.fn(),
+} as any;
+WebSocketService.setInstance(mockWebSocketService);
+
+// Mock StartupGreetingService and MetricsCollector
+jest.mock('@src/services/StartupGreetingService', () => {
+  const mockSGS = { initialize: jest.fn() };
+  return {
+    StartupGreetingService: {
+      getInstance: jest.fn(() => mockSGS),
+    },
+    __mockInstance: mockSGS,
+  };
+});
+
+jest.mock('@src/monitoring/MetricsCollector', () => {
+  const mockMC = { record: jest.fn() };
+  return {
+    MetricsCollector: {
+      getInstance: jest.fn(() => mockMC),
+    },
+    __mockInstance: mockMC,
+  };
+});
+
+const { __mockInstance: mockStartupGreetingService } = require('@src/services/StartupGreetingService');
+const { __mockInstance: mockMetricsCollector } = require('@src/monitoring/MetricsCollector');
+
+// Register mocks in container
+container.registerInstance(StartupGreetingService as any, mockStartupGreetingService);
+container.registerInstance(MetricsCollector as any, mockMetricsCollector);
+
+
 
 // Mock Discord Service
 const mockDiscordService = {
@@ -347,9 +392,9 @@ describe('getMessengerProvider additional branch coverage', () => {
 
     resetMessengerProviderCache();
     const second = await getMessengerProvider();
-    // with empty providers and no env filter, legacy fallback should still return slack
+    // with empty providers and no env filter, legacy fallback should still return discord (default)
     expect(second.length).toBe(1);
-    expect(second[0].provider).toBe('slack');
+    expect(second[0].provider).toBe('discord');
   });
 
   it('adds provider name when instantiated service omits provider field', async () => {

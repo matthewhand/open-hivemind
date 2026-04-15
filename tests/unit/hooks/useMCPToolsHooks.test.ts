@@ -128,7 +128,8 @@ describe('useToolExecution', () => {
   });
 
   it('handleExecuteTool on success sets result and shows modal', async () => {
-    mockApi.post.mockResolvedValue({ result: 'ok' });
+    mockApi.post.mockResolvedValueOnce({ result: 'ok' }); // execution
+    mockApi.post.mockResolvedValueOnce({ success: true }); // history
 
     const { result } = renderHook(() => useToolExecution(mockProps));
 
@@ -139,6 +140,8 @@ describe('useToolExecution', () => {
     expect(result.current.selectedResult?.isError).toBe(false);
     expect(result.current.showResultModal).toBe(true);
     expect(result.current.recentResults).toHaveLength(1);
+    // Should have been called twice: once for execution, once for history
+    expect(mockApi.post).toHaveBeenCalledTimes(2);
   });
 
   it('handleExecuteTool on failure sets error result', async () => {
@@ -180,10 +183,11 @@ describe('useToolExecution', () => {
 
     expect(result.current.selectedTool).toBeNull();
     expect(result.current.isRunning).toBe(false);
+    expect(mockApi.post).toHaveBeenCalledTimes(2);
   });
 
   it('handleExecuteTool limits recentResults to 20 entries', async () => {
-    mockApi.post.mockResolvedValue({ result: 'ok' });
+    mockApi.post.mockResolvedValue({ result: 'ok' }); // handles both calls
 
     const { result } = renderHook(() => useToolExecution(mockProps));
 

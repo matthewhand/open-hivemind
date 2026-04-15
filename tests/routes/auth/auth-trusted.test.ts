@@ -35,6 +35,7 @@ jest.mock('../../../src/auth/AuthManager', () => {
 // Mock rateLimiter middleware to bypass rate limiting in these trusted-IP tests
 jest.mock('../../../src/middleware/rateLimiter', () => ({
   authRateLimiter: (_req: any, _res: any, next: any) => next(),
+  apiRateLimiter: (_req: any, _res: any, next: any) => next(),
 }));
 
 // Obtain the mock singleton that the factory created

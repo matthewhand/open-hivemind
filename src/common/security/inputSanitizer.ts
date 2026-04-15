@@ -193,9 +193,9 @@ export class InputSanitizer {
       return 'unknown';
     }
 
-    // Slack user IDs should start with U or W and contain alphanumeric characters
+    // Slack user IDs should start with U, W, B, or S and contain alphanumeric characters
     // More flexible pattern to accommodate test cases like U123ABC
-    const userIdRegex = /^[UW][A-Z0-9]+$/;
+    const userIdRegex = /^[UWBS][A-Z0-9]{2,32}$/;
 
     if (!userIdRegex.test(sanitized)) {
       debug(`Invalid user ID format: ${sanitized}, returning 'unknown'`);
@@ -223,7 +223,7 @@ export class InputSanitizer {
     }
 
     // Slack channel IDs should start with C, D, or G and be alphanumeric
-    const channelIdRegex = /^[CDG][A-Z0-9]+$/;
+    const channelIdRegex = /^[CDG][A-Z0-9]{2,32}$/;
 
     if (!channelIdRegex.test(sanitized)) {
       debug(`Invalid channel ID format: ${sanitized}, returning empty string`);

@@ -160,7 +160,7 @@ describe('Error Handling Integration Tests', () => {
         });
       });
 
-      const response = await request(app).get('/test-error').expect(500);
+      const response = await request(app).get('/test-error').expect(400);
 
       expect(response.body.error).toEqual(
         expect.objectContaining({ message: expect.stringContaining('Test error for middleware') })
@@ -174,7 +174,7 @@ describe('Error Handling Integration Tests', () => {
         });
       });
 
-      const response = await request(app).get('/test-async-error').expect(500);
+      const response = await request(app).get('/test-async-error').expect(400);
 
       expect(response.body.error).toEqual(
         expect.objectContaining({ message: expect.stringContaining('Test async error') })

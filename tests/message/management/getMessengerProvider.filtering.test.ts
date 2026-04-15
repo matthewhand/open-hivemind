@@ -1,5 +1,13 @@
 import 'reflect-metadata';
 import path from 'path';
+import { WebSocketService } from '@src/server/services/WebSocketService';
+
+// Mock WebSocketService
+const mockWebSocketService = {
+  initialize: jest.fn(),
+  shutdown: jest.fn(),
+} as any;
+WebSocketService.setInstance(mockWebSocketService);
 
 // Define mocks on global object to make them accessible to hoisted jest.mock()
 (global as any).mockWSFunctions = {
@@ -77,17 +85,22 @@ jest.mock('../../../src/server/services/websocket', () => {
 });
 
 import { getMessengerProvider } from '../../../src/message/management/getMessengerProvider';
+import { registerServices } from '../../../src/di/registration';
 
 describe('getMessengerProvider filtering', () => {
-  const originalEnv = process.env;
+  const ORIGINAL_ENV = { ...process.env };
+
+  beforeAll(() => {
+    registerServices();
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
-    process.env = { ...originalEnv };
+    process.env = { ...ORIGINAL_ENV };
   });
 
   afterAll(() => {
-    process.env = originalEnv;
+    process.env = ORIGINAL_ENV;
   });
 
   it('a) MESSAGE_PROVIDER="discord": only Discord is initialized', async () => {

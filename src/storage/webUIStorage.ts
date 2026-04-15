@@ -1,4 +1,4 @@
-import { promises as fs } from 'fs';
+import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
 import { Logger } from '../common/logger';
@@ -67,7 +67,20 @@ export class WebUIStorage {
   constructor() {
     this.configDir = path.join(process.cwd(), 'config', 'user');
     this.configFile = path.join(this.configDir, 'webui-config.json');
-    this.ensureConfigDir();
+    this.ensureConfigDirSync();
+  }
+
+  /**
+   * Ensure the configuration directory exists synchronously
+   */
+  private ensureConfigDirSync(): void {
+    try {
+      if (!fs.existsSync(this.configDir)) {
+        fs.mkdirSync(this.configDir, { recursive: true });
+      }
+    } catch (err) {
+      debug('ERROR:', 'Failed to create config directory:', err);
+    }
   }
 
   /**
@@ -75,9 +88,9 @@ export class WebUIStorage {
    */
   private async ensureConfigDir(): Promise<void> {
     try {
-      await fs.access(this.configDir);
+      await fs.promises.access(this.configDir);
     } catch {
-      await fs.mkdir(this.configDir, { recursive: true });
+      await fs.promises.mkdir(this.configDir, { recursive: true });
     }
   }
 
@@ -89,19 +102,8 @@ export class WebUIStorage {
       return this.configCache;
     }
 
-    try {
-      await fs.access(this.configFile);
-      const data = await fs.readFile(this.configFile, 'utf8');
-      this.configCache = JSON.parse(data);
-      return this.configCache!;
-    } catch (error: unknown) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
-        debug('ERROR:', 'Error loading web UI config:', error);
-      }
-    }
-
-    // Return default configuration
-    const defaultConfig = {
+    // Default configuration
+    const defaultConfig: WebUIConfig = {
       agents: [],
       mcpServers: [],
       llmProviders: [],
@@ -110,6 +112,17 @@ export class WebUIStorage {
       guards: [],
       lastUpdated: new Date().toISOString(),
     };
+
+    try {
+      await fs.promises.access(this.configFile);
+      const data = await fs.promises.readFile(this.configFile, 'utf8');
+      this.configCache = { ...defaultConfig, ...JSON.parse(data) };
+      return this.configCache!;
+    } catch (error: unknown) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+        debug('ERROR:', 'Error loading web UI config, using defaults:', error);
+      }
+    }
 
     this.configCache = defaultConfig;
     return defaultConfig;
@@ -120,7 +133,7 @@ export class WebUIStorage {
    */
   public saveConfig(config: WebUIConfig): Promise<void> {
     config.lastUpdated = new Date().toISOString();
-    this.ensureConfigDir();
+    this.ensureConfigDirSync();
 
     // Update cache immediately so subsequent synchronous reads get the new state
     this.configCache = config;
@@ -133,7 +146,7 @@ export class WebUIStorage {
       this.saveQueue = this.saveQueue
         .then(async () => {
           try {
-            await fs.writeFile(this.configFile, dataToWrite);
+            await fs.promises.writeFile(this.configFile, dataToWrite);
             resolve();
           } catch (error) {
             debug('ERROR:', 'Error saving web UI config:', error);

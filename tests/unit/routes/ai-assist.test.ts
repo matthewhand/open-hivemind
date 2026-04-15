@@ -127,7 +127,7 @@ describe('AI Assist Route - POST /generate', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.data.result).toBe('completion response');
-    expect(completionMock).toHaveBeenCalledWith('hello');
+    expect(completionMock).toHaveBeenCalledWith('sys\n\nhello');
   });
 
   it('returns 400 when provider supports no generation modes', async () => {

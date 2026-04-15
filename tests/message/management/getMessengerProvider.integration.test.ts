@@ -1,21 +1,59 @@
+import 'reflect-metadata';
 import path from 'path';
+import { container } from 'tsyringe';
+import { ConnectionManager } from '@src/server/services/websocket/ConnectionManager';
+import { BroadcastService } from '@src/server/services/websocket/BroadcastService';
+import { EventHandlers } from '@src/server/services/websocket/EventHandlers';
+import { WebSocketService } from '@src/server/services/WebSocketService';
+import { StartupGreetingService } from '@src/services/StartupGreetingService';
+import { MetricsCollector } from '@src/monitoring/MetricsCollector';
+import {
+  getMessengerProvider,
+  resetMessengerProviderCache,
+} from '@src/message/management/getMessengerProvider';
+import { registerServices } from '@src/di/registration';
 
-// Define mocks on global object to make them accessible to hoisted jest.mock()
-(global as any).mockWSFunctions = {
-  broadcastBotStatus: jest.fn(),
-  broadcastConfigChange: jest.fn(),
-};
+// Mock StartupGreetingService and MetricsCollector
+jest.mock('@src/services/StartupGreetingService', () => {
+  const mockSGS = { initialize: jest.fn() };
+  return {
+    StartupGreetingService: {
+      getInstance: jest.fn(() => mockSGS),
+    },
+    __mockInstance: mockSGS,
+  };
+});
 
-(global as any).mockGreetingFunctions = {
-  greetAll: jest.fn(),
-};
+jest.mock('@src/monitoring/MetricsCollector', () => {
+  const mockMC = { record: jest.fn() };
+  return {
+    MetricsCollector: {
+      getInstance: jest.fn(() => mockMC),
+    },
+    __mockInstance: mockMC,
+  };
+});
+
+const { __mockInstance: mockStartupGreetingService } = require('@src/services/StartupGreetingService');
+const { __mockInstance: mockMetricsCollector } = require('@src/monitoring/MetricsCollector');
+
+// Register mocks in container
+container.registerInstance(StartupGreetingService as any, mockStartupGreetingService);
+container.registerInstance(MetricsCollector as any, mockMetricsCollector);
+
+// Mock WebSocketService
+const mockWebSocketService = {
+  initialize: jest.fn(),
+  shutdown: jest.fn(),
+} as any;
+WebSocketService.setInstance(mockWebSocketService);
 
 jest.mock('@hivemind/message-discord', () => ({
   DiscordService: {
     getInstance: jest.fn(() => ({
-      provider: 'discord',
       sendMessageToChannel: jest.fn(),
       getClientId: jest.fn(),
+      provider: 'discord',
     })),
   },
 }));
@@ -23,7 +61,6 @@ jest.mock('@hivemind/message-discord', () => ({
 jest.mock('@hivemind/message-slack', () => ({
   SlackService: {
     getInstance: jest.fn(() => ({
-      provider: 'slack',
       sendMessageToChannel: jest.fn(),
       getClientId: jest.fn(),
       provider: 'slack',
@@ -31,74 +68,63 @@ jest.mock('@hivemind/message-slack', () => ({
   },
 }));
 
-jest.mock('fs', () => ({
-  readFileSync: jest.fn(() =>
-    JSON.stringify({
-      providers: [{ type: 'discord' }, { type: 'slack' }],
-    })
-  ),
-  existsSync: jest.fn(() => true),
-  readdirSync: jest.fn(() => []),
+jest.mock('@hivemind/message-mattermost', () => ({
+  MattermostService: {
+    getInstance: jest.fn(() => ({
+      sendMessageToChannel: jest.fn(),
+      getClientId: jest.fn(),
+      provider: 'mattermost',
+    })),
+  },
 }));
 
-// Use the global mocks in the hoisted mock factory
-jest.mock('../../../src/services/StartupGreetingService', () => {
-  return {
-    __esModule: true,
-    StartupGreetingService: {
-      getInstance: jest.fn(() => ({
-        greetAll: (...args: any[]) => (global as any).mockGreetingFunctions.greetAll(...args),
-      })),
-    },
-    default: {
-      getInstance: jest.fn(() => ({
-        greetAll: (...args: any[]) => (global as any).mockGreetingFunctions.greetAll(...args),
-      })),
-    },
-  };
-});
+jest.mock('@hivemind/message-webhook', () => ({
+  WebhookService: {
+    getInstance: jest.fn(() => ({
+      sendMessageToChannel: jest.fn(),
+      getClientId: jest.fn(),
+      provider: 'webhook',
+    })),
+  },
+}));
 
-jest.mock('../../../src/server/services/websocket', () => {
-  return {
-    __esModule: true,
-    WebSocketService: {
-      getInstance: jest.fn(() => ({
-        broadcastBotStatus: (...args: any[]) => (global as any).mockWSFunctions.broadcastBotStatus(...args),
-        broadcastConfigChange: (...args: any[]) => (global as any).mockWSFunctions.broadcastConfigChange(...args),
-      })),
-    },
-    default: {
-      getInstance: jest.fn(() => ({
-        broadcastBotStatus: (...args: any[]) => (global as any).mockWSFunctions.broadcastBotStatus(...args),
-        broadcastConfigChange: (...args: any[]) => (global as any).mockWSFunctions.broadcastConfigChange(...args),
-      })),
-    },
-  };
-});
-
-import { getMessengerProvider } from '../../../src/message/management/getMessengerProvider';
-
-describe('getMessengerProvider Unit Test', () => {
+describe('getMessengerProvider integration', () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetModules();
+    registerServices();
     process.env = { ...originalEnv };
+    resetMessengerProviderCache();
   });
 
-  afterAll(() => {
+  afterEach(() => {
     process.env = originalEnv;
   });
 
-  it('should return DiscordMessageProvider when MESSAGE_PROVIDER is "discord"', async () => {
-    process.env.MESSAGE_PROVIDER = 'discord';
+  it('initializes all configured providers', async () => {
+    process.env.MESSAGE_PROVIDER = 'discord,slack';
+    
+    // Mock fs.readFileSync to return a config with no providers (forces env-only)
+    jest.mock('fs', () => ({
+      readFileSync: jest.fn(() => JSON.stringify({ providers: [] })),
+      existsSync: jest.fn(() => true),
+    }));
+
     const providers = await getMessengerProvider();
-    expect(providers[0].provider).toBe('discord');
+    expect(providers.length).toBe(2);
+    
+    const types = providers.map(p => p.provider);
+    expect(types).toContain('discord');
+    expect(types).toContain('slack');
   });
 
-  it('should return SlackMessageProvider when MESSAGE_PROVIDER is "slack"', async () => {
-    process.env.MESSAGE_PROVIDER = 'slack';
+  it('handles provider specific settings from environment', async () => {
+    process.env.MESSAGE_PROVIDER = 'discord';
+    process.env.DISCORD_BOT_TOKEN = 'test-token';
+    
     const providers = await getMessengerProvider();
-    expect(providers[0].provider).toBe('slack');
+    expect(providers.length).toBe(1);
+    expect(providers[0].provider).toBe('discord');
   });
 });
