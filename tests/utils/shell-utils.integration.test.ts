@@ -3,8 +3,7 @@ import { executeCommandSafe } from '../../src/utils/utils';
 describe('Shell Utils Integration', () => {
   it('should successfully execute a safe command', async () => {
     // We use node directly to ensure it is found in PATH
-    const command = 'node -e "process.stdout.write(\'hello\')"';
-    const result = await executeCommandSafe(command);
+    const result = await executeCommandSafe(process.execPath, ['-e', 'process.stdout.write("hello")']);
     expect(result.trim()).toBe('hello');
   });
 
