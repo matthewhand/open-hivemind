@@ -135,7 +135,7 @@ describe('Agent API Endpoints', () => {
     });
   });
 
-  describe.skip('DELETE /api/agents/:id', () => {
+  describe('DELETE /api/agents/:id', () => {
     it('should delete an existing agent', async () => {
       // First, create an agent
       const newAgent = {
@@ -151,7 +151,7 @@ describe('Agent API Endpoints', () => {
 
       // Now, delete the agent
       const deleteResponse = await request(app).delete(`/api/agents/${agentId}`);
-      expect(deleteResponse.status).toBe(404);
+      expect(deleteResponse.status).toBe(200);
       expect(deleteResponse.body.success).toBe(true);
 
       // Verify it's gone
@@ -184,16 +184,21 @@ describe('Agent API Endpoints', () => {
     });
   });
 
-  describe.skip('DELETE /api/agents/personas/:key', () => {
+  describe('DELETE /api/agents/personas/:key', () => {
     it('should delete an existing persona', async () => {
       // First, create a persona
       const newPersona = { name: 'Persona to Delete', systemPrompt: '...' };
-      await request(app).post('/api/agents/personas').send(newPersona);
+      const createResponse = await request(app).post('/api/agents/personas').send(newPersona);
+      const personaKey = createResponse.body.data.persona.key;
 
       // Now, delete the persona
-      const deleteResponse = await request(app).delete(`/api/agents/personas/persona_to_delete`);
-      expect(deleteResponse.status).toBe(404);
+      const deleteResponse = await request(app).delete(`/api/agents/personas/${personaKey}`);
+      expect(deleteResponse.status).toBe(200);
       expect(deleteResponse.body.success).toBe(true);
+
+      // Verify it's gone
+      const getResponse = await request(app).get('/api/agents/personas');
+      expect(getResponse.body.data.personas.find((p: any) => p.key === personaKey)).toBeUndefined();
     });
 
     it('should return 404 when deleting a non-existent persona', async () => {
@@ -202,6 +207,12 @@ describe('Agent API Endpoints', () => {
       );
       expect(deleteResponse.status).toBe(404);
       expect(deleteResponse.body.error).toBe('Persona not found');
+    });
+
+    it('should reject deleting the default persona', async () => {
+      const deleteResponse = await request(app).delete('/api/agents/personas/default');
+      expect(deleteResponse.status).toBe(400);
+      expect(deleteResponse.body.error).toContain('Cannot delete default persona');
     });
   });
 });
