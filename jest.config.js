@@ -24,7 +24,7 @@ module.exports = {
   testRegex: '(\.|/)(test|integration\.test)\.[tj]sx?$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   moduleNameMapper: {
-    uuid: require.resolve('uuid'),
+    uuid: '<rootDir>/tests/mocks/uuid.js',
     '^@tests/(.*)$': '<rootDir>/tests/$1',
     '^@src/utils/logger$': '<rootDir>/tests/mocks/logger.ts',
     '.*src/client/src/utils/logger$': '<rootDir>/tests/mocks/clientLogger.ts',
