@@ -5,6 +5,7 @@
  * that include recovery mechanisms and correlation IDs for tracking.
  */
 
+import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 import { ErrorUtils, type AppError, type ErrorType } from './errors';
 
@@ -166,7 +167,8 @@ export class NetworkError extends BaseHivemindError {
   private calculateRetryDelay(): number {
     // Exponential backoff with jitter
     const baseDelay = 1000; // 1 second
-    const jitter = Math.random() * 1000; // Random jitter up to 1 second
+    const randomBytes = crypto.randomBytes(4);
+    const jitter = (randomBytes.readUInt32BE() / 0x100000000) * 1000; // Random jitter up to 1 second
     return baseDelay + jitter;
   }
 }

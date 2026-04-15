@@ -5,6 +5,7 @@
  * with exponential backoff, circuit breakers, and adaptive strategies.
  */
 
+import crypto from 'crypto';
 import Debug from 'debug';
 import { BaseHivemindError, TimeoutError } from '../types/errorClasses';
 
@@ -297,7 +298,9 @@ export class RetryHandler {
     // Add jitter if enabled
     if (this.config.jitter) {
       const jitterRange = delay * 0.1;
-      delay += Math.random() * jitterRange - jitterRange / 2;
+      const randomBytes = crypto.randomBytes(4);
+      const jitter = (randomBytes.readUInt32BE() / 0x100000000) * jitterRange - jitterRange / 2;
+      delay += jitter;
     }
 
     return Math.max(0, Math.floor(delay));

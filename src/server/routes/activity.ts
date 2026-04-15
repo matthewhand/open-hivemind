@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import Debug from 'debug';
 import { Router } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
@@ -9,6 +10,13 @@ import { validateRequest } from '../../validation/validateRequest';
 
 const debug = Debug('app:webui:activity');
 const router = Router();
+
+// Helper to generate random integer between min and max using crypto
+function getRandomInt(min: number, max: number): number {
+  const randomBytes = crypto.randomBytes(4);
+  const randomFloat = randomBytes.readUInt32BE() / 0x100000000;
+  return Math.floor(randomFloat * (max - min + 1)) + min;
+}
 
 interface ActivityFilter {
   agentId?: string;
@@ -222,16 +230,16 @@ router.get(
         // Mock message activity data
         messageActivityData.push({
           timestamp,
-          count: Math.floor(Math.random() * 50) + 10,
+          count: getRandomInt(10, 59),
           provider: filter.messageProvider,
         });
 
         // Mock LLM usage data
         llmUsageData.push({
           timestamp,
-          usage: Math.floor(Math.random() * 100) + 20,
+          usage: getRandomInt(20, 119),
           provider: filter.llmProvider,
-          responseTime: Math.floor(Math.random() * 1000) + 200,
+          responseTime: getRandomInt(200, 1199),
         });
       }
 
