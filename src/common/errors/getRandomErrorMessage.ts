@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+
 /**
  * Returns a random error message from a predefined list of messages.
  *
@@ -16,6 +18,7 @@ export function getRandomErrorMessage(): string {
     'Uh-oh, I spilled some pixels here! 🤖🎨',
     'Hold on, recalibrating my humor sensors! 🤖😂',
   ];
-  const randomIndex = Math.floor(Math.random() * errorMessages.length);
+  const randomBytes = crypto.randomBytes(4);
+  const randomIndex = randomBytes.readUInt32BE() % errorMessages.length;
   return errorMessages[randomIndex];
 }

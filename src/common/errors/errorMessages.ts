@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+
 const errorMessages: string[] = [
   'Oops, my circuits got tangled in digital spaghetti! 🍝🤖',
   'Whoa, I tripped over a virtual shoelace! 🤖👟',
@@ -12,6 +14,7 @@ const errorMessages: string[] = [
 ];
 
 export function getRandomErrorMessage(): string {
-  const randomIndex = Math.floor(Math.random() * errorMessages.length);
+  const randomBytes = crypto.randomBytes(4);
+  const randomIndex = randomBytes.readUInt32BE() % errorMessages.length;
   return errorMessages[randomIndex];
 }
