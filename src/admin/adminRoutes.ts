@@ -1,5 +1,3 @@
-import fs from 'fs';
-import path from 'path';
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { Discord } from '@hivemind/message-discord';
@@ -11,6 +9,8 @@ import { ipWhitelist } from '../server/middleware/security';
 import type { IBotInfo } from '../types/botInfo';
 import { type IMessageProvider } from '../types/IProvider';
 import { serializeSchema } from '../utils/schemaSerializer';
+import { personasRouter } from './personasRoutes';
+import { statusRouter } from './statusRoutes';
 
 const debug = Debug('app:admin');
 export const adminRouter = Router();
@@ -21,109 +21,9 @@ adminRouter.use(authenticate);
 
 adminRouter.use(auditMiddleware);
 
-async function loadPersonas(): Promise<{ key: string; name: string; systemPrompt: string }[]> {
-  const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
-  const personasDir = path.join(configDir, 'personas');
-  const fallback = [
-    {
-      key: 'friendly-helper',
-      name: 'Friendly Helper',
-      systemPrompt: 'You are a friendly, concise assistant.',
-    },
-    {
-      key: 'dev-assistant',
-      name: 'Dev Assistant',
-      systemPrompt: 'You are a senior engineer. Answer with pragmatic code examples.',
-    },
-    {
-      key: 'teacher',
-      name: 'Teacher',
-      systemPrompt: 'Explain concepts clearly with analogies and steps.',
-    },
-  ];
-  try {
-    try {
-      await fs.promises.access(personasDir);
-    } catch {
-      return fallback;
-    }
-
-    const files = await fs.promises.readdir(personasDir);
-    const validFiles = files.filter((file) => file.endsWith('.json'));
-
-    const promises = validFiles.map(async (file) => {
-      try {
-        const content = await fs.promises.readFile(path.join(personasDir, file), 'utf8');
-        const data = JSON.parse(content);
-        if (data && data.key && data.name && typeof data.systemPrompt === 'string') {
-          return data;
-        }
-      } catch (e) {
-        debug('Invalid persona file:', file, e);
-      }
-      return null;
-    });
-
-    const results = await Promise.allSettled(promises);
-    const out: { key: string; name: string; systemPrompt: string }[] = results
-      .map((r) => (r.status === 'fulfilled' ? r.value : null))
-      .filter((item): item is { key: string; name: string; systemPrompt: string } => item !== null);
-
-    return out.length ? out : fallback;
-  } catch (e) {
-    debug('Failed loading personas', e);
-    return fallback;
-  }
-}
-
-adminRouter.get('/status', async (_req: Request, res: Response) => {
-  try {
-    const slack = SlackService.getInstance();
-    const slackBots = slack.getBotNames();
-    const slackInfo = slackBots.map((name: string) => {
-      const cfg = slack.getBotConfig(name) || {};
-      return {
-        provider: 'slack',
-        name,
-        defaultChannel: cfg?.slack?.defaultChannelId || '',
-        mode: cfg?.slack?.mode || 'socket',
-      };
-    });
-    let discordBots: string[] = [];
-    let discordInfo: { provider: string; name: string }[] = [];
-    try {
-      const DiscordModule = Discord as unknown as {
-        DiscordService: { getInstance: () => unknown };
-      };
-      const ds = DiscordModule.DiscordService.getInstance() as { getAllBots?: () => IBotInfo[] };
-      const bots = ds.getAllBots?.() || [];
-      discordBots = bots.map((b) => b?.botUserName || b?.config?.name || 'discord');
-      discordInfo = bots.map((b) => ({
-        provider: 'discord',
-        name: b?.botUserName || b?.config?.name || 'discord',
-      }));
-    } catch (error) {
-      debug('Failed to retrieve Discord bot info (non-fatal)', {
-        error: error instanceof Error ? error.message : String(error),
-        endpoint: '/status',
-      });
-    }
-    res.json({
-      success: true,
-      slackBots,
-      discordBots,
-      discordCount: discordBots.length,
-      slackInfo,
-      discordInfo,
-    });
-  } catch {
-    res.json({ success: true, bots: [] });
-  }
-});
-
-adminRouter.get('/personas', async (_req: Request, res: Response) => {
-  res.json({ success: true, personas: await loadPersonas() });
-});
+// Mount sub-routers
+adminRouter.use('/', personasRouter);
+adminRouter.use('/', statusRouter);
 
 adminRouter.get('/bots', async (_req: Request, res: Response) => {
   try {
