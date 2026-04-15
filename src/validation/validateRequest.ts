@@ -19,10 +19,10 @@ export const validateRequest =
       if (error instanceof ZodError) {
         return res.status(400).json({
           success: false,
-          error: 'Validation failed',
           code: 'VALIDATION_ERROR',
-          data: error.issues,
+          error: 'Validation failed',
           issues: error.issues,
+          data: error.issues,
           details: error.issues,
         });
       }

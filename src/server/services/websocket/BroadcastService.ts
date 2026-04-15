@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { randomUUID } from 'crypto';
 import os from 'os';
 import Debug from 'debug';

@@ -2,58 +2,99 @@ import 'reflect-metadata';
 import { container } from 'tsyringe';
 import { registerServices, areServicesRegistered, TOKENS } from '../../../src/di/registration';
 
-// Use a shared mock object defined in a way that avoids hoisting issues
-(global as any).mockLogger = {
-  info: jest.fn(),
-  error: jest.fn(),
-  warn: jest.fn(),
-  debug: jest.fn(),
-};
-
 // Mock all singleton services to prevent real initialization
 jest.mock('../../../src/config/ConfigurationManager', () => ({
   ConfigurationManager: {
     getInstance: jest.fn().mockReturnValue({}),
   },
+  __esModule: true,
 }));
 
 jest.mock('../../../src/config/BotConfigurationManager', () => ({
   BotConfigurationManager: {
     getInstance: jest.fn().mockReturnValue({ reload: jest.fn() }),
     resetInstance: jest.fn(),
+    getAllBots: jest.fn().mockReturnValue([]),
   },
+  __esModule: true,
 }));
 
 jest.mock('../../../src/config/UserConfigStore', () => ({
   UserConfigStore: {
     getInstance: jest.fn().mockReturnValue({}),
   },
+  __esModule: true,
 }));
 
 jest.mock('../../../src/config/SecureConfigManager', () => ({
   SecureConfigManager: {
     getInstance: jest.fn().mockReturnValue({}),
   },
+  __esModule: true,
 }));
 
-jest.mock('../../../src/config/ProviderConfigManager', () => ({
-  ProviderConfigManager: {
-    getInstance: jest.fn().mockReturnValue({ syncBotProviders: jest.fn() }),
+jest.mock('../../../src/config/MCPProviderManager', () => ({
+  MCPProviderManager: {
+    getInstance: jest.fn().mockReturnValue({}),
   },
-  default: {
-    getInstance: jest.fn().mockReturnValue({ syncBotProviders: jest.fn() }),
-  }
+  __esModule: true,
 }));
 
-jest.mock('../../../src/common/logger', () => {
-  const logger = (global as any).mockLogger;
+jest.mock('../../../src/database/DatabaseManager', () => ({
+  DatabaseManager: {
+    getInstance: jest.fn().mockReturnValue({}),
+  },
+  __esModule: true,
+}));
+
+jest.mock('../../../src/database/SchemaManager', () => ({
+  SchemaManager: {
+    getInstance: jest.fn().mockReturnValue({}),
+  },
+  __esModule: true,
+}));
+
+jest.mock('../../../src/managers/BotManager', () => ({
+  BotManager: {
+    getInstance: jest.fn().mockReturnValue({}),
+  },
+  __esModule: true,
+}));
+
+jest.mock('../../../src/server/services/WebSocketService', () => ({
+  WebSocketService: {
+    getInstance: jest.fn().mockReturnValue({}),
+  },
+  __esModule: true,
+}));
+
+jest.mock('../../../src/monitoring/MetricsCollector', () => ({
+  MetricsCollector: {
+    getInstance: jest.fn().mockReturnValue({}),
+  },
+  __esModule: true,
+}));
+
+jest.mock('../../../src/config/ProviderConfigManager', () => {
   return {
     __esModule: true,
     default: {
-      info: (msg: string) => logger.info(msg),
-      error: (msg: string) => logger.error(msg),
-      warn: (msg: string) => logger.warn(msg),
-      debug: (msg: string) => logger.debug(msg),
+      getInstance: jest.fn().mockReturnValue({ syncBotProviders: jest.fn() }),
+    },
+  };
+});
+
+jest.mock('../../../src/common/logger', () => {
+  const logger = {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+  };
+  (global as any).mockLogger = logger;
+  return {
+    __esModule: true,
+    default: {
       withContext: jest.fn(() => logger),
     },
     Logger: {

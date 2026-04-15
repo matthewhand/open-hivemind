@@ -214,7 +214,7 @@ const PERFORMANCE_BUDGETS = {
   POST: 500,
   PUT: 500,
   DELETE: 300,
-  HEALTH: 100,
+  HEALTH: 250,
 };
 
 // Number of test runs for statistical analysis

@@ -16,10 +16,10 @@ jest.mock('debug', () => () => jest.fn());
 jest.mock('@slack/web-api', () => ({
   WebClient: jest.fn().mockImplementation(() => ({
     auth: {
-      test: () => (global as any).mockSlackFunctions.authTest(),
+      test: jest.fn().mockResolvedValue({ user_id: 'U123', user: 'testuser' }),
     },
     conversations: {
-      history: () => (global as any).mockSlackFunctions.history(),
+      history: jest.fn().mockResolvedValue({ messages: [] }),
     },
   })),
 }));
@@ -81,10 +81,9 @@ describe('SlackBotManager', () => {
     // Initialize
     await manager.initialize();
     
-    // Give some time for connected event
-    await new Promise(resolve => setTimeout(resolve, 50));
-
-    expect((global as any).mockSlackFunctions.authTest).toHaveBeenCalled();
+    // Check that auth.test was called on the web client
+    const webClientInstance = MockWebClient.mock.instances[0];
+    expect(webClientInstance.auth.test).toHaveBeenCalled();
     expect(MockSocketModeClient).toHaveBeenCalled();
 
     // Simulate receiving a message
@@ -92,8 +91,9 @@ describe('SlackBotManager', () => {
       await socketEventHandlers['message']({
         event: {
           type: 'message',
+          channel_type: 'im',
           text: 'hello',
-          user: 'U999',
+          user: 'U999', // Different from bot user U123
           channel: 'C123',
           event_ts: '123456789.000001',
         },

@@ -272,22 +272,21 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove, position }) => {
   );
 };
 
-// Convenience hooks for different toast types
-export const useSuccessToast = () => {
-  const { addToast } = useToast();
-  return useCallback(
-    (title: string, message?: string, options?: Partial<Toast>) => {
-      return addToast({ type: 'success', title, message, ...options });
-    },
-    [addToast]
-  );
-};
-
 export const useErrorToast = () => {
   const { addToast } = useToast();
   return useCallback(
     (title: string, message?: string, options?: Partial<Toast>) => {
       return addToast({ type: 'error', title, message, ...options });
+    },
+    [addToast]
+  );
+};
+
+export const useSuccessToast = () => {
+  const { addToast } = useToast();
+  return useCallback(
+    (title: string, message?: string, options?: Partial<Toast>) => {
+      return addToast({ type: 'success', title, message, ...options });
     },
     [addToast]
   );

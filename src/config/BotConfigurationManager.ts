@@ -48,10 +48,10 @@ export class BotConfigurationManager {
   }
 
   /**
-   * Resets the singleton instance (used for testing).
+   * Resets the singleton instance (primarily for testing)
    */
   public static resetInstance(): void {
-    (BotConfigurationManager as any).instance = undefined;
+    BotConfigurationManager.instance = undefined as any;
   }
 
   /**
@@ -179,7 +179,19 @@ export class BotConfigurationManager {
    */
 
   public getBot(name: string): BotConfig | undefined {
-    return this.bots.get(name);
+    // Try exact match first
+    const bot = this.bots.get(name);
+    if (bot) return bot;
+
+    // Try case-insensitive and hyphen-dash normalization match
+    const canonical = name.trim().toLowerCase().replace(/[_\s]+/g, '-');
+    for (const [key, value] of this.bots.entries()) {
+      if (key.trim().toLowerCase().replace(/[_\s]+/g, '-') === canonical) {
+        return value;
+      }
+    }
+    
+    return undefined;
   }
 
   /**

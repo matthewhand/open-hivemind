@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { Router, type Request, type Response } from 'express';
+import { Router, type NextFunction, type Request, type Response } from 'express';
 import { AuthManager } from '../../auth/AuthManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import type { AuthMiddlewareRequest, LoginCredentials, RegisterData } from '../../auth/types';
@@ -105,7 +105,7 @@ router.post(
       return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success({ user }));
     } catch (error: unknown) {
       return res
-        .status(HTTP_STATUS.BAD_REQUEST)
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error(ErrorUtils.getMessage(error)));
     }
   })
@@ -172,7 +172,7 @@ router.post(
       return res.json(ApiResponse.success());
     } catch (error: unknown) {
       return res
-        .status(HTTP_STATUS.BAD_REQUEST)
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error(ErrorUtils.getMessage(error)));
     }
   })
@@ -277,7 +277,10 @@ router.get('/verify', apiRateLimiter, async (req: Request, res: Response) => {
 });
 
 // GET /api/auth/trusted-status — check if request comes from trusted IP
-router.get('/trusted-status', apiRateLimiter, (req: Request, res: Response) => {
+// Uses apiRateLimiter (not authRateLimiter) — this is a lightweight status check, not a credential endpoint
+const safeApiLimiter =
+  apiRateLimiter || ((_req: Request, _res: Response, next: NextFunction) => next());
+router.get('/trusted-status', safeApiLimiter, (req: Request, res: Response) => {
   const trusted = isTrustedAdminIP(req);
   return res.json(ApiResponse.success({ trusted }));
 });
@@ -366,16 +369,12 @@ router.post(
     const { oldPassword, newPassword } = req.body;
 
     try {
-      // Verify old password first
-      const userWithHash = authManager.getUserWithHash(authReq.user.id);
-      if (!userWithHash || !userWithHash.passwordHash) {
-        return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('User not found'));
-      }
+      // Verify old password first using refactored method
+      const isPasswordValid = await authManager.verifyCurrentPassword(authReq.user.id, oldPassword);
 
-      const isPasswordValid = await authManager.verifyPassword(
-        oldPassword,
-        userWithHash.passwordHash
-      );
+      if (!isPasswordValid) {
+        return res.status(HTTP_STATUS.UNAUTHORIZED).json(ApiResponse.error('Invalid old password'));
+      }
       if (!isPasswordValid) {
         return res.status(HTTP_STATUS.UNAUTHORIZED).json(ApiResponse.error('Invalid old password'));
       }

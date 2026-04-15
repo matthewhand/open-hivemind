@@ -1,0 +1,5 @@
+display_name: Git Auto Maintainer
+short_description: Automates git status, diff, pull, conflict resolution, build, lint, test, and PR management.
+default_prompt: Synchronize, fix, and merge local changes using the git-auto-maintainer workflow.
+icon: git-branch
+brand_color: '#F05032'
