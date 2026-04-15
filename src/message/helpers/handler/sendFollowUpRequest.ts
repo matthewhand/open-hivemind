@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import Debug from 'debug';
 import { getTaskLlm } from '@src/llm/taskLlmRouter';
 import discordConfig from '@config/discordConfig';
@@ -5,6 +6,12 @@ import type { IMessage } from '@message/interfaces/IMessage';
 import type { IMessageProvider } from '@message/interfaces/IMessageProvider';
 
 const debug = Debug('app:sendFollowUpRequest');
+
+// Helper to generate random float between 0 and 1 using crypto
+function getRandomFloat(): number {
+  const randomBytes = crypto.randomBytes(4);
+  return randomBytes.readUInt32BE() / 0x100000000;
+}
 
 /**
  * Sends an AI-generated follow-up message using chat completions.
@@ -33,7 +40,7 @@ export async function sendFollowUpRequest(
   const baseChance = 0.1;
   const finalChance = baseChance * bonus;
 
-  if (Math.random() >= finalChance) {
+  if (getRandomFloat() >= finalChance) {
     debug(`Skipped follow-up due to chance limit (finalChance: ${finalChance})`);
     return;
   }

@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import Debug from 'debug';
 import { AuditLogger } from '@src/common/auditLogger';
 import { ErrorHandler } from '@src/common/errors/ErrorHandler';
@@ -106,8 +107,11 @@ export async function handleMessage(
       const logger = Debug(`app:messageHandler:${activeAgentName}`);
 
       // Helper for random integer (chaos)
-      const _randInt = (min: number, max: number): number =>
-        Math.floor(Math.random() * (max - min + 1)) + min;
+      const _randInt = (min: number, max: number): number => {
+        const randomBytes = crypto.randomBytes(4);
+        const randomFloat = randomBytes.readUInt32BE() / 0x100000000;
+        return Math.floor(randomFloat * (max - min + 1)) + min;
+      };
 
       // Log received message
       const userId = message.getAuthorId();

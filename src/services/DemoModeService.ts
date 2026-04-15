@@ -408,6 +408,17 @@ export class DemoModeService {
     return WebSocketService.getInstance();
   }
 
+  // Helper for cryptographically secure random float between 0 and 1
+  private randomFloat(): number {
+    const randomBytes = crypto.randomBytes(4);
+    return randomBytes.readUInt32BE() / 0x100000000;
+  }
+
+  // Helper for cryptographically secure random integer between min and max
+  private randomInt(min: number, max: number): number {
+    return Math.floor(this.randomFloat() * (max - min + 1)) + min;
+  }
+
   constructor(
     @inject(TOKENS.BotConfigurationManager) private botManager: BotConfigurationManager,
     @inject(TOKENS.UserConfigStore) private _userConfigStore: UserConfigStore
@@ -592,7 +603,7 @@ export class DemoModeService {
     this.seedHistoricalData();
 
     // Generate message flow events every 2-8 seconds
-    const messageInterval = () => Math.random() * 6000 + 2000;
+    const messageInterval = () => this.randomFloat() * 6000 + 2000;
     const tick = () => {
       this.generateAndRecordMessageEvent();
       this.simulationInterval = setTimeout(tick, messageInterval());
@@ -720,7 +731,7 @@ export class DemoModeService {
     if (lowerMessage.includes('help')) {
       return 'Open-Hivemind offers multi-platform bots, multiple LLM providers, MCP integration, and personas. Configure API keys to unlock full functionality!';
     }
-    const scenario = MESSAGE_SCENARIOS[Math.floor(Math.random() * MESSAGE_SCENARIOS.length)];
+    const scenario = MESSAGE_SCENARIOS[this.randomInt(0, MESSAGE_SCENARIOS.length - 1)];
     return scenario.response;
   }
 
@@ -734,18 +745,18 @@ export class DemoModeService {
 
     // Pre-seed MetricsCollector with 60 data points
     for (let i = 60; i >= 0; i--) {
-      const cpu = 15 + Math.sin(i * 0.1) * 10 + (Math.random() - 0.5) * 8;
-      const mem = 45 + Math.sin(i * 0.2) * 15 + (Math.random() - 0.5) * 10;
+      const cpu = 15 + Math.sin(i * 0.1) * 10 + (this.randomFloat() - 0.5) * 8;
+      const mem = 45 + Math.sin(i * 0.2) * 15 + (this.randomFloat() - 0.5) * 10;
       this.metricsCollector.recordMetric('demo.cpu', Math.max(5, Math.min(60, cpu)), {
         source: 'demo',
       });
       this.metricsCollector.recordMetric('demo.memory', Math.max(20, Math.min(85, mem)), {
         source: 'demo',
       });
-      this.metricsCollector.recordResponseTime(100 + Math.random() * 500);
-      if (Math.random() < 0.3) {
+      this.metricsCollector.recordResponseTime(100 + this.randomFloat() * 500);
+      if (this.randomFloat() < 0.3) {
         this.metricsCollector.incrementMessages();
-        this.metricsCollector.recordLlmTokenUsage(Math.floor(Math.random() * 200 + 50));
+        this.metricsCollector.recordLlmTokenUsage(this.randomInt(50, 249));
       }
     }
 
@@ -782,7 +793,7 @@ export class DemoModeService {
     if (event.status === 'error') {
       this.metricsCollector.incrementErrors();
     }
-    this.metricsCollector.recordLlmTokenUsage(Math.floor(Math.random() * 300 + 50));
+    this.metricsCollector.recordLlmTokenUsage(this.randomInt(50, 349));
 
     // 2. Persist via ActivityLogger
     try {
@@ -817,7 +828,7 @@ export class DemoModeService {
     // so we don't need to manually broadcast.
 
     // Occasionally generate an alert
-    if (Math.random() < 0.1) {
+    if (this.randomFloat() < 0.1) {
       const alert = this.createAlertEventForWS();
       this.wsService.recordAlert(alert);
     }
@@ -832,8 +843,8 @@ export class DemoModeService {
     const now = Date.now();
 
     // 30% chance to start a new conversation thread
-    if (Math.random() < 0.3 || this.activeThreads.size === 0) {
-      const threadIndex = Math.floor(Math.random() * CONVERSATION_THREADS.length);
+    if (this.randomFloat() < 0.3 || this.activeThreads.size === 0) {
+      const threadIndex = this.randomInt(0, CONVERSATION_THREADS.length - 1);
       const channelKey = `thread-${Date.now()}`;
       this.activeThreads.set(channelKey, { threadIndex, stepIndex: 0, lastActivity: now });
 
@@ -843,7 +854,7 @@ export class DemoModeService {
 
     // Continue existing thread
     const activeThreadKeys = Array.from(this.activeThreads.keys());
-    const channelKey = activeThreadKeys[Math.floor(Math.random() * activeThreadKeys.length)];
+    const channelKey = activeThreadKeys[this.randomInt(0, activeThreadKeys.length - 1)];
     const threadState = this.activeThreads.get(channelKey)!;
     const thread = CONVERSATION_THREADS[threadState.threadIndex];
 
@@ -875,10 +886,10 @@ export class DemoModeService {
    * Create a message flow event WITH id/timestamp — for ActivityLogger.
    */
   private createMessageFlowEventForWS(_timestamp?: string): MessageFlowEvent {
-    const bot = this.demoBots[Math.floor(Math.random() * this.demoBots.length)];
+    const bot = this.demoBots[this.randomInt(0, this.demoBots.length - 1)];
     const processingTime = this.generateProcessingTime();
-    const hasError = Math.random() < 0.05;
-    const user = DEMO_USERS[Math.floor(Math.random() * DEMO_USERS.length)];
+    const hasError = this.randomFloat() < 0.05;
+    const user = DEMO_USERS[this.randomInt(0, DEMO_USERS.length - 1)];
 
     // Use conversation threads for more realistic content
     const threadContent = this.generateThreadContent();
@@ -898,7 +909,7 @@ export class DemoModeService {
       processingTime: isIncoming ? undefined : processingTime,
       status: hasError ? 'error' : processingTime > 1500 ? 'timeout' : 'success',
       errorMessage: hasError
-        ? ERROR_MESSAGES[Math.floor(Math.random() * ERROR_MESSAGES.length)]
+        ? ERROR_MESSAGES[this.randomInt(0, ERROR_MESSAGES.length - 1)]
         : undefined,
     };
   }
@@ -909,14 +920,14 @@ export class DemoModeService {
   private createAlertEventForWS(
     _timestamp?: string
   ): Omit<AlertEvent, 'id' | 'timestamp' | 'status' | 'acknowledgedAt' | 'resolvedAt'> {
-    const bot = this.demoBots[Math.floor(Math.random() * this.demoBots.length)];
+    const bot = this.demoBots[this.randomInt(0, this.demoBots.length - 1)];
     const levels: Array<'info' | 'warning' | 'error' | 'critical'> = [
       'info',
       'warning',
       'error',
       'critical',
     ];
-    const level = levels[Math.floor(Math.random() * levels.length)];
+    const level = levels[this.randomInt(0, levels.length - 1)];
 
     const titles: Record<string, string[]> = {
       info: ['Bot connected successfully', 'Configuration reloaded', 'Health check passed'],
@@ -931,8 +942,8 @@ export class DemoModeService {
 
     return {
       level,
-      title: titles[level][Math.floor(Math.random() * titles[level].length)],
-      message: `Demo alert: ${bot.name} — ${titles[level][Math.floor(Math.random() * titles[level].length)]}`,
+      title: titles[level][this.randomInt(0, titles[level].length - 1)],
+      message: `Demo alert: ${bot.name} — ${titles[level][this.randomInt(0, titles[level].length - 1)]}`,
       botName: bot.name,
       channelId: bot.discord?.channelId || bot.slack?.channelId,
       metadata: { isDemo: true },
@@ -944,8 +955,8 @@ export class DemoModeService {
     const cyclePosition = (elapsed / 60000) % 1;
     const hourOfDay = new Date().getHours();
     const todMultiplier = this.getTimeOfDayMultiplier(hourOfDay);
-    const hasSpike = Math.random() < 0.05;
-    const spikeMul = hasSpike ? 1.5 + Math.random() * 0.5 : 1;
+    const hasSpike = this.randomFloat() < 0.05;
+    const spikeMul = hasSpike ? 1.5 + this.randomFloat() * 0.5 : 1;
 
     const cpu = (15 + Math.sin(cyclePosition * Math.PI * 2) * 10) * todMultiplier;
     const mem = (45 + Math.sin(cyclePosition * Math.PI * 4) * 15) * (0.8 + todMultiplier * 0.4);
@@ -953,20 +964,20 @@ export class DemoModeService {
 
     return {
       timestamp: timestamp || new Date().toISOString(),
-      responseTime: Math.random() * 500 + 100 + (hasSpike ? 200 : 0),
-      memoryUsage: Math.max(20, Math.min(85, mem + (Math.random() - 0.5) * 10)),
-      cpuUsage: Math.max(5, Math.min(60, cpu * spikeMul + (Math.random() - 0.5) * 8)),
-      activeConnections: Math.floor(3 + msgRate + (Math.random() - 0.5) * 2),
-      messageRate: Math.max(0, msgRate * spikeMul + (Math.random() - 0.5) * 0.5),
-      errorRate: hasSpike ? Math.random() * 0.1 : Math.random() * 0.02,
+      responseTime: this.randomFloat() * 500 + 100 + (hasSpike ? 200 : 0),
+      memoryUsage: Math.max(20, Math.min(85, mem + (this.randomFloat() - 0.5) * 10)),
+      cpuUsage: Math.max(5, Math.min(60, cpu * spikeMul + (this.randomFloat() - 0.5) * 8)),
+      activeConnections: Math.floor(3 + msgRate + (this.randomFloat() - 0.5) * 2),
+      messageRate: Math.max(0, msgRate * spikeMul + (this.randomFloat() - 0.5) * 0.5),
+      errorRate: hasSpike ? this.randomFloat() * 0.1 : this.randomFloat() * 0.02,
     };
   }
 
   private generateProcessingTime(): number {
-    const r = Math.random();
-    if (r < 0.6) return Math.random() * 400 + 100; // 60% fast
-    if (r < 0.9) return Math.random() * 1000 + 500; // 30% medium
-    return Math.random() * 1500 + 1500; // 10% slow
+    const r = this.randomFloat();
+    if (r < 0.6) return this.randomFloat() * 400 + 100; // 60% fast
+    if (r < 0.9) return this.randomFloat() * 1000 + 500; // 30% medium
+    return this.randomFloat() * 1500 + 1500; // 10% slow
   }
 
   private getTimeOfDayMultiplier(hour: number): number {

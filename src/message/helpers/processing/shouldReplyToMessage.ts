@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import Debug from 'debug';
 import messageConfig from '@config/messageConfig';
 import { DatabaseManager } from '../../../database/DatabaseManager';
@@ -617,7 +618,8 @@ async function evaluateReplyDecision(
   }
 
   chance = Math.max(0, Math.min(1, chance));
-  const roll = Math.random();
+  const randomBytes = crypto.randomBytes(4);
+  const roll = randomBytes.readUInt32BE() / 0x100000000;
   const decision = roll < chance;
 
   // Generate human-readable prose explanation
