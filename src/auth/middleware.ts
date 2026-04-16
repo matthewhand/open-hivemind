@@ -92,7 +92,7 @@ export class AuthMiddleware {
     const allowLocalBypass = process.env.ALLOW_LOCALHOST_ADMIN === 'true';
     const isLocalhost = isLocalhostRequest();
 
-    const bypassAuth = () => {
+    const bypassAuth = (): void => {
       debug(`Bypassing authentication for localhost request: ${req.method} ${req.path}`);
       // Create a default admin user for localhost access
       const defaultUser: User = {
@@ -304,7 +304,7 @@ export const requirePermission = (
   return middleware.requirePermission(permission);
 };
 
-export const requireAdmin: (req: Request, res: Response, next: NextFunction) => void = (() => {
+export const requireAdmin: (req: Request, res: Response, next: NextFunction) => void = ((): ((req: Request, res: Response, next: NextFunction) => void) => {
   const middleware = new AuthMiddleware();
   return middleware.requireAdmin;
 })();

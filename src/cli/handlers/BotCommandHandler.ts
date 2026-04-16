@@ -36,6 +36,7 @@ export class BotCommandHandler implements CommandHandler {
             await this.addBot(options);
           }
         } catch (error) {
+          // eslint-disable-next-line no-console
           console.error(chalk.red('Error adding bot:'), error);
         }
       });
@@ -56,6 +57,7 @@ export class BotCommandHandler implements CommandHandler {
         try {
           await this.removeBot(name, options.force);
         } catch (error) {
+          // eslint-disable-next-line no-console
           console.error(chalk.red('Error removing bot:'), error);
         }
       });
@@ -67,6 +69,7 @@ export class BotCommandHandler implements CommandHandler {
         try {
           await this.startBot(name);
         } catch (error) {
+          // eslint-disable-next-line no-console
           console.error(chalk.red('Error starting bot:'), error);
         }
       });
@@ -78,6 +81,7 @@ export class BotCommandHandler implements CommandHandler {
         try {
           await this.stopBot(name);
         } catch (error) {
+          // eslint-disable-next-line no-console
           console.error(chalk.red('Error stopping bot:'), error);
         }
       });
@@ -90,17 +94,21 @@ export class BotCommandHandler implements CommandHandler {
       });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private async addBot(options: any): Promise<void> {
     // eslint-disable-next-line no-console
     console.log(chalk.blue('Adding new bot...'));
 
     if (!options.name || !options.provider || !options.llm) {
+      // eslint-disable-next-line no-console
       console.error(chalk.red('Missing required options. Use --name, --provider, and --llm'));
       return;
     }
 
     // Here you would save to configuration
+    // eslint-disable-next-line no-console
     console.log(chalk.green(`✓ Bot '${options.name}' added successfully`));
+    // eslint-disable-next-line no-console
     console.log(`  Provider: ${options.provider} → ${options.llm}`);
   }
 
