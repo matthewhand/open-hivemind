@@ -186,9 +186,19 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
   }, [fetchStatus, fetchConfig]);
 
   // Derive bots with status combining config and system data independently
+  const statusBotsMap = useMemo(() => {
+    const map = new Map<string, any>();
+    if (systemMetrics?.bots) {
+      for (const b of systemMetrics.bots) {
+        map.set(b.name, b);
+      }
+    }
+    return map;
+  }, [systemMetrics]);
+
   useEffect(() => {
     const botsWithStatus = configBots.map((bot: Bot) => {
-      const statusBot = systemMetrics?.bots?.find((b: any) => b.name === bot.name);
+      const statusBot = statusBotsMap.get(bot.name);
       return {
         ...bot,
         id: bot.name,
@@ -212,7 +222,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
       };
     });
     setBots(botsWithStatus);
-  }, [configBots, systemMetrics]);
+  }, [configBots, statusBotsMap]);
 
   // Track WS activity so fallback poll knows when WS last delivered data
   useEffect(() => {

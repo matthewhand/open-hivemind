@@ -22,3 +22,6 @@
 ## 2024-05-22 - Dashboard Bot Status Lookups
 **Learning:** `Dashboard.tsx` was rendering a list of bots and calling `status?.bots?.find()` for every bot in the `.map()` loop, making the rendering loop $O(N \times M)$ complexity.
 **Action:** When rendering lists in React components that require correlated data, never use `.find()` inside the `.map()`. Pre-compute a lookup Map using `useMemo` to achieve O(1) lookups and bring the rendering complexity down to $O(N + M)$.
+## 2024-05-23 - MonitoringDashboard React List Bottleneck
+**Learning:** `MonitoringDashboard.tsx` was rendering a list of bots and calling `systemMetrics?.bots?.find(...)` for every single bot in the `.map()` loop during rendering. As the number of bots and metrics arrays grow, this causes the rendering loop complexity to scale poorly at $O(N \times M)$.
+**Action:** When rendering lists in React components that require correlated data lookups, never use `.find()` inside the `.map()`. Pre-compute a lookup Map using `useMemo` to achieve O(1) lookups inside the loop, bringing the component rendering complexity down to $O(N + M)$.
