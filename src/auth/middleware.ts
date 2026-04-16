@@ -304,7 +304,11 @@ export const requirePermission = (
   return middleware.requirePermission(permission);
 };
 
-export const requireAdmin: (req: Request, res: Response, next: NextFunction) => void = ((): ((req: Request, res: Response, next: NextFunction) => void) => {
+export const requireAdmin: (req: Request, res: Response, next: NextFunction) => void = ((): ((
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => void) => {
   const middleware = new AuthMiddleware();
   return middleware.requireAdmin;
 })();

@@ -121,7 +121,8 @@ export class BotCommandHandler implements CommandHandler {
         type: 'input',
         name: 'name',
         message: 'Bot name:',
-        validate: (input: string) => input.trim().length > 0 || 'Name is required',
+        validate: (input: string): string | boolean =>
+          input.trim().length > 0 || 'Name is required',
       },
       {
         type: 'list',
@@ -146,6 +147,7 @@ export class BotCommandHandler implements CommandHandler {
     await this.addBot(answers);
   }
 
+  /* eslint-disable no-console */
   private listBots(verbose = false): void {
     const bots = this.configManager.getAllBots();
 
@@ -162,6 +164,7 @@ export class BotCommandHandler implements CommandHandler {
 
       if (verbose) {
         console.log(`   Enabled: ${bot.enabled ? chalk.green('Yes') : chalk.red('No')}`);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         console.log(`   Created: ${(bot as any).createdAt || 'Unknown'}`);
       }
       console.log();
@@ -198,7 +201,6 @@ export class BotCommandHandler implements CommandHandler {
   }
 
   private async startBot(name: string): Promise<void> {
-    // eslint-disable-next-line no-console
     console.log(chalk.blue(`Starting bot '${name}'...`));
     // Here you would start the specific bot
     console.log(chalk.green(`✓ Bot '${name}' started`));
@@ -236,4 +238,5 @@ export class BotCommandHandler implements CommandHandler {
       console.log(`Server: ${chalk.green('Running')}`); // This would be dynamic
     }
   }
+  /* eslint-enable no-console */
 }
