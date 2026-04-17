@@ -10,20 +10,22 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useInactivity } from '../useInactivity';
 
+import { renderHook, act } from '@testing-library/react';
+
 /**
  * Minimal hook runner that calls the hook function directly and provides
  * a way to re-invoke it (simulating re-renders).
  */
 function runHook<T, R>(hookFn: () => R) {
-  let result: R;
-  const invoke = () => {
-    result = hookFn();
-    return result;
-  };
-  invoke();
+  const { result, rerender } = renderHook(hookFn);
   return {
-    get result() { return result!; },
-    rerender: invoke,
+    get result() { return result.current; },
+    rerender: () => {
+      act(() => {
+        rerender();
+      });
+      return result.current;
+    },
   };
 }
 
