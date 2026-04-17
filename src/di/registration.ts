@@ -17,6 +17,9 @@ import { UserConfigStore } from '../config/UserConfigStore';
 import { DatabaseManager } from '../database/DatabaseManager';
 import { SchemaManager } from '../database/SchemaManager';
 import { BotManager } from '../managers/BotManager';
+import { BotConfigService } from '../server/services/BotConfigService';
+import { ConfigurationTemplateService } from '../server/services/ConfigurationTemplateService';
+import { ConfigurationValidator } from '../server/services/ConfigurationValidator';
 import { RealTimeValidationService } from '../server/services/RealTimeValidationService';
 import { BroadcastService } from '../server/services/websocket/BroadcastService';
 import { ConnectionManager } from '../server/services/websocket/ConnectionManager';
@@ -89,6 +92,11 @@ export function registerServices(): void {
 
   logger.debug('Registering RealTimeValidationService');
   container.registerSingleton(TOKENS.RealTimeValidationService, RealTimeValidationService);
+
+  logger.debug('Registering Configuration services');
+  container.registerSingleton(ConfigurationValidator, ConfigurationValidator);
+  container.registerSingleton(BotConfigService, BotConfigService);
+  container.registerSingleton(ConfigurationTemplateService, ConfigurationTemplateService);
 
   logger.debug('Registering DemoModeService');
   container.registerSingleton('DemoModeService', DemoModeService);
