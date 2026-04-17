@@ -1,59 +1,84 @@
 import express from 'express';
 import session from 'express-session';
 import request from 'supertest';
-import { destroySession } from '../../../src/middleware/sessionMiddleware';
+import { destroySession, getSessionSecret } from '../../../src/middleware/sessionMiddleware';
 
-describe('Session Lifecycle Integration', () => {
+describe('Session Lifecycle and Configuration Integration', () => {
   let app: express.Application;
+  const originalEnv = process.env;
 
-  beforeAll(() => {
-    app = express();
-    app.use(session({
-      secret: 'test-secret-at-least-32-chars-long-now',
-      resave: false,
-      saveUninitialized: true,
-      cookie: { secure: false }
-    }));
+  beforeEach(() => {
+    jest.resetModules();
+    process.env = { ...originalEnv };
+  });
 
-    app.get('/set-session', (req, res) => {
-      (req.session as any).user = 'test-user';
-      res.status(200).send('Session set');
+  afterAll(() => {
+    process.env = originalEnv;
+  });
+
+  describe('Configuration', () => {
+    it('should throw error if SESSION_SECRET is missing', () => {
+      delete process.env.SESSION_SECRET;
+      expect(() => getSessionSecret()).toThrow(/SESSION_SECRET environment variable is required/);
     });
 
-    app.get('/get-session', (req, res) => {
-      if ((req.session as any).user) {
-        res.status(200).send(`User: ${(req.session as any).user}`);
-      } else {
-        res.status(404).send('No session');
-      }
-    });
-
-    app.post('/destroy-session', async (req, res) => {
-      try {
-        await destroySession(req);
-        res.status(200).send('Session destroyed');
-      } catch (err) {
-        res.status(500).send('Failed to destroy');
-      }
+    it('should return secret if valid', () => {
+      process.env.SESSION_SECRET = 'a'.repeat(32);
+      expect(getSessionSecret()).toBe('a'.repeat(32));
     });
   });
 
-  it('should maintain session state across requests and destroy it when requested', async () => {
-    const agent = request.agent(app);
+  describe('Lifecycle', () => {
+    beforeAll(() => {
+      process.env.SESSION_SECRET = 'test-secret-at-least-32-chars-long-now';
+      app = express();
+      app.use(session({
+        secret: 'test-secret-at-least-32-chars-long-now',
+        resave: false,
+        saveUninitialized: true,
+        cookie: { secure: false }
+      }));
 
-    // 1. Initially no session
-    await agent.get('/get-session').expect(404);
+      app.get('/set-session', (req, res) => {
+        (req.session as any).user = 'test-user';
+        res.status(200).send('Session set');
+      });
 
-    // 2. Set session
-    await agent.get('/set-session').expect(200);
+      app.get('/get-session', (req, res) => {
+        if ((req.session as any).user) {
+          res.status(200).send(`User: ${(req.session as any).user}`);
+        } else {
+          res.status(404).send('No session');
+        }
+      });
 
-    // 3. Verify session exists
-    await agent.get('/get-session').expect(200, 'User: test-user');
+      app.post('/destroy-session', async (req, res) => {
+        try {
+          await destroySession(req);
+          res.status(200).send('Session destroyed');
+        } catch (err) {
+          res.status(500).send('Failed to destroy');
+        }
+      });
+    });
 
-    // 4. Destroy session
-    await agent.post('/destroy-session').expect(200, 'Session destroyed');
+    it('should maintain session state across requests and destroy it when requested', async () => {
+      const agent = request.agent(app);
 
-    // 5. Verify session is gone
-    await agent.get('/get-session').expect(404);
+      // 1. Initially no session
+      await agent.get('/get-session').expect(404);
+
+      // 2. Set session
+      await agent.get('/set-session').expect(200);
+
+      // 3. Verify session exists
+      await agent.get('/get-session').expect(200, 'User: test-user');
+
+      // 4. Destroy session
+      await agent.post('/destroy-session').expect(200, 'Session destroyed');
+
+      // 5. Verify session is gone
+      await agent.get('/get-session').expect(404);
+    });
   });
 });
