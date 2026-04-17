@@ -167,13 +167,23 @@ async function readPackageVersion(pluginPath: string): Promise<string> {
 }
 
 async function deriveNameFromPath(pluginPath: string): Promise<string> {
+  let name = path.basename(pluginPath);
   try {
     const content = await fs.promises.readFile(path.join(pluginPath, 'package.json'), 'utf-8');
     const pkg = JSON.parse(content);
-    return pkg.name?.replace(/^@[^/]+\//, '') ?? path.basename(pluginPath);
+    if (pkg.name && typeof pkg.name === 'string') {
+      name = pkg.name.replace(/^@[^/]+\//, '');
+    }
   } catch {
-    return path.basename(pluginPath);
+    // Ignore errors reading package.json and fallback to directory name
   }
+
+  // Prevent path traversal by ensuring the name doesn't contain path separators or relative path components
+  if (name.includes('..') || name.includes('/') || name.includes('\\')) {
+    throw new PluginValidationError(`Invalid plugin name: ${name}`);
+  }
+
+  return name;
 }
 
 function exec(cmd: string, args: string[], cwd: string): void {
