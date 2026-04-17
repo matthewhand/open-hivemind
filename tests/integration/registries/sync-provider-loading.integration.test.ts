@@ -1,6 +1,6 @@
-import { SyncProviderRegistry } from '@src/registries/SyncProviderRegistry';
-import * as path from 'path';
 import * as fs from 'fs';
+import * as path from 'path';
+import { SyncProviderRegistry } from '@src/registries/SyncProviderRegistry';
 
 describe('SyncProviderRegistry Loading Integration', () => {
   const originalEnv = { ...process.env };
@@ -30,7 +30,7 @@ describe('SyncProviderRegistry Loading Integration', () => {
   it('should gracefully handle empty configurations during init', async () => {
     const registry = SyncProviderRegistry.getInstance();
     const result = await registry.initialize();
-    
+
     expect(result.failed).toHaveLength(0);
     expect(registry.isInitialized()).toBe(true);
     // Should have 0 providers if config dir is empty

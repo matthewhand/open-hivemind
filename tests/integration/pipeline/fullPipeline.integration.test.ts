@@ -23,8 +23,8 @@ import {
   type MessageSender,
   type PromptBuilder,
 } from '@src/pipeline';
-import { IMessage } from '@message/interfaces/IMessage';
 import { SwarmCoordinator } from '@src/services/SwarmCoordinator';
+import { IMessage } from '@message/interfaces/IMessage';
 
 // ---------------------------------------------------------------------------
 // StubMessage

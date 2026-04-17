@@ -76,14 +76,19 @@ function buildService() {
   } as any;
 
   // Per-bot metrics store so getBotStats returns real data
-  const botMetricsStore: Record<string, { messageCount: number; errorCount: number; errors: string[] }> = {};
+  const botMetricsStore: Record<
+    string,
+    { messageCount: number; errorCount: number; errors: string[] }
+  > = {};
   const mockBotMetricsService = {
     incrementMessageCount: jest.fn((botName: string) => {
-      if (!botMetricsStore[botName]) botMetricsStore[botName] = { messageCount: 0, errorCount: 0, errors: [] };
+      if (!botMetricsStore[botName])
+        botMetricsStore[botName] = { messageCount: 0, errorCount: 0, errors: [] };
       botMetricsStore[botName].messageCount++;
     }),
     incrementErrorCount: jest.fn((botName: string, error: string) => {
-      if (!botMetricsStore[botName]) botMetricsStore[botName] = { messageCount: 0, errorCount: 0, errors: [] };
+      if (!botMetricsStore[botName])
+        botMetricsStore[botName] = { messageCount: 0, errorCount: 0, errors: [] };
       botMetricsStore[botName].errorCount++;
       botMetricsStore[botName].errors.push(error);
     }),

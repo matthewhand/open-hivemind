@@ -14,9 +14,9 @@
  * @jest-environment jsdom
  */
 import { act, renderHook } from '@testing-library/react';
-import { apiService } from '../../../src/client/src/services/api';
-import { useToolHistory } from '../../../src/client/src/pages/MCPToolsPage/hooks/useToolHistory';
 import { useToolExecution } from '../../../src/client/src/pages/MCPToolsPage/hooks/useToolExecution';
+import { useToolHistory } from '../../../src/client/src/pages/MCPToolsPage/hooks/useToolHistory';
+import { apiService } from '../../../src/client/src/services/api';
 
 // ---------------------------------------------------------------------------
 // Mocks

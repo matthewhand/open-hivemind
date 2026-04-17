@@ -1,16 +1,16 @@
 import 'reflect-metadata';
 import fs from 'fs';
 import { container } from 'tsyringe';
-import { ConnectionManager } from '@src/server/services/websocket/ConnectionManager';
-import { BroadcastService } from '@src/server/services/websocket/BroadcastService';
-import { EventHandlers } from '@src/server/services/websocket/EventHandlers';
-import { WebSocketService } from '@src/server/services/WebSocketService';
-import { StartupGreetingService } from '@src/services/StartupGreetingService';
-import { MetricsCollector } from '@src/monitoring/MetricsCollector';
 import {
   getMessengerProvider,
   resetMessengerProviderCache,
 } from '@src/message/management/getMessengerProvider';
+import { MetricsCollector } from '@src/monitoring/MetricsCollector';
+import { BroadcastService } from '@src/server/services/websocket/BroadcastService';
+import { ConnectionManager } from '@src/server/services/websocket/ConnectionManager';
+import { EventHandlers } from '@src/server/services/websocket/EventHandlers';
+import { WebSocketService } from '@src/server/services/WebSocketService';
+import { StartupGreetingService } from '@src/services/StartupGreetingService';
 
 // Mock WebSocketService
 const mockWebSocketService = {
@@ -40,14 +40,14 @@ jest.mock('@src/monitoring/MetricsCollector', () => {
   };
 });
 
-const { __mockInstance: mockStartupGreetingService } = require('@src/services/StartupGreetingService');
+const {
+  __mockInstance: mockStartupGreetingService,
+} = require('@src/services/StartupGreetingService');
 const { __mockInstance: mockMetricsCollector } = require('@src/monitoring/MetricsCollector');
 
 // Register mocks in container
 container.registerInstance(StartupGreetingService as any, mockStartupGreetingService);
 container.registerInstance(MetricsCollector as any, mockMetricsCollector);
-
-
 
 // Mock Discord Service
 const mockDiscordService = {
@@ -330,8 +330,12 @@ describe('getMessengerProvider additional branch coverage', () => {
       throw new Error(`Unknown plugin: ${name}`);
     });
     instantiateMessageService.mockImplementation((mod: any) => {
-      if (mod?.DiscordService) {return mockDiscordService;}
-      if (mod?.SlackService) {return mockSlackService;}
+      if (mod?.DiscordService) {
+        return mockDiscordService;
+      }
+      if (mod?.SlackService) {
+        return mockSlackService;
+      }
       return null;
     });
     mockFsPromises.readFile.mockResolvedValue(
@@ -350,7 +354,10 @@ describe('getMessengerProvider additional branch coverage', () => {
     mockFsPromises.readFile.mockResolvedValue(
       JSON.stringify({
         MESSAGE_PROVIDER: ['discord', 'slack'],
-        providers: [{ type: 'discord', enabled: true }, { type: 'slack', enabled: true }],
+        providers: [
+          { type: 'discord', enabled: true },
+          { type: 'slack', enabled: true },
+        ],
       }) as any
     );
 
@@ -386,9 +393,7 @@ describe('getMessengerProvider additional branch coverage', () => {
     const first = await getMessengerProvider();
     expect(first.length).toBeGreaterThan(0);
 
-    mockFsPromises.readFile.mockResolvedValueOnce(
-      JSON.stringify({ providers: [] }) as any
-    );
+    mockFsPromises.readFile.mockResolvedValueOnce(JSON.stringify({ providers: [] }) as any);
 
     resetMessengerProviderCache();
     const second = await getMessengerProvider();

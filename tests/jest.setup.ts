@@ -2,10 +2,6 @@ import '@testing-library/jest-dom';
 import 'reflect-metadata';
 import { Server } from 'http';
 import express from 'express';
-import { RealTimeValidationService } from '../src/server/services/RealTimeValidationService';
-import { WebSocketService } from '../src/server/services/WebSocketService';
-import { DatabaseManager } from '../src/database/DatabaseManager';
-import { MessageBus } from '../src/events/MessageBus';
 
 const _polyfillUtil = require('util');
 if (typeof globalThis.TextEncoder === 'undefined') {
@@ -92,21 +88,7 @@ jest.setTimeout(60000);
 let server: Server;
 
 beforeAll((done) => {
-  // Mock services without starting server
-  try {
-    const wsService = WebSocketService.getInstance();
-    wsService.initialize = jest.fn();
-
-    const originalSetupEventHandlers = RealTimeValidationService.prototype.setupEventHandlers;
-    RealTimeValidationService.prototype.setupEventHandlers = jest.fn();
-
-    const validationService = RealTimeValidationService.getInstance();
-    RealTimeValidationService.prototype.setupEventHandlers = originalSetupEventHandlers;
-
-    done();
-  } catch (error) {
-    done();
-  }
+  done();
 });
 
 afterAll((done) => {
@@ -147,33 +129,3 @@ if (!allow) {
   };
 }
 
-// Global Service Cleanup Hooks
-afterEach(async () => {
-  // Reset MessageBus after every test to clear listeners
-  try {
-    MessageBus.getInstance().reset();
-  } catch (err) {
-    // Service might not be initialized
-  }
-});
-
-afterAll(async () => {
-  // Disconnect Database and Shutdown WebSocketService after the full suite
-  try {
-    const db = DatabaseManager.getInstance();
-    if (typeof db.disconnect === 'function') {
-      await db.disconnect();
-    }
-  } catch (err) {
-    // Database might not be configured
-  }
-
-  try {
-    const ws = WebSocketService.getInstance();
-    if (typeof ws.shutdown === 'function') {
-      ws.shutdown();
-    }
-  } catch (err) {
-    // WebSocketService might not be initialized
-  }
-});

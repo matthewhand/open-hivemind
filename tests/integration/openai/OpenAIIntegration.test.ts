@@ -1,3 +1,5 @@
+import { OpenAI } from 'openai';
+
 /**
  * OpenAI Integration Tests
  *
@@ -35,8 +37,6 @@ jest.mock('openai', () => {
     })),
   };
 });
-
-import { OpenAI } from 'openai';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -121,9 +121,7 @@ describe('OpenAI Integration', () => {
     });
 
     it('should propagate errors when model retrieval fails', async () => {
-      mockModelsRetrieve.mockRejectedValue(
-        new Error('Model not found')
-      );
+      mockModelsRetrieve.mockRejectedValue(new Error('Model not found'));
 
       const client = createClient();
       await expect(client.models.retrieve('nonexistent')).rejects.toThrow('Model not found');
@@ -188,7 +186,13 @@ describe('OpenAI Integration', () => {
     it('should handle multi-turn conversation with system message', async () => {
       mockChatCreate.mockResolvedValue({
         ...successResponse,
-        choices: [{ index: 0, message: { role: 'assistant', content: 'The capital is Paris.' }, finish_reason: 'stop' }],
+        choices: [
+          {
+            index: 0,
+            message: { role: 'assistant', content: 'The capital is Paris.' },
+            finish_reason: 'stop',
+          },
+        ],
       });
 
       const client = createClient();
@@ -223,9 +227,7 @@ describe('OpenAI Integration', () => {
       });
 
       expect(response.choices[0].finish_reason).toBe('length');
-      expect(mockChatCreate).toHaveBeenCalledWith(
-        expect.objectContaining({ max_tokens: 1 })
-      );
+      expect(mockChatCreate).toHaveBeenCalledWith(expect.objectContaining({ max_tokens: 1 }));
     });
 
     it('should pass temperature and top_p parameters', async () => {

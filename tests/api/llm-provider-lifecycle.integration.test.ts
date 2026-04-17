@@ -18,7 +18,7 @@ describe('LLM Provider API Integration', () => {
       .set('Origin', 'http://localhost:3000');
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body.data)).toBe(true);
-    
+
     // We should have some default profiles
     if (res.body.data.length > 0) {
       expect(res.body.data[0]).toHaveProperty('key');

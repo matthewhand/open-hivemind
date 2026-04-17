@@ -1,4 +1,8 @@
-import { getSessionKey, refreshSessionKey } from '../../../packages/llm-openwebui/src/sessionManager';
+import { http } from '@hivemind/shared-types';
+import {
+  getSessionKey,
+  refreshSessionKey,
+} from '../../../packages/llm-openwebui/src/sessionManager';
 
 // Silence debug logs during tests
 jest.mock('debug', () => () => jest.fn());
@@ -15,7 +19,6 @@ jest.mock('@hivemind/shared-types', () => {
   };
 });
 
-import { http } from '@hivemind/shared-types';
 const mockedHttp = http as jest.Mocked<typeof http>;
 
 const mockedConfig = {
@@ -46,7 +49,7 @@ jest.mock(
  */
 function loadIsolated() {
   jest.resetModules();
-  
+
   // Re-mock dependencies for the isolated module
   jest.doMock('@hivemind/shared-types', () => ({
     http: {
@@ -67,7 +70,7 @@ function loadIsolated() {
 
   const isolatedHttp = require('@hivemind/shared-types').http;
   const mod = require('../../../packages/llm-openwebui/src/sessionManager');
-  
+
   return { mod, isolatedHttp };
 }
 

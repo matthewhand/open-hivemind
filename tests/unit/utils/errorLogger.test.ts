@@ -1,5 +1,9 @@
+import {
+  BaseHivemindError,
+  ConfigurationError,
+  NetworkError,
+} from '../../../src/types/errorClasses';
 import { ErrorLogger, type ErrorContext } from '../../../src/utils/errorLogger';
-import { BaseHivemindError, NetworkError, ConfigurationError } from '../../../src/types/errorClasses';
 
 describe('ErrorLogger', () => {
   let logger: ErrorLogger;

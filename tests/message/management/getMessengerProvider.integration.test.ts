@@ -1,17 +1,17 @@
 import 'reflect-metadata';
 import path from 'path';
 import { container } from 'tsyringe';
-import { ConnectionManager } from '@src/server/services/websocket/ConnectionManager';
-import { BroadcastService } from '@src/server/services/websocket/BroadcastService';
-import { EventHandlers } from '@src/server/services/websocket/EventHandlers';
-import { WebSocketService } from '@src/server/services/WebSocketService';
-import { StartupGreetingService } from '@src/services/StartupGreetingService';
-import { MetricsCollector } from '@src/monitoring/MetricsCollector';
+import { registerServices } from '@src/di/registration';
 import {
   getMessengerProvider,
   resetMessengerProviderCache,
 } from '@src/message/management/getMessengerProvider';
-import { registerServices } from '@src/di/registration';
+import { MetricsCollector } from '@src/monitoring/MetricsCollector';
+import { BroadcastService } from '@src/server/services/websocket/BroadcastService';
+import { ConnectionManager } from '@src/server/services/websocket/ConnectionManager';
+import { EventHandlers } from '@src/server/services/websocket/EventHandlers';
+import { WebSocketService } from '@src/server/services/WebSocketService';
+import { StartupGreetingService } from '@src/services/StartupGreetingService';
 
 // Mock StartupGreetingService and MetricsCollector
 jest.mock('@src/services/StartupGreetingService', () => {
@@ -34,7 +34,9 @@ jest.mock('@src/monitoring/MetricsCollector', () => {
   };
 });
 
-const { __mockInstance: mockStartupGreetingService } = require('@src/services/StartupGreetingService');
+const {
+  __mockInstance: mockStartupGreetingService,
+} = require('@src/services/StartupGreetingService');
 const { __mockInstance: mockMetricsCollector } = require('@src/monitoring/MetricsCollector');
 
 // Register mocks in container
@@ -104,7 +106,7 @@ describe('getMessengerProvider integration', () => {
 
   it('initializes all configured providers', async () => {
     process.env.MESSAGE_PROVIDER = 'discord,slack';
-    
+
     // Mock fs.readFileSync to return a config with no providers (forces env-only)
     jest.mock('fs', () => ({
       readFileSync: jest.fn(() => JSON.stringify({ providers: [] })),
@@ -113,8 +115,8 @@ describe('getMessengerProvider integration', () => {
 
     const providers = await getMessengerProvider();
     expect(providers.length).toBe(2);
-    
-    const types = providers.map(p => p.provider);
+
+    const types = providers.map((p) => p.provider);
     expect(types).toContain('discord');
     expect(types).toContain('slack');
   });
@@ -122,7 +124,7 @@ describe('getMessengerProvider integration', () => {
   it('handles provider specific settings from environment', async () => {
     process.env.MESSAGE_PROVIDER = 'discord';
     process.env.DISCORD_BOT_TOKEN = 'test-token';
-    
+
     const providers = await getMessengerProvider();
     expect(providers.length).toBe(1);
     expect(providers[0].provider).toBe('discord');

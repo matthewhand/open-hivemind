@@ -93,7 +93,9 @@ describe('ToolExecutionHistoryService', () => {
   // ---- Logging executions ----
 
   it('should log a successful tool execution', async () => {
-    await service.logExecution(entry('exec-1', { toolName: 'get_forecast', serverName: 'weather' }));
+    await service.logExecution(
+      entry('exec-1', { toolName: 'get_forecast', serverName: 'weather' })
+    );
 
     const history = await service.getExecutions();
     expect(history).toHaveLength(1);
@@ -102,11 +104,13 @@ describe('ToolExecutionHistoryService', () => {
   });
 
   it('should log a failed tool execution', async () => {
-    await service.logExecution(entry('exec-2', {
-      status: 'error' as const,
-      error: 'Connection refused',
-      duration: 5000,
-    }));
+    await service.logExecution(
+      entry('exec-2', {
+        status: 'error' as const,
+        error: 'Connection refused',
+        duration: 5000,
+      })
+    );
 
     const history = await service.getExecutions();
     expect(history).toHaveLength(1);
@@ -190,7 +194,9 @@ describe('ToolExecutionHistoryService', () => {
   });
 
   it('should retrieve a single entry by ID', async () => {
-    await service.logExecution(entry('target', { arguments: { key: 'value' }, result: { out: 'ok' } }));
+    await service.logExecution(
+      entry('target', { arguments: { key: 'value' }, result: { out: 'ok' } })
+    );
 
     const execEntry = await service.getExecutionById('target');
     expect(execEntry).not.toBeNull();
@@ -214,7 +220,15 @@ describe('ToolExecutionHistoryService', () => {
   it('should return accurate statistics', async () => {
     await service.logExecution(entry('s1', { serverName: 'srv-a', toolName: 't1', duration: 100 }));
     await service.logExecution(entry('s2', { serverName: 'srv-a', toolName: 't2', duration: 200 }));
-    await service.logExecution(entry('f1', { serverName: 'srv-b', toolName: 't1', status: 'error' as const, error: 'err', duration: 50 }));
+    await service.logExecution(
+      entry('f1', {
+        serverName: 'srv-b',
+        toolName: 't1',
+        status: 'error' as const,
+        error: 'err',
+        duration: 50,
+      })
+    );
 
     const stats = await service.getStats();
 
@@ -251,16 +265,19 @@ describe('ToolExecutionHistoryService', () => {
   it('should load existing history from disk on initialization', async () => {
     // Write a history entry manually
     const historyFile = path.join(tempDir, 'data', 'tool-execution-history.jsonl');
-    fs.writeFileSync(historyFile, JSON.stringify({
-      id: 'preloaded',
-      serverName: 'pre-s',
-      toolName: 'pre-t',
-      arguments: {},
-      result: {},
-      status: 'success',
-      executedAt: '2024-01-01T00:00:00Z',
-      duration: 42,
-    }) + '\n');
+    fs.writeFileSync(
+      historyFile,
+      JSON.stringify({
+        id: 'preloaded',
+        serverName: 'pre-s',
+        toolName: 'pre-t',
+        arguments: {},
+        result: {},
+        status: 'success',
+        executedAt: '2024-01-01T00:00:00Z',
+        duration: 42,
+      }) + '\n'
+    );
 
     resetSingleton();
     const freshService = ToolExecutionHistoryService.getInstance();

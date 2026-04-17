@@ -8,8 +8,8 @@
  * entire service and tested nothing about actual path traversal attacks.
  */
 import path from 'path';
-import { ConfigurationImportExportService } from '../../src/server/services/ConfigurationImportExportService';
 import { BackupManager } from '../../src/server/services/configImportExport/backupManager';
+import { ConfigurationImportExportService } from '../../src/server/services/ConfigurationImportExportService';
 import { PathSecurityUtils } from '../../src/utils/PathSecurityUtils';
 
 // ---------------------------------------------------------------------------
@@ -27,7 +27,9 @@ describe('Import/Export Security', () => {
     it('should strip Unix path traversal sequences via basename', () => {
       expect(PathSecurityUtils.sanitizeFilename('../../../etc/passwd')).toBe('passwd');
       // On Linux, backslashes are NOT path separators, so they're preserved
-      expect(PathSecurityUtils.sanitizeFilename('..\\..\\windows\\system32')).toBe('..\\..\\windows\\system32');
+      expect(PathSecurityUtils.sanitizeFilename('..\\..\\windows\\system32')).toBe(
+        '..\\..\\windows\\system32'
+      );
     });
 
     it('should handle filenames with null bytes (passed through by basename)', () => {

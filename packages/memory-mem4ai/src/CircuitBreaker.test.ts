@@ -1,9 +1,9 @@
 import {
   CircuitBreaker,
-  CircuitBreakerState,
   CircuitBreakerError,
-  getCircuitBreaker,
+  CircuitBreakerState,
   clearCircuitBreakerRegistry,
+  getCircuitBreaker,
   resetAllCircuitBreakers,
 } from './CircuitBreaker';
 
@@ -48,7 +48,9 @@ describe('CircuitBreaker — OPEN state', () => {
   it('rejects immediately when OPEN', async () => {
     const cb = new CircuitBreaker({ name: 'test', failureThreshold: 1, resetTimeoutMs: 60000 });
     await expect(cb.execute(() => Promise.reject(new Error('e')))).rejects.toThrow();
-    await expect(cb.execute(() => Promise.resolve('ok'))).rejects.toBeInstanceOf(CircuitBreakerError);
+    await expect(cb.execute(() => Promise.resolve('ok'))).rejects.toBeInstanceOf(
+      CircuitBreakerError
+    );
   });
 
   it('transitions to HALF_OPEN after resetTimeoutMs', async () => {
@@ -66,7 +68,12 @@ describe('CircuitBreaker — HALF_OPEN state', () => {
   }
 
   it('closes after halfOpenMaxAttempts successes', async () => {
-    const cb = new CircuitBreaker({ name: 'test', failureThreshold: 1, resetTimeoutMs: 5, halfOpenMaxAttempts: 2 });
+    const cb = new CircuitBreaker({
+      name: 'test',
+      failureThreshold: 1,
+      resetTimeoutMs: 5,
+      halfOpenMaxAttempts: 2,
+    });
     await openAndWait(cb, 5);
     await cb.execute(() => Promise.resolve('ok'));
     await cb.execute(() => Promise.resolve('ok'));
@@ -74,7 +81,12 @@ describe('CircuitBreaker — HALF_OPEN state', () => {
   });
 
   it('re-opens on failure in HALF_OPEN', async () => {
-    const cb = new CircuitBreaker({ name: 'test', failureThreshold: 1, resetTimeoutMs: 5, halfOpenMaxAttempts: 3 });
+    const cb = new CircuitBreaker({
+      name: 'test',
+      failureThreshold: 1,
+      resetTimeoutMs: 5,
+      halfOpenMaxAttempts: 3,
+    });
     await openAndWait(cb, 5);
     // Ensure it's in HALF_OPEN by calling it once
     // If it was OPEN, first call after timeout transitions to HALF_OPEN and executes
@@ -84,7 +96,12 @@ describe('CircuitBreaker — HALF_OPEN state', () => {
 
   it('re-opens on failure in HALF_OPEN and then closes after successes', async () => {
     // With halfOpenMaxAttempts=2:
-    const cb = new CircuitBreaker({ name: 'test', failureThreshold: 1, resetTimeoutMs: 1, halfOpenMaxAttempts: 2 });
+    const cb = new CircuitBreaker({
+      name: 'test',
+      failureThreshold: 1,
+      resetTimeoutMs: 1,
+      halfOpenMaxAttempts: 2,
+    });
     await openAndWait(cb);
 
     // 1. Transition to HALF_OPEN by calling it. It fails, so it should go back to OPEN.
@@ -103,7 +120,6 @@ describe('CircuitBreaker — HALF_OPEN state', () => {
     // Since halfOpenMaxAttempts=2, after 2 successes it should CLOSE
     expect(cb.getState()).toBe(CircuitBreakerState.CLOSED);
   });
-
 });
 
 describe('CircuitBreaker stats', () => {

@@ -1,18 +1,19 @@
-import express from 'express';
-import request from 'supertest';
 import { jest } from '@jest/globals';
-import { optionalAuth } from '../src/server/middleware/auth';
-// Import the router after mocks
-import errorsRouter from '../src/server/routes/errors';
 
 // Define mocks before imports that use them
 jest.mock('../src/server/middleware/auth', () => ({
-  optionalAuth: (req, res, next) => next(),
-  authenticateToken: (req, res, next) => {
+  optionalAuth: (req: any, res: any, next: any) => next(),
+  authenticateToken: (req: any, res: any, next: any) => {
     // Simulate auth failure for test
     res.status(401).json({ error: 'Access token required' });
   },
 }));
+
+import express from 'express';
+import request from 'supertest';
+import { optionalAuth } from '../src/server/middleware/auth';
+// Import the router after mocks
+import errorsRouter from '../src/server/routes/errors';
 
 jest.mock('../src/utils/errorLogger', () => {
   return {

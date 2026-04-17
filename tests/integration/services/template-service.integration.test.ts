@@ -1,8 +1,8 @@
-import { ConfigurationTemplateService } from '../../../src/server/services/ConfigurationTemplateService';
-import { registerServices } from '../../../src/di/registration';
-import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
+import * as path from 'path';
+import { registerServices } from '../../../src/di/registration';
+import { ConfigurationTemplateService } from '../../../src/server/services/ConfigurationTemplateService';
 
 describe('ConfigurationTemplateService Integration', () => {
   let service: ConfigurationTemplateService;

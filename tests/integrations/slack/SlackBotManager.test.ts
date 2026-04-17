@@ -1,7 +1,7 @@
-import { SlackBotManager } from '@src/integrations/slack/SlackBotManager';
-import { WebClient } from '@slack/web-api';
-import { SocketModeClient } from '@slack/socket-mode';
 import { RTMClient } from '@slack/rtm-api';
+import { SocketModeClient } from '@slack/socket-mode';
+import { WebClient } from '@slack/web-api';
+import { SlackBotManager } from '@src/integrations/slack/SlackBotManager';
 
 // Silence debug logs during tests
 jest.mock('debug', () => () => jest.fn());
@@ -83,7 +83,7 @@ describe('SlackBotManager', () => {
 
     // Initialize
     await manager.initialize();
-    
+
     // Check that auth.test was called on the web client
     expect(mockAuthTest).toHaveBeenCalled();
     expect(MockSocketModeClient).toHaveBeenCalled();
@@ -103,7 +103,7 @@ describe('SlackBotManager', () => {
     }
 
     // Give some time for async message handling
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(mockHandler).toHaveBeenCalled();
     const handlerCall = mockHandler.mock.calls[0];

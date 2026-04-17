@@ -10,7 +10,11 @@ jest.mock('convict', () =>
       if (key === 'password') return 'pass';
       return '';
     }),
-    getProperties: jest.fn(() => ({ apiUrl: 'https://openwebui.example.com', username: 'user', password: 'pass' })),
+    getProperties: jest.fn(() => ({
+      apiUrl: 'https://openwebui.example.com',
+      username: 'user',
+      password: 'pass',
+    })),
     set: jest.fn(),
     validate: jest.fn(),
   }))
@@ -23,7 +27,10 @@ jest.mock('@hivemind/shared-types', () => {
 
 function mockFetch(body: unknown, status = 200) {
   jest.spyOn(global, 'fetch').mockResolvedValue(
-    new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { 'content-type': 'application/json' },
+    })
   );
 }
 

@@ -1,8 +1,8 @@
 import express from 'express';
 import request from 'supertest';
+import configRouter from '../../src/server/routes/config';
 import healthRouter from '../../src/server/routes/health';
 import sitemapRouter from '../../src/server/routes/sitemap';
-import configRouter from '../../src/server/routes/config';
 
 describe('System Status API Integration', () => {
   let app: express.Application;

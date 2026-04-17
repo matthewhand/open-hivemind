@@ -14,10 +14,7 @@
  * - In-memory module behavior via mocks: save/retrieve, case-insensitive lookup
  * - HTTP GET endpoint response shape
  */
-import {
-  normalizeModelType,
-  isEmbeddingCapableProfile,
-} from '../../src/config/llmProfiles';
+import { isEmbeddingCapableProfile, normalizeModelType } from '../../src/config/llmProfiles';
 
 // ---------------------------------------------------------------------------
 // Pure function tests (no mocking, no file I/O needed)

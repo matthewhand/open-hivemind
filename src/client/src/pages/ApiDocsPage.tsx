@@ -309,7 +309,12 @@ const RouteCard: React.FC<{ route: RouteInfo }> = ({ route }) => {
         <h4 className="font-semibold text-sm mb-2">Live Testing</h4>
 
         <TryItPanel route={route} />
-      </div>
+            </div>
+          ),
+        {']'}
+        {'}'}
+        size="sm"
+      />
     </div>
   );
 };

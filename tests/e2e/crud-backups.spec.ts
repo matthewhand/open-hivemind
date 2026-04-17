@@ -119,9 +119,7 @@ test.describe('Backups Page', () => {
     await page.waitForLoadState('networkidle');
 
     // Should show empty state message
-    await expect(
-      page.getByText(/no backups|create your first/i)
-    ).toBeVisible();
+    await expect(page.getByText(/no backups|create your first/i)).toBeVisible();
   });
 
   test('handles API errors gracefully', async ({ page }) => {
@@ -145,7 +143,7 @@ test.describe('Backups Page', () => {
 
     // Should show encrypted badge for encrypted backup
     const encryptedBadge = page.locator('[class*="badge"]').filter({ hasText: /encrypted/i });
-    if (await encryptedBadge.count() > 0) {
+    if ((await encryptedBadge.count()) > 0) {
       await expect(encryptedBadge.first()).toBeVisible();
     }
   });

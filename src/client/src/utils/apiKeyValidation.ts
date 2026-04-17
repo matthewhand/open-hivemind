@@ -25,12 +25,12 @@ const API_KEY_PATTERNS: Record<string, {
     description: 'Example: sk-abc123...(48 characters total)',
   },
   anthropic: {
-    pattern: /^sk-ant-[A-Za-z0-9\-_]{40,}$/,
+    pattern: /^sk-ant-[A-Za-z0-9\-_]{40 }$/,
     hint: 'Anthropic API keys start with "sk-ant-" followed by 40+ alphanumeric characters, hyphens, or underscores',
     description: 'Example: sk-ant-api03-abc123...',
   },
   discord: {
-    pattern: /^[A-Za-z0-9_\-]{59,}$/,
+    pattern: /^[A-Za-z0-9_\-]{59 }$/,
     hint: 'Discord bot tokens are typically 59+ characters containing letters, numbers, underscores, and hyphens',
     description: 'Example: MTk4NzA1MDMyMzU5...(long token)',
   },

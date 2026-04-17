@@ -9,7 +9,10 @@
  * and never executed a single assertion.
  */
 import type { Request, Response } from 'express';
-import { verifyIpWhitelist, verifyWebhookToken } from '../../../src/webhook/security/webhookSecurity';
+import {
+  verifyIpWhitelist,
+  verifyWebhookToken,
+} from '../../../src/webhook/security/webhookSecurity';
 
 // ---------------------------------------------------------------------------
 // Mock webhook config with per-test overrides

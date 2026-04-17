@@ -2,7 +2,7 @@
  * Performance benchmarks for Map-based lookup optimizations.
  * Verifies the claimed ~60x improvement for collections of ~1000 items.
  */
-import { describe, test, expect } from '@jest/globals';
+import { describe, expect, test } from '@jest/globals';
 
 // Simulate the Map-based vs Array-based lookup patterns
 const COLLECTION_SIZE = 1000;

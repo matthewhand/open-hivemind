@@ -1,6 +1,8 @@
 import 'reflect-metadata';
 import path from 'path';
 import { WebSocketService } from '@src/server/services/WebSocketService';
+import { registerServices } from '../../../src/di/registration';
+import { getMessengerProvider } from '../../../src/message/management/getMessengerProvider';
 
 // Mock WebSocketService
 const mockWebSocketService = {
@@ -71,21 +73,22 @@ jest.mock('../../../src/server/services/websocket', () => {
     __esModule: true,
     WebSocketService: {
       getInstance: jest.fn(() => ({
-        broadcastBotStatus: (...args: any[]) => (global as any).mockWSFunctions.broadcastBotStatus(...args),
-        broadcastConfigChange: (...args: any[]) => (global as any).mockWSFunctions.broadcastConfigChange(...args),
+        broadcastBotStatus: (...args: any[]) =>
+          (global as any).mockWSFunctions.broadcastBotStatus(...args),
+        broadcastConfigChange: (...args: any[]) =>
+          (global as any).mockWSFunctions.broadcastConfigChange(...args),
       })),
     },
     default: {
       getInstance: jest.fn(() => ({
-        broadcastBotStatus: (...args: any[]) => (global as any).mockWSFunctions.broadcastBotStatus(...args),
-        broadcastConfigChange: (...args: any[]) => (global as any).mockWSFunctions.broadcastConfigChange(...args),
+        broadcastBotStatus: (...args: any[]) =>
+          (global as any).mockWSFunctions.broadcastBotStatus(...args),
+        broadcastConfigChange: (...args: any[]) =>
+          (global as any).mockWSFunctions.broadcastConfigChange(...args),
       })),
     },
   };
 });
-
-import { getMessengerProvider } from '../../../src/message/management/getMessengerProvider';
-import { registerServices } from '../../../src/di/registration';
 
 describe('getMessengerProvider filtering', () => {
   const ORIGINAL_ENV = { ...process.env };

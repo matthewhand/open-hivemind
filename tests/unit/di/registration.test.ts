@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { container } from 'tsyringe';
-import { registerServices, areServicesRegistered, TOKENS } from '../../../src/di/registration';
+import { areServicesRegistered, registerServices, TOKENS } from '../../../src/di/registration';
 
 // Mock all singleton services to prevent real initialization
 jest.mock('../../../src/config/ConfigurationManager', () => ({

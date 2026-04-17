@@ -8,13 +8,13 @@ describe('Memory Provider Functional Integration', () => {
   const mem0Options = {
     apiKey: 'fake-key',
     baseUrl: 'http://localhost:1234',
-    userId: 'u1'
+    userId: 'u1',
   };
 
   const mem4aiOptions = {
     apiKey: 'fake-key',
     apiUrl: 'http://localhost:5678',
-    userId: 'u1'
+    userId: 'u1',
   };
 
   it('should instantiate Mem0Provider with real schema validation', () => {

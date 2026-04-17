@@ -1,5 +1,5 @@
-import request from 'supertest';
 import express from 'express';
+import request from 'supertest';
 import mcpProvidersRouter from '../../../src/server/routes/mcp/providers';
 
 // Mock MCPProviderManager
@@ -15,9 +15,9 @@ jest.mock('../../../src/config/MCPProviderManager', () => {
         provider1: { id: 'provider1', status: 'running', lastCheck: new Date() },
         provider2: { id: 'provider2', status: 'stopped', lastCheck: new Date() },
       }),
-      getTemplates: jest.fn().mockReturnValue([
-        { id: 'template1', name: 'Template 1', description: 'Test template' },
-      ]),
+      getTemplates: jest
+        .fn()
+        .mockReturnValue([{ id: 'template1', name: 'Template 1', description: 'Test template' }]),
       getStats: jest.fn().mockReturnValue({
         total: 2,
         enabled: 1,
@@ -35,14 +35,18 @@ jest.mock('../../../src/config/MCPProviderManager', () => {
         lastCheck: new Date(),
       })),
       addProvider: jest.fn().mockImplementation((config: any) => Promise.resolve()),
-      createProvider: jest.fn().mockImplementation((config: any) => Promise.resolve({
-        id: 'new-provider',
-        ...config,
-      })),
-      updateProvider: jest.fn().mockImplementation((id: string, config: any) => Promise.resolve({
-        id,
-        ...config,
-      })),
+      createProvider: jest.fn().mockImplementation((config: any) =>
+        Promise.resolve({
+          id: 'new-provider',
+          ...config,
+        })
+      ),
+      updateProvider: jest.fn().mockImplementation((id: string, config: any) =>
+        Promise.resolve({
+          id,
+          ...config,
+        })
+      ),
       removeProvider: jest.fn().mockResolvedValue(undefined),
       deleteProvider: jest.fn().mockResolvedValue(undefined),
       startProvider: jest.fn().mockResolvedValue(true),
@@ -54,7 +58,7 @@ jest.mock('../../../src/config/MCPProviderManager', () => {
         status: 'running',
         lastCheck: new Date(),
       })),
-    }
+    },
   };
 });
 
@@ -130,17 +134,13 @@ describe('MCP Providers Router', () => {
         enabled: true,
       };
 
-      const res = await request(app)
-        .post('/api/mcp/providers')
-        .send(newProvider);
+      const res = await request(app).post('/api/mcp/providers').send(newProvider);
 
       expect(res.status).toBe(400); // Validation fails in test setup
     });
 
     it('should return 400 for invalid provider data', async () => {
-      const res = await request(app)
-        .post('/api/mcp/providers')
-        .send({});
+      const res = await request(app).post('/api/mcp/providers').send({});
 
       expect(res.status).toBe(400);
     });
@@ -150,9 +150,7 @@ describe('MCP Providers Router', () => {
     it('should update an existing provider', async () => {
       const updates = { name: 'Updated Provider', enabled: false };
 
-      const res = await request(app)
-        .put('/api/mcp/providers/provider1')
-        .send(updates);
+      const res = await request(app).put('/api/mcp/providers/provider1').send(updates);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);

@@ -7,8 +7,8 @@
  * The MattermostClient is mocked at the module boundary so the real
  * MattermostService executes its actual logic paths.
  */
-import { MattermostService } from '@src/integrations/mattermost/MattermostService';
 import BotConfigurationManager from '@src/config/BotConfigurationManager';
+import { MattermostService } from '@src/integrations/mattermost/MattermostService';
 
 // ---------------------------------------------------------------------------
 // Mock boundaries — only the client and config manager, NOT the service itself
@@ -101,7 +101,11 @@ describe('MattermostService', () => {
     configureMockBots([
       validBot('valid-bot'),
       { name: 'no-url-bot', messageProvider: 'mattermost', mattermost: { token: 'tok' } },
-      { name: 'no-token-bot', messageProvider: 'mattermost', mattermost: { serverUrl: 'https://x' } },
+      {
+        name: 'no-token-bot',
+        messageProvider: 'mattermost',
+        mattermost: { serverUrl: 'https://x' },
+      },
       { name: 'discord-bot', messageProvider: 'discord' },
     ]);
     const service = MattermostService.getInstance();
@@ -123,7 +127,8 @@ describe('MattermostService', () => {
     failingClient.connect.mockRejectedValueOnce(new Error('ENOTFOUND'));
 
     const workingClient = createMockClient();
-    jest.requireMock('../../../packages/message-mattermost/src/mattermostClient')
+    jest
+      .requireMock('../../../packages/message-mattermost/src/mattermostClient')
       .mockImplementationOnce(() => failingClient)
       .mockImplementationOnce(() => workingClient);
 
@@ -158,7 +163,13 @@ describe('MattermostService', () => {
   it('should send a reply in a thread when replyToMessageId is provided', async () => {
     configureMockBots([validBot('thread-bot')]);
     const service = MattermostService.getInstance();
-    const postId = await service.sendMessageToChannel('general', 'Reply text', undefined, undefined, 'parent-123');
+    const postId = await service.sendMessageToChannel(
+      'general',
+      'Reply text',
+      undefined,
+      undefined,
+      'parent-123'
+    );
     // Should return a post id from the mocked client
     expect(postId).toBe('post-abc');
   });

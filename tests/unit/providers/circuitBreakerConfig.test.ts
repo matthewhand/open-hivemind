@@ -7,17 +7,14 @@
  * that many failures (not the default of 5).
  */
 
+import * as sharedTypes from '@hivemind/shared-types';
 import { Mem0Provider } from '../../../packages/memory-mem0/src/Mem0Provider';
 import {
-  resetAllCircuitBreakers as resetAllMem4aiCircuitBreakers,
   CircuitBreakerError as Mem4aiCircuitBreakerError,
+  resetAllCircuitBreakers as resetAllMem4aiCircuitBreakers,
 } from '../../../packages/memory-mem4ai/src/CircuitBreaker';
 import { Mem4aiProvider } from '../../../packages/memory-mem4ai/src/Mem4aiProvider';
-import {
-  CircuitBreakerError,
-  resetAllCircuitBreakers,
-} from '../../../src/common/CircuitBreaker';
-import * as sharedTypes from '@hivemind/shared-types';
+import { CircuitBreakerError, resetAllCircuitBreakers } from '../../../src/common/CircuitBreaker';
 
 // Mock isSafeUrl so injected test URLs don't trigger SSRF guard failures
 jest.mock('@hivemind/shared-types', () => {
@@ -50,7 +47,7 @@ beforeEach(() => {
   resetAllMem4aiCircuitBreakers();
   fetchMock = jest.fn();
   global.fetch = fetchMock;
-  
+
   // Ensure isSafeUrl mock is set up correctly for every test
   (sharedTypes.isSafeUrl as jest.Mock).mockResolvedValue({ safe: true });
 });
@@ -87,7 +84,7 @@ describe('Mem0Provider injectable circuit breaker config', () => {
     // Second failure - this should trip the circuit breaker
     await expect(provider.search('q')).rejects.toThrow();
     expect(fetchMock).toHaveBeenCalledTimes(2);
-    
+
     // Third call should be rejected by the circuit breaker itself (fetch NOT called)
     await expect(provider.search('q')).rejects.toThrow(CircuitBreakerError);
     expect(fetchMock).toHaveBeenCalledTimes(2);

@@ -1,7 +1,7 @@
 import express from 'express';
 import request from 'supertest';
-import hotReloadRouter from '../../src/server/routes/hotReload';
 import { HotReloadManager } from '../../src/config/HotReloadManager';
+import hotReloadRouter from '../../src/server/routes/hotReload';
 
 describe('Hot Reload API Integration', () => {
   let app: express.Application;
@@ -18,7 +18,7 @@ describe('Hot Reload API Integration', () => {
       .post('/api/hot-reload')
       .set('Origin', 'http://localhost:3000')
       .send({});
-    
+
     expect(res.status).toBe(400);
     expect(res.body.error).toContain('Validation failed');
   });
@@ -30,9 +30,9 @@ describe('Hot Reload API Integration', () => {
       .send({
         type: 'update',
         botName: 'test-bot',
-        changes: {}
+        changes: {},
       });
-    
+
     expect(res.status).toBe(400);
     expect(JSON.stringify(res.body)).toContain('At least one change');
   });

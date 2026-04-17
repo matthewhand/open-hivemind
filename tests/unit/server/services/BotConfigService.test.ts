@@ -1,5 +1,5 @@
-import { BotConfigService } from '../../../../src/server/services/BotConfigService';
 import { DatabaseManager } from '../../../../src/database/DatabaseManager';
+import { BotConfigService } from '../../../../src/server/services/BotConfigService';
 import { ConfigurationError } from '../../../../src/types/errorClasses';
 
 // Use a shared mock object for database
@@ -24,14 +24,18 @@ jest.mock('../../../../src/database/DatabaseManager', () => {
         isConfigured: () => true,
         configured: true, // Internal property used by some methods
         ensureConnected: () => {}, // Method used by repositories
-        getBotConfigurationByName: (name: string) => (global as any).mockDb.getBotConfigurationByName(name),
+        getBotConfigurationByName: (name: string) =>
+          (global as any).mockDb.getBotConfigurationByName(name),
         createBotConfiguration: (data: any) => (global as any).mockDb.createBotConfiguration(data),
         getBotConfiguration: (id: any) => (global as any).mockDb.getBotConfiguration(id),
-        getBotConfigurationVersions: (id: any) => (global as any).mockDb.getBotConfigurationVersions(id),
+        getBotConfigurationVersions: (id: any) =>
+          (global as any).mockDb.getBotConfigurationVersions(id),
         getBotConfigurationAudit: (id: any) => (global as any).mockDb.getBotConfigurationAudit(id),
-        createBotConfigurationAudit: (data: any) => (global as any).mockDb.createBotConfigurationAudit(data),
+        createBotConfigurationAudit: (data: any) =>
+          (global as any).mockDb.createBotConfigurationAudit(data),
         getAllBotConfigurations: () => (global as any).mockDb.getAllBotConfigurations(),
-        updateBotConfiguration: (id: any, data: any) => (global as any).mockDb.updateBotConfiguration(id, data),
+        updateBotConfiguration: (id: any, data: any) =>
+          (global as any).mockDb.updateBotConfiguration(id, data),
         deleteBotConfiguration: (id: any) => (global as any).mockDb.deleteBotConfiguration(id),
       })),
     },
@@ -49,28 +53,44 @@ describe('BotConfigService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Create a mock instance
     const mockDbManager = {
       isConfigured: jest.fn().mockReturnValue(true),
       configured: true,
       ensureConnected: jest.fn(),
-      getBotConfigurationByName: jest.fn((name: string) => (global as any).mockDb.getBotConfigurationByName(name)),
-      createBotConfiguration: jest.fn((data: any) => (global as any).mockDb.createBotConfiguration(data)),
+      getBotConfigurationByName: jest.fn((name: string) =>
+        (global as any).mockDb.getBotConfigurationByName(name)
+      ),
+      createBotConfiguration: jest.fn((data: any) =>
+        (global as any).mockDb.createBotConfiguration(data)
+      ),
       getBotConfiguration: jest.fn((id: any) => (global as any).mockDb.getBotConfiguration(id)),
-      getBotConfigurationVersions: jest.fn((id: any) => (global as any).mockDb.getBotConfigurationVersions(id)),
-      getBotConfigurationAudit: jest.fn((id: any) => (global as any).mockDb.getBotConfigurationAudit(id)),
-      createBotConfigurationAudit: jest.fn((data: any) => (global as any).mockDb.createBotConfigurationAudit(data)),
+      getBotConfigurationVersions: jest.fn((id: any) =>
+        (global as any).mockDb.getBotConfigurationVersions(id)
+      ),
+      getBotConfigurationAudit: jest.fn((id: any) =>
+        (global as any).mockDb.getBotConfigurationAudit(id)
+      ),
+      createBotConfigurationAudit: jest.fn((data: any) =>
+        (global as any).mockDb.createBotConfigurationAudit(data)
+      ),
       getAllBotConfigurations: jest.fn(() => (global as any).mockDb.getAllBotConfigurations()),
-      getAllBotConfigurationsWithDetails: jest.fn(() => (global as any).mockDb.getAllBotConfigurations()),
-      updateBotConfiguration: jest.fn((id: any, data: any) => (global as any).mockDb.updateBotConfiguration(id, data)),
-      deleteBotConfiguration: jest.fn((id: any) => (global as any).mockDb.deleteBotConfiguration(id)),
+      getAllBotConfigurationsWithDetails: jest.fn(() =>
+        (global as any).mockDb.getAllBotConfigurations()
+      ),
+      updateBotConfiguration: jest.fn((id: any, data: any) =>
+        (global as any).mockDb.updateBotConfiguration(id, data)
+      ),
+      deleteBotConfiguration: jest.fn((id: any) =>
+        (global as any).mockDb.deleteBotConfiguration(id)
+      ),
     };
 
     // Spy on getInstance and return our mock
     jest.spyOn(DatabaseManager, 'getInstance').mockReturnValue({
       ...mockDbManager,
-      isConfigured: () => true
+      isConfigured: () => true,
     } as any);
 
     BotConfigService.resetInstance();
@@ -91,7 +111,7 @@ describe('BotConfigService', () => {
       messageProvider: 'discord',
       llmProvider: 'openai',
       openai: { apiKey: 'test-key' },
-      discord: { botToken: 'test-token' }
+      discord: { botToken: 'test-token' },
     };
 
     it('should create a bot configuration successfully', async () => {
@@ -101,7 +121,10 @@ describe('BotConfigService', () => {
     });
 
     it('should throw when bot name already exists', async () => {
-      (global as any).mockDb.getBotConfigurationByName.mockResolvedValue({ id: 1, name: 'test-bot' });
+      (global as any).mockDb.getBotConfigurationByName.mockResolvedValue({
+        id: 1,
+        name: 'test-bot',
+      });
 
       await expect(service.createBotConfig(validConfig as any)).rejects.toThrow(
         "Bot configuration with name 'test-bot' already exists"

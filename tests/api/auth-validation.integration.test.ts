@@ -26,7 +26,7 @@ describe('Auth Validation Integration', () => {
       const res = await request(app).post('/auth/register').send({
         username: 'a', // Too short
         password: '123', // Too short
-        email: 'test@example.com'
+        email: 'test@example.com',
       });
       expect(res.status).toBe(400);
       expect(res.body.code).toBe('VALIDATION_ERROR');
@@ -37,7 +37,7 @@ describe('Auth Validation Integration', () => {
       const res = await request(app).post('/auth/register').send({
         username: 'validuser',
         password: 'ValidPassword123!',
-        email: 'not-an-email'
+        email: 'not-an-email',
       });
       expect(res.status).toBe(400);
       expect(res.body.code).toBe('VALIDATION_ERROR');

@@ -170,8 +170,20 @@ test.describe('Specs Page Filtering', () => {
         json: {
           success: true,
           data: [
-            { id: '1', topic: 'Alpha Feature', tags: [], author: 'test', timestamp: new Date().toISOString() },
-            { id: '2', topic: 'Beta Feature', tags: [], author: 'test', timestamp: new Date().toISOString() },
+            {
+              id: '1',
+              topic: 'Alpha Feature',
+              tags: [],
+              author: 'test',
+              timestamp: new Date().toISOString(),
+            },
+            {
+              id: '2',
+              topic: 'Beta Feature',
+              tags: [],
+              author: 'test',
+              timestamp: new Date().toISOString(),
+            },
           ],
         },
       });
@@ -195,8 +207,20 @@ test.describe('Specs Page Filtering', () => {
         json: {
           success: true,
           data: [
-            { id: '1', topic: 'Spec A', tags: ['important'], author: 'test', timestamp: new Date().toISOString() },
-            { id: '2', topic: 'Spec B', tags: ['optional'], author: 'test', timestamp: new Date().toISOString() },
+            {
+              id: '1',
+              topic: 'Spec A',
+              tags: ['important'],
+              author: 'test',
+              timestamp: new Date().toISOString(),
+            },
+            {
+              id: '2',
+              topic: 'Spec B',
+              tags: ['optional'],
+              author: 'test',
+              timestamp: new Date().toISOString(),
+            },
           ],
         },
       });
@@ -221,7 +245,12 @@ test.describe('Specs Page Accessibility', () => {
 
     await page.route('**/api/specs', async (route) => {
       await route.fulfill({
-        json: { success: true, data: [{ id: '1', topic: 'Test', tags: [], author: 'a', timestamp: new Date().toISOString() }] },
+        json: {
+          success: true,
+          data: [
+            { id: '1', topic: 'Test', tags: [], author: 'a', timestamp: new Date().toISOString() },
+          ],
+        },
       });
     });
 

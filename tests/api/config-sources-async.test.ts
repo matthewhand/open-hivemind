@@ -8,10 +8,10 @@
  * error coverage. The old file's name promised "Performance Optimization"
  * but contained no timing, throughput, or memory assertions.
  */
-import express from 'express';
-import request from 'supertest';
 import fs from 'fs';
 import path from 'path';
+import express from 'express';
+import request from 'supertest';
 import configRouter from '../../src/server/routes/config';
 
 // ---------------------------------------------------------------------------
@@ -165,7 +165,11 @@ describe('GET /api/config/sources', () => {
   it('should return empty envVars when no matching env vars exist', async () => {
     // Clear all matching env vars
     Object.keys(process.env).forEach((key) => {
-      if (/^(BOTS_|DISCORD_|SLACK_|OPENAI_|FLOWISE_|OPENWEBUI_|MATTERMOST_|MESSAGE_|WEBHOOK_)/.test(key)) {
+      if (
+        /^(BOTS_|DISCORD_|SLACK_|OPENAI_|FLOWISE_|OPENWEBUI_|MATTERMOST_|MESSAGE_|WEBHOOK_)/.test(
+          key
+        )
+      ) {
         delete process.env[key];
       }
     });
