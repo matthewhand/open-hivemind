@@ -150,7 +150,13 @@ export class DatabaseManager {
           await fs.mkdir(dbDir, { recursive: true });
         }
 
-        this.db = new Database(dbPath);
+        if (process.env.NODE_ENV === 'test') {
+          const mockExport = require('../../tests/mocks/sqlite3');
+          const MockDatabase = mockExport.default || mockExport;
+          this.db = new MockDatabase.Database(dbPath);
+        } else {
+          this.db = new Database(dbPath);
+        }
 
         await this.createTables();
         await this.createIndexes();

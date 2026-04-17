@@ -49,8 +49,8 @@ export class BotConfigRepository {
           config.openwebui,
           config.openswarm,
           config.isActive ? 1 : 0,
-          config.createdAt.toISOString(),
-          config.updatedAt.toISOString(),
+          (config.createdAt || new Date()).toISOString(),
+          (config.updatedAt || new Date()).toISOString(),
           config.createdBy,
           config.updatedBy,
         ]
@@ -286,7 +286,7 @@ export class BotConfigRepository {
       }
       if (config.updatedAt !== undefined) {
         updateFields.push('updatedAt = ?');
-        values.push(config.updatedAt.toISOString());
+        values.push((config.updatedAt || new Date()).toISOString());
       }
       if (config.updatedBy !== undefined) {
         updateFields.push('updatedBy = ?');
@@ -371,7 +371,7 @@ export class BotConfigRepository {
           version.openwebui,
           version.openswarm,
           version.isActive ? 1 : 0,
-          version.createdAt.toISOString(),
+          (version.createdAt || new Date()).toISOString(),
           version.createdBy,
           version.changeLog,
         ]
@@ -557,7 +557,7 @@ export class BotConfigRepository {
           audit.oldValues,
           audit.newValues,
           audit.performedBy,
-          audit.performedAt.toISOString(),
+          (audit.performedAt || new Date()).toISOString(),
           audit.ipAddress,
           audit.userAgent,
         ]

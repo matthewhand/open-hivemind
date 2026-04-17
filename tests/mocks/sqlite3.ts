@@ -86,8 +86,8 @@ class MockDatabase {
           openwebui: args[12],
           openswarm: args[13],
           isActive: args[14],
-          createdAt: normalizeDate(args[15]),
-          updatedAt: normalizeDate(args[16]),
+          createdAt: normalizeDate(args[15] || new Date()),
+          updatedAt: normalizeDate(args[16] || new Date()),
           createdBy: args[17],
           updatedBy: args[18],
         };
