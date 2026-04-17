@@ -44,19 +44,19 @@ export class MemoryStoreWithCleanup {
     }
   }
 
-  async increment(key: string): Promise<{ totalHits: number; resetTime: number }> {
+  async increment(key: string): Promise<{ totalHits: number; resetTime: Date }> {
     const now = Date.now();
     const existing = this.hits.get(key);
 
     if (existing && now < existing.resetTime) {
       existing.count++;
-      return { totalHits: existing.count, resetTime: existing.resetTime };
+      return { totalHits: existing.count, resetTime: new Date(existing.resetTime) };
     }
 
     const resetTime = now + this.windowMs;
     const newData = { count: 1, resetTime };
     this.hits.set(key, newData);
-    return { totalHits: 1, resetTime };
+    return { totalHits: 1, resetTime: new Date(resetTime) };
   }
 
   async decrement(key: string): Promise<void> {

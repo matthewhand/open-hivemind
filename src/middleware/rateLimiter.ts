@@ -128,18 +128,18 @@ export async function createBotRateLimiter(
       keyGenerator: (req: Request) => `${getClientKey(req)}:${botName}`,
       skip: shouldSkipRateLimit,
       handler: (
-        req: Request & { rateLimit?: { resetTime?: number; limit?: number } },
+        req: Request & { rateLimit?: { resetTime?: Date; limit?: number } },
         res: Response
       ) => {
         const retryAfter = req.rateLimit?.resetTime
-          ? Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000)
+          ? Math.ceil((req.rateLimit.resetTime.getTime() - Date.now()) / 1000)
           : Math.ceil(settings.windowMs / 1000);
 
         res.setHeader('Retry-After', String(retryAfter));
         res.setHeader('X-RateLimit-Limit', String(settings.maxRequests));
         res.setHeader('X-RateLimit-Remaining', '0');
         if (req.rateLimit?.resetTime)
-          res.setHeader('X-RateLimit-Reset', String(req.rateLimit.resetTime));
+          res.setHeader('X-RateLimit-Reset', String(req.rateLimit.resetTime.getTime()));
 
         res.status(429).json({
           error: 'Too many requests',

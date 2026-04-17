@@ -96,7 +96,7 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'echo "Start server manually with: ALLOW_TEST_BYPASS=true npm run start:dev" && exit 1',
+    command: 'ALLOW_TEST_BYPASS=true npm run start:dev',
     url: 'http://localhost:3028',
     reuseExistingServer: true,
     timeout: 180 * 1000,
