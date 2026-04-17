@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   closestCenter,
   DndContext,
@@ -66,7 +66,8 @@ interface SortableProviderCardProps {
   onToggleActive: (id: string, isActive: boolean) => void;
 }
 
-const SortableProviderCard: React.FC<SortableProviderCardProps> = ({
+// ⚡ Bolt Optimization: Added React.memo() to prevent unnecessary re-renders of list items when parent state changes.
+const SortableProviderCard: React.FC<SortableProviderCardProps> = React.memo(({
   provider,
   onEdit,
   onDelete,
@@ -149,7 +150,7 @@ const SortableProviderCard: React.FC<SortableProviderCardProps> = ({
       </Card>
     </div>
   );
-};
+});
 
 const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
   apiEndpoint,
@@ -188,7 +189,8 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
     })
   );
 
-  const fetchProviders = async () => {
+  // ⚡ Bolt Optimization: Memoized parent callbacks and arrays so SortableProviderCard gets stable props.
+  const fetchProviders = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -199,11 +201,11 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [apiEndpoint, title]);
 
   useEffect(() => {
     fetchProviders();
-  }, [apiEndpoint]);
+  }, [fetchProviders]);
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -228,17 +230,17 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
     }
   };
 
-  const handleOpenDialog = (provider?: ProviderItem) => {
+  const handleOpenDialog = useCallback((provider?: ProviderItem) => {
     setEditingProvider(provider || null);
     setFormData(provider?.config || {});
     setOpenDialog(true);
-  };
+  }, []);
 
-  const handleCloseDialog = () => {
+  const handleCloseDialog = useCallback(() => {
     setOpenDialog(false);
     setEditingProvider(null);
     setFormData({});
-  };
+  }, []);
 
   const handleSaveProvider = async () => {
     try {
@@ -274,7 +276,7 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
     }
   };
 
-  const handleDeleteProvider = async (providerId: string) => {
+  const handleDeleteProvider = useCallback(async (providerId: string) => {
     setConfirmModal({
       isOpen: true,
       title: 'Delete Provider',
@@ -299,9 +301,9 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
         }
       },
     });
-  };
+  }, [apiEndpoint, fetchProviders]);
 
-  const handleToggleActive = async (providerId: string, isActive: boolean) => {
+  const handleToggleActive = useCallback(async (providerId: string, isActive: boolean) => {
     try {
       await apiService.post(`${apiEndpoint}/${providerId}/toggle`, { isActive });
 
@@ -313,12 +315,15 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
         type: 'error',
       });
     }
-  };
+  }, [apiEndpoint, fetchProviders]);
 
-  const activeProviderDocs = React.useMemo(() => {
+  const activeProviderDocs = useMemo(() => {
     const currentType = formData.type || editingProvider?.type;
     return providerTypeOptions.find((o) => o.value === currentType)?.docsUrl;
   }, [formData.type, editingProvider?.type, providerTypeOptions]);
+
+  // ⚡ Bolt Optimization: Memoize the derived array to prevent SortableContext from remounting or causing re-renders
+  const providerIds = useMemo(() => providers.map((p) => p.id), [providers]);
 
   if (loading) {
     return (
@@ -366,7 +371,7 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext
-            items={providers.map((p) => p.id)}
+            items={providerIds}
             strategy={verticalListSortingStrategy}
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

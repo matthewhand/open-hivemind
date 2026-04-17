@@ -22,3 +22,7 @@
 ## 2024-05-22 - Dashboard Bot Status Lookups
 **Learning:** `Dashboard.tsx` was rendering a list of bots and calling `status?.bots?.find()` for every bot in the `.map()` loop, making the rendering loop $O(N \times M)$ complexity.
 **Action:** When rendering lists in React components that require correlated data, never use `.find()` inside the `.map()`. Pre-compute a lookup Map using `useMemo` to achieve O(1) lookups and bring the rendering complexity down to $O(N + M)$.
+
+## 2024-05-23 - Complete Memoization of Context-Derived Lists
+**Learning:** Adding `React.memo` to a list item (like `SortableProviderCard`) isn't enough if the parent component passes down unmemoized callbacks or if derived arrays used for context (like `providers.map(p => p.id)` for `SortableContext`) are recreated on every render. This forces unnecessary re-renders of $O(N)$ list items on any unrelated parent state update.
+**Action:** Always ensure that `React.memo` list items receive stable props by wrapping parent handlers in `useCallback` and derived arrays or data structures passed down to contexts/lists in `useMemo`.
