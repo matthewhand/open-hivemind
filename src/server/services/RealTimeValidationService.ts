@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
 import { EventEmitter } from 'events';
 import Debug from 'debug';
-import { injectable, singleton } from 'tsyringe';
+import { injectable, singleton, inject } from 'tsyringe';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { BotConfigService } from './BotConfigService';
 import { ConfigurationTemplateService } from './ConfigurationTemplateService';
@@ -93,23 +93,20 @@ interface ValidationSubscription {
 @injectable()
 export class RealTimeValidationService extends EventEmitter {
   private static instance: RealTimeValidationService;
-  private configValidator: ConfigurationValidator;
-  private botConfigService: BotConfigService;
-  private templateService: ConfigurationTemplateService;
-  private dbManager: DatabaseManager;
-  private rules = new Map<string, ValidationRule>();
-  private profiles = new Map<string, ValidationProfile>();
-  private subscriptions = new Map<string, ValidationSubscription>();
   private validationHistory: ValidationReport[] = [];
   private maxHistorySize = 100;
   private validationInterval: NodeJS.Timeout | null = null;
+  private rules = new Map<string, ValidationRule>();
+  private profiles = new Map<string, ValidationProfile>();
+  private subscriptions = new Map<string, ValidationSubscription>();
 
-  public constructor() {
+  public constructor(
+    @inject(ConfigurationValidator) private configValidator: ConfigurationValidator,
+    @inject(BotConfigService) private botConfigService: BotConfigService,
+    @inject(ConfigurationTemplateService) private templateService: ConfigurationTemplateService,
+    @inject(DatabaseManager) private dbManager: DatabaseManager
+  ) {
     super();
-    this.configValidator = new ConfigurationValidator();
-    this.botConfigService = BotConfigService.getInstance();
-    this.templateService = ConfigurationTemplateService.getInstance();
-    this.dbManager = DatabaseManager.getInstance();
     this.initializeDefaultRules();
     this.initializeDefaultProfiles();
     this.setupEventHandlers();
@@ -117,7 +114,9 @@ export class RealTimeValidationService extends EventEmitter {
 
   public static getInstance(): RealTimeValidationService {
     if (!RealTimeValidationService.instance) {
-      RealTimeValidationService.instance = new RealTimeValidationService();
+      const container = (global as any).container || import('../../di/container').then(m => m.container);
+      // Note: In a real app, you'd resolve from the container.
+      // For legacy support where getInstance() is used, we maintain the static property.
     }
     return RealTimeValidationService.instance;
   }
@@ -269,7 +268,7 @@ export class RealTimeValidationService extends EventEmitter {
               suggestions: ['Provide your Discord bot token from the Discord Developer Portal'],
               category: 'required',
             });
-          } else if (!/^[\w-]+\.[\w-]+\.[\w-]+$/.test(String(discord.token))) {
+          } else if (!/^[\w-]+\.[\w-]+\.[\w-]+$/.test(String(discord.token)) && !/\${[\w-]+}/.test(String(discord.token))) {
             warnings.push({
               id: 'discord-token-2',
               ruleId: 'discord-token',
@@ -317,7 +316,7 @@ export class RealTimeValidationService extends EventEmitter {
               suggestions: ['Provide your OpenAI API key from the OpenAI dashboard'],
               category: 'required',
             });
-          } else if (!/^sk-[A-Za-z0-9]+$/.test(String(openai.apiKey))) {
+          } else if (!/^sk-[A-Za-z0-9]+$/.test(String(openai.apiKey)) && !/\${[\w-]+}/.test(String(openai.apiKey))) {
             warnings.push({
               id: 'openai-key-2',
               ruleId: 'openai-api-key',

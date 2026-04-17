@@ -17,7 +17,10 @@ module.exports = {
   testEnvironment: 'node',
   // testTimeout handled in setup files to avoid CLI conflicts
   transform: {
-    '^.+\.tsx?$': 'babel-jest',
+    '^.+\.tsx?$': ['ts-jest', {
+      tsconfig: 'tsconfig.json',
+      isolatedModules: true,
+    }],
     '^.+\.jsx?$': 'babel-jest',
     '^.+\.js$': 'babel-jest',
   },

@@ -32,6 +32,7 @@ export class ConfigLoader {
       const blockedCommands = [
         'sh', 'bash', 'zsh', 'dash', 'csh', 'ksh', 'tcsh',
         'cmd', 'cmd.exe', 'powershell', 'powershell.exe', 'pwsh',
+        'rm', 'del', 'erase', 'format', 'mkfs', 'dd',
       ];
 
       const isBlocked = blockedCommands.some(blocked => {
