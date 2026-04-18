@@ -195,17 +195,23 @@ The configuration supports:
 ### Local Development
 
 ```bash
-# Run all tests
-npm run test:e2e
+# Start the server with test bypass (required for auth-dependent tests)
+ALLOW_TEST_BYPASS=true npm run start:dev
+
+# Run all tests (captures screenshots for all tests)
+npx playwright test
 
 # Run specific test file
-npx playwright tests/e2e/login.spec.ts
+npx playwright test tests/e2e/login.spec.ts
 
-# Run in headed mode
-npx playwright tests/e2e/login.spec.ts --headed
+# Run in headed mode (useful for debugging)
+npx playwright test tests/e2e/login.spec.ts --headed
 
 # Run with specific browser
-npx playwright tests/e2e/login.spec.ts --project=chromium
+npx playwright test tests/e2e/login.spec.ts --project=chromium
+
+# Run and open HTML report
+npx playwright show-report
 ```
 
 ### CI/CD

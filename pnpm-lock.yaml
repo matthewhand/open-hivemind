@@ -240,9 +240,6 @@ importers:
       jsdom:
         specifier: ^28.1.0
         version: 28.1.0(@noble/hashes@1.8.0)
-      jsonwebtoken:
-        specifier: ^9.0.2
-        version: 9.0.3
       libsodium-wrappers:
         specifier: ^0.7.9
         version: 0.7.16
@@ -607,6 +604,9 @@ importers:
       jest-snapshot:
         specifier: ^29.7.0
         version: 29.7.0
+      jsonwebtoken:
+        specifier: ^9.0.3
+        version: 9.0.3
       lint-staged:
         specifier: ^15.5.2
         version: 15.5.2
