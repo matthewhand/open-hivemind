@@ -14,6 +14,29 @@ import { isOnTopic } from './SemanticRelevanceChecker';
 
 const debug = Debug('app:shouldReplyToMessage');
 
+interface MessageLike {
+  getChannelId(): string;
+  getMessageId(): string;
+  getText?(): string;
+  getAuthorId?(): string;
+  isFromBot?(): boolean;
+  isDirectMessage?(): boolean;
+  getUserMentions?(): string[];
+  mentionsUsers?(id: string): boolean;
+  isMentioning?(id: string): boolean;
+  isReplyToBot?(): boolean;
+  metadata?: { replyTo?: { userId?: string } };
+}
+
+interface HistoryMessageLike {
+  getAuthorId?(): string;
+  getText?(): string;
+  isFromBot?(): boolean;
+  authorId?: string;
+  timestamp?: number | Date;
+  createdAt?: number | Date;
+}
+
 /**
  * Resolve the persona's responseBehavior from botConfig.persona (an ID string).
  * Returns undefined when no persona is configured or the persona has no overrides.
@@ -42,12 +65,11 @@ export interface ReplyDecision {
 }
 
 export async function shouldReplyToMessage(
-  message: any,
+  message: MessageLike,
   botId: string,
   platform: 'discord' | 'generic',
   botNameOrNames?: string | string[],
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- heterogeneous history messages
-  historyMessages?: any[],
+  historyMessages?: HistoryMessageLike[],
   defaultChannelId?: string,
   botConfig?: Record<string, unknown>
 ): Promise<ReplyDecision> {
@@ -103,12 +125,11 @@ export async function shouldReplyToMessage(
 }
 
 async function evaluateReplyDecision(
-  message: any,
+  message: MessageLike,
   botId: string,
   platform: 'discord' | 'generic',
   botNameOrNames?: string | string[],
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- heterogeneous history messages
-  historyMessages?: any[],
+  historyMessages?: HistoryMessageLike[],
   defaultChannelId?: string,
   botConfig?: Record<string, unknown>
 ): Promise<ReplyDecision> {
@@ -260,11 +281,7 @@ async function evaluateReplyDecision(
   let density: IncomingMessageDensity | null = null;
   try {
     density = IncomingMessageDensity.getInstance();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- runtime duck-typing check
-    if (typeof (density as any).recordMessage === 'function') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (density as any).recordMessage(channelId, authorId, isFromBot);
-    }
+    density.recordMessage(channelId, authorId, isFromBot);
   } catch (error) {
     debug('Error recording incoming message density:', error);
   }
@@ -345,12 +362,10 @@ async function evaluateReplyDecision(
     for (let i = historyMessages.length - 1; i >= 0; i--) {
       const m = historyMessages[i];
       if (m.authorId === botId) {
-        const timestamp = (m as any).timestamp || (m as any).createdAt || 0;
+        const tsRaw = m.timestamp || m.createdAt || 0;
+        const timestamp = tsRaw instanceof Date ? tsRaw.getTime() : Number(tsRaw);
         if (timestamp > 0) {
-          lastPostTime = Math.max(
-            lastPostTime,
-            timestamp instanceof Date ? timestamp.getTime() : timestamp
-          );
+          lastPostTime = Math.max(lastPostTime, timestamp);
           break;
         }
       }
@@ -391,8 +406,8 @@ async function evaluateReplyDecision(
     const windowMs = typeof windowRaw === 'number' ? windowRaw : Number(windowRaw) || 5 * 60 * 1000;
     let participants = 1;
     try {
-      if (density && typeof (density as any).getUniqueParticipantCount === 'function') {
-        participants = (density as any).getUniqueParticipantCount(channelId, windowMs);
+      if (density) {
+        participants = density.getUniqueParticipantCount(channelId, windowMs);
       }
     } catch (error) {
       debug('Error getting unique participant count:', error);
@@ -431,7 +446,7 @@ async function evaluateReplyDecision(
     try {
       const recentContext = historyMessages
         .slice(-5)
-        .map((m: any) => `${m.getAuthorId?.() || 'unknown'}: ${m.getText?.() || ''}`)
+        .map((m: HistoryMessageLike) => `${m.getAuthorId?.() || 'unknown'}: ${m.getText?.() || ''}`)
         .join('\n');
       const newMessage = message.getText?.() || '';
       if (await isOnTopic(recentContext, newMessage)) {
@@ -499,8 +514,8 @@ async function evaluateReplyDecision(
 
     if (historyMessages && historyMessages.length > 0 && lastPostTime > 0) {
       for (const msg of historyMessages) {
-        const ts = (msg as any).timestamp || (msg as any).createdAt || 0;
-        const msgTime = ts instanceof Date ? ts.getTime() : ts;
+        const tsRaw = msg.timestamp || msg.createdAt || 0;
+        const msgTime = tsRaw instanceof Date ? tsRaw.getTime() : Number(tsRaw);
         const aid = msg.getAuthorId?.() || '';
         const isBot = msg.isFromBot?.() || false;
 
@@ -539,9 +554,9 @@ async function evaluateReplyDecision(
     }
 
     // Quiet Channel Bonus (5 min window) - still global as it's about channel activity
-    if (density && typeof (density as any).getDensity === 'function') {
+    if (density) {
       const quietWindow = 300000;
-      const { total: total5m } = (density as any).getDensity(channelId, quietWindow);
+      const { total: total5m } = density.getDensity(channelId, quietWindow);
       const quietBonus = 0.2 * Math.max(0, 1 - total5m / 5);
       if (quietBonus > 0) {
         chance += quietBonus;
@@ -840,14 +855,14 @@ function escapeRegExp(string: string) {
 }
 
 function applyModifiers(
-  message: any,
+  message: MessageLike,
   botId: string,
   platform: 'discord' | 'generic',
   chance: number,
   isDirectlyAddressed = false,
   isLeadingAddress = false,
   isReplyToBot = false,
-  botConfig?: Record<string, any>,
+  botConfig?: Record<string, unknown>,
   personaBehavior?: PersonaResponseBehavior
 ): { chance: number; modifiers: string } {
   const text = (message.getText?.() || '').toLowerCase();
@@ -890,7 +905,7 @@ function applyModifiers(
   }
 
   const channelBonuses: Record<string, number> =
-    (messageConfig.get as any)('CHANNEL_BONUSES') || {};
+    (messageConfig.get('CHANNEL_BONUSES') as Record<string, number>) || {};
   const channelBonus =
     typeof channelBonuses?.[message.getChannelId()] === 'number'
       ? channelBonuses[message.getChannelId()]
