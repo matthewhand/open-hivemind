@@ -33,6 +33,7 @@ const generalSettingsSchema = z.object({
   enableHealthChecks: z.boolean(),
   healthCheckInterval: z.coerce.number().int().min(10, 'Must be at least 10 seconds').max(3600, 'Must be 3600 seconds or fewer'),
   advancedMode: z.boolean(),
+  maintenanceMode: z.boolean(),
 });
 
 type GeneralConfig = z.infer<typeof generalSettingsSchema>;
@@ -51,6 +52,7 @@ const defaultValues: GeneralConfig = {
   enableHealthChecks: true,
   healthCheckInterval: 60,
   advancedMode: false,
+  maintenanceMode: false,
 };
 
 const SettingsGeneral: React.FC = () => {
@@ -139,6 +141,7 @@ const SettingsGeneral: React.FC = () => {
         enableHealthChecks: userSettings['health.enabled'] ?? (config.health?.enabled?.value !== false),
         healthCheckInterval: userSettings['health.interval'] || config.health?.interval?.value || 60,
         advancedMode: userSettings['webui.advancedMode'] || false,
+        maintenanceMode: userSettings['app.maintenanceMode'] ?? false,
       });
     } catch (error) {
       setFetchError(error instanceof Error ? error.message : 'An unknown error occurred while fetching settings.');
@@ -161,6 +164,7 @@ const SettingsGeneral: React.FC = () => {
         'app.description': values.description,
         'app.timezone': values.timezone,
         'app.language': values.language,
+        'app.maintenanceMode': values.maintenanceMode,
         'webui.theme': values.theme,
         'webui.notifications': values.enableNotifications,
         'logging.level': values.logLevel,
@@ -443,6 +447,24 @@ const SettingsGeneral: React.FC = () => {
                 />
               )}
             />
+            <Controller
+              name="maintenanceMode"
+              control={control}
+              render={({ field }) => (
+                <Toggle
+                  label="Maintenance Mode"
+                  checked={field.value}
+                  onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
+                    field.onChange(e.target.checked);
+                    await saveGlobalSetting({ 'app.maintenanceMode': e.target.checked }).catch(() => { });
+                  }}
+                  size="sm"
+                />
+              )}
+            />
+            <p className="text-xs text-base-content/50 pl-1">
+              When enabled, the system will be in maintenance mode. New messages will not be processed.
+            </p>
           </div>
         </Card>
       </div>

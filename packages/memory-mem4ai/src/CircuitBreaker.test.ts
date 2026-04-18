@@ -60,50 +60,60 @@ describe('CircuitBreaker — OPEN state', () => {
 });
 
 describe('CircuitBreaker — HALF_OPEN state', () => {
-  async function openAndWait(cb: CircuitBreaker, timeout = 10) {
+  async function openAndWait(cb: CircuitBreaker) {
     await expect(cb.execute(() => Promise.reject(new Error('e')))).rejects.toThrow();
-    await new Promise((r) => setTimeout(r, timeout + 5));
+    await new Promise((r) => setTimeout(r, 10));
   }
 
   it('closes after halfOpenMaxAttempts successes', async () => {
-    const cb = new CircuitBreaker({ name: 'test', failureThreshold: 1, resetTimeoutMs: 5, halfOpenMaxAttempts: 2 });
-    await openAndWait(cb, 5);
+    const cb = new CircuitBreaker({ name: 'test', failureThreshold: 1, resetTimeoutMs: 1, halfOpenMaxAttempts: 2 });
+    await openAndWait(cb);
     await cb.execute(() => Promise.resolve('ok'));
     await cb.execute(() => Promise.resolve('ok'));
     expect(cb.getState()).toBe(CircuitBreakerState.CLOSED);
   });
 
   it('re-opens on failure in HALF_OPEN', async () => {
-    const cb = new CircuitBreaker({ name: 'test', failureThreshold: 1, resetTimeoutMs: 5, halfOpenMaxAttempts: 3 });
-    await openAndWait(cb, 5);
-    // Ensure it's in HALF_OPEN by calling it once
-    // If it was OPEN, first call after timeout transitions to HALF_OPEN and executes
+    const cb = new CircuitBreaker({ name: 'test', failureThreshold: 1, resetTimeoutMs: 1000, halfOpenMaxAttempts: 3 });
+    // Manually force into OPEN then HALF_OPEN
+    await expect(cb.execute(() => Promise.reject(new Error('e')))).rejects.toThrow();
+    // Simulate time passing to get to HALF_OPEN
+    (cb as any).lastFailureTime = Date.now() - 2000;
+    
+    // Now it should be HALF_OPEN on next call or getState
+    expect(cb.getState()).toBe(CircuitBreakerState.HALF_OPEN);
+    
+    // This failure should return it to OPEN
     await expect(cb.execute(() => Promise.reject(new Error('e')))).rejects.toThrow();
     expect(cb.getState()).toBe(CircuitBreakerState.OPEN);
   });
 
-  it('re-opens on failure in HALF_OPEN and then closes after successes', async () => {
-    // With halfOpenMaxAttempts=2:
-    const cb = new CircuitBreaker({ name: 'test', failureThreshold: 1, resetTimeoutMs: 1, halfOpenMaxAttempts: 2 });
-    await openAndWait(cb);
-
-    // 1. Transition to HALF_OPEN by calling it. It fails, so it should go back to OPEN.
+  it('rejects after halfOpenMaxAttempts probe limit reached before success', async () => {
+    // With halfOpenMaxAttempts=2: first probe allowed, second probe allowed,
+    // third probe rejected because limit reached
+    const cb = new CircuitBreaker({ name: 'test', failureThreshold: 1, resetTimeoutMs: 1000, halfOpenMaxAttempts: 2 });
+    
+    // Open the circuit
     await expect(cb.execute(() => Promise.reject(new Error('e')))).rejects.toThrow();
-    expect(cb.getState()).toBe(CircuitBreakerState.OPEN);
-
-    // 2. Wait for resetTimeoutMs to be eligible for HALF_OPEN again
-    await new Promise((r) => setTimeout(r, 10));
-
-    // 3. First probe in HALF_OPEN — allowed, succeeds
-    await cb.execute(() => Promise.resolve('ok'));
+    
+    // Wait for HALF_OPEN
+    (cb as any).lastFailureTime = Date.now() - 2000;
     expect(cb.getState()).toBe(CircuitBreakerState.HALF_OPEN);
 
-    // 4. Second probe in HALF_OPEN — allowed, succeeds
+    // First probe — allowed but fails, re-opens
+    await expect(cb.execute(() => Promise.reject(new Error('e')))).rejects.toThrow();
+    expect(cb.getState()).toBe(CircuitBreakerState.OPEN);
+    
+    // Wait again for HALF_OPEN
+    (cb as any).lastFailureTime = Date.now() - 2000;
+    expect(cb.getState()).toBe(CircuitBreakerState.HALF_OPEN);
+
+    // First probe — allowed, succeeds
     await cb.execute(() => Promise.resolve('ok'));
-    // Since halfOpenMaxAttempts=2, after 2 successes it should CLOSE
+    // Second probe — allowed, succeeds → closes
+    await cb.execute(() => Promise.resolve('ok'));
     expect(cb.getState()).toBe(CircuitBreakerState.CLOSED);
   });
-
 });
 
 describe('CircuitBreaker stats', () => {

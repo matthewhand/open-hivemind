@@ -74,7 +74,7 @@ export class ChannelDelayManager {
       debug(
         `[${key}] extended delayUntil=${existing.delayUntil} pending=${existing.pendingMessageIds.size}`
       );
-      console.info(
+      debug(
         `⏳ DELAY EXTENDED | key: ${key} | added: ${baseDelayMs}ms | total_pending: ${existing.pendingMessageIds.size}`
       );
     }

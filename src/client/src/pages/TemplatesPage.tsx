@@ -7,25 +7,25 @@ import {
 import { useErrorToast, useSuccessToast } from '../components/DaisyUI/ToastNotification';
 import { usePageLifecycle } from '../hooks/usePageLifecycle';
 import {
+  DetailDrawer,
+  Alert,
+  Badge,
+  Button,
+  Divider,
+  Carousel,
+  Pagination,
+  Card,
+  Input,
+  Textarea,
+  Modal,
+  ConfirmModal,
   PageHeader,
   CodeBlock,
-  Button,
   Tabs,
   LoadingSpinner,
   EmptyState,
   SkeletonPage,
-  Modal,
-  ConfirmModal,
-  Alert,
-  Badge,
-  Card,
-  Divider,
-  Carousel,
-  Pagination
 } from '../components/DaisyUI';
-import DetailDrawer from '../components/DaisyUI/DetailDrawer';
-import Input from '../components/DaisyUI/Input';
-import Textarea from '../components/DaisyUI/Textarea';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { apiService } from '../services/api';
 import { ErrorService } from '../services/ErrorService';
@@ -456,7 +456,7 @@ const TemplatesPage: React.FC = () => {
               totalItems={filteredTemplates.length}
               pageSize={pageSize}
               onPageChange={setCurrentPage}
-              style="standard"
+              variant="standard"
             />
           </div>
         </div>

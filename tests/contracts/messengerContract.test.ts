@@ -1,10 +1,4 @@
-/**
- * Contract tests for IMessengerService implementations.
- *
- * These tests verify that every messenger provider conforms to the
- * IMessengerService interface defined in src/message/interfaces/IMessengerService.ts.
- * All external dependencies (Discord.js, Slack SDK, Mattermost client) are mocked.
- */
+import 'reflect-metadata';
 
 // ---------------------------------------------------------------------------
 // Mocks — declared before imports
@@ -176,6 +170,9 @@ jest.mock('debug', () => {
 
 jest.mock('tsyringe', () => ({
   container: { resolve: jest.fn() },
+  singleton: () => (target: any) => target,
+  injectable: () => (target: any) => target,
+  inject: () => (target: any) => target,
 }));
 
 // ---------------------------------------------------------------------------

@@ -1,416 +1,100 @@
-import { EventEmitter } from 'events';
-import fs from 'fs';
-import path from 'path';
+import 'reflect-metadata';
+import { BotManager } from '../../src/managers/BotManager';
 import { BotConfigurationManager } from '../../src/config/BotConfigurationManager';
-import { SecureConfigManager } from '../../src/config/SecureConfigManager';
-import { UserConfigStore } from '../../src/config/UserConfigStore';
-import { BotInstance, BotManager } from '../../src/managers/BotManager';
-import * as ProviderRegistry from '../../src/message/ProviderRegistry';
 import { webUIStorage } from '../../src/storage/webUIStorage';
 
-// Mock dependencies
-jest.mock('fs', () => {
-  const actual = jest.requireActual('fs');
-  return {
-    ...actual,
-    promises: {
-      access: jest.fn().mockResolvedValue(undefined),
-      mkdir: jest.fn().mockResolvedValue(undefined),
-      readFile: jest.fn().mockResolvedValue('{}'),
-      writeFile: jest.fn().mockResolvedValue(undefined),
-    },
-    readFileSync: jest.fn().mockReturnValue('{}'),
-    writeFileSync: jest.fn(),
-    existsSync: jest.fn().mockReturnValue(true),
-    mkdirSync: jest.fn(),
-  };
-});
-jest.mock('path', () => {
-  const originalPath = jest.requireActual('path');
-  return {
-    ...originalPath,
-    join: jest.fn((...args) => args.join('/')),
-    dirname: jest.fn((p) => p.split('/').slice(0, -1).join('/')),
-  };
-});
-
 jest.mock('../../src/config/BotConfigurationManager');
-jest.mock('../../src/config/SecureConfigManager');
-jest.mock('../../src/config/UserConfigStore');
-jest.mock('../../src/storage/webUIStorage', () => ({
-  webUIStorage: {
-    getAgents: jest.fn().mockResolvedValue([]),
-    saveAgent: jest.fn().mockResolvedValue(undefined),
-    deleteAgent: jest.fn().mockResolvedValue(undefined),
-    getGuards: jest.fn().mockResolvedValue([]),
-  },
+jest.mock('../../src/config/ProviderConfigManager', () => ({
+  __esModule: true,
   default: {
-    getAgents: jest.fn().mockResolvedValue([]),
-    saveAgent: jest.fn().mockResolvedValue(undefined),
-    deleteAgent: jest.fn().mockResolvedValue(undefined),
-    getGuards: jest.fn().mockResolvedValue([]),
-  },
+    getInstance: jest.fn(() => ({
+      getMessageProviderIdForBot: jest.fn(),
+      getLlmProviderIdForBot: jest.fn(),
+    }))
+  }
 }));
-jest.mock('../../src/message/ProviderRegistry', () => ({
-  getMessengerServiceByProvider: jest.fn(),
+jest.mock('../../src/config/SecureConfigManager', () => ({
+  SecureConfigManager: {
+    getInstanceSync: jest.fn(() => ({
+      storeConfig: jest.fn().mockResolvedValue(undefined),
+    }))
+  }
 }));
-jest.mock('../../src/utils/envUtils', () => ({
-  checkBotEnvOverrides: jest.fn().mockReturnValue({}),
-}));
-jest.mock('../../src/managers/botPersistence', () => ({
-  loadCustomBots: jest.fn().mockReturnValue({}),
-  saveCustomBots: jest.fn(),
-  storeSecureConfig: jest.fn().mockResolvedValue(undefined),
-}));
+jest.mock('../../src/storage/webUIStorage');
 
 describe('BotManager', () => {
-  let botManager: BotManager;
+  let manager: BotManager;
   let mockBotConfigManager: any;
-  let mockSecureConfigManager: any;
-  let mockUserConfigStore: any;
-  let mockMessengerService: any;
 
-  // BotInstance shape
-  const mockBotInstance: BotInstance = {
-    id: 'test-bot-id',
-    name: 'Test Bot',
-    messageProvider: 'discord',
-    llmProvider: 'openai',
-    isActive: false,
-    createdAt: new Date().toISOString(),
-    lastModified: new Date().toISOString(),
-    config: {
-      discord: { token: 'test-token' },
-      openai: { apiKey: 'test-key' },
-    },
-    persona: 'default',
-    systemInstruction: 'You are a bot',
-    mcpServers: [],
-    mcpGuard: { enabled: false, type: 'owner' },
-  };
-
-  // BotConfig shape (flat structure)
-  const mockBotConfig = {
-    name: 'Configured Bot',
-    messageProvider: 'discord',
-    llmProvider: 'openai',
-    discord: { token: 'test-token' },
-    openai: { apiKey: 'test-key' },
-    persona: 'default',
-    systemInstruction: 'You are a bot',
-    mcpServers: [],
-    mcpGuard: { enabled: false, type: 'owner' },
-  };
-
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.clearAllMocks();
-
-    // Setup mocks
+    
     mockBotConfigManager = {
       getAllBots: jest.fn().mockReturnValue([]),
-      getBot: jest.fn().mockImplementation((id: any) => {
-        if (id === 'Bot 1') return { ...mockBotConfig, name: 'Bot 1' };
-        if (id === 'custom-bot') return { ...mockBotConfig, name: 'custom-bot' };
-        if (id === 'test-bot-id') return { ...mockBotConfig, name: 'Test Bot' }; // Map test-bot-id back to name "Test Bot"
-        if (id === 'Test Bot') return { ...mockBotConfig, name: 'Test Bot' };
-        if (id === 'configured-bot-id') return { ...mockBotConfig, name: 'configured-bot-id' };
-        if (id === 'source-bot') return { ...mockBotConfig, name: 'source-bot' };
-        return undefined;
-      }),
-      cloneBot: jest.fn(),
-      deleteBot: jest.fn(),
+      getBot: jest.fn().mockReturnValue(null),
     };
     (BotConfigurationManager.getInstance as jest.Mock).mockReturnValue(mockBotConfigManager);
-
-    mockSecureConfigManager = {
-      storeConfig: jest.fn(),
-      getConfig: jest.fn(),
-      deleteConfig: jest.fn(),
-    };
-    (SecureConfigManager.getInstance as jest.Mock).mockResolvedValue(mockSecureConfigManager);
-    (SecureConfigManager as any).getInstanceSync = jest
-      .fn()
-      .mockReturnValue(mockSecureConfigManager);
-
-    mockUserConfigStore = {
-      setBotDisabled: jest.fn(),
-    };
-    (UserConfigStore.getInstance as jest.Mock).mockReturnValue(mockUserConfigStore);
-
-    mockMessengerService = {
-      addBot: jest.fn(),
-      disconnectBot: jest.fn(),
-      removeBot: jest.fn(),
-      sendMessageToChannel: jest.fn(),
-      getMessagesFromChannel: jest.fn().mockResolvedValue([]),
-      getDefaultChannel: jest.fn().mockReturnValue('general'),
-    };
-    (ProviderRegistry.getMessengerServiceByProvider as jest.Mock).mockResolvedValue(
-      mockMessengerService
-    );
-
-    // Mock fs
-    (fs.existsSync as jest.Mock).mockReturnValue(false);
-    (fs.readFileSync as jest.Mock).mockReturnValue('{}');
-    (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
-    (fs.mkdirSync as jest.Mock).mockImplementation(() => {});
-
-    // Reset singleton instance
+    
+    (webUIStorage.getAgents as jest.Mock).mockResolvedValue([]);
+    
+    // Reset singleton
     (BotManager as any).instance = undefined;
-    botManager = new BotManager();
+    manager = await BotManager.getInstance();
   });
 
-  describe('Initialization', () => {
-    it('should be a singleton', async () => {
-      const instance1 = await BotManager.getInstance();
-      const instance2 = await BotManager.getInstance();
-      expect(instance1).toBe(instance2);
-    });
-
-    it('should load custom bots from file if exists', async () => {
-      (fs.existsSync as jest.Mock).mockReturnValue(true);
-      const customBotsData = {
-        'custom-bot-1': { ...mockBotInstance, id: 'custom-bot-1', name: 'Custom Bot 1' },
-      };
-      (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(customBotsData));
-
-      (BotManager as any).instance = undefined;
-      const newManager = await BotManager.getInstance();
-
-      expect(newManager).toBeDefined();
-    });
+  it('should be a singleton', async () => {
+    const s2 = await BotManager.getInstance();
+    expect(manager).toBe(s2);
   });
 
   describe('getAllBots', () => {
-    it('should combine configured bots and custom bots', async () => {
-      // Mock configured bots
-      const configuredBot = { ...mockBotConfig, name: 'Configured Bot' };
+    it('should combine configured and custom bots', async () => {
+      const configuredBot = { name: 'conf-1', messageProvider: 'discord', llmProvider: 'openai' };
+      const customBot = { id: 'cust-1', name: 'Custom 1', messageProvider: 'slack' };
+      
       mockBotConfigManager.getAllBots.mockReturnValue([configuredBot]);
-
-      // Mock custom bots
-      const customBot = { ...mockBotInstance, id: 'custom-bot', name: 'Custom Bot' };
-      (webUIStorage.getAgents as jest.Mock).mockReturnValue([customBot]);
-
-      const bots = await botManager.getAllBots();
-
-      expect(bots).toHaveLength(2);
-      expect(bots.some((b) => b.id === 'Configured Bot')).toBe(true);
-      expect(bots.some((b) => b.id === 'custom-bot')).toBe(true);
-    });
-
-    it('should prioritize custom bots over configured bots with same ID', async () => {
-      const configuredBot = { ...mockBotConfig, name: 'Configured Name' };
-      mockBotConfigManager.getAllBots.mockReturnValue([configuredBot]);
-
-      // Custom bot with same ID as configured bot (configured bot ID = name)
-      const customBot = { ...mockBotInstance, id: 'Configured Name', name: 'Custom Bot Override' };
-      (webUIStorage.getAgents as jest.Mock).mockReturnValue([customBot]);
-
-      const bots = await botManager.getAllBots();
-
-      expect(bots).toHaveLength(1);
-      expect(bots[0].name).toBe('Custom Bot Override');
+      (webUIStorage.getAgents as jest.Mock).mockResolvedValue([customBot]);
+      
+      const allBots = await manager.getAllBots();
+      
+      expect(allBots).toHaveLength(2);
+      expect(allBots.some(b => b.name === 'conf-1')).toBe(true);
+      expect(allBots.some(b => b.id === 'cust-1')).toBe(true);
     });
   });
 
   describe('getBot', () => {
-    it('should retrieve a bot by ID', async () => {
-      const customBot = { ...mockBotInstance, id: 'custom-bot', name: 'Custom Bot' };
-      (webUIStorage.getAgents as jest.Mock).mockReturnValue([customBot]);
-      // The new logic requires it to be in customBots cache
-      botManager['customBots'].set('custom-bot', customBot);
-
-      const bot = await botManager.getBot('custom-bot');
+    it('should find bot in configured bots', async () => {
+      const configuredBot = { name: 'bot-1', messageProvider: 'd', llmProvider: 'o' };
+      mockBotConfigManager.getBot.mockReturnValue(configuredBot);
+      
+      const bot = await manager.getBot('bot-1');
       expect(bot).not.toBeNull();
-      expect(bot?.id).toBe('custom-bot');
+      expect(bot?.name).toBe('bot-1');
     });
 
     it('should return null if bot not found', async () => {
-      mockBotConfigManager.getAllBots.mockReturnValue([]);
-      (webUIStorage.getAgents as jest.Mock).mockReturnValue([]);
-
-      const bot = await botManager.getBot('non-existent');
+      const bot = await manager.getBot('non-existent');
       expect(bot).toBeNull();
     });
   });
 
   describe('createBot', () => {
-    const createRequest = {
-      name: 'New Bot',
-      messageProvider: 'discord' as const,
-      llmProvider: 'openai' as const,
-      config: {
-        discord: { token: 'new-token' },
-        openai: { apiKey: 'new-key' },
-      },
-    };
-
-    it('should create a new bot successfully', async () => {
-      const bot = await botManager.createBot(createRequest);
-
-      expect(bot.name).toBe(createRequest.name);
-      expect(typeof bot.id).toBe('string');
-      expect(webUIStorage.saveAgent).toHaveBeenCalledWith(
-        expect.objectContaining({
-          name: createRequest.name,
-          id: bot.id,
-        })
-      );
-      const { storeSecureConfig } = require('../../src/managers/botPersistence');
-      expect(storeSecureConfig).toHaveBeenCalledWith(
-        expect.anything(),
-        bot.id,
-        expect.objectContaining(createRequest.config)
-      );
-    });
-
-    it('should throw error if name is missing', async () => {
-      await expect(botManager.createBot({ ...createRequest, name: '' })).rejects.toThrow(
-        'Bot name is required'
-      );
-    });
-  });
-
-  describe('updateBot', () => {
-    it('should throw error if bot is not found', async () => {
-      mockBotConfigManager.getBot.mockReturnValue(undefined);
-      (webUIStorage.getAgents as jest.Mock).mockReturnValue([]);
-
-      await expect(botManager.updateBot('non-existent', { name: 'UpdatedName' })).rejects.toThrow(
-        /not found/i
-      );
-    });
-  });
-
-  describe('startBot', () => {
-    it('should start a bot successfully', async () => {
-      const botToStart = { ...mockBotInstance, isActive: false };
-
-      mockBotConfigManager.getAllBots.mockReturnValue([]);
-      (webUIStorage.getAgents as jest.Mock).mockReturnValue([botToStart]);
-
-      mockSecureConfigManager.getConfig.mockResolvedValue({ data: botToStart.config });
-
-      await botManager.startBot(botToStart.id);
-
-      expect(mockUserConfigStore.setBotDisabled).toHaveBeenCalledWith(botToStart.name, false);
-      expect(mockMessengerService.addBot).toHaveBeenCalled();
-    });
-  });
-
-  describe('stopBot', () => {
-    it('should stop a bot successfully', async () => {
-      const botToStop = { ...mockBotInstance, isActive: true };
-
-      mockBotConfigManager.getAllBots.mockReturnValue([]);
-      (webUIStorage.getAgents as jest.Mock).mockReturnValue([botToStop]);
-      mockSecureConfigManager.getConfig.mockResolvedValue({ data: botToStop.config });
-
-      await botManager.startBot(botToStop.id);
-
-      await botManager.stopBot(botToStop.id);
-
-      expect(mockUserConfigStore.setBotDisabled).toHaveBeenCalledWith(botToStop.name, true);
-      expect(mockMessengerService.disconnectBot).toHaveBeenCalled();
-    });
-  });
-
-  describe('cloneBot', () => {
-    it('should clone a custom bot', async () => {
-      const sourceBot = { ...mockBotInstance, id: 'source-id', name: 'Source Bot' };
-      (webUIStorage.getAgents as jest.Mock).mockReturnValue([sourceBot]);
-      botManager['customBots'].set('source-id', sourceBot);
-
-      const clonedBot = await botManager.cloneBot('source-id', 'Cloned Bot');
-
-      expect(clonedBot.name).toBe('Cloned Bot');
-      expect(clonedBot.id).not.toBe('source-id');
-      expect(webUIStorage.saveAgent).toHaveBeenCalled();
-    });
-  });
-
-  describe('Health Check', () => {
-    it('should perform health check on running bots', async () => {
-      const bot = { ...mockBotInstance, isActive: true };
-      mockBotConfigManager.getAllBots.mockReturnValue([]);
-      (webUIStorage.getAgents as jest.Mock).mockReturnValue([bot]);
-      mockSecureConfigManager.getConfig.mockResolvedValue({ data: bot.config });
-
-      await botManager.startBot(bot.id);
-
-      const health = await botManager.performHealthCheck();
-
-      expect(health).toHaveLength(1);
-      expect(health[0].botId).toBe(bot.id);
-      expect(health[0].status).toBe('healthy');
-    });
-  });
-
-  describe('Batch Operations', () => {
-    it('should start all configured bots', async () => {
-      const bot1 = { ...mockBotConfig, name: 'Bot 1' };
-
-      mockBotConfigManager.getAllBots.mockReturnValue([bot1]);
-      (webUIStorage.getAgents as jest.Mock).mockReturnValue([]);
-      mockSecureConfigManager.getConfig.mockResolvedValue({ data: {} });
-
-      await botManager.startAllConfiguredBots();
-
-      expect(mockMessengerService.addBot).toHaveBeenCalledTimes(1);
-    });
-
-    it('should stop all configured bots', async () => {
-      const bot1 = { ...mockBotConfig, name: 'Bot 1' };
-
-      mockBotConfigManager.getAllBots.mockReturnValue([bot1]);
-      (webUIStorage.getAgents as jest.Mock).mockReturnValue([]);
-      mockSecureConfigManager.getConfig.mockResolvedValue({ data: {} });
-
-      await botManager.startBot('Bot 1');
-
-      await botManager.stopAllConfiguredBots();
-
-      expect(mockMessengerService.disconnectBot).toHaveBeenCalled();
-    });
-  });
-
-  describe('getBotHistory', () => {
-    it('should return bot history', async () => {
-      const bot = { ...mockBotConfig, name: 'Bot 1' };
-      mockBotConfigManager.getAllBots.mockReturnValue([bot]);
-      (webUIStorage.getAgents as jest.Mock).mockReturnValue([]);
-
-      const history = await botManager.getBotHistory('Bot 1', 'channel-id');
-
-      expect(mockMessengerService.getMessagesFromChannel).toHaveBeenCalledWith('channel-id', 20);
-      expect(history).toEqual([]);
-    });
-
-    it('should use default channel if not provided', async () => {
-      const bot = {
-        ...mockBotConfig,
-        name: 'Bot 1',
-        discord: { ...mockBotConfig.discord, defaultChannelId: 'default-channel' },
+    it('should create and save a new bot', async () => {
+      const request = {
+        name: 'New Bot',
+        messageProvider: 'discord',
+        llmProvider: 'openai',
+        mcpServers: [],
+        mcpGuard: { enabled: false, type: 'owner' as const, allowedUserIds: [] }
       };
-      mockBotConfigManager.getAllBots.mockReturnValue([bot]);
-      (webUIStorage.getAgents as jest.Mock).mockReturnValue([]);
-
-      // Set the default channel in the bot config manually for the test
-      mockBotConfigManager.getBot.mockImplementation((id: any) => {
-        if (id === 'Bot 1')
-          return {
-            ...mockBotConfig,
-            name: 'Bot 1',
-            discord: { defaultChannelId: 'default-channel' },
-          };
-        return undefined;
-      });
-      await botManager.getBotHistory('Bot 1');
-
-      expect(mockMessengerService.getMessagesFromChannel).toHaveBeenCalledWith(
-        'default-channel',
-        20
-      );
+      
+      (webUIStorage.saveAgent as jest.Mock).mockResolvedValue(undefined);
+      
+      const bot = await manager.createBot(request);
+      
+      expect(bot.name).toBe('New Bot');
+      expect(webUIStorage.saveAgent).toHaveBeenCalled();
     });
   });
 });

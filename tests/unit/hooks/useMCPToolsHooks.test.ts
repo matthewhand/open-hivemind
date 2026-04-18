@@ -22,6 +22,12 @@ import { useToolExecution } from '../../../src/client/src/pages/MCPToolsPage/hoo
 // Mocks
 // ---------------------------------------------------------------------------
 
+Object.defineProperty(global, 'crypto', {
+  value: {
+    randomUUID: () => 'mock-uuid',
+  },
+});
+
 jest.mock('../../../src/client/src/services/api', () => ({
   apiService: {
     get: jest.fn(),

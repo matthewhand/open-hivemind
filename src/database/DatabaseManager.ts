@@ -199,16 +199,19 @@ export class DatabaseManager {
   // ---------------------------------------------------------------------------
 
   private initRepositories(): void {
-    const getDb = () => this.db;
-    const isConn = () => this.connected;
-    const ensure = () => this.ensureConnected();
+    const getDb = (): Database => {
+      if (!this.db) throw new Error('Database not initialized');
+      return this.db;
+    };
+    const isConn = (): boolean => this.connected;
+    const ensure = (): void => this.ensureConnected();
 
-    this.messageRepo = new MessageRepository(getDb, isConn, ensure);
-    this.botConfigRepo = new BotConfigRepository(getDb, ensure);
-    this.anomalyRepo = new AnomalyRepository(getDb, isConn);
-    this.approvalRepo = new ApprovalRepository(getDb, ensure);
-    this.aiFeedbackRepo = new AIFeedbackRepository(getDb, ensure);
-    this.decisionRepo = new DecisionRepository(getDb, isConn);
+    this.messageRepo = new MessageRepository(getDb as any, isConn, ensure as any);
+    this.botConfigRepo = new BotConfigRepository(getDb as any, ensure as any);
+    this.anomalyRepo = new AnomalyRepository(getDb as any, isConn);
+    this.approvalRepo = new ApprovalRepository(getDb as any, ensure as any);
+    this.aiFeedbackRepo = new AIFeedbackRepository(getDb as any, ensure as any);
+    this.decisionRepo = new DecisionRepository(getDb as any, isConn);
   }
 
   // ---------------------------------------------------------------------------
@@ -312,7 +315,7 @@ export class DatabaseManager {
       CREATE TABLE IF NOT EXISTS bot_configuration_versions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         botConfigurationId INTEGER NOT NULL,
-        version INTEGER NOT NULL,
+        version TEXT NOT NULL,
         name TEXT NOT NULL,
         messageProvider TEXT NOT NULL,
         llmProvider TEXT NOT NULL,

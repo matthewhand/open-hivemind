@@ -17,7 +17,7 @@ export interface Shortcut {
 /**
  * Low-level hook: registers global keydown listeners for a list of shortcuts.
  */
-export const useKeyboardShortcuts = (shortcuts: Shortcut[]) => {
+export const useKeyboardShortcuts = (shortcuts: Shortcut[]): void => {
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     const target = event.target as HTMLElement;
     const isTyping =
@@ -61,7 +61,13 @@ export const useKeyboardShortcuts = (shortcuts: Shortcut[]) => {
  * High-level hook: wires up all default keyboard shortcuts and manages
  * the open/closed state of the command palette and shortcuts help overlay.
  */
-export const useDefaultShortcuts = () => {
+export const useDefaultShortcuts = (): {
+  shortcuts: Shortcut[];
+  isCommandPaletteOpen: boolean;
+  setCommandPaletteOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  isShortcutsHelpOpen: boolean;
+  setShortcutsHelpOpen: React.Dispatch<React.SetStateAction<boolean>>;
+} => {
   const navigate = useNavigate();
   const [isCommandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [isShortcutsHelpOpen, setShortcutsHelpOpen] = useState(false);

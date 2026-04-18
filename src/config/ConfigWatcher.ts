@@ -1,10 +1,10 @@
-import { watch } from 'fs';
+import { watch, type FSWatcher } from 'fs';
 import { EventEmitter } from 'events';
 
 export class ConfigWatcher extends EventEmitter {
-  private watchers = new Map<string, any>();
+  private watchers = new Map<string, FSWatcher>();
   
-  watchConfig(configPath: string) {
+  watchConfig(configPath: string): void {
     if (this.watchers.has(configPath)) {return;}
     
     const watcher = watch(configPath, (eventType) => {
@@ -16,7 +16,7 @@ export class ConfigWatcher extends EventEmitter {
     this.watchers.set(configPath, watcher);
   }
   
-  stopWatching(configPath?: string) {
+  stopWatching(configPath?: string): void {
     if (configPath) {
       const watcher = this.watchers.get(configPath);
       if (watcher) {

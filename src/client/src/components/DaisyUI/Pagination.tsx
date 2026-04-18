@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 
-type PaginationStyle = 'compact' | 'standard' | 'extended';
+type PaginationVariant = 'compact' | 'standard' | 'extended';
 
 /**
  * Configuration properties for the Pagination component.
@@ -15,7 +15,7 @@ interface PaginationProps {
   /** Callback triggered when a user selects a new page. */
   onPageChange: (page: number) => void;
   /** The visual style of the pagination (compact, standard, or extended). */
-  style?: PaginationStyle;
+  variant?: PaginationVariant;
   /** Additional CSS classes for the root container. */
   className?: string;
   /** Explicit override for the maximum number of visible page buttons before truncating with ellipsis. */
@@ -27,7 +27,7 @@ export const Pagination: React.FC<PaginationProps> = ({
   totalItems,
   pageSize = 10,
   onPageChange,
-  style = 'standard',
+  variant = 'standard',
   className = '',
   maxVisiblePages: explicitMaxVisiblePages,
 }) => {
@@ -170,7 +170,7 @@ export const Pagination: React.FC<PaginationProps> = ({
       <div className="sr-only" aria-live="polite" aria-atomic="true">
         Page {currentPage} of {totalPages}
       </div>
-      {style === 'extended' && (
+      {variant === 'extended' && (
         <button
           className="join-item btn"
           onClick={handleFirst}
@@ -189,7 +189,7 @@ export const Pagination: React.FC<PaginationProps> = ({
         ‹
       </button>
 
-      {style !== 'compact' &&
+      {variant !== 'compact' &&
         pageNumbers.map((page, index) => {
           if (typeof page === 'number') {
             return (
@@ -235,7 +235,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           return null;
         })}
 
-      {style === 'compact' && (
+      {variant === 'compact' && (
         <button className="join-item btn" disabled>
           Page {currentPage} of {totalPages}
         </button>
@@ -249,7 +249,7 @@ export const Pagination: React.FC<PaginationProps> = ({
       >
         ›
       </button>
-      {style === 'extended' && (
+      {variant === 'extended' && (
         <button
           className="join-item btn"
           onClick={handleLast}

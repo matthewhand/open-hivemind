@@ -48,7 +48,7 @@ export const mockApiResponse = <T,>(data: T, ok = true) => ({
 });
 
 // Mock WebSocket helper
-export const createMockWebSocket = () => {
+export const createMockWebSocket = (): unknown => {
   const mockWS = {
     addEventListener: jest.fn(),
     removeEventListener: jest.fn(),
@@ -66,10 +66,16 @@ export const createMockWebSocket = () => {
 };
 
 // Wait for component to finish async operations
-export const waitForAsync = () => new Promise<void>(resolve => setTimeout(resolve, 0));
+export const waitForAsync = (): Promise<void> => new Promise<void>(resolve => setTimeout(resolve, 0));
 
 // Mock localStorage/sessionStorage helpers
-export const mockLocalStorage = () => {
+export const mockLocalStorage = (): {
+  getItem: (key: string) => string | null;
+  setItem: (key: string, value: string) => void;
+  removeItem: (key: string) => void;
+  clear: () => void;
+  store: Record<string, string>;
+} => {
   const store: Record<string, string> = {};
 
   return {
@@ -80,13 +86,14 @@ export const mockLocalStorage = () => {
     removeItem: (key: string) => {
       delete store[key];
     },
-    clear: () => {
+    clear: (): void => {
       Object.keys(store).forEach(key => delete store[key]);
     },
+    store,
   };
 };
 
-export const mockSessionStorage = () => mockLocalStorage();
+export const mockSessionStorage = (): ReturnType<typeof mockLocalStorage> => mockLocalStorage();
 
 // Common test data
 export const mockUser = {

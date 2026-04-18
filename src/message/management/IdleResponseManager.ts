@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import Debug from 'debug';
 import { recordBotActivity } from '@message/helpers/processing/ChannelActivity';
 import type { IMessage } from '@message/interfaces/IMessage';
@@ -5,6 +6,13 @@ import type { IMessengerService } from '@message/interfaces/IMessengerService';
 import { getMessengerProvider } from '@message/management/getMessengerProvider';
 
 const log = Debug('app:idleResponseManager');
+
+// Helper to generate random integer between min and max using crypto
+function getRandomInt(min: number, max: number): number {
+  const randomBytes = crypto.randomBytes(4);
+  const randomFloat = randomBytes.readUInt32BE() / 0x100000000;
+  return Math.floor(randomFloat * (max - min + 1)) + min;
+}
 
 interface ChannelActivity {
   lastInteractionTime: number;
@@ -321,7 +329,7 @@ export class IdleResponseManager {
   }
 
   private getRandomDelay(): number {
-    return Math.floor(Math.random() * (this.maxDelay - this.minDelay + 1)) + this.minDelay;
+    return getRandomInt(this.minDelay, this.maxDelay);
   }
 
   private getBotDisplayName(serviceName: string, botConfig: any): string {
@@ -504,7 +512,7 @@ Do not mention that the channel was quiet/idle and do not say "I noticed".`;
       log(
         `Sent idle response to ${serviceName}:${channelId}: "${idlePrompt.substring(0, 100)}..."`
       );
-      console.info(
+      log(
         `✅ IDLE RESPONSE SENT | bot: ${botName} | channel: ${channelId} | content: "${idlePrompt.substring(0, 50)}..."`
       );
 
@@ -516,7 +524,8 @@ Do not mention that the channel was quiet/idle and do not say "I noticed".`;
   }
 
   private getRandomIdlePrompt(): string {
-    return this.idlePrompts[Math.floor(Math.random() * this.idlePrompts.length)];
+    if (this.idlePrompts.length === 0) return '';
+    return this.idlePrompts[getRandomInt(0, this.idlePrompts.length - 1)];
   }
 
   public configure(config: {

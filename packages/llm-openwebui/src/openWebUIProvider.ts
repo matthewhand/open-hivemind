@@ -3,18 +3,40 @@ import { http, isHttpError } from '@hivemind/shared-types';
 import type { IMessage } from '@src/message/interfaces/IMessage';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import openWebUIConfig from './openWebUIConfig';
+import { getSessionKey } from './sessionManager';
 
 const debug = Debug('app:openWebUIProvider');
-
-const openWebUIClient = http.create(openWebUIConfig.get('apiUrl'), {
-  'Content-Type': 'application/json',
-  Authorization: 'Bearer ollama',
-});
 
 const model = openWebUIConfig.get('model');
 
 /**
+ * Creates an HTTP client with proper authorization headers based on auth method.
+ * @returns An http client configured for OpenWebUI API.
+ */
+async function createOpenWebUIClient() {
+  const apiUrl = openWebUIConfig.get('apiUrl');
+  const authMethod = openWebUIConfig.get('authMethod');
+  const apiKey = openWebUIConfig.get('apiKey');
+
+  // For API key auth, we can create the client directly with the key
+  if (authMethod === 'apiKey' && apiKey) {
+    return http.create(apiUrl, {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    });
+  }
+
+  // For password auth, we need to get the session key first
+  const sessionKey = await getSessionKey();
+  return http.create(apiUrl, {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${sessionKey}`,
+  });
+}
+
+/**
  * Provides chat and non-chat completion functionality for OpenWebUI.
+ * Supports both password-based and API key authentication.
  */
 export const openWebUIProvider: ILlmProvider = {
   name: 'openwebui',
@@ -27,13 +49,14 @@ export const openWebUIProvider: ILlmProvider = {
   ): Promise<string> {
     debug('Generating chat completion with OpenWebUI:', { userMessage, historyMessages });
 
+    const client = await createOpenWebUIClient();
     const messages = [
       ...historyMessages.map((msg) => ({ role: 'user', content: msg.getText() })),
       { role: 'user', content: userMessage },
     ];
 
     try {
-      const data = await openWebUIClient.post<{ choices: Array<{ message: { content: string } }> }>(
+      const data = await client.post<{ choices: Array<{ message: { content: string } }> }>(
         '/chat/completions',
         { model, messages }
       );
@@ -47,8 +70,10 @@ export const openWebUIProvider: ILlmProvider = {
   async generateCompletion(prompt: string): Promise<string> {
     debug('Generating non-chat completion with OpenWebUI:', { prompt });
 
+    const client = await createOpenWebUIClient();
+
     try {
-      const data = await openWebUIClient.post<{ choices: Array<{ text: string }> }>(
+      const data = await client.post<{ choices: Array<{ text: string }> }>(
         '/completions',
         { model, prompt, max_tokens: 100 }
       );

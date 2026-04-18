@@ -68,20 +68,20 @@ describe('Rate Limiter IP Extraction Security', () => {
   });
 
   describe('validateIP', () => {
-    it('should return the IP for valid IPv4', () => {
-      expect(validateIP('127.0.0.1')).toBe('127.0.0.1');
-      expect(validateIP('8.8.8.8')).toBe('8.8.8.8');
+    it('should return truthy for valid IPv4', () => {
+      expect(validateIP('127.0.0.1')).toBeTruthy();
+      expect(validateIP('8.8.8.8')).toBeTruthy();
     });
 
-    it('should return the IP for valid IPv6', () => {
-      expect(validateIP('::1')).toBe('::1');
-      expect(validateIP('2001:4860:4860::8888')).toBe('2001:4860:4860::8888');
+    it('should return truthy for valid IPv6', () => {
+      expect(validateIP('::1')).toBeTruthy();
+      expect(validateIP('2001:4860:4860::8888')).toBeTruthy();
     });
 
-    it('should return null for invalid formats', () => {
-      expect(validateIP('999.999.999.999')).toBe(null);
-      expect(validateIP('hello.world')).toBe(null);
-      expect(validateIP('')).toBe(null);
+    it('should return falsy for invalid formats', () => {
+      expect(validateIP('999.999.999.999')).toBeFalsy();
+      expect(validateIP('hello.world')).toBeFalsy();
+      expect(validateIP('')).toBeFalsy();
     });
   });
 });

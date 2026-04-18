@@ -106,7 +106,7 @@ export class QueryBuilder {
       CREATE TABLE IF NOT EXISTS bot_configuration_versions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         botConfigurationId INTEGER NOT NULL,
-        version INTEGER NOT NULL,
+        version TEXT NOT NULL,
         name TEXT NOT NULL,
         messageProvider TEXT NOT NULL,
         llmProvider TEXT NOT NULL,

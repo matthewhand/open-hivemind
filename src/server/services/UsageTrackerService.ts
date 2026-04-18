@@ -81,20 +81,26 @@ export class UsageTrackerService {
 
   private async loadData(): Promise<void> {
     try {
-      await fs.promises.access(this.dataFile);
+      if (!fs.existsSync(this.dataFile)) {
+        return;
+      }
       const content = await fs.promises.readFile(this.dataFile, 'utf8');
-      const parsed = JSON.parse(content) as UsageData;
-      this.data = parsed;
+      const parsed = JSON.parse(content) as Partial<UsageData>;
+
+      this.data = {
+        tools: parsed.tools || {},
+        providers: parsed.providers || {},
+        lastUpdated: parsed.lastUpdated || new Date().toISOString(),
+      };
+
       debug(
         'Loaded usage data with %d tools and %d providers',
-        Object.keys(parsed.tools).length,
-        Object.keys(parsed.providers).length
+        Object.keys(this.data.tools).length,
+        Object.keys(this.data.providers).length
       );
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
-        debug('Failed to load usage data: %O', error);
-      }
-      // If file doesn't exist, start with empty data
+      debug('Failed to load usage data: %O', error);
+      // Fallback already set in constructor
     }
   }
 

@@ -14,7 +14,7 @@ jest.mock('convict', () => {
     }),
     set: jest.fn(),
     validate: jest.fn(),
-    getProperties: jest.fn(() => ({ apiUrl: 'https://openwebui.example.com', model: 'test-model', username: 'u', password: 'p' })),
+    getProperties: jest.fn(() => ({ apiUrl: 'https://openwebui.example.com', model: 'test-model', username: 'u', password: 'p', authMethod: 'apiKey', apiKey: 'fake-key' })),
   }));
 });
 

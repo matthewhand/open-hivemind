@@ -1,23 +1,17 @@
 import 'reflect-metadata';
 import path from 'path';
-import { WebSocketService } from '@src/server/services/WebSocketService';
 
-// Mock WebSocketService
-const mockWebSocketService = {
-  initialize: jest.fn(),
-  shutdown: jest.fn(),
-} as any;
-WebSocketService.setInstance(mockWebSocketService);
+// Class-based mocks for tsyringe compatibility
+class MockStartupGreetingService {
+  static getInstance = jest.fn(() => new MockStartupGreetingService());
+  greetAll = jest.fn();
+}
 
-// Define mocks on global object to make them accessible to hoisted jest.mock()
-(global as any).mockWSFunctions = {
-  broadcastBotStatus: jest.fn(),
-  broadcastConfigChange: jest.fn(),
-};
-
-(global as any).mockGreetingFunctions = {
-  greetAll: jest.fn(),
-};
+class MockWebSocketService {
+  static getInstance = jest.fn(() => new MockWebSocketService());
+  broadcastBotStatus = jest.fn();
+  broadcastConfigChange = jest.fn();
+}
 
 jest.mock('fs', () => ({
   readFileSync: jest.fn(() =>
@@ -49,58 +43,38 @@ jest.mock('@hivemind/message-slack', () => ({
   },
 }));
 
-// Use the global mocks in the hoisted mock factory
-jest.mock('../../../src/services/StartupGreetingService', () => {
-  return {
-    __esModule: true,
-    StartupGreetingService: {
-      getInstance: jest.fn(() => ({
-        greetAll: (...args: any[]) => (global as any).mockGreetingFunctions.greetAll(...args),
-      })),
-    },
-    default: {
-      getInstance: jest.fn(() => ({
-        greetAll: (...args: any[]) => (global as any).mockGreetingFunctions.greetAll(...args),
-      })),
-    },
-  };
-});
+jest.mock('../../../src/services/StartupGreetingService', () => ({
+  __esModule: true,
+  StartupGreetingService: MockStartupGreetingService,
+  default: MockStartupGreetingService,
+}));
 
-jest.mock('../../../src/server/services/websocket', () => {
-  return {
-    __esModule: true,
-    WebSocketService: {
-      getInstance: jest.fn(() => ({
-        broadcastBotStatus: (...args: any[]) => (global as any).mockWSFunctions.broadcastBotStatus(...args),
-        broadcastConfigChange: (...args: any[]) => (global as any).mockWSFunctions.broadcastConfigChange(...args),
-      })),
-    },
-    default: {
-      getInstance: jest.fn(() => ({
-        broadcastBotStatus: (...args: any[]) => (global as any).mockWSFunctions.broadcastBotStatus(...args),
-        broadcastConfigChange: (...args: any[]) => (global as any).mockWSFunctions.broadcastConfigChange(...args),
-      })),
-    },
-  };
-});
+jest.mock('../../../src/server/services/websocket', () => ({
+  __esModule: true,
+  WebSocketService: MockWebSocketService,
+  default: MockWebSocketService,
+}));
+
+// We must also mock the individual service files because they might be imported directly
+jest.mock('../../../src/server/services/WebSocketService', () => ({
+  __esModule: true,
+  WebSocketService: MockWebSocketService,
+  default: MockWebSocketService,
+}));
 
 import { getMessengerProvider } from '../../../src/message/management/getMessengerProvider';
-import { registerServices } from '../../../src/di/registration';
 
 describe('getMessengerProvider filtering', () => {
-  const ORIGINAL_ENV = { ...process.env };
-
-  beforeAll(() => {
-    registerServices();
-  });
+  const originalEnv = process.env;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    process.env = { ...ORIGINAL_ENV };
+    // Use the Proxy-friendly set approach
+    process.env.MESSAGE_PROVIDER = originalEnv.MESSAGE_PROVIDER;
   });
 
   afterAll(() => {
-    process.env = ORIGINAL_ENV;
+    process.env.MESSAGE_PROVIDER = originalEnv.MESSAGE_PROVIDER;
   });
 
   it('a) MESSAGE_PROVIDER="discord": only Discord is initialized', async () => {
@@ -129,7 +103,6 @@ describe('getMessengerProvider filtering', () => {
   it('d) MESSAGE_PROVIDER set to unavailable provider: returns empty or default', async () => {
     process.env.MESSAGE_PROVIDER = 'nonexistent';
     const providers = await getMessengerProvider();
-    // Implementation behavior for invalid provider varies, but should not crash
     expect(Array.isArray(providers)).toBe(true);
   });
 

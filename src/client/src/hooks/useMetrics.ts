@@ -2,7 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import type { Metrics } from '../services/metricsService';
 import { getMetrics } from '../services/metricsService';
 
-export const useMetrics = () => {
+export const useMetrics = (): {
+  metrics: Metrics | null;
+  loading: boolean;
+  error: string | null;
+} => {
   const {
     data: metrics = null,
     isLoading: loading,

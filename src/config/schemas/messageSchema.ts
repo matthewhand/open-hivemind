@@ -85,9 +85,7 @@ export const MessageSchema = z.object({
     const clamped: Record<string, number> = {};
     for (const [k, v] of Object.entries(val)) {
       const num = Number(v);
-      if (!isNaN(num)) {
-        clamped[k] = Math.max(0, Math.min(2, num));
-      }
+      clamped[k] = isNaN(num) ? 0 : Math.max(0, Math.min(2, num));
     }
     return clamped;
   }, z.record(z.number())).default({}),
@@ -96,9 +94,7 @@ export const MessageSchema = z.object({
     const clamped: Record<string, number> = {};
     for (const [k, v] of Object.entries(val)) {
       const num = Number(v);
-      if (!isNaN(num)) {
-        clamped[k] = Math.max(0, Math.floor(num));
-      }
+      clamped[k] = isNaN(num) ? 0 : Math.max(0, Math.floor(num));
     }
     return clamped;
   }, z.record(z.number())).default({}),

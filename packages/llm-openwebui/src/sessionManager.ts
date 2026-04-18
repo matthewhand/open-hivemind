@@ -6,18 +6,27 @@ const debug = Debug('app:sessionManager');
 let sessionKey: string | null = null; // Cache session key in memory.
 
 /**
- * Fetches a new session key from Open WebUI using the configured username and password.
+ * Fetches a new session key from Open WebUI using the configured authentication method.
+ * Supports both password-based auth (username/password) and API key auth.
  * Throws an error if authentication fails.
  * @returns {Promise<string>} The new session key.
  */
 export async function getSessionKey(): Promise<string> {
-  const { apiUrl, username, password } = openWebUIConfig.getProperties();
+  const { apiUrl, authMethod, username, password, apiKey } = openWebUIConfig.getProperties();
 
   if (sessionKey) {
     debug('Using cached session key:', sessionKey);
     return sessionKey; // Reuse cached session key.
   }
 
+  if (authMethod === 'apiKey' && apiKey) {
+    debug('Using API key authentication');
+    sessionKey = apiKey;
+    // API key is used directly as authorization header
+    return sessionKey;
+  }
+
+  // Default to password-based authentication
   debug('Requesting new session key for:', username);
 
   try {

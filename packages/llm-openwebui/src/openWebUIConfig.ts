@@ -14,17 +14,30 @@ const openWebUIConfig = convict({
     default: 'http://host.docker.internal:3000/api/',
     env: 'OPEN_WEBUI_API_URL',
   },
+  authMethod: {
+    doc: 'Authentication method: "password" (username/password) or "apiKey"',
+    format: ['password', 'apiKey'],
+    default: 'password',
+    env: 'OPEN_WEBUI_AUTH_METHOD',
+  },
   username: {
-    doc: 'Username for authentication with Open WebUI',
+    doc: 'Username for authentication with Open WebUI (used when authMethod is "password")',
     format: String,
     default: '',
     env: 'OPEN_WEBUI_USERNAME',
   },
   password: {
-    doc: 'Password for authentication with Open WebUI',
+    doc: 'Password for authentication with Open WebUI (used when authMethod is "password")',
     format: String,
     default: '',
     env: 'OPEN_WEBUI_PASSWORD',
+    sensitive: true,
+  },
+  apiKey: {
+    doc: 'API key for authentication with Open WebUI (used when authMethod is "apiKey")',
+    format: String,
+    default: '',
+    env: 'OPEN_WEBUI_API_KEY',
     sensitive: true,
   },
   knowledgeFile: {
