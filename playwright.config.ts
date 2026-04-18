@@ -62,7 +62,6 @@ export default defineConfig({
           permissions: ['clipboard-read', 'clipboard-write']
         },
         launchOptions: {
-          executablePath: '/usr/bin/google-chrome',
         },
       },
     },
@@ -109,12 +108,11 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command: process.env.CI
-      ? 'SKIP_MESSENGERS=true NODE_ENV=test node dist/index.js'
-      : 'ALLOW_TEST_BYPASS=true npm run start:dev',
+      ? 'cross-env SKIP_MESSENGERS=true NODE_ENV=test node dist/index.js'
+      : 'cross-env ALLOW_TEST_BYPASS=true npm run start:dev',
     url: 'http://localhost:3028',
     reuseExistingServer: !process.env.CI,
     timeout: 180 * 1000,
-  },
   },
 
   /* Metadata for test organization */

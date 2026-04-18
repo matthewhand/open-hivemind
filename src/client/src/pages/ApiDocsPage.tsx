@@ -9,6 +9,7 @@ import { apiService } from '../services/api';
 import Input from '../components/DaisyUI/Input';
 import Textarea from '../components/DaisyUI/Textarea';
 import Accordion from '../components/DaisyUI/Accordion';
+import Button from '../components/DaisyUI/Button';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -241,6 +242,7 @@ const TryItPanel: React.FC<{ route: RouteInfo }> = ({ route }) => {
 
 /** Single route card with expandable details */
 const RouteCard: React.FC<{ route: RouteInfo }> = ({ route }) => {
+  const [expanded, setExpanded] = useState(false);
   return (
     <div className="collapse collapse-arrow bg-base-100 border border-base-300 mb-2">
       <input type="checkbox" checked={expanded} onChange={() => setExpanded(!expanded)} />
@@ -309,12 +311,7 @@ const RouteCard: React.FC<{ route: RouteInfo }> = ({ route }) => {
         <h4 className="font-semibold text-sm mb-2">Live Testing</h4>
 
         <TryItPanel route={route} />
-            </div>
-          ),
-        {']'}
-        {'}'}
-        size="sm"
-      />
+      </div>
     </div>
   );
 };

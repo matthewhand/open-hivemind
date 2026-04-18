@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import {
   assertNoErrors,
   navigateAndWaitReady,
+  registerViteSourceBypass,
   setupTestWithErrorDetection,
   waitForPageReady,
 } from './test-utils';
@@ -56,6 +57,8 @@ test.describe('User Flows', () => {
         route.fulfill({ status: 200, json: { data: { bots: [] } } })
       ),
     ]);
+    // CRITICAL: Call this AFTER all other routes to ensure Vite modules can load
+    await registerViteSourceBypass(page);
   }
 
   test('complete bot creation flow without errors', async ({ page }) => {

@@ -10,7 +10,7 @@ const debug = Debug('app:rateLimiterCore');
  * Used as fallback when Redis is not available
  */
 export class MemoryStoreWithCleanup {
-  private hits = new Map<string, { count: number; resetTime: number }>();
+  private hits = new Map<string, { count: number; resetTime: Date }>();
   private cleanupInterval: NodeJS.Timeout | null = null;
   private windowMs: number;
 
@@ -27,7 +27,7 @@ export class MemoryStoreWithCleanup {
         const now = Date.now();
         let cleaned = 0;
         for (const [key, data] of this.hits.entries()) {
-          if (now > data.resetTime) {
+          if (now > data.resetTime.getTime()) {
             this.hits.delete(key);
             cleaned++;
           }
@@ -44,16 +44,16 @@ export class MemoryStoreWithCleanup {
     }
   }
 
-  async increment(key: string): Promise<{ totalHits: number; resetTime: number }> {
+  async increment(key: string): Promise<{ totalHits: number; resetTime: Date }> {
     const now = Date.now();
     const existing = this.hits.get(key);
 
-    if (existing && now < existing.resetTime) {
+    if (existing && now < existing.resetTime.getTime()) {
       existing.count++;
       return { totalHits: existing.count, resetTime: existing.resetTime };
     }
 
-    const resetTime = now + this.windowMs;
+    const resetTime = new Date(now + this.windowMs);
     const newData = { count: 1, resetTime };
     this.hits.set(key, newData);
     return { totalHits: 1, resetTime };
