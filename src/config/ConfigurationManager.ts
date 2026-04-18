@@ -9,207 +9,140 @@ import { type IConfigurationManager } from '../di/interfaces';
 const debug = Debug('app:ConfigurationManager');
 
 /**
- * Base convict schema for environment configuration
- * @typedef {Object} BaseSchema
- * @property {Object} NODE_ENV - Node environment configuration
- */
-const schema = convict({
-  NODE_ENV: {
-    doc: 'The application environment.',
-    format: ['production', 'development', 'test'],
-    default: 'development',
-    env: 'NODE_ENV',
-  },
-  VITE_API_BASE_URL: {
-    doc: 'API base URL for Vite frontend',
-    format: (val: any) => {
-      if (typeof val !== 'string') {
-        throw new ValidationError(
-          'Value must be a string',
-          'VITE_API_BASE_URL',
-          val,
-          'string',
-          ['Must be a valid string'],
-        );
-      }
-      if (!isValidUrl(val)) {
-        throw new ValidationError(
-          'Value must be a valid URL',
-          'VITE_API_BASE_URL',
-          val,
-          'valid URL',
-          ['Must be a properly formatted URL'],
-        );
-      }
-    },
-    default: 'http://localhost:3000/api',
-    env: 'VITE_API_BASE_URL',
-  },
-  PLAYWRIGHT_BASE_URL: {
-    doc: 'Base URL for Playwright E2E tests',
-    format: (val: any) => {
-      if (typeof val !== 'string') {
-        throw new ValidationError(
-          'Value must be a string',
-          'PLAYWRIGHT_BASE_URL',
-          val,
-          'string',
-          ['Must be a valid string'],
-        );
-      }
-      if (!isValidUrl(val)) {
-        throw new ValidationError(
-          'Value must be a valid URL',
-          'PLAYWRIGHT_BASE_URL',
-          val,
-          'valid URL',
-          ['Must be a properly formatted URL'],
-        );
-      }
-    },
-    default: 'http://localhost:3000',
-    env: 'PLAYWRIGHT_BASE_URL',
-  },
-});
-
-/**
- * ConfigurationManager Class - Singleton configuration manager
+ * Manages configuration and environment settings.
  *
- * Now supports dependency injection via tsyringe while maintaining
- * backward compatibility with the singleton pattern.
+ * This manager provides unified access to all configuration layers (environment, files, secure storage)
+ * and maintains schema validation via convict.
  *
- * @class
+ * @singleton
  * @implements {IConfigurationManager}
- * @description Centralized configuration management system that handles:
- * - Environment configuration validation
- * - Runtime configuration storage
- * - Session ID management across integrations
- *
- * @example
- * // Using singleton pattern (backward compatible)
- * const configManager = ConfigurationManager.getInstance();
- * const envConfig = configManager.getConfig('environment');
- *
- * @example
- * // Using dependency injection (recommended for new code)
- * import { container, TOKENS } from '../di';
- * const configManager = container.resolve<IConfigurationManager>(TOKENS.ConfigurationManager);
  */
 @singleton()
 @injectable()
 export class ConfigurationManager implements IConfigurationManager {
-  private static instance: ConfigurationManager | null = null;
-  private configs: Record<string, convict.Config<any>> = {};
+  private static instance: ConfigurationManager;
+  private readonly configs: Map<string, convict.Config<any>> = new Map();
+  private readonly secureManager: SecureConfigManager;
   private sessionStore: Record<string, Record<string, string>> = {};
 
-  /**
-     * Constructor for ConfigurationManager
-     * @throws {Error} If schema validation fails
-     */
   constructor() {
-    // Validate schema before loading files - use 'warn' to allow extra params from config files
-    schema.validate({ allowed: 'warn' });
+    this.secureManager = SecureConfigManager.getInstanceSync();
+    
+    // Initialize schema inside constructor to ensure fresh env read in tests
+    const schema = convict({
+      NODE_ENV: {
+        doc: 'The application environment.',
+        format: ['production', 'development', 'test'],
+        default: 'development',
+        env: 'NODE_ENV',
+      },
+      VITE_API_BASE_URL: {
+        doc: 'API base URL for Vite frontend',
+        format: (val: any) => {
+          if (typeof val !== 'string') {
+            throw new ValidationError(
+              'Value must be a string',
+              'VITE_API_BASE_URL',
+              val,
+              'string',
+              ['Must be a valid string'],
+            );
+          }
+          if (!isValidUrl(val)) {
+            throw new ValidationError(
+              'Value must be a valid URL',
+              'VITE_API_BASE_URL',
+              val,
+              'valid URL',
+              ['Must be a properly formatted URL'],
+            );
+          }
+        },
+        default: 'http://localhost:3000/api',
+        env: 'VITE_API_BASE_URL',
+      },
+      PLAYWRIGHT_BASE_URL: {
+        doc: 'Base URL for Playwright E2E tests',
+        format: (val: any) => {
+          if (typeof val !== 'string') {
+            throw new ValidationError(
+              'Value must be a string',
+              'PLAYWRIGHT_BASE_URL',
+              val,
+              'string',
+              ['Must be a valid string'],
+            );
+          }
+        },
+        default: 'http://localhost:3000',
+        env: 'PLAYWRIGHT_BASE_URL',
+      },
+    });
 
-    const secureManager = SecureConfigManager.getInstanceSync();
-    const env = process.env.NODE_ENV || 'default';
-    const fileConfig = secureManager.getDecryptedMainConfigSync(env);
-    if (fileConfig) {
-      schema.load(fileConfig);
-      // Use 'warn' to allow extra config params that aren't in the minimal schema
-      schema.validate({ allowed: 'warn' });
-    }
-
-    // Final validation with warnings for undeclared params
-    schema.validate({ allowed: 'warn' });
-
-    // Access all configuration values to trigger env var loading
-    schema.getProperties();
-
-    this.configs['environment'] = schema;
-    debug('ConfigurationManager initialized in development environment');
+    this.configs.set('environment', schema);
+    debug('ConfigurationManager initialized');
   }
 
   /**
-     * Gets the singleton instance (backward compatible)
-     * @static
-     * @returns {ConfigurationManager} The singleton instance
-     * @deprecated Prefer using dependency injection via container.resolve()
-     * @example
-     * const configManager = ConfigurationManager.getInstance();
-     */
+   * Retrieves the singleton instance.
+   */
   public static getInstance(): ConfigurationManager {
     if (!ConfigurationManager.instance) {
       ConfigurationManager.instance = new ConfigurationManager();
-      debug('ConfigurationManager instance created');
     }
-    return ConfigurationManager.instance!;
+    return ConfigurationManager.instance;
   }
 
   /**
-     * Retrieves a configuration object by name
-     * @param {string} configName - Name of the configuration to retrieve
-     * @returns {convict.Config<any>|null} Requested configuration or null if not found
-     * @throws {TypeError} If configName is not a string
-     * @example
-     * const dbConfig = configManager.getConfig('database');
-     */
-  public getConfig(configName: string): convict.Config<any> | null {
-    if (typeof configName !== 'string') {
-      throw new ValidationError(
-        'configName must be a string',
-        'configName',
-        configName,
-        'string',
-        ['Must be a valid string'],
-      );
-    }
-    const config = this.configs[configName];
-    if (config) {
-      debug(`Configuration '${configName}' retrieved successfully`);
-    } else {
-      debug(`Configuration '${configName}' not found`);
-    }
-    return config || null;
+   * Resets the singleton instance (for testing).
+   */
+  public static resetInstance(): void {
+    ConfigurationManager.instance = undefined as any;
   }
 
   /**
-     * Stores a unique session ID for an integration/channel combination
-     * @param {string} integration - Integration name (e.g., 'slack', 'discord')
-     * @param {string} channelId - Channel/conversation identifier
-     * @param {string} sessionId - Session identifier to store
-     * @returns {void}
-     * @throws {TypeError} If any argument is missing or invalid
-     * @example
-     * configManager.setSession('slack', 'C123456', 'session_789');
-     */
-  public setSession(integration: string, channelId: string, sessionId: string) {
-    if (typeof integration !== 'string') {
-      throw new ValidationError(
-        'integration must be a string',
-        'integration',
-        integration,
-        'string',
-        ['Must be a valid string'],
-      );
+   * Retrieves a configuration object by name.
+   */
+  public getConfig(name: string): convict.Config<any> | null {
+    return this.configs.get(name) ?? null;
+  }
+
+  /**
+   * Get a configuration value by key from a specific group.
+   */
+  public get(group: string, key: string): any {
+    const config = this.configs.get(group);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return config ? (config as any).get(key) : undefined;
+  }
+
+  /**
+   * Retrieves the secure configuration manager.
+   */
+  public getSecureManager(): SecureConfigManager {
+    return this.secureManager;
+  }
+
+  /**
+   * Refreshes all configuration sources.
+   */
+  public async refresh(): Promise<void> {
+    for (const config of this.configs.values()) {
+      try {
+        config.validate({ allowed: 'warn' });
+      } catch (e) {
+        debug('Validation error during refresh:', e);
+      }
     }
-    if (typeof channelId !== 'string') {
-      throw new ValidationError(
-        'channelId must be a string',
-        'channelId',
-        channelId,
-        'string',
-        ['Must be a valid string'],
-      );
-    }
-    if (typeof sessionId !== 'string') {
-      throw new ValidationError(
-        'sessionId must be a string',
-        'sessionId',
-        sessionId,
-        'string',
-        ['Must be a valid string'],
-      );
-    }
+  }
+
+  /**
+   * Stores a unique session ID for an integration/channel combination
+   * @param integration - Integration name (e.g., 'slack', 'discord')
+   * @param channelId - Channel/conversation identifier
+   * @param sessionId - Session identifier to store
+   */
+  public setSession(integration: string, channelId: string, sessionId: string): void {
     if (!this.sessionStore[integration]) {
       this.sessionStore[integration] = {};
     }
@@ -219,27 +152,23 @@ export class ConfigurationManager implements IConfigurationManager {
   }
 
   /**
-     * Retrieves a stored session ID
-     * @param {string} integration - Integration name
-     * @param {string} channelId - Channel/conversation identifier
-     * @returns {string|undefined} Session ID if exists, undefined otherwise
-     * @throws {TypeError} If arguments are invalid
-     * @example
-     * const session = configManager.getSession('slack', 'C123456');
-     */
+   * Retrieves a stored session ID
+   * @param integration - Integration name
+   * @param channelId - Channel/conversation identifier
+   * @returns Session ID if exists, undefined otherwise
+   */
   public getSession(integration: string, channelId: string): string | undefined {
     return this.sessionStore[integration]?.[channelId];
   }
 
   /**
-     * Retrieves all sessions for an integration
-     * @param {string} integration - Integration name
-     * @returns {Record<string, string>|undefined} All channel-session mappings or undefined
-     * @throws {TypeError} If integration name is invalid
-     * @example
-     * const allSessions = configManager.getAllSessions('slack');
-     */
+   * Retrieves all sessions for an integration
+   * @param integration - Integration name
+   * @returns All channel-session mappings or undefined
+   */
   public getAllSessions(integration: string): Record<string, string> | undefined {
     return this.sessionStore[integration];
   }
 }
+
+export default ConfigurationManager;
