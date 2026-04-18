@@ -1,8 +1,19 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { instantiateMessageService, loadPlugin } from '@src/plugins/PluginLoader';
+import type { IMessengerService } from '../interfaces/IMessengerService';
 
 const gmpDebug = require('debug')('app:getMessengerProvider');
+
+interface MessengersConfig {
+  MESSAGE_PROVIDER?: string | string[];
+  providers?: { type: string }[];
+}
+
+type MessengerServiceInstance = IMessengerService & {
+  provider?: string;
+  sendTypingIndicator(...args: unknown[]): Promise<void>;
+};
 
 /**
  * Get Messenger Providers
@@ -17,11 +28,11 @@ const gmpDebug = require('debug')('app:getMessengerProvider');
  * @returns Array of initialized message provider instances.
  */
 // Ensure CommonJS require compatibility for tests using jest.mock()
-function __require(modulePath: string): any {
+function __require(modulePath: string): unknown {
   return require(modulePath);
 }
 
-let cachedMessengersConfig: any = null;
+let cachedMessengersConfig: MessengersConfig | null = null;
 
 export function resetMessengerProviderCache(): void {
   cachedMessengersConfig = null;
@@ -30,14 +41,16 @@ export function resetMessengerProviderCache(): void {
 export async function getMessengerProvider() {
   const messengersConfigPath = path.join(__dirname, '../../../config/providers/messengers.json');
 
-  let messengersConfig: any = {};
+  let messengersConfig: MessengersConfig = {};
 
   if (cachedMessengersConfig) {
     messengersConfig = cachedMessengersConfig;
   } else {
     try {
       const messengersConfigRaw = await fs.promises.readFile(messengersConfigPath, 'utf-8');
-      messengersConfig = messengersConfigRaw ? JSON.parse(messengersConfigRaw) : {};
+      messengersConfig = messengersConfigRaw
+        ? (JSON.parse(messengersConfigRaw) as MessengersConfig)
+        : {};
     } catch {
       // If file doesn't exist or JSON is invalid, use empty config
       messengersConfig = {};
@@ -45,7 +58,7 @@ export async function getMessengerProvider() {
     cachedMessengersConfig = messengersConfig;
   }
 
-  const messengerServices: any[] = [];
+  const messengerServices: MessengerServiceInstance[] = [];
 
   // Derive MESSAGE_PROVIDER filter similar to src/index.ts bootstrap
   // Supports string or array-like values via environment (primary) or config fallback
@@ -57,7 +70,7 @@ export async function getMessengerProvider() {
           .map((v: string) => v.trim().toLowerCase())
           .filter(Boolean)
       : Array.isArray(rawProviders)
-        ? rawProviders.map((v: any) => String(v).trim().toLowerCase()).filter(Boolean)
+        ? rawProviders.map((v: unknown) => String(v).trim().toLowerCase()).filter(Boolean)
         : [];
 
   const wantProvider = (name: string) => {
@@ -65,8 +78,8 @@ export async function getMessengerProvider() {
   };
 
   // In tests we exclusively support the { providers: [{ type: string }] } shape
-  const providersArray: { type: string }[] = Array.isArray((messengersConfig as any).providers)
-    ? (messengersConfig as any).providers
+  const providersArray: { type: string }[] = Array.isArray(messengersConfig.providers)
+    ? messengersConfig.providers
     : [];
 
   const hasType = (type: string) =>
@@ -94,10 +107,11 @@ export async function getMessengerProvider() {
       const mod = await loadPlugin(`message-${name}`);
       const svc = instantiateMessageService(mod, undefined, dependencies);
       if (svc) {
-        if (typeof (svc as any).provider === 'undefined') {
-          (svc as any).provider = name;
+        const instance = svc as MessengerServiceInstance;
+        if (typeof instance.provider === 'undefined') {
+          instance.provider = name;
         }
-        messengerServices.push(svc);
+        messengerServices.push(instance);
         gmpDebug('Initialized %s provider via plugin loader', name);
       }
     } catch (e: unknown) {
@@ -122,10 +136,11 @@ export async function getMessengerProvider() {
         const mod = await loadPlugin('message-slack');
         const svc = instantiateMessageService(mod, undefined, dependencies);
         if (svc) {
-          if (typeof (svc as any).provider === 'undefined') {
-            (svc as any).provider = 'slack';
+          const instance = svc as MessengerServiceInstance;
+          if (typeof instance.provider === 'undefined') {
+            instance.provider = 'slack';
           }
-          messengerServices.push(svc);
+          messengerServices.push(instance);
         }
       } catch {
         // As a last resort in tests, return a recognizable Slack sentinel
@@ -133,13 +148,13 @@ export async function getMessengerProvider() {
           provider: 'slack',
           sendMessageToChannel: () => {},
           getClientId: () => 'SLACK_CLIENT_ID',
-        });
+        } as unknown as MessengerServiceInstance);
       }
     }
   }
 
   gmpDebug(
-    `Returning ${messengerServices.length} provider(s): ${messengerServices.map((p: any) => p?.provider).join(',')}`
+    `Returning ${messengerServices.length} provider(s): ${messengerServices.map((p) => p?.provider).join(',')}`
   );
   return messengerServices;
 }
