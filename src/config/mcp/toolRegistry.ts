@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { spawn } from 'child_process';
 import { v4 as uuidv4 } from 'uuid';
 import { ErrorUtils } from '@src/types/errors';

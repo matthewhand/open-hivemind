@@ -5,6 +5,7 @@ import {
 } from '../../../../src/message/helpers/processing/ChannelActivity';
 import { IncomingMessageDensity } from '../../../../src/message/helpers/processing/IncomingMessageDensity';
 import { shouldReplyToMessage } from '../../../../src/message/helpers/processing/shouldReplyToMessage';
+import { SwarmCoordinator } from '../../../../src/services/SwarmCoordinator';
 import {
   looksLikeOpportunity,
   shouldReplyToUnsolicitedMessage,
@@ -66,11 +67,15 @@ describe('shouldReplyToMessage', () => {
     mockMessage = {
       getMessageId: jest.fn().mockReturnValue('msg-123'),
       getChannelId: jest.fn().mockReturnValue('channel-1'),
+      getMessageId: jest.fn().mockReturnValue('msg-1'),
       getText: jest.fn().mockReturnValue('Hello world this is a normal length message'),
       getAuthorId: jest.fn().mockReturnValue('user-1'),
       mentionsUsers: jest.fn().mockReturnValue(false),
       getUserMentions: jest.fn().mockReturnValue([]),
       isFromBot: jest.fn().mockReturnValue(false),
+      isDirectMention: jest.fn().mockReturnValue(false),
+      isReplyToBot: jest.fn().mockReturnValue(false),
+      getMentions: jest.fn().mockReturnValue([]),
     };
   });
 

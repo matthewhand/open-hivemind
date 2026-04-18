@@ -25,12 +25,12 @@ const mockAuthManager = (
 
 // Mock rateLimiter (no-op)
 jest.mock('../../../src/middleware/rateLimiter', () => ({
-  authRateLimiter: (_req: unknown, _res: unknown, next: () => void) => next(),
-  defaultRateLimiter: (_req: unknown, _res: unknown, next: () => void) => next(),
-  configRateLimiter: (_req: unknown, _res: unknown, next: () => void) => next(),
-  adminRateLimiter: (_req: unknown, _res: unknown, next: () => void) => next(),
-  apiRateLimiter: (_req: unknown, _res: unknown, next: () => void) => next(),
-  applyRateLimiting: (_req: unknown, _res: unknown, next: () => void) => next(),
+  authRateLimiter: (_req: any, _res: any, next: any) => next(),
+  defaultRateLimiter: (_req: any, _res: any, next: any) => next(),
+  configRateLimiter: (_req: any, _res: any, next: any) => next(),
+  adminRateLimiter: (_req: any, _res: any, next: any) => next(),
+  apiRateLimiter: (_req: any, _res: any, next: any) => next(),
+  applyRateLimiting: (_req: any, _res: any, next: any) => next(),
 }));
 
 const mockUser = {
@@ -130,7 +130,8 @@ describe('GET /auth/verify', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.data.tokenValid).toBe(true);
+    expect(res.body.data.user).toBeDefined();
+    expect(res.body.data.user.username).toBe('testuser');
     expect(mockAuthManager.verifyAccessToken).toHaveBeenCalledWith(token);
   });
 
@@ -139,7 +140,7 @@ describe('GET /auth/verify', () => {
 
     expect(res.status).toBe(401);
     expect(res.body.success).toBe(false);
-    expect(res.body.error).toMatch(/bearer token required/i);
+    expect(res.body.error).toMatch(/No token provided/i);
     expect(mockAuthManager.verifyAccessToken).not.toHaveBeenCalled();
   });
 

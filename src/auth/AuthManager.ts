@@ -485,4 +485,13 @@ export class AuthManager {
 
     return true;
   }
+
+  /**
+   * Verify current password for a user
+   */
+  public async verifyCurrentPassword(userId: string, password: string): Promise<boolean> {
+    const user = this.users.get(userId);
+    if (!user || !user.passwordHash) return false;
+    return this.verifyPassword(password, user.passwordHash);
+  }
 }

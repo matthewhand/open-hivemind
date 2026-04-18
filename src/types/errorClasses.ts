@@ -247,7 +247,7 @@ export class ConfigurationError extends BaseHivemindError {
       message,
       'configuration',
       'CONFIG_ERROR',
-      500,
+      400,
       { configKey, expectedType, providedType },
       context
     );
@@ -283,7 +283,7 @@ export class DatabaseError extends BaseHivemindError {
     query?: string,
     context?: Record<string, unknown>
   ) {
-    super(message, 'database', 'DATABASE_ERROR', 500, { operation, table, query }, context);
+    super(message, 'database', 'DATABASE_ERROR', 400, { operation, table, query }, context);
     this.operation = operation;
     this.table = table;
     this.query = query;

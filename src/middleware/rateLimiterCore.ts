@@ -271,11 +271,10 @@ export function getClientKey(req: Request): string {
   };
 
   // CONNECTION IP: The address of the machine directly connecting to us
-  const connectionIP =
-    validateIP(req.socket?.remoteAddress || (req as any).ip || '') || '127.0.0.1';
+  const connectionIP = validateIP(req.socket?.remoteAddress || (req as any).ip || '') || 'unknown';
 
   // If the direct connection is NOT from a trusted proxy, use it as the client IP (ignores headers)
-  if (!isTrustedProxy(connectionIP)) {
+  if (connectionIP !== 'unknown' && !isTrustedProxy(connectionIP)) {
     return connectionIP;
   }
 

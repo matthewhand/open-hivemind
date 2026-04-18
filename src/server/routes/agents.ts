@@ -195,7 +195,7 @@ router.post(
       // Idempotency check: return existing agent with same name
       const existingAgent = agents.find((a) => a.name === agentData.name);
       if (existingAgent) {
-        return res.status(HTTP_STATUS.OK).json({ agent: existingAgent });
+        return res.status(HTTP_STATUS.OK).json(ApiResponse.success({ agent: existingAgent }));
       }
 
       const newAgent: AgentConfig = {

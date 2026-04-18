@@ -170,22 +170,6 @@ export class ErrorLogger {
   private createLogEntry(error: HivemindError, context: ErrorContext): ErrorLogEntry {
     const memoryUsage = process.memoryUsage();
 
-    let recovery = undefined;
-    if (
-      error instanceof BaseHivemindError &&
-      typeof (error as any).getRecoveryStrategy === 'function'
-    ) {
-      const strategy = error.getRecoveryStrategy();
-      if (strategy) {
-        recovery = {
-          canRecover: strategy.canRecover,
-          retryDelay: strategy.retryDelay,
-          maxRetries: strategy.maxRetries,
-          steps: strategy.recoverySteps,
-        };
-      }
-    }
-
     return {
       timestamp: new Date().toISOString(),
       correlationId: context.correlationId,
@@ -226,7 +210,18 @@ export class ErrorLogger {
           external: memoryUsage.external,
         },
       },
-      recovery,
+      recovery:
+        error &&
+        typeof error === 'object' &&
+        'getRecoveryStrategy' in error &&
+        typeof (error as any).getRecoveryStrategy === 'function'
+          ? {
+              canRecover: (error as any).getRecoveryStrategy().canRecover,
+              retryDelay: (error as any).getRecoveryStrategy().retryDelay,
+              maxRetries: (error as any).getRecoveryStrategy().maxRetries,
+              steps: (error as any).getRecoveryStrategy().recoverySteps,
+            }
+          : undefined,
     };
   }
 
@@ -286,8 +281,8 @@ export class ErrorLogger {
         return 'frontend';
       }
       // Check for type property
-      if ('type' in error && (error as any).type) {
-        return String((error as any).type);
+      if ('type' in error && error.type) {
+        return String(error.type);
       }
       // Check for other properties that might indicate type
       if ('name' in error && error.name) {
@@ -479,21 +474,6 @@ export class ErrorLogger {
   }
 
   /**
-   * Get a summary of error counts
-   */
-  getErrorSummary(): Record<string, number> {
-    return Object.fromEntries(this.errorCounts);
-  }
-
-  /**
-   * Clear all error counts
-   */
-  clearErrorCounts(): void {
-    this.errorCounts.clear();
-    this.lastErrors.clear();
-  }
-
-  /**
    * Get recent error count
    */
   getRecentErrorCount(timeframeMs = 60000): number {
@@ -551,6 +531,21 @@ export class ErrorLogger {
   }
 
   /**
+   * Get current error summary
+   */
+  getErrorSummary(): Record<string, number> {
+    return Object.fromEntries(this.errorCounts);
+  }
+
+  /**
+   * Clear all error counts
+   */
+  clearErrorCounts(): void {
+    this.errorCounts.clear();
+    this.debug('Error counts cleared');
+  }
+
+  /**
    * Update configuration
    */
   updateConfig(config: Partial<LoggerConfig>): void {
@@ -583,7 +578,7 @@ export function createErrorContext(req: any): ErrorContext {
     path: req.path,
     method: req.method,
     userAgent: req.headers['user-agent'],
-    ip: req.ip || req.connection?.remoteAddress,
+    ip: req.ip || req.connection.remoteAddress,
     duration: req.startTime ? Date.now() - req.startTime : undefined,
     body: req.body,
     params: req.params,

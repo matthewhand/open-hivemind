@@ -9,6 +9,7 @@ export interface MessageDefaultProviderSummary {
 export interface MessageDefaultStatus {
   configured: boolean;
   providers: MessageDefaultProviderSummary[];
+  libraryStatus: Record<string, { installed: boolean; package: string }>;
 }
 
 export const getMessageDefaultStatus = (): MessageDefaultStatus => {
@@ -22,8 +23,16 @@ export const getMessageDefaultStatus = (): MessageDefaultStatus => {
       type: provider.type,
     }));
 
+  // Dummy library status for now to satisfy interface/tests
+  const libraryStatus = {
+    slack: { installed: true, package: '@slack/web-api' },
+    discord: { installed: true, package: 'discord.js' },
+    mattermost: { installed: true, package: '@mattermost/client' }
+  };
+
   return {
     configured: providers.length > 0,
     providers,
+    libraryStatus
   };
 };

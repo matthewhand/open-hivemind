@@ -18,8 +18,13 @@ import { DatabaseManager } from '../database/DatabaseManager';
 import { SchemaManager } from '../database/SchemaManager';
 import { BotManager } from '../managers/BotManager';
 import { RealTimeValidationService } from '../server/services/RealTimeValidationService';
+import { BroadcastService } from '../server/services/websocket/BroadcastService';
+import { ConnectionManager } from '../server/services/websocket/ConnectionManager';
+import { EventHandlers } from '../server/services/websocket/EventHandlers';
 import { WebSocketService } from '../server/services/WebSocketService';
 import DemoModeService from '../services/DemoModeService';
+import { GreetingStateManager } from '../services/GreetingStateManager';
+import { StartupGreetingService } from '../services/StartupGreetingService';
 import { SwarmCoordinator } from '../services/SwarmCoordinator';
 import { container, TOKENS } from './container';
 
@@ -74,6 +79,11 @@ export function registerServices(): void {
   logger.debug('Registering MCPProviderManager');
   container.registerSingleton('MCPProviderManager', MCPProviderManager);
 
+  logger.debug('Registering WebSocketService dependencies');
+  container.registerSingleton(ConnectionManager, ConnectionManager);
+  container.registerSingleton(BroadcastService, BroadcastService);
+  container.registerSingleton(EventHandlers, EventHandlers);
+
   logger.debug('Registering WebSocketService');
   container.registerSingleton(TOKENS.WebSocketService, WebSocketService);
 
@@ -82,6 +92,12 @@ export function registerServices(): void {
 
   logger.debug('Registering DemoModeService');
   container.registerSingleton('DemoModeService', DemoModeService);
+
+  logger.debug('Registering GreetingStateManager');
+  container.registerSingleton(GreetingStateManager, GreetingStateManager);
+
+  logger.debug('Registering StartupGreetingService');
+  container.registerSingleton(StartupGreetingService, StartupGreetingService);
 
   logger.debug('Registering SwarmCoordinator');
   // SwarmCoordinator uses singleton pattern with private constructor

@@ -1,8 +1,17 @@
 import React, { useState, useCallback } from 'react';
 import { Download, Upload, FileJson, AlertCircle, CheckCircle, X, Settings, Lock, Unlock, Package } from 'lucide-react';
-import PageHeader from '../components/DaisyUI/PageHeader';
-import { 
-  Button, Checkbox, FileUpload, Modal, Alert, Card, Badge, Select, Divider, Input, LoadingSpinner, ProgressBar 
+import {
+  Button,
+  Card,
+  Checkbox,
+  PageHeader,
+  FileUpload,
+  Modal,
+  Alert,
+  LoadingSpinner,
+  ProgressBar,
+  Select,
+  Input
 } from '../components/DaisyUI';
 import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
 import { apiService } from '../services/api';
@@ -21,18 +30,21 @@ interface ExportOptions {
 }
 
 interface ImportOptions {
+  file: File | null;
   overwrite: boolean;
-  validateOnly: boolean;
-  skipValidation: boolean;
-  decryptionKey: string;
+  dryRun: boolean;
+}
+
+interface ImportResult {
+  success: boolean;
+  message: string;
+  details?: any;
 }
 
 const ImportExportPage: React.FC = () => {
-  const showSuccess = useSuccessToast();
-  const showError = useErrorToast();
+  const { addSuccessToast } = useSuccessToast();
+  const { addErrorToast } = useErrorToast();
 
-  // Export state
-  const [showExportModal, setShowExportModal] = useState(false);
   const [exportOptions, setExportOptions] = useState<ExportOptions>({
     configIds: [],
     format: 'json',
@@ -44,163 +56,75 @@ const ImportExportPage: React.FC = () => {
     encryptionKey: '',
     fileName: '',
   });
-  const [exportProgress, setExportProgress] = useState(0);
-  const [isExporting, setIsExporting] = useState(false);
 
-  // Import state
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [importOptions, setImportOptions] = useState<ImportOptions>({
+    file: null,
     overwrite: false,
-    validateOnly: false,
-    skipValidation: false,
-    decryptionKey: '',
+    dryRun: true,
   });
-  const [importProgress, setImportProgress] = useState(0);
-  const [isImporting, setIsImporting] = useState(false);
-  const [importResult, setImportResult] = useState<any>(null);
 
-  // Fetch available configurations
-  const { data: botsData, isLoading: botsLoading } = useApiQuery(
-    ['bots'],
-    () => apiService.getBots()
-  );
-  const bots = botsData || [];
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const { data: botsData, isLoading: isLoadingBots } = useApiQuery<{ bots: any[] }>('/api/admin/bots');
 
   const handleExport = useCallback(async () => {
-    if (exportOptions.configIds.length === 0) {
-      showError('Please select at least one configuration to export');
-      return;
-    }
-
-    if (exportOptions.encrypt && !exportOptions.encryptionKey) {
-      showError('Please provide an encryption key');
-      return;
-    }
-
     setIsExporting(true);
-    setExportProgress(0);
-
     try {
-      // Simulate progress
-      const progressInterval = setInterval(() => {
-        setExportProgress(prev => Math.min(prev + 10, 90));
-      }, 200);
-
-      const result = await apiService.exportConfigurations({
-        configIds: exportOptions.configIds,
-        format: exportOptions.format,
-        includeVersions: exportOptions.includeVersions,
-        includeAuditLogs: exportOptions.includeAuditLogs,
-        includeTemplates: exportOptions.includeTemplates,
-        compress: exportOptions.compress,
-        encrypt: exportOptions.encrypt,
-        encryptionKey: exportOptions.encryptionKey || undefined,
-        fileName: exportOptions.fileName || undefined,
-      });
-
-      clearInterval(progressInterval);
-      setExportProgress(100);
-
-      if (result.success) {
-        showSuccess(`Configurations exported successfully! File: ${result.data.filePath}`);
-        setShowExportModal(false);
-
-        // Reset form
-        setExportOptions({
-          configIds: [],
-          format: 'json',
-          includeVersions: true,
-          includeAuditLogs: true,
-          includeTemplates: true,
-          compress: true,
-          encrypt: false,
-          encryptionKey: '',
-          fileName: '',
-        });
-      } else {
-        showError(`Export failed: ${result.message}`);
-      }
-    } catch (error) {
-      showError(`Export error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      const response = await apiService.post('/api/admin/export', exportOptions);
+      const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = exportOptions.fileName || `hivemind-export-${new Date().toISOString()}.json`;
+      link.click();
+      addSuccessToast('Configuration exported successfully');
+    } catch (error: any) {
+      addErrorToast(error.message || 'Failed to export configuration');
     } finally {
       setIsExporting(false);
-      setExportProgress(0);
     }
-  }, [exportOptions, showSuccess, showError]);
+  }, [exportOptions, addSuccessToast, addErrorToast]);
 
   const handleImport = useCallback(async () => {
     if (!selectedFile) {
-      showError('Please select a file to import');
-      return;
-    }
-
-    if (selectedFile.name.endsWith('.enc') && !importOptions.decryptionKey) {
-      showError('This file is encrypted. Please provide a decryption key.');
+      addErrorToast('Please select a file to import');
       return;
     }
 
     setIsImporting(true);
-    setImportProgress(0);
     setImportResult(null);
 
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('overwrite', String(importOptions.overwrite));
+    formData.append('dryRun', String(importOptions.dryRun));
+
     try {
-      // Simulate progress
-      const progressInterval = setInterval(() => {
-        setImportProgress(prev => Math.min(prev + 10, 90));
-      }, 200);
-
-      const result = await apiService.importConfigurations(selectedFile, {
-        overwrite: importOptions.overwrite,
-        validateOnly: importOptions.validateOnly,
-        skipValidation: importOptions.skipValidation,
-        decryptionKey: importOptions.decryptionKey || undefined,
+      const response = await apiService.post('/api/admin/import', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
-
-      clearInterval(progressInterval);
-      setImportProgress(100);
-
-      setImportResult(result.data);
-
-      if (result.success) {
-        const { importedCount = 0, skippedCount = 0, errorCount = 0 } = result.data;
-        showSuccess(
-          `Import completed! Imported: ${importedCount}, Skipped: ${skippedCount}, Errors: ${errorCount}`
-        );
-      } else {
-        showError(`Import failed: ${result.message}`);
-      }
-    } catch (error) {
-      showError(`Import error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setImportResult({
+        success: true,
+        message: 'Import completed successfully',
+        details: response.data,
+      });
+      addSuccessToast('Configuration imported successfully');
+    } catch (error: any) {
+      setImportResult({
+        success: false,
+        message: error.message || 'Failed to import configuration',
+        details: error.response?.data,
+      });
+      addErrorToast(error.message || 'Failed to import configuration');
     } finally {
       setIsImporting(false);
-      setImportProgress(0);
     }
-  }, [selectedFile, importOptions, showSuccess, showError]);
-
-  const handleValidate = useCallback(async () => {
-    if (!selectedFile) {
-      showError('Please select a file to validate');
-      return;
-    }
-
-    try {
-      const result = await apiService.validateConfigurationFile(selectedFile);
-
-      if (result.success) {
-        const { importedCount = 0, errorCount = 0, errors = [] } = result.data;
-        if (errorCount === 0) {
-          showSuccess(`Validation passed! ${importedCount} configurations are valid.`);
-        } else {
-          showError(`Validation found ${errorCount} errors: ${errors.join(', ')}`);
-        }
-      } else {
-        showError(`Validation failed: ${result.message}`);
-      }
-    } catch (error) {
-      showError(`Validation error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }, [selectedFile, showSuccess, showError]);
+  }, [selectedFile, importOptions, addSuccessToast, addErrorToast]);
 
   const toggleBotSelection = (botId: number) => {
     setExportOptions(prev => ({
@@ -211,418 +135,214 @@ const ImportExportPage: React.FC = () => {
     }));
   };
 
-  const selectAllBots = () => {
-    setExportOptions(prev => ({
-      ...prev,
-      configIds: bots.map((bot: any) => bot.id),
-    }));
-  };
-
-  const deselectAllBots = () => {
-    setExportOptions(prev => ({
-      ...prev,
-      configIds: [],
-    }));
-  };
-
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="container mx-auto p-6 max-w-5xl">
       <PageHeader
-        title="Import/Export Configurations"
-        description="Export configurations for backup or migration, and import configurations from files"
-        icon={<Package className="w-8 h-8" />}
+        title="Import / Export"
+        description="Manage your system configuration, bot profiles, and templates via backup files."
+        icon={<Settings className="w-8 h-8" />}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
         {/* Export Card */}
-        <Card className="shadow-xl">
-            <Card.Title className="text-2xl mb-4">
-              <Download className="w-6 h-6" />
-              Export Configurations
-            </Card.Title>
-            <p className="text-base-content/70 mb-4">
-              Export bot configurations to a file for backup or migration purposes.
+        <Card className="shadow-xl bg-base-100 border border-base-300">
+          <div className="card-body">
+            <h2 className="card-title text-2xl mb-4 flex items-center gap-2">
+              <Download className="w-6 h-6 text-primary" />
+              Export Configuration
+            </h2>
+            <p className="text-base-content/70 mb-6">
+              Create a backup of your current system state, including all bot configurations and templates.
             </p>
 
             <div className="space-y-4">
-              <div>
+              <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-semibold">Export Format</span>
+                  <span className="label-text font-medium">Export Format</span>
                 </label>
                 <Select
-                  className="select-bordered"
                   value={exportOptions.format}
-                  onChange={(e) =>
-                    setExportOptions({ ...exportOptions, format: e.target.value as 'json' | 'yaml' | 'csv' })
-                  }
-                >
-                  <option value="json">JSON</option>
-                  <option value="yaml">YAML</option>
-                  <option value="csv">CSV</option>
-                </Select>
+                  onChange={(e) => setExportOptions({ ...exportOptions, format: e.target.value as any })}
+                  options={[
+                    { value: 'json', label: 'JSON (Recommended)' },
+                    { value: 'yaml', label: 'YAML' },
+                    { value: 'csv', label: 'CSV (Data Only)' },
+                  ]}
+                />
               </div>
 
-              <Checkbox
-                variant="primary"
-                label="Include Version History"
-                checked={exportOptions.includeVersions}
-                onChange={(e) =>
-                  setExportOptions({ ...exportOptions, includeVersions: e.target.checked })
-                }
-              />
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-medium">File Name (Optional)</span>
+                </label>
+                <Input
+                  placeholder="hivemind-backup.json"
+                  value={exportOptions.fileName}
+                  onChange={(e) => setExportOptions({ ...exportOptions, fileName: e.target.value })}
+                />
+              </div>
+
+              <div className="divider">Include Resources</div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <Checkbox
+                  label="Version History"
+                  checked={exportOptions.includeVersions}
+                  onChange={(checked) => setExportOptions({ ...exportOptions, includeVersions: checked })}
+                />
+                <Checkbox
+                  label="Audit Logs"
+                  checked={exportOptions.includeAuditLogs}
+                  onChange={(checked) => setExportOptions({ ...exportOptions, includeAuditLogs: checked })}
+                />
+                <Checkbox
+                  label="Templates"
+                  checked={exportOptions.includeTemplates}
+                  onChange={(checked) => setExportOptions({ ...exportOptions, includeTemplates: checked })}
+                />
+                <Checkbox
+                  label="Compress (GZip)"
+                  checked={exportOptions.compress}
+                  onChange={(checked) => setExportOptions({ ...exportOptions, compress: checked })}
+                />
+              </div>
+
+              <div className="divider">Security</div>
 
               <Checkbox
-                variant="primary"
-                label="Include Audit Logs"
-                checked={exportOptions.includeAuditLogs}
-                onChange={(e) =>
-                  setExportOptions({ ...exportOptions, includeAuditLogs: e.target.checked })
-                }
-              />
-
-              <Checkbox
-                variant="primary"
-                label="Include Templates"
-                checked={exportOptions.includeTemplates}
-                onChange={(e) =>
-                  setExportOptions({ ...exportOptions, includeTemplates: e.target.checked })
-                }
-              />
-
-              <Checkbox
-                variant="primary"
-                label="Compress File (gzip)"
-                checked={exportOptions.compress}
-                onChange={(e) =>
-                  setExportOptions({ ...exportOptions, compress: e.target.checked })
-                }
-              />
-
-              <Checkbox
-                variant="primary"
-                label="Encrypt Export"
+                label="Encrypt Export File"
                 checked={exportOptions.encrypt}
-                onChange={(e) =>
-                  setExportOptions({ ...exportOptions, encrypt: e.target.checked })
-                }
+                onChange={(checked) => setExportOptions({ ...exportOptions, encrypt: checked })}
               />
 
               {exportOptions.encrypt && (
-                <div>
+                <div className="form-control animate-in fade-in slide-in-from-top-2">
                   <label className="label">
-                    <span className="label-text font-semibold">Encryption Key</span>
+                    <span className="label-text font-medium flex items-center gap-2">
+                      <Lock className="w-4 h-4" />
+                      Encryption Key
+                    </span>
                   </label>
                   <Input
                     type="password"
-                    placeholder="Enter encryption key (min 8 characters)"
+                    placeholder="Strong passphrase..."
                     value={exportOptions.encryptionKey}
-                    onChange={(e) =>
-                      setExportOptions({ ...exportOptions, encryptionKey: e.target.value })
-                    }
+                    onChange={(e) => setExportOptions({ ...exportOptions, encryptionKey: e.target.value })}
                   />
+                  <label className="label">
+                    <span className="label-text-alt text-warning">Warning: You will need this key to import this file.</span>
+                  </label>
                 </div>
               )}
-
-              <div>
-                <label className="label">
-                  <span className="label-text font-semibold">File Name (Optional)</span>
-                </label>
-                <Input
-                  type="text"
-                  placeholder="custom-export-name"
-                  value={exportOptions.fileName}
-                  onChange={(e) =>
-                    setExportOptions({ ...exportOptions, fileName: e.target.value })
-                  }
-                />
-              </div>
             </div>
 
-            <Card.Actions className="mt-6">
+            <div className="card-actions justify-end mt-8">
               <Button
                 variant="primary"
-                onClick={() => setShowExportModal(true)}
-                disabled={botsLoading}
+                onClick={handleExport}
+                loading={isExporting}
+                className="w-full md:w-auto"
               >
-                <Download className="w-4 h-4" />
-                Select Configurations to Export
+                <Download className="w-4 h-4 mr-2" />
+                Generate Export
               </Button>
-            </Card.Actions>
+            </div>
+          </div>
         </Card>
 
         {/* Import Card */}
-        <Card className="shadow-xl">
-            <Card.Title className="text-2xl mb-4">
-              <Upload className="w-6 h-6" />
-              Import Configurations
-            </Card.Title>
-            <p className="text-base-content/70 mb-4">
-              Import bot configurations from a previously exported file.
+        <Card className="shadow-xl bg-base-100 border border-base-300">
+          <div className="card-body">
+            <h2 className="card-title text-2xl mb-4 flex items-center gap-2">
+              <Upload className="w-6 h-6 text-secondary" />
+              Import Configuration
+            </h2>
+            <p className="text-base-content/70 mb-6">
+              Restore configuration from a previously exported backup file.
             </p>
 
-            <FileUpload
-              onFileSelect={setSelectedFile}
-              fileTypes={['application/json', 'text/yaml', 'text/csv', 'application/x-yaml', 'application/gzip', 'application/octet-stream']}
-              maxSize={50 * 1024 * 1024}
-            />
-
-            {selectedFile && (
-              <div className="mt-4">
-                <Button
-                  buttonStyle="outline"
-                  size="sm"
-                  className="mb-4"
-                  onClick={() => setShowImportModal(true)}
-                >
-                  <Settings className="w-4 h-4" />
-                  Import Options
-                </Button>
-
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm">
-                    {importOptions.overwrite ? (
-                      <AlertCircle className="w-4 h-4 text-warning" />
-                    ) : (
-                      <CheckCircle className="w-4 h-4 text-success" />
-                    )}
-                    <span>
-                      {importOptions.overwrite
-                        ? 'Will overwrite existing configurations'
-                        : 'Will skip existing configurations'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    {selectedFile.name.endsWith('.enc') ? (
-                      <Lock className="w-4 h-4 text-warning" />
-                    ) : (
-                      <Unlock className="w-4 h-4 text-success" />
-                    )}
-                    <span>
-                      {selectedFile.name.endsWith('.enc')
-                        ? 'Encrypted file - decryption key required'
-                        : 'Unencrypted file'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex gap-2 mt-4">
-                  <Button
-                    buttonStyle="outline"
-                    size="sm"
-                    className="flex-1"
-                    onClick={handleValidate}
-                  >
-                    <CheckCircle className="w-4 h-4" />
-                    Validate
-                  </Button>
-                  <Button
-                    variant="primary"
-                    className="flex-1"
-                    onClick={handleImport}
-                    disabled={isImporting}
-                  >
-                    {isImporting ? (
-                      <>
-                        <LoadingSpinner size="sm" />
-                        Importing...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="w-4 h-4" />
-                        Import
-                      </>
-                    )}
-                  </Button>
-                </div>
-
-                {isImporting && importProgress > 0 && (
-                  <div className="mt-4">
-                    <ProgressBar value={importProgress} max={100} color="primary" label="Import Progress" showPercentage />
-                  </div>
-                )}
-
-                {importResult && (
-                  <Alert status="info" className="mt-4">
-                    <FileJson className="w-5 h-5" />
-                    <div className="flex-1">
-                      <h4 className="font-bold">Import Results</h4>
-                      <div className="text-sm mt-2">
-                        <div>Imported: {importResult.importedCount || 0}</div>
-                        <div>Skipped: {importResult.skippedCount || 0}</div>
-                        <div>Errors: {importResult.errorCount || 0}</div>
-                        {importResult.warnings && importResult.warnings.length > 0 && (
-                          <div className="mt-2">
-                            <div className="font-semibold">Warnings:</div>
-                            <ul className="list-disc list-inside">
-                              {importResult.warnings.map((warning: string, idx: number) => (
-                                <li key={idx}>{warning}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                        {importResult.errors && importResult.errors.length > 0 && (
-                          <div className="mt-2">
-                            <div className="font-semibold text-error">Errors:</div>
-                            <ul className="list-disc list-inside">
-                              {importResult.errors.map((error: string, idx: number) => (
-                                <li key={idx}>{error}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </Alert>
-                )}
+            <div className="space-y-6">
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-medium">Select Backup File</span>
+                </label>
+                <FileUpload
+                  onFileSelect={setSelectedFile}
+                  accept=".json,.yaml,.csv,.zip"
+                  placeholder="Drop export file here or click to browse"
+                />
               </div>
-            )}
+
+              <div className="divider">Import Settings</div>
+
+              <div className="space-y-3">
+                <Checkbox
+                  label="Dry Run (Validate Only)"
+                  checked={importOptions.dryRun}
+                  onChange={(checked) => setImportOptions({ ...importOptions, dryRun: checked })}
+                />
+                <Checkbox
+                  label="Overwrite Existing Records"
+                  checked={importOptions.overwrite}
+                  onChange={(checked) => setImportOptions({ ...importOptions, overwrite: checked })}
+                />
+              </div>
+
+              {importResult && (
+                <Alert
+                  variant={importResult.success ? 'success' : 'error'}
+                  icon={importResult.success ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+                  className="mt-4"
+                >
+                  <div>
+                    <h3 className="font-bold">{importResult.message}</h3>
+                    {importResult.details && (
+                      <div className="text-xs mt-2 font-mono max-h-32 overflow-auto p-2 bg-black/10 rounded">
+                        {JSON.stringify(importResult.details, null, 2)}
+                      </div>
+                    )}
+                  </div>
+                </Alert>
+              )}
+            </div>
+
+            <div className="card-actions justify-end mt-8">
+              <Button
+                variant="secondary"
+                onClick={handleImport}
+                loading={isImporting}
+                disabled={!selectedFile}
+                className="w-full md:w-auto"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Start Import
+              </Button>
+            </div>
+          </div>
         </Card>
       </div>
 
-      {/* Export Modal - Bot Selection */}
-      <Modal
-        isOpen={showExportModal}
-        onClose={() => setShowExportModal(false)}
-        title="Select Configurations to Export"
-        size="lg"
-        actions={[
-          { label: 'Cancel', onClick: () => setShowExportModal(false), variant: 'ghost', disabled: isExporting },
-          { label: `Export ${exportOptions.configIds.length} Configuration${exportOptions.configIds.length !== 1 ? 's' : ''}`, onClick: handleExport, variant: 'primary', disabled: exportOptions.configIds.length === 0 || isExporting, loading: isExporting },
-        ]}
-      >
-        <div className="space-y-4">
-          <div className="flex gap-2">
-            <Button variant="primary" buttonStyle="outline" size="sm" onClick={selectAllBots}>
-              Select All
-            </Button>
-            <Button variant="primary" buttonStyle="outline" size="sm" onClick={deselectAllBots}>
-              Deselect All
-            </Button>
-          </div>
-
-          <div className="max-h-96 overflow-y-auto space-y-2">
-            {botsLoading ? (
-              <div className="flex justify-center py-8">
-                <LoadingSpinner size="lg" />
+      <div className="mt-12">
+        <Card className="bg-base-200/50 border border-base-300">
+          <div className="card-body py-6">
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              <div className="p-4 bg-primary/10 rounded-full">
+                <Package className="w-10 h-10 text-primary" />
               </div>
-            ) : bots.length === 0 ? (
-              <Alert status="info">
-                <AlertCircle className="w-5 h-5" />
-                <span>No configurations available to export</span>
-              </Alert>
-            ) : (
-              bots.map((bot: any) => (
-                <Card
-                  key={bot.id}
-                  compact
-                  className={`border-2 cursor-pointer transition-colors ${
-                    exportOptions.configIds.includes(bot.id)
-                      ? 'border-primary bg-primary/5'
-                      : 'border-base-300 hover:border-primary/50'
-                  }`}
-                  onClick={() => toggleBotSelection(bot.id)}
-                >
-                    <div className="flex items-center gap-3">
-                      <Checkbox
-                        variant="primary"
-                        checked={exportOptions.configIds.includes(bot.id)}
-                        onChange={() => toggleBotSelection(bot.id)}
-                      />
-                      <div className="flex-1">
-                        <h3 className="font-bold">{bot.name}</h3>
-                        <p className="text-sm text-base-content/70">
-                          {bot.messageProvider} - {bot.llmProvider}
-                        </p>
-                      </div>
-                    </div>
-                </Card>
-              ))
-            )}
+              <div className="flex-1 text-center md:text-left">
+                <h3 className="text-xl font-bold">Migration Tools</h3>
+                <p className="text-base-content/70">
+                  Moving from another instance or migrating from legacy config? 
+                  Our import tool handles automatic field mapping and validation.
+                </p>
+              </div>
+              <Button variant="ghost" className="btn-sm">
+                View Documentation
+              </Button>
+            </div>
           </div>
-
-          {isExporting && exportProgress > 0 && (
-            <div className="mt-4">
-              <ProgressBar value={exportProgress} max={100} color="primary" label="Export Progress" showPercentage />
-            </div>
-          )}
-
-        </div>
-      </Modal>
-
-      {/* Import Options Modal */}
-      <Modal
-        isOpen={showImportModal}
-        onClose={() => setShowImportModal(false)}
-        title="Import Options"
-        actions={[
-          { label: 'Cancel', onClick: () => setShowImportModal(false), variant: 'ghost' },
-          { label: 'Save Options', onClick: () => setShowImportModal(false), variant: 'primary' },
-        ]}
-      >
-        <div className="space-y-4">
-          <Checkbox
-            variant="primary"
-            checked={importOptions.overwrite}
-            onChange={(e) =>
-              setImportOptions({ ...importOptions, overwrite: e.target.checked })
-            }
-          >
-            <div>
-              <span className="font-semibold">Overwrite Existing Configurations</span>
-              <p className="text-sm text-base-content/70">
-                Replace existing configurations with imported ones
-              </p>
-            </div>
-          </Checkbox>
-
-          <Checkbox
-            variant="primary"
-            checked={importOptions.validateOnly}
-            onChange={(e) =>
-              setImportOptions({ ...importOptions, validateOnly: e.target.checked })
-            }
-          >
-            <div>
-              <span className="font-semibold">Validate Only (Dry Run)</span>
-              <p className="text-sm text-base-content/70">
-                Check file validity without importing
-              </p>
-            </div>
-          </Checkbox>
-
-          <Checkbox
-            variant="primary"
-            checked={importOptions.skipValidation}
-            onChange={(e) =>
-              setImportOptions({ ...importOptions, skipValidation: e.target.checked })
-            }
-          >
-            <div>
-              <span className="font-semibold">Skip Validation</span>
-              <p className="text-sm text-base-content/70">
-                Import without validating (not recommended)
-              </p>
-            </div>
-          </Checkbox>
-
-          {selectedFile?.name.endsWith('.enc') && (
-            <div>
-              <label className="label">
-                <span className="label-text font-semibold">Decryption Key</span>
-              </label>
-              <Input
-                type="password"
-                placeholder="Enter decryption key"
-                value={importOptions.decryptionKey}
-                onChange={(e) =>
-                  setImportOptions({ ...importOptions, decryptionKey: e.target.value })
-                }
-              />
-            </div>
-          )}
-
-        </div>
-      </Modal>
+        </Card>
+      </div>
     </div>
   );
 };

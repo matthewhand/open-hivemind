@@ -26,12 +26,12 @@ const mockAuthManager = (
 // Mock rateLimiter (no-op) — rate limiter already skips in NODE_ENV=test,
 // but mock the module to guarantee no side-effects.
 jest.mock('../../../src/middleware/rateLimiter', () => ({
-  authRateLimiter: (_req: unknown, _res: unknown, next: () => void) => next(),
-  defaultRateLimiter: (_req: unknown, _res: unknown, next: () => void) => next(),
-  configRateLimiter: (_req: unknown, _res: unknown, next: () => void) => next(),
-  adminRateLimiter: (_req: unknown, _res: unknown, next: () => void) => next(),
-  apiRateLimiter: (_req: unknown, _res: unknown, next: () => void) => next(),
-  applyRateLimiting: (_req: unknown, _res: unknown, next: () => void) => next(),
+  authRateLimiter: (_req: any, _res: any, next: any) => next(),
+  defaultRateLimiter: (_req: any, _res: any, next: any) => next(),
+  configRateLimiter: (_req: any, _res: any, next: any) => next(),
+  adminRateLimiter: (_req: any, _res: any, next: any) => next(),
+  apiRateLimiter: (_req: any, _res: any, next: any) => next(),
+  applyRateLimiting: (_req: any, _res: any, next: any) => next(),
 }));
 
 describe('POST /auth/refresh', () => {

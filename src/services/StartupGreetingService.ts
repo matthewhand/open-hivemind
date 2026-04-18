@@ -1,7 +1,6 @@
 import { EventEmitter } from 'events';
-import { inject, singleton } from 'tsyringe';
+import { inject, injectable, singleton } from 'tsyringe';
 import messageConfig from '@config/messageConfig';
-import { getLlmProvider } from '@llm/getLlmProvider';
 import type { IMessengerService } from '@message/interfaces/IMessengerService';
 import Logger from '@common/logger';
 import { GreetingStateManager } from './GreetingStateManager';
@@ -15,6 +14,7 @@ interface GreetingConfig {
 }
 
 @singleton()
+@injectable()
 export class StartupGreetingService extends EventEmitter {
   public constructor(
     @inject(GreetingStateManager) private greetingStateManager: GreetingStateManager
@@ -49,6 +49,7 @@ export class StartupGreetingService extends EventEmitter {
    */
   private async generateLlmGreeting(): Promise<string> {
     try {
+      const { getLlmProvider } = await import('@llm/getLlmProvider');
       const providers = await getLlmProvider();
       if (providers.length === 0) {
         appLogger.warn('No LLM providers available for greeting generation');

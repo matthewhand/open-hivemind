@@ -5,9 +5,9 @@ import { useModal } from '../hooks/useModal';
 import Card from '../components/DaisyUI/Card';
 import Button from '../components/DaisyUI/Button';
 import Badge from '../components/DaisyUI/Badge';
-import Tabs from '../components/DaisyUI/Tabs';
+import TabbedProviderPage from '../components/TabbedProviderPage';
 import Toggle from '../components/DaisyUI/Toggle';
-import { Alert } from '../components/DaisyUI/Alert';
+
 import StatsCards from '../components/DaisyUI/StatsCards';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import ConfigKeyValueCard from '../components/DaisyUI/ConfigKeyValueCard';
@@ -917,25 +917,15 @@ const LLMProvidersPage: React.FC = () => {
   ];
 
   return (
-    <div>
-      <div className="px-6 pt-6 pb-2">
-        <h1 className="text-2xl font-bold">LLM Providers</h1>
-        <p className="text-base-content/60 text-sm mt-1">Manage language model provider profiles and settings</p>
-      </div>
-      <div className="px-6 pb-6">
-        {error && (
-          <div className="mb-6">
-            <Alert status="error" icon={<XIcon />} message={error} onClose={() => setError(null)} />
-          </div>
-        )}
-        <Tabs
-          tabs={tabs}
-          variant="lifted"
-          activeTab={activeTab}
-          onChange={handleTabChange}
-        />
-      </div>
-
+    <TabbedProviderPage
+      title="LLM Providers"
+      description="Manage language model provider profiles and settings"
+      error={error}
+      onClearError={() => setError(null)}
+      tabs={tabs}
+      activeTab={activeTab}
+      onTabChange={handleTabChange}
+    >
       <ProviderConfigModal
         modalState={modalState}
         onClose={closeModal}
@@ -953,7 +943,7 @@ const LLMProvidersPage: React.FC = () => {
           }}
         />
       )}
-    </div>
+    </TabbedProviderPage>
   );
 };
 

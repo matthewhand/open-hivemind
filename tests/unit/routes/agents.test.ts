@@ -95,8 +95,8 @@ describe('Agents Routes', () => {
         llmProvider: 'openai',
       });
       expect(res.status).toBe(200);
-      // Idempotency path returns raw { agent } without ApiResponse envelope
-      expect(res.body.agent.id).toBe('agent_123');
+      // Idempotency path returns ApiResponse envelope
+      expect(res.body.data.agent.id).toBe('agent_123');
     });
   });
 

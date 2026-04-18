@@ -55,6 +55,8 @@
       "@hivemind/message-slack/*": ["packages/message-slack/src/*"],
       "@hivemind/message-mattermost": ["packages/message-mattermost/src/index.ts"],
       "@hivemind/message-mattermost/*": ["packages/message-mattermost/src/*"],
+      "@hivemind/message-webhook": ["packages/message-webhook/src/index.ts"],
+      "@hivemind/message-webhook/*": ["packages/message-webhook/src/*"],
       "@hivemind/memory-mem0": ["packages/memory-mem0/src/index.ts"],
       "@hivemind/memory-mem0/*": ["packages/memory-mem0/src/*"]
     },
@@ -70,7 +72,8 @@
     "packages/llm-letta/src/**/*",
     "packages/message-discord/src/**/*",
     "packages/message-slack/src/**/*",
-    "packages/message-mattermost/src/**/*"
+    "packages/message-mattermost/src/**/*",
+    "packages/message-webhook/src/**/*"
   ],
   "exclude": ["tests/**/*", "node_modules", "src/client/**/*", "packages/**/*.test.ts"],
   "files": ["src/global.d.ts"]

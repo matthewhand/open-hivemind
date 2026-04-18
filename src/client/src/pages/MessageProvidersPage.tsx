@@ -3,21 +3,21 @@ import { useModal } from '../hooks/useModal';
 import Card from '../components/DaisyUI/Card';
 import Button from '../components/DaisyUI/Button';
 import Badge from '../components/DaisyUI/Badge';
-import { Alert } from '../components/DaisyUI/Alert';
+import TabbedProviderPage from '../components/TabbedProviderPage';
 import StatsCards from '../components/DaisyUI/StatsCards';
 import EmptyState from '../components/DaisyUI/EmptyState';
 import ConfigKeyValueCard from '../components/DaisyUI/ConfigKeyValueCard';
 import { SkeletonTableLayout } from '../components/DaisyUI/Skeleton';
 import SearchFilterBar from '../components/SearchFilterBar';
 import { ConfirmModal } from '../components/DaisyUI/Modal';
-import Tabs from '../components/DaisyUI/Tabs';
+
 import Toggle from '../components/DaisyUI/Toggle';
 import { useErrorToast } from '../components/DaisyUI/ToastNotification';
 import {
   MessageSquare as MessageIcon,
   Plus as AddIcon,
   Settings as ConfigIcon,
-  XCircle as XIcon,
+
   Trash2 as DeleteIcon,
   Edit as EditIcon,
   ChevronDown as ExpandIcon,
@@ -549,43 +549,33 @@ const MessageProvidersPage: React.FC = () => {
   ];
 
   return (
-    <div>
-      <div className="px-6 pt-6 pb-2">
-        <h1 className="text-2xl font-bold">Message Providers</h1>
-        <p className="text-base-content/60 text-sm mt-1">Manage messaging platform connections and profiles</p>
-      </div>
-      <div className="px-6 pb-6">
-        {error && (
-          <div className="mb-6">
-            <Alert status="error" icon={<XIcon />} message={error} onClose={() => setError(null)} />
-          </div>
-        )}
-        <Tabs
-          tabs={tabs}
-          variant="lifted"
-          activeTab={activeTab}
-          onChange={setActiveTab}
-        />
+    <TabbedProviderPage
+      title="Message Providers"
+      description="Manage messaging platform connections and profiles"
+      error={error}
+      onClearError={() => setError(null)}
+      tabs={tabs}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+    >
+      <ProviderConfigModal
+        modalState={{ ...modalState, providerType: 'message' }}
+        existingProviders={profiles}
+        onClose={closeModal}
+        onSubmit={handleProviderSubmit}
+      />
 
-        <ProviderConfigModal
-          modalState={{ ...modalState, providerType: 'message' }}
-          existingProviders={profiles}
-          onClose={closeModal}
-          onSubmit={handleProviderSubmit}
-        />
-
-        <ConfirmModal
-          isOpen={confirmModal.isOpen}
-          onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
-          title={confirmModal.title}
-          message={confirmModal.message}
-          onConfirm={confirmModal.onConfirm}
-          confirmVariant="error"
-          confirmText="Delete"
-          cancelText="Cancel"
-        />
-      </div>
-    </div>
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        confirmVariant="error"
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
+    </TabbedProviderPage>
   );
 };
 

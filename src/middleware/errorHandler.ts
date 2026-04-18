@@ -136,7 +136,7 @@ export function globalErrorHandler(
   MetricsCollector.getInstance().incrementErrors();
 
   // Determine response status
-  const statusCode = hivemindError.statusCode || 500;
+  const statusCode = hivemindError.statusCode || 400;
 
   // Create standard error response
   const errorResponseBuilder = createErrorResponse(

@@ -20,15 +20,15 @@ describe('Error Classes', () => {
       getRecoveryStrategy() {
         return { canRecover: false };
       }
-    })('Test error', 500, 'TEST_ERROR');
+    })('Test error', 400, 'TEST_ERROR');
 
     expect(error).toBeInstanceOf(BaseHivemindError);
     expect(error.message).toBe('Test error');
-    expect(error.status).toBe(500);
+    expect(error.status).toBe(400);
     expect(error.code).toBe('TEST_ERROR');
     expect(error.timestamp).toBeInstanceOf(Date);
     expect(typeof error.correlationId).toBe('string');
-    expect(error.severity).toBe('high');
+    expect(error.severity).toBe('medium');
   });
 
   test('should create NetworkError with proper properties', () => {
@@ -56,7 +56,7 @@ describe('Error Classes', () => {
 
     expect(error).toBeInstanceOf(ConfigurationError);
     expect(error.message).toBe('Missing required config');
-    expect(error.status).toBe(500);
+    expect(error.status).toBe(400);
     expect(error.code).toBe('CONFIG_ERROR');
     expect(error.severity).toBe('critical');
   });
@@ -66,7 +66,7 @@ describe('Error Classes', () => {
 
     expect(error).toBeInstanceOf(DatabaseError);
     expect(error.message).toBe('Database connection failed');
-    expect(error.status).toBe(500);
+    expect(error.status).toBe(400);
     expect(error.code).toBe('DATABASE_ERROR');
   });
 

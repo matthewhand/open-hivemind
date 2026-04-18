@@ -185,7 +185,7 @@ export class ErrorResponseBuilder {
       case 'CONFIG_ERROR':
       case 'CONFIGURATION':
       case 'CONFIGURATION_ERROR':
-        return HTTP_STATUS.BAD_REQUEST; // Configuration errors often mean bad inputs
+        return HTTP_STATUS.BAD_REQUEST;
       case 'DATABASE_ERROR':
         return HTTP_STATUS.INTERNAL_SERVER_ERROR;
       case 'NETWORK_ERROR':

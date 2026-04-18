@@ -39,6 +39,7 @@ jest.mock('../../../src/auth/AuthManager', () => {
 // Bypass rate limiting entirely in tests
 jest.mock('../../../src/middleware/rateLimiter', () => ({
   authRateLimiter: (_req: any, _res: any, next: any) => next(),
+  apiRateLimiter: (_req: any, _res: any, next: any) => next(),
 }));
 
 describe('POST /auth/logout', () => {
