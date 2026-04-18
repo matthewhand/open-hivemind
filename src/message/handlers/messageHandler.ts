@@ -35,6 +35,7 @@ import { stripBotId } from '../helpers/processing/stripBotId';
 // New utilities
 import TokenTracker from '../helpers/processing/TokenTracker';
 import TypingActivity from '../helpers/processing/TypingActivity';
+import { MessageBus } from '@src/events/MessageBus';
 import { pipelineEventEmitter, PipelineMetrics } from '../PipelineMetrics';
 import { PipelineMetricsAggregator } from '../PipelineMetricsAggregator';
 import processingLocks from '../processing/processingLocks';
@@ -83,8 +84,14 @@ const getSemanticGuardrailService = () => SemanticGuardrailService.getInstance()
 export async function handleMessage(
   message: IMessage,
   historyMessages: IMessage[] = [],
-  botConfig: Record<string, unknown>
+  botConfig: Record<string, unknown> = {}
 ): Promise<string | null> {
+  // Ensure botConfig is at least an empty object
+  const safeBotConfig = botConfig || {};
+  console.log('DEBUG: safeBotConfig keys =', Object.keys(safeBotConfig));
+  console.log('DEBUG: safeBotConfig.name =', safeBotConfig.name);
+  console.log('DEBUG: botConfig.name =', botConfig.name);
+  
   return await PerformanceMonitor.measureAsync(
     async () => {
       // Check if system is in maintenance mode
@@ -119,12 +126,23 @@ export async function handleMessage(
       const pipelineMetrics = new PipelineMetrics();
       pipelineMetrics.startStage('receive');
       const channelId = message.getChannelId();
-      let resolvedBotId = String(botConfig.BOT_ID || botConfig.name || 'unknown-bot');
+      let resolvedBotId = String(safeBotConfig.BOT_ID || safeBotConfig.name || 'unknown-bot');
+
+      // Emit incoming event for the bus (used by tracing/monitoring)
+      const text = message.getText();
+      if (text && text.trim().length > 0) {
+        MessageBus.getInstance().emit('message:incoming', {
+          message,
+          botName: String(safeBotConfig.name || 'unknown'),
+          timestamp: new Date(),
+        });
+      }
+
       let delayKey: string | null = null;
       let isLeaderInvocation = false;
       let didLock = false;
       const activeAgentName = String(
-        botConfig.MESSAGE_USERNAME_OVERRIDE || botConfig.name || 'Bot'
+        safeBotConfig.MESSAGE_USERNAME_OVERRIDE || safeBotConfig.name || 'Bot'
       );
       let providerSenderKey: string = activeAgentName;
       let typingInterval: NodeJS.Timeout | null = null;
@@ -145,7 +163,6 @@ export async function handleMessage(
 
       // Log received message
       const userId = message.getAuthorId();
-      const text = message.getText();
       if (text) {
         // Only log if text exists (check logic inside later handles empty text, but we need text for log)
         AuditLogger.getInstance().logBotAction(
@@ -166,7 +183,6 @@ export async function handleMessage(
       }
 
       try {
-        const text = message.getText();
         if (!text) {
           logger('Empty message content, skipping processing.');
           return null;

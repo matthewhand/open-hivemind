@@ -1,6 +1,7 @@
 /**
  * @jest-environment jsdom
  */
+import React from 'react';
 import { renderHook, act } from '@testing-library/react';
 import { MemoryRouter, useSearchParams } from 'react-router-dom';
 import { useUrlParams } from '../../../src/client/src/hooks/useUrlParams';

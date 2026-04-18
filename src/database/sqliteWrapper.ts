@@ -1,14 +1,39 @@
-import Database = require('better-sqlite3');
+import Database from 'better-sqlite3';
+import Debug from 'debug';
+
+const debug = Debug('app:SQLiteWrapper');
 
 /**
  * Wrapper around better-sqlite3 providing an async/promise-based API
  * compatible with the previous sqlite package usage.
  */
 export class SQLiteWrapper {
-  private db: Database.Database;
+  private db: any;
 
   constructor(filename: string) {
-    this.db = new Database(filename);
+    debug('SQLITE_WRAPPER: constructor called for', filename);
+    let DBConstructor: any;
+    
+    // Try different ways better-sqlite3 might be exported/imported
+    if (typeof Database === 'function') {
+      DBConstructor = Database;
+    } else if (Database && typeof (Database as any).default === 'function') {
+      DBConstructor = (Database as any).default;
+    } else {
+      try {
+        // Direct require as fallback
+        const BetterSqlite3 = require('better-sqlite3');
+        DBConstructor = typeof BetterSqlite3 === 'function' ? BetterSqlite3 : BetterSqlite3.default;
+      } catch (e) {
+        throw new Error(`Failed to load better-sqlite3: ${e instanceof Error ? e.message : String(e)}`);
+      }
+    }
+
+    if (typeof DBConstructor !== 'function') {
+      throw new Error('better-sqlite3 export is not a constructor');
+    }
+
+    this.db = new DBConstructor(filename);
   }
 
   async run(sql: string, params: any[] = []): Promise<{ lastID: number; changes: number }> {

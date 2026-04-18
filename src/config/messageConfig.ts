@@ -150,6 +150,15 @@ function loadMessageConfig(): MessageConfig {
   mapEnv('CHANNEL_PRIORITIES', 'CHANNEL_PRIORITIES', parseJSONOrCSV);
   mapEnv('MESSAGE_RESPONSE_PROFILES', 'MESSAGE_RESPONSE_PROFILES', parseJSON);
   mapEnv('GREETING', 'greeting', parseJSON);
+  
+  // Specific handling for DISCORD_MESSAGE_TEMPLATES which must throw on invalid JSON
+  if (process.env.DISCORD_MESSAGE_TEMPLATES !== undefined) {
+    try {
+      envConfig.DISCORD_MESSAGE_TEMPLATES = JSON.parse(process.env.DISCORD_MESSAGE_TEMPLATES!);
+    } catch (e: any) {
+      throw new Error(`Invalid JSON: ${process.env.DISCORD_MESSAGE_TEMPLATES}`);
+    }
+  }
 
   // Merge: Defaults < File < Env
   const combinedConfig = {

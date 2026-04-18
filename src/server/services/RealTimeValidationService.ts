@@ -114,9 +114,9 @@ export class RealTimeValidationService extends EventEmitter {
 
   public static getInstance(): RealTimeValidationService {
     if (!RealTimeValidationService.instance) {
-      const container = (global as any).container || import('../../di/container').then(m => m.container);
-      // Note: In a real app, you'd resolve from the container.
-      // For legacy support where getInstance() is used, we maintain the static property.
+      // For legacy support
+      const { container } = require('../../di/container');
+      RealTimeValidationService.instance = container.resolve(RealTimeValidationService);
     }
     return RealTimeValidationService.instance;
   }

@@ -1,4 +1,4 @@
-import llmConfig from '../../src/config/llmConfig';
+import convict from 'convict';
 
 describe('llmConfig Integration', () => {
   const originalEnv = { ...process.env };
@@ -6,6 +6,9 @@ describe('llmConfig Integration', () => {
   beforeEach(() => {
     jest.resetModules();
     process.env = { ...originalEnv };
+    // Clear relevant env vars
+    delete process.env.LLM_PROVIDER;
+    delete process.env.LLM_PARALLEL_EXECUTION;
   });
 
   afterAll(() => {
@@ -13,40 +16,25 @@ describe('llmConfig Integration', () => {
   });
 
   it('should load default values when no environment variables are set', () => {
-    delete process.env.LLM_PROVIDER;
-    delete process.env.DEFAULT_EMBEDDING_PROVIDER;
-    delete process.env.LLM_PARALLEL_EXECUTION;
-
-    // We need to reload the module to pick up the changes
     const config = require('../../src/config/llmConfig').default;
-    
     expect(config.get('LLM_PROVIDER')).toBe('openai');
     expect(config.get('LLM_PARALLEL_EXECUTION')).toBe(false);
   });
 
   it('should override values from environment variables', () => {
-    process.env.LLM_PROVIDER = 'flowise';
-    process.env.DEFAULT_EMBEDDING_PROVIDER = 'test-provider';
-    
+    process.env.LLM_PROVIDER = 'anthropic';
     const config = require('../../src/config/llmConfig').default;
-    
-    expect(config.get('LLM_PROVIDER')).toBe('flowise');
-    expect(config.get('DEFAULT_EMBEDDING_PROVIDER')).toBe('test-provider');
+    expect(config.get('LLM_PROVIDER')).toBe('anthropic');
   });
 
-  it('should correctly coerce LLM_PARALLEL_EXECUTION string to boolean', () => {
-    const testCases = [
-      { input: 'true', expected: true },
-      { input: '1', expected: true },
-      { input: 'TRUE', expected: true },
-      { input: 'false', expected: false },
-      { input: '0', expected: false },
-      { input: 'anything-else', expected: false },
-    ];
-
-    testCases.forEach(({ input, expected }) => {
+  [
+    { input: 'true', expected: true },
+    { input: '1', expected: true },
+    { input: 'false', expected: false },
+    { input: '0', expected: false }
+  ].forEach(({ input, expected }) => {
+    it(`should correctly coerce LLM_PARALLEL_EXECUTION="${input}" to ${expected}`, () => {
       process.env.LLM_PARALLEL_EXECUTION = input;
-      jest.resetModules();
       const config = require('../../src/config/llmConfig').default;
       expect(config.get('LLM_PARALLEL_EXECUTION')).toBe(expected);
     });

@@ -15,7 +15,7 @@ const debug = Debug('app:hotReloadRoutes');
 const router = Router();
 
 router.post(
-  '/api/config/hot-reload',
+  '/',
   validateRequest(HotReloadChangeSchema),
   asyncErrorHandler(async (req, res) => {
     try {
@@ -49,13 +49,13 @@ router.post(
   })
 );
 
-router.get('/api/config/hot-reload/history', (req, res) => {
+router.get('/history', (req, res) => {
   try {
     const limit = parseInt(req.query.limit as string) || 50;
     const hotReloadManager = HotReloadManager.getInstance();
     const history = hotReloadManager.getChangeHistory(limit);
 
-    return res.json(ApiResponse.success());
+    return res.json(ApiResponse.success(history));
   } catch (error) {
     debug('Hot reload history API error:', error);
     return res
@@ -72,12 +72,12 @@ router.get('/api/config/hot-reload/history', (req, res) => {
   }
 });
 
-router.get('/api/config/hot-reload/rollbacks', (req, res) => {
+router.get('/rollbacks', (req, res) => {
   try {
     const hotReloadManager = HotReloadManager.getInstance();
     const rollbacks = hotReloadManager.getAvailableRollbacks();
 
-    return res.json(ApiResponse.success());
+    return res.json(ApiResponse.success(rollbacks));
   } catch (error) {
     debug('Hot reload rollbacks API error:', error);
     return res
@@ -95,7 +95,7 @@ router.get('/api/config/hot-reload/rollbacks', (req, res) => {
 });
 
 router.post(
-  '/api/config/hot-reload/rollback/:snapshotId',
+  '/rollback/:snapshotId',
   validateRequest(SnapshotIdParamSchema),
   async (req, res) => {
     try {
@@ -114,7 +114,7 @@ router.post(
           metadata: { snapshotId },
         });
 
-        return res.json(ApiResponse.success());
+        return res.json(ApiResponse.success(true));
       } else {
         return res
           .status(HTTP_STATUS.NOT_FOUND)
@@ -137,11 +137,15 @@ router.post(
   }
 );
 
-router.get('/api/config/hot-reload/status', (req, res) => {
+router.get('/status', (req, res) => {
   try {
     const hotReloadManager = HotReloadManager.getInstance();
+    const status = {
+      enabled: hotReloadManager.isHotReloadEnabled(),
+      lastChange: hotReloadManager.getLatestChange(),
+    };
 
-    return res.json(ApiResponse.success());
+    return res.json(ApiResponse.success(status));
   } catch (error) {
     debug('Hot reload status API error:', error);
     return res

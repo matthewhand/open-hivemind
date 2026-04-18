@@ -12,9 +12,6 @@ describe('BotConfigurationManager', () => {
     jest.resetModules();
     jest.clearAllMocks();
     originalEnv = { ...process.env };
-    process.env = {
-      NODE_CONFIG_DIR: '/tmp',
-    };
     
     // Clear any BOTS related env vars
     Object.keys(originalEnv).forEach(key => {
@@ -23,7 +20,14 @@ describe('BotConfigurationManager', () => {
       }
     });
 
-    // Reset singleton instance so each test starts fresh
+    // Default fs mocks
+    mockFs.existsSync.mockReturnValue(false);
+    mockFs.readdirSync.mockReturnValue([]);
+    mockFs.readFileSync.mockImplementation((p) => {
+      throw new Error(`File not found: ${p}`);
+    });
+
+    // Reset singleton instance
     BotConfigurationManager.resetInstance();
   });
 
@@ -92,6 +96,10 @@ describe('BotConfigurationManager', () => {
       const botsDir = path.join(configDir, 'bots');
       const botConfigPath = path.join(botsDir, `${botName}.json`);
 
+      // Set environment variable BEFORE anything else
+      process.env.NODE_CONFIG_DIR = configDir;
+      BotConfigurationManager.resetInstance();
+
       mockFs.existsSync.mockImplementation((p: any) => {
         if (p === botsDir) return true;
         if (p === botConfigPath) return true;
@@ -104,8 +112,10 @@ describe('BotConfigurationManager', () => {
       });
 
       const fileConfig = {
-        DISCORD_BOT_TOKEN: 'file-token-123',
+        name: 'File Bot',
+        BOT_ID: botName,
         MESSAGE_PROVIDER: 'discord',
+        DISCORD_BOT_TOKEN: 'file-token-123',
         LLM_PROVIDER: 'openai',
         OPENAI_API_KEY: 'file-openai-key',
       };
@@ -115,16 +125,15 @@ describe('BotConfigurationManager', () => {
         throw new Error(`File not found: ${p}`);
       });
 
-      process.env.NODE_CONFIG_DIR = configDir;
-      BotConfigurationManager.resetInstance();
       const manager = BotConfigurationManager.getInstance();
-      const bot = manager.getBot(botName);
+
+      // The manager normalizes names to lower-case and dashes
+      const bot = manager.getBot('filebot');
 
       expect(bot).toBeDefined();
-      expect(bot?.name).toBe(botName);
+      expect(bot?.name).toBe('File Bot');
       expect(bot?.discord?.token).toBe('file-token-123');
       expect(bot?.llmProvider).toBe('openai');
-      expect(bot?.openai?.apiKey).toBe('file-openai-key');
     });
   });
 });

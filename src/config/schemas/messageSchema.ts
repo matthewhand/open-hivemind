@@ -116,6 +116,7 @@ export const MessageSchema = z.object({
     message: z.string().default('Hello! I am online.'),
     use_llm: z.boolean().default(true),
   }).default({}),
+  DISCORD_MESSAGE_TEMPLATES: z.record(z.string()).default({}),
 });
 
 export type MessageConfig = z.infer<typeof MessageSchema>;

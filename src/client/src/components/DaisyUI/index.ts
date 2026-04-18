@@ -20,7 +20,15 @@ export { default as Join } from './Join';
 export type { JoinProps } from './Join';
 export { Loading, LoadingSpinner, LoadingOverlay, StepProgress, Progress, LoadingSpinnerWithMessage } from './Loading';
 export { Skeleton, SkeletonAvatar, SkeletonText, SkeletonCircle, SkeletonRectangle, SkeletonCard, SkeletonCard as LoadingSkeletonCard, SkeletonList, SkeletonGrid, SkeletonTableLayout, SkeletonTableLayout as SkeletonTable, SkeletonTimeline, SkeletonMessageList, SkeletonStatsCards, SkeletonStatsCards as SkeletonStats, SkeletonPage } from './Skeleton';
-export { default as Modal, DetailDrawer } from './Modal';
+export {
+  default as Modal,
+  DetailDrawer,
+  ConfirmModal,
+  SuccessModal,
+  ErrorModal,
+  LoadingModal,
+  InfoModal
+} from './Modal';
 export { default as ModalForm } from './ModalForm';
 export { default as StatsCards } from './StatsCards';
 export { Stat, Stats } from './Stat';

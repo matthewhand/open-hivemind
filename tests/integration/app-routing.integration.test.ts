@@ -26,9 +26,9 @@ describe('App Routing Integration', () => {
   });
 
   it('should return 401 Unauthorized for protected API routes', async () => {
-    // /api/admin is protected by authenticateToken
-    const resAdmin = await request(app).get('/api/admin/health');
-    expect(resAdmin.status).toBe(401);
+    // /api/health is now public (optionalAuth), but other /api/admin routes are not
+    const resHealth = await request(app).get('/api/health');
+    expect(resHealth.status).toBe(200);
 
     // /api/agents is protected
     const resAgents = await request(app).get('/api/agents');
