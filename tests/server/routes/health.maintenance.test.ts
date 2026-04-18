@@ -5,6 +5,7 @@ import 'reflect-metadata';
 import express from 'express';
 import request from 'supertest';
 import { UserConfigStore } from '../../../src/config/UserConfigStore';
+import basicRouter from '../../../src/server/routes/health/basic';
 
 // Mock UserConfigStore
 const mockUserConfigStore = {
@@ -26,8 +27,6 @@ jest.mock('../../../src/database/DatabaseManager', () => ({
   },
 }));
 
-import basicRouter from '../../../src/server/routes/health/basic';
-
 describe('Health Routes - Maintenance Mode', () => {
   let app: express.Express;
 
@@ -42,7 +41,7 @@ describe('Health Routes - Maintenance Mode', () => {
       mockUserConfigStore.isMaintenanceMode.mockReturnValue(false);
 
       const res = await request(app).get('/api/health/maintenance');
-      
+
       expect(res.status).toBe(200);
       expect(res.body.maintenanceMode).toBe(false);
       expect(res.body.message).toBe('System is operating normally');
@@ -52,7 +51,7 @@ describe('Health Routes - Maintenance Mode', () => {
       mockUserConfigStore.isMaintenanceMode.mockReturnValue(true);
 
       const res = await request(app).get('/api/health/maintenance');
-      
+
       expect(res.status).toBe(200);
       expect(res.body.maintenanceMode).toBe(true);
       expect(res.body.message).toBe('System is currently in maintenance mode');
@@ -64,7 +63,7 @@ describe('Health Routes - Maintenance Mode', () => {
       mockUserConfigStore.isMaintenanceMode.mockReturnValue(true);
 
       const res = await request(app).get('/api/health');
-      
+
       expect(res.status).toBe(200);
       expect(res.body.maintenanceMode).toBe(true);
       expect(res.body.status).toBe('degraded');

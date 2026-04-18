@@ -176,7 +176,7 @@ test.describe('System Management Backup Operations', () => {
 
     // Enable encryption checkbox
     const encryptCheckbox = page.getByRole('checkbox', { name: /encrypt/i });
-    if (await encryptCheckbox.count() > 0) {
+    if ((await encryptCheckbox.count()) > 0) {
       await encryptCheckbox.check();
 
       // Should show encryption key input
@@ -207,7 +207,7 @@ test.describe('System Management Backup Operations', () => {
 
     // Look for restore button
     const restoreBtn = page.getByRole('button', { name: /restore/i }).first();
-    if (await restoreBtn.count() > 0) {
+    if ((await restoreBtn.count()) > 0) {
       await restoreBtn.click();
 
       // Should open confirmation modal
@@ -233,7 +233,7 @@ test.describe('System Management Backup Operations', () => {
 
     // Look for delete button
     const deleteBtn = page.getByRole('button', { name: /delete/i }).first();
-    if (await deleteBtn.count() > 0) {
+    if ((await deleteBtn.count()) > 0) {
       await deleteBtn.click();
 
       // Should open confirmation modal

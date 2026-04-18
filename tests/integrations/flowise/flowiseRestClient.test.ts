@@ -1,3 +1,4 @@
+import { http } from '@hivemind/shared-types';
 import { ConfigurationManager } from '@config/ConfigurationManager';
 import { resetAllCircuitBreakers } from '@common/CircuitBreaker';
 import flowiseConfig from '../../../packages/llm-flowise/src/flowiseConfig';
@@ -14,7 +15,6 @@ jest.mock('@hivemind/shared-types', () => ({
   isSafeUrl: jest.fn().mockResolvedValue({ safe: true }),
 }));
 
-import { http } from '@hivemind/shared-types';
 const mockedHttp = http as jest.Mocked<typeof http>;
 
 jest.mock('../../../packages/llm-flowise/src/flowiseConfig', () => {
@@ -96,7 +96,8 @@ describe('flowiseRestClient.getFlowiseResponse', () => {
     mgr.setSession('flowise', channelId, 'old-chat');
 
     mockedHttp.post.mockResolvedValueOnce({
-      text: 'answer', chatId: 'new-chat'
+      text: 'answer',
+      chatId: 'new-chat',
     } as any);
 
     const text = await getFlowiseResponse(channelId, 'hello');

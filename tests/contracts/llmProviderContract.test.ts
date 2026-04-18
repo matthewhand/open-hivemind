@@ -82,8 +82,8 @@ jest.mock('../../packages/llm-openwebui/src/openWebUIConfig', () => ({
       authMethod: 'apiKey',
       apiKey: 'fake-api-key',
       apiUrl: 'http://localhost:3000/api/',
-      model: 'llama3.2'
-    }))
+      model: 'llama3.2',
+    })),
   },
 }));
 

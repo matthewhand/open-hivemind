@@ -1,8 +1,8 @@
 import express from 'express';
 import request from 'supertest';
+import configRouter from '../../src/server/routes/config';
 import healthRouter from '../../src/server/routes/health';
 import sitemapRouter from '../../src/server/routes/sitemap';
-import configRouter from '../../src/server/routes/config';
 
 describe('API Response Consistency', () => {
   let app: express.Application;
@@ -25,10 +25,10 @@ describe('API Response Consistency', () => {
   endpoints.forEach(({ path, expectedStatus }) => {
     it(`GET ${path} should return a consistent JSON response`, async () => {
       const res = await request(app).get(path);
-      
+
       expect(res.status).toBe(expectedStatus);
       expect(res.headers['content-type']).toMatch(/json/);
-      
+
       // All successful non-legacy endpoints should ideally have a success flag
       // or at least be valid JSON
       expect(typeof res.body).toBe('object');

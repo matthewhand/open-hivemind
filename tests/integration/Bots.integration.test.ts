@@ -1,5 +1,6 @@
 import express from 'express';
 import request from 'supertest';
+import botsRouter from '../../src/server/routes/bots';
 
 // Hoisted mock
 jest.mock('../../src/managers/BotManager', () => {
@@ -20,8 +21,6 @@ jest.mock('../../src/managers/BotManager', () => {
   };
 });
 
-import botsRouter from '../../src/server/routes/bots';
-
 // Mock middlewares
 jest.mock('../../src/server/middleware/audit', () => ({
   auditMiddleware: (req: any, res: any, next: any) => next(),
@@ -38,7 +37,7 @@ describe('Bots API Integration', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    
+
     const { BotManager } = require('../../src/managers/BotManager');
     mockManager = await BotManager.getInstance();
 
@@ -47,21 +46,21 @@ describe('Bots API Integration', () => {
     app.use('/api/bots', botsRouter);
   });
 
-  const sampleBot = { 
-    id: 'bot-1', 
-    name: 'Test Bot', 
-    messageProvider: 'discord', 
+  const sampleBot = {
+    id: 'bot-1',
+    name: 'Test Bot',
+    messageProvider: 'discord',
     llmProvider: 'openai',
-    isActive: true 
+    isActive: true,
   };
 
   describe('GET /api/bots', () => {
     it('should return list of bots with status', async () => {
       mockManager.getAllBots.mockResolvedValue([sampleBot]);
       mockManager.getBotsStatus.mockResolvedValue([{ id: 'bot-1', isRunning: true }]);
-      
+
       const response = await request(app).get('/api/bots');
-      
+
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       // The router returns result array directly in data
@@ -74,11 +73,11 @@ describe('Bots API Integration', () => {
     it('should create a new bot', async () => {
       mockManager.getAllBots.mockResolvedValue([]);
       mockManager.createBot.mockResolvedValue(sampleBot);
-      
+
       const response = await request(app)
         .post('/api/bots')
         .send({ name: 'Test Bot', messageProvider: 'discord', llmProvider: 'openai' });
-      
+
       expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
     });
@@ -87,9 +86,9 @@ describe('Bots API Integration', () => {
   describe('POST /api/bots/:id/start', () => {
     it('should start a bot', async () => {
       mockManager.startBot.mockResolvedValue({ success: true });
-      
+
       const response = await request(app).post('/api/bots/bot-1/start');
-      
+
       expect(response.status).toBe(200);
       expect(mockManager.startBot).toHaveBeenCalledWith('bot-1');
     });

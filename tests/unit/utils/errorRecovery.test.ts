@@ -1,8 +1,8 @@
 import {
   CircuitBreaker,
   RetryHandler,
-  type RetryConfig,
   type CircuitBreakerConfig,
+  type RetryConfig,
 } from '../../../src/utils/errorRecovery';
 
 describe('CircuitBreaker', () => {

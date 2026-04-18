@@ -1,6 +1,6 @@
 import { DatabaseManager } from '../../src/database/DatabaseManager';
-import { DatabaseError } from '../../src/types/errorClasses';
 import { SQLiteWrapper } from '../../src/database/sqliteWrapper';
+import { DatabaseError } from '../../src/types/errorClasses';
 
 // Spies on the mocked Database
 let runSpy: jest.SpyInstance;
@@ -18,8 +18,10 @@ describe('DatabaseManager', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
-    runSpy = jest.spyOn(SQLiteWrapper.prototype, 'run').mockResolvedValue({ lastID: 1, changes: 1 });
+
+    runSpy = jest
+      .spyOn(SQLiteWrapper.prototype, 'run')
+      .mockResolvedValue({ lastID: 1, changes: 1 });
     getSpy = jest.spyOn(SQLiteWrapper.prototype, 'get').mockResolvedValue(undefined);
     allSpy = jest.spyOn(SQLiteWrapper.prototype, 'all').mockResolvedValue([]);
     execSpy = jest.spyOn(SQLiteWrapper.prototype, 'exec').mockResolvedValue(undefined);

@@ -24,12 +24,14 @@ jest.mock('../../src/server/services/ConfigurationVersionService', () => ({
 
 // Mock BackupManager constructor
 jest.mock('../../src/server/services/configImportExport/backupManager.ts', () => {
-  const actual = jest.requireActual('../../src/server/services/configImportExport/backupManager.ts');
+  const actual = jest.requireActual(
+    '../../src/server/services/configImportExport/backupManager.ts'
+  );
   return {
     ...actual,
     BackupManager: class extends actual.BackupManager {
       listBackups = jest.fn();
-    }
+    },
   };
 });
 

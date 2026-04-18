@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import express from 'express';
 import request from 'supertest';
+import router from '../../../src/server/routes/demo';
 
 const mockDemoService = {
   getDemoStatus: jest.fn(),
@@ -46,8 +47,6 @@ jest.mock('../../../src/server/services/WebSocketService', () => ({
   },
 }));
 
-import router from '../../../src/server/routes/demo';
-
 describe('Demo Routes', () => {
   let app: express.Application;
 
@@ -72,7 +71,7 @@ describe('Demo Routes', () => {
   describe('POST /demo/toggle', () => {
     it('should toggle demo mode', async () => {
       mockDemoService.isInDemoMode.mockReturnValueOnce(false).mockReturnValue(true);
-      
+
       const res = await request(app).post('/demo/toggle');
       expect(res.status).toBe(200);
       expect(res.body.data.enabled).toBe(true);
@@ -107,7 +106,7 @@ describe('Demo Routes', () => {
       const res = await request(app)
         .post('/demo/chat')
         .send({ message: 'hello', botName: 'TestBot' });
-      
+
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body.data.isDemo).toBe(true);

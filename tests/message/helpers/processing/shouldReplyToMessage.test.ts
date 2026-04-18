@@ -5,12 +5,11 @@ import {
 } from '../../../../src/message/helpers/processing/ChannelActivity';
 import { IncomingMessageDensity } from '../../../../src/message/helpers/processing/IncomingMessageDensity';
 import { shouldReplyToMessage } from '../../../../src/message/helpers/processing/shouldReplyToMessage';
-import { SwarmCoordinator } from '../../../../src/services/SwarmCoordinator';
 import {
   looksLikeOpportunity,
   shouldReplyToUnsolicitedMessage,
 } from '../../../../src/message/helpers/unsolicitedMessageHandler';
-import { SwarmCoordinator } from '../../../../src/services/SwarmCoordinator';
+import { SwarmCoordinator, SwarmCoordinator } from '../../../../src/services/SwarmCoordinator';
 
 // Mocks
 jest.mock('../../../../src/message/helpers/processing/IncomingMessageDensity');

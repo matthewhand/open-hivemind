@@ -1,9 +1,9 @@
+import fs from 'fs';
+import path from 'path';
 import request from 'supertest';
+import { registerServices } from '../../src/di/registration';
 import { WebUIServer } from '../../src/server/server';
 import { webUIStorage } from '../../src/storage/webUIStorage';
-import { registerServices } from '../../src/di/registration';
-import path from 'path';
-import fs from 'fs';
 
 describe('WebUI Config API Integration', () => {
   let app: any;
@@ -11,7 +11,7 @@ describe('WebUI Config API Integration', () => {
 
   beforeAll(() => {
     registerServices();
-    
+
     // Override config directory for testing
     (webUIStorage as any).configDir = testConfigDir;
     (webUIStorage as any).configFile = path.join(testConfigDir, 'webui-config.json');
@@ -38,8 +38,8 @@ describe('WebUI Config API Integration', () => {
       mcpGuard: {
         enabled: false,
         type: 'owner',
-        allowedUserIds: []
-      }
+        allowedUserIds: [],
+      },
     };
 
     // 1. Create agent - use a token that our auth mock accepts or bypasses
@@ -48,11 +48,11 @@ describe('WebUI Config API Integration', () => {
       .set('Authorization', 'Bearer dummy-admin-token')
       .set('Origin', 'http://localhost:3000')
       .send(newAgent);
-    
-    // If auth is not mocked to pass, this will be 401. 
+
+    // If auth is not mocked to pass, this will be 401.
     // We want to test the logic, so we hope it's 200.
     expect([200, 401, 403]).toContain(createRes.status);
-    
+
     if (createRes.status === 200) {
       expect(createRes.body.data.agent.name).toBe(newAgent.name);
       const agentId = createRes.body.data.agent.id;

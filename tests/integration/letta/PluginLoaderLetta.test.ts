@@ -88,10 +88,7 @@ describe('PluginLoader → LettaProvider integration', () => {
 
     expect(result).toBe('hello from letta');
     // SDK call: client.agents.messages.create(agentId, body)
-    expect(mockCreateMessages).toHaveBeenCalledWith(
-      'agent-test',
-      expect.anything()
-    );
+    expect(mockCreateMessages).toHaveBeenCalledWith('agent-test', expect.anything());
   });
 
   it('should prepend system prompt when provided', async () => {
@@ -117,9 +114,7 @@ describe('PluginLoader → LettaProvider integration', () => {
   // ---- Per-Channel Mode ----
 
   it('should list existing conversations and reuse a matching one', async () => {
-    mockListConversations.mockResolvedValue([
-      { id: 'conv-existing-123', summary: 'channel-456' },
-    ]);
+    mockListConversations.mockResolvedValue([{ id: 'conv-existing-123', summary: 'channel-456' }]);
     mockCreateConvMessages.mockResolvedValue({
       messages: [{ role: 'assistant', content: 'reused' }],
     });
@@ -137,10 +132,7 @@ describe('PluginLoader → LettaProvider integration', () => {
     // Should NOT have called create conversation since one exists
     expect(mockCreateConversation).not.toHaveBeenCalled();
     // SDK call signature is: client.conversations.messages.create(conversationId, body)
-    expect(mockCreateConvMessages).toHaveBeenCalledWith(
-      'conv-existing-123',
-      expect.anything()
-    );
+    expect(mockCreateConvMessages).toHaveBeenCalledWith('conv-existing-123', expect.anything());
   });
 
   it('should create a new conversation when none exists', async () => {
@@ -203,10 +195,7 @@ describe('PluginLoader → LettaProvider integration', () => {
 
     expect(result).toBe('fixed response');
     // SDK call: client.conversations.messages.create(conversationId, body)
-    expect(mockCreateConvMessages).toHaveBeenCalledWith(
-      'conv-fixed-999',
-      expect.anything()
-    );
+    expect(mockCreateConvMessages).toHaveBeenCalledWith('conv-fixed-999', expect.anything());
   });
 
   it('should fall back to default when conversationId is missing in fixed mode', async () => {
@@ -321,9 +310,9 @@ describe('PluginLoader → LettaProvider integration', () => {
   it('should throw when no agent ID is provided', async () => {
     const provider = instantiateLlmProvider(llmLettaModule, { agentId: undefined as any });
 
-    await expect(
-      provider.generateChatCompletion('hello', [], {})
-    ).rejects.toThrow('No agent ID provided');
+    await expect(provider.generateChatCompletion('hello', [], {})).rejects.toThrow(
+      'No agent ID provided'
+    );
   });
 
   it('should handle SDK errors gracefully and fall back to default conversation', async () => {

@@ -115,7 +115,9 @@ describe('getLlmProvider Caching', () => {
 
     await getLlmProvider();
     expect(mockInstantiateLlmProvider).toHaveBeenCalledTimes(2);
-    expect(mockInstantiateLlmProvider).toHaveBeenLastCalledWith(expect.any(Object), { key: 'val2' });
+    expect(mockInstantiateLlmProvider).toHaveBeenLastCalledWith(expect.any(Object), {
+      key: 'val2',
+    });
   });
 
   it('cleans up stale providers and re-instantiates when added back', async () => {

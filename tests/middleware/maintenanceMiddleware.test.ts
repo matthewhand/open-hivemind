@@ -4,9 +4,9 @@
  * and blocks requests accordingly.
  */
 
-import { Request, Response, NextFunction } from 'express';
-import { maintenanceModeMiddleware } from '../../src/middleware/maintenanceMiddleware';
+import { NextFunction, Request, Response } from 'express';
 import { UserConfigStore } from '../../src/config/UserConfigStore';
+import { maintenanceModeMiddleware } from '../../src/middleware/maintenanceMiddleware';
 
 // Mock UserConfigStore
 const mockUserConfigStore = {
@@ -63,9 +63,9 @@ describe('Maintenance Mode Middleware', () => {
       it('should return 503 for POST /api/messages', async () => {
         req.path = '/api/messages';
         req.method = 'POST';
-        
+
         await maintenanceModeMiddleware(req, res, next);
-        
+
         expect(res.status).toHaveBeenCalledWith(503);
         expect(res.json).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -79,9 +79,9 @@ describe('Maintenance Mode Middleware', () => {
       it('should return 503 for GET /api/bots', async () => {
         req.path = '/api/bots';
         req.method = 'GET';
-        
+
         await maintenanceModeMiddleware(req, res, next);
-        
+
         expect(res.status).toHaveBeenCalledWith(503);
         expect(next).not.toHaveBeenCalled();
       });
@@ -103,9 +103,9 @@ describe('Maintenance Mode Middleware', () => {
       allowedPaths.forEach((path) => {
         it(`should allow ${path}`, async () => {
           req.path = path;
-          
+
           await maintenanceModeMiddleware(req, res, next);
-          
+
           expect(next).toHaveBeenCalled();
           expect(res.status).not.toHaveBeenCalled();
         });
@@ -114,36 +114,36 @@ describe('Maintenance Mode Middleware', () => {
 
     it('should allow admin routes', async () => {
       req.path = '/api/admin/settings';
-      
+
       await maintenanceModeMiddleware(req, res, next);
-      
+
       expect(next).toHaveBeenCalled();
       expect(res.status).not.toHaveBeenCalled();
     });
 
     it('should allow auth routes', async () => {
       req.path = '/api/auth/login';
-      
+
       await maintenanceModeMiddleware(req, res, next);
-      
+
       expect(next).toHaveBeenCalled();
       expect(res.status).not.toHaveBeenCalled();
     });
 
     it('should allow static assets', async () => {
       req.path = '/assets/main.js';
-      
+
       await maintenanceModeMiddleware(req, res, next);
-      
+
       expect(next).toHaveBeenCalled();
       expect(res.status).not.toHaveBeenCalled();
     });
 
     it('should add maintenanceMode=true to request object', async () => {
       req.path = '/admin';
-      
+
       await maintenanceModeMiddleware(req, res, next);
-      
+
       expect(req.maintenanceMode).toBe(true);
     });
   });
@@ -155,7 +155,7 @@ describe('Maintenance Mode Middleware', () => {
       });
 
       await maintenanceModeMiddleware(req, res, next);
-      
+
       // Should let the request proceed even if config can't be read
       expect(next).toHaveBeenCalled();
       expect(res.status).not.toHaveBeenCalled();

@@ -15,9 +15,9 @@
 
 import express from 'express';
 import request from 'supertest';
-import sitemapRouter from '../../src/server/routes/sitemap';
-import webhookConfig from '../../src/config/webhookConfig';
 import telegramConfig from '../../src/config/telegramConfig';
+import webhookConfig from '../../src/config/webhookConfig';
+import sitemapRouter from '../../src/server/routes/sitemap';
 
 describe('API Routes Comprehensive Tests', () => {
   // ============================================================================

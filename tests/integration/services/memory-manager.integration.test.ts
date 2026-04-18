@@ -1,5 +1,5 @@
-import { MemoryManager } from '../../../src/services/MemoryManager';
 import { registerServices } from '../../../src/di/registration';
+import { MemoryManager } from '../../../src/services/MemoryManager';
 
 describe('MemoryManager Integration', () => {
   beforeAll(() => {
@@ -10,7 +10,11 @@ describe('MemoryManager Integration', () => {
     const manager = MemoryManager.getInstance();
     expect(manager).toBeDefined();
 
-    const results = await manager.retrieveRelevantMemories('non-existent-bot', 'test query', 'user1');
+    const results = await manager.retrieveRelevantMemories(
+      'non-existent-bot',
+      'test query',
+      'user1'
+    );
     expect(results).toHaveLength(0);
   });
 

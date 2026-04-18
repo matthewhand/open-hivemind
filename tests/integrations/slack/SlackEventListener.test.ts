@@ -9,8 +9,8 @@
  * SlackService and asserted nothing about real code paths.
  */
 import crypto from 'crypto';
-import { SlackSignatureVerifier } from '@hivemind/message-slack/SlackSignatureVerifier';
 import { extractSlackMetadata } from '@hivemind/message-slack/slackMetadata';
+import { SlackSignatureVerifier } from '@hivemind/message-slack/SlackSignatureVerifier';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -18,7 +18,11 @@ import { extractSlackMetadata } from '@hivemind/message-slack/slackMetadata';
 
 const SIGNING_SECRET = 'test-signing-secret-abc123';
 
-function generateSignature(payload: string, timestamp: string, secret: string = SIGNING_SECRET): string {
+function generateSignature(
+  payload: string,
+  timestamp: string,
+  secret: string = SIGNING_SECRET
+): string {
   const baseString = `v0:${timestamp}:${payload}`;
   const hmac = crypto.createHmac('sha256', secret).update(baseString).digest('hex');
   return `v0=${hmac}`;
@@ -73,9 +77,12 @@ describe('Slack Event Processing', () => {
     });
 
     it('should reject requests missing the timestamp header', () => {
-      const req = createMockReq({ type: 'event_callback' }, {
-        'x-slack-signature': 'v0=abc123',
-      });
+      const req = createMockReq(
+        { type: 'event_callback' },
+        {
+          'x-slack-signature': 'v0=abc123',
+        }
+      );
 
       verifier.verify(req, mockRes, mockNext);
 
@@ -85,9 +92,12 @@ describe('Slack Event Processing', () => {
     });
 
     it('should reject requests missing the signature header', () => {
-      const req = createMockReq({ type: 'event_callback' }, {
-        'x-slack-request-timestamp': '1700000000',
-      });
+      const req = createMockReq(
+        { type: 'event_callback' },
+        {
+          'x-slack-request-timestamp': '1700000000',
+        }
+      );
 
       verifier.verify(req, mockRes, mockNext);
 

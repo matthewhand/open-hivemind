@@ -89,12 +89,7 @@ describe('ToolPreferencesService', () => {
   });
 
   it('should set a tool to disabled', async () => {
-    const result = await service.setToolEnabled(
-      'server1-tool1',
-      'server1',
-      'tool1',
-      false
-    );
+    const result = await service.setToolEnabled('server1-tool1', 'server1', 'tool1', false);
 
     expect(result.toolId).toBe('server1-tool1');
     expect(result.enabled).toBe(false);

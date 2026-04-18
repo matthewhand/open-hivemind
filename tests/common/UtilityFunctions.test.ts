@@ -1,5 +1,5 @@
-import { getRandomDelay } from '../../src/common/getRandomDelay';
 import { getEmoji } from '../../src/common/getEmoji';
+import { getRandomDelay } from '../../src/common/getRandomDelay';
 
 describe('Utility Functions', () => {
   describe('getRandomDelay', () => {

@@ -308,7 +308,9 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
     it('should handle connection failures gracefully', async () => {
       // Set up mock to reject connection
       const mcpServiceInstance = MCPService.getInstance();
-      jest.spyOn(mcpServiceInstance, 'connectToServer').mockRejectedValueOnce(new Error('Connection failed'));
+      jest
+        .spyOn(mcpServiceInstance, 'connectToServer')
+        .mockRejectedValueOnce(new Error('Connection failed'));
 
       const failingConfig = {
         name: 'failing-server',

@@ -120,7 +120,9 @@ describe('Webhook Routes Integration', () => {
 
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('Invalid request body');
-      expect(res.body.details.some((d: string) => d.includes('Missing or invalid "id" field'))).toBe(true);
+      expect(
+        res.body.details.some((d: string) => d.includes('Missing or invalid "id" field'))
+      ).toBe(true);
     });
 
     it('should reject invalid status values', async () => {
@@ -130,7 +132,9 @@ describe('Webhook Routes Integration', () => {
         .send({ id: 'pred-1', status: 'invalid-status' });
 
       expect(res.status).toBe(400);
-      expect(res.body.details.some((d: string) => d.includes('Invalid status "invalid-status"'))).toBe(true);
+      expect(
+        res.body.details.some((d: string) => d.includes('Invalid status "invalid-status"'))
+      ).toBe(true);
     });
 
     it('should reject output arrays exceeding 10 items', async () => {
@@ -240,10 +244,7 @@ describe('Webhook Routes Integration', () => {
         .post('/webhook/slack')
         .set('x-webhook-token', 'secret-token')
         .send({
-          attachments: [
-            { text: 'Attachment 1', fallback: 'Fallback 1' },
-            { text: 'Attachment 2' },
-          ],
+          attachments: [{ text: 'Attachment 1', fallback: 'Fallback 1' }, { text: 'Attachment 2' }],
         });
 
       expect(res.status).toBe(200);

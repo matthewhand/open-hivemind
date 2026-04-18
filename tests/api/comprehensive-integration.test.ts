@@ -1,9 +1,9 @@
 import express from 'express';
 import request from 'supertest';
+import { adminRouter } from '../../src/server/routes/admin';
+import configRouter from '../../src/server/routes/config';
 import healthRouter from '../../src/server/routes/health';
 import sitemapRouter from '../../src/server/routes/sitemap';
-import configRouter from '../../src/server/routes/config';
-import { adminRouter } from '../../src/server/routes/admin';
 
 describe('Comprehensive API Integration', () => {
   let app: express.Application;
@@ -11,7 +11,7 @@ describe('Comprehensive API Integration', () => {
   beforeAll(() => {
     app = express();
     app.use(express.json());
-    
+
     // Mount all major route groups
     app.use('/health', healthRouter);
     app.use('/sitemap', sitemapRouter);

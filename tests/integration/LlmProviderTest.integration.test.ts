@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import express from 'express';
 import request from 'supertest';
+import providerRouter from '../../src/server/routes/admin/llmProviders';
 
 // Shared mock provider
 const mockLlmProvider = {
@@ -12,8 +13,6 @@ jest.mock('../../src/plugins/PluginLoader', () => ({
   loadPlugin: jest.fn().mockResolvedValue({}),
   instantiateLlmProvider: jest.fn(() => mockLlmProvider),
 }));
-
-import providerRouter from '../../src/server/routes/admin/llmProviders';
 
 // Mock auth middleware
 jest.mock('../../src/auth/middleware', () => ({
@@ -53,7 +52,7 @@ describe('LLM Provider Test Connection API', () => {
       .post('/api/admin/providers/test-connection')
       .send({
         providerType: 'openai',
-        config: { apiKey: 'test-key' }
+        config: { apiKey: 'test-key' },
       });
 
     expect(response.status).toBe(200);
@@ -68,7 +67,7 @@ describe('LLM Provider Test Connection API', () => {
       .post('/api/admin/providers/test-connection')
       .send({
         providerType: 'openai',
-        config: { apiKey: 'invalid-key' }
+        config: { apiKey: 'invalid-key' },
       });
 
     // The route returns 200 but body.success is false
@@ -82,7 +81,7 @@ describe('LLM Provider Test Connection API', () => {
       .post('/api/admin/providers/test-connection')
       .send({
         providerType: 'non-existent',
-        config: { apiKey: 'test' }
+        config: { apiKey: 'test' },
       });
 
     expect(response.status).toBe(400);

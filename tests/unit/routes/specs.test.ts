@@ -100,15 +100,17 @@ describe('Specs Routes', () => {
     });
 
     it('should return 400 for invalid spec data', async () => {
-      const res = await request(app).post('/specs').send({
-        content: 'test',
-        id: 'invalid id!',
-        topic: 'Testing',
-        tags: ['unit'],
-        author: 'tester',
-        timestamp: '2025-01-01T00:00:00.000Z',
-        version: '1.0.0',
-      });
+      const res = await request(app)
+        .post('/specs')
+        .send({
+          content: 'test',
+          id: 'invalid id!',
+          topic: 'Testing',
+          tags: ['unit'],
+          author: 'tester',
+          timestamp: '2025-01-01T00:00:00.000Z',
+          version: '1.0.0',
+        });
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
     });

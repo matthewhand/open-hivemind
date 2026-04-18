@@ -1,8 +1,8 @@
-import { BroadcastService } from '../../../../../src/server/services/websocket/BroadcastService';
-import { DeliveryStatus } from '../../../../../src/types/websocket';
 import { BotConfigurationManager } from '../../../../../src/config/BotConfigurationManager';
 import { ActivityLogger } from '../../../../../src/server/services/ActivityLogger';
 import { BotMetricsService } from '../../../../../src/server/services/BotMetricsService';
+import { BroadcastService } from '../../../../../src/server/services/websocket/BroadcastService';
+import { DeliveryStatus } from '../../../../../src/types/websocket';
 
 jest.mock('../../../../../src/config/BotConfigurationManager');
 jest.mock('../../../../../src/server/services/ActivityLogger');
@@ -118,7 +118,11 @@ describe('websocket/BroadcastService', () => {
       getWarnings: jest.fn(() => []),
     });
 
-    const service = new BroadcastService(connectionManager, apiMonitorService, demoModeService as any);
+    const service = new BroadcastService(
+      connectionManager,
+      apiMonitorService,
+      demoModeService as any
+    );
     service.sendBotStatus(socket);
 
     expect(socket.emit).toHaveBeenCalledWith(
@@ -142,7 +146,11 @@ describe('websocket/BroadcastService', () => {
       throw new Error('config failure');
     });
 
-    const service = new BroadcastService(connectionManager, apiMonitorService, demoModeService as any);
+    const service = new BroadcastService(
+      connectionManager,
+      apiMonitorService,
+      demoModeService as any
+    );
     service.sendConfigValidation(socket);
 
     expect(socket.emit).toHaveBeenCalledWith('error', {
@@ -151,7 +159,11 @@ describe('websocket/BroadcastService', () => {
   });
 
   it('retries tracked messages then marks timed out after max retries', () => {
-    const service = new BroadcastService(connectionManager, apiMonitorService, demoModeService as any);
+    const service = new BroadcastService(
+      connectionManager,
+      apiMonitorService,
+      demoModeService as any
+    );
     service.configureAck({ enabled: true, messageTimeoutMs: 10, maxRetries: 1 });
 
     const envelope = service.sendTrackedMessage('evt', { ok: true }, 'chan');
@@ -167,7 +179,11 @@ describe('websocket/BroadcastService', () => {
   });
 
   it('broadcastMonitoringData tolerates bot stats aggregation failure', () => {
-    const service = new BroadcastService(connectionManager, apiMonitorService, demoModeService as any);
+    const service = new BroadcastService(
+      connectionManager,
+      apiMonitorService,
+      demoModeService as any
+    );
     jest.spyOn(service as any, 'getAllBotStats').mockImplementation(() => {
       throw new Error('stats fail');
     });

@@ -40,7 +40,7 @@ describe('ConfigurationValidator', () => {
       });
 
       expect(result.isValid).toBe(false);
-      expect(result.errors.some(e => e.includes('character') || e.includes('least'))).toBe(true);
+      expect(result.errors.some((e) => e.includes('character') || e.includes('least'))).toBe(true);
     });
 
     it('should fail when name is too long', () => {
@@ -51,7 +51,7 @@ describe('ConfigurationValidator', () => {
       });
 
       expect(result.isValid).toBe(false);
-      expect(result.errors.some(e => e.includes('less than') || e.includes('most'))).toBe(true);
+      expect(result.errors.some((e) => e.includes('less than') || e.includes('most'))).toBe(true);
     });
 
     it('should fail when messageProvider is missing', () => {
@@ -73,7 +73,7 @@ describe('ConfigurationValidator', () => {
       });
 
       expect(result.isValid).toBe(false);
-      expect(result.errors.some(e => e.includes('Invalid message provider'))).toBe(true);
+      expect(result.errors.some((e) => e.includes('Invalid message provider'))).toBe(true);
     });
 
     it('should warn when Discord token format is unusual', () => {
@@ -86,7 +86,7 @@ describe('ConfigurationValidator', () => {
       });
 
       expect(result.isValid).toBe(true);
-      expect(result.warnings.some(w => w.includes('Discord token'))).toBe(true);
+      expect(result.warnings.some((w) => w.includes('Discord token'))).toBe(true);
     });
 
     it('should fail when Discord token is missing', () => {
@@ -138,7 +138,7 @@ describe('ConfigurationValidator', () => {
       });
 
       expect(result.isValid).toBe(true);
-      expect(result.warnings.some(w => w.includes('Slack app token'))).toBe(true);
+      expect(result.warnings.some((w) => w.includes('Slack app token'))).toBe(true);
     });
 
     it('should fail when Mattermost URL is missing', () => {
@@ -203,7 +203,7 @@ describe('ConfigurationValidator', () => {
       });
 
       expect(result.isValid).toBe(true);
-      expect(result.warnings.some(w => w.includes('OpenAI API key'))).toBe(true);
+      expect(result.warnings.some((w) => w.includes('OpenAI API key'))).toBe(true);
     });
 
     it('should suggest specifying OpenAI model when not provided', () => {
@@ -216,7 +216,7 @@ describe('ConfigurationValidator', () => {
       });
 
       expect(result.isValid).toBe(true);
-      expect(result.suggestions.some(s => s.includes('OpenAI model'))).toBe(true);
+      expect(result.suggestions.some((s) => s.includes('OpenAI model'))).toBe(true);
     });
 
     it('should fail when Flowise endpoint is missing', () => {
@@ -308,7 +308,7 @@ describe('ConfigurationValidator', () => {
       });
 
       expect(result.isValid).toBe(true);
-      expect(result.warnings.some(w => w.includes('System instruction is very long'))).toBe(true);
+      expect(result.warnings.some((w) => w.includes('System instruction is very long'))).toBe(true);
     });
 
     it('should suggest when system instruction is too short', () => {
@@ -322,7 +322,9 @@ describe('ConfigurationValidator', () => {
       });
 
       expect(result.isValid).toBe(true);
-      expect(result.suggestions.some(s => s.includes('System instruction is very short'))).toBe(true);
+      expect(result.suggestions.some((s) => s.includes('System instruction is very short'))).toBe(
+        true
+      );
     });
 
     it('should warn when MCP Guard has no allowed users', () => {
@@ -336,7 +338,7 @@ describe('ConfigurationValidator', () => {
       });
 
       expect(result.isValid).toBe(true);
-      expect(result.warnings.some(w => w.includes('MCP Guard'))).toBe(true);
+      expect(result.warnings.some((w) => w.includes('MCP Guard'))).toBe(true);
     });
 
     it('should warn for custom persona', () => {
@@ -350,7 +352,7 @@ describe('ConfigurationValidator', () => {
       });
 
       expect(result.isValid).toBe(true);
-      expect(result.warnings.some(w => w.includes('Custom persona'))).toBe(true);
+      expect(result.warnings.some((w) => w.includes('Custom persona'))).toBe(true);
     });
 
     it('should validate string-based provider configs', () => {

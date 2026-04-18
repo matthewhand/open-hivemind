@@ -1,9 +1,5 @@
 import { Request } from 'express';
-import {
-  getClientKey,
-  isIPInCIDR,
-  validateIP,
-} from '@src/middleware/rateLimiter';
+import { getClientKey, isIPInCIDR, validateIP } from '@src/middleware/rateLimiter';
 
 describe('Rate Limiter IP Extraction Security', () => {
   let mockReq: Partial<Request>;

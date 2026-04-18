@@ -1,8 +1,8 @@
-import { getLlmProvider } from '../../src/llm/getLlmProvider';
 import ProviderConfigManager from '../../src/config/ProviderConfigManager';
-import { SyncProviderRegistry } from '../../src/registries/SyncProviderRegistry';
 import { UserConfigStore } from '../../src/config/UserConfigStore';
+import { getLlmProvider } from '../../src/llm/getLlmProvider';
 import * as PluginLoader from '../../src/plugins/PluginLoader';
+import { SyncProviderRegistry } from '../../src/registries/SyncProviderRegistry';
 
 jest.mock('../../src/config/ProviderConfigManager');
 jest.mock('../../src/registries/SyncProviderRegistry');
@@ -49,7 +49,7 @@ describe('LLM Provider Caching and Resolution', () => {
     mockRegistry.getLlmProviders.mockReturnValue(mockProviders);
 
     const providers = await getLlmProvider();
-    
+
     expect(providers).toBe(mockProviders);
     expect(mockRegistry.getLlmProviders).toHaveBeenCalled();
   });
@@ -59,7 +59,7 @@ describe('LLM Provider Caching and Resolution', () => {
       id: 'p1',
       enabled: true,
       type: 'openai',
-      config: { name: 'openai-1', apiKey: 'key1' }
+      config: { name: 'openai-1', apiKey: 'key1' },
     };
     mockProviderManager.getAllProviders.mockReturnValue([config]);
 
@@ -80,7 +80,7 @@ describe('LLM Provider Caching and Resolution', () => {
       id: 'p-reinstantiate',
       enabled: true,
       type: 'openai',
-      config: { name: 'openai-1', apiKey: 'key1' }
+      config: { name: 'openai-1', apiKey: 'key1' },
     };
     mockProviderManager.getAllProviders.mockReturnValue([config1]);
 
@@ -92,7 +92,7 @@ describe('LLM Provider Caching and Resolution', () => {
       id: 'p-reinstantiate',
       enabled: true,
       type: 'openai',
-      config: { name: 'openai-1', apiKey: 'key2' } // New API key
+      config: { name: 'openai-1', apiKey: 'key2' }, // New API key
     };
     mockProviderManager.getAllProviders.mockClear();
     mockProviderManager.getAllProviders.mockReturnValue([config2]);
@@ -110,8 +110,8 @@ describe('LLM Provider Caching and Resolution', () => {
 
     const providers = await getLlmProvider();
     expect(providers).toHaveLength(2);
-    expect(providers.map(p => p.name)).toContain('p1');
-    expect(providers.map(p => p.name)).toContain('p2');
+    expect(providers.map((p) => p.name)).toContain('p1');
+    expect(providers.map((p) => p.name)).toContain('p2');
   });
 
   it('should wrap providers with token counting', async () => {

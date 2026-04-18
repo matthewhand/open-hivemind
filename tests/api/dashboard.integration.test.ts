@@ -1,7 +1,7 @@
-import request from 'supertest';
-import { WebUIServer } from '../../src/server/server';
 import express from 'express';
+import request from 'supertest';
 import { registerServices } from '../../src/di/registration';
+import { WebUIServer } from '../../src/server/server';
 
 describe('Dashboard API Integration', () => {
   let app: express.Application;

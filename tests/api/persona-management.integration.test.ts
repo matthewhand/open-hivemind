@@ -1,6 +1,6 @@
 import request from 'supertest';
-import { WebUIServer } from '../../src/server/server';
 import { registerServices } from '../../src/di/registration';
+import { WebUIServer } from '../../src/server/server';
 
 describe('Persona Management Integration', () => {
   let app: any;
@@ -16,13 +16,13 @@ describe('Persona Management Integration', () => {
       .get('/api/personas')
       .set('Authorization', 'Bearer dummy-token')
       .set('Origin', 'http://localhost:3000');
-    
+
     expect([200, 401, 403]).toContain(res.status);
-    
+
     if (res.status === 200) {
       expect(Array.isArray(res.body)).toBe(true);
       expect(res.body.length).toBeGreaterThanOrEqual(1);
-      
+
       // Check that personas have required fields
       const persona = res.body[0];
       expect(persona).toHaveProperty('id');
@@ -36,7 +36,7 @@ describe('Persona Management Integration', () => {
       .get('/api/personas/non-existent-persona-12345')
       .set('Authorization', 'Bearer dummy-token')
       .set('Origin', 'http://localhost:3000');
-    
+
     expect([404, 401, 403]).toContain(res.status);
   });
 });

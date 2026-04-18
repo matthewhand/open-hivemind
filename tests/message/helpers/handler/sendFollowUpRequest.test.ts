@@ -1,3 +1,5 @@
+import { getTaskLlm } from '@src/llm/taskLlmRouter';
+import discordConfig from '@config/discordConfig';
 import { sendFollowUpRequest } from '../../../../src/message/helpers/handler/sendFollowUpRequest';
 
 jest.mock('@src/llm/taskLlmRouter', () => ({
@@ -10,9 +12,6 @@ jest.mock('@config/discordConfig', () => ({
     get: jest.fn(),
   },
 }));
-
-import { getTaskLlm } from '@src/llm/taskLlmRouter';
-import discordConfig from '@config/discordConfig';
 
 describe('sendFollowUpRequest', () => {
   const mockSendMessageToChannel = jest.fn();
@@ -28,8 +27,12 @@ describe('sendFollowUpRequest', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (discordConfig.get as jest.Mock).mockImplementation((key: string) => {
-      if (key === 'DISCORD_CHANNEL_BONUSES') {return {};}
-      if (key === 'DISCORD_UNSOLICITED_CHANCE_MODIFIER') {return 1.0;}
+      if (key === 'DISCORD_CHANNEL_BONUSES') {
+        return {};
+      }
+      if (key === 'DISCORD_UNSOLICITED_CHANCE_MODIFIER') {
+        return 1.0;
+      }
       return undefined;
     });
   });
@@ -65,8 +68,12 @@ describe('sendFollowUpRequest', () => {
   it('sends follow-up when random gate passes using channel bonus', async () => {
     (global as any).mockRandom(0.01);
     (discordConfig.get as jest.Mock).mockImplementation((key: string) => {
-      if (key === 'DISCORD_CHANNEL_BONUSES') {return { 'channel-1': 5 };}
-      if (key === 'DISCORD_UNSOLICITED_CHANCE_MODIFIER') {return 1.0;}
+      if (key === 'DISCORD_CHANNEL_BONUSES') {
+        return { 'channel-1': 5 };
+      }
+      if (key === 'DISCORD_UNSOLICITED_CHANCE_MODIFIER') {
+        return 1.0;
+      }
       return undefined;
     });
 
@@ -87,11 +94,9 @@ describe('sendFollowUpRequest', () => {
       'sender-key-1'
     );
 
-    expect(generateChatCompletion).toHaveBeenCalledWith(
-      'follow up',
-      [mockMessage],
-      { route: 'followup' }
-    );
+    expect(generateChatCompletion).toHaveBeenCalledWith('follow up', [mockMessage], {
+      route: 'followup',
+    });
     expect(mockSendMessageToChannel).toHaveBeenCalledWith(
       'channel-1',
       'follow up AI reply',

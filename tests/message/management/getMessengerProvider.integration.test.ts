@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 import path from 'path';
+import { getMessengerProvider } from '../../../src/message/management/getMessengerProvider';
 
 // Define mocks on global object to make them accessible to hoisted jest.mock()
 (global as any).mockWSFunctions = {
@@ -77,8 +78,6 @@ jest.mock('../../../src/server/services/websocket', () => {
     default: MockWebSocketService,
   };
 });
-
-import { getMessengerProvider } from '../../../src/message/management/getMessengerProvider';
 
 describe('getMessengerProvider Unit Test', () => {
   const originalEnv = process.env;

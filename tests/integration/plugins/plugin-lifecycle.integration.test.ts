@@ -1,6 +1,6 @@
 import * as fs from 'fs';
-import * as path from 'path';
 import * as os from 'os';
+import * as path from 'path';
 
 describe('Plugin Lifecycle Integration', () => {
   const originalEnv = { ...process.env };
@@ -51,18 +51,18 @@ describe('Plugin Lifecycle Integration', () => {
     // Manually create a dummy plugin directory and registry entry
     const pluginDir = path.join(tempPluginsDir, pluginName);
     fs.mkdirSync(pluginDir, { recursive: true });
-    
+
     const registryFile = path.join(tempPluginsDir, 'registry.json');
     const dummyEntry = {
       name: pluginName,
       repoUrl: 'https://github.com/test/test',
       installedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      version: '1.0.0'
+      version: '1.0.0',
     };
-    
+
     fs.writeFileSync(registryFile, JSON.stringify([dummyEntry]));
-    
+
     // We also need to mock loadPlugin to return something or at least not fail
     jest.doMock('../../../src/plugins/PluginLoader', () => {
       const actual = jest.requireActual('../../../src/plugins/PluginLoader');
@@ -72,7 +72,7 @@ describe('Plugin Lifecycle Integration', () => {
         loadPlugin: jest.fn().mockResolvedValue({ manifest: { name: pluginName, type: 'llm' } }),
       };
     });
-    
+
     const { listInstalledPlugins } = require('../../../src/plugins/PluginManager');
     const plugins = await listInstalledPlugins();
     expect(plugins).toHaveLength(1);

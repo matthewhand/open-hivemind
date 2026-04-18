@@ -1,7 +1,7 @@
 import { OpenAI } from 'openai';
 import { OpenAiProvider, openAiProvider } from '@hivemind/llm-openai';
-import openaiConfig from '@config/openaiConfig';
 import { ConfigurationError } from '@src/types/errorClasses';
+import openaiConfig from '@config/openaiConfig';
 import { IMessage } from '@message/interfaces/IMessage';
 import { resetAllCircuitBreakers } from '@common/CircuitBreaker';
 

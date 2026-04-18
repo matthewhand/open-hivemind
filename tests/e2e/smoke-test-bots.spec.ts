@@ -1,5 +1,9 @@
 import { expect, test } from '@playwright/test';
-import { setupTestWithErrorDetection, waitForPageReady, registerViteSourceBypass } from './test-utils';
+import {
+  registerViteSourceBypass,
+  setupTestWithErrorDetection,
+  waitForPageReady,
+} from './test-utils';
 
 /**
  * Smoke Test - Bot Management Pages
@@ -46,7 +50,17 @@ async function validatePageLoads(
 ) {
   const results: Array<{ label: string; status: 'pass' | 'fail'; error?: string }> = [];
 
-  const ACCEPTED_REDIRECTS = ['/onboarding', '/admin/bots?tab=', '/admin/developer?tab=', '/admin/providers?tab=', '/admin/overview?tab=', '/admin/llm', '/admin/memory', '/admin/tool', '/admin/message'];
+  const ACCEPTED_REDIRECTS = [
+    '/onboarding',
+    '/admin/bots?tab=',
+    '/admin/developer?tab=',
+    '/admin/providers?tab=',
+    '/admin/overview?tab=',
+    '/admin/llm',
+    '/admin/memory',
+    '/admin/tool',
+    '/admin/message',
+  ];
   function isAcceptedRedirect(url: string): boolean {
     return ACCEPTED_REDIRECTS.some((prefix) => url.includes(prefix));
   }

@@ -130,7 +130,7 @@ describe('Provider Implementations Comprehensive Tests', () => {
       const schema = provider.getSchema();
       const keys = provider.getSensitiveKeys();
       expect(keys).toContain('OPENAI_API_KEY');
-      
+
       const props = (schema as any).properties || (schema as any)._cvtProperties || schema;
       for (const key of keys) {
         expect(props[key]).toBeDefined();
@@ -202,7 +202,7 @@ describe('Provider Implementations Comprehensive Tests', () => {
 
     it('should have all sensitive keys as strings', () => {
       const keys = provider.getSensitiveKeys();
-      expect(keys.every(k => typeof k === 'string')).toBe(true);
+      expect(keys.every((k) => typeof k === 'string')).toBe(true);
     });
 
     it('should not have duplicate sensitive keys', () => {
@@ -215,7 +215,7 @@ describe('Provider Implementations Comprehensive Tests', () => {
       const keys = provider.getSensitiveKeys();
       const schema = provider.getSchema();
       const props = (schema as any).properties || (schema as any)._cvtProperties || schema;
-      
+
       for (const key of keys) {
         expect(props[key]).toBeDefined();
       }
@@ -260,19 +260,13 @@ describe('Provider Implementations Comprehensive Tests', () => {
 
     it('should handle boundary temperature values', () => {
       const config = provider.getConfig();
-      expect(() =>
-        config.validate({ OPENAI_TEMPERATURE: 0 })
-      ).not.toThrow();
-      expect(() =>
-        config.validate({ OPENAI_TEMPERATURE: 2 })
-      ).not.toThrow();
+      expect(() => config.validate({ OPENAI_TEMPERATURE: 0 })).not.toThrow();
+      expect(() => config.validate({ OPENAI_TEMPERATURE: 2 })).not.toThrow();
     });
 
     it('should handle boundary max tokens values', () => {
       const config = provider.getConfig();
-      expect(() =>
-        config.validate({ OPENAI_MAX_TOKENS: 1 })
-      ).not.toThrow();
+      expect(() => config.validate({ OPENAI_MAX_TOKENS: 1 })).not.toThrow();
     });
   });
 
@@ -366,7 +360,7 @@ describe('Provider Implementations Comprehensive Tests', () => {
 
     it('should have string type for all sensitive keys', () => {
       const keys = provider.getSensitiveKeys();
-      expect(keys.every(k => typeof k === 'string')).toBe(true);
+      expect(keys.every((k) => typeof k === 'string')).toBe(true);
     });
 
     it('should have function type for getConfig', () => {
@@ -430,7 +424,7 @@ describe('Provider Implementations Comprehensive Tests', () => {
     it('should handle concurrent instance creation', () => {
       const providers = Array.from({ length: 10 }, () => new OpenAIProvider());
       expect(providers.length).toBe(10);
-      expect(providers.every(p => p.id === 'openai')).toBe(true);
+      expect(providers.every((p) => p.id === 'openai')).toBe(true);
     });
   });
 
@@ -478,11 +472,11 @@ describe('Provider Implementations Comprehensive Tests', () => {
     it('should maintain consistency under stress', () => {
       const config = provider.getConfig();
       const originalModel = config.get('OPENAI_MODEL');
-      
+
       for (let i = 0; i < 50; i++) {
         config.validate({ OPENAI_MODEL: `gpt-${i}` });
       }
-      
+
       // Should still be able to get values
       expect(config.get('OPENAI_TEMPERATURE')).toBeDefined();
     });

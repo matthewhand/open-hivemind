@@ -15,12 +15,12 @@
 
 import fs from 'fs';
 import path from 'path';
+import openaiConfig from '../../src/config/openaiConfig';
+import loadServerPolicy from '../../src/message/helpers/moderation/loadServerPolicy';
 import {
   checkVotingEligibility,
   startVotingProcess,
 } from '../../src/message/helpers/moderation/votingUtils';
-import loadServerPolicy from '../../src/message/helpers/moderation/loadServerPolicy';
-import openaiConfig from '../../src/config/openaiConfig';
 
 describe('Moderation Utilities Comprehensive Tests', () => {
   // ============================================================================
@@ -52,16 +52,14 @@ describe('Moderation Utilities Comprehensive Tests', () => {
         startVotingProcess('user-3'),
       ]);
       expect(results.length).toBe(3);
-      expect(results.every(r => r && r.votePassed !== undefined)).toBe(true);
+      expect(results.every((r) => r && r.votePassed !== undefined)).toBe(true);
     });
 
     it('should handle concurrent voting requests', async () => {
-      const promises = Array.from({ length: 10 }, (_, i) =>
-        startVotingProcess(`user-${i}`)
-      );
+      const promises = Array.from({ length: 10 }, (_, i) => startVotingProcess(`user-${i}`));
       const results = await Promise.all(promises);
       expect(results.length).toBe(10);
-      expect(results.every(r => r && typeof r === 'object')).toBe(true);
+      expect(results.every((r) => r && typeof r === 'object')).toBe(true);
     });
 
     it('should not throw on repeated calls for same user', async () => {
@@ -106,7 +104,7 @@ describe('Moderation Utilities Comprehensive Tests', () => {
     it('should handle multiple users eligibility check', () => {
       const users = ['user-1', 'user-2', 'user-3', 'user-4', 'user-5'];
       const results = users.map(checkVotingEligibility);
-      expect(results.every(r => typeof r === 'boolean')).toBe(true);
+      expect(results.every((r) => typeof r === 'boolean')).toBe(true);
     });
 
     it('should handle consecutive eligibility checks', () => {
@@ -117,15 +115,9 @@ describe('Moderation Utilities Comprehensive Tests', () => {
     });
 
     it('should handle special character user IDs', () => {
-      const specialIds = [
-        'user@domain.com',
-        'user-123',
-        'user_name',
-        'user.name',
-        'user123',
-      ];
+      const specialIds = ['user@domain.com', 'user-123', 'user_name', 'user.name', 'user123'];
       const results = specialIds.map(checkVotingEligibility);
-      expect(results.every(r => typeof r === 'boolean')).toBe(true);
+      expect(results.every((r) => typeof r === 'boolean')).toBe(true);
     });
 
     it('should handle edge case empty string', () => {
@@ -139,10 +131,8 @@ describe('Moderation Utilities Comprehensive Tests', () => {
     });
 
     it('should maintain consistent return type', () => {
-      const calls = Array.from({ length: 50 }, (_, i) =>
-        checkVotingEligibility(`user-${i}`)
-      );
-      expect(calls.every(r => typeof r === 'boolean')).toBe(true);
+      const calls = Array.from({ length: 50 }, (_, i) => checkVotingEligibility(`user-${i}`));
+      expect(calls.every((r) => typeof r === 'boolean')).toBe(true);
     });
   });
 
@@ -228,7 +218,7 @@ describe('Moderation Utilities Comprehensive Tests', () => {
       resolveSpy.mockRestore();
     });
 
-    it('should treat malformed JSON as a valid string (it doesn\'t parse)', async () => {
+    it("should treat malformed JSON as a valid string (it doesn't parse)", async () => {
       fs.writeFileSync(policyPath, '{ invalid json }');
 
       const resolveSpy = jest.spyOn(path, 'resolve').mockImplementation((...args: string[]) => {
@@ -368,8 +358,8 @@ describe('Moderation Utilities Comprehensive Tests', () => {
       const votingPromises = userIds.map(startVotingProcess);
       const votingResults = await Promise.all(votingPromises);
 
-      expect(eligibilityResults.every(r => typeof r === 'boolean')).toBe(true);
-      expect(votingResults.every(r => r && typeof r === 'object')).toBe(true);
+      expect(eligibilityResults.every((r) => typeof r === 'boolean')).toBe(true);
+      expect(votingResults.every((r) => r && typeof r === 'object')).toBe(true);
     });
   });
 });

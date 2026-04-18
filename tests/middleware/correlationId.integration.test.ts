@@ -8,7 +8,7 @@ describe('Correlation ID Integration', () => {
   beforeEach(() => {
     app = express();
     app.use(correlationIdMiddleware);
-    
+
     app.get('/test', (req, res) => {
       const id = getCorrelationId();
       res.json({ correlationId: id });
@@ -34,20 +34,16 @@ describe('Correlation ID Integration', () => {
 
   it('should use correlation ID from request header if provided', async () => {
     const customId = 'test-id-123';
-    const response = await request(app)
-      .get('/test')
-      .set('X-Correlation-ID', customId);
-    
+    const response = await request(app).get('/test').set('X-Correlation-ID', customId);
+
     expect(response.headers['x-correlation-id']).toBe(customId);
     expect(response.body.correlationId).toBe(customId);
   });
 
   it('should use X-Request-ID as fallback for incoming correlation ID', async () => {
     const requestId = 'req-456';
-    const response = await request(app)
-      .get('/test')
-      .set('X-Request-ID', requestId);
-    
+    const response = await request(app).get('/test').set('X-Request-ID', requestId);
+
     expect(response.headers['x-correlation-id']).toBe(requestId);
   });
 
@@ -60,14 +56,14 @@ describe('Correlation ID Integration', () => {
   it('should maintain separate correlation IDs for concurrent requests', async () => {
     app.get('/delay', async (req, res) => {
       const idBefore = getCorrelationId();
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 50));
       const idAfter = getCorrelationId();
       res.json({ idBefore, idAfter });
     });
 
     const [res1, res2] = await Promise.all([
       request(app).get('/delay').set('X-Correlation-ID', 'id-1'),
-      request(app).get('/delay').set('X-Correlation-ID', 'id-2')
+      request(app).get('/delay').set('X-Correlation-ID', 'id-2'),
     ]);
 
     expect(res1.body.idBefore).toBe('id-1');

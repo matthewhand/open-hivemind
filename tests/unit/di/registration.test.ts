@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { container } from 'tsyringe';
-import { registerServices, areServicesRegistered, TOKENS } from '../../../src/di/registration';
+import { areServicesRegistered, registerServices, TOKENS } from '../../../src/di/registration';
 
 // Use a shared mock object defined in a way that avoids hoisting issues
 (global as any).mockLogger = {
@@ -43,7 +43,7 @@ jest.mock('../../../src/config/ProviderConfigManager', () => ({
   },
   default: {
     getInstance: jest.fn().mockReturnValue({ syncBotProviders: jest.fn() }),
-  }
+  },
 }));
 
 jest.mock('../../../src/common/logger', () => {

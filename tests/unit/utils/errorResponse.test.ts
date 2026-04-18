@@ -1,5 +1,10 @@
-import { ErrorResponseBuilder, createErrorResponse } from '../../../src/utils/errorResponse';
-import { ConfigurationError, AuthenticationError, NetworkError, ValidationError } from '../../../src/types/errorClasses';
+import {
+  AuthenticationError,
+  ConfigurationError,
+  NetworkError,
+  ValidationError,
+} from '../../../src/types/errorClasses';
+import { createErrorResponse, ErrorResponseBuilder } from '../../../src/utils/errorResponse';
 
 describe('ErrorResponseBuilder', () => {
   describe('basic error response', () => {
@@ -23,7 +28,12 @@ describe('ErrorResponseBuilder', () => {
     });
 
     it('should include error details when available', () => {
-      const error = new ValidationError('Validation failed', 'email', 'invalid@email', 'valid email');
+      const error = new ValidationError(
+        'Validation failed',
+        'email',
+        'invalid@email',
+        'valid email'
+      );
       const builder = new ErrorResponseBuilder(error);
       const response = builder.build();
 
@@ -100,12 +110,14 @@ describe('ErrorResponseBuilder', () => {
       builder.send(mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
-        success: false,
-        error: expect.objectContaining({
-          message: 'Test error',
-        }),
-      }));
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          error: expect.objectContaining({
+            message: 'Test error',
+          }),
+        })
+      );
     });
   });
 

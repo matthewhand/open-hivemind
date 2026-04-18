@@ -1,9 +1,3 @@
-// Mock isSafeUrl BEFORE any other imports to ensure it is applied correctly
-jest.mock('@hivemind/shared-types', () => ({
-  ...jest.requireActual('@hivemind/shared-types'),
-  isSafeUrl: jest.fn().mockResolvedValue({ safe: true }),
-}));
-
 import { Mem0Provider } from '../../../packages/memory-mem0/src/Mem0Provider';
 import { Mem0ApiError } from '../../../packages/memory-mem0/src/types';
 import { create as createMem4ai } from '../../../packages/memory-mem4ai/src/index';
@@ -12,6 +6,12 @@ import {
   CircuitBreakerError,
   clearCircuitBreakerRegistry,
 } from '../../../src/common/CircuitBreaker';
+
+// Mock isSafeUrl BEFORE any other imports to ensure it is applied correctly
+jest.mock('@hivemind/shared-types', () => ({
+  ...jest.requireActual('@hivemind/shared-types'),
+  isSafeUrl: jest.fn().mockResolvedValue({ safe: true }),
+}));
 
 // ---------------------------------------------------------------------------
 // Fetch mock helpers

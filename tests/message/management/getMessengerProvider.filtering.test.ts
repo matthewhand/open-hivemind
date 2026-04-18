@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 import path from 'path';
+import { getMessengerProvider } from '../../../src/message/management/getMessengerProvider';
 
 // Class-based mocks for tsyringe compatibility
 class MockStartupGreetingService {
@@ -61,8 +62,6 @@ jest.mock('../../../src/server/services/WebSocketService', () => ({
   WebSocketService: MockWebSocketService,
   default: MockWebSocketService,
 }));
-
-import { getMessengerProvider } from '../../../src/message/management/getMessengerProvider';
 
 describe('getMessengerProvider filtering', () => {
   const originalEnv = process.env;

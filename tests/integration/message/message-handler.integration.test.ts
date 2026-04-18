@@ -1,20 +1,33 @@
+import { MessageBus } from '../../../src/events/MessageBus';
 import { handleMessage } from '../../../src/message/handlers/messageHandler';
 import { IMessage } from '../../../src/message/interfaces/IMessage';
-import { MessageBus } from '../../../src/events/MessageBus';
 
 // Extend IMessage to create a concrete test message
 class TestMessage extends IMessage {
-  constructor(public text: string, public isUnsolicited = false) {
+  constructor(
+    public text: string,
+    public isUnsolicited = false
+  ) {
     super({}, 'user');
     this.content = text;
     this.channelId = 'test-channel';
     this.platform = 'test-platform';
   }
-  getMessageId() { return 'test-msg-id'; }
-  getText() { return this.text; }
-  getTimestamp() { return new Date(); }
-  getChannelId() { return 'test-channel'; }
-  getAuthorId() { return 'test-user'; }
+  getMessageId() {
+    return 'test-msg-id';
+  }
+  getText() {
+    return this.text;
+  }
+  getTimestamp() {
+    return new Date();
+  }
+  getChannelId() {
+    return 'test-channel';
+  }
+  getAuthorId() {
+    return 'test-user';
+  }
 }
 
 describe('Message Handler Integration', () => {

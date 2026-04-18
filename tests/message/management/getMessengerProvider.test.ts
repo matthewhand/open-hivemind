@@ -295,8 +295,12 @@ describe('getMessengerProvider additional branch coverage', () => {
       throw new Error(`Unknown plugin: ${name}`);
     });
     instantiateMessageService.mockImplementation((mod: any) => {
-      if (mod?.DiscordService) {return mockDiscordService;}
-      if (mod?.SlackService) {return mockSlackService;}
+      if (mod?.DiscordService) {
+        return mockDiscordService;
+      }
+      if (mod?.SlackService) {
+        return mockSlackService;
+      }
       return null;
     });
     mockFsPromises.readFile.mockResolvedValue(
@@ -315,7 +319,10 @@ describe('getMessengerProvider additional branch coverage', () => {
     mockFsPromises.readFile.mockResolvedValue(
       JSON.stringify({
         MESSAGE_PROVIDER: ['discord', 'slack'],
-        providers: [{ type: 'discord', enabled: true }, { type: 'slack', enabled: true }],
+        providers: [
+          { type: 'discord', enabled: true },
+          { type: 'slack', enabled: true },
+        ],
       }) as any
     );
 
@@ -345,7 +352,7 @@ describe('getMessengerProvider additional branch coverage', () => {
 
   it('resets cache and rereads config after reset', async () => {
     delete process.env.MESSAGE_PROVIDER;
-    
+
     mockFsPromises.readFile.mockResolvedValueOnce(
       JSON.stringify({ providers: [{ type: 'discord', enabled: true }] }) as any
     );
@@ -353,9 +360,7 @@ describe('getMessengerProvider additional branch coverage', () => {
     const first = await getMessengerProvider();
     expect(first.length).toBeGreaterThan(0);
 
-    mockFsPromises.readFile.mockResolvedValueOnce(
-      JSON.stringify({ providers: [] }) as any
-    );
+    mockFsPromises.readFile.mockResolvedValueOnce(JSON.stringify({ providers: [] }) as any);
 
     resetMessengerProviderCache();
     const second = await getMessengerProvider();

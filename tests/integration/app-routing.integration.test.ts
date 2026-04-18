@@ -1,9 +1,8 @@
-import request from 'supertest';
-import { WebUIServer } from '../../src/server/server';
 import express from 'express';
-
+import request from 'supertest';
 // We may need to mock registerServices to prevent missing dependency errors.
 import { registerServices } from '../../src/di/registration';
+import { WebUIServer } from '../../src/server/server';
 
 describe('App Routing Integration', () => {
   let app: express.Application;
@@ -49,7 +48,7 @@ describe('App Routing Integration', () => {
   it('should serve HTML index for frontend routes', async () => {
     // /admin/* fallback
     const resWebUI = await request(app).get('/admin/some-frontend-path');
-    
+
     // We just check if it doesn't give a raw Express 404 HTML but returns the index.html or 404
     // Usually res.text will be index.html or if missing dist, a string
     expect(resWebUI.status).toBe(200);

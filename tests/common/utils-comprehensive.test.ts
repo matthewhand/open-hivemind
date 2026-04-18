@@ -83,8 +83,8 @@ describe('Utility Functions Comprehensive Tests', () => {
     it('should return repeatable results within reasonable bounds', () => {
       // Call 1000 times and ensure no errors
       const results = Array.from({ length: 1000 }, () => getEmoji());
-      expect(results.every(r => typeof r === 'string')).toBe(true);
-      expect(results.every(r => r.length > 0)).toBe(true);
+      expect(results.every((r) => typeof r === 'string')).toBe(true);
+      expect(results.every((r) => r.length > 0)).toBe(true);
     });
   });
 
@@ -141,7 +141,7 @@ describe('Utility Functions Comprehensive Tests', () => {
         `${COMMAND_PREFIX}stop - Stop the bot`,
         `${COMMAND_PREFIX}help - Show help`,
       ];
-      expect(lines.every(l => l.startsWith(COMMAND_PREFIX))).toBe(true);
+      expect(lines.every((l) => l.startsWith(COMMAND_PREFIX))).toBe(true);
     });
 
     it('should demonstrate string splitting with prefix', () => {
@@ -186,7 +186,7 @@ describe('Utility Functions Comprehensive Tests', () => {
     it('should validate string length constraints', () => {
       const isValidLength = (s: string, min: number, max: number) =>
         s.length >= min && s.length <= max;
-      
+
       expect(isValidLength('test', 1, 10)).toBe(true);
       expect(isValidLength('', 1, 10)).toBe(false);
       expect(isValidLength('verylongstring', 1, 5)).toBe(false);
@@ -201,7 +201,7 @@ describe('Utility Functions Comprehensive Tests', () => {
     it('should validateCommandFormat for bot commands', () => {
       const isValidCommand = (input: string) =>
         input.startsWith(COMMAND_PREFIX) && input.length > COMMAND_PREFIX.length;
-      
+
       expect(isValidCommand(`${COMMAND_PREFIX}help`)).toBe(true);
       expect(isValidCommand(`${COMMAND_PREFIX}`)).toBe(false);
       expect(isValidCommand('help')).toBe(false);
@@ -210,7 +210,7 @@ describe('Utility Functions Comprehensive Tests', () => {
     it('should handle multiple prefix validation', () => {
       const validPrefixes = ['!', '/', '.', '?'];
       const isValidPrefix = (p: string) => validPrefixes.includes(p);
-      
+
       expect(isValidPrefix(COMMAND_PREFIX)).toBe(true);
       expect(isValidPrefix('invalid')).toBe(false);
     });
@@ -276,16 +276,17 @@ describe('Utility Functions Comprehensive Tests', () => {
         `${COMMAND_PREFIX}restart`,
         `${COMMAND_PREFIX}status`,
       ];
-      expect(commands.every(c => c.startsWith(COMMAND_PREFIX))).toBe(true);
+      expect(commands.every((c) => c.startsWith(COMMAND_PREFIX))).toBe(true);
     });
 
     it('should handle batch command generation', () => {
       const emoji = getEmoji();
-      const commands = Array.from({ length: 10 }, (_, i) =>
-        `${COMMAND_PREFIX}command${i} ${emoji}`
+      const commands = Array.from(
+        { length: 10 },
+        (_, i) => `${COMMAND_PREFIX}command${i} ${emoji}`
       );
       expect(commands.length).toBe(10);
-      expect(commands.every(c => c.startsWith(COMMAND_PREFIX))).toBe(true);
+      expect(commands.every((c) => c.startsWith(COMMAND_PREFIX))).toBe(true);
     });
 
     it('should validate command batch', () => {
@@ -294,8 +295,8 @@ describe('Utility Functions Comprehensive Tests', () => {
         `${COMMAND_PREFIX}valid2`,
         `${COMMAND_PREFIX}valid3`,
       ];
-      const allValid = commands.every(c =>
-        c.startsWith(COMMAND_PREFIX) && c.length > COMMAND_PREFIX.length
+      const allValid = commands.every(
+        (c) => c.startsWith(COMMAND_PREFIX) && c.length > COMMAND_PREFIX.length
       );
       expect(allValid).toBe(true);
     });
@@ -305,7 +306,7 @@ describe('Utility Functions Comprehensive Tests', () => {
       const commandPattern = new RegExp(`${COMMAND_PREFIX}\\w+`, 'g');
       const commands = mixedText.match(commandPattern) || [];
       expect(commands.length).toBeGreaterThan(0);
-      expect(commands.every(c => c.startsWith(COMMAND_PREFIX))).toBe(true);
+      expect(commands.every((c) => c.startsWith(COMMAND_PREFIX))).toBe(true);
     });
 
     it('should handle edge case of consecutive commands', () => {

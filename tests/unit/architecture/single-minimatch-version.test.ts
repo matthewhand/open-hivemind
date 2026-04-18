@@ -15,7 +15,7 @@ describe('Architecture: single minimatch major version', () => {
     const majors = [...new Set(versions)];
     // Allow known versions that are currently required by the project dependencies
     const allowedMajors = ['3', '5', '9', '10'];
-    majors.forEach(major => {
+    majors.forEach((major) => {
       expect(allowedMajors).toContain(major);
     });
   });

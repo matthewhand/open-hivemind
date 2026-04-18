@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import express from 'express';
 import request from 'supertest';
+import { configureWebhookRoutes } from '../../src/webhook/routes/webhookRoutes';
 
 // Define mock config inside hoisted mock factory
 jest.mock('../../src/config/webhookConfig', () => {
@@ -18,8 +19,6 @@ jest.mock('../../src/config/webhookConfig', () => {
     default: mockInstance,
   };
 });
-
-import { configureWebhookRoutes } from '../../src/webhook/routes/webhookRoutes';
 
 // Helper to spoof the source IP for testing whitelist logic
 const spoofIp = (ip: string) => (req: any, res: any, next: any) => {
@@ -43,7 +42,7 @@ describe('Slack Webhook Integration', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     app = express();
     app.use(express.json());
     app.use(spoofIp('127.0.0.1'));
@@ -78,7 +77,7 @@ describe('Slack Webhook Integration', () => {
       sendPublicAnnouncement: jest.fn().mockResolvedValue(undefined),
       getDefaultChannel: jest.fn().mockReturnValue('general'),
     };
-    
+
     const fallbackApp = express();
     fallbackApp.use(express.json());
     fallbackApp.use(spoofIp('127.0.0.1'));
