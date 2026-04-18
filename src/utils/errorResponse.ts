@@ -83,7 +83,9 @@ export class ErrorResponseBuilder {
       'getRecoveryStrategy' in error &&
       typeof (error as Record<string, unknown>).getRecoveryStrategy === 'function'
     ) {
-      const recovery = (error as { getRecoveryStrategy: () => Record<string, unknown> }).getRecoveryStrategy();
+      const recovery = (
+        error as { getRecoveryStrategy: () => Record<string, unknown> }
+      ).getRecoveryStrategy();
       this.response.error.recovery = {
         canRecover: recovery.canRecover,
         retryDelay: recovery.retryDelay,
@@ -145,7 +147,9 @@ export class ErrorResponseBuilder {
     }
     // Provide details as an alias for compatibility
     if (finalResponse.error && (finalResponse.error as Record<string, unknown>).issues) {
-      (finalResponse.error as Record<string, unknown>).details = (finalResponse.error as Record<string, unknown>).issues;
+      (finalResponse.error as Record<string, unknown>).details = (
+        finalResponse.error as Record<string, unknown>
+      ).issues;
     }
     return finalResponse;
   }

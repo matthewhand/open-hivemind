@@ -32,9 +32,13 @@ const indexLog = debug('app:index');
 const appLogger = Logger.withContext('app:index');
 const skipMessengers = process.env.SKIP_MESSENGERS === 'true';
 
-interface ConvictConfig { get(key: string): unknown; }
-const messageConfig = (messageConfigModule.default || messageConfigModule) as unknown as ConvictConfig;
-const webhookConfig = (webhookConfigModule.default || webhookConfigModule) as unknown as ConvictConfig;
+interface ConvictConfig {
+  get(key: string): unknown;
+}
+const messageConfig = (messageConfigModule.default ||
+  messageConfigModule) as unknown as ConvictConfig;
+const webhookConfig = (webhookConfigModule.default ||
+  webhookConfigModule) as unknown as ConvictConfig;
 
 interface MessengerService {
   providerName?: string;
@@ -76,7 +80,10 @@ async function startBot(app: import('express').Application, messengerService: Me
       const bus = MessageBus.getInstance();
       messengerService.setMessageHandler(
         async (message: unknown, historyMessages: unknown, botConfig: Record<string, unknown>) => {
-          const msg = message as Record<string, unknown> & { platform?: string; getChannelId?: () => string };
+          const msg = message as Record<string, unknown> & {
+            platform?: string;
+            getChannelId?: () => string;
+          };
           await bus.emitAsync('message:incoming', {
             message,
             history: historyMessages,
