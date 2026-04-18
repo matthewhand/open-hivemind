@@ -94,55 +94,52 @@ router.get('/rollbacks', (req, res) => {
   }
 });
 
-router.post(
-  '/rollback/:snapshotId',
-  validateRequest(SnapshotIdParamSchema),
-  async (req, res) => {
-    try {
-      const { snapshotId } = req.params;
-      const hotReloadManager = HotReloadManager.getInstance();
+router.post('/rollback/:snapshotId', validateRequest(SnapshotIdParamSchema), async (req, res) => {
+  try {
+    const { snapshotId } = req.params;
+    const hotReloadManager = HotReloadManager.getInstance();
 
-      const success = await hotReloadManager.rollbackToSnapshot(snapshotId);
+    const success = await hotReloadManager.rollbackToSnapshot(snapshotId);
 
-      if (success) {
-        // Notify via WebSocket
-        const wsService = WebSocketService.getInstance();
-        wsService.recordAlert({
-          level: 'warning',
-          title: 'Configuration Rolled Back',
-          message: `Configuration rolled back to snapshot ${snapshotId}`,
-          metadata: { snapshotId },
-        });
+    if (success) {
+      // Notify via WebSocket
+      const wsService = WebSocketService.getInstance();
+      wsService.recordAlert({
+        level: 'warning',
+        title: 'Configuration Rolled Back',
+        message: `Configuration rolled back to snapshot ${snapshotId}`,
+        metadata: { snapshotId },
+      });
 
-        return res.json(ApiResponse.success(true));
-      } else {
-        return res
-          .status(HTTP_STATUS.NOT_FOUND)
-          .json(ApiResponse.error('Rollback snapshot not found or rollback failed'));
-      }
-    } catch (error) {
-      debug('Hot reload rollback API error:', error);
+      return res.json(ApiResponse.success(true));
+    } else {
       return res
-        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(
-          ApiResponse.error(
-            process.env.NODE_ENV === 'production'
-              ? 'An internal error occurred'
-              : error instanceof Error
-                ? error.message
-                : 'Unknown error'
-          )
-        );
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Rollback snapshot not found or rollback failed'));
     }
+  } catch (error) {
+    debug('Hot reload rollback API error:', error);
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(
+        ApiResponse.error(
+          process.env.NODE_ENV === 'production'
+            ? 'An internal error occurred'
+            : error instanceof Error
+              ? error.message
+              : 'Unknown error'
+        )
+      );
   }
-);
+});
 
 router.get('/status', (req, res) => {
   try {
     const hotReloadManager = HotReloadManager.getInstance();
+    const history = hotReloadManager.getChangeHistory(1);
     const status = {
-      enabled: hotReloadManager.isHotReloadEnabled(),
-      lastChange: hotReloadManager.getLatestChange(),
+      enabled: true,
+      lastChange: history[0] || null,
     };
 
     return res.json(ApiResponse.success(status));

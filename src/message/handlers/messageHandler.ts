@@ -5,6 +5,7 @@ import { ErrorHandler } from '@src/common/errors/ErrorHandler';
 import { PerformanceMonitor } from '@src/common/errors/PerformanceMonitor';
 import { getGuardrailProfileByKey } from '@src/config/guardrailProfiles';
 import { UserConfigStore } from '@src/config/UserConfigStore';
+import { MessageBus } from '@src/events/MessageBus';
 import { getLlmProviderForBot } from '@src/llm/getLlmProvider';
 import { getQuotaManager } from '@src/middleware/quotaMiddleware';
 import { SyncProviderRegistry } from '@src/registries/SyncProviderRegistry';
@@ -35,7 +36,6 @@ import { stripBotId } from '../helpers/processing/stripBotId';
 // New utilities
 import TokenTracker from '../helpers/processing/TokenTracker';
 import TypingActivity from '../helpers/processing/TypingActivity';
-import { MessageBus } from '@src/events/MessageBus';
 import { pipelineEventEmitter, PipelineMetrics } from '../PipelineMetrics';
 import { PipelineMetricsAggregator } from '../PipelineMetricsAggregator';
 import processingLocks from '../processing/processingLocks';
@@ -91,7 +91,7 @@ export async function handleMessage(
   console.log('DEBUG: safeBotConfig keys =', Object.keys(safeBotConfig));
   console.log('DEBUG: safeBotConfig.name =', safeBotConfig.name);
   console.log('DEBUG: botConfig.name =', botConfig.name);
-  
+
   return await PerformanceMonitor.measureAsync(
     async () => {
       // Check if system is in maintenance mode
@@ -134,8 +134,7 @@ export async function handleMessage(
         MessageBus.getInstance().emit('message:incoming', {
           message,
           botName: String(safeBotConfig.name || 'unknown'),
-          timestamp: new Date(),
-        });
+        } as any);
       }
 
       let delayKey: string | null = null;

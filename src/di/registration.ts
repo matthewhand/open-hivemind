@@ -27,7 +27,6 @@ import { EventHandlers } from '../server/services/websocket/EventHandlers';
 import { WebSocketService } from '../server/services/WebSocketService';
 import { container, TOKENS } from './container';
 
-
 const logger = Logger.withContext('DI');
 
 /**
@@ -101,11 +100,15 @@ export function registerServices(): void {
   container.registerSingleton('DemoModeService', DemoModeServiceClass);
 
   logger.debug('Registering GreetingStateManager');
-  const { GreetingStateManager: GreetingStateManagerClass } = require('../services/GreetingStateManager');
+  const {
+    GreetingStateManager: GreetingStateManagerClass,
+  } = require('../services/GreetingStateManager');
   container.registerSingleton(GreetingStateManagerClass, GreetingStateManagerClass);
 
   logger.debug('Registering StartupGreetingService');
-  const { StartupGreetingService: StartupGreetingServiceClass } = require('../services/StartupGreetingService');
+  const {
+    StartupGreetingService: StartupGreetingServiceClass,
+  } = require('../services/StartupGreetingService');
   container.registerSingleton(StartupGreetingServiceClass, StartupGreetingServiceClass);
   container.registerSingleton('StartupGreetingService', StartupGreetingServiceClass);
 
@@ -144,7 +147,7 @@ export function validateRegistrations(): void {
     TOKENS.WebSocketService,
     TOKENS.RealTimeValidationService,
     TOKENS.SwarmCoordinator,
-    StartupGreetingService,
+    'StartupGreetingService',
     'DemoModeService',
   ];
 

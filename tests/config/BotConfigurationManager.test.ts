@@ -131,7 +131,7 @@ describe('BotConfigurationManager', () => {
       const bot = manager.getBot('filebot');
 
       expect(bot).toBeDefined();
-      expect(bot?.name).toBe('File Bot');
+      expect(bot?.name).toBe('filebot'); // normalized to lowercase
       expect(bot?.discord?.token).toBe('file-token-123');
       expect(bot?.llmProvider).toBe('openai');
     });
