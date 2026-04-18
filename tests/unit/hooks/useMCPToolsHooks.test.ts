@@ -18,6 +18,15 @@ import { apiService } from '../../../src/client/src/services/api';
 import { useToolHistory } from '../../../src/client/src/pages/MCPToolsPage/hooks/useToolHistory';
 import { useToolExecution } from '../../../src/client/src/pages/MCPToolsPage/hooks/useToolExecution';
 
+// Mock crypto.randomUUID for jsdom
+if (typeof (global as any).crypto === 'undefined') {
+  (global as any).crypto = {
+    randomUUID: () => 'test-uuid'
+  };
+} else if (!(global as any).crypto.randomUUID) {
+  (global as any).crypto.randomUUID = () => 'test-uuid';
+}
+
 // ---------------------------------------------------------------------------
 // Mocks
 // ---------------------------------------------------------------------------
@@ -134,7 +143,7 @@ describe('useToolExecution', () => {
   });
 
   it('handleExecuteTool on success sets result and shows modal', async () => {
-    mockApi.post.mockResolvedValueOnce({ result: 'ok' }); // execution
+    mockApi.post.mockResolvedValueOnce({ success: true, result: 'ok' }); // execution
     mockApi.post.mockResolvedValueOnce({ success: true }); // history
 
     const { result } = renderHook(() => useToolExecution(mockProps));
@@ -143,6 +152,7 @@ describe('useToolExecution', () => {
       await result.current.handleExecuteTool(mockTool, { param: 'value' });
     });
 
+    // Check if it's NOT an error (isError should be false if success is true)
     expect(result.current.selectedResult?.isError).toBe(false);
     expect(result.current.showResultModal).toBe(true);
     expect(result.current.recentResults).toHaveLength(1);
@@ -151,7 +161,7 @@ describe('useToolExecution', () => {
   });
 
   it('handleExecuteTool on failure sets error result', async () => {
-    mockApi.post.mockRejectedValue(new Error('tool failed'));
+    mockApi.post.mockRejectedValueOnce(new Error('tool failed'));
 
     const { result } = renderHook(() => useToolExecution(mockProps));
 
@@ -164,7 +174,7 @@ describe('useToolExecution', () => {
   });
 
   it('handleExecuteTool posts to the correct API endpoint', async () => {
-    mockApi.post.mockResolvedValue({ result: 'ok' });
+    mockApi.post.mockResolvedValue({ success: true, result: 'ok' });
 
     const { result } = renderHook(() => useToolExecution(mockProps));
 
@@ -179,7 +189,7 @@ describe('useToolExecution', () => {
   });
 
   it('handleExecuteTool resets selectedTool after execution completes', async () => {
-    mockApi.post.mockResolvedValue({ result: 'done' });
+    mockApi.post.mockResolvedValue({ success: true, result: 'done' });
 
     const { result } = renderHook(() => useToolExecution(mockProps));
 
@@ -193,7 +203,7 @@ describe('useToolExecution', () => {
   });
 
   it('handleExecuteTool limits recentResults to 20 entries', async () => {
-    mockApi.post.mockResolvedValue({ result: 'ok' }); // handles both calls
+    mockApi.post.mockResolvedValue({ success: true, result: 'ok' }); // handles both calls
 
     const { result } = renderHook(() => useToolExecution(mockProps));
 

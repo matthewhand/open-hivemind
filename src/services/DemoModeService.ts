@@ -420,8 +420,8 @@ export class DemoModeService {
   }
 
   constructor(
-    @inject(TOKENS.BotConfigurationManager) private botManager: BotConfigurationManager,
-    @inject(TOKENS.UserConfigStore) private _userConfigStore: UserConfigStore
+    @inject('BotConfigurationManager') private botManager: BotConfigurationManager,
+    @inject('UserConfigStore') private configStore: UserConfigStore
   ) {
     debug('DemoModeService constructed');
   }

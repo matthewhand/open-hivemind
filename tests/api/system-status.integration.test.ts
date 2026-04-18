@@ -3,6 +3,62 @@ import request from 'supertest';
 import healthRouter from '../../src/server/routes/health';
 import sitemapRouter from '../../src/server/routes/sitemap';
 import configRouter from '../../src/server/routes/config';
+import { DatabaseManager } from '../../src/database/DatabaseManager';
+import { MetricsCollector } from '../../src/monitoring/MetricsCollector';
+
+// Mock optionalAuth middleware
+jest.mock('../../src/server/middleware/auth', () => ({
+  optionalAuth: (req: any, res: any, next: any) => {
+    req.user = { id: 'test-user', role: 'admin' };
+    next();
+  },
+  authenticateToken: (req: any, res: any, next: any) => {
+    req.user = { id: 'test-user', role: 'admin' };
+    next();
+  }
+}));
+
+// Mock DatabaseManager
+jest.mock('../../src/database/DatabaseManager', () => ({
+  DatabaseManager: {
+    getInstance: jest.fn().mockReturnValue({
+      isConnected: jest.fn().mockReturnValue(true),
+      connect: jest.fn().mockResolvedValue(undefined),
+      disconnect: jest.fn().mockResolvedValue(undefined)
+    })
+  }
+}));
+
+// Mock MetricsCollector
+jest.mock('../../src/monitoring/MetricsCollector', () => ({
+  MetricsCollector: {
+    getInstance: jest.fn().mockReturnValue({
+      getMetrics: jest.fn().mockReturnValue({
+        uptime: 100000, // > 60 seconds to be healthy
+        errors: 0,
+        messagesProcessed: 0,
+        responseTime: [],
+        llmTokenUsage: 0
+      })
+    })
+  }
+}));
+
+// Mock process.memoryUsage
+const originalMemoryUsage = process.memoryUsage;
+beforeAll(() => {
+  process.memoryUsage = jest.fn().mockReturnValue({
+    heapUsed: 100,
+    heapTotal: 1000,
+    external: 0,
+    rss: 1000,
+    arrayBuffers: 0
+  });
+});
+
+afterAll(() => {
+  process.memoryUsage = originalMemoryUsage;
+});
 
 describe('System Status API Integration', () => {
   let app: express.Application;
@@ -11,7 +67,7 @@ describe('System Status API Integration', () => {
     app = express();
     app.use(express.json());
     app.use('/health', healthRouter);
-    app.use('/sitemap', sitemapRouter);
+    app.use('/', sitemapRouter);
     app.use('/api/config', configRouter);
   });
 
@@ -26,6 +82,7 @@ describe('System Status API Integration', () => {
     it('should return detailed health with memory/system info', async () => {
       const res = await request(app).get('/health/detailed');
       expect(res.status).toBe(200);
+      expect(res.body.status).toBe('healthy');
       expect(res.body).toHaveProperty('memory');
       expect(res.body.memory).toHaveProperty('used');
       expect(res.body).toHaveProperty('system');

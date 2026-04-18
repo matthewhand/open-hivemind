@@ -1,31 +1,44 @@
-import request from 'supertest';
-import { WebUIServer } from '../../src/server/server';
 import express from 'express';
+import request from 'supertest';
+import dashboardRouter from '../../src/server/routes/dashboard';
 import { registerServices } from '../../src/di/registration';
+
+// Mock authentication and permissions
+jest.mock('../../src/server/middleware/auth', () => ({
+  authenticateToken: (req: any, res: any, next: any) => {
+    req.user = { id: 'test-user', role: 'admin' };
+    next();
+  },
+  optionalAuth: (req: any, res: any, next: any) => {
+    req.user = { id: 'test-user', role: 'admin' };
+    next();
+  },
+  requirePermission: () => (req: any, res: any, next: any) => next(),
+  requireRole: () => (req: any, res: any, next: any) => next()
+}));
 
 describe('Dashboard API Integration', () => {
   let app: express.Application;
 
   beforeAll(() => {
+    process.env.CSRF_SKIP_IN_TEST = 'true';
     registerServices();
-    const server = new WebUIServer();
-    app = server.getApp();
+    app = express();
+    app.use(express.json());
+    app.use('/api/dashboard', dashboardRouter);
+  });
+
+  afterAll(() => {
+    delete process.env.CSRF_SKIP_IN_TEST;
   });
 
   it('should return valid JSON for dashboard status when authenticated', async () => {
-    const response = await request(app)
-      .get('/api/dashboard/status')
-      .set('Authorization', 'Bearer fake-token-for-admin'); // Assume our auth mock accepts this or we handle it
-
-    // Given we are testing the real app with auth middleware, we expect 401 if unauthenticated
-    // or 200 if the auth is bypassed/mocked correctly. Let's verify the route is protected.
-    // If the test suite doesn't auto-mock auth for this file, it will be 401.
-    expect([200, 401]).toContain(response.status);
-
-    if (response.status === 200) {
-      expect(response.body).toHaveProperty('success');
-      expect(response.headers['content-type']).toMatch(/json/);
-    }
+    const response = await request(app).get('/api/dashboard/status');
+    
+    // With our mock, this should always be 200
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty('success');
+    expect(response.body.success).toBe(true);
   });
 
   it('should return 404 for unknown dashboard routes', async () => {

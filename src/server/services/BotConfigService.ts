@@ -1,3 +1,4 @@
+import { injectable, singleton, inject } from 'tsyringe';
 import Debug from 'debug';
 import {
   DatabaseManager,
@@ -75,15 +76,15 @@ export interface BotConfigResponse extends BotConfiguration {
   auditLog?: BotConfigurationAudit[];
 }
 
+@singleton()
+@injectable()
 export class BotConfigService {
   private static instance: BotConfigService;
-  private dbManager: DatabaseManager;
-  private configValidator: ConfigurationValidator;
 
-  private constructor() {
-    this.dbManager = DatabaseManager.getInstance();
-    this.configValidator = new ConfigurationValidator();
-  }
+  public constructor(
+    @inject(DatabaseManager) private dbManager: DatabaseManager,
+    @inject(ConfigurationValidator) private configValidator: ConfigurationValidator
+  ) {}
 
   private ensureDatabaseEnabled(action: string): void {
     if (!this.dbManager.isConfigured()) {
@@ -93,14 +94,13 @@ export class BotConfigService {
 
   public static getInstance(): BotConfigService {
     if (!BotConfigService.instance) {
-      BotConfigService.instance = new BotConfigService();
+      // For legacy support
+      const { container } = require('../../di/container');
+      BotConfigService.instance = container.resolve(BotConfigService);
     }
     return BotConfigService.instance;
   }
 
-  /**
-   * Resets the singleton instance (used for testing).
-   */
   /**
    * Resets the singleton instance (used for testing).
    */

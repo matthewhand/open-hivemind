@@ -17,7 +17,10 @@ module.exports = {
   testEnvironment: 'node',
   // testTimeout handled in setup files to avoid CLI conflicts
   transform: {
-    '^.+\.tsx?$': 'babel-jest',
+    '^.+\.tsx?$': ['ts-jest', {
+      tsconfig: 'tsconfig.json',
+      isolatedModules: true,
+    }],
     '^.+\.jsx?$': 'babel-jest',
     '^.+\.js$': 'babel-jest',
   },
@@ -86,6 +89,7 @@ module.exports = {
     '^@slack/rtm-api$': '<rootDir>/tests/mocks/slackRtmApiMock.js',
     sqlite$: '<rootDir>/tests/mocks/sqlite.ts',
     sqlite3$: '<rootDir>/tests/mocks/sqlite3.ts',
+    'better-sqlite3$': '<rootDir>/tests/mocks/sqlite3.ts',
     bcrypt$: '<rootDir>/tests/mocks/bcrypt.ts',
     'discord.js':
       process.env.RUN_SYSTEM_TESTS === 'true'

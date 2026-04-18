@@ -1,35 +1,51 @@
 import request from 'supertest';
-import { WebUIServer } from '../../src/server/server';
 import express from 'express';
+import usageTrackingRouter from '../../src/server/routes/usage-tracking';
 import { registerServices } from '../../src/di/registration';
-import { UsageTrackerService } from '../../src/server/services/UsageTrackerService';
+
+// Mock authentication and permissions
+jest.mock('../../src/server/middleware/auth', () => ({
+  authenticateToken: (req: any, res: any, next: any) => {
+    req.user = { id: 'test-user', role: 'admin' };
+    next();
+  },
+  optionalAuth: (req: any, res: any, next: any) => {
+    req.user = { id: 'test-user', role: 'admin' };
+    next();
+  },
+  requirePermission: () => (req: any, res: any, next: any) => next(),
+  requireRole: () => (req: any, res: any, next: any) => next()
+}));
 
 describe('Usage Analytics API Integration', () => {
   let app: express.Application;
 
   beforeAll(() => {
+    process.env.CSRF_SKIP_IN_TEST = 'true';
     registerServices();
-    const server = new WebUIServer();
-    app = server.getApp();
+    app = express();
+    app.use(express.json());
+    app.use('/api/usage-tracking', usageTrackingRouter);
+  });
+
+  afterAll(() => {
+    delete process.env.CSRF_SKIP_IN_TEST;
   });
 
   it('should return 200 for usage statistics when authenticated', async () => {
     const res = await request(app)
-      .get('/api/usage/stats')
+      .get('/api/usage-tracking/stats')
       .set('Authorization', 'Bearer fake-admin-token');
     
-    expect([200, 401]).toContain(res.status);
-    if (res.status === 200) {
-      expect(res.body.success).toBe(true);
-      expect(res.body.data).toHaveProperty('topTools');
-    }
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
   });
 
   it('should return 200 for tool usage details', async () => {
     const res = await request(app)
-      .get('/api/usage/tools')
+      .get('/api/usage-tracking/tools')
       .set('Authorization', 'Bearer fake-admin-token');
     
-    expect([200, 401]).toContain(res.status);
+    expect(res.status).toBe(200);
   });
 });

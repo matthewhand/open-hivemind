@@ -36,7 +36,7 @@ describe('Message Handler Integration', () => {
     const message = new TestMessage('Hello, bot!');
     const botConfig = { name: 'TestBot' };
 
-    await handleMessage(message, botConfig as any);
+    await handleMessage(message, [], botConfig as any);
 
     expect(incomingSpy).toHaveBeenCalled();
     const callArgs = incomingSpy.mock.calls[0][0];

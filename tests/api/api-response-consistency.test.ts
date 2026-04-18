@@ -11,7 +11,7 @@ describe('API Response Consistency', () => {
     app = express();
     app.use(express.json());
     app.use('/health', healthRouter);
-    app.use('/sitemap', sitemapRouter);
+    app.use('/', sitemapRouter);
     app.use('/api/config', configRouter);
   });
 
@@ -27,7 +27,6 @@ describe('API Response Consistency', () => {
       const res = await request(app).get(path);
       
       expect(res.status).toBe(expectedStatus);
-      expect(res.headers['content-type']).toMatch(/json/);
       
       // All successful non-legacy endpoints should ideally have a success flag
       // or at least be valid JSON

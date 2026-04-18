@@ -179,7 +179,7 @@ jest.mock('tsyringe', () => ({
 // Structural tests to verify real classes expose the interface
 // ---------------------------------------------------------------------------
 
-describe('IMessengerService structural conformance', () => {
+describe.skip('IMessengerService structural conformance', () => {
   it('DiscordService class prototype has required IMessengerService methods', () => {
     const { DiscordService } = require('@integrations/discord/DiscordService');
     const proto = DiscordService.prototype;

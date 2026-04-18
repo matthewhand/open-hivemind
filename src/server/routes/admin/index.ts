@@ -43,6 +43,8 @@ const configRateLimit = isTestEnv
 // Apply rate limiting to sensitive configuration operations
 router.use('/', configRateLimit);
 
+debug('Mounting admin sub-routers');
+
 // Mount existing sub-routes
 router.use('/agents', agentsRouter);
 router.use('/mcp', mcpRouter);
@@ -50,15 +52,13 @@ router.use('/activity', activityRouter);
 router.use('/guard-profiles', guardProfilesRouter);
 
 // Mount the newly split sub-routers
-// Map the logic directly to the root of the admin router since the frontend
-// calls them without the /users, /system, etc. prefixes.
-// We mount them on '/' so paths like /api/admin/llm-providers still work correctly.
+debug('Mounting llmProvidersRouter at /');
+router.use('/', llmProvidersRouter);
 router.use('/', auditRouter);
 router.use('/', approvalsRouter);
 router.use('/', monitoringRouter);
 router.use('/', backupRouter);
 router.use('/', configRouter);
-router.use('/', llmProvidersRouter);
 router.use('/', maintenanceRouter);
 router.use('/', mcpServersRouter);
 router.use('/', messengerProvidersRouter);
@@ -66,5 +66,7 @@ router.use('/', providerHealthRouter);
 router.use('/', providerTypesRouter);
 router.use('/', systemInfoRouter);
 router.use('/', usersRouter);
+
+debug('Admin sub-routers mounted');
 
 export default router;
