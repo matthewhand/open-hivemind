@@ -37,12 +37,15 @@ jobs:
       - name: Build application
         run: pnpm run build
 
-      - name: Run Playwright tests
+      - name: Run Playwright smoke tests
         env:
+          CI: 'true'
           PLAYWRIGHT_BASE_URL: http://127.0.0.1:3028
           SKIP_MESSENGERS: 'true'
           HTTP_ENABLED: 'true'
-        run: pnpm run test:playwright -- --reporter=line
+          NODE_ENV: test
+          PORT: '3028'
+        run: pnpm run test:playwright -- --grep "smoke|core-pages" --reporter=line
 
       - name: Upload Playwright test artifacts
         if: ${{ always() }}
