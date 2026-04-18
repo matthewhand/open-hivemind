@@ -125,7 +125,7 @@ export class MCPProviderManager extends EventEmitter implements IMCPProviderMana
     return Array.from(this.providers.values());
   }
 
-  getServers() {
+  getServers(): MCPProviderConfig[] {
     return this.getAllProviders();
   }
 

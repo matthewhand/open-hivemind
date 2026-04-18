@@ -15,9 +15,9 @@
 
 import express from 'express';
 import request from 'supertest';
-import sitemapRouter from '../../../src/server/routes/sitemap';
-import webhookConfig from '../../../src/config/webhookConfig';
-import telegramConfig from '../../../src/config/telegramConfig';
+import sitemapRouter from '../../src/server/routes/sitemap';
+import webhookConfig from '../../src/config/webhookConfig';
+import telegramConfig from '../../src/config/telegramConfig';
 
 describe('API Routes Comprehensive Tests', () => {
   // ============================================================================
@@ -64,19 +64,21 @@ describe('API Routes Comprehensive Tests', () => {
     });
 
     it('should validate IP whitelist format', () => {
-      expect(() =>
-        webhookConfig.validate({ WEBHOOK_IP_WHITELIST: '127.0.0.1,192.168.1.1' })
-      ).not.toThrow();
+      const original = webhookConfig.get('WEBHOOK_IP_WHITELIST');
+      webhookConfig.set('WEBHOOK_IP_WHITELIST', '127.0.0.1,192.168.1.1');
+      expect(() => webhookConfig.validate()).not.toThrow();
+      webhookConfig.set('WEBHOOK_IP_WHITELIST', original);
     });
 
     it('should reject invalid port number', () => {
-      expect(() =>
-        webhookConfig.validate({ WEBHOOK_PORT: 'not-a-number' })
-      ).toThrow();
+      const original = webhookConfig.get('WEBHOOK_PORT');
+      webhookConfig.set('WEBHOOK_PORT', 'not-a-number' as any);
+      expect(() => webhookConfig.validate()).toThrow();
+      webhookConfig.set('WEBHOOK_PORT', original);
     });
 
     it('should handle missing optional fields gracefully', () => {
-      expect(() => webhookConfig.validate({})).not.toThrow();
+      expect(() => webhookConfig.validate()).not.toThrow();
     });
   });
 
@@ -121,15 +123,17 @@ describe('API Routes Comprehensive Tests', () => {
     });
 
     it('should reject invalid TELEGRAM_PARSE_MODE', () => {
-      expect(() =>
-        telegramConfig.validate({ TELEGRAM_PARSE_MODE: 'InvalidMode' })
-      ).toThrow();
+      const original = telegramConfig.get('TELEGRAM_PARSE_MODE');
+      telegramConfig.set('TELEGRAM_PARSE_MODE', 'InvalidMode' as any);
+      expect(() => telegramConfig.validate()).toThrow();
+      telegramConfig.set('TELEGRAM_PARSE_MODE', original);
     });
 
     it('should validate TELEGRAM_ALLOWED_CHATS as comma-separated list', () => {
-      expect(() =>
-        telegramConfig.validate({ TELEGRAM_ALLOWED_CHATS: 'chat1,chat2,chat3' })
-      ).not.toThrow();
+      const original = telegramConfig.get('TELEGRAM_ALLOWED_CHATS');
+      telegramConfig.set('TELEGRAM_ALLOWED_CHATS', 'chat1,chat2,chat3');
+      expect(() => telegramConfig.validate()).not.toThrow();
+      telegramConfig.set('TELEGRAM_ALLOWED_CHATS', original);
     });
 
     it('should handle sensitive flag on TELEGRAM_BOT_TOKEN', () => {

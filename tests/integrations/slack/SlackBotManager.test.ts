@@ -62,11 +62,14 @@ describe('SlackBotManager', () => {
       () =>
         ({
           on: jest.fn((event, handler) => {
+            console.log(`DEBUG: Registering handler for ${event}`);
             socketEventHandlers[event] = handler;
           }),
           start: jest.fn(async () => {
+            console.log('DEBUG: SocketModeClient.start called');
             // Simulate connection success
             if (socketEventHandlers['connected']) {
+              console.log('DEBUG: Simulating connected event');
               setTimeout(() => socketEventHandlers['connected'](), 0);
             }
             return Promise.resolve();
@@ -80,6 +83,7 @@ describe('SlackBotManager', () => {
 
     // Initialize
     await manager.initialize();
+    console.log('DEBUG: manager.initialize completed');
     
     // Give some time for connected event
     await new Promise(resolve => setTimeout(resolve, 50));
@@ -89,6 +93,7 @@ describe('SlackBotManager', () => {
 
     // Simulate receiving a message
     if (socketEventHandlers['message']) {
+      console.log('DEBUG: Simulating message event');
       await socketEventHandlers['message']({
         event: {
           type: 'message',
@@ -98,6 +103,8 @@ describe('SlackBotManager', () => {
           event_ts: '123456789.000001',
         },
       });
+    } else {
+      console.log('DEBUG: NO message handler registered!');
     }
 
     // Give some time for async message handling

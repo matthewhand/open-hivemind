@@ -1,8 +1,8 @@
 import process from 'process';
 import { Router } from 'express';
+import { UserConfigStore } from '../../../config/UserConfigStore';
 import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import { HTTP_STATUS } from '../../../types/constants';
-import { UserConfigStore } from '../../../config/UserConfigStore';
 
 const router = Router();
 

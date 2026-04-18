@@ -69,13 +69,17 @@ describe('discordConfig', () => {
       });
     });
 
-    it('gracefully falls back on invalid values instead of clamping', () => {
+    it('clumps invalid values instead of falling back to empty object', () => {
       const oldEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'production';
-      process.env.DISCORD_CHANNEL_BONUSES = '{"ch1":-1.0,"ch2":5.0,"ch3":1.5}';
+      process.env.NODE_ENV = 'production'; // so it doesn't throw
+      process.env.DISCORD_CHANNEL_BONUSES = 'ch1: -1, ch2: 5, ch3: 1.5';
       jest.resetModules();
       const config = require('../../src/config/discordConfig').default;
-      expect(config.get('DISCORD_CHANNEL_BONUSES')).toEqual({}); // falls back since values may violate max/min Zod constraints
+      expect(config.get('DISCORD_CHANNEL_BONUSES')).toEqual({
+        ch1: 0,
+        ch2: 2,
+        ch3: 1.5
+      });
       process.env.NODE_ENV = oldEnv;
     });
   });

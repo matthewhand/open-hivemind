@@ -198,6 +198,9 @@ export class SlackBotManager {
       }
 
       for (const botInfo of this.slackBots) {
+        // Skip primary bot since it already has its handlers registered above
+        if (botInfo === primaryBot) continue;
+
         if (this.mode === 'socket' && botInfo.socketClient) {
           botInfo.socketClient.on('slack_event', (event) => {
             const eventId = event.body?.event_id || event.event_ts;

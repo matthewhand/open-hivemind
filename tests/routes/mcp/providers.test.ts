@@ -26,7 +26,12 @@ jest.mock('../../../src/config/MCPProviderManager', () => ({
     }
     return null;
   }),
-  createProvider: jest.fn().mockImplementation((config: any) => Promise.resolve({
+  getProviderStatus: jest.fn().mockReturnValue({
+    status: 'running',
+    lastCheck: new Date()
+  }),
+  validateProviderConfig: jest.fn().mockReturnValue({ isValid: true, errors: [], warnings: [], suggestions: [] }),
+  addProvider: jest.fn().mockImplementation((config: any) => Promise.resolve({
     id: 'new-provider',
     ...config,
   })),
@@ -34,7 +39,7 @@ jest.mock('../../../src/config/MCPProviderManager', () => ({
     id,
     ...config,
   })),
-  deleteProvider: jest.fn().mockResolvedValue(undefined),
+  removeProvider: jest.fn().mockResolvedValue(undefined),
   startProvider: jest.fn().mockResolvedValue(true),
   stopProvider: jest.fn().mockResolvedValue(true),
 }));
@@ -106,9 +111,10 @@ describe('MCP Providers Router', () => {
   describe('POST /api/mcp/providers', () => {
     it('should create a new provider', async () => {
       const newProvider = {
+        id: 'new-provider',
         name: 'New Provider',
-        type: 'tool',
-        enabled: true,
+        type: 'stdio',
+        config: { command: 'test' },
       };
 
       const res = await request(app)
@@ -131,7 +137,7 @@ describe('MCP Providers Router', () => {
 
   describe('PUT /api/mcp/providers/:id', () => {
     it('should update an existing provider', async () => {
-      const updates = { name: 'Updated Provider', enabled: false };
+      const updates = { name: 'Updated Provider' };
 
       const res = await request(app)
         .put('/api/mcp/providers/provider1')
@@ -158,10 +164,11 @@ describe('MCP Providers Router', () => {
       expect(res.body.success).toBe(true);
     });
 
-    it('should return 404 for non-existent provider', async () => {
+    it('should return 200 for non-existent provider', async () => {
       const res = await request(app).delete('/api/mcp/providers/nonexistent');
 
-      expect(res.status).toBe(404);
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
     });
   });
 

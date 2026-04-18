@@ -7,7 +7,7 @@ import { ConfigurationError } from '../../../../src/types/errorClasses';
   isConfigured: jest.fn().mockReturnValue(true),
   getBotConfigurationByName: jest.fn().mockResolvedValue(null),
   createBotConfiguration: jest.fn().mockResolvedValue(1),
-  getBotConfiguration: jest.fn(),
+  getBotConfiguration: jest.fn().mockResolvedValue({ id: 1, name: 'test-bot' }),
   getBotConfigurationVersions: jest.fn().mockResolvedValue([]),
   getBotConfigurationAudit: jest.fn().mockResolvedValue([]),
   createBotConfigurationAudit: jest.fn().mockResolvedValue(undefined),

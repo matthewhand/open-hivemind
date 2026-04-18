@@ -68,7 +68,7 @@ describe('ErrorResponseBuilder', () => {
 
   describe('getHttpStatusCode', () => {
     it('should return 400 for ConfigurationError', () => {
-      const error = new ConfigurationError('Invalid config', 'invalid');
+      const error = { code: 'CONFIGURATION', message: 'Invalid config' };
       const builder = new ErrorResponseBuilder(error);
       expect(builder.getHttpStatusCode()).toBe(400);
     });

@@ -9,9 +9,15 @@ import { maintenanceModeMiddleware } from '../../src/middleware/maintenanceMiddl
 import { UserConfigStore } from '../../src/config/UserConfigStore';
 
 // Mock UserConfigStore
-jest.mock('../../src/config/UserConfigStore');
+const mockUserConfigStore = {
+  isMaintenanceMode: jest.fn(),
+};
 
-const mockUserConfigStore = UserConfigStore.getInstance() as jest.Mocked<UserConfigStore>;
+jest.mock('../../src/config/UserConfigStore', () => ({
+  UserConfigStore: {
+    getInstance: jest.fn(() => mockUserConfigStore),
+  },
+}));
 
 describe('Maintenance Mode Middleware', () => {
   let req: any;

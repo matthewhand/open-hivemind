@@ -183,6 +183,7 @@ export class ErrorResponseBuilder {
       case 'TIMEOUT_ERROR':
         return HTTP_STATUS.REQUEST_TIMEOUT;
       case 'CONFIG_ERROR':
+      case 'CONFIGURATION':
       case 'CONFIGURATION_ERROR':
         return HTTP_STATUS.BAD_REQUEST; // Configuration errors often mean bad inputs
       case 'DATABASE_ERROR':

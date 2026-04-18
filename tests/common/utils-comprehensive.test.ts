@@ -177,7 +177,7 @@ describe('Utility Functions Comprehensive Tests', () => {
 
   describe('Validation utilities', () => {
     it('should validate non-empty strings', () => {
-      const isNonEmpty = (s: string) => s && s.trim().length > 0;
+      const isNonEmpty = (s: string) => !!(s && s.trim().length > 0);
       expect(isNonEmpty('test')).toBe(true);
       expect(isNonEmpty('')).toBe(false);
       expect(isNonEmpty('   ')).toBe(false);

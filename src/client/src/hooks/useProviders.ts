@@ -1,7 +1,12 @@
 import { useQueries } from '@tanstack/react-query';
 import { getLlmProviders, getMessengerProviders, type ProviderInfo } from '../services/providerService';
 
-export const useProviders = () => {
+export const useProviders = (): {
+  llmProviders: ProviderInfo[];
+  messageProviders: ProviderInfo[];
+  loading: boolean;
+  error: string | null;
+} => {
   const results = useQueries({
     queries: [
       {

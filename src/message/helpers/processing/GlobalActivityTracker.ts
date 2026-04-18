@@ -30,6 +30,13 @@ export class GlobalActivityTracker {
   }
 
   /**
+   * Reset all activity states (for tests)
+   */
+  public reset(): void {
+    this.states.clear();
+  }
+
+  /**
    * Record new activity for a bot (increment score).
    * Call this when the bot successfully sends a message.
    */

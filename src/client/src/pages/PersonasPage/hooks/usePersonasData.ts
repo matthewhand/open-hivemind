@@ -14,7 +14,20 @@ export interface Persona extends BasePersona {
   assignedBotIds?: string[];
 }
 
-export const usePersonasData = () => {
+export const usePersonasData = (): {
+  bots: Bot[];
+  personas: Persona[];
+  loading: boolean;
+  error: string | null;
+  fetchData: () => Promise<void>;
+  searchQuery: string;
+  setSearchQuery: (v: string) => void;
+  selectedCategory: string;
+  setSelectedCategory: (v: string) => void;
+  filteredPersonas: Persona[];
+  filteredPersonaIds: string[];
+  setPersonas: React.Dispatch<React.SetStateAction<Persona[]>>;
+} => {
   const [bots, setBots] = useState<Bot[]>([]);
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,13 +91,13 @@ export const usePersonasData = () => {
     setError(err ? err.message : null);
   }, [configError, personasError]);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (): Promise<void> => {
     await queryClient.invalidateQueries({ queryKey: ['config'] });
     await queryClient.invalidateQueries({ queryKey: ['personas'] });
     await Promise.all([tqRefetchConfig(), tqRefetchPersonas()]);
   }, [queryClient, tqRefetchConfig, tqRefetchPersonas]);
 
-  const filteredPersonas = useMemo(() => {
+  const filteredPersonas = useMemo((): Persona[] => {
     return personas.filter((p) => {
       const matchesSearch =
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -95,7 +108,7 @@ export const usePersonasData = () => {
   }, [personas, searchQuery, selectedCategory]);
 
   const filteredPersonaIds = useMemo(
-    () => filteredPersonas.filter((p) => !p.isBuiltIn).map((p) => p.id),
+    (): string[] => filteredPersonas.filter((p) => !p.isBuiltIn).map((p) => p.id),
     [filteredPersonas]
   );
 

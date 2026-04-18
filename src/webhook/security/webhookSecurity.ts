@@ -13,7 +13,6 @@ export const verifyWebhookToken = (req: Request, res: Response, next: NextFuncti
   let providedToken: string = headerKey ? String(req.headers[headerKey.toLowerCase()]) : '';
 
   // Fallback to Authorization Bearer token if x-webhook-token is not provided
-  // RFC 6750 specifies Bearer token format: Bearer <token>
   const BEARER_PREFIX = 'bearer ';
   if (!providedToken) {
     const authHeaderKey = Object.keys(req.headers || {}).find(
@@ -49,9 +48,6 @@ export const verifyWebhookToken = (req: Request, res: Response, next: NextFuncti
     return;
   }
 
-  // Prevent timing attacks using crypto.timingSafeEqual.
-  // Pad both buffers to the same length so that length differences do not
-  // leak information about the expected token via timing side-channels.
   const providedBuffer = Buffer.from(providedToken, 'utf8');
   const expectedBuffer = Buffer.from(expectedToken, 'utf8');
 
@@ -73,9 +69,6 @@ export const verifyWebhookToken = (req: Request, res: Response, next: NextFuncti
   next();
 };
 
-/**
- * Validate that all octets of an IPv4 address are in the range 0-255.
- */
 const isValidIpv4 = (ip: string): boolean => {
   const ipv4Regex = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
   const match = ipv4Regex.exec(ip);
@@ -86,12 +79,7 @@ const isValidIpv4 = (ip: string): boolean => {
   });
 };
 
-/**
- * Validate an IPv6 address using Node's built-in net module for full RFC 4291
- * compliance (handles compressed notation, embedded IPv4, loopback, etc.).
- */
 const isValidIpv6 = (ip: string): boolean => {
-  // Use the net module for authoritative IPv6 validation
   try {
     return net.isIPv6(ip);
   } catch {
@@ -102,8 +90,9 @@ const isValidIpv6 = (ip: string): boolean => {
 export const verifyIpWhitelist = (req: Request, res: Response, next: NextFunction): void => {
   let whitelistedIps: string[] = [];
   try {
-    whitelistedIps = webhookConfig.get('WEBHOOK_IP_WHITELIST')
-      ? String(webhookConfig.get('WEBHOOK_IP_WHITELIST'))
+    const rawWhitelist = webhookConfig.get('WEBHOOK_IP_WHITELIST');
+    whitelistedIps = rawWhitelist
+      ? String(rawWhitelist)
           .split(',')
           .map((s) => s.trim())
           .filter(Boolean)
@@ -117,16 +106,12 @@ export const verifyIpWhitelist = (req: Request, res: Response, next: NextFunctio
   }
 
   let requestIp: string = req.ip ?? '';
-
-  // Handle IPv4-mapped IPv6 addresses (::ffff:x.x.x.x)
   const ipv4Match = requestIp.match(/^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/);
   if (ipv4Match) {
     requestIp = ipv4Match[1];
   }
 
-  // Validate IP format before whitelist evaluation
   const validIp = isValidIpv4(requestIp) || isValidIpv6(requestIp);
-
   if (!validIp) {
     res.status(403).send('Forbidden: Malformed IP address');
     return;
@@ -148,11 +133,6 @@ export const verifyIpWhitelist = (req: Request, res: Response, next: NextFunctio
 
 /**
  * Verify Slack signature for incoming webhooks.
- *
- * Uses crypto.createHmac('sha256', SLACK_SIGNING_SECRET) to verify the X-Slack-Signature
- * and X-Slack-Request-Timestamp headers.
- *
- * Note: Requires the raw request body (added by setupMiddleware via verify function).
  */
 export const verifySlackSignature = (req: Request, res: Response, next: NextFunction): void => {
   const signature = req.headers['x-slack-signature'] as string;
@@ -165,15 +145,12 @@ export const verifySlackSignature = (req: Request, res: Response, next: NextFunc
   }
 
   if (!signature || !timestamp) {
-    Logger.warn('Missing Slack signature headers', { path: req.path });
     res.status(401).send('Unauthorized: Missing Slack headers');
     return;
   }
 
-  // Prevent replay attacks (5 minute window)
   const fiveMinutesAgo = Math.floor(Date.now() / 1000) - 60 * 5;
   if (parseInt(timestamp, 10) < fiveMinutesAgo) {
-    Logger.warn('Slack request timestamp is too old', { timestamp, path: req.path });
     res.status(401).send('Unauthorized: Request too old');
     return;
   }
@@ -201,11 +178,9 @@ export const verifySlackSignature = (req: Request, res: Response, next: NextFunc
     ) {
       next();
     } else {
-      Logger.warn('Invalid Slack signature', { path: req.path });
       res.status(401).send('Unauthorized: Invalid Slack signature');
     }
   } catch (error) {
-    Logger.error('Error during Slack signature verification', { error });
     res.status(401).send('Unauthorized: Signature verification error');
   }
 };

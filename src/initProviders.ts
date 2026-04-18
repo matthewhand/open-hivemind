@@ -13,7 +13,7 @@ import { providerRegistry } from './registries/ProviderRegistry';
 
 const debug = Debug('app:initProviders');
 
-export async function initProviders() {
+export async function initProviders(): Promise<void> {
   const providersDir = path.join(__dirname, 'providers');
 
   try {

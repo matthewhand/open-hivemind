@@ -1,8 +1,18 @@
+import 'reflect-metadata';
 import fs from 'fs';
 import {
   getMessengerProvider,
   resetMessengerProviderCache,
 } from '@src/message/management/getMessengerProvider';
+
+jest.mock('tsyringe', () => ({
+  container: {
+    resolve: jest.fn().mockReturnValue({}),
+  },
+  singleton: () => () => {},
+  injectable: () => () => {},
+  inject: () => () => {},
+}));
 
 // Mock Discord Service
 const mockDiscordService = {
@@ -334,6 +344,8 @@ describe('getMessengerProvider additional branch coverage', () => {
   });
 
   it('resets cache and rereads config after reset', async () => {
+    delete process.env.MESSAGE_PROVIDER;
+    
     mockFsPromises.readFile.mockResolvedValueOnce(
       JSON.stringify({ providers: [{ type: 'discord', enabled: true }] }) as any
     );

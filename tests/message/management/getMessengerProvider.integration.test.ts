@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import path from 'path';
 
 // Define mocks on global object to make them accessible to hoisted jest.mock()
@@ -43,36 +44,37 @@ jest.mock('fs', () => ({
 
 // Use the global mocks in the hoisted mock factory
 jest.mock('../../../src/services/StartupGreetingService', () => {
+  class MockStartupGreetingService {
+    static getInstance() {
+      return new MockStartupGreetingService();
+    }
+    greetAll(...args: any[]) {
+      return (global as any).mockGreetingFunctions.greetAll(...args);
+    }
+  }
   return {
     __esModule: true,
-    StartupGreetingService: {
-      getInstance: jest.fn(() => ({
-        greetAll: (...args: any[]) => (global as any).mockGreetingFunctions.greetAll(...args),
-      })),
-    },
-    default: {
-      getInstance: jest.fn(() => ({
-        greetAll: (...args: any[]) => (global as any).mockGreetingFunctions.greetAll(...args),
-      })),
-    },
+    StartupGreetingService: MockStartupGreetingService,
+    default: MockStartupGreetingService,
   };
 });
 
 jest.mock('../../../src/server/services/websocket', () => {
+  class MockWebSocketService {
+    static getInstance() {
+      return new MockWebSocketService();
+    }
+    broadcastBotStatus(...args: any[]) {
+      return (global as any).mockWSFunctions.broadcastBotStatus(...args);
+    }
+    broadcastConfigChange(...args: any[]) {
+      return (global as any).mockWSFunctions.broadcastConfigChange(...args);
+    }
+  }
   return {
     __esModule: true,
-    WebSocketService: {
-      getInstance: jest.fn(() => ({
-        broadcastBotStatus: (...args: any[]) => (global as any).mockWSFunctions.broadcastBotStatus(...args),
-        broadcastConfigChange: (...args: any[]) => (global as any).mockWSFunctions.broadcastConfigChange(...args),
-      })),
-    },
-    default: {
-      getInstance: jest.fn(() => ({
-        broadcastBotStatus: (...args: any[]) => (global as any).mockWSFunctions.broadcastBotStatus(...args),
-        broadcastConfigChange: (...args: any[]) => (global as any).mockWSFunctions.broadcastConfigChange(...args),
-      })),
-    },
+    WebSocketService: MockWebSocketService,
+    default: MockWebSocketService,
   };
 });
 

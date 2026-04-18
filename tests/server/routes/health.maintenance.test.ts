@@ -1,68 +1,61 @@
 /**
  * Tests for maintenance mode in health check routes
  */
-
-import { Request, Response } from 'express';
+import 'reflect-metadata';
+import express from 'express';
+import request from 'supertest';
 import { UserConfigStore } from '../../../src/config/UserConfigStore';
 
 // Mock UserConfigStore
-jest.mock('../../../src/config/UserConfigStore');
+const mockUserConfigStore = {
+  isMaintenanceMode: jest.fn(),
+};
 
-const mockUserConfigStore = UserConfigStore.getInstance() as jest.Mocked<UserConfigStore>;
+jest.mock('../../../src/config/UserConfigStore', () => ({
+  UserConfigStore: {
+    getInstance: jest.fn(() => mockUserConfigStore),
+  },
+}));
+
+// Mock other dependencies used by basic router
+jest.mock('../../../src/database/DatabaseManager', () => ({
+  DatabaseManager: {
+    getInstance: jest.fn(() => ({
+      isConnected: jest.fn().mockReturnValue(true),
+    })),
+  },
+}));
+
+import basicRouter from '../../../src/server/routes/health/basic';
 
 describe('Health Routes - Maintenance Mode', () => {
+  let app: express.Express;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    app = express();
+    app.use('/api/health', basicRouter);
+  });
+
   describe('GET /api/health/maintenance', () => {
-    let basicRouter: any;
-
-    beforeEach(async () => {
-      jest.clearAllMocks();
-      // Import after mocks are set up
-      basicRouter = (await import('../../../src/server/routes/health/basic')).default;
-    });
-
-    it('should return maintenanceMode: false when not in maintenance', () => {
+    it('should return maintenanceMode: false when not in maintenance', async () => {
       mockUserConfigStore.isMaintenanceMode.mockReturnValue(false);
 
-      const req = { path: '/maintenance' } as Request;
-      const res = {
-        json: jest.fn(),
-      } as unknown as Response;
-
-      // Find the maintenance route handler
-      const routes = basicRouter.stack as any[];
-      const maintenanceRoute = routes.find((r: any) => r.route?.path === '/maintenance');
+      const res = await request(app).get('/api/health/maintenance');
       
-      if (maintenanceRoute) {
-        maintenanceRoute.handle(req, res);
-        expect(res.json).toHaveBeenCalledWith(
-          expect.objectContaining({
-            maintenanceMode: false,
-            message: 'System is operating normally',
-          })
-        );
-      }
+      expect(res.status).toBe(200);
+      expect(res.body.maintenanceMode).toBe(false);
+      expect(res.body.message).toBe('System is operating normally');
     });
 
-    it('should return maintenanceMode: true when in maintenance', () => {
+    it('should return maintenanceMode: true when in maintenance', async () => {
       mockUserConfigStore.isMaintenanceMode.mockReturnValue(true);
 
-      const req = { path: '/maintenance' } as Request;
-      const res = {
-        json: jest.fn(),
-      } as unknown as Response;
-
-      const routes = basicRouter.stack as any[];
-      const maintenanceRoute = routes.find((r: any) => r.route?.path === '/maintenance');
+      const res = await request(app).get('/api/health/maintenance');
       
-      if (maintenanceRoute) {
-        maintenanceRoute.handle(req, res);
-        expect(res.json).toHaveBeenCalledWith(
-          expect.objectContaining({
-            maintenanceMode: true,
-            message: 'System is currently in maintenance mode',
-          })
-        );
-      }
+      expect(res.status).toBe(200);
+      expect(res.body.maintenanceMode).toBe(true);
+      expect(res.body.message).toBe('System is currently in maintenance mode');
     });
   });
 
@@ -70,13 +63,11 @@ describe('Health Routes - Maintenance Mode', () => {
     it('should include maintenanceMode in response', async () => {
       mockUserConfigStore.isMaintenanceMode.mockReturnValue(true);
 
-      // Note: Full integration test would require setting up the entire Express app
-      // This tests the logic in isolation
-      const userConfigStore = UserConfigStore.getInstance();
-      const isMaintenance = userConfigStore.isMaintenanceMode();
+      const res = await request(app).get('/api/health');
       
-      expect(isMaintenance).toBe(true);
-      // The basic health route would include this in its response
+      expect(res.status).toBe(200);
+      expect(res.body.maintenanceMode).toBe(true);
+      expect(res.body.status).toBe('degraded');
     });
   });
 });

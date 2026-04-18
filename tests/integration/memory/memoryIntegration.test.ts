@@ -1,10 +1,8 @@
-/**
- * REAL integration tests for the memory subsystem.
- *
- * Only global.fetch is mocked (the HTTP boundary). Everything else --
- * Mem0Provider, Mem4aiProvider, CircuitBreaker, MemoryManager, plugin
- * loading, config resolution -- is REAL production code.
- */
+// Mock isSafeUrl BEFORE any other imports to ensure it is applied correctly
+jest.mock('@hivemind/shared-types', () => ({
+  ...jest.requireActual('@hivemind/shared-types'),
+  isSafeUrl: jest.fn().mockResolvedValue({ safe: true }),
+}));
 
 import { Mem0Provider } from '../../../packages/memory-mem0/src/Mem0Provider';
 import { Mem0ApiError } from '../../../packages/memory-mem0/src/types';
@@ -14,12 +12,6 @@ import {
   CircuitBreakerError,
   clearCircuitBreakerRegistry,
 } from '../../../src/common/CircuitBreaker';
-
-// Mock isSafeUrl so injected test URLs don't trigger SSRF guard failures
-jest.mock('@hivemind/shared-types', () => ({
-  ...jest.requireActual('@hivemind/shared-types'),
-  isSafeUrl: jest.fn().mockResolvedValue(true),
-}));
 
 // ---------------------------------------------------------------------------
 // Fetch mock helpers

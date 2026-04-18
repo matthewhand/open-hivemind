@@ -46,7 +46,14 @@ function createWebSocketService(): WebSocketService {
   const MockApiMonitor = require('../../../src/services/ApiMonitorService').default;
   const connMgr = new ConnectionManager();
   const apiMonitor = new MockApiMonitor();
-  const broadcastService = new BroadcastService(connMgr, apiMonitor);
+  const mockDemoModeService = {
+    isInDemoMode: jest.fn(() => false),
+    getSimulatedMessageFlow: jest.fn(() => []),
+    getSimulatedAlerts: jest.fn(() => []),
+    getSimulatedPerformanceMetrics: jest.fn(() => []),
+    getDemoBots: jest.fn(() => []),
+  };
+  const broadcastService = new BroadcastService(connMgr, apiMonitor, mockDemoModeService as any);
   const eventHandlers = new EventHandlers(connMgr, broadcastService);
   return new WebSocketService(connMgr, broadcastService, eventHandlers);
 }

@@ -11,6 +11,7 @@ const MAINTENANCE_ALLOWED_PATHS = [
   '/api/health/',
   '/api/health/detailed',
   '/api/maintenance/status',
+  '/api/maintenance',
   '/api/demo/status',
   '/api/config/global',
   '/api/config',

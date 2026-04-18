@@ -37,6 +37,7 @@ jest.mock('../../../src/config/SecureConfigManager', () => ({
 }));
 
 jest.mock('../../../src/config/ProviderConfigManager', () => ({
+  __esModule: true,
   ProviderConfigManager: {
     getInstance: jest.fn().mockReturnValue({ syncBotProviders: jest.fn() }),
   },
@@ -46,21 +47,30 @@ jest.mock('../../../src/config/ProviderConfigManager', () => ({
 }));
 
 jest.mock('../../../src/common/logger', () => {
-  const logger = (global as any).mockLogger;
+  const mockLoggerInstance = {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+  };
   return {
     __esModule: true,
     default: {
-      info: (msg: string) => logger.info(msg),
-      error: (msg: string) => logger.error(msg),
-      warn: (msg: string) => logger.warn(msg),
-      debug: (msg: string) => logger.debug(msg),
-      withContext: jest.fn(() => logger),
+      withContext: jest.fn(() => mockLoggerInstance),
+      ...mockLoggerInstance,
     },
     Logger: {
-      withContext: jest.fn(() => logger),
+      withContext: jest.fn(() => mockLoggerInstance),
+      ...mockLoggerInstance,
     },
   };
 });
+
+// Update test to use the actual mock
+const getMockLogger = () => {
+  const loggerModule = require('../../../src/common/logger');
+  return loggerModule.default.withContext();
+};
 
 describe('DI Service Registration Logging', () => {
   beforeEach(() => {
@@ -72,7 +82,7 @@ describe('DI Service Registration Logging', () => {
     registerServices();
 
     // Verify completion log (info level)
-    expect((global as any).mockLogger.info).toHaveBeenCalledWith('DI services registered');
+    expect(getMockLogger().info).toHaveBeenCalledWith('DI services registered');
   });
 
   it('should check if services are registered', () => {

@@ -6,8 +6,20 @@ import { UserConfigStore } from '../../src/config/UserConfigStore';
 import * as fs from 'fs';
 import * as path from 'path';
 
-jest.mock('fs');
-jest.mock('fs/promises');
+jest.mock('fs', () => ({
+  readFileSync: jest.fn(),
+  writeFileSync: jest.fn(),
+  promises: {
+    mkdir: jest.fn().mockResolvedValue(undefined),
+    writeFile: jest.fn().mockResolvedValue(undefined),
+    readFile: jest.fn(),
+  }
+}));
+jest.mock('fs/promises', () => ({
+  mkdir: jest.fn().mockResolvedValue(undefined),
+  writeFile: jest.fn().mockResolvedValue(undefined),
+  readFile: jest.fn(),
+}));
 
 describe('UserConfigStore - Maintenance Mode', () => {
   let userConfigStore: UserConfigStore;
