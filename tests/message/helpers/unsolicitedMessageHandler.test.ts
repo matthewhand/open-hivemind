@@ -1,95 +1,106 @@
-import messageConfig from '../../../src/config/messageConfig';
-import { clearBotActivity } from '../../../src/message/helpers/processing/ChannelActivity';
-import { shouldReplyToUnsolicitedMessage } from '../../../src/message/helpers/unsolicitedMessageHandler';
+import { shouldReplyToUnsolicitedMessage, looksLikeOpportunity } from '@message/helpers/unsolicitedMessageHandler';
+import messageConfig from '@config/messageConfig';
 
-jest.mock('../../../src/config/messageConfig', () => ({
-  __esModule: true,
-  default: { get: jest.fn() },
+// Mock messageConfig
+jest.mock('@config/messageConfig', () => ({
+  get: jest.fn(),
 }));
 
-describe('shouldReplyToUnsolicitedMessage', () => {
-  const botId = 'bot123';
-  const integration = 'discord';
+const mockMessageConfig = messageConfig as jest.Mocked<typeof messageConfig>;
 
+class MockMessage {
+  constructor(
+    public text: string,
+    public mentions: string[] = [],
+    public isReplyToBotFlag = false,
+    public metadata: any = {}
+  ) {}
+
+  getText(): string {
+    return this.text;
+  }
+
+  mentionsUsers(userId: string): boolean {
+    return this.mentions.includes(userId);
+  }
+
+  isMentioning(userId: string): boolean {
+    return this.mentions.includes(userId);
+  }
+
+  getUserMentions(): string[] {
+    return this.mentions;
+  }
+
+  isReplyToBot(): boolean {
+    return this.isReplyToBotFlag;
+  }
+}
+
+describe('unsolicitedMessageHandler', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    clearBotActivity();
-    (messageConfig.get as jest.Mock).mockImplementation((key: string) => {
-      if (key === 'MESSAGE_ONLY_WHEN_SPOKEN_TO') return true;
-      if (key === 'MESSAGE_UNSOLICITED_ADDRESSED') return false;
-      if (key === 'MESSAGE_UNSOLICITED_UNADDRESSED') return false;
-      if (key === 'MESSAGE_ACTIVITY_TIME_WINDOW') return 300000;
-      if (key === 'MESSAGE_WAKEWORDS') return ['bot'];
-      return null;
+    mockMessageConfig.get.mockImplementation((key: string) => {
+      const config: Record<string, any> = {
+        MESSAGE_WAKEWORDS: [],
+      };
+      return config[key];
     });
   });
 
-  it('does not hard-block unsolicited messages (pipeline proceeds)', () => {
-    const msg: any = {
-      getChannelId: () => 'c1',
-      getText: () => 'hello',
-      mentionsUsers: () => false,
-      isReplyToBot: () => false,
-    };
-
-    expect(shouldReplyToUnsolicitedMessage(msg, botId, integration)).toBe(true);
-
-    const mentioned: any = { ...msg, mentionsUsers: () => true };
-    expect(shouldReplyToUnsolicitedMessage(mentioned, botId, integration)).toBe(true);
-  });
-
-  it('returns true for wakeword when MESSAGE_ONLY_WHEN_SPOKEN_TO=true', () => {
-    const msg: any = {
-      getChannelId: () => 'c1',
-      getText: () => 'bot help me',
-      mentionsUsers: () => false,
-      isReplyToBot: () => false,
-    };
-
-    expect(shouldReplyToUnsolicitedMessage(msg, botId, integration)).toBe(true);
-  });
-
-  it('when MESSAGE_ONLY_WHEN_SPOKEN_TO=false, does not hard-block (opportunity handled elsewhere)', () => {
-    (messageConfig.get as jest.Mock).mockImplementation((key: string) => {
-      if (key === 'MESSAGE_ONLY_WHEN_SPOKEN_TO') return false;
-      if (key === 'MESSAGE_UNSOLICITED_ADDRESSED') return true;
-      if (key === 'MESSAGE_UNSOLICITED_UNADDRESSED') return true;
-      if (key === 'MESSAGE_WAKEWORDS') return ['bot'];
-      return null;
+  describe('shouldReplyToUnsolicitedMessage', () => {
+    it('should return true for direct mentions', () => {
+      const message = new MockMessage('Hello!', ['bot-123']);
+      const result = shouldReplyToUnsolicitedMessage(message, 'bot-123', 'discord');
+      expect(result).toBe(true);
     });
 
-    const msg: any = {
-      getChannelId: () => 'c1',
-      getText: () => 'this is chatter',
-      mentionsUsers: () => false,
-      isReplyToBot: () => false,
-      getUserMentions: () => [],
-    };
-
-    // No hard blocks here; probability is handled elsewhere.
-    expect(shouldReplyToUnsolicitedMessage(msg, botId, integration)).toBe(true);
-
-    // Opportunity -> yes
-    const q: any = { ...msg, getText: () => 'anyone know how do i fix this?' };
-    expect(shouldReplyToUnsolicitedMessage(q, botId, integration)).toBe(true);
-  });
-
-  it('does not hard-block addressed/unaddressed config when MESSAGE_ONLY_WHEN_SPOKEN_TO=false', () => {
-    (messageConfig.get as jest.Mock).mockImplementation((key: string) => {
-      if (key === 'MESSAGE_ONLY_WHEN_SPOKEN_TO') return false;
-      if (key === 'MESSAGE_UNSOLICITED_ADDRESSED') return false;
-      if (key === 'MESSAGE_UNSOLICITED_UNADDRESSED') return true;
-      if (key === 'MESSAGE_WAKEWORDS') return ['bot'];
-      return null;
+    it('should return true for replies to the bot', () => {
+      const message = new MockMessage('Hello!', [], true);
+      const result = shouldReplyToUnsolicitedMessage(message, 'bot-123', 'discord');
+      expect(result).toBe(true);
     });
 
-    const addressed: any = {
-      getChannelId: () => 'c1',
-      getText: () => 'hey @someone, can someone help?',
-      mentionsUsers: () => false,
-      isReplyToBot: () => false,
-      getUserMentions: () => ['someone'],
-    };
-    expect(shouldReplyToUnsolicitedMessage(addressed, botId, integration)).toBe(true);
+    it('should return true for wakeword mentions', () => {
+      mockMessageConfig.get.mockReturnValue(['hey bot']);
+      const message = new MockMessage('hey bot how are you?');
+      const result = shouldReplyToUnsolicitedMessage(message, 'bot-123', 'discord');
+      expect(result).toBe(true);
+    });
+
+    it('should return true for text mentions (e.g., <@bot-123>)', () => {
+      const message = new MockMessage('<@bot-123> Hello!');
+      const result = shouldReplyToUnsolicitedMessage(message, 'bot-123', 'discord');
+      expect(result).toBe(true);
+    });
+
+    it('should return true even for non-direct messages (logic refactor)', () => {
+      const message = new MockMessage('Hello!');
+      const result = shouldReplyToUnsolicitedMessage(message, 'bot-123', 'discord');
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('looksLikeOpportunity', () => {
+    it('should return true for questions', () => {
+      expect(looksLikeOpportunity('How do I do this?')).toBe(true);
+      expect(looksLikeOpportunity('What is this?')).toBe(true);
+      expect(looksLikeOpportunity('Why is this happening')).toBe(false); // No question mark
+    });
+
+    it('should return true for help/request patterns', () => {
+      expect(looksLikeOpportunity('How do I fix this')).toBe(true);
+      expect(looksLikeOpportunity('Can someone help me?')).toBe(true);
+      expect(looksLikeOpportunity('Anyone know how to do this?')).toBe(true);
+      expect(looksLikeOpportunity('Help!')).toBe(true);
+      expect(looksLikeOpportunity('There is an issue')).toBe(true);
+      expect(looksLikeOpportunity('I got an error')).toBe(true);
+    });
+
+    it('should return false for non-opportunities', () => {
+      expect(looksLikeOpportunity('Hello')).toBe(false);
+      expect(looksLikeOpportunity('')).toBe(false);
+      expect(looksLikeOpportunity('This is a statement.')).toBe(false);
+    });
   });
 });
