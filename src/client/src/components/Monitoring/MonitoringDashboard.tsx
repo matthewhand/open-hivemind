@@ -187,8 +187,16 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
 
   // Derive bots with status combining config and system data independently
   useEffect(() => {
+    // Pre-compute a lookup Map for O(1) status lookup instead of O(N*M) with .find()
+    const statusBotMap = new Map<string, any>();
+    if (systemMetrics?.bots) {
+      for (const b of systemMetrics.bots) {
+        statusBotMap.set(b.name, b);
+      }
+    }
+
     const botsWithStatus = configBots.map((bot: Bot) => {
-      const statusBot = systemMetrics?.bots?.find((b: any) => b.name === bot.name);
+      const statusBot = statusBotMap.get(bot.name);
       return {
         ...bot,
         id: bot.name,
