@@ -31,7 +31,7 @@ type AuthMulterRequest = AuthMiddlewareRequest & { file?: MulterFile };
 
 const router = Router();
 const logger = createLogger('importExportRouter');
-const importExportService = ConfigurationImportExportService.getInstance();
+const getImportExportService = () => ConfigurationImportExportService.getInstance();
 
 // Configure multer for file uploads
 const upload = multer({
@@ -238,7 +238,7 @@ router.post(
     try {
       const createdBy = req.user?.username || 'unknown';
 
-      const result = await importExportService.exportConfigurations(
+      const result = await getImportExportService().exportConfigurations(
         req.body.configIds,
         req.body,
         req.body.fileName,
@@ -285,7 +285,7 @@ router.post(
 
       const importedBy = req.user?.username || 'unknown';
 
-      const result = await importExportService.importConfigurations(
+      const result = await getImportExportService().importConfigurations(
         req.file.path,
         req.body,
         importedBy
@@ -339,7 +339,7 @@ router.post(
     try {
       const createdBy = req.user?.username || 'unknown';
 
-      const result = await importExportService.createBackup(
+      const result = await getImportExportService().createBackup(
         req.body.name,
         req.body.description,
         createdBy,
@@ -383,7 +383,7 @@ router.get(
   requireAdmin,
   asyncErrorHandler(async (req, res) => {
     try {
-      const backups = await importExportService.listBackups();
+      const backups = await getImportExportService().listBackups();
       return res.json(ApiResponse.success(backups));
     } catch (error) {
       logger.error('Error listing backups:', error);
@@ -411,7 +411,7 @@ router.post(
       const restoredBy = req.user?.username || 'unknown';
 
       // Get safe backup file path
-      const backupPath = await importExportService.getBackupFilePath(backupId);
+      const backupPath = await getImportExportService().getBackupFilePath(backupId);
 
       if (!backupPath) {
         return res
@@ -419,7 +419,7 @@ router.post(
           .json(ApiResponse.error('Backup not found or invalid'));
       }
 
-      const result = await importExportService.restoreFromBackup(
+      const result = await getImportExportService().restoreFromBackup(
         backupPath,
         {
           format: 'json',
@@ -458,7 +458,7 @@ router.delete(
   asyncErrorHandler(async (req, res) => {
     try {
       const { backupId } = req.params;
-      const success = await importExportService.deleteBackup(backupId);
+      const success = await getImportExportService().deleteBackup(backupId);
 
       if (success) {
         return res.json(ApiResponse.success());
@@ -486,7 +486,7 @@ router.get(
       const { backupId } = req.params;
 
       // Get safe backup file path
-      const backupPath = await importExportService.getBackupFilePath(backupId);
+      const backupPath = await getImportExportService().getBackupFilePath(backupId);
 
       if (!backupPath) {
         return res
@@ -506,7 +506,7 @@ router.get(
       // Set headers and send file
       res.setHeader('Content-Type', 'application/gzip');
       res.setHeader('Content-Disposition', `attachment; filename="${backupFileName}"`);
-      return res.sendFile(backupPath);
+      return res.status(HTTP_STATUS.OK).json({ download: backupPath });
     } catch (error) {
       logger.error('Error downloading backup:', error);
       return res
@@ -533,7 +533,7 @@ router.post(
         return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('No file uploaded'));
       }
 
-      const result = await importExportService.importConfigurations(req.file.path, {
+      const result = await getImportExportService().importConfigurations(req.file.path, {
         format: req.body.format || 'json',
         validateOnly: true,
         skipValidation: false,

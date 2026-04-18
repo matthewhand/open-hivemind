@@ -1,9 +1,17 @@
-import axios from 'axios';
-import { generateChatCompletionDirect } from '../../../src/integrations/openwebui/directClient';
+import { http } from '@hivemind/shared-types';
+import { generateChatCompletionDirect } from '@hivemind/llm-openwebui/directClient';
 
-jest.mock('axios');
+jest.mock('@hivemind/shared-types', () => {
+  const original = jest.requireActual('@hivemind/shared-types');
+  return {
+    ...original,
+    http: {
+      create: jest.fn(),
+    },
+  };
+});
 
-const mockedAxios = axios as jest.Mocked<typeof axios>;
+const mockedHttp = http as jest.Mocked<typeof http>;
 
 const makeMessage = (text: string, role = 'user') =>
   ({ getText: () => text, role }) as { getText: () => string; role?: string };
@@ -21,11 +29,9 @@ describe('generateChatCompletionDirect', () => {
 
   it('sends request and returns first choice content', async () => {
     const post = jest.fn().mockResolvedValue({
-      data: {
-        choices: [{ message: { content: 'ok response' } }],
-      },
+      choices: [{ message: { content: 'ok response' } }],
     });
-    mockedAxios.create.mockReturnValue({ post } as any);
+    mockedHttp.create.mockReturnValue({ post } as any);
 
     const result = await generateChatCompletionDirect(
       {
@@ -39,14 +45,12 @@ describe('generateChatCompletionDirect', () => {
     );
 
     expect(result).toBe('ok response');
-    expect(mockedAxios.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        baseURL: 'http://localhost:3000/api',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer abc',
-        },
-      })
+    expect(mockedHttp.create).toHaveBeenCalledWith(
+      'http://localhost:3000/api',
+      {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer abc',
+      }
     );
     expect(post).toHaveBeenCalledWith(
       '/chat/completions',
@@ -57,8 +61,7 @@ describe('generateChatCompletionDirect', () => {
           { role: 'assistant', content: 'prev-1' },
           { role: 'user', content: 'hello' },
         ],
-      },
-      expect.anything()
+      }
     );
   });
 });

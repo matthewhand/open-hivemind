@@ -1,10 +1,10 @@
 import axios from 'axios';
 import { ConfigurationManager } from '@config/ConfigurationManager';
-import flowiseConfig from '@integrations/flowise/flowiseConfig';
+import flowiseConfig from '@hivemind/llm-flowise/src/flowiseConfig';
 import {
   getFlowiseResponse,
   getFlowiseResponseFallback,
-} from '@integrations/flowise/flowiseRestClient';
+} from '@hivemind/llm-flowise/src/flowiseRestClient';
 import { resetAllCircuitBreakers } from '@common/CircuitBreaker';
 
 jest.mock('axios');
@@ -14,8 +14,8 @@ jest.mock('../../../src/utils/ssrfGuard', () => ({
   isSafeUrl: jest.fn().mockResolvedValue(true),
 }));
 
-jest.mock('@integrations/flowise/flowiseConfig', () => {
-  const actual = jest.requireActual('@integrations/flowise/flowiseConfig');
+jest.mock('@hivemind/llm-flowise/src/flowiseConfig', () => {
+  const actual = jest.requireActual('@hivemind/llm-flowise/src/flowiseConfig');
   return {
     __esModule: true,
     default: {

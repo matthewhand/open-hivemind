@@ -1,5 +1,5 @@
-import { getFlowiseResponse } from '@integrations/flowise/flowiseRestClient';
-import { getFlowiseSdkResponse } from '@integrations/flowise/flowiseSdkClient';
+import { getFlowiseResponse } from '@hivemind/llm-flowise/src/flowiseRestClient';
+import { getFlowiseSdkResponse } from '@hivemind/llm-flowise/src/flowiseSdkClient';
 import { FlowiseProvider } from './flowiseProvider';
 
 jest.mock('@config/flowiseConfig', () => ({
@@ -10,11 +10,11 @@ jest.mock('@config/flowiseConfig', () => ({
   }),
 }));
 
-jest.mock('@integrations/flowise/flowiseRestClient', () => ({
+jest.mock('@hivemind/llm-flowise/src/flowiseRestClient', () => ({
   getFlowiseResponse: jest.fn().mockResolvedValue('rest response'),
 }));
 
-jest.mock('@integrations/flowise/flowiseSdkClient', () => ({
+jest.mock('@hivemind/llm-flowise/src/flowiseSdkClient', () => ({
   getFlowiseSdkResponse: jest.fn().mockResolvedValue('sdk response'),
 }));
 

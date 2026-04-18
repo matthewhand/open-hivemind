@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import { http, isHttpError } from '@hivemind/shared-types';
 import { ConfigurationManager } from '@config/ConfigurationManager';
-import flowiseConfig from '@integrations/flowise/flowiseConfig';
+import flowiseConfig from '@hivemind/llm-flowise/src/flowiseConfig';
 
 const debug = Debug('app:flowiseClient');
 

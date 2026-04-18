@@ -317,6 +317,15 @@
       "tar": "^7.5.11",
       "undici": "^6.24.0",
       "fast-xml-parser": "^4.5.5"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "bcrypt",
+      "esbuild",
+      "ffmpeg-static",
+      "puppeteer",
+      "sharp",
+      "sqlite3",
+      "workerd"
+    ]
   }
 }

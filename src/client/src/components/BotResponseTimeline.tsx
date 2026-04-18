@@ -147,6 +147,8 @@ const TimelineEntry: React.FC<{ msg: ChatMessage; isLast: boolean }> = ({ msg, i
             <button
               className="text-[10px] text-primary hover:underline mt-0.5 inline-flex items-center gap-0.5"
               onClick={() => setExpanded(!expanded)}
+              aria-label={expanded ? 'Show less of the message' : 'Show more of the message'}
+              aria-expanded={expanded}
             >
               {expanded ? (
                 <><ChevronUp className="w-3 h-3" /> Show less</>

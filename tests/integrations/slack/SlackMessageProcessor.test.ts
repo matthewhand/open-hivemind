@@ -7,6 +7,17 @@ jest.mock('axios', () => ({
   get: jest.fn(),
 }));
 
+jest.mock('@hivemind/shared-types', () => {
+  const original = jest.requireActual('@hivemind/shared-types');
+  return {
+    ...original,
+    http: {
+      get: jest.fn(),
+      post: jest.fn(),
+    },
+  };
+});
+
 // Helper to create a mock webClient with only what we need per test
 function createWebClientMock(overrides: Partial<any> = {}) {
   return {
@@ -181,8 +192,9 @@ describe('SlackMessageProcessor', () => {
 
     it('handles image file handling in message enrichment', async () => {
       process.env.SUPPRESS_CANVAS_CONTENT = 'false';
-      let axiosGet = axios.get as jest.Mock;
-      axiosGet.mockResolvedValueOnce({ data: Buffer.from('image-bytes') });
+      const { http } = require('@hivemind/shared-types');
+      const httpGet = http.get as jest.Mock;
+      httpGet.mockResolvedValueOnce(Buffer.from('image-bytes'));
 
       let webClient = createWebClientMock({
         files: {
