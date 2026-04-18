@@ -39,7 +39,7 @@ export interface StandardErrorResponse {
 /**
  * Success response structure for consistency
  */
-export interface StandardSuccessResponse<T = any> {
+export interface StandardSuccessResponse<T = unknown> {
   success: true;
   data: T;
   meta?: {
@@ -56,7 +56,7 @@ export class ErrorResponseBuilder {
   private response: StandardErrorResponse;
   private includeStack = false;
 
-  private originalError: any;
+  private originalError: HivemindError | Record<string, unknown>;
 
   constructor(error: HivemindError | Record<string, unknown>, correlationId?: string) {
     this.originalError = error;
@@ -81,9 +81,9 @@ export class ErrorResponseBuilder {
       error &&
       typeof error === 'object' &&
       'getRecoveryStrategy' in error &&
-      typeof (error as any).getRecoveryStrategy === 'function'
+      typeof (error as Record<string, unknown>).getRecoveryStrategy === 'function'
     ) {
-      const recovery = (error as any).getRecoveryStrategy();
+      const recovery = (error as { getRecoveryStrategy: () => Record<string, unknown> }).getRecoveryStrategy();
       this.response.error.recovery = {
         canRecover: recovery.canRecover,
         retryDelay: recovery.retryDelay,
@@ -144,8 +144,8 @@ export class ErrorResponseBuilder {
       delete finalResponse.stack;
     }
     // Provide details as an alias for compatibility
-    if (finalResponse.error && (finalResponse.error as any).issues) {
-      (finalResponse.error as any).details = (finalResponse.error as any).issues;
+    if (finalResponse.error && (finalResponse.error as Record<string, unknown>).issues) {
+      (finalResponse.error as Record<string, unknown>).details = (finalResponse.error as Record<string, unknown>).issues;
     }
     return finalResponse;
   }
@@ -190,7 +190,7 @@ export class ErrorResponseBuilder {
       case 'NETWORK_ERROR':
         // Check if it's a client or server error
         if (error.details && typeof error.details === 'object' && 'response' in error.details) {
-          const response = (error.details as any).response;
+          const response = (error.details as Record<string, unknown>).response;
           if (response && typeof response === 'object' && 'status' in response) {
             const status = Number(response.status);
             if (status >= 400 && status < 600) {
@@ -241,7 +241,7 @@ export class ErrorResponseBuilder {
 /**
  * Success response builder class
  */
-export class SuccessResponseBuilder<T = any> {
+export class SuccessResponseBuilder<T = unknown> {
   private response: StandardSuccessResponse<T>;
 
   constructor(data: T, correlationId?: string) {
@@ -458,8 +458,8 @@ export const ErrorResponses = {
    */
   validation(
     field: string,
-    value: any,
-    expected: any,
+    value: unknown,
+    expected: unknown,
     suggestions?: string[]
   ): ErrorResponseBuilder {
     const error = {
@@ -504,7 +504,7 @@ export const ErrorResponses = {
   /**
    * Network error (500/4xx)
    */
-  network(message: string, statusCode?: number, response?: any): ErrorResponseBuilder {
+  network(message: string, statusCode?: number, response?: unknown): ErrorResponseBuilder {
     const error = {
       code: 'NETWORK_ERROR',
       message,

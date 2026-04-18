@@ -16,9 +16,9 @@ export interface AuditEvent {
   details: string;
   ipAddress?: string;
   userAgent?: string;
-  oldValue?: any;
-  newValue?: any;
-  metadata?: Record<string, any>;
+  oldValue?: unknown;
+  newValue?: unknown;
+  metadata?: Record<string, unknown>;
 }
 
 export class AuditLogger {
@@ -165,9 +165,9 @@ export class AuditLogger {
     options: {
       ipAddress?: string;
       userAgent?: string;
-      oldValue?: any;
-      newValue?: any;
-      metadata?: Record<string, any>;
+      oldValue?: unknown;
+      newValue?: unknown;
+      metadata?: Record<string, unknown>;
     } = {}
   ): void {
     this.log({
@@ -189,9 +189,9 @@ export class AuditLogger {
     options: {
       ipAddress?: string;
       userAgent?: string;
-      oldValue?: any;
-      newValue?: any;
-      metadata?: Record<string, any>;
+      oldValue?: unknown;
+      newValue?: unknown;
+      metadata?: Record<string, unknown>;
     } = {}
   ): void {
     this.log({
@@ -213,7 +213,7 @@ export class AuditLogger {
     options: {
       ipAddress?: string;
       userAgent?: string;
-      metadata?: Record<string, any>;
+      metadata?: Record<string, unknown>;
     } = {}
   ): void {
     this.log({
