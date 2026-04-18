@@ -1,6 +1,14 @@
+import crypto from 'crypto';
+
 /**
  * Common utility functions
  */
+
+// Helper to generate random integer between 0 and max using crypto
+function getRandomInt(max: number): number {
+  const randomBytes = crypto.randomBytes(4);
+  return Math.floor((randomBytes.readUInt32BE() / 0x100000000) * (max + 1));
+}
 
 /**
  * Returns a random emoji to be used in user prompts or as a filler.
@@ -25,7 +33,7 @@ export function getEmoji(): string {
     '💪',
     '🔥',
   ];
-  return emojis[Math.floor(Math.random() * emojis.length)];
+  return emojis[getRandomInt(emojis.length - 1)];
 }
 
 /**
@@ -96,7 +104,8 @@ export const arrays = {
    * Get random element from array
    */
   random: <T>(arr: T[]): T | undefined => {
-    return arr[Math.floor(Math.random() * arr.length)];
+    if (arr.length === 0) return undefined;
+    return arr[getRandomInt(arr.length - 1)];
   },
 
   /**

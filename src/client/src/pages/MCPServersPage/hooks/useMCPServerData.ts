@@ -29,7 +29,16 @@ interface TrustedRepository {
   stars: number;
 }
 
-export const useMCPServerData = () => {
+export const useMCPServerData = (): {
+  servers: MCPServer[];
+  setServers: React.Dispatch<React.SetStateAction<MCPServer[]>>;
+  loading: boolean;
+  error: string | null;
+  trustedRepositories: TrustedRepository[];
+  cautionRepositories: TrustedRepository[];
+  showTrustIndicator: boolean;
+  fetchServers: () => Promise<void>;
+} => {
   const [servers, setServers] = useState<MCPServer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +46,7 @@ export const useMCPServerData = () => {
   const [cautionRepositories, setCautionRepositories] = useState<TrustedRepository[]>([]);
   const [showTrustIndicator, setShowTrustIndicator] = useState(true);
 
-  const fetchServers = useCallback(async () => {
+  const fetchServers = useCallback(async (): Promise<void> => {
     try {
       setLoading(true);
       setError(null);

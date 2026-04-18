@@ -64,31 +64,31 @@ export class BotConfigRepository {
     }
   }
 
-  private mapRowToBotConfiguration(row: Record<string, any>): BotConfiguration {
+  private mapRowToBotConfiguration(row: Record<string, unknown>): BotConfiguration {
     // Hydrate JSON strings into objects if necessary (SQLite strings vs Postgres JSON)
-    const parseIfString = (val: unknown) => (typeof val === 'string' ? JSON.parse(val) : val);
+    const parseIfString = (val: unknown): any => (typeof val === 'string' ? JSON.parse(val) : val);
 
     return {
-      id: row.id,
-      name: row.name,
-      messageProvider: row.messageProvider,
-      llmProvider: row.llmProvider,
-      persona: row.persona,
-      systemInstruction: row.systemInstruction,
-      mcpServers: row.mcpServers ? parseIfString(row.mcpServers) : null,
-      mcpGuard: row.mcpGuard ? parseIfString(row.mcpGuard) : null,
-      discord: row.discord ? parseIfString(row.discord) : null,
-      slack: row.slack ? parseIfString(row.slack) : null,
-      mattermost: row.mattermost ? parseIfString(row.mattermost) : null,
-      openai: row.openai ? parseIfString(row.openai) : null,
-      flowise: row.flowise ? parseIfString(row.flowise) : null,
-      openwebui: row.openwebui ? parseIfString(row.openwebui) : null,
-      openswarm: row.openswarm ? parseIfString(row.openswarm) : null,
+      id: row.id as number,
+      name: row.name as string,
+      messageProvider: row.messageProvider as string,
+      llmProvider: row.llmProvider as string,
+      persona: row.persona as string | undefined,
+      systemInstruction: row.systemInstruction as string | undefined,
+      mcpServers: row.mcpServers ? parseIfString(row.mcpServers) : undefined,
+      mcpGuard: row.mcpGuard ? parseIfString(row.mcpGuard) : undefined,
+      discord: row.discord ? parseIfString(row.discord) : undefined,
+      slack: row.slack ? parseIfString(row.slack) : undefined,
+      mattermost: row.mattermost ? parseIfString(row.mattermost) : undefined,
+      openai: row.openai ? parseIfString(row.openai) : undefined,
+      flowise: row.flowise ? parseIfString(row.flowise) : undefined,
+      openwebui: row.openwebui ? parseIfString(row.openwebui) : undefined,
+      openswarm: row.openswarm ? parseIfString(row.openswarm) : undefined,
       isActive: row.isActive === 1,
-      createdAt: new Date(row.createdAt),
-      updatedAt: new Date(row.updatedAt),
-      createdBy: row.createdBy,
-      updatedBy: row.updatedBy,
+      createdAt: new Date(row.createdAt as string | number | Date),
+      updatedAt: new Date(row.updatedAt as string | number | Date),
+      createdBy: row.createdBy as string | undefined,
+      updatedBy: row.updatedBy as string | undefined,
     };
   }
 
@@ -385,30 +385,30 @@ export class BotConfigRepository {
     }
   }
 
-  private mapRowToBotConfigurationVersion(row: Record<string, any>): BotConfigurationVersion {
-    const parseIfString = (val: unknown) => (typeof val === 'string' ? JSON.parse(val) : val);
+  private mapRowToBotConfigurationVersion(row: Record<string, unknown>): BotConfigurationVersion {
+    const parseIfString = (val: unknown): any => (typeof val === 'string' ? JSON.parse(val) : val);
     return {
-      id: row.id,
-      botConfigurationId: row.botConfigurationId,
-      version: row.version,
-      name: row.name,
-      messageProvider: row.messageProvider,
-      llmProvider: row.llmProvider,
-      persona: row.persona,
-      systemInstruction: row.systemInstruction,
-      mcpServers: row.mcpServers ? parseIfString(row.mcpServers) : null,
-      mcpGuard: row.mcpGuard ? parseIfString(row.mcpGuard) : null,
-      discord: row.discord ? parseIfString(row.discord) : null,
-      slack: row.slack ? parseIfString(row.slack) : null,
-      mattermost: row.mattermost ? parseIfString(row.mattermost) : null,
-      openai: row.openai ? parseIfString(row.openai) : null,
-      flowise: row.flowise ? parseIfString(row.flowise) : null,
-      openwebui: row.openwebui ? parseIfString(row.openwebui) : null,
-      openswarm: row.openswarm ? parseIfString(row.openswarm) : null,
+      id: row.id as number,
+      botConfigurationId: row.botConfigurationId as number,
+      version: String(row.version),
+      name: row.name as string,
+      messageProvider: row.messageProvider as string,
+      llmProvider: row.llmProvider as string,
+      persona: row.persona as string | undefined,
+      systemInstruction: row.systemInstruction as string | undefined,
+      mcpServers: row.mcpServers ? parseIfString(row.mcpServers) : undefined,
+      mcpGuard: row.mcpGuard ? parseIfString(row.mcpGuard) : undefined,
+      discord: row.discord ? parseIfString(row.discord) : undefined,
+      slack: row.slack ? parseIfString(row.slack) : undefined,
+      mattermost: row.mattermost ? parseIfString(row.mattermost) : undefined,
+      openai: row.openai ? parseIfString(row.openai) : undefined,
+      flowise: row.flowise ? parseIfString(row.flowise) : undefined,
+      openwebui: row.openwebui ? parseIfString(row.openwebui) : undefined,
+      openswarm: row.openswarm ? parseIfString(row.openswarm) : undefined,
       isActive: row.isActive === 1,
-      createdAt: new Date(row.createdAt),
-      createdBy: row.createdBy,
-      changeLog: row.changeLog,
+      createdAt: new Date(row.createdAt as string | number | Date),
+      createdBy: row.createdBy as string | undefined,
+      changeLog: row.changeLog as string | undefined,
     };
   }
 
@@ -571,17 +571,17 @@ export class BotConfigRepository {
     }
   }
 
-  private mapRowToBotConfigurationAudit(row: Record<string, any>): BotConfigurationAudit {
+  private mapRowToBotConfigurationAudit(row: Record<string, unknown>): BotConfigurationAudit {
     return {
-      id: row.id,
-      botConfigurationId: row.botConfigurationId,
-      action: row.action,
-      oldValues: row.oldValues,
-      newValues: row.newValues,
-      performedBy: row.performedBy,
-      performedAt: new Date(row.performedAt),
-      ipAddress: row.ipAddress,
-      userAgent: row.userAgent,
+      id: row.id as number | undefined,
+      botConfigurationId: row.botConfigurationId as number,
+      action: row.action as 'CREATE' | 'UPDATE' | 'DELETE' | 'ACTIVATE' | 'DEACTIVATE',
+      oldValues: row.oldValues as string | undefined,
+      newValues: row.newValues as string | undefined,
+      performedBy: row.performedBy as string | undefined,
+      performedAt: new Date(row.performedAt as string | number | Date),
+      ipAddress: row.ipAddress as string | undefined,
+      userAgent: row.userAgent as string | undefined,
     };
   }
 

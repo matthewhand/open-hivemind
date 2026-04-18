@@ -155,6 +155,40 @@ module.exports = [
       'no-console': 'off',
     },
   },
+  // CLI handlers - allow console for user-facing output
+  {
+    files: ['src/cli/**/*.ts'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+  // Logger implementation - uses console for output
+  {
+    files: ['src/common/logger.ts'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+  // Config files that use console for initialization feedback
+  {
+    files: ['src/config/rateLimitConfig.ts'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+  // Service files with intentional console output
+  {
+    files: [
+      'src/services/StartupLegendService.ts',
+      'src/message/helpers/handler/ChannelDelayManager.ts',
+      'src/plugins/PluginLoader.ts',
+      'src/server/routes/config/system.ts',
+      'src/utils/errorLogger.ts',
+    ],
+    rules: {
+      'no-console': 'off',
+    },
+  },
   // Prettier config override to turn off conflicting rules
   eslintConfigPrettier,
 ];

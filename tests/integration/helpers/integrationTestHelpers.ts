@@ -65,8 +65,9 @@ export function createIntegrationSuite(
   testFn: () => void
 ): void {
   const missing = getMissingEnvVars(...requiredEnvVars);
+  const force = process.env.FORCE_INTEGRATION_TESTS === 'true';
 
-  if (missing.length > 0) {
+  if (missing.length > 0 && !force) {
     describe.skip(`${integrationName} Integration (missing: ${missing.join(', ')})`, () => {
       it('skipped - missing required env vars', () => {
         // This test is skipped

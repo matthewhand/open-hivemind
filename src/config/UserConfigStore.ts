@@ -286,5 +286,13 @@ export class UserConfigStore {
 
     await this.saveConfig();
   }
+
+  /**
+   * Check if the system is in maintenance mode.
+   * @returns true if maintenance mode is enabled, false otherwise.
+   */
+  public isMaintenanceMode(): boolean {
+    return this.getGeneralSettings()['app.maintenanceMode'] === true;
+  }
 }
 

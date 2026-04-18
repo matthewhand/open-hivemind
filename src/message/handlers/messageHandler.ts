@@ -1,8 +1,10 @@
+import crypto from 'crypto';
 import Debug from 'debug';
 import { AuditLogger } from '@src/common/auditLogger';
 import { ErrorHandler } from '@src/common/errors/ErrorHandler';
 import { PerformanceMonitor } from '@src/common/errors/PerformanceMonitor';
 import { getGuardrailProfileByKey } from '@src/config/guardrailProfiles';
+import { UserConfigStore } from '@src/config/UserConfigStore';
 import { getLlmProviderForBot } from '@src/llm/getLlmProvider';
 import { getQuotaManager } from '@src/middleware/quotaMiddleware';
 import { SyncProviderRegistry } from '@src/registries/SyncProviderRegistry';
@@ -85,6 +87,35 @@ export async function handleMessage(
 ): Promise<string | null> {
   return await PerformanceMonitor.measureAsync(
     async () => {
+      // Check if system is in maintenance mode
+      const userConfigStore = UserConfigStore.getInstance();
+      const isMaintenanceMode = userConfigStore.isMaintenanceMode();
+
+      if (isMaintenanceMode) {
+        const logger = Debug(`app:messageHandler:maintenance`);
+        logger('Message received but system is in maintenance mode - skipping processing');
+        try {
+          AuditLogger.getInstance().logBotAction(
+            message.getAuthorId(),
+            'UPDATE',
+            String(botConfig.name || botConfig.BOT_ID || 'unknown-bot'),
+            'failure',
+            'Message blocked due to maintenance mode',
+            {
+              metadata: {
+                type: 'MAINTENANCE_MODE_BLOCKED',
+                channelId: message.getChannelId(),
+                botId: String(botConfig.BOT_ID || 'unknown-bot'),
+              },
+            }
+          );
+        } catch (auditError) {
+          // If audit logging fails, just continue - we're already in maintenance mode
+          logger('Failed to log maintenance mode block:', auditError);
+        }
+        return null;
+      }
+
       const pipelineMetrics = new PipelineMetrics();
       pipelineMetrics.startStage('receive');
       const channelId = message.getChannelId();
@@ -106,8 +137,11 @@ export async function handleMessage(
       const logger = Debug(`app:messageHandler:${activeAgentName}`);
 
       // Helper for random integer (chaos)
-      const _randInt = (min: number, max: number): number =>
-        Math.floor(Math.random() * (max - min + 1)) + min;
+      const _randInt = (min: number, max: number): number => {
+        const randomBytes = crypto.randomBytes(4);
+        const randomFloat = randomBytes.readUInt32BE() / 0x100000000;
+        return Math.floor(randomFloat * (max - min + 1)) + min;
+      };
 
       // Log received message
       const userId = message.getAuthorId();
@@ -448,7 +482,7 @@ export async function handleMessage(
             // Prose explanation at info level with context
             let prose = replyDecision.meta?.prose || replyDecision.reason;
             prose = await summarizeLogWithLlm(String(prose));
-            console.info(
+            logger(
               `\u{1F6AB} ${String(botConfig.name)} skips @${authorName} in ${channelName}: ${prose}`
             );
           }
@@ -786,7 +820,7 @@ export async function handleMessage(
         const modelInfo = botConfig
           ? ` | provider: ${botConfig.llmProvider} | model: ${botConfig.llmModel || 'default'}`
           : '';
-        console.info(
+        logger(
           `\u274C INFERENCE/PROCESSING FAILED | error: ${error instanceof Error ? error.message : String(error)}${modelInfo}`
         );
         logger(

@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import Debug from 'debug';
 
 const debug = Debug('app:providers:ReconnectionManager');
@@ -191,7 +192,9 @@ export class ReconnectionManager {
     // Add jitter (±20%)
     if (this.config.jitter) {
       const jitterAmount = delay * 0.2;
-      delay = delay + (Math.random() * jitterAmount * 2 - jitterAmount);
+      const randomBytes = crypto.randomBytes(4);
+      const jitter = (randomBytes.readUInt32BE() / 0x100000000) * jitterAmount * 2 - jitterAmount;
+      delay = delay + jitter;
     }
 
     this.nextAttemptAt = new Date(Date.now() + delay);

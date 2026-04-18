@@ -1,5 +1,12 @@
+import crypto from 'crypto';
 import { EventEmitter } from 'events';
 import Logger from '@common/logger';
+
+// Helper to generate random float between 0 and max using crypto
+function getRandomFloat(max: number): number {
+  const randomBytes = crypto.randomBytes(4);
+  return (randomBytes.readUInt32BE() / 0x100000000) * max;
+}
 
 const logger = Logger.withContext('MetricsCollector');
 
@@ -95,7 +102,7 @@ export class MetricsCollector extends EventEmitter {
     const timestamp = new Date().toISOString();
 
     // Collect CPU usage (placeholder)
-    const cpuUsage = Math.random() * 100;
+    const cpuUsage = getRandomFloat(100);
     this.recordMetric('cpu_usage', cpuUsage, { timestamp });
 
     // Collect memory usage
@@ -190,8 +197,8 @@ export class MetricsCollector extends EventEmitter {
     const performance: PerformanceMetrics = {
       cpuUsage: this.getLatestValue('cpu_usage') || 0,
       memoryUsage: this.getLatestValue('memory_usage') || 0,
-      diskUsage: Math.random() * 100, // placeholder
-      networkIO: Math.random() * 1000, // placeholder
+      diskUsage: getRandomFloat(100), // placeholder
+      networkIO: getRandomFloat(1000), // placeholder
       responseTime: avgResponseTime,
       throughput:
         this.metrics.messagesProcessed / (Math.max(1, Date.now() - this.metrics.uptime) / 1000),

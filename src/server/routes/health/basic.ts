@@ -1,5 +1,6 @@
 import process from 'process';
 import { Router } from 'express';
+import { UserConfigStore } from '../../../config/UserConfigStore';
 import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import { HTTP_STATUS } from '../../../types/constants';
 
@@ -76,6 +77,16 @@ router.get(
     if (status === 'healthy' && anyMemoryProviderUnhealthy) {
       status = 'degraded';
     }
+
+    // Check maintenance mode
+    const userConfigStore = UserConfigStore.getInstance();
+    const isMaintenanceMode = userConfigStore.isMaintenanceMode();
+
+    // If in maintenance mode, status should be degraded
+    if (isMaintenanceMode && status === 'healthy') {
+      status = 'degraded';
+    }
+
     const statusCode = HTTP_STATUS.OK; // Even degraded, we return 200 for basic health. /ready will return HTTP_STATUS.SERVICE_UNAVAILABLE if not ready.
 
     return res.status(statusCode).json({
@@ -83,6 +94,7 @@ router.get(
       timestamp: new Date().toISOString(),
       version: '1.0.0',
       uptime: process.uptime(),
+      maintenanceMode: isMaintenanceMode,
       memory: {
         used: Math.round(memoryUsage.heapUsed / 1024 / 1024),
         total: Math.round(memoryUsage.heapTotal / 1024 / 1024),
@@ -131,6 +143,20 @@ router.get('/live', (req, res) => {
   return res.json({
     alive: true,
     timestamp: new Date().toISOString(),
+  });
+});
+
+// Maintenance mode status
+router.get('/maintenance', (req, res) => {
+  const userConfigStore = UserConfigStore.getInstance();
+  const isMaintenanceMode = userConfigStore.isMaintenanceMode();
+
+  return res.json({
+    maintenanceMode: isMaintenanceMode,
+    timestamp: new Date().toISOString(),
+    message: isMaintenanceMode
+      ? 'System is currently in maintenance mode'
+      : 'System is operating normally',
   });
 });
 

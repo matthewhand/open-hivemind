@@ -12,7 +12,15 @@ export const DiscordSchema = z.object({
   DISCORD_MESSAGE_HISTORY_LIMIT: z.number().int().default(10),
   DISCORD_CHANNEL_ID: z.string().default(''),
   DISCORD_DEFAULT_CHANNEL_ID: z.string().default(''),
-  DISCORD_CHANNEL_BONUSES: z.record(z.number().min(0).max(2)).default({}),
+  DISCORD_CHANNEL_BONUSES: z.preprocess((val: any) => {
+    if (typeof val !== 'object' || val === null) return val;
+    const clamped: Record<string, number> = {};
+    for (const [k, v] of Object.entries(val)) {
+      const num = Number(v);
+      clamped[k] = isNaN(num) ? 0 : Math.max(0, Math.min(2, num));
+    }
+    return clamped;
+  }, z.record(z.number())).default({}),
   DISCORD_UNSOLICITED_CHANCE_MODIFIER: z.number().default(1.0),
   DISCORD_VOICE_CHANNEL_ID: z.string().default(''),
   DISCORD_MAX_MESSAGE_LENGTH: z.number().int().default(2000),

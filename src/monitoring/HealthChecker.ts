@@ -1,8 +1,15 @@
+import crypto from 'crypto';
 import { promises as fs } from 'fs';
 import { performance } from 'perf_hooks';
 import Logger from '@common/logger';
 
 const logger = Logger.withContext('HealthChecker');
+
+// Helper to generate random float between 0 and max using crypto
+function getRandomFloat(max: number): number {
+  const randomBytes = crypto.randomBytes(4);
+  return (randomBytes.readUInt32BE() / 0x100000000) * max;
+}
 
 export interface HealthCheckResult {
   status: 'healthy' | 'degraded' | 'unhealthy';
@@ -182,17 +189,17 @@ export class HealthChecker {
 
     try {
       // CPU Usage (placeholder - would need system-specific implementation)
-      metrics.cpuUsage = Math.random() * 100; // Placeholder
+      metrics.cpuUsage = getRandomFloat(100); // Placeholder
 
       // Disk Usage
       const diskInfo = await this.getDiskUsage();
       metrics.diskUsage = diskInfo.percentage;
 
       // Active Connections (placeholder)
-      metrics.activeConnections = Math.floor(Math.random() * 100);
+      metrics.activeConnections = Math.floor(getRandomFloat(100));
 
       // Error Rate (placeholder)
-      metrics.errorRate = Math.random() * 5;
+      metrics.errorRate = getRandomFloat(5);
     } catch (error) {
       logger.error('Failed to collect metrics:', error);
     }
@@ -204,7 +211,7 @@ export class HealthChecker {
     try {
       // Placeholder for disk usage check
       // In real implementation, this would check actual disk usage
-      const used = Math.random() * 100;
+      const used = getRandomFloat(100);
       const total = 100;
 
       return {

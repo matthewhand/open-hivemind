@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { promises as fs } from 'fs';
 import chalk from 'chalk';
 import { type Command } from 'commander';

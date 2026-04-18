@@ -13,7 +13,48 @@ export const usePersonaActions = (
   infoToast: (title?: string, message?: string) => void,
   bulk: any,
   showStamp?: () => void
-) => {
+): {
+  bulkDeleting: boolean;
+  handlePersonaReorder: (reordered: Persona[]) => Promise<void>;
+  handleBulkDeletePersonas: () => Promise<void>;
+  handleCopyPrompt: (text: string) => Promise<void>;
+  handleSavePersona: (
+    setLoading: (l: boolean) => void,
+    setError: (e: string) => void
+  ) => Promise<void>;
+  handleDeletePersona: (personaId: string, setError: (e: string) => void) => void;
+  confirmDelete: (setLoading: (l: boolean) => void, setError: (e: string) => void) => Promise<void>;
+  openCreateModal: () => void;
+  openCloneModal: (persona: Persona) => void;
+  openEditModal: (persona: Persona) => void;
+  openViewModal: (persona: Persona) => void;
+  closeModals: () => void;
+  showCreateModal: boolean;
+  setShowCreateModal: React.Dispatch<React.SetStateAction<boolean>>;
+  showEditModal: boolean;
+  setShowEditModal: React.Dispatch<React.SetStateAction<boolean>>;
+  showDeleteModal: boolean;
+  setShowDeleteModal: React.Dispatch<React.SetStateAction<boolean>>;
+  deletingPersona: Persona | null;
+  editingPersona: Persona | null;
+  cloningPersonaId: string | null;
+  isViewMode: boolean;
+  personaName: string;
+  setPersonaName: React.Dispatch<React.SetStateAction<string>>;
+  personaDescription: string;
+  setPersonaDescription: React.Dispatch<React.SetStateAction<string>>;
+  personaPrompt: string;
+  setPersonaPrompt: React.Dispatch<React.SetStateAction<string>>;
+  selectedBotIds: string[];
+  setSelectedBotIds: React.Dispatch<React.SetStateAction<string[]>>;
+  personaCategory: ApiPersona['category'];
+  setPersonaCategory: React.Dispatch<React.SetStateAction<ApiPersona['category']>>;
+  setIsViewMode: React.Dispatch<React.SetStateAction<boolean>>;
+  avatarStyle: string;
+  setAvatarStyle: React.Dispatch<React.SetStateAction<string>>;
+  responseBehavior: PersonaResponseBehavior;
+  setResponseBehavior: React.Dispatch<React.SetStateAction<PersonaResponseBehavior>>;
+} => {
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -32,7 +73,7 @@ export const usePersonaActions = (
   const [responseBehavior, setResponseBehavior] = useState<PersonaResponseBehavior>({});
 
   const handlePersonaReorder = useCallback(
-    async (reordered: Persona[]) => {
+    async (reordered: Persona[]): Promise<void> => {
       setPersonas(reordered);
       try {
         const ids = reordered.map((p) => p.id);
@@ -44,7 +85,7 @@ export const usePersonaActions = (
     [setPersonas]
   );
 
-  const handleBulkDeletePersonas = async () => {
+  const handleBulkDeletePersonas = async (): Promise<void> => {
     if (bulk.selectedCount === 0) return;
     setBulkDeleting(true);
     try {
@@ -72,7 +113,7 @@ export const usePersonaActions = (
     }
   };
 
-  const handleCopyPrompt = async (text: string) => {
+  const handleCopyPrompt = async (text: string): Promise<void> => {
     try {
       await navigator.clipboard.writeText(text);
       successToast('Copied!', 'System prompt copied to clipboard');
@@ -84,7 +125,7 @@ export const usePersonaActions = (
   const handleSavePersona = async (
     setLoading: (l: boolean) => void,
     setError: (e: string) => void
-  ) => {
+  ): Promise<void> => {
     if (!personaName.trim()) return;
 
     setLoading(true);
@@ -171,7 +212,7 @@ export const usePersonaActions = (
     }
   };
 
-  const openCreateModal = () => {
+  const openCreateModal = (): void => {
     setPersonaName('');
     setPersonaDescription('');
     setPersonaCategory('general');
@@ -185,7 +226,7 @@ export const usePersonaActions = (
     setShowCreateModal(true);
   };
 
-  const openCloneModal = (persona: Persona) => {
+  const openCloneModal = (persona: Persona): void => {
     setPersonaName(`Copy of ${persona.name}`);
     setPersonaDescription(persona.description);
     setPersonaCategory(persona.category as any);
@@ -199,7 +240,7 @@ export const usePersonaActions = (
     setShowCreateModal(true);
   };
 
-  const openEditModal = (persona: Persona) => {
+  const openEditModal = (persona: Persona): void => {
     if (persona.isBuiltIn) {
       infoToast('Built-in Persona', 'Cannot edit built-in personas directly. Clone them instead.');
       return;
@@ -217,7 +258,7 @@ export const usePersonaActions = (
     setShowEditModal(true);
   };
 
-  const openViewModal = (persona: Persona) => {
+  const openViewModal = (persona: Persona): void => {
     setPersonaName(persona.name);
     setPersonaDescription(persona.description);
     setPersonaCategory(persona.category as any);
@@ -229,7 +270,7 @@ export const usePersonaActions = (
     setShowEditModal(true);
   };
 
-  const handleDeletePersona = (personaId: string, setError: (e: string) => void) => {
+  const handleDeletePersona = (personaId: string, setError: (e: string) => void): void => {
     const persona = personas.find((p) => p.id === personaId);
     if (!persona) return;
     if (persona.isBuiltIn) {
@@ -240,7 +281,7 @@ export const usePersonaActions = (
     setShowDeleteModal(true);
   };
 
-  const confirmDelete = async (setLoading: (l: boolean) => void, setError: (e: string) => void) => {
+  const confirmDelete = async (setLoading: (l: boolean) => void, setError: (e: string) => void): Promise<void> => {
     if (!deletingPersona) return;
     setLoading(true);
     try {
@@ -262,7 +303,7 @@ export const usePersonaActions = (
     }
   };
 
-  const closeModals = useCallback(() => {
+  const closeModals = useCallback((): void => {
     setShowCreateModal(false);
     setShowEditModal(false);
     setShowDeleteModal(false);

@@ -491,6 +491,10 @@ router.get('/sitemap', (req: Request, res: Response) => {
     <div class="header">
         <h1>🗺️ Open-Hivemind Sitemap</h1>
         <p>Complete navigation structure and page hierarchy</p>
+        <p>
+          <a href="/sitemap.xml" target="_blank">XML Sitemap (sitemap.xml)</a> | 
+          <a href="/sitemap.json" target="_blank">JSON Sitemap (sitemap.json)</a>
+        </p>
         <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
         <p><strong>Total Pages:</strong> ${routes.length}</p>
     </div>

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import chalk from 'chalk';
 import { type Command } from 'commander';
 import { type CommandHandler } from './CommandHandler';

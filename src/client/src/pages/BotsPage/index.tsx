@@ -432,14 +432,26 @@ const BotsPage: React.FC = () => {
           llmProfiles={llmProfiles}
           integrationOptions={{ message: getIntegrationOptions('message') }}
           onUpdateConfig={async (bot, key, value) => {
-            await handleUpdateBot({ ...bot, [key]: value });
+            try {
+              await handleUpdateBot({ ...bot, [key]: value });
+            } catch {
+              // Error is already handled by handleUpdateBot's toastError
+            }
           }}
           onUpdatePersona={async (bot, personaId) => {
-            await handleUpdateBot({ ...bot, persona: personaId });
+            try {
+              await handleUpdateBot({ ...bot, persona: personaId });
+            } catch {
+              // Error is already handled by handleUpdateBot's toastError
+            }
           }}
-          onClone={(bot) => {
-            setEditingBot(null);
-            handleCreateBot({ ...bot, name: `${bot.name}-copy`, id: undefined });
+          onClone={async (bot) => {
+            try {
+              setEditingBot(null);
+              await handleCreateBot({ ...bot, name: `${bot.name}-copy`, id: undefined });
+            } catch {
+              // Error is already handled by handleCreateBot's toastError
+            }
           }}
           onDelete={(bot) => {
             setEditingBot(null);

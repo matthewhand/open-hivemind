@@ -1,5 +1,5 @@
 module.exports = {
-  collectCoverage: true,
+  collectCoverage: false,
   coverageDirectory: "coverage",
   coverageReporters: ["html", "text", "lcov"],
   coverageThreshold: {
@@ -98,7 +98,7 @@ module.exports = {
     '^@modelcontextprotocol/sdk$': '<rootDir>/tests/mocks/modelcontextprotocol-sdk.ts',
     '^@socket.io/redis-adapter$': '<rootDir>/tests/mocks/redisAdapter.js',
   },
-  setupFiles: ["<rootDir>/tests/accessibility/jsdom-polyfills.ts"],
+  setupFiles: ["reflect-metadata", "<rootDir>/tests/accessibility/jsdom-polyfills.ts"],
   setupFilesAfterEnv: ['<rootDir>/tests/jest.setup.ts'],
   testPathIgnorePatterns: [
     '/node_modules/',

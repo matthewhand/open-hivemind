@@ -259,7 +259,7 @@ router.get('/verify', apiRateLimiter, async (req: Request, res: Response) => {
 
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
-      return res.status(401).json(ApiResponse.error('No token provided'));
+      return res.status(401).json(ApiResponse.error('Bearer token required'));
     }
 
     const token = authHeader.split(' ')[1];
@@ -270,7 +270,7 @@ router.get('/verify', apiRateLimiter, async (req: Request, res: Response) => {
       return res.status(401).json(ApiResponse.error('User not found'));
     }
 
-    return res.json(ApiResponse.success({ user }));
+    return res.json(ApiResponse.success({ user, tokenValid: true }));
   } catch {
     return res.status(401).json(ApiResponse.error('Invalid or expired token'));
   }

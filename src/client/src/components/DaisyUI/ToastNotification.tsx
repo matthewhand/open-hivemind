@@ -25,7 +25,7 @@ interface ToastContextType {
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
-export const useToast = () => {
+export const useToast = (): ToastContextType => {
   const context = useContext(ToastContext);
   if (!context) {
     throw new Error('useToast must be used within a ToastProvider');
@@ -272,40 +272,57 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove, position }) => {
   );
 };
 
-export const useErrorToast = () => {
+// Convenience hooks for different toast types
+export const useSuccessToast = (): (
+  title: string,
+  message?: string,
+  options?: Partial<Toast>
+) => string => {
   const { addToast } = useToast();
   return useCallback(
-    (title: string, message?: string, options?: Partial<Toast>) => {
-      return addToast({ type: 'error', title, message, ...options });
-    },
-    [addToast]
-  );
-};
-
-export const useSuccessToast = () => {
-  const { addToast } = useToast();
-  return useCallback(
-    (title: string, message?: string, options?: Partial<Toast>) => {
+    (title: string, message?: string, options?: Partial<Toast>): string => {
       return addToast({ type: 'success', title, message, ...options });
     },
     [addToast]
   );
 };
 
-export const useWarningToast = () => {
+export const useErrorToast = (): (
+  title: string,
+  message?: string,
+  options?: Partial<Toast>
+) => string => {
   const { addToast } = useToast();
   return useCallback(
-    (title: string, message?: string, options?: Partial<Toast>) => {
+    (title: string, message?: string, options?: Partial<Toast>): string => {
+      return addToast({ type: 'error', title, message, ...options });
+    },
+    [addToast]
+  );
+};
+
+export const useWarningToast = (): (
+  title: string,
+  message?: string,
+  options?: Partial<Toast>
+) => string => {
+  const { addToast } = useToast();
+  return useCallback(
+    (title: string, message?: string, options?: Partial<Toast>): string => {
       return addToast({ type: 'warning', title, message, ...options });
     },
     [addToast]
   );
 };
 
-export const useInfoToast = () => {
+export const useInfoToast = (): (
+  title: string,
+  message?: string,
+  options?: Partial<Toast>
+) => string => {
   const { addToast } = useToast();
   return useCallback(
-    (title: string, message?: string, options?: Partial<Toast>) => {
+    (title: string, message?: string, options?: Partial<Toast>): string => {
       return addToast({ type: 'info', title, message, ...options });
     },
     [addToast]

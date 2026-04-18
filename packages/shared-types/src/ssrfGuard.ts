@@ -80,6 +80,12 @@ export async function isSafeUrl(url: string): Promise<SafeUrlResult> {
       return validateIP(hostname);
     }
 
+    // Bypass check for .test and .local domains if local access allowed
+    const isLocalAllowed = process.env.ALLOW_LOCAL_NETWORK_ACCESS === 'true';
+    if (isLocalAllowed && (hostname.endsWith('.test') || hostname.endsWith('.local'))) {
+      return { safe: true };
+    }
+
     // Resolve hostname to IP - ALWAYS resolve to prevent DNS rebinding/bypass
     try {
       const { address } = await dns.promises.lookup(hostname);
