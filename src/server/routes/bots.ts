@@ -16,6 +16,7 @@ import { ReorderSchema } from '../../validation/schemas/commonSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { ActivityLogger } from '../services/ActivityLogger';
 import { WebSocketService } from '../services/WebSocketService';
+import { getLlmProvider } from '../../llm/getLlmProvider';
 
 const router = Router();
 const logger = createLogger('botsRouter');
@@ -780,6 +781,79 @@ router.get(
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to export bot'));
+    }
+  })
+);
+
+/**
+ * @openapi
+ * /api/bots/generate-config:
+ *   post:
+ *     summary: Generate bot configuration using AI
+ *     tags: [Bots]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               description: { type: string }
+ *     responses:
+ *       200:
+ *         description: Generated configuration
+ */
+router.post(
+  '/generate-config',
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const { description } = req.body;
+      if (!description) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Description is required'));
+      }
+
+      const providers = await getLlmProvider();
+      const provider = providers[0]; // Use first available provider (usually OpenAI/default)
+
+      if (!provider) {
+        return res
+          .status(HTTP_STATUS.SERVICE_UNAVAILABLE)
+          .json(ApiResponse.error('No LLM provider available for generation'));
+      }
+
+      const systemPrompt = `You are an expert AI Bot Designer for the Open Hivemind platform.
+Your task is to take a user's brief description of a bot they want to create and generate a high-quality configuration.
+
+Output MUST be a JSON object with these fields:
+- name: A short, catchy name for the bot (e.g., "DevOpsMaster", "CodeCritic", "ResearchAlly")
+- personaName: A descriptive name for its personality (e.g., "Proactive Engineer", "Detail-Oriented Librarian")
+- systemInstruction: A comprehensive, expert-level system prompt (200-500 words) that defines the bot's tone, rules, expertise, and behavior. Use markdown formatting.
+- suggestedMcpTools: An array of 3-5 strings naming types of tools it would likely need (e.g., "filesystem", "fetch", "google-search", "sqlite").
+
+User Description: "${description}"
+
+Respond ONLY with valid JSON. No preamble or explanation.`;
+
+      const responseText = await provider.generateChatCompletion(systemPrompt, []);
+      let generated;
+
+      try {
+        // Clean up markdown code blocks if the LLM included them
+        const cleanJson = responseText.replace(/```json\n?|```/g, '').trim();
+        generated = JSON.parse(cleanJson);
+      } catch (parseErr) {
+        logger.error('Failed to parse generated persona JSON', parseErr as Error);
+        return res
+          .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+          .json(ApiResponse.error('AI generated an invalid configuration format. Please try again.'));
+      }
+
+      return res.json(ApiResponse.success(generated));
+    } catch (error: unknown) {
+      logger.error('AI generation failed', error instanceof Error ? error : new Error(String(error)));
+      return res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error('Failed to generate configuration using AI'));
     }
   })
 );

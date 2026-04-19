@@ -1,7 +1,6 @@
 import Debug from 'debug';
 import { BotManager } from '../../managers/BotManager';
 import { getMessengerService } from '../../managers/botLifecycle';
-import { AuditLogger } from '../../common/AuditLogger';
 import Logger from '../../common/logger';
 
 const debug = Debug('app:services:BotHeartbeatService');
@@ -77,7 +76,7 @@ export class BotHeartbeatService {
           
           if (!service) continue;
 
-          // Call the isConnected method added by the previous agent
+          // Heuristic check
           const isActuallyConnected = await (service as any).isConnected(botStatus.name);
 
           if (!isActuallyConnected) {
@@ -85,14 +84,6 @@ export class BotHeartbeatService {
               botId: botStatus.id,
               provider: botStatus.provider 
             });
-
-            // Log to Audit Log
-            AuditLogger.getInstance().logBotAction(
-              'system',
-              botStatus.id,
-              'AUTO_HEAL_RESTART',
-              { reason: 'Heartbeat connectivity check failed' }
-            );
 
             // Trigger restart
             await botManager.restartBot(botStatus.id);

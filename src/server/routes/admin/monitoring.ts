@@ -7,6 +7,7 @@ import { isSafeUrl } from '../../../utils/ssrfGuard';
 import { TestConnectionSchema } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
 import { getActiveTracer } from '../../../observability/PipelineTracer';
+import { AnomalyDetectionService } from '../../../services/AnomalyDetectionService';
 import {
   getChatModels,
   getEmbeddingModels,
@@ -424,6 +425,21 @@ router.get('/llm-providers/:type/models', (req: Request, res: Response) => {
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       error: 'Failed to fetch LLM models',
       message: hivemindError.message || 'An error occurred while fetching LLM models',
+    });
+  }
+});
+
+// GET /anomalies - Get detected system anomalies
+router.get('/anomalies', async (req: Request, res: Response) => {
+  try {
+    const ads = AnomalyDetectionService.getInstance();
+    const anomalies = ads.getAnomalies();
+    return res.json({ success: true, data: { anomalies } });
+  } catch (error) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      error: 'Failed to fetch anomalies',
+      message: hivemindError.message || 'An error occurred while fetching anomalies',
     });
   }
 });

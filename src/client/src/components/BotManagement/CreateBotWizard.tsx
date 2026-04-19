@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Bot, User, Shield, Check, AlertCircle } from 'lucide-react';
+import { Bot, User, Shield, Check, AlertCircle, Wand2, Sparkles, Send } from 'lucide-react';
 import Button from '../DaisyUI/Button';
 import Divider from '../DaisyUI/Divider';
 import Input from '../DaisyUI/Input';
@@ -16,6 +16,7 @@ import Debug from 'debug';
 import Toggle from '../DaisyUI/Toggle';
 import Select from '../DaisyUI/Select';
 import Textarea from '../DaisyUI/Textarea';
+import Mockup from '../DaisyUI/Mockup';
 const debug = Debug('app:client:components:BotManagement:CreateBotWizard');
 
 interface CreateBotWizardProps {
@@ -64,6 +65,47 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
 
     const [formData, setFormData] = useState(initialFormData);
     const [showDiffConfirm, setShowDiffConfirm] = useState(false);
+    
+    // AI Generation state
+    const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+    const [aiDescription, setAiDescription] = useState('');
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [aiGeneratedResult, setAiGeneratedResult] = useState<any>(null);
+
+    const handleAiGenerate = async () => {
+        if (!aiDescription.trim()) return;
+        setIsGenerating(true);
+        setAiGeneratedResult(null);
+        try {
+            const result: any = await apiService.post('/api/bots/generate-config', { 
+                description: aiDescription 
+            });
+            if (result.success && result.data) {
+                setAiGeneratedResult(result.data);
+            }
+        } catch (e) {
+            debug('ERROR:', 'AI generation failed', e);
+            setError('AI generation failed. Please try a different description.');
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    const applyAiGeneratedConfig = () => {
+        if (!aiGeneratedResult) return;
+        
+        setFormData({
+            ...formData,
+            name: aiGeneratedResult.name || formData.name,
+            description: aiGeneratedResult.personaName || formData.description,
+            // Pre-fill system instructions would require adding a field to bot config or creating a persona
+            // For now, we'll map description to personaName
+        });
+        
+        setIsAiModalOpen(false);
+        setAiGeneratedResult(null);
+        setAiDescription('');
+    };
 
     const formDataAsRecord = useMemo(() => formData as unknown as Record<string, unknown>, [formData]);
     const { hasChanges, diff, setOriginalConfig, resetToOriginal } = useConfigDiff(formDataAsRecord);
@@ -240,13 +282,26 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
             validation: () => validateStep(1).valid,
             content: (
                 <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                    <Input
-                        label={<span>Bot Name <span className="text-error">*</span></span>}
-                        placeholder="e.g. HelpBot"
-                        value={formData.name}
-                        onChange={e => setFormData({ ...formData, name: e.target.value })}
-                        autoFocus
-                    />
+                    <div className="flex items-end gap-2">
+                        <div className="flex-1">
+                            <Input
+                                label={<span>Bot Name <span className="text-error">*</span></span>}
+                                placeholder="e.g. HelpBot"
+                                value={formData.name}
+                                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                autoFocus
+                            />
+                        </div>
+                        <Button 
+                            variant="primary" 
+                            className="gap-2 mb-1" 
+                            onClick={() => setIsAiModalOpen(true)}
+                            aria-label="Generate with AI"
+                        >
+                            <Wand2 className="w-4 h-4" />
+                            <span className="hidden sm:inline">AI Help</span>
+                        </Button>
+                    </div>
 
                     <div className="form-control">
                         <Textarea
@@ -492,32 +547,114 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
 
 
     return (
+        <>
+            <Modal isOpen={isOpen} onClose={onClose} title="Create New Bot" size="lg">
+                <div className="flex flex-col h-full max-h-[70vh]">
+                    {error && (
+                        <Alert status="error" className="mb-4" message={error} />
+                    )}
 
-        <Modal isOpen={isOpen} onClose={onClose} title="Create New Bot" size="lg">
-            <div className="flex flex-col h-full max-h-[70vh]">
-                {error && (
-                    <Alert status="error" className="mb-4" message={error} />
-                )}
-
-                <div className="flex-1 overflow-y-auto px-1 pb-16">
-                    <StepWizard
-                        steps={wizardSteps}
-                        onComplete={() => hasChanges ? setShowDiffConfirm(true) : handleSubmit()}
-                        onCancel={onClose}
-                        showProgress={true}
-                    />
+                    <div className="flex-1 overflow-y-auto px-1 pb-16">
+                        <StepWizard
+                            steps={wizardSteps}
+                            onComplete={() => hasChanges ? setShowDiffConfirm(true) : handleSubmit()}
+                            onCancel={onClose}
+                            showProgress={true}
+                        />
+                    </div>
                 </div>
+
+                <ConfigDiffConfirmDialog
+                    isOpen={showDiffConfirm}
+                    diff={diff}
+                    onConfirm={() => { setShowDiffConfirm(false); handleSubmit(); }}
+                    onCancel={() => setShowDiffConfirm(false)}
+                    title="Confirm Bot Configuration"
+                    loading={loading}
+                />
+            </Modal>
+
+            {/* AI Persona Generator Modal */}
+        <Modal 
+            isOpen={isAiModalOpen} 
+            onClose={() => setIsAiModalOpen(false)} 
+            title="AI Persona Generator"
+            size="md"
+        >
+            <div className="space-y-4">
+                {!aiGeneratedResult ? (
+                    <>
+                        <p className="text-sm opacity-70">
+                            Describe what you want your bot to do, and our AI will generate a name, 
+                            persona, and expert system instructions for you.
+                        </p>
+                        <div className="form-control">
+                            <Textarea
+                                className="h-32 bg-base-200"
+                                placeholder="e.g. A proactive DevOps assistant that monitors my Slack channels for infrastructure alerts and suggests fixes..."
+                                value={aiDescription}
+                                onChange={e => setAiDescription(e.target.value)}
+                                autoFocus
+                                disabled={isGenerating}
+                            />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                            <Button variant="ghost" onClick={() => setIsAiModalOpen(false)}>Cancel</Button>
+                            <Button 
+                                variant="primary" 
+                                className="gap-2" 
+                                onClick={handleAiGenerate}
+                                loading={isGenerating}
+                                disabled={!aiDescription.trim()}
+                            >
+                                <Sparkles className="w-4 h-4" />
+                                {isGenerating ? 'Designing...' : 'Generate Persona'}
+                            </Button>
+                        </div>
+                    </>
+                ) : (
+                    <div className="space-y-4 animate-in zoom-in-95 duration-300">
+                        <div className="p-4 bg-primary/10 rounded-xl border border-primary/20">
+                            <h4 className="text-xs font-bold text-primary uppercase mb-2">Generated Draft</h4>
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <span className="text-xs opacity-50">Suggested Name:</span>
+                                    <span className="text-sm font-bold">{aiGeneratedResult.name}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-xs opacity-50">Persona:</span>
+                                    <span className="text-sm font-medium italic">{aiGeneratedResult.personaName}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <Collapse title="View System Instructions" className="bg-base-200" size="sm">
+                            <Mockup 
+                                type="code" 
+                                content={aiGeneratedResult.systemInstruction} 
+                                className="text-[10px] max-h-48 overflow-auto"
+                            />
+                        </Collapse>
+
+                        {aiGeneratedResult.suggestedMcpTools && (
+                            <div className="flex flex-wrap gap-2">
+                                {aiGeneratedResult.suggestedMcpTools.map((tool: string) => (
+                                    <Badge key={tool} variant="outline" size="sm">+{tool}</Badge>
+                                ))}
+                            </div>
+                        )}
+
+                        <div className="flex justify-between pt-2">
+                            <Button variant="ghost" onClick={() => setAiGeneratedResult(null)}>Try Again</Button>
+                            <Button variant="primary" className="gap-2" onClick={applyAiGeneratedConfig}>
+                                <Send className="w-4 h-4" />
+                                Apply to Wizard
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </div>
-
-        <ConfigDiffConfirmDialog
-            isOpen={showDiffConfirm}
-            diff={diff}
-            onConfirm={() => { setShowDiffConfirm(false); handleSubmit(); }}
-            onCancel={() => setShowDiffConfirm(false)}
-            title="Confirm Bot Configuration"
-            loading={loading}
-        />
         </Modal>
-
+    </>
     );
 };

@@ -247,5 +247,9 @@ export function monitoringMixin(api: ApiService) {
     }> {
       return api.request('/health/detailed/services');
     },
+
+    getAnomalies(): Promise<{ success: boolean; data: { anomalies: any[] } }> {
+      return api.request('/api/admin/monitoring/anomalies');
+    },
   };
 }

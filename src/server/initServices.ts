@@ -208,7 +208,7 @@ async function startBot(app: import('express').Application, messengerService: an
 }
 
 export interface InitServicesResult {
-  messengerServices: MessengerService[];
+  messengerServices: any[];
 }
 
 /**
@@ -312,7 +312,7 @@ export async function initServices(
   appLogger.info('\ud83d\udd0d Anomaly Detection Service initialized');
 
   // Prepare messenger services collection for optional webhook registration later
-  let messengerServices: MessengerService[] = [];
+  let messengerServices: any[] = [];
 
   // In demo mode, skip messenger initialization if no real providers configured
   const shouldSkipMessengers = skipMessengers || demoService.isInDemoMode();
@@ -355,7 +355,7 @@ export async function initServices(
 
     // Register messenger services with ShutdownCoordinator
     for (const service of messengerServices) {
-      shutdownCoordinator.registerMessengerService(service);
+      shutdownCoordinator.registerMessengerService(service as any);
     }
 
     if (filteredMessengers.length > 0) {
@@ -430,7 +430,11 @@ export async function initWebhooks(
         ? messengerService.getDefaultChannel()
         : null;
       if (channelId) {
-        await webhookServiceModule.webhookService.start(app, messengerService, channelId);
+        await webhookServiceModule.webhookService.start(
+          app,
+          messengerService as any,
+          channelId
+        );
         appLogger.info('\u2705 Webhook route registered', {
           provider: messengerService.providerName,
           channelId,

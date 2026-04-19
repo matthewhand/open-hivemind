@@ -1108,8 +1108,8 @@ export class SlackService extends EventEmitter implements IMessengerService {
       if (!botManager) return false;
       const bot = botManager.getAllBots().find((b) => b.botUserName === botName);
       if (!bot) return false;
-      if (bot.socketClient) return bot.socketClient.connected;
-      if (bot.rtmClient) return bot.rtmClient.connected;
+      if (bot.socketClient) return (bot.socketClient as any).connected;
+      if (bot.rtmClient) return (bot.rtmClient as any).connected;
       return true; // WebClient only bots are "connected" if they exist
     }
 
