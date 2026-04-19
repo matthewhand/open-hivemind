@@ -22,3 +22,7 @@
 ## 2024-05-22 - Dashboard Bot Status Lookups
 **Learning:** `Dashboard.tsx` was rendering a list of bots and calling `status?.bots?.find()` for every bot in the `.map()` loop, making the rendering loop $O(N \times M)$ complexity.
 **Action:** When rendering lists in React components that require correlated data, never use `.find()` inside the `.map()`. Pre-compute a lookup Map using `useMemo` to achieve O(1) lookups and bring the rendering complexity down to $O(N + M)$.
+
+## 2026-04-17 - Provider Config List Re-renders
+**Learning:** `SortableProviderCard` components in `BaseProvidersConfig` were re-rendering on every parent state change (modals, toasts) because callbacks weren't memoized.
+**Action:** Wrap list item components in `React.memo()` and stable callback refs using `useCallback` to achieve O(1) re-renders instead of O(N).
