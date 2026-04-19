@@ -5,7 +5,7 @@ import Debug from 'debug';
 import { isValidUrl } from '../common/urlUtils';
 import { SecureConfigManager } from './SecureConfigManager';
 import { ValidationError } from '../types/errorClasses';
-import { validateUrl, validateString, validateEnum } from './validationUtils';
+import { validateUrl, validateEnum } from './validationUtils';
 import { type IConfigurationManager } from '../di/interfaces';
 const debug = Debug('app:ConfigurationManager');
 
