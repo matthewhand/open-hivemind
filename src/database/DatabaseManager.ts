@@ -151,7 +151,7 @@ export class DatabaseManager {
         this.db = new Database(dbPath);
         debug('DATABASE_MANAGER: this.db initialized, type:', typeof this.db);
         if (this.db && (this.db as any).exec) {
-           debug('DATABASE_MANAGER: this.db.exec exists');
+          debug('DATABASE_MANAGER: this.db.exec exists');
         }
 
         await this.createTables();
