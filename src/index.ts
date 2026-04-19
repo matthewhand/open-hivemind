@@ -38,6 +38,14 @@ const resolveFrontendDistPath = (): string => {
   return fallback;
 };
 
+const resolveFrontendDistExists = (): boolean => {
+  const candidates = [
+    path.join(process.cwd(), 'dist/client/dist'),
+    path.join(process.cwd(), 'src/client/dist'),
+  ];
+  return candidates.some(candidate => fs.existsSync(candidate));
+};
+
 const frontendDistPath = resolveFrontendDistPath();
 const frontendAssetsPath = path.join(frontendDistPath, 'assets');
 
@@ -45,8 +53,8 @@ const frontendAssetsPath = path.join(frontendDistPath, 'assets');
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Vite dev server type is dynamic
 const viteServerRef: { current: any } = { current: undefined };
 
-// Check if frontend dist exists (async check will be done in main())
-let frontendDistExists = false;
+// Check if frontend dist exists
+const frontendDistExists = resolveFrontendDistExists();
 
 // Initialize ShutdownCoordinator for graceful shutdown
 const shutdownCoordinator = ShutdownCoordinator.getInstance();
@@ -110,7 +118,8 @@ async function main(): Promise<void> {
 
     // Initialize Vite in Development Mode (with HMR)
     const enableViteDev = process.env.ENABLE_VITE_DEV !== 'false';
-    if (process.env.NODE_ENV === 'development' && enableViteDev) {
+    const isDevOrTest = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+    if (isDevOrTest && enableViteDev) {
       // @ts-ignore - Vite is a dev dependency using dynamic import
       const viteModule = await new Function('return import("vite")')();
       const createViteServer = viteModule.createServer;
@@ -157,11 +166,16 @@ async function main(): Promise<void> {
       appLogger.info('🌍 WebUI available', { url: `http://localhost:${port}` });
       appLogger.info('📡 API endpoints available', { baseUrl: `http://localhost:${port}/api` });
 
-      if (frontendDistExists) {
-        appLogger.info('📱 Frontend assets served from', { path: frontendDistPath });
+      if (frontendDistExists || viteServerRef.current) {
+        if (frontendDistExists) {
+          appLogger.info('📱 Frontend assets served from', { path: frontendDistPath });
+        }
+        if (viteServerRef.current) {
+          appLogger.info('⚡ Vite Dev Server is handling frontend requests');
+        }
       } else {
         appLogger.warn(
-          '⚠️  Frontend build not found - attempting auto-build via `pnpm run build:frontend`'
+          '⚠️  Frontend build not found and Vite not active - attempting auto-build via `pnpm run build:frontend`'
         );
         // SECURITY: Command injection safe - using execFile() with argument array.
         // execFile() does not spawn a shell, so arguments are passed directly to pnpm.

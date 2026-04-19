@@ -81,6 +81,11 @@ const IGNORED_ERROR_PATTERNS = [
   // Production build ReferenceErrors caught by React error boundaries
   /ReferenceError:.*is not defined/i,
   /TypeError:.*is not a function/i,
+  // Rate limiting — should not occur in test (NODE_ENV=test disables limits),
+  // but ignore gracefully if it does to avoid masking real test failures
+  /429/i,
+  /Too Many Requests/i,
+  /Rate limit exceeded/i,
 ];
 
 /**

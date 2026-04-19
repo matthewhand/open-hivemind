@@ -176,7 +176,8 @@ export function registerRoutes(app: import('express').Application, ctx: RouteCon
     ) {
       return next();
     }
-    if (process.env.NODE_ENV === 'development' && viteServerRef.current) {
+    const isDevOrTest = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+    if (isDevOrTest && viteServerRef.current) {
       // In dev mode, serve through Vite's HTML transform
       const url = req.originalUrl;
       fs.promises
@@ -196,7 +197,8 @@ export function registerRoutes(app: import('express').Application, ctx: RouteCon
 
   // Vite Proxy Middleware for Development (Must be before 404 handler)
   app.use((req: Request, res: Response, next: NextFunction) => {
-    if (process.env.NODE_ENV === 'development' && viteServerRef.current) {
+    const isDevOrTest = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+    if (isDevOrTest && viteServerRef.current) {
       viteServerRef.current.middlewares(req, res, next);
     } else {
       next();
