@@ -29,3 +29,6 @@
 ## 2024-04-15 - Sliding Window Optimizations (filter vs backwards loop)
 **Learning:** `TokenTracker` and `DuplicateMessageDetector` use `.filter()` over the entire history array on *every message* to prune out old records or calculate sums. Because these are "sliding windows" where recent items are always at the end, iterating backwards and breaking early is up to 60x faster than `.filter()` + `.reduce()` for larger arrays.
 **Action:** Replace `array.filter().reduce()` in high-frequency sliding window calculations with reverse `for` loops that break early when the timestamp threshold is reached.
+## 2024-05-18 - Avoid O(N) array methods inside loop maps
+**Learning:** Calling O(N) array methods like `.find()` inside a `.map()` callback leads to O(N*M) time complexity, potentially blocking the main thread during component renders or effects.
+**Action:** Pre-compute a lookup Map before iterating, utilizing `new Map(items.map(i => [i.key, i.value]))` to achieve O(1) lookups and reduce overall complexity to O(N + M).
