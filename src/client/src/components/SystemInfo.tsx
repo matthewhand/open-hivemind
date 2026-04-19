@@ -14,14 +14,16 @@ import React, { useState } from 'react';
 import Card from './DaisyUI/Card';
 import Button from './DaisyUI/Button';
 import Tooltip from './DaisyUI/Tooltip';
+import Mockup from './DaisyUI/Mockup';
+import Kbd from './DaisyUI/Kbd';
 import { LoadingSpinner } from './DaisyUI/Loading';
 import { ConfirmModal } from './DaisyUI/Modal';
 import {
   RefreshCw,
   Download as ArrowDownTrayIcon,
   Power as PowerIcon,
-  Play as PlayIcon,
   X as XMarkIcon,
+  Terminal as TerminalIcon,
 } from 'lucide-react';
 import { useDashboardStore } from '../store/dashboardStore';
 import { apiService } from '../services/api';
@@ -207,15 +209,27 @@ const SystemInfo: React.FC = () => {
                   </Tooltip>
                 </div>
               </div>
-              <div className="bg-base-300 p-4 rounded-lg font-mono text-sm h-96 overflow-auto text-base-content">
+              <div className="h-96">
                 {logs.length === 0 ? (
-                  <span className="text-base-content/50">No logs available</span>
+                  <div className="bg-base-300 p-4 rounded-lg font-mono text-sm h-full flex items-center justify-center">
+                    <span className="text-base-content/50 italic">No logs available</span>
+                  </div>
                 ) : (
-                  logs.map((log, index) => (
-                    <div key={index} className="mb-1 whitespace-pre-wrap">
-                      {log}
-                    </div>
-                  ))
+                  <Mockup
+                    type="code"
+                    className="h-full"
+                    ariaLabel="System logs output"
+                    content={
+                      <div className="flex flex-col gap-1">
+                        {logs.map((log, index) => (
+                          <div key={index} className="flex gap-2 text-sm leading-relaxed">
+                            <span className="opacity-40 select-none">[{index + 1}]</span>
+                            <span className="whitespace-pre-wrap">{log}</span>
+                          </div>
+                        ))}
+                      </div>
+                    }
+                  />
                 )}
               </div>
             </Card.Body>
