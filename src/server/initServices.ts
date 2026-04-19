@@ -85,7 +85,7 @@ async function startBot(app: import('express').Application, messengerService: Me
       const { MessageBus } = await import('@src/events/MessageBus');
       const bus = MessageBus.getInstance();
       messengerService.setMessageHandler(
-        async (message: any, historyMessages?: any, botConfig?: any) => {
+        async (message: any, historyMessages: any, botConfig: any): Promise<string> => {
           const msg = message as Record<string, unknown> & {
             platform?: string;
             getChannelId?: () => string;
