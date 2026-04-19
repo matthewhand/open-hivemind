@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import Debug from 'debug';
 import messageConfig from '@config/messageConfig';
+import { strings } from '@src/utils/common';
 import { DatabaseManager } from '../../../database/DatabaseManager';
 import { MessageBus } from '../../../events/MessageBus';
 import { PersonaManager, type PersonaResponseBehavior } from '../../../managers/PersonaManager';
@@ -476,8 +477,8 @@ async function evaluateReplyDecision(
   let isLeadingAddress = false;
   if (isDirectlyAddressed) {
     const myPatterns: RegExp[] = [
-      new RegExp(`<@!?${botId}>`, 'i'),
-      ...nameCandidates.map((n) => new RegExp(`${escapeRegExp(n)}\\b`, 'i')),
+      new RegExp(`<@!?${strings.escapeRegExp(botId)}>`, 'i'),
+      ...nameCandidates.map((n) => new RegExp(`${strings.escapeRegExp(n)}\\b`, 'i')),
     ];
     let firstMatchIndex = Infinity;
     for (const pat of myPatterns) {
@@ -850,10 +851,6 @@ function extractModifierTokens(modifiers?: string): string[] {
     return [];
   }
   return modifiers.match(/[+\-×]?[\w!]+\([^)]+\)/g) || [];
-}
-
-function escapeRegExp(string: string) {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function applyModifiers(
