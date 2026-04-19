@@ -86,6 +86,10 @@ async function startBot(app: import('express').Application, messengerService: Me
       const bus = MessageBus.getInstance();
       messengerService.setMessageHandler(
         async (message: unknown, historyMessages: unknown, botConfig: Record<string, unknown>) => {
+          if (!message || typeof message !== 'object' || !historyMessages || !Array.isArray(historyMessages)) {
+            debug('Invalid message or historyMessages type');
+            return;
+          }
           const msg = message as Record<string, unknown> & {
             platform?: string;
             getChannelId?: () => string;
