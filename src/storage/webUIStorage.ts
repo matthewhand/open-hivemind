@@ -2,8 +2,10 @@ import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
 import { Logger } from '../common/logger';
+import { SecureConfigManager } from '../config/SecureConfigManager';
 
 const debug = Debug('app:storage:webUIStorage');
+const logger = Logger.withContext('app:storage:webUIStorage');
 
 interface WebUIAgent {
   id: string;
@@ -114,14 +116,41 @@ export class WebUIStorage {
     };
 
     try {
-      await fs.promises.access(this.configFile);
-      const data = await fs.promises.readFile(this.configFile, 'utf8');
-      this.configCache = { ...defaultConfig, ...JSON.parse(data) };
+      if (!fs.existsSync(this.configFile)) {
+        this.configCache = defaultConfig;
+        return defaultConfig;
+      }
+
+      const rawData = await fs.promises.readFile(this.configFile, 'utf8');
+      let parsedData: any;
+
+      // Detect if file is encrypted (contains colon-separated segments) or plain JSON
+      if (rawData.includes(':')) {
+        debug('Loading encrypted web UI configuration');
+        const secureManager = await SecureConfigManager.getInstance();
+        const decryptedData = secureManager.decrypt(rawData);
+        parsedData = JSON.parse(decryptedData);
+      } else {
+        debug('Loading legacy plain-text web UI configuration');
+        parsedData = JSON.parse(rawData);
+
+        // Migrate to encrypted format on next save
+        setTimeout(() => {
+          if (this.configCache) {
+            this.saveConfig(this.configCache).catch((err) =>
+              logger.error('Failed to migrate config to encrypted format', { error: err.message })
+            );
+          }
+        }, 1000);
+      }
+
+      this.configCache = { ...defaultConfig, ...parsedData };
       return this.configCache!;
     } catch (error: unknown) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
-        debug('ERROR:', 'Error loading web UI config, using defaults:', error);
-      }
+      debug('ERROR:', 'Error loading web UI config, using defaults:', error);
+      logger.error('Failed to load web UI configuration', {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
 
     this.configCache = defaultConfig;
@@ -138,15 +167,17 @@ export class WebUIStorage {
     // Update cache immediately so subsequent synchronous reads get the new state
     this.configCache = config;
 
-    // Enqueue the async write to prevent concurrent file corruption
-    const dataToWrite = JSON.stringify(config, null, 2);
-
     // Return a new promise that resolves or rejects based on this specific write
     return new Promise((resolve, reject) => {
       this.saveQueue = this.saveQueue
         .then(async () => {
           try {
-            await fs.promises.writeFile(this.configFile, dataToWrite);
+            const dataToEncrypt = JSON.stringify(config, null, 2);
+            const secureManager = await SecureConfigManager.getInstance();
+            const encryptedData = secureManager.encrypt(dataToEncrypt);
+
+            await fs.promises.writeFile(this.configFile, encryptedData, 'utf8');
+            debug('Web UI configuration saved (encrypted)');
             resolve();
           } catch (error) {
             debug('ERROR:', 'Error saving web UI config:', error);
@@ -157,10 +188,9 @@ export class WebUIStorage {
             );
           }
         })
-        .catch(() => {
-          // Reset queue on failure so subsequent writes aren't blocked
-          // by a previous caller's rejection. Each caller's promise
-          // rejects independently via the try/catch above.
+        .catch((err) => {
+          debug('Queue error:', err);
+          // Don't block the queue
         });
     });
   }
