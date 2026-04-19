@@ -90,9 +90,7 @@ export class WebSocketService {
 
         const demoMode = container.isRegistered(DemoModeService)
           ? container.resolve(DemoModeService)
-          : (DemoModeService as any).getInstance
-            ? (DemoModeService as any).getInstance()
-            : new DemoModeService();
+          : (DemoModeService as any).getInstance ? (DemoModeService as any).getInstance() : new DemoModeService();
 
         const broadcastService = container.isRegistered(BroadcastService)
           ? container.resolve(BroadcastService)
