@@ -59,7 +59,7 @@ export class DecisionRepository {
   /**
    * Retrieve recent decisions.
    */
-  async getRecentDecisions(limit = 100): Promise<any[]> {
+  async getRecentDecisions(limit = 100): Promise<DecisionRecord[]> {
     const db = this.getDb();
     if (!db || !this.isConnected()) {
       return [];
@@ -68,14 +68,14 @@ export class DecisionRepository {
     try {
       const rows = await db.all(`SELECT * FROM decisions ORDER BY timestamp DESC LIMIT ?`, [limit]);
 
-      return rows.map((row: any) => ({
-        id: row.id,
-        botName: row.botName,
+      return rows.map((row: Record<string, unknown>) => ({
+        id: row.id as number,
+        botName: row.botName as string,
         shouldReply: Boolean(row.shouldReply),
-        reason: row.reason,
-        probabilityRoll: row.probabilityRoll,
-        threshold: row.threshold,
-        timestamp: row.timestamp ? new Date(row.timestamp) : undefined,
+        reason: row.reason as string,
+        probabilityRoll: row.probabilityRoll as number,
+        threshold: row.threshold as number,
+        timestamp: row.timestamp ? new Date(row.timestamp as string) : undefined,
       }));
     } catch (error) {
       debug('Error retrieving recent decisions:', error);
