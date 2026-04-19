@@ -459,4 +459,18 @@ router.post(
   }
 );
 
+/**
+ * POST /api/marketplace/refresh
+ * Clear cache and refresh package list from sources
+ */
+router.post(
+  '/refresh',
+  requireRole('admin'),
+  asyncErrorHandler(async (req, res) => {
+    debug('Manually refreshing marketplace cache');
+    invalidateCache();
+    return res.json(ApiResponse.success({ message: 'Cache cleared' }));
+  })
+);
+
 export default router;

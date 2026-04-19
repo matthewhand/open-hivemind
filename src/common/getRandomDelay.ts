@@ -18,7 +18,6 @@ export function getRandomDelay(min: number, max: number): number {
     debug('Invalid min or max values provided for delay.');
     return 0;
   }
-  // Use crypto.randomBytes() for cryptographically secure random numbers
   const randomBytes = crypto.randomBytes(4);
   const randomFloat = randomBytes.readUInt32BE() / 0x100000000;
   const delay = Math.floor(randomFloat * (max - min + 1)) + min;

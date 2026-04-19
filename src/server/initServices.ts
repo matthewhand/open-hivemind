@@ -45,7 +45,13 @@ interface MessengerService {
   botId?: string;
   initialize(): Promise<void>;
   setApp?(app: import('express').Application): void;
-  setMessageHandler(handler: (...args: unknown[]) => unknown): void;
+  setMessageHandler(
+    handler: (
+      message: unknown,
+      historyMessages?: unknown,
+      botConfig?: Record<string, unknown>
+    ) => unknown
+  ): void;
   getAgentStartupSummaries?(): Array<Record<string, string>>;
   getDefaultChannel?(): string | null;
   getChannels?(): string[];
