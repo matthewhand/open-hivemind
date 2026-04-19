@@ -49,31 +49,26 @@ export interface BotRateLimitSettings {
   windowMs: number;
 }
 
-// In test mode, disable rate limiting by default so E2E suites can run without
-// hitting throttle limits. Production deployments use conservative defaults
-// unless overridden via environment variables.
-const isTestEnv = process.env.NODE_ENV === 'test';
-
 export const RATE_LIMIT_CONFIG: RateLimitConfig = {
   default: {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10), // 15 minutes
-    max: parseInt(process.env.RATE_LIMIT_MAX || (isTestEnv ? '1000000' : '100'), 10),
+    max: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
   },
   auth: {
     windowMs: parseInt(process.env.RATE_LIMIT_AUTH_WINDOW_MS || '3600000', 10), // 1 hour
-    max: parseInt(process.env.RATE_LIMIT_AUTH_MAX || (isTestEnv ? '1000000' : '5'), 10),
+    max: parseInt(process.env.RATE_LIMIT_AUTH_MAX || '5', 10),
   },
   config: {
     windowMs: parseInt(process.env.RATE_LIMIT_CONFIG_WINDOW_MS || '300000', 10), // 5 minutes
-    max: parseInt(process.env.RATE_LIMIT_CONFIG_MAX || (isTestEnv ? '1000000' : '10'), 10),
+    max: parseInt(process.env.RATE_LIMIT_CONFIG_MAX || '10', 10),
   },
   admin: {
     windowMs: parseInt(process.env.RATE_LIMIT_ADMIN_WINDOW_MS || '900000', 10), // 15 minutes
-    max: parseInt(process.env.RATE_LIMIT_ADMIN_MAX || (isTestEnv ? '1000000' : '20'), 10),
+    max: parseInt(process.env.RATE_LIMIT_ADMIN_MAX || '20', 10),
   },
   api: {
     windowMs: parseInt(process.env.RATE_LIMIT_API_WINDOW_MS || '60000', 10), // 1 minute
-    max: parseInt(process.env.RATE_LIMIT_API_MAX || (isTestEnv ? '1000000' : '100'), 10),
+    max: parseInt(process.env.RATE_LIMIT_API_MAX || '100', 10),
   },
   redis: {
     url: process.env.REDIS_URL || 'redis://localhost:6379',

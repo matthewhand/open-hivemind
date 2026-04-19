@@ -317,8 +317,8 @@ export function getClientKey(req: Request): string {
  * Check if rate limiting should be skipped
  */
 export function shouldSkipRateLimit(req: Request): boolean {
-  // Skip entirely in test mode (NODE_ENV=test) unless explicitly enabled
-  if (process.env.NODE_ENV === 'test' && process.env.ENABLE_RATE_LIMIT_TESTS !== 'true')
+  // Skip entirely in test mode ONLY if explicitly allowed by ALLOW_TEST_BYPASS
+  if (process.env.NODE_ENV === 'test' && process.env.ALLOW_TEST_BYPASS === 'true' && process.env.ENABLE_RATE_LIMIT_TESTS !== 'true')
     return true;
 
   // Always skip health/metrics endpoints
