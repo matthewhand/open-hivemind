@@ -13,10 +13,27 @@ jest.mock('@src/common/logger', () => ({
 
 describe('validateRequiredEnvVars', () => {
   const originalEnv = { ...process.env };
+  const validSecret = 'a'.repeat(32);
+  const validPassword = 'b'.repeat(12);
+
+  const setupValidProductionEnv = () => {
+    process.env.NODE_ENV = 'production';
+    process.env.SESSION_SECRET = validSecret;
+    process.env.JWT_SECRET = validSecret;
+    process.env.JWT_REFRESH_SECRET = validSecret;
+    process.env.HIVEMIND_PLUGIN_SIGNING_KEY = validSecret;
+    process.env.ADMIN_PASSWORD = validPassword;
+    process.env.DISCORD_BOT_TOKEN = 'token';
+  };
 
   beforeEach(() => {
     jest.resetModules();
-    process.env = { ...originalEnv };
+    // Clear all keys from process.env for a clean state
+    Object.keys(process.env).forEach((key) => {
+      delete process.env[key];
+    });
+    // Restore base env
+    Object.assign(process.env, originalEnv);
   });
 
   afterEach(() => {
@@ -29,21 +46,15 @@ describe('validateRequiredEnvVars', () => {
   });
 
   it('throws in production when SESSION_SECRET is missing', () => {
-    process.env.NODE_ENV = 'production';
-    process.env.JWT_SECRET = 'secret';
-    process.env.JWT_REFRESH_SECRET = 'refresh';
-    process.env.DISCORD_BOT_TOKEN = 'token';
+    setupValidProductionEnv();
     delete process.env.SESSION_SECRET;
 
     expect(() => validateRequiredEnvVars()).toThrow('Environment validation failed');
   });
 
-  it('throws in production when SESSION_SECRET is empty', () => {
-    process.env.NODE_ENV = 'production';
-    process.env.JWT_SECRET = 'secret';
-    process.env.JWT_REFRESH_SECRET = 'refresh';
-    process.env.DISCORD_BOT_TOKEN = 'token';
-    process.env.SESSION_SECRET = '  ';
+  it('throws in production when SESSION_SECRET is too short', () => {
+    setupValidProductionEnv();
+    process.env.SESSION_SECRET = 'too-short';
 
     expect(() => validateRequiredEnvVars()).toThrow('Environment validation failed');
   });
@@ -69,10 +80,7 @@ describe('validateRequiredEnvVars', () => {
   });
 
   it('throws in production when no bot tokens are configured', () => {
-    process.env.NODE_ENV = 'production';
-    process.env.SESSION_SECRET = 'sess';
-    process.env.JWT_SECRET = 'secret';
-    process.env.JWT_REFRESH_SECRET = 'refresh';
+    setupValidProductionEnv();
     // Remove all bot tokens
     delete process.env.DISCORD_BOT_TOKEN;
     delete process.env.SLACK_BOT_TOKEN;
@@ -93,20 +101,12 @@ describe('validateRequiredEnvVars', () => {
   });
 
   it('does not throw when all production vars and a bot token are present', () => {
-    process.env.NODE_ENV = 'production';
-    process.env.SESSION_SECRET = 'sess';
-    process.env.JWT_SECRET = 'secret';
-    process.env.JWT_REFRESH_SECRET = 'refresh';
-    process.env.DISCORD_BOT_TOKEN = 'token';
-
+    setupValidProductionEnv();
     expect(() => validateRequiredEnvVars()).not.toThrow();
   });
 
   it('accepts a dynamic bot token as sufficient', () => {
-    process.env.NODE_ENV = 'production';
-    process.env.SESSION_SECRET = 'sess';
-    process.env.JWT_SECRET = 'secret';
-    process.env.JWT_REFRESH_SECRET = 'refresh';
+    setupValidProductionEnv();
     delete process.env.DISCORD_BOT_TOKEN;
     delete process.env.SLACK_BOT_TOKEN;
     delete process.env.MATTERMOST_TOKEN;

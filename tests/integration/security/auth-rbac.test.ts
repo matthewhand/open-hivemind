@@ -7,8 +7,12 @@ describe('RBAC & IP Security Integration Tests', () => {
   const authManager = AuthManager.getInstance();
   let userToken: string;
   let adminToken: string;
+  const originalBypass = process.env.ALLOW_LOCALHOST_ADMIN;
+  const originalAllowAll = process.env.HTTP_ALLOW_ALL_IPS;
 
   beforeAll(async () => {
+    process.env.ALLOW_LOCALHOST_ADMIN = 'false';
+    process.env.HTTP_ALLOW_ALL_IPS = 'true';
     // Register a normal user
     try {
       await authManager.register({
@@ -32,12 +36,19 @@ describe('RBAC & IP Security Integration Tests', () => {
     const userLogin = await request(app)
       .post('/api/auth/login')
       .send({ username: 'rbac-user', password: 'password123' });
-    userToken = userLogin.body.data?.token;
+    if (!userLogin.body.data) console.error('User login failed:', userLogin.body);
+    userToken = userLogin.body.data?.accessToken;
 
     const adminLogin = await request(app)
       .post('/api/auth/login')
       .send({ username: 'rbac-admin', password: 'password123' });
-    adminToken = adminLogin.body.data?.token;
+    if (!adminLogin.body.data) console.error('Admin login failed:', adminLogin.body);
+    adminToken = adminLogin.body.data?.accessToken;
+  });
+
+  afterAll(() => {
+    process.env.ALLOW_LOCALHOST_ADMIN = originalBypass;
+    process.env.HTTP_ALLOW_ALL_IPS = originalAllowAll;
   });
 
   describe('Role-Based Access Control', () => {
@@ -77,11 +88,13 @@ describe('RBAC & IP Security Integration Tests', () => {
 
   describe('IP Whitelisting', () => {
     it('should allow access from localhost', async () => {
+      process.env.HTTP_ALLOW_ALL_IPS = 'false';
       const response = await request(app)
         .get('/api/health')
         .set('X-Forwarded-For', '127.0.0.1');
 
       expect(response.status).toBe(200);
+      process.env.HTTP_ALLOW_ALL_IPS = 'true';
     });
   });
 });

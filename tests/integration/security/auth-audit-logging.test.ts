@@ -21,7 +21,7 @@ describe('Audit Logging & Monitoring Integration Tests', () => {
      const adminLogin = await request(app)
        .post('/api/auth/login')
        .send({ username: 'audit-admin', password: 'password123' });
-     adminToken = adminLogin.body.data?.token;
+     adminToken = adminLogin.body.data?.accessToken;
   });
 
   it('should allow admins to access audit logs', async () => {

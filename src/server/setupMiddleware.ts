@@ -44,14 +44,12 @@ export function setupMiddleware(app: express.Application, ctx: MiddlewareContext
   // CORS middleware for localhost development
   app.use((req: Request, res: Response, next: NextFunction) => {
     const origin = req.headers.origin;
+    // Strictly match http://localhost or http://127.0.0.1 with optional port
     const isLocalhost =
-      origin?.includes('localhost') ||
-      origin?.includes('127.0.0.1') ||
-      req.hostname === 'localhost' ||
-      req.hostname === '127.0.0.1';
+      origin && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
 
     if (isLocalhost) {
-      res.setHeader('Access-Control-Allow-Origin', origin || 'http://localhost:3000');
+      res.setHeader('Access-Control-Allow-Origin', origin!);
       res.setHeader('Access-Control-Allow-Credentials', 'true');
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
       res.setHeader(

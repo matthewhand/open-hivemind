@@ -63,6 +63,10 @@ export interface RouteContext {
 export function registerRoutes(app: import('express').Application, ctx: RouteContext): void {
   const { frontendDistPath, viteServerRef } = ctx;
 
+  // Health endpoints (MUST be above IP filter/auth)
+  app.use('/api/health', healthRoute);
+  app.use('/health', healthRoute);
+
   // ─────────────────────────────────────────────────────────────────────────────
   // IP Filtering Security (when auth is disabled)
   // Evaluated lazily per-request so --env-file / dotenv values are available
@@ -149,10 +153,6 @@ export function registerRoutes(app: import('express').Application, ctx: RouteCon
   //    openapiRouter handles /api/openapi, /api/openapi.json, etc.
   //    If mounted earlier it would intercept ALL /api/* requests.
   app.use('/api', openapiRouter);
-
-  // Health endpoints
-  app.use('/api/health', healthRoute);
-  app.use('/health', healthRoute);
 
   app.use(sitemapRouter); // Sitemap routes at root level
 

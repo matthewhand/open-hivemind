@@ -31,7 +31,7 @@ describe('Authentication (Login) Integration Tests', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.data).toHaveProperty('token');
+      expect(response.body.data).toHaveProperty('accessToken');
       expect(response.body.data).toHaveProperty('refreshToken');
     });
 
@@ -69,7 +69,7 @@ describe('Authentication (Login) Integration Tests', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.data).toHaveProperty('token');
+      expect(response.body.data).toHaveProperty('accessToken');
     });
 
     it('should fail with invalid refresh token', async () => {
@@ -82,7 +82,7 @@ describe('Authentication (Login) Integration Tests', () => {
   });
 
   describe('POST /api/auth/logout', () => {
-    let token: string;
+    let accessToken: string;
     let refreshToken: string;
 
     beforeAll(async () => {
@@ -92,15 +92,15 @@ describe('Authentication (Login) Integration Tests', () => {
           username: 'test-user',
           password: 'test-password',
         });
-      token = response.body.data?.token;
+      accessToken = response.body.data?.accessToken;
       refreshToken = response.body.data?.refreshToken;
     });
 
     it('should logout successfully', async () => {
-      expect(token).toBeDefined();
+      expect(accessToken).toBeDefined();
       const response = await request(app)
         .post('/api/auth/logout')
-        .set('Authorization', `Bearer ${token}`)
+        .set('Authorization', `Bearer ${accessToken}`)
         .send({ refreshToken });
 
       expect(response.status).toBe(200);
