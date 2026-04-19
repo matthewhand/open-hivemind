@@ -1,10 +1,10 @@
+import 'reflect-metadata';
 import { MCPProviderManager } from '../../src/config/MCPProviderManager';
 import { ConfigLoader } from '../../src/config/mcp/configLoader';
 import { ServerLifecycle } from '../../src/config/mcp/serverLifecycle';
 import { ToolRegistry } from '../../src/config/mcp/toolRegistry';
 import { container } from 'tsyringe';
 import { registerServices } from '../../src/di/registration';
-import 'reflect-metadata';
 import path from 'path';
 import fs from 'fs';
 

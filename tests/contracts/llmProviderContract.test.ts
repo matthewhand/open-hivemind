@@ -68,6 +68,25 @@ jest.mock('@config/flowiseConfig', () => ({
   default: { get: jest.fn(() => '') },
 }));
 
+jest.mock('../../packages/llm-openwebui/src/openWebUIConfig', () => ({
+  __esModule: true,
+  default: {
+    get: jest.fn((key) => {
+      if (key === 'authMethod') return 'apiKey';
+      if (key === 'apiKey') return 'fake-api-key';
+      if (key === 'apiUrl') return 'http://localhost:3000/api/';
+      if (key === 'model') return 'llama3.2';
+      return '';
+    }),
+    getProperties: jest.fn(() => ({
+      authMethod: 'apiKey',
+      apiKey: 'fake-api-key',
+      apiUrl: 'http://localhost:3000/api/',
+      model: 'llama3.2'
+    }))
+  },
+}));
+
 jest.mock('@integrations/flowise/flowiseRestClient', () => ({
   getFlowiseResponse: jest.fn().mockResolvedValue('flowise rest response'),
 }));

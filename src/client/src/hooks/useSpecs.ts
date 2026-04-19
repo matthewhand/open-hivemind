@@ -2,7 +2,12 @@ import { useQuery } from '@tanstack/react-query';
 import { apiService } from '../services/api';
 import type { Spec } from '../types/spec';
 
-export const useSpecs = () => {
+export const useSpecs = (): {
+  specs: Spec[];
+  loading: boolean;
+  error: string | null;
+  refetch: () => Promise<void>;
+} => {
   const {
     data: specs = [],
     isLoading: loading,
@@ -10,7 +15,7 @@ export const useSpecs = () => {
     refetch,
   } = useQuery<Spec[]>({
     queryKey: ['specs'],
-    queryFn: async () => {
+    queryFn: async (): Promise<Spec[]> => {
       const response = await apiService.request<{ success: boolean; data: Spec[]; error?: string }>('/api/specs');
       if (response.success && response.data) {
         return response.data;

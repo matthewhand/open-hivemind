@@ -49,7 +49,7 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [configVersion, setConfigVersion] = useState(0);
   const [lastConfigChange, setLastConfigChange] = useState<ConfigChangedEvent | null>(null);
 
-  const connect = () => {
+  const connect = (): void => {
     if (socket?.connected) { return; }
 
     const connectionTarget = API_BASE_URL && API_BASE_URL.length > 0 ? API_BASE_URL : undefined;
@@ -187,7 +187,7 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
     setSocket(newSocket);
   };
 
-  const disconnect = () => {
+  const disconnect = (): void => {
     if (socket) {
       socket.disconnect();
       setSocket(null);

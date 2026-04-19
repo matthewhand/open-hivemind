@@ -1,129 +1,7 @@
 import express from 'express';
 import request from 'supertest';
-import configRouter from '../../src/server/routes/config';
 
 process.env.NODE_ENV = 'test';
-
-// Mock BotConfigurationManager
-const mockBotConfigurationManager = {
-  getAllBots: jest.fn().mockReturnValue([
-    {
-      id: 'test-bot-id',
-      name: 'test-bot',
-      messageProvider: 'discord',
-      llmProvider: 'openai',
-      isActive: true,
-      envOverrides: {},
-      discord: {
-        token: 'test-discord-token',
-        clientId: '123456789',
-        guildId: '987654321',
-      },
-      openai: {
-        apiKey: 'test-openai-key',
-        baseUrl: 'https://api.openai.com/v1',
-      },
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ]),
-  getWarnings: jest.fn().mockReturnValue([]),
-  isLegacyMode: jest.fn().mockReturnValue(false),
-  reload: jest.fn(),
-  getBot: jest.fn().mockImplementation((botId) => {
-    if (botId === 'test-bot-id') {
-      return mockBotConfigurationManager.getAllBots()[0];
-    }
-    return undefined;
-  }),
-  getBotConfig: jest.fn().mockImplementation((botId) => {
-    if (botId === 'test-bot-id') {
-      return mockBotConfigurationManager.getAllBots()[0];
-    }
-    return undefined;
-  }),
-  getBotConfigs: jest.fn().mockReturnValue([]),
-  getBotCount: jest.fn().mockReturnValue(1),
-  getActiveBotCount: jest.fn().mockReturnValue(1),
-  getBotNames: jest.fn().mockReturnValue(['test-bot']),
-};
-
-jest.mock('../../src/config/BotConfigurationManager', () => ({
-  BotConfigurationManager: {
-    getInstance: () => mockBotConfigurationManager,
-  },
-}));
-
-// Mock UserConfigStore
-jest.mock('../../src/config/UserConfigStore', () => {
-  const mockUserConfigStore = {
-    getBotOverride: jest.fn().mockReturnValue({}),
-    getToolConfig: jest.fn().mockReturnValue(undefined),
-    setToolConfig: jest.fn(),
-    setBotOverride: jest.fn(),
-  };
-  return {
-    UserConfigStore: {
-      getInstance: () => mockUserConfigStore,
-    },
-  };
-});
-
-// Mock redactSensitiveInfo
-jest.mock('../../src/common/redactSensitiveInfo', () => ({
-  redactSensitiveInfo: jest.fn((key, value) => {
-    if (
-      typeof value === 'string' &&
-      (key.toLowerCase().includes('token') || key.toLowerCase().includes('key'))
-    ) {
-      return 'test**********key';
-    }
-    return value;
-  }),
-}));
-
-// Mock audit middleware
-const mockLogConfigChange = jest.fn();
-jest.mock('../../src/server/middleware/audit', () => ({
-  auditMiddleware: jest.fn((req, res, next) => next()),
-  logConfigChange: mockLogConfigChange,
-}));
-
-// Mock ErrorUtils
-jest.mock('../../src/types/errors', () => {
-  const originalModule = jest.requireActual('../../src/types/errors');
-  return {
-    ...originalModule,
-    ErrorUtils: {
-      ...originalModule.ErrorUtils,
-      toHivemindError: jest.fn((error) => ({
-        message: error?.message || 'Unknown error',
-        statusCode: 500,
-        code: 'TEST_ERROR',
-        stack: error?.stack,
-      })),
-      classifyError: jest.fn(() => ({
-        type: 'test',
-        retryable: false,
-        severity: 'low',
-        userMessage: undefined,
-        logLevel: 'error',
-      })),
-    },
-  };
-});
-
-// Mock fs and path
-jest.mock('fs', () => ({
-  ...jest.requireActual('fs'),
-  readdirSync: jest.fn().mockReturnValue([]),
-  statSync: jest.fn().mockReturnValue({ size: 0, mtime: new Date() }),
-}));
-
-jest.mock('path', () => ({
-  ...jest.requireActual('path'),
-  join: (...args: string[]) => args.join('/'),
-}));
 
 // Create a mock module that will be properly scoped
 const createMockConfigRouter = () => {
@@ -248,6 +126,129 @@ const createMockConfigRouter = () => {
 
 // Mock the config router
 jest.mock('../../src/server/routes/config', () => createMockConfigRouter());
+
+import configRouter from '../../src/server/routes/config';
+
+// Mock BotConfigurationManager
+const mockBotConfigurationManager = {
+  getAllBots: jest.fn().mockReturnValue([
+    {
+      id: 'test-bot-id',
+      name: 'test-bot',
+      messageProvider: 'discord',
+      llmProvider: 'openai',
+      isActive: true,
+      envOverrides: {},
+      discord: {
+        token: 'test-discord-token',
+        clientId: '123456789',
+        guildId: '987654321',
+      },
+      openai: {
+        apiKey: 'test-openai-key',
+        baseUrl: 'https://api.openai.com/v1',
+      },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  ]),
+  getWarnings: jest.fn().mockReturnValue([]),
+  isLegacyMode: jest.fn().mockReturnValue(false),
+  reload: jest.fn(),
+  getBot: jest.fn().mockImplementation((botId) => {
+    if (botId === 'test-bot-id') {
+      return mockBotConfigurationManager.getAllBots()[0];
+    }
+    return undefined;
+  }),
+  getBotConfig: jest.fn().mockImplementation((botId) => {
+    if (botId === 'test-bot-id') {
+      return mockBotConfigurationManager.getAllBots()[0];
+    }
+    return undefined;
+  }),
+  getBotConfigs: jest.fn().mockReturnValue([]),
+  getBotCount: jest.fn().mockReturnValue(1),
+  getActiveBotCount: jest.fn().mockReturnValue(1),
+  getBotNames: jest.fn().mockReturnValue(['test-bot']),
+};
+
+jest.mock('../../src/config/BotConfigurationManager', () => ({
+  BotConfigurationManager: {
+    getInstance: () => mockBotConfigurationManager,
+  },
+}));
+
+// Mock UserConfigStore
+jest.mock('../../src/config/UserConfigStore', () => {
+  const mockUserConfigStore = {
+    getBotOverride: jest.fn().mockReturnValue({}),
+    getToolConfig: jest.fn().mockReturnValue(undefined),
+    setToolConfig: jest.fn(),
+    setBotOverride: jest.fn(),
+  };
+  return {
+    UserConfigStore: {
+      getInstance: () => mockUserConfigStore,
+    },
+  };
+});
+
+// Mock redactSensitiveInfo
+jest.mock('../../src/common/redactSensitiveInfo', () => ({
+  redactSensitiveInfo: jest.fn((key, value) => {
+    if (
+      typeof value === 'string' &&
+      (key.toLowerCase().includes('token') || key.toLowerCase().includes('key'))
+    ) {
+      return 'test**********key';
+    }
+    return value;
+  }),
+}));
+
+// Mock audit middleware
+const mockLogConfigChange = jest.fn();
+jest.mock('../../src/server/middleware/audit', () => ({
+  auditMiddleware: jest.fn((req, res, next) => next()),
+  logConfigChange: mockLogConfigChange,
+}));
+
+// Mock ErrorUtils
+jest.mock('../../src/types/errors', () => {
+  const originalModule = jest.requireActual('../../src/types/errors');
+  return {
+    ...originalModule,
+    ErrorUtils: {
+      ...originalModule.ErrorUtils,
+      toHivemindError: jest.fn((error) => ({
+        message: error?.message || 'Unknown error',
+        statusCode: 500,
+        code: 'TEST_ERROR',
+        stack: error?.stack,
+      })),
+      classifyError: jest.fn(() => ({
+        type: 'test',
+        retryable: false,
+        severity: 'low',
+        userMessage: undefined,
+        logLevel: 'error',
+      })),
+    },
+  };
+});
+
+// Mock fs and path
+jest.mock('fs', () => ({
+  ...jest.requireActual('fs'),
+  readdirSync: jest.fn().mockReturnValue([]),
+  statSync: jest.fn().mockReturnValue({ size: 0, mtime: new Date() }),
+}));
+
+jest.mock('path', () => ({
+  ...jest.requireActual('path'),
+  join: (...args: string[]) => args.join('/'),
+}));
 
 describe('Configuration Management API Endpoints - COMPLETE TDD SUITE', () => {
   let app: express.Application;

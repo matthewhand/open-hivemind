@@ -9,7 +9,29 @@ interface UseToolRegistryProps {
   setAlert: (alert: AlertState | null) => void;
 }
 
-export function useToolRegistry({ setAlert }: UseToolRegistryProps) {
+export function useToolRegistry({ setAlert }: UseToolRegistryProps): {
+  tools: MCPTool[];
+  filteredTools: MCPTool[];
+  loading: boolean;
+  handleToggleFavorite: (id: string) => void;
+  searchQuery: string;
+  selectedCategory: string;
+  setSelectedCategory: (v: string) => void;
+  selectedServer: string;
+  setSelectedServer: (v: string) => void;
+  selectedView: string;
+  setSelectedView: (v: string) => void;
+  sortBy: string;
+  setSortBy: (v: string) => void;
+  setSearchQuery: (v: string) => void;
+  setFilteredTools: React.Dispatch<React.SetStateAction<MCPTool[]>>;
+  favorites: string[];
+  setFavorites: React.Dispatch<React.SetStateAction<string[]>>;
+  recentlyUsed: RecentToolUsage[];
+  setRecentlyUsed: React.Dispatch<React.SetStateAction<RecentToolUsage[]>>;
+  usageCounts: Record<string, number>;
+  setUsageCounts: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+} {
   const [tools, setTools] = useState<MCPTool[]>([]);
   const [filteredTools, setFilteredTools] = useState<MCPTool[]>([]);
   const [loading, setLoading] = useState(true);

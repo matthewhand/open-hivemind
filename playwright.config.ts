@@ -37,8 +37,8 @@ export default defineConfig({
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3028',
     /* Collect trace when retrying on CI. */
     trace: process.env.CI ? 'retain-on-failure' : 'on-first-retry',
-    /* Capture screenshots for failed tests */
-    screenshot: 'only-on-failure',
+    /* Capture screenshots for all tests */
+    screenshot: 'on',
     /* Record videos for diagnostics in CI */
     video: process.env.CI ? 'retain-on-failure' : 'off',
     /* Enable accessibility testing */
@@ -60,7 +60,10 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         contextOptions: {
           permissions: ['clipboard-read', 'clipboard-write']
-        }
+        },
+        launchOptions: {
+          executablePath: '/usr/bin/google-chrome',
+        },
       },
     },
 
@@ -77,13 +80,22 @@ export default defineConfig({
 
   /* Enhanced reporters */
   reporter: process.env.CI ? [
-    ['html', { outputFolder: 'playwright-report', open: 'never' }],
+    ['html', {
+      outputFolder: 'playwright-report', 
+      open: 'never',
+      attachments: 'embed', // Embed screenshots in HTML report
+    }],
     ['json', { outputFile: 'test-results/results.json' }],
     ['junit', { outputFile: 'test-results/junit.xml' }],
     ['line'],
     ['github'],
+    ['./tests/e2e/reporters/ScreenshotReporter.ts'],
   ] : [
-    ['html', { outputFolder: 'playwright-report', open: 'on-failure' }],
+    ['html', {
+      outputFolder: 'playwright-report', 
+      open: 'on-failure',
+      attachments: 'embed', // Embed screenshots in HTML report
+    }],
     ['line']
   ],
 
@@ -96,10 +108,13 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'echo "Start server manually with: ALLOW_TEST_BYPASS=true npm run start:dev" && exit 1',
+    command: process.env.CI
+      ? 'SKIP_MESSENGERS=true NODE_ENV=test node dist/index.js'
+      : 'ALLOW_TEST_BYPASS=true npm run start:dev',
     url: 'http://localhost:3028',
-    reuseExistingServer: true,
+    reuseExistingServer: !process.env.CI,
     timeout: 180 * 1000,
+  },
   },
 
   /* Metadata for test organization */

@@ -63,7 +63,7 @@ setupMiddleware(app, { frontendDistPath, frontendAssetsPath, viteServerRef });
 // ── Routes ──
 registerRoutes(app, { frontendDistPath, viteServerRef });
 
-async function main() {
+async function main(): Promise<void> {
   // ── Services (DI, DB, providers, messengers, pipeline) ──
   const { messengerServices } = await initServices(app);
 

@@ -4,7 +4,21 @@ import { ErrorService } from '../../../services/ErrorService';
 import type { BotConfig } from '../../../types/bot';
 import { withRetry } from '../../../utils/withRetry';
 
-export const useBotPreview = () => {
+export const useBotPreview = (): {
+  previewBot: BotConfig | null;
+  setPreviewBot: React.Dispatch<React.SetStateAction<BotConfig | null>>;
+  previewTab: 'activity' | 'chat' | 'validation' | 'testdrive';
+  setPreviewTab: React.Dispatch<React.SetStateAction<'activity' | 'chat' | 'validation' | 'testdrive'>>;
+  activityLogs: any[];
+  chatHistory: any[];
+  logFilter: string;
+  setLogFilter: React.Dispatch<React.SetStateAction<string>>;
+  activityError: string | null;
+  chatError: string | null;
+  fetchPreviewActivity: (botId: string, limit?: number) => Promise<void>;
+  fetchPreviewChat: (botId: string) => Promise<void>;
+  handlePreviewBot: (bot: BotConfig) => Promise<void>;
+} => {
   const [previewBot, setPreviewBot] = useState<BotConfig | null>(null);
   const [previewTab, setPreviewTab] = useState<'activity' | 'chat' | 'validation' | 'testdrive'>('activity');
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
@@ -13,7 +27,7 @@ export const useBotPreview = () => {
   const [activityError, setActivityError] = useState<string | null>(null);
   const [chatError, setChatError] = useState<string | null>(null);
 
-  const fetchPreviewActivity = useCallback(async (botId: string, limit = 20) => {
+  const fetchPreviewActivity = useCallback(async (botId: string, limit = 20): Promise<void> => {
     setActivityError(null);
     try {
       const activityJson = await withRetry(() =>

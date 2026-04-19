@@ -259,7 +259,7 @@ export const BotProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
 };
 
-export const useBotContext = () => {
+export const useBotContext = (): BotContextType => {
   const context = useContext(BotContext);
   if (context === undefined) {
     throw new Error('useBotContext must be used within a BotProvider');

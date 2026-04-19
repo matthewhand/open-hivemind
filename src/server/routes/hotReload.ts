@@ -15,7 +15,7 @@ const debug = Debug('app:hotReloadRoutes');
 const router = Router();
 
 router.post(
-  '/api/config/hot-reload',
+  '/',
   validateRequest(HotReloadChangeSchema),
   asyncErrorHandler(async (req, res) => {
     try {
@@ -49,13 +49,13 @@ router.post(
   })
 );
 
-router.get('/api/config/hot-reload/history', (req, res) => {
+router.get('/history', (req, res) => {
   try {
     const limit = parseInt(req.query.limit as string) || 50;
     const hotReloadManager = HotReloadManager.getInstance();
     const history = hotReloadManager.getChangeHistory(limit);
 
-    return res.json(ApiResponse.success());
+    return res.json(ApiResponse.success(history));
   } catch (error) {
     debug('Hot reload history API error:', error);
     return res
@@ -72,12 +72,12 @@ router.get('/api/config/hot-reload/history', (req, res) => {
   }
 });
 
-router.get('/api/config/hot-reload/rollbacks', (req, res) => {
+router.get('/rollbacks', (req, res) => {
   try {
     const hotReloadManager = HotReloadManager.getInstance();
     const rollbacks = hotReloadManager.getAvailableRollbacks();
 
-    return res.json(ApiResponse.success());
+    return res.json(ApiResponse.success(rollbacks));
   } catch (error) {
     debug('Hot reload rollbacks API error:', error);
     return res
@@ -94,54 +94,55 @@ router.get('/api/config/hot-reload/rollbacks', (req, res) => {
   }
 });
 
-router.post(
-  '/api/config/hot-reload/rollback/:snapshotId',
-  validateRequest(SnapshotIdParamSchema),
-  async (req, res) => {
-    try {
-      const { snapshotId } = req.params;
-      const hotReloadManager = HotReloadManager.getInstance();
-
-      const success = await hotReloadManager.rollbackToSnapshot(snapshotId);
-
-      if (success) {
-        // Notify via WebSocket
-        const wsService = WebSocketService.getInstance();
-        wsService.recordAlert({
-          level: 'warning',
-          title: 'Configuration Rolled Back',
-          message: `Configuration rolled back to snapshot ${snapshotId}`,
-          metadata: { snapshotId },
-        });
-
-        return res.json(ApiResponse.success());
-      } else {
-        return res
-          .status(HTTP_STATUS.NOT_FOUND)
-          .json(ApiResponse.error('Rollback snapshot not found or rollback failed'));
-      }
-    } catch (error) {
-      debug('Hot reload rollback API error:', error);
-      return res
-        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(
-          ApiResponse.error(
-            process.env.NODE_ENV === 'production'
-              ? 'An internal error occurred'
-              : error instanceof Error
-                ? error.message
-                : 'Unknown error'
-          )
-        );
-    }
-  }
-);
-
-router.get('/api/config/hot-reload/status', (req, res) => {
+router.post('/rollback/:snapshotId', validateRequest(SnapshotIdParamSchema), async (req, res) => {
   try {
+    const { snapshotId } = req.params;
     const hotReloadManager = HotReloadManager.getInstance();
 
-    return res.json(ApiResponse.success());
+    const success = await hotReloadManager.rollbackToSnapshot(snapshotId);
+
+    if (success) {
+      // Notify via WebSocket
+      const wsService = WebSocketService.getInstance();
+      wsService.recordAlert({
+        level: 'warning',
+        title: 'Configuration Rolled Back',
+        message: `Configuration rolled back to snapshot ${snapshotId}`,
+        metadata: { snapshotId },
+      });
+
+      return res.json(ApiResponse.success(true));
+    } else {
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Rollback snapshot not found or rollback failed'));
+    }
+  } catch (error) {
+    debug('Hot reload rollback API error:', error);
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(
+        ApiResponse.error(
+          process.env.NODE_ENV === 'production'
+            ? 'An internal error occurred'
+            : error instanceof Error
+              ? error.message
+              : 'Unknown error'
+        )
+      );
+  }
+});
+
+router.get('/status', (req, res) => {
+  try {
+    const hotReloadManager = HotReloadManager.getInstance();
+    const history = hotReloadManager.getChangeHistory(1);
+    const status = {
+      enabled: true,
+      lastChange: history[0] || null,
+    };
+
+    return res.json(ApiResponse.success(status));
   } catch (error) {
     debug('Hot reload status API error:', error);
     return res

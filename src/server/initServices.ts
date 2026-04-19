@@ -32,13 +32,35 @@ const indexLog = debug('app:index');
 const appLogger = Logger.withContext('app:index');
 const skipMessengers = process.env.SKIP_MESSENGERS === 'true';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const messageConfig = (messageConfigModule.default || messageConfigModule) as any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const webhookConfig = (webhookConfigModule.default || webhookConfigModule) as any;
+interface ConvictConfig {
+  get(key: string): unknown;
+}
+const messageConfig = (messageConfigModule.default ||
+  messageConfigModule) as unknown as ConvictConfig;
+const webhookConfig = (webhookConfigModule.default ||
+  webhookConfigModule) as unknown as ConvictConfig;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function startBot(app: import('express').Application, messengerService: any) {
+interface MessengerService {
+  providerName?: string;
+  botId?: string;
+  initialize(): Promise<void>;
+  setApp?(app: import('express').Application): void;
+  setMessageHandler(
+    handler: (
+      message: unknown,
+      historyMessages?: unknown,
+      botConfig?: Record<string, unknown>
+    ) => unknown
+  ): void;
+  getAgentStartupSummaries?(): Array<Record<string, string>>;
+  getDefaultChannel?(): string | null;
+  getChannels?(): string[];
+  sendMessageToChannel?(channelId: string, text: string): Promise<void>;
+  sendMessage?(channelId: string, text: string): Promise<void>;
+  constructor?: { name?: string };
+}
+
+async function startBot(app: import('express').Application, messengerService: MessengerService) {
   const providerType =
     messengerService.providerName || messengerService.constructor?.name || 'Unknown';
 
@@ -63,14 +85,18 @@ async function startBot(app: import('express').Application, messengerService: an
       const { MessageBus } = await import('@src/events/MessageBus');
       const bus = MessageBus.getInstance();
       messengerService.setMessageHandler(
-        async (message: any, historyMessages: any[], botConfig: any) => {
+        async (message: unknown, historyMessages: unknown, botConfig: Record<string, unknown>) => {
+          const msg = message as Record<string, unknown> & {
+            platform?: string;
+            getChannelId?: () => string;
+          };
           await bus.emitAsync('message:incoming', {
             message,
             history: historyMessages,
             botConfig,
             botName: String(botConfig.BOT_NAME || botConfig.name || 'hivemind'),
-            platform: message.platform || 'unknown',
-            channelId: message.getChannelId?.() || '',
+            platform: msg.platform || 'unknown',
+            channelId: msg.getChannelId?.() || '',
             metadata: {},
           });
           return ''; // Response is sent by SendStage
@@ -78,8 +104,8 @@ async function startBot(app: import('express').Application, messengerService: an
       );
     } else {
       // Legacy mode: call handleMessage() directly
-      messengerService.setMessageHandler((message: any, historyMessages: any[], botConfig: any) =>
-        messageHandlerModule.handleMessage(message, historyMessages, botConfig)
+      messengerService.setMessageHandler((...args: unknown[]) =>
+        messageHandlerModule.handleMessage(args[0], args[1], args[2])
       );
     }
     indexLog('[DEBUG] Message handler set up successfully.');
@@ -179,7 +205,7 @@ async function startBot(app: import('express').Application, messengerService: an
 }
 
 export interface InitServicesResult {
-  messengerServices: any[];
+  messengerServices: MessengerService[];
 }
 
 /**
@@ -275,12 +301,12 @@ export async function initServices(
   appLogger.info('\ud83d\udd0d Anomaly Detection Service initialized');
 
   // Prepare messenger services collection for optional webhook registration later
-  let messengerServices: any[] = [];
+  let messengerServices: MessengerService[] = [];
 
   // In demo mode, skip messenger initialization if no real providers configured
   const shouldSkipMessengers = skipMessengers || demoService.isInDemoMode();
 
-  let llmProviders: any[] = [];
+  let llmProviders: unknown[] = [];
   if (!shouldSkipMessengers) {
     llmProviders = await getLlmProvider();
     appLogger.info('\ud83e\udd16 Resolved LLM providers', {
@@ -310,7 +336,7 @@ export async function initServices(
 
     messengerServices = await messengerProviderModule.getMessengerProvider();
     // Only initialize messenger services that match the configured MESSAGE_PROVIDER(s)
-    const filteredMessengers = messengerServices.filter((service: any) => {
+    const filteredMessengers = messengerServices.filter((service) => {
       // If providerName is not defined, assume 'slack' by default.
       const providerName = service.providerName || 'slack';
       return messageProviders.includes(providerName.toLowerCase());
@@ -323,7 +349,7 @@ export async function initServices(
 
     if (filteredMessengers.length > 0) {
       appLogger.info('\ud83e\udd16 Starting messenger bots', {
-        services: filteredMessengers.map((s: any) => s.providerName).join(', '),
+        services: filteredMessengers.map((s) => s.providerName).join(', '),
       });
       const startResults = await Promise.allSettled(
         filteredMessengers.map(async (service) => {
@@ -382,7 +408,7 @@ export async function initServices(
  */
 export async function initWebhooks(
   app: import('express').Application,
-  messengerServices: any[]
+  messengerServices: MessengerService[]
 ): Promise<void> {
   const isWebhookEnabled = webhookConfig.get('WEBHOOK_ENABLED') || false;
   if (isWebhookEnabled) {

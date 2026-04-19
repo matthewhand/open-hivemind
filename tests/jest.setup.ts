@@ -1,11 +1,6 @@
 import '@testing-library/jest-dom';
 import 'reflect-metadata';
 import { Server } from 'http';
-import express from 'express';
-import { RealTimeValidationService } from '../src/server/services/RealTimeValidationService';
-import { WebSocketService } from '../src/server/services/WebSocketService';
-import { DatabaseManager } from '../src/database/DatabaseManager';
-import { MessageBus } from '../src/events/MessageBus';
 
 const _polyfillUtil = require('util');
 if (typeof globalThis.TextEncoder === 'undefined') {
@@ -33,81 +28,77 @@ if (typeof HTMLCanvasElement !== 'undefined') {
   } as any;
 }
 
-process.env.SESSION_SECRET = 'testsecretlongenoughstringtoavoidwarning32chars';
-process.env.NODE_CONFIG_DIR = 'config/test/';
-
 // Env-Var Isolation & Interceptor
 const PROTECTED_PREFIXES = ['OPENAI_', 'SLACK_', 'DISCORD_', 'MATTERMOST_', 'DATABASE_'];
-const originalEnv = process.env;
+const originalEnv = { ...process.env };
+const mockedInTest = new Set<string>();
 
-beforeEach(() => {
-  const envSnapshot = { ...originalEnv };
-  const mockedInTest = new Set<string>();
-
-  // Use a proxy to intercept access to "secret" variables
-  // @ts-ignore - process.env type is strict
-  process.env = new Proxy(envSnapshot, {
-    get(target, prop) {
-      if (typeof prop === 'string') {
-        const isProtected = PROTECTED_PREFIXES.some((prefix) => prop.startsWith(prefix));
-        if (isProtected && !mockedInTest.has(prop) && target[prop]) {
-          console.error(
-            `\x1b[31m[SECURITY WARNING]\x1b[0m Accessing protected env var "${prop}" without explicit mock in test.`
+// Use a proxy to intercept access to "secret" variables
+// @ts-ignore - process.env type is strict
+process.env = new Proxy(process.env, {
+  get(target, prop) {
+    if (typeof prop === 'string') {
+      const isProtected = PROTECTED_PREFIXES.some((prefix) => prop.startsWith(prefix));
+      if (isProtected && !mockedInTest.has(prop) && target[prop]) {
+        // If it's the real value (from start), block it unless ALLOW_REAL_SECRETS is true.
+        if (target[prop] === originalEnv[prop]) {
+          if (process.env.ALLOW_REAL_SECRETS === 'true') {
+            return target[prop];
+          }
+           console.error(
+            `\x1b[31m[SECURITY WARNING]\x1b[0m Accessing protected env var "${prop}" without explicit mock in test. Set ALLOW_REAL_SECRETS=true to allow this.`
           );
           return undefined; // Block access to real secret
         }
       }
-      return target[prop];
-    },
-    set(target, prop, value) {
-      if (typeof prop === 'string') {
-        mockedInTest.add(prop);
-      }
-      target[prop] = value as string;
-      return true;
-    },
-    deleteProperty(target, prop) {
-      if (typeof prop === 'string') {
-        mockedInTest.delete(prop);
-      }
-      delete target[prop];
-      return true;
-    },
-    ownKeys(target) {
-      return Reflect.ownKeys(target);
-    },
-    getOwnPropertyDescriptor(target, prop) {
-      return Reflect.getOwnPropertyDescriptor(target, prop);
-    },
-  });
+    }
+    return target[prop];
+  },
+  set(target, prop, value) {
+    if (typeof prop === 'string') {
+      mockedInTest.add(prop);
+    }
+    target[prop] = value as string;
+    return true;
+  },
+  deleteProperty(target, prop) {
+    if (typeof prop === 'string') {
+      mockedInTest.delete(prop);
+    }
+    delete target[prop];
+    return true;
+  },
+  ownKeys(target) {
+    return Reflect.ownKeys(target);
+  },
+  getOwnPropertyDescriptor(target, prop) {
+    return Reflect.getOwnPropertyDescriptor(target, prop);
+  },
+});
+
+beforeEach(() => {
+  // Clear mocked set for each test? No, that would break beforeAll.
+  // We'll trust suites to manage their own mocks.
 });
 
 afterEach(() => {
-  process.env = originalEnv;
+  // We don't reset process.env to originalEnv here because it's a Proxy now.
 });
+
+process.env.SESSION_SECRET = 'testsecretlongenoughstringtoavoidwarning32chars';
+process.env.NODE_CONFIG_DIR = 'config/test/';
+process.env.ALLOW_LOCAL_NETWORK_ACCESS = 'true';
+
+// Global mock for better-sqlite3
+jest.mock('better-sqlite3', () => {
+  const mockSqlite = jest.requireActual('./mocks/sqlite');
+  return mockSqlite.default || mockSqlite;
+}, { virtual: true });
 
 // Set default timeout for all tests
 jest.setTimeout(60000);
 
 let server: Server;
-
-beforeAll((done) => {
-  // Mock services without starting server
-  try {
-    const wsService = WebSocketService.getInstance();
-    wsService.initialize = jest.fn();
-
-    const originalSetupEventHandlers = RealTimeValidationService.prototype.setupEventHandlers;
-    RealTimeValidationService.prototype.setupEventHandlers = jest.fn();
-
-    const validationService = RealTimeValidationService.getInstance();
-    RealTimeValidationService.prototype.setupEventHandlers = originalSetupEventHandlers;
-
-    done();
-  } catch (error) {
-    done();
-  }
-});
 
 afterAll((done) => {
   if (server) {
@@ -117,25 +108,10 @@ afterAll((done) => {
   }
 });
 
-/**
- * Jest setup file to optionally silence console output during tests.
- *
- * Behavior:
- * - If process.env.ALLOW_CONSOLE is truthy, no stubbing is applied.
- * - Otherwise, console methods are stubbed to no-ops to keep test output quiet.
- *
- * You can enable console logs temporarily by running:
- *   ALLOW_CONSOLE=1 npm test
- *   ALLOW_CONSOLE=1 make test
- */
-
 const allow = !!process.env.ALLOW_CONSOLE;
 
 if (!allow) {
-  // Preserve original methods in case a suite wants to restore them.
   const noop = () => {};
-  // Commonly used console methods in the repo
-
   global.console = {
     ...console,
     log: noop,
@@ -149,31 +125,36 @@ if (!allow) {
 
 // Global Service Cleanup Hooks
 afterEach(async () => {
-  // Reset MessageBus after every test to clear listeners
   try {
+    const { MessageBus } = require('../src/events/MessageBus');
     MessageBus.getInstance().reset();
-  } catch (err) {
-    // Service might not be initialized
-  }
-});
-
-afterAll(async () => {
-  // Disconnect Database and Shutdown WebSocketService after the full suite
-  try {
-    const db = DatabaseManager.getInstance();
-    if (typeof db.disconnect === 'function') {
-      await db.disconnect();
-    }
-  } catch (err) {
-    // Database might not be configured
-  }
+  } catch (err) {}
 
   try {
-    const ws = WebSocketService.getInstance();
-    if (typeof ws.shutdown === 'function') {
-      ws.shutdown();
-    }
-  } catch (err) {
-    // WebSocketService might not be initialized
-  }
+    const { GlobalActivityTracker } = require('../src/message/helpers/processing/GlobalActivityTracker');
+    GlobalActivityTracker.getInstance().reset();
+  } catch (err) {}
+
+  try {
+    const { IncomingMessageDensity } = require('../src/message/helpers/processing/IncomingMessageDensity');
+    IncomingMessageDensity.getInstance().clear();
+  } catch (err) {}
+
+  try {
+    const { clearBotActivity } = require('../src/message/helpers/processing/ChannelActivity');
+    clearBotActivity();
+  } catch (err) {}
 });
+
+/**
+ * Helper to mock crypto.randomBytes and Math.random for consistent test results
+ * @param value Number between 0 and 1
+ */
+(global as any).mockRandom = (value: number) => {
+  const crypto = require('crypto');
+  const uint32 = Math.floor(value * 0x100000000);
+  const buffer = Buffer.alloc(4);
+  buffer.writeUInt32BE(uint32);
+  jest.spyOn(crypto, 'randomBytes').mockReturnValue(buffer);
+  jest.spyOn(Math, 'random').mockReturnValue(value);
+};

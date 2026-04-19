@@ -24,7 +24,7 @@
     "skipLibCheck": true,
     "noEmitOnError": true,
     "downlevelIteration": true,
-    "jsx": "react",
+    "jsx": "react-jsx",
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": false,
     "paths": {

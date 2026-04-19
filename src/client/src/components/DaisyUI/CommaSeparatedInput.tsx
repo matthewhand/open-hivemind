@@ -12,6 +12,12 @@ export interface CommaSeparatedInputProps {
   tagColor?: (tag: string) => string;
   error?: string;
   validate?: (item: string) => string | null;
+  /**
+   * Debounce delay in milliseconds for token processing.
+   * Prevents rapid state updates during fast typing.
+   * @default 0 (no debounce)
+   */
+  bufferDelay?: number;
 }
 
 export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
@@ -26,6 +32,7 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   tagColor,
   error,
   validate,
+  bufferDelay = 0,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -42,6 +49,10 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   // We need to keep a ref of current value to push to history
   const currentValueRef = useRef(value);
 
+  // Token buffer for debounced processing
+  const tokenBufferRef = useRef<string>('');
+  const bufferTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     // Only update if it actually changed to avoid infinite loops,
     // though the parent might give us the same array ref if we're lucky.
@@ -50,11 +61,34 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
     }
   }, [value]);
 
+  // Cleanup buffer timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (bufferTimeoutRef.current) {
+        clearTimeout(bufferTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const pushToHistory = useCallback((_newValue: string[]) => {
     const last = historyRef.current[historyRef.current.length - 1];
     if (!last || JSON.stringify(last) !== JSON.stringify(currentValueRef.current)) {
       historyRef.current.push([...currentValueRef.current]);
       setCanUndo(true);
+    }
+  }, []);
+
+  /**
+   * Flush the token buffer and commit any buffered tokens.
+   */
+  const flushBuffer = useCallback(() => {
+    if (bufferTimeoutRef.current) {
+      clearTimeout(bufferTimeoutRef.current);
+      bufferTimeoutRef.current = null;
+    }
+    if (tokenBufferRef.current) {
+      commitInput(tokenBufferRef.current);
+      tokenBufferRef.current = '';
     }
   }, []);
 
@@ -117,16 +151,20 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
+      flushBuffer();
       commitInput();
     } else if (e.key === ',') {
       e.preventDefault();
+      flushBuffer();
       commitInput();
     } else if (e.key === 'Backspace' && !inputValue && value.length > 0) {
+      flushBuffer();
       const next = value.slice(0, -1);
       pushToHistory(next);
       onChange(next);
     } else if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
       e.preventDefault();
+      flushBuffer();
       handleUndo();
     }
   };
@@ -148,6 +186,9 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
     if (disabled) return;
+
+    // Flush any existing buffer
+    flushBuffer();
 
     const pastedText = e.clipboardData.getData('text');
     if (!pastedText) return;
@@ -176,6 +217,9 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
 
     // Auto-commit if user types a comma
     if (newVal.endsWith(',')) {
+      // Flush any existing buffer first
+      flushBuffer();
+      
       const parts = newVal.split(',');
       const itemToCommit = parts[0];
 
@@ -196,6 +240,21 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
     setShowSuggestions(true);
     if (internalError) {
       setInternalError(null);
+    }
+
+    // Buffer input for debounced processing
+    if (bufferDelay > 0) {
+      tokenBufferRef.current = newVal;
+      
+      if (bufferTimeoutRef.current) {
+        clearTimeout(bufferTimeoutRef.current);
+      }
+      
+      bufferTimeoutRef.current = setTimeout(() => {
+        if (tokenBufferRef.current) {
+          flushBuffer();
+        }
+      }, bufferDelay);
     }
   };
 
@@ -249,6 +308,8 @@ export const CommaSeparatedInput: React.FC<CommaSeparatedInputProps> = ({
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onBlur={() => {
+            // Flush buffer first
+            flushBuffer();
             // Add a small delay so suggestion clicks can fire before blur
             setTimeout(() => commitInput(), 150);
           }}

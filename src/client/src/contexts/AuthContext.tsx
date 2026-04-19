@@ -126,7 +126,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     // Check for serverless mode
-    const checkServerless = async () => {
+    const checkServerless = async (): Promise<void> => {
       try {
         const res = await fetch('/health');
         if (res.ok) {
@@ -144,7 +144,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Check if the client is on a trusted network
   useEffect(() => {
-    const checkTrustedNetwork = async () => {
+    const checkTrustedNetwork = async (): Promise<void> => {
       try {
         const res = await fetch(buildUrl('/api/auth/trusted-status'));
         if (res.ok) {
@@ -212,7 +212,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const logout = () => {
+  const logout = (): void => {
     setUser(null);
     setTokens(null);
     // Clear from both storages — we don't know which was used at login time

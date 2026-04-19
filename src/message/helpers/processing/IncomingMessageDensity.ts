@@ -103,7 +103,7 @@ export class IncomingMessageDensity {
   }
 
   // For testing
-  public clear() {
+  public clear(): void {
     this.channelHistory.clear();
     this.participantLastSeen.clear();
   }

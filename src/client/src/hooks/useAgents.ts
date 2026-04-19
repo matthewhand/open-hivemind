@@ -2,7 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import type { Agent } from '../services/agentService';
 import { getAgents } from '../services/agentService';
 
-export const useAgents = () => {
+export const useAgents = (): {
+  agents: Agent[];
+  loading: boolean;
+  error: string | null;
+} => {
   const {
     data: agents = [],
     isLoading: loading,

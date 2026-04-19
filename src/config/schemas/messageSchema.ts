@@ -85,9 +85,7 @@ export const MessageSchema = z.object({
     const clamped: Record<string, number> = {};
     for (const [k, v] of Object.entries(val)) {
       const num = Number(v);
-      if (!isNaN(num)) {
-        clamped[k] = Math.max(0, Math.min(2, num));
-      }
+      clamped[k] = isNaN(num) ? 0 : Math.max(0, Math.min(2, num));
     }
     return clamped;
   }, z.record(z.number())).default({}),
@@ -96,9 +94,7 @@ export const MessageSchema = z.object({
     const clamped: Record<string, number> = {};
     for (const [k, v] of Object.entries(val)) {
       const num = Number(v);
-      if (!isNaN(num)) {
-        clamped[k] = Math.max(0, Math.floor(num));
-      }
+      clamped[k] = isNaN(num) ? 0 : Math.max(0, Math.floor(num));
     }
     return clamped;
   }, z.record(z.number())).default({}),
@@ -120,6 +116,7 @@ export const MessageSchema = z.object({
     message: z.string().default('Hello! I am online.'),
     use_llm: z.boolean().default(true),
   }).default({}),
+  DISCORD_MESSAGE_TEMPLATES: z.record(z.string()).default({}),
 });
 
 export type MessageConfig = z.infer<typeof MessageSchema>;

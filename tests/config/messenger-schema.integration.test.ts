@@ -1,8 +1,12 @@
-import telegramConfig from '../../src/config/telegramConfig';
-import webhookConfig from '../../src/config/webhookConfig';
+import 'reflect-metadata';
+import { registerServices } from '../../src/di/registration';
 
 describe('Messenger Schema Integration', () => {
   const originalEnv = { ...process.env };
+
+  beforeAll(() => {
+    registerServices();
+  });
 
   beforeEach(() => {
     jest.resetModules();
@@ -36,11 +40,11 @@ describe('Messenger Schema Integration', () => {
   describe('Webhook Config', () => {
     it('should load and validate Webhook settings', () => {
       process.env.WEBHOOK_URL = 'https://example.com/webhook';
-      process.env.WEBHOOK_SECRET = 'secret-123';
+      process.env.WEBHOOK_TOKEN = 'secret-123';
       
       const config = require('../../src/config/webhookConfig').default;
       expect(config.get('WEBHOOK_URL')).toBe('https://example.com/webhook');
-      expect(config.get('WEBHOOK_SECRET')).toBe('secret-123');
+      expect(config.get('WEBHOOK_TOKEN')).toBe('secret-123');
       expect(() => config.validate({ allowed: 'strict' })).not.toThrow();
     });
   });

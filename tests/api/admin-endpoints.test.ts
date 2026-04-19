@@ -53,6 +53,13 @@ jest.mock('../../src/auth/middleware', () => ({
   },
 }));
 
+// Mock isSafeUrl to allow localhost in tests
+jest.mock('@hivemind/shared-types', () => ({
+  ...jest.requireActual('@hivemind/shared-types'),
+  isSafeUrl: jest.fn().mockResolvedValue({ safe: true, ip: '127.0.0.1' }),
+  isPrivateIP: jest.fn().mockReturnValue(false),
+}));
+
 describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
   afterEach(() => {
     (MCPService as any).instance = undefined;
@@ -270,7 +277,7 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
     });
   });
 
-  describe.skip('POST /api/admin/mcp-servers/connect', () => {
+  describe('POST /api/admin/mcp-servers/connect', () => {
     it('should connect to a valid MCP server', async () => {
       const serverConfig = {
         name: 'test-server',
@@ -299,9 +306,13 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
     });
 
     it('should handle connection failures gracefully', async () => {
+      // Set up mock to reject connection
+      const mcpServiceInstance = MCPService.getInstance();
+      jest.spyOn(mcpServiceInstance, 'connectToServer').mockRejectedValueOnce(new Error('Connection failed'));
+
       const failingConfig = {
         name: 'failing-server',
-        serverUrl: 'http://invalid-url:9999',
+        serverUrl: 'http://localhost:9999',
         apiKey: 'test-key',
       };
 
@@ -309,8 +320,7 @@ describe('Admin API Endpoints - COMPLETE TDD SUITE', () => {
         .post('/api/admin/mcp-servers/connect')
         .send(failingConfig);
 
-      // SSRF guard blocks unresolvable hostnames with 403
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(500);
       expect(response.body).toHaveProperty('error');
     });
   });

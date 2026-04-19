@@ -5,6 +5,7 @@ import Debug from 'debug';
 import { isValidUrl } from '../common/urlUtils';
 import { SecureConfigManager } from './SecureConfigManager';
 import { ValidationError } from '../types/errorClasses';
+import { validateUrl, validateEnum } from './validationUtils';
 import { type IConfigurationManager } from '../di/interfaces';
 const debug = Debug('app:ConfigurationManager');
 
@@ -16,57 +17,19 @@ const debug = Debug('app:ConfigurationManager');
 const schema = convict({
   NODE_ENV: {
     doc: 'The application environment.',
-    format: ['production', 'development', 'test'],
+    format: (val: any) => validateEnum('NODE_ENV', val, ['production', 'development', 'test']),
     default: 'development',
     env: 'NODE_ENV',
   },
   VITE_API_BASE_URL: {
     doc: 'API base URL for Vite frontend',
-    format: (val: any) => {
-      if (typeof val !== 'string') {
-        throw new ValidationError(
-          'Value must be a string',
-          'VITE_API_BASE_URL',
-          val,
-          'string',
-          ['Must be a valid string'],
-        );
-      }
-      if (!isValidUrl(val)) {
-        throw new ValidationError(
-          'Value must be a valid URL',
-          'VITE_API_BASE_URL',
-          val,
-          'valid URL',
-          ['Must be a properly formatted URL'],
-        );
-      }
-    },
+    format: (val: any) => validateUrl('VITE_API_BASE_URL', val),
     default: 'http://localhost:3000/api',
     env: 'VITE_API_BASE_URL',
   },
   PLAYWRIGHT_BASE_URL: {
     doc: 'Base URL for Playwright E2E tests',
-    format: (val: any) => {
-      if (typeof val !== 'string') {
-        throw new ValidationError(
-          'Value must be a string',
-          'PLAYWRIGHT_BASE_URL',
-          val,
-          'string',
-          ['Must be a valid string'],
-        );
-      }
-      if (!isValidUrl(val)) {
-        throw new ValidationError(
-          'Value must be a valid URL',
-          'PLAYWRIGHT_BASE_URL',
-          val,
-          'valid URL',
-          ['Must be a properly formatted URL'],
-        );
-      }
-    },
+    format: (val: any) => validateUrl('PLAYWRIGHT_BASE_URL', val),
     default: 'http://localhost:3000',
     env: 'PLAYWRIGHT_BASE_URL',
   },

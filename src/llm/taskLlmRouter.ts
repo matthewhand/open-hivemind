@@ -16,7 +16,7 @@ export type LlmTask = 'semantic' | 'summary' | 'followup' | 'idle';
 
 export interface TaskLlmSelection {
   provider: ILlmProvider;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   source: 'default' | 'override';
 }
 
@@ -31,8 +31,9 @@ function readOverride(task: LlmTask): { providerRef: string; modelRef: string } 
   const keyProvider = `LLM_TASK_${task.toUpperCase()}_PROVIDER` as const;
   const keyModel = `LLM_TASK_${task.toUpperCase()}_MODEL` as const;
 
-  const providerRef = String((llmTaskConfig.get as any)(keyProvider) || '').trim();
-  const modelRef = String((llmTaskConfig.get as any)(keyModel) || '').trim();
+  const getConfig = llmTaskConfig.get.bind(llmTaskConfig) as (key: string) => unknown;
+  const providerRef = String(getConfig(keyProvider) || '').trim();
+  const modelRef = String(getConfig(keyModel) || '').trim();
 
   // Back-compat aliases (if someone uses older naming conventions)
   const aliasProvider = String(process.env[`LLM_${task.toUpperCase()}_PROVIDER`] || '').trim();
@@ -54,7 +55,7 @@ function withTokenCounting(provider: ILlmProvider, _instanceId: string): ILlmPro
     generateChatCompletion: async (
       userMessage: string,
       historyMessages: IMessage[],
-      metadata?: Record<string, any>
+      metadata?: Record<string, unknown>
     ) => {
       const response = await provider.generateChatCompletion(
         userMessage,
@@ -83,22 +84,14 @@ const openWebUI: ILlmProvider = {
   generateChatCompletion: async (
     userMessage: string,
     historyMessages: IMessage[],
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ) => {
-    if (openWebUIImport.generateChatCompletion.length === 3) {
-      const result = await openWebUIImport.generateChatCompletion(
-        userMessage,
-        historyMessages,
-        metadata
-      );
-      return result.text || '';
-    } else {
-      const result = await (openWebUIImport as any).generateChatCompletion(
-        userMessage,
-        historyMessages
-      );
-      return result.text || '';
-    }
+    const result = await openWebUIImport.generateChatCompletion(
+      userMessage,
+      historyMessages,
+      metadata
+    );
+    return result.text || '';
   },
   generateCompletion: async () => {
     throw new Error('Non-chat completion not supported by OpenWebUI');
@@ -118,7 +111,7 @@ async function createProviderFromInstance(
     switch (type) {
       case 'openai':
         const { OpenAiProvider } = await import('@hivemind/llm-openai');
-        provider = new OpenAiProvider(cfg as any);
+        provider = new OpenAiProvider(cfg as Record<string, unknown>);
         break;
       case 'flowise':
         provider = new FlowiseProvider(cfg);
@@ -184,7 +177,7 @@ async function createProviderFromProfile(profileKey: string): Promise<ILlmProvid
     switch (type) {
       case 'openai':
         const { OpenAiProvider } = await import('@hivemind/llm-openai');
-        provider = new OpenAiProvider(cfg as any);
+        provider = new OpenAiProvider(cfg as Record<string, unknown>);
         break;
       case 'flowise':
         provider = new FlowiseProvider(cfg);
@@ -208,14 +201,14 @@ async function createProviderFromProfile(profileKey: string): Promise<ILlmProvid
 
 export async function getTaskLlm(
   task: LlmTask,
-  opts?: { fallbackProviders?: ILlmProvider[]; baseMetadata?: Record<string, any> }
+  opts?: { fallbackProviders?: ILlmProvider[]; baseMetadata?: Record<string, unknown> }
 ): Promise<TaskLlmSelection> {
   const overrides = readOverride(task);
   const providerRef = overrides.providerRef;
   const modelRef = overrides.modelRef;
 
   const baseMetadata = opts?.baseMetadata || {};
-  const metadata: Record<string, any> = { ...baseMetadata };
+  const metadata: Record<string, unknown> = { ...baseMetadata };
   if (modelRef) {
     metadata.modelOverride = modelRef;
   }

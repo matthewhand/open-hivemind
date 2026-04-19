@@ -17,15 +17,14 @@ import { UserConfigStore } from '../config/UserConfigStore';
 import { DatabaseManager } from '../database/DatabaseManager';
 import { SchemaManager } from '../database/SchemaManager';
 import { BotManager } from '../managers/BotManager';
+import { BotConfigService } from '../server/services/BotConfigService';
+import { ConfigurationTemplateService } from '../server/services/ConfigurationTemplateService';
+import { ConfigurationValidator } from '../server/services/ConfigurationValidator';
 import { RealTimeValidationService } from '../server/services/RealTimeValidationService';
 import { BroadcastService } from '../server/services/websocket/BroadcastService';
 import { ConnectionManager } from '../server/services/websocket/ConnectionManager';
 import { EventHandlers } from '../server/services/websocket/EventHandlers';
 import { WebSocketService } from '../server/services/WebSocketService';
-import DemoModeService from '../services/DemoModeService';
-import { GreetingStateManager } from '../services/GreetingStateManager';
-import { StartupGreetingService } from '../services/StartupGreetingService';
-import { SwarmCoordinator } from '../services/SwarmCoordinator';
 import { container, TOKENS } from './container';
 
 const logger = Logger.withContext('DI');
@@ -68,7 +67,8 @@ export function registerServices(): void {
   providerConfigManager.syncBotProviders();
 
   logger.debug('Registering DatabaseManager');
-  container.registerSingleton(TOKENS.DatabaseManager, DatabaseManager);
+  container.registerInstance(TOKENS.DatabaseManager, DatabaseManager.getInstance());
+  container.registerInstance(DatabaseManager, DatabaseManager.getInstance());
 
   logger.debug('Registering SchemaManager');
   container.registerSingleton(TOKENS.SchemaManager, SchemaManager);
@@ -90,19 +90,34 @@ export function registerServices(): void {
   logger.debug('Registering RealTimeValidationService');
   container.registerSingleton(TOKENS.RealTimeValidationService, RealTimeValidationService);
 
+  logger.debug('Registering Configuration services');
+  container.registerSingleton(ConfigurationValidator, ConfigurationValidator);
+  container.registerSingleton(BotConfigService, BotConfigService);
+  container.registerSingleton(ConfigurationTemplateService, ConfigurationTemplateService);
+
   logger.debug('Registering DemoModeService');
-  container.registerSingleton('DemoModeService', DemoModeService);
+  const { default: DemoModeServiceClass } = require('../services/DemoModeService');
+  container.registerSingleton('DemoModeService', DemoModeServiceClass);
 
   logger.debug('Registering GreetingStateManager');
-  container.registerSingleton(GreetingStateManager, GreetingStateManager);
+  const {
+    GreetingStateManager: GreetingStateManagerClass,
+  } = require('../services/GreetingStateManager');
+  container.registerSingleton(GreetingStateManagerClass, GreetingStateManagerClass);
 
   logger.debug('Registering StartupGreetingService');
-  container.registerSingleton(StartupGreetingService, StartupGreetingService);
+  const {
+    StartupGreetingService: StartupGreetingServiceClass,
+  } = require('../services/StartupGreetingService');
+  container.registerSingleton(StartupGreetingServiceClass, StartupGreetingServiceClass);
+  container.registerSingleton('StartupGreetingService', StartupGreetingServiceClass);
 
   logger.debug('Registering SwarmCoordinator');
+  const { SwarmCoordinator: SwarmCoordinatorClass } = require('../services/SwarmCoordinator');
   // SwarmCoordinator uses singleton pattern with private constructor
   // Register the instance directly instead of the class
-  container.registerInstance(TOKENS.SwarmCoordinator, SwarmCoordinator.getInstance());
+  container.registerInstance(TOKENS.SwarmCoordinator, SwarmCoordinatorClass.getInstance());
+  container.registerInstance(SwarmCoordinatorClass, SwarmCoordinatorClass.getInstance());
 
   logger.info('DI services registered');
 }
@@ -132,6 +147,8 @@ export function validateRegistrations(): void {
     TOKENS.WebSocketService,
     TOKENS.RealTimeValidationService,
     TOKENS.SwarmCoordinator,
+    'StartupGreetingService',
+    'DemoModeService',
   ];
 
   let hasErrors = false;

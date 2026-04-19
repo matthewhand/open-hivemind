@@ -4,6 +4,8 @@ import { AuditLogger } from '@src/common/auditLogger';
 import { ErrorHandler } from '@src/common/errors/ErrorHandler';
 import { PerformanceMonitor } from '@src/common/errors/PerformanceMonitor';
 import { getGuardrailProfileByKey } from '@src/config/guardrailProfiles';
+import { UserConfigStore } from '@src/config/UserConfigStore';
+import { MessageBus } from '@src/events/MessageBus';
 import { getLlmProviderForBot } from '@src/llm/getLlmProvider';
 import { getQuotaManager } from '@src/middleware/quotaMiddleware';
 import { SyncProviderRegistry } from '@src/registries/SyncProviderRegistry';
@@ -82,19 +84,64 @@ const getSemanticGuardrailService = () => SemanticGuardrailService.getInstance()
 export async function handleMessage(
   message: IMessage,
   historyMessages: IMessage[] = [],
-  botConfig: Record<string, unknown>
+  botConfig: Record<string, unknown> = {}
 ): Promise<string | null> {
+  // Ensure botConfig is at least an empty object
+  const safeBotConfig = botConfig || {};
+  console.log('DEBUG: safeBotConfig keys =', Object.keys(safeBotConfig));
+  console.log('DEBUG: safeBotConfig.name =', safeBotConfig.name);
+  console.log('DEBUG: botConfig.name =', botConfig.name);
+
   return await PerformanceMonitor.measureAsync(
     async () => {
+      // Check if system is in maintenance mode
+      const userConfigStore = UserConfigStore.getInstance();
+      const isMaintenanceMode = userConfigStore.isMaintenanceMode();
+
+      if (isMaintenanceMode) {
+        const logger = Debug(`app:messageHandler:maintenance`);
+        logger('Message received but system is in maintenance mode - skipping processing');
+        try {
+          AuditLogger.getInstance().logBotAction(
+            message.getAuthorId(),
+            'UPDATE',
+            String(botConfig.name || botConfig.BOT_ID || 'unknown-bot'),
+            'failure',
+            'Message blocked due to maintenance mode',
+            {
+              metadata: {
+                type: 'MAINTENANCE_MODE_BLOCKED',
+                channelId: message.getChannelId(),
+                botId: String(botConfig.BOT_ID || 'unknown-bot'),
+              },
+            }
+          );
+        } catch (auditError) {
+          // If audit logging fails, just continue - we're already in maintenance mode
+          logger('Failed to log maintenance mode block:', auditError);
+        }
+        return null;
+      }
+
       const pipelineMetrics = new PipelineMetrics();
       pipelineMetrics.startStage('receive');
       const channelId = message.getChannelId();
-      let resolvedBotId = String(botConfig.BOT_ID || botConfig.name || 'unknown-bot');
+      let resolvedBotId = String(safeBotConfig.BOT_ID || safeBotConfig.name || 'unknown-bot');
+
+      // Emit incoming event for the bus (used by tracing/monitoring)
+      const text = message.getText();
+      if (text && text.trim().length > 0) {
+        MessageBus.getInstance().emit('message:incoming', {
+          message,
+          botName: String(safeBotConfig.name || 'unknown'),
+        } as any);
+      }
+
       let delayKey: string | null = null;
       let isLeaderInvocation = false;
       let didLock = false;
       const activeAgentName = String(
-        botConfig.MESSAGE_USERNAME_OVERRIDE || botConfig.name || 'Bot'
+        safeBotConfig.MESSAGE_USERNAME_OVERRIDE || safeBotConfig.name || 'Bot'
       );
       let providerSenderKey: string = activeAgentName;
       let typingInterval: NodeJS.Timeout | null = null;
@@ -115,7 +162,6 @@ export async function handleMessage(
 
       // Log received message
       const userId = message.getAuthorId();
-      const text = message.getText();
       if (text) {
         // Only log if text exists (check logic inside later handles empty text, but we need text for log)
         AuditLogger.getInstance().logBotAction(
@@ -136,7 +182,6 @@ export async function handleMessage(
       }
 
       try {
-        const text = message.getText();
         if (!text) {
           logger('Empty message content, skipping processing.');
           return null;
@@ -452,7 +497,7 @@ export async function handleMessage(
             // Prose explanation at info level with context
             let prose = replyDecision.meta?.prose || replyDecision.reason;
             prose = await summarizeLogWithLlm(String(prose));
-            console.info(
+            logger(
               `\u{1F6AB} ${String(botConfig.name)} skips @${authorName} in ${channelName}: ${prose}`
             );
           }
@@ -790,7 +835,7 @@ export async function handleMessage(
         const modelInfo = botConfig
           ? ` | provider: ${botConfig.llmProvider} | model: ${botConfig.llmModel || 'default'}`
           : '';
-        console.info(
+        logger(
           `\u274C INFERENCE/PROCESSING FAILED | error: ${error instanceof Error ? error.message : String(error)}${modelInfo}`
         );
         logger(

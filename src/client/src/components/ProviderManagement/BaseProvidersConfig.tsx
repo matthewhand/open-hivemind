@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   closestCenter,
   DndContext,
@@ -10,13 +10,13 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { arrayMove } from '@dnd-kit/sortable';
 import {
   ExternalLink as ArrowTopRightOnSquareIcon,
   GripVertical as Bars3Icon,
@@ -33,7 +33,7 @@ import Modal, { ConfirmModal } from '../DaisyUI/Modal';
 import Input from '../DaisyUI/Input';
 import Select from '../DaisyUI/Select';
 import ProviderConfig from '../ProviderConfig';
-import { apiService } from '../../services/api';
+import useProviderConfig from './useProviderConfig';
 
 export interface ProviderItem {
   id: string;
@@ -160,19 +160,22 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
   emptyStateMessage,
   refreshIcon,
 }) => {
-  const [providers, setProviders] = useState<ProviderItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    providers,
+    loading: providersLoading,
+    error: providersError,
+    toast,
+    setToast,
+    fetchProviders,
+    handleDragEnd: hookHandleDragEnd,
+    handleSaveProvider: hookHandleSaveProvider,
+    handleDeleteProvider: hookHandleDeleteProvider,
+    handleToggleActive: hookHandleToggleActive,
+  } = useProviderConfig({ apiEndpoint });
+
   const [openDialog, setOpenDialog] = useState(false);
   const [editingProvider, setEditingProvider] = useState<ProviderItem | null>(null);
   const [formData, setFormData] = useState<any>({});
-  const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>(
-    {
-      show: false,
-      message: '',
-      type: 'success',
-    }
-  );
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean; title: string; message: string; onConfirm: () => void;
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
@@ -188,45 +191,13 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
     })
   );
 
-  const fetchProviders = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data: any = await apiService.get(apiEndpoint);
-      setProviders(data.providers || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : `Failed to fetch ${title.toLowerCase()}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchProviders();
-  }, [apiEndpoint]);
-
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (over && active.id !== over.id) {
-      setProviders((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
-        const reordered = arrayMove(items, oldIndex, newIndex);
-
-        // In a real implementation, we would call an API here to save the new order
-        // e.g. await fetch(`${apiEndpoint}/reorder`, { method: 'POST', body: JSON.stringify(reordered.map(p => p.id)) })
-
-        return reordered;
-      });
-
-      setToast({
-        show: true,
-        message: 'Provider priority updated',
-        type: 'success',
-      });
-    }
-  };
+  // Wrapper functions that adapt hook results to component's modal/state needs
+  const handleDragEnd = useCallback(
+    async (event: DragEndEvent) => {
+      await hookHandleDragEnd(event);
+    },
+    [hookHandleDragEnd]
+  );
 
   const handleOpenDialog = (provider?: ProviderItem) => {
     setEditingProvider(provider || null);
@@ -241,37 +212,8 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
   };
 
   const handleSaveProvider = async () => {
-    try {
-      const url = editingProvider ? `${apiEndpoint}/${editingProvider.id}` : apiEndpoint;
-      const body = {
-        name: formData.name || editingProvider?.name,
-        type: formData.type || editingProvider?.type,
-        config: formData,
-      };
-
-      if (editingProvider) {
-        await apiService.put(url, body);
-      } else {
-        await apiService.post(url, body);
-      }
-
-      setToast({
-        show: true,
-        message: `Provider ${editingProvider ? 'updated' : 'created'} successfully`,
-        type: 'success',
-      });
-      handleCloseDialog();
-      fetchProviders();
-    } catch (err) {
-      setToast({
-        show: true,
-        message:
-          err instanceof Error
-            ? err.message
-            : `Failed to ${editingProvider ? 'update' : 'create'} provider`,
-        type: 'error',
-      });
-    }
+    await hookHandleSaveProvider(editingProvider, formData);
+    handleCloseDialog();
   };
 
   const handleDeleteProvider = async (providerId: string) => {
@@ -281,46 +223,21 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
       message: 'Are you sure you want to delete this provider?',
       onConfirm: async () => {
         setConfirmModal(prev => ({ ...prev, isOpen: false }));
-        try {
-          await apiService.delete(`${apiEndpoint}/${providerId}`);
-
-          setToast({
-            show: true,
-            message: 'Provider deleted successfully',
-            type: 'success',
-          });
-          fetchProviders();
-        } catch (err) {
-          setToast({
-            show: true,
-            message: err instanceof Error ? err.message : 'Failed to delete provider',
-            type: 'error',
-          });
-        }
+        await hookHandleDeleteProvider(providerId);
       },
     });
   };
 
   const handleToggleActive = async (providerId: string, isActive: boolean) => {
-    try {
-      await apiService.post(`${apiEndpoint}/${providerId}/toggle`, { isActive });
-
-      fetchProviders();
-    } catch (err) {
-      setToast({
-        show: true,
-        message: err instanceof Error ? err.message : 'Failed to update provider status',
-        type: 'error',
-      });
-    }
+    await hookHandleToggleActive(providerId, isActive);
   };
 
-  const activeProviderDocs = React.useMemo(() => {
+  const activeProviderDocs = useMemo(() => {
     const currentType = formData.type || editingProvider?.type;
     return providerTypeOptions.find((o) => o.value === currentType)?.docsUrl;
   }, [formData.type, editingProvider?.type, providerTypeOptions]);
 
-  if (loading) {
+  if (providersLoading) {
     return (
       <div className="min-h-[200px] p-4">
         <SkeletonList items={4} />
@@ -346,7 +263,7 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
         </div>
       </div>
 
-      {error && <Alert status="error" message={error} onClose={() => setError(null)} />}
+      {providersError && <Alert status="error" message={providersError} onClose={() => setToast({ ...toast, show: false })} />}
 
       {providers.length === 0 ? (
         <div className="text-center py-12">

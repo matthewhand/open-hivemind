@@ -13,23 +13,15 @@ import {
 
 // Only import Slack modules if we're going to run tests
 const slackConfig = INTEGRATION_CONFIGS.slack;
-const canRunTests = hasAllEnvVars(...slackConfig.requiredEnvVars);
 
 createIntegrationSuite(slackConfig.name, slackConfig.requiredEnvVars, () => {
   // Lazy import to avoid loading Slack SDK if tests are skipped
   let SlackService: typeof import('@hivemind/message-slack/SlackService').SlackService;
 
   beforeAll(async () => {
-    if (!canRunTests) return;
-
-    // Dynamic import to avoid loading if skipped
+    // Dynamic import
     const slackModule = await import('@hivemind/message-slack/SlackService');
     SlackService = slackModule.SlackService;
-
-    // Log redacted credentials for debugging (safe - only shows partial)
-    console.log('Slack Integration Test Setup:');
-    console.log(`  BOT_TOKEN: ${redactValue(process.env.SLACK_BOT_TOKEN)}`);
-    console.log(`  APP_TOKEN: ${redactValue(process.env.SLACK_APP_TOKEN)}`);
   });
 
   beforeAll(async () => {

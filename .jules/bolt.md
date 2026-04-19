@@ -22,3 +22,7 @@
 ## 2024-05-22 - Dashboard Bot Status Lookups
 **Learning:** `Dashboard.tsx` was rendering a list of bots and calling `status?.bots?.find()` for every bot in the `.map()` loop, making the rendering loop $O(N \times M)$ complexity.
 **Action:** When rendering lists in React components that require correlated data, never use `.find()` inside the `.map()`. Pre-compute a lookup Map using `useMemo` to achieve O(1) lookups and bring the rendering complexity down to $O(N + M)$.
+
+## 2024-04-15 - Sliding Window Optimizations (filter vs backwards loop)
+**Learning:** `TokenTracker` and `DuplicateMessageDetector` use `.filter()` over the entire history array on *every message* to prune out old records or calculate sums. Because these are "sliding windows" where recent items are always at the end, iterating backwards and breaking early is up to 60x faster than `.filter()` + `.reduce()` for larger arrays.
+**Action:** Replace `array.filter().reduce()` in high-frequency sliding window calculations with reverse `for` loops that break early when the timestamp threshold is reached.

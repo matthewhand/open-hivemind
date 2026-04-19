@@ -1,34 +1,52 @@
 import express from 'express';
 import request from 'supertest';
-import providersRouter from '@src/server/routes/providers';
+import configRouter from '../../src/server/routes/config';
+import { registerServices } from '../../src/di/registration';
+
+// Mock authentication and permissions
+jest.mock('../../src/server/middleware/auth', () => ({
+  authenticateToken: (req: any, res: any, next: any) => {
+    req.user = { id: 'test-user', role: 'admin' };
+    next();
+  },
+  optionalAuth: (req: any, res: any, next: any) => {
+    req.user = { id: 'test-user', role: 'admin' };
+    next();
+  },
+  requirePermission: () => (req: any, res: any, next: any) => next(),
+  requireRole: () => (req: any, res: any, next: any) => next()
+}));
 
 describe('LLM Provider API Integration', () => {
   let app: express.Application;
 
   beforeAll(() => {
+    process.env.CSRF_SKIP_IN_TEST = 'true';
+    registerServices();
     app = express();
     app.use(express.json());
-    // Mount on the expected path
-    app.use('/api/providers', providersRouter);
+    // The profiles routes are actually under /api/config/llm-profiles
+    app.use('/api/config', configRouter);
+  });
+
+  afterAll(() => {
+    delete process.env.CSRF_SKIP_IN_TEST;
   });
 
   it('should return a list of system LLM profiles', async () => {
     const res = await request(app)
-      .get('/api/providers/profiles')
+      .get('/api/config/llm-profiles')
       .set('Origin', 'http://localhost:3000');
-    expect(res.status).toBe(200);
-    expect(Array.isArray(res.body.data)).toBe(true);
     
-    // We should have some default profiles
-    if (res.body.data.length > 0) {
-      expect(res.body.data[0]).toHaveProperty('key');
-      expect(res.body.data[0]).toHaveProperty('name');
-    }
+    expect(res.status).toBe(200);
+    // Based on src/server/routes/config/providers.ts, it returns { llm: [...] }
+    expect(res.body).toHaveProperty('llm');
+    expect(Array.isArray(res.body.llm)).toBe(true);
   });
 
   it('should return 404 for non-existent provider profile', async () => {
     const res = await request(app)
-      .get('/api/providers/providers/non-existent-key-999')
+      .get('/api/config/llm-profiles/non-existent-key-999')
       .set('Origin', 'http://localhost:3000');
     // If not found, should return 404
     expect(res.status).toBe(404);

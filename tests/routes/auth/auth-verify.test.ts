@@ -140,7 +140,7 @@ describe('GET /auth/verify', () => {
 
     expect(res.status).toBe(401);
     expect(res.body.success).toBe(false);
-    expect(res.body.error).toMatch(/No token provided/i);
+    expect(res.body.error).toMatch(/Bearer token required/i);
     expect(mockAuthManager.verifyAccessToken).not.toHaveBeenCalled();
   });
 

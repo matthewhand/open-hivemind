@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { redactSensitiveInfo } from './redactSensitiveInfo';
 
 type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error';

@@ -512,7 +512,7 @@ Do not mention that the channel was quiet/idle and do not say "I noticed".`;
       log(
         `Sent idle response to ${serviceName}:${channelId}: "${idlePrompt.substring(0, 100)}..."`
       );
-      console.info(
+      log(
         `✅ IDLE RESPONSE SENT | bot: ${botName} | channel: ${channelId} | content: "${idlePrompt.substring(0, 50)}..."`
       );
 
