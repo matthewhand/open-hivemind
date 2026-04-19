@@ -1,5 +1,5 @@
-import { injectable, singleton, inject } from 'tsyringe';
 import Debug from 'debug';
+import { inject, injectable, singleton } from 'tsyringe';
 import {
   DatabaseManager,
   type BotConfiguration,

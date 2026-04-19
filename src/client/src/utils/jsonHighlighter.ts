@@ -1,5 +1,3 @@
-import React from 'react';
-
 /**
  * JSON Syntax Highlighting Utility
  * 
@@ -62,9 +60,9 @@ function tokenizeJson(jsonString: string): Token[] {
     const char = jsonString[i];
 
     // Handle whitespace
-    if (/[\t\n\r\s]/.test(char)) {
+    if (\t\n\r\s/.test(char)) {
       let whitespace = '';
-      while (i < len && /[\t\n\r\s]/.test(jsonString[i])) {
+      while (i < len && \t\n\r\s/.test(jsonString[i])) {
         whitespace += jsonString[i++];
       }
       tokens.push({ type: 'whitespace', value: whitespace, escaped: escapeHtml(whitespace) });

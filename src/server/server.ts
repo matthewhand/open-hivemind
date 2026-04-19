@@ -212,20 +212,12 @@ export class WebUIServer {
     this.app.use('/api/providers', authenticateToken, providersRouter);
 
     // WebUI application routes (serve React app)
-    this.app.get('/admin/*', (req, res, next) => {
-      res.sendFile(join(this.frontendDistPath, 'index.html'), (err) => {
-        if (err) {
-          next(err);
-        }
-      });
+    this.app.get('/admin/*', (req, res) => {
+      res.sendFile(join(this.frontendDistPath, 'index.html'));
     });
 
-    this.app.get('/webui/*', (req, res, next) => {
-      res.sendFile(join(this.frontendDistPath, 'index.html'), (err) => {
-        if (err) {
-          next(err);
-        }
-      });
+    this.app.get('/webui/*', (req, res) => {
+      res.sendFile(join(this.frontendDistPath, 'index.html'));
     });
 
     // API documentation

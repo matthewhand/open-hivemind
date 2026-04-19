@@ -85,7 +85,7 @@ async function startBot(app: import('express').Application, messengerService: Me
       const { MessageBus } = await import('@src/events/MessageBus');
       const bus = MessageBus.getInstance();
       messengerService.setMessageHandler(
-        async (message: unknown, historyMessages: unknown, botConfig: Record<string, unknown>) => {
+        async (message: any, historyMessages?: any, botConfig?: any) => {
           const msg = message as Record<string, unknown> & {
             platform?: string;
             getChannelId?: () => string;
@@ -105,7 +105,7 @@ async function startBot(app: import('express').Application, messengerService: Me
     } else {
       // Legacy mode: call handleMessage() directly
       messengerService.setMessageHandler((...args: unknown[]) =>
-        messageHandlerModule.handleMessage(args[0], args[1], args[2])
+        messageHandlerModule.handleMessage(args[0] as any, args[1] as any, args[2] as any)
       );
     }
     indexLog('[DEBUG] Message handler set up successfully.');
@@ -205,7 +205,7 @@ async function startBot(app: import('express').Application, messengerService: Me
 }
 
 export interface InitServicesResult {
-  messengerServices: MessengerService[];
+  messengerServices: any[];
 }
 
 /**
@@ -301,7 +301,7 @@ export async function initServices(
   appLogger.info('\ud83d\udd0d Anomaly Detection Service initialized');
 
   // Prepare messenger services collection for optional webhook registration later
-  let messengerServices: MessengerService[] = [];
+  let messengerServices: any[] = [];
 
   // In demo mode, skip messenger initialization if no real providers configured
   const shouldSkipMessengers = skipMessengers || demoService.isInDemoMode();
@@ -310,7 +310,7 @@ export async function initServices(
   if (!shouldSkipMessengers) {
     llmProviders = await getLlmProvider();
     appLogger.info('\ud83e\udd16 Resolved LLM providers', {
-      providers: llmProviders.map((p) => p.constructor.name || 'Unknown'),
+      providers: llmProviders.map((p: any) => p.constructor.name || 'Unknown'),
     });
   } else {
     appLogger.info('\ud83e\udd16 LLM provider resolution skipped (demo/skip mode)');
@@ -408,7 +408,7 @@ export async function initServices(
  */
 export async function initWebhooks(
   app: import('express').Application,
-  messengerServices: MessengerService[]
+  messengerServices: any[]
 ): Promise<void> {
   const isWebhookEnabled = webhookConfig.get('WEBHOOK_ENABLED') || false;
   if (isWebhookEnabled) {
