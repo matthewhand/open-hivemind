@@ -1,4 +1,5 @@
 import Debug from 'debug';
+import { strings } from '@src/utils/common';
 import type { ContentFilterConfig } from '@src/types/config';
 
 const debug = Debug('app:ContentFilterService');
@@ -129,7 +130,7 @@ export class ContentFilterService {
    */
   private matchWholeWord(content: string, term: string): boolean {
     // Create word boundary regex
-    const pattern = new RegExp(`\\b${this.escapeRegex(term)}\\b`, 'i');
+    const pattern = new RegExp(`\\b${strings.escapeRegExp(term)}\\b`, 'i');
     return pattern.test(content);
   }
 
@@ -174,13 +175,6 @@ export class ContentFilterService {
   }
 
   /**
-   * Escape special regex characters
-   */
-  private escapeRegex(str: string): string {
-    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  }
-
-  /**
    * Filter content for display (redact blocked terms)
    *
    * @param content - The content to filter
@@ -210,17 +204,17 @@ export class ContentFilterService {
       switch (strictness) {
         case 'low':
           // Replace whole words only
-          pattern = new RegExp(`\\b${this.escapeRegex(term)}\\b`, 'gi');
+          pattern = new RegExp(`\\b${strings.escapeRegExp(term)}\\b`, 'gi');
           break;
 
         case 'medium':
         case 'high':
           // Replace all occurrences
-          pattern = new RegExp(this.escapeRegex(term), 'gi');
+          pattern = new RegExp(strings.escapeRegExp(term), 'gi');
           break;
 
         default:
-          pattern = new RegExp(`\\b${this.escapeRegex(term)}\\b`, 'gi');
+          pattern = new RegExp(`\\b${strings.escapeRegExp(term)}\\b`, 'gi');
       }
 
       filtered = filtered.replace(pattern, '[FILTERED]');

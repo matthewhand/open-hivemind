@@ -1,4 +1,5 @@
 import Debug from 'debug';
+import { strings } from '@src/utils/common';
 
 const debug = Debug('app:MentionDetector');
 
@@ -14,10 +15,6 @@ export interface MentionContext {
 
 const DEFAULT_CONTEXT_HINT =
   '[CONTEXT: You were not specifically mentioned or replied to. If you respond, do so generally to the topic/room (do not assume the message is directed at you). Infer intent from recent conversation history; if still unclear, ask one brief clarifying question.]';
-
-function escapeRegExp(input: string): string {
-  return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
 
 function normalizeForNameMatch(input: string): string {
   const s = String(input || '');
@@ -38,7 +35,7 @@ export function isBotNameInText(text: string, botName: string): boolean {
   if (!t || !name) {
     return false;
   }
-  const namePattern = escapeRegExp(name).replace(/\s+/g, '\\s+');
+  const namePattern = strings.escapeRegExp(name).replace(/\s+/g, '\\s+');
   // Boundary chars include common punctuation and both ASCII and normalized unicode quotes/dashes.
   const re = new RegExp(`(^|[\\s"'\\(\\[\\{*])${namePattern}([\\s"'\\)\\]\\}*:,.!?\\-]|$)`, 'i');
   return re.test(t);

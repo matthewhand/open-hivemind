@@ -22,7 +22,13 @@
 ## 2024-05-22 - Dashboard Bot Status Lookups
 **Learning:** `Dashboard.tsx` was rendering a list of bots and calling `status?.bots?.find()` for every bot in the `.map()` loop, making the rendering loop $O(N \times M)$ complexity.
 **Action:** When rendering lists in React components that require correlated data, never use `.find()` inside the `.map()`. Pre-compute a lookup Map using `useMemo` to achieve O(1) lookups and bring the rendering complexity down to $O(N + M)$.
+## 2026-04-17 - Provider Config List Re-renders
+**Learning:** `SortableProviderCard` components in `BaseProvidersConfig` were re-rendering on every parent state change (modals, toasts) because callbacks weren't memoized.
+**Action:** Wrap list item components in `React.memo()` and stable callback refs using `useCallback` to achieve O(1) re-renders instead of O(N).
 
 ## 2024-04-15 - Sliding Window Optimizations (filter vs backwards loop)
 **Learning:** `TokenTracker` and `DuplicateMessageDetector` use `.filter()` over the entire history array on *every message* to prune out old records or calculate sums. Because these are "sliding windows" where recent items are always at the end, iterating backwards and breaking early is up to 60x faster than `.filter()` + `.reduce()` for larger arrays.
 **Action:** Replace `array.filter().reduce()` in high-frequency sliding window calculations with reverse `for` loops that break early when the timestamp threshold is reached.
+## 2024-05-18 - Avoid O(N) array methods inside loop maps
+**Learning:** Calling O(N) array methods like `.find()` inside a `.map()` callback leads to O(N*M) time complexity, potentially blocking the main thread during component renders or effects.
+**Action:** Pre-compute a lookup Map before iterating, utilizing `new Map(items.map(i => [i.key, i.value]))` to achieve O(1) lookups and reduce overall complexity to O(N + M).
