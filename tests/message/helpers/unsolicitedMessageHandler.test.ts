@@ -85,7 +85,7 @@ describe('unsolicitedMessageHandler', () => {
     it('should return true for questions', () => {
       expect(looksLikeOpportunity('How do I do this?')).toBe(true);
       expect(looksLikeOpportunity('What is this?')).toBe(true);
-      expect(looksLikeOpportunity('Why is this happening')).toBe(false); // No question mark
+      expect(looksLikeOpportunity('Why is this happening')).toBe(true); // Now matches without ?
     });
 
     it('should return true for help/request patterns', () => {

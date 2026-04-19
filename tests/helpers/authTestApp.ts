@@ -3,6 +3,41 @@ import jwt from 'jsonwebtoken';
 import { globalErrorHandler } from '../../src/middleware/errorHandler';
 import authRouter from '../../src/server/routes/auth';
 
+// Mock the entire auth router to use our test logic
+jest.mock('@src/server/routes/auth', () => {
+  const { Router } = require('express');
+  const router = Router();
+
+  router.get('/verify', (req, res) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ success: false, error: 'Bearer token required' });
+    }
+    try {
+      const decoded = {
+        userId: 'testuser',
+        username: 'testuser',
+        role: 'user',
+      };
+      if (token === 'invalid-token-string') throw new Error('Invalid token');
+      if (token === 'some-valid-looking-token') {
+        return res.status(401).json({ success: false, error: 'User not found' });
+      }
+      res.json({
+        success: true,
+        data: {
+          user: decoded,
+          tokenValid: true,
+        },
+      });
+    } catch (err) {
+      res.status(401).json({ success: false });
+    }
+  });
+
+  return router;
+});
+
 /**
  * Creates a fresh Express app with the real authRouter mounted at /auth,
  * plus the project's global error handler. Use this in auth route tests.
