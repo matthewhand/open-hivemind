@@ -9,14 +9,14 @@
 // Base Discord API Response Types
 export interface DiscordAPIResponse {
   ok: boolean;
-  data?: any;
+  data?: unknown;
   error?: DiscordAPIError;
 }
 
 export interface DiscordAPIError {
   code: number;
   message: string;
-  errors?: Record<string, any>;
+  errors?: Record<string, unknown>;
 }
 
 // Discord Message Types
@@ -515,7 +515,7 @@ export interface DiscordInteractionData {
 export interface DiscordInteractionDataOption {
   name: string;
   type: number;
-  value?: any;
+  value?: string | number | boolean;
   options?: DiscordInteractionDataOption[];
   focused?: boolean;
 }
@@ -543,7 +543,7 @@ export interface DiscordEntitlement {
 
 // Discord Client and Bot Types
 export interface DiscordBot {
-  client: any; // Discord.js Client
+  client: unknown; // Discord.js Client
   botUserId: string;
   botUserName: string;
   config: DiscordBotConfig;
@@ -556,7 +556,7 @@ export interface DiscordBotConfig {
     token: string;
   };
   llmProvider?: string;
-  llm?: any;
+  llm?: Record<string, unknown>;
 }
 
 // Discord Message Provider Types
@@ -566,33 +566,39 @@ export interface DiscordMessageProvider {
 }
 
 // Type Guards for Runtime Type Checking
-export function isDiscordMessage(obj: any): obj is DiscordMessage {
+export function isDiscordMessage(obj: unknown): obj is DiscordMessage {
+  const o = obj as Record<string, unknown>;
   return (
-    obj &&
-    typeof obj.id === 'string' &&
-    typeof obj.channel_id === 'string' &&
-    typeof obj.content === 'string' &&
-    obj.author &&
-    typeof obj.author.id === 'string'
+    !!o &&
+    typeof o.id === 'string' &&
+    typeof o.channel_id === 'string' &&
+    typeof o.content === 'string' &&
+    !!o.author &&
+    typeof (o.author as Record<string, unknown>).id === 'string'
   );
 }
 
-export function isDiscordUser(obj: any): obj is DiscordUser {
-  return obj && typeof obj.id === 'string' && typeof obj.username === 'string';
+export function isDiscordUser(obj: unknown): obj is DiscordUser {
+  const o = obj as Record<string, unknown>;
+  return !!o && typeof o.id === 'string' && typeof o.username === 'string';
 }
 
-export function isDiscordChannel(obj: any): obj is DiscordChannel {
-  return obj && typeof obj.id === 'string' && typeof obj.type === 'number';
+export function isDiscordChannel(obj: unknown): obj is DiscordChannel {
+  const o = obj as Record<string, unknown>;
+  return !!o && typeof o.id === 'string' && typeof o.type === 'number';
 }
 
-export function isDiscordGuild(obj: any): obj is DiscordGuild {
-  return obj && typeof obj.id === 'string' && typeof obj.name === 'string';
+export function isDiscordGuild(obj: unknown): obj is DiscordGuild {
+  const o = obj as Record<string, unknown>;
+  return !!o && typeof o.id === 'string' && typeof o.name === 'string';
 }
 
-export function isDiscordAPIResponse(obj: any): obj is DiscordAPIResponse {
-  return obj && typeof obj.ok === 'boolean';
+export function isDiscordAPIResponse(obj: unknown): obj is DiscordAPIResponse {
+  const o = obj as Record<string, unknown>;
+  return !!o && typeof o.ok === 'boolean';
 }
 
-export function isDiscordAPIError(obj: any): obj is DiscordAPIError {
-  return obj && typeof obj.code === 'number' && typeof obj.message === 'string';
+export function isDiscordAPIError(obj: unknown): obj is DiscordAPIError {
+  const o = obj as Record<string, unknown>;
+  return !!o && typeof o.code === 'number' && typeof o.message === 'string';
 }
