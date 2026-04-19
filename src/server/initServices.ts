@@ -23,6 +23,8 @@ import * as webhookConfigModule from '@config/webhookConfig';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import * as messengerProviderModule from '@message/management/getMessengerProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
+import type { IMessage } from '@message/interfaces/IMessage';
+import type { IMessengerService } from '@message/interfaces/IMessengerService';
 import Logger from '@common/logger';
 import { initProviders } from '../initProviders';
 import startupDiagnostics from '../utils/startupDiagnostics';
@@ -47,20 +49,20 @@ interface MessengerService {
   setApp?(app: import('express').Application): void;
   setMessageHandler(
     handler: (
-      message: unknown,
-      historyMessages?: unknown,
-      botConfig?: Record<string, unknown>
-    ) => unknown
+      message: any,
+      historyMessages?: any[],
+      botConfig?: Record<string, any>
+    ) => Promise<string | null>
   ): void;
   getAgentStartupSummaries?(): Array<Record<string, string>>;
   getDefaultChannel?(): string | null;
   getChannels?(): string[];
-  sendMessageToChannel?(channelId: string, text: string): Promise<void>;
-  sendMessage?(channelId: string, text: string): Promise<void>;
+  sendMessageToChannel?(channelId: string, text: string): Promise<any>;
+  sendMessage?(channelId: string, text: string): Promise<any>;
   constructor?: { name?: string };
 }
 
-async function startBot(app: import('express').Application, messengerService: MessengerService) {
+async function startBot(app: import('express').Application, messengerService: any) {
   const providerType =
     messengerService.providerName || messengerService.constructor?.name || 'Unknown';
 
@@ -85,16 +87,16 @@ async function startBot(app: import('express').Application, messengerService: Me
       const { MessageBus } = await import('@src/events/MessageBus');
       const bus = MessageBus.getInstance();
       messengerService.setMessageHandler(
-        async (message: unknown, historyMessages: unknown, botConfig: Record<string, unknown>) => {
-          const msg = message as Record<string, unknown> & {
-            platform?: string;
-            getChannelId?: () => string;
-          };
+        async (message: any, historyMessages?: any[], botConfig?: Record<string, any>) => {
+          const msg = message as IMessage;
+          const history = (historyMessages as IMessage[]) || [];
+          const config = botConfig || {};
+
           await bus.emitAsync('message:incoming', {
-            message,
-            history: historyMessages,
-            botConfig,
-            botName: String(botConfig.BOT_NAME || botConfig.name || 'hivemind'),
+            message: msg,
+            history: history,
+            botConfig: config,
+            botName: String(config.BOT_NAME || config.name || 'hivemind'),
             platform: msg.platform || 'unknown',
             channelId: msg.getChannelId?.() || '',
             metadata: {},
@@ -104,7 +106,7 @@ async function startBot(app: import('express').Application, messengerService: Me
       );
     } else {
       // Legacy mode: call handleMessage() directly
-      messengerService.setMessageHandler((...args: unknown[]) =>
+      messengerService.setMessageHandler((...args: any[]) =>
         messageHandlerModule.handleMessage(args[0], args[1], args[2])
       );
     }
@@ -306,11 +308,11 @@ export async function initServices(
   // In demo mode, skip messenger initialization if no real providers configured
   const shouldSkipMessengers = skipMessengers || demoService.isInDemoMode();
 
-  let llmProviders: unknown[] = [];
+  let llmProviders: any[] = [];
   if (!shouldSkipMessengers) {
     llmProviders = await getLlmProvider();
     appLogger.info('\ud83e\udd16 Resolved LLM providers', {
-      providers: llmProviders.map((p) => p.constructor.name || 'Unknown'),
+      providers: llmProviders.map((p) => p.constructor?.name || 'Unknown'),
     });
   } else {
     appLogger.info('\ud83e\udd16 LLM provider resolution skipped (demo/skip mode)');
