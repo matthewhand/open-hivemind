@@ -9,6 +9,7 @@ import { SkeletonCard } from './DaisyUI/Skeleton';
 import { Stat, Stats } from './DaisyUI/Stat';
 import DashboardBotCard from './DashboardBotCard';
 import AgentGrid from './Dashboard/AgentGrid';
+import CommandCenterStream from './Monitoring/CommandCenterStream';
 
 const getStatusColor = (botStatus: string) => {
   switch (botStatus.toLowerCase()) {
@@ -236,6 +237,11 @@ const Dashboard: React.FC = () => {
         <div className="mb-8">
           <h3 className="text-xl font-bold mb-4">Agents</h3>
           <AgentGrid />
+        </div>
+
+        {/* Real-time Command Center Stream */}
+        <div className="mb-8">
+          <CommandCenterStream />
         </div>
 
         {/* System Status Footer */}

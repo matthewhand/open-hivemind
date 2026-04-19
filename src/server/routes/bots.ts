@@ -858,4 +858,141 @@ Respond ONLY with valid JSON. No preamble or explanation.`;
   })
 );
 
+/**
+ * @openapi
+ * /api/bots/{id}/diagnose:
+ *   get:
+ *     summary: Run deep diagnostic on a bot
+ *     tags: [Bots]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Diagnostic results
+ */
+router.get(
+  '/:id/diagnose',
+  validateRequest(BotIdParamSchema),
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const manager = await managerPromise;
+      const bot = await manager.getBot(req.params.id);
+      if (!bot) {
+        return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Bot not found'));
+      }
+
+      const results = {
+        messageProvider: { status: 'pending', details: '' },
+        llm: { status: 'pending', details: '' },
+        mcp: [] as any[],
+        timestamp: new Date().toISOString(),
+      };
+
+      // 1. Test Message Provider
+      try {
+        const { getMessengerService } = await import('../../managers/botLifecycle');
+        const service = await getMessengerService(bot.messageProvider);
+        if (service) {
+          const isConnected = await (service as any).isConnected(bot.name);
+          results.messageProvider = {
+            status: isConnected ? 'ok' : 'error',
+            details: isConnected ? 'Active connection confirmed' : 'Provider unreachable or disconnected',
+          };
+        }
+      } catch (err) {
+        results.messageProvider = { status: 'error', details: String(err) };
+      }
+
+      // 2. Test LLM
+      try {
+        const providers = await getLlmProvider();
+        const provider = providers.find(p => p.name === bot.llmProvider) || providers[0];
+        if (provider) {
+          const start = Date.now();
+          await provider.generateCompletion('ping');
+          results.llm = { 
+            status: 'ok', 
+            details: `Latency: ${Date.now() - start}ms` 
+          };
+        }
+      } catch (err) {
+        results.llm = { status: 'error', details: String(err) };
+      }
+
+      // 3. Test MCP
+      if (bot.mcpServers && Array.isArray(bot.mcpServers)) {
+        const { MCPService } = await import('../../services/MCPService');
+        const mcp = MCPService.getInstance();
+        for (const serverName of bot.mcpServers) {
+          try {
+             const server = typeof serverName === 'string' ? serverName : (serverName as any).name;
+             const isUp = await mcp.isServerConnected(server);
+             results.mcp.push({ name: server, status: isUp ? 'ok' : 'error' });
+          } catch (err) {
+             results.mcp.push({ name: String(serverName), status: 'error', details: String(err) });
+          }
+        }
+      }
+
+      return res.json(ApiResponse.success(results));
+    } catch (error: unknown) {
+      logger.error('Diagnostic failed', error instanceof Error ? error : new Error(String(error)));
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Diagnostic failed'));
+    }
+  })
+);
+
+/**
+ * @openapi
+ * /api/bots/test-chat:
+ *   post:
+ *     summary: Test a persona configuration in a sandbox
+ *     tags: [Bots]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               botConfig: { type: object }
+ *               message: { type: string }
+ *     responses:
+ *       200:
+ *         description: AI response
+ */
+router.post(
+  '/test-chat',
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const { botConfig, message, history = [] } = req.body;
+      if (!message) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Message is required'));
+      }
+
+      const providers = await getLlmProvider();
+      const provider = providers.find(p => p.name === botConfig.llmProvider) || providers[0];
+
+      if (!provider) {
+        return res.status(HTTP_STATUS.SERVICE_UNAVAILABLE).json(ApiResponse.error('No LLM available'));
+      }
+
+      const responseText = await provider.generateChatCompletion(
+        message, 
+        history, 
+        { systemPrompt: botConfig.systemInstruction || '' }
+      );
+
+      return res.json(ApiResponse.success({ response: responseText }));
+    } catch (error: unknown) {
+      logger.error('Sandbox chat failed', error instanceof Error ? error : new Error(String(error)));
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to get response'));
+    }
+  })
+);
+
 export default router;

@@ -1,9 +1,11 @@
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import PersonaAvatar from './PersonaAvatar';
 import Badge from './DaisyUI/Badge';
 import Card from './DaisyUI/Card';
 import Button from './DaisyUI/Button';
 import type { Bot, StatusResponse } from '../services/api';
+import { Activity } from 'lucide-react';
+import DiagnosticModal from './BotManagement/DiagnosticModal';
 
 interface DashboardBotCardProps {
   bot: Bot;
@@ -28,28 +30,39 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
   getStatusColor,
 }) => {
   const botStatus = botStatusData?.status || 'unknown';
+  const [isDiagnosticOpen, setIsDiagnosticOpen] = useState(false);
 
   return (
-    <Card className="shadow-md hover:shadow-lg transition-shadow duration-200">
-      <div className="card-body p-4">
-        {/* Header: avatar + name + status */}
-        <div className="flex items-center gap-3">
-          <PersonaAvatar
-            seed={bot.persona || bot.name}
-            size={40}
-          />
-          <div className="flex-1 min-w-0">
-            <h2 className="card-title text-base font-semibold truncate">
-              {bot.name}
-            </h2>
+    <>
+      <Card className="shadow-md hover:shadow-lg transition-all duration-200 group">
+        <div className="card-body p-4">
+          {/* Header: avatar + name + status */}
+          <div className="flex items-center gap-3">
+            <PersonaAvatar
+              seed={bot.persona || bot.name}
+              size={40}
+            />
+            <div className="flex-1 min-w-0">
+              <h2 className="card-title text-base font-semibold truncate">
+                {bot.name}
+              </h2>
+            </div>
+            <div className="flex items-center gap-2">
+               <button 
+                 onClick={() => setIsDiagnosticOpen(true)}
+                 className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity"
+                 title="Run Diagnostic"
+               >
+                  <Activity className="w-4 h-4" />
+               </button>
+               <Badge
+                variant={toBadgeVariant(getStatusColor(botStatus))}
+                size="small"
+              >
+                {botStatus.toUpperCase()}
+              </Badge>
+            </div>
           </div>
-          <Badge
-            variant={toBadgeVariant(getStatusColor(botStatus))}
-            size="small"
-          >
-            {botStatus.toUpperCase()}
-          </Badge>
-        </div>
 
         {/* Provider badges */}
         <div className="flex flex-wrap gap-1.5 mt-3">
@@ -81,6 +94,14 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
         </div>
       </div>
     </Card>
+
+    <DiagnosticModal 
+       botId={bot.id}
+       botName={bot.name}
+       isOpen={isDiagnosticOpen}
+       onClose={() => setIsDiagnosticOpen(false)}
+    />
+    </>
   );
 });
 

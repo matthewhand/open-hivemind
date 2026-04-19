@@ -17,6 +17,7 @@ import Toggle from '../DaisyUI/Toggle';
 import Select from '../DaisyUI/Select';
 import Textarea from '../DaisyUI/Textarea';
 import Mockup from '../DaisyUI/Mockup';
+import LlmTestChat from '../LlmTestChat';
 const debug = Debug('app:client:components:BotManagement:CreateBotWizard');
 
 interface CreateBotWizardProps {
@@ -71,6 +72,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
     const [aiDescription, setAiDescription] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
     const [aiGeneratedResult, setAiGeneratedResult] = useState<any>(null);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
     const handleAiGenerate = async () => {
         if (!aiDescription.trim()) return;
@@ -540,6 +542,16 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                             </div>
                         </div>
                     </Alert>
+
+                    <div className="bg-primary/5 p-4 rounded-xl border border-primary/10 flex items-center justify-between mt-4">
+                        <div>
+                           <p className="text-sm font-medium text-primary">Live Sandbox Preview</p>
+                           <p className="text-xs opacity-60">Test this persona's logic before saving.</p>
+                        </div>
+                        <Button variant="secondary" size="sm" className="gap-2" onClick={() => setIsPreviewOpen(true)}>
+                           <MessageSquare className="w-4 h-4" /> Preview Chat
+                        </Button>
+                    </div>
                 </div>
             )
         }
@@ -655,6 +667,14 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                 )}
             </div>
         </Modal>
+
+        {/* Sandbox Preview Chat */}
+        {isPreviewOpen && (
+            <LlmTestChat 
+                sandboxConfig={formData}
+                onClose={() => setIsPreviewOpen(false)}
+            />
+        )}
     </>
     );
 };
