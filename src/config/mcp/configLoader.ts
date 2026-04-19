@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { strings } from '../../utils/common';
 import { isMCPProviderType } from '../../types/mcp';
 import type { MCPProviderConfig, MCPProviderValidationResult } from '../../types/mcp';
 
@@ -42,7 +43,7 @@ export class ConfigLoader {
         // Check if it ends with the blocked command (e.g. /bin/sh)
         // using forward slash or backslash as separator
         // blocked commands are lowercase in the list
-        const pattern = new RegExp(`[\\/\\\\]${blocked}$`);
+        const pattern = new RegExp(`[\\/\\\\]${strings.escapeRegExp(blocked)}$`);
         return pattern.test(lowerCommand);
       });
 
