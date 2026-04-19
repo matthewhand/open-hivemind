@@ -38,3 +38,7 @@
 **Vulnerability:** Malicious plugin repository could define_relative path sequence in `package.json` "name" field (e.g., `../../../tmp/pwned`), causing arbitrary file write during plugin directory rename.
 **Learning:** Always validate extracted strings from external configuration files before filesystem operations. The `package.json` name field is user-controlled and should never be trusted.
 **Prevention:** Reject plugin names containing `..`, `/`, or `\` path separators. Throw `PluginValidationError` if detected.
+## 2025-02-27 - OTLP Exporters and SSRF Protection
+**Vulnerability:** SSRF checks applied to internal infrastructure.
+**Learning:** OTLP collectors and telemetry components are routinely deployed as internal sidecars (e.g., localhost:4318) or within private VPC networks. Applying SSRF protections like `isSafeUrl` that block private or loopback IP addresses to these exporters will break legitimate observability pipelines.
+**Prevention:** Do not apply external SSRF protections to internal observability components like trace exporters unless explicitly instructed to protect against user-supplied endpoint configuration.
