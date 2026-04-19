@@ -152,6 +152,7 @@ const GettingStarted: React.FC<GettingStartedProps> = ({ onDismiss }) => {
                 <button
                   className="btn btn-sm btn-ghost border border-base-300 flex-shrink-0"
                   onClick={() => navigate(task.actionLink)}
+                  aria-label={`${task.actionLabel} ${task.title.toLowerCase()}`}
                 >
                   {task.actionLabel}
                 </button>
