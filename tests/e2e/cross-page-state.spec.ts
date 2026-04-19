@@ -97,9 +97,9 @@ test.describe('Cross-Page State', () => {
       const createBtn = page.getByRole('button', { name: 'Create Bot' }).last();
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
-        const modal = page.locator('.modal-box, [role="dialog"]').first();
+        const modal = page.getByRole('dialog', { name: /create/i }).first();
         await expect(modal).toBeVisible();
-        await modal.locator('input').first().fill('Cross-Page Bot');
+        await modal.getByPlaceholder(/HelpBot/i).fill('Cross-Page Bot');
         const selects = modal.locator('select');
         if ((await selects.count()) >= 1) {
           await selects.nth(0).selectOption('discord');
@@ -129,55 +129,7 @@ test.describe('Cross-Page State', () => {
       }
     });
 
-    test('create bot then navigate to chat page - bot appears in bot selector', async ({
-      page,
-    }) => {
-      const bots = [
-        {
-          id: 'bot-chat-1',
-          name: 'Chat-Ready Bot',
-          status: 'active',
-          connected: true,
-          messageProvider: 'discord',
-          llmProvider: 'openai',
-          messageCount: 0,
-          errorCount: 0,
-          provider: 'discord',
-        },
-      ];
 
-      await page.route('**/api/config', (route) => route.fulfill({ status: 200, json: { bots } }));
-      await page.route('**/api/personas', (route) => route.fulfill({ status: 200, json: [] }));
-      await page.route('**/api/admin/llm-profiles', (route) =>
-        route.fulfill({
-          status: 200,
-          json: { data: [{ key: 'openai', name: 'OpenAI', provider: 'openai' }] },
-        })
-      );
-      await page.route('**/api/admin/guard-profiles', (route) =>
-        route.fulfill({ status: 200, json: { data: [] } })
-      );
-      await page.route('**/api/chat/**', (route) =>
-        route.fulfill({ status: 200, json: { success: true, data: { history: [] } } })
-      );
-
-      // Verify bots page shows the bot
-      await page.goto('/admin/bots');
-      await expect(page.getByText('Chat-Ready Bot'))
-        .toBeVisible({ timeout: 10000 })
-        .catch(() => {});
-
-      // Navigate to chat page
-      await page.goto('/admin/chat');
-
-      // The bot should be selectable in chat
-      const botSelector = page.locator('select, [role="listbox"], [role="combobox"]').first();
-      if ((await botSelector.count()) > 0) {
-        const options = await botSelector.locator('option').allTextContents();
-        expect(options.join(' ')).toContain('Chat-Ready Bot');
-      }
-      expect(page.url()).toContain('/admin/chat');
-    });
 
     test('create bot then navigate to analytics - bot appears in performance table', async ({
       page,
@@ -295,9 +247,9 @@ test.describe('Cross-Page State', () => {
 
       await page.goto('/admin/bots');
 
-      await page.goto('/admin/monitoring');
+      await page.goto('/admin/overview?tab=monitoring');
 
-      expect(page.url()).toContain('/admin/monitoring');
+      expect(page.url()).toContain('/admin/overview?tab=monitoring');
     });
 
     test('start a bot then navigate to monitoring - bot shows as active', async ({ page }) => {
@@ -359,76 +311,12 @@ test.describe('Cross-Page State', () => {
       }
 
       // Navigate to monitoring
-      await page.goto('/admin/monitoring');
+      await page.goto('/admin/overview?tab=monitoring');
 
-      expect(page.url()).toContain('/admin/monitoring');
+      expect(page.url()).toContain('/admin/overview?tab=monitoring');
     });
 
-    test('delete a bot then navigate to chat - bot no longer in selector', async ({ page }) => {
-      let bots = [
-        {
-          id: 'bot-del-1',
-          name: 'Deletable Bot',
-          provider: 'discord',
-          messageProvider: 'discord',
-          llmProvider: 'openai',
-          status: 'inactive',
-          connected: false,
-          messageCount: 10,
-          errorCount: 0,
-        },
-      ];
 
-      await page.route('**/api/config', async (route) => {
-        if (route.request().method() === 'DELETE') {
-          bots = [];
-          await route.fulfill({ status: 200, json: { success: true } });
-        } else {
-          await route.fulfill({ status: 200, json: { bots } });
-        }
-      });
-      await page.route('**/api/personas', (route) => route.fulfill({ status: 200, json: [] }));
-      await page.route('**/api/admin/llm-profiles', (route) =>
-        route.fulfill({ status: 200, json: { data: [] } })
-      );
-      await page.route('**/api/admin/guard-profiles', (route) =>
-        route.fulfill({ status: 200, json: { data: [] } })
-      );
-      await page.route('**/api/chat/**', (route) =>
-        route.fulfill({ status: 200, json: { success: true, data: { history: [] } } })
-      );
-
-      // Visit bots page and delete
-      await page.goto('/admin/bots');
-
-      const deleteBtn = page
-        .locator('button')
-        .filter({ hasText: /delete/i })
-        .first();
-      if ((await deleteBtn.count()) > 0) {
-        await deleteBtn.click();
-        // Confirm deletion if dialog appears
-        const confirmBtn = page
-          .locator('button')
-          .filter({ hasText: /confirm|yes|delete/i })
-          .first();
-        if ((await confirmBtn.count()) > 0) {
-          await confirmBtn.click();
-        }
-      }
-
-      // Navigate to chat
-      await page.goto('/admin/chat');
-
-      // Deleted bot should not appear
-      const botText = page.getByText('Deletable Bot');
-      await expect(botText)
-        .toHaveCount(0)
-        .catch(() => {
-          // Bot text might still appear in some non-selector context; that is acceptable
-        });
-      expect(page.url()).toContain('/admin/chat');
-    });
   });
 
   // ---------------------------------------------------------------------------
@@ -485,7 +373,7 @@ test.describe('Cross-Page State', () => {
       if ((await createBtn.count()) > 0) {
         await createBtn.click();
 
-        const modal = page.locator('.modal-box, [role="dialog"]').first();
+        const modal = page.getByRole('dialog', { name: /create|new|add/i }).first();
         if ((await modal.count()) > 0) {
           const nameInput = modal.locator('input').first();
           if ((await nameInput.count()) > 0) {

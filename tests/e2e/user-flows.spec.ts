@@ -67,23 +67,24 @@ test.describe('User Flows', () => {
     await navigateAndWaitReady(page, '/admin/bots');
 
     // Open create modal
-    const createBtn = page
-      .locator('button')
-      .filter({ hasText: /create|new|add/i })
-      .first();
+    const createBtn = page.getByRole('button', { name: /Create Bot/i }).first();
     if ((await createBtn.count()) > 0) {
       await createBtn.click();
 
       // Fill form
-      const nameInput = page.locator('input').first();
+      const modal = page.getByRole('dialog', { name: /create/i }).first();
+      await expect(modal).toBeVisible();
+      const nameInput = modal.getByPlaceholder(/HelpBot/i);
       if ((await nameInput.count()) > 0) {
         await nameInput.fill('E2E Test Bot');
       }
+      
+      await page.screenshot({ path: 'test-results/flow-01-bot-creation-modal.png', fullPage: true });
 
       // Close modal
       await page.keyboard.press('Escape');
     }
-    await page.screenshot({ path: 'test-results/flow-01-bot-creation.png', fullPage: true });
+    await page.screenshot({ path: 'test-results/flow-01-bot-creation-end.png', fullPage: true });
 
     await assertNoErrors(errors, 'Bot creation flow');
   });
