@@ -24,18 +24,16 @@ jest.mock('lucide-react', () => {
 // Mock DaisyUI components using a Proxy to handle all named exports
 jest.mock('../../../src/client/src/components/DaisyUI', () => {
   const React = require('react');
-  const MockComponent = React.forwardRef(({ children, label, checked, onChange, isOpen, ...props }: any, ref: any) => {
-    // Special handling for some components to satisfy test selectors
-    if (props.type === 'checkbox' || label !== undefined) {
-       return (
-         <label>
-           <input type="checkbox" checked={checked} onChange={onChange} ref={ref} {...props} />
-           {label}
-           {children}
-         </label>
-       );
-    }
-    return React.createElement('div', { ref, ...props }, children);
+  const MockComponent = React.forwardRef(({ children, label, title, description, message, ...props }: any, ref: any) => {
+    return (
+      <div ref={ref} {...props}>
+        {title && <div>{title}</div>}
+        {description && <div>{description}</div>}
+        {message && <div>{message}</div>}
+        {label && <label>{label}</label>}
+        {children}
+      </div>
+    );
   });
   
   // Add sub-components to mocks that need them
@@ -134,7 +132,9 @@ describe('ImportExportPage', () => {
 
   it('renders the main page with export and import cards', () => {
     renderWithProviders(<ImportExportPage />);
-    expect(screen.getByText('Import/Export Configurations')).toBeInTheDocument();
+    expect(screen.getByText(/Import \/ Export/i)).toBeInTheDocument();
+    expect(screen.getByText('Export Configuration')).toBeInTheDocument();
+    expect(screen.getByText('Import Configuration')).toBeInTheDocument();
   });
 
   it('displays export options', () => {

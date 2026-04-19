@@ -144,6 +144,12 @@ afterEach(async () => {
     const { clearBotActivity } = require('../src/message/helpers/processing/ChannelActivity');
     clearBotActivity();
   } catch (err) {}
+
+  try {
+    const { SwarmCoordinator } = require('../src/services/SwarmCoordinator');
+    SwarmCoordinator.getInstance().clearCache();
+    SwarmCoordinator.resetInstance();
+  } catch (err) {}
 });
 
 /**

@@ -3,7 +3,7 @@ import request from 'supertest';
 import healthRouter from '../../src/server/routes/health';
 import sitemapRouter from '../../src/server/routes/sitemap';
 import configRouter from '../../src/server/routes/config';
-import { adminRouter } from '../../src/server/routes/admin';
+import adminRouter from '../../src/server/routes/admin';
 
 describe('Comprehensive API Integration', () => {
   let app: express.Application;
@@ -14,7 +14,7 @@ describe('Comprehensive API Integration', () => {
     
     // Mount all major route groups
     app.use('/health', healthRouter);
-    app.use('/sitemap', sitemapRouter);
+    app.use(sitemapRouter); // Mount at root
     app.use('/api/config', configRouter);
     app.use('/api/admin', adminRouter);
   });

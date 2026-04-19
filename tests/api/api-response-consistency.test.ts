@@ -11,7 +11,7 @@ describe('API Response Consistency', () => {
     app = express();
     app.use(express.json());
     app.use('/health', healthRouter);
-    app.use('/sitemap', sitemapRouter);
+    app.use(sitemapRouter);
     app.use('/api/config', configRouter);
   });
 

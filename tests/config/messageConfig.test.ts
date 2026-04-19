@@ -70,11 +70,11 @@ describe('messageConfig', () => {
       expect(config.get('MESSAGE_MIN_DELAY')).toBe(2000);
     });
 
-    it('throws on invalid JSON in env override', () => {
-      process.env.CHANNEL_PRIORITIES = '{invalid-json';
-      expect(() => {
-        require('../../src/config/messageConfig').default;
-      }).toThrow('Invalid JSON: {invalid-json');
+    it('falls back to empty object on invalid JSON in env override', () => {
+      process.env.CHANNEL_BONUSES = '{invalid-json';
+      jest.resetModules();
+      const config = require('../../src/config/messageConfig').default;
+      expect(config.get('CHANNEL_BONUSES')).toEqual({});
     });
 
   });

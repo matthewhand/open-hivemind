@@ -10,7 +10,6 @@ import {
   looksLikeOpportunity,
   shouldReplyToUnsolicitedMessage,
 } from '../../../../src/message/helpers/unsolicitedMessageHandler';
-import { SwarmCoordinator } from '../../../../src/services/SwarmCoordinator';
 
 // Mocks
 jest.mock('../../../../src/message/helpers/processing/IncomingMessageDensity');

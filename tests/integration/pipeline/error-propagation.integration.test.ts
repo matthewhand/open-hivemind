@@ -19,21 +19,23 @@ describe('Pipeline Error Propagation Integration', () => {
   });
 
   it('should emit message:error when inference fails', async () => {
-    const mockInvoker = { invoke: jest.fn().mockRejectedValue(new Error('LLM down')) };
+    const mockInvoker = { generateResponse: jest.fn().mockRejectedValue(new Error('LLM down')) };
     const inference = new InferenceStage(bus, mockInvoker as any);
+    inference.register();
     
     const errorSpy = jest.fn();
     bus.on('message:error', errorSpy);
 
     const message = new TestMessage('hello');
-    const context = { message, botName: 'bot1', requestId: 'r1' };
+    const context = { message, botName: 'bot1', requestId: 'r1', history: [] };
     
-    bus.emit('message:enriched', { ...context, systemPrompt: 'p', userPrompt: 'u' });
+    bus.emit('message:enriched', { ...context, systemPrompt: 'p', memories: [] });
 
     await new Promise(resolve => setTimeout(resolve, 50));
 
     expect(errorSpy).toHaveBeenCalledWith(expect.objectContaining({
-      error: expect.objectContaining({ message: 'LLM down' })
+      error: expect.objectContaining({ message: 'LLM down' }),
+      stage: 'inference'
     }));
   });
 });

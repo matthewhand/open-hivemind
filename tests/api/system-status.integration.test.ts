@@ -4,6 +4,36 @@ import healthRouter from '../../src/server/routes/health';
 import sitemapRouter from '../../src/server/routes/sitemap';
 import configRouter from '../../src/server/routes/config';
 
+// Mock UserConfigStore
+jest.mock('../../src/config/UserConfigStore', () => ({
+  UserConfigStore: {
+    getInstance: jest.fn(() => ({
+      isMaintenanceMode: jest.fn().mockReturnValue(false),
+    })),
+  },
+}));
+
+// Mock DatabaseManager
+jest.mock('../../src/database/DatabaseManager', () => ({
+  DatabaseManager: {
+    getInstance: jest.fn(() => ({
+      isConnected: jest.fn().mockReturnValue(true),
+    })),
+  },
+}));
+
+// Mock auth middleware
+jest.mock('../../src/server/middleware/auth', () => ({
+  optionalAuth: (req: any, res: any, next: any) => {
+    req.user = { id: 'test-user', isAdmin: true };
+    next();
+  },
+  authenticateToken: (req: any, res: any, next: any) => {
+    req.user = { id: 'test-user', isAdmin: true };
+    next();
+  },
+}));
+
 describe('System Status API Integration', () => {
   let app: express.Application;
 
@@ -11,7 +41,7 @@ describe('System Status API Integration', () => {
     app = express();
     app.use(express.json());
     app.use('/health', healthRouter);
-    app.use('/sitemap', sitemapRouter);
+    app.use(sitemapRouter); // Mount at root
     app.use('/api/config', configRouter);
   });
 

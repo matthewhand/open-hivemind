@@ -13,11 +13,11 @@ describe('ConfigurationManager Integration', () => {
     registerServices();
     testConfigDir = path.join(os.tmpdir(), `hivemind-config-test-${Date.now()}`);
     fs.mkdirSync(testConfigDir, { recursive: true });
-    
-    // Set up a mock secure config and other dependencies to test full load
     process.env.NODE_CONFIG_DIR = testConfigDir;
-    
-    // We test that it instantiates correctly with actual filesystem bounds
+  });
+
+  beforeEach(() => {
+    ConfigurationManager.resetInstance();
     manager = ConfigurationManager.getInstance();
   });
 
@@ -39,7 +39,10 @@ describe('ConfigurationManager Integration', () => {
   it('should reflect environment variable overrides', () => {
     process.env.VITE_API_BASE_URL = 'http://test-url:9999/api';
     
+    // resetInstance is called in beforeEach, but we need it here after setting env var
+    ConfigurationManager.resetInstance();
     const newManager = ConfigurationManager.getInstance();
+    
     const envConfig = newManager.getConfig('environment');
     expect(envConfig?.get('VITE_API_BASE_URL')).toBe('http://test-url:9999/api');
   });
