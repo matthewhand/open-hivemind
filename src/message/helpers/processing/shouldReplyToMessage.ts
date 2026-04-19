@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import Debug from 'debug';
-import messageConfig from '@config/messageConfig';
 import { strings } from '@src/utils/common';
+import messageConfig from '@config/messageConfig';
 import { DatabaseManager } from '../../../database/DatabaseManager';
 import { MessageBus } from '../../../events/MessageBus';
 import { PersonaManager, type PersonaResponseBehavior } from '../../../managers/PersonaManager';

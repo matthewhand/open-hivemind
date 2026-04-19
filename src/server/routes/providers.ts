@@ -1,10 +1,10 @@
 import Debug from 'debug';
 import { Router } from 'express';
+import { getLlmProfileByKey, loadLlmProfiles } from '../../config/llmProfiles';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { providerRegistry } from '../../registries/ProviderRegistry';
 import { HTTP_STATUS } from '../../types/constants';
 import { ApiResponse } from '../utils/apiResponse';
-import { loadLlmProfiles, getLlmProfileByKey } from '../../config/llmProfiles';
 
 const debug = Debug('app:providers-route');
 const router = Router();
@@ -221,7 +221,12 @@ router.post(
           });
         }
       } else {
-        steps.push({ step: 'getMemory', status: 'skip', ms: 0, detail: 'no memoryId from add step' });
+        steps.push({
+          step: 'getMemory',
+          status: 'skip',
+          ms: 0,
+          detail: 'no memoryId from add step',
+        });
       }
 
       // Step 5: Delete
@@ -239,7 +244,12 @@ router.post(
           });
         }
       } else {
-        steps.push({ step: 'deleteMemory', status: 'skip', ms: 0, detail: 'no memoryId from add step' });
+        steps.push({
+          step: 'deleteMemory',
+          status: 'skip',
+          ms: 0,
+          detail: 'no memoryId from add step',
+        });
       }
 
       const passed = steps.filter((s) => s.status === 'pass').length;

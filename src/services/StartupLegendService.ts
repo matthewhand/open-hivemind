@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import Logger from '@common/logger';
 
 const appLogger = Logger.withContext('app:startup');

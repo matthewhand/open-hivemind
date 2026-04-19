@@ -13,7 +13,7 @@ export class SQLiteWrapper {
   constructor(filename: string) {
     debug('SQLITE_WRAPPER: constructor called for', filename);
     let DBConstructor: any;
-    
+
     // Try different ways better-sqlite3 might be exported/imported
     if (typeof Database === 'function') {
       DBConstructor = Database;
@@ -25,7 +25,9 @@ export class SQLiteWrapper {
         const BetterSqlite3 = require('better-sqlite3');
         DBConstructor = typeof BetterSqlite3 === 'function' ? BetterSqlite3 : BetterSqlite3.default;
       } catch (e) {
-        throw new Error(`Failed to load better-sqlite3: ${e instanceof Error ? e.message : String(e)}`);
+        throw new Error(
+          `Failed to load better-sqlite3: ${e instanceof Error ? e.message : String(e)}`
+        );
       }
     }
 
