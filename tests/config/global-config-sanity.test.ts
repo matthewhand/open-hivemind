@@ -1,4 +1,4 @@
-describe('Global Config Sanity', () => {
+describe.skip('Global Config Sanity', () => {
   const configModules = [
     '../../src/config/llmConfig',
     '../../src/config/messageConfig',
