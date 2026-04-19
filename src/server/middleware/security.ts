@@ -14,6 +14,98 @@ export function getClientIP(req: Request): string {
 }
 
 /**
+ * Security headers middleware
+ */
+export function securityHeaders(req: Request, res: Response, next: NextFunction): void {
+  // Prevent clickjacking attacks
+  res.setHeader('X-Frame-Options', 'DENY');
+
+  // Prevent MIME type sniffing
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+
+  // Enable XSS protection
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+
+  // Referrer Policy
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+
+  // Content Security Policy (CSP)
+  // SECURITY NOTE: CSP with 'unsafe-eval' and 'unsafe-inline'
+  //
+  // 'unsafe-eval': Required for Vite's dynamic import() in development mode and
+  // React's hot module replacement (HMR). In production builds, Vite compiles
+  // everything to static chunks, but we maintain this directive for development
+  // compatibility and potential runtime plugin loading via MCP.
+  //
+  // 'unsafe-inline': Required for:
+  //   1. Inline <style> tags in React components
+  //   2. WebSocket connection initialization scripts
+  //   3. DaisyUI theme switching which injects inline styles
+  //
+  // MITIGATION: All user input is sanitized via Zod schemas and the sanitization
+  // middleware before being stored or rendered. See:
+  //   - src/server/middleware/sanitizationMiddleware.ts
+  //   - src/common/security/inputSanitizer.ts
+  let cspDirectives: string[];
+
+  if (process.env.NODE_ENV === 'development') {
+    cspDirectives = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https: http://localhost:* https://localhost:*",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com http://localhost:*",
+      "img-src 'self' data: https:",
+      "font-src 'self' https://fonts.gstatic.com",
+      "connect-src 'self' ws: wss: https: http://localhost:* https://localhost:*",
+      "media-src 'self'",
+      "object-src 'none'",
+      "frame-ancestors 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-src 'none'",
+      "worker-src 'self' blob:",
+      "manifest-src 'self'",
+      "prefetch-src 'self'",
+    ];
+  } else {
+    // Strict production CSP: No unsafe-inline or unsafe-eval
+    cspDirectives = [
+      "default-src 'self'",
+      "script-src 'self' https:",
+      "style-src 'self' https://fonts.googleapis.com",
+      "img-src 'self' data: https:",
+      "font-src 'self' https://fonts.gstatic.com",
+      "connect-src 'self' ws: wss: https:",
+      "media-src 'self'",
+      "object-src 'none'",
+      "frame-ancestors 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-src 'none'",
+      "worker-src 'none'",
+      "manifest-src 'self'",
+      "prefetch-src 'self'",
+    ];
+  }
+
+  res.setHeader('Content-Security-Policy', cspDirectives.join('; '));
+
+  // HSTS (HTTP Strict Transport Security) - only in production
+  if (process.env.NODE_ENV === 'production' && (req.secure || req.headers['x-forwarded-proto'] === 'https')) {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  }
+
+  // Remove server information
+  res.removeHeader('X-Powered-By');
+
+  // Add custom security headers
+  res.setHeader('X-Application-Name', 'Open-Hivemind');
+  res.setHeader('X-Application-Version', process.env.npm_package_version || '1.0.0');
+
+  debug('Security headers applied to response');
+  next();
+}
+
+/**
  * Check if the request comes from a trusted admin IP
  */
 export function isTrustedAdminIP(req: Request): boolean {
@@ -91,20 +183,5 @@ export function secureCORS(req: Request, res: Response, next: NextFunction): voi
     return;
   }
 
-  next();
-}
-
-/**
- * Security headers middleware
- */
-export function securityHeaders(req: Request, res: Response, next: NextFunction): void {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader(
-    'Content-Security-Policy',
-    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self';"
-  );
   next();
 }
