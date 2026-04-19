@@ -1,6 +1,6 @@
 import Debug from 'debug';
-import { strings } from '@src/utils/common';
 import type { ContentFilterConfig } from '@src/types/config';
+import { strings } from '@src/utils/common';
 
 const debug = Debug('app:ContentFilterService');
 

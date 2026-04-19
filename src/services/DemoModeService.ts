@@ -12,7 +12,6 @@ import Debug from 'debug';
 import { inject, injectable, singleton } from 'tsyringe';
 import { type BotConfigurationManager } from '../config/BotConfigurationManager';
 import { type UserConfigStore } from '../config/UserConfigStore';
-import { TOKENS } from '../di/container';
 import { MetricsCollector } from '../monitoring/MetricsCollector';
 import { ActivityLogger } from '../server/services/ActivityLogger';
 import type {

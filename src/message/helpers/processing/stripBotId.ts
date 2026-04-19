@@ -1,6 +1,6 @@
 import Debug from 'debug';
-import messageConfig from '@config/messageConfig';
 import { strings } from '@src/utils/common';
+import messageConfig from '@config/messageConfig';
 
 const debug = Debug('app:stripBotId');
 

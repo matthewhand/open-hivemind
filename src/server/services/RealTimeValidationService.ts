@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
 import { EventEmitter } from 'events';
 import Debug from 'debug';
-import { injectable, singleton, inject } from 'tsyringe';
+import { inject, injectable, singleton } from 'tsyringe';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { BotConfigService } from './BotConfigService';
 import { ConfigurationTemplateService } from './ConfigurationTemplateService';
@@ -268,7 +268,10 @@ export class RealTimeValidationService extends EventEmitter {
               suggestions: ['Provide your Discord bot token from the Discord Developer Portal'],
               category: 'required',
             });
-          } else if (!/^[\w-]+\.[\w-]+\.[\w-]+$/.test(String(discord.token)) && !/\${[\w-]+}/.test(String(discord.token))) {
+          } else if (
+            !/^[\w-]+\.[\w-]+\.[\w-]+$/.test(String(discord.token)) &&
+            !/\${[\w-]+}/.test(String(discord.token))
+          ) {
             warnings.push({
               id: 'discord-token-2',
               ruleId: 'discord-token',
@@ -316,7 +319,10 @@ export class RealTimeValidationService extends EventEmitter {
               suggestions: ['Provide your OpenAI API key from the OpenAI dashboard'],
               category: 'required',
             });
-          } else if (!/^sk-[A-Za-z0-9]+$/.test(String(openai.apiKey)) && !/\${[\w-]+}/.test(String(openai.apiKey))) {
+          } else if (
+            !/^sk-[A-Za-z0-9]+$/.test(String(openai.apiKey)) &&
+            !/\${[\w-]+}/.test(String(openai.apiKey))
+          ) {
             warnings.push({
               id: 'openai-key-2',
               ruleId: 'openai-api-key',

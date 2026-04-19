@@ -2,7 +2,6 @@ import 'reflect-metadata';
 import { injectable, singleton } from 'tsyringe';
 import convict from 'convict';
 import Debug from 'debug';
-import { isValidUrl } from '../common/urlUtils';
 import { SecureConfigManager } from './SecureConfigManager';
 import { ValidationError } from '../types/errorClasses';
 import { validateUrl, validateEnum } from './validationUtils';
