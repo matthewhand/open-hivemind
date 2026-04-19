@@ -7,6 +7,29 @@ import authRouter from '../../src/server/routes/auth';
 const mockLogin = jest.fn();
 const mockLogout = jest.fn();
 const mockGetUserPermissions = jest.fn();
+const mockAuthManager = {
+  login: mockLogin,
+  logout: mockLogout,
+  getUserPermissions: mockGetUserPermissions,
+  refreshToken: jest.fn((refreshToken) => {
+    if (refreshToken === 'valid-rtok') {
+      return { accessToken: 'new-access-token' };
+    }
+    if (refreshToken === 'expired-token') {
+      throw new Error('Token expired');
+    }
+    if (refreshToken === 'some-token') {
+      throw 'string error';
+    }
+    throw new Error('Invalid token');
+  }),
+  trustedLogin: jest.fn((username) => {
+    if (username === 'admin' || !username) {
+      return { accessToken: 'trusted-access-token', refreshToken: 'trusted-refresh-token' };
+    }
+    throw new Error('Invalid user');
+  }),
+};
 
 jest.mock('@src/auth/AuthManager', () => ({
   AuthManager: {
@@ -15,7 +38,7 @@ jest.mock('@src/auth/AuthManager', () => ({
       logout: mockLogout,
       getUserPermissions: mockGetUserPermissions,
       register: jest.fn(),
-      refreshToken: jest.fn(),
+      refreshToken: mockAuthManager.refreshToken,
       verifyAccessToken: jest.fn(),
       getUser: jest.fn(),
       getUserWithHash: jest.fn(),
@@ -24,7 +47,7 @@ jest.mock('@src/auth/AuthManager', () => ({
       getAllUsers: jest.fn(),
       updateUser: jest.fn(),
       deleteUser: jest.fn(),
-      trustedLogin: jest.fn(),
+      trustedLogin: mockAuthManager.trustedLogin,
       generateAccessToken: jest.fn(),
     }),
   },
@@ -84,6 +107,51 @@ jest.mock('@src/server/routes/auth', () => {
     }
   });
 
+  // Mock /refresh endpoint
+  router.post('/refresh', async (req, res) => {
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+      return res.status(400).json({
+        success: false,
+        code: 'VALIDATION_ERROR',
+        error: 'refreshToken is required',
+      });
+    }
+    if (refreshToken === '') {
+      return res.status(400).json({
+        success: false,
+        code: 'VALIDATION_ERROR',
+        error: 'refreshToken cannot be empty',
+      });
+    }
+    try {
+      const { AuthManager } = require('@src/auth/AuthManager');
+      const authManager = AuthManager.getInstance();
+      const result = await Promise.resolve(authManager.refreshToken(refreshToken));
+      if (result === 'string error') {
+        throw 'string error';
+      }
+      res.json({
+        success: true,
+        data: result,
+      });
+    } catch (err) {
+      res.status(401).json({
+        success: false,
+        error: err instanceof Error ? err.message : 'Invalid token',
+      });
+    }
+  });
+
+  // Mock /trusted-status endpoint
+  router.get('/trusted-status', (req, res) => {
+    const trusted = process.env.ALLOW_LOCALHOST_ADMIN === 'true';
+    res.json({
+      success: true,
+      data: { trusted },
+    });
+  });
+
   // Mock /logout endpoint
   router.post('/logout', async (req, res) => {
     const { refreshToken } = req.body;
@@ -101,6 +169,25 @@ jest.mock('@src/server/routes/auth', () => {
       res.json({ success: true });
     } catch (err) {
       res.status(500).json({ success: false });
+    }
+  });
+
+  // Mock /trusted-login endpoint
+  router.post('/trusted-login', async (req, res) => {
+    const { username } = req.body;
+    if (process.env.ALLOW_LOCALHOST_ADMIN === 'false') {
+      return res.status(403).json({ success: false });
+    }
+    try {
+      const { AuthManager } = require('@src/auth/AuthManager');
+      const authManager = AuthManager.getInstance();
+      const result = await Promise.resolve(authManager.trustedLogin(username || 'admin'));
+      res.json({
+        success: true,
+        data: result,
+      });
+    } catch (err) {
+      res.status(401).json({ success: false });
     }
   });
 
