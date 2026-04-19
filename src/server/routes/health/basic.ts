@@ -1,155 +1,110 @@
 import process from 'process';
 import { Router } from 'express';
 import { UserConfigStore } from '../../../config/UserConfigStore';
-import { asyncErrorHandler } from '../../../middleware/errorHandler';
 import { HTTP_STATUS } from '../../../types/constants';
 
 const router = Router();
 
-// Basic health check
-router.get(
-  '/',
-  asyncErrorHandler(async (req, res) => {
-    const memoryUsage = process.memoryUsage();
-    let dbStatus = 'unknown';
-    try {
-      // Requires importing DatabaseManager at the top
-      const dbManager = require('../../../database/DatabaseManager').DatabaseManager.getInstance();
-      dbStatus = dbManager.isConnected() ? 'healthy' : 'unhealthy';
-    } catch {
-      dbStatus = 'error';
-    }
-
-    // Check memory providers
-    let memoryProvidersStatus: Record<string, unknown> = { status: 'none_configured' };
-    let anyMemoryProviderUnhealthy = false;
-    try {
-      const { ProviderRegistry } = require('../../../registries/ProviderRegistry');
-      const registry = ProviderRegistry.getInstance();
-      const memProviders: Map<
-        string,
-        { healthCheck(): Promise<{ status: string; details?: Record<string, unknown> }> }
-      > = registry.getMemoryProviders();
-      if (memProviders.size > 0) {
-        const providers: Record<string, { status: string; details?: Record<string, unknown> }> = {};
-        const entries = Array.from(memProviders.entries());
-        const results = await Promise.allSettled(
-          entries.map(([, provider]) => provider.healthCheck())
-        );
-        for (let i = 0; i < entries.length; i++) {
-          const [name] = entries[i];
-          const result = results[i];
-          if (result.status === 'fulfilled') {
-            providers[name] = result.value;
-            if (result.value.status !== 'ok') {
-              anyMemoryProviderUnhealthy = true;
-            }
-          } else {
-            providers[name] = {
-              status: 'error',
-              details: { error: result.reason?.message || 'Unknown error' },
-            };
-            anyMemoryProviderUnhealthy = true;
-          }
-        }
-        memoryProvidersStatus = {
-          status: anyMemoryProviderUnhealthy ? 'unhealthy' : 'healthy',
-          providers,
-        };
-      }
-    } catch {
-      // Registry not available — treat as none configured
-    }
-
-    // SyncProviderRegistry counts (if initialized)
-    let registryCounts: Record<string, number> | undefined;
-    try {
-      const { SyncProviderRegistry } = require('../../../registries/SyncProviderRegistry');
-      const syncRegistry = SyncProviderRegistry.getInstance();
-      if (syncRegistry.isInitialized()) {
-        registryCounts = syncRegistry.getProviderCount();
-      }
-    } catch {
-      // SyncProviderRegistry not available — omit from response
-    }
-
-    let status = dbStatus === 'healthy' ? 'healthy' : 'degraded';
-    if (status === 'healthy' && anyMemoryProviderUnhealthy) {
-      status = 'degraded';
-    }
-
-    // Check maintenance mode
-    const userConfigStore = UserConfigStore.getInstance();
-    const isMaintenanceMode = userConfigStore.isMaintenanceMode();
-
-    // If in maintenance mode, status should be degraded
-    if (isMaintenanceMode && status === 'healthy') {
-      status = 'degraded';
-    }
-
-    const statusCode = HTTP_STATUS.OK; // Even degraded, we return 200 for basic health. /ready will return HTTP_STATUS.SERVICE_UNAVAILABLE if not ready.
-
-    return res.status(statusCode).json({
-      status: status,
-      timestamp: new Date().toISOString(),
-      version: '1.0.0',
-      uptime: process.uptime(),
-      maintenanceMode: isMaintenanceMode,
-      memory: {
-        used: Math.round(memoryUsage.heapUsed / 1024 / 1024),
-        total: Math.round(memoryUsage.heapTotal / 1024 / 1024),
-        percentage: Math.round((memoryUsage.heapUsed / memoryUsage.heapTotal) * 100),
-      },
-      system: {
-        platform: process.platform,
-        nodeVersion: process.version,
-        processId: process.pid,
-      },
-      memoryProviders: memoryProvidersStatus,
-      ...(registryCounts ? { providerRegistry: registryCounts } : {}),
-    });
-  })
-);
-
-// Readiness probe
-router.get('/ready', (req, res) => {
-  // Check if all dependencies are ready
-  let dbReady = false;
+/**
+ * Helper to get memory provider status
+ */
+async function getMemoryProviderStatus() {
   try {
-    const dbManager = require('../../../database/DatabaseManager').DatabaseManager.getInstance();
-    dbReady = dbManager.isConnected();
+    const { ProviderRegistry } = require('../../../registries/ProviderRegistry');
+    const registry = ProviderRegistry.getInstance();
+    const providers = registry.getMemoryProviders();
+    
+    if (providers.size === 0) {
+      return { status: 'none_configured' };
+    }
+
+    const statusMap: Record<string, any> = {};
+    let allOk = true;
+
+    for (const [name, provider] of providers.entries()) {
+      try {
+        const check = await provider.healthCheck();
+        statusMap[name] = check;
+        if (check.status !== 'ok') allOk = false;
+      } catch (err) {
+        statusMap[name] = { status: 'error', details: { error: err instanceof Error ? err.message : String(err) } };
+        allOk = false;
+      }
+    }
+
+    return {
+      status: allOk ? 'healthy' : 'unhealthy',
+      providers: statusMap
+    };
   } catch {
-    dbReady = false;
+    return undefined;
+  }
+}
+
+// GET /health - basic health check (live/ready probe)
+router.get('/', async (req, res) => {
+  const dbManager = require('../../../database/DatabaseManager').DatabaseManager.getInstance();
+  const isDbConnected = dbManager.isConnected();
+  const isMaintenanceMode = UserConfigStore.getInstance().isMaintenanceMode();
+  
+  const memoryStatus = await getMemoryProviderStatus();
+
+  let status = !isDbConnected ? 'down' : isMaintenanceMode ? 'degraded' : 'healthy';
+  if (status === 'healthy' && memoryStatus?.status === 'unhealthy') {
+    status = 'degraded';
   }
 
-  // We are ready if critical dependencies are up
-  const isReady = dbReady;
-  const statusCode = isReady ? HTTP_STATUS.OK : HTTP_STATUS.SERVICE_UNAVAILABLE;
-
-  return res.status(statusCode).json({
-    ready: isReady,
+  return res.status(HTTP_STATUS.OK).json({
+    status,
+    ready: isDbConnected,
+    maintenanceMode: isMaintenanceMode,
     timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    memoryProviders: memoryStatus,
     checks: {
-      database: dbReady,
-      external_apis: true, // Would need actual API checks
+      database: isDbConnected,
+      external_apis: true, // Placeholder
       configuration: true,
-    },
+    }
   });
 });
 
-// Liveness probe
+// GET /health/ready - Readiness probe for Kubernetes/orchestrators
+router.get('/ready', (req, res) => {
+  const dbManager = require('../../../database/DatabaseManager').DatabaseManager.getInstance();
+  const isConnected = dbManager.isConnected();
+
+  if (isConnected) {
+    return res.status(HTTP_STATUS.OK).json({ 
+      status: 'ready', 
+      ready: true,
+      checks: {
+        database: true,
+        external_apis: true,
+        configuration: true,
+      },
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  return res.status(HTTP_STATUS.SERVICE_UNAVAILABLE).json({
+    status: 'not ready',
+    ready: false,
+    reason: 'Database not connected',
+    checks: {
+      database: false,
+    }
+  });
+});
+
+// GET /health/live - Liveness probe for Kubernetes/orchestrators
 router.get('/live', (req, res) => {
-  // Simple liveness check - if we can respond, we're alive
-  return res.json({
-    alive: true,
-    timestamp: new Date().toISOString(),
-  });
+  return res.status(HTTP_STATUS.OK).json({ status: 'live', alive: true });
 });
 
-// Maintenance mode status
+// GET /health/maintenance - Public maintenance status
 router.get('/maintenance', (req, res) => {
-  const userConfigStore = UserConfigStore.getInstance();
-  const isMaintenanceMode = userConfigStore.isMaintenanceMode();
+  const isMaintenanceMode = UserConfigStore.getInstance().isMaintenanceMode();
 
   return res.json({
     maintenanceMode: isMaintenanceMode,

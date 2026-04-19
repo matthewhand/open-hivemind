@@ -209,7 +209,7 @@ router.post(
       await saveJsonConfig(AGENTS_CONFIG_FILE, agents);
 
       debug(`Created new agent: ${newAgent.name}`);
-      return res.json(ApiResponse.success({ agent: newAgent }));
+      return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success({ agent: newAgent }));
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
       const errorInfo = ErrorUtils.classifyError(hivemindError);
