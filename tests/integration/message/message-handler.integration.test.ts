@@ -1,58 +1,114 @@
-import { handleMessage } from '../../../src/message/handlers/messageHandler';
-import { IMessage } from '../../../src/message/interfaces/IMessage';
+import 'reflect-metadata';
 import { MessageBus } from '../../../src/events/MessageBus';
+import { createPipeline } from '../../../src/pipeline/createPipeline';
+import { IMessage } from '../../../src/message/interfaces/IMessage';
+import { IMessengerService } from '../../../src/message/interfaces/IMessengerService';
+import { LlmInvokerAdapter } from '../../../src/pipeline/adapters/LlmInvokerAdapter';
+import { DecisionStrategyAdapter } from '../../../src/pipeline/adapters/DecisionStrategyAdapter';
 
-// Extend IMessage to create a concrete test message
+// Extend IMessage for test
 class TestMessage extends IMessage {
-  constructor(public text: string, public isUnsolicited = false) {
+  constructor(public text: string) {
     super({}, 'user');
     this.content = text;
-    this.channelId = 'test-channel';
-    this.platform = 'test-platform';
+    this.channelId = 'c1';
+    this.platform = 'test';
   }
-  getMessageId() { return 'test-msg-id'; }
+  getMessageId() { return 'm1'; }
   getText() { return this.text; }
   getTimestamp() { return new Date(); }
-  getChannelId() { return 'test-channel'; }
-  getAuthorId() { return 'test-user'; }
+  getChannelId() { return 'c1'; }
+  getAuthorId() { return 'u1'; }
+  setText(t: string) { this.text = t; this.content = t; }
 }
 
-describe('Message Handler Integration', () => {
+describe('Message Pipeline Integration', () => {
   let bus: MessageBus;
+  let mockMessenger: jest.Mocked<IMessengerService>;
 
   beforeEach(() => {
-    bus = new MessageBus();
-    jest.spyOn(MessageBus, 'getInstance').mockReturnValue(bus);
+    bus = MessageBus.getInstance();
+    bus.reset();
+    bus = MessageBus.getInstance();
+    
+    mockMessenger = {
+      initialize: jest.fn(),
+      sendMessageToChannel: jest.fn().mockResolvedValue(undefined),
+      getMessagesFromChannel: jest.fn().mockResolvedValue([]),
+      sendPublicAnnouncement: jest.fn().mockResolvedValue(undefined),
+      getClientId: jest.fn().mockReturnValue('bot123'),
+      getDefaultChannel: jest.fn().mockReturnValue('general'),
+      shutdown: jest.fn(),
+      setMessageHandler: jest.fn(),
+    } as any;
+
+    // Create the pipeline
+    createPipeline(bus, {
+      botId: 'bot123',
+      botConfig: { name: 'TestBot' },
+      messengerService: mockMessenger,
+    });
   });
 
-  afterEach(() => {
-    jest.restoreAllMocks();
+  it('should process an incoming message through the pipeline and send a reply', async () => {
+    // 1. Mock dependencies that adapters use
+    jest.spyOn(LlmInvokerAdapter.prototype, 'generateResponse').mockResolvedValue('Hello from AI!');
+    jest.spyOn(DecisionStrategyAdapter.prototype, 'shouldReply').mockResolvedValue({
+      shouldReply: true,
+      reason: 'Test force reply'
+    });
+
+    // 2. Listen for completion
+    const sentSpy = jest.fn();
+    bus.on('message:sent', sentSpy);
+
+    // 3. Trigger the pipeline
+    const message = new TestMessage('Hi bot');
+    const context: any = {
+      message,
+      botName: 'TestBot',
+      botConfig: { name: 'TestBot' },
+      requestId: 'req123',
+      history: [],
+      metadata: {}
+    };
+
+    // Use emitAsync to wait for all stages
+    await bus.emitAsync('message:incoming', context);
+
+    // 5. Verify
+    expect(sentSpy).toHaveBeenCalled();
+    expect(mockMessenger.sendMessageToChannel).toHaveBeenCalledWith(
+      'c1',
+      'Hello from AI!',
+      'TestBot'
+    );
   });
 
-  it('should emit message:incoming when a valid message is processed', async () => {
-    const incomingSpy = jest.fn();
-    bus.on('message:incoming', incomingSpy);
+  it('should skip messages that the decision stage rejects', async () => {
+    jest.spyOn(DecisionStrategyAdapter.prototype, 'shouldReply').mockResolvedValue({
+      shouldReply: false,
+      reason: 'No reply needed'
+    });
 
-    const message = new TestMessage('Hello, bot!');
-    const botConfig = { name: 'TestBot' };
+    const skippedSpy = jest.fn();
+    bus.on('message:skipped', skippedSpy);
+    const sentSpy = jest.fn();
+    bus.on('message:sent', sentSpy);
 
-    await handleMessage(message, botConfig as any);
+    const message = new TestMessage('Ignored message');
+    await bus.emitAsync('message:incoming', {
+      message,
+      botName: 'TestBot',
+      botConfig: { name: 'TestBot' },
+      requestId: 'req456',
+      history: [],
+      metadata: {}
+    });
 
-    expect(incomingSpy).toHaveBeenCalled();
-    const callArgs = incomingSpy.mock.calls[0][0];
-    expect(callArgs.message.getText()).toBe('Hello, bot!');
-    expect(callArgs.botName).toBe('TestBot');
-  });
-
-  it('should not emit message:incoming for empty messages', async () => {
-    const incomingSpy = jest.fn();
-    bus.on('message:incoming', incomingSpy);
-
-    const message = new TestMessage('');
-    const botConfig = { name: 'TestBot' };
-
-    await handleMessage(message, botConfig as any);
-
-    expect(incomingSpy).not.toHaveBeenCalled();
+    expect(skippedSpy).toHaveBeenCalledWith(expect.objectContaining({
+      reason: 'No reply needed'
+    }));
+    expect(sentSpy).not.toHaveBeenCalled();
   });
 });

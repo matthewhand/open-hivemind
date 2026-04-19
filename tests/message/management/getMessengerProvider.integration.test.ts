@@ -78,6 +78,21 @@ jest.mock('../../../src/server/services/websocket', () => {
   };
 });
 
+jest.mock('tsyringe', () => ({
+  container: {
+    resolve: jest.fn((token) => {
+      if (token && (token.name === 'WebSocketService' || token.toString().includes('WebSocketService'))) {
+        return { broadcastBotStatus: jest.fn(), broadcastConfigChange: jest.fn() };
+      }
+      return {};
+    }),
+    isRegistered: jest.fn().mockReturnValue(true),
+  },
+  singleton: () => (target: any) => target,
+  injectable: () => (target: any) => target,
+  inject: () => (target: any) => target,
+}));
+
 import { getMessengerProvider } from '../../../src/message/management/getMessengerProvider';
 
 describe('getMessengerProvider Unit Test', () => {
