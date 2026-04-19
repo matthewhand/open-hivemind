@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
-import { assertNoErrors, navigateAndWaitReady, setupTestWithErrorDetection } from './test-utils';
+import { assertNoErrors, navigateAndWaitReady, registerViteSourceBypass, setupTestWithErrorDetection } from './test-utils';
+
 
 test.describe('Bots Search and Filter', () => {
   test.setTimeout(90000);
@@ -122,6 +123,10 @@ test.describe('Bots Search and Filter', () => {
       // Catch-all: return empty 200 for any unmatched API endpoint
       return route.fulfill({ status: 200, json: {} });
     });
+
+    // CRITICAL: register AFTER all other routes so Vite source-module paths
+    // (/src/**) are not intercepted by the **/api/** catch-all above.
+    await registerViteSourceBypass(page);
   });
 
   test('can search bots by name', async ({ page }) => {
@@ -129,16 +134,15 @@ test.describe('Bots Search and Filter', () => {
     await navigateAndWaitReady(page, '/admin/bots');
 
     // Wait for the page to fully render (bots loaded, search bar visible)
-    const searchInput = page.locator('input[placeholder="Search..."]');
+    const searchInput = page.locator('input[placeholder="Search agents by name or purpose..."]');
     await searchInput.waitFor({ state: 'visible', timeout: 15000 });
 
     await searchInput.fill('Support');
 
     // Wait for filter to apply
-
-    const botRows = page.locator('.card.bg-base-100');
+    
     // We expect 1 visible row
-    const visibleBot = botRows.filter({ hasText: 'Support Bot' });
+    const visibleBot = page.getByRole('heading', { name: 'Support Bot' });
     await expect(visibleBot).toBeVisible();
 
     // Check others are not visible
@@ -153,11 +157,11 @@ test.describe('Bots Search and Filter', () => {
     const errors = await setupTestWithErrorDetection(page);
     await navigateAndWaitReady(page, '/admin/bots');
 
-    const searchInput = page.locator('input[placeholder="Search..."]');
+    const searchInput = page.locator('input[placeholder="Search agents by name or purpose..."]');
+    await searchInput.waitFor({ state: 'visible', timeout: 15000 });
     await searchInput.fill('Internal');
 
-    const botRows = page.locator('.card.bg-base-100');
-    const visibleBot = botRows.filter({ hasText: 'Internal Helper' });
+    const visibleBot = page.getByRole('heading', { name: 'Internal Helper' });
     await expect(visibleBot).toBeVisible();
 
     await expect(page.locator('text=Support Bot')).not.toBeVisible();
@@ -169,11 +173,11 @@ test.describe('Bots Search and Filter', () => {
     const errors = await setupTestWithErrorDetection(page);
     await navigateAndWaitReady(page, '/admin/bots');
 
-    const searchInput = page.locator('input[placeholder="Search..."]');
+    const searchInput = page.locator('input[placeholder="Search agents by name or purpose..."]');
+    await searchInput.waitFor({ state: 'visible', timeout: 15000 });
     await searchInput.fill('Creative');
 
-    const botRows = page.locator('.card.bg-base-100');
-    const visibleBot = botRows.filter({ hasText: 'Creative Writer' });
+    const visibleBot = page.getByRole('heading', { name: 'Creative Writer' });
     await expect(visibleBot).toBeVisible();
 
     await expect(page.locator('text=Support Bot')).not.toBeVisible();
@@ -185,7 +189,8 @@ test.describe('Bots Search and Filter', () => {
     const errors = await setupTestWithErrorDetection(page);
     await navigateAndWaitReady(page, '/admin/bots');
 
-    const searchInput = page.locator('input[placeholder="Search..."]');
+    const searchInput = page.locator('input[placeholder="Search agents by name or purpose..."]');
+    await searchInput.waitFor({ state: 'visible', timeout: 15000 });
     await searchInput.fill('NonExistentBot');
 
     await expect(page.locator('text=No agents found')).toBeVisible();

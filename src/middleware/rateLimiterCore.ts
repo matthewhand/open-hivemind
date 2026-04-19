@@ -317,9 +317,27 @@ export function getClientKey(req: Request): string {
  * Check if rate limiting should be skipped
  */
 export function shouldSkipRateLimit(req: Request): boolean {
+  // Skip entirely in test mode (NODE_ENV=test) unless explicitly enabled
   if (process.env.NODE_ENV === 'test' && process.env.ENABLE_RATE_LIMIT_TESTS !== 'true')
     return true;
+
+  // Always skip health/metrics endpoints
   if (req.path === '/health' || req.path === '/metrics') return true;
+
+  // Skip Vite dev server asset requests — these are never API calls and would
+  // exhaust limits immediately during parallel E2E test runs.
+  // Covers: /src/**, /@vite/**, /@react-refresh, /node_modules/.vite/**, /node_modules/**
+  const path = req.path;
+  if (
+    path.startsWith('/src/') ||
+    path.startsWith('/@') ||          // /@vite/client, /@react-refresh, /@fs/
+    path.startsWith('/node_modules/') ||
+    // Static assets with file extensions (js, ts, tsx, css, png, svg, woff…)
+    /\.[a-zA-Z0-9]+(\?.*)?$/.test(path)
+  ) {
+    return true;
+  }
+
   return false;
 }
 

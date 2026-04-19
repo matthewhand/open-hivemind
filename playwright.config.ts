@@ -109,7 +109,7 @@ export default defineConfig({
   webServer: {
     command: process.env.CI
       ? 'cross-env SKIP_MESSENGERS=true NODE_ENV=test node dist/index.js'
-      : 'cross-env NODE_ENV=test ALLOW_TEST_BYPASS=true npm run start:dev',
+      : 'npm run start:test',
     url: 'http://localhost:3028',
     reuseExistingServer: !process.env.CI,
     timeout: 180 * 1000,

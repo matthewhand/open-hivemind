@@ -86,6 +86,9 @@ const IGNORED_ERROR_PATTERNS = [
   /429/i,
   /Too Many Requests/i,
   /Rate limit exceeded/i,
+  // Vite dev server transient errors on cold start
+  /504/i,
+  /Outdated Optimize Dep/i,
 ];
 
 /**
