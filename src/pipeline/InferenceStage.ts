@@ -80,6 +80,7 @@ export class InferenceStage {
    * other pipeline stages that need an imperative (non-event) code path.
    */
   async process(ctx: MessageContext & { memories: string[]; systemPrompt: string }): Promise<void> {
+    const startTime = Date.now();
     try {
       // Extract user message text — prefer getText() when available, fall
       // back to the public `content` property.
@@ -93,7 +94,16 @@ export class InferenceStage {
         ctx.metadata
       );
 
+      const durationMs = Date.now() - startTime;
+
       if (!responseText) {
+        // Capture metadata for skipped response
+        ctx.metadata.inference = {
+          model: (ctx.botConfig.MODEL as string) || 'unknown',
+          durationMs,
+          status: 'empty',
+        };
+
         await this.bus.emitAsync('message:skipped', {
           ...ctx,
           reason: 'empty LLM response',
@@ -101,6 +111,14 @@ export class InferenceStage {
         debug('Inference skipped (empty response): bot=%s', ctx.botName);
         return;
       }
+
+      // Capture metadata for successful response
+      ctx.metadata.inference = {
+        model: (ctx.botConfig.MODEL as string) || 'unknown',
+        durationMs,
+        responseLength: responseText.length,
+        status: 'ok',
+      };
 
       await this.bus.emitAsync('message:response', { ...ctx, responseText });
       debug('Inference complete: bot=%s responseLength=%d', ctx.botName, responseText.length);

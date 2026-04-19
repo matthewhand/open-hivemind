@@ -97,6 +97,14 @@ export class DecisionStage {
 
         debug('[DecisionStage] Message %s: skipped (claimed)', messageId);
 
+        // Capture metadata
+        ctx.metadata.decision = {
+          alreadyClaimed: true,
+          claimedBy: existingClaim?.botId,
+          reason,
+          shouldReply: false,
+        };
+
         // Broadcast decision to WebSocket for Live Orchestration Log
         this.bus.emit('pipeline:decision', {
           botName,
@@ -113,6 +121,14 @@ export class DecisionStage {
 
       // --- Run the decision strategy ---
       const decision = await this.strategy.shouldReply(ctx);
+
+      // Capture metadata
+      ctx.metadata.decision = {
+        alreadyClaimed: false,
+        shouldReply: decision.shouldReply,
+        reason: decision.reason,
+        meta: decision.meta,
+      };
 
       if (decision.shouldReply) {
         // Claim the message for this bot

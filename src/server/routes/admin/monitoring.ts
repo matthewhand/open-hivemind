@@ -6,6 +6,7 @@ import { HTTP_STATUS } from '../../../types/constants';
 import { isSafeUrl } from '../../../utils/ssrfGuard';
 import { TestConnectionSchema } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
+import { getActiveTracer } from '../../../observability/PipelineTracer';
 import {
   getChatModels,
   getEmbeddingModels,
@@ -423,6 +424,23 @@ router.get('/llm-providers/:type/models', (req: Request, res: Response) => {
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       error: 'Failed to fetch LLM models',
       message: hivemindError.message || 'An error occurred while fetching LLM models',
+    });
+  }
+});
+
+// GET /decision-traces - Get recent message pipeline decision traces
+router.get('/decision-traces', (req: Request, res: Response) => {
+  try {
+    const tracer = getActiveTracer();
+    if (!tracer) {
+      return res.json({ traces: [] });
+    }
+    return res.json({ traces: tracer.getCompletedTraces() });
+  } catch (error) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      error: 'Failed to fetch decision traces',
+      message: hivemindError.message || 'An error occurred while fetching traces',
     });
   }
 });

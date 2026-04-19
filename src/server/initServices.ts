@@ -13,6 +13,7 @@ import { container } from '@src/di/container';
 import { registerServices } from '@src/di/registration';
 import { SyncProviderRegistry, type ProviderProfile } from '@src/registries/SyncProviderRegistry';
 import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
+import { BotHeartbeatService } from '@src/server/services/BotHeartbeatService';
 import AnomalyDetectionService from '@src/services/AnomalyDetectionService';
 import DemoModeService from '@src/services/DemoModeService';
 import StartupGreetingService from '@src/services/StartupGreetingService';
@@ -297,6 +298,14 @@ export async function initServices(
   // Initialize the StartupGreetingService
   const startupGreetingService = container.resolve(StartupGreetingService);
   await startupGreetingService.initialize();
+
+  // Initialize and start BotHeartbeatService (Auto-Healing)
+  const heartbeatService = BotHeartbeatService.getInstance();
+  heartbeatService.start();
+  shutdownCoordinator.registerService({
+    name: 'BotHeartbeatService',
+    shutdown: () => heartbeatService.stop(),
+  });
 
   // Initialize AnomalyDetectionService
   AnomalyDetectionService.getInstance();

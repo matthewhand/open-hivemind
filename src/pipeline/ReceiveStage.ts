@@ -75,7 +75,13 @@ export class ReceiveStage {
       botName,
       platform,
       channelId,
-      metadata: {},
+      metadata: {
+        receive: {
+          rawTextLength: rawText.length,
+          sanitizedTextLength: text.length,
+          receivedAt: Date.now(),
+        },
+      },
     };
 
     // 4. Persist the sanitized text back onto the message

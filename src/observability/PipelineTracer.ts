@@ -172,6 +172,14 @@ export class PipelineTracer {
 
     const closing = this.findSpan(trace, closeName);
     if (closing) {
+      // Capture stage-specific metadata from ctx.metadata
+      const stageMeta = ctx.metadata[closeName];
+      if (stageMeta && typeof stageMeta === 'object') {
+        Object.entries(stageMeta).forEach(([k, v]) => {
+          closing.attributes[k] = String(v);
+        });
+      }
+
       closeSpan(closing);
       debug('Span %s closed (%dms)', closeName, closing.durationMs);
     }
@@ -192,6 +200,14 @@ export class PipelineTracer {
 
     const decision = this.findSpan(trace, 'decision');
     if (decision) {
+      // Capture decision metadata
+      const stageMeta = ctx.metadata.decision;
+      if (stageMeta && typeof stageMeta === 'object') {
+        Object.entries(stageMeta).forEach(([k, v]) => {
+          decision.attributes[k] = String(v);
+        });
+      }
+
       closeSpan(decision);
       decision.attributes.skipped = true;
       decision.attributes.reason = ctx.reason;
@@ -211,6 +227,14 @@ export class PipelineTracer {
 
     const sendSpan = this.findSpan(trace, 'send');
     if (sendSpan) {
+      // Capture send metadata
+      const stageMeta = ctx.metadata.send;
+      if (stageMeta && typeof stageMeta === 'object') {
+        Object.entries(stageMeta).forEach(([k, v]) => {
+          sendSpan.attributes[k] = String(v);
+        });
+      }
+
       closeSpan(sendSpan);
       debug('Span send closed (%dms)', sendSpan.durationMs);
     }
