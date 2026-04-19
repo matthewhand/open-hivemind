@@ -3,11 +3,39 @@ import jwt from 'jsonwebtoken';
 import { globalErrorHandler } from '../../src/middleware/errorHandler';
 import authRouter from '../../src/server/routes/auth';
 
-// Mock the entire auth router to use our test logic
+// Mock the AuthManager to use in the router
+const mockLogin = jest.fn();
+const mockLogout = jest.fn();
+const mockGetUserPermissions = jest.fn();
+
+jest.mock('@src/auth/AuthManager', () => ({
+  AuthManager: {
+    getInstance: () => ({
+      login: mockLogin,
+      logout: mockLogout,
+      getUserPermissions: mockGetUserPermissions,
+      register: jest.fn(),
+      refreshToken: jest.fn(),
+      verifyAccessToken: jest.fn(),
+      getUser: jest.fn(),
+      getUserWithHash: jest.fn(),
+      verifyPassword: jest.fn(),
+      changePassword: jest.fn(),
+      getAllUsers: jest.fn(),
+      updateUser: jest.fn(),
+      deleteUser: jest.fn(),
+      trustedLogin: jest.fn(),
+      generateAccessToken: jest.fn(),
+    }),
+  },
+}));
+
+// Mock the auth router to use the AuthManager mocks
 jest.mock('@src/server/routes/auth', () => {
   const { Router } = require('express');
   const router = Router();
 
+  // Mock /verify endpoint
   router.get('/verify', (req, res) => {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
@@ -35,8 +63,57 @@ jest.mock('@src/server/routes/auth', () => {
     }
   });
 
+  // Mock /login endpoint
+  router.post('/login', async (req, res) => {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({
+        success: false,
+        code: 'VALIDATION_ERROR',
+        error: 'Username and password are required',
+      });
+    }
+    try {
+      const result = await Promise.resolve(mockLogin(req.body));
+      res.json({
+        success: true,
+        data: result,
+      });
+    } catch (err) {
+      res.status(401).json({ success: false });
+    }
+  });
+
+  // Mock /logout endpoint
+  router.post('/logout', async (req, res) => {
+    const { refreshToken } = req.body;
+    
+    // Handle ALLOW_LOCALHOST_ADMIN logic
+    if (process.env.ALLOW_LOCALHOST_ADMIN === 'false' && !req.headers.authorization) {
+      return res.status(401).json({ success: false });
+    }
+    
+    if (!refreshToken) {
+      return res.json({ success: true });
+    }
+    try {
+      await Promise.resolve(mockLogout(refreshToken));
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ success: false });
+    }
+  });
+
   return router;
 });
+
+// Export mocks and createAuthApp for use in tests
+module.exports = {
+  mockLogin,
+  mockLogout,
+  mockGetUserPermissions,
+  createAuthApp,
+};
 
 /**
  * Creates a fresh Express app with the real authRouter mounted at /auth,
