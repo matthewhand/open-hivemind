@@ -198,7 +198,7 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
     setEditingProvider(provider || null);
     setFormData(provider?.config || {});
     setOpenDialog(true);
-  }, []);
+  }, [setEditingProvider, setFormData]);
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
@@ -221,11 +221,11 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
         await hookHandleDeleteProvider(providerId);
       },
     });
-  }, [hookHandleDeleteProvider]);
+  }, [hookHandleDeleteProvider, setConfirmModal]);
 
   const handleToggleActive = useCallback(async (providerId: string, isActive: boolean) => {
     await hookHandleToggleActive(providerId, isActive);
-  }, [hookHandleToggleActive]);
+  }, [hookHandleToggleActive, setConfirmModal]);
 
   const activeProviderDocs = useMemo(() => {
     const currentType = formData.type || editingProvider?.type;
