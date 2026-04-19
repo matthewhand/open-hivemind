@@ -2,14 +2,12 @@
  * Circuit Breaker – local copy for the mem4ai workspace package.
  *
  * This avoids importing from `@common/CircuitBreaker` which lives in the main
- * app source tree and cannot be resolved when the package is loaded from `dist/`.
+ * app source tree and cannot be resolved when the package is loaded from `dist`.
  */
 
 import Debug from 'debug';
 
 const debug = Debug('app:circuit-breaker');
-
-const THIRTY_SECONDS_MS = 30_000;
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -20,9 +18,13 @@ export enum CircuitBreakerState {
 }
 
 export interface CircuitBreakerOptions {
+  /** Name used in log messages (e.g. "openai", "mem0"). */
   name: string;
+  /** Number of consecutive failures before opening the circuit. Default 5. */
   failureThreshold?: number;
+  /** Time in ms to wait before moving from OPEN to HALF_OPEN. Default 30 000. */
   resetTimeoutMs?: number;
+  /** Max probe requests allowed in HALF_OPEN before deciding. Default 3. */
   halfOpenMaxAttempts?: number;
 }
 
@@ -54,6 +56,7 @@ export class CircuitBreaker {
   private halfOpenSuccesses = 0;
   private lastFailureTime: number | null = null;
 
+  // Lifetime counters
   private totalRequests = 0;
   private totalFailures = 0;
   private totalSuccesses = 0;
@@ -66,22 +69,28 @@ export class CircuitBreaker {
   constructor(options: CircuitBreakerOptions) {
     this._name = options.name;
     this.failureThreshold = options.failureThreshold ?? 5;
-    this.resetTimeoutMs = options.resetTimeoutMs ?? THIRTY_SECONDS_MS;
+    this.resetTimeoutMs = options.resetTimeoutMs ?? 30000;
     this.halfOpenMaxAttempts = options.halfOpenMaxAttempts ?? 3;
   }
 
+  /**
+   * Execute an async operation under circuit breaker protection.
+   * Throws `CircuitBreakerError` when the circuit is open.
+   */
   async execute<T>(fn: () => Promise<T>): Promise<T> {
-    if (this.state === CircuitBreakerState.OPEN && this.shouldTransitionToHalfOpen()) {
-      this.transitionTo(CircuitBreakerState.HALF_OPEN);
-      this.halfOpenAttempts = 0;
-      this.halfOpenSuccesses = 0;
-    }
-
+    // Check whether an OPEN breaker should transition to HALF_OPEN
     if (this.state === CircuitBreakerState.OPEN) {
-      debug('[%s] Circuit is OPEN — rejecting request', this._name);
-      throw new CircuitBreakerError(this._name);
+      if (this.shouldTransitionToHalfOpen()) {
+        this.transitionTo(CircuitBreakerState.HALF_OPEN);
+        this.halfOpenAttempts = 0;
+        this.halfOpenSuccesses = 0;
+      } else {
+        debug('[%s] Circuit is OPEN — rejecting request', this._name);
+        throw new CircuitBreakerError(this._name);
+      }
     }
 
+    // In HALF_OPEN, cap the number of probe attempts
     if (this.state === CircuitBreakerState.HALF_OPEN) {
       if (this.halfOpenAttempts >= this.halfOpenMaxAttempts) {
         debug('[%s] HALF_OPEN probe limit reached — rejecting', this._name);
@@ -102,10 +111,18 @@ export class CircuitBreaker {
     }
   }
 
+  /** Return the current state. */
   getState(): CircuitBreakerState {
+    // Lazily detect OPEN -> HALF_OPEN on read
+    if (this.state === CircuitBreakerState.OPEN && this.shouldTransitionToHalfOpen()) {
+      this.transitionTo(CircuitBreakerState.HALF_OPEN);
+      this.halfOpenAttempts = 0;
+      this.halfOpenSuccesses = 0;
+    }
     return this.state;
   }
 
+  /** Return a snapshot of internal counters. */
   getStats(): CircuitBreakerStats {
     return {
       name: this._name,
@@ -120,6 +137,7 @@ export class CircuitBreaker {
     };
   }
 
+  /** Force-reset the breaker to CLOSED and clear all counters. */
   reset(): void {
     this.consecutiveFailures = 0;
     this.halfOpenAttempts = 0;
@@ -132,15 +150,20 @@ export class CircuitBreaker {
     debug('[%s] Circuit breaker manually reset', this._name);
   }
 
+  // ── Private helpers ──────────────────────────────────────────────────────
+
   private onSuccess(): void {
     this.totalSuccesses++;
+
     if (this.state === CircuitBreakerState.HALF_OPEN) {
       this.halfOpenSuccesses++;
+      // All probe attempts succeeded — close the circuit
       if (this.halfOpenSuccesses >= this.halfOpenMaxAttempts) {
         this.consecutiveFailures = 0;
         this.transitionTo(CircuitBreakerState.CLOSED);
       }
     } else {
+      // CLOSED — reset consecutive failure counter
       this.consecutiveFailures = 0;
     }
   }
@@ -149,7 +172,9 @@ export class CircuitBreaker {
     this.totalFailures++;
     this.consecutiveFailures++;
     this.lastFailureTime = Date.now();
+
     if (this.state === CircuitBreakerState.HALF_OPEN) {
+      // Any failure in HALF_OPEN reopens the circuit
       this.transitionTo(CircuitBreakerState.OPEN);
     } else if (this.consecutiveFailures >= this.failureThreshold) {
       this.transitionTo(CircuitBreakerState.OPEN);
@@ -169,22 +194,36 @@ export class CircuitBreaker {
   }
 }
 
-// ─── Registry ────────────────────────────────────────────────────────────────
+// ─── Registry (singleton per provider name) ──────────────────────────────────
 
 const registry = new Map<string, CircuitBreaker>();
 
+/**
+ * Get or create a named circuit breaker. Re-uses an existing instance when
+ * called with the same name so all call-sites for a provider share state.
+ */
 export function getCircuitBreaker(options: CircuitBreakerOptions): CircuitBreaker {
   const existing = registry.get(options.name);
   if (existing) return existing;
+
   const breaker = new CircuitBreaker(options);
   registry.set(options.name, breaker);
   return breaker;
 }
 
+/**
+ * Clear the global registry (useful for tests).
+ */
 export function clearCircuitBreakerRegistry(): void {
   registry.clear();
 }
 
+/**
+ * Reset every circuit breaker in the registry to CLOSED and clear all counters,
+ * then clear the registry itself. Use this in test `beforeEach` to prevent
+ * state leakage between tests — especially for module-level breaker instances
+ * that survive a simple `registry.clear()`.
+ */
 export function resetAllCircuitBreakers(): void {
   for (const breaker of registry.values()) {
     breaker.reset();
