@@ -9,8 +9,8 @@ import { validateRequest } from '../../../validation/validateRequest';
 import { getActiveTracer } from '../../../observability/PipelineTracer';
 import { AnomalyDetectionService } from '../../../services/AnomalyDetectionService';
 import { PipelineDebuggerService } from '../../services/PipelineDebuggerService';
-import {
-  getChatModels,
+import { container } from 'tsyringe';
+import { getChatModels,
   getEmbeddingModels,
   getModelsForProvider,
   getSupportedProviders,

@@ -33,6 +33,7 @@ import lettaRouter from '@src/server/routes/letta';
 import marketplaceRouter from '@src/server/routes/marketplace';
 import mcpRouter from '@src/server/routes/mcp';
 import mcpToolsRouter from '@src/server/routes/mcpTools';
+import monitoringRouter from '@src/server/routes/monitoring';
 import onboardingRouter from '@src/server/routes/onboarding';
 import openapiRouter from '@src/server/routes/openapi';
 import personasRouter from '@src/server/routes/personas';
@@ -138,6 +139,7 @@ export function registerRoutes(app: import('express').Application, ctx: RouteCon
   app.use('/api/marketplace', marketplaceRouter);
   app.use('/api/mcp', mcpRouter);
   app.use('/api/mcp-tools', mcpToolsRouter);
+  app.use('/api/monitoring', authenticateToken, monitoringRouter);
   app.use('/api/onboarding', onboardingRouter);
   app.use('/api/personas', personasRouter);
   app.use('/api/providers', providersRouter);

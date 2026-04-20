@@ -174,7 +174,7 @@ export class ToolManager {
       if (isSensitive) {
         debug(`[${botName}] Tool "${toolName}" is sensitive. Requesting admin approval...`);
         const pendingMgr = PendingActionManager.getInstance();
-        const approved = await pendingMgr.requestApproval(botName, toolName, args, context);
+        const approved = await pendingMgr.create(botName, toolName, args, context);
 
         if (!approved) {
           const msg = `Tool execution denied: "${toolName}" requires administrator approval.`;

@@ -10,6 +10,8 @@ import { Stat, Stats } from './DaisyUI/Stat';
 import DashboardBotCard from './DashboardBotCard';
 import AgentGrid from './Dashboard/AgentGrid';
 import CommandCenterStream from './Monitoring/CommandCenterStream';
+import { useSuccessToast, useErrorToast } from './DaisyUI/ToastNotification';
+import { ArrowUp, ArrowDown, Save, Settings2 } from 'lucide-react';
 
 const getStatusColor = (botStatus: string) => {
   switch (botStatus.toLowerCase()) {
@@ -48,6 +50,51 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [botRatings, setBotRatings] = useState<Record<string, number>>({});
+  
+  // Dashboard Customization State
+  const [layout, setLayout] = useState<string[]>(['stats', 'agents', 'command-stream']);
+  const [isCustomizing, setIsCustomizing] = useState(false);
+  const [savingLayout, setSavingLayout] = useState(false);
+
+  const successToast = useSuccessToast();
+  const errorToast = useErrorToast();
+
+  const fetchLayout = useCallback(async () => {
+    try {
+      const response: any = await apiService.get('/api/webui/config');
+      if (response.success && response.data?.layout) {
+        setLayout(response.data.layout);
+      }
+    } catch (e) {
+      console.error('Failed to fetch dashboard layout', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchLayout();
+  }, [fetchLayout]);
+
+  const saveLayout = async () => {
+    setSavingLayout(true);
+    try {
+      await apiService.post('/api/webui/config', { layout });
+      successToast('Dashboard Layout Saved', 'Your custom widget order has been persisted.');
+      setIsCustomizing(false);
+    } catch (e: any) {
+      errorToast('Failed to Save Layout', e.message || 'Error occurred');
+    } finally {
+      setSavingLayout(false);
+    }
+  };
+
+  const moveWidget = (index: number, direction: 'up' | 'down') => {
+    const newLayout = [...layout];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= newLayout.length) return;
+
+    [newLayout[index], newLayout[targetIndex]] = [newLayout[targetIndex], newLayout[index]];
+    setLayout(newLayout);
+  };
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
@@ -204,6 +251,71 @@ const Dashboard: React.FC = () => {
     );
   }
 
+  const renderWidget = (type: string, index: number) => {
+    const controls = isCustomizing && (
+      <div className="flex gap-1 mb-2">
+         <Button size="xs" variant="ghost" onClick={() => moveWidget(index, 'up')} disabled={index === 0}><ArrowUp className="w-3 h-3" /></Button>
+         <Button size="xs" variant="ghost" onClick={() => moveWidget(index, 'down')} disabled={index === layout.length - 1}><ArrowDown className="w-3 h-3" /></Button>
+      </div>
+    );
+
+    switch (type) {
+      case 'stats':
+        return (
+          <div key="stats" className="mb-8">
+            {controls}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Stat title="Total Bots" value={totalBots} icon="🤖" />
+              <Stat title="Active" value={activeBots} icon="🟢" />
+              <Stat title="Providers" value={totalProviders} icon="📡" />
+              <Stat title="Message Volume" value={totalMessages.toLocaleString()} valueClassName="text-lg" description="processed successfully" />
+            </div>
+          </div>
+        );
+      case 'agents':
+        return (
+          <div key="agents" className="mb-8">
+            {controls}
+            <div className="flex items-center justify-between mb-4">
+               <h3 className="text-xl font-bold flex items-center gap-2">
+                  Agents
+                  {!isCustomizing && <Badge variant="primary" size="sm">{bots.length}</Badge>}
+               </h3>
+            </div>
+            
+            {/* Bot Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              {bots.map((bot) => (
+                <DashboardBotCard
+                  key={bot.name}
+                  bot={bot}
+                  botStatusData={botStatusMap.get(bot.id)}
+                  rating={botRatings[bot.name] || 0}
+                  onRatingChange={handleRatingChange}
+                  getProviderIcon={getProviderIcon}
+                  getStatusColor={getStatusColor}
+                />
+              ))}
+            </div>
+
+            <div className="mb-8">
+              <h3 className="text-xl font-bold mb-4">Management Grid</h3>
+              <AgentGrid />
+            </div>
+          </div>
+        );
+      case 'command-stream':
+        return (
+          <div key="command-stream" className="mb-8">
+            {controls}
+            <CommandCenterStream />
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-base-200">
       {/* Toast Notification */}
@@ -215,42 +327,53 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
+      {/* Header */}
+      <div className="p-6 bg-base-100 border-b border-base-300 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
+         <div>
+            <h1 className="text-4xl font-black tracking-tight text-base-content mb-1">
+               Hivemind Dashboard
+            </h1>
+            <p className="text-sm opacity-50 uppercase tracking-widest font-bold">
+               Autonomous Multi-Agent System
+            </p>
+         </div>
+
+         <div className="flex gap-2">
+            {isCustomizing ? (
+               <>
+                  <Button variant="ghost" onClick={() => { setIsCustomizing(false); fetchLayout(); }}>Cancel</Button>
+                  <Button variant="primary" className="gap-2" onClick={saveLayout} loading={savingLayout}>
+                     <Save className="w-4 h-4" /> Save Layout
+                  </Button>
+               </>
+            ) : (
+               <Button variant="ghost" size="sm" className="gap-2 opacity-50 hover:opacity-100" onClick={() => setIsCustomizing(true)}>
+                  <Settings2 className="w-4 h-4" /> Customize
+               </Button>
+            )}
+            <Button
+               variant="primary"
+               onClick={fetchData}
+               disabled={loading}
+               className="flex items-center gap-2"
+            >
+               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+               Refresh
+            </Button>
+         </div>
+      </div>
+
       {/* Main Content */}
-      <div className="px-2 py-2">
-
-        {/* Bot Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {bots.map((bot) => (
-            <DashboardBotCard
-              key={bot.name}
-              bot={bot}
-              botStatusData={botStatusMap.get(bot.id)}
-              rating={botRatings[bot.name] || 0}
-              onRatingChange={handleRatingChange}
-              getProviderIcon={getProviderIcon}
-              getStatusColor={getStatusColor}
-            />
-          ))}
-        </div>
-
-        {/* Agent Grid */}
-        <div className="mb-8">
-          <h3 className="text-xl font-bold mb-4">Agents</h3>
-          <AgentGrid />
-        </div>
-
-        {/* Real-time Command Center Stream */}
-        <div className="mb-8">
-          <CommandCenterStream />
-        </div>
+      <div className="px-6 py-8 max-w-7xl mx-auto">
+        {layout.map((widgetType, index) => renderWidget(widgetType, index))}
 
         {/* System Status Footer */}
         {status && (
-          <Card title="🖥️ System Information">
+          <Card title="🖥️ System Information" className="bg-base-100 border border-base-300 mt-12">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Stat title="Uptime" value={<>{uptimeHours}h {uptimeMinutes}m</>} valueClassName="text-lg" description="System running smoothly" />
-              <Stat title="Total Bots" value={bots.length} valueClassName="text-lg" description={`${activeBots} currently active`} />
-              <Stat title="Message Volume" value={totalMessages.toLocaleString()} valueClassName="text-lg" description="processed successfully" />
+              <Stat title="Environment" value={status.environment.toUpperCase()} valueClassName="text-lg" description="Mode" />
+              <Stat title="Version" value={status.version} valueClassName="text-lg" description="Current build" />
             </div>
           </Card>
         )}

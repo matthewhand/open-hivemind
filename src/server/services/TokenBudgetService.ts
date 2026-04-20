@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
+import { CostAnalyticsService } from './CostAnalyticsService';
 
 const debug = Debug('app:TokenBudgetService');
 
@@ -97,7 +98,7 @@ export class TokenBudgetService {
   /**
    * Increment token usage for a bot
    */
-  public async incrementUsage(botId: string, tokens: number): Promise<number> {
+  public async incrementUsage(botId: string, tokens: number, model?: string): Promise<number> {
     const today = this.getTodayString();
     
     if (!this.data.bots[botId] || this.data.bots[botId].day !== today) {
@@ -113,6 +114,11 @@ export class TokenBudgetService {
     usage.dailyUsage += tokens;
     usage.lastUsed = new Date().toISOString();
     
+    if (model) {
+      const costService = CostAnalyticsService.getInstance();
+      await costService.recordCost(botId, model, tokens);
+    }
+
     this.scheduleSave();
     return usage.dailyUsage;
   }

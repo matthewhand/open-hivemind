@@ -137,7 +137,8 @@ export class InferenceStage {
       // 2. Budget Increment (Heuristic: ~4 chars per token for prompt + response)
       if (maxTokens) {
          const estimatedTokens = Math.ceil((userMessage.length + responseText.length) / 4);
-         await budgetService.incrementUsage(ctx.botName, estimatedTokens);
+         const model = (ctx.botConfig.MODEL as string) || 'gpt-4o';
+         await budgetService.incrementUsage(ctx.botName, estimatedTokens, model);
       }
 
       // Capture metadata for successful response

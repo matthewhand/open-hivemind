@@ -56,6 +56,7 @@ interface WebUIConfig {
   messengerProviders: WebUIMessengerProvider[];
   personas: WebUIPersona[];
   guards: WebUIGuard[];
+  layout?: string[];
   lastUpdated: string;
 }
 
