@@ -4,10 +4,11 @@ import Badge from './DaisyUI/Badge';
 import Card from './DaisyUI/Card';
 import Button from './DaisyUI/Button';
 import type { Bot, StatusResponse } from '../services/api';
-import { Activity, Sparkles, History } from 'lucide-react';
+import { Activity, Sparkles, History, Trophy } from 'lucide-react';
 import DiagnosticModal from './BotManagement/DiagnosticModal';
 import InsightsModal from './BotManagement/InsightsModal';
 import VersionHistoryModal from './BotManagement/VersionHistoryModal';
+import BenchmarkModal from './BotManagement/BenchmarkModal';
 
 interface DashboardBotCardProps {
   bot: Bot;
@@ -35,6 +36,7 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
   const [isDiagnosticOpen, setIsDiagnosticOpen] = useState(false);
   const [isInsightsOpen, setIsInsightsOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isBenchmarkOpen, setIsBenchmarkOpen] = useState(false);
 
   return (
     <>
@@ -52,6 +54,13 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
               </h2>
             </div>
             <div className="flex items-center gap-2">
+               <button 
+                 onClick={() => setIsBenchmarkOpen(true)}
+                 className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity text-warning"
+                 title="Run Performance Benchmark"
+               >
+                  <Trophy className="w-4 h-4" />
+               </button>
                <button 
                  onClick={() => setIsHistoryOpen(true)}
                  className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity text-secondary"
@@ -132,6 +141,13 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
        botName={bot.name}
        isOpen={isHistoryOpen}
        onClose={() => setIsHistoryOpen(false)}
+    />
+
+    <BenchmarkModal
+       botId={bot.id}
+       botName={bot.name}
+       isOpen={isBenchmarkOpen}
+       onClose={() => setIsBenchmarkOpen(false)}
     />
     </>
   );

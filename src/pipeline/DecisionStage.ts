@@ -21,6 +21,8 @@ import Debug from 'debug';
 import { type MessageBus } from '@src/events/MessageBus';
 import type { MessageContext, ReplyDecision } from '@src/events/types';
 import { SwarmCoordinator } from '@src/services/SwarmCoordinator';
+import { container } from 'tsyringe';
+import { PipelineDebuggerService } from '../server/services/PipelineDebuggerService';
 
 const debug = Debug('app:pipeline:decision');
 
@@ -81,6 +83,18 @@ export class DecisionStage {
    */
   async process(ctx: MessageContext): Promise<ReplyDecision> {
     try {
+      // --- Pipeline Debugger Breakpoint Check ---
+      try {
+        const debuggerService = container.resolve(PipelineDebuggerService);
+        if (debuggerService.shouldPause('validated')) {
+           debug(`[Debugger] Pausing pipeline for bot ${ctx.botName} at stage 'validated'`);
+           ctx = await debuggerService.pause('validated', ctx);
+           debug(`[Debugger] Resuming pipeline for bot ${ctx.botName}`);
+        }
+      } catch (e) {
+        // Ignore DI errors
+      }
+
       const messageId = ctx.message.getMessageId();
       const botId = (ctx.botConfig.BOT_ID as string) || (ctx.botConfig.botId as string) || '';
       const swarm = SwarmCoordinator.getInstance();

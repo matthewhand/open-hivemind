@@ -8,6 +8,7 @@ import { TestConnectionSchema } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
 import { getActiveTracer } from '../../../observability/PipelineTracer';
 import { AnomalyDetectionService } from '../../../services/AnomalyDetectionService';
+import { PipelineDebuggerService } from '../../services/PipelineDebuggerService';
 import {
   getChatModels,
   getEmbeddingModels,
@@ -459,6 +460,32 @@ router.get('/decision-traces', (req: Request, res: Response) => {
       message: hivemindError.message || 'An error occurred while fetching traces',
     });
   }
+});
+
+// GET /pipeline/breakpoints - Get active pipeline breakpoints
+router.get('/pipeline/breakpoints', (req: Request, res: Response) => {
+  const debuggerService = container.resolve(PipelineDebuggerService);
+  return res.json({
+    breakpoints: debuggerService.getActiveBreakpoints(),
+    pausedStages: debuggerService.getPausedStages(),
+  });
+});
+
+// POST /pipeline/breakpoints/toggle - Toggle breakpoint on a stage
+router.post('/pipeline/breakpoints/toggle', (req: Request, res: Response) => {
+  const { stage } = req.body;
+  const debuggerService = container.resolve(PipelineDebuggerService);
+  const enabled = debuggerService.toggleBreakpoint(stage || 'validated');
+  return res.json({ success: true, stage: stage || 'validated', enabled });
+});
+
+// POST /pipeline/resume/:id - Resume a paused pipeline
+router.post('/pipeline/resume/:id', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { updatedContext } = req.body;
+  const debuggerService = container.resolve(PipelineDebuggerService);
+  debuggerService.resume(id, updatedContext);
+  return res.json({ success: true, message: 'Pipeline resumed' });
 });
 
 export default router;
