@@ -6,6 +6,7 @@ import Badge from '../DaisyUI/Badge';
 import { LoadingSpinner } from '../DaisyUI/Loading';
 import { Alert } from '../DaisyUI/Alert';
 import Mockup from '../DaisyUI/Mockup';
+import LlmTestChat from '../LlmTestChat';
 import {
   Activity,
   ChevronRight,
@@ -17,6 +18,7 @@ import {
   Send,
   Search,
   Filter,
+  Play,
 } from 'lucide-react';
 import { apiService } from '../../services/api';
 
@@ -44,6 +46,7 @@ const DecisionTraceVisualizer: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedTrace, setExpandedTrace] = useState<string | null>(null);
+  const [replayTrace, setReplayTrace] = useState<DecisionTrace | null>(null);
 
   const fetchTraces = async () => {
     try {
@@ -173,21 +176,40 @@ const DecisionTraceVisualizer: React.FC = () => {
                        ))}
                     </Timeline>
 
-                    {trace.output && (
-                      <div className="mt-4 p-4 bg-primary/5 rounded-xl border border-primary/20">
-                         <h4 className="text-xs font-bold text-primary uppercase mb-2 flex items-center gap-2">
-                            <Send className="w-3 h-3" /> Final Response
-                         </h4>
-                         <p className="text-sm italic">"{trace.output}"</p>
-                      </div>
-                    )}
+                    
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mt-4 gap-4">
+                      {trace.output && (
+                        <div className="flex-1 p-4 bg-primary/5 rounded-xl border border-primary/20 w-full">
+                           <h4 className="text-xs font-bold text-primary uppercase mb-2 flex items-center gap-2">
+                              <Send className="w-3 h-3" /> Final Response
+                           </h4>
+                           <p className="text-sm italic">"{trace.output}"</p>
+                        </div>
+                      )}
+                      <button 
+                        onClick={() => setReplayTrace(trace)} 
+                        className="btn btn-sm btn-secondary gap-2 shadow-sm w-full md:w-auto"
+                      >
+                         <Play className="w-4 h-4 fill-current" /> Replay in Sandbox
+                      </button>
+                    </div>
+
                  </div>
                )}
             </Card>
           ))}
+        
         </div>
       )}
+
+      {replayTrace && (
+        <LlmTestChat 
+           sandboxConfig={replayTrace.stages.find(s => s.name === 'receive')?.metadata?.botConfig || {}}
+           onClose={() => setReplayTrace(null)}
+        />
+      )}
     </div>
+
   );
 };
 

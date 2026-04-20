@@ -75,8 +75,9 @@ const DiagnosticModal: React.FC<DiagnosticModalProps> = ({ botId, botName, isOpe
       onClose={onClose} 
       title={`Deep Diagnostic: ${botName}`}
       size="md"
+      ariaLabelledBy="diagnostic-modal-title"
     >
-      <div className="space-y-6">
+      <div className="space-y-6 p-4 sm:p-6" role="region" aria-label="Diagnostic results">
         {loading && !results ? (
           <div className="py-12 text-center space-y-4">
              <LoadingSpinner lg />

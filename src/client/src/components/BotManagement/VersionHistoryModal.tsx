@@ -86,13 +86,14 @@ const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({ botId, botNam
       onClose={onClose} 
       title={
         <div className="flex items-center gap-2">
-           <History className="w-5 h-5 text-primary" />
-           <span>Version History: {botName}</span>
+           <History className="w-5 h-5 text-primary" aria-hidden="true" />
+           <span id="version-history-title">Version History: {botName}</span>
         </div>
       }
       size="md"
+      ariaLabelledBy="version-history-title"
     >
-      <div className="space-y-6">
+      <div className="space-y-6 p-4 sm:p-6" role="region" aria-label="Version timeline">
         {error && <Alert status="error" message={error} />}
         {successMsg && (
           <Alert status="success" className="animate-in fade-in zoom-in-95" message={successMsg} />

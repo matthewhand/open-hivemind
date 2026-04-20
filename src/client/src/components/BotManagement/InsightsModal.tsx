@@ -46,8 +46,9 @@ const InsightsModal: React.FC<InsightsModalProps> = ({ botId, botName, isOpen, o
       onClose={onClose} 
       title={`AI Performance Insights: ${botName}`}
       size="lg"
+      ariaLabelledBy={`insights-title-${botId}`}
     >
-      <div className="space-y-4">
+      <div className="space-y-4 p-4 sm:p-6" role="region" aria-label="Insights content">
         {loading ? (
           <div className="py-20 text-center space-y-4">
             <div className="flex justify-center">

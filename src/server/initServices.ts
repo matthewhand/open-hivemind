@@ -14,6 +14,7 @@ import { registerServices } from '@src/di/registration';
 import { SyncProviderRegistry, type ProviderProfile } from '@src/registries/SyncProviderRegistry';
 import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
 import { BotHeartbeatService } from '@src/server/services/BotHeartbeatService';
+import { BackupSchedulerService } from '@src/server/services/BackupSchedulerService';
 import AnomalyDetectionService from '@src/services/AnomalyDetectionService';
 import DemoModeService from '@src/services/DemoModeService';
 import StartupGreetingService from '@src/services/StartupGreetingService';
@@ -305,6 +306,14 @@ export async function initServices(
   shutdownCoordinator.registerService({
     name: 'BotHeartbeatService',
     shutdown: () => heartbeatService.stop(),
+  });
+
+  // Initialize and start BackupSchedulerService (Automated Backups)
+  const backupScheduler = BackupSchedulerService.getInstance();
+  backupScheduler.start();
+  shutdownCoordinator.registerService({
+    name: 'BackupSchedulerService',
+    shutdown: () => backupScheduler.stop(),
   });
 
   // Initialize AnomalyDetectionService
