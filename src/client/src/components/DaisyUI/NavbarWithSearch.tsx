@@ -71,11 +71,29 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
   const [bots, setBots] = useState<Bot[]>([]);
   const [isCommandMode, setIsCommandMode] = useState(false);
+  const [isPanicMode, setIsPanicMode] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
   const successToast = useSuccessToast();
   const errorToast = useErrorToast();
+
+  const handleTogglePanicMode = async () => {
+    try {
+      const response: any = await apiService.post('/api/admin/panic-mode');
+      if (response.success) {
+        const enabled = response.data.enabled;
+        setIsPanicMode(enabled);
+        if (enabled) {
+           errorToast('KILL SWITCH ACTIVATED', 'All bot messages are now being rejected globally.');
+        } else {
+           successToast('Kill Switch Deactivated', 'Bot message processing resumed.');
+        }
+      }
+    } catch (e: any) {
+      errorToast('Action Failed', e.message || 'Failed to toggle Panic Mode');
+    }
+  };
 
   const _handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -255,6 +273,14 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
   const setUiTheme = useUIStore((s) => s.setTheme);
 
   return (
+    <>
+      {isPanicMode && (
+        <div className="bg-error text-error-content px-4 py-2 text-center text-sm font-bold uppercase tracking-widest flex items-center justify-center gap-2 animate-pulse shadow-inner">
+          <ShieldAlert className="w-4 h-4" />
+          SYSTEM PANIC MODE ACTIVE: ALL BOT MESSAGES REJECTED
+          <ShieldAlert className="w-4 h-4" />
+        </div>
+      )}
     <nav className="navbar bg-base-100 shadow-lg border-b border-base-200 px-4" aria-label="Main navigation">
       {/* Navbar Start */}
       <div className="navbar-start gap-2">
@@ -418,6 +444,17 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
 
       {/* Navbar End */}
       <div className="navbar-end gap-1 sm:gap-3">
+        {/* Kill Switch */}
+        <Tooltip content={isPanicMode ? "Deactivate Kill Switch" : "Global Kill Switch (PANIC)"} position="bottom">
+          <button 
+            className={`btn btn-sm btn-circle ${isPanicMode ? 'btn-error animate-pulse shadow-[0_0_15px_rgba(220,38,38,0.8)]' : 'btn-ghost text-error/60 hover:bg-error hover:text-error-content'}`}
+            onClick={handleTogglePanicMode}
+            aria-label="Toggle Global Kill Switch"
+          >
+            <ShieldAlert className="w-4 h-4" />
+          </button>
+        </Tooltip>
+
         {/* Quick Actions */}
         <div className="hidden md:flex">
           <Tooltip content="Create New Bot" position="bottom">
@@ -520,6 +557,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
         </div>
       </div>
     </nav>
+    </>
     );
     };
 

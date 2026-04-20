@@ -207,6 +207,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                 ...(formData.llmProvider ? { llmProvider: formData.llmProvider } : {}),
                 persona: formData.persona,
                 mcpGuardProfile: formData.mcpGuardProfile,
+                maxTokensPerDay: formData.maxTokensPerDay > 0 ? formData.maxTokensPerDay : undefined,
                 config: {
                     mcpGuard: { enabled: formData.guards.accessControl },
                     rateLimit: { enabled: formData.guards.rateLimit },
@@ -488,6 +489,24 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                                 <span className="label-text font-bold">Content Filtering</span>
                                 <span className="label-text-alt">Block inappropriate or harmful content.</span>
                             </div>
+                        </label>
+                    </div>
+
+                    <Divider>Cost Control</Divider>
+
+                    <div className="form-control">
+                        <label className="label">
+                            <span className="label-text font-bold">Daily Token Limit</span>
+                        </label>
+                        <Input
+                            type="number"
+                            min="0"
+                            placeholder="e.g. 50000"
+                            value={formData.maxTokensPerDay || ''}
+                            onChange={e => setFormData({ ...formData, maxTokensPerDay: parseInt(e.target.value, 10) || 0 })}
+                        />
+                        <label className="label">
+                            <span className="label-text-alt">Bot will pause automatically if it exceeds this daily usage (0 = unlimited).</span>
                         </label>
                     </div>
                 </div>

@@ -17,6 +17,8 @@ import Debug from 'debug';
 import { type MessageBus } from '@src/events/MessageBus';
 import type { MessageContext } from '@src/events/types';
 import type { IMessage } from '@message/interfaces/IMessage';
+import { container } from 'tsyringe';
+import { PanicModeService } from '../server/services/PanicModeService';
 
 const debug = Debug('app:pipeline:receive');
 
@@ -53,6 +55,17 @@ export class ReceiveStage {
     history: IMessage[],
     botConfig: Record<string, unknown>
   ): Promise<MessageContext | null> {
+    // 0. Global Kill Switch Check
+    try {
+      const panicService = container.resolve(PanicModeService);
+      if (panicService.isPanicModeEnabled()) {
+         debug('GLOBAL KILL SWITCH ACTIVE: Rejecting incoming message');
+         return null;
+      }
+    } catch (e) {
+      // Ignore DI errors during test/setup
+    }
+
     // 1. Extract and sanitize text
     const rawText = message.getText();
     const text = this.sanitize(rawText);
