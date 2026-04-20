@@ -8,6 +8,7 @@ import {
   BotActivityQuerySchema,
   BotHistoryQuerySchema,
   BotIdParamSchema,
+  BotVersionParamSchema,
   CloneBotSchema,
   CreateBotSchema,
   UpdateBotSchema,
@@ -17,6 +18,10 @@ import { validateRequest } from '../../validation/validateRequest';
 import { ActivityLogger } from '../services/ActivityLogger';
 import { WebSocketService } from '../services/WebSocketService';
 import { getLlmProvider } from '../../llm/getLlmProvider';
+import { DatabaseManager } from '../../database/DatabaseManager';
+import { ConfigurationVersionService } from '../services/ConfigurationVersionService';
+import { BotMetricsService } from '../services/BotMetricsService';
+import { AnomalyDetectionService } from '../../services/AnomalyDetectionService';
 
 const router = Router();
 const logger = createLogger('botsRouter');
@@ -737,6 +742,113 @@ router.get(
 
 /**
  * @openapi
+ * /api/bots/{id}/versions:
+ *   get:
+ *     summary: Get bot configuration versions
+ *     tags: [Bots]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of versions
+ */
+router.get(
+  '/:id/versions',
+  validateRequest(BotIdParamSchema),
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const manager = await managerPromise;
+      const { id } = req.params;
+      const bot = await manager.getBot(id);
+      if (!bot) {
+        return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Bot not found'));
+      }
+
+      const dbManager = DatabaseManager.getInstance();
+      const config = await dbManager.getBotConfigurationByName(bot.name);
+      if (!config || !config.id) {
+        return res.json(ApiResponse.success({ versions: [] }));
+      }
+
+      const versionHistory = await ConfigurationVersionService.getInstance().getVersionHistory(config.id);
+      return res.json(ApiResponse.success(versionHistory));
+    } catch (error: unknown) {
+      logger.error(
+        'Failed to retrieve bot versions',
+        error instanceof Error ? error : new Error(String(error)),
+        { id: req.params.id }
+      );
+      return res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error('Failed to retrieve bot versions'));
+    }
+  })
+);
+
+/**
+ * @openapi
+ * /api/bots/{id}/versions/{versionId}/restore:
+ *   post:
+ *     summary: Restore a bot configuration version
+ *     tags: [Bots]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: versionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Bot restored
+ */
+router.post(
+  '/:id/versions/:versionId/restore',
+  validateRequest(BotVersionParamSchema),
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const manager = await managerPromise;
+      const { id, versionId } = req.params;
+      const bot = await manager.getBot(id);
+      if (!bot) {
+        return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Bot not found'));
+      }
+
+      const dbManager = DatabaseManager.getInstance();
+      const config = await dbManager.getBotConfigurationByName(bot.name);
+      if (!config || !config.id) {
+        return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Bot configuration not found in database'));
+      }
+
+      await ConfigurationVersionService.getInstance().restoreVersion(config.id, versionId, 'system');
+
+      // Refresh the bot in the manager
+      await manager.restartBot(id);
+
+      return res.json(ApiResponse.success({ message: `Restored to version ${versionId}` }));
+    } catch (error: unknown) {
+      logger.error(
+        'Failed to restore bot version',
+        error instanceof Error ? error : new Error(String(error)),
+        { id: req.params.id, versionId: req.params.versionId }
+      );
+      return res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error('Failed to restore bot version'));
+    }
+  })
+);
+
+/**
+ * @openapi
  * /api/bots/{id}/export:
  *   get:
  *     summary: Export a single bot (sensitive fields redacted)
@@ -925,12 +1037,12 @@ router.get(
 
       // 3. Test MCP
       if (bot.mcpServers && Array.isArray(bot.mcpServers)) {
-        const { MCPService } = await import('../../services/MCPService');
+        const { MCPService } = await import('../../mcp/MCPService');
         const mcp = MCPService.getInstance();
         for (const serverName of bot.mcpServers) {
           try {
              const server = typeof serverName === 'string' ? serverName : (serverName as any).name;
-             const isUp = await mcp.isServerConnected(server);
+             const isUp = mcp.getConnectedServers().includes(server);
              results.mcp.push({ name: server, status: isUp ? 'ok' : 'error' });
           } catch (err) {
              results.mcp.push({ name: String(serverName), status: 'error', details: String(err) });
@@ -991,6 +1103,89 @@ router.post(
     } catch (error: unknown) {
       logger.error('Sandbox chat failed', error instanceof Error ? error : new Error(String(error)));
       return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error('Failed to get response'));
+    }
+  })
+);
+
+/**
+ * @openapi
+ * /api/bots/{id}/insights:
+ *   get:
+ *     summary: Get AI-driven performance insights for a bot
+ *     tags: [Bots]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: AI-generated performance insights in markdown
+ */
+router.get(
+  '/:id/insights',
+  validateRequest(BotIdParamSchema),
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const manager = await managerPromise;
+      const bot = await manager.getBot(req.params.id);
+      if (!bot) {
+        return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Bot not found'));
+      }
+
+      // Gather data
+      const metricsService = BotMetricsService.getInstance();
+      const metrics = metricsService.getMetrics(bot.name);
+      
+      const anomalyService = AnomalyDetectionService.getInstance();
+      const activeAnomalies = anomalyService.getActiveAnomalies();
+      // Filter anomalies that might be related to this bot (via traceId or metric name if possible)
+      // For now, we'll provide all active anomalies as context of system health
+      
+      const providers = await getLlmProvider();
+      const provider = providers[0];
+
+      if (!provider) {
+        return res
+          .status(HTTP_STATUS.SERVICE_UNAVAILABLE)
+          .json(ApiResponse.error('No LLM provider available for insights'));
+      }
+
+      const systemPrompt = `You are a Performance Analyst for the Open Hivemind platform.
+Your task is to review the performance metrics and active anomalies for a specific bot and provide a detailed performance review and optimization recommendations.
+
+Bot Name: ${bot.name}
+Persona: ${bot.persona}
+LLM Provider: ${bot.llmProvider}
+Message Provider: ${bot.messageProvider}
+
+Metrics:
+- Messages Handled: ${metrics.messageCount}
+- Error Count: ${metrics.errorCount}
+- Last Active: ${metrics.lastActive || 'N/A'}
+
+Active System Anomalies:
+${activeAnomalies.length > 0 
+  ? activeAnomalies.map(a => `- [${a.severity}] ${a.metric}: ${a.explanation}`).join('\n')
+  : 'None detected'}
+
+Provide your response in Markdown. Include:
+1. **Performance Summary**: A concise evaluation of how the bot is doing.
+2. **Anomaly Impact**: How current system anomalies might be affecting this bot.
+3. **Recommendations**: 3-5 specific, actionable steps to improve performance, reliability, or cost-efficiency.
+4. **Overall Health Score**: A score from 0-100.
+
+Be professional, data-driven, and concise.`;
+
+      const insights = await provider.generateChatCompletion(systemPrompt, []);
+
+      return res.json(ApiResponse.success({ insights }));
+    } catch (error: unknown) {
+      logger.error('Failed to generate insights', error instanceof Error ? error : new Error(String(error)));
+      return res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error('Failed to generate performance insights'));
     }
   })
 );

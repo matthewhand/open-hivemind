@@ -4,8 +4,10 @@ import Badge from './DaisyUI/Badge';
 import Card from './DaisyUI/Card';
 import Button from './DaisyUI/Button';
 import type { Bot, StatusResponse } from '../services/api';
-import { Activity } from 'lucide-react';
+import { Activity, Sparkles, History } from 'lucide-react';
 import DiagnosticModal from './BotManagement/DiagnosticModal';
+import InsightsModal from './BotManagement/InsightsModal';
+import VersionHistoryModal from './BotManagement/VersionHistoryModal';
 
 interface DashboardBotCardProps {
   bot: Bot;
@@ -31,6 +33,8 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
 }) => {
   const botStatus = botStatusData?.status || 'unknown';
   const [isDiagnosticOpen, setIsDiagnosticOpen] = useState(false);
+  const [isInsightsOpen, setIsInsightsOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   return (
     <>
@@ -48,6 +52,20 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
               </h2>
             </div>
             <div className="flex items-center gap-2">
+               <button 
+                 onClick={() => setIsHistoryOpen(true)}
+                 className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity text-secondary"
+                 title="Version History"
+               >
+                  <History className="w-4 h-4" />
+               </button>
+               <button 
+                 onClick={() => setIsInsightsOpen(true)}
+                 className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity text-primary"
+                 title="AI Performance Insights"
+               >
+                  <Sparkles className="w-4 h-4" />
+               </button>
                <button 
                  onClick={() => setIsDiagnosticOpen(true)}
                  className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity"
@@ -100,6 +118,20 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
        botName={bot.name}
        isOpen={isDiagnosticOpen}
        onClose={() => setIsDiagnosticOpen(false)}
+    />
+
+    <InsightsModal
+       botId={bot.id}
+       botName={bot.name}
+       isOpen={isInsightsOpen}
+       onClose={() => setIsInsightsOpen(false)}
+    />
+
+    <VersionHistoryModal
+       botId={bot.id}
+       botName={bot.name}
+       isOpen={isHistoryOpen}
+       onClose={() => setIsHistoryOpen(false)}
     />
     </>
   );

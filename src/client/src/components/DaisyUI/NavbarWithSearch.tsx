@@ -7,6 +7,9 @@ import Indicator from './Indicator';
 import Tooltip from './Tooltip';
 import Badge from './Badge';
 import { useUIStore } from '../../store/uiStore';
+import { apiService } from '../../services/api';
+import type { Bot } from '../../services/api/types';
+import { useSuccessToast, useErrorToast } from './ToastNotification';
 import {
   Bell,
   Plus,
@@ -19,6 +22,11 @@ import {
   FileText,
   Menu,
   X,
+  Bot as BotIcon,
+  Terminal,
+  Play,
+  Square,
+  SearchCode,
 } from 'lucide-react';
 
 interface NavItem {
@@ -61,8 +69,13 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
+  const [bots, setBots] = useState<Bot[]>([]);
+  const [isCommandMode, setIsCommandMode] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+
+  const successToast = useSuccessToast();
+  const errorToast = useErrorToast();
 
   const _handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,25 +89,91 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
     if (storedSearches) {
       setRecentSearches(JSON.parse(storedSearches));
     }
+
+    // Fetch bots for command palette
+    const fetchBots = async () => {
+      try {
+        const fetchedBots = await apiService.getBots();
+        setBots(fetchedBots);
+      } catch (err) {
+        console.error('Failed to fetch bots for omnibar:', err);
+      }
+    };
+    fetchBots();
   }, []);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
-    if (query) {
-      const suggestions = [
-        ...searchSuggestions,
-        ...searchCategories.map(cat => `${cat}:`),
-      ].filter(s => s.toLowerCase().includes(query.toLowerCase()));
-      setFilteredSuggestions(suggestions);
+
+    if (query.startsWith('>')) {
+      setIsCommandMode(true);
+      const commandQuery = query.slice(1).trim().toLowerCase();
+      
+      const commands: string[] = [];
+      bots.forEach(bot => {
+        commands.push(`> Start ${bot.name}`);
+        commands.push(`> Stop ${bot.name}`);
+        commands.push(`> Diagnose ${bot.name}`);
+      });
+
+      const filtered = commands.filter(c => 
+        c.toLowerCase().includes(query.toLowerCase())
+      );
+      
+      setFilteredSuggestions(filtered);
       setShowSuggestions(true);
     } else {
-      setShowSuggestions(false);
+      setIsCommandMode(false);
+      if (query) {
+        const suggestions = [
+          ...searchSuggestions,
+          ...searchCategories.map(cat => `${cat}:`),
+        ].filter(s => s.toLowerCase().includes(query.toLowerCase()));
+        setFilteredSuggestions(suggestions);
+        setShowSuggestions(true);
+      } else {
+        setShowSuggestions(false);
+      }
     }
   };
 
-  const handleSearchSubmitWithOptions = (query: string) => {
+  const handleSearchSubmitWithOptions = async (query: string) => {
     if (query.trim()) {
+      if (query.startsWith('>')) {
+        const command = query.slice(1).trim();
+        const parts = command.split(' ');
+        const action = parts[0].toLowerCase();
+        const botName = parts.slice(1).join(' ');
+
+        const bot = bots.find(b => b.name === botName);
+        if (!bot) {
+          errorToast('Command Error', `Bot "${botName}" not found.`);
+          return;
+        }
+
+        try {
+          if (action === 'start') {
+            await apiService.startBot(bot.id);
+            successToast('Bot Started', `${bot.name} is now running.`);
+          } else if (action === 'stop') {
+            await apiService.stopBot(bot.id);
+            successToast('Bot Stopped', `${bot.name} has been stopped.`);
+          } else if (action === 'diagnose') {
+            await apiService.get(`/api/bots/${bot.id}/diagnose`);
+            successToast('Diagnostic Started', `Running health check for ${bot.name}.`);
+          } else {
+            errorToast('Unknown Command', `Action "${action}" is not recognized.`);
+          }
+        } catch (err: any) {
+          errorToast('Action Failed', err.message || `Failed to ${action} ${bot.name}`);
+        }
+        
+        setSearchQuery('');
+        setShowSuggestions(false);
+        return;
+      }
+
       const updatedSearches = [query.trim(), ...recentSearches.filter(s => s !== query.trim())].slice(0, 5);
       setRecentSearches(updatedSearches);
       localStorage.setItem('recentSearches', JSON.stringify(updatedSearches));
@@ -221,13 +300,17 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
         <form onSubmit={(e) => { e.preventDefault(); handleSearchSubmitWithOptions(searchQuery); }} className="w-full relative" role="search" aria-label="Site search">
           <div className="relative group">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <SearchIcon className={`w-4 h-4 transition-colors ${isSearchFocused ? 'text-primary' : 'text-base-content/40'}`} />
+              {isCommandMode ? (
+                <Terminal className="w-4 h-4 text-primary animate-pulse" />
+              ) : (
+                <SearchIcon className={`w-4 h-4 transition-colors ${isSearchFocused ? 'text-primary' : 'text-base-content/40'}`} />
+              )}
             </div>
             <input
               ref={searchInputRef}
               type="text"
-              placeholder="Search features, bots, or configs... (Ctrl+K)"
-              className={`input input-bordered w-full pl-10 pr-10 bg-base-200/50 focus:bg-base-100 focus:border-primary transition-all duration-300 ${isSearchFocused ? 'shadow-inner' : ''}`}
+              placeholder={isCommandMode ? "Enter command (e.g. > Start BotName)" : "Search features, bots, or configs... (Ctrl+K)"}
+              className={`input input-bordered w-full pl-10 pr-10 bg-base-200/50 focus:bg-base-100 focus:border-primary transition-all duration-300 ${isSearchFocused ? 'shadow-inner' : ''} ${isCommandMode ? 'border-primary/50' : ''}`}
               value={searchQuery}
               onChange={handleSearchChange}
               onFocus={handleFocus}
@@ -245,6 +328,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
                 onClick={() => {
                   setSearchQuery('');
                   setShowSuggestions(false);
+                  setIsCommandMode(false);
                   searchInputRef.current?.focus();
                 }}
               >
@@ -252,7 +336,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
               </button>
             )}
             <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-               <span className="text-[10px] font-bold opacity-30 bg-base-300 px-1 rounded">⌘K</span>
+               <span className="text-[10px] font-bold opacity-30 bg-base-300 px-1 rounded">{isCommandMode ? 'CMD' : '⌘K'}</span>
             </div>
           </div>
 
@@ -264,21 +348,36 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
             >
               {searchQuery && filteredSuggestions.length > 0 && (
                 <div className="p-2">
-                  <h3 className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest px-3 py-2">Quick Results</h3>
+                  <h3 className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest px-3 py-2">
+                    {isCommandMode ? 'Action Commands' : 'Quick Results'}
+                  </h3>
                   <ul>
-                    {filteredSuggestions.map((suggestion, index) => (
-                      <li key={index}>
-                        <button
-                          className={`w-full text-left px-3 py-2.5 rounded-lg hover:bg-base-200 transition-colors flex items-center gap-3 ${selectedSuggestionIndex === index ? 'bg-primary/10 text-primary font-medium' : ''
-                            }`}
-                          onClick={() => handleSearchSubmitWithOptions(suggestion)}
-                          onMouseEnter={() => setSelectedSuggestionIndex(index)}
-                        >
-                          <SearchIcon className="w-3.5 h-3.5 opacity-40" />
-                          <span className="text-sm">{suggestion}</span>
-                        </button>
-                      </li>
-                    ))}
+                    {filteredSuggestions.map((suggestion, index) => {
+                      const isAction = suggestion.startsWith('>');
+                      let Icon = SearchIcon;
+                      if (isAction) {
+                        if (suggestion.includes('Start')) Icon = Play;
+                        else if (suggestion.includes('Stop')) Icon = Square;
+                        else if (suggestion.includes('Diagnose')) Icon = SearchCode;
+                      }
+
+                      return (
+                        <li key={index}>
+                          <button
+                            className={`w-full text-left px-3 py-2.5 rounded-lg hover:bg-base-200 transition-colors flex items-center gap-3 ${selectedSuggestionIndex === index ? 'bg-primary/10 text-primary font-medium' : ''
+                              }`}
+                            onClick={() => handleSearchSubmitWithOptions(suggestion)}
+                            onMouseEnter={() => setSelectedSuggestionIndex(index)}
+                          >
+                            <Icon className={`w-3.5 h-3.5 ${isAction ? 'text-primary' : 'opacity-40'}`} />
+                            <span className="text-sm">{suggestion}</span>
+                            {isAction && (
+                              <Badge size="xs" variant="outline" className="ml-auto text-[8px] opacity-50 uppercase">Bot Action</Badge>
+                            )}
+                          </button>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               )}
@@ -361,7 +460,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
             <li className="menu-title text-xs font-bold uppercase tracking-widest p-3">Recent Alerts</li>
             <div className="max-h-60 overflow-y-auto">
                <li><a className="py-3 items-start gap-3 border-b border-base-200 rounded-none">
-                  <div className="bg-primary/10 text-primary p-2 rounded-lg"><Bot className="w-4 h-4" /></div>
+                  <div className="bg-primary/10 text-primary p-2 rounded-lg"><BotIcon className="w-4 h-4" /></div>
                   <div className="flex flex-col">
                      <span className="text-xs font-bold">Bot "Assistant" reconnected</span>
                      <span className="text-[10px] opacity-40">2 minutes ago</span>
