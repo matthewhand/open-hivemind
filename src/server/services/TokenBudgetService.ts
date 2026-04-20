@@ -136,7 +136,7 @@ export class TokenBudgetService {
    */
   public isOverBudget(botId: string, limit: number): boolean {
     if (!limit || limit <= 0) return false;
-    return this.getDailyUsage(botId) >= limit;
+    return this.getDailyUsage(botId) > limit;
   }
 
   /**
