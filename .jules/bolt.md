@@ -32,3 +32,6 @@
 ## 2024-05-18 - Avoid O(N) array methods inside loop maps
 **Learning:** Calling O(N) array methods like `.find()` inside a `.map()` callback leads to O(N*M) time complexity, potentially blocking the main thread during component renders or effects.
 **Action:** Pre-compute a lookup Map before iterating, utilizing `new Map(items.map(i => [i.key, i.value]))` to achieve O(1) lookups and reduce overall complexity to O(N + M).
+## 2024-05-23 - Dashboard Widget Type Lookups
+**Learning:** `DashboardWidgetSystem.tsx` was iterating through `widgets` in its render cycle and calling `widgetTypes.find(t => t.id === widget.type)` for each one. Calling O(N) array methods like `.find()` inside a `.map()` during a React render loop causes O(N*M) complexity, slowing down component interactions (like drag-and-drop or parent state updates).
+**Action:** Replace `array.find()` inside render loops with pre-computed O(1) Map lookups using `useMemo` (e.g., `const widgetTypeMap = useMemo(() => new Map(widgetTypes.map(t => [t.id, t])), [widgetTypes])`).

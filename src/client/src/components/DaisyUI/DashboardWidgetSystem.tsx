@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Debug from 'debug';
 import Card from './Card';
 const debug = Debug('app:client:components:DaisyUI:DashboardWidgetSystem');
@@ -285,6 +285,11 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
     }
   }, [widgets, onWidgetsChange]);
 
+  // Performance optimization: pre-compute map for O(1) lookups instead of calling .find() inside .map() loops
+  const widgetTypeMap = useMemo(() => {
+    return new Map(widgetTypes.map(t => [t.id, t]));
+  }, [widgetTypes]);
+
   // Load saved widgets
   useEffect(() => {
     const saved = localStorage.getItem('hivemind-dashboard-widgets');
@@ -490,7 +495,7 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
 
         {/* Widgets */}
         {widgets.filter(w => w.isVisible).map(widget => {
-          const WidgetComponent = widgetTypes.find(t => t.id === widget.type)?.component;
+          const WidgetComponent = widgetTypeMap.get(widget.type)?.component;
           if (!WidgetComponent) {return null;}
 
           return (
