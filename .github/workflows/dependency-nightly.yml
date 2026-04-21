@@ -1,0 +1,75 @@
+name: Dependency Audit Nightly
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  audit-low:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit dependencies at low threshold
+        run: pnpm audit --audit-level=low
+
+  dependency-bump-pr:
+    runs-on: ubuntu-latest
+    needs: audit-low
+    if: needs.audit-low.result == 'failure' || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Apply dependency bumps
+        run: |
+          pnpm up --latest --recursive
+          pnpm install --lockfile-only
+
+      - name: Create dependency bump PR
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: chore/nightly-dependency-bumps
+          commit-message: "chore(deps): nightly dependency bumps"
+          title: "chore(deps): nightly dependency bumps"
+          body: |
+            Automated nightly dependency bump PR.
+
+            Trigger:
+            - Low-level security audit failure on nightly run, or
+            - Manual workflow dispatch
+
+            Please review CI and changelogs before merge.

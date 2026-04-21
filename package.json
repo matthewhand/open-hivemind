@@ -18,10 +18,13 @@
   "scripts": {
     "prepare": "git config core.hooksPath .githooks || true",
     "lint": "node ./node_modules/eslint/bin/eslint.js src/",
+    "lint:json": "node ./node_modules/eslint/bin/eslint.js src/ -f json -o .ci/eslint-report.json",
+    "lint:gate": "pnpm run lint:json && node scripts/ci/eslint-warning-gate.js",
+    "lint:baseline:update": "pnpm run lint:json && node scripts/ci/eslint-warning-gate.js --write-baseline",
     "lint:fix": "node ./node_modules/eslint/bin/eslint.js src/ --fix",
     "format": "node ./node_modules/prettier/bin/prettier.cjs --write \"src/**/*.ts\" \"src/**/*.tsx\" \"tests/**/*.ts\" \"packages/**/*.ts\"",
     "format:check": "node ./node_modules/prettier/bin/prettier.cjs --check \"src/**/*.ts\" \"src/**/*.tsx\" \"tests/**/*.ts\" \"packages/**/*.ts\"",
-    "check-types": "tsc --noEmit || true",
+    "check-types": "tsc --noEmit",
     "version": "tsc -v",
     "build": "bash scripts/build-all.sh",
     "build:backend": "bash scripts/build-backend.sh",
@@ -63,7 +66,9 @@
     "build:only:frontend": "npm run build:frontend",
     "test:only": "npm run test",
     "test:only:backend": "npm run test",
-    "test:only:frontend": "cd src/client && npx vitest run"
+    "test:only:frontend": "cd src/client && npx vitest run",
+    "test:changed": "bash scripts/ci/run-changed-tests.sh",
+    "test:flaky:quarantine": "node scripts/ci/run-flaky-tests.js"
   },
   "_moduleAliases": {
     "@src": "dist/src",

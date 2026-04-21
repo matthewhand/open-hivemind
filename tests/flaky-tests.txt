@@ -1,0 +1,4 @@
+# Quarantined flaky tests (non-blocking).
+# Keep this list short and move tests out once stabilized.
+
+tests/integration/MonitoringPipeline.test.ts

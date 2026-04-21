@@ -25,20 +25,42 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version-file: '.nvmrc'
           cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install
 
-      - name: Run lint
-        run: pnpm run lint
+      - name: Run lint warning gate (baseline)
+        run: pnpm run lint:gate
 
       - name: Check types
         run: pnpm run check-types
 
-      - name: Audit dependencies
+      - name: Run changed-files test selection
+        if: github.event_name == 'pull_request'
+        run: pnpm run test:changed
+
+      - name: Audit dependencies (PR)
+        if: github.event_name == 'pull_request'
         run: pnpm audit --audit-level=moderate
+
+      - name: Audit dependencies (main)
+        if: github.event_name == 'push'
+        run: pnpm audit --audit-level=high --production
+
+      - name: Run quarantined flaky tests (non-blocking)
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        run: pnpm run test:flaky:quarantine
+
+      - name: Upload flaky quarantine summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flaky-test-summary
+          path: test-results/flaky-test-summary.json
+          if-no-files-found: ignore
 
   build:
     runs-on: ubuntu-latest
@@ -58,7 +80,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version-file: '.nvmrc'
           cache: 'pnpm'
 
       - name: Install dependencies
