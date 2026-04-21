@@ -1,7 +1,7 @@
 import * as crypto from 'crypto';
 import Debug from 'debug';
-import type { SQLiteWrapper as Database } from './sqliteWrapper';
-import type { BotMetrics, ConversationSummary, MessageRecord } from './types';
+import type { SQLiteWrapper as Database } from '../sqliteWrapper';
+import type { BotMetrics, ConversationSummary, MessageRecord } from '../types';
 
 const debug = Debug('app:MessageRepository');
 

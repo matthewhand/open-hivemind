@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import type { SQLiteWrapper as Database } from './sqliteWrapper';
+import type { SQLiteWrapper as Database } from '../sqliteWrapper';
 
 const debug = Debug('app:AIFeedbackRepository');
 

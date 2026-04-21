@@ -1,6 +1,7 @@
 import Debug from 'debug';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
-import { type BotInstance, type BotInstance } from '@src/managers/BotManager';
+import { createLogger } from '@common/StructuredLogger';
+import { type BotInstance } from '@src/managers/BotManager';
 
 const debug = Debug('app:services:BotBenchmarkService');
 const logger = createLogger('BotBenchmarkService');
@@ -74,10 +75,7 @@ export class BotBenchmarkService {
           tokensPerSecond: Math.round(response.length / 4 / (latency / 1000 || 0.001)),
         });
       } catch (error) {
-        logger.warn(
-          `Benchmark question failed: ${question}`,
-          error instanceof Error ? error : new Error(String(error))
-        );
+        logger.warn(`Benchmark question failed: ${question}`, { error: (error as Error).message });
       }
     }
 

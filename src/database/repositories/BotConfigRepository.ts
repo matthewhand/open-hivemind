@@ -1,6 +1,6 @@
 import Debug from 'debug';
-import type { SQLiteWrapper as Database } from './sqliteWrapper';
-import type { BotConfiguration, BotConfigurationAudit, BotConfigurationVersion } from './types';
+import type { SQLiteWrapper as Database } from '../sqliteWrapper';
+import type { BotConfiguration, BotConfigurationAudit, BotConfigurationVersion } from '../types';
 
 const debug = Debug('app:BotConfigRepository');
 

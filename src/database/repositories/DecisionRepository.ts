@@ -1,6 +1,6 @@
 import Debug from 'debug';
-import type { SQLiteWrapper as Database } from './sqliteWrapper';
-import type { DecisionRecord } from './types';
+import type { SQLiteWrapper as Database } from '../sqliteWrapper';
+import type { DecisionRecord } from '../types';
 
 const debug = Debug('app:DecisionRepository');
 
