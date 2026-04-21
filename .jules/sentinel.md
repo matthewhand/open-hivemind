@@ -42,3 +42,7 @@
 **Vulnerability:** SSRF checks applied to internal infrastructure.
 **Learning:** OTLP collectors and telemetry components are routinely deployed as internal sidecars (e.g., localhost:4318) or within private VPC networks. Applying SSRF protections like `isSafeUrl` that block private or loopback IP addresses to these exporters will break legitimate observability pipelines.
 **Prevention:** Do not apply external SSRF protections to internal observability components like trace exporters unless explicitly instructed to protect against user-supplied endpoint configuration.
+## 2024-05-24 - [Fix broken regex quantifiers exposing secrets and bypassing validation]
+**Vulnerability:** Regex quantifiers across the codebase used to validate API keys and redact sensitive tokens from logs (e.g., `{40 }`, `{35 }`) contained a trailing space. This syntax causes the regex engine to treat the quantifier as literal string characters instead of evaluating the length bounds. This meant token masking in logs failed (exposing secrets) and API key validation could be bypassed by an attacker submitting a string containing the literal `{40 }` sequence.
+**Learning:** Whitespace inside regex quantifiers `{min,max}` completely breaks them in JavaScript, turning them into literal strings. This is a subtle but critical failure mode that static analysis often misses.
+**Prevention:** When authoring or reviewing security-critical regular expressions, avoid any extraneous spaces inside quantifiers and test boundary conditions thoroughly with assertions against expected patterns.

@@ -12,7 +12,7 @@ const debug = Debug('app:providers:TelegramProvider');
  * Telegram bot token format: <bot_id>:<token_string>
  * bot_id is a sequence of digits; token_string is 35 alphanumeric/underscore/hyphen chars.
  */
-const TELEGRAM_TOKEN_REGEX = /^\d+:[A-Za-z0-9_-]{35 }$/;
+const TELEGRAM_TOKEN_REGEX = /^\d+:[A-Za-z0-9_-]{35}$/;
 
 /**
  * Masks any Telegram bot token found in a string (e.g. a URL) so that it
@@ -21,7 +21,7 @@ const TELEGRAM_TOKEN_REGEX = /^\d+:[A-Za-z0-9_-]{35 }$/;
  */
 function maskToken(value: string): string {
   // Match the bot<id>:<secret> pattern inside the string
-  return value.replace(/(\d+):[A-Za-z0-9_-]{35 }/g, '$1:****');
+  return value.replace(/(\d+):[A-Za-z0-9_-]{35}/g, '$1:****');
 }
 
 function validateTelegramToken(token: string): void {
