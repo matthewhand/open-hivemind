@@ -27,3 +27,8 @@
 
 - PR fast CI runs `pnpm run test:changed`.
 - This selects and runs related tests for changed files to shorten feedback loops.
+
+## Extra Hardening
+
+- Key workflows use `concurrency` with `cancel-in-progress: true` to avoid redundant runs.
+- Workflow linting runs via `.github/workflows/workflow-lint.yml` using `actionlint`.
