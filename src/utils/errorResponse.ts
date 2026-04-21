@@ -87,10 +87,10 @@ export class ErrorResponseBuilder {
         error as { getRecoveryStrategy: () => Record<string, unknown> }
       ).getRecoveryStrategy();
       this.response.error.recovery = {
-        canRecover: recovery.canRecover,
-        retryDelay: recovery.retryDelay,
-        maxRetries: recovery.maxRetries,
-        steps: recovery.recoverySteps,
+        canRecover: Boolean(recovery.canRecover),
+        retryDelay: Number(recovery.retryDelay) || undefined,
+        maxRetries: Number(recovery.maxRetries) || undefined,
+        steps: Array.isArray(recovery.recoverySteps) ? recovery.recoverySteps : undefined,
       };
     }
   }
@@ -100,7 +100,7 @@ export class ErrorResponseBuilder {
    */
   withStack(include = true): ErrorResponseBuilder {
     this.includeStack = include;
-    if (include && this.originalError && this.originalError.stack) {
+    if (include && this.originalError && typeof this.originalError.stack === 'string') {
       this.response.stack = this.originalError.stack;
     }
     return this;

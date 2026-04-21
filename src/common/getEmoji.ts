@@ -30,7 +30,7 @@ export function getEmoji(keyword?: string): string {
     if (k.includes('success')) return '✅';
     if (k.includes('error')) return '❌';
     if (k.includes('warning')) return '⚠️';
-    return '🤖'; // Default for unknown keywords
+    return '🤖';
   }
 
   const randomBytes = crypto.randomBytes(4);

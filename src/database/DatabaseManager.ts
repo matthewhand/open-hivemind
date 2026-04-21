@@ -75,10 +75,7 @@ export class DatabaseManager {
   private aiFeedbackRepo!: AIFeedbackRepository;
   private decisionRepo!: DecisionRepository;
 
-  constructor(config?: DatabaseConfig) {
-    if (config) {
-      this.configure(config);
-    }
+  constructor() {
     this.initRepositories();
   }
 
@@ -103,8 +100,9 @@ export class DatabaseManager {
 
   static getInstance(config?: DatabaseConfig): DatabaseManager {
     if (!DatabaseManager.instance) {
-      DatabaseManager.instance = new DatabaseManager(config);
-    } else if (config) {
+      DatabaseManager.instance = new DatabaseManager();
+    }
+    if (config) {
       DatabaseManager.instance.configure(config);
     }
     return DatabaseManager.instance;
@@ -151,6 +149,10 @@ export class DatabaseManager {
         }
 
         this.db = new Database(dbPath);
+        debug('DATABASE_MANAGER: this.db initialized, type:', typeof this.db);
+        if (this.db && (this.db as any).exec) {
+          debug('DATABASE_MANAGER: this.db.exec exists');
+        }
 
         await this.createTables();
         await this.createIndexes();
@@ -199,19 +201,16 @@ export class DatabaseManager {
   // ---------------------------------------------------------------------------
 
   private initRepositories(): void {
-    const getDb = (): Database => {
-      if (!this.db) throw new Error('Database not initialized');
-      return this.db;
-    };
+    const getDb = (): Database | null => this.db ?? null;
     const isConn = (): boolean => this.connected;
     const ensure = (): void => this.ensureConnected();
 
-    this.messageRepo = new MessageRepository(getDb as any, isConn, ensure as any);
-    this.botConfigRepo = new BotConfigRepository(getDb as any, ensure as any);
-    this.anomalyRepo = new AnomalyRepository(getDb as any, isConn);
-    this.approvalRepo = new ApprovalRepository(getDb as any, ensure as any);
-    this.aiFeedbackRepo = new AIFeedbackRepository(getDb as any, ensure as any);
-    this.decisionRepo = new DecisionRepository(getDb as any, isConn);
+    this.messageRepo = new MessageRepository(getDb, isConn, ensure);
+    this.botConfigRepo = new BotConfigRepository(getDb, ensure);
+    this.anomalyRepo = new AnomalyRepository(getDb, isConn);
+    this.approvalRepo = new ApprovalRepository(getDb, ensure);
+    this.aiFeedbackRepo = new AIFeedbackRepository(getDb, ensure);
+    this.decisionRepo = new DecisionRepository(getDb, isConn);
   }
 
   // ---------------------------------------------------------------------------
@@ -823,7 +822,7 @@ export class DatabaseManager {
     return this.decisionRepo.saveDecision(decision);
   }
 
-  async getRecentDecisions(limit = 100): Promise<any[]> {
+  async getRecentDecisions(limit = 100): Promise<DecisionRecord[]> {
     return this.decisionRepo.getRecentDecisions(limit);
   }
 }

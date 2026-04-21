@@ -53,9 +53,22 @@ export class AuthManager {
 
   private constructor() {
     // Generate secure JWT secrets or use environment variable
-    this.jwtSecret = process.env.JWT_SECRET || this.generateSecureSecret('jwt_access');
-    this.jwtRefreshSecret =
-      process.env.JWT_REFRESH_SECRET || this.generateSecureSecret('jwt_refresh');
+    const envJwtSecret = process.env.JWT_SECRET;
+    const envJwtRefreshSecret = process.env.JWT_REFRESH_SECRET;
+
+    if (process.env.NODE_ENV === 'production') {
+      if (!envJwtSecret) {
+        throw new Error('CRITICAL: JWT_SECRET environment variable is required in production.');
+      }
+      if (!envJwtRefreshSecret) {
+        throw new Error(
+          'CRITICAL: JWT_REFRESH_SECRET environment variable is required in production.'
+        );
+      }
+    }
+
+    this.jwtSecret = envJwtSecret || this.generateSecureSecret('jwt_access');
+    this.jwtRefreshSecret = envJwtRefreshSecret || this.generateSecureSecret('jwt_refresh');
 
     // Create default admin user synchronously
     this.initializeDefaultAdminSync();
@@ -121,6 +134,10 @@ export class AuthManager {
     let password = process.env.ADMIN_PASSWORD;
 
     if (!password) {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('CRITICAL: ADMIN_PASSWORD environment variable is required in production.');
+      }
+
       password = crypto.randomBytes(16).toString('hex');
       this.generatedPassword = password;
       debug('WARN:', '================================================================');

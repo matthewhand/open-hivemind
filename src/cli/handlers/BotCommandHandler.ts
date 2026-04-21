@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import chalk from 'chalk';
 import { type Command } from 'commander';
 import inquirer from 'inquirer';

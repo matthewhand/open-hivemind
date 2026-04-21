@@ -1,6 +1,7 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
+import { inject, injectable, singleton } from 'tsyringe';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { ConfigurationValidator } from './ConfigurationValidator';
 
@@ -45,23 +46,37 @@ export interface TemplateFilter {
   createdBy?: string;
 }
 
+@singleton()
+@injectable()
 export class ConfigurationTemplateService {
   private static instance: ConfigurationTemplateService;
-  private dbManager: DatabaseManager;
-  private configValidator: ConfigurationValidator;
   private templatesDir: string;
 
-  private constructor(templatesDir?: string) {
-    this.dbManager = DatabaseManager.getInstance();
-    this.configValidator = new ConfigurationValidator();
-    this.templatesDir = templatesDir || path.join(process.cwd(), 'config', 'templates');
+  public constructor(
+    @inject(DatabaseManager) private dbManager: DatabaseManager,
+    @inject(ConfigurationValidator) private configValidator: ConfigurationValidator
+  ) {
+    this.templatesDir = path.join(process.cwd(), 'config', 'templates');
+    this.ensureTemplatesDirectory();
+    this.loadBuiltInTemplates();
+  }
+
+  /**
+   * Set templates directory (primarily for testing)
+   */
+  public setTemplatesDir(dir: string): void {
+    this.templatesDir = dir;
     this.ensureTemplatesDirectory();
     this.loadBuiltInTemplates();
   }
 
   public static getInstance(templatesDir?: string): ConfigurationTemplateService {
     if (!ConfigurationTemplateService.instance) {
-      ConfigurationTemplateService.instance = new ConfigurationTemplateService(templatesDir);
+      const { container } = require('../../di/container');
+      ConfigurationTemplateService.instance = container.resolve(ConfigurationTemplateService);
+      if (templatesDir) {
+        ConfigurationTemplateService.instance.setTemplatesDir(templatesDir);
+      }
     }
     return ConfigurationTemplateService.instance;
   }

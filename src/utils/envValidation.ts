@@ -13,28 +13,46 @@ const envSchema = z
     DISCORD_BOT_TOKEN: z.string().trim().min(1, 'DISCORD_BOT_TOKEN must not be empty').optional(),
     SLACK_BOT_TOKEN: z.string().trim().min(1, 'SLACK_BOT_TOKEN must not be empty').optional(),
     MATTERMOST_TOKEN: z.string().trim().min(1, 'MATTERMOST_TOKEN must not be empty').optional(),
+    HIVEMIND_PLUGIN_SIGNING_KEY: z.string().optional(),
+    ADMIN_PASSWORD: z.string().optional(),
   })
   .passthrough() // Allow other environment variables
   .superRefine((env, ctx) => {
     if (env.NODE_ENV === 'production') {
-      if (!env.SESSION_SECRET || env.SESSION_SECRET.trim().length === 0) {
+      if (!env.HIVEMIND_PLUGIN_SIGNING_KEY || env.HIVEMIND_PLUGIN_SIGNING_KEY.trim().length < 32) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'SESSION_SECRET is required in production',
+          message:
+            'HIVEMIND_PLUGIN_SIGNING_KEY is required in production and must be at least 32 characters',
+          path: ['HIVEMIND_PLUGIN_SIGNING_KEY'],
+        });
+      }
+      if (!env.ADMIN_PASSWORD || env.ADMIN_PASSWORD.trim().length < 12) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'ADMIN_PASSWORD is required in production and must be at least 12 characters',
+          path: ['ADMIN_PASSWORD'],
+        });
+      }
+      if (!env.SESSION_SECRET || env.SESSION_SECRET.trim().length < 32) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'SESSION_SECRET is required in production and must be at least 32 characters',
           path: ['SESSION_SECRET'],
         });
       }
-      if (!env.JWT_SECRET || env.JWT_SECRET.trim().length === 0) {
+      if (!env.JWT_SECRET || env.JWT_SECRET.trim().length < 32) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'JWT_SECRET is required in production',
+          message: 'JWT_SECRET is required in production and must be at least 32 characters',
           path: ['JWT_SECRET'],
         });
       }
-      if (!env.JWT_REFRESH_SECRET || env.JWT_REFRESH_SECRET.trim().length === 0) {
+      if (!env.JWT_REFRESH_SECRET || env.JWT_REFRESH_SECRET.trim().length < 32) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'JWT_REFRESH_SECRET is required in production',
+          message:
+            'JWT_REFRESH_SECRET is required in production and must be at least 32 characters',
           path: ['JWT_REFRESH_SECRET'],
         });
       }
@@ -74,7 +92,7 @@ export function validateRequiredEnvVars(): void {
 
   if (!result.success) {
     Logger.error('---------------------------------------------------------');
-    Logger.error('🚨 CRITICAL STARTUP FAILURE: INVALID ENVIRONMENT VARIABLES');
+    Logger.error('\ud83d\udea8 CRITICAL STARTUP FAILURE: INVALID ENVIRONMENT VARIABLES');
     Logger.error('---------------------------------------------------------');
 
     result.error.issues.forEach((issue) => {

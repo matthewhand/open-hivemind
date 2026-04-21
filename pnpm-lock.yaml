@@ -153,9 +153,6 @@ importers:
       bcrypt:
         specifier: ^6.0.0
         version: 6.0.0
-      better-sqlite3:
-        specifier: ^12.9.0
-        version: 12.9.0
       chalk:
         specifier: ^5.6.2
         version: 5.6.2
@@ -547,6 +544,9 @@ importers:
       baseline-browser-mapping:
         specifier: ^2.9.6
         version: 2.10.17
+      better-sqlite3:
+        specifier: ^12.9.0
+        version: 12.9.0
       chai:
         specifier: ^5.1.1
         version: 5.3.3

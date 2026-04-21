@@ -61,5 +61,12 @@ export function botsMixin(api: ApiService) {
     stopBot(botId: string): Promise<{ success: boolean; message: string }> {
       return api.request(`/api/bots/${botId}/stop`, { method: 'POST' });
     },
+
+    generateBotConfig(description: string): Promise<any> {
+      return api.request('/api/bots/generate-config', {
+        method: 'POST',
+        body: JSON.stringify({ description }),
+      });
+    },
   };
 }

@@ -506,8 +506,12 @@ export class DiscordService extends EventEmitter implements IMessengerService {
     return this.botManager.disconnectBot(botName);
   }
 
-  public isBotConnected(botName: string): boolean {
-    return this.botManager.isBotConnected(botName);
+  public isConnected(botName?: string): boolean {
+    if (botName) {
+      return this.botManager.isBotConnected(botName);
+    }
+    const bots = this.botManager.getAllBots();
+    return bots.length > 0 && bots.every((b) => b.client.ws.status === 0);
   }
 
   public getHealthStatus(): Record<string, any> {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, useRef, lazy, Suspense, useMemo } from 'react';
 import { useWebSocket } from '../../contexts/WebSocketContext';
 import Card from '../DaisyUI/Card';
 import Badge from '../DaisyUI/Badge';
@@ -185,10 +185,23 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     fetchConfig();
   }, [fetchStatus, fetchConfig]);
 
+  // Memoize system metrics bot map for O(1) lookups
+  const systemMetricsMap = useMemo(() => {
+    const map = new Map<string, any>();
+    if (systemMetrics?.bots) {
+      systemMetrics.bots.forEach((b: any) => {
+        if (b.name) {
+          map.set(b.name, b);
+        }
+      });
+    }
+    return map;
+  }, [systemMetrics]);
+
   // Derive bots with status combining config and system data independently
   useEffect(() => {
     const botsWithStatus = configBots.map((bot: Bot) => {
-      const statusBot = systemMetrics?.bots?.find((b: any) => b.name === bot.name);
+      const statusBot = systemMetricsMap.get(bot.name);
       return {
         ...bot,
         id: bot.name,
@@ -212,7 +225,7 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
       };
     });
     setBots(botsWithStatus);
-  }, [configBots, systemMetrics]);
+  }, [configBots, systemMetricsMap]);
 
   // Track WS activity so fallback poll knows when WS last delivered data
   useEffect(() => {

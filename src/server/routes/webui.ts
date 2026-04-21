@@ -3,8 +3,31 @@ import process from 'process';
 import { Router } from 'express';
 import { MetricsCollector } from '../../monitoring/MetricsCollector';
 import { providerRegistry } from '../../registries/ProviderRegistry';
+import { webUIStorage } from '../../storage/webUIStorage';
 
 const router = Router();
+
+// GET /config - Get the WebUI configuration
+router.get('/config', async (_req, res) => {
+  try {
+    const config = await webUIStorage.loadConfig();
+    return res.json(config);
+  } catch (error) {
+    return res.status(500).json({ error: 'Failed to load configuration' });
+  }
+});
+
+// POST /config - Update the WebUI configuration
+router.post('/config', async (req, res) => {
+  try {
+    const currentConfig = await webUIStorage.loadConfig();
+    const newConfig = { ...currentConfig, ...req.body };
+    await webUIStorage.saveConfig(newConfig);
+    return res.json({ success: true, config: newConfig });
+  } catch (error) {
+    return res.status(500).json({ error: 'Failed to save configuration' });
+  }
+});
 
 // GET /system-status - Overall system status for the WebUI
 router.get('/system-status', (_req, res) => {

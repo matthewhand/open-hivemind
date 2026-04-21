@@ -2,7 +2,7 @@ import { http, isHttpError } from '@hivemind/shared-types';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 import { LLMResponse } from '@llm/interfaces/LLMResponse';
 import type { IMessage } from '@message/interfaces/IMessage';
-import { Logger } from '@common/logger';
+import Logger from '@common/logger';
 
 const logger = Logger.withContext('OpenSwarmProvider');
 

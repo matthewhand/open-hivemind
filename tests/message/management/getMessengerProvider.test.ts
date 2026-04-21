@@ -8,10 +8,11 @@ import {
 jest.mock('tsyringe', () => ({
   container: {
     resolve: jest.fn().mockReturnValue({}),
+    isRegistered: jest.fn().mockReturnValue(true),
   },
-  singleton: () => () => {},
-  injectable: () => () => {},
-  inject: () => () => {},
+  singleton: () => (target: any) => target,
+  injectable: () => (target: any) => target,
+  inject: () => (target: any) => target,
 }));
 
 // Mock Discord Service

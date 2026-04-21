@@ -158,10 +158,10 @@ describe('Monitoring Pipeline Integration Tests', () => {
     metricsCollector.recordLlmTokenUsage(100);
 
     // Add data points via anomaly service (integration point)
-    for (let i = 0; i < 10; i++) {
-      anomalyService.addDataPoint('errors', 1); // Low errors
+    for (let i = 0; i < 20; i++) {
+      anomalyService.addDataPoint('errors', 0); // Zero errors
     }
-    anomalyService.addDataPoint('errors', 50); // Anomaly spike
+    anomalyService.addDataPoint('errors', 100); // Massive Anomaly spike (100 vs 0)
 
     // Manually increment errors in metrics collector for this test
     metricsCollector.incrementErrors();

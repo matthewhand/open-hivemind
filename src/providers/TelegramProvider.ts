@@ -49,8 +49,8 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
     return telegramConfig.getSchema() as unknown as Record<string, unknown>;
   }
 
-  getConfig(): typeof telegramConfig {
-    return telegramConfig;
+  getConfig(): Record<string, unknown> {
+    return telegramConfig as unknown as Record<string, unknown>;
   }
 
   getSensitiveKeys(): string[] {

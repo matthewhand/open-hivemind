@@ -1,5 +1,19 @@
 import convict from 'convict';
 
+convict.addFormat({
+  name: 'strict-bool',
+  validate: (val) => {
+    if (typeof val !== 'boolean') {
+      throw new Error('must be a boolean');
+    }
+  },
+  coerce: (val) => {
+    if (val === '0' || val === 0 || val === 'false' || val === false) { return false; }
+    if (val === '1' || val === 1 || val === 'true' || val === true) { return true; }
+    return !!val;
+  }
+});
+
 const llmConfig = convict({
   LLM_PROVIDER: {
     doc: 'LLM provider (e.g., openai, flowise, openwebui)',
@@ -15,18 +29,9 @@ const llmConfig = convict({
   },
   LLM_PARALLEL_EXECUTION: {
     doc: 'Whether to allow parallel execution of requests',
-    format: Boolean,
+    format: 'strict-bool',
     default: false,
     env: 'LLM_PARALLEL_EXECUTION',
-    coerce: (val: any) => {
-      if (typeof val === 'boolean') {return val;}
-      if (typeof val === 'string') {
-        const lower = val.toLowerCase();
-        if (lower === 'true' || lower === '1') {return true;}
-        if (lower === 'false' || lower === '0') {return false;}
-      }
-      return false;
-    },
   },
 });
 

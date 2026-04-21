@@ -167,13 +167,20 @@ async function readPackageVersion(pluginPath: string): Promise<string> {
 }
 
 async function deriveNameFromPath(pluginPath: string): Promise<string> {
+  let name = path.basename(pluginPath);
   try {
     const content = await fs.promises.readFile(path.join(pluginPath, 'package.json'), 'utf-8');
     const pkg = JSON.parse(content);
-    return pkg.name?.replace(/^@[^/]+\//, '') ?? path.basename(pluginPath);
-  } catch {
-    return path.basename(pluginPath);
+    if (pkg.name && typeof pkg.name === 'string') {
+      name = pkg.name.replace(/^@[^/]+\//, '');
+    }
+  } catch {}
+
+  if (name.includes('..') || name.includes('/') || name.includes('\\')) {
+    throw new PluginValidationError(`Invalid plugin name: ${name}`);
   }
+
+  return name;
 }
 
 function exec(cmd: string, args: string[], cwd: string): void {
@@ -418,6 +425,12 @@ export async function listInstalledPlugins(): Promise<PluginInfo[]> {
 let PLUGIN_SIGNING_KEY = process.env.HIVEMIND_PLUGIN_SIGNING_KEY;
 
 if (!PLUGIN_SIGNING_KEY) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'CRITICAL: HIVEMIND_PLUGIN_SIGNING_KEY environment variable is required in production.'
+    );
+  }
+
   PLUGIN_SIGNING_KEY = crypto.randomBytes(32).toString('hex');
   logger.warn('⚠️  WARNING: No HIVEMIND_PLUGIN_SIGNING_KEY environment variable found.');
   logger.warn('   Generated a temporary plugin signing key for this session.');

@@ -111,7 +111,7 @@ async function createProviderFromInstance(
     switch (type) {
       case 'openai':
         const { OpenAiProvider } = await import('@hivemind/llm-openai');
-        provider = new OpenAiProvider(cfg as Record<string, unknown>);
+        provider = new OpenAiProvider(cfg as any);
         break;
       case 'flowise':
         provider = new FlowiseProvider(cfg);
@@ -177,7 +177,7 @@ async function createProviderFromProfile(profileKey: string): Promise<ILlmProvid
     switch (type) {
       case 'openai':
         const { OpenAiProvider } = await import('@hivemind/llm-openai');
-        provider = new OpenAiProvider(cfg as Record<string, unknown>);
+        provider = new OpenAiProvider(cfg as any);
         break;
       case 'flowise':
         provider = new FlowiseProvider(cfg);

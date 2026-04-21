@@ -17,14 +17,17 @@ module.exports = {
   testEnvironment: 'node',
   // testTimeout handled in setup files to avoid CLI conflicts
   transform: {
-    '^.+\.tsx?$': 'babel-jest',
+    '^.+\.tsx?$': ['ts-jest', {
+      tsconfig: 'tsconfig.json',
+      isolatedModules: true,
+    }],
     '^.+\.jsx?$': 'babel-jest',
     '^.+\.js$': 'babel-jest',
   },
   testRegex: '(\.|/)(test|integration\.test)\.[tj]sx?$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   moduleNameMapper: {
-    uuid: require.resolve('uuid'),
+    uuid: '<rootDir>/tests/mocks/uuid.js',
     '^@tests/(.*)$': '<rootDir>/tests/$1',
     '^@src/utils/logger$': '<rootDir>/tests/mocks/logger.ts',
     '.*src/client/src/utils/logger$': '<rootDir>/tests/mocks/clientLogger.ts',
@@ -86,6 +89,7 @@ module.exports = {
     '^@slack/rtm-api$': '<rootDir>/tests/mocks/slackRtmApiMock.js',
     sqlite$: '<rootDir>/tests/mocks/sqlite.ts',
     sqlite3$: '<rootDir>/tests/mocks/sqlite3.ts',
+    'better-sqlite3$': '<rootDir>/tests/mocks/sqlite3.ts',
     bcrypt$: '<rootDir>/tests/mocks/bcrypt.ts',
     'discord.js':
       process.env.RUN_SYSTEM_TESTS === 'true'

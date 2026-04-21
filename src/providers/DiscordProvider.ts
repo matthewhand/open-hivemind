@@ -23,11 +23,11 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
     this.discordService = discordService || (Discord as any).DiscordService.getInstance();
   }
 
-  getSchema(): any {
+  getSchema(): Record<string, unknown> {
     return discordConfig.getSchema();
   }
 
-  getConfig(): any {
+  getConfig(): Record<string, unknown> {
     return discordConfig;
   }
 
@@ -68,13 +68,15 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
     return [];
   }
 
-  async getBots(): Promise<any[]> {
+  async getBots(): Promise<Record<string, unknown>[]> {
     const status = await this.getStatus();
     return status.bots;
   }
 
-  async addBot(config: any): Promise<void> {
-    const { name, token, llm } = config;
+  async addBot(config: Record<string, unknown>): Promise<void> {
+    const name = String(config.name ?? '');
+    const token = config.token as string | undefined;
+    const llm = config.llm;
     if (!token) {
       throw new Error('token is required');
     }

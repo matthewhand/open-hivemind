@@ -12,7 +12,6 @@ import Debug from 'debug';
 import { inject, injectable, singleton } from 'tsyringe';
 import { type BotConfigurationManager } from '../config/BotConfigurationManager';
 import { type UserConfigStore } from '../config/UserConfigStore';
-import { TOKENS } from '../di/container';
 import { MetricsCollector } from '../monitoring/MetricsCollector';
 import { ActivityLogger } from '../server/services/ActivityLogger';
 import type {
@@ -420,8 +419,8 @@ export class DemoModeService {
   }
 
   constructor(
-    @inject(TOKENS.BotConfigurationManager) private botManager: BotConfigurationManager,
-    @inject(TOKENS.UserConfigStore) private _userConfigStore: UserConfigStore
+    @inject('BotConfigurationManager') private botManager: BotConfigurationManager,
+    @inject('UserConfigStore') private configStore: UserConfigStore
   ) {
     debug('DemoModeService constructed');
   }

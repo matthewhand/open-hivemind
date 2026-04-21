@@ -322,13 +322,17 @@ describe('ReceiveStage', () => {
   // 16. Metadata initialized
   // -------------------------------------------------------------------------
   describe('metadata initialization', () => {
-    it('initializes metadata as an empty object', async () => {
+    it('initializes metadata with receive info', async () => {
       const msg = new StubMessage('hello');
       const result = await stage.process(msg, [], { BOT_NAME: 'Bot' });
 
       expect(result).not.toBeNull();
-      expect(result!.metadata).toEqual({});
-      expect(typeof result!.metadata).toBe('object');
+      expect(result!.metadata).toHaveProperty('receive');
+      expect(result!.metadata.receive).toMatchObject({
+        rawTextLength: 5,
+        sanitizedTextLength: 5,
+      });
+      expect(typeof result!.metadata.receive.receivedAt).toBe('number');
     });
   });
 

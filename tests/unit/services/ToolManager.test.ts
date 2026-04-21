@@ -89,9 +89,10 @@ describe('ToolManager', () => {
 
       const tools = await mgr.getToolsForBot('bot1');
 
-      expect(tools).toHaveLength(2);
+      expect(tools).toHaveLength(3); // 2 from servers + 1 built-in
       expect(tools[0]).toMatchObject({ name: 'search', serverName: 'server-a' });
       expect(tools[1]).toMatchObject({ name: 'fetch', serverName: 'server-b' });
+      expect(tools[2]).toMatchObject({ name: 'transfer_to_bot', serverName: 'built-in' });
     });
 
     it('resolves tools from mcpServerProfile', async () => {
@@ -108,27 +109,30 @@ describe('ToolManager', () => {
       ]);
 
       const tools = await mgr.getToolsForBot('bot1');
-      expect(tools).toHaveLength(1);
+      expect(tools).toHaveLength(2); // 1 from server + 1 built-in
       expect(tools[0].name).toBe('browse');
+      expect(tools[1].name).toBe('transfer_to_bot');
     });
 
-    it('returns empty array when bot has no MCP servers', async () => {
+    it('returns only built-in tools when bot has no MCP servers', async () => {
       const mgr = freshManager();
       mockGetBot.mockReturnValue({ name: 'bot1' });
 
       const tools = await mgr.getToolsForBot('bot1');
-      expect(tools).toEqual([]);
+      expect(tools).toHaveLength(1);
+      expect(tools[0].name).toBe('transfer_to_bot');
     });
 
-    it('returns empty array when bot config is not found', async () => {
+    it('returns only built-in tools when bot config is not found', async () => {
       const mgr = freshManager();
       mockGetBot.mockReturnValue(undefined);
 
       const tools = await mgr.getToolsForBot('unknown');
-      expect(tools).toEqual([]);
+      expect(tools).toHaveLength(1);
+      expect(tools[0].name).toBe('transfer_to_bot');
     });
 
-    it('skips servers that have no cached tools', async () => {
+    it('skips servers that have no cached tools but still returns built-in tools', async () => {
       const mgr = freshManager();
       mockGetBot.mockReturnValue({
         name: 'bot1',
@@ -141,10 +145,12 @@ describe('ToolManager', () => {
         ]);
 
       const tools = await mgr.getToolsForBot('bot1');
-      expect(tools).toHaveLength(1);
+      expect(tools).toHaveLength(2); // 1 from server + 1 built-in
+      expect(tools[0].name).toBe('tool1');
+      expect(tools[1].name).toBe('transfer_to_bot');
     });
 
-    it('deduplicates servers from direct config and profile', async () => {
+    it('deduplicates servers and returns built-in tools', async () => {
       const mgr = freshManager();
       mockGetBot.mockReturnValue({
         name: 'bot1',
@@ -161,7 +167,9 @@ describe('ToolManager', () => {
       const tools = await mgr.getToolsForBot('bot1');
       // Should only query the server once (deduplication via Set).
       expect(mockGetToolsFromServer).toHaveBeenCalledTimes(1);
-      expect(tools).toHaveLength(1);
+      expect(tools).toHaveLength(2); // 1 from server + 1 built-in
+      expect(tools[0].name).toBe('tool1');
+      expect(tools[1].name).toBe('transfer_to_bot');
     });
   });
 

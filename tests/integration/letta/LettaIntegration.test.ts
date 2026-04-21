@@ -35,7 +35,8 @@ createIntegrationSuite(lettaConfig.name, lettaConfig.requiredEnvVars, () => {
     it('should have valid API key set', () => {
       const key = process.env.LETTA_API_KEY!;
       expect(key.length).toBeGreaterThan(0);
-      expect(key.startsWith('sk-let-')).toBe(true);
+      // Letta API keys can start with 'sk-let-' or 'at-let-' (newer format)
+      expect(key.startsWith('sk-let-') || key.startsWith('at-let')).toBe(true);
     });
   });
 

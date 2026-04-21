@@ -20,6 +20,9 @@ import Debug from 'debug';
 import { type MessageBus } from '@src/events/MessageBus';
 import type { MessageContext } from '@src/events/types';
 import type { IMessage } from '@message/interfaces/IMessage';
+import { sendErrorAlertMessage } from '../managers/botLifecycle';
+import { BotManager } from '../managers/BotManager';
+import { TokenBudgetService } from '../server/services/TokenBudgetService';
 
 const debug = Debug('app:pipeline:inference');
 
@@ -80,7 +83,27 @@ export class InferenceStage {
    * other pipeline stages that need an imperative (non-event) code path.
    */
   async process(ctx: MessageContext & { memories: string[]; systemPrompt: string }): Promise<void> {
+    const startTime = Date.now();
     try {
+      const budgetService = TokenBudgetService.getInstance();
+      const maxTokens = (ctx.botConfig as any).maxTokensPerDay as number;
+
+      // 1. Budget Pre-Check
+      if (maxTokens && budgetService.isOverBudget(ctx.botName, maxTokens)) {
+        const errorMsg = `Daily token budget exceeded for bot ${ctx.botName}. Limit: ${maxTokens}.`;
+        debug(errorMsg);
+
+        // Notify admin and pause bot
+        const botManager = await BotManager.getInstance();
+        const bot = await botManager.getBot(ctx.botName);
+        if (bot) {
+          await sendErrorAlertMessage(bot, new Error(errorMsg));
+          await botManager.stopBot(bot.id);
+        }
+
+        throw new Error(errorMsg);
+      }
+
       // Extract user message text — prefer getText() when available, fall
       // back to the public `content` property.
       const userMessage =
@@ -93,7 +116,16 @@ export class InferenceStage {
         ctx.metadata
       );
 
+      const durationMs = Date.now() - startTime;
+
       if (!responseText) {
+        // Capture metadata for skipped response
+        ctx.metadata.inference = {
+          model: (ctx.botConfig.MODEL as string) || 'unknown',
+          durationMs,
+          status: 'empty',
+        };
+
         await this.bus.emitAsync('message:skipped', {
           ...ctx,
           reason: 'empty LLM response',
@@ -101,6 +133,21 @@ export class InferenceStage {
         debug('Inference skipped (empty response): bot=%s', ctx.botName);
         return;
       }
+
+      // 2. Budget Increment (Heuristic: ~4 chars per token for prompt + response)
+      if (maxTokens) {
+        const estimatedTokens = Math.ceil((userMessage.length + responseText.length) / 4);
+        const model = (ctx.botConfig.MODEL as string) || 'gpt-4o';
+        await budgetService.incrementUsage(ctx.botName, estimatedTokens, model);
+      }
+
+      // Capture metadata for successful response
+      ctx.metadata.inference = {
+        model: (ctx.botConfig.MODEL as string) || 'unknown',
+        durationMs,
+        responseLength: responseText.length,
+        status: 'ok',
+      };
 
       await this.bus.emitAsync('message:response', { ...ctx, responseText });
       debug('Inference complete: bot=%s responseLength=%d', ctx.botName, responseText.length);

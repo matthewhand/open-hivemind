@@ -273,6 +273,7 @@ export interface Anomaly {
   explanation: string;
   resolved: boolean;
   tenantId?: string;
+  traceId?: string;
 }
 
 export interface ApprovalRequest {

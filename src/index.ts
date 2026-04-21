@@ -59,10 +59,6 @@ const frontendDistExists = resolveFrontendDistExists();
 // Initialize ShutdownCoordinator for graceful shutdown
 const shutdownCoordinator = ShutdownCoordinator.getInstance();
 
-// Unhandled rejection and uncaught exception handlers are registered by
-// ShutdownCoordinator.setupSignalHandlers() (called below) — do not register
-// them here a second time to avoid duplicate listeners.
-
 const app = express();
 
 // ── Middleware ──

@@ -14,6 +14,9 @@ import { performSingleBotHealthCheck, type BotHealthResult } from './botHealthCh
 import {
   BotRunningState,
   getMessengerService,
+  sendDailyStatusReport,
+  sendErrorAlertMessage,
+  sendShutdownMessage,
   sendWelcomeMessage,
   shutdownBotProvider,
   startBotById as startBotByIdHelper,
@@ -39,6 +42,7 @@ export class BotManager extends EventEmitter {
   private customBots = new Map<string, BotInstance>();
   private botsFilePath: string;
   private runningState = new BotRunningState();
+  private statusReportInterval: NodeJS.Timeout | null = null;
 
   constructor() {
     super();
@@ -49,6 +53,26 @@ export class BotManager extends EventEmitter {
     // Note: loadCustomBots is now async but called from constructor
     // We'll handle initialization separately
     debug('BotManager initialized');
+
+    // Schedule periodic status reports (every 24 hours by default)
+    this.scheduleStatusReports();
+  }
+
+  /**
+   * Schedule status reports for all running bots.
+   */
+  private scheduleStatusReports(): void {
+    const intervalMs = parseInt(process.env.STATUS_REPORT_INTERVAL_MS || '86400000', 10);
+    this.statusReportInterval = setInterval(async () => {
+      const runningBots = await this.getAllBots();
+      for (const bot of runningBots) {
+        if (this.runningState.isRunning(bot.id)) {
+          await sendDailyStatusReport(bot).catch((err) =>
+            debug(`Failed to send status report for ${bot.name}:`, err)
+          );
+        }
+      }
+    }, intervalMs);
   }
 
   public static async getInstance(): Promise<BotManager> {
@@ -372,12 +396,12 @@ export class BotManager extends EventEmitter {
    * Start a bot instance
    */
   public async startBot(botId: string): Promise<boolean> {
-    try {
-      const bot = await this.getBot(botId);
-      if (!bot) {
-        throw new Error('Bot not found');
-      }
+    const bot = await this.getBot(botId);
+    if (!bot) {
+      throw new Error('Bot not found');
+    }
 
+    try {
       // Persist enabled state to user config file
       const userConfigStore = UserConfigStore.getInstance();
       await userConfigStore.setBotDisabled(bot.name, false);
@@ -404,6 +428,11 @@ export class BotManager extends EventEmitter {
       return true;
     } catch (error: unknown) {
       debug('Error starting bot:', ErrorUtils.getMessage(error));
+      // Send error alert to channel
+      await sendErrorAlertMessage(bot, error).catch((err) =>
+        debug('Failed to send error alert:', err)
+      );
+
       throw ErrorUtils.createError(
         `Failed to start bot: ${ErrorUtils.getMessage(error)}`,
         'configuration'
@@ -415,12 +444,12 @@ export class BotManager extends EventEmitter {
    * Stop a bot instance
    */
   public async stopBot(botId: string): Promise<boolean> {
-    try {
-      const bot = await this.getBot(botId);
-      if (!bot) {
-        throw new Error('Bot not found');
-      }
+    const bot = await this.getBot(botId);
+    if (!bot) {
+      throw new Error('Bot not found');
+    }
 
+    try {
       // Persist disabled state to user config file
       const userConfigStore = UserConfigStore.getInstance();
       await userConfigStore.setBotDisabled(bot.name, true);
@@ -433,6 +462,9 @@ export class BotManager extends EventEmitter {
         this.customBots.set(botId, updatedBot);
         await this.saveCustomBots();
       }
+
+      // Send shutdown message before actual disconnect
+      await sendShutdownMessage(bot).catch((err) => debug('Failed to send shutdown message:', err));
 
       // Use integration-agnostic shutdown
       try {
@@ -659,5 +691,12 @@ export class BotManager extends EventEmitter {
         issues: ['Health check failed to execute'],
       };
     });
+  }
+
+  /**
+   * Check if a bot is currently running.
+   */
+  public isBotRunning(botId: string): boolean {
+    return this.runningState.isRunning(botId);
   }
 }

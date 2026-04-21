@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { EventEmitter } from 'events';
 import fs, { promises as fsPromises } from 'fs';
 import path from 'path';
 import readline from 'readline';
@@ -21,7 +22,7 @@ export interface AuditEvent {
   metadata?: Record<string, unknown>;
 }
 
-export class AuditLogger {
+export class AuditLogger extends EventEmitter {
   private static instance: AuditLogger;
   private logFilePath: string;
   private maxLogSize: number = 10 * 1024 * 1024; // 10MB
@@ -30,6 +31,7 @@ export class AuditLogger {
   private isProcessing: boolean = false;
 
   private constructor() {
+    super();
     const configDir = process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config');
     this.logFilePath = path.join(configDir, 'audit.log');
     this.ensureLogDirectory();
@@ -148,6 +150,9 @@ export class AuditLogger {
         user: auditEvent.user,
         result: auditEvent.result,
       });
+
+      // Emit event for real-time consumers (like WebSocketService)
+      this.emit('auditEvent', auditEvent);
 
       this.processQueue();
     } catch (error) {

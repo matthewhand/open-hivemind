@@ -74,10 +74,8 @@ describe('ShutdownCoordinator', () => {
   });
 
   describe('Server Registration', () => {
-    it('should register HTTP server', () => {
+    it('should register HTTP server without throwing', () => {
       const httpServer = createMockHttpServer();
-      coordinator.registerHttpServer(httpServer);
-      // Server should be registered without error
       expect(() => coordinator.registerHttpServer(httpServer)).not.toThrow();
     });
 
@@ -261,7 +259,6 @@ describe('ShutdownCoordinator', () => {
       const shutdownPromise = coordinator.initiateShutdown('SIGTERM');
 
       // Advance past total timeout (1000ms) AND phase timeout (5000ms)
-      // We need phase to timeout so shutdownPromise resolves (since process.exit is mocked)
       await jest.advanceTimersByTimeAsync(10000);
 
       await shutdownPromise;

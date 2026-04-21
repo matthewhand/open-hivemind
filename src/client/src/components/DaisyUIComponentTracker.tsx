@@ -10,7 +10,8 @@ import { Alert } from './DaisyUI/Alert';
 import Modal from './DaisyUI/Modal';
 import Tabs from './DaisyUI/Tabs';
 import { Stat } from './DaisyUI/Stat';
-import Accordion from './DaisyUI/Accordion';
+import Collapse from './DaisyUI/Collapse';
+import Link from './DaisyUI/Link';
 
 interface Props {
   isOpen?: boolean;
@@ -201,34 +202,40 @@ const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) =>
             {/* Categories Tab */}
             {selectedCategory === 'categories' && (
               <div className="space-y-4">
-                <Accordion
-                  items={Object.entries(stats.categories).map(([category, data]) => ({
-                    id: category,
-                    title: `${category} (${data.used}/${data.total} components)`,
-                    content: (
-                      <div className="space-y-2 mt-2">
-                        {data.components.length > 0 ? (
-                          data.components.map((component) => {
-                            const usage = stats.componentUsage.find(u => u.component === component);
-                            return (
-                              <div key={component} className="flex items-center justify-between p-2 bg-base-100 rounded">
-                                <span>{component}</span>
-                                {usage && (
-                                  <Badge variant="success" size="xs">{usage.usageCount} uses</Badge>
-                                )}
-                              </div>
-                            );
-                          })
-                        ) : (
-                          <p className="text-sm text-base-content/60 italic">No components from this category used yet</p>
-                        )}
-                      </div>
-                    ),
-                    className: 'bg-base-200',
-                  }))}
-                  allowMultiple
-                  defaultOpenItems={Object.entries(stats.categories).filter(([_, data]) => data.used > 0).map(([category]) => category)}
-                />
+                {Object.entries(stats.categories).map(([category, data]) => (
+                  <Collapse
+                    key={category}
+                    title={`${category} (${data.used}/${data.total} components)`}
+                    variant="arrow"
+                    className="bg-base-200"
+                    defaultOpen={data.used > 0}
+                  >
+                    <div className="space-y-2 mt-2">
+                      {data.components.length > 0 ? (
+                        data.components.map((component) => {
+                          const usage = stats.componentUsage.find((u) => u.component === component);
+                          return (
+                            <div
+                              key={component}
+                              className="flex items-center justify-between p-2 bg-base-100 rounded"
+                            >
+                              <span>{component}</span>
+                              {usage && (
+                                <Badge variant="success" size="xs">
+                                  {usage.usageCount} uses
+                                </Badge>
+                              )}
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <p className="text-sm text-base-content/60 italic">
+                          No components from this category used yet
+                        </p>
+                      )}
+                    </div>
+                  </Collapse>
+                ))}
               </div>
             )}
           </div>

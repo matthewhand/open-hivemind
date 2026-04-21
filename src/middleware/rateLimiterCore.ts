@@ -50,13 +50,13 @@ export class MemoryStoreWithCleanup {
 
     if (existing && now < existing.resetTime.getTime()) {
       existing.count++;
-      return { totalHits: existing.count, resetTime: existing.resetTime };
+      return { totalHits: existing.count, resetTime: new Date(existing.resetTime) };
     }
 
     const resetTime = new Date(now + this.windowMs);
     const newData = { count: 1, resetTime };
     this.hits.set(key, newData);
-    return { totalHits: 1, resetTime };
+    return { totalHits: 1, resetTime: new Date(resetTime) };
   }
 
   async decrement(key: string): Promise<void> {
