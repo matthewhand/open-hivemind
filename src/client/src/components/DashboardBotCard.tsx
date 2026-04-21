@@ -58,6 +58,7 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
                  onClick={() => setIsBenchmarkOpen(true)}
                  className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity text-warning"
                  title="Run Performance Benchmark"
+                 aria-label={`Run Performance Benchmark for ${bot.name}`}
                >
                   <Trophy className="w-4 h-4" />
                </button>
@@ -65,6 +66,7 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
                  onClick={() => setIsHistoryOpen(true)}
                  className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity text-secondary"
                  title="Version History"
+                 aria-label={`View Version History for ${bot.name}`}
                >
                   <History className="w-4 h-4" />
                </button>
@@ -72,6 +74,7 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
                  onClick={() => setIsInsightsOpen(true)}
                  className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity text-primary"
                  title="AI Performance Insights"
+                 aria-label={`View AI Performance Insights for ${bot.name}`}
                >
                   <Sparkles className="w-4 h-4" />
                </button>
@@ -79,6 +82,7 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
                  onClick={() => setIsDiagnosticOpen(true)}
                  className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity"
                  title="Run Diagnostic"
+                 aria-label={`Run Diagnostic for ${bot.name}`}
                >
                   <Activity className="w-4 h-4" />
                </button>
