@@ -51,6 +51,8 @@ describe('Pipeline Stage Transitions Integration', () => {
       systemPrompt: 'p',
       userPrompt: 'u',
       history: [],
+      botConfig: { maxTokensPerDay: 1000 },
+      metadata: {},
     };
 
     bus.emit('message:enriched', context as any);
@@ -83,6 +85,8 @@ describe('Pipeline Stage Transitions Integration', () => {
       systemPrompt: 'p',
       userPrompt: 'u',
       history: [],
+      botConfig: { maxTokensPerDay: 1000 },
+      metadata: {},
     };
 
     bus.emit('message:enriched', context as any);
@@ -110,6 +114,8 @@ describe('Pipeline Stage Transitions Integration', () => {
       responseText: 'hi',
       platform: 'test',
       channelId: 'c1',
+      botConfig: { maxTokensPerDay: 1000 },
+      metadata: {},
     };
 
     // Manually trigger the SendStage (bypass event bus for test)
@@ -138,6 +144,8 @@ describe('Pipeline Stage Transitions Integration', () => {
       botName: 'bot1',
       requestId: 'r1',
       responseText: 'hi',
+      botConfig: { maxTokensPerDay: 1000 },
+      metadata: {},
     };
 
     // Manually trigger the SendStage
