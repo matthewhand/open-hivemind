@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { singleton, injectable } from 'tsyringe';
+import { injectable, singleton } from 'tsyringe';
 
 const debug = Debug('app:PanicModeService');
 

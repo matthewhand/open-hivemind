@@ -1,20 +1,21 @@
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
+import { container } from 'tsyringe';
 import { ErrorUtils } from '../../../common/ErrorUtils';
 import { DatabaseManager } from '../../../database/DatabaseManager';
+import { getActiveTracer } from '../../../observability/PipelineTracer';
+import { AnomalyDetectionService } from '../../../services/AnomalyDetectionService';
 import { HTTP_STATUS } from '../../../types/constants';
 import { isSafeUrl } from '../../../utils/ssrfGuard';
 import { TestConnectionSchema } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
-import { getActiveTracer } from '../../../observability/PipelineTracer';
-import { AnomalyDetectionService } from '../../../services/AnomalyDetectionService';
-import { PipelineDebuggerService } from '../../services/PipelineDebuggerService';
-import { container } from 'tsyringe';
-import { getChatModels,
+import {
+  getChatModels,
   getEmbeddingModels,
   getModelsForProvider,
   getSupportedProviders,
 } from '../../data/llmModels';
+import { PipelineDebuggerService } from '../../services/PipelineDebuggerService';
 
 const debug = Debug('open-hivemind:admin:monitoring');
 

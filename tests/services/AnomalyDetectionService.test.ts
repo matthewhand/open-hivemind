@@ -45,7 +45,7 @@ describe('AnomalyDetectionService', () => {
   test('should add data point to window', () => {
     service.addDataPoint('responseTime', 150);
     const window = service['dataWindows'].get('responseTime');
-    expect(window).toContain(150);
+    expect(window).toContainEqual({ value: 150, traceId: undefined });
     expect(window!.length).toBe(1);
   });
 
@@ -120,7 +120,7 @@ describe('AnomalyDetectionService', () => {
     service.addDataPoint('responseTime', 150);
     service.addDataPoint('responseTime', 200);
     const window = service['dataWindows'].get('responseTime');
-    expect(window).toEqual([150, 200]);
+    expect(window).toEqual([{ value: 150, traceId: undefined }, { value: 200, traceId: undefined }]);
   });
 
   test('runDetection should exit early if disabled', async () => {
@@ -372,12 +372,12 @@ describe('AnomalyDetectionService', () => {
     service.addDataPoint('responseTime', 150);
 
     expect(dataPointHandler).toHaveBeenCalledTimes(1);
-    expect(dataPointHandler).toHaveBeenCalledWith({ metric: 'responseTime', value: 150 });
+    expect(dataPointHandler).toHaveBeenCalledWith({ metric: 'responseTime', value: 150, traceId: undefined });
 
     // Add another data point to verify repeated emission
     service.addDataPoint('responseTime', 200);
     expect(dataPointHandler).toHaveBeenCalledTimes(2);
-    expect(dataPointHandler).toHaveBeenCalledWith({ metric: 'responseTime', value: 200 });
+    expect(dataPointHandler).toHaveBeenCalledWith({ metric: 'responseTime', value: 200, traceId: undefined });
 
     service.removeListener('dataPointAdded', dataPointHandler);
   });

@@ -12,9 +12,10 @@ import { loadToolProfiles } from '@src/config/toolProfiles';
 import { container } from '@src/di/container';
 import { registerServices } from '@src/di/registration';
 import { SyncProviderRegistry, type ProviderProfile } from '@src/registries/SyncProviderRegistry';
-import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
-import { BotHeartbeatService } from '@src/server/services/BotHeartbeatService';
 import { BackupSchedulerService } from '@src/server/services/BackupSchedulerService';
+import { BotHeartbeatService } from '@src/server/services/BotHeartbeatService';
+import { BotTaskScheduler } from '@src/server/services/BotTaskScheduler';
+import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
 import AnomalyDetectionService from '@src/services/AnomalyDetectionService';
 import DemoModeService from '@src/services/DemoModeService';
 import StartupGreetingService from '@src/services/StartupGreetingService';
@@ -23,10 +24,9 @@ import * as debugEnvVarsModule from '@config/debugEnvVars';
 import * as messageConfigModule from '@config/messageConfig';
 import * as webhookConfigModule from '@config/webhookConfig';
 import { getLlmProvider } from '@llm/getLlmProvider';
+import type { IMessage } from '@message/interfaces/IMessage';
 import * as messengerProviderModule from '@message/management/getMessengerProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
-import type { IMessage } from '@message/interfaces/IMessage';
-import type { IMessengerService } from '@message/interfaces/IMessengerService';
 import Logger from '@common/logger';
 import { initProviders } from '../initProviders';
 import startupDiagnostics from '../utils/startupDiagnostics';
@@ -316,6 +316,14 @@ export async function initServices(
     shutdown: () => backupScheduler.stop(),
   });
 
+  // Initialize and start BotTaskScheduler (Scheduled Prompts)
+  const taskScheduler = BotTaskScheduler.getInstance();
+  taskScheduler.start();
+  shutdownCoordinator.registerService({
+    name: 'BotTaskScheduler',
+    shutdown: () => taskScheduler.stop(),
+  });
+
   // Initialize AnomalyDetectionService
   AnomalyDetectionService.getInstance();
   appLogger.info('\ud83d\udd0d Anomaly Detection Service initialized');
@@ -439,11 +447,7 @@ export async function initWebhooks(
         ? messengerService.getDefaultChannel()
         : null;
       if (channelId) {
-        await webhookServiceModule.webhookService.start(
-          app,
-          messengerService as any,
-          channelId
-        );
+        await webhookServiceModule.webhookService.start(app, messengerService as any, channelId);
         appLogger.info('\u2705 Webhook route registered', {
           provider: messengerService.providerName,
           channelId,

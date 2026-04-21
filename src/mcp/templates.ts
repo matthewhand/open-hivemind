@@ -48,7 +48,12 @@ export const MCP_TEMPLATES: MCPTemplate[] = [
     icon: '📁',
     defaultUrl: 'http://localhost:8003',
     requiredConfigFields: [
-      { key: 'ALLOWED_DIRECTORIES', label: 'Allowed Paths', type: 'string', placeholder: '/tmp,/mnt/data' },
+      {
+        key: 'ALLOWED_DIRECTORIES',
+        label: 'Allowed Paths',
+        type: 'string',
+        placeholder: '/tmp,/mnt/data',
+      },
     ],
   },
   {
@@ -65,9 +70,7 @@ export const MCP_TEMPLATES: MCPTemplate[] = [
     description: 'Personalized long-term memory for AI agents',
     icon: '🧠',
     defaultUrl: 'http://localhost:8005',
-    requiredConfigFields: [
-      { key: 'MEM0_API_KEY', label: 'Mem0 API Key', type: 'password' },
-    ],
+    requiredConfigFields: [{ key: 'MEM0_API_KEY', label: 'Mem0 API Key', type: 'password' }],
     docsUrl: 'https://docs.mem0.ai',
-  }
+  },
 ];

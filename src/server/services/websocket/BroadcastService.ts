@@ -4,8 +4,10 @@ import os from 'os';
 import Debug from 'debug';
 import type { Socket, Server as SocketIOServer } from 'socket.io';
 import { inject, injectable, singleton } from 'tsyringe';
+import { AuditLogger, type AuditEvent } from '../../../common/auditLogger';
 import { BotConfigurationManager } from '../../../config/BotConfigurationManager';
 import { MessageBus } from '../../../events/MessageBus';
+import { BotManager } from '../../../managers/BotManager';
 import ApiMonitorService, { type EndpointStatus } from '../../../services/ApiMonitorService';
 import DemoModeService from '../../../services/DemoModeService';
 import type { BotConfig } from '../../../types/config';
@@ -21,8 +23,6 @@ import { ActivityLogger } from '../ActivityLogger';
 import { BotMetricsService } from '../BotMetricsService';
 import { ConnectionManager } from './ConnectionManager';
 import type { AlertEvent, MessageFlowEvent, PerformanceMetric, SystemEvent } from './types';
-import { AuditLogger, type AuditEvent } from '../../../common/auditLogger';
-import { BotManager } from '../../../managers/BotManager';
 
 const debug = Debug('app:WebSocketService:BroadcastService');
 
@@ -282,9 +282,7 @@ export class BroadcastService {
     }
   }
 
-  public recordSystemEvent(
-    event: Omit<SystemEvent, 'id' | 'timestamp'>
-  ): void {
+  public recordSystemEvent(event: Omit<SystemEvent, 'id' | 'timestamp'>): void {
     const systemEvent: SystemEvent = {
       ...event,
       id: `sys_${Date.now()}_${randomUUID()}`,

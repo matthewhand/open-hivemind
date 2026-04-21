@@ -2,6 +2,20 @@ import fs from 'fs';
 import { jest } from '@jest/globals';
 import { WebUIStorage } from '../../../src/storage/webUIStorage';
 
+// Mock SecureConfigManager to avoid its side effects and file reads
+jest.mock('../../../src/config/SecureConfigManager', () => ({
+  SecureConfigManager: {
+    getInstance: jest.fn().mockResolvedValue({
+      encrypt: (text: string) => text,
+      decrypt: (text: string) => text,
+    }),
+    getInstanceSync: jest.fn().mockReturnValue({
+      encrypt: (text: string) => text,
+      decrypt: (text: string) => text,
+    }),
+  },
+}));
+
 describe('WebUIStorage Performance', () => {
   let storage: WebUIStorage;
   const mockConfig = {
@@ -21,8 +35,12 @@ describe('WebUIStorage Performance', () => {
   let mkdirSyncSpy: jest.SpiedFunction<typeof fs.mkdirSync>;
   let promisesWriteFileSpy: jest.SpiedFunction<typeof fs.promises.writeFile>;
 
+  beforeAll(() => {
+    process.env.DISABLE_ENCRYPTION = 'true';
+  });
+
   beforeEach(() => {
-    jest.restoreAllMocks();
+    jest.clearAllMocks();
     existsSyncSpy = jest.spyOn(fs, 'existsSync').mockReturnValue(true);
     promisesAccessSpy = jest.spyOn(fs.promises, 'access').mockResolvedValue(undefined);
     promisesReadFileSpy = jest

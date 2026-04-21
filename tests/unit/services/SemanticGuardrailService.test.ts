@@ -10,12 +10,20 @@ jest.mock('@common/logger', () => {
     info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
+    trace: jest.fn(),
+  };
+  const LoggerMock = {
+    withContext: jest.fn().mockReturnValue(mockLogger),
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    trace: jest.fn(),
   };
   return {
     __esModule: true,
-    default: {
-      withContext: jest.fn().mockReturnValue(mockLogger),
-    },
+    Logger: LoggerMock,
+    default: LoggerMock,
   };
 });
 

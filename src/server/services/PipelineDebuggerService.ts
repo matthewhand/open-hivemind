@@ -1,6 +1,6 @@
-import Debug from 'debug';
-import { singleton, injectable } from 'tsyringe';
 import { EventEmitter } from 'events';
+import Debug from 'debug';
+import { injectable, singleton } from 'tsyringe';
 
 const debug = Debug('app:PipelineDebuggerService');
 
