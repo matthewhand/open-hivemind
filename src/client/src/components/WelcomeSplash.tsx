@@ -16,7 +16,8 @@ import { Alert } from './DaisyUI/Alert';
 import { Badge } from './DaisyUI/Badge';
 import Steps from './DaisyUI/Steps';
 import { apiService } from '../services/api';
-import TipRotator from './TipRotator';
+
+const TipRotator = React.lazy(() => import('./TipRotator'));
 
 // ---------------------------------------------------------------------------
 // Types
@@ -168,7 +169,9 @@ const WelcomeSplash: React.FC = () => {
       </div>
 
       {/* User Tips */}
-      <TipRotator className="flex items-center gap-2 text-sm text-base-content/70 px-4" />
+      <React.Suspense fallback={null}>
+        <TipRotator className="flex items-center gap-2 text-sm text-base-content/70 px-4" />
+      </React.Suspense>
 
       {/* Configuration Progress */}
       <Card className="bg-base-100 shadow-lg">
