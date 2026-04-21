@@ -56,19 +56,39 @@ export class AuthManager {
     const envJwtSecret = process.env.JWT_SECRET;
     const envJwtRefreshSecret = process.env.JWT_REFRESH_SECRET;
 
-    if (process.env.NODE_ENV === 'production') {
-      if (!envJwtSecret) {
-        throw new Error('CRITICAL: JWT_SECRET environment variable is required in production.');
+    let secureJwtSecret: string | null = null;
+    let secureJwtRefreshSecret: string | null = null;
+
+    // Attempt to load from secure config synchronously
+    if (process.env.NODE_ENV !== 'test') {
+      const secureManager = SecureConfigManager.getInstanceSync();
+      const accessConfig = secureManager.getConfigSync('jwt_access_secret');
+      if (accessConfig?.data && typeof accessConfig.data.secret === 'string') {
+        secureJwtSecret = accessConfig.data.secret;
       }
-      if (!envJwtRefreshSecret) {
+
+      const refreshConfig = secureManager.getConfigSync('jwt_refresh_secret');
+      if (refreshConfig?.data && typeof refreshConfig.data.secret === 'string') {
+        secureJwtRefreshSecret = refreshConfig.data.secret;
+      }
+    }
+
+    if (process.env.NODE_ENV === 'production') {
+      if (!envJwtSecret && !secureJwtSecret) {
         throw new Error(
-          'CRITICAL: JWT_REFRESH_SECRET environment variable is required in production.'
+          'CRITICAL: JWT_SECRET environment variable or secure config is required in production.'
+        );
+      }
+      if (!envJwtRefreshSecret && !secureJwtRefreshSecret) {
+        throw new Error(
+          'CRITICAL: JWT_REFRESH_SECRET environment variable or secure config is required in production.'
         );
       }
     }
 
-    this.jwtSecret = envJwtSecret || this.generateSecureSecret('jwt_access');
-    this.jwtRefreshSecret = envJwtRefreshSecret || this.generateSecureSecret('jwt_refresh');
+    this.jwtSecret = envJwtSecret || secureJwtSecret || this.generateSecureSecret('jwt_access');
+    this.jwtRefreshSecret =
+      envJwtRefreshSecret || secureJwtRefreshSecret || this.generateSecureSecret('jwt_refresh');
 
     // Create default admin user synchronously
     this.initializeDefaultAdminSync();

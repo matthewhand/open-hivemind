@@ -1,4 +1,4 @@
-import { ValidationRule, ValidationError, ValidationWarning } from '../types';
+import { type ValidationError, type ValidationRule, type ValidationWarning } from '../types';
 
 export const providerRules: ValidationRule[] = [
   {

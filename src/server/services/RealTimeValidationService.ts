@@ -1,24 +1,24 @@
 import { randomUUID } from 'crypto';
 import { EventEmitter } from 'events';
 import Debug from 'debug';
-import { inject, injectable, singleton, container } from 'tsyringe';
+import { container, inject, injectable, singleton } from 'tsyringe';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { BotConfigService } from './BotConfigService';
 import { ConfigurationTemplateService } from './ConfigurationTemplateService';
 import { ConfigurationValidator } from './ConfigurationValidator';
-import {
-  ValidationRule,
-  ValidationResult,
-  ValidationError,
-  ValidationWarning,
-  ValidationInfo,
-  ValidationReport,
-  ValidationProfile,
-  ValidationSubscription,
-} from './validation/types';
 import { basicRules } from './validation/rules/basicRules';
 import { providerRules } from './validation/rules/providerRules';
-import { securityRules, businessRules, performanceRules } from './validation/rules/securityRules';
+import { businessRules, performanceRules, securityRules } from './validation/rules/securityRules';
+import {
+  ValidationError,
+  ValidationInfo,
+  ValidationProfile,
+  ValidationReport,
+  ValidationResult,
+  ValidationRule,
+  ValidationSubscription,
+  ValidationWarning,
+} from './validation/types';
 
 const debug = Debug('app:RealTimeValidationService');
 
@@ -65,9 +65,13 @@ export class RealTimeValidationService extends EventEmitter {
    * Initialize default validation rules
    */
   private initializeDefaultRules(): void {
-    [...basicRules, ...providerRules, ...securityRules, ...businessRules, ...performanceRules].forEach(
-      (rule) => this.addRule(rule)
-    );
+    [
+      ...basicRules,
+      ...providerRules,
+      ...securityRules,
+      ...businessRules,
+      ...performanceRules,
+    ].forEach((rule) => this.addRule(rule));
     debug(`Initialized ${this.rules.size} validation rules`);
   }
 
@@ -183,7 +187,11 @@ export class RealTimeValidationService extends EventEmitter {
     return Array.from(this.profiles.values());
   }
 
-  public async subscribe(configId: number, clientId: string, profileId = 'standard'): Promise<string> {
+  public async subscribe(
+    configId: number,
+    clientId: string,
+    profileId = 'standard'
+  ): Promise<string> {
     const id = randomUUID();
     const subscription: ValidationSubscription = {
       id,
@@ -215,11 +223,11 @@ export class RealTimeValidationService extends EventEmitter {
   ): Promise<ValidationResult> {
     const startTime = Date.now();
     const profile = this.getProfile(profileId) || this.getProfile('standard');
-    
+
     const errors: ValidationError[] = [];
     const warnings: ValidationWarning[] = [];
     const info: ValidationInfo[] = [];
-    
+
     if (profile) {
       for (const ruleId of profile.ruleIds) {
         const rule = this.getRule(ruleId);
@@ -276,7 +284,7 @@ export class RealTimeValidationService extends EventEmitter {
   ): Promise<ValidationReport> {
     const config = await this.dbManager.getBotConfiguration(configId);
     if (!config) throw new Error(`Configuration ${configId} not found`);
-    
+
     const result = await this.validateConfig(config as any, profileId);
     return {
       id: randomUUID(),
@@ -292,9 +300,35 @@ export class RealTimeValidationService extends EventEmitter {
     config: Record<string, unknown>,
     profileId = 'standard'
   ): ValidationResult {
-    // Hack: route should be async, but if it calls this sync, we have a problem.
-    // For now we'll return a placeholder or throw if not awaited properly.
-    throw new Error('validateConfigurationData is deprecated, use validateConfig instead');
+    // Synchronous validation using internal rules
+    const profile = this.getProfile(profileId) || this.getProfile('standard');
+    
+    const errors: ValidationError[] = [];
+    const warnings: ValidationWarning[] = [];
+    const info: ValidationInfo[] = [];
+    
+    if (profile) {
+      for (const ruleId of profile.ruleIds) {
+        const rule = this.getRule(ruleId);
+        if (rule) {
+          const result = rule.validator(config);
+          errors.push(...result.errors);
+          warnings.push(...result.warnings);
+          info.push(...result.info);
+        }
+      }
+    }
+
+    const totalProblems = errors.length * 2 + warnings.length;
+    const score = Math.max(0, 100 - totalProblems * 5);
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+      warnings,
+      info,
+      score,
+    };
   }
 
   public getValidationHistory(_configId?: number, _limit = 20): ValidationReport[] {

@@ -51,14 +51,14 @@ export class SystemMetricsReporter {
     const currentCpuUsage = process.cpuUsage(this.lastCpuUsage);
     const currentHrTime = process.hrtime.bigint();
     const elapsedHrTime = currentHrTime - this.lastHrTime;
-    
+
     this.lastCpuUsage = process.cpuUsage();
     this.lastHrTime = currentHrTime;
 
     const elapsedMs = Number(elapsedHrTime) / 1_000_000;
     const userMs = currentCpuUsage.user / 1000;
     const systemMs = currentCpuUsage.system / 1000;
-    
+
     // Aggregate over all CPU cores
     const cpuPercent = (100 * (userMs + systemMs)) / (elapsedMs || 1);
     return Math.min(100, Math.round(cpuPercent * 10) / 10);

@@ -1,12 +1,6 @@
-import { 
-  ONE_HOUR_MS, 
-  ONE_MINUTE_MS 
-} from '../../common/constants/time';
+import { ONE_HOUR_MS, ONE_MINUTE_MS } from '../../common/constants/time';
 import { type MessageFlowEvent } from '../../server/services/websocket/types';
-import { 
-  BehaviorPattern, 
-  TimeSeriesBucket 
-} from './types';
+import { type BehaviorPattern, type TimeSeriesBucket } from './types';
 
 /**
  * Utility for performing analytics calculations on message events

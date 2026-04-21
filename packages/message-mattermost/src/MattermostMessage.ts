@@ -11,11 +11,11 @@ export interface MattermostPost {
   delete_at: number;
   is_pinned: boolean;
   type: string;
-  props: any;
+  props: Record<string, unknown>;
   hashtags: string;
   pending_post_id: string;
   reply_count: number;
-  metadata: any;
+  metadata: Record<string, unknown>;
 }
 
 export class MattermostMessage extends IMessage {

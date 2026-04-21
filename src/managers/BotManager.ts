@@ -121,7 +121,7 @@ export class BotManager extends EventEmitter {
       // Add custom bots from web UI storage (overwriting configured bots with same ID)
       const customBots = await webUIStorage.getAgents();
       for (const bot of customBots) {
-        botMap.set(bot.id, bot as BotInstance);
+        botMap.set(bot.id, bot as unknown as BotInstance);
       }
 
       const botInstances = Array.from(botMap.values());
@@ -217,7 +217,7 @@ export class BotManager extends EventEmitter {
       await storeSecureConfig(this.secureConfigManager, botId, request.config || {});
 
       // Add to web UI storage
-      await webUIStorage.saveAgent(botInstance);
+      await webUIStorage.saveAgent(botInstance as any);
 
       debug(`Created new bot: ${request.name} (${botId})`);
 
@@ -331,7 +331,7 @@ export class BotManager extends EventEmitter {
       }
 
       // Update in web UI storage
-      await webUIStorage.saveAgent(updatedBot);
+      await webUIStorage.saveAgent(updatedBot as any);
 
       debug(`Updated bot: ${updatedBot.name} (${botId})`);
 

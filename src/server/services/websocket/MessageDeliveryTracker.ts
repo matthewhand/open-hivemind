@@ -1,8 +1,8 @@
 import { injectable, singleton } from 'tsyringe';
-import { 
-  DeliveryStatus, 
-  type MessageAckConfig, 
-  type MessageEnvelope 
+import {
+  DeliveryStatus,
+  type MessageAckConfig,
+  type MessageEnvelope,
 } from '../../../types/websocket';
 
 /**
@@ -61,9 +61,10 @@ export class MessageDeliveryTracker {
     return {
       ...this.deliveryCounts,
       pending: this.pendingMessages.size,
-      successRate: this.deliveryCounts.sent > 0 
-        ? Math.round((this.deliveryCounts.acknowledged / this.deliveryCounts.sent) * 100) 
-        : 100,
+      successRate:
+        this.deliveryCounts.sent > 0
+          ? Math.round((this.deliveryCounts.acknowledged / this.deliveryCounts.sent) * 100)
+          : 100,
     };
   }
 

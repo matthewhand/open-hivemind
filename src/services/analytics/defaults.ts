@@ -1,8 +1,4 @@
-import { 
-  BehaviorPattern, 
-  UserSegment, 
-  DashboardRecommendation 
-} from './types';
+import { type BehaviorPattern, type DashboardRecommendation, type UserSegment } from './types';
 
 /**
  * Provides default data for analytics when no actual data is available

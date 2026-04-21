@@ -1,11 +1,11 @@
 import Debug from 'debug';
-import { ADVERSARIAL_PROMPTS } from '@common/adversarialPrompts';
-import { createLogger } from '@common/StructuredLogger';
 import { MessageBus } from '@src/events/MessageBus';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
 import { type BotInstance } from '@src/managers/BotManager';
 import { LlmInvokerAdapter } from '@src/pipeline/adapters/LlmInvokerAdapter';
 import { InferenceStage } from '@src/pipeline/InferenceStage';
+import { ADVERSARIAL_PROMPTS } from '@common/adversarialPrompts';
+import { createLogger } from '@common/StructuredLogger';
 
 const debug = Debug('app:services:BotStressTestService');
 const logger = createLogger('BotStressTestService');

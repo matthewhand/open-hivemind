@@ -51,7 +51,7 @@ export class BotConfigurationManager {
    * Resets the singleton instance (primarily for testing)
    */
   public static resetInstance(): void {
-    BotConfigurationManager.instance = undefined as any;
+    BotConfigurationManager.instance = undefined as unknown as BotConfigurationManager;
   }
 
   /**

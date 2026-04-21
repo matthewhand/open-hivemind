@@ -1,10 +1,10 @@
 import { EventEmitter } from 'events';
-import { inject, injectable, singleton } from 'tsyringe';
-import { 
-  MessageFlowEvent, 
-  PerformanceMetric, 
-  AlertEvent, 
-  SystemEvent 
+import { injectable, singleton } from 'tsyringe';
+import {
+  type AlertEvent,
+  type MessageFlowEvent,
+  type PerformanceMetric,
+  type SystemEvent,
 } from './types';
 
 /**
@@ -18,7 +18,7 @@ export class EventRecorder extends EventEmitter {
   private alerts: AlertEvent[] = [];
   private alertsMap: Map<string, AlertEvent> = new Map();
   private systemEvents: SystemEvent[] = [];
-  
+
   private readonly MAX_BUFFER_SIZE = 100;
 
   constructor() {
@@ -46,7 +46,7 @@ export class EventRecorder extends EventEmitter {
     if (alert.id) {
       this.alertsMap.set(alert.id, alert);
     }
-    
+
     this.alerts.unshift(alert);
     if (this.alerts.length > this.MAX_BUFFER_SIZE) {
       this.alerts.pop();

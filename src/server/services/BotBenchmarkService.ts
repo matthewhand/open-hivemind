@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
-import { createLogger } from '@common/StructuredLogger';
 import { type BotInstance } from '@src/managers/BotManager';
+import { createLogger } from '@common/StructuredLogger';
 
 const debug = Debug('app:services:BotBenchmarkService');
 const logger = createLogger('BotBenchmarkService');

@@ -1,4 +1,4 @@
-import { ValidationRule, ValidationWarning, ValidationInfo } from '../types';
+import { type ValidationInfo, type ValidationRule, type ValidationWarning } from '../types';
 
 export const securityRules: ValidationRule[] = [
   {
