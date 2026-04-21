@@ -5,6 +5,13 @@ import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { type CommandHandler } from './CommandHandler';
 
+interface AddBotOptions {
+  name?: string;
+  provider?: string;
+  llm?: string;
+  token?: string;
+}
+
 export class BotCommandHandler implements CommandHandler {
   private configManager: BotConfigurationManager;
   private dbManager: DatabaseManager;
@@ -90,7 +97,7 @@ export class BotCommandHandler implements CommandHandler {
       });
   }
 
-  private async addBot(options: any): Promise<void> {
+  private async addBot(options: AddBotOptions): Promise<void> {
     console.log(chalk.blue('Adding new bot...'));
 
     if (!options.name || !options.provider || !options.llm) {
@@ -111,7 +118,7 @@ export class BotCommandHandler implements CommandHandler {
         type: 'input',
         name: 'name',
         message: 'Bot name:',
-        validate: (input: string) => input.trim().length > 0 || 'Name is required',
+        validate: (input: string): true | string => input.trim().length > 0 || 'Name is required',
       },
       {
         type: 'list',
@@ -152,7 +159,8 @@ export class BotCommandHandler implements CommandHandler {
 
       if (verbose) {
         console.log(`   Enabled: ${bot.enabled ? chalk.green('Yes') : chalk.red('No')}`);
-        console.log(`   Created: ${(bot as any).createdAt || 'Unknown'}`);
+        const createdAt = typeof bot.createdAt === 'string' ? bot.createdAt : 'Unknown';
+        console.log(`   Created: ${createdAt}`);
       }
       console.log();
     });
