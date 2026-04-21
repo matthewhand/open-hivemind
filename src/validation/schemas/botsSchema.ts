@@ -75,3 +75,10 @@ export const UpdateBotStatusSchema = z.object({
     }),
   }),
 });
+
+export const BotVersionParamSchema = z.object({
+  params: z.object({
+    id: z.string().min(1, { message: 'Bot ID is required' }),
+    versionId: z.string().min(1, { message: 'Version ID is required' }),
+  }),
+});

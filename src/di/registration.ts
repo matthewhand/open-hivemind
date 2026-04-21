@@ -20,6 +20,7 @@ import { BotManager } from '../managers/BotManager';
 import { BotConfigService } from '../server/services/BotConfigService';
 import { ConfigurationTemplateService } from '../server/services/ConfigurationTemplateService';
 import { ConfigurationValidator } from '../server/services/ConfigurationValidator';
+import { PanicModeService } from '../server/services/PanicModeService';
 import { RealTimeValidationService } from '../server/services/RealTimeValidationService';
 import { BroadcastService } from '../server/services/websocket/BroadcastService';
 import { ConnectionManager } from '../server/services/websocket/ConnectionManager';

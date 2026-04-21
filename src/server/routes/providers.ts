@@ -1,5 +1,6 @@
 import Debug from 'debug';
 import { Router } from 'express';
+import { getLlmProfileByKey, loadLlmProfiles } from '../../config/llmProfiles';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { providerRegistry } from '../../registries/ProviderRegistry';
 import { HTTP_STATUS } from '../../types/constants';
@@ -7,6 +8,50 @@ import { ApiResponse } from '../utils/apiResponse';
 
 const debug = Debug('app:providers-route');
 const router = Router();
+
+/**
+ * GET /api/providers/profiles
+ * List all registered LLM profiles.
+ */
+router.get(
+  '/profiles',
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const profiles = loadLlmProfiles().llm;
+      return res.json(ApiResponse.success(profiles));
+    } catch (err: unknown) {
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(
+        ApiResponse.error('Failed to retrieve LLM profiles', 'PROVIDER_LIST_ERROR', {
+          message: err instanceof Error ? err.message : String(err),
+        })
+      );
+    }
+  })
+);
+
+/**
+ * GET /api/providers/providers/:key
+ * Get a specific LLM profile by key.
+ */
+router.get(
+  '/providers/:key',
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const { key } = req.params;
+      const profile = getLlmProfileByKey(key);
+      if (!profile) {
+        return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Provider not found'));
+      }
+      return res.json(ApiResponse.success(profile));
+    } catch (err: unknown) {
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(
+        ApiResponse.error('Failed to retrieve provider', 'PROVIDER_FETCH_ERROR', {
+          message: err instanceof Error ? err.message : String(err),
+        })
+      );
+    }
+  })
+);
 
 /**
  * GET /api/providers/memory
@@ -63,8 +108,6 @@ router.get(
 /**
  * POST /api/providers/memory/:name/test
  * Smoke-test a registered memory provider: add → search → get → delete.
- *
- * Returns step-by-step results so you can see exactly where things break.
  */
 router.post(
   '/memory/:name/test',
@@ -158,9 +201,9 @@ router.post(
         });
       }
 
-      // Step 4: Get by ID (if add succeeded)
+      // Step 4: Get by ID
+      const t3 = Date.now();
       if (memoryId) {
-        const t3 = Date.now();
         try {
           const entry = await provider.getMemory(memoryId);
           steps.push({
@@ -186,9 +229,9 @@ router.post(
         });
       }
 
-      // Step 5: Delete (cleanup)
+      // Step 5: Delete
+      const t4 = Date.now();
       if (memoryId) {
-        const t4 = Date.now();
         try {
           await provider.deleteMemory(memoryId);
           steps.push({ step: 'deleteMemory', status: 'pass', ms: Date.now() - t4 });
@@ -211,14 +254,13 @@ router.post(
 
       const passed = steps.filter((s) => s.status === 'pass').length;
       const failed = steps.filter((s) => s.status === 'fail').length;
+      const skipped = steps.filter((s) => s.status === 'skip').length;
       const totalMs = steps.reduce((sum, s) => sum + s.ms, 0);
-
-      debug('Memory provider "%s" test: %d/%d passed in %dms', name, passed, steps.length, totalMs);
 
       return res.json(
         ApiResponse.success({
           provider: name,
-          summary: { passed, failed, skipped: steps.length - passed - failed, totalMs },
+          summary: { passed, failed, skipped, totalMs },
           steps,
         })
       );
@@ -242,33 +284,19 @@ router.get(
   asyncErrorHandler(async (req, res) => {
     try {
       const toolProviders = providerRegistry.getToolProviders();
-      const results: Array<{
-        name: string;
-        id: string;
-        label: string;
-        status: 'active' | 'unhealthy' | 'unknown';
-        details?: string;
-      }> = [];
-
+      const results: any[] = [];
       for (const [name, provider] of toolProviders) {
-        let status: 'active' | 'unhealthy' | 'unknown' = 'active';
-        let details: string | undefined;
-
-        // If the provider implements healthCheck, use it
+        let status = 'active';
+        let details: any;
         if (typeof provider.healthCheck === 'function') {
           try {
             const health = await provider.healthCheck();
             status = health.status === 'ok' ? 'active' : 'unhealthy';
-            details =
-              typeof health.details === 'string'
-                ? health.details
-                : JSON.stringify(health.details ?? '');
+            details = health.details;
           } catch {
             status = 'unknown';
-            details = 'Health check failed';
           }
         }
-
         results.push({
           name,
           id: (provider as any).id,
@@ -277,7 +305,6 @@ router.get(
           details,
         });
       }
-
       return res.json(ApiResponse.success({ count: results.length, providers: results }));
     } catch (err: unknown) {
       return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(

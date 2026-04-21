@@ -1,13 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import Card from './DaisyUI/Card';
-import Badge from './DaisyUI/Badge';
-import Button from './DaisyUI/Button';
-import { SkeletonList } from './DaisyUI/Skeleton';
-import Modal from './DaisyUI/Modal';
 import Tabs from './DaisyUI/Tabs';
 import type { TabItem } from './DaisyUI/Tabs';
-import Accordion from './DaisyUI/Accordion';
+import Collapse from './DaisyUI/Collapse';
 import { Alert } from './DaisyUI/Alert';
 import Input from './DaisyUI/Input';
 import Textarea from './DaisyUI/Textarea';
@@ -19,21 +14,10 @@ import {
   Code as CodeBracketIcon,
   Lock as LockClosedIcon,
   ChevronDown as ChevronDownIcon,
+  Info as InfoIcon,
 } from 'lucide-react';
 import { apiService } from '../services/api';
 import type { ConfigSourcesResponse } from '../services/api';
-
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: string;
-  value: string;
-}
-
-const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => (
-  <div role="tabpanel" hidden={value !== index} className="mt-4">
-    {value === index && children}
-  </div>
-);
 
 const configSourceTabs: TabItem[] = [
   { key: 'env', label: 'Environment Variables' },
@@ -78,16 +62,12 @@ const ConfigSources: React.FC = () => {
   };
 
   const isSensitiveKey = (key: string) => {
-    const sensitivePatterns = [
-      'token', 'key', 'secret', 'password', 'auth', 'credential',
-    ];
-    return sensitivePatterns.some(pattern =>
-      key.toLowerCase().includes(pattern),
-    );
+    const sensitivePatterns = ['token', 'key', 'secret', 'password', 'auth', 'credential'];
+    return sensitivePatterns.some((pattern) => key.toLowerCase().includes(pattern));
   };
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) {return '0 B';}
+    if (bytes === 0) return '0 B';
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -112,11 +92,7 @@ const ConfigSources: React.FC = () => {
     return (
       <Card>
         <Alert status="error" message={error} className="mb-4" />
-        <Button
-          variant="primary"
-          onClick={fetchConfigSources}
-          className="flex items-center gap-2"
-        >
+        <Button variant="primary" onClick={fetchConfigSources} className="flex items-center gap-2">
           <RefreshCw className="w-5 h-5" />
           Retry
         </Button>
@@ -134,39 +110,39 @@ const ConfigSources: React.FC = () => {
 
   const envVarData = configSources?.environmentVariables
     ? Object.entries(configSources.environmentVariables).map(([key, value]) => ({
-      variable: (
-        <div className="flex items-center gap-2">
-          <span className="font-mono font-medium text-sm">{key}</span>
-          {isSensitiveKey(key) && <LockClosedIcon className="w-4 h-4 text-error" />}
-        </div>
-      ),
-      value: (
-        <span className="font-mono text-xs">
-          {isSensitiveKey(key) ? '••••••••' : (value?.value || 'Not set')}
-        </span>
-      ),
-      source: (
-        <Badge variant="primary" size="sm" style="outline">
-          <Cog6ToothIcon className="w-3 h-3 mr-1" />
-          Environment
-        </Badge>
-      ),
-      sensitive: (
-        <Badge variant={isSensitiveKey(key) ? 'error' : 'success'} size="sm">
-          {isSensitiveKey(key) ? 'Yes' : 'No'}
-        </Badge>
-      ),
-      actions: (
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => handleViewEnvVar(key)}
-          disabled={isSensitiveKey(key)}
-        >
-          View
-        </Button>
-      ),
-    }))
+        variable: (
+          <div className="flex items-center gap-2">
+            <span className="font-mono font-medium text-sm">{key}</span>
+            {isSensitiveKey(key) && <LockClosedIcon className="w-4 h-4 text-error" />}
+          </div>
+        ),
+        value: (
+          <span className="font-mono text-xs">
+            {isSensitiveKey(key) ? '••••••••' : (value?.value || 'Not set')}
+          </span>
+        ),
+        source: (
+          <Badge variant="primary" size="sm" style="outline">
+            <Cog6ToothIcon className="w-3 h-3 mr-1" />
+            Environment
+          </Badge>
+        ),
+        sensitive: (
+          <Badge variant={isSensitiveKey(key) ? 'error' : 'success'} size="sm">
+            {isSensitiveKey(key) ? 'Yes' : 'No'}
+          </Badge>
+        ),
+        actions: (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => handleViewEnvVar(key)}
+            disabled={isSensitiveKey(key)}
+          >
+            View
+          </Button>
+        ),
+      }))
     : [];
 
   const configFileColumns = [
@@ -177,17 +153,18 @@ const ConfigSources: React.FC = () => {
     { key: 'type', label: 'Type' },
   ];
 
-  const configFileData = configSources?.configFiles?.map((file) => ({
-    name: <span className="font-medium">{file.name}</span>,
-    path: <span className="font-mono text-xs">{file.path}</span>,
-    size: formatFileSize(file.size),
-    modified: formatDate(file.modified),
-    type: (
-      <Badge variant="secondary" size="sm" style="outline">
-        {file.type.toUpperCase()}
-      </Badge>
-    ),
-  })) || [];
+  const configFileData =
+    configSources?.configFiles?.map((file) => ({
+      name: <span className="font-medium">{file.name}</span>,
+      path: <span className="font-mono text-xs">{file.path}</span>,
+      size: formatFileSize(file.size),
+      modified: formatDate(file.modified),
+      type: (
+        <Badge variant="secondary" size="sm" style="outline">
+          {file.type.toUpperCase()}
+        </Badge>
+      ),
+    })) || [];
 
   const overrideColumns = [
     { key: 'key', label: 'Key' },
@@ -197,26 +174,27 @@ const ConfigSources: React.FC = () => {
     { key: 'source', label: 'Source' },
   ];
 
-  const overrideData = configSources?.overrides?.map((override) => ({
-    key: <span className="font-mono font-medium text-sm">{override.key}</span>,
-    value: (
-      <span className="font-mono text-xs">
-        {isSensitiveKey(override.key) ? '••••••••' : (override.value || 'Not set')}
-      </span>
-    ),
-    bot: override.bot,
-    type: (
-      <Badge variant="warning" size="sm" style="outline">
-        {override.type}
-      </Badge>
-    ),
-    source: (
-      <Badge variant="warning" size="sm">
-        <CodeBracketIcon className="w-3 h-3 mr-1" />
-        Override
-      </Badge>
-    ),
-  })) || [];
+  const overrideData =
+    configSources?.overrides?.map((override) => ({
+      key: <span className="font-mono font-medium text-sm">{override.key}</span>,
+      value: (
+        <span className="font-mono text-xs">
+          {isSensitiveKey(override.key) ? '••••••••' : (override.value || 'Not set')}
+        </span>
+      ),
+      bot: override.bot,
+      type: (
+        <Badge variant="warning" size="sm" style="outline">
+          {override.type}
+        </Badge>
+      ),
+      source: (
+        <Badge variant="warning" size="sm">
+          <CodeBracketIcon className="w-3 h-3 mr-1" />
+          Override
+        </Badge>
+      ),
+    })) || [];
 
   return (
     <>
@@ -232,7 +210,8 @@ const ConfigSources: React.FC = () => {
             <Button
               size="sm"
               onClick={fetchConfigSources}
-              disabled={loading} aria-busy={loading}
+              disabled={loading}
+              aria-busy={loading}
               className="flex items-center gap-2"
             >
               <RefreshCw className="w-4 h-4" />
@@ -242,7 +221,8 @@ const ConfigSources: React.FC = () => {
         </div>
 
         <p className="text-sm text-base-content/70 mb-6">
-          View and manage configuration sources including environment variables, config files, and overrides.
+          View and manage configuration sources including environment variables, config files, and
+          overrides.
         </p>
 
         {/* DaisyUI Tabs */}
@@ -250,100 +230,101 @@ const ConfigSources: React.FC = () => {
           tabs={configSourceTabs}
           activeTab={tabValue}
           onChange={setTabValue}
-          variant="bordered"
+          variant="lifted"
           className="mb-4"
         />
 
-        <TabPanel value={tabValue} index="env">
-          {envVarData.length > 0 ? (
-            <DataTable columns={envVarColumns} data={envVarData} />
-          ) : (
-            <Alert status="info" message="No environment variables found for bot configuration." />
+        <div className="mt-4">
+          {tabValue === 'env' && (
+            <>
+              {envVarData.length > 0 ? (
+                <DataTable columns={envVarColumns} data={envVarData} />
+              ) : (
+                <Alert
+                  status="info"
+                  message="No environment variables found for bot configuration."
+                />
+              )}
+            </>
           )}
-        </TabPanel>
 
-        <TabPanel value={tabValue} index="files">
-          {configFileData.length > 0 ? (
-            <DataTable columns={configFileColumns} data={configFileData} />
-          ) : (
-            <Alert status="info" message="No configuration files found." />
+          {tabValue === 'files' && (
+            <>
+              {configFileData.length > 0 ? (
+                <DataTable columns={configFileColumns} data={configFileData} />
+              ) : (
+                <Alert status="info" message="No configuration files found." />
+              )}
+            </>
           )}
-        </TabPanel>
 
-        <TabPanel value={tabValue} index="overrides">
-          {overrideData.length > 0 ? (
-            <DataTable columns={overrideColumns} data={overrideData} />
-          ) : (
-            <Alert status="info" message="No configuration overrides found." />
+          {tabValue === 'overrides' && (
+            <>
+              {overrideData.length > 0 ? (
+                <DataTable columns={overrideColumns} data={overrideData} />
+              ) : (
+                <Alert status="info" message="No configuration overrides found." />
+              )}
+            </>
           )}
-        </TabPanel>
+        </div>
       </Card>
 
       {/* Environment Variable Detail Modal */}
-      <Modal isOpen={dialogOpen} onClose={handleCloseDialog} title="Environment Variable Details" actions={[
-        { label: 'Close', onClick: handleCloseDialog, variant: 'ghost' },
-      ]}>
+      <Modal
+        isOpen={dialogOpen}
+        onClose={handleCloseDialog}
+        title="Environment Variable Details"
+        actions={[{ label: 'Close', onClick: handleCloseDialog, variant: 'ghost' }]}
+      >
         {selectedEnvVar && configSources?.environmentVariables[selectedEnvVar] && (
           <div className="space-y-4">
-            <Accordion defaultOpen>
-              <Accordion.Item value="details">
-                <Accordion.Trigger>
-                  <div className="flex items-center gap-2">
-                    <span>Details</span>
-                    <ChevronDownIcon className="w-4 h-4" />
+            <Collapse
+              title="Configuration Details"
+              variant="arrow"
+              defaultOpen
+              icon={<InfoIcon className="w-5 h-5" />}
+            >
+              <div className="space-y-4 pt-2">
+                <div className="form-control w-full">
+                  <label className="label">
+                    <span className="label-text">Key</span>
+                  </label>
+                  <Input type="text" value={selectedEnvVar} readOnly />
+                </div>
+
+                <div className="form-control w-full">
+                  <label className="label">
+                    <span className="label-text">Value</span>
+                  </label>
+                  <Textarea
+                    value={configSources.environmentVariables[selectedEnvVar].value || ''}
+                    readOnly
+                    rows={3}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="form-control w-full">
+                    <label className="label">
+                      <span className="label-text">Source</span>
+                    </label>
+                    <Input
+                      type="text"
+                      value={configSources.environmentVariables[selectedEnvVar].source || 'unknown'}
+                      readOnly
+                    />
                   </div>
-                </Accordion.Trigger>
-                <Accordion.Content>
-                  <div className="space-y-4">
-                    <div className="form-control w-full">
-                      <label className="label">
-                        <span className="label-text">Key</span>
-                      </label>
-                      <Input
-                        type="text"
-                        value={selectedEnvVar}
-                        readOnly
-                      />
-                    </div>
 
-                    <div className="form-control w-full">
-                      <label className="label">
-                        <span className="label-text">Value</span>
-                      </label>
-                      <Textarea
-                        value={configSources.environmentVariables[selectedEnvVar].value || ''}
-                        readOnly
-                        rows={3}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="form-control w-full">
-                        <label className="label">
-                          <span className="label-text">Source</span>
-                        </label>
-                        <Input
-                          type="text"
-                          value={configSources.environmentVariables[selectedEnvVar].source || 'unknown'}
-                          readOnly
-                        />
-                      </div>
-
-                      <div className="form-control w-full">
-                        <label className="label">
-                          <span className="label-text">Sensitive</span>
-                        </label>
-                        <Input
-                          type="text"
-                          value={isSensitiveKey(selectedEnvVar) ? 'Yes' : 'No'}
-                          readOnly
-                        />
-                      </div>
-                    </div>
+                  <div className="form-control w-full">
+                    <label className="label">
+                      <span className="label-text">Sensitive</span>
+                    </label>
+                    <Input type="text" value={isSensitiveKey(selectedEnvVar) ? 'Yes' : 'No'} readOnly />
                   </div>
-                </Accordion.Content>
-              </Accordion.Item>
-            </Accordion>
+                </div>
+              </div>
+            </Collapse>
           </div>
         )}
       </Modal>

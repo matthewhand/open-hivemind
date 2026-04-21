@@ -25,7 +25,7 @@ export class AnomalyDetectionService extends EventEmitter {
     metricsToMonitor: ['responseTime', 'errors'],
     minDataPoints: 10,
   };
-  private dataWindows = new Map<string, number[]>(); // metric -> rolling data points
+  private dataWindows = new Map<string, { value: number; traceId?: string }[]>(); // metric -> rolling data points
   private anomalies: Anomaly[] = [];
   private isDetecting = false;
   private detectionInterval: NodeJS.Timeout | null = null;
@@ -79,7 +79,7 @@ export class AnomalyDetectionService extends EventEmitter {
     debug('Anomaly detection config updated');
   }
 
-  addDataPoint(metric: string, value: number): void {
+  addDataPoint(metric: string, value: number, traceId?: string): void {
     if (value === null || value === undefined || isNaN(value) || !isFinite(value)) {
       return;
     }
@@ -88,15 +88,21 @@ export class AnomalyDetectionService extends EventEmitter {
     }
 
     const window = this.dataWindows.get(metric) || [];
-    window.push(value);
+    window.push({ value, traceId });
     if (window.length > this.config.windowSize) {
       window.shift();
     }
     this.dataWindows.set(metric, window);
 
-    debug(`Added data point for ${metric}: ${value}`);
-    this.emit('dataPointAdded', { metric, value });
+    debug(`Added data point for ${metric}: ${value} (traceId: ${traceId || 'none'})`);
+    this.emit('dataPointAdded', { metric, value, traceId });
+
+    // For specific high-value metrics, we run detection immediately if it's a single point anomaly
+    if (metric === 'errors' && value > 0) {
+      this.runDetection().catch(err => debug('Detection run error:', err));
+    }
   }
+
 
   async runDetection(): Promise<void> {
     if (!this.config.enabled || this.isDetecting) {
@@ -114,12 +120,21 @@ export class AnomalyDetectionService extends EventEmitter {
           continue;
         }
 
-        const { mean, stdDev } = this.calculateStats(window);
-        const recentValue = window[window.length - 1];
+        const values = window.map((p) => p.value);
+        const { mean, stdDev } = this.calculateStats(values);
+        const lastPoint = window[window.length - 1];
+        const recentValue = lastPoint.value;
         const zScore = Math.abs((recentValue - mean) / stdDev);
 
         if (zScore > this.config.zThreshold) {
-          const anomaly = this.createAnomaly(metric, recentValue, mean, stdDev, zScore);
+          const anomaly = this.createAnomaly(
+            metric,
+            recentValue,
+            mean,
+            stdDev,
+            zScore,
+            lastPoint.traceId
+          );
           this.anomalies.push(anomaly);
           this.emit('anomalyDetected', anomaly);
 
@@ -170,13 +185,13 @@ export class AnomalyDetectionService extends EventEmitter {
 
     return { mean, stdDev: stdDev || 1 }; // Avoid division by zero
   }
-
   private createAnomaly(
     metric: string,
     value: number,
     mean: number,
     stdDev: number,
-    zScore: number
+    zScore: number,
+    traceId?: string
   ): Anomaly {
     const threshold = this.config.zThreshold;
     let severity: 'low' | 'medium' | 'high' | 'critical';
@@ -205,6 +220,7 @@ export class AnomalyDetectionService extends EventEmitter {
       severity,
       explanation,
       resolved: false,
+      traceId,
     };
   }
 

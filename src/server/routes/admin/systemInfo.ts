@@ -10,9 +10,30 @@ import {
   getModelsForProvider,
   getSupportedProviders,
 } from '../../data/llmModels';
+import { container } from 'tsyringe';
+import { PanicModeService } from '../../services/PanicModeService';
 
 const router = Router();
 const debug = Debug('app:webui:admin:system-info');
+
+// Toggle Panic Mode
+router.post('/panic-mode', (req: Request, res: Response) => {
+  try {
+    const panicService = container.resolve(PanicModeService);
+    const newState = panicService.togglePanicMode();
+    return res.json({
+      success: true,
+      data: { enabled: newState },
+      message: `Panic Mode is now ${newState ? 'ENABLED' : 'DISABLED'}`,
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      error: 'Failed to toggle panic mode',
+      message: hivemindError.message,
+    });
+  }
+});
 
 // Get environment variable overrides
 router.get('/env-overrides', (req: Request, res: Response) => {

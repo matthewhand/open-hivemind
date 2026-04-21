@@ -13,6 +13,8 @@ import { container } from '@src/di/container';
 import { registerServices } from '@src/di/registration';
 import { SyncProviderRegistry, type ProviderProfile } from '@src/registries/SyncProviderRegistry';
 import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
+import { BotHeartbeatService } from '@src/server/services/BotHeartbeatService';
+import { BackupSchedulerService } from '@src/server/services/BackupSchedulerService';
 import AnomalyDetectionService from '@src/services/AnomalyDetectionService';
 import DemoModeService from '@src/services/DemoModeService';
 import StartupGreetingService from '@src/services/StartupGreetingService';
@@ -23,6 +25,8 @@ import * as webhookConfigModule from '@config/webhookConfig';
 import { getLlmProvider } from '@llm/getLlmProvider';
 import * as messengerProviderModule from '@message/management/getMessengerProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
+import type { IMessage } from '@message/interfaces/IMessage';
+import type { IMessengerService } from '@message/interfaces/IMessengerService';
 import Logger from '@common/logger';
 import { initProviders } from '../initProviders';
 import startupDiagnostics from '../utils/startupDiagnostics';
@@ -47,20 +51,20 @@ interface MessengerService {
   setApp?(app: import('express').Application): void;
   setMessageHandler(
     handler: (
-      message: unknown,
-      historyMessages?: unknown,
-      botConfig?: Record<string, unknown>
-    ) => unknown
+      message: any,
+      historyMessages?: any[],
+      botConfig?: Record<string, any>
+    ) => Promise<string | null>
   ): void;
   getAgentStartupSummaries?(): Array<Record<string, string>>;
   getDefaultChannel?(): string | null;
   getChannels?(): string[];
-  sendMessageToChannel?(channelId: string, text: string): Promise<void>;
-  sendMessage?(channelId: string, text: string): Promise<void>;
+  sendMessageToChannel?(channelId: string, text: string): Promise<any>;
+  sendMessage?(channelId: string, text: string): Promise<any>;
   constructor?: { name?: string };
 }
 
-async function startBot(app: import('express').Application, messengerService: MessengerService) {
+async function startBot(app: import('express').Application, messengerService: any) {
   const providerType =
     messengerService.providerName || messengerService.constructor?.name || 'Unknown';
 
@@ -85,16 +89,16 @@ async function startBot(app: import('express').Application, messengerService: Me
       const { MessageBus } = await import('@src/events/MessageBus');
       const bus = MessageBus.getInstance();
       messengerService.setMessageHandler(
-        async (message: unknown, historyMessages: unknown, botConfig: Record<string, unknown>) => {
-          const msg = message as Record<string, unknown> & {
-            platform?: string;
-            getChannelId?: () => string;
-          };
+        async (message: any, historyMessages?: any[], botConfig?: Record<string, any>) => {
+          const msg = message as IMessage;
+          const history = (historyMessages as IMessage[]) || [];
+          const config = botConfig || {};
+
           await bus.emitAsync('message:incoming', {
-            message,
-            history: historyMessages,
-            botConfig,
-            botName: String(botConfig.BOT_NAME || botConfig.name || 'hivemind'),
+            message: msg,
+            history: history,
+            botConfig: config,
+            botName: String(config.BOT_NAME || config.name || 'hivemind'),
             platform: msg.platform || 'unknown',
             channelId: msg.getChannelId?.() || '',
             metadata: {},
@@ -104,7 +108,7 @@ async function startBot(app: import('express').Application, messengerService: Me
       );
     } else {
       // Legacy mode: call handleMessage() directly
-      messengerService.setMessageHandler((...args: unknown[]) =>
+      messengerService.setMessageHandler((...args: any[]) =>
         messageHandlerModule.handleMessage(args[0], args[1], args[2])
       );
     }
@@ -205,7 +209,7 @@ async function startBot(app: import('express').Application, messengerService: Me
 }
 
 export interface InitServicesResult {
-  messengerServices: MessengerService[];
+  messengerServices: any[];
 }
 
 /**
@@ -296,21 +300,37 @@ export async function initServices(
   const startupGreetingService = container.resolve(StartupGreetingService);
   await startupGreetingService.initialize();
 
+  // Initialize and start BotHeartbeatService (Auto-Healing)
+  const heartbeatService = BotHeartbeatService.getInstance();
+  heartbeatService.start();
+  shutdownCoordinator.registerService({
+    name: 'BotHeartbeatService',
+    shutdown: () => heartbeatService.stop(),
+  });
+
+  // Initialize and start BackupSchedulerService (Automated Backups)
+  const backupScheduler = BackupSchedulerService.getInstance();
+  backupScheduler.start();
+  shutdownCoordinator.registerService({
+    name: 'BackupSchedulerService',
+    shutdown: () => backupScheduler.stop(),
+  });
+
   // Initialize AnomalyDetectionService
   AnomalyDetectionService.getInstance();
   appLogger.info('\ud83d\udd0d Anomaly Detection Service initialized');
 
   // Prepare messenger services collection for optional webhook registration later
-  let messengerServices: MessengerService[] = [];
+  let messengerServices: any[] = [];
 
   // In demo mode, skip messenger initialization if no real providers configured
   const shouldSkipMessengers = skipMessengers || demoService.isInDemoMode();
 
-  let llmProviders: unknown[] = [];
+  let llmProviders: any[] = [];
   if (!shouldSkipMessengers) {
     llmProviders = await getLlmProvider();
     appLogger.info('\ud83e\udd16 Resolved LLM providers', {
-      providers: llmProviders.map((p) => p.constructor.name || 'Unknown'),
+      providers: llmProviders.map((p) => p.constructor?.name || 'Unknown'),
     });
   } else {
     appLogger.info('\ud83e\udd16 LLM provider resolution skipped (demo/skip mode)');
@@ -344,7 +364,7 @@ export async function initServices(
 
     // Register messenger services with ShutdownCoordinator
     for (const service of messengerServices) {
-      shutdownCoordinator.registerMessengerService(service);
+      shutdownCoordinator.registerMessengerService(service as any);
     }
 
     if (filteredMessengers.length > 0) {
@@ -419,7 +439,11 @@ export async function initWebhooks(
         ? messengerService.getDefaultChannel()
         : null;
       if (channelId) {
-        await webhookServiceModule.webhookService.start(app, messengerService, channelId);
+        await webhookServiceModule.webhookService.start(
+          app,
+          messengerService as any,
+          channelId
+        );
         appLogger.info('\u2705 Webhook route registered', {
           provider: messengerService.providerName,
           channelId,

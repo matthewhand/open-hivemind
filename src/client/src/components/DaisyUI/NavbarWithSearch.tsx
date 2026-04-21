@@ -2,6 +2,32 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Divider from './Divider';
 import Logo from '../Logo';
 import Avatar from './Avatar';
+import AdvancedThemeSwitcher from './AdvancedThemeSwitcher';
+import Indicator from './Indicator';
+import Tooltip from './Tooltip';
+import Badge from './Badge';
+import { useUIStore } from '../../store/uiStore';
+import { apiService } from '../../services/api';
+import type { Bot } from '../../services/api/types';
+import { useSuccessToast, useErrorToast } from './ToastNotification';
+import {
+  Bell,
+  Plus,
+  Activity,
+  User as UserIcon,
+  Search as SearchIcon,
+  LogOut,
+  HelpCircle,
+  Settings as CogIcon,
+  FileText,
+  Menu,
+  X,
+  Bot as BotIcon,
+  Terminal,
+  Play,
+  Square,
+  SearchCode,
+} from 'lucide-react';
 
 interface NavItem {
   id: string;
@@ -43,8 +69,31 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
+  const [bots, setBots] = useState<Bot[]>([]);
+  const [isCommandMode, setIsCommandMode] = useState(false);
+  const [isPanicMode, setIsPanicMode] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+
+  const successToast = useSuccessToast();
+  const errorToast = useErrorToast();
+
+  const handleTogglePanicMode = async () => {
+    try {
+      const response: any = await apiService.post('/api/admin/panic-mode');
+      if (response.success) {
+        const enabled = response.data.enabled;
+        setIsPanicMode(enabled);
+        if (enabled) {
+           errorToast('KILL SWITCH ACTIVATED', 'All bot messages are now being rejected globally.');
+        } else {
+           successToast('Kill Switch Deactivated', 'Bot message processing resumed.');
+        }
+      }
+    } catch (e: any) {
+      errorToast('Action Failed', e.message || 'Failed to toggle Panic Mode');
+    }
+  };
 
   const _handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,25 +107,91 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
     if (storedSearches) {
       setRecentSearches(JSON.parse(storedSearches));
     }
+
+    // Fetch bots for command palette
+    const fetchBots = async () => {
+      try {
+        const fetchedBots = await apiService.getBots();
+        setBots(fetchedBots);
+      } catch (err) {
+        console.error('Failed to fetch bots for omnibar:', err);
+      }
+    };
+    fetchBots();
   }, []);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
-    if (query) {
-      const suggestions = [
-        ...searchSuggestions,
-        ...searchCategories.map(cat => `${cat}:`),
-      ].filter(s => s.toLowerCase().includes(query.toLowerCase()));
-      setFilteredSuggestions(suggestions);
+
+    if (query.startsWith('>')) {
+      setIsCommandMode(true);
+      const commandQuery = query.slice(1).trim().toLowerCase();
+      
+      const commands: string[] = [];
+      bots.forEach(bot => {
+        commands.push(`> Start ${bot.name}`);
+        commands.push(`> Stop ${bot.name}`);
+        commands.push(`> Diagnose ${bot.name}`);
+      });
+
+      const filtered = commands.filter(c => 
+        c.toLowerCase().includes(query.toLowerCase())
+      );
+      
+      setFilteredSuggestions(filtered);
       setShowSuggestions(true);
     } else {
-      setShowSuggestions(false);
+      setIsCommandMode(false);
+      if (query) {
+        const suggestions = [
+          ...searchSuggestions,
+          ...searchCategories.map(cat => `${cat}:`),
+        ].filter(s => s.toLowerCase().includes(query.toLowerCase()));
+        setFilteredSuggestions(suggestions);
+        setShowSuggestions(true);
+      } else {
+        setShowSuggestions(false);
+      }
     }
   };
 
-  const handleSearchSubmitWithOptions = (query: string) => {
+  const handleSearchSubmitWithOptions = async (query: string) => {
     if (query.trim()) {
+      if (query.startsWith('>')) {
+        const command = query.slice(1).trim();
+        const parts = command.split(' ');
+        const action = parts[0].toLowerCase();
+        const botName = parts.slice(1).join(' ');
+
+        const bot = bots.find(b => b.name === botName);
+        if (!bot) {
+          errorToast('Command Error', `Bot "${botName}" not found.`);
+          return;
+        }
+
+        try {
+          if (action === 'start') {
+            await apiService.startBot(bot.id);
+            successToast('Bot Started', `${bot.name} is now running.`);
+          } else if (action === 'stop') {
+            await apiService.stopBot(bot.id);
+            successToast('Bot Stopped', `${bot.name} has been stopped.`);
+          } else if (action === 'diagnose') {
+            await apiService.get(`/api/bots/${bot.id}/diagnose`);
+            successToast('Diagnostic Started', `Running health check for ${bot.name}.`);
+          } else {
+            errorToast('Unknown Command', `Action "${action}" is not recognized.`);
+          }
+        } catch (err: any) {
+          errorToast('Action Failed', err.message || `Failed to ${action} ${bot.name}`);
+        }
+        
+        setSearchQuery('');
+        setShowSuggestions(false);
+        return;
+      }
+
       const updatedSearches = [query.trim(), ...recentSearches.filter(s => s !== query.trim())].slice(0, 5);
       setRecentSearches(updatedSearches);
       localStorage.setItem('recentSearches', JSON.stringify(updatedSearches));
@@ -154,27 +269,36 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
     { value: 'retro', label: 'Retro', emoji: '📺' },
   ];
 
+  const uiTheme = useUIStore((s) => s.theme);
+  const setUiTheme = useUIStore((s) => s.setTheme);
+
   return (
-    <nav className="navbar bg-base-100 shadow-lg border-b border-base-200" aria-label="Main navigation">
+    <>
+      {isPanicMode && (
+        <div className="bg-error text-error-content px-4 py-2 text-center text-sm font-bold uppercase tracking-widest flex items-center justify-center gap-2 animate-pulse shadow-inner">
+          <ShieldAlert className="w-4 h-4" />
+          SYSTEM PANIC MODE ACTIVE: ALL BOT MESSAGES REJECTED
+          <ShieldAlert className="w-4 h-4" />
+        </div>
+      )}
+    <nav className="navbar bg-base-100 shadow-lg border-b border-base-200 px-4" aria-label="Main navigation">
       {/* Navbar Start */}
-      <div className="navbar-start">
+      <div className="navbar-start gap-2">
         {/* Mobile Menu */}
         <div className="dropdown lg:hidden">
           <div tabIndex={0} role="button" className="btn btn-ghost btn-circle" aria-label="Open mobile menu">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7"></path>
-            </svg>
+            <Menu className="w-5 h-5" />
           </div>
-          <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+          <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[30] p-2 shadow-xl bg-base-100 rounded-box w-64 border border-base-200">
             {navItems.map((item) => (
               <li key={item.id}>
-                <a href={item.path} className={currentPath === item.path ? 'active' : ''}>
+                <a href={item.path} className={currentPath === item.path ? 'active font-bold' : ''}>
                   <span className="text-lg">{item.icon}</span>
                   {item.label}
-                  {item.badge && <div className="badge badge-sm badge-primary">{item.badge}</div>}
+                  {item.badge && <Badge size="sm" variant="primary">{item.badge}</Badge>}
                 </a>
                 {item.children && (
-                  <ul className="p-2">
+                  <ul className="p-2 border-l border-base-300 ml-4">
                     {item.children.map((child) => (
                       <li key={child.id}>
                         <a href={child.path} className={currentPath === child.path ? 'active' : ''}>
@@ -191,55 +315,28 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
         </div>
 
         {/* Logo and Title */}
-        <a href="/" className="btn btn-ghost px-2 hover:bg-transparent">
+        <a href="/" className="btn btn-ghost px-2 hover:bg-transparent flex gap-2">
           <Logo size="sm" />
+          <span className="hidden sm:inline font-bold tracking-tight">Open-Hivemind</span>
         </a>
-
-        {/* Desktop Menu */}
-        <div className="hidden lg:flex">
-          <ul className="menu menu-horizontal px-1">
-            {navItems.slice(0, 5).map((item) => (
-              <li key={item.id}>
-                {item.children ? (
-                  <details>
-                    <summary className={currentPath.startsWith(item.path) ? 'active' : ''}>
-                      <span className="text-lg">{item.icon}</span>
-                      {item.label}
-                      {item.badge && <div className="badge badge-sm badge-primary">{item.badge}</div>}
-                    </summary>
-                    <ul className="p-2 bg-base-100 rounded-t-none z-10">
-                      {item.children.map((child) => (
-                        <li key={child.id}>
-                          <a href={child.path} className={currentPath === child.path ? 'active' : ''}>
-                            <span>{child.icon}</span>
-                            {child.label}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </details>
-                ) : (
-                  <a href={item.path} className={currentPath === item.path ? 'active' : ''}>
-                    <span className="text-lg">{item.icon}</span>
-                    {item.label}
-                    {item.badge && <div className="badge badge-sm badge-primary">{item.badge}</div>}
-                  </a>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
       </div>
 
       {/* Navbar Center - Search */}
-      <div className="navbar-center hidden lg:flex">
-        <form onSubmit={(e) => { e.preventDefault(); handleSearchSubmitWithOptions(searchQuery); }} className="form-control relative" role="search" aria-label="Site search">
-          <div className={`input-group ${isSearchFocused ? 'input-group-lg' : ''}`}>
+      <div className="navbar-center hidden lg:flex flex-1 justify-center max-w-xl">
+        <form onSubmit={(e) => { e.preventDefault(); handleSearchSubmitWithOptions(searchQuery); }} className="w-full relative" role="search" aria-label="Site search">
+          <div className="relative group">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              {isCommandMode ? (
+                <Terminal className="w-4 h-4 text-primary animate-pulse" />
+              ) : (
+                <SearchIcon className={`w-4 h-4 transition-colors ${isSearchFocused ? 'text-primary' : 'text-base-content/40'}`} />
+              )}
+            </div>
             <input
               ref={searchInputRef}
               type="text"
-              placeholder="Search... (Ctrl+K)"
-              className={`input input-bordered ${isSearchFocused ? 'input-lg w-96' : 'w-64'} transition-all duration-300 ease-in-out`}
+              placeholder={isCommandMode ? "Enter command (e.g. > Start BotName)" : "Search features, bots, or configs... (Ctrl+K)"}
+              className={`input input-bordered w-full pl-10 pr-10 bg-base-200/50 focus:bg-base-100 focus:border-primary transition-all duration-300 ${isSearchFocused ? 'shadow-inner' : ''} ${isCommandMode ? 'border-primary/50' : ''}`}
               value={searchQuery}
               onChange={handleSearchChange}
               onFocus={handleFocus}
@@ -248,104 +345,96 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
               role="combobox"
               aria-expanded={showSuggestions}
               aria-autocomplete="list"
-              aria-label="Search the site"
             />
             {searchQuery && (
               <button
                 type="button"
-                className="btn btn-ghost btn-square"
+                className="absolute inset-y-0 right-10 pr-2 flex items-center opacity-50 hover:opacity-100 transition-opacity"
                 aria-label="Clear search"
                 onClick={() => {
                   setSearchQuery('');
                   setShowSuggestions(false);
+                  setIsCommandMode(false);
                   searchInputRef.current?.focus();
                 }}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
+                <X className="w-4 h-4" />
               </button>
             )}
-            <button type="submit" className="btn btn-square btn-primary" aria-label="Submit search">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m21 21-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-              </svg>
-            </button>
+            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+               <span className="text-[10px] font-bold opacity-30 bg-base-300 px-1 rounded">{isCommandMode ? 'CMD' : '⌘K'}</span>
+            </div>
           </div>
 
           {/* Search Suggestions Dropdown */}
           {showSuggestions && (
             <div
               ref={suggestionsRef}
-              className="absolute top-full mt-2 w-full bg-base-100 rounded-box shadow-xl border border-base-300 z-30 max-h-80 overflow-y-auto" role="listbox" aria-label="Search suggestions"
+              className="absolute top-full mt-2 w-full bg-base-100 rounded-box shadow-2xl border border-base-300 z-50 max-h-96 overflow-y-auto animate-in fade-in zoom-in-95 duration-200" role="listbox"
             >
               {searchQuery && filteredSuggestions.length > 0 && (
                 <div className="p-2">
-                  <h3 className="text-xs font-semibold text-base-content/70 uppercase tracking-wide px-3 py-2">Suggestions</h3>
+                  <h3 className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest px-3 py-2">
+                    {isCommandMode ? 'Action Commands' : 'Quick Results'}
+                  </h3>
                   <ul>
-                    {filteredSuggestions.map((suggestion, index) => (
-                      <li key={index}>
-                        <button
-                          className={`w-full text-left px-3 py-2 rounded-lg hover:bg-base-200 transition-colors ${selectedSuggestionIndex === index ? 'bg-primary text-primary-content' : ''
-                            }`}
-                          onClick={() => handleSearchSubmitWithOptions(suggestion)}
-                          onMouseEnter={() => setSelectedSuggestionIndex(index)}
-                        >
-                          <div className="flex items-center gap-2">
-                            <svg className="w-4 h-4 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                            </svg>
-                            <span>{suggestion}</span>
-                          </div>
-                        </button>
-                      </li>
-                    ))}
+                    {filteredSuggestions.map((suggestion, index) => {
+                      const isAction = suggestion.startsWith('>');
+                      let Icon = SearchIcon;
+                      if (isAction) {
+                        if (suggestion.includes('Start')) Icon = Play;
+                        else if (suggestion.includes('Stop')) Icon = Square;
+                        else if (suggestion.includes('Diagnose')) Icon = SearchCode;
+                      }
+
+                      return (
+                        <li key={index}>
+                          <button
+                            className={`w-full text-left px-3 py-2.5 rounded-lg hover:bg-base-200 transition-colors flex items-center gap-3 ${selectedSuggestionIndex === index ? 'bg-primary/10 text-primary font-medium' : ''
+                              }`}
+                            onClick={() => handleSearchSubmitWithOptions(suggestion)}
+                            onMouseEnter={() => setSelectedSuggestionIndex(index)}
+                          >
+                            <Icon className={`w-3.5 h-3.5 ${isAction ? 'text-primary' : 'opacity-40'}`} />
+                            <span className="text-sm">{suggestion}</span>
+                            {isAction && (
+                              <Badge size="xs" variant="outline" className="ml-auto text-[8px] opacity-50 uppercase">Bot Action</Badge>
+                            )}
+                          </button>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               )}
 
               {recentSearches.length > 0 && (
-                <div className="p-2">
-                  {searchQuery && filteredSuggestions.length > 0 && <Divider className="my-1" />}
+                <div className="p-2 border-t border-base-200">
                   <div className="flex justify-between items-center px-3 py-2">
-                    <h3 className="text-xs font-semibold text-base-content/70 uppercase tracking-wide">Recent Searches</h3>
+                    <h3 className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest">Recently Searched</h3>
                     <button
-                      className="text-xs text-error hover:text-error-focus transition-colors"
+                      className="text-[10px] font-bold text-error/60 hover:text-error transition-colors"
                       onClick={handleClearRecentSearches}
                     >
-                      Clear
+                      CLEAR ALL
                     </button>
                   </div>
                   <ul>
                     {recentSearches.map((search, index) => (
                       <li key={index}>
                         <button
-                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-base-200 transition-colors"
+                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-base-200 transition-colors flex items-center justify-between group"
                           onClick={() => handleSearchSubmitWithOptions(search)}
-                          aria-label={`Search for ${search}`}
                         >
-                          <div className="flex items-center gap-2">
-                            <svg className="w-4 h-4 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <span>{search}</span>
+                          <div className="flex items-center gap-3">
+                            <Activity className="w-3.5 h-3.5 opacity-30" />
+                            <span className="text-sm">{search}</span>
                           </div>
+                          <span className="text-[10px] opacity-0 group-hover:opacity-40 transition-opacity">Select ↵</span>
                         </button>
                       </li>
                     ))}
                   </ul>
-                </div>
-              )}
-
-              {!searchQuery && recentSearches.length === 0 && (
-                <div className="p-4 text-center text-sm text-base-content/60">
-                  <div className="flex flex-col items-center gap-2">
-                    <svg className="w-8 h-8 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
-                    <p>Start typing to search...</p>
-                    <p className="text-xs">Try: "bots", "configs", or "logs"</p>
-                  </div>
                 </div>
               )}
             </div>
@@ -354,109 +443,122 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
       </div>
 
       {/* Navbar End */}
-      <div className="navbar-end gap-2">
-        {/* Quick Actions */}
-        <Tooltip content="Create New Bot" position="bottom">
-          <button className="btn btn-ghost btn-circle btn-sm" aria-label="Create New Bot">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
-            </svg>
+      <div className="navbar-end gap-1 sm:gap-3">
+        {/* Kill Switch */}
+        <Tooltip content={isPanicMode ? "Deactivate Kill Switch" : "Global Kill Switch (PANIC)"} position="bottom">
+          <button 
+            className={`btn btn-sm btn-circle ${isPanicMode ? 'btn-error animate-pulse shadow-[0_0_15px_rgba(220,38,38,0.8)]' : 'btn-ghost text-error/60 hover:bg-error hover:text-error-content'}`}
+            onClick={handleTogglePanicMode}
+            aria-label="Toggle Global Kill Switch"
+          >
+            <ShieldAlert className="w-4 h-4" />
           </button>
         </Tooltip>
+
+        {/* Quick Actions */}
+        <div className="hidden md:flex">
+          <Tooltip content="Create New Bot" position="bottom">
+            <button className="btn btn-ghost btn-circle btn-sm" aria-label="Create New Bot">
+              <Plus className="w-5 h-5" />
+            </button>
+          </Tooltip>
+        </div>
 
         {/* System Status Indicator */}
         <div className="dropdown dropdown-end">
           <div tabIndex={0} role="button" className="btn btn-ghost btn-circle btn-sm" aria-label="System status">
-            <div className="indicator">
-              <div className="w-3 h-3 bg-success rounded-full animate-pulse"></div>
-              <span className="indicator-item badge badge-xs badge-success"></span>
-            </div>
+            <Indicator
+               item={<span className="badge badge-xs badge-success indicator-item"></span>}
+               className="p-1"
+            >
+               <div className="w-2.5 h-2.5 bg-success rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
+            </Indicator>
           </div>
-          <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-            <li className="menu-title">System Status</li>
-            <li><a>🟢 All Systems Online</a></li>
-            <li><a>🤖 3 Bots Active</a></li>
-            <li><a>📡 5 MCP Servers Connected</a></li>
-            <li><a>⚡ 99.9% Uptime</a></li>
+          <ul tabIndex={0} className="dropdown-content z-[40] menu p-3 shadow-2xl bg-base-100 rounded-box w-64 border border-base-200 mt-2">
+            <li className="menu-title text-xs opacity-40 uppercase tracking-widest font-bold mb-2">Live Infrastructure</li>
+            <li><a className="flex justify-between py-2 font-medium"><span>🟢 System Status</span> <Badge variant="success" size="xs">Healthy</Badge></a></li>
+            <li><a className="flex justify-between py-2"><span>🤖 Active Bots</span> <span className="font-mono text-xs">3</span></a></li>
+            <li><a className="flex justify-between py-2"><span>📡 MCP Nodes</span> <span className="font-mono text-xs">5</span></a></li>
+            <Divider className="my-1" />
+            <li><a href="/admin/monitoring" className="btn btn-xs btn-primary btn-outline mt-2">View Health Dashboard</a></li>
           </ul>
         </div>
 
         {/* Notifications */}
         <div className="dropdown dropdown-end">
-          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle" onClick={onNotificationClick} aria-label={`Notifications, ${notificationCount} unread`}>
-            <div className="indicator">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-              </svg>
-              {notificationCount > 0 && (
-                <span className="badge badge-xs badge-primary indicator-item">{notificationCount}</span>
-              )}
-            </div>
+          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle btn-sm" onClick={onNotificationClick} aria-label={`Notifications, ${notificationCount} unread`}>
+            <Indicator
+              item={notificationCount > 0 ? <Badge size="xs" variant="primary" className="indicator-item border-none text-[8px] h-3.5 min-w-[14px]">{notificationCount}</Badge> : null}
+            >
+              <Bell className="w-5 h-5 opacity-70" />
+            </Indicator>
           </div>
-          <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-80">
-            <li className="menu-title">Recent Notifications</li>
-            <li><a>🤖 Bot "Assistant" reconnected</a></li>
-            <li><a>⚠️ High memory usage detected</a></li>
-            <li><a>✅ MCP Server update completed</a></li>
-            <li><a>📊 Weekly report generated</a></li>
-            <li><a href="/admin/monitoring" className="btn btn-sm btn-primary">View All</a></li>
+          <ul tabIndex={0} className="dropdown-content z-[40] menu p-2 shadow-2xl bg-base-100 rounded-box w-80 border border-base-200 mt-2">
+            <li className="menu-title text-xs font-bold uppercase tracking-widest p-3">Recent Alerts</li>
+            <div className="max-h-60 overflow-y-auto">
+               <li><a className="py-3 items-start gap-3 border-b border-base-200 rounded-none">
+                  <div className="bg-primary/10 text-primary p-2 rounded-lg"><BotIcon className="w-4 h-4" /></div>
+                  <div className="flex flex-col">
+                     <span className="text-xs font-bold">Bot "Assistant" reconnected</span>
+                     <span className="text-[10px] opacity-40">2 minutes ago</span>
+                  </div>
+               </a></li>
+               <li><a className="py-3 items-start gap-3 border-b border-base-200 rounded-none">
+                  <div className="bg-warning/10 text-warning p-2 rounded-lg"><Activity className="w-4 h-4" /></div>
+                  <div className="flex flex-col">
+                     <span className="text-xs font-bold">High memory usage detected</span>
+                     <span className="text-[10px] opacity-40">15 minutes ago</span>
+                  </div>
+               </a></li>
+            </div>
+            <li><a href="/admin/monitoring" className="text-center font-bold text-primary text-xs py-3">View All Notifications</a></li>
           </ul>
         </div>
 
-        {/* Theme Selector */}
-        <div className="dropdown dropdown-end">
-          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle" aria-label="Choose theme">
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd"></path>
-            </svg>
-          </div>
-          <ul tabIndex={0} className="dropdown-content z-[1] p-2 shadow-2xl bg-base-300 rounded-box w-52">
-            <li className="menu-title">Choose Theme</li>
-            {themeOptions.map((theme) => (
-              <li key={theme.value}>
-                <input
-                  type="radio"
-                  name="theme-dropdown"
-                  className="theme-controller"
-                  value={theme.value}
-                  aria-label={theme.label}
-                />
-                <span className="flex items-center gap-2">
-                  <span>{theme.emoji}</span>
-                  {theme.label}
-                </span>
-              </li>
-            ))}
-          </ul>
+        <Divider vertical className="h-6 mx-0 hidden sm:flex" />
+
+        {/* Improved Theme Switcher integration */}
+        <div className="hidden sm:flex">
+          <AdvancedThemeSwitcher
+            currentTheme={uiTheme}
+            onThemeChange={setUiTheme}
+            position="dropdown"
+          />
         </div>
 
         {/* User Menu */}
         <div className="dropdown dropdown-end">
-          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle" aria-label="User menu">
-            <Avatar
-              size="sm"
-              shape="circle"
-              src={userAvatar || undefined}
-              placeholder={!userAvatar}
-              className="w-8"
-              innerClassName={!userAvatar ? "bg-neutral text-neutral-content rounded-full w-8 text-xs flex items-center justify-center" : "w-8 rounded-full"}
-            >
-              {!userAvatar && userName.charAt(0).toUpperCase()}
-            </Avatar>
+          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar ml-1" aria-label="User menu">
+            <div className="w-8 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 overflow-hidden shadow-md">
+               <Avatar
+                size="sm"
+                shape="circle"
+                src={userAvatar || undefined}
+                placeholder={!userAvatar}
+                className="w-full h-full"
+                innerClassName={!userAvatar ? "bg-primary text-primary-content flex items-center justify-center font-bold text-xs" : ""}
+              >
+                {!userAvatar && userName.charAt(0).toUpperCase()}
+              </Avatar>
+            </div>
           </div>
-          <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
-            <li className="menu-title">{userName}</li>
-            <li><a href="/admin/settings">👤 Profile</a></li>
-            <li><a href="/admin/settings">⚙️ Settings</a></li>
-            <li><a href="https://github.com/open-hivemind/open-hivemind" target="_blank" rel="noopener noreferrer">❓ Help & Support</a></li>
-            <li><a href="https://github.com/open-hivemind/open-hivemind" target="_blank" rel="noopener noreferrer">📚 Documentation</a></li>
-            <li className="divider"></li>
-            <li><a href="/login" className="text-error">🚪 Sign out</a></li>
+          <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[50] p-2 shadow-2xl bg-base-100 rounded-box w-64 border border-base-200">
+            <div className="px-4 py-3 border-b border-base-200 mb-2">
+               <p className="text-xs font-bold opacity-40 uppercase tracking-widest mb-1">Signed in as</p>
+               <p className="font-bold text-sm truncate">{userName}</p>
+            </div>
+            <li><a href="/admin/settings" className="py-2.5"><UserIcon className="w-4 h-4" /> My Profile</a></li>
+            <li><a href="/admin/settings" className="py-2.5"><CogIcon className="w-4 h-4" /> System Settings</a></li>
+            <Divider className="my-1" />
+            <li><a href="https://github.com/matthewhand/open-hivemind" target="_blank" rel="noopener noreferrer" className="py-2.5"><HelpCircle className="w-4 h-4" /> Help & Support</a></li>
+            <li><a href="https://github.com/matthewhand/open-hivemind" target="_blank" rel="noopener noreferrer" className="py-2.5"><FileText className="w-4 h-4" /> API Documentation</a></li>
+            <li className="mt-2"><a href="/login" className="text-error font-bold hover:bg-error/10 py-2.5"><LogOut className="w-4 h-4" /> Sign out</a></li>
           </ul>
         </div>
       </div>
     </nav>
-  );
-};
+    </>
+    );
+    };
 
-export default NavbarWithSearch;
+    export default NavbarWithSearch;

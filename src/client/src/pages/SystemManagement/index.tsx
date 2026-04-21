@@ -13,9 +13,12 @@ import AlertsTab from './AlertsTab';
 import ConfigTab from './ConfigTab';
 import BackupsTab from './BackupsTab';
 import PerformanceTab from './PerformanceTab';
+import ApprovalsTab from './ApprovalsTab';
+import AuditTab from './AuditTab';
 import type { SystemConfig, BackupRecord } from './types';
 import { LoadingSpinner } from '../../components/DaisyUI/Loading';
 import Input from '../../components/DaisyUI/Input';
+import { ShieldCheck, History } from 'lucide-react';
 
 const SystemManagement: React.FC = () => {
   const { alerts, performanceMetrics } = useWebSocket();
@@ -248,6 +251,8 @@ const SystemManagement: React.FC = () => {
 
   const systemManagementTabs = useMemo(() => [
     { key: 'alerts', label: 'Alert Management', color: 'warning' as const },
+    { key: 'approvals', label: 'Approvals', color: 'primary' as const, icon: <ShieldCheck className="w-4 h-4" /> },
+    { key: 'audit', label: 'Audit Trail', color: 'secondary' as const, icon: <History className="w-4 h-4" /> },
     { key: 'config', label: 'System Configuration' },
     { key: 'backups', label: 'Backup Management', color: 'info' as const },
     { key: 'performance', label: 'Performance Tuning', color: 'accent' as const },
@@ -296,6 +301,8 @@ const SystemManagement: React.FC = () => {
           />
 
           {activeTab === 'alerts' && <AlertsTab />}
+          {activeTab === 'approvals' && <ApprovalsTab />}
+          {activeTab === 'audit' && <AuditTab />}
           {activeTab === 'config' && (
             <ConfigTab systemConfig={systemConfig} onConfigUpdate={handleConfigUpdate} />
           )}

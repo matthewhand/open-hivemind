@@ -22,11 +22,11 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
     this.slackService = slackService || SlackService.getInstance();
   }
 
-  getSchema(): any {
+  getSchema(): Record<string, unknown> {
     return slackConfig.getSchema();
   }
 
-  getConfig(): any {
+  getConfig(): Record<string, unknown> {
     return slackConfig;
   }
 
@@ -34,7 +34,7 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
     return ['SLACK_BOT_TOKEN', 'SLACK_APP_TOKEN', 'SLACK_SIGNING_SECRET'];
   }
 
-  async getStatus(): Promise<{ ok: boolean; bots: any[]; count: number }> {
+  async getStatus(): Promise<Record<string, unknown>> {
     const slack = this.slackService;
     const botNames = slack.getBotNames();
     const bots = botNames.map((name: string) => {
@@ -61,14 +61,20 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
     return this.slackService.getBotNames();
   }
 
-  async getBots(): Promise<any[]> {
+  async getBots(): Promise<Record<string, unknown>[]> {
     const status = await this.getStatus();
-    return status.bots;
+    return (status.bots as Record<string, unknown>[]) ?? [];
   }
 
-  async addBot(config: any): Promise<void> {
-    const { name, botToken, signingSecret, appToken, defaultChannelId, joinChannels, mode, llm } =
-      config;
+  async addBot(config: Record<string, unknown>): Promise<void> {
+    const name = String(config.name ?? '');
+    const botToken = config.botToken as string | undefined;
+    const signingSecret = config.signingSecret as string | undefined;
+    const appToken = config.appToken as string | undefined;
+    const defaultChannelId = config.defaultChannelId as string | undefined;
+    const joinChannels = config.joinChannels;
+    const mode = config.mode as string | undefined;
+    const llm = config.llm;
 
     if (!name || !botToken || !signingSecret) {
       throw new Error('name, botToken, and signingSecret are required');

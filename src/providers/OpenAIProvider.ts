@@ -8,12 +8,12 @@ export class OpenAIProvider implements ILLMProvider<OpenAIConfig> {
   docsUrl = 'https://platform.openai.com/account/api-keys';
   helpText = 'Create an OpenAI API key from the developer dashboard and paste it here.';
 
-  getSchema() {
-    return openaiConfig.getSchema();
+  getSchema(): Record<string, unknown> {
+    return openaiConfig.getSchema() as unknown as Record<string, unknown>;
   }
 
-  getConfig() {
-    return openaiConfig;
+  getConfig(): Record<string, unknown> {
+    return openaiConfig as unknown as Record<string, unknown>;
   }
 
   getSensitiveKeys() {

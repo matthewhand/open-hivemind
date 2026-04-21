@@ -20,7 +20,9 @@ import {
 import { ActivityLogger } from '../ActivityLogger';
 import { BotMetricsService } from '../BotMetricsService';
 import { ConnectionManager } from './ConnectionManager';
-import type { AlertEvent, MessageFlowEvent, PerformanceMetric } from './types';
+import type { AlertEvent, MessageFlowEvent, PerformanceMetric, SystemEvent } from './types';
+import { AuditLogger, type AuditEvent } from '../../../common/auditLogger';
+import { BotManager } from '../../../managers/BotManager';
 
 const debug = Debug('app:WebSocketService:BroadcastService');
 
@@ -31,6 +33,7 @@ export class BroadcastService {
   private performanceMetrics: PerformanceMetric[] = [];
   private alerts: AlertEvent[] = [];
   private alertsMap: Map<string, AlertEvent> = new Map();
+  private systemEvents: SystemEvent[] = [];
   private messageRateHistory: number[] = new Array(60).fill(0);
   private errorRateHistory: number[] = new Array(60).fill(0);
 
@@ -58,6 +61,62 @@ export class BroadcastService {
   ) {
     this.setupApiMonitoring();
     this.setupMessageBus();
+    this.setupEventListeners();
+  }
+
+  private setupEventListeners(): void {
+    // Audit Logger events
+    AuditLogger.getInstance().on('auditEvent', (event: AuditEvent) => {
+      this.recordSystemEvent({
+        type: event.result === 'success' ? 'info' : 'error',
+        category: 'audit',
+        message: `${event.action}: ${event.details}`,
+        metadata: {
+          user: event.user,
+          resource: event.resource,
+          result: event.result,
+        },
+      });
+    });
+
+    // Bot Lifecycle events via BotManager
+    BotManager.getInstance().then((botManager) => {
+      botManager.on('botStarted', (bot) => {
+        this.recordSystemEvent({
+          type: 'info',
+          category: 'lifecycle',
+          message: `Bot-${bot.name} Started`,
+          botName: bot.name,
+        });
+      });
+
+      botManager.on('botStopped', (bot) => {
+        this.recordSystemEvent({
+          type: 'warn',
+          category: 'lifecycle',
+          message: `Bot-${bot.name} Stopped`,
+          botName: bot.name,
+        });
+      });
+
+      botManager.on('botRestarted', (payload) => {
+        this.recordSystemEvent({
+          type: 'heal',
+          category: 'lifecycle',
+          message: `Bot-${payload.botId} Restarted`,
+          botName: payload.botId,
+        });
+      });
+
+      botManager.on('botError', (payload) => {
+        this.recordSystemEvent({
+          type: 'error',
+          category: 'lifecycle',
+          message: `Bot-${payload.botId} Error: ${payload.error?.message || 'Unknown error'}`,
+          botName: payload.botId,
+        });
+      });
+    });
   }
 
   private setupMessageBus(): void {
@@ -220,6 +279,26 @@ export class BroadcastService {
     const currentIo = this.io();
     if (currentIo && this.connectedClients() > 0) {
       currentIo.emit('alert_update', alertEvent);
+    }
+  }
+
+  public recordSystemEvent(
+    event: Omit<SystemEvent, 'id' | 'timestamp'>
+  ): void {
+    const systemEvent: SystemEvent = {
+      ...event,
+      id: `sys_${Date.now()}_${randomUUID()}`,
+      timestamp: new Date().toISOString(),
+    };
+
+    this.systemEvents.push(systemEvent);
+    if (this.systemEvents.length > 500) {
+      this.systemEvents.shift();
+    }
+
+    const currentIo = this.io();
+    if (currentIo && this.connectedClients() > 0) {
+      currentIo.emit('system_event', systemEvent);
     }
   }
 

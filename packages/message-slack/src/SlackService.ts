@@ -1102,6 +1102,21 @@ export class SlackService extends EventEmitter implements IMessengerService {
     debug('SlackService instance cleared');
   }
 
+  public isConnected(botName?: string): boolean {
+    if (botName) {
+      const botManager = this.getBotManager(botName);
+      if (!botManager) return false;
+      const bot = botManager.getAllBots().find((b) => b.botUserName === botName);
+      if (!bot) return false;
+      if (bot.socketClient) return (bot.socketClient as any).connected;
+      if (bot.rtmClient) return (bot.rtmClient as any).connected;
+      return true; // WebClient only bots are "connected" if they exist
+    }
+
+    if (this.botManagers.size === 0) return false;
+    return Array.from(this.botManagers.keys()).every((name) => this.isConnected(name));
+  }
+
   /**
    * Channel routing/scoring parity with Discord.
    * When MESSAGE_CHANNEL_ROUTER_ENABLED is true, delegate to ChannelRouter.computeScore.

@@ -36,3 +36,13 @@ export interface AlertEvent {
   acknowledgedAt?: string;
   resolvedAt?: string;
 }
+
+export interface SystemEvent {
+  id: string;
+  timestamp: string;
+  type: 'info' | 'warn' | 'error' | 'heal';
+  category: 'lifecycle' | 'audit' | 'system';
+  message: string;
+  botName?: string;
+  metadata?: Record<string, unknown>;
+}

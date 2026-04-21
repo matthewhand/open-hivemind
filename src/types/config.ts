@@ -222,6 +222,8 @@ export interface BotConfig {
   };
   /** Content filter configuration */
   contentFilter?: ContentFilterConfig;
+  /** Maximum tokens per day for this bot */
+  maxTokensPerDay?: number;
   /** Discord-specific configuration */
   discord?: DiscordConfig;
   /** Slack-specific configuration */

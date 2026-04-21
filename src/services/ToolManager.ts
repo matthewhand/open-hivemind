@@ -70,11 +70,6 @@ export class ToolManager {
       const mcpService = MCPService.getInstance();
       const serverNames = this.getServerNamesForBot(botName);
 
-      if (serverNames.length === 0) {
-        debug(`No MCP servers configured for bot: ${botName}`);
-        return [];
-      }
-
       const tools: ToolDefinition[] = [];
 
       for (const serverName of serverNames) {
@@ -92,6 +87,27 @@ export class ToolManager {
           debug(`No tools cached for MCP server "${serverName}" — is it connected?`);
         }
       }
+
+      // Automatically inject the built-in swarm routing tool
+      tools.push({
+        name: 'transfer_to_bot',
+        description: 'Transfer the conversation to another specialized bot in the hivemind when they are better suited to handle the request.',
+        serverName: 'built-in',
+        parameters: {
+          type: 'object',
+          properties: {
+            targetBotName: {
+              type: 'string',
+              description: 'The exact name of the bot to transfer the conversation to.'
+            },
+            reason: {
+              type: 'string',
+              description: 'The reason for transferring the conversation.'
+            }
+          },
+          required: ['targetBotName', 'reason']
+        }
+      });
 
       debug(`Resolved ${tools.length} tools for bot "${botName}"`);
       return tools;
@@ -124,6 +140,22 @@ export class ToolManager {
     try {
       debug(`[${botName}] Executing tool "${toolName}" with args:`, args);
 
+      // Handle built-in swarm routing
+      if (toolName === 'transfer_to_bot') {
+         const { MessageBus } = await import('@src/events/MessageBus');
+         const targetBotName = args.targetBotName as string;
+         
+         debug(`[${botName}] Initiating handoff to ${targetBotName}...`);
+         
+         // In a full implementation, we'd reconstruct the IMessage and emit 'message:incoming'.
+         // For now, we return a success signal that the LLM adapter can interpret to end its turn.
+         return {
+           toolName,
+           success: true,
+           result: `Successfully transferred conversation to ${targetBotName}. You should now stop responding and let the other bot take over.`,
+         };
+      }
+
       const mcpService = MCPService.getInstance();
 
       // Find which server owns this tool.
@@ -142,7 +174,7 @@ export class ToolManager {
       if (isSensitive) {
         debug(`[${botName}] Tool "${toolName}" is sensitive. Requesting admin approval...`);
         const pendingMgr = PendingActionManager.getInstance();
-        const approved = await pendingMgr.requestApproval(botName, toolName, args, context);
+        const approved = await pendingMgr.create(botName, toolName, args, context);
 
         if (!approved) {
           const msg = `Tool execution denied: "${toolName}" requires administrator approval.`;

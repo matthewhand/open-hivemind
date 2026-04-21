@@ -425,6 +425,12 @@ export async function listInstalledPlugins(): Promise<PluginInfo[]> {
 let PLUGIN_SIGNING_KEY = process.env.HIVEMIND_PLUGIN_SIGNING_KEY;
 
 if (!PLUGIN_SIGNING_KEY) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'CRITICAL: HIVEMIND_PLUGIN_SIGNING_KEY environment variable is required in production.'
+    );
+  }
+
   PLUGIN_SIGNING_KEY = crypto.randomBytes(32).toString('hex');
   logger.warn('⚠️  WARNING: No HIVEMIND_PLUGIN_SIGNING_KEY environment variable found.');
   logger.warn('   Generated a temporary plugin signing key for this session.');
