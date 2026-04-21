@@ -1,0 +1,54 @@
+--- useInactivity.test.ts
++++ useInactivity.test.ts
+@@ -7,24 +7,8 @@
+  * Uses direct hook invocation with a minimal React-like wrapper to avoid
+  * the React 19 + testing-library act() compatibility issue.
+  */
+ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
++import { renderHook, act } from '@testing-library/react';
+ import { useInactivity } from '../useInactivity';
+
+-/**
+- * Minimal hook runner that calls the hook function directly and provides
+- * a way to re-invoke it (simulating re-renders).
+- */
+-function runHook<T, R>(hookFn: () => R) {
+-  let result: R;
+-  const invoke = () => {
+-    result = hookFn();
+-    return result;
+-  };
+-  invoke();
+-  return {
+-    get result() { return result!; },
+-    rerender: invoke,
+-  };
+-}
+-
+ describe('useInactivity Hook', () => {
+--- /dev/null
++++ /dev/null
+@@ -37,17 +21,17 @@
+
+   it('should start as not idle', () => {
+-    const { result } = runHook(() => useInactivity({ timeoutMs: 1000 }));
+-    expect(result.isIdle).toBe(false);
++    const { result } = renderHook(() => useInactivity({ timeoutMs: 1000 }));
++    expect(result.current.isIdle).toBe(false);
+   });
+
+   it('should transition to idle after the specified timeout with no activity', () => {
+     const timeoutMs = 5000;
+-    const { result } = runHook(() => useInactivity({ timeoutMs }));
++    const { result } = renderHook(() => useInactivity({ timeoutMs }));
+
+-    expect(result.isIdle).toBe(false);
++    expect(result.current.isIdle).toBe(false);
+
+-    vi.advanceTimersByTime(timeoutMs);
+-    expect(result.isIdle).toBe(true);
++    act(() => { vi.advanceTimersByTime(timeoutMs); });
++    expect(result.current.isIdle).toBe(true);
+   });
+
+   it('should call onIdle callback when transitioning to idle', () => {
