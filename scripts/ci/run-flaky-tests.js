@@ -6,18 +6,39 @@ const { spawnSync } = require('child_process');
 const LIST_PATH = 'tests/flaky-tests.txt';
 const MAX_RETRIES = Number(process.env.FLAKY_TEST_RETRIES || 2);
 
+function parseEntry(line) {
+  const parts = line.split('|').map((p) => p.trim()).filter(Boolean);
+  const testPath = parts[0] || '';
+  const metadata = {};
+  for (const part of parts.slice(1)) {
+    const idx = part.indexOf('=');
+    if (idx === -1) continue;
+    const key = part.slice(0, idx).trim();
+    const value = part.slice(idx + 1).trim();
+    metadata[key] = value;
+  }
+  return {
+    testPath,
+    owner: metadata.owner || '',
+    expires: metadata.expires || '',
+    reason: metadata.reason || '',
+  };
+}
+
 if (!fs.existsSync(LIST_PATH)) {
   console.log(`${LIST_PATH} not found. Nothing to run.`);
   process.exit(0);
 }
 
-const tests = fs
+const entries = fs
   .readFileSync(LIST_PATH, 'utf8')
   .split('\n')
   .map((line) => line.trim())
-  .filter((line) => line && !line.startsWith('#'));
+  .filter((line) => line && !line.startsWith('#'))
+  .map(parseEntry)
+  .filter((entry) => entry.testPath);
 
-if (tests.length === 0) {
+if (entries.length === 0) {
   console.log('No flaky tests listed. Nothing to run.');
   process.exit(0);
 }
@@ -25,7 +46,8 @@ if (tests.length === 0) {
 const summary = [];
 let failures = 0;
 
-for (const testPath of tests) {
+for (const entry of entries) {
+  const testPath = entry.testPath;
   let passed = false;
   let attempts = 0;
   for (let i = 0; i <= MAX_RETRIES; i += 1) {
@@ -53,7 +75,14 @@ for (const testPath of tests) {
     }
   }
 
-  summary.push({ testPath, passed, attempts });
+  summary.push({
+    testPath,
+    owner: entry.owner,
+    expires: entry.expires,
+    reason: entry.reason,
+    passed,
+    attempts,
+  });
   if (!passed) failures += 1;
 }
 
