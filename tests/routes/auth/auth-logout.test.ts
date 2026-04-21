@@ -1,39 +1,10 @@
 import request from 'supertest';
 import { createAuthApp } from '../../helpers/authTestApp';
+import { mockLogin, mockLogout, mockGetUserPermissions } from '../../helpers/authTestApp';
 
-// Use `var` so the declaration is hoisted above the jest.mock factory calls.
-
-var mockLogin: jest.Mock;
-
-var mockLogout: jest.Mock;
-
-var mockGetUserPermissions: jest.Mock;
-
-jest.mock('../../../src/auth/AuthManager', () => {
-  mockLogin = jest.fn();
-  mockLogout = jest.fn();
-  mockGetUserPermissions = jest.fn();
-  return {
-    AuthManager: {
-      getInstance: jest.fn(() => ({
-        login: mockLogin,
-        logout: mockLogout,
-        getUserPermissions: mockGetUserPermissions,
-        register: jest.fn(),
-        refreshToken: jest.fn(),
-        verifyAccessToken: jest.fn(),
-        getUser: jest.fn(),
-        getUserWithHash: jest.fn(),
-        verifyPassword: jest.fn(),
-        changePassword: jest.fn(),
-        getAllUsers: jest.fn(),
-        updateUser: jest.fn(),
-        deleteUser: jest.fn(),
-        trustedLogin: jest.fn(),
-        generateAccessToken: jest.fn(),
-      })),
-    },
-  };
+// Reset all mocks before each test
+beforeEach(() => {
+  jest.clearAllMocks();
 });
 
 // Bypass rate limiting entirely in tests
