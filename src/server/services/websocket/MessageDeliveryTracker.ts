@@ -41,8 +41,8 @@ export class MessageDeliveryTracker {
   public handleAck(messageId: string): MessageEnvelope | undefined {
     const envelope = this.pendingMessages.get(messageId);
     if (envelope) {
-      envelope.status = DeliveryStatus.DELIVERED;
-      envelope.ackTimestamp = Date.now();
+      envelope.status = 'DELIVERED';
+      envelope.timestamp = Date.now();
       this.pendingMessages.delete(messageId);
       this.deliveryCounts.acknowledged++;
     }

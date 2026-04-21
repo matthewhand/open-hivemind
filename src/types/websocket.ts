@@ -12,6 +12,9 @@ export enum DeliveryStatus {
 
 /** Envelope wrapping every outbound message with tracking metadata. */
 export interface MessageEnvelope {
+  id?: string;
+  channelId?: string;
+  ackTimestamp?: number;
   /** Unique message identifier. */
   messageId: string;
   /** Per-channel sequence number for ordering / gap detection. */

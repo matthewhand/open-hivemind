@@ -27,6 +27,8 @@ describe('AuthManager Security Fix', () => {
   it('should use ADMIN_PASSWORD if provided in production', () => {
     process.env.NODE_ENV = 'production';
     process.env.ADMIN_PASSWORD = 'mysecurepassword';
+    process.env.JWT_SECRET = 'test-secret';
+    process.env.JWT_REFRESH_SECRET = 'test-refresh-secret';
 
     // We need to re-require AuthManager to ensure env vars are picked up if they are read at module level (which they are not, they are read in constructor/methods)
     // But bcrypt mock is persistent.
@@ -44,15 +46,17 @@ describe('AuthManager Security Fix', () => {
 
   it('should throw CRITICAL error if ADMIN_PASSWORD is missing in production', () => {
     process.env.NODE_ENV = 'production';
+    delete process.env.JWT_SECRET;
     delete process.env.ADMIN_PASSWORD;
 
     expect(() => {
       AuthManager.getInstance();
-    }).toThrow('CRITICAL: ADMIN_PASSWORD environment variable is required in production.');
+    }).toThrow('CRITICAL: JWT_SECRET environment variable is required in production.');
   });
 
   it('should still use default password in test environment', () => {
     process.env.NODE_ENV = 'test';
+    delete process.env.JWT_SECRET;
     delete process.env.ADMIN_PASSWORD;
 
     authManager = AuthManager.getInstance();

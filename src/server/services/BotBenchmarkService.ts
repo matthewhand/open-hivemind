@@ -1,3 +1,4 @@
+import { createLogger } from '../../common/StructuredLogger';
 import Debug from 'debug';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
 import { type BotInstance, type BotInstance } from '@src/managers/BotManager';

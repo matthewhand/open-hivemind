@@ -115,10 +115,10 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 180 * 1000,
   },
-  },
 
   /* Metadata for test organization */
   metadata: {
+
     'Test Environment': process.env.NODE_ENV || 'test',
     'Browser Versions': 'Latest',
     'Test Suite': 'E2E Tests',

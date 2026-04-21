@@ -108,7 +108,8 @@ describe('UsageTrackerService', () => {
     
     // Use real timers for this part to allow async init to complete
     jest.useRealTimers();
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await Promise.resolve();
+    await Promise.resolve();
     jest.useFakeTimers();
     
     expect(newService.getToolMetrics('old-tool')).toMatchObject({ usageCount: 5 });

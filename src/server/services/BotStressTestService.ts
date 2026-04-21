@@ -1,3 +1,4 @@
+import { createLogger } from '../../common/StructuredLogger';
 import Debug from 'debug';
 import { MessageBus } from '@src/events/MessageBus';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
