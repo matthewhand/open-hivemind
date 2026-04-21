@@ -24,7 +24,6 @@ describe('WebUIStorage', () => {
   });
 
   beforeEach(() => {
-    console.error('TEST beforeEach starting');
     storage = new WebUIStorage();
     if (fs.existsSync(testConfigFile)) {
       fs.unlinkSync(testConfigFile);

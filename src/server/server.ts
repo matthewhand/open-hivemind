@@ -212,16 +212,16 @@ export class WebUIServer {
     this.app.use('/api/providers', authenticateToken, providersRouter);
 
     // WebUI application routes (serve React app)
-    this.app.get('/admin/*', (req, res) => {
+    this.app.get('/admin/*', (req: express.Request, res: express.Response): void => {
       res.sendFile(join(this.frontendDistPath, 'index.html'));
     });
 
-    this.app.get('/webui/*', (req, res) => {
+    this.app.get('/webui/*', (req: express.Request, res: express.Response): void => {
       res.sendFile(join(this.frontendDistPath, 'index.html'));
     });
 
     // API documentation
-    this.app.get('/api', (req, res) => {
+    this.app.get('/api', (req: express.Request, res: express.Response): void => {
       res.json({
         name: 'Hivemind WebUI API',
         version: '1.0.0',

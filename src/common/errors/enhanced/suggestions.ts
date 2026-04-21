@@ -1,4 +1,4 @@
-import { ErrorType, ErrorContext } from './types';
+import { type ErrorContext, type ErrorType } from './types';
 
 /**
  * Helper to determine retry delay

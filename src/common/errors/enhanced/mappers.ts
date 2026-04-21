@@ -1,14 +1,14 @@
-import { ErrorType, ErrorContext } from './types';
 import {
   ApiError,
   AuthenticationError,
-  BaseHivemindError,
   ConfigurationError,
   NetworkError,
   RateLimitError,
   TimeoutError,
   ValidationError,
+  type BaseHivemindError,
 } from '../../../types/errorClasses';
+import { type ErrorContext, type ErrorType } from './types';
 
 /**
  * Map BaseHivemindError to ErrorType
@@ -153,6 +153,13 @@ export function detectErrorType(error: Error, context?: ErrorContext): ErrorType
   }
 
   return 'unknown_error';
+}
+
+/**
+ * Detect error type from message string
+ */
+export function detectErrorTypeFromMessage(message: string, context?: ErrorContext): ErrorType {
+  return detectErrorType(new Error(message), context);
 }
 
 /**

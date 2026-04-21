@@ -8,20 +8,15 @@
 import Debug from 'debug';
 import { BaseHivemindError } from '../../types/errorClasses';
 import { type LoggerInstance } from '../logger';
-import { ErrorContext, ActionableError, ErrorType } from './enhanced/types';
 import {
-  getSuggestions,
-  getDocsUrl,
-  getErrorTitle,
-  getRetryDelay,
-} from './enhanced/suggestions';
-import {
-  mapHivemindErrorToType,
   detectErrorType,
   detectErrorTypeFromMessage,
-  getUserFriendlyMessage,
   getStatusCode,
+  getUserFriendlyMessage,
+  mapHivemindErrorToType,
 } from './enhanced/mappers';
+import { getDocsUrl, getErrorTitle, getRetryDelay, getSuggestions } from './enhanced/suggestions';
+import { ActionableError, ErrorContext, ErrorType } from './enhanced/types';
 
 const debug = Debug('app:errors:enhanced');
 
