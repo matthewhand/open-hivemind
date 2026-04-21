@@ -1,6 +1,6 @@
 import Debug from 'debug';
-import type { SQLiteWrapper as Database } from './sqliteWrapper';
-import type { Anomaly } from './types';
+import type { SQLiteWrapper as Database } from '../sqliteWrapper';
+import type { Anomaly } from '../types';
 
 const debug = Debug('app:AnomalyRepository');
 

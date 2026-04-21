@@ -4,12 +4,12 @@ import { join } from 'path';
 import Debug from 'debug';
 import { injectable, singleton } from 'tsyringe';
 import { ConfigurationError, DatabaseError } from '@src/types/errorClasses';
-import { AIFeedbackRepository } from './AIFeedbackRepository';
-import { AnomalyRepository } from './AnomalyRepository';
-import { ApprovalRepository } from './ApprovalRepository';
-import { BotConfigRepository } from './BotConfigRepository';
-import { DecisionRepository } from './DecisionRepository';
-import { MessageRepository } from './MessageRepository';
+import { AIFeedbackRepository } from './repositories/AIFeedbackRepository';
+import { AnomalyRepository } from './repositories/AnomalyRepository';
+import { ApprovalRepository } from './repositories/ApprovalRepository';
+import { BotConfigRepository } from './repositories/BotConfigRepository';
+import { DecisionRepository } from './repositories/DecisionRepository';
+import { MessageRepository } from './repositories/MessageRepository';
 import { SQLiteWrapper as Database } from './sqliteWrapper';
 import type {
   Anomaly,
