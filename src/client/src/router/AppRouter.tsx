@@ -58,13 +58,11 @@ const OnboardingPage = lazy(() => import('../pages/OnboardingPage'));
 const AboutPage = lazy(() => import('../pages/AboutPage'));
 const ApiDocsPage = lazy(() => import('../pages/ApiDocsPage'));
 const HelpPage = lazy(() => import('../pages/HelpPage'));
-
+import TipRotator from '../components/TipRotator';
 
 interface LoadingFallbackProps {
   message?: string;
 }
-
-const TipRotator = lazy(() => import('../components/TipRotator'));
 
 const LoadingFallback: React.FC<LoadingFallbackProps> = ({ message: _message = 'Loading...' }) => (
   <div className="min-h-[60vh] p-6">
