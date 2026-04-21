@@ -90,7 +90,10 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
   res.setHeader('Content-Security-Policy', cspDirectives.join('; '));
 
   // HSTS (HTTP Strict Transport Security) - only in production
-  if (process.env.NODE_ENV === 'production' && (req.secure || req.headers['x-forwarded-proto'] === 'https')) {
+  if (
+    process.env.NODE_ENV === 'production' &&
+    (req.secure || req.headers['x-forwarded-proto'] === 'https')
+  ) {
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
   }
 

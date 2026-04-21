@@ -1,14 +1,14 @@
 import Debug from 'debug';
-import { BotManager } from '../../managers/BotManager';
-import { getMessengerService } from '../../managers/botLifecycle';
 import Logger from '../../common/logger';
+import { getMessengerService } from '../../managers/botLifecycle';
+import { BotManager } from '../../managers/BotManager';
 
 const debug = Debug('app:services:BotHeartbeatService');
 const logger = Logger.withContext('BotHeartbeatService');
 
 /**
  * BotHeartbeatService monitors the actual connectivity status of active bots.
- * If a bot is supposed to be running but the messenger connection (Discord/Slack) 
+ * If a bot is supposed to be running but the messenger connection (Discord/Slack)
  * has dropped, it automatically triggers a restart (Auto-Healing).
  */
 export class BotHeartbeatService {
@@ -34,7 +34,7 @@ export class BotHeartbeatService {
 
     logger.info('Starting Bot Heartbeat Service', { intervalMs: this.intervalMs });
     this.checkInterval = setInterval(() => this.checkBots(), this.intervalMs);
-    
+
     // Initial check after a short delay
     setTimeout(() => this.checkBots(), 5000);
   }
@@ -60,9 +60,9 @@ export class BotHeartbeatService {
     try {
       const botManager = await BotManager.getInstance();
       const botsStatus = await botManager.getBotsStatus();
-      
-      const activeRunningBots = botsStatus.filter(b => b.isActive && b.isRunning);
-      
+
+      const activeRunningBots = botsStatus.filter((b) => b.isActive && b.isRunning);
+
       if (activeRunningBots.length === 0) {
         this.isProcessing = false;
         return;
@@ -73,21 +73,24 @@ export class BotHeartbeatService {
       for (const botStatus of activeRunningBots) {
         try {
           const service = await getMessengerService(botStatus.provider);
-          
+
           if (!service) continue;
 
           // Heuristic check
           const isActuallyConnected = await (service as any).isConnected(botStatus.name);
 
           if (!isActuallyConnected) {
-            logger.warn(`Bot Auto-Healing triggered: ${botStatus.name} is active but disconnected`, { 
-              botId: botStatus.id,
-              provider: botStatus.provider 
-            });
+            logger.warn(
+              `Bot Auto-Healing triggered: ${botStatus.name} is active but disconnected`,
+              {
+                botId: botStatus.id,
+                provider: botStatus.provider,
+              }
+            );
 
             // Trigger restart
             await botManager.restartBot(botStatus.id);
-            
+
             logger.info(`Auto-healing restart completed for ${botStatus.name}`);
           }
         } catch (botErr) {
@@ -95,8 +98,8 @@ export class BotHeartbeatService {
         }
       }
     } catch (error) {
-      logger.error('Error during bot heartbeat check', { 
-        error: error instanceof Error ? error.message : String(error) 
+      logger.error('Error during bot heartbeat check', {
+        error: error instanceof Error ? error.message : String(error),
       });
     } finally {
       this.isProcessing = false;

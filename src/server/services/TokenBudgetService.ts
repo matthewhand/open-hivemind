@@ -100,7 +100,7 @@ export class TokenBudgetService {
    */
   public async incrementUsage(botId: string, tokens: number, model?: string): Promise<number> {
     const today = this.getTodayString();
-    
+
     if (!this.data.bots[botId] || this.data.bots[botId].day !== today) {
       this.data.bots[botId] = {
         botId,
@@ -113,7 +113,7 @@ export class TokenBudgetService {
     const usage = this.data.bots[botId];
     usage.dailyUsage += tokens;
     usage.lastUsed = new Date().toISOString();
-    
+
     if (model) {
       const costService = CostAnalyticsService.getInstance();
       await costService.recordCost(botId, model, tokens);
@@ -129,11 +129,11 @@ export class TokenBudgetService {
   public getDailyUsage(botId: string): number {
     const today = this.getTodayString();
     const usage = this.data.bots[botId];
-    
+
     if (!usage || usage.day !== today) {
       return 0;
     }
-    
+
     return usage.dailyUsage;
   }
 

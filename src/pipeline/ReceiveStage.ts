@@ -14,10 +14,10 @@
  */
 
 import Debug from 'debug';
+import { container } from 'tsyringe';
 import { type MessageBus } from '@src/events/MessageBus';
 import type { MessageContext } from '@src/events/types';
 import type { IMessage } from '@message/interfaces/IMessage';
-import { container } from 'tsyringe';
 import { PanicModeService } from '../server/services/PanicModeService';
 
 const debug = Debug('app:pipeline:receive');
@@ -59,8 +59,8 @@ export class ReceiveStage {
     try {
       const panicService = container.resolve(PanicModeService);
       if (panicService.isPanicModeEnabled()) {
-         debug('GLOBAL KILL SWITCH ACTIVE: Rejecting incoming message');
-         return null;
+        debug('GLOBAL KILL SWITCH ACTIVE: Rejecting incoming message');
+        return null;
       }
     } catch (e) {
       // Ignore DI errors during test/setup

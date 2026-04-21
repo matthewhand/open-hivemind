@@ -32,6 +32,10 @@ describe('Agent and Template API Integration', () => {
         { id: '1', name: 'Test Bot', isActive: true, messageProvider: 'discord', llmProvider: 'openai' }
       ]),
       getBotsStatus: jest.fn().mockResolvedValue([{ id: '1', isRunning: true }]),
+      on: jest.fn(),
+      off: jest.fn(),
+      emit: jest.fn(),
+      removeListener: jest.fn(),
     };
     jest.spyOn(BotManager, 'getInstance').mockResolvedValue(mockBotManager as any);
 

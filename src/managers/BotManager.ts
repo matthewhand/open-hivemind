@@ -14,10 +14,10 @@ import { performSingleBotHealthCheck, type BotHealthResult } from './botHealthCh
 import {
   BotRunningState,
   getMessengerService,
-  sendWelcomeMessage,
-  sendShutdownMessage,
-  sendErrorAlertMessage,
   sendDailyStatusReport,
+  sendErrorAlertMessage,
+  sendShutdownMessage,
+  sendWelcomeMessage,
   shutdownBotProvider,
   startBotById as startBotByIdHelper,
   stopBotById as stopBotByIdHelper,
@@ -691,5 +691,12 @@ export class BotManager extends EventEmitter {
         issues: ['Health check failed to execute'],
       };
     });
+  }
+
+  /**
+   * Check if a bot is currently running.
+   */
+  public isBotRunning(botId: string): boolean {
+    return this.runningState.isRunning(botId);
   }
 }

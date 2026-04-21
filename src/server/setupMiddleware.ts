@@ -45,8 +45,7 @@ export function setupMiddleware(app: express.Application, ctx: MiddlewareContext
   app.use((req: Request, res: Response, next: NextFunction) => {
     const origin = req.headers.origin;
     // Strictly match http://localhost or http://127.0.0.1 with optional port
-    const isLocalhost =
-      origin && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+    const isLocalhost = origin && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
 
     if (isLocalhost) {
       res.setHeader('Access-Control-Allow-Origin', origin!);

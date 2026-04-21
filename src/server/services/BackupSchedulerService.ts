@@ -1,6 +1,6 @@
 import Logger from '@common/logger';
-import { ConfigurationImportExportService } from './ConfigurationImportExportService';
 import { type BackupMetadata } from './configImportExport';
+import { ConfigurationImportExportService } from './ConfigurationImportExportService';
 
 const logger = Logger.withContext('BackupSchedulerService');
 
@@ -42,8 +42,8 @@ export class BackupSchedulerService {
     // Schedule the first backup after a short delay (e.g., 1 minute) to avoid startup congestion
     setTimeout(() => {
       this.performBackup().catch((err) => {
-        logger.error('Initial automated backup failed', { 
-          error: err instanceof Error ? err.message : String(err) 
+        logger.error('Initial automated backup failed', {
+          error: err instanceof Error ? err.message : String(err),
         });
       });
     }, 60000);
@@ -51,8 +51,8 @@ export class BackupSchedulerService {
     // Set up the daily interval
     this.interval = setInterval(() => {
       this.performBackup().catch((err) => {
-        logger.error('Scheduled automated backup failed', { 
-          error: err instanceof Error ? err.message : String(err) 
+        logger.error('Scheduled automated backup failed', {
+          error: err instanceof Error ? err.message : String(err),
         });
       });
     }, this.BACKUP_INTERVAL);
@@ -108,14 +108,14 @@ export class BackupSchedulerService {
    */
   private async applyRetentionPolicy(): Promise<void> {
     const configService = ConfigurationImportExportService.getInstance();
-    
+
     try {
       const backups: BackupMetadata[] = await configService.listBackups();
-      
+
       // listBackups already returns backups sorted by createdAt descending (newest first)
       if (backups.length > this.RETENTION_COUNT) {
         const toDelete = backups.slice(this.RETENTION_COUNT);
-        
+
         logger.info(`Applying retention policy: deleting ${toDelete.length} old backups`, {
           totalBackups: backups.length,
           retentionLimit: this.RETENTION_COUNT,
@@ -126,9 +126,9 @@ export class BackupSchedulerService {
             await configService.deleteBackup(backup.id);
             logger.debug('Deleted old backup', { backupId: backup.id, name: backup.name });
           } catch (err) {
-            logger.warn('Failed to delete old backup', { 
-              backupId: backup.id, 
-              error: err instanceof Error ? err.message : String(err) 
+            logger.warn('Failed to delete old backup', {
+              backupId: backup.id,
+              error: err instanceof Error ? err.message : String(err),
             });
           }
         }

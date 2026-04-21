@@ -20,9 +20,9 @@ import Debug from 'debug';
 import { type MessageBus } from '@src/events/MessageBus';
 import type { MessageContext } from '@src/events/types';
 import type { IMessage } from '@message/interfaces/IMessage';
-import { TokenBudgetService } from '../server/services/TokenBudgetService';
 import { sendErrorAlertMessage } from '../managers/botLifecycle';
 import { BotManager } from '../managers/BotManager';
+import { TokenBudgetService } from '../server/services/TokenBudgetService';
 
 const debug = Debug('app:pipeline:inference');
 
@@ -87,12 +87,12 @@ export class InferenceStage {
     try {
       const budgetService = TokenBudgetService.getInstance();
       const maxTokens = (ctx.botConfig as any).maxTokensPerDay as number;
-      
+
       // 1. Budget Pre-Check
       if (maxTokens && budgetService.isOverBudget(ctx.botName, maxTokens)) {
         const errorMsg = `Daily token budget exceeded for bot ${ctx.botName}. Limit: ${maxTokens}.`;
         debug(errorMsg);
-        
+
         // Notify admin and pause bot
         const botManager = await BotManager.getInstance();
         const bot = await botManager.getBot(ctx.botName);
@@ -100,7 +100,7 @@ export class InferenceStage {
           await sendErrorAlertMessage(bot, new Error(errorMsg));
           await botManager.stopBot(bot.id);
         }
-        
+
         throw new Error(errorMsg);
       }
 
@@ -136,9 +136,9 @@ export class InferenceStage {
 
       // 2. Budget Increment (Heuristic: ~4 chars per token for prompt + response)
       if (maxTokens) {
-         const estimatedTokens = Math.ceil((userMessage.length + responseText.length) / 4);
-         const model = (ctx.botConfig.MODEL as string) || 'gpt-4o';
-         await budgetService.incrementUsage(ctx.botName, estimatedTokens, model);
+        const estimatedTokens = Math.ceil((userMessage.length + responseText.length) / 4);
+        const model = (ctx.botConfig.MODEL as string) || 'gpt-4o';
+        await budgetService.incrementUsage(ctx.botName, estimatedTokens, model);
       }
 
       // Capture metadata for successful response

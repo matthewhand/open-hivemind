@@ -27,7 +27,7 @@ const PRICING_MAP: Record<string, number> = {
   'claude-3-haiku': 0.25,
   'gemini-1.5-pro': 3.5,
   'gemini-1.5-flash': 0.075,
-  'default': 5.0, // Default $5 per 1M tokens as requested
+  default: 5.0, // Default $5 per 1M tokens as requested
 };
 
 export class CostAnalyticsService {
@@ -122,22 +122,28 @@ export class CostAnalyticsService {
 
     this.data.records.push(record);
     this.scheduleSave();
-    
-    debug('Recorded cost for bot %s: $%f (%d tokens, model %s)', botId, estimatedCost, tokens, model);
+
+    debug(
+      'Recorded cost for bot %s: $%f (%d tokens, model %s)',
+      botId,
+      estimatedCost,
+      tokens,
+      model
+    );
   }
 
   public getHistoricalCosts(days: number = 7): CostRecord[] {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - days);
-    
-    return this.data.records.filter(r => new Date(r.timestamp) >= cutoff);
+
+    return this.data.records.filter((r) => new Date(r.timestamp) >= cutoff);
   }
 
-  public getDailyCosts(days: number = 7): { date: string, cost: number }[] {
+  public getDailyCosts(days: number = 7): { date: string; cost: number }[] {
     const records = this.getHistoricalCosts(days);
     const dailyMap: Record<string, number> = {};
 
-    records.forEach(r => {
+    records.forEach((r) => {
       const date = r.timestamp.split('T')[0];
       dailyMap[date] = (dailyMap[date] || 0) + r.estimatedCost;
     });

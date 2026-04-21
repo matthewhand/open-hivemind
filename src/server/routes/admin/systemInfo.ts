@@ -1,5 +1,6 @@
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
+import { container } from 'tsyringe';
 import { ErrorUtils } from '../../../common/ErrorUtils';
 import { DatabaseManager } from '../../../database/DatabaseManager';
 import { HTTP_STATUS } from '../../../types/constants';
@@ -10,7 +11,6 @@ import {
   getModelsForProvider,
   getSupportedProviders,
 } from '../../data/llmModels';
-import { container } from 'tsyringe';
 import { PanicModeService } from '../../services/PanicModeService';
 
 const router = Router();

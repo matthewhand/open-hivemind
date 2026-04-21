@@ -99,10 +99,9 @@ export class AnomalyDetectionService extends EventEmitter {
 
     // For specific high-value metrics, we run detection immediately if it's a single point anomaly
     if (metric === 'errors' && value > 0) {
-      this.runDetection().catch(err => debug('Detection run error:', err));
+      this.runDetection().catch((err) => debug('Detection run error:', err));
     }
   }
-
 
   async runDetection(): Promise<void> {
     if (!this.config.enabled || this.isDetecting) {

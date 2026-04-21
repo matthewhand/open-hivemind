@@ -91,22 +91,23 @@ export class ToolManager {
       // Automatically inject the built-in swarm routing tool
       tools.push({
         name: 'transfer_to_bot',
-        description: 'Transfer the conversation to another specialized bot in the hivemind when they are better suited to handle the request.',
+        description:
+          'Transfer the conversation to another specialized bot in the hivemind when they are better suited to handle the request.',
         serverName: 'built-in',
         parameters: {
           type: 'object',
           properties: {
             targetBotName: {
               type: 'string',
-              description: 'The exact name of the bot to transfer the conversation to.'
+              description: 'The exact name of the bot to transfer the conversation to.',
             },
             reason: {
               type: 'string',
-              description: 'The reason for transferring the conversation.'
-            }
+              description: 'The reason for transferring the conversation.',
+            },
           },
-          required: ['targetBotName', 'reason']
-        }
+          required: ['targetBotName', 'reason'],
+        },
       });
 
       debug(`Resolved ${tools.length} tools for bot "${botName}"`);
@@ -142,18 +143,18 @@ export class ToolManager {
 
       // Handle built-in swarm routing
       if (toolName === 'transfer_to_bot') {
-         const { MessageBus } = await import('@src/events/MessageBus');
-         const targetBotName = args.targetBotName as string;
-         
-         debug(`[${botName}] Initiating handoff to ${targetBotName}...`);
-         
-         // In a full implementation, we'd reconstruct the IMessage and emit 'message:incoming'.
-         // For now, we return a success signal that the LLM adapter can interpret to end its turn.
-         return {
-           toolName,
-           success: true,
-           result: `Successfully transferred conversation to ${targetBotName}. You should now stop responding and let the other bot take over.`,
-         };
+        const { MessageBus } = await import('@src/events/MessageBus');
+        const targetBotName = args.targetBotName as string;
+
+        debug(`[${botName}] Initiating handoff to ${targetBotName}...`);
+
+        // In a full implementation, we'd reconstruct the IMessage and emit 'message:incoming'.
+        // For now, we return a success signal that the LLM adapter can interpret to end its turn.
+        return {
+          toolName,
+          success: true,
+          result: `Successfully transferred conversation to ${targetBotName}. You should now stop responding and let the other bot take over.`,
+        };
       }
 
       const mcpService = MCPService.getInstance();
