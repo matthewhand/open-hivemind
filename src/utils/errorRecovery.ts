@@ -135,7 +135,12 @@ export class CircuitBreaker {
   /**
    * Get circuit breaker stats
    */
-  getStats() {
+  getStats(): {
+    state: CircuitState;
+    failureCount: number;
+    successCount: number;
+    lastFailureTime: number;
+  } {
     return {
       state: this.state,
       failureCount: this.failureCount,

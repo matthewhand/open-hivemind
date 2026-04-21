@@ -85,7 +85,7 @@ export class WebUIServer {
       origin: (
         origin: string | undefined,
         callback: (err: Error | null, origin?: string) => void
-      ) => {
+      ): void => {
         const allowedOrigins = process.env.CORS_ORIGIN
           ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
           : [];

@@ -12,7 +12,7 @@ router.get('/config', async (_req, res) => {
   try {
     const config = await webUIStorage.loadConfig();
     return res.json(config);
-  } catch (error) {
+  } catch (_error) {
     return res.status(500).json({ error: 'Failed to load configuration' });
   }
 });
@@ -24,7 +24,7 @@ router.post('/config', async (req, res) => {
     const newConfig = { ...currentConfig, ...req.body };
     await webUIStorage.saveConfig(newConfig);
     return res.json({ success: true, config: newConfig });
-  } catch (error) {
+  } catch (_error) {
     return res.status(500).json({ error: 'Failed to save configuration' });
   }
 });

@@ -16,6 +16,7 @@ import {
   TimeoutError,
   ValidationError,
 } from '../../types/errorClasses';
+import { type LoggerInstance } from '../logger';
 
 const debug = Debug('app:errors:enhanced');
 
@@ -814,7 +815,7 @@ export class EnhancedErrorHandler {
   /**
    * Log error with appropriate level
    */
-  static logError(actionableError: ActionableError, logger?: any): void {
+  static logError(actionableError: ActionableError, logger?: LoggerInstance): void {
     const logData = {
       errorType: actionableError.errorType,
       message: actionableError.message,
