@@ -1,9 +1,8 @@
 import Debug from 'debug';
 import { Router } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
-import { requireAdmin } from '../../auth/middleware';
+import { authenticate, requireAdmin } from '../../auth/middleware';
 import { DatabaseManager } from '../../database/DatabaseManager';
-import { authenticateToken } from '../middleware/auth';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { HTTP_STATUS } from '../../types/constants';
 import { LogActivitySchema } from '../../validation/schemas/activitySchema';
@@ -13,7 +12,7 @@ const debug = Debug('app:webui:activity');
 const router = Router();
 
 // Secure all activity routes with authentication and admin role
-router.use(authenticateToken, requireAdmin);
+router.use(authenticate, requireAdmin);
 
 interface ActivityFilter {
   agentId?: string;
