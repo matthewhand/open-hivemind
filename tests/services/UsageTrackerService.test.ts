@@ -6,7 +6,6 @@ jest.mock('fs', () => {
   const actualFs = jest.requireActual('fs');
   return {
     ...actualFs,
-    existsSync: jest.fn().mockReturnValue(true),
     promises: {
       ...actualFs.promises,
       mkdir: jest.fn().mockResolvedValue(undefined),

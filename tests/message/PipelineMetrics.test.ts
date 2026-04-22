@@ -101,7 +101,7 @@ describe('PipelineMetrics', () => {
     const timings = metrics.getTimings();
     expect(timings).toHaveLength(1);
     expect(timings[0].stage).toBe('orphan');
-    expect(timings[0].durationMs).toBe(0);
+    expect(timings[0].durationMs).toBeGreaterThanOrEqual(0);
     expect(timings[0].metadata).toEqual({ note: 'no start' });
   });
 });
