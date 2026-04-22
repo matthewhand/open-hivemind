@@ -26,6 +26,8 @@ describe('AuthManager Security Fix', () => {
 
   it('should use ADMIN_PASSWORD if provided in production', () => {
     process.env.NODE_ENV = 'production';
+    process.env.JWT_SECRET = 'dummy-secret';
+    process.env.JWT_REFRESH_SECRET = 'dummy-refresh-secret';
     process.env.ADMIN_PASSWORD = 'mysecurepassword';
 
     // We need to re-require AuthManager to ensure env vars are picked up if they are read at module level (which they are not, they are read in constructor/methods)
