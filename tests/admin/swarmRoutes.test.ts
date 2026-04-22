@@ -18,6 +18,11 @@ jest.mock('@integrations/openswarm/SwarmInstaller', () => {
   };
 });
 
+// Mock authenticate middleware
+jest.mock('../../src/auth/middleware', () => ({
+  authenticate: (req: express.Request, res: express.Response, next: express.NextFunction) => next()
+}));
+
 describe('Swarm Routes', () => {
   let app: express.Application;
 
