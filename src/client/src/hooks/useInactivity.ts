@@ -38,13 +38,16 @@ export function useInactivity({
 
   const reset = useCallback(() => {
     lastActiveRef.current = Date.now();
-    if (isIdle) {
-      setIsIdle(false);
-      onWake?.();
-    }
+    setIsIdle((prev) => {
+      if (prev) {
+        onWake?.();
+        return false;
+      }
+      return prev;
+    });
     clearTimer();
     timerRef.current = window.setTimeout(goIdle, timeoutMs);
-  }, [goIdle, isIdle, onWake, timeoutMs]);
+  }, [goIdle, onWake, timeoutMs]);
 
   useEffect(() => {
     // Initialize timer
@@ -59,13 +62,16 @@ export function useInactivity({
       reset();
     };
 
-    events.forEach(evt => window.addEventListener(evt, handleEvent, { passive: true }));
+    // Need to bind string events array instead of reference
+    const boundEvents = [...events];
+    boundEvents.forEach(evt => window.addEventListener(evt, handleEvent, { passive: true }));
 
     return () => {
       clearTimer();
-      events.forEach(evt => window.removeEventListener(evt, handleEvent));
+      boundEvents.forEach(evt => window.removeEventListener(evt, handleEvent));
     };
-  }, [events, reset]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [events.join(','), reset]);
 
   return { isIdle, reset, lastActive: lastActiveRef.current };
 }

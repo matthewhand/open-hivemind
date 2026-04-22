@@ -46,6 +46,8 @@ describe('AuthManager Security Fix', () => {
 
   it('should throw CRITICAL error if ADMIN_PASSWORD is missing in production', () => {
     process.env.NODE_ENV = 'production';
+    process.env.JWT_SECRET = 'dummy-secret';
+    process.env.JWT_REFRESH_SECRET = 'dummy-refresh-secret';
     delete process.env.ADMIN_PASSWORD;
 
     expect(() => {

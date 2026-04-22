@@ -100,6 +100,7 @@ describe('UsageTrackerService', () => {
       providers: {},
       lastUpdated: new Date().toISOString()
     };
+    (fs.existsSync as jest.Mock) = jest.fn().mockReturnValue(true);
     (fs.promises.readFile as jest.Mock).mockResolvedValue(JSON.stringify(existingData));
     
     // Re-initialize to trigger load
@@ -108,7 +109,8 @@ describe('UsageTrackerService', () => {
     
     // Use real timers for this part to allow async init to complete
     jest.useRealTimers();
-    await new Promise(resolve => setTimeout(resolve, 50));
+    // Wait for the next tick to allow load() to complete
+    await new Promise(resolve => setImmediate(resolve));
     jest.useFakeTimers();
     
     expect(newService.getToolMetrics('old-tool')).toMatchObject({ usageCount: 5 });
