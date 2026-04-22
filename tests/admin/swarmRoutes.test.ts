@@ -1,8 +1,13 @@
 import express from 'express';
 import request from 'supertest';
 import { SwarmInstaller } from '@integrations/openswarm/SwarmInstaller';
-import swarmRouter from '../../src/admin/swarmRoutes';
 import { providerRegistry } from '../../src/registries/ProviderRegistry';
+
+jest.mock('../../src/auth/middleware', () => ({
+  authenticate: (req: any, res: any, next: any) => next()
+}));
+
+import swarmRouter from '../../src/admin/swarmRoutes';
 
 // Mock the SwarmInstaller to return successful responses
 jest.mock('@integrations/openswarm/SwarmInstaller', () => {
