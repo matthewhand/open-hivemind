@@ -32,3 +32,7 @@
 ## 2024-05-18 - Avoid O(N) array methods inside loop maps
 **Learning:** Calling O(N) array methods like `.find()` inside a `.map()` callback leads to O(N*M) time complexity, potentially blocking the main thread during component renders or effects.
 **Action:** Pre-compute a lookup Map before iterating, utilizing `new Map(items.map(i => [i.key, i.value]))` to achieve O(1) lookups and reduce overall complexity to O(N + M).
+
+## 2025-01-22 - DashboardWidgetSystem Array.find Bottleneck
+**Learning:** `DashboardWidgetSystem` was calling `widgetTypes.find()` for every visible widget during the render cycle within a `.map()` block. This resulted in O(N*M) time complexity, where N is the number of widgets and M is the number of widget types.
+**Action:** Pre-compute a lookup map `widgetTypeMap` using `useMemo` to cache widget types by ID, reducing the lookup complexity to O(1) and the overall rendering complexity to O(N+M).

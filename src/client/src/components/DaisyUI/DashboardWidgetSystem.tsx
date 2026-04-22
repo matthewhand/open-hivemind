@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Debug from 'debug';
 import Card from './Card';
 const debug = Debug('app:client:components:DaisyUI:DashboardWidgetSystem');
@@ -217,19 +217,8 @@ const SystemHealthWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate
   );
 };
 
-const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
-  initialWidgets = [],
-  onWidgetsChange,
-  readOnly = false,
-  gridSize = 20,
-}) => {
-  const [widgets, setWidgets] = useState<Widget[]>(initialWidgets);
-  const [isEditing, setIsEditing] = useState(false);
-  const [draggedWidget, setDraggedWidget] = useState<string | null>(null);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [showWidgetPalette, setShowWidgetPalette] = useState(false);
-
-  const widgetTypes: WidgetType[] = [
+// Define static widget types outside the component to avoid re-creation on every render
+const WIDGET_TYPES: WidgetType[] = [
     {
       id: 'stats',
       name: 'Statistics',
@@ -275,7 +264,22 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
       component: SystemHealthWidget,
       configurable: true,
     },
-  ];
+];
+
+// Pre-compute a lookup map to achieve O(1) lookups during render, replacing O(N) array .find() calls
+const WIDGET_TYPE_MAP = new Map(WIDGET_TYPES.map(t => [t.id, t]));
+
+const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
+  initialWidgets = [],
+  onWidgetsChange,
+  readOnly = false,
+  gridSize = 20,
+}) => {
+  const [widgets, setWidgets] = useState<Widget[]>(initialWidgets);
+  const [isEditing, setIsEditing] = useState(false);
+  const [draggedWidget, setDraggedWidget] = useState<string | null>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [showWidgetPalette, setShowWidgetPalette] = useState(false);
 
   // Save widgets to localStorage
   useEffect(() => {
@@ -299,7 +303,7 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
   }, [initialWidgets]);
 
   const addWidget = (type: string) => {
-    const widgetType = widgetTypes.find(t => t.id === type);
+    const widgetType = WIDGET_TYPE_MAP.get(type);
     if (!widgetType) {return;}
 
     const newWidget: Widget = {
@@ -458,7 +462,7 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
       {showWidgetPalette && (
         <Card className="fixed top-20 right-4 z-40 w-80" title="Add Widget">
           <div className="grid grid-cols-1 gap-2">
-            {widgetTypes.map(type => (
+            {WIDGET_TYPES.map(type => (
               <button
                 key={type.id}
                 className="btn btn-outline justify-start gap-3"
@@ -490,7 +494,7 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
 
         {/* Widgets */}
         {widgets.filter(w => w.isVisible).map(widget => {
-          const WidgetComponent = widgetTypes.find(t => t.id === widget.type)?.component;
+          const WidgetComponent = WIDGET_TYPE_MAP.get(widget.type)?.component;
           if (!WidgetComponent) {return null;}
 
           return (

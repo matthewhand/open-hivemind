@@ -1,0 +1,76 @@
+--- src/client/src/components/DaisyUI/DashboardWidgetSystem.tsx
++++ src/client/src/components/DaisyUI/DashboardWidgetSystem.tsx
+@@ -223,14 +223,8 @@
+   gridSize?: number;
+ }
+
+-const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
+-  initialWidgets = [],
+-  onWidgetsChange,
+-  readOnly = false,
+-  gridSize = 20,
+-}) => {
+-  const [widgets, setWidgets] = useState<Widget[]>(initialWidgets);
+-  const [isEditing, setIsEditing] = useState(false);
+-  const [draggedWidget, setDraggedWidget] = useState<string | null>(null);
+-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+-  const [showWidgetPalette, setShowWidgetPalette] = useState(false);
+-
+-  const widgetTypes: WidgetType[] = useMemo(() => [
++// Define static widget types outside the component to avoid re-creation on every render
++const WIDGET_TYPES: WidgetType[] = [
+     {
+       id: 'stats',
+       name: 'Statistics',
+@@ -275,9 +269,22 @@
+       component: SystemHealthWidget,
+       configurable: true,
+     },
+-  ], []);
++];
++
++// Pre-compute a lookup map to achieve O(1) lookups during render, replacing O(N) array .find() calls
++const WIDGET_TYPE_MAP = new Map(WIDGET_TYPES.map(t => [t.id, t]));
+
+-  const widgetTypeMap = useMemo(() => new Map(widgetTypes.map(t => [t.id, t])), [widgetTypes]);
++const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
++  initialWidgets = [],
++  onWidgetsChange,
++  readOnly = false,
++  gridSize = 20,
++}) => {
++  const [widgets, setWidgets] = useState<Widget[]>(initialWidgets);
++  const [isEditing, setIsEditing] = useState(false);
++  const [draggedWidget, setDraggedWidget] = useState<string | null>(null);
++  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
++  const [showWidgetPalette, setShowWidgetPalette] = useState(false);
+
+   // Save widgets to localStorage
+   useEffect(() => {
+@@ -301,7 +308,7 @@
+   }, [initialWidgets]);
+
+   const addWidget = (type: string) => {
+-    const widgetType = widgetTypeMap.get(type);
++    const widgetType = WIDGET_TYPE_MAP.get(type);
+     if (!widgetType) {return;}
+
+     const newWidget: Widget = {
+@@ -460,7 +467,7 @@
+       {showWidgetPalette && (
+         <Card className="fixed top-20 right-4 z-40 w-80" title="Add Widget">
+           <div className="grid grid-cols-1 gap-2">
+-            {widgetTypes.map(type => (
++            {WIDGET_TYPES.map(type => (
+               <button
+                 key={type.id}
+                 className="btn btn-outline justify-start gap-3"
+@@ -492,7 +499,7 @@
+
+         {/* Widgets */}
+         {widgets.filter(w => w.isVisible).map(widget => {
+-          const WidgetComponent = widgetTypeMap.get(widget.type)?.component;
++          const WidgetComponent = WIDGET_TYPE_MAP.get(widget.type)?.component;
+           if (!WidgetComponent) {return null;}
+
+           return (
