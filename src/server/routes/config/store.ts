@@ -5,6 +5,7 @@ import llmConfig from '../../../config/llmConfig';
 import llmTaskConfig from '../../../config/llmTaskConfig';
 import messageConfig from '../../../config/messageConfig';
 import webhookConfig from '../../../config/webhookConfig';
+import databaseConfig from '../../../config/databaseConfig';
 import { providerRegistry } from '../../../registries/ProviderRegistry';
 import { createLogger } from '../../../common/StructuredLogger';
 
@@ -17,6 +18,7 @@ export const coreSchemaSources: Record<string, any> = {
   llm: llmConfig,
   llmTask: llmTaskConfig,
   webhook: webhookConfig,
+  database: databaseConfig,
 };
 
 // Map of base config types to their convict objects (used as schema sources)

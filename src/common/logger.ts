@@ -1,4 +1,5 @@
 import { redactSensitiveInfo } from './redactSensitiveInfo';
+import databaseConfig from '../config/databaseConfig';
 
 type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error';
 
@@ -183,7 +184,35 @@ function logInternal(level: LogLevel, ...args: unknown[]): void {
     return;
   }
   const consoleMethod = getConsoleMethod(level);
-  consoleMethod(...sanitizeArgs(args));
+  const sanitizedArgs = sanitizeArgs(args);
+  consoleMethod(...sanitizedArgs);
+
+  // Persist to database if enabled
+  if (databaseConfig.get('LOG_TO_DATABASE')) {
+    try {
+      const { DatabaseManager } = require('../database/DatabaseManager');
+      const dbManager = DatabaseManager.getInstance();
+      if (dbManager.isConnected()) {
+        const message = args.filter((a) => typeof a === 'string').join(' ');
+        const details = args.find((a) => typeof a === 'object' && !(a instanceof Error));
+        const contextMatch =
+          args[0] &&
+          typeof args[0] === 'string' &&
+          args[0].startsWith('[') &&
+          args[0].endsWith(']');
+        const context = contextMatch ? (args[0] as string).slice(1, -1) : undefined;
+
+        dbManager.saveLog({
+          level,
+          message: sanitizeLooseString(message),
+          context,
+          details: details ? sanitizeValue(undefined, details, new WeakSet()) : undefined,
+        });
+      }
+    } catch (e) {
+      // Ignore errors in database logging to avoid infinite loops
+    }
+  }
 }
 
 export function sanitizeForLogging<T>(value: T, key?: string): unknown {

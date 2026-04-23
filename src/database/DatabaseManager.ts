@@ -4,13 +4,15 @@ import { join } from 'path';
 import Debug from 'debug';
 import { injectable, singleton } from 'tsyringe';
 import { ConfigurationError, DatabaseError } from '@src/types/errorClasses';
+import databaseConfig from '@src/config/databaseConfig';
 import { AIFeedbackRepository } from './repositories/AIFeedbackRepository';
 import { AnomalyRepository } from './repositories/AnomalyRepository';
 import { ApprovalRepository } from './repositories/ApprovalRepository';
 import { BotConfigRepository } from './repositories/BotConfigRepository';
 import { DecisionRepository } from './repositories/DecisionRepository';
 import { MessageRepository } from './repositories/MessageRepository';
-import { SQLiteWrapper as Database } from './sqliteWrapper';
+import { SQLiteWrapper } from './sqliteWrapper';
+import { PostgresWrapper } from './postgresWrapper';
 import type {
   Anomaly,
   ApprovalRequest,
@@ -21,6 +23,7 @@ import type {
   ConversationSummary,
   DatabaseConfig,
   DecisionRecord,
+  IDatabase,
   MessageRecord,
 } from './types';
 
@@ -52,6 +55,7 @@ export type {
   Anomaly,
   ApprovalRequest,
   AIFeedback,
+  IDatabase,
 } from './types';
 
 export type { Database } from './sqliteWrapper';
@@ -65,7 +69,7 @@ export class DatabaseManager {
   private config?: DatabaseConfig;
   private configured = false;
   private connected = false;
-  private db: Database | null = null;
+  private db: IDatabase | null = null;
 
   // Repositories
   private messageRepo!: MessageRepository;
@@ -77,6 +81,23 @@ export class DatabaseManager {
 
   constructor() {
     this.initRepositories();
+    // Load config from databaseConfig (convict)
+    const type = databaseConfig.get('DATABASE_TYPE') as 'sqlite' | 'postgres';
+    if (type === 'sqlite') {
+      this.configure({
+        type: 'sqlite',
+        path: databaseConfig.get('DATABASE_PATH'),
+      });
+    } else {
+      this.configure({
+        type: 'postgres',
+        host: databaseConfig.get('DATABASE_HOST'),
+        port: databaseConfig.get('DATABASE_PORT'),
+        username: databaseConfig.get('DATABASE_USER'),
+        password: databaseConfig.get('DATABASE_PASSWORD'),
+        database: databaseConfig.get('DATABASE_NAME'),
+      });
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -88,14 +109,6 @@ export class DatabaseManager {
    *
    * @param {DatabaseConfig} [config] - Optional database configuration to apply
    * @returns {DatabaseManager} The singleton instance
-   * @example
-   * ```typescript
-   * const db = DatabaseManager.getInstance({
-   *   type: 'sqlite',
-   *   path: './data/hivemind.db'
-   * });
-   * await db.connect();
-   * ```
    */
 
   static getInstance(config?: DatabaseConfig): DatabaseManager {
@@ -148,15 +161,32 @@ export class DatabaseManager {
           await fs.mkdir(dbDir, { recursive: true });
         }
 
-        this.db = new Database(dbPath);
-        debug('DATABASE_MANAGER: this.db initialized, type:', typeof this.db);
-        if (this.db && (this.db as any).exec) {
-          debug('DATABASE_MANAGER: this.db.exec exists');
-        }
-
+        this.db = new SQLiteWrapper(dbPath);
+        debug('DATABASE_MANAGER: this.db initialized (SQLite)');
+        
         await this.createTables();
         await this.createIndexes();
         await this.migrate();
+      } else if (this.config.type === 'postgres') {
+        const dbUrl = process.env.DATABASE_URL || databaseConfig.get('DATABASE_URL');
+        if (dbUrl) {
+          this.db = new PostgresWrapper(dbUrl);
+        } else {
+          this.db = new PostgresWrapper({
+            host: this.config.host,
+            port: this.config.port,
+            user: this.config.username,
+            password: this.config.password,
+            database: this.config.database,
+            ssl: databaseConfig.get('DATABASE_SSL') ? { rejectUnauthorized: false } : false,
+          });
+        }
+        debug('DATABASE_MANAGER: this.db initialized (Postgres)');
+        
+        await this.createTables();
+        await this.createIndexes();
+        // Skip sqlite-specific migrations for postgres for now, 
+        // or implement postgres-specific ones.
       } else {
         throw new ConfigurationError(
           `Database type ${this.config.type} not yet implemented`,
@@ -201,7 +231,7 @@ export class DatabaseManager {
   // ---------------------------------------------------------------------------
 
   private initRepositories(): void {
-    const getDb = (): Database | null => this.db ?? null;
+    const getDb = (): any => this.db ?? null;
     const isConn = (): boolean => this.connected;
     const ensure = (): void => this.ensureConnected();
 
@@ -214,79 +244,93 @@ export class DatabaseManager {
   }
 
   // ---------------------------------------------------------------------------
-  // Schema creation (private, unchanged)
+  // Schema creation (private)
   // ---------------------------------------------------------------------------
 
   private async createTables(): Promise<void> {
     if (!this.db) throw new DatabaseError('Database not initialized', 'DATABASE_NOT_INITIALIZED');
     const db = this.db;
+    const isPostgres = this.config?.type === 'postgres';
+
+    const pk_auto = isPostgres ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
+    const text_type = isPostgres ? 'TEXT' : 'TEXT';
+    const datetime_type = isPostgres ? 'TIMESTAMP' : 'DATETIME';
+    const default_now = isPostgres ? 'CURRENT_TIMESTAMP' : 'CURRENT_TIMESTAMP';
 
     // Messages table
     await db.exec(`
       CREATE TABLE IF NOT EXISTS messages (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id ${pk_auto},
         messageId TEXT NOT NULL,
         channelId TEXT NOT NULL,
         content TEXT NOT NULL,
         authorId TEXT NOT NULL,
         authorName TEXT NOT NULL,
-        timestamp DATETIME NOT NULL,
+        timestamp ${datetime_type} NOT NULL,
         provider TEXT NOT NULL,
         metadata TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        tenantId TEXT,
+        created_at ${datetime_type} DEFAULT ${default_now}
       )
     `);
 
     // Conversation summaries table
     await db.exec(`
       CREATE TABLE IF NOT EXISTS conversation_summaries (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id ${pk_auto},
         channelId TEXT NOT NULL,
         summary TEXT NOT NULL,
         messageCount INTEGER NOT NULL,
-        startTimestamp DATETIME NOT NULL,
-        endTimestamp DATETIME NOT NULL,
+        startTimestamp ${datetime_type} NOT NULL,
+        endTimestamp ${datetime_type} NOT NULL,
         provider TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at ${datetime_type} DEFAULT ${default_now}
       )
     `);
 
     // Bot metrics table
     await db.exec(`
       CREATE TABLE IF NOT EXISTS bot_metrics (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id ${pk_auto},
         botName TEXT NOT NULL,
         messagesSent INTEGER DEFAULT 0,
         messagesReceived INTEGER DEFAULT 0,
         conversationsHandled INTEGER DEFAULT 0,
         averageResponseTime REAL DEFAULT 0,
-        lastActivity DATETIME,
+        lastActivity ${datetime_type},
         provider TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        tenantId TEXT,
+        created_at ${datetime_type} DEFAULT ${default_now},
+        updated_at ${datetime_type} DEFAULT ${default_now}
       )
     `);
+    
+    // Add unique constraint for bot_metrics in postgres if needed for INSERT OR REPLACE emulation
+    if (isPostgres) {
+       try { await db.exec('ALTER TABLE bot_metrics ADD CONSTRAINT bot_metrics_name_unique UNIQUE (botName)'); } catch(e) {}
+    }
 
     // Bot sessions table
     await db.exec(`
       CREATE TABLE IF NOT EXISTS bot_sessions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id ${pk_auto},
         sessionId TEXT UNIQUE NOT NULL,
         botName TEXT NOT NULL,
         channelId TEXT NOT NULL,
         provider TEXT NOT NULL,
-        startTime DATETIME NOT NULL,
-        endTime DATETIME,
+        startTime ${datetime_type} NOT NULL,
+        endTime ${datetime_type},
         messageCount INTEGER DEFAULT 0,
-        isActive BOOLEAN DEFAULT 1,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        isActive BOOLEAN DEFAULT ${isPostgres ? 'TRUE' : '1'},
+        tenantId TEXT,
+        created_at ${datetime_type} DEFAULT ${default_now}
       )
     `);
 
     // Bot configurations table
     await db.exec(`
       CREATE TABLE IF NOT EXISTS bot_configurations (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id ${pk_auto},
         name TEXT UNIQUE NOT NULL,
         messageProvider TEXT NOT NULL,
         llmProvider TEXT NOT NULL,
@@ -301,9 +345,10 @@ export class DatabaseManager {
         flowise TEXT,
         openwebui TEXT,
         openswarm TEXT,
-        isActive BOOLEAN DEFAULT 1,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        tenantId TEXT,
+        isActive BOOLEAN DEFAULT ${isPostgres ? 'TRUE' : '1'},
+        createdAt ${datetime_type} DEFAULT ${default_now},
+        updatedAt ${datetime_type} DEFAULT ${default_now},
         createdBy TEXT,
         updatedBy TEXT
       )
@@ -312,7 +357,7 @@ export class DatabaseManager {
     // Bot configuration versions table
     await db.exec(`
       CREATE TABLE IF NOT EXISTS bot_configuration_versions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id ${pk_auto},
         botConfigurationId INTEGER NOT NULL,
         version TEXT NOT NULL,
         name TEXT NOT NULL,
@@ -329,27 +374,27 @@ export class DatabaseManager {
         flowise TEXT,
         openwebui TEXT,
         openswarm TEXT,
-        isActive BOOLEAN DEFAULT 1,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        tenantId TEXT,
+        isActive BOOLEAN DEFAULT ${isPostgres ? 'TRUE' : '1'},
+        createdAt ${datetime_type} DEFAULT ${default_now},
         createdBy TEXT,
-        changeLog TEXT,
-        FOREIGN KEY (botConfigurationId) REFERENCES bot_configurations(id) ON DELETE CASCADE
+        changeLog TEXT
       )
     `);
 
     // Bot configuration audit table
     await db.exec(`
       CREATE TABLE IF NOT EXISTS bot_configuration_audit (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id ${pk_auto},
         botConfigurationId INTEGER NOT NULL,
         action TEXT NOT NULL,
         oldValues TEXT,
         newValues TEXT,
         performedBy TEXT,
-        performedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        performedAt ${datetime_type} DEFAULT ${default_now},
         ipAddress TEXT,
         userAgent TEXT,
-        FOREIGN KEY (botConfigurationId) REFERENCES bot_configurations(id) ON DELETE CASCADE
+        tenantId TEXT
       )
     `);
 
@@ -363,51 +408,48 @@ export class DatabaseManager {
         maxBots INTEGER DEFAULT 5,
         maxUsers INTEGER DEFAULT 3,
         storageQuota INTEGER DEFAULT 1073741824,
-        features TEXT, -- JSON array
-        isActive BOOLEAN DEFAULT 1,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        expiresAt DATETIME
+        features TEXT,
+        isActive BOOLEAN DEFAULT ${isPostgres ? 'TRUE' : '1'},
+        createdAt ${datetime_type} DEFAULT ${default_now},
+        expiresAt ${datetime_type}
       )
     `);
 
     // Roles table
     await db.exec(`
       CREATE TABLE IF NOT EXISTS roles (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id ${pk_auto},
         name TEXT NOT NULL,
         description TEXT,
         level INTEGER DEFAULT 0,
-        permissions TEXT, -- JSON array
-        isActive BOOLEAN DEFAULT 1,
+        permissions TEXT,
+        isActive BOOLEAN DEFAULT ${isPostgres ? 'TRUE' : '1'},
         tenantId TEXT NOT NULL,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (tenantId) REFERENCES tenants(id) ON DELETE CASCADE
+        createdAt ${datetime_type} DEFAULT ${default_now},
+        updatedAt ${datetime_type} DEFAULT ${default_now}
       )
     `);
 
     // Users table
     await db.exec(`
       CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id ${pk_auto},
         username TEXT UNIQUE NOT NULL,
         email TEXT UNIQUE NOT NULL,
         passwordHash TEXT NOT NULL,
         roleId INTEGER,
         tenantId TEXT NOT NULL,
-        isActive BOOLEAN DEFAULT 1,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        lastLogin DATETIME,
-        FOREIGN KEY (roleId) REFERENCES roles(id),
-        FOREIGN KEY (tenantId) REFERENCES tenants(id) ON DELETE CASCADE
+        isActive BOOLEAN DEFAULT ${isPostgres ? 'TRUE' : '1'},
+        createdAt ${datetime_type} DEFAULT ${default_now},
+        lastLogin ${datetime_type}
       )
     `);
 
     // Audits table
     await db.exec(`
       CREATE TABLE IF NOT EXISTS audits (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        id ${pk_auto},
+        timestamp ${datetime_type} DEFAULT ${default_now},
         userId INTEGER,
         action TEXT NOT NULL,
         resource TEXT NOT NULL,
@@ -417,17 +459,15 @@ export class DatabaseManager {
         userAgent TEXT,
         severity TEXT DEFAULT 'info',
         status TEXT DEFAULT 'success',
-        details TEXT, -- JSON
-        metadata TEXT, -- JSON
-        FOREIGN KEY (userId) REFERENCES users(id),
-        FOREIGN KEY (tenantId) REFERENCES tenants(id)
+        details TEXT,
+        metadata TEXT
       )
     `);
 
     // Approval requests table
     await db.exec(`
       CREATE TABLE IF NOT EXISTS approval_requests (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id ${pk_auto},
         resourceType TEXT NOT NULL,
         resourceId INTEGER NOT NULL,
         changeType TEXT NOT NULL,
@@ -435,11 +475,10 @@ export class DatabaseManager {
         diff TEXT,
         status TEXT NOT NULL DEFAULT 'pending',
         reviewedBy TEXT,
-        reviewedAt DATETIME,
+        reviewedAt ${datetime_type},
         reviewComments TEXT,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        tenantId TEXT,
-        FOREIGN KEY (tenantId) REFERENCES tenants(id) ON DELETE CASCADE
+        createdAt ${datetime_type} DEFAULT ${default_now},
+        tenantId TEXT
       )
     `);
 
@@ -447,29 +486,28 @@ export class DatabaseManager {
     await db.exec(`
       CREATE TABLE IF NOT EXISTS anomalies (
         id TEXT PRIMARY KEY,
-        timestamp DATETIME NOT NULL,
+        timestamp ${datetime_type} NOT NULL,
         metric TEXT NOT NULL,
         value REAL NOT NULL,
         expectedMean REAL NOT NULL,
         standardDeviation REAL NOT NULL,
         zScore REAL NOT NULL,
         threshold REAL NOT NULL,
-        severity TEXT NOT NULL CHECK (severity IN ('low', 'medium', 'high', 'critical')),
+        severity TEXT NOT NULL,
         explanation TEXT NOT NULL,
-        resolved BOOLEAN DEFAULT 0,
+        resolved BOOLEAN DEFAULT ${isPostgres ? 'FALSE' : '0'},
         tenantId TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (tenantId) REFERENCES tenants(id) ON DELETE CASCADE
+        created_at ${datetime_type} DEFAULT ${default_now}
       )
     `);
 
     // AI Feedback table
     await db.exec(`
       CREATE TABLE IF NOT EXISTS ai_feedback (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id ${pk_auto},
         recommendationId TEXT NOT NULL,
         feedback TEXT NOT NULL,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        timestamp ${datetime_type} DEFAULT ${default_now},
         metadata TEXT
       )
     `);
@@ -477,13 +515,26 @@ export class DatabaseManager {
     // Decisions table
     await db.exec(`
       CREATE TABLE IF NOT EXISTS decisions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id ${pk_auto},
         botName TEXT,
         shouldReply BOOLEAN,
         reason TEXT,
         probabilityRoll REAL,
         threshold REAL,
         timestamp TEXT
+      )
+    `);
+
+    // Logs table for database persistence
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS logs (
+        id ${pk_auto},
+        timestamp ${datetime_type} DEFAULT ${default_now},
+        level TEXT NOT NULL,
+        context TEXT,
+        message TEXT NOT NULL,
+        details TEXT,
+        metadata TEXT
       )
     `);
 
@@ -536,46 +587,19 @@ export class DatabaseManager {
       `CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_performed_at ON bot_configuration_audit(performedAt DESC)`
     );
 
-    // Approval requests indexes
-    await db.exec(
-      `CREATE INDEX IF NOT EXISTS idx_approval_requests_resource ON approval_requests(resourceType, resourceId)`
-    );
-    await db.exec(
-      `CREATE INDEX IF NOT EXISTS idx_approval_requests_status ON approval_requests(status)`
-    );
-    await db.exec(
-      `CREATE INDEX IF NOT EXISTS idx_approval_requests_requested_by ON approval_requests(requestedBy)`
-    );
-    await db.exec(
-      `CREATE INDEX IF NOT EXISTS idx_approval_requests_created_at ON approval_requests(createdAt DESC)`
-    );
-    await db.exec(
-      `CREATE INDEX IF NOT EXISTS idx_approval_requests_tenant ON approval_requests(tenantId)`
-    );
-
-    // Anomalies indexes
-    await db.exec(
-      `CREATE INDEX IF NOT EXISTS idx_anomalies_timestamp ON anomalies(timestamp DESC)`
-    );
-    await db.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_metric ON anomalies(metric)`);
-    await db.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_severity ON anomalies(severity)`);
-    await db.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_resolved ON anomalies(resolved)`);
-    await db.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_tenant ON anomalies(tenantId)`);
-
-    // AI Feedback indexes
-    await db.exec(
-      `CREATE INDEX IF NOT EXISTS idx_ai_feedback_recommendation ON ai_feedback(recommendationId)`
-    );
+    // Logs indexes
+    await db.exec(`CREATE INDEX IF NOT EXISTS idx_logs_timestamp ON logs(timestamp DESC)`);
+    await db.exec(`CREATE INDEX IF NOT EXISTS idx_logs_level ON logs(level)`);
 
     debug('Database indexes created');
   }
 
   private async migrate(): Promise<void> {
-    if (!this.db) throw new Error('Database not initialized');
+    if (!this.db || this.config?.type === 'postgres') return; 
     const db = this.db;
 
     try {
-      // Add tenantId columns to existing tables
+      // SQLite specific migration additions
       await db.exec(`ALTER TABLE bot_configurations ADD COLUMN tenantId TEXT`);
       await db.exec(`ALTER TABLE bot_configuration_versions ADD COLUMN tenantId TEXT`);
       await db.exec(`ALTER TABLE bot_configuration_audit ADD COLUMN tenantId TEXT`);
@@ -583,41 +607,44 @@ export class DatabaseManager {
       await db.exec(`ALTER TABLE bot_sessions ADD COLUMN tenantId TEXT`);
       await db.exec(`ALTER TABLE bot_metrics ADD COLUMN tenantId TEXT`);
 
-      // Add RBAC enhancements to roles table
-      await db.exec(`ALTER TABLE roles ADD COLUMN description TEXT`);
-      await db.exec(`ALTER TABLE roles ADD COLUMN level INTEGER DEFAULT 0`);
-      await db.exec(`ALTER TABLE roles ADD COLUMN isActive BOOLEAN DEFAULT 1`);
-      await db.exec(`ALTER TABLE roles ADD COLUMN createdAt DATETIME DEFAULT CURRENT_TIMESTAMP`);
-      await db.exec(`ALTER TABLE roles ADD COLUMN updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP`);
-
-      // Add indexes for tenantId
-      await db.exec(
-        `CREATE INDEX IF NOT EXISTS idx_bot_configurations_tenant ON bot_configurations(tenantId)`
-      );
-      await db.exec(`CREATE INDEX IF NOT EXISTS idx_messages_tenant ON messages(tenantId)`);
-      await db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_sessions_tenant ON bot_sessions(tenantId)`);
-      await db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_metrics_tenant ON bot_metrics(tenantId)`);
-      await db.exec(
-        `CREATE INDEX IF NOT EXISTS idx_bot_configuration_versions_tenant ON bot_configuration_versions(tenantId)`
-      );
-      await db.exec(
-        `CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_tenant ON bot_configuration_audit(tenantId)`
-      );
-      await db.exec(`CREATE INDEX IF NOT EXISTS idx_roles_tenant ON roles(tenantId)`);
-      await db.exec(`CREATE INDEX IF NOT EXISTS idx_roles_level ON roles(level)`);
-      await db.exec(`CREATE INDEX IF NOT EXISTS idx_users_tenant ON users(tenantId)`);
-      await db.exec(`CREATE INDEX IF NOT EXISTS idx_audits_tenant ON audits(tenantId)`);
-      await db.exec(`CREATE INDEX IF NOT EXISTS idx_audits_user ON audits(userId)`);
-
       debug('Database migration completed');
     } catch (error) {
-      // Ignore errors if columns already exist (SQLite ALTER throws if exists)
       if ((error as Error).message.includes('duplicate column name')) {
         debug('Some columns already exist, skipping');
       } else {
         debug('Migration error:', error);
         throw error;
       }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Log operations
+  // ---------------------------------------------------------------------------
+
+  async saveLog(log: {
+    level: string;
+    message: string;
+    context?: string;
+    details?: any;
+    metadata?: any;
+  }): Promise<void> {
+    if (!this.db || !this.connected) return;
+
+    try {
+      await this.db.run(
+        `INSERT INTO logs (level, context, message, details, metadata) VALUES (?, ?, ?, ?, ?)`,
+        [
+          log.level,
+          log.context || null,
+          log.message,
+          log.details ? JSON.stringify(log.details) : null,
+          log.metadata ? JSON.stringify(log.metadata) : null,
+        ]
+      );
+    } catch (error) {
+      // Don't throw here to avoid infinite log loops if DB fails
+      console.error('Failed to save log to database:', error);
     }
   }
 
@@ -630,11 +657,11 @@ export class DatabaseManager {
     userId: string,
     content: string,
     provider = 'unknown'
-  ): Promise<number> {
+  ): Promise<number | string> {
     return this.messageRepo.saveMessage(channelId, userId, content, provider);
   }
 
-  async storeMessage(message: MessageRecord): Promise<number> {
+  async storeMessage(message: MessageRecord): Promise<number | string> {
     return this.messageRepo.storeMessage(message);
   }
 
@@ -646,7 +673,7 @@ export class DatabaseManager {
     return this.messageRepo.getMessages(channelId, limit, offset);
   }
 
-  async storeConversationSummary(summary: ConversationSummary): Promise<number> {
+  async storeConversationSummary(summary: ConversationSummary): Promise<number | string> {
     return this.messageRepo.storeConversationSummary(summary);
   }
 
@@ -806,7 +833,7 @@ export class DatabaseManager {
     recommendationId: string;
     feedback: string;
     metadata?: Record<string, unknown>;
-  }): Promise<number> {
+  }): Promise<number | string> {
     return this.aiFeedbackRepo.storeAIFeedback(feedback);
   }
 

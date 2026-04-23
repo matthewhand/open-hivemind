@@ -1,6 +1,6 @@
 import Debug from 'debug';
 import { DatabaseError } from '@src/types/errorClasses';
-import type { Database } from './sqliteWrapper';
+import type { IDatabase as Database } from './types';
 
 const debug = Debug('app:QueryBuilder');
 
