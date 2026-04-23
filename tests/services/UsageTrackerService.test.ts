@@ -101,12 +101,13 @@ describe('UsageTrackerService', () => {
       lastUpdated: new Date().toISOString()
     };
     (fs.promises.readFile as jest.Mock).mockResolvedValue(JSON.stringify(existingData));
+    jest.spyOn(fs, 'existsSync').mockReturnValue(true);
     
     // Re-initialize to trigger load
     (UsageTrackerService as any).instance = undefined;
     const newService = UsageTrackerService.getInstance();
     
-    // Use real timers for this part to allow async init to complete
+    // Re-mock timer behavior for this specific test to resolve the debounce/timeout inside instance
     jest.useRealTimers();
     await new Promise(resolve => setTimeout(resolve, 50));
     jest.useFakeTimers();

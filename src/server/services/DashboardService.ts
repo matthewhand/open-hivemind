@@ -176,7 +176,7 @@ export class DashboardService {
     let demoMode = false;
     try {
       const demoService = container.resolve(DemoModeService);
-      demoMode = demoService.isInDemoMode();
+      demoMode = demoService.isDemoModeEnabled();
     } catch {
       /* ignore */
     }
