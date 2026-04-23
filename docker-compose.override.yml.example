@@ -1,23 +1,37 @@
-# docker-compose.override.example.yml
+# docker-compose.override.yml.example
 #
-# Auxiliary services for Open Hivemind: self-hosted Mem0 memory provider.
+# Auxiliary services for Open Hivemind: Postgres database and self-hosted Mem0 memory provider.
 #
 # Usage:
-#   cp docker-compose.override.example.yml docker-compose.override.yml
+#   cp docker-compose.override.yml.example docker-compose.override.yml
 #   cp .env.mem0.example .env.mem0
 #   # Edit .env.mem0 — at minimum set OPENAI_API_KEY (or switch to Ollama)
 #   docker compose up -d
 #
 # Docker Compose automatically merges docker-compose.override.yml on top of
-# docker-compose.yml, so the mem0 stack comes up alongside hivemind.
-#
-# Verify:
-#   ./scripts/test-mem0-local.sh
-#
-# Mem0 API docs:  http://localhost:8888/docs
-# Neo4j browser:  http://localhost:8474
+# docker-compose.yml, so the services come up alongside hivemind.
 
 services:
+  # ---------------------------------------------------------------------------
+  # Primary PostgreSQL (for configuration and log persistence)
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=hivemind
+      - POSTGRES_PASSWORD=hivemind_secret
+      - POSTGRES_DB=hivemind
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hivemind -d hivemind"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   # ---------------------------------------------------------------------------
   # Mem0 API server (FastAPI)
   # ---------------------------------------------------------------------------
@@ -56,7 +70,7 @@ services:
     restart: unless-stopped
 
   # ---------------------------------------------------------------------------
-  # PostgreSQL + pgvector (vector embeddings storage)
+  # PostgreSQL + pgvector (for Mem0 vector embeddings storage)
   # ---------------------------------------------------------------------------
   mem0-postgres:
     image: ankane/pgvector:v0.5.1
@@ -106,7 +120,6 @@ services:
 
   # ---------------------------------------------------------------------------
   # Letta — self-hosted stateful agent server (REST API on port 8283)
-  # Docs: https://docs.letta.com/guides/docker/
   # ---------------------------------------------------------------------------
   letta:
     image: letta/letta:latest
@@ -128,6 +141,7 @@ services:
     restart: unless-stopped
 
 volumes:
+  postgres_data:
   mem0_postgres_data:
   mem0_neo4j_data:
   mem0_history:

@@ -17,6 +17,8 @@
  */
 
 import Debug from 'debug';
+import { DatabaseManager } from '../database/DatabaseManager';
+
 import { type MessageBus } from '@src/events/MessageBus';
 import type { MessageContext } from '@src/events/types';
 import type { IMessage } from '@message/interfaces/IMessage';
@@ -84,6 +86,10 @@ export class InferenceStage {
    */
   async process(ctx: MessageContext & { memories: string[]; systemPrompt: string }): Promise<void> {
     const startTime = Date.now();
+    const userMessage =
+      typeof ctx.message.getText === 'function' ? ctx.message.getText() : ctx.message.content;
+    const dbManager = DatabaseManager.getInstance();
+
     try {
       const budgetService = TokenBudgetService.getInstance();
       const maxTokens = (ctx.botConfig as any).maxTokensPerDay as number;
@@ -104,11 +110,6 @@ export class InferenceStage {
         throw new Error(errorMsg);
       }
 
-      // Extract user message text — prefer getText() when available, fall
-      // back to the public `content` property.
-      const userMessage =
-        typeof ctx.message.getText === 'function' ? ctx.message.getText() : ctx.message.content;
-
       const responseText = await this.llmInvoker.generateResponse(
         userMessage,
         ctx.history,
@@ -126,6 +127,15 @@ export class InferenceStage {
           status: 'empty',
         };
 
+        await dbManager.logInference({
+          botName: ctx.botName,
+          prompt: userMessage,
+          status: 'error',
+          errorMessage: 'empty LLM response',
+          latencyMs: durationMs,
+          provider: (ctx.botConfig.llmProvider as string) || 'unknown',
+        });
+
         await this.bus.emitAsync('message:skipped', {
           ...ctx,
           reason: 'empty LLM response',
@@ -135,8 +145,8 @@ export class InferenceStage {
       }
 
       // 2. Budget Increment (Heuristic: ~4 chars per token for prompt + response)
+      const estimatedTokens = Math.ceil((userMessage.length + responseText.length) / 4);
       if (maxTokens) {
-        const estimatedTokens = Math.ceil((userMessage.length + responseText.length) / 4);
         const model = (ctx.botConfig.MODEL as string) || 'gpt-4o';
         await budgetService.incrementUsage(ctx.botName, estimatedTokens, model);
       }
@@ -149,13 +159,34 @@ export class InferenceStage {
         status: 'ok',
       };
 
+      await dbManager.logInference({
+        botName: ctx.botName,
+        prompt: userMessage,
+        response: responseText,
+        status: 'success',
+        tokensUsed: estimatedTokens,
+        latencyMs: durationMs,
+        provider: (ctx.botConfig.llmProvider as string) || 'unknown',
+      });
+
       await this.bus.emitAsync('message:response', { ...ctx, responseText });
       debug('Inference complete: bot=%s responseLength=%d', ctx.botName, responseText.length);
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
+      const durationMs = Date.now() - startTime;
       debug('Inference error: %O', error);
+
+      await dbManager.logInference({
+        botName: ctx.botName,
+        prompt: userMessage,
+        status: 'error',
+        errorMessage: error.message,
+        latencyMs: durationMs,
+        provider: (ctx.botConfig.llmProvider as string) || 'unknown',
+      });
 
       await this.bus.emitAsync('message:error', { ...ctx, error, stage: 'inference' });
     }
   }
+}
 }

@@ -214,11 +214,12 @@ function instantiateProvider<T>(
   mod: PluginModule,
   config: AnyConfig | unknown | undefined,
   errorPrefix: string,
-  typeSuffix = 'Provider'
+  typeSuffix = 'Provider',
+  dependencies?: IServiceDependencies
 ): T {
   // Preferred: explicit factory
   if (typeof mod.create === 'function') {
-    return mod.create(config) as T;
+    return mod.create(config, dependencies) as T;
   }
   // Fallback: singleton getInstance
   const singletonKey = Object.keys(mod).find(
@@ -291,9 +292,10 @@ export function instantiateMessageService(
  */
 export function instantiateMemoryProvider(
   mod: PluginModule,
-  config?: AnyConfig | unknown
+  config?: AnyConfig | unknown,
+  dependencies?: IServiceDependencies
 ): IMemoryProvider {
-  return instantiateProvider<IMemoryProvider>(mod, config, 'Memory plugin');
+  return instantiateProvider<IMemoryProvider>(mod, config, 'Memory plugin', 'Provider', dependencies);
 }
 
 /**

@@ -5,6 +5,7 @@ import { createBotConfig } from './botConfigFactory';
 import { loadLegacyBots } from './botLegacyConfig';
 import { addBotToFile, updateBotOnFile, deleteBotFromFile } from './botCrudOperations';
 import { validateBotConfiguration, mergeConfigurations, sanitizeConfiguration } from './botValidation';
+import { DatabaseManager } from '../database/DatabaseManager';
 
 import type {
   BotConfig,
@@ -26,7 +27,9 @@ export class BotConfigurationManager {
   private discordBotsCache: BotConfig[] | null = null;
 
   public constructor() {
-    this.loadConfiguration();
+    // Note: async loading happens via explicit call or lazy init if needed
+    // but for now we do bootstrap sync load and expect initServices to call async load
+    this.loadConfigurationSync();
   }
 
   /**
@@ -57,7 +60,7 @@ export class BotConfigurationManager {
   /**
    * Load configuration from environment variables and config files
    */
-  private loadConfiguration(): void {
+  private loadConfigurationSync(): void {
     this.bots.clear();
     this.discordBotsCache = null;
     this.warnings = [];
@@ -102,6 +105,50 @@ export class BotConfigurationManager {
 
     // Validate configuration
     this.validateConfigurationInternal();
+  }
+
+  /**
+   * Load configuration from environment variables, config files, and database.
+   * This is the asynchronous entry point that ensures database sync.
+   */
+  public async loadConfiguration(): Promise<void> {
+    // 1. Load from files/env first (legacy/bootstrap)
+    this.loadConfigurationSync();
+
+    // 2. Sync files/env to database if connected
+    const dbManager = DatabaseManager.getInstance();
+    if (dbManager.isConnected()) {
+      try {
+        await this.syncToDatabase();
+        // 3. Load everything from database (source of truth)
+        const dbBots = await dbManager.getAllBotConfigurations();
+        for (const dbBot of dbBots) {
+          // Database wins over files/env
+          this.bots.set(dbBot.name, dbBot as any);
+        }
+        debug(`Loaded ${dbBots.length} bots from database`);
+      } catch (error) {
+        debug('Error syncing/loading from database:', error);
+        this.warnings.push(`Database configuration sync failed: ${error}`);
+      }
+    }
+  }
+
+  private async syncToDatabase(): Promise<void> {
+    const dbManager = DatabaseManager.getInstance();
+    if (!dbManager.isConnected()) return;
+
+    for (const [name, config] of this.bots.entries()) {
+      try {
+        const existing = await dbManager.getBotConfigurationByName(name);
+        if (!existing) {
+          debug(`Syncing bot "${name}" to database...`);
+          await dbManager.createBotConfiguration(config as any);
+        }
+      } catch (error) {
+        debug(`Failed to sync bot "${name}" to database:`, error);
+      }
+    }
   }
 
   /**
@@ -277,8 +324,8 @@ export class BotConfigurationManager {
   /**
    * Reload configuration
    */
-  public reload(): void {
-    this.loadConfiguration();
+  public async reload(): Promise<void> {
+    await this.loadConfiguration();
   }
 
   /**

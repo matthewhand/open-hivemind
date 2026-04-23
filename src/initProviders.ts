@@ -10,6 +10,7 @@ import {
   loadPlugin,
 } from './plugins/PluginLoader';
 import { providerRegistry } from './registries/ProviderRegistry';
+import { getServiceDependencies } from './utils/serviceDependencies';
 
 const debug = Debug('app:initProviders');
 
@@ -100,7 +101,8 @@ async function discoverMemoryProviders(): Promise<void> {
           ? profile.provider
           : `memory-${profile.provider}`;
         const mod = await loadPlugin(pluginName);
-        const instance = instantiateMemoryProvider(mod, profile.config);
+        const deps = getServiceDependencies(`memory:${profile.key}`);
+        const instance = instantiateMemoryProvider(mod, profile.config, deps);
         providerRegistry.registerMemoryProvider(profile.key, instance);
         debug('Registered memory provider from profile: %s (%s)', profile.key, pluginName);
       } catch (err: unknown) {
@@ -127,7 +129,8 @@ async function discoverMemoryProviders(): Promise<void> {
       if (providerRegistry.getMemoryProvider(pkgName)) continue;
       try {
         const mod = await loadPlugin(pkgName);
-        const instance = instantiateMemoryProvider(mod);
+        const deps = getServiceDependencies(`memory:${pkgName}`);
+        const instance = instantiateMemoryProvider(mod, undefined, deps);
         providerRegistry.registerMemoryProvider(pkgName, instance);
         debug('Auto-discovered memory provider package: %s', pkgName);
       } catch (err: unknown) {

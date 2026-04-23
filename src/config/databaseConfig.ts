@@ -70,6 +70,42 @@ const databaseConfig = convict({
     default: 30,
     env: 'LOG_RETENTION_DAYS',
   },
+  MAX_HISTORY_ROWS: {
+    doc: 'Maximum number of rows to keep in history tables',
+    format: 'int',
+    default: 10000,
+    env: 'MAX_HISTORY_ROWS',
+  },
+  AUTO_RETENTION: {
+    doc: 'Whether to automatically adjust retention based on DB type (Lite/Standard/Cloud)',
+    format: Boolean,
+    default: true,
+    env: 'DATABASE_AUTO_RETENTION',
+  },
+  AUTO_CLEANUP_ON_STARTUP: {
+    doc: 'Whether to run database cleanup on application startup',
+    format: Boolean,
+    default: true,
+    env: 'DATABASE_AUTO_CLEANUP_STARTUP',
+  },
+  PERSIST_CONFIG: {
+    doc: 'Whether to persist bot configurations to the database',
+    format: Boolean,
+    default: true,
+    env: 'DATABASE_PERSIST_CONFIG',
+  },
+  PERSIST_MESSAGES: {
+    doc: 'Whether to persist user messages to the database',
+    format: Boolean,
+    default: true,
+    env: 'DATABASE_PERSIST_MESSAGES',
+  },
+  PERSIST_INFERENCE: {
+    doc: 'Whether to persist LLM inference logs to the database',
+    format: Boolean,
+    default: true,
+    env: 'DATABASE_PERSIST_INFERENCE',
+  },
 });
 
 // Load existing config file if it exists

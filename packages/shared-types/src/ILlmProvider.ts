@@ -26,4 +26,6 @@ export interface ILlmProvider {
   ) => Promise<string>;
   /** Generate a plain completion */
   generateCompletion: (prompt: string) => Promise<string>;
+  /** Generate an embedding for the given text */
+  generateEmbedding?: (text: string) => Promise<number[]>;
 }

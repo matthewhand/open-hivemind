@@ -15,6 +15,7 @@ import { SyncProviderRegistry, type ProviderProfile } from '@src/registries/Sync
 import { BackupSchedulerService } from '@src/server/services/BackupSchedulerService';
 import { BotHeartbeatService } from '@src/server/services/BotHeartbeatService';
 import { BotTaskScheduler } from '@src/server/services/BotTaskScheduler';
+import { DatabaseMaintenanceService } from '@src/server/services/DatabaseMaintenanceService';
 import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
 import AnomalyDetectionService from '@src/services/AnomalyDetectionService';
 import DemoModeService from '@src/services/DemoModeService';
@@ -243,6 +244,16 @@ export async function initServices(
   // Application startup with enhanced diagnostics
   appLogger.info('\ud83d\ude80 Starting Open Hivemind Server');
 
+  // Load bot configurations (database-first with sync)
+  try {
+    const { BotConfigurationManager } = await import('@src/config/BotConfigurationManager');
+    const configManager = BotConfigurationManager.getInstance();
+    await configManager.loadConfiguration();
+    appLogger.info('Bot configurations loaded and synced to database');
+  } catch (error) {
+    appLogger.warn('Failed to load bot configurations', { error });
+  }
+
   // Initialize providers (skip in demo/skip mode)
   if (process.env.SKIP_MESSENGERS !== 'true') {
     await initProviders();
@@ -322,6 +333,14 @@ export async function initServices(
   shutdownCoordinator.registerService({
     name: 'BotTaskScheduler',
     shutdown: () => taskScheduler.stop(),
+  });
+
+  // Initialize and start Database Maintenance Service (Keep-Alive & Cleanup)
+  const maintenanceService = DatabaseMaintenanceService.getInstance();
+  maintenanceService.start();
+  shutdownCoordinator.registerService({
+    name: 'DatabaseMaintenanceService',
+    shutdown: () => maintenanceService.stop(),
   });
 
   // Initialize AnomalyDetectionService

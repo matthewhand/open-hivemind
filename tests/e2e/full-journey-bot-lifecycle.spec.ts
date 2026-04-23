@@ -20,157 +20,101 @@ import { navigateAndWaitReady, setupAuth, setupTestWithErrorDetection } from './
 test.describe('Full Journey: Bot Lifecycle End-to-End', () => {
   test.setTimeout(120000); // 2 minutes for full journey
 
-  // Mock common API endpoints
-  async function mockFullJourneyAPIs(page: any) {
-    await page.route('**/api/health', (route: any) =>
-      route.fulfill({
-        status: 200,
-        json: { status: 'ok', version: '1.0.0' },
-      })
-    );
-    await page.route('**/api/health/detailed', (route: any) =>
-      route.fulfill({
-        status: 200,
-        json: {
-          status: 'healthy',
-          database: 'connected',
-          messengers: { slack: 'connected', discord: 'connected' },
-        },
-      })
-    );
-    await page.route('**/api/csrf-token', (route: any) =>
-      route.fulfill({
-        status: 200,
-        json: { token: 'mock-csrf-token' },
-      })
-    );
-    await page.route('**/api/admin/guard-profiles', (route: any) =>
-      route.fulfill({
-        status: 200,
-        json: { data: [] },
-      })
-    );
-    await page.route('**/api/demo/status', (route: any) =>
-      route.fulfill({
-        status: 200,
-        json: { active: false },
-      })
-    );
-    await page.route('**/api/config/global', (route: any) =>
-      route.fulfill({
-        status: 200,
-        json: { theme: 'light', locale: 'en-US' },
-      })
-    );
-    await page.route('**/api/config', (route: any) =>
-      route.fulfill({
-        status: 200,
-        json: { bots: [] },
-      })
-    );
-  }
-
-  async function createMockBot(page: any, botData: any) {
-    await page.route('**/api/bots', (route: any) => {
-      if (route.request().method() === 'GET') {
-        return route.fulfill({ status: 200, json: { data: { bots: [] } } });
-      }
-      if (route.request().method() === 'POST') {
-        const body = route.request().postData();
-        const newBot = {
-          ...JSON.parse(body),
-          id: 'bot-e2e-test-1',
-          createdAt: new Date().toISOString(),
-        };
-        return route.fulfill({ status: 201, json: newBot });
-      }
-      return route.continue();
-    });
-  }
-
   test('Complete bot lifecycle: Create → Configure → Test → Deactivate', async ({ page }) => {
-    const errors = await setupTestWithErrorDetection(page);
-    await mockFullJourneyAPIs(page);
+    await setupTestWithErrorDetection(page);
 
     // Step 1: Navigate to bots page
     await navigateAndWaitReady(page, '/admin/bots');
 
+    // Generate a unique bot name to avoid conflicts with existing data
+    const botName = `E2E Test Bot ${Date.now()}`;
+
     // Step 2: Open create modal and create bot
-    const createBtn = page.locator('button:has-text("Create")').first();
-    if ((await createBtn.count()) > 0) {
-      await createBtn.click();
+    const createBtn = page.locator('button:has-text("Create Bot")').first();
+    await expect(createBtn).toBeVisible({ timeout: 10000 });
+    await createBtn.click();
 
-      // Fill bot form
-      await page.locator('input[name="name"]').fill('E2E Test Bot');
-      await page.locator('select[name="messageProvider"]').selectOption('discord');
-      await page.locator('select[name="llmProvider"]').selectOption('openai');
+    // Fill bot form (Step 1: Basics)
+    await page.locator('input[placeholder="e.g. HelpBot"]').fill(botName);
+    await page.locator('div.form-control:has-text("Message Provider") select').selectOption('discord');
+    
+    // Continue to Step 2
+    await page.locator('button:has-text("Next")').click();
 
-      // Submit form
-      const submitBtn = page.locator('button:has-text("Save")').first();
-      if ((await submitBtn.count()) > 0) {
-        await submitBtn.click();
-        await page.waitForResponse('**/api/bots', { timeout: 10000 });
-      }
-    }
+    // Step 2: Persona (Keep default)
+    await page.locator('button:has-text("Next")').click();
+
+    // Step 3: Guardrails (Optional)
+    await page.locator('button:has-text("Next")').click();
+
+    // Step 4: Review
+    await page.locator('button:has-text("Complete")').click();
+
+    // Confirm & Save dialog
+    const confirmBtn = page.locator('button:has-text("Confirm & Save")').first();
+    await expect(confirmBtn).toBeVisible({ timeout: 5000 });
+    await confirmBtn.click();
 
     // Step 3: Verify bot appears in list
-    await expect(page.locator('text=E2E Test Bot')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text=${botName}`)).toBeVisible({ timeout: 15000 });
 
     // Step 4: Navigate to bot detail/configuration
-    await page.locator('text=E2E Test Bot').first().click();
-    await page.waitForURL('**/admin/bots/*');
+    // Clicking the bot opens the DetailDrawer
+    await page.locator(`text=${botName}`).first().click();
+    
+    // Click the "Config" button in the DetailDrawer dock to open BotSettingsModal
+    const configBtn = page.locator('button[title="Configuration"]').first();
+    await expect(configBtn).toBeVisible({ timeout: 5000 });
+    await configBtn.click();
 
-    // Step 5: Update bot settings
-    const settingsTab = page.locator('button:has-text("Settings")').first();
-    if ((await settingsTab.count()) > 0) {
-      await settingsTab.click();
-      await page.locator('input[name="description"]').fill('E2E Test Description');
-    }
-
-    // Step 6: Verify changes persist
-    await expect(page.locator('text=E2E Test Description')).toBeVisible({ timeout: 5000 });
+    // Step 5: Verify bot name in modal and close
+    await expect(page.locator(`.modal-title:has-text("${botName}")`)).toBeVisible();
+    await page.locator('button:has-text("Close")').click();
 
     // Success - full journey completed
     console.log('✅ Full bot lifecycle journey completed successfully');
   });
 
   test('Bot creation to messaging flow', async ({ page }) => {
-    const errors = await setupTestWithErrorDetection(page);
-    await mockFullJourneyAPIs(page);
+    await setupTestWithErrorDetection(page);
 
-    // Mock bot creation and chat endpoints
-    await page.route('**/api/bots', (route: any) => {
-      if (route.request().method() === 'POST') {
-        return route.fulfill({
-          status: 201,
-          json: {
-            id: 'e2e-bot-1',
-            name: 'Messaging Test Bot',
-            messageProvider: 'discord',
-            llmProvider: 'openai',
-          },
-        });
-      }
-      return route.fulfill({ status: 200, json: { data: { bots: [] } } });
-    });
+    const botName = `Messaging Test Bot ${Date.now()}`;
 
+    // Step 1: Create bot
     await navigateAndWaitReady(page, '/admin/bots');
+    const createBtn = page.locator('button:has-text("Create Bot")').first();
+    await expect(createBtn).toBeVisible();
+    await createBtn.click();
+    
+    // Fill wizard
+    await page.locator('input[placeholder="e.g. HelpBot"]').fill(botName);
+    await page.locator('div.form-control:has-text("Message Provider") select').selectOption('discord');
+    await page.locator('button:has-text("Next")').click(); // Step 1 -> 2
+    await page.locator('button:has-text("Next")').click(); // Step 2 -> 3
+    await page.locator('button:has-text("Next")').click(); // Step 3 -> 4
+    await page.locator('button:has-text("Complete")').click();
+    
+    const confirmBtn = page.locator('button:has-text("Confirm & Save")').first();
+    await expect(confirmBtn).toBeVisible();
+    await confirmBtn.click();
 
-    // Create bot
-    const createBtn = page.locator('button:has-text("Create")').first();
-    if ((await createBtn.count()) > 0) {
-      await createBtn.click();
-      await page.locator('input[name="name"]').fill('Messaging Test Bot');
-      await page.locator('select[name="messageProvider"]').selectOption('discord');
-      await page.locator('select[name="llmProvider"]').selectOption('openai');
-      await page.locator('button:has-text("Save")').first().click();
-    }
+    // Verify creation success in list
+    await expect(page.locator(`text=${botName}`)).toBeVisible({ timeout: 15000 });
 
-    // Navigate to chat/test interface
-    await navigateAndWaitReady(page, '/admin/bots');
+    // Step 2: Navigate to real chat interface
+    await navigateAndWaitReady(page, '/admin/chat');
 
-    // Verify bot is listed
-    await expect(page.locator('text=Messaging Test Bot')).toBeVisible({ timeout: 10000 });
+    // Step 3: Verify bot is listed in chat sidebar and ready
+    // The chat sidebar lists active bots
+    const botInSidebar = page.locator(`button:has-text("${botName}")`).first();
+    await expect(botInSidebar).toBeVisible({ timeout: 20000 });
+
+    // Select the bot to verify details
+    await botInSidebar.click();
+    
+    // Verify the bot interface is loaded
+    await expect(page.locator(`h1:has-text("Live Chat Monitor")`)).toBeVisible();
+    await expect(page.locator(`span:has-text("${botName}")`).first()).toBeVisible();
 
     console.log('✅ Bot creation to messaging flow completed');
   });

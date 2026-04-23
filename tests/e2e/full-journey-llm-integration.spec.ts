@@ -1,10 +1,10 @@
 import { expect, test } from '@playwright/test';
-import { navigateAndWaitReady, setupAuth, setupTestWithErrorDetection } from './test-utils';
+import { navigateAndWaitReady, setupTestWithErrorDetection } from './test-utils';
 
 /**
  * Full Journey: LLM Provider Integration
  *
- * Tests the complete LLM provider setup flow:
+ * Tests the complete LLM provider setup flow using real backend APIs:
  * 1. Navigate to LLM provider configuration
  * 2. Add a new LLM provider with API key
  * 3. Configure provider settings
@@ -17,131 +17,8 @@ import { navigateAndWaitReady, setupAuth, setupTestWithErrorDetection } from './
 test.describe('Full Journey: LLM Provider Integration', () => {
   test.setTimeout(90000);
 
-  let llmProvidersStore: any[] = [];
-  let botsStore: any[] = [];
-
-  async function mockLLMIntegrationAPIs(page: any) {
-    // Standard mocks
-    await page.route('**/api/health', (route: any) =>
-      route.fulfill({
-        status: 200,
-        json: { status: 'ok' },
-      })
-    );
-    await page.route('**/api/health/detailed', (route: any) =>
-      route.fulfill({
-        status: 200,
-        json: { status: 'healthy', database: 'connected', llm: { available: true } },
-      })
-    );
-    await page.route('**/api/csrf-token', (route: any) =>
-      route.fulfill({
-        status: 200,
-        json: { token: 'mock-csrf' },
-      })
-    );
-    await page.route('**/api/config/global', (route: any) =>
-      route.fulfill({
-        status: 200,
-        json: { theme: 'light' },
-      })
-    );
-    await page.route('**/api/config', (route: any) =>
-      route.fulfill({
-        status: 200,
-        json: { bots: botsStore, providers: llmProvidersStore },
-      })
-    );
-    await page.route('**/api/admin/guard-profiles', (route: any) =>
-      route.fulfill({
-        status: 200,
-        json: { data: [] },
-      })
-    );
-    await page.route('**/api/demo/status', (route: any) =>
-      route.fulfill({
-        status: 200,
-        json: { active: false },
-      })
-    );
-
-    // LLM Providers CRUD
-    await page.route('**/api/llm/providers', (route: any) => {
-      const method = route.request().method();
-      if (method === 'GET') {
-        return route.fulfill({ status: 200, json: llmProvidersStore });
-      }
-      if (method === 'POST') {
-        const body = JSON.parse(route.request().postData() || '{}');
-        const newProvider = {
-          ...body,
-          id: `llm-${Date.now()}`,
-          status: 'configured',
-          connected: true,
-        };
-        llmProvidersStore.push(newProvider);
-        return route.fulfill({ status: 201, json: newProvider });
-      }
-      return route.continue();
-    });
-
-    // Test connection endpoint
-    await page.route('**/api/llm/test-connection', (route: any) => {
-      return route.fulfill({
-        status: 200,
-        json: { success: true, latency: 120, modelAvailable: true },
-      });
-    });
-
-    // Bots CRUD
-    await page.route('**/api/bots', (route: any) => {
-      const method = route.request().method();
-      if (method === 'GET') {
-        return route.fulfill({ status: 200, json: { data: { bots: botsStore } } });
-      }
-      if (method === 'POST') {
-        const body = JSON.parse(route.request().postData() || '{}');
-        const newBot = { ...body, id: `bot-${Date.now()}`, createdAt: new Date().toISOString() };
-        botsStore.push(newBot);
-        return route.fulfill({ status: 201, json: newBot });
-      }
-      return route.continue();
-    });
-
-    // Available models endpoint
-    await page.route('**/api/llm/models', (route: any) => {
-      return route.fulfill({
-        status: 200,
-        json: [
-          { id: 'gpt-4', name: 'GPT-4', provider: 'openai' },
-          { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'openai' },
-          { id: 'claude-3', name: 'Claude 3', provider: 'anthropic' },
-        ],
-      });
-    });
-
-    // LLM status
-    await page.route('**/api/config/llm-status', (route: any) => {
-      return route.fulfill({
-        status: 200,
-        json: {
-          defaultConfigured: true,
-          defaultProviders: llmProvidersStore.map((p) => p.id),
-          botsMissingLlmProvider: [],
-          hasMissing: false,
-        },
-      });
-    });
-  }
-
-  test.beforeEach(async () => {
-    llmProvidersStore = [];
-    botsStore = [];
-  });
-
   test('Add OpenAI provider and configure with bot', async ({ page }) => {
     const errors = await setupTestWithErrorDetection(page);
-    await mockLLMIntegrationAPIs(page);
 
     // Step 1: Navigate to LLM providers page
     await navigateAndWaitReady(page, '/admin/llm-providers');
@@ -157,20 +34,22 @@ test.describe('Full Journey: LLM Provider Integration', () => {
       await page.locator('input[name="apiKey"]').fill('sk-mock-e2e-key-12345');
       await page.locator('select[name="defaultModel"]').selectOption('gpt-4');
 
-      // Save provider
+      // Save provider and wait for real API response
+      const saveResponsePromise = page.waitForResponse(
+        (response) =>
+          response.url().includes('/api/llm/providers') && response.request().method() === 'POST',
+        { timeout: 10000 }
+      );
+      
       const saveBtn = page.locator('button:has-text("Save")').first();
       await saveBtn.click();
-      await page.waitForResponse('**/api/llm/providers', { timeout: 10000 });
+      
+      const saveResponse = await saveResponsePromise;
+      expect(saveResponse.status()).toBe(201);
+      const responseBody = await saveResponse.json();
+      expect(responseBody.providerType).toBe('openai');
+      expect(responseBody.name).toBe('E2E OpenAI');
     }
-
-    // Verify provider was added
-    expect(llmProvidersStore.length).toBe(1);
-    expect(llmProvidersStore[0].providerType).toBe('openai');
-    expect(llmProvidersStore[0].name).toBe('E2E OpenAI');
-
-    // Step 3: Test connection
-    // Note: In real UI, there would be a "Test Connection" button
-    // This verifies the API route is set up correctly
 
     // Step 4: Create bot with this provider
     await navigateAndWaitReady(page, '/admin/bots');
@@ -179,13 +58,27 @@ test.describe('Full Journey: LLM Provider Integration', () => {
     await createBtn.click();
     await page.locator('input[name="name"]').fill('Provider Test Bot');
     await page.locator('select[name="messageProvider"]').selectOption('discord');
-    await page.locator('select[name="llmProvider"]').selectOption('E2E OpenAI');
+    
+    // Wait for the provider to be available in the dropdown
+    const llmSelect = page.locator('select[name="llmProvider"]');
+    await expect(llmSelect).toBeVisible({ timeout: 5000 });
+    await llmSelect.selectOption({ label: 'E2E OpenAI' });
+    
+    // Save bot and wait for real API response
+    const botSavePromise = page.waitForResponse(
+      (response) => response.url().includes('/api/bots') && response.request().method() === 'POST',
+      { timeout: 10000 }
+    );
+    
     await page.locator('button:has-text("Save")').first().click();
-    await page.waitForResponse('**/api/bots', { timeout: 10000 });
-
-    // Verify bot was created with the provider
-    expect(botsStore.length).toBe(1);
-    expect(botsStore[0].llmProvider).toBe('E2E OpenAI');
+    
+    const botResponse = await botSavePromise;
+    expect(botResponse.status()).toBe(201);
+    const botData = await botResponse.json();
+    
+    // Some APIs might return the bot nested in a data property
+    const bot = botData.data?.bot || botData;
+    expect(bot.llmProvider).toBe('E2E OpenAI');
 
     console.log(
       '✅ LLM provider integration journey completed: OpenAI provider added and assigned to bot'
@@ -194,7 +87,6 @@ test.describe('Full Journey: LLM Provider Integration', () => {
 
   test('Configure multiple providers and verify all connected', async ({ page }) => {
     const errors = await setupTestWithErrorDetection(page);
-    await mockLLMIntegrationAPIs(page);
 
     await navigateAndWaitReady(page, '/admin/llm-providers');
 
@@ -205,8 +97,14 @@ test.describe('Full Journey: LLM Provider Integration', () => {
       await page.locator('select[name="providerType"]').selectOption('openai');
       await page.locator('input[name="name"]').fill('Provider OpenAI');
       await page.locator('input[name="apiKey"]').fill('sk-openai-mock');
+      
+      const savePromise1 = page.waitForResponse(
+        (response) =>
+          response.url().includes('/api/llm/providers') && response.request().method() === 'POST',
+        { timeout: 10000 }
+      );
       await page.locator('button:has-text("Save")').first().click();
-      await page.waitForResponse('**/api/llm/providers', { timeout: 10000 });
+      await savePromise1;
     }
 
     // Add Anthropic
@@ -215,27 +113,26 @@ test.describe('Full Journey: LLM Provider Integration', () => {
       await page.locator('select[name="providerType"]').selectOption('anthropic');
       await page.locator('input[name="name"]').fill('Provider Anthropic');
       await page.locator('input[name="apiKey"]').fill('sk-ant-mock');
+      
+      const savePromise2 = page.waitForResponse(
+        (response) =>
+          response.url().includes('/api/llm/providers') && response.request().method() === 'POST',
+        { timeout: 10000 }
+      );
       await page.locator('button:has-text("Save")').first().click();
-      await page.waitForResponse('**/api/llm/providers', { timeout: 10000 });
+      await savePromise2;
     }
 
-    // Verify both providers exist
-    expect(llmProvidersStore.length).toBe(2);
-
-    const openaiProvider = llmProvidersStore.find((p) => p.providerType === 'openai');
-    const anthropicProvider = llmProvidersStore.find((p) => p.providerType === 'anthropic');
-
-    expect(openaiProvider).toBeDefined();
-    expect(anthropicProvider).toBeDefined();
-    expect(openaiProvider.connected).toBe(true);
-    expect(anthropicProvider.connected).toBe(true);
+    // Verify providers are listed
+    const providerList = page.locator('table, .list-container');
+    await expect(providerList).toContainText('Provider OpenAI');
+    await expect(providerList).toContainText('Provider Anthropic');
 
     console.log('✅ Multiple LLM providers journey completed: 2 providers configured');
   });
 
   test('Add provider and verify appearance in selection dropdowns', async ({ page }) => {
     const errors = await setupTestWithErrorDetection(page);
-    await mockLLMIntegrationAPIs(page);
 
     // Add provider first
     await navigateAndWaitReady(page, '/admin/llm-providers');
@@ -246,8 +143,14 @@ test.describe('Full Journey: LLM Provider Integration', () => {
       await page.locator('select[name="providerType"]').selectOption('openai');
       await page.locator('input[name="name"]').fill('Dropdown Test Provider');
       await page.locator('input[name="apiKey"]').fill('sk-dropdown-test');
+      
+      const savePromise = page.waitForResponse(
+        (response) =>
+          response.url().includes('/api/llm/providers') && response.request().method() === 'POST',
+        { timeout: 10000 }
+      );
       await page.locator('button:has-text("Save")').first().click();
-      await page.waitForResponse('**/api/llm/providers', { timeout: 10000 });
+      await savePromise;
     }
 
     // Navigate to bot creation
@@ -259,9 +162,10 @@ test.describe('Full Journey: LLM Provider Integration', () => {
     // Verify the new provider appears in the LLM provider dropdown
     const llmSelect = page.locator('select[name="llmProvider"]');
     await expect(llmSelect).toBeVisible({ timeout: 5000 });
-
-    // The dropdown should contain our new provider
-    // Note: This verifies the data flow from provider config to bot creation UI
+    
+    // Check if the option exists
+    const options = await llmSelect.locator('option').allTextContents();
+    expect(options).toContain('Dropdown Test Provider');
 
     console.log('✅ Provider dropdown integration journey completed');
   });
