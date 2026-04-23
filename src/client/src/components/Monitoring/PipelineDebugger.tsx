@@ -129,7 +129,7 @@ const PipelineDebugger: React.FC = () => {
         <div className="space-y-3">
            <h3 className="font-bold text-xs uppercase tracking-widest opacity-50 px-2 flex justify-between items-center">
               <span>Active Halts ({breakpoints.length})</span>
-              <button onClick={fetchState} className="btn btn-xs btn-ghost btn-square"><RefreshCw className="w-3 h-3" /></button>
+              <button onClick={fetchState} className="btn btn-xs btn-ghost btn-square" aria-label="Refresh State" title="Refresh State"><RefreshCw className="w-3 h-3" /></button>
            </h3>
            
            {breakpoints.length === 0 ? (
