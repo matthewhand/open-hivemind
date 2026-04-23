@@ -61,9 +61,6 @@ export default defineConfig({
         contextOptions: {
           permissions: ['clipboard-read', 'clipboard-write']
         },
-        launchOptions: {
-          executablePath: '/usr/bin/google-chrome',
-        },
       },
     },
 
@@ -114,7 +111,6 @@ export default defineConfig({
     url: 'http://localhost:3028',
     reuseExistingServer: !process.env.CI,
     timeout: 180 * 1000,
-  },
   },
 
   /* Metadata for test organization */

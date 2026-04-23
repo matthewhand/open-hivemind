@@ -32,6 +32,7 @@ export interface MessageRecord {
   authorName: string;
   timestamp: Date;
   provider: string;
+  direction?: 'incoming' | 'outgoing';
   metadata?: Record<string, unknown>;
 }
 
@@ -316,3 +317,29 @@ export interface DecisionRecord {
   threshold: number;
   timestamp?: Date;
 }
+
+export interface InferenceLog {
+  id?: number | string;
+  botName: string;
+  prompt: string;
+  response?: string;
+  tokensUsed?: number;
+  latencyMs?: number;
+  provider?: string;
+  status: 'success' | 'error';
+  errorMessage?: string;
+  timestamp?: Date;
+}
+
+export interface MemoryRecord {
+  id?: number | string;
+  content: string;
+  metadata?: Record<string, any>;
+  userId?: string;
+  agentId?: string;
+  sessionId?: string;
+  embedding?: number[];
+  createdAt?: Date;
+}
+
+

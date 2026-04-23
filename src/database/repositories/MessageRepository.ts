@@ -20,7 +20,8 @@ export class MessageRepository {
     channelId: string,
     userId: string,
     content: string,
-    provider = 'unknown'
+    provider = 'unknown',
+    direction: 'incoming' | 'outgoing' = 'incoming'
   ): Promise<number> {
     const db = this.getDb();
     if (!db || !this.isConnected()) {
@@ -32,8 +33,8 @@ export class MessageRepository {
       const timestamp = new Date();
       const result = await db.run(
         `
-        INSERT INTO messages (messageId, channelId, content, authorId, authorName, timestamp, provider)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO messages (messageId, channelId, content, authorId, authorName, timestamp, provider, direction)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `,
         [
           `${Date.now()}-${crypto.randomUUID()}`, // Generate unique messageId
@@ -43,11 +44,12 @@ export class MessageRepository {
           'Unknown User', // We can enhance this later
           timestamp.toISOString(),
           provider,
+          direction,
         ]
       );
 
       const messageId = result.lastID as number;
-      debug(`Message saved with ID: ${messageId}`);
+      debug(`Message saved with ID: ${messageId}, direction: ${direction}`);
       return messageId;
     } catch (error) {
       debug('Error saving message:', error);
@@ -72,8 +74,8 @@ export class MessageRepository {
 
       const result = await db.run(
         `
-        INSERT INTO messages (messageId, channelId, content, authorId, authorName, timestamp, provider, metadata)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO messages (messageId, channelId, content, authorId, authorName, timestamp, provider, metadata, direction)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
         [
           message.messageId,
@@ -84,6 +86,7 @@ export class MessageRepository {
           timestamp.toISOString(),
           message.provider,
           message.metadata ? JSON.stringify(message.metadata) : null,
+          message.direction || 'incoming',
         ]
       );
 
@@ -124,6 +127,7 @@ export class MessageRepository {
         authorName: row.authorName,
         timestamp: new Date(row.timestamp),
         provider: row.provider,
+        direction: row.direction as 'incoming' | 'outgoing' | undefined,
         metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
       }));
 
@@ -157,6 +161,7 @@ export class MessageRepository {
         authorName: row.authorName,
         timestamp: new Date(row.timestamp),
         provider: row.provider,
+        direction: row.direction as 'incoming' | 'outgoing' | undefined,
         metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
       }));
     } catch (error) {

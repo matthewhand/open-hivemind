@@ -13,6 +13,7 @@
 
 import Debug from 'debug';
 import type { IMemoryProvider, IMessengerService, IToolProvider } from '@hivemind/shared-types';
+import { getServiceDependencies } from '@src/utils/serviceDependencies';
 import {
   instantiateLlmProvider,
   instantiateMemoryProvider,
@@ -147,7 +148,8 @@ export class SyncProviderRegistry {
     for (const profile of config.memoryProfiles ?? []) {
       try {
         const mod = await loadPlugin(`memory-${profile.provider.toLowerCase()}`);
-        const instance = instantiateMemoryProvider(mod, profile.config);
+        const deps = getServiceDependencies(`memory:${profile.key}`);
+        const instance = instantiateMemoryProvider(mod, profile.config, deps);
         this.memoryProviders.set(profile.key, instance);
         this.memoryProfileMap.set(profile.key, profile);
         debug('Loaded memory provider: %s (%s)', profile.key, profile.provider);
@@ -506,7 +508,8 @@ export class SyncProviderRegistry {
         const p = profile ?? this.memoryProfileMap.get(id);
         if (!p) throw new Error(`No profile found for memory provider '${id}'`);
         const mod = await loadPlugin(`memory-${p.provider.toLowerCase()}`);
-        const instance = instantiateMemoryProvider(mod, p.config);
+        const deps = getServiceDependencies(`memory:${id}`);
+        const instance = instantiateMemoryProvider(mod, p.config, deps);
         this.memoryProviders.set(id, instance);
         this.memoryProfileMap.set(id, p);
         debug('Reloaded memory provider: %s', id);

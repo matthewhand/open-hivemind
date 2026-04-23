@@ -11,6 +11,10 @@ import { ApprovalRepository } from './repositories/ApprovalRepository';
 import { BotConfigRepository } from './repositories/BotConfigRepository';
 import { DecisionRepository } from './repositories/DecisionRepository';
 import { MessageRepository } from './repositories/MessageRepository';
+import { ActivityRepository, ActivityLog } from './repositories/ActivityRepository';
+import { InferenceRepository, InferenceLog } from './repositories/InferenceRepository';
+import { MemoryRepository } from './repositories/MemoryRepository';
+import { ActivitySchemas } from './schemas/ActivitySchemas';
 import { SQLiteWrapper } from './sqliteWrapper';
 import { PostgresWrapper } from './postgresWrapper';
 import type {
@@ -24,6 +28,7 @@ import type {
   DatabaseConfig,
   DecisionRecord,
   IDatabase,
+  InferenceLog,
   MessageRecord,
 } from './types';
 
@@ -78,6 +83,9 @@ export class DatabaseManager {
   private approvalRepo!: ApprovalRepository;
   private aiFeedbackRepo!: AIFeedbackRepository;
   private decisionRepo!: DecisionRepository;
+  private activityRepo!: ActivityRepository;
+  private inferenceRepo!: InferenceRepository;
+  private memoryRepo!: MemoryRepository;
 
   constructor() {
     this.initRepositories();
@@ -183,6 +191,14 @@ export class DatabaseManager {
         }
         debug('DATABASE_MANAGER: this.db initialized (Postgres)');
         
+        // Enable pgvector extension
+        try {
+          await this.db.exec('CREATE EXTENSION IF NOT EXISTS vector');
+          debug('DATABASE_MANAGER: pgvector extension enabled');
+        } catch (e) {
+          debug('DATABASE_MANAGER: failed to enable pgvector (might already exist or permission denied):', e);
+        }
+
         await this.createTables();
         await this.createIndexes();
         // Skip sqlite-specific migrations for postgres for now, 
@@ -196,6 +212,13 @@ export class DatabaseManager {
 
       this.connected = true;
       debug('Database connected successfully');
+
+      // Trigger automatic cleanup on startup if enabled
+      if (databaseConfig.get('AUTO_CLEANUP_ON_STARTUP')) {
+        this.runFullCleanup().catch((err) => {
+          debug('Automatic startup cleanup failed:', err);
+        });
+      }
     } catch (error) {
       debug('Database connection failed:', error);
       if (error instanceof DatabaseError) {
@@ -234,6 +257,7 @@ export class DatabaseManager {
     const getDb = (): any => this.db ?? null;
     const isConn = (): boolean => this.connected;
     const ensure = (): void => this.ensureConnected();
+    const isPg = (): boolean => this.config?.type === 'postgres';
 
     this.messageRepo = new MessageRepository(getDb, isConn, ensure);
     this.botConfigRepo = new BotConfigRepository(getDb, ensure);
@@ -241,6 +265,9 @@ export class DatabaseManager {
     this.approvalRepo = new ApprovalRepository(getDb, ensure);
     this.aiFeedbackRepo = new AIFeedbackRepository(getDb, ensure);
     this.decisionRepo = new DecisionRepository(getDb, isConn);
+    this.activityRepo = new ActivityRepository(getDb, isConn);
+    this.inferenceRepo = new InferenceRepository(getDb, isConn);
+    this.memoryRepo = new MemoryRepository(getDb, isConn, isPg);
   }
 
   // ---------------------------------------------------------------------------
@@ -250,6 +277,7 @@ export class DatabaseManager {
   private async createTables(): Promise<void> {
     if (!this.db) throw new DatabaseError('Database not initialized', 'DATABASE_NOT_INITIALIZED');
     const db = this.db;
+
     const isPostgres = this.config?.type === 'postgres';
 
     const pk_auto = isPostgres ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
@@ -268,6 +296,7 @@ export class DatabaseManager {
         authorName TEXT NOT NULL,
         timestamp ${datetime_type} NOT NULL,
         provider TEXT NOT NULL,
+        direction TEXT,
         metadata TEXT,
         tenantId TEXT,
         created_at ${datetime_type} DEFAULT ${default_now}
@@ -525,6 +554,39 @@ export class DatabaseManager {
       )
     `);
 
+    // Inference logs table
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS inference_logs (
+        id ${pk_auto},
+        botName TEXT NOT NULL,
+        prompt TEXT NOT NULL,
+        response TEXT,
+        tokensUsed INTEGER,
+        latencyMs INTEGER,
+        provider TEXT,
+        status TEXT,
+        errorMessage TEXT,
+        timestamp ${datetime_type} DEFAULT ${default_now}
+      )
+    `);
+
+    // Vector Memories table
+    // For Postgres we use the 'vector' type from pgvector.
+    // For SQLite we store the embedding as a JSON string for now.
+    const embedding_col = isPostgres ? 'embedding vector(1536)' : 'embedding TEXT';
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS memories (
+        id ${isPostgres ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT'},
+        content TEXT NOT NULL,
+        metadata TEXT,
+        userId TEXT,
+        agentId TEXT,
+        sessionId TEXT,
+        ${embedding_col},
+        created_at ${datetime_type} DEFAULT ${default_now}
+      )
+    `);
+
     // Logs table for database persistence
     await db.exec(`
       CREATE TABLE IF NOT EXISTS logs (
@@ -537,6 +599,11 @@ export class DatabaseManager {
         metadata TEXT
       )
     `);
+
+    // Create activity tables from schema module
+    const activitySchemas = new ActivitySchemas();
+    await activitySchemas.createTables(db);
+    await activitySchemas.createIndexes(db);
 
     debug('Database tables created');
   }
@@ -591,6 +658,23 @@ export class DatabaseManager {
     await db.exec(`CREATE INDEX IF NOT EXISTS idx_logs_timestamp ON logs(timestamp DESC)`);
     await db.exec(`CREATE INDEX IF NOT EXISTS idx_logs_level ON logs(level)`);
 
+    // Inference indexes
+    await db.exec(`CREATE INDEX IF NOT EXISTS idx_inference_bot ON inference_logs(botName)`);
+    await db.exec(`CREATE INDEX IF NOT EXISTS idx_inference_timestamp ON inference_logs(timestamp DESC)`);
+
+    // Memory indexes
+    await db.exec(`CREATE INDEX IF NOT EXISTS idx_memories_user ON memories(userId)`);
+    await db.exec(`CREATE INDEX IF NOT EXISTS idx_memories_agent ON memories(agentId)`);
+    
+    if (this.config?.type === 'postgres') {
+      try {
+        // HNSW index for vector similarity search (cosine distance)
+        await db.exec(`CREATE INDEX IF NOT EXISTS idx_memories_embedding ON memories USING hnsw (embedding vector_cosine_ops)`);
+      } catch (e) {
+        debug('DATABASE_MANAGER: failed to create HNSW index (might need pgvector 0.5+):', e);
+      }
+    }
+
     debug('Database indexes created');
   }
 
@@ -604,6 +688,7 @@ export class DatabaseManager {
       await db.exec(`ALTER TABLE bot_configuration_versions ADD COLUMN tenantId TEXT`);
       await db.exec(`ALTER TABLE bot_configuration_audit ADD COLUMN tenantId TEXT`);
       await db.exec(`ALTER TABLE messages ADD COLUMN tenantId TEXT`);
+      await db.exec(`ALTER TABLE messages ADD COLUMN direction TEXT`);
       await db.exec(`ALTER TABLE bot_sessions ADD COLUMN tenantId TEXT`);
       await db.exec(`ALTER TABLE bot_metrics ADD COLUMN tenantId TEXT`);
 
@@ -851,5 +936,174 @@ export class DatabaseManager {
 
   async getRecentDecisions(limit = 100): Promise<DecisionRecord[]> {
     return this.decisionRepo.getRecentDecisions(limit);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Activity operations -- delegated to ActivityRepository
+  // ---------------------------------------------------------------------------
+
+  async logActivity(activity: ActivityLog): Promise<number | string> {
+    return this.activityRepo.logActivity(activity);
+  }
+
+  async logMessageActivity(log: {
+    bot_id?: string;
+    channel_id: string;
+    user_id: string;
+    message: string;
+    response?: string;
+  }): Promise<number | string> {
+    return this.activityRepo.logMessageActivity(log);
+  }
+
+  async logAudit(audit: {
+    bot_id: string;
+    action: string;
+    user_id?: string;
+    old_values?: string;
+    new_values?: string;
+  }): Promise<number | string> {
+    return this.activityRepo.logAudit(audit);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Inference operations -- delegated to InferenceRepository
+  // ---------------------------------------------------------------------------
+
+  async logInference(log: InferenceLog): Promise<number | string> {
+    if (!databaseConfig.get('PERSIST_INFERENCE')) return 0;
+    return this.inferenceRepo.logInference(log);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Memory operations -- delegated to MemoryRepository
+  // ---------------------------------------------------------------------------
+
+  async addMemory(record: MemoryRecord): Promise<number | string> {
+    return this.memoryRepo.addMemory(record);
+  }
+
+  async searchMemories(
+    embedding: number[], 
+    options: { limit?: number; userId?: string; agentId?: string } = {}
+  ): Promise<(MemoryRecord & { score: number })[]> {
+    return this.memoryRepo.searchMemories(embedding, options);
+  }
+
+  async getMemories(options: { limit?: number; userId?: string; agentId?: string } = {}): Promise<MemoryRecord[]> {
+    return this.memoryRepo.getMemories(options);
+  }
+
+  async deleteMemory(id: string | number): Promise<boolean> {
+    return this.memoryRepo.deleteMemory(id);
+  }
+
+  async deleteAllMemories(options: { userId?: string; agentId?: string } = {}): Promise<void> {
+    return this.memoryRepo.deleteAll(options);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Cleanup operations
+  // ---------------------------------------------------------------------------
+
+  async cleanupTableByDate(tableName: string, days: number, dateColumn = 'timestamp'): Promise<number> {
+    if (!this.db || !this.connected) return 0;
+
+    const isPostgres = this.config?.type === 'postgres';
+    let sql: string;
+
+    if (isPostgres) {
+      sql = `DELETE FROM ${tableName} WHERE ${dateColumn} < NOW() - INTERVAL '${days} days'`;
+    } else {
+      sql = `DELETE FROM ${tableName} WHERE ${dateColumn} < datetime('now', '-${days} days')`;
+    }
+
+    try {
+      const result = await this.db.run(sql);
+      debug(`Cleaned up ${result.changes} rows from ${tableName} (by date)`);
+      return result.changes;
+    } catch (error) {
+      debug(`Error cleaning up table ${tableName}:`, error);
+      return 0;
+    }
+  }
+
+  async cleanupTableByRows(tableName: string, maxRows: number): Promise<number> {
+    if (!this.db || !this.connected) return 0;
+
+    // Subquery to find IDs to keep
+    // Note: This assumes 'id' is the primary key and rows are ordered by timestamp or id
+    const sql = `
+      DELETE FROM ${tableName}
+      WHERE id NOT IN (
+        SELECT id FROM (
+          SELECT id FROM ${tableName}
+          ORDER BY id DESC
+          LIMIT ?
+        ) AS tmp
+      )
+    `;
+
+    try {
+      const result = await this.db.run(sql, [maxRows]);
+      debug(`Cleaned up ${result.changes} rows from ${tableName} (by row count)`);
+      return result.changes;
+    } catch (error) {
+      debug(`Error cleaning up table ${tableName}:`, error);
+      return 0;
+    }
+  }
+
+  private getRetentionLimits(): { days: number; maxRows: number } {
+    const autoRetention = databaseConfig.get('AUTO_RETENTION');
+    let days = databaseConfig.get('LOG_RETENTION_DAYS');
+    let maxRows = databaseConfig.get('MAX_HISTORY_ROWS');
+
+    if (autoRetention) {
+      if (this.config?.type === 'sqlite' && this.config.path === ':memory:') {
+        // Lite: Miniscule retention for RAM efficiency
+        days = 1;
+        maxRows = 100;
+        debug('Applying LITE retention limits (1 day, 100 rows)');
+      } else if (this.config?.type === 'postgres') {
+        // Cloud: Limited retention for Neon Free Tier (0.5 GB limit)
+        days = 7;
+        maxRows = 1000;
+        debug('Applying CLOUD retention limits (7 days, 1000 rows)');
+      } else {
+        // Standard: Regular disk settings
+        debug(`Applying STANDARD retention limits (${days} days, ${maxRows} rows)`);
+      }
+    }
+
+    return { days, maxRows };
+  }
+
+  async runFullCleanup(): Promise<void> {
+    const { days, maxRows } = this.getRetentionLimits();
+
+    const tables = [
+      { name: 'messages', dateCol: 'timestamp' },
+      { name: 'logs', dateCol: 'timestamp' },
+      { name: 'bot_configuration_audit', dateCol: 'performedAt' },
+      { name: 'activity_logs', dateCol: 'timestamp' },
+      { name: 'message_logs', dateCol: 'timestamp' },
+      { name: 'bot_audit_logs', dateCol: 'timestamp' },
+      { name: 'bot_error_logs', dateCol: 'timestamp' },
+      { name: 'audits', dateCol: 'timestamp' },
+      { name: 'inference_logs', dateCol: 'timestamp' },
+      { name: 'memories', dateCol: 'created_at' },
+    ];
+
+    debug(`Running full database cleanup: retention=${days}d, maxRows=${maxRows}`);
+
+    for (const table of tables) {
+      try {
+        await this.cleanupTableByDate(table.name, days, table.dateCol);
+        await this.cleanupTableByRows(table.name, maxRows);
+      } catch (e) {
+        debug(`Failed to cleanup table ${table.name}:`, e);
+      }
+    }
   }
 }
