@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3';
 import Debug from 'debug';
+import { IDatabase } from './types';
 
 const debug = Debug('app:SQLiteWrapper');
 
@@ -7,7 +8,7 @@ const debug = Debug('app:SQLiteWrapper');
  * Wrapper around better-sqlite3 providing an async/promise-based API
  * compatible with the previous sqlite package usage.
  */
-export class SQLiteWrapper {
+export class SQLiteWrapper implements IDatabase {
   private db: any;
 
   constructor(filename: string) {
@@ -67,4 +68,4 @@ export class SQLiteWrapper {
 export type { Database as DatabaseType };
 
 // Type alias for compatibility with existing code that imported Database from 'sqlite'
-export type Database = SQLiteWrapper;
+export type Database = IDatabase;

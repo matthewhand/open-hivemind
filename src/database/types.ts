@@ -5,6 +5,14 @@
  * are now re-exported from this single location.
  */
 
+export interface IDatabase {
+  run(sql: string, params?: any[]): Promise<{ lastID: number | string; changes: number }>;
+  all<T = any>(sql: string, params?: any[]): Promise<T[]>;
+  get<T = any>(sql: string, params?: any[]): Promise<T | undefined>;
+  exec(sql: string): Promise<void>;
+  close(): Promise<void>;
+}
+
 export interface DatabaseConfig {
   type: 'sqlite' | 'postgres' | 'mysql';
   path?: string;
