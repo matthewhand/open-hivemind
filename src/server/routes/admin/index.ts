@@ -23,9 +23,10 @@ const router = Router();
 const debug = Debug('app:webui:admin');
 
 const isTestEnv = process.env.NODE_ENV === 'test';
+const skipAuth = process.env.SKIP_AUTH === 'true';
 
-// Apply authentication middleware to all admin routes (skip in tests)
-if (!isTestEnv) {
+// Apply authentication middleware to all admin routes (unless SKIP_AUTH is set)
+if (!skipAuth) {
   router.use(authenticate, requireAdmin);
 }
 

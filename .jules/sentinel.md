@@ -33,3 +33,12 @@
 **Vulnerability:** The custom `isLocalhostRequest` implementation in `src/auth/middleware.ts` used a logical OR (`||`) to check if the request came from localhost by examining the IP address, Host header, or Origin header. When `ALLOW_LOCALHOST_ADMIN=true` was enabled, an external attacker could completely bypass authentication by simply adding `Host: localhost` or `Origin: http://localhost` to their HTTP request headers.
 **Learning:** Security checks that rely on client-provided headers (like `Host` or `Origin`) MUST NOT be used in an OR condition alongside stronger identity factors like source IP address for establishing trust. The intention was to check all properties to protect against DNS rebinding and CSRF, but the OR implementation actually expanded the trust domain to any request containing the spoofed headers.
 **Prevention:** Always use strict AND conditions when layering defense-in-depth header checks on top of a foundational trust signal like source IP. Verify that the IP address itself is correct FIRST, and then only reject (not authorize) the request if the provided headers do not match expectations.
+
+## 2026-04-17 - Path Traversal in Plugin Name
+**Vulnerability:** Malicious plugin repository could define_relative path sequence in `package.json` "name" field (e.g., `../../../tmp/pwned`), causing arbitrary file write during plugin directory rename.
+**Learning:** Always validate extracted strings from external configuration files before filesystem operations. The `package.json` name field is user-controlled and should never be trusted.
+**Prevention:** Reject plugin names containing `..`, `/`, or `\` path separators. Throw `PluginValidationError` if detected.
+## 2025-02-27 - OTLP Exporters and SSRF Protection
+**Vulnerability:** SSRF checks applied to internal infrastructure.
+**Learning:** OTLP collectors and telemetry components are routinely deployed as internal sidecars (e.g., localhost:4318) or within private VPC networks. Applying SSRF protections like `isSafeUrl` that block private or loopback IP addresses to these exporters will break legitimate observability pipelines.
+**Prevention:** Do not apply external SSRF protections to internal observability components like trace exporters unless explicitly instructed to protect against user-supplied endpoint configuration.

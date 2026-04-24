@@ -5,6 +5,14 @@
  * are now re-exported from this single location.
  */
 
+export interface IDatabase {
+  run(sql: string, params?: any[]): Promise<{ lastID: number | string; changes: number }>;
+  all<T = any>(sql: string, params?: any[]): Promise<T[]>;
+  get<T = any>(sql: string, params?: any[]): Promise<T | undefined>;
+  exec(sql: string): Promise<void>;
+  close(): Promise<void>;
+}
+
 export interface DatabaseConfig {
   type: 'sqlite' | 'postgres' | 'mysql';
   path?: string;
@@ -24,6 +32,7 @@ export interface MessageRecord {
   authorName: string;
   timestamp: Date;
   provider: string;
+  direction?: 'incoming' | 'outgoing';
   metadata?: Record<string, unknown>;
 }
 
@@ -273,6 +282,7 @@ export interface Anomaly {
   explanation: string;
   resolved: boolean;
   tenantId?: string;
+  traceId?: string;
 }
 
 export interface ApprovalRequest {
@@ -307,3 +317,29 @@ export interface DecisionRecord {
   threshold: number;
   timestamp?: Date;
 }
+
+export interface InferenceLog {
+  id?: number | string;
+  botName: string;
+  prompt: string;
+  response?: string;
+  tokensUsed?: number;
+  latencyMs?: number;
+  provider?: string;
+  status: 'success' | 'error';
+  errorMessage?: string;
+  timestamp?: Date;
+}
+
+export interface MemoryRecord {
+  id?: number | string;
+  content: string;
+  metadata?: Record<string, any>;
+  userId?: string;
+  agentId?: string;
+  sessionId?: string;
+  embedding?: number[];
+  createdAt?: Date;
+}
+
+

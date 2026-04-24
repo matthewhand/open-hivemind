@@ -18,9 +18,11 @@
  */
 
 import Debug from 'debug';
+import { container } from 'tsyringe';
 import { type MessageBus } from '@src/events/MessageBus';
 import type { MessageContext, ReplyDecision } from '@src/events/types';
 import { SwarmCoordinator } from '@src/services/SwarmCoordinator';
+import { PipelineDebuggerService } from '../server/services/PipelineDebuggerService';
 
 const debug = Debug('app:pipeline:decision');
 
@@ -81,6 +83,18 @@ export class DecisionStage {
    */
   async process(ctx: MessageContext): Promise<ReplyDecision> {
     try {
+      // --- Pipeline Debugger Breakpoint Check ---
+      try {
+        const debuggerService = container.resolve(PipelineDebuggerService);
+        if (debuggerService.shouldPause('validated')) {
+          debug(`[Debugger] Pausing pipeline for bot ${ctx.botName} at stage 'validated'`);
+          ctx = await debuggerService.pause('validated', ctx);
+          debug(`[Debugger] Resuming pipeline for bot ${ctx.botName}`);
+        }
+      } catch (e) {
+        // Ignore DI errors
+      }
+
       const messageId = ctx.message.getMessageId();
       const botId = (ctx.botConfig.BOT_ID as string) || (ctx.botConfig.botId as string) || '';
       const swarm = SwarmCoordinator.getInstance();
@@ -96,6 +110,14 @@ export class DecisionStage {
           : 'Message already claimed by another bot in swarm';
 
         debug('[DecisionStage] Message %s: skipped (claimed)', messageId);
+
+        // Capture metadata
+        ctx.metadata.decision = {
+          alreadyClaimed: true,
+          claimedBy: existingClaim?.botId,
+          reason,
+          shouldReply: false,
+        };
 
         // Broadcast decision to WebSocket for Live Orchestration Log
         this.bus.emit('pipeline:decision', {
@@ -113,6 +135,14 @@ export class DecisionStage {
 
       // --- Run the decision strategy ---
       const decision = await this.strategy.shouldReply(ctx);
+
+      // Capture metadata
+      ctx.metadata.decision = {
+        alreadyClaimed: false,
+        shouldReply: decision.shouldReply,
+        reason: decision.reason,
+        meta: decision.meta,
+      };
 
       if (decision.shouldReply) {
         // Claim the message for this bot

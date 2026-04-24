@@ -1,7 +1,10 @@
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
+import { container } from 'tsyringe';
 import { ErrorUtils } from '../../../common/ErrorUtils';
 import { DatabaseManager } from '../../../database/DatabaseManager';
+import { getActiveTracer } from '../../../observability/PipelineTracer';
+import { AnomalyDetectionService } from '../../../services/AnomalyDetectionService';
 import { HTTP_STATUS } from '../../../types/constants';
 import { isSafeUrl } from '../../../utils/ssrfGuard';
 import { TestConnectionSchema } from '../../../validation/schemas/adminSchema';
@@ -12,6 +15,7 @@ import {
   getModelsForProvider,
   getSupportedProviders,
 } from '../../data/llmModels';
+import { PipelineDebuggerService } from '../../services/PipelineDebuggerService';
 
 const debug = Debug('open-hivemind:admin:monitoring');
 
@@ -425,6 +429,64 @@ router.get('/llm-providers/:type/models', (req: Request, res: Response) => {
       message: hivemindError.message || 'An error occurred while fetching LLM models',
     });
   }
+});
+
+// GET /anomalies - Get detected system anomalies
+router.get('/anomalies', async (req: Request, res: Response) => {
+  try {
+    const ads = AnomalyDetectionService.getInstance();
+    const anomalies = ads.getAnomalies();
+    return res.json({ success: true, data: { anomalies } });
+  } catch (error) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      error: 'Failed to fetch anomalies',
+      message: hivemindError.message || 'An error occurred while fetching anomalies',
+    });
+  }
+});
+
+// GET /decision-traces - Get recent message pipeline decision traces
+router.get('/decision-traces', (req: Request, res: Response) => {
+  try {
+    const tracer = getActiveTracer();
+    if (!tracer) {
+      return res.json({ traces: [] });
+    }
+    return res.json({ traces: tracer.getCompletedTraces() });
+  } catch (error) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      error: 'Failed to fetch decision traces',
+      message: hivemindError.message || 'An error occurred while fetching traces',
+    });
+  }
+});
+
+// GET /pipeline/breakpoints - Get active pipeline breakpoints
+router.get('/pipeline/breakpoints', (req: Request, res: Response) => {
+  const debuggerService = container.resolve(PipelineDebuggerService);
+  return res.json({
+    breakpoints: debuggerService.getActiveBreakpoints(),
+    pausedStages: debuggerService.getPausedStages(),
+  });
+});
+
+// POST /pipeline/breakpoints/toggle - Toggle breakpoint on a stage
+router.post('/pipeline/breakpoints/toggle', (req: Request, res: Response) => {
+  const { stage } = req.body;
+  const debuggerService = container.resolve(PipelineDebuggerService);
+  const enabled = debuggerService.toggleBreakpoint(stage || 'validated');
+  return res.json({ success: true, stage: stage || 'validated', enabled });
+});
+
+// POST /pipeline/resume/:id - Resume a paused pipeline
+router.post('/pipeline/resume/:id', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { updatedContext } = req.body;
+  const debuggerService = container.resolve(PipelineDebuggerService);
+  debuggerService.resume(id, updatedContext);
+  return res.json({ success: true, message: 'Pipeline resumed' });
 });
 
 export default router;

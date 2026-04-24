@@ -53,9 +53,42 @@ export class AuthManager {
 
   private constructor() {
     // Generate secure JWT secrets or use environment variable
-    this.jwtSecret = process.env.JWT_SECRET || this.generateSecureSecret('jwt_access');
+    const envJwtSecret = process.env.JWT_SECRET;
+    const envJwtRefreshSecret = process.env.JWT_REFRESH_SECRET;
+
+    let secureJwtSecret: string | null = null;
+    let secureJwtRefreshSecret: string | null = null;
+
+    // Attempt to load from secure config synchronously
+    if (process.env.NODE_ENV !== 'test') {
+      const secureManager = SecureConfigManager.getInstanceSync();
+      const accessConfig = secureManager.getConfigSync('jwt_access_secret');
+      if (accessConfig?.data && typeof accessConfig.data.secret === 'string') {
+        secureJwtSecret = accessConfig.data.secret;
+      }
+
+      const refreshConfig = secureManager.getConfigSync('jwt_refresh_secret');
+      if (refreshConfig?.data && typeof refreshConfig.data.secret === 'string') {
+        secureJwtRefreshSecret = refreshConfig.data.secret;
+      }
+    }
+
+    if (process.env.NODE_ENV === 'production') {
+      if (!envJwtSecret && !secureJwtSecret) {
+        throw new Error(
+          'CRITICAL: JWT_SECRET environment variable or secure config is required in production.'
+        );
+      }
+      if (!envJwtRefreshSecret && !secureJwtRefreshSecret) {
+        throw new Error(
+          'CRITICAL: JWT_REFRESH_SECRET environment variable or secure config is required in production.'
+        );
+      }
+    }
+
+    this.jwtSecret = envJwtSecret || secureJwtSecret || this.generateSecureSecret('jwt_access');
     this.jwtRefreshSecret =
-      process.env.JWT_REFRESH_SECRET || this.generateSecureSecret('jwt_refresh');
+      envJwtRefreshSecret || secureJwtRefreshSecret || this.generateSecureSecret('jwt_refresh');
 
     // Create default admin user synchronously
     this.initializeDefaultAdminSync();
@@ -121,6 +154,10 @@ export class AuthManager {
     let password = process.env.ADMIN_PASSWORD;
 
     if (!password) {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('CRITICAL: ADMIN_PASSWORD environment variable is required in production.');
+      }
+
       password = crypto.randomBytes(16).toString('hex');
       this.generatedPassword = password;
       debug('WARN:', '================================================================');

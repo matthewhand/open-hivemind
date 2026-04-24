@@ -3,8 +3,37 @@ import process from 'process';
 import { Router } from 'express';
 import { MetricsCollector } from '../../monitoring/MetricsCollector';
 import { providerRegistry } from '../../registries/ProviderRegistry';
+import { webUIStorage } from '../../storage/webUIStorage';
+import { WebuiConfigUpdateSchema } from '../../validation/schemas/configSchema';
+import { validateRequest } from '../../validation/validateRequest';
 
 const router = Router();
+
+// GET /config - Get the WebUI configuration
+router.get('/config', async (_req, res) => {
+  try {
+    const config = await webUIStorage.loadConfig();
+    return res.json(config);
+  } catch (_error) {
+    return res.status(500).json({ error: 'Failed to load configuration' });
+  }
+});
+
+// POST /config - Update the WebUI configuration (dashboard layout / user preferences only)
+router.post('/config', validateRequest(WebuiConfigUpdateSchema), async (req, res) => {
+  try {
+    const { layout } = req.body as { layout?: string[] };
+    const currentConfig = await webUIStorage.loadConfig();
+    const newConfig = { ...currentConfig };
+    if (layout !== undefined) {
+      newConfig.layout = layout;
+    }
+    await webUIStorage.saveConfig(newConfig);
+    return res.json({ success: true, config: newConfig });
+  } catch (_error) {
+    return res.status(500).json({ error: 'Failed to save configuration' });
+  }
+});
 
 // GET /system-status - Overall system status for the WebUI
 router.get('/system-status', (_req, res) => {

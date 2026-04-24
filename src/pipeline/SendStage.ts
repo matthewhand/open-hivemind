@@ -95,6 +95,13 @@ export class SendStage {
         await this.sender.sendToChannel(ctx.channelId, part, ctx.botName);
       }
 
+      // Capture metadata
+      ctx.metadata.send = {
+        partsCount: parts.length,
+        totalLength: trimmed.length,
+        status: 'sent',
+      };
+
       await this.bus.emitAsync('message:sent', {
         ...ctx,
         responseText: trimmed,

@@ -319,11 +319,22 @@ describe('PluginLoader → LettaProvider integration', () => {
   // ---- Error Handling ----
 
   it('should throw when no agent ID is provided', async () => {
-    const provider = instantiateLlmProvider(llmLettaModule, { agentId: undefined as any });
+    // Temporarily clear LETTA_AGENT_ID to test the validation error
+    const originalAgentId = process.env.LETTA_AGENT_ID;
+    delete process.env.LETTA_AGENT_ID;
 
-    await expect(
-      provider.generateChatCompletion('hello', [], {})
-    ).rejects.toThrow('No agent ID provided');
+    try {
+      const provider = instantiateLlmProvider(llmLettaModule, { agentId: undefined as any });
+
+      await expect(
+        provider.generateChatCompletion('hello', [], {})
+      ).rejects.toThrow('No agent ID provided');
+    } finally {
+      // Restore the env var
+      if (originalAgentId !== undefined) {
+        process.env.LETTA_AGENT_ID = originalAgentId;
+      }
+    }
   });
 
   it('should handle SDK errors gracefully and fall back to default conversation', async () => {

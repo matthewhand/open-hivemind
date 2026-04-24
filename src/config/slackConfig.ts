@@ -14,7 +14,7 @@ function loadSlackConfig(): SlackConfig {
   const configDir = process.env.NODE_CONFIG_DIR || './config/';
   const configPath = path.join(configDir, 'providers/slack.json');
   
-  let fileConfig: Record<string, any> = {};
+  let fileConfig: Record<string, unknown> = {};
   
   try {
     if (fs.existsSync(configPath)) {
@@ -28,17 +28,17 @@ function loadSlackConfig(): SlackConfig {
   }
 
   // Map environment variables
-  const envConfig: Record<string, any> = {};
+  const envConfig: Record<string, unknown> = {};
   
-  const mapEnv = (envKey: string, configKey: string, parser?: (val: string) => any) => {
+  const mapEnv = (envKey: string, configKey: string, parser?: (val: string) => unknown) => {
     if (process.env[envKey] !== undefined) {
       const val = process.env[envKey]!;
       envConfig[configKey] = parser ? parser(val) : val;
     }
   };
 
-  const parseIntBase10 = (v: string) => parseInt(v, 10);
-  const parseBool = (v: string) => v.toLowerCase() === 'true';
+  const parseIntBase10 = (v: string): number => parseInt(v, 10);
+  const parseBool = (v: string): boolean => v.toLowerCase() === 'true';
 
   mapEnv('SLACK_BOT_TOKEN', 'SLACK_BOT_TOKEN');
   mapEnv('SLACK_APP_TOKEN', 'SLACK_APP_TOKEN');
@@ -67,7 +67,7 @@ function loadSlackConfig(): SlackConfig {
     debug('Slack configuration validation failed:', result.error.format());
     if (process.env.NODE_ENV === 'test') {
       const err = new Error(JSON.stringify(result.error.issues));
-      (err as any).issues = result.error.issues;
+      (err as Error & { issues: unknown }).issues = result.error.issues;
       throw err;
     }
     return SlackSchema.parse({});
@@ -82,7 +82,7 @@ const slackConfig = {
   get: (key: keyof SlackConfig) => config[key],
   getProperties: () => config,
   getSchema: () => zodToJsonSchema(SlackSchema as any),
-  validate: (options: { allowed: 'strict' | 'warn' }) => {
+  validate: (_options: { allowed: 'strict' | 'warn' }) => {
     SlackSchema.parse(config);
   }
 };

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
-import Accordion from './DaisyUI/Accordion';
+import List, { ListRow, ListColGrow, ListColWrap } from './DaisyUI/List';
+import Collapse from './DaisyUI/Collapse';
 import { Alert } from './DaisyUI/Alert';
 import Button from './DaisyUI/Button';
 import Card from './DaisyUI/Card';
@@ -29,6 +30,8 @@ import {
   Pencil as PencilSquareIcon,
   Trash2 as TrashIcon,
   Lock as LockClosedIcon,
+  Terminal,
+  ExternalLink,
 } from 'lucide-react';
 
 import { apiService } from '../services/api';
@@ -333,7 +336,11 @@ const IntegrationsPanel: React.FC = () => {
           <h2 className="text-lg font-bold flex items-center gap-2 uppercase tracking-wide text-base-content/70">
             <CpuChipIcon className="w-5 h-5" />
             LLM Providers
-            <Tooltip content="Manage AI models and API keys" position="right" className="font-normal normal-case text-sm">
+            <Tooltip
+              content="Manage AI models and API keys"
+              position="right"
+              className="font-normal normal-case text-sm"
+            >
               <AlertCircle className="w-4 h-4 cursor-help opacity-50 hover:opacity-100" />
             </Tooltip>
           </h2>
@@ -341,101 +348,144 @@ const IntegrationsPanel: React.FC = () => {
             variant="ghost"
             size="sm"
             className="gap-2"
-            onClick={() => setProviderModalState({ isOpen: true, isEdit: false, providerType: 'llm', provider: null })}
+            onClick={() =>
+              setProviderModalState({ isOpen: true, isEdit: false, providerType: 'llm', provider: null })
+            }
           >
             <PlusIcon className="w-4 h-4" /> Add LLM Provider
           </Button>
         </div>
 
-        {/* Profiles List */}
+        {/* Profiles List using DaisyUI List */}
         {llmProfiles.length === 0 ? (
           <div className="text-center py-8 opacity-50 border-2 border-dashed border-base-200 rounded-xl mb-6">
             <Brain className="w-12 h-12 mx-auto mb-2 opacity-20" />
             <p>No custom LLM profiles configured. Using defaults.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
-            {llmProfiles.map(profile => {
+          <List className="mb-8 rounded-xl shadow-sm border border-base-200 bg-base-100 overflow-hidden">
+            {llmProfiles.map((profile) => {
               const Icon = (profile.provider && PROVIDER_ICONS[profile.provider]) || Brain;
               const connectedBots = getConnectedBots(profile.key, 'llm');
               return (
-                <Card key={profile.key} className="shadow-sm hover:shadow-md transition-all border border-base-200 group">
-                  <Card.Body className="p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3 overflow-hidden">
-                        <div className="p-2 bg-base-200 rounded-lg text-primary group-hover:bg-primary group-hover:text-primary-content transition-colors flex items-center justify-center">
-                          {typeof Icon === 'string' ? <span className="text-xl">{Icon}</span> : (typeof Icon === 'function' ? <Icon className="w-5 h-5" /> : (typeof Icon === 'object' && Icon && 'render' in Icon) ? React.createElement(Icon as any, { className: "w-5 h-5" }) : <div className="w-5 h-5 flex items-center justify-center">{Icon as React.ReactNode}</div>)}
-                        </div>
-                        <div className="min-w-0">
-                          <h3 className="font-bold text-sm truncate" title={profile.name}>{profile.name}</h3>
-                          <Badge variant="ghost" size="small" className="gap-1 p-0 text-xs">{profile.provider}</Badge>
-                        </div>
-                      </div>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" className="btn-square btn-xs" aria-label={`Edit ${profile.name} provider profile`} onClick={() => setProviderModalState({
-                          isOpen: true,
-                          isEdit: true,
-                          providerType: 'llm',
-                          provider: { id: profile.key, name: profile.name, type: profile.provider, config: profile.config, modelType: profile.modelType }
-                        })}>
-                          <PencilSquareIcon className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="btn-square btn-xs text-error" aria-label={`Delete ${profile.name} provider profile`} onClick={() => handleDeleteProfile(profile.key)}>
-                          <TrashIcon className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="pt-3 border-t border-base-200">
-                      <p className="text-xs font-bold text-base-content/40 uppercase mb-1.5 flex items-center gap-1">
-                        <Bot className="w-3 h-3" /> Used by {connectedBots.length} Bots
-                      </p>
-                    </div>
-                  </Card.Body>
-                </Card>
-              );
-            })}
-          </div>
-        )}
+                <ListRow key={profile.key} className="hover:bg-base-200/30 transition-colors p-4 border-b border-base-200 last:border-b-0">
+                  <div className="p-2 bg-base-200 rounded-lg text-primary flex items-center justify-center min-w-10">
+                    {typeof Icon === 'function' ? (
+                      <Icon className="w-5 h-5" />
+                    ) : (
+                      <Brain className="w-5 h-5" />
+                    )}
+                  </div>
+                  
+                  <ListColGrow>
+                    <div className="font-bold text-sm">{profile.name}</div>
+                    <div className="text-xs opacity-50 font-mono uppercase tracking-wider">{profile.provider}</div>
+                  </ListColGrow>
 
-        {/* Global LLM Settings */}
-        {llmConfig && (
-          <Accordion
-            items={[{
-              id: 'global-llm-settings',
-              title: 'Global Settings',
-              icon: <Plug className="w-4 h-4" />,
-              content: (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                  <div className="flex items-center justify-between mb-2 col-span-full">
-                    <h3 className="font-bold text-sm">Default Configuration</h3>
-                    <Button variant="ghost" size="sm" className="btn-xs" aria-label="Edit global LLM configuration" onClick={() => openEditModal('llm')}>
-                      <PencilSquareIcon className="w-3 h-3 mr-1" /> Edit Globals
-                    </Button>
+                  <div className="hidden sm:flex flex-col items-end mr-4">
+                    <div className="text-xs font-bold text-base-content/40 uppercase mb-1 flex items-center gap-1">
+                      <Bot className="w-3 h-3" /> Used by {connectedBots.length} Bots
+                    </div>
+                    {connectedBots.length > 0 && (
+                       <div className="flex gap-1">
+                         {connectedBots.slice(0, 2).map(b => (
+                           <Badge key={b.id} size="xs" variant="ghost" className="text-[10px] h-4">{b.name}</Badge>
+                         ))}
+                         {connectedBots.length > 2 && <Badge size="xs" variant="ghost" className="text-[10px] h-4">+{connectedBots.length - 2}</Badge>}
+                       </div>
+                    )}
                   </div>
 
-                  {Object.entries(llmConfig.values).map(([key, value]) => {
-                    const isAdvanced = key.includes('PARALLEL') || key.includes('EXECUTION');
-                    if (isAdvanced && !advancedMode) return null;
+                  <ListColWrap className="flex gap-1">
+                    <Tooltip content="Edit Provider">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="btn-square btn-xs"
+                        aria-label={`Edit ${profile.name} provider`}
+                        onClick={() =>
+                          setProviderModalState({
+                            isOpen: true,
+                            isEdit: true,
+                            providerType: 'llm',
+                            provider: {
+                              id: profile.key,
+                              name: profile.name,
+                              type: profile.provider,
+                              config: profile.config,
+                              modelType: profile.modelType,
+                            },
+                          })
+                        }
+                      >
+                        <PencilSquareIcon className="w-4 h-4" />
+                      </Button>
+                    </Tooltip>
+                    <Tooltip content="Delete Provider">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="btn-square btn-xs text-error"
+                        aria-label={`Delete ${profile.name} provider`}
+                        onClick={() => handleDeleteProfile(profile.key)}
+                      >
+                        <TrashIcon className="w-4 h-4" />
+                      </Button>
+                    </Tooltip>
+                  </ListColWrap>
+                </ListRow>
+              );
+            })}
+          </List>
+        )}
 
-                    return (
-                      <div key={key} className="flex justify-between items-center p-2 bg-base-100 rounded border border-base-200">
-                        <span className="text-xs font-mono opacity-70">{key}</span>
-                        <span className="font-bold text-sm">{String(value)}</span>
-                      </div>
-                    );
-                  })}
+        {/* Global LLM Settings using Collapse */}
+        {llmConfig && (
+          <Collapse
+            title="Global LLM Engine Settings"
+            icon={<Plug className="w-4 h-4" />}
+            variant="arrow"
+            className="bg-base-200 border border-base-300"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4">
+              <div className="flex items-center justify-between mb-2 col-span-full border-b border-base-content/10 pb-2">
+                <h3 className="font-bold text-sm flex items-center gap-2">
+                  <Terminal className="w-4 h-4" /> Core Engine Options
+                </h3>
+                <Button
+                  variant="primary"
+                  size="xs"
+                  className="btn-outline"
+                  onClick={() => openEditModal('llm')}
+                >
+                  <PencilSquareIcon className="w-3 h-3 mr-1" /> Configure Globals
+                </Button>
+              </div>
 
-                  {!advancedMode && (
-                    <div className="col-span-full text-center text-xs opacity-50 italic">
-                      Enable "Advanced Mode" in System Settings to see more options.
-                    </div>
-                  )}
+              {Object.entries(llmConfig.values).map(([key, value]) => {
+                const isAdvanced = key.includes('PARALLEL') || key.includes('EXECUTION');
+                if (isAdvanced && !advancedMode) return null;
+
+                return (
+                  <div
+                    key={key}
+                    className="flex justify-between items-center p-2.5 bg-base-100 rounded-lg border border-base-200 shadow-sm"
+                  >
+                    <span className="text-[10px] font-mono opacity-60 uppercase truncate mr-2" title={key}>{key}</span>
+                    <span className="font-bold text-xs">{String(value)}</span>
+                  </div>
+                );
+              })}
+
+              {!advancedMode && (
+                <div className="col-span-full text-center py-2">
+                  <Button variant="ghost" size="xs" onClick={() => (window as any).location.href = '/admin/settings'} className="text-[10px] opacity-50 hover:opacity-100">
+                    <ExternalLink className="w-3 h-3 mr-1" /> Enable "Advanced Mode" for more options
+                  </Button>
                 </div>
-              ),
-            }]}
-            size="sm"
-            variant="bordered"
-          />
+              )}
+            </div>
+          </Collapse>
         )}
       </div>
     );

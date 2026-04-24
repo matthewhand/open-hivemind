@@ -2,10 +2,9 @@ import 'reflect-metadata';
 import { injectable, singleton } from 'tsyringe';
 import convict from 'convict';
 import Debug from 'debug';
-import { isValidUrl } from '../common/urlUtils';
 import { SecureConfigManager } from './SecureConfigManager';
 import { ValidationError } from '../types/errorClasses';
-import { validateUrl, validateString, validateEnum } from './validationUtils';
+import { validateUrl, validateEnum } from './validationUtils';
 import { type IConfigurationManager } from '../di/interfaces';
 const debug = Debug('app:ConfigurationManager');
 
@@ -105,7 +104,7 @@ export class ConfigurationManager implements IConfigurationManager {
       ConfigurationManager.instance = new ConfigurationManager();
       debug('ConfigurationManager instance created');
     }
-    return ConfigurationManager.instance!;
+    return ConfigurationManager.instance as ConfigurationManager;
   }
 
   /**
@@ -145,7 +144,7 @@ export class ConfigurationManager implements IConfigurationManager {
      * @example
      * configManager.setSession('slack', 'C123456', 'session_789');
      */
-  public setSession(integration: string, channelId: string, sessionId: string) {
+  public setSession(integration: string, channelId: string, sessionId: string): void {
     if (typeof integration !== 'string') {
       throw new ValidationError(
         'integration must be a string',

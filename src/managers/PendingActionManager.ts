@@ -77,6 +77,18 @@ export class PendingActionManager extends EventEmitter {
   }
 
   /**
+   * Alias for requestApproval to match naming in requirement.
+   */
+  public async create(
+    botName: string,
+    toolName: string,
+    args: Record<string, unknown>,
+    context?: any
+  ): Promise<boolean> {
+    return this.requestApproval(botName, toolName, args, context);
+  }
+
+  /**
    * Resolve a pending action (approve or deny).
    */
   public resolveAction(

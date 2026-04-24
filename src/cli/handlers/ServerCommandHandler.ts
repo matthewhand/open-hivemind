@@ -1,7 +1,12 @@
-/* eslint-disable no-console */
 import chalk from 'chalk';
 import { type Command } from 'commander';
 import { type CommandHandler } from './CommandHandler';
+
+interface StartServerOptions {
+  port: string;
+  config?: string;
+  daemon?: boolean;
+}
 
 export class ServerCommandHandler implements CommandHandler {
   public setup(program: Command): void {
@@ -49,7 +54,7 @@ export class ServerCommandHandler implements CommandHandler {
       });
   }
 
-  private async startServer(options: any): Promise<void> {
+  private async startServer(options: StartServerOptions): Promise<void> {
     console.log(chalk.blue(`Starting Hivemind server on port ${options.port}...`));
 
     if (options.daemon) {

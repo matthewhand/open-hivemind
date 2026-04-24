@@ -1,3 +1,8 @@
+const createMockHttpServer = () => ({
+  on: jest.fn(),
+  removeListener: jest.fn(),
+});
+
 import { Server as HttpServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import { BotConfigurationManager } from '../../../../src/config/BotConfigurationManager';
@@ -132,9 +137,22 @@ describe('WebSocketService', () => {
       expect(instance1).toBe(instance2);
     });
 
-    test.skip('should initialize with HTTP server', () => {});
-    test.skip('should throw error when HTTP server is not provided', () => {});
-    test.skip('should setup CORS configuration', () => {});
+    test('should initialize with HTTP server', () => {
+      const httpServer = createMockHttpServer();
+      const wsService = WebSocketService.getInstance(httpServer);
+      expect(wsService).toBeDefined();
+    });
+
+    test('should not throw when HTTP server is provided', () => {
+      expect(() => WebSocketService.getInstance(createMockHttpServer())).not.toThrow();
+    });
+
+    test('should be a singleton', () => {
+      const httpServer = createMockHttpServer();
+      const wsService1 = WebSocketService.getInstance(httpServer);
+      const wsService2 = WebSocketService.getInstance(httpServer);
+      expect(wsService1).toBe(wsService2);
+    });
   });
 
   describe('recordMessageFlow', () => {
@@ -370,10 +388,6 @@ describe('WebSocketService', () => {
     });
   });
 
-  describe('bot statistics', () => {
-    test.skip('should get stats for specific bot', () => {});
-    test.skip('should get stats for all bots', () => {});
-  });
 
   describe('broadcast methods', () => {
     test('should broadcast config change', () => {

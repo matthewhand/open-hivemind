@@ -215,6 +215,30 @@ export class OpenAiProvider implements ILlmProvider {
     });
   }
 
+  async generateEmbedding(text: string): Promise<number[]> {
+    const apiKey = this.config.apiKey || openaiConfig.get('OPENAI_API_KEY') || process.env.OPENAI_API_KEY;
+    let baseURL = this.config.baseUrl || openaiConfig.get('OPENAI_BASE_URL') || DEFAULT_BASE_URL;
+    const model = 'text-embedding-3-small'; // Standard embedding model
+
+    const openai = new OpenAI({ apiKey, baseURL });
+
+    return circuitBreaker.execute(async () => {
+      const response = await withTimeout(
+        (signal) =>
+          openai.embeddings.create(
+            {
+              model,
+              input: text,
+            },
+            { signal }
+          ),
+        30000, // 30s timeout for embeddings
+        'OpenAI embedding'
+      );
+      return response.data[0].embedding;
+    });
+  }
+
   async validateCredentials(): Promise<boolean> {
     const apiKey =
       this.config.apiKey || openaiConfig.get('OPENAI_API_KEY') || process.env.OPENAI_API_KEY;

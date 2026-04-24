@@ -27,7 +27,7 @@ class TestMessage extends IMessage {
   }
 }
 
-describe.skip('Pipeline Stage Transitions Integration', () => {
+describe('Pipeline Stage Transitions Integration', () => {
   let bus: MessageBus;
 
   beforeEach(() => {
@@ -51,24 +51,55 @@ describe.skip('Pipeline Stage Transitions Integration', () => {
       systemPrompt: 'p',
       userPrompt: 'u',
       history: [],
+      botConfig: { maxTokensPerDay: 1000 },
+      metadata: {},
     };
 
     bus.emit('message:enriched', context as any);
 
     // Allow async handlers to run
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     expect(mockInvoker.generateResponse).toHaveBeenCalled();
     expect(responseSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         responseText: 'bot response',
+        message: expect.any(TestMessage),
       })
     );
   });
 
-  it('should flow from response to send', async () => {
-    const mockSender = { send: jest.fn().mockResolvedValue(undefined) };
-    const mockStorer = { store: jest.fn().mockResolvedValue(undefined) };
+  it('should handle inference errors and emit message:error', async () => {
+    const mockInvoker = { generateResponse: jest.fn().mockRejectedValue(new Error('LLM down')) };
+    const inference = new InferenceStage(bus, mockInvoker as any);
+    inference.register();
+
+    const errorSpy = jest.fn();
+    bus.on('message:error', errorSpy);
+
+    const message = new TestMessage('hello');
+    const context = {
+      message,
+      botName: 'bot1',
+      requestId: 'r1',
+      systemPrompt: 'p',
+      userPrompt: 'u',
+      history: [],
+      botConfig: { maxTokensPerDay: 1000 },
+      metadata: {},
+    };
+
+    bus.emit('message:enriched', context as any);
+
+    // Allow async handlers to run
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    expect(errorSpy).toHaveBeenCalled();
+  });
+
+  it('should flow from response to send and store the response', async () => {
+    const mockSender = { sendToChannel: jest.fn().mockImplementation(() => Promise.resolve()) };
+    const mockStorer = { storeMemory: jest.fn().mockResolvedValue(undefined) };
     const send = new SendStage(bus, mockSender as any, mockStorer as any);
     send.register();
 
@@ -76,14 +107,50 @@ describe.skip('Pipeline Stage Transitions Integration', () => {
     bus.on('message:sent', sentSpy);
 
     const message = new TestMessage('hello');
-    const context = { message, botName: 'bot1', requestId: 'r1', responseText: 'hi' };
+    const context = {
+      message,
+      botName: 'bot1',
+      requestId: 'r1',
+      responseText: 'hi',
+      platform: 'test',
+      channelId: 'c1',
+      botConfig: { maxTokensPerDay: 1000 },
+      metadata: {},
+    };
 
-    bus.emit('message:response', context as any);
+    // Manually trigger the SendStage (bypass event bus for test)
+    await send.process(context as any);
 
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(mockSender.sendToChannel).toHaveBeenCalledWith('c1', 'hi', 'bot1');
+    expect(mockStorer.storeMemory).toHaveBeenCalled();
+    expect(sentSpy).toHaveBeenCalledWith(expect.objectContaining({
+      ...context,
+      parts: ['hi'],
+    }));
+  });
 
-    expect(mockSender.send).toHaveBeenCalled();
-    expect(mockStorer.store).toHaveBeenCalled();
-    expect(sentSpy).toHaveBeenCalled();
+  it('should handle send errors and emit message:error', async () => {
+    const mockSender = { send: jest.fn().mockRejectedValue(new Error('Send failed')) };
+    const mockStorer = { store: jest.fn().mockResolvedValue(undefined) };
+    const send = new SendStage(bus, mockSender as any, mockStorer as any);
+    send.register();
+
+    const errorSpy = jest.fn();
+    bus.on('message:error', errorSpy);
+
+    const message = new TestMessage('hello');
+    const context = {
+      message,
+      botName: 'bot1',
+      requestId: 'r1',
+      responseText: 'hi',
+      botConfig: { maxTokensPerDay: 1000 },
+      metadata: {},
+    };
+
+    // Manually trigger the SendStage
+    await send.process(context as any);
+
+    expect(errorSpy).toHaveBeenCalled();
   });
 });

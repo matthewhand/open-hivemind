@@ -41,6 +41,7 @@ describe('Bots API Integration', () => {
     
     const { BotManager } = require('../../src/managers/BotManager');
     mockManager = await BotManager.getInstance();
+    mockManager.getBot.mockResolvedValue(sampleBot);
 
     app = express();
     app.use(express.json());

@@ -2,13 +2,14 @@ import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
 import { Logger } from '../common/logger';
+import { SecureConfigManager } from '../config/SecureConfigManager';
 
 const debug = Debug('app:storage:webUIStorage');
+const logger = Logger.withContext('app:storage:webUIStorage');
 
 interface WebUIAgent {
   id: string;
   name?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 }
 
@@ -46,28 +47,41 @@ interface WebUIGuard {
  * Simple persistent storage for web UI configurations
  * Stores data in JSON files in the config/user directory
  */
-
-interface WebUIConfig {
+export interface WebUIConfig {
   agents: WebUIAgent[];
   mcpServers: WebUIMcpServer[];
   llmProviders: WebUILlmProvider[];
   messengerProviders: WebUIMessengerProvider[];
   personas: WebUIPersona[];
   guards: WebUIGuard[];
+  layout?: string[];
   lastUpdated: string;
 }
 
 export class WebUIStorage {
-  private configDir: string;
-  private configFile: string;
+  private static instance: WebUIStorage | null = null;
   private guardsInitializationInProgress = false;
   private configCache: WebUIConfig | null = null;
+  private loadPromise: Promise<WebUIConfig> | null = null;
   private saveQueue: Promise<void> = Promise.resolve();
 
-  constructor() {
-    this.configDir = path.join(process.cwd(), 'config', 'user');
-    this.configFile = path.join(this.configDir, 'webui-config.json');
+  private get configDir(): string {
+    return path.join(process.cwd(), 'config', 'user');
+  }
+
+  private get configFile(): string {
+    return path.join(this.configDir, 'webui-config.json');
+  }
+
+  public constructor() {
     this.ensureConfigDirSync();
+  }
+
+  public static getInstance(): WebUIStorage {
+    if (!WebUIStorage.instance) {
+      WebUIStorage.instance = new WebUIStorage();
+    }
+    return WebUIStorage.instance;
   }
 
   /**
@@ -102,30 +116,72 @@ export class WebUIStorage {
       return this.configCache;
     }
 
-    // Default configuration
-    const defaultConfig: WebUIConfig = {
-      agents: [],
-      mcpServers: [],
-      llmProviders: [],
-      messengerProviders: [],
-      personas: [],
-      guards: [],
-      lastUpdated: new Date().toISOString(),
-    };
-
-    try {
-      await fs.promises.access(this.configFile);
-      const data = await fs.promises.readFile(this.configFile, 'utf8');
-      this.configCache = { ...defaultConfig, ...JSON.parse(data) };
-      return this.configCache!;
-    } catch (error: unknown) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
-        debug('ERROR:', 'Error loading web UI config, using defaults:', error);
-      }
+    if (this.loadPromise) {
+      return this.loadPromise;
     }
 
-    this.configCache = defaultConfig;
-    return defaultConfig;
+    this.loadPromise = (async () => {
+      // Default configuration
+      const defaultConfig: WebUIConfig = {
+        agents: [],
+        mcpServers: [],
+        llmProviders: [],
+        messengerProviders: [],
+        personas: [],
+        guards: [],
+        lastUpdated: new Date().toISOString(),
+      };
+
+      try {
+        if (!fs.existsSync(this.configFile)) {
+          return defaultConfig;
+        }
+
+        const rawData = await fs.promises.readFile(this.configFile, 'utf8');
+        let parsedData: any;
+
+        // Detect if file is encrypted (contains multiple colon-separated segments and doesn't look like JSON)
+        // Encrypted format is iv:authTag:encryptedData or similar
+        const isEncrypted = rawData.includes(':') && !rawData.trim().startsWith('{');
+
+        if (isEncrypted) {
+          debug('Loading encrypted web UI configuration');
+          const secureManager = await SecureConfigManager.getInstance();
+          const decryptedData = secureManager.decrypt(rawData);
+          parsedData = JSON.parse(decryptedData);
+        } else {
+          debug('Loading legacy plain-text web UI configuration');
+          parsedData = JSON.parse(rawData);
+
+          // Migrate to encrypted format on next save (only if encryption is enabled)
+          const encryptionEnabled = process.env.DISABLE_ENCRYPTION !== 'true';
+          if (encryptionEnabled) {
+            setTimeout(() => {
+              if (this.configCache) {
+                this.saveConfig(this.configCache).catch((err) =>
+                  logger.error('Failed to migrate config to encrypted format', {
+                    error: err.message,
+                  })
+                );
+              }
+            }, 1000);
+          }
+        }
+
+        return { ...defaultConfig, ...parsedData };
+      } catch (error: unknown) {
+        debug('ERROR:', 'Error loading web UI config, using defaults:', error);
+        logger.error('Failed to load web UI configuration', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return defaultConfig;
+      } finally {
+        this.loadPromise = null;
+      }
+    })();
+
+    this.configCache = await this.loadPromise;
+    return this.configCache;
   }
 
   /**
@@ -138,15 +194,27 @@ export class WebUIStorage {
     // Update cache immediately so subsequent synchronous reads get the new state
     this.configCache = config;
 
-    // Enqueue the async write to prevent concurrent file corruption
-    const dataToWrite = JSON.stringify(config, null, 2);
-
     // Return a new promise that resolves or rejects based on this specific write
     return new Promise((resolve, reject) => {
       this.saveQueue = this.saveQueue
         .then(async () => {
           try {
-            await fs.promises.writeFile(this.configFile, dataToWrite);
+            const dataToSave = JSON.stringify(config, null, 2);
+            let finalData: string;
+
+            // Allow disabling encryption for tests to simplify them
+            const encryptionEnabled = process.env.DISABLE_ENCRYPTION !== 'true';
+
+            if (encryptionEnabled) {
+              const secureManager = await SecureConfigManager.getInstance();
+              finalData = secureManager.encrypt(dataToSave);
+              debug('Web UI configuration saved (encrypted)');
+            } else {
+              finalData = dataToSave;
+              debug('Web UI configuration saved (plain-text)');
+            }
+
+            await fs.promises.writeFile(this.configFile, finalData, 'utf8');
             resolve();
           } catch (error) {
             debug('ERROR:', 'Error saving web UI config:', error);
@@ -157,10 +225,9 @@ export class WebUIStorage {
             );
           }
         })
-        .catch(() => {
-          // Reset queue on failure so subsequent writes aren't blocked
-          // by a previous caller's rejection. Each caller's promise
-          // rejects independently via the try/catch above.
+        .catch((err) => {
+          debug('Queue error:', err);
+          // Don't block the queue
         });
     });
   }
@@ -170,64 +237,29 @@ export class WebUIStorage {
    */
   public async getAgents(): Promise<WebUIAgent[]> {
     const config = await this.loadConfig();
-    return config.agents;
+    return config.agents || [];
   }
 
   /**
-   * Add or update an agent
+   * Save a single agent
    */
   public async saveAgent(agent: WebUIAgent): Promise<void> {
     const config = await this.loadConfig();
-    const existingIndex = config.agents.findIndex((a) => a.id === agent.id);
-
-    if (existingIndex >= 0) {
-      config.agents[existingIndex] = agent;
+    const index = config.agents.findIndex((a) => a.id === agent.id);
+    if (index >= 0) {
+      config.agents[index] = agent;
     } else {
       config.agents.push(agent);
     }
-
     await this.saveConfig(config);
   }
 
   /**
    * Delete an agent
    */
-  public async deleteAgent(agentId: string): Promise<void> {
+  public async deleteAgent(id: string): Promise<void> {
     const config = await this.loadConfig();
-    config.agents = config.agents.filter((a) => a.id !== agentId);
-    await this.saveConfig(config);
-  }
-
-  /**
-   * Get all MCP servers
-   */
-  public async getMcps(): Promise<WebUIMcpServer[]> {
-    const config = await this.loadConfig();
-    return config.mcpServers;
-  }
-
-  /**
-   * Add or update an MCP server
-   */
-  public async saveMcp(mcp: WebUIMcpServer): Promise<void> {
-    const config = await this.loadConfig();
-    const existingIndex = config.mcpServers.findIndex((m) => m.name === mcp.name);
-
-    if (existingIndex >= 0) {
-      config.mcpServers[existingIndex] = mcp;
-    } else {
-      config.mcpServers.push(mcp);
-    }
-
-    await this.saveConfig(config);
-  }
-
-  /**
-   * Delete an MCP server
-   */
-  public async deleteMcp(mcpName: string): Promise<void> {
-    const config = await this.loadConfig();
-    config.mcpServers = config.mcpServers.filter((m) => m.name !== mcpName);
+    config.agents = config.agents.filter((a) => a.id !== id);
     await this.saveConfig(config);
   }
 
@@ -236,33 +268,76 @@ export class WebUIStorage {
    */
   public async getPersonas(): Promise<WebUIPersona[]> {
     const config = await this.loadConfig();
-    return config.personas;
+    return config.personas || [];
   }
 
   /**
-   * Add or update a persona
+   * Save a persona
    */
   public async savePersona(persona: WebUIPersona): Promise<void> {
     const config = await this.loadConfig();
-    const existingIndex = config.personas.findIndex((p) => p.key === persona.key);
-
-    if (existingIndex >= 0) {
-      config.personas[existingIndex] = persona;
+    if (!config.personas) config.personas = [];
+    const index = config.personas.findIndex((p) => p.key === persona.key);
+    if (index >= 0) {
+      config.personas[index] = persona;
     } else {
       config.personas.push(persona);
     }
-
     await this.saveConfig(config);
   }
 
   /**
    * Delete a persona
    */
-  public async deletePersona(personaKey: string): Promise<void> {
+  public async deletePersona(key: string): Promise<void> {
     const config = await this.loadConfig();
-    config.personas = config.personas.filter((p) => p.key !== personaKey);
+    if (config.personas) {
+      config.personas = config.personas.filter((p) => p.key !== key);
+      await this.saveConfig(config);
+    }
+  }
+
+  /**
+   * Get all MCP servers
+   */
+  public async getMcpServers(): Promise<WebUIMcpServer[]> {
+    const config = await this.loadConfig();
+    return config.mcpServers || [];
+  }
+
+  /**
+   * Get all Mcps (alias for getMcpServers)
+   */
+  public async getMcps(): Promise<WebUIMcpServer[]> {
+    return this.getMcpServers();
+  }
+
+  /**
+   * Save an MCP server
+   */
+  public async saveMcp(mcp: WebUIMcpServer): Promise<void> {
+    const config = await this.loadConfig();
+    if (!config.mcpServers) config.mcpServers = [];
+    const index = config.mcpServers.findIndex((m) => m.name === mcp.name);
+    if (index >= 0) {
+      config.mcpServers[index] = mcp;
+    } else {
+      config.mcpServers.push(mcp);
+    }
     await this.saveConfig(config);
   }
+
+  /**
+   * Delete an MCP server
+   */
+  public async deleteMcp(name: string): Promise<void> {
+    const config = await this.loadConfig();
+    if (config.mcpServers) {
+      config.mcpServers = config.mcpServers.filter((m) => m.name !== name);
+      await this.saveConfig(config);
+    }
+  }
+
   /**
    * Get all LLM providers
    */
@@ -272,36 +347,29 @@ export class WebUIStorage {
   }
 
   /**
-   * Add or update an LLM provider
+   * Save an LLM provider
    */
   public async saveLlmProvider(provider: WebUILlmProvider): Promise<void> {
     const config = await this.loadConfig();
-    if (!config.llmProviders) {
-      config.llmProviders = [];
-    }
-
-    const existingIndex = config.llmProviders.findIndex((p) => p.id === provider.id);
-
-    if (existingIndex >= 0) {
-      config.llmProviders[existingIndex] = provider;
+    if (!config.llmProviders) config.llmProviders = [];
+    const index = config.llmProviders.findIndex((p) => p.id === provider.id);
+    if (index >= 0) {
+      config.llmProviders[index] = provider;
     } else {
       config.llmProviders.push(provider);
     }
-
     await this.saveConfig(config);
   }
 
   /**
    * Delete an LLM provider
    */
-  public async deleteLlmProvider(providerId: string): Promise<void> {
+  public async deleteLlmProvider(id: string): Promise<void> {
     const config = await this.loadConfig();
-    if (!config.llmProviders) {
-      return;
+    if (config.llmProviders) {
+      config.llmProviders = config.llmProviders.filter((p) => p.id !== id);
+      await this.saveConfig(config);
     }
-
-    config.llmProviders = config.llmProviders.filter((p) => p.id !== providerId);
-    await this.saveConfig(config);
   }
 
   /**
@@ -313,36 +381,29 @@ export class WebUIStorage {
   }
 
   /**
-   * Add or update a messenger provider
+   * Save a messenger provider
    */
   public async saveMessengerProvider(provider: WebUIMessengerProvider): Promise<void> {
     const config = await this.loadConfig();
-    if (!config.messengerProviders) {
-      config.messengerProviders = [];
-    }
-
-    const existingIndex = config.messengerProviders.findIndex((p) => p.id === provider.id);
-
-    if (existingIndex >= 0) {
-      config.messengerProviders[existingIndex] = provider;
+    if (!config.messengerProviders) config.messengerProviders = [];
+    const index = config.messengerProviders.findIndex((p) => p.id === provider.id);
+    if (index >= 0) {
+      config.messengerProviders[index] = provider;
     } else {
       config.messengerProviders.push(provider);
     }
-
     await this.saveConfig(config);
   }
 
   /**
    * Delete a messenger provider
    */
-  public async deleteMessengerProvider(providerId: string): Promise<void> {
+  public async deleteMessengerProvider(id: string): Promise<void> {
     const config = await this.loadConfig();
-    if (!config.messengerProviders) {
-      return;
+    if (config.messengerProviders) {
+      config.messengerProviders = config.messengerProviders.filter((p) => p.id !== id);
+      await this.saveConfig(config);
     }
-
-    config.messengerProviders = config.messengerProviders.filter((p) => p.id !== providerId);
-    await this.saveConfig(config);
   }
 
   /**
@@ -353,87 +414,94 @@ export class WebUIStorage {
 
     // Initialize default guards if they don't exist or if guards array is missing
     if (!config.guards || config.guards.length === 0) {
+      // Bolt Optimization: Don't run multiple initializations in parallel
+      if (this.guardsInitializationInProgress) {
+        return config.guards || [];
+      }
+      this.guardsInitializationInProgress = true;
+
       const defaultGuards = [
         {
           id: 'access-control',
           name: 'Access Control',
           description: 'User and IP-based access restrictions',
+          enabled: true,
           type: 'access',
-          enabled: true,
-          config: { type: 'users', users: [], ips: [] },
+          config: {
+            users: [],
+            ips: [],
+            type: 'users',
+          },
         },
         {
-          id: 'rate-limiter',
-          name: 'Rate Limiter',
-          description: 'Prevents spam and excessive requests',
-          type: 'rate',
-          enabled: true,
-          config: { maxRequests: 100, windowMs: 60000 },
-        },
-        {
-          id: 'content-filter',
-          name: 'Content Filter',
-          description: 'Filters inappropriate content',
-          type: 'content',
+          id: 'rate-limiting',
+          name: 'Rate Limiting',
+          description: 'Prevents abuse by limiting message frequency',
           enabled: false,
-          config: {},
+          type: 'rate-limit',
+          config: {
+            windowMs: 60000,
+            max: 10,
+          },
+        },
+        {
+          id: 'content-filtering',
+          name: 'Content Filtering',
+          description: 'Blocks messages containing prohibited language',
+          enabled: false,
+          type: 'content',
+          config: {
+            blockedWords: [],
+          },
         },
       ];
 
-      // If guards is undefined, initialize it with defaults
-      if (!config.guards) {
-        config.guards = defaultGuards;
-      } else {
-        // Merge defaults: if a guard with same ID exists, keep it, otherwise add default
-        // ⚡ Bolt Optimization: Use Set for O(1) lookups instead of O(n) array search
-        const existingIds = new Set(config.guards.map((g: { id: string }) => g.id));
-        for (const defaultGuard of defaultGuards) {
-          if (!existingIds.has(defaultGuard.id)) {
-            config.guards.push(defaultGuard);
-            existingIds.add(defaultGuard.id);
+      try {
+        if (!config.guards) {
+          config.guards = defaultGuards;
+        } else {
+          // Merge defaults: if a guard with same ID exists, keep it, otherwise add default
+          const existingIds = new Set(config.guards.map((g: { id: string }) => g.id));
+          for (const defaultGuard of defaultGuards) {
+            if (!existingIds.has(defaultGuard.id)) {
+              config.guards.push(defaultGuard);
+              existingIds.add(defaultGuard.id);
+            }
           }
         }
-      }
 
-      // Save the defaults back to storage
-      this.saveConfig(config).catch((err) => {
-        debug('ERROR:', 'Failed to save default guards:', err);
-        Logger.warn('Failed to persist default guards to storage:', err);
-      });
+        // Save the defaults back to storage
+        this.saveConfig(config).catch((err) => {
+          debug('ERROR:', 'Failed to save default guards:', err);
+          logger.warn('Failed to persist default guards to storage:', err);
+        });
+      } finally {
+        this.guardsInitializationInProgress = false;
+      }
     }
 
     return config.guards;
   }
 
   /**
-   * Save a guard
+   * Save a single guard
    */
   public async saveGuard(guard: WebUIGuard): Promise<void> {
     const config = await this.loadConfig();
-    if (!config.guards) {
-      config.guards = [];
-    }
-
-    const existingIndex = config.guards.findIndex((g) => g.id === guard.id);
-
-    if (existingIndex >= 0) {
-      config.guards[existingIndex] = guard;
+    const index = config.guards.findIndex((g) => g.id === guard.id);
+    if (index >= 0) {
+      config.guards[index] = guard;
     } else {
       config.guards.push(guard);
     }
-
     await this.saveConfig(config);
   }
 
   /**
-   * Toggle a guard
+   * Toggle a guard's enabled status
    */
   public async toggleGuard(id: string, enabled: boolean): Promise<void> {
     const config = await this.loadConfig();
-    if (!config.guards) {
-      return;
-    }
-
     const guard = config.guards.find((g) => g.id === id);
     if (guard) {
       guard.enabled = enabled;
@@ -443,5 +511,5 @@ export class WebUIStorage {
 }
 
 // Export singleton instance
-export const webUIStorage = new WebUIStorage();
+export const webUIStorage = WebUIStorage.getInstance();
 export default webUIStorage;

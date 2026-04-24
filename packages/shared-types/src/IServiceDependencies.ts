@@ -303,6 +303,8 @@ export interface IServiceDependencies {
   getAllBotConfigs?: GetAllBotConfigsFn;
   /** Function to get LLM providers */
   getLlmProviders?: GetLlmProvidersFn;
+  /** Function to get the database manager */
+  getDatabaseManager?: () => any;
   /** Check if a bot is disabled */
   isBotDisabled?: (botName: string) => boolean;
 }

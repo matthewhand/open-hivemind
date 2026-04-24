@@ -1,6 +1,8 @@
 import { DatabaseManager } from '../../src/database/DatabaseManager';
 import { DatabaseError } from '../../src/types/errorClasses';
 import { SQLiteWrapper } from '../../src/database/sqliteWrapper';
+import { PostgresWrapper } from '../../src/database/postgresWrapper';
+import databaseConfig from '../../src/config/databaseConfig';
 
 // Spies on the mocked Database
 let runSpy: jest.SpyInstance;
@@ -8,6 +10,8 @@ let getSpy: jest.SpyInstance;
 let allSpy: jest.SpyInstance;
 let execSpy: jest.SpyInstance;
 let closeSpy: jest.SpyInstance;
+
+jest.mock('../../src/database/postgresWrapper');
 
 describe('DatabaseManager', () => {
   let dbManager: DatabaseManager;
@@ -25,10 +29,56 @@ describe('DatabaseManager', () => {
     execSpy = jest.spyOn(SQLiteWrapper.prototype, 'exec').mockResolvedValue(undefined);
     closeSpy = jest.spyOn(SQLiteWrapper.prototype, 'close').mockResolvedValue(undefined);
 
+    // Mock databaseConfig
+    jest.spyOn(databaseConfig, 'get').mockImplementation((key: string) => {
+      if (key === 'DATABASE_TYPE') return 'sqlite';
+      if (key === 'DATABASE_PATH') return ':memory:';
+      return false;
+    });
+
     // Reset singleton instance for each test
     // @ts-ignore - Accessing private property for testing
     DatabaseManager.instance = null;
     dbManager = DatabaseManager.getInstance(testConfig);
+  });
+
+  describe('Database Toggling', () => {
+    it('should initialize with SQLite by default', () => {
+      // @ts-ignore
+      expect(dbManager.config.type).toBe('sqlite');
+    });
+
+    it('should initialize with Postgres when configured', () => {
+      jest.spyOn(databaseConfig, 'get').mockImplementation((key: string) => {
+        if (key === 'DATABASE_TYPE') return 'postgres';
+        return '';
+      });
+      
+      // @ts-ignore
+      DatabaseManager.instance = null;
+      const pgManager = DatabaseManager.getInstance();
+      // @ts-ignore
+      expect(pgManager.config.type).toBe('postgres');
+    });
+
+    it('should use DATABASE_URL if provided for Postgres', async () => {
+      const url = 'postgres://user:pass@host:5432/db';
+      process.env.DATABASE_URL = url;
+      
+      jest.spyOn(databaseConfig, 'get').mockImplementation((key: string) => {
+        if (key === 'DATABASE_TYPE') return 'postgres';
+        if (key === 'DATABASE_URL') return url;
+        return '';
+      });
+
+      // @ts-ignore
+      DatabaseManager.instance = null;
+      const pgManager = DatabaseManager.getInstance();
+      await pgManager.connect();
+      
+      expect(PostgresWrapper).toHaveBeenCalledWith(url);
+      delete process.env.DATABASE_URL;
+    });
   });
 
   describe('Connection', () => {
@@ -43,6 +93,26 @@ describe('DatabaseManager', () => {
       await dbManager.disconnect();
       expect(closeSpy).toHaveBeenCalled();
       expect(dbManager.isConnected()).toBe(false);
+    });
+  });
+
+  describe('Logging Persistence', () => {
+    beforeEach(async () => {
+      await dbManager.connect();
+    });
+
+    it('should save a log entry', async () => {
+      await dbManager.saveLog({
+        level: 'info',
+        message: 'Test log',
+        context: 'test',
+        details: { foo: 'bar' }
+      });
+
+      expect(runSpy).toHaveBeenCalledWith(
+        expect.stringContaining('INSERT INTO logs'),
+        expect.arrayContaining(['info', 'test', 'Test log', JSON.stringify({ foo: 'bar' })])
+      );
     });
   });
 

@@ -33,6 +33,7 @@ import lettaRouter from '@src/server/routes/letta';
 import marketplaceRouter from '@src/server/routes/marketplace';
 import mcpRouter from '@src/server/routes/mcp';
 import mcpToolsRouter from '@src/server/routes/mcpTools';
+import monitoringRouter from '@src/server/routes/monitoring';
 import onboardingRouter from '@src/server/routes/onboarding';
 import openapiRouter from '@src/server/routes/openapi';
 import personasRouter from '@src/server/routes/personas';
@@ -62,6 +63,10 @@ export interface RouteContext {
 
 export function registerRoutes(app: import('express').Application, ctx: RouteContext): void {
   const { frontendDistPath, viteServerRef } = ctx;
+
+  // Health endpoints (MUST be above IP filter/auth)
+  app.use('/api/health', healthRoute);
+  app.use('/health', healthRoute);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // IP Filtering Security (when auth is disabled)
@@ -117,7 +122,7 @@ export function registerRoutes(app: import('express').Application, ctx: RouteCon
   app.use('/api/import-export', authenticateToken, importExportRouter);
 
   // 3. Resource routers (specific paths, no catch-all conflict)
-  app.use('/api/activity', activityRouter);
+  app.use('/api/activity', authenticateToken, activityRouter);
   app.use('/api/agents', agentsRouter);
   app.use('/api/dashboard', dashboardRouter);
   app.use('/api/config', webuiConfigRouter);
@@ -134,13 +139,14 @@ export function registerRoutes(app: import('express').Application, ctx: RouteCon
   app.use('/api/marketplace', marketplaceRouter);
   app.use('/api/mcp', mcpRouter);
   app.use('/api/mcp-tools', mcpToolsRouter);
+  app.use('/api/monitoring', authenticateToken, monitoringRouter);
   app.use('/api/onboarding', onboardingRouter);
   app.use('/api/personas', personasRouter);
   app.use('/api/providers', providersRouter);
   app.use('/api/templates', templatesRouter);
   app.use('/api/usage-tracking', usageTrackingRouter);
   app.use('/api/webhooks', webhooksRouter);
-  app.use('/api/webui', webuiRouter);
+  app.use('/api/webui', authenticateToken, webuiRouter);
   app.use('/api/demo', demoRouter);
   app.use('/api/docs', apiDocsRouter);
   app.use('/api/pluginSecurity', pluginSecurityRouter);
@@ -149,10 +155,6 @@ export function registerRoutes(app: import('express').Application, ctx: RouteCon
   //    openapiRouter handles /api/openapi, /api/openapi.json, etc.
   //    If mounted earlier it would intercept ALL /api/* requests.
   app.use('/api', openapiRouter);
-
-  // Health endpoints
-  app.use('/api/health', healthRoute);
-  app.use('/health', healthRoute);
 
   app.use(sitemapRouter); // Sitemap routes at root level
 

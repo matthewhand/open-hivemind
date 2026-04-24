@@ -42,27 +42,13 @@ describe('AuthManager Security Fix', () => {
     // Warning logging is now via structured Debug logger, not console.warn
   });
 
-  it('should generate random password if ADMIN_PASSWORD is missing in production', () => {
+  it('should throw CRITICAL error if ADMIN_PASSWORD is missing in production', () => {
     process.env.NODE_ENV = 'production';
     delete process.env.ADMIN_PASSWORD;
 
-    authManager = AuthManager.getInstance();
-
-    const admin = authManager.getUser('admin');
-    expect(admin).toBeDefined();
-
-    // Verify hashSync was called with a generated password
-    const calls = (bcrypt.hashSync as jest.Mock).mock.calls;
-    // We expect at least one call (for admin user creation)
-    expect(calls.length).toBeGreaterThan(0);
-
-    // Find the call for admin user (it might be the only one)
-    const generatedPassword = calls[calls.length - 1][0];
-
-    // Verify password format (hex string of 16 bytes = 32 chars)
-    expect(generatedPassword).toMatch(/^[0-9a-f]{32}$/);
-
-    // Warning logging is now via structured Debug logger, not console.warn
+    expect(() => {
+      AuthManager.getInstance();
+    }).toThrow('CRITICAL: ADMIN_PASSWORD environment variable is required in production.');
   });
 
   it('should still use default password in test environment', () => {

@@ -40,6 +40,7 @@ export const TOKENS = {
   WebSocketService: 'WebSocketService',
   RealTimeValidationService: 'RealTimeValidationService',
   SwarmCoordinator: 'SwarmCoordinator',
+  PanicModeService: 'PanicModeService',
 } as const;
 
 /**
@@ -54,7 +55,7 @@ export function resetContainer(): void {
  * @param token The token/key for the service
  * @param klass The class constructor
  */
-export function registerSingleton<T>(token: string, klass: new (...args: any[]) => T): void {
+export function registerSingleton<T>(token: string, klass: new (...args: unknown[]) => T): void {
   container.register(token, { useClass: klass }, { lifecycle: Lifecycle.Singleton });
 }
 
@@ -63,7 +64,7 @@ export function registerSingleton<T>(token: string, klass: new (...args: any[]) 
  * @param token The token/key for the service
  * @param klass The class constructor
  */
-export function registerTransient<T>(token: string, klass: new (...args: any[]) => T): void {
+export function registerTransient<T>(token: string, klass: new (...args: unknown[]) => T): void {
   container.register(token, { useClass: klass });
 }
 

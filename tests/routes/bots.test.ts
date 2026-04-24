@@ -77,7 +77,7 @@ describe('Bots Router', () => {
 
     mockManager = {
       getAllBots: jest.fn().mockResolvedValue([]),
-      getBot: jest.fn().mockResolvedValue(undefined),
+      getBot: jest.fn().mockResolvedValue({ id: 'bot1', name: 'Bot 1' }),
       getBotsStatus: jest.fn(),
       createBot: jest.fn(),
       updateBot: jest.fn(),
@@ -286,7 +286,7 @@ describe('Bots Router', () => {
     });
 
     it('should return 404 if bot not found', async () => {
-      mockManager.getBotHistory.mockRejectedValue(new Error('Bot "unknown" not found'));
+      mockManager.getBot.mockResolvedValue(null);
       const res = await request(app).get('/api/bots/unknown/history');
       expect(res.status).toBe(404);
     });
@@ -294,7 +294,7 @@ describe('Bots Router', () => {
 
   describe('POST /api/bots/:id/start', () => {
     it('should return 404 if bot not found', async () => {
-      mockManager.startBot.mockRejectedValue(new Error('Bot "unknown" not found'));
+      mockManager.getBot.mockResolvedValue(null);
       const res = await request(app).post('/api/bots/unknown/start');
       expect(res.status).toBe(404);
     });
@@ -302,7 +302,7 @@ describe('Bots Router', () => {
 
   describe('POST /api/bots/:id/stop', () => {
     it('should return 404 if bot not found', async () => {
-      mockManager.stopBot.mockRejectedValue(new Error('Bot "unknown" not found'));
+      mockManager.getBot.mockResolvedValue(null);
       const res = await request(app).post('/api/bots/unknown/stop');
       expect(res.status).toBe(404);
     });

@@ -1,0 +1,6 @@
+# Quarantined flaky tests (non-blocking).
+# Keep this list short and move tests out once stabilized.
+# Format:
+# testPath | owner=@team-or-user | expires=YYYY-MM-DD | reason=short note
+
+tests/integration/MonitoringPipeline.test.ts | owner=@platform-ci | expires=2026-05-15 | reason=intermittent timing variance under CI load

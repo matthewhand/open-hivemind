@@ -162,6 +162,7 @@ export interface Bot {
     allowedUserIds?: string[];
   };
   isActive?: boolean;
+  maxTokensPerDay?: number;
   envOverrides?: Record<string, any>;
   metadata?: Record<string, any>;
   discord?: {

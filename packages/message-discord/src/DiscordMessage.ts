@@ -1,7 +1,7 @@
 // src/integrations/discord/DiscordMessage.ts
 import Debug from 'debug';
 import { Collection, TextChannel, type GuildMember, type Message, type User } from 'discord.js';
-import type { IMessage } from '@hivemind/shared-types';
+import { IMessage } from '@message/interfaces/IMessage';
 
 const debug = Debug('app:DiscordMessage');
 
@@ -23,7 +23,6 @@ const ErrorUtils = {
  * for Discord messages while maintaining compatibility with the IMessage contract.
  * It handles Discord-specific features like mentions, channel topics, and message editing.
  *
- * @implements {IMessage}
  * @example
  * ```typescript
  * const discordMessage = new DiscordMessage(message);
@@ -31,45 +30,8 @@ const ErrorUtils = {
  * console.log(discordMessage.getAuthorName()); // "username#1234"
  * ```
  */
-export class DiscordMessage implements IMessage {
+export class DiscordMessage extends IMessage {
   static DiscordMessage = DiscordMessage;
-  /**
-   * The text content of the Discord message.
-   * @type {string}
-   */
-  public content: string;
-
-  /**
-   * The Discord channel ID where this message was sent.
-   * @type {string}
-   */
-  public channelId: string;
-
-  /**
-   * Raw Discord.js message data.
-   * Contains the original Message object from discord.js.
-   * @type {Message<boolean>}
-   */
-  public data: Message<boolean>;
-
-  /**
-   * The role of the message sender (user, assistant, system, tool).
-   * @type {string}
-   */
-  public role: string;
-
-  /**
-   * The platform this message originated from.
-   * @type {string}
-   */
-  public platform: string;
-
-  /**
-   * Metadata for cross-platform compatibility.
-   * Includes replyTo information for reply detection.
-   * @type {any}
-   */
-  public metadata: any;
 
   /**
    * The underlying Discord.js Message object.
@@ -98,30 +60,23 @@ export class DiscordMessage implements IMessage {
    * ```
    */
   constructor(message: Message<boolean>, repliedMessage: Message<boolean> | null = null) {
+    const role = message.author.id === message.client?.user?.id ? 'assistant' : 'user';
+    const metadata = repliedMessage ? {
+      replyTo: {
+        userId: repliedMessage.author?.id || null,
+        username: repliedMessage.author?.username || null,
+        messageId: repliedMessage.id || null,
+        isBot: repliedMessage.author?.bot || false,
+      },
+    } : {};
+
+    super(message, role, metadata);
+
     this.message = message;
     this.repliedMessage = repliedMessage;
     this.content = message.content || '[No content]'; // Ensure fallback for empty content
     this.channelId = message.channelId;
-    this.data = message;
-    // Role calculation:
-    // If the author is THIS bot (the client user), role is 'assistant'.
-    // Everyone else (humans AND other bots) is 'user'.
-    this.role = message.author.id === message.client?.user?.id ? 'assistant' : 'user';
     this.platform = 'discord';
-
-    // Populate metadata for reply detection
-    if (repliedMessage) {
-      this.metadata = {
-        replyTo: {
-          userId: repliedMessage.author?.id || null,
-          username: repliedMessage.author?.username || null,
-          messageId: repliedMessage.id || null,
-          isBot: repliedMessage.author?.bot || false,
-        },
-      };
-    } else {
-      this.metadata = {};
-    }
 
     const author = message.author;
     const authorString = `${author.username ?? 'unknown'}#${author.discriminator ?? '0000'} (${author.id ?? 'unknown'})`;

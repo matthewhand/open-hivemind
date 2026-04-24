@@ -66,12 +66,7 @@ interface SortableProviderCardProps {
   onToggleActive: (id: string, isActive: boolean) => void;
 }
 
-const SortableProviderCard: React.FC<SortableProviderCardProps> = ({
-  provider,
-  onEdit,
-  onDelete,
-  onToggleActive,
-}) => {
+const SortableProviderCard = React.memo<SortableProviderCardProps>(({ provider, onEdit, onDelete, onToggleActive }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: provider.id,
   });
@@ -149,7 +144,7 @@ const SortableProviderCard: React.FC<SortableProviderCardProps> = ({
       </Card>
     </div>
   );
-};
+});
 
 const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
   apiEndpoint,
@@ -199,11 +194,11 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
     [hookHandleDragEnd]
   );
 
-  const handleOpenDialog = (provider?: ProviderItem) => {
+  const handleOpenDialog = useCallback((provider?: ProviderItem) => {
     setEditingProvider(provider || null);
     setFormData(provider?.config || {});
     setOpenDialog(true);
-  };
+  }, [setEditingProvider, setFormData]);
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
@@ -216,7 +211,7 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
     handleCloseDialog();
   };
 
-  const handleDeleteProvider = async (providerId: string) => {
+  const handleDeleteProvider = useCallback(async (providerId: string) => {
     setConfirmModal({
       isOpen: true,
       title: 'Delete Provider',
@@ -226,11 +221,11 @@ const BaseProvidersConfig: React.FC<BaseProvidersConfigProps> = ({
         await hookHandleDeleteProvider(providerId);
       },
     });
-  };
+  }, [hookHandleDeleteProvider, setConfirmModal]);
 
-  const handleToggleActive = async (providerId: string, isActive: boolean) => {
+  const handleToggleActive = useCallback(async (providerId: string, isActive: boolean) => {
     await hookHandleToggleActive(providerId, isActive);
-  };
+  }, [hookHandleToggleActive, setConfirmModal]);
 
   const activeProviderDocs = useMemo(() => {
     const currentType = formData.type || editingProvider?.type;

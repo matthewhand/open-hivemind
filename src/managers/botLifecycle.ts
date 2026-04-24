@@ -3,6 +3,7 @@ import Debug from 'debug';
 import type { SecureConfigManager } from '@config/SecureConfigManager';
 import type { IMessengerService } from '../message/interfaces/IMessengerService';
 import { getMessengerServiceByProvider } from '../message/ProviderRegistry';
+import { BotMetricsService } from '../server/services/BotMetricsService';
 import { ErrorUtils } from '../types/errors';
 import type { BotInstance } from './botTypes';
 
@@ -161,7 +162,8 @@ export async function stopBotById(
  * Send a welcome message when a bot is started (if configured).
  */
 export async function sendWelcomeMessage(bot: BotInstance): Promise<void> {
-  const enableWelcome = process.env.ENABLE_WELCOME_MESSAGE === 'true';
+  const enableWelcome =
+    process.env.ENABLE_WELCOME_MESSAGE === 'true' || (bot.config as any)?.enableWelcomeMessage;
   if (!enableWelcome) return;
 
   try {
@@ -173,7 +175,7 @@ export async function sendWelcomeMessage(bot: BotInstance): Promise<void> {
         service.getDefaultChannel?.();
       if (defaultChannel) {
         const welcomeText =
-          process.env.WELCOME_MESSAGE_TEXT || '🤖 I am now online and ready to assist.';
+          process.env.WELCOME_MESSAGE_TEXT || `🤖 Bot ${bot.name} is now online and ready.`;
         await service.sendMessageToChannel(defaultChannel, welcomeText);
         debug(`Sent welcome message for bot ${bot.name} to channel ${defaultChannel}`);
       }
@@ -183,6 +185,92 @@ export async function sendWelcomeMessage(bot: BotInstance): Promise<void> {
       `Failed to send welcome message for ${bot.name}:`,
       welcomeErr instanceof Error ? welcomeErr.message : String(welcomeErr)
     );
+  }
+}
+
+/**
+ * Send a shutdown message when a bot is stopped (if configured).
+ */
+export async function sendShutdownMessage(bot: BotInstance): Promise<void> {
+  const enableShutdown =
+    process.env.ENABLE_SHUTDOWN_MESSAGE === 'true' || (bot.config as any)?.enableShutdownMessage;
+  if (!enableShutdown) return;
+
+  try {
+    const service = await getMessengerService(bot.messageProvider);
+    if (service) {
+      const defaultChannel =
+        (bot.config as Record<string, { defaultChannelId?: string }>)?.slack?.defaultChannelId ||
+        (bot.config as Record<string, { defaultChannelId?: string }>)?.discord?.defaultChannelId ||
+        service.getDefaultChannel?.();
+      if (defaultChannel) {
+        const shutdownText =
+          process.env.SHUTDOWN_MESSAGE_TEXT || `🛑 Bot ${bot.name} is shutting down.`;
+        await service.sendMessageToChannel(defaultChannel, shutdownText);
+        debug(`Sent shutdown message for bot ${bot.name} to channel ${defaultChannel}`);
+      }
+    }
+  } catch (err: unknown) {
+    debug(`Failed to send shutdown message for ${bot.name}:`, ErrorUtils.getMessage(err));
+  }
+}
+
+/**
+ * Send an error alert message when a bot encounters a critical error.
+ */
+export async function sendErrorAlertMessage(bot: BotInstance, error: unknown): Promise<void> {
+  const enableAlerts =
+    process.env.ENABLE_ERROR_ALERTS === 'true' || (bot.config as any)?.enableErrorAlerts;
+  if (!enableAlerts) return;
+
+  try {
+    const service = await getMessengerService(bot.messageProvider);
+    if (service) {
+      const defaultChannel =
+        (bot.config as Record<string, { defaultChannelId?: string }>)?.slack?.defaultChannelId ||
+        (bot.config as Record<string, { defaultChannelId?: string }>)?.discord?.defaultChannelId ||
+        service.getDefaultChannel?.();
+      if (defaultChannel) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        const alertText = `🚨 *CRITICAL ERROR* for Bot ${bot.name}:\n\n> ${errorMsg}\n\nPlease check system logs for details.`;
+        await service.sendMessageToChannel(defaultChannel, alertText);
+        debug(`Sent error alert for bot ${bot.name} to channel ${defaultChannel}`);
+      }
+    }
+  } catch (err: unknown) {
+    debug(`Failed to send error alert for ${bot.name}:`, ErrorUtils.getMessage(err));
+  }
+}
+
+/**
+ * Send a status report with current metrics for the bot.
+ */
+export async function sendDailyStatusReport(bot: BotInstance): Promise<void> {
+  const enableReport =
+    process.env.ENABLE_STATUS_REPORTS === 'true' || (bot.config as any)?.enableStatusReports;
+  if (!enableReport) return;
+
+  try {
+    const service = await getMessengerService(bot.messageProvider);
+    if (service) {
+      const defaultChannel =
+        (bot.config as Record<string, { defaultChannelId?: string }>)?.slack?.defaultChannelId ||
+        (bot.config as Record<string, { defaultChannelId?: string }>)?.discord?.defaultChannelId ||
+        service.getDefaultChannel?.();
+      if (defaultChannel) {
+        const metrics = BotMetricsService.getInstance().getMetrics(bot.name);
+        const reportText =
+          `📊 *Daily Status Report* for Bot: ${bot.name}\n\n` +
+          `• Total Messages: ${metrics.messageCount}\n` +
+          `• Total Errors: ${metrics.errorCount}\n` +
+          `• Last Active: ${metrics.lastActive ? new Date(metrics.lastActive).toLocaleString() : 'N/A'}`;
+
+        await service.sendMessageToChannel(defaultChannel, reportText);
+        debug(`Sent status report for bot ${bot.name} to channel ${defaultChannel}`);
+      }
+    }
+  } catch (err: unknown) {
+    debug(`Failed to send status report for ${bot.name}:`, ErrorUtils.getMessage(err));
   }
 }
 

@@ -3,15 +3,12 @@ import { getMockAuthManager } from '../../helpers/authMocks';
 import { createAuthApp } from '../../helpers/authTestApp';
 
 // Mock AuthManager singleton at file level.
-// jest.mock factories are hoisted before all variable declarations, so we use
-// jest.requireMock() after the factory runs to retrieve the mock instance.
 jest.mock('../../../src/auth/AuthManager', () => {
-  const { getMockAuthManager: make } = jest.requireActual('../../helpers/authMocks');
-  const instance = make();
+  const { getMockAuthManager } = jest.requireActual('../../helpers/authMocks');
+  const instance = getMockAuthManager();
   return {
     AuthManager: {
       getInstance: jest.fn(() => instance),
-      _mockInstance: instance, // stash so we can retrieve it below
     },
   };
 });
@@ -19,9 +16,9 @@ jest.mock('../../../src/auth/AuthManager', () => {
 // Retrieve the mock instance that the factory created above
 const mockAuthManager = (
   jest.requireMock('../../../src/auth/AuthManager') as {
-    AuthManager: { _mockInstance: ReturnType<typeof getMockAuthManager> };
+    AuthManager: { getInstance: jest.Mock<ReturnType<typeof getMockAuthManager>> };
   }
-).AuthManager._mockInstance;
+).AuthManager.getInstance();
 
 // Mock rateLimiter (no-op) — rate limiter already skips in NODE_ENV=test,
 // but mock the module to guarantee no side-effects.

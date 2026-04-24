@@ -79,7 +79,7 @@ export function looksLikeOpportunity(text: string): boolean {
     /\bcan someone\b/,
     /\bhelp\b/,
     /\bwhat is\b/,
-    /\bwhy is\b/,
+    /\bwhy is\b/, // Match "why is" questions (with or without ?)
     /\bdoes anyone\b/,
     /\bissue\b/,
     /\berror\b/,

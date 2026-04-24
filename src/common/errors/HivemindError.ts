@@ -239,7 +239,7 @@ export class MCPConnectionError extends NetworkError {
 /**
  * Thrown when an external API request fails
  */
-class APIError extends NetworkError {
+export class APIError extends NetworkError {
   readonly code = 'API_ERROR';
   readonly statusCode?: number;
 

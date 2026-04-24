@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { memo, useState, useEffect, useCallback, useMemo } from 'react';
 import Debug from 'debug';
 import Card from './Card';
+import RadialProgress from './RadialProgress';
 const debug = Debug('app:client:components:DaisyUI:DashboardWidgetSystem');
 
 interface Widget {
@@ -40,7 +41,7 @@ interface DashboardWidgetSystemProps {
 }
 
 // Widget Components
-const StatsWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate: _onUpdate, onRemove, onConfigure }) => {
+const StatsWidget: React.FC<WidgetProps> = memo(({ widget, isEditing, onUpdate: _onUpdate, onRemove, onConfigure }) => {
   const stats = widget.data?.stats || [
     { label: 'Active Bots', value: '3', change: '+2' },
     { label: 'Messages', value: '1.2K', change: '+15%' },
@@ -72,9 +73,10 @@ const StatsWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate: _onUp
       </div>
     </Card>
   );
-};
+});
+StatsWidget.displayName = 'StatsWidget';
 
-const ChartWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate: _onUpdate, onRemove, onConfigure }) => {
+const ChartWidget: React.FC<WidgetProps> = memo(({ widget, isEditing, onUpdate: _onUpdate, onRemove, onConfigure }) => {
   const _data = widget.data?.chartData || [];
 
   return (
@@ -104,9 +106,10 @@ const ChartWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate: _onUp
       </div>
     </Card>
   );
-};
+});
+ChartWidget.displayName = 'ChartWidget';
 
-const ActivityWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate: _onUpdate, onRemove, onConfigure }) => {
+const ActivityWidget: React.FC<WidgetProps> = memo(({ widget, isEditing, onUpdate: _onUpdate, onRemove, onConfigure }) => {
   const activities = widget.data?.activities || [
     { time: '2 min ago', action: 'Bot connected', type: 'success' },
     { time: '5 min ago', action: 'Message processed', type: 'info' },
@@ -141,9 +144,10 @@ const ActivityWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate: _o
       </div>
     </Card>
   );
-};
+});
+ActivityWidget.displayName = 'ActivityWidget';
 
-const QuickActionsWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate: _onUpdate, onRemove, onConfigure }) => {
+const QuickActionsWidget: React.FC<WidgetProps> = memo(({ widget, isEditing, onUpdate: _onUpdate, onRemove, onConfigure }) => {
   const actions = widget.data?.actions || [
     { label: 'Add Bot', icon: '🤖', color: 'btn-primary' },
     { label: 'View Logs', icon: '📋', color: 'btn-secondary' },
@@ -171,7 +175,8 @@ const QuickActionsWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate
       </div>
     </Card>
   );
-};
+});
+QuickActionsWidget.displayName = 'QuickActionsWidget';
 
 const getHealthColor = (value: number): 'success' | 'warning' | 'error' => {
   if (value > 80) return 'error';
@@ -179,7 +184,7 @@ const getHealthColor = (value: number): 'success' | 'warning' | 'error' => {
   return 'success';
 };
 
-const SystemHealthWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate: _onUpdate, onRemove, onConfigure }) => {
+const SystemHealthWidget: React.FC<WidgetProps> = memo(({ widget, isEditing, onUpdate: _onUpdate, onRemove, onConfigure }) => {
   const health = widget.data?.health || {
     cpu: 45,
     memory: 62,
@@ -215,6 +220,98 @@ const SystemHealthWidget: React.FC<WidgetProps> = ({ widget, isEditing, onUpdate
       </div>
     </Card>
   );
+});
+SystemHealthWidget.displayName = 'SystemHealthWidget';
+
+const WIDGET_TYPES: WidgetType[] = [
+  {
+    id: 'stats',
+    name: 'Statistics',
+    description: 'Display key metrics and statistics',
+    icon: '📊',
+    defaultSize: { width: 300, height: 200 },
+    component: StatsWidget,
+    configurable: true,
+  },
+  {
+    id: 'chart',
+    name: 'Chart',
+    description: 'Data visualization charts',
+    icon: '📈',
+    defaultSize: { width: 400, height: 250 },
+    component: ChartWidget,
+    configurable: true,
+  },
+  {
+    id: 'activity',
+    name: 'Activity Feed',
+    description: 'Recent system activities',
+    icon: '📋',
+    defaultSize: { width: 350, height: 300 },
+    component: ActivityWidget,
+    configurable: true,
+  },
+  {
+    id: 'actions',
+    name: 'Quick Actions',
+    description: 'Frequently used actions',
+    icon: '⚡',
+    defaultSize: { width: 250, height: 150 },
+    component: QuickActionsWidget,
+    configurable: true,
+  },
+  {
+    id: 'health',
+    name: 'System Health',
+    description: 'System resource monitoring',
+    icon: '💚',
+    defaultSize: { width: 300, height: 200 },
+    component: SystemHealthWidget,
+    configurable: true,
+  },
+];
+
+const WIDGET_TYPE_MAP = new Map(WIDGET_TYPES.map(t => [t.id, t]));
+
+const getDefaultWidgetData = (type: string) => {
+  switch (type) {
+  case 'stats':
+    return {
+      stats: [
+        { label: 'Active Bots', value: '3', change: '+2' },
+        { label: 'Messages', value: '1.2K', change: '+15%' },
+        { label: 'Uptime', value: '99.9%', change: '+0.1%' },
+      ],
+    };
+  case 'activity':
+    return {
+      activities: [
+        { time: '2 min ago', action: 'Bot connected', type: 'success' },
+        { time: '5 min ago', action: 'Message processed', type: 'info' },
+        { time: '12 min ago', action: 'User joined', type: 'success' },
+      ],
+    };
+  case 'actions':
+    return {
+      actions: [
+        { label: 'Add Bot', icon: '🤖', color: 'btn-primary' },
+        { label: 'View Logs', icon: '📋', color: 'btn-secondary' },
+        { label: 'Settings', icon: '⚙️', color: 'btn-accent' },
+        { label: 'Help', icon: '❓', color: 'btn-info' },
+      ],
+    };
+  case 'health':
+    return {
+      health: {
+        cpu: Math.floor(Math.random() * 100),
+        memory: Math.floor(Math.random() * 100),
+        disk: Math.floor(Math.random() * 100),
+        network: Math.floor(Math.random() * 100),
+      },
+    };
+  default:
+    return {};
+  }
 };
 
 const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
@@ -228,54 +325,6 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
   const [draggedWidget, setDraggedWidget] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [showWidgetPalette, setShowWidgetPalette] = useState(false);
-
-  const widgetTypes: WidgetType[] = [
-    {
-      id: 'stats',
-      name: 'Statistics',
-      description: 'Display key metrics and statistics',
-      icon: '📊',
-      defaultSize: { width: 300, height: 200 },
-      component: StatsWidget,
-      configurable: true,
-    },
-    {
-      id: 'chart',
-      name: 'Chart',
-      description: 'Data visualization charts',
-      icon: '📈',
-      defaultSize: { width: 400, height: 250 },
-      component: ChartWidget,
-      configurable: true,
-    },
-    {
-      id: 'activity',
-      name: 'Activity Feed',
-      description: 'Recent system activities',
-      icon: '📋',
-      defaultSize: { width: 350, height: 300 },
-      component: ActivityWidget,
-      configurable: true,
-    },
-    {
-      id: 'actions',
-      name: 'Quick Actions',
-      description: 'Frequently used actions',
-      icon: '⚡',
-      defaultSize: { width: 250, height: 150 },
-      component: QuickActionsWidget,
-      configurable: true,
-    },
-    {
-      id: 'health',
-      name: 'System Health',
-      description: 'System resource monitoring',
-      icon: '💚',
-      defaultSize: { width: 300, height: 200 },
-      component: SystemHealthWidget,
-      configurable: true,
-    },
-  ];
 
   // Save widgets to localStorage
   useEffect(() => {
@@ -298,8 +347,8 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
     }
   }, [initialWidgets]);
 
-  const addWidget = (type: string) => {
-    const widgetType = widgetTypes.find(t => t.id === type);
+  const addWidget = useCallback((type: string) => {
+    const widgetType = WIDGET_TYPE_MAP.get(type);
     if (!widgetType) {return;}
 
     const newWidget: Widget = {
@@ -314,48 +363,7 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
 
     setWidgets(prev => [...prev, newWidget]);
     setShowWidgetPalette(false);
-  };
-
-  const getDefaultWidgetData = (type: string) => {
-    switch (type) {
-    case 'stats':
-      return {
-        stats: [
-          { label: 'Active Bots', value: '3', change: '+2' },
-          { label: 'Messages', value: '1.2K', change: '+15%' },
-          { label: 'Uptime', value: '99.9%', change: '+0.1%' },
-        ],
-      };
-    case 'activity':
-      return {
-        activities: [
-          { time: '2 min ago', action: 'Bot connected', type: 'success' },
-          { time: '5 min ago', action: 'Message processed', type: 'info' },
-          { time: '12 min ago', action: 'User joined', type: 'success' },
-        ],
-      };
-    case 'actions':
-      return {
-        actions: [
-          { label: 'Add Bot', icon: '🤖', color: 'btn-primary' },
-          { label: 'View Logs', icon: '📋', color: 'btn-secondary' },
-          { label: 'Settings', icon: '⚙️', color: 'btn-accent' },
-          { label: 'Help', icon: '❓', color: 'btn-info' },
-        ],
-      };
-    case 'health':
-      return {
-        health: {
-          cpu: Math.floor(Math.random() * 100),
-          memory: Math.floor(Math.random() * 100),
-          disk: Math.floor(Math.random() * 100),
-          network: Math.floor(Math.random() * 100),
-        },
-      };
-    default:
-      return {};
-    }
-  };
+  }, []);
 
   const updateWidget = useCallback((updatedWidget: Widget) => {
     setWidgets(prev => prev.map(w => w.id === updatedWidget.id ? updatedWidget : w));
@@ -365,7 +373,7 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
     setWidgets(prev => prev.filter(w => w.id !== id));
   }, []);
 
-  const handleMouseDown = (e: React.MouseEvent, widgetId: string) => {
+  const handleMouseDown = useCallback((e: React.MouseEvent, widgetId: string) => {
     if (!isEditing) {return;}
 
     const widget = widgets.find(w => w.id === widgetId);
@@ -376,7 +384,7 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
       x: e.clientX - widget.position.x,
       y: e.clientY - widget.position.y,
     });
-  };
+  }, [isEditing, widgets]);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!draggedWidget || !isEditing) {return;}
@@ -409,16 +417,28 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
     // when dragging stops or component unmounts unexpectedly.
   }, [draggedWidget, handleMouseMove, handleMouseUp]);
 
-  const resetLayout = () => {
-    const resetWidgets = widgets.map((widget, index) => ({
+  const resetLayout = useCallback(() => {
+    setWidgets(prev => prev.map((widget, index) => ({
       ...widget,
       position: {
         x: (index % 3) * 350 + 50,
         y: Math.floor(index / 3) * 300 + 50,
       },
-    }));
-    setWidgets(resetWidgets);
-  };
+    })));
+  }, []);
+
+  const visibleWidgets = useMemo(
+    () => widgets.filter(w => w.isVisible),
+    [widgets],
+  );
+
+  const gridBackgroundStyle = useMemo(
+    () => ({
+      backgroundImage: 'radial-gradient(circle, #888 1px, transparent 1px)',
+      backgroundSize: `${gridSize}px ${gridSize}px`,
+    }),
+    [gridSize],
+  );
 
   return (
     <div className="relative min-h-screen bg-base-200 p-4">
@@ -458,7 +478,7 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
       {showWidgetPalette && (
         <Card className="fixed top-20 right-4 z-40 w-80" title="Add Widget">
           <div className="grid grid-cols-1 gap-2">
-            {widgetTypes.map(type => (
+            {WIDGET_TYPES.map(type => (
               <button
                 key={type.id}
                 className="btn btn-outline justify-start gap-3"
@@ -481,16 +501,13 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
         {isEditing && (
           <div
             className="absolute inset-0 opacity-10 pointer-events-none"
-            style={{
-              backgroundImage: 'radial-gradient(circle, #888 1px, transparent 1px)',
-              backgroundSize: `${gridSize}px ${gridSize}px`,
-            }}
+            style={gridBackgroundStyle}
           />
         )}
 
         {/* Widgets */}
-        {widgets.filter(w => w.isVisible).map(widget => {
-          const WidgetComponent = widgetTypes.find(t => t.id === widget.type)?.component;
+        {visibleWidgets.map(widget => {
+          const WidgetComponent = WIDGET_TYPE_MAP.get(widget.type)?.component;
           if (!WidgetComponent) {return null;}
 
           return (

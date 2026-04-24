@@ -27,7 +27,14 @@ describe('Pipeline Error Propagation Integration', () => {
     bus.on('message:error', errorSpy);
 
     const message = new TestMessage('hello');
-    const context = { message, botName: 'bot1', requestId: 'r1', systemPrompt: 'p', history: [] };
+    const context = { 
+      message, 
+      botName: 'bot1', 
+      requestId: 'r1', 
+      systemPrompt: 'p', 
+      history: [],
+      botConfig: { maxTokensPerDay: 1000 }
+    };
     
     bus.emit('message:enriched', context as any);
 

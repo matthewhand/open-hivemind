@@ -17,11 +17,11 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
     this.mattermostService = mattermostService || MattermostService.getInstance();
   }
 
-  getSchema(): any {
+  getSchema(): Record<string, unknown> {
     return mattermostConfig.getSchema();
   }
 
-  getConfig(): any {
+  getConfig(): Record<string, unknown> {
     return mattermostConfig;
   }
 
@@ -34,7 +34,7 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
    * Note: This currently simulates connection status and should be updated
    * to perform a real API check in the future.
    */
-  async getStatus(): Promise<{ ok: boolean; bots: any[]; count: number }> {
+  async getStatus(): Promise<Record<string, unknown>> {
     const mattermost = this.mattermostService;
     const botNames = mattermost.getBotNames();
     const bots = botNames.map((name: string) => {
@@ -63,13 +63,13 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
   /**
    * Retrieves the current list of bots.
    */
-  async getBots(): Promise<any[]> {
+  async getBots(): Promise<Record<string, unknown>[]> {
     const status = await this.getStatus();
-    return status.bots;
+    return (status.bots as Record<string, unknown>[]) ?? [];
   }
 
-  async addBot(config: any): Promise<void> {
-    const { name } = config;
+  async addBot(config: Record<string, unknown>): Promise<void> {
+    const name = String(config.name ?? '');
 
     // Since MattermostProvider does not fully implement addBot yet, we
     // set up the foundation for the ReconnectionManager integration here.
@@ -115,7 +115,7 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
    * @param limit - Optional maximum number of messages to retrieve
    * @returns A promise that resolves to an array of messages
    */
-  async getMessages(channelId: string, limit?: number): Promise<any[]> {
+  async getMessages(channelId: string, limit?: number): Promise<unknown[]> {
     return await this.mattermostService.getMessagesFromChannel(channelId, limit);
   }
 

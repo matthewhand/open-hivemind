@@ -1,5 +1,5 @@
-/* eslint-disable no-console */
 import { redactSensitiveInfo } from './redactSensitiveInfo';
+import databaseConfig from '../config/databaseConfig';
 
 type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error';
 
@@ -14,7 +14,7 @@ const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {
 const KEY_VALUE_REGEX =
   /\b([A-Za-z0-9_.-]*(?:password|token|secret|key)[A-Za-z0-9_.-]*)\b\s*[:=]\s*([^\s,"']+)/gi;
 const BEARER_TOKEN_REGEX = /\bBearer\s+([A-Za-z0-9\-._~+/]+=*)/gi;
-const GENERIC_TOKEN_REGEX = /\b(?:sk|pk|rk|ak)_[A-Za-z0-9]{8 }\b/gi;
+const GENERIC_TOKEN_REGEX = /\b(?:sk|pk|rk|ak)_[A-Za-z0-9]{8,}\b/gi;
 const DEFAULT_LEVEL: LogLevel =
   (process.env.LOG_LEVEL && parseLogLevel(process.env.LOG_LEVEL)) ||
   (process.env.NODE_ENV === 'production' ? 'info' : 'debug');
@@ -184,7 +184,35 @@ function logInternal(level: LogLevel, ...args: unknown[]): void {
     return;
   }
   const consoleMethod = getConsoleMethod(level);
-  consoleMethod(...sanitizeArgs(args));
+  const sanitizedArgs = sanitizeArgs(args);
+  consoleMethod(...sanitizedArgs);
+
+  // Persist to database if enabled
+  if (databaseConfig.get('LOG_TO_DATABASE')) {
+    try {
+      const { DatabaseManager } = require('../database/DatabaseManager');
+      const dbManager = DatabaseManager.getInstance();
+      if (dbManager.isConnected()) {
+        const message = args.filter((a) => typeof a === 'string').join(' ');
+        const details = args.find((a) => typeof a === 'object' && !(a instanceof Error));
+        const contextMatch =
+          args[0] &&
+          typeof args[0] === 'string' &&
+          args[0].startsWith('[') &&
+          args[0].endsWith(']');
+        const context = contextMatch ? (args[0] as string).slice(1, -1) : undefined;
+
+        dbManager.saveLog({
+          level,
+          message: sanitizeLooseString(message),
+          context,
+          details: details ? sanitizeValue(undefined, details, new WeakSet()) : undefined,
+        });
+      }
+    } catch (e) {
+      // Ignore errors in database logging to avoid infinite loops
+    }
+  }
 }
 
 export function sanitizeForLogging<T>(value: T, key?: string): unknown {

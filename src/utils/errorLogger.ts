@@ -6,6 +6,7 @@
  */
 
 import Debug from 'debug';
+import type { Request } from 'express';
 import { MetricsCollector } from '../monitoring/MetricsCollector';
 import { BaseHivemindError } from '../types/errorClasses';
 import { ErrorUtils, type HivemindError } from '../types/errors';
@@ -214,12 +215,16 @@ export class ErrorLogger {
         error &&
         typeof error === 'object' &&
         'getRecoveryStrategy' in error &&
-        typeof (error as any).getRecoveryStrategy === 'function'
+        typeof (error as Record<string, unknown>).getRecoveryStrategy === 'function'
           ? {
-              canRecover: (error as any).getRecoveryStrategy().canRecover,
-              retryDelay: (error as any).getRecoveryStrategy().retryDelay,
-              maxRetries: (error as any).getRecoveryStrategy().maxRetries,
-              steps: (error as any).getRecoveryStrategy().recoverySteps,
+              canRecover: (error as { getRecoveryStrategy: () => any }).getRecoveryStrategy()
+                .canRecover,
+              retryDelay: (error as { getRecoveryStrategy: () => any }).getRecoveryStrategy()
+                .retryDelay,
+              maxRetries: (error as { getRecoveryStrategy: () => any }).getRecoveryStrategy()
+                .maxRetries,
+              steps: (error as { getRecoveryStrategy: () => any }).getRecoveryStrategy()
+                .recoverySteps,
             }
           : undefined,
     };
@@ -569,17 +574,17 @@ export function logError(error: HivemindError, context: ErrorContext): void {
 /**
  * Create error context from Express request
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Express request with arbitrary middleware augmentation
-export function createErrorContext(req: any): ErrorContext {
+export function createErrorContext(req: Request): ErrorContext {
+  const reqAny = req as any;
   return {
-    correlationId: req.correlationId || req.headers['x-correlation-id'] || 'unknown',
+    correlationId: reqAny.correlationId || (req.headers['x-correlation-id'] as string) || 'unknown',
     requestId: req.headers['x-request-id'] as string,
-    userId: req.user?.id || req.user?.sub,
+    userId: reqAny.user?.id || reqAny.user?.sub,
     path: req.path,
     method: req.method,
     userAgent: req.headers['user-agent'],
-    ip: req.ip || req.connection.remoteAddress,
-    duration: req.startTime ? Date.now() - req.startTime : undefined,
+    ip: req.ip || req.socket.remoteAddress,
+    duration: reqAny.startTime ? Date.now() - reqAny.startTime : undefined,
     body: req.body,
     params: req.params,
     query: req.query,
@@ -589,10 +594,9 @@ export function createErrorContext(req: any): ErrorContext {
 /**
  * Error logging middleware
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Express middleware with augmented request
-export function errorLoggingMiddleware(req: any, _res: unknown, next: () => void): void {
+export function errorLoggingMiddleware(req: Request, _res: unknown, next: () => void): void {
   // Add error logger to request object
-  req.errorLogger = errorLogger;
+  (req as any).errorLogger = errorLogger;
   next();
 }
 

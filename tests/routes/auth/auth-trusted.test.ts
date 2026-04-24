@@ -39,11 +39,11 @@ jest.mock('../../../src/middleware/rateLimiter', () => ({
 }));
 
 // Obtain the mock singleton that the factory created
-
-const { AuthManager } = require('../../../src/auth/AuthManager');
-const mockAuthManager = AuthManager.getInstance() as ReturnType<
-  typeof import('../../helpers/authMocks').getMockAuthManager
->;
+const mockAuthManager = (
+  jest.requireMock('../../../src/auth/AuthManager') as {
+    AuthManager: { getInstance: jest.Mock<any> };
+  }
+).AuthManager.getInstance();
 
 describe('GET /auth/trusted-status', () => {
   const app = createAuthApp();

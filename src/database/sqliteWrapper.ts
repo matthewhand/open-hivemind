@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3';
 import Debug from 'debug';
+import { IDatabase } from './types';
 
 const debug = Debug('app:SQLiteWrapper');
 
@@ -7,13 +8,13 @@ const debug = Debug('app:SQLiteWrapper');
  * Wrapper around better-sqlite3 providing an async/promise-based API
  * compatible with the previous sqlite package usage.
  */
-export class SQLiteWrapper {
+export class SQLiteWrapper implements IDatabase {
   private db: any;
 
   constructor(filename: string) {
     debug('SQLITE_WRAPPER: constructor called for', filename);
     let DBConstructor: any;
-    
+
     // Try different ways better-sqlite3 might be exported/imported
     if (typeof Database === 'function') {
       DBConstructor = Database;
@@ -25,7 +26,9 @@ export class SQLiteWrapper {
         const BetterSqlite3 = require('better-sqlite3');
         DBConstructor = typeof BetterSqlite3 === 'function' ? BetterSqlite3 : BetterSqlite3.default;
       } catch (e) {
-        throw new Error(`Failed to load better-sqlite3: ${e instanceof Error ? e.message : String(e)}`);
+        throw new Error(
+          `Failed to load better-sqlite3: ${e instanceof Error ? e.message : String(e)}`
+        );
       }
     }
 
@@ -65,4 +68,4 @@ export class SQLiteWrapper {
 export type { Database as DatabaseType };
 
 // Type alias for compatibility with existing code that imported Database from 'sqlite'
-export type Database = SQLiteWrapper;
+export type Database = IDatabase;

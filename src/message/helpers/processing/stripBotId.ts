@@ -1,4 +1,5 @@
 import Debug from 'debug';
+import { strings } from '@src/utils/common';
 import messageConfig from '@config/messageConfig';
 
 const debug = Debug('app:stripBotId');
@@ -10,7 +11,7 @@ const debug = Debug('app:stripBotId');
  * @returns Message without bot ID references.
  */
 export function stripBotId(message: string, botId: string): string {
-  const botIdRegex = new RegExp(`<@${botId}>`, 'g');
+  const botIdRegex = new RegExp(`<@${strings.escapeRegExp(botId)}>`, 'g');
   debug(`Stripping bot ID: ${botId} from message: "${message}"`);
 
   if ((messageConfig as any).get('MESSAGE_STRIP_BOT_ID')) {

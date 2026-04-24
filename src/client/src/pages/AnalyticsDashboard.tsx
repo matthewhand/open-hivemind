@@ -18,6 +18,7 @@ import {
 const AnalyticsDashboard: React.FC = () => {
   const { messageFlow, performanceMetrics } = useWebSocket();
   const [activityData, setActivityData] = useState<ActivityResponse | null>(null);
+  const [costData, setCostData] = useState<{ date: string, cost: number }[]>([]);
   const [timeRange, setTimeRange] = useState('24h');
   const [isLoading, setIsLoading] = useState(true);
   const errorToast = useErrorToast();
@@ -31,15 +32,19 @@ const AnalyticsDashboard: React.FC = () => {
       // Calculate from date based on range
       const now = new Date();
       const from = new Date();
-      if (timeRange === '1h') { from.setHours(now.getHours() - 1); }
-      else if (timeRange === '24h') { from.setHours(now.getHours() - 24); }
-      else if (timeRange === '7d') { from.setDate(now.getDate() - 7); }
-      else if (timeRange === '30d') { from.setDate(now.getDate() - 30); }
+      let days = 1;
+      if (timeRange === '1h') { from.setHours(now.getHours() - 1); days = 1; }
+      else if (timeRange === '24h') { from.setHours(now.getHours() - 24); days = 1; }
+      else if (timeRange === '7d') { from.setDate(now.getDate() - 7); days = 7; }
+      else if (timeRange === '30d') { from.setDate(now.getDate() - 30); days = 30; }
 
-      const data = await apiService.getActivity({
-        from: from.toISOString(),
-      });
-      setActivityData(data);
+      const [activity, costs] = await Promise.all([
+        apiService.getActivity({ from: from.toISOString() }),
+        apiService.getCostAnalytics(days)
+      ]);
+
+      setActivityData(activity);
+      setCostData(costs.data?.daily || []);
     } catch (_error) {
       errorToast('Analytics Error', 'Failed to fetch analytics data');
     } finally {
@@ -153,6 +158,18 @@ const AnalyticsDashboard: React.FC = () => {
           type="area"
           color="var(--fallback-p,oklch(var(--p)/1))"
           unit="msgs"
+          height={350}
+        />
+        <MetricChart
+          title="Cost Trend"
+          data={costData.map(d => ({
+            timestamp: d.date,
+            value: d.cost,
+            label: 'Cost'
+          }))}
+          type="line"
+          color="var(--fallback-su,oklch(var(--su)/1))"
+          unit="$"
           height={350}
         />
         <MetricChart

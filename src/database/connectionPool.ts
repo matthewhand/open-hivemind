@@ -2,7 +2,7 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import Debug from 'debug';
 import { ConfigurationError, DatabaseError } from '@src/types/errorClasses';
-import { SQLiteWrapper as Database } from './sqliteWrapper';
+import { IDatabase as Database } from './types';
 import type { DatabaseConfig } from './types';
 
 const debug = Debug('app:ConnectionPool');

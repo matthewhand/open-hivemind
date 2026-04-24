@@ -9,6 +9,7 @@ import path from 'path';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import { maintenanceModeMiddleware } from '@src/middleware/maintenanceMiddleware';
 import { applyRateLimiting } from '@src/middleware/rateLimiter';
+import { securityHeaders } from '@src/server/middleware/security';
 import Logger from '@common/logger';
 
 const appLogger = Logger.withContext('app:index');
@@ -43,14 +44,11 @@ export function setupMiddleware(app: express.Application, ctx: MiddlewareContext
   // CORS middleware for localhost development
   app.use((req: Request, res: Response, next: NextFunction) => {
     const origin = req.headers.origin;
-    const isLocalhost =
-      origin?.includes('localhost') ||
-      origin?.includes('127.0.0.1') ||
-      req.hostname === 'localhost' ||
-      req.hostname === '127.0.0.1';
+    // Strictly match http://localhost or http://127.0.0.1 with optional port
+    const isLocalhost = origin && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
 
     if (isLocalhost) {
-      res.setHeader('Access-Control-Allow-Origin', origin || 'http://localhost:3000');
+      res.setHeader('Access-Control-Allow-Origin', origin!);
       res.setHeader('Access-Control-Allow-Credentials', 'true');
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
       res.setHeader(
@@ -68,7 +66,7 @@ export function setupMiddleware(app: express.Application, ctx: MiddlewareContext
     next();
   });
 
-  // Request logging & security headers
+  // Request logging
   app.use((req: Request, res: Response, next: NextFunction) => {
     // Suppress noisy health checks by default, but allow override via SUPPRESS_HEALTH_LOGS
     const suppressHealthLogs = process.env.SUPPRESS_HEALTH_LOGS !== 'false';
@@ -79,19 +77,11 @@ export function setupMiddleware(app: express.Application, ctx: MiddlewareContext
     } else {
       httpLogger.debug('Incoming request', { method: req.method, path: req.path });
     }
-
-    // Security headers
-    // SECURITY: See src/server/middleware/security.ts for detailed CSP explanation
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    const workerSrc =
-      process.env.NODE_ENV === 'development' ? "worker-src 'self' blob:;" : "worker-src 'none';";
-    res.setHeader(
-      'Content-Security-Policy',
-      `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; connect-src 'self' ws: wss:; font-src 'self' data: https://fonts.gstatic.com; object-src 'none'; frame-ancestors 'none'; ${workerSrc}`
-    );
-
     next();
   });
+
+  // Security headers
+  app.use(securityHeaders);
 
   // Serve dashboard at root
   if (process.env.NODE_ENV !== 'development') {

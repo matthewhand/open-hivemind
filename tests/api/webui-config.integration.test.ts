@@ -7,24 +7,28 @@ import fs from 'fs';
 
 describe('WebUI Config API Integration', () => {
   let app: any;
-  const testConfigDir = path.join(process.cwd(), 'config', 'user-test');
+  let originalCwd: string;
+  const testRoot = path.join(process.cwd(), 'test-root-api');
 
   beforeAll(() => {
     registerServices();
     
-    // Override config directory for testing
-    (webUIStorage as any).configDir = testConfigDir;
-    (webUIStorage as any).configFile = path.join(testConfigDir, 'webui-config.json');
-    (webUIStorage as any).ensureConfigDirSync();
-
+    // Override config directory for testing by changing CWD
+    originalCwd = process.cwd();
+    if (!fs.existsSync(testRoot)) {
+      fs.mkdirSync(testRoot, { recursive: true });
+    }
+    process.chdir(testRoot);
+    
     const server = new WebUIServer();
     app = server.getApp();
   });
 
   afterAll(() => {
-    // Clean up test directory
-    if (fs.existsSync(testConfigDir)) {
-      fs.rmSync(testConfigDir, { recursive: true, force: true });
+    // Restore CWD and clean up
+    process.chdir(originalCwd);
+    if (fs.existsSync(testRoot)) {
+      fs.rmSync(testRoot, { recursive: true, force: true });
     }
   });
 
