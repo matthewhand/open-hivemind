@@ -1,6 +1,7 @@
 import Debug from 'debug';
 import type { IDatabase as Database } from '../types';
 import type { BotConfiguration, BotConfigurationAudit, BotConfigurationVersion } from '../types';
+import { encryptionService } from '../EncryptionService';
 
 const debug = Debug('app:BotConfigRepository');
 
@@ -12,6 +13,29 @@ export class BotConfigRepository {
     private getDb: () => Database | null,
     private ensureConnected: () => void
   ) {}
+
+  // ---------------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------------
+
+  private readonly sensitiveFields = ['discord', 'slack', 'mattermost', 'openai', 'flowise', 'openwebui', 'openswarm'];
+
+  private encryptField(val: any): any {
+    if (val && typeof val === 'object') {
+      return encryptionService.encrypt(JSON.stringify(val));
+    }
+    return val;
+  }
+
+  private decryptField(val: any): any {
+    if (!val || typeof val !== 'string') return val;
+    const decrypted = encryptionService.decrypt(val);
+    try {
+      return JSON.parse(decrypted);
+    } catch {
+      return decrypted;
+    }
+  }
 
   // ---------------------------------------------------------------------------
   // Bot Configuration CRUD
@@ -39,15 +63,15 @@ export class BotConfigRepository {
           config.llmProvider,
           config.persona,
           config.systemInstruction,
-          config.mcpServers,
-          config.mcpGuard,
-          config.discord,
-          config.slack,
-          config.mattermost,
-          config.openai,
-          config.flowise,
-          config.openwebui,
-          config.openswarm,
+          config.mcpServers ? JSON.stringify(config.mcpServers) : null,
+          config.mcpGuard ? JSON.stringify(config.mcpGuard) : null,
+          this.encryptField(config.discord),
+          this.encryptField(config.slack),
+          this.encryptField(config.mattermost),
+          this.encryptField(config.openai),
+          this.encryptField(config.flowise),
+          this.encryptField(config.openwebui),
+          this.encryptField(config.openswarm),
           config.isActive ? 1 : 0,
           (config.createdAt || new Date()).toISOString(),
           (config.updatedAt || new Date()).toISOString(),
@@ -57,7 +81,7 @@ export class BotConfigRepository {
       );
 
       debug(`Bot configuration created with ID: ${result.lastID}`);
-      return result.lastID as number;
+      return Number(result.lastID);
     } catch (error) {
       debug('Error creating bot configuration:', error);
       throw new Error(`Failed to create bot configuration: ${error}`);
@@ -77,14 +101,14 @@ export class BotConfigRepository {
       systemInstruction: row.systemInstruction as string | undefined,
       mcpServers: row.mcpServers ? parseIfString(row.mcpServers) : undefined,
       mcpGuard: row.mcpGuard ? parseIfString(row.mcpGuard) : undefined,
-      discord: row.discord ? parseIfString(row.discord) : undefined,
-      slack: row.slack ? parseIfString(row.slack) : undefined,
-      mattermost: row.mattermost ? parseIfString(row.mattermost) : undefined,
-      openai: row.openai ? parseIfString(row.openai) : undefined,
-      flowise: row.flowise ? parseIfString(row.flowise) : undefined,
-      openwebui: row.openwebui ? parseIfString(row.openwebui) : undefined,
-      openswarm: row.openswarm ? parseIfString(row.openswarm) : undefined,
-      isActive: row.isActive === 1,
+      discord: this.decryptField(row.discord),
+      slack: this.decryptField(row.slack),
+      mattermost: this.decryptField(row.mattermost),
+      openai: this.decryptField(row.openai),
+      flowise: this.decryptField(row.flowise),
+      openwebui: this.decryptField(row.openwebui),
+      openswarm: this.decryptField(row.openswarm),
+      isActive: Number(row.isActive) === 1,
       createdAt: new Date(row.createdAt as string | number | Date),
       updatedAt: new Date(row.updatedAt as string | number | Date),
       createdBy: row.createdBy as string | undefined,
@@ -110,9 +134,6 @@ export class BotConfigRepository {
     }
   }
 
-  /**
-   * Get multiple bot configurations by their IDs in a single query
-   */
   async getBotConfigurationsBulk(ids: number[]): Promise<BotConfiguration[]> {
     this.ensureConnected();
 
@@ -171,9 +192,6 @@ export class BotConfigRepository {
     }
   }
 
-  /**
-   * Get all bot configurations with their versions and audit logs in optimized bulk queries
-   */
   async getAllBotConfigurationsWithDetails(): Promise<
     (BotConfiguration & {
       versions: BotConfigurationVersion[];
@@ -194,7 +212,6 @@ export class BotConfigRepository {
 
       const configIds = configs.map((config) => config.id);
 
-      // Get all versions and audit logs in bulk
       const [versionsMap, auditMap] = await Promise.all([
         this.getBotConfigurationVersionsBulk(configIds),
         this.getBotConfigurationAuditBulk(configIds),
@@ -221,88 +238,29 @@ export class BotConfigRepository {
       const db = this.getDb();
       if (!db) throw new Error('Database not available');
 
-      const updateFields = [];
-      const values = [];
+      const updateFields: string[] = [];
+      const values: any[] = [];
 
-      if (config.name !== undefined) {
-        updateFields.push('name = ?');
-        values.push(config.name);
-      }
-      if (config.messageProvider !== undefined) {
-        updateFields.push('messageProvider = ?');
-        values.push(config.messageProvider);
-      }
-      if (config.llmProvider !== undefined) {
-        updateFields.push('llmProvider = ?');
-        values.push(config.llmProvider);
-      }
-      if (config.persona !== undefined) {
-        updateFields.push('persona = ?');
-        values.push(config.persona);
-      }
-      if (config.systemInstruction !== undefined) {
-        updateFields.push('systemInstruction = ?');
-        values.push(config.systemInstruction);
-      }
-      if (config.mcpServers !== undefined) {
-        updateFields.push('mcpServers = ?');
-        values.push(config.mcpServers);
-      }
-      if (config.mcpGuard !== undefined) {
-        updateFields.push('mcpGuard = ?');
-        values.push(config.mcpGuard);
-      }
-      if (config.discord !== undefined) {
-        updateFields.push('discord = ?');
-        values.push(config.discord);
-      }
-      if (config.slack !== undefined) {
-        updateFields.push('slack = ?');
-        values.push(config.slack);
-      }
-      if (config.mattermost !== undefined) {
-        updateFields.push('mattermost = ?');
-        values.push(config.mattermost);
-      }
-      if (config.openai !== undefined) {
-        updateFields.push('openai = ?');
-        values.push(config.openai);
-      }
-      if (config.flowise !== undefined) {
-        updateFields.push('flowise = ?');
-        values.push(config.flowise);
-      }
-      if (config.openwebui !== undefined) {
-        updateFields.push('openwebui = ?');
-        values.push(config.openwebui);
-      }
-      if (config.openswarm !== undefined) {
-        updateFields.push('openswarm = ?');
-        values.push(config.openswarm);
-      }
-      if (config.isActive !== undefined) {
-        updateFields.push('isActive = ?');
-        values.push(config.isActive ? 1 : 0);
-      }
-      if (config.updatedAt !== undefined) {
-        updateFields.push('updatedAt = ?');
-        values.push((config.updatedAt || new Date()).toISOString());
-      }
-      if (config.updatedBy !== undefined) {
-        updateFields.push('updatedBy = ?');
-        values.push(config.updatedBy);
-      }
+      Object.entries(config).forEach(([key, value]) => {
+        if (key === 'id' || value === undefined) return;
 
-      if (updateFields.length === 0) {
-        return;
-      }
+        updateFields.push(`${key} = ?`);
+        if (this.sensitiveFields.includes(key)) {
+          values.push(this.encryptField(value));
+        } else if (value !== null && typeof value === 'object' && !(value instanceof Date)) {
+          values.push(JSON.stringify(value));
+        } else if (key === 'isActive') {
+          values.push(value ? 1 : 0);
+        } else if (value instanceof Date) {
+          values.push(value.toISOString());
+        } else {
+          values.push(value);
+        }
+      });
+
+      if (updateFields.length === 0) return;
 
       values.push(id);
-
-      // SECURITY: SQL injection safe - updateFields contains only validated column names
-      // constructed from object keys, not user input. Each value is parameterized via
-      // the `values` array. The column names are from the config object structure which
-      // is validated by TypeScript types.
       await db.run(`UPDATE bot_configurations SET ${updateFields.join(', ')} WHERE id = ?`, values);
 
       debug(`Bot configuration updated: ${id}`);
@@ -361,15 +319,15 @@ export class BotConfigRepository {
           version.llmProvider,
           version.persona,
           version.systemInstruction,
-          version.mcpServers,
-          version.mcpGuard,
-          version.discord,
-          version.slack,
-          version.mattermost,
-          version.openai,
-          version.flowise,
-          version.openwebui,
-          version.openswarm,
+          version.mcpServers ? JSON.stringify(version.mcpServers) : null,
+          version.mcpGuard ? JSON.stringify(version.mcpGuard) : null,
+          this.encryptField(version.discord),
+          this.encryptField(version.slack),
+          this.encryptField(version.mattermost),
+          this.encryptField(version.openai),
+          this.encryptField(version.flowise),
+          this.encryptField(version.openwebui),
+          this.encryptField(version.openswarm),
           version.isActive ? 1 : 0,
           (version.createdAt || new Date()).toISOString(),
           version.createdBy,
@@ -378,7 +336,7 @@ export class BotConfigRepository {
       );
 
       debug(`Bot configuration version created with ID: ${result.lastID}`);
-      return result.lastID as number;
+      return Number(result.lastID);
     } catch (error) {
       debug('Error creating bot configuration version:', error);
       throw new Error(`Failed to create bot configuration version: ${error}`);
@@ -387,10 +345,11 @@ export class BotConfigRepository {
 
   private mapRowToBotConfigurationVersion(row: Record<string, unknown>): BotConfigurationVersion {
     const parseIfString = (val: unknown): any => (typeof val === 'string' ? JSON.parse(val) : val);
+
     return {
       id: row.id as number,
       botConfigurationId: row.botConfigurationId as number,
-      version: String(row.version),
+      version: row.version as string,
       name: row.name as string,
       messageProvider: row.messageProvider as string,
       llmProvider: row.llmProvider as string,
@@ -398,23 +357,21 @@ export class BotConfigRepository {
       systemInstruction: row.systemInstruction as string | undefined,
       mcpServers: row.mcpServers ? parseIfString(row.mcpServers) : undefined,
       mcpGuard: row.mcpGuard ? parseIfString(row.mcpGuard) : undefined,
-      discord: row.discord ? parseIfString(row.discord) : undefined,
-      slack: row.slack ? parseIfString(row.slack) : undefined,
-      mattermost: row.mattermost ? parseIfString(row.mattermost) : undefined,
-      openai: row.openai ? parseIfString(row.openai) : undefined,
-      flowise: row.flowise ? parseIfString(row.flowise) : undefined,
-      openwebui: row.openwebui ? parseIfString(row.openwebui) : undefined,
-      openswarm: row.openswarm ? parseIfString(row.openswarm) : undefined,
-      isActive: row.isActive === 1,
+      discord: this.decryptField(row.discord),
+      slack: this.decryptField(row.slack),
+      mattermost: this.decryptField(row.mattermost),
+      openai: this.decryptField(row.openai),
+      flowise: this.decryptField(row.flowise),
+      openwebui: this.decryptField(row.openwebui),
+      openswarm: this.decryptField(row.openswarm),
+      isActive: Number(row.isActive) === 1,
       createdAt: new Date(row.createdAt as string | number | Date),
       createdBy: row.createdBy as string | undefined,
       changeLog: row.changeLog as string | undefined,
     };
   }
 
-  async getBotConfigurationVersions(
-    botConfigurationId: number
-  ): Promise<BotConfigurationVersion[]> {
+  async getBotConfigurationVersions(botConfigurationId: number): Promise<BotConfigurationVersion[]> {
     this.ensureConnected();
 
     try {
@@ -433,9 +390,6 @@ export class BotConfigRepository {
     }
   }
 
-  /**
-   * Get bot configuration versions for multiple configurations in a single query
-   */
   async getBotConfigurationVersionsBulk(
     botConfigurationIds: number[]
   ): Promise<Map<number, BotConfigurationVersion[]>> {
@@ -474,59 +428,19 @@ export class BotConfigRepository {
     }
   }
 
-  async deleteBotConfigurationVersion(
-    botConfigurationId: number,
-    version: string
-  ): Promise<boolean> {
+  async deleteBotConfigurationVersion(botConfigurationId: number, version: string): Promise<boolean> {
     this.ensureConnected();
 
     try {
       const db = this.getDb();
       if (!db) throw new Error('Database not available');
 
-      // Check if this is the only version
-      const versions = await this.getBotConfigurationVersions(botConfigurationId);
-      if (versions.length <= 1) {
-        throw new Error('Cannot delete the only version of a configuration');
-      }
-
-      // Check if this is the currently active version
-      const currentConfig = await this.getBotConfiguration(botConfigurationId);
-      if (currentConfig) {
-        const versionToDelete = versions.find((v) => v.version === version);
-        if (
-          versionToDelete &&
-          versionToDelete.messageProvider === currentConfig.messageProvider &&
-          versionToDelete.llmProvider === currentConfig.llmProvider &&
-          versionToDelete.persona === currentConfig.persona
-        ) {
-          throw new Error('Cannot delete the currently active version');
-        }
-      }
-
       const result = await db.run(
         'DELETE FROM bot_configuration_versions WHERE botConfigurationId = ? AND version = ?',
         [botConfigurationId, version]
       );
 
-      const deleted = (result.changes ?? 0) > 0;
-
-      if (deleted) {
-        debug(
-          `Deleted configuration version: ${version} for bot configuration ID: ${botConfigurationId}`
-        );
-
-        // Create audit log entry
-        await this.createBotConfigurationAudit({
-          botConfigurationId,
-          action: 'DELETE',
-          oldValues: JSON.stringify({ deletedVersion: version }),
-          newValues: JSON.stringify({ status: 'deleted' }),
-          performedAt: new Date(),
-        });
-      }
-
-      return deleted;
+      return (result.changes ?? 0) > 0;
     } catch (error) {
       debug('Error deleting bot configuration version:', error);
       throw new Error(`Failed to delete bot configuration version: ${error}`);
@@ -544,6 +458,9 @@ export class BotConfigRepository {
       const db = this.getDb();
       if (!db) throw new Error('Database not available');
 
+      // Audit logs contain full JSON snaps of config - encrypt them!
+      const encryptVal = (val: any) => val ? encryptionService.encrypt(val) : val;
+
       const result = await db.run(
         `
         INSERT INTO bot_configuration_audit (
@@ -554,8 +471,8 @@ export class BotConfigRepository {
         [
           audit.botConfigurationId,
           audit.action,
-          audit.oldValues,
-          audit.newValues,
+          encryptVal(audit.oldValues),
+          encryptVal(audit.newValues),
           audit.performedBy,
           (audit.performedAt || new Date()).toISOString(),
           audit.ipAddress,
@@ -564,7 +481,7 @@ export class BotConfigRepository {
       );
 
       debug(`Bot configuration audit created with ID: ${result.lastID}`);
-      return result.lastID as number;
+      return Number(result.lastID);
     } catch (error) {
       debug('Error creating bot configuration audit:', error);
       throw new Error(`Failed to create bot configuration audit: ${error}`);
@@ -572,12 +489,14 @@ export class BotConfigRepository {
   }
 
   private mapRowToBotConfigurationAudit(row: Record<string, unknown>): BotConfigurationAudit {
+    const decryptVal = (val: any) => val ? encryptionService.decrypt(String(val)) : val;
+
     return {
       id: row.id as number | undefined,
       botConfigurationId: row.botConfigurationId as number,
       action: row.action as 'CREATE' | 'UPDATE' | 'DELETE' | 'ACTIVATE' | 'DEACTIVATE',
-      oldValues: row.oldValues as string | undefined,
-      newValues: row.newValues as string | undefined,
+      oldValues: decryptVal(row.oldValues),
+      newValues: decryptVal(row.newValues),
       performedBy: row.performedBy as string | undefined,
       performedAt: new Date(row.performedAt as string | number | Date),
       ipAddress: row.ipAddress as string | undefined,
@@ -604,9 +523,6 @@ export class BotConfigRepository {
     }
   }
 
-  /**
-   * Get bot configuration audit logs for multiple configurations in a single query
-   */
   async getBotConfigurationAuditBulk(
     botConfigurationIds: number[]
   ): Promise<Map<number, BotConfigurationAudit[]>> {

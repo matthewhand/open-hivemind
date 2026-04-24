@@ -106,6 +106,13 @@ const databaseConfig = convict({
     default: true,
     env: 'DATABASE_PERSIST_INFERENCE',
   },
+  ENCRYPTION_KEY: {
+    doc: 'Master key for database at-rest encryption',
+    format: String,
+    default: '',
+    env: 'DATABASE_ENCRYPTION_KEY',
+    sensitive: true,
+  },
 });
 
 // Load existing config file if it exists
