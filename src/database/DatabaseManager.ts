@@ -1002,6 +1002,65 @@ export class DatabaseManager {
     return this.memoryRepo.deleteAll(options);
   }
 
+  /**
+   * Reset the database by clearing all major tables.
+   * This is a destructive operation used for "Factory Reset".
+   */
+  async resetDatabase(): Promise<void> {
+    if (!this.db || !this.connected) throw new Error('Database not connected');
+    const db = this.db;
+
+    const tables = [
+      'messages',
+      'conversation_summaries',
+      'bot_metrics',
+      'bot_sessions',
+      'bot_configurations',
+      'bot_configuration_versions',
+      'bot_configuration_audit',
+      'tenants',
+      'roles',
+      'users',
+      'audits',
+      'approval_requests',
+      'anomalies',
+      'ai_feedback',
+      'decisions',
+      'logs',
+      'inference_logs',
+      'memories',
+      'activity_logs',
+      'message_logs',
+      'bot_audit_logs',
+      'bot_error_logs'
+    ];
+
+    debug('Starting factory reset (nuke)...');
+
+    // Disable foreign key checks for the nuke to avoid dependency issues
+    if (this.config?.type === 'sqlite') {
+      await db.exec('PRAGMA foreign_keys = OFF');
+    } else if (this.config?.type === 'postgres') {
+      await db.exec('SET CONSTRAINTS ALL DEFERRED');
+    }
+
+    for (const table of tables) {
+      try {
+        console.log(`Clearing ${table}...`);
+        await db.run(`DELETE FROM ${table}`);
+      } catch (e) {
+        debug(`Failed to clear table ${table}:`, e);
+      }
+    }
+
+    // Re-enable foreign key checks
+    if (this.config?.type === 'sqlite') {
+      await db.exec('PRAGMA foreign_keys = ON');
+    }
+
+    debug('Factory reset completed.');
+  }
+
   // ---------------------------------------------------------------------------
   // Cleanup operations
   // ---------------------------------------------------------------------------

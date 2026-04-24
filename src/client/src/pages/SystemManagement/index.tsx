@@ -15,6 +15,7 @@ import BackupsTab from './BackupsTab';
 import PerformanceTab from './PerformanceTab';
 import ApprovalsTab from './ApprovalsTab';
 import AuditTab from './AuditTab';
+import MaintenanceTab from './MaintenanceTab';
 import type { SystemConfig, BackupRecord } from './types';
 import { LoadingSpinner } from '../../components/DaisyUI/Loading';
 import Input from '../../components/DaisyUI/Input';
@@ -256,6 +257,7 @@ const SystemManagement: React.FC = () => {
     { key: 'config', label: 'System Configuration' },
     { key: 'backups', label: 'Backup Management', color: 'info' as const },
     { key: 'performance', label: 'Performance Tuning', color: 'accent' as const },
+    { key: 'maintenance', label: 'Maintenance', color: 'error' as const, icon: <RotateCcw className="w-4 h-4" /> },
   ], []);
 
   return (
@@ -316,6 +318,7 @@ const SystemManagement: React.FC = () => {
           {activeTab === 'performance' && (
             <PerformanceTab onClearCache={handleClearCache} />
           )}
+          {activeTab === 'maintenance' && <MaintenanceTab />}
       </Card>
 
       {/* Backup Creation Modal */}
