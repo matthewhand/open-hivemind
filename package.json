@@ -68,7 +68,8 @@
     "test:only:backend": "npm run test",
     "test:only:frontend": "cd src/client && npx vitest run",
     "test:changed": "bash scripts/ci/run-changed-tests.sh",
-    "test:flaky:quarantine": "node scripts/ci/run-flaky-tests.js"
+    "test:flaky:quarantine": "node scripts/ci/run-flaky-tests.js",
+    "test:flaky:policy": "node scripts/ci/check-flaky-policy.js"
   },
   "_moduleAliases": {
     "@src": "dist/src",

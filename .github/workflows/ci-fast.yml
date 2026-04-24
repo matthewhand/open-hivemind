@@ -53,6 +53,10 @@ jobs:
         if: github.event_name == 'push'
         run: pnpm audit --audit-level=high --production
 
+      - name: Enforce flaky quarantine policy
+        if: github.event_name == 'pull_request'
+        run: pnpm run test:flaky:policy
+
       - name: Run quarantined flaky tests (non-blocking)
         if: github.event_name == 'pull_request'
         continue-on-error: true
