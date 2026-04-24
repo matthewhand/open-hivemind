@@ -4,6 +4,8 @@ import { Router } from 'express';
 import { MetricsCollector } from '../../monitoring/MetricsCollector';
 import { providerRegistry } from '../../registries/ProviderRegistry';
 import { webUIStorage } from '../../storage/webUIStorage';
+import { WebuiConfigUpdateSchema } from '../../validation/schemas/configSchema';
+import { validateRequest } from '../../validation/validateRequest';
 
 const router = Router();
 
@@ -17,11 +19,15 @@ router.get('/config', async (_req, res) => {
   }
 });
 
-// POST /config - Update the WebUI configuration
-router.post('/config', async (req, res) => {
+// POST /config - Update the WebUI configuration (dashboard layout / user preferences only)
+router.post('/config', validateRequest(WebuiConfigUpdateSchema), async (req, res) => {
   try {
+    const { layout } = req.body as { layout?: string[] };
     const currentConfig = await webUIStorage.loadConfig();
-    const newConfig = { ...currentConfig, ...req.body };
+    const newConfig = { ...currentConfig };
+    if (layout !== undefined) {
+      newConfig.layout = layout;
+    }
     await webUIStorage.saveConfig(newConfig);
     return res.json({ success: true, config: newConfig });
   } catch (_error) {
