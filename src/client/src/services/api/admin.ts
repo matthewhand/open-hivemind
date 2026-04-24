@@ -52,5 +52,12 @@ export function adminMixin(api: ApiService) {
     downloadSystemBackup(backupId: string): Promise<Blob> {
       return api.getBlob(`/api/import-export/backups/${backupId}/download`);
     },
+
+    resetSystem(confirmation: string): Promise<{ success: boolean; message: string }> {
+      return api.request('/api/admin/system/reset', {
+        method: 'POST',
+        body: JSON.stringify({ confirmation }),
+      });
+    },
   };
 }
