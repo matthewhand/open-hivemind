@@ -19,7 +19,7 @@ import MaintenanceTab from './MaintenanceTab';
 import type { SystemConfig, BackupRecord } from './types';
 import { LoadingSpinner } from '../../components/DaisyUI/Loading';
 import Input from '../../components/DaisyUI/Input';
-import { ShieldCheck, History } from 'lucide-react';
+import { ShieldCheck, History, RotateCcw } from 'lucide-react';
 
 const SystemManagement: React.FC = () => {
   const { alerts, performanceMetrics } = useWebSocket();

@@ -64,13 +64,6 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
   const getActiveCategoryClass = (color: string) => COLOR_BTN_CLASSES[color]?.active || COLOR_BTN_CLASSES.neutral.active;
   const getCategoryDotClass = (color: string) => COLOR_BTN_CLASSES[color]?.dot || COLOR_BTN_CLASSES.neutral.dot;
 
-  // ⚡ Bolt Optimization: Pre-compute map for O(1) category lookups to avoid O(N*M) in mapping loops
-  const categoryColorMap = useMemo(() => {
-    const map = new Map<string, string>();
-    categories.forEach(c => map.set(c.value, c.color));
-    return map;
-  }, [categories]);
-
   const filteredPersonas = useMemo(() => {
     let filtered = personas;
 
@@ -199,7 +192,7 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
                           <div
                             className={`
                               w-2 h-2 rounded-full
-                              ${getCategoryDotClass(categoryColorMap.get(persona.category) || 'neutral')}
+                              ${getCategoryDotClass(categories.find(c => c.value === persona.category)?.color || 'neutral')}
                             `}
                           />
                           <span className="font-medium text-sm">{persona.name}</span>
@@ -344,7 +337,7 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
                       <div
                         className={`
                           w-3 h-3 rounded-full
-                          ${getCategoryDotClass(categoryColorMap.get(persona.category) || 'neutral')}
+                          ${getCategoryDotClass(categories.find(c => c.value === persona.category)?.color || 'neutral')}
                         `}
                       />
                       <h4 className="font-semibold">{persona.name}</h4>

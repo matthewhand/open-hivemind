@@ -32,7 +32,3 @@
 ## 2024-05-18 - Avoid O(N) array methods inside loop maps
 **Learning:** Calling O(N) array methods like `.find()` inside a `.map()` callback leads to O(N*M) time complexity, potentially blocking the main thread during component renders or effects.
 **Action:** Pre-compute a lookup Map before iterating, utilizing `new Map(items.map(i => [i.key, i.value]))` to achieve O(1) lookups and reduce overall complexity to O(N + M).
-
-## 2024-05-23 - Map Pre-computation Dependency Arrays
-**Learning:** When using `useMemo` to pre-compute a `Map` to optimize an O(N) array `.find()` inside a mapping loop, failing to include the source array (e.g., `categories`) in the dependency array can introduce a stale closure bug. The React linter requires it, and without it, the optimization will not correctly update if the parent state changes the available items.
-**Action:** Always include the source data variable in the `useMemo` dependency array when constructing lookup maps (e.g., `}, [categories]);`).
