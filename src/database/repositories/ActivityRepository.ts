@@ -80,7 +80,13 @@ export class ActivityRepository {
     try {
       const result = await db.run(
         `INSERT INTO bot_audit_logs (bot_id, action, user_id, old_values, new_values) VALUES (?, ?, ?, ?, ?)`,
-        [audit.bot_id, audit.action, audit.user_id || null, audit.old_values || null, audit.new_values || null]
+        [
+          audit.bot_id,
+          audit.action,
+          audit.user_id || null,
+          audit.old_values || null,
+          audit.new_values || null,
+        ]
       );
       return result.lastID;
     } catch (error) {

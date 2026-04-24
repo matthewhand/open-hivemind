@@ -318,7 +318,11 @@ export function getClientKey(req: Request): string {
  */
 export function shouldSkipRateLimit(req: Request): boolean {
   // Skip entirely in test mode ONLY if explicitly allowed by ALLOW_TEST_BYPASS
-  if (process.env.NODE_ENV === 'test' && process.env.ALLOW_TEST_BYPASS === 'true' && process.env.ENABLE_RATE_LIMIT_TESTS !== 'true')
+  if (
+    process.env.NODE_ENV === 'test' &&
+    process.env.ALLOW_TEST_BYPASS === 'true' &&
+    process.env.ENABLE_RATE_LIMIT_TESTS !== 'true'
+  )
     return true;
 
   // Always skip health/metrics endpoints
@@ -330,7 +334,7 @@ export function shouldSkipRateLimit(req: Request): boolean {
   const path = req.path;
   if (
     path.startsWith('/src/') ||
-    path.startsWith('/@') ||          // /@vite/client, /@react-refresh, /@fs/
+    path.startsWith('/@') || // /@vite/client, /@react-refresh, /@fs/
     path.startsWith('/node_modules/') ||
     // Static assets with file extensions (js, ts, tsx, css, png, svg, woff…)
     /\.[a-zA-Z0-9]+(\?.*)?$/.test(path)

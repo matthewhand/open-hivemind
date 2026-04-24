@@ -3,20 +3,20 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import Debug from 'debug';
 import { injectable, singleton } from 'tsyringe';
-import { ConfigurationError, DatabaseError } from '@src/types/errorClasses';
 import databaseConfig from '@src/config/databaseConfig';
+import { ConfigurationError, DatabaseError } from '@src/types/errorClasses';
+import { PostgresWrapper } from './postgresWrapper';
+import { ActivityRepository, type ActivityLog } from './repositories/ActivityRepository';
 import { AIFeedbackRepository } from './repositories/AIFeedbackRepository';
 import { AnomalyRepository } from './repositories/AnomalyRepository';
 import { ApprovalRepository } from './repositories/ApprovalRepository';
 import { BotConfigRepository } from './repositories/BotConfigRepository';
 import { DecisionRepository } from './repositories/DecisionRepository';
-import { MessageRepository } from './repositories/MessageRepository';
-import { ActivityRepository, ActivityLog } from './repositories/ActivityRepository';
-import { InferenceRepository, InferenceLog } from './repositories/InferenceRepository';
+import { InferenceRepository, type InferenceLog } from './repositories/InferenceRepository';
 import { MemoryRepository } from './repositories/MemoryRepository';
+import { MessageRepository } from './repositories/MessageRepository';
 import { ActivitySchemas } from './schemas/ActivitySchemas';
 import { SQLiteWrapper } from './sqliteWrapper';
-import { PostgresWrapper } from './postgresWrapper';
 import type {
   Anomaly,
   ApprovalRequest,
@@ -171,7 +171,7 @@ export class DatabaseManager {
 
         this.db = new SQLiteWrapper(dbPath);
         debug('DATABASE_MANAGER: this.db initialized (SQLite)');
-        
+
         await this.createTables();
         await this.createIndexes();
         await this.migrate();
@@ -190,18 +190,21 @@ export class DatabaseManager {
           });
         }
         debug('DATABASE_MANAGER: this.db initialized (Postgres)');
-        
+
         // Enable pgvector extension
         try {
           await this.db.exec('CREATE EXTENSION IF NOT EXISTS vector');
           debug('DATABASE_MANAGER: pgvector extension enabled');
         } catch (e) {
-          debug('DATABASE_MANAGER: failed to enable pgvector (might already exist or permission denied):', e);
+          debug(
+            'DATABASE_MANAGER: failed to enable pgvector (might already exist or permission denied):',
+            e
+          );
         }
 
         await this.createTables();
         await this.createIndexes();
-        // Skip sqlite-specific migrations for postgres for now, 
+        // Skip sqlite-specific migrations for postgres for now,
         // or implement postgres-specific ones.
       } else {
         throw new ConfigurationError(
@@ -333,10 +336,14 @@ export class DatabaseManager {
         updated_at ${datetime_type} DEFAULT ${default_now}
       )
     `);
-    
+
     // Add unique constraint for bot_metrics in postgres if needed for INSERT OR REPLACE emulation
     if (isPostgres) {
-       try { await db.exec('ALTER TABLE bot_metrics ADD CONSTRAINT bot_metrics_name_unique UNIQUE (botName)'); } catch(e) {}
+      try {
+        await db.exec(
+          'ALTER TABLE bot_metrics ADD CONSTRAINT bot_metrics_name_unique UNIQUE (botName)'
+        );
+      } catch (e) {}
     }
 
     // Bot sessions table
@@ -660,16 +667,20 @@ export class DatabaseManager {
 
     // Inference indexes
     await db.exec(`CREATE INDEX IF NOT EXISTS idx_inference_bot ON inference_logs(botName)`);
-    await db.exec(`CREATE INDEX IF NOT EXISTS idx_inference_timestamp ON inference_logs(timestamp DESC)`);
+    await db.exec(
+      `CREATE INDEX IF NOT EXISTS idx_inference_timestamp ON inference_logs(timestamp DESC)`
+    );
 
     // Memory indexes
     await db.exec(`CREATE INDEX IF NOT EXISTS idx_memories_user ON memories(userId)`);
     await db.exec(`CREATE INDEX IF NOT EXISTS idx_memories_agent ON memories(agentId)`);
-    
+
     if (this.config?.type === 'postgres') {
       try {
         // HNSW index for vector similarity search (cosine distance)
-        await db.exec(`CREATE INDEX IF NOT EXISTS idx_memories_embedding ON memories USING hnsw (embedding vector_cosine_ops)`);
+        await db.exec(
+          `CREATE INDEX IF NOT EXISTS idx_memories_embedding ON memories USING hnsw (embedding vector_cosine_ops)`
+        );
       } catch (e) {
         debug('DATABASE_MANAGER: failed to create HNSW index (might need pgvector 0.5+):', e);
       }
@@ -679,7 +690,7 @@ export class DatabaseManager {
   }
 
   private async migrate(): Promise<void> {
-    if (!this.db || this.config?.type === 'postgres') return; 
+    if (!this.db || this.config?.type === 'postgres') return;
     const db = this.db;
 
     try {
@@ -984,13 +995,15 @@ export class DatabaseManager {
   }
 
   async searchMemories(
-    embedding: number[], 
+    embedding: number[],
     options: { limit?: number; userId?: string; agentId?: string } = {}
   ): Promise<(MemoryRecord & { score: number })[]> {
     return this.memoryRepo.searchMemories(embedding, options);
   }
 
-  async getMemories(options: { limit?: number; userId?: string; agentId?: string } = {}): Promise<MemoryRecord[]> {
+  async getMemories(
+    options: { limit?: number; userId?: string; agentId?: string } = {}
+  ): Promise<MemoryRecord[]> {
     return this.memoryRepo.getMemories(options);
   }
 
@@ -1032,7 +1045,7 @@ export class DatabaseManager {
       'activity_logs',
       'message_logs',
       'bot_audit_logs',
-      'bot_error_logs'
+      'bot_error_logs',
     ];
 
     debug('Starting factory reset (nuke)...');
@@ -1065,7 +1078,11 @@ export class DatabaseManager {
   // Cleanup operations
   // ---------------------------------------------------------------------------
 
-  async cleanupTableByDate(tableName: string, days: number, dateColumn = 'timestamp'): Promise<number> {
+  async cleanupTableByDate(
+    tableName: string,
+    days: number,
+    dateColumn = 'timestamp'
+  ): Promise<number> {
     if (!this.db || !this.connected) return 0;
 
     const isPostgres = this.config?.type === 'postgres';

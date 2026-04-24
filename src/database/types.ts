@@ -341,5 +341,3 @@ export interface MemoryRecord {
   embedding?: number[];
   createdAt?: Date;
 }
-
-

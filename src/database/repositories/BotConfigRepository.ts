@@ -1,7 +1,11 @@
 import Debug from 'debug';
-import type { IDatabase as Database } from '../types';
-import type { BotConfiguration, BotConfigurationAudit, BotConfigurationVersion } from '../types';
 import { encryptionService } from '../EncryptionService';
+import type {
+  BotConfiguration,
+  BotConfigurationAudit,
+  BotConfigurationVersion,
+  IDatabase as Database,
+} from '../types';
 
 const debug = Debug('app:BotConfigRepository');
 
@@ -18,7 +22,15 @@ export class BotConfigRepository {
   // Helpers
   // ---------------------------------------------------------------------------
 
-  private readonly sensitiveFields = ['discord', 'slack', 'mattermost', 'openai', 'flowise', 'openwebui', 'openswarm'];
+  private readonly sensitiveFields = [
+    'discord',
+    'slack',
+    'mattermost',
+    'openai',
+    'flowise',
+    'openwebui',
+    'openswarm',
+  ];
 
   private encryptField(val: any): any {
     if (val && typeof val === 'object') {
@@ -371,7 +383,9 @@ export class BotConfigRepository {
     };
   }
 
-  async getBotConfigurationVersions(botConfigurationId: number): Promise<BotConfigurationVersion[]> {
+  async getBotConfigurationVersions(
+    botConfigurationId: number
+  ): Promise<BotConfigurationVersion[]> {
     this.ensureConnected();
 
     try {
@@ -428,7 +442,10 @@ export class BotConfigRepository {
     }
   }
 
-  async deleteBotConfigurationVersion(botConfigurationId: number, version: string): Promise<boolean> {
+  async deleteBotConfigurationVersion(
+    botConfigurationId: number,
+    version: string
+  ): Promise<boolean> {
     this.ensureConnected();
 
     try {
@@ -459,7 +476,7 @@ export class BotConfigRepository {
       if (!db) throw new Error('Database not available');
 
       // Audit logs contain full JSON snaps of config - encrypt them!
-      const encryptVal = (val: any) => val ? encryptionService.encrypt(val) : val;
+      const encryptVal = (val: any) => (val ? encryptionService.encrypt(val) : val);
 
       const result = await db.run(
         `

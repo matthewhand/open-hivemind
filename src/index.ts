@@ -43,7 +43,7 @@ const resolveFrontendDistExists = (): boolean => {
     path.join(process.cwd(), 'dist/client/dist'),
     path.join(process.cwd(), 'src/client/dist'),
   ];
-  return candidates.some(candidate => fs.existsSync(candidate));
+  return candidates.some((candidate) => fs.existsSync(candidate));
 };
 
 const frontendDistPath = resolveFrontendDistPath();

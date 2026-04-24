@@ -295,7 +295,13 @@ export function instantiateMemoryProvider(
   config?: AnyConfig | unknown,
   dependencies?: IServiceDependencies
 ): IMemoryProvider {
-  return instantiateProvider<IMemoryProvider>(mod, config, 'Memory plugin', 'Provider', dependencies);
+  return instantiateProvider<IMemoryProvider>(
+    mod,
+    config,
+    'Memory plugin',
+    'Provider',
+    dependencies
+  );
 }
 
 /**

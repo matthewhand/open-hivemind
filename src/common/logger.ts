@@ -1,5 +1,5 @@
-import { redactSensitiveInfo } from './redactSensitiveInfo';
 import databaseConfig from '../config/databaseConfig';
+import { redactSensitiveInfo } from './redactSensitiveInfo';
 
 type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error';
 
