@@ -373,23 +373,18 @@ const DashboardWidgetSystem: React.FC<DashboardWidgetSystemProps> = ({
     setWidgets(prev => prev.filter(w => w.id !== id));
   }, []);
 
-  const widgetPositionMap = useMemo(
-    () => new Map(widgets.map(w => [w.id, w.position])),
-    [widgets],
-  );
-
   const handleMouseDown = useCallback((e: React.MouseEvent, widgetId: string) => {
     if (!isEditing) {return;}
 
-    const position = widgetPositionMap.get(widgetId);
-    if (!position) {return;}
+    const widget = widgets.find(w => w.id === widgetId);
+    if (!widget) {return;}
 
     setDraggedWidget(widgetId);
     setDragOffset({
-      x: e.clientX - position.x,
-      y: e.clientY - position.y,
+      x: e.clientX - widget.position.x,
+      y: e.clientY - widget.position.y,
     });
-  }, [isEditing, widgetPositionMap]);
+  }, [isEditing, widgets]);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!draggedWidget || !isEditing) {return;}

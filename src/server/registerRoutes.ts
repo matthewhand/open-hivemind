@@ -146,7 +146,7 @@ export function registerRoutes(app: import('express').Application, ctx: RouteCon
   app.use('/api/templates', templatesRouter);
   app.use('/api/usage-tracking', usageTrackingRouter);
   app.use('/api/webhooks', webhooksRouter);
-  app.use('/api/webui', webuiRouter);
+  app.use('/api/webui', authenticateToken, webuiRouter);
   app.use('/api/demo', demoRouter);
   app.use('/api/docs', apiDocsRouter);
   app.use('/api/pluginSecurity', pluginSecurityRouter);
