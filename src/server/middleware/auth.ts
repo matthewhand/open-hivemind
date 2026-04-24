@@ -18,7 +18,7 @@ const TEST_BYPASS_USER = {
   id: 'test-admin',
   username: 'admin',
   email: 'test@open-hivemind.local',
-  role: 'owner',
+  role: 'admin',
   permissions: ['*'],
 };
 

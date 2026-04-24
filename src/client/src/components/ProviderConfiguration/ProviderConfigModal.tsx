@@ -426,7 +426,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   // Helper: get display name for a provider type key (from hardcoded config or API schema)
   const getProviderDisplayName = (type: string): string => {
     const hardcoded = (configs as any)[type];
-    if (hardcoded?.displayName || hardcoded?.name) {
+    if (hardcoded && (hardcoded.displayName || hardcoded.name)) {
       return hardcoded.displayName || hardcoded.name;
     }
     return apiSchemasByKey[type]?.label ?? type;
@@ -435,7 +435,7 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
   // Helper: get icon for a provider type key
   const getProviderIcon = (type: string): string => {
     const hardcoded = (configs as any)[type];
-    if (hardcoded?.icon && typeof hardcoded.icon === 'string') {
+    if (hardcoded && hardcoded.icon && typeof hardcoded.icon === 'string') {
       return hardcoded.icon;
     }
     return '\u2022';
@@ -486,10 +486,9 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
             onChange={(e) => setSelectedType(e.target.value as LLMProviderType)}
           >
             {providerTypes.map(type => {
-              const typeConfig = (configs as any)[type];
               return (
                 <option key={type} value={type}>
-                  {typeConfig.displayName || typeConfig.name}
+                  {getProviderDisplayName(type)}
                 </option>
               );
             })}

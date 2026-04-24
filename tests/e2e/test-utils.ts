@@ -12,14 +12,14 @@ const collectedErrors: string[] = [];
  * Setup authentication for a page using fake tokens
  */
 export async function setupAuth(page: Page) {
-  // Use the same JWT_SECRET as the hivemind service
-  const jwtSecret = 'dev-jwt-secret-for-testing';
+  // Use the same JWT_SECRET as the hivemind service (AuthManager.ts fallback for NODE_ENV=test)
+  const jwtSecret = process.env.JWT_SECRET || 'open-hivemind-test-secret-123';
   const fakeToken = require('jsonwebtoken').sign(
     {
       exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour expiry
       username: 'admin',
       userId: 'admin',
-      role: 'owner',
+      role: 'admin',
       permissions: ['*'],
     },
     jwtSecret
@@ -28,7 +28,7 @@ export async function setupAuth(page: Page) {
     id: 'admin',
     username: 'admin',
     email: 'admin@open-hivemind.com',
-    role: 'owner',
+    role: 'admin',
     permissions: ['*'],
   });
 
