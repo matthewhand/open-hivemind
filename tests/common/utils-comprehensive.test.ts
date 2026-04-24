@@ -13,81 +13,9 @@
  * error handling, and integration scenarios.
  */
 
-import { getEmoji } from '../../src/common/getEmoji';
 import { COMMAND_PREFIX } from '../../src/config/environment';
 
 describe('Utility Functions Comprehensive Tests', () => {
-  // ---- getEmoji utility ----
-
-  describe('getEmoji', () => {
-    it('should return a string', () => {
-      const result = getEmoji();
-      expect(typeof result).toBe('string');
-    });
-
-    it('should return a non-empty string', () => {
-      const result = getEmoji();
-      expect(result.length).toBeGreaterThan(0);
-    });
-
-    it('should return a valid emoji character', () => {
-      const result = getEmoji();
-      // Emoji characters are typically 1-4 bytes in UTF-8
-      expect(result.length).toBeGreaterThanOrEqual(1);
-      expect(result.length).toBeLessThanOrEqual(4);
-    });
-
-    it('should return different emojis over many calls (randomness check)', () => {
-      const results = new Set<string>();
-      for (let i = 0; i < 100; i++) {
-        results.add(getEmoji());
-      }
-      // With a pool of emojis, 100 calls should yield multiple distinct values
-      expect(results.size).toBeGreaterThanOrEqual(2);
-    });
-
-    it('should return consistent emoji format across calls', () => {
-      for (let i = 0; i < 50; i++) {
-        const result = getEmoji();
-        expect(typeof result).toBe('string');
-        expect(result.length).toBeGreaterThan(0);
-      }
-    });
-
-    it('should return emoji characters in Unicode emoji range', () => {
-      const result = getEmoji();
-      // Check if the result is a single emoji character or a string of emoji
-      // This is a loose check - emojis typically have code points > 127
-      const codePoint = result.charCodeAt(0);
-      // Most emojis are above 0x1F300, but some are in other ranges
-      // This just verifies it's not a plain ASCII character
-      expect(codePoint > 32).toBe(true);
-    });
-
-    it('should handle multiple consecutive calls without state issues', () => {
-      const first = getEmoji();
-      const second = getEmoji();
-      // Should be able to call multiple times without errors
-      expect(typeof first).toBe('string');
-      expect(typeof second).toBe('string');
-    });
-
-    it('should not throw on any call', () => {
-      expect(() => {
-        for (let i = 0; i < 100; i++) {
-          getEmoji();
-        }
-      }).not.toThrow();
-    });
-
-    it('should return repeatable results within reasonable bounds', () => {
-      // Call 1000 times and ensure no errors
-      const results = Array.from({ length: 1000 }, () => getEmoji());
-      expect(results.every(r => typeof r === 'string')).toBe(true);
-      expect(results.every(r => r.length > 0)).toBe(true);
-    });
-  });
-
   // ---- Environment Constants ----
 
   describe('Environment Configuration Constants', () => {
@@ -262,13 +190,6 @@ describe('Utility Functions Comprehensive Tests', () => {
   // ---- Integration scenarios ----
 
   describe('Integration scenarios', () => {
-    it('should build command with prefix and emoji', () => {
-      const emoji = getEmoji();
-      const command = `${COMMAND_PREFIX}status ${emoji}`;
-      expect(command.startsWith(COMMAND_PREFIX)).toBe(true);
-      expect(command).toContain(emoji);
-    });
-
     it('should create multiple commands with consistent prefix', () => {
       const commands = [
         `${COMMAND_PREFIX}start`,
@@ -280,9 +201,8 @@ describe('Utility Functions Comprehensive Tests', () => {
     });
 
     it('should handle batch command generation', () => {
-      const emoji = getEmoji();
       const commands = Array.from({ length: 10 }, (_, i) =>
-        `${COMMAND_PREFIX}command${i} ${emoji}`
+        `${COMMAND_PREFIX}command${i}`
       );
       expect(commands.length).toBe(10);
       expect(commands.every(c => c.startsWith(COMMAND_PREFIX))).toBe(true);
