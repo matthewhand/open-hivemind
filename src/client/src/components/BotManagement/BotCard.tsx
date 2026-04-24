@@ -241,6 +241,7 @@ const BotCard: React.FC<BotCardProps> = ({
             isOpen={isDropdownOpen}
             onToggle={(open) => setIsDropdownOpen(open)}
             hideArrow
+            aria-label={`Options for ${bot.name}`}
           >
             <li>
               <a onClick={handleConfigureBot} className="flex items-center gap-2" role="menuitem">

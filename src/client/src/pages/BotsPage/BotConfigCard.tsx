@@ -171,7 +171,7 @@ const BotConfigCard: React.FC<BotConfigCardProps> = ({
             size="sm"
             className={`btn-square ${isActive ? 'text-error border-error' : ''}`}
             onClick={(e) => { e.stopPropagation(); onToggleStatus?.(bot); }}
-            aria-label={isActive ? 'Deactivate' : 'Activate'}
+            aria-label={isActive ? `Deactivate ${bot.name}` : `Activate ${bot.name}`}
           >
             {isActive ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
           </Button>

@@ -95,6 +95,7 @@ const CommaSeparatedInput = ({
                 size="xs"
                 className="btn-circle h-4 w-4 min-h-0"
                 onClick={() => removeValue(val)}
+                aria-label={`Remove ${val}`}
               >
                 ✕
               </Button>

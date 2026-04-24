@@ -54,8 +54,8 @@ const AuditTab: React.FC = () => {
               onChange={(e) => setSearchBase(e.target.value)}
             />
           </div>
-          <Button size="sm" variant="ghost" className="btn-square"><Filter className="w-4 h-4" /></Button>
-          <Button size="sm" variant="ghost" className="btn-square"><Download className="w-4 h-4" /></Button>
+          <Button size="sm" variant="ghost" className="btn-square" aria-label="Filter logs"><Filter className="w-4 h-4" /></Button>
+          <Button size="sm" variant="ghost" className="btn-square" aria-label="Download logs"><Download className="w-4 h-4" /></Button>
         </div>
       </div>
 
