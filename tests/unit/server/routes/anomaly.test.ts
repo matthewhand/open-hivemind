@@ -1,11 +1,11 @@
 import request from 'supertest';
 import express from 'express';
-import anomalyRouter from '../../../src/server/routes/anomaly';
-import { DatabaseManager } from '../../../src/database/DatabaseManager';
-import { AnomalyDetectionService } from '../../../src/services/AnomalyDetectionService';
+import anomalyRouter from '../../../../src/server/routes/anomaly';
+import { DatabaseManager } from '../../../../src/database/DatabaseManager';
+import { AnomalyDetectionService } from '../../../../src/services/AnomalyDetectionService';
 
-jest.mock('../../../src/database/DatabaseManager');
-jest.mock('../../../src/services/AnomalyDetectionService');
+jest.mock('../../../../src/database/DatabaseManager');
+jest.mock('../../../../src/services/AnomalyDetectionService');
 
 describe('Anomaly Routes', () => {
   let app: express.Application;

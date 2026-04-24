@@ -26,6 +26,8 @@ describe('quotaMiddleware', () => {
     let req: Partial<Request>;
     let res: Partial<Response>;
     let next: NextFunction;
+    const originalNodeEnv = process.env.NODE_ENV;
+    const originalDisableQuota = process.env.DISABLE_QUOTA;
 
     beforeEach(() => {
       req = {
@@ -37,8 +39,21 @@ describe('quotaMiddleware', () => {
         json: jest.fn(),
       };
       next = jest.fn();
-      process.env.NODE_ENV = 'development'; // avoid skipping in test env if we want to test it
+      process.env.NODE_ENV = 'development';
       delete process.env.DISABLE_QUOTA;
+    });
+
+    afterEach(() => {
+      if (originalNodeEnv === undefined) {
+        delete process.env.NODE_ENV;
+      } else {
+        process.env.NODE_ENV = originalNodeEnv;
+      }
+      if (originalDisableQuota === undefined) {
+        delete process.env.DISABLE_QUOTA;
+      } else {
+        process.env.DISABLE_QUOTA = originalDisableQuota;
+      }
     });
 
     it('should skip if NODE_ENV is test', () => {
