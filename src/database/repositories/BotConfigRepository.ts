@@ -489,7 +489,15 @@ export class BotConfigRepository {
   }
 
   private mapRowToBotConfigurationAudit(row: Record<string, unknown>): BotConfigurationAudit {
-    const decryptVal = (val: any) => val ? encryptionService.decrypt(String(val)) : val;
+    const decryptVal = (val: any) => {
+      if (!val) return val;
+      try {
+        return encryptionService.decrypt(String(val));
+      } catch (error) {
+        debug('Failed to decrypt audit row field (id=%s): %O', row.id, error);
+        return null;
+      }
+    };
 
     return {
       id: row.id as number | undefined,
