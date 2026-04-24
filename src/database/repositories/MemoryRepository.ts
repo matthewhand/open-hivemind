@@ -52,43 +52,68 @@ export class MemoryRepository {
     const db = this.getDb();
     if (!db) return [];
 
+    const isPg = this.isPostgres();
+    const limit = options.limit || 10;
+
     try {
-      const isPg = this.isPostgres();
-      if (!isPg) {
-        debug('Vector search only supported on Postgres/pgvector');
-        return [];
+      if (isPg) {
+        const vectorStr = `[${embedding.join(',')}]`;
+        let sql = `
+          SELECT *, 1 - (embedding <=> ?::vector) as score
+          FROM memories
+          WHERE 1=1
+        `;
+        const params: any[] = [vectorStr];
+        if (options.userId) { sql += ` AND userId = ?`; params.push(options.userId); }
+        if (options.agentId) { sql += ` AND agentId = ?`; params.push(options.agentId); }
+        sql += ` ORDER BY embedding <=> ?::vector LIMIT ?`;
+        params.push(vectorStr);
+        params.push(limit);
+
+        const rows = await db.all(sql, params);
+        return rows.map(row => ({
+          ...row,
+          metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
+          score: parseFloat(row.score)
+        }));
+      } else {
+        // Fallback for SQLite: JS-side similarity
+        debug('Performing JS-side vector similarity search for SQLite');
+        let sql = `SELECT * FROM memories WHERE 1=1`;
+        const params: any[] = [];
+        if (options.userId) { sql += ` AND userId = ?`; params.push(options.userId); }
+        if (options.agentId) { sql += ` AND agentId = ?`; params.push(options.agentId); }
+        
+        const rows = await db.all(sql, params);
+        
+        const scored = rows
+          .map(row => {
+            const rowEmbedding = typeof row.embedding === 'string' ? JSON.parse(row.embedding) : row.embedding;
+            if (!rowEmbedding || !Array.isArray(rowEmbedding)) return null;
+            
+            // Cosine Similarity
+            let dotProduct = 0;
+            let normA = 0;
+            let normB = 0;
+            for (let i = 0; i < embedding.length; i++) {
+              dotProduct += embedding[i] * rowEmbedding[i];
+              normA += embedding[i] * embedding[i];
+              normB += rowEmbedding[i] * rowEmbedding[i];
+            }
+            const score = dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+            
+            return {
+              ...row,
+              metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
+              score
+            };
+          })
+          .filter(r => r !== null)
+          .sort((a, b) => b!.score - a!.score)
+          .slice(0, limit);
+
+        return scored as (MemoryRecord & { score: number })[];
       }
-
-      const limit = options.limit || 10;
-      const vectorStr = `[${embedding.join(',')}]`;
-      
-      let sql = `
-        SELECT *, 1 - (embedding <=> ?::vector) as score
-        FROM memories
-        WHERE 1=1
-      `;
-      
-      const params: any[] = [vectorStr];
-
-      if (options.userId) {
-        sql += ` AND userId = ?`;
-        params.push(options.userId);
-      }
-      if (options.agentId) {
-        sql += ` AND agentId = ?`;
-        params.push(options.agentId);
-      }
-
-      sql += ` ORDER BY embedding <=> ?::vector LIMIT ?`;
-      params.push(vectorStr);
-      params.push(limit);
-
-      const rows = await db.all(sql, params);
-      return rows.map(row => ({
-        ...row,
-        metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
-        score: parseFloat(row.score)
-      }));
     } catch (error) {
       debug('Error searching memories:', error);
       return [];
