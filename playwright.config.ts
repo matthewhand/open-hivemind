@@ -61,8 +61,6 @@ export default defineConfig({
         contextOptions: {
           permissions: ['clipboard-read', 'clipboard-write']
         },
-        launchOptions: {
-        },
       },
     },
 

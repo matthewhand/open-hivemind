@@ -78,7 +78,7 @@ describe('Agents Routes', () => {
       };
 
       const res = await request(app).post('/agents').send(newAgent);
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(201);
       expect(res.body.data.agent).toEqual(
         expect.objectContaining({ name: 'NewBot', messageProvider: 'slack', llmProvider: 'openai' })
       );
@@ -154,7 +154,7 @@ describe('Agents Routes', () => {
       const res = await request(app)
         .post('/agents/personas')
         .send({ name: 'Custom', systemPrompt: 'Be helpful.' });
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(201);
       expect(res.body.data.persona.key).toBe('custom');
       expect(res.body.data.persona.name).toBe('Custom');
     });

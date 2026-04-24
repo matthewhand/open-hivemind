@@ -4,7 +4,7 @@ import Debug from 'debug';
 import { Logger } from '@common/logger';
 import { SecureConfigManager } from '../../config/SecureConfigManager';
 import { DatabaseManager } from '../../database/DatabaseManager';
-import { type BotConfigurationVersion } from '../../database/types';
+import { type BotConfiguration, type BotConfigurationVersion } from '../../database/types';
 import { ErrorUtils } from '../../types/errors';
 import {
   BackupManager,
@@ -54,7 +54,8 @@ export class ConfigurationImportExportService {
     this.ensureDirectories();
 
     this.backupManager = new BackupManager(this.backupsDir, {
-      getAllBotConfigurations: (): Promise<any[]> => this.dbManager.getAllBotConfigurations(),
+      getAllBotConfigurations: (): Promise<BotConfiguration[]> =>
+        this.dbManager.getAllBotConfigurations(),
       exportConfigurations: (
         configIds: number[],
         options: ExportOptions,

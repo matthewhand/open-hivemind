@@ -4,26 +4,27 @@
  * Tests that key API endpoints return well-formed, validated responses
  * with correct shapes, types, and status codes. These catch regressions
  * in API contracts that would break frontend consumers.
- *
- * This replaces the old 195-line performanceTestingExample.test.ts — a demo
- * file with 4 console.log statements that only measured microsecond timing
- * of discordConfig.get() without verifying any application behavior.
  */
 import express from 'express';
 import request from 'supertest';
 import dashboardRouter from '../../src/server/routes/dashboard';
+import { globalErrorHandler } from '../../src/middleware/errorHandler';
 
 // ---------------------------------------------------------------------------
 // Mock auth and services
 // ---------------------------------------------------------------------------
 
-jest.mock('../../src/auth/middleware', () => ({
-  authenticate: (req: any, res: any, next: any) => {
-    req.user = { username: 'admin', role: 'admin' };
+jest.mock('../../src/auth/middleware', () => {
+  const passthrough = (req: any, _res: any, next: any) => {
+    req.user = { id: 'admin', username: 'admin', role: 'admin' };
     next();
-  },
-  requireAdmin: (req: any, res: any, next: any) => next(),
-}));
+  };
+  return {
+    authenticate: passthrough,
+    requireAdmin: passthrough,
+    optionalAuth: passthrough,
+  };
+});
 
 jest.mock('@src/config/BotConfigurationManager', () => ({
   BotConfigurationManager: {
@@ -63,10 +64,15 @@ const mockActivityLoggerInstance = {
   getEvents: jest.fn().mockResolvedValue([]),
 };
 
+jest.mock('../../src/validation/validateRequest', () => ({
+  validateRequest: () => (req: any, _res: any, next: any) => next(),
+}));
+
 function makeApp() {
   const app = express();
   app.use(express.json());
   app.use('/dashboard', dashboardRouter);
+  app.use(globalErrorHandler);
 
   const { BotConfigurationManager } = require('@src/config/BotConfigurationManager');
   const WebSocketService = require('@src/server/services/WebSocketService').default;
@@ -115,12 +121,17 @@ describe('API Response Validation', () => {
 
   describe('Error response shape', () => {
     it('should return 500 on activity endpoint when logger fails', async () => {
-      mockActivityLoggerInstance.getEvents.mockRejectedValue(new Error('Activity log corrupt'));
+      // Mock BaseHivemindError with 500 status
+      const error: any = new Error('Activity log corrupt');
+      error.statusCode = 500;
+      error.name = 'DatabaseError';
+      
+      mockActivityLoggerInstance.getEvents.mockRejectedValue(error);
 
       const res = await request(app).get('/dashboard/activity');
 
       expect(res.status).toBe(500);
-      expect(res.body).toHaveProperty('error');
+      expect(res.body.error).toBeDefined();
     });
   });
 
@@ -228,7 +239,7 @@ describe('API Response Validation', () => {
       const res1 = await request(app).get('/dashboard/tips');
       const res2 = await request(app).get('/dashboard/tips');
 
-      expect(res1.body.length).toBe(res2.body.length);
+      expect(res1.body.data.tips.length).toBe(res2.body.data.tips.length);
     });
 
     it('should return consistent config-status shape', async () => {

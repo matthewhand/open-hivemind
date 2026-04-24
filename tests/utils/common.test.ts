@@ -15,11 +15,11 @@ describe('utils/common', () => {
   });
 
   describe('permissions', () => {
-    it('isUserAllowed should return true', () => {
+    it('isUserAllowed should return true (placeholder)', () => {
       expect(permissions.isUserAllowed()).toBe(true);
     });
 
-    it('isRoleAllowed should return true', () => {
+    it('isRoleAllowed should return true (placeholder)', () => {
       expect(permissions.isRoleAllowed()).toBe(true);
     });
   });

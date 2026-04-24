@@ -2,10 +2,11 @@ import express from 'express';
 import request from 'supertest';
 import dashboardRouter from '../../src/server/routes/dashboard';
 import { registerServices } from '../../src/di/registration';
+import { WebSocketService } from '../../src/server/services/WebSocketService';
 
 // Mock authentication and permissions
 jest.mock('../../src/server/middleware/auth', () => ({
-  authenticateToken: (req: any, res: any, next: any) => {
+  authenticate: (req: any, res: any, next: any) => {
     req.user = { id: 'test-user', role: 'admin' };
     next();
   },
@@ -14,7 +15,8 @@ jest.mock('../../src/server/middleware/auth', () => ({
     next();
   },
   requirePermission: () => (req: any, res: any, next: any) => next(),
-  requireRole: () => (req: any, res: any, next: any) => next()
+  requireRole: () => (req: any, res: any, next: any) => next(),
+  requireAdmin: (req: any, res: any, next: any) => next(),
 }));
 
 describe('Dashboard API Integration', () => {
@@ -23,6 +25,13 @@ describe('Dashboard API Integration', () => {
   beforeAll(() => {
     process.env.CSRF_SKIP_IN_TEST = 'true';
     registerServices();
+    
+    // Mock WebSocketService for the whole suite
+    const mockWs = {
+      getBotStats: jest.fn().mockReturnValue({ messageCount: 0, errorCount: 0 }),
+    };
+    WebSocketService.setInstance(mockWs as any);
+
     app = express();
     app.use(express.json());
     app.use('/api/dashboard', dashboardRouter);

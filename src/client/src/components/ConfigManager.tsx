@@ -225,7 +225,7 @@ const ConfigManager: React.FC = () => {
                         variant="ghost"
                         size="sm"
                         className="btn-circle text-error"
-                        aria-label="Delete configuration"
+                        aria-label={`Delete ${config.name} configuration`}
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteConfig(config);

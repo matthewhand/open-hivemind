@@ -4,10 +4,8 @@ import type { BotConfiguration } from '../database/DatabaseManager';
 import type { BotOverride, MessageProvider, LlmProvider, McpServerConfig, McpGuardConfig } from '@src/types/config';
 import Debug from 'debug';
 import { SecureConfigManager } from './SecureConfigManager';
-import { Logger } from '../common/logger';
 
 const debug = Debug('app:config:UserConfigStore');
-const logger = Logger.withContext('app:config:UserConfigStore');
 
 interface ToolConfig {
   guards?: {

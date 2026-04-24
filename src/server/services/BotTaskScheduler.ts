@@ -30,7 +30,9 @@ export class BotTaskScheduler {
   private checkInterval: NodeJS.Timeout | null = null;
   private isProcessing = false;
 
-  constructor() {}
+  public constructor() {
+    // Singleton
+  }
 
   public static getInstance(): BotTaskScheduler {
     if (!BotTaskScheduler.instance) {
@@ -47,10 +49,16 @@ export class BotTaskScheduler {
 
     logger.info('Starting Bot Task Scheduler');
     // Check every minute
-    this.checkInterval = setInterval(() => this.processTasks(), 60000);
+    this.checkInterval = setInterval(() => {
+      this.processTasks().catch((err) => {
+        logger.error('Error in Bot Task Scheduler loop', err);
+      });
+    }, 60000);
 
     // Load tasks from DB (mocked for now, in a real scenario we'd use a Repository)
-    this.loadTasks();
+    this.loadTasks().catch((err) => {
+      logger.error('Error loading tasks', err);
+    });
   }
 
   /**

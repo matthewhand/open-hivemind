@@ -254,8 +254,8 @@ const Dashboard: React.FC = () => {
   const renderWidget = (type: string, index: number) => {
     const controls = isCustomizing && (
       <div className="flex gap-1 mb-2">
-         <Button size="xs" variant="ghost" onClick={() => moveWidget(index, 'up')} disabled={index === 0}><ArrowUp className="w-3 h-3" /></Button>
-         <Button size="xs" variant="ghost" onClick={() => moveWidget(index, 'down')} disabled={index === layout.length - 1}><ArrowDown className="w-3 h-3" /></Button>
+         <Button size="xs" variant="ghost" aria-label={`Move ${type} widget up`} onClick={() => moveWidget(index, 'up')} disabled={index === 0}><ArrowUp className="w-3 h-3" /></Button>
+         <Button size="xs" variant="ghost" aria-label={`Move ${type} widget down`} onClick={() => moveWidget(index, 'down')} disabled={index === layout.length - 1}><ArrowDown className="w-3 h-3" /></Button>
       </div>
     );
 

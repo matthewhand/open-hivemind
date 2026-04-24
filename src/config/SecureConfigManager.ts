@@ -209,6 +209,40 @@ export class SecureConfigManager {
     }
   }
 
+  /**
+   * Retrieve a configuration securely (Synchronous)
+   * This should only be used during application startup when async is not possible.
+   */
+  public getConfigSync(id: string): SecureConfig | null {
+    try {
+      const filePath = this.getSecureFilePath(id);
+      if (!fs.existsSync(filePath)) {
+        return null;
+      }
+
+      const encryptedData = fs.readFileSync(filePath, 'utf8');
+      const decryptedData = this.decrypt(encryptedData);
+      const config: SecureConfig = JSON.parse(decryptedData);
+
+      // Verify integrity
+      const { checksum, ...configWithoutChecksum } = config;
+      if (this.calculateChecksum(configWithoutChecksum) !== checksum) {
+        throw ErrorUtils.createError(
+          'Configuration integrity check failed',
+          'unknown',
+          'SECURE_CONFIG_INTEGRITY_FAILED',
+          500,
+        );
+      }
+
+      return config;
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      debug(`Failed to synchronously retrieve configuration ${id}:`, hivemindError.message);
+      return null;
+    }
+  }
+
   public async getDecryptedMainConfig(env: string): Promise<Record<string, unknown> | null> {
     try {
       const configPath = path.join(this.mainConfigDir, `${env}.json.enc`);

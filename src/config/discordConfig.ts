@@ -29,23 +29,16 @@ function loadDiscordConfig(): DiscordConfig {
 
   // Map environment variables
   const envConfig: Record<string, any> = {};
-  const mapEnv = (envKey: string, configKey: string, parser?: (val: string) => any) => {
-    if (process.env[envKey] !== undefined) {
-      const val = process.env[envKey]!;
+  const mapEnv = (envKey: string, configKey: string, parser?: (val: string) => any): void => {
+    const val = process.env[envKey];
+    if (val !== undefined) {
       envConfig[configKey] = parser ? parser(val) : val;
     }
   };
 
-  const parseIntBase10 = (v: string) => parseInt(v, 10);
-  const parseFloatBase10 = (v: string) => parseFloat(v);
-  const parseBool = (v: string) => v.toLowerCase() === 'true';
-  const parseJSON = (v: string) => {
-    try {
-      return JSON.parse(v);
-    } catch {
-      return undefined;
-    }
-  };
+  const parseIntBase10 = (v: string): number => parseInt(v, 10);
+  const parseFloatBase10 = (v: string): number => parseFloat(v);
+  const parseBool = (v: string): boolean => v.toLowerCase() === 'true';
 
   mapEnv('DISCORD_BOT_TOKEN', 'DISCORD_BOT_TOKEN');
   mapEnv('DISCORD_CLIENT_ID', 'DISCORD_CLIENT_ID');
@@ -108,10 +101,10 @@ function loadDiscordConfig(): DiscordConfig {
 const config = loadDiscordConfig();
 
 const discordConfig = {
-  get: (key: keyof DiscordConfig) => config[key],
-  getProperties: () => config,
-  getSchema: () => zodToJsonSchema(DiscordSchema as any),
-  validate: (options: { allowed: 'strict' | 'warn' }) => {
+  get: (key: keyof DiscordConfig): any => config[key],
+  getProperties: (): DiscordConfig => config,
+  getSchema: (): any => zodToJsonSchema(DiscordSchema as any),
+  validate: (options: { allowed: 'strict' | 'warn' }): void => {
     DiscordSchema.parse(config);
   }
 };
