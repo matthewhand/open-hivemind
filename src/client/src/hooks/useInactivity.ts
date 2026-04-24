@@ -38,13 +38,17 @@ export function useInactivity({
 
   const reset = useCallback(() => {
     lastActiveRef.current = Date.now();
-    if (isIdle) {
-      setIsIdle(false);
-      onWake?.();
-    }
+    setIsIdle(prev => {
+      if (prev) {
+        // Schedule onWake to run outside the render cycle
+        setTimeout(() => onWake?.(), 0);
+        return false;
+      }
+      return prev;
+    });
     clearTimer();
     timerRef.current = window.setTimeout(goIdle, timeoutMs);
-  }, [goIdle, isIdle, onWake, timeoutMs]);
+  }, [goIdle, onWake, timeoutMs]);
 
   useEffect(() => {
     // Initialize timer

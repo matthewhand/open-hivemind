@@ -27,22 +27,21 @@ export class MessageDeliveryTracker {
     return seq;
   }
 
-  public trackMessage(envelope: MessageEnvelope): void {
-    this.pendingMessages.set(envelope.id, envelope);
+  public trackMessage(envelope: MessageEnvelope, channelId: string): void {
+    this.pendingMessages.set(envelope.messageId, envelope);
     this.deliveryCounts.sent++;
 
     // Add to history
-    const history = this.channelMessageHistory.get(envelope.channelId) || [];
+    const history = this.channelMessageHistory.get(channelId) || [];
     history.push(envelope);
     if (history.length > 50) history.shift();
-    this.channelMessageHistory.set(envelope.channelId, history);
+    this.channelMessageHistory.set(channelId, history);
   }
 
   public handleAck(messageId: string): MessageEnvelope | undefined {
     const envelope = this.pendingMessages.get(messageId);
     if (envelope) {
-      envelope.status = DeliveryStatus.DELIVERED;
-      envelope.ackTimestamp = Date.now();
+      envelope.status = DeliveryStatus.ACKNOWLEDGED;
       this.pendingMessages.delete(messageId);
       this.deliveryCounts.acknowledged++;
     }

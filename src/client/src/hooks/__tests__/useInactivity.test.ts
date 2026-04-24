@@ -8,22 +8,17 @@
  * the React 19 + testing-library act() compatibility issue.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { renderHook, act } from '@testing-library/react';
 import { useInactivity } from '../useInactivity';
 
 /**
- * Minimal hook runner that calls the hook function directly and provides
- * a way to re-invoke it (simulating re-renders).
+ * Run hook using renderHook from testing-library to properly handle React's hooks lifecycle
  */
 function runHook<T, R>(hookFn: () => R) {
-  let result: R;
-  const invoke = () => {
-    result = hookFn();
-    return result;
-  };
-  invoke();
+  const { result, rerender } = renderHook(hookFn);
   return {
-    get result() { return result!; },
-    rerender: invoke,
+    get result() { return result.current; },
+    rerender: () => rerender(),
   };
 }
 
@@ -48,7 +43,9 @@ describe('useInactivity Hook', () => {
 
     expect(result.isIdle).toBe(false);
 
-    vi.advanceTimersByTime(timeoutMs);
+    act(() => {
+      vi.advanceTimersByTime(timeoutMs);
+    });
 
     expect(result.isIdle).toBe(true);
   });
@@ -59,7 +56,9 @@ describe('useInactivity Hook', () => {
 
     expect(onIdle).not.toHaveBeenCalled();
 
-    vi.advanceTimersByTime(3000);
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
 
     expect(onIdle).toHaveBeenCalledTimes(1);
   });
@@ -69,17 +68,25 @@ describe('useInactivity Hook', () => {
     const { result } = runHook(() => useInactivity({ timeoutMs }));
 
     // Advance partway to idle
-    vi.advanceTimersByTime(1500);
+    act(() => {
+      vi.advanceTimersByTime(1500);
+    });
     expect(result.isIdle).toBe(false);
 
     // Simulate mouse movement
-    window.dispatchEvent(new MouseEvent('mousemove'));
+    act(() => {
+      window.dispatchEvent(new MouseEvent('mousemove'));
+    });
 
     // Timer should have reset; need another full timeout to go idle
-    vi.advanceTimersByTime(1500);
+    act(() => {
+      vi.advanceTimersByTime(1500);
+    });
     expect(result.isIdle).toBe(false);
 
-    vi.advanceTimersByTime(500);
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
     expect(result.isIdle).toBe(true);
   });
 
@@ -91,14 +98,18 @@ describe('useInactivity Hook', () => {
     );
 
     // Go idle
-    vi.advanceTimersByTime(1000);
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
     expect(result.isIdle).toBe(true);
     expect(onIdle).toHaveBeenCalledTimes(1);
     expect(onWake).not.toHaveBeenCalled();
 
     // Simulate activity and re-render (simulates state change triggering re-render)
-    window.dispatchEvent(new KeyboardEvent('keydown'));
-    rerender();
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown'));
+      rerender();
+    });
 
     expect(result.isIdle).toBe(false);
     expect(onWake).toHaveBeenCalledTimes(1);
@@ -109,7 +120,9 @@ describe('useInactivity Hook', () => {
     const { result, rerender } = runHook(() => useInactivity({ timeoutMs }));
 
     // Go idle
-    vi.advanceTimersByTime(timeoutMs);
+    act(() => {
+      vi.advanceTimersByTime(timeoutMs);
+    });
     expect(result.isIdle).toBe(true);
 
     // Page becomes visible again
@@ -118,8 +131,10 @@ describe('useInactivity Hook', () => {
       writable: true,
       configurable: true,
     });
-    window.dispatchEvent(new Event('visibilitychange'));
-    rerender();
+    act(() => {
+      window.dispatchEvent(new Event('visibilitychange'));
+      rerender();
+    });
 
     expect(result.isIdle).toBe(false);
   });
@@ -134,10 +149,14 @@ describe('useInactivity Hook', () => {
       writable: true,
       configurable: true,
     });
-    window.dispatchEvent(new Event('visibilitychange'));
+    act(() => {
+      window.dispatchEvent(new Event('visibilitychange'));
+    });
 
     // Timer should still go idle on schedule
-    vi.advanceTimersByTime(timeoutMs);
+    act(() => {
+      vi.advanceTimersByTime(timeoutMs);
+    });
     expect(result.isIdle).toBe(true);
   });
 
@@ -163,16 +182,22 @@ describe('useInactivity Hook', () => {
     const { result } = runHook(() => useInactivity({ timeoutMs: 1000 }));
 
     // Go idle
-    vi.advanceTimersByTime(1000);
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
     expect(result.isIdle).toBe(true);
 
     // Manually reset
-    result.reset();
+    act(() => {
+      result.reset();
+    });
 
     expect(result.isIdle).toBe(false);
 
     // Should go idle again after timeout
-    vi.advanceTimersByTime(1000);
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
     expect(result.isIdle).toBe(true);
   });
 
@@ -181,10 +206,14 @@ describe('useInactivity Hook', () => {
     const initialActive = result.lastActive;
 
     // Wait some time
-    vi.advanceTimersByTime(2000);
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
 
     // Simulate activity
-    window.dispatchEvent(new MouseEvent('mousemove'));
+    act(() => {
+      window.dispatchEvent(new MouseEvent('mousemove'));
+    });
 
     const afterActivity = result.lastActive;
     expect(afterActivity).toBeGreaterThanOrEqual(initialActive);
@@ -197,18 +226,26 @@ describe('useInactivity Hook', () => {
     const { result } = runHook(() =>
       useInactivity({ timeoutMs, events: ['keydown'] })
     );
-    vi.advanceTimersByTime(500);
-    window.dispatchEvent(new MouseEvent('mousemove'));
-    vi.advanceTimersByTime(600);
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+    act(() => {
+      window.dispatchEvent(new MouseEvent('mousemove'));
+      vi.advanceTimersByTime(600);
+    });
     expect(result.isIdle).toBe(true);
 
     // With keydown, keydown event SHOULD reset
     const { result: result2 } = runHook(() =>
       useInactivity({ timeoutMs, events: ['keydown'] })
     );
-    vi.advanceTimersByTime(500);
-    window.dispatchEvent(new KeyboardEvent('keydown'));
-    vi.advanceTimersByTime(500);
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown'));
+      vi.advanceTimersByTime(500);
+    });
     expect(result2.isIdle).toBe(false);
   });
 });

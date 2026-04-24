@@ -5,6 +5,7 @@ import { type BotInstance } from '@src/managers/BotManager';
 import { LlmInvokerAdapter } from '@src/pipeline/adapters/LlmInvokerAdapter';
 import { InferenceStage } from '@src/pipeline/InferenceStage';
 import { ADVERSARIAL_PROMPTS } from '@common/adversarialPrompts';
+import { createLogger } from '@src/common/StructuredLogger';
 
 const debug = Debug('app:services:BotStressTestService');
 const logger = createLogger('BotStressTestService');
@@ -102,8 +103,8 @@ export class BotStressTestService {
         errorMessage = err instanceof Error ? err.message : String(err);
       } finally {
         // Cleanup listeners
-        bus.off('message:response', onResponse);
-        bus.off('message:error', onError);
+        bus.off('message:response', onResponse as any);
+        bus.off('message:error', onError as any);
       }
 
       let status: 'pass' | 'fail' | 'error' = 'pass';

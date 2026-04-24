@@ -1,6 +1,7 @@
 import Debug from 'debug';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
-import { type BotInstance, type BotInstance } from '@src/managers/BotManager';
+import { type BotInstance } from '@src/managers/BotManager';
+import { createLogger } from '@src/common/StructuredLogger';
 
 const debug = Debug('app:services:BotBenchmarkService');
 const logger = createLogger('BotBenchmarkService');
@@ -76,7 +77,7 @@ export class BotBenchmarkService {
       } catch (error) {
         logger.warn(
           `Benchmark question failed: ${question}`,
-          error instanceof Error ? error : new Error(String(error))
+          { error: error instanceof Error ? error.message : String(error) }
         );
       }
     }

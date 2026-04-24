@@ -21,6 +21,9 @@ import { ActivityLogger } from '../services/ActivityLogger';
 import { BotTaskScheduler } from '../services/BotTaskScheduler';
 import { ConfigurationVersionService } from '../services/ConfigurationVersionService';
 import { WebSocketService } from '../services/WebSocketService';
+import { BotInsightsService } from '../services/BotInsightsService';
+import { BotBenchmarkService } from '../services/BotBenchmarkService';
+import { BotStressTestService } from '../services/BotStressTestService';
 
 const router = Router();
 const logger = createLogger('botsRouter');

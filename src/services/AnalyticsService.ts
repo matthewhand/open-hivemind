@@ -9,7 +9,7 @@ import {
 } from '@common/constants/time';
 import { BotConfigurationManager } from '../config/BotConfigurationManager';
 import { ActivityLogger, type ActivityFilter } from '../server/services/ActivityLogger';
-import { type MessageFlowEvent } from '../server/services/WebSocketService';
+import { type MessageFlowEvent } from '@src/server/services/websocket/types';
 
 const debug = Debug('app:AnalyticsService');
 

@@ -2,7 +2,7 @@ import {
   ONE_HOUR_MS, 
   ONE_MINUTE_MS 
 } from '@common/constants/time';
-import { type MessageFlowEvent } from '../server/services/WebSocketService';
+import { type MessageFlowEvent } from '@src/server/services/websocket/types';
 import { 
   BehaviorPattern, 
   TimeSeriesBucket 
@@ -84,8 +84,8 @@ export class AnalyticsCalculator {
    */
   static calculateAvgLatency(events: MessageFlowEvent[]): number {
     const validLatencies = events
-      .filter((e) => e.duration !== undefined)
-      .map((e) => e.duration as number);
+      .filter((e) => e.processingTime !== undefined)
+      .map((e) => e.processingTime as number);
 
     if (validLatencies.length === 0) return 0;
     return validLatencies.reduce((sum, val) => sum + val, 0) / validLatencies.length;
@@ -115,10 +115,10 @@ export class AnalyticsCalculator {
 
       current.count++;
       if (event.status === 'error') current.errors++;
-      if (event.duration) {
+      if (event.processingTime) {
         // Simple running average update
         current.avgProcessingTime =
-          (current.avgProcessingTime * (current.count - 1) + event.duration) / current.count;
+          (current.avgProcessingTime * (current.count - 1) + event.processingTime) / current.count;
       }
 
       buckets.set(bucketTime, current);
@@ -135,7 +135,7 @@ export class AnalyticsCalculator {
   static analyzeProviderPatterns(events: MessageFlowEvent[]): BehaviorPattern[] {
     const providers = new Map<string, number>();
     events.forEach((e) => {
-      if (e.platform) providers.set(e.platform, (providers.get(e.platform) || 0) + 1);
+      if (e.provider) providers.set(e.provider, (providers.get(e.provider) || 0) + 1);
     });
 
     const patterns: BehaviorPattern[] = [];
