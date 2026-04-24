@@ -54,31 +54,35 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
               </h2>
             </div>
             <div className="flex items-center gap-2">
-               <button 
+               <button
                  onClick={() => setIsBenchmarkOpen(true)}
                  className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity text-warning"
                  title="Run Performance Benchmark"
+                 aria-label={`Run performance benchmark for ${bot.name}`}
                >
                   <Trophy className="w-4 h-4" />
                </button>
-               <button 
+               <button
                  onClick={() => setIsHistoryOpen(true)}
                  className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity text-secondary"
                  title="Version History"
+                 aria-label={`View version history for ${bot.name}`}
                >
                   <History className="w-4 h-4" />
                </button>
-               <button 
+               <button
                  onClick={() => setIsInsightsOpen(true)}
                  className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity text-primary"
                  title="AI Performance Insights"
+                 aria-label={`View AI performance insights for ${bot.name}`}
                >
                   <Sparkles className="w-4 h-4" />
                </button>
-               <button 
+               <button
                  onClick={() => setIsDiagnosticOpen(true)}
                  className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity"
                  title="Run Diagnostic"
+                 aria-label={`Run diagnostic for ${bot.name}`}
                >
                   <Activity className="w-4 h-4" />
                </button>

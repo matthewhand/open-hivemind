@@ -138,6 +138,8 @@ export const DistributedTraceWaterfall: React.FC<DistributedTraceWaterfallProps>
               <button
                 onClick={(e) => toggleExpand(span.id, e)}
                 className="btn btn-ghost btn-xs btn-square mr-1"
+                aria-label={isExpanded ? `Collapse ${span.name}` : `Expand ${span.name}`}
+                aria-expanded={isExpanded}
               >
                 {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
               </button>

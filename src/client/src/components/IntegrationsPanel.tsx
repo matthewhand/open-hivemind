@@ -402,6 +402,7 @@ const IntegrationsPanel: React.FC = () => {
                         variant="ghost"
                         size="sm"
                         className="btn-square btn-xs"
+                        aria-label={`Edit ${profile.name} provider`}
                         onClick={() =>
                           setProviderModalState({
                             isOpen: true,
@@ -425,6 +426,7 @@ const IntegrationsPanel: React.FC = () => {
                         variant="ghost"
                         size="sm"
                         className="btn-square btn-xs text-error"
+                        aria-label={`Delete ${profile.name} provider`}
                         onClick={() => handleDeleteProfile(profile.key)}
                       >
                         <TrashIcon className="w-4 h-4" />

@@ -110,7 +110,7 @@ const ToolPlayground: React.FC = () => {
                 <h3 className="font-bold text-sm uppercase tracking-widest opacity-50 flex items-center gap-2">
                   <Puzzle className="w-4 h-4" /> Servers
                 </h3>
-                <button onClick={fetchServers} className="btn btn-xs btn-ghost btn-square"><RefreshCw className="w-3 h-3" /></button>
+                <button onClick={fetchServers} className="btn btn-xs btn-ghost btn-square" aria-label="Refresh servers" title="Refresh servers"><RefreshCw className="w-3 h-3" /></button>
               </div>
 
               <div className="space-y-2">

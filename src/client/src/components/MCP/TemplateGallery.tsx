@@ -69,7 +69,7 @@ const TemplateGallery: React.FC = () => {
                      {template.icon}
                   </div>
                   {template.docsUrl && (
-                    <a href={template.docsUrl} target="_blank" rel="noopener noreferrer" className="btn btn-xs btn-ghost btn-circle">
+                    <a href={template.docsUrl} target="_blank" rel="noopener noreferrer" className="btn btn-xs btn-ghost btn-circle" aria-label={`Open documentation for ${template.name}`}>
                        <ExternalLink className="w-4 h-4 opacity-40" />
                     </a>
                   )}
