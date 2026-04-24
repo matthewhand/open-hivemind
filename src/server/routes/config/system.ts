@@ -274,7 +274,7 @@ router.get('/global', (req, res) => {
         // Helper to redact recursively using provider metadata if available
         const provider = providerRegistry.get(key);
 
-        if (provider) {
+        if (provider && typeof provider.getSensitiveKeys === 'function') {
           const sensitive = new Set(provider.getSensitiveKeys());
           for (const k in redactedProps) {
             if (sensitive.has(k)) {

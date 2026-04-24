@@ -106,8 +106,8 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command: process.env.CI
-      ? 'SKIP_MESSENGERS=true NODE_ENV=test node dist/index.js'
-      : 'ALLOW_TEST_BYPASS=true npm run start:dev',
+      ? 'SKIP_MESSENGERS=true NODE_ENV=test ALLOW_LOCALHOST_ADMIN=true node dist/index.js'
+      : 'ALLOW_TEST_BYPASS=true ALLOW_LOCALHOST_ADMIN=true npm run start:dev',
     url: 'http://localhost:3028',
     reuseExistingServer: !process.env.CI,
     timeout: 180 * 1000,

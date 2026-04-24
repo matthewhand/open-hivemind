@@ -86,9 +86,14 @@ export class AuthManager {
       }
     }
 
-    this.jwtSecret = envJwtSecret || secureJwtSecret || this.generateSecureSecret('jwt_access');
-    this.jwtRefreshSecret =
-      envJwtRefreshSecret || secureJwtRefreshSecret || this.generateSecureSecret('jwt_refresh');
+    if (process.env.NODE_ENV === 'test') {
+      this.jwtSecret = envJwtSecret || 'open-hivemind-test-secret-123';
+      this.jwtRefreshSecret = envJwtRefreshSecret || 'open-hivemind-test-refresh-secret-123';
+    } else {
+      this.jwtSecret = envJwtSecret || secureJwtSecret || this.generateSecureSecret('jwt_access');
+      this.jwtRefreshSecret =
+        envJwtRefreshSecret || secureJwtRefreshSecret || this.generateSecureSecret('jwt_refresh');
+    }
 
     // Create default admin user synchronously
     this.initializeDefaultAdminSync();

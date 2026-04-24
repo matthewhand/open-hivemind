@@ -19,7 +19,7 @@ import MaintenanceTab from './MaintenanceTab';
 import type { SystemConfig, BackupRecord } from './types';
 import { LoadingSpinner } from '../../components/DaisyUI/Loading';
 import Input from '../../components/DaisyUI/Input';
-import { ShieldCheck, History } from 'lucide-react';
+import { ShieldCheck, History, RotateCcw } from 'lucide-react';
 
 const SystemManagement: React.FC = () => {
   const { alerts, performanceMetrics } = useWebSocket();
@@ -318,7 +318,11 @@ const SystemManagement: React.FC = () => {
           {activeTab === 'performance' && (
             <PerformanceTab onClearCache={handleClearCache} />
           )}
-          {activeTab === 'maintenance' && <MaintenanceTab />}
+          {activeTab === 'maintenance' && (
+            <div data-testid="maintenance-tab-content">
+              <MaintenanceTab />
+            </div>
+          )}
       </Card>
 
       {/* Backup Creation Modal */}

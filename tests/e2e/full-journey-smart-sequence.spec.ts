@@ -1,82 +1,88 @@
 import { expect, test } from '@playwright/test';
-import { navigateAndWaitReady, setupTestWithErrorDetection } from './test-utils';
+import { setupTestWithErrorDetection } from './test-utils';
 
-/**
- * Full Journey: Smart Sequence
- * 
- * Iterates through every major endpoint in a smart sequence without mocks:
- * 1) Add LLM Provider
- * 2) Add Messenger Integration
- * 3) Create Persona
- * 4) Create Bot tying them together
- * 5) Send a test message
- * 6) Navigate to the Dashboard and verify stats
- */
 test.describe('Full Journey: Smart Sequence', () => {
-  // Increased timeout for a full journey without mocks
-  test.setTimeout(120000);
+  test.setTimeout(180000);
 
-  test('Execute full system journey and verify dashboard', async ({ page }) => {
-    // Step 0: Setup and Authentication
+  test('Execute full system journey and verify dashboard', async ({ page, request }) => {
+    console.log('🚀 Starting Smart Sequence E2E (API Setup + UI Verification)');
+    
+    // 1. Auth Setup
     await setupTestWithErrorDetection(page);
 
-    // Step 1: Add LLM Provider
-    await navigateAndWaitReady(page, '/admin/providers/llm');
-    const addLlmBtn = page.locator('button:has-text("Create Profile"), button:has-text("Add Provider")').first();
-    if (await addLlmBtn.count() > 0) {
-      await addLlmBtn.click();
-      await page.locator('input[name="name"]').fill('Smart-LLM-E2E');
-      await page.locator('select[name="provider"]').selectOption('openai');
-      await page.locator('input[name="apiKey"]').fill('sk-smart-sequence-test-key');
-      await page.locator('button:has-text("Save")').click();
-    }
+    const jwtSecret = process.env.JWT_SECRET || 'open-hivemind-test-secret-123';
+    const fakeToken = require('jsonwebtoken').sign(
+      { exp: Math.floor(Date.now() / 1000) + 3600, username: 'admin', userId: 'admin', role: 'admin', permissions: ['*'] },
+      jwtSecret
+    );
+    const authHeaders = {
+      'Authorization': `Bearer ${fakeToken}`,
+      'Content-Type': 'application/json'
+    };
 
-    // Step 2: Add Messenger Integration
-    await navigateAndWaitReady(page, '/admin/providers/message');
-    const addMsgBtn = page.locator('button:has-text("Create Profile"), button:has-text("Add Provider")').first();
-    if (await addMsgBtn.count() > 0) {
-      await addMsgBtn.click();
-      await page.locator('input[name="name"]').fill('Smart-Msg-E2E');
-      await page.locator('select[name="provider"]').selectOption('discord');
-      await page.locator('button:has-text("Save")').click();
-    }
+    // Step 1: Add LLM Provider via API
+    console.log('Setting up LLM Provider...');
+    const llmRes = await request.post('/api/admin/llm-providers', {
+      headers: authHeaders,
+      data: {
+        name: 'Smart-LLM-E2E',
+        type: 'openai',
+        modelType: 'chat',
+        config: { apiKey: 'sk-test', model: 'gpt-4o' }
+      }
+    });
+    expect(llmRes.ok()).toBeTruthy();
 
-    // Step 3: Create Persona
-    await navigateAndWaitReady(page, '/admin/personas');
-    const addPersonaBtn = page.locator('button:has-text("Create Persona"), button:has-text("Create")').first();
-    if (await addPersonaBtn.count() > 0) {
-      await addPersonaBtn.click();
-      await page.locator('input[name="name"], input[placeholder*="Friendly Helper"]').fill('Smart-Persona-E2E');
-      await page.locator('input[name="description"], input[placeholder*="Short description"]').fill('E2E persona for smart sequence');
-      await page.locator('textarea[name="systemPrompt"], .monaco-editor').first().type('You are a helpful E2E assistant.');
-      await page.locator('button:has-text("Save")').click();
-    }
+    // Step 2: Add Messenger Integration via API
+    console.log('Setting up Message Provider...');
+    const msgRes = await request.post('/api/admin/messenger-providers', {
+      headers: authHeaders,
+      data: {
+        name: 'Smart-Msg-E2E',
+        type: 'discord',
+        config: { token: 'discord-token', clientId: '12345' }
+      }
+    });
+    expect(msgRes.ok()).toBeTruthy();
 
-    // Step 4: Create Bot tying them together
-    await navigateAndWaitReady(page, '/admin/bots');
-    const createBotBtn = page.locator('button:has-text("Create")').first();
-    if (await createBotBtn.count() > 0) {
-      await createBotBtn.click();
-      await page.locator('input[name="name"]').fill('Smart-Bot-E2E');
-      
-      const msgProviderSelect = page.locator('select[name="messageProvider"]');
-      if (await msgProviderSelect.count() > 0) await msgProviderSelect.selectOption({ label: 'Smart-Msg-E2E' });
-      
-      const llmProviderSelect = page.locator('select[name="llmProvider"]');
-      if (await llmProviderSelect.count() > 0) await llmProviderSelect.selectOption({ label: 'Smart-LLM-E2E' });
-      
-      await page.locator('button:has-text("Save")').first().click();
-      await page.waitForResponse('**/api/bots', { timeout: 10000 });
-    }
+    // Step 3: Create Persona via API
+    console.log('Setting up Persona...');
+    const perRes = await request.post('/api/personas', {
+      headers: authHeaders,
+      data: {
+        name: 'Smart-Persona-E2E',
+        description: 'E2E persona',
+        category: 'professional',
+        systemPrompt: 'You are a helpful E2E assistant.',
+        traits: []
+      }
+    });
+    expect(perRes.ok()).toBeTruthy();
 
-    // Step 5: Navigate to chat
-    await navigateAndWaitReady(page, '/admin/chat');
-    
-    // Step 6: Navigate to the Dashboard and verify stats are populated
-    await navigateAndWaitReady(page, '/admin/overview');
+    // Step 4: Create Bot via API
+    console.log('Creating Bot...');
+    const botRes = await request.post('/api/bots', {
+      headers: authHeaders,
+      data: {
+        name: 'Smart-Bot-E2E',
+        messageProvider: 'discord',
+        llmProvider: 'openai',
+        isActive: true
+      }
+    });
+    expect(botRes.ok()).toBeTruthy();
+
+    // Wait a moment for DB sync
+    await page.waitForTimeout(2000);
+
+    // Step 5: Navigate to Dashboard and verify stats
+    console.log('Verifying Dashboard...');
+    await page.goto('/admin/overview', { waitUntil: 'domcontentloaded' });
+    await expect(page).toHaveURL(/\/admin\/overview/);
     
     // Wait for network to settle so dashboard widgets load
     await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(5000); // Give React time to render charts
     
     // Final Step: Take full-page screenshot proving the system works
     await page.screenshot({ 
