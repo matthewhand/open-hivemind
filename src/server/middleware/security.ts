@@ -98,7 +98,9 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
   }
 
   // Remove server information
-  res.removeHeader('X-Powered-By');
+  if (typeof res.removeHeader === 'function') {
+    res.removeHeader('X-Powered-By');
+  }
 
   // Add custom security headers
   res.setHeader('X-Application-Name', 'Open-Hivemind');

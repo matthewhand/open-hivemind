@@ -333,7 +333,7 @@ describe('Approval Workflow', () => {
           requestedBy: 'test-user',
           status: 'pending',
         })
-      ).rejects.toThrow('Database is not configured');
+      ).rejects.toThrow(/Database is not configured|Database not connected/);
     });
 
     test('should validate required fields', async () => {

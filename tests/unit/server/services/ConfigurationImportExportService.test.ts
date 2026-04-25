@@ -8,6 +8,7 @@ jest.mock('../../../../src/database/DatabaseManager');
 jest.mock('../../../../src/config/UserConfigStore');
 jest.mock('../../../../src/common/auditLogger');
 jest.mock('fs', () => ({
+  ...jest.requireActual('fs'),
   promises: {
     mkdir: jest.fn(),
     writeFile: jest.fn(),
@@ -16,6 +17,7 @@ jest.mock('fs', () => ({
     readdir: jest.fn(),
     readFile: jest.fn(),
   },
+  existsSync: jest.fn().mockReturnValue(false),
 }));
 
 describe('ConfigurationImportExportService - Backup Retention', () => {
