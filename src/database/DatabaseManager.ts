@@ -1082,6 +1082,7 @@ export class DatabaseManager {
       debug(`Cleaned up ${result.changes} rows from ${tableName} (by date)`);
       return result.changes;
     } catch (error) {
+      console.error(`Error cleaning up table ${tableName}:`, error);
       debug(`Error cleaning up table ${tableName}:`, error);
       return 0;
     }
@@ -1090,24 +1091,40 @@ export class DatabaseManager {
   async cleanupTableByRows(tableName: string, maxRows: number): Promise<number> {
     if (!this.db || !this.connected) return 0;
 
-    // Subquery to find IDs to keep
-    // Note: This assumes 'id' is the primary key and rows are ordered by timestamp or id
-    const sql = `
-      DELETE FROM ${tableName}
-      WHERE id NOT IN (
-        SELECT id FROM (
+    const isPostgres = this.config?.type === 'postgres';
+    let sql: string;
+
+    if (isPostgres) {
+      // Postgres allows subqueries in IN with LIMIT, but sometimes requires an alias if nested
+      sql = `
+        DELETE FROM ${tableName}
+        WHERE id NOT IN (
+          SELECT id FROM (
+            SELECT id FROM ${tableName}
+            ORDER BY id DESC
+            LIMIT ?
+          ) AS tmp
+        )
+      `;
+    } else {
+      // SQLite
+      sql = `
+        DELETE FROM ${tableName}
+        WHERE id NOT IN (
           SELECT id FROM ${tableName}
           ORDER BY id DESC
           LIMIT ?
-        ) AS tmp
-      )
-    `;
+        )
+      `;
+    }
 
     try {
       const result = await this.db.run(sql, [maxRows]);
       debug(`Cleaned up ${result.changes} rows from ${tableName} (by row count)`);
+      if (tableName === 'messages') console.log(`cleanupTableByRows [${tableName}]: SQL ${sql.trim()}, maxRows ${maxRows}, changes ${result.changes}`);
       return result.changes;
     } catch (error) {
+      console.error(`Error cleaning up table ${tableName}:`, error);
       debug(`Error cleaning up table ${tableName}:`, error);
       return 0;
     }
@@ -1161,6 +1178,7 @@ export class DatabaseManager {
         await this.cleanupTableByDate(table.name, days, table.dateCol);
         await this.cleanupTableByRows(table.name, maxRows);
       } catch (e) {
+        console.error(`Failed to cleanup table ${table.name}:`, e);
         debug(`Failed to cleanup table ${table.name}:`, e);
       }
     }
