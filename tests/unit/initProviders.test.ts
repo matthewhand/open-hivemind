@@ -160,7 +160,7 @@ describe('initProviders — memory and tool discovery', () => {
       await initProviders();
 
       expect(mockedLoadPlugin).toHaveBeenCalledWith('memory-mem0');
-      expect(mockedInstantiateMemoryProvider).toHaveBeenCalledWith(mockMod, { apiKey: 'k' });
+      expect(mockedInstantiateMemoryProvider).toHaveBeenCalledWith(mockMod, { apiKey: 'k' }, expect.any(Object));
       expect(mockRegistry.registerMemoryProvider).toHaveBeenCalledWith(
         'mem0-default',
         mockInstance
@@ -186,7 +186,7 @@ describe('initProviders — memory and tool discovery', () => {
       await initProviders();
 
       expect(mockedLoadPlugin).toHaveBeenCalledWith('memory-zep');
-      expect(mockedInstantiateMemoryProvider).toHaveBeenCalledWith(mockMemMod);
+      expect(mockedInstantiateMemoryProvider).toHaveBeenCalledWith(mockMemMod, undefined, expect.any(Object));
       expect(mockRegistry.registerMemoryProvider).toHaveBeenCalledWith(
         'memory-zep',
         mockMemInstance

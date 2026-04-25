@@ -12,7 +12,7 @@ import { BotConfigRepository } from './repositories/BotConfigRepository';
 import { DecisionRepository } from './repositories/DecisionRepository';
 import { MessageRepository } from './repositories/MessageRepository';
 import { ActivityRepository, ActivityLog } from './repositories/ActivityRepository';
-import { InferenceRepository, InferenceLog } from './repositories/InferenceRepository';
+import { InferenceRepository } from './repositories/InferenceRepository';
 import { MemoryRepository } from './repositories/MemoryRepository';
 import { ActivitySchemas } from './schemas/ActivitySchemas';
 import { SQLiteWrapper } from './sqliteWrapper';
@@ -29,6 +29,7 @@ import type {
   DecisionRecord,
   IDatabase,
   InferenceLog,
+  MemoryRecord,
   MessageRecord,
 } from './types';
 

@@ -24,7 +24,7 @@ export class DatabaseMaintenanceService {
   // Cleanup once every 24 hours
   private readonly cleanupIntervalMs = 24 * 60 * 60 * 1000;
 
-  private constructor() {}
+  constructor() {}
 
   public static getInstance(): DatabaseMaintenanceService {
     if (!DatabaseMaintenanceService.instance) {

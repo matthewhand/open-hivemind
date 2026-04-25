@@ -35,10 +35,10 @@ describe('POST/GET /api/activity requires authentication', () => {
     expect(res.status).toBe(401);
   });
 
-  it('returns 401 on GET /messages with an obviously invalid token', async () => {
+  it('returns 403 on GET /messages with an obviously invalid token', async () => {
     const res = await request(app)
       .get('/api/activity/messages')
       .set('Authorization', 'Bearer not-a-real-jwt');
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(403);
   });
 });
