@@ -779,19 +779,6 @@ importers:
         specifier: ^5.9.2
         version: 5.9.3
 
-  packages/memory-postgres:
-    dependencies:
-      '@hivemind/shared-types':
-        specifier: workspace:*
-        version: link:../shared-types
-      debug:
-        specifier: ^4.3.4
-        version: 4.4.3(supports-color@8.1.1)
-    devDependencies:
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-
   packages/message-discord:
     dependencies:
       '@discordjs/rest':
