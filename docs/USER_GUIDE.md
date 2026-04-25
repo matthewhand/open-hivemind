@@ -16,7 +16,6 @@ Welcome to the Open-Hivemind User Guide. This document provides a detailed walkt
   - [Memory Providers](#memory-providers)
   - [Tool Providers](#tool-providers)
   - [Personas Management](#personas-management)
-  - [Response Profiles](#response-profiles)
   - [Guards](#guards)
   - [MCP Servers](#mcp-servers)
   - [MCP Tools](#mcp-tools)
@@ -163,15 +162,6 @@ The Personas (Beta) feature allows you to define distinct AI personalities and s
 *   **System Prompts**: Define the core instructions (System Prompt) for the AI.
 *   **Bulk Assignment**: Assign a persona to multiple bots simultaneously.
 *   **Real-time Updates**: Changes to a persona (e.g., updating the prompt) are immediately reflected across all assigned bots.
-
-### [Response Profiles](/admin/config/response-profiles)
-Manage different response profiles including Standard and Swarm Orchestration modes.
-
-![Response Profiles List](screenshots/response-profiles-page.png)
-![Create Response Profile](screenshots/response-profiles-modal.png)
-
-*   **Profile Types**: Create standard response profiles or advanced multi-agent Swarm configurations.
-*   **Swarm Orchestration**: Configure parallel or sequential agent execution within a Swarm.
 
 ### [Guards](/admin/guards)
 Set up safety and security boundaries.

@@ -12,8 +12,6 @@ const logger = Logger.withContext('DatabaseMaintenance');
  * 1. Keep-Alive: Prevents cloud databases (like Neon.tech) from scaling to zero.
  * 2. Auto-Cleanup: Regularly prunes history and logs based on retention policies.
  */
-@singleton()
-@injectable()
 export class DatabaseMaintenanceService {
   private static instance: DatabaseMaintenanceService;
   private maintenanceInterval: NodeJS.Timeout | null = null;

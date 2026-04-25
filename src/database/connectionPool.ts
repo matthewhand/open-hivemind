@@ -2,7 +2,9 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import Debug from 'debug';
 import { ConfigurationError, DatabaseError } from '@src/types/errorClasses';
-import { IDatabase as Database } from './types';
+import { IDatabase } from './types';
+import Database from 'better-sqlite3';
+
 import type { DatabaseConfig } from './types';
 
 const debug = Debug('app:ConnectionPool');
@@ -11,7 +13,7 @@ export class ConnectionPool {
   private config?: DatabaseConfig;
   private configured = false;
   private connected = false;
-  private db: Database | null = null;
+  private db: IDatabase | null = null;
 
   constructor(config?: DatabaseConfig) {
     if (config) {
@@ -41,7 +43,7 @@ export class ConnectionPool {
     }
   }
 
-  async connect(): Promise<Database | null> {
+  async connect(): Promise<IDatabase | null> {
     try {
       debug('Connecting to database...');
 
@@ -59,7 +61,7 @@ export class ConnectionPool {
           await fs.mkdir(dbDir, { recursive: true });
         }
 
-        this.db = new Database(dbPath);
+        this.db = new Database(dbPath) as unknown as IDatabase;
       } else {
         throw new ConfigurationError(
           `Database type ${this.config.type} not yet implemented`,
@@ -70,7 +72,7 @@ export class ConnectionPool {
       this.connected = true;
       debug('Database connected successfully');
       return this.db;
-    } catch (error) {
+    } catch (error: any) {
       debug('Database connection failed:', error);
       if (error instanceof DatabaseError || error instanceof ConfigurationError) {
         throw error;
@@ -90,7 +92,7 @@ export class ConnectionPool {
       }
       this.connected = false;
       debug('Database disconnected');
-    } catch (error) {
+    } catch (error: any) {
       debug('Error disconnecting database:', error);
       throw error;
     }
@@ -100,7 +102,7 @@ export class ConnectionPool {
     return this.connected;
   }
 
-  getDb(): Database | null {
+  getDb(): IDatabase | null {
     return this.db;
   }
 }
