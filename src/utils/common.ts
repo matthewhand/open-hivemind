@@ -11,19 +11,10 @@ function getRandomInt(max: number): number {
 }
 
 /**
- * Returns a specific emoji for known keywords or a random emoji.
- * @param keyword Optional keyword to get a specific emoji for.
- * @returns An emoji as a string.
+ * Returns a random emoji to be used in user prompts or as a filler.
+ * @returns A random emoji as a string.
  */
-export function getEmoji(keyword?: string): string {
-  if (keyword) {
-    const lowerKeyword = keyword.toLowerCase();
-    if (lowerKeyword === 'success') return '✅';
-    if (lowerKeyword === 'error') return '❌';
-    if (lowerKeyword === 'warning') return '⚠️';
-    return '🤖';
-  }
-
+export function getEmoji(): string {
   const emojis = [
     '😀',
     '😂',

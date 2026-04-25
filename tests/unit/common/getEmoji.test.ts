@@ -1,4 +1,4 @@
-import { getEmoji } from '../../../src/utils/common';
+import { getEmoji } from '../../../src/common/getEmoji';
 
 describe('getEmoji', () => {
   it('should return specific emojis for known keywords', () => {
