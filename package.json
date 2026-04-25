@@ -2,7 +2,7 @@
   "name": "open-hivemind",
   "version": "1.0.0",
   "//overrides-note": "minimatch >=10 required for CVE-2026-27903/CVE-2026-26996; babel-plugin-istanbul@8 and glob@10 support v10 natively",
-  "packageManager": "pnpm@10.25.0",
+  "packageManager": "pnpm@9.15.4",
   "description": "A messenger bot to communicate with LLMs",
   "type": "commonjs",
   "engines": {
