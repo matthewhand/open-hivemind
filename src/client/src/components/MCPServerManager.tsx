@@ -64,15 +64,19 @@ const MCPServerManager: React.FC = () => {
         });
       }
       if (data.configurations) {
+        // Performance optimization: use Set for O(1) lookups instead of O(N) array search inside loop
+        const existingServerNames = new Set(serverList.map(s => s.name));
+
         data.configurations.forEach((config: unknown) => {
           const configObj = config as { name?: string; serverUrl?: string; apiKey?: string };
-          if (!serverList.find((s) => s.name === configObj.name) && configObj.name) {
+          if (configObj.name && !existingServerNames.has(configObj.name)) {
             serverList.push({
               name: configObj.name,
               serverUrl: configObj.serverUrl || '',
               apiKey: configObj.apiKey || '',
               connected: false,
             });
+            existingServerNames.add(configObj.name);
           }
         });
       }
