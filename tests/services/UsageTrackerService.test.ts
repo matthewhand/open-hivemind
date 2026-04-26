@@ -106,7 +106,7 @@ describe('UsageTrackerService', () => {
     (UsageTrackerService as any).instance = undefined;
     const newService = UsageTrackerService.getInstance();
     
-    // Use real timers for this part to allow async init to complete
+    // allow async init to complete
     jest.useRealTimers();
     await new Promise(resolve => setTimeout(resolve, 50));
     jest.useFakeTimers();

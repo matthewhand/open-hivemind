@@ -27,24 +27,20 @@ describe('AuthManager Security Fix', () => {
   it('should use ADMIN_PASSWORD if provided in production', () => {
     process.env.NODE_ENV = 'production';
     process.env.ADMIN_PASSWORD = 'mysecurepassword';
-
-    // We need to re-require AuthManager to ensure env vars are picked up if they are read at module level (which they are not, they are read in constructor/methods)
-    // But bcrypt mock is persistent.
+    process.env.JWT_SECRET = 'myjwtsecret'; // required in production now
 
     authManager = AuthManager.getInstance();
 
     const admin = authManager.getUser('admin');
     expect(admin).toBeDefined();
 
-    // Check if bcrypt.hashSync was called with the correct password
     expect(bcrypt.hashSync).toHaveBeenCalledWith('mysecurepassword', 12);
-
-    // Warning logging is now via structured Debug logger, not console.warn
   });
 
   it('should throw CRITICAL error if ADMIN_PASSWORD is missing in production', () => {
     process.env.NODE_ENV = 'production';
     delete process.env.ADMIN_PASSWORD;
+    process.env.JWT_SECRET = 'myjwtsecret';
 
     expect(() => {
       AuthManager.getInstance();
@@ -54,16 +50,11 @@ describe('AuthManager Security Fix', () => {
   it('should still use default password in test environment', () => {
     process.env.NODE_ENV = 'test';
     delete process.env.ADMIN_PASSWORD;
+    delete process.env.JWT_SECRET;
 
     authManager = AuthManager.getInstance();
 
-    // In test environment, it uses 'test-admin-hash' directly (or defaults if env is different)
-    // Removed strict expectation on `bcrypt.hashSync` call count because in some test envs it might fall back to using it.
-
     const admin = authManager.getUser('admin');
-    // The implementation details of how passwordHash is stored in test env might vary,
-    // but based on current code it is 'test-admin-hash'
-    // We can't check private field easily, but we can check if login works with default password
-    // But login is async and calls verifyPassword which is mocked/handled.
+    expect(admin).toBeDefined();
   });
 });
