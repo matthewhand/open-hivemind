@@ -167,11 +167,22 @@ The Personas (Beta) feature allows you to define distinct AI personalities and s
 Set up safety and security boundaries.
 
 ![Guard Profiles List](screenshots/guards-page.png)
+
 ![Create Guard Profile](screenshots/guards-modal.png)
+
+
 
 *   **Content Filters**: Block specific words or phrases.
 *   **Tool Permissions**: Control which MCP tools a bot is allowed to use.
 *   **Input Sanitization**: Configure rules to prevent injection attacks or malicious inputs.
+
+### [Response Profiles](/admin/config/response-profiles)
+Create profiles to control bot social dynamics and response timing.
+
+![Response Profiles](screenshots/response-profiles-page.png)
+
+*   **Swarm Orchestration**: Choose how bots coordinate when deciding to respond to messages (e.g. Exclusive, Collaborative, Broadcast).
+*   **Response Settings**: Configure chance addressed, delay variations, and probability multipliers.
 
 ### [MCP Servers](/admin/mcp/servers)
 Manage Model Context Protocol servers to extend bot capabilities with external tools.

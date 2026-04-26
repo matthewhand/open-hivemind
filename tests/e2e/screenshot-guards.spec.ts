@@ -99,7 +99,7 @@ test.describe('Guards Page Screenshots', () => {
     await page.goto('/admin/guards');
 
     // Wait for content to load
-    await expect(page.getByText('Guard Profiles')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Guard Profiles' })).toBeVisible();
 
     // Wait for cards
     await expect(page.locator('.card').first()).toBeVisible();
