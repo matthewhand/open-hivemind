@@ -233,18 +233,15 @@ if (isNaN(portNum) || portNum < 1 || portNum > 65535) {
 
 ### Frontend Sanitization
 
-React provides XSS protection by default through automatic escaping. However, two instances use `dangerouslySetInnerHTML`:
+React provides XSS protection by default through automatic escaping. The application strictly avoids the use of `dangerouslySetInnerHTML` for rendering dynamic content to prevent XSS vulnerabilities.
 
-**Location:** `src/client/src/components/ToolResultModal.tsx`
+For example, `src/client/src/components/ToolResultModal.tsx` handles syntax highlighting for JSON tool results using a safe tokenization approach (`src/client/src/utils/jsonHighlighter.tsx`) that generates React elements rather than HTML strings:
 
-**Purpose:** Syntax highlighting for JSON tool results
-
-**Safety:**
-- Input is passed through `JSON.stringify()` first, which escapes all HTML special characters
-- Only predefined `<span>` tags with CSS classes are added
-- No user-supplied HTML is rendered
-
-See code comments in the file for detailed security analysis.
+```tsx
+// SAFE: Tokenizer returns React elements mapped to CSS classes
+// No dangerouslySetInnerHTML is required
+<HighlightedJson json={result.arguments} />
+```
 
 ### Content Security Policy (CSP)
 

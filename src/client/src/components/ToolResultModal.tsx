@@ -9,7 +9,7 @@ import Modal from './DaisyUI/Modal';
 import Mockup from './DaisyUI/Mockup';
 import { Alert } from './DaisyUI/Alert';
 import { logger } from '../utils/logger';
-import { renderJsonWithHighlighting } from '../utils/jsonHighlighter';
+import { HighlightedJson } from '../utils/jsonHighlighter';
 
 interface ToolResult {
   timestamp: string;
@@ -135,7 +135,7 @@ const ToolResultModal: React.FC<ToolResultModalProps> = ({ isOpen, onClose, resu
             </button>
           </div>
           <Mockup type="code" content={
-            <span dangerouslySetInnerHTML={{ __html: renderJsonWithHighlighting(result.arguments) }} />
+            <HighlightedJson json={result.arguments} />
           } className="bg-base-300 max-h-48 overflow-auto" />
         </div>
 
@@ -203,7 +203,7 @@ const ToolResultModal: React.FC<ToolResultModalProps> = ({ isOpen, onClose, resu
               </button>
             </div>
             <Mockup type="code" content={
-              <span dangerouslySetInnerHTML={{ __html: renderJsonWithHighlighting(result.result) }} />
+              <HighlightedJson json={result.result} />
             } className="bg-base-300 max-h-96 overflow-auto" />
           </div>
         )}

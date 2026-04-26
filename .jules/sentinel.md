@@ -42,3 +42,8 @@
 **Vulnerability:** SSRF checks applied to internal infrastructure.
 **Learning:** OTLP collectors and telemetry components are routinely deployed as internal sidecars (e.g., localhost:4318) or within private VPC networks. Applying SSRF protections like `isSafeUrl` that block private or loopback IP addresses to these exporters will break legitimate observability pipelines.
 **Prevention:** Do not apply external SSRF protections to internal observability components like trace exporters unless explicitly instructed to protect against user-supplied endpoint configuration.
+
+## 2026-04-26 - [Remove dangerouslySetInnerHTML]
+**Vulnerability:** XSS vulnerability through usage of `dangerouslySetInnerHTML` for displaying JSON output in `ToolResultModal.tsx`.
+**Learning:** Even though `JSON.stringify` was being run, avoiding `dangerouslySetInnerHTML` entirely by rendering React elements directly is a much more robust pattern that eliminates the possibility of future XSS bypasses.
+**Prevention:** Avoid `dangerouslySetInnerHTML` entirely, instead parse content into tokens and render safe React components for complex rendering like syntax highlighting.

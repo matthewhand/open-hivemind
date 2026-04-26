@@ -217,7 +217,7 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction) =
 
 #### React Precautions
 
-1. **Never use `dangerouslySetInnerHTML`**
+1. **Strict avoidance of `dangerouslySetInnerHTML`**
    ```jsx
    // ❌ Dangerous
    <div dangerouslySetInnerHTML={{ __html: userInput }} />
