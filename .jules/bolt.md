@@ -35,3 +35,7 @@
 ## 2026-04-25 - Optimize MCPServers array lookup
 **Learning:** React component renders often contain hidden O(N^2) complexity when checking for array duplicates using `.find()` inside `.forEach()` or `.map()` loops.
 **Action:** Replace nested array `.find()` operations during bulk processing with a pre-computed `Set` to achieve O(1) membership testing and linear overall time complexity.
+## 2026-04-26 - O(N²) Render Optimization Patterns
+**Learning:** When using bash tools that output to temporary files (e.g., `grep ... > temp.txt`), those files must be deleted before finalizing code to prevent repository pollution.
+**Learning:** When optimizing React component renders by replacing array lookups with pre-computed maps, static source arrays should be extracted entirely outside the component function scope to prevent unnecessary re-allocation on every render.
+**Action:** Remember to clean up all temporary scratch files created during the exploration phase. Always move static datasets outside of the component body when memoizing lookup maps.

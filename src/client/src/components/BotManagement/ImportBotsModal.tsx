@@ -137,6 +137,14 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
   const newCount = conflicts.filter((c) => !c.isConflict).length;
   const conflictCount = conflicts.filter((c) => c.isConflict).length;
 
+  const botMap = useMemo(() => {
+    const map = new Map<string, any>();
+    if (bundle?.bots) {
+      bundle.bots.forEach((b) => map.set(b.name, b));
+    }
+    return map;
+  }, [bundle]);
+
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Import Bot Configurations" size="lg">
       <div className="space-y-4">
@@ -173,7 +181,7 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
                 <thead><tr><th>Name</th><th>Message Provider</th><th>LLM Provider</th><th>Status</th></tr></thead>
                 <tbody>
                   {conflicts.map((c) => {
-                    const bot = bundle.bots.find((b) => b.name === c.name);
+                    const bot = botMap.get(c.name);
                     return (
                       <tr key={c.name}>
                         <td className="font-medium">{c.name}</td>
