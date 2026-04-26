@@ -38,6 +38,9 @@ export class EncryptionService {
         this.encryptionKey = fs.readFileSync(keyPath);
         debug('Encryption key initialized from .key file');
       } else {
+        if (process.env.NODE_ENV === 'production') {
+          throw new Error('FATAL: DATABASE_ENCRYPTION_KEY is required in production environment.');
+        }
         console.warn(
           '[SECURITY] DATABASE_ENCRYPTION_KEY not configured — sensitive fields will be stored in plaintext. Set DATABASE_ENCRYPTION_KEY to enable at-rest encryption.'
         );

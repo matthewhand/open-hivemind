@@ -21,9 +21,18 @@ export class PostgresWrapper implements IDatabase {
   }
 
   private translateSql(sql: string): string {
-    // Replace ? with $1, $2, etc.
     let index = 1;
-    let translated = sql.replace(/\?/g, () => `$${index++}`);
+    let translated = '';
+    let inString = false;
+    for (let i = 0; i < sql.length; i++) {
+      const char = sql[i];
+      if (char === "'") inString = !inString;
+      if (char === '?' && !inString) {
+        translated += '$' + index++;
+      } else {
+        translated += char;
+      }
+    }
     
     // SQLite specific "INSERT OR REPLACE" -> Postgres "INSERT ... ON CONFLICT"
     // This is a naive translation and might need specific handling per query
@@ -109,8 +118,6 @@ export class PostgresWrapper implements IDatabase {
       }
     }
 
-    console.log('[PG run]', finalSql);
-
     const result = await this.pool.query(finalSql, params);
     
     return { 
@@ -121,21 +128,30 @@ export class PostgresWrapper implements IDatabase {
 
   async all<T = any>(sql: string, params: any[] = []): Promise<T[]> {
     const translatedSql = this.translateSql(sql);
-    console.log('[PG all]', translatedSql);
     const result = await this.pool.query(translatedSql, params);
     return result.rows.map(row => this.mapRow(row)) as T[];
   }
 
   async get<T = any>(sql: string, params: any[] = []): Promise<T | undefined> {
     const translatedSql = this.translateSql(sql);
-    console.log('[PG get]', translatedSql);
     const result = await this.pool.query(translatedSql, params);
     return this.mapRow(result.rows[0]) as T | undefined;
   }
 
   async exec(sql: string): Promise<void> {
-    console.log('[PG exec]', sql);
     await this.pool.query(sql);
+  }
+
+  async transaction<T>(callback: (db: IDatabase) => Promise<T>): Promise<T> {
+    await this.exec('BEGIN');
+    try {
+      const result = await callback(this);
+      await this.exec('COMMIT');
+      return result;
+    } catch (e) {
+      await this.exec('ROLLBACK');
+      throw e;
+    }
   }
 
   async close(): Promise<void> {
