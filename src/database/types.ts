@@ -10,6 +10,7 @@ export interface IDatabase {
   all<T = any>(sql: string, params?: any[]): Promise<T[]>;
   get<T = any>(sql: string, params?: any[]): Promise<T | undefined>;
   exec(sql: string): Promise<void>;
+  transaction<T>(callback: (db: IDatabase) => Promise<T>): Promise<T>;
   close(): Promise<void>;
 }
 

@@ -55,8 +55,6 @@ describe('Database Cleanup Integration', () => {
           `INSERT INTO messages (messageId, channelId, content, authorId, authorName, provider, timestamp) VALUES (?, ?, ?, ?, ?, ?, datetime('now', '-${daysOld} days'))`,
           [`msg-${i}`, 'ch1', `Test message ${i}`, 'user1', 'User 1', 'test']
         );
-        const check = await db.all('SELECT * FROM messages');
-        if (i === 0) console.log('Immediate check after insert:', check.length);
       }
     }
   };

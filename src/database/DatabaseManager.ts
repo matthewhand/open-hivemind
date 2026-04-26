@@ -191,14 +191,6 @@ export class DatabaseManager {
         }
         debug('DATABASE_MANAGER: this.db initialized (Postgres)');
         
-        // Enable pgvector extension
-        try {
-          await this.db.exec('CREATE EXTENSION IF NOT EXISTS vector');
-          debug('DATABASE_MANAGER: pgvector extension enabled');
-        } catch (e) {
-          debug('DATABASE_MANAGER: failed to enable pgvector (might already exist or permission denied):', e);
-        }
-
         await runMigrations(this.db, true);
       } else {
         throw new ConfigurationError(
@@ -655,37 +647,17 @@ export class DatabaseManager {
   async cleanupTableByRows(tableName: string, maxRows: number): Promise<number> {
     if (!this.db || !this.connected) return 0;
 
-    const isPostgres = this.config?.type === 'postgres';
-    let sql: string;
-
-    if (isPostgres) {
-      // Postgres allows subqueries in IN with LIMIT, but sometimes requires an alias if nested
-      sql = `
-        DELETE FROM ${tableName}
-        WHERE id NOT IN (
-          SELECT id FROM (
-            SELECT id FROM ${tableName}
-            ORDER BY id DESC
-            LIMIT ?
-          ) AS tmp
-        )
-      `;
-    } else {
-      // SQLite
-      sql = `
-        DELETE FROM ${tableName}
-        WHERE id NOT IN (
-          SELECT id FROM ${tableName}
-          ORDER BY id DESC
-          LIMIT ?
-        )
-      `;
-    }
-
     try {
-      const result = await this.db.run(sql, [maxRows]);
+      // Find the cutoff ID using an index-optimized query
+      // OFFSET is maxRows, meaning we want the ID of the (maxRows + 1)th newest row
+      const cutoffRow = await this.db.get(`SELECT id FROM ${tableName} ORDER BY id DESC LIMIT 1 OFFSET ?`, [maxRows]);
+      
+      // If we have fewer rows than maxRows, or no rows, there's nothing to delete
+      if (!cutoffRow || !cutoffRow.id) return 0;
+      
+      // Execute a fast range deletion
+      const result = await this.db.run(`DELETE FROM ${tableName} WHERE id <= ?`, [cutoffRow.id]);
       debug(`Cleaned up ${result.changes} rows from ${tableName} (by row count)`);
-      if (tableName === 'messages') console.log(`cleanupTableByRows [${tableName}]: SQL ${sql.trim()}, maxRows ${maxRows}, changes ${result.changes}`);
       return result.changes;
     } catch (error) {
       console.error(`Error cleaning up table ${tableName}:`, error);

@@ -6,6 +6,14 @@ export const up = async ({ db, isPostgres }: { db: IDatabase, isPostgres: boolea
   const datetime_type = isPostgres ? 'TIMESTAMP' : 'DATETIME';
   const default_now = isPostgres ? 'CURRENT_TIMESTAMP' : 'CURRENT_TIMESTAMP';
 
+  if (isPostgres) {
+    try {
+      await db.exec('CREATE EXTENSION IF NOT EXISTS vector');
+    } catch (e) {
+      console.warn('Failed to enable pgvector extension (might already exist or permission denied):', e);
+    }
+  }
+
   // Core Tables
   await db.exec(`
     CREATE TABLE IF NOT EXISTS messages (

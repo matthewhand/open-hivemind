@@ -43,9 +43,6 @@ export class SQLiteWrapper implements IDatabase {
     try {
       const stmt = this.db.prepare(sql);
       const info = params.length > 0 ? stmt.run(...params) : stmt.run();
-      if (sql.includes('INSERT')) {
-        console.log('SQLiteWrapper.run executed successfully! info:', info, 'sql:', sql, 'params:', params);
-      }
       return { lastID: info.lastInsertRowid as number, changes: info.changes };
     } catch (err) {
       console.error('SQLiteWrapper.run ERROR!', err, 'sql:', sql);
@@ -65,6 +62,18 @@ export class SQLiteWrapper implements IDatabase {
 
   async exec(sql: string): Promise<void> {
     this.db.exec(sql);
+  }
+
+  async transaction<T>(callback: (db: IDatabase) => Promise<T>): Promise<T> {
+    await this.exec('BEGIN TRANSACTION');
+    try {
+      const result = await callback(this);
+      await this.exec('COMMIT');
+      return result;
+    } catch (e) {
+      await this.exec('ROLLBACK');
+      throw e;
+    }
   }
 
   async close(): Promise<void> {
