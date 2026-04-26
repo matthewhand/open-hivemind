@@ -101,12 +101,15 @@ export class PostgresWrapper implements IDatabase {
   async run(sql: string, params: any[] = []): Promise<{ lastID: number | string; changes: number }> {
     const translatedSql = this.translateSql(sql);
     
-    // If it's an INSERT, we might want the ID back. 
-    // Postgres requires RETURNING id.
     let finalSql = translatedSql;
     if (sql.trim().toUpperCase().startsWith('INSERT') && !sql.toUpperCase().includes('RETURNING')) {
-      finalSql += ' RETURNING id';
+      // Don't append RETURNING id for umzug_migrations as it doesn't have an id column
+      if (!sql.includes('umzug_migrations')) {
+        finalSql += ' RETURNING id';
+      }
     }
+
+    console.log('[PG run]', finalSql);
 
     const result = await this.pool.query(finalSql, params);
     
@@ -118,19 +121,20 @@ export class PostgresWrapper implements IDatabase {
 
   async all<T = any>(sql: string, params: any[] = []): Promise<T[]> {
     const translatedSql = this.translateSql(sql);
+    console.log('[PG all]', translatedSql);
     const result = await this.pool.query(translatedSql, params);
     return result.rows.map(row => this.mapRow(row)) as T[];
   }
 
   async get<T = any>(sql: string, params: any[] = []): Promise<T | undefined> {
     const translatedSql = this.translateSql(sql);
+    console.log('[PG get]', translatedSql);
     const result = await this.pool.query(translatedSql, params);
     return this.mapRow(result.rows[0]) as T | undefined;
   }
 
   async exec(sql: string): Promise<void> {
-    // exec in sqlite-wrapper executes multiple statements separated by ;
-    // pg.query can also do this if no parameters are provided.
+    console.log('[PG exec]', sql);
     await this.pool.query(sql);
   }
 
