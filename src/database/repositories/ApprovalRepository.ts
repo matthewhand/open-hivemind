@@ -1,6 +1,5 @@
 import Debug from 'debug';
-import type { IDatabase as Database } from '../types';
-import type { ApprovalRequest } from '../types';
+import type { ApprovalRequest, IDatabase as Database } from '../types';
 
 const debug = Debug('app:ApprovalRepository');
 

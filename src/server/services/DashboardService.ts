@@ -1,13 +1,11 @@
 import fs from 'fs';
 import path from 'path';
-import { DatabaseManager } from '@src/database/DatabaseManager';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
-import { AnalyticsService } from '../../services/AnalyticsService';
-import DemoModeService from '../../services/DemoModeService';
-import { container } from '../../di/container';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
-import WebSocketService, { type MessageFlowEvent } from './WebSocketService';
+import { container } from '../../di/container';
+import DemoModeService from '../../services/DemoModeService';
 import { ActivityLogger } from './ActivityLogger';
+import WebSocketService, { type MessageFlowEvent } from './WebSocketService';
 
 export interface BehaviorPattern {
   id: string;
@@ -236,8 +234,10 @@ export class DashboardService {
     const fromTime = query.from?.getTime();
     const toTime = query.to?.getTime();
 
-    const limit = typeof query.limit === 'number' ? query.limit : (parseInt(query.limit as any, 10) || 200);
-    const offset = typeof query.offset === 'number' ? query.offset : (parseInt(query.offset as any, 10) || 0);
+    const limit =
+      typeof query.limit === 'number' ? query.limit : parseInt(query.limit as any, 10) || 200;
+    const offset =
+      typeof query.offset === 'number' ? query.offset : parseInt(query.offset as any, 10) || 0;
 
     const storedEvents = await ActivityLogger.getInstance().getEvents({
       startTime: query.from,

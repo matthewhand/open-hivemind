@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3';
 import Debug from 'debug';
-import { IDatabase } from './types';
+import { type IDatabase } from './types';
 
 const debug = Debug('app:SQLiteWrapper');
 

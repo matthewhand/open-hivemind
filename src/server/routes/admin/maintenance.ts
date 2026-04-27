@@ -1,9 +1,9 @@
 import { Router, type Request, type Response } from 'express';
 import { ErrorUtils } from '../../../common/ErrorUtils';
 import { getTrustedMcpReposConfig } from '../../../config/trustedMcpRepos';
+import { DatabaseManager } from '../../../database/DatabaseManager';
 import { MCPService } from '../../../mcp/MCPService';
 import { webUIStorage } from '../../../storage/webUIStorage';
-import { DatabaseManager } from '../../../database/DatabaseManager';
 import { HTTP_STATUS } from '../../../types/constants';
 import { isSafeUrl } from '../../../utils/ssrfGuard';
 import {
@@ -471,34 +471,31 @@ router.post(
 );
 
 // Factory Reset endpoint
-router.post(
-  '/system/reset',
-  async (req: Request, res: Response) => {
-    try {
-      const { confirmation } = req.body;
+router.post('/system/reset', async (req: Request, res: Response) => {
+  try {
+    const { confirmation } = req.body;
 
-      if (confirmation !== 'confirm-factory-reset') {
-        return res.status(HTTP_STATUS.BAD_REQUEST).json({
-          error: 'Validation error',
-          message: 'Incorrect confirmation phrase',
-        });
-      }
-
-      const dbManager = DatabaseManager.getInstance();
-      await dbManager.resetDatabase();
-
-      return res.json({
-        success: true,
-        message: 'System has been successfully reset to factory settings.',
-      });
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        error: 'Failed to reset system',
-        message: hivemindError.message || 'An error occurred during factory reset',
+    if (confirmation !== 'confirm-factory-reset') {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        error: 'Validation error',
+        message: 'Incorrect confirmation phrase',
       });
     }
+
+    const dbManager = DatabaseManager.getInstance();
+    await dbManager.resetDatabase();
+
+    return res.json({
+      success: true,
+      message: 'System has been successfully reset to factory settings.',
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      error: 'Failed to reset system',
+      message: hivemindError.message || 'An error occurred during factory reset',
+    });
   }
-);
+});
 
 export default router;

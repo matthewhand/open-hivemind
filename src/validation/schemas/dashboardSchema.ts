@@ -14,14 +14,16 @@ export const DashboardAnnouncementQuerySchema = z.object({
   }),
 });
 
-export const DashboardActivityQuerySchema = z.object({
-  query: z.object({
-    bot: z.any().optional(),
-    messageProvider: z.any().optional(),
-    llmProvider: z.any().optional(),
-    from: z.any().optional(),
-    to: z.any().optional(),
-    limit: z.any().optional(),
-    offset: z.any().optional(),
-  }),
-}).passthrough();
+export const DashboardActivityQuerySchema = z
+  .object({
+    query: z.object({
+      bot: z.any().optional(),
+      messageProvider: z.any().optional(),
+      llmProvider: z.any().optional(),
+      from: z.any().optional(),
+      to: z.any().optional(),
+      limit: z.any().optional(),
+      offset: z.any().optional(),
+    }),
+  })
+  .passthrough();

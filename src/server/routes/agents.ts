@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import Debug from 'debug';
-import { Router, Request, Response } from 'express';
+import { Router, type Request, type Response } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { ErrorUtils } from '@src/types/errors';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
@@ -75,8 +75,16 @@ const saveJsonConfig = async <T>(filePath: string, data: T): Promise<void> => {
 const getEnvOverrides = (): Record<string, { isOverridden: boolean; redactedValue?: string }> => {
   const overrides: Record<string, { isOverridden: boolean; redactedValue?: string }> = {};
   const envVarPatterns = [
-    /^DISCORD_/, /^SLACK_/, /^TELEGRAM_/, /^MATTERMOST_/, /^OPENAI_/,
-    /^FLOWISE_/, /^OPENWEBUI_/, /^MCP_/, /^BOT_/, /^AGENT_/,
+    /^DISCORD_/,
+    /^SLACK_/,
+    /^TELEGRAM_/,
+    /^MATTERMOST_/,
+    /^OPENAI_/,
+    /^FLOWISE_/,
+    /^OPENWEBUI_/,
+    /^MCP_/,
+    /^BOT_/,
+    /^AGENT_/,
   ];
 
   Object.keys(process.env).forEach((key) => {
@@ -168,7 +176,9 @@ router.put(
     const agentIndex = agents.findIndex((agent) => agent.id === id);
 
     if (agentIndex === -1) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Agent not found', 'NOT_FOUND'));
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Agent not found', 'NOT_FOUND'));
     }
 
     agents[agentIndex] = { ...agents[agentIndex], ...updates, updatedAt: new Date().toISOString() };
@@ -188,7 +198,9 @@ router.delete(
     const filteredAgents = agents.filter((agent) => agent.id !== id);
 
     if (filteredAgents.length === agents.length) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Agent not found', 'NOT_FOUND'));
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Agent not found', 'NOT_FOUND'));
     }
 
     await saveJsonConfig(AGENTS_CONFIG_FILE, filteredAgents);
@@ -204,7 +216,8 @@ router.get(
       {
         key: 'default',
         name: 'Default Assistant',
-        systemPrompt: 'You are a helpful AI assistant. Be concise, accurate, and helpful in your responses.',
+        systemPrompt:
+          'You are a helpful AI assistant. Be concise, accurate, and helpful in your responses.',
       },
       {
         key: 'friendly',
@@ -255,7 +268,9 @@ router.put(
     const personaIndex = personas.findIndex((p) => p.key === key);
 
     if (personaIndex === -1) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Persona not found', 'NOT_FOUND'));
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Persona not found', 'NOT_FOUND'));
     }
 
     personas[personaIndex] = { key, name, systemPrompt };
@@ -273,14 +288,18 @@ router.delete(
     const { key } = req.params;
 
     if (key === 'default') {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Cannot delete default persona', 'BAD_REQUEST'));
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json(ApiResponse.error('Cannot delete default persona', 'BAD_REQUEST'));
     }
 
     const personas = await loadJsonConfig<Persona[]>(PERSONAS_CONFIG_FILE, []);
     const filteredPersonas = personas.filter((p) => p.key !== key);
 
     if (filteredPersonas.length === personas.length) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Persona not found', 'NOT_FOUND'));
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Persona not found', 'NOT_FOUND'));
     }
 
     await saveJsonConfig(PERSONAS_CONFIG_FILE, filteredPersonas);

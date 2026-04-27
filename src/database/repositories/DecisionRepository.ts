@@ -1,6 +1,5 @@
 import Debug from 'debug';
-import type { IDatabase as Database } from '../types';
-import type { DecisionRecord } from '../types';
+import type { IDatabase as Database, DecisionRecord } from '../types';
 
 const debug = Debug('app:DecisionRepository');
 

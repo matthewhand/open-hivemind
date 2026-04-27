@@ -25,6 +25,9 @@ archive/
 
 # Dependency directories
 node_modules
+**/node_modules
+**/.pnpm
+**/.pnpm-store
 
 # TypeScript compiled output
 dist

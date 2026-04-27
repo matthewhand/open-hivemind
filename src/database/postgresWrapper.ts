@@ -1,6 +1,6 @@
-import { Pool, PoolConfig } from 'pg';
 import Debug from 'debug';
-import { IDatabase } from './types';
+import { Pool, type PoolConfig } from 'pg';
+import { type IDatabase } from './types';
 
 const debug = Debug('app:PostgresWrapper');
 
@@ -33,12 +33,11 @@ export class PostgresWrapper implements IDatabase {
         translated += char;
       }
     }
-    
     // SQLite specific "INSERT OR REPLACE" -> Postgres "INSERT ... ON CONFLICT"
     // This is a naive translation and might need specific handling per query
     // but for simple cases it might work.
     // For now, let's keep it simple and handle specific translations in repositories if needed.
-    
+
     return translated;
   }
 
@@ -107,9 +106,13 @@ export class PostgresWrapper implements IDatabase {
     return mapping[key] || key;
   }
 
-  async run(sql: string, params: any[] = []): Promise<{ lastID: number | string; changes: number }> {
+  async run(
+    sql: string,
+    params: any[] = []
+  ): Promise<{ lastID: number | string; changes: number }> {
     const translatedSql = this.translateSql(sql);
-    
+    // If it's an INSERT, we might want the ID back.
+    // Postgres requires RETURNING id.
     let finalSql = translatedSql;
     if (sql.trim().toUpperCase().startsWith('INSERT') && !sql.toUpperCase().includes('RETURNING')) {
       // Don't append RETURNING id for umzug_migrations as it doesn't have an id column
@@ -119,17 +122,17 @@ export class PostgresWrapper implements IDatabase {
     }
 
     const result = await this.pool.query(finalSql, params);
-    
-    return { 
-      lastID: result.rows[0]?.id || 0, 
-      changes: result.rowCount || 0 
+
+    return {
+      lastID: result.rows[0]?.id || 0,
+      changes: result.rowCount || 0,
     };
   }
 
   async all<T = any>(sql: string, params: any[] = []): Promise<T[]> {
     const translatedSql = this.translateSql(sql);
     const result = await this.pool.query(translatedSql, params);
-    return result.rows.map(row => this.mapRow(row)) as T[];
+    return result.rows.map((row) => this.mapRow(row)) as T[];
   }
 
   async get<T = any>(sql: string, params: any[] = []): Promise<T | undefined> {

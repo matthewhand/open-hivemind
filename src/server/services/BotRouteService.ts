@@ -1,8 +1,8 @@
 import fs from 'fs';
 import path from 'path';
-import { BotManager, type BotInstance, type CreateBotRequest } from '../../managers/BotManager';
-import { getLlmProvider } from '../../llm/getLlmProvider';
 import { createLogger } from '../../common/StructuredLogger';
+import { getLlmProvider } from '../../llm/getLlmProvider';
+import { BotManager, type BotInstance, type CreateBotRequest } from '../../managers/BotManager';
 
 const logger = createLogger('BotRouteService');
 
@@ -50,13 +50,7 @@ export class BotRouteService {
           report.errors.push('Skipped bot with no name');
           continue;
         }
-        const {
-          id: _id,
-          status: _status,
-          messageCount: _mc,
-          errorCount: _ec,
-          ...importData
-        } = bot;
+        const { id: _id, status: _status, messageCount: _mc, errorCount: _ec, ...importData } = bot;
 
         const existing = existingByName.get(bot.name.toLowerCase());
         if (existing) {
