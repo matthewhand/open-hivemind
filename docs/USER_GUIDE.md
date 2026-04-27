@@ -204,6 +204,17 @@ Browse, install, and manage extensions and packages for your application.
 *   **Install from URL**: Manually install a custom package by providing its GitHub repository URL.
 ![Install from URL Modal](screenshots/marketplace-install-modal.png)
 *   **Filter & Manage**: Easily filter available packages by type (e.g., LLM, Tool) and update or uninstall existing ones.
+
+### [Plugin Security](/admin/plugin-security)
+Manage trust levels, capabilities, and verification for installed plugins.
+
+![Plugin Security Dashboard](screenshots/plugin-security-dashboard.png)
+
+*   **Overview**: View statistics on trusted, untrusted, and verification-failed plugins.
+*   **Filtering**: Filter plugins by their security status or capability.
+![Plugin Security Filtered](screenshots/plugin-security-filtered.png)
+*   **Capabilities Management**: Inspect the capabilities (e.g., network, filesystem) requested, granted, or denied for each plugin.
+*   **Trust Controls**: Trust or revoke trust for community plugins, and re-verify their signatures.
 ---
 
 ## System

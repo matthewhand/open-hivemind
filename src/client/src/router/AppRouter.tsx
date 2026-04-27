@@ -58,6 +58,7 @@ const OnboardingPage = lazy(() => import('../pages/OnboardingPage'));
 const AboutPage = lazy(() => import('../pages/AboutPage'));
 const ApiDocsPage = lazy(() => import('../pages/ApiDocsPage'));
 const HelpPage = lazy(() => import('../pages/HelpPage'));
+const PluginSecurityPage = lazy(() => import('../pages/PluginSecurityPage'));
 
 
 interface LoadingFallbackProps {
@@ -153,6 +154,8 @@ const AppRouter: React.FC = () => {
 
           {/* Marketplace Route */}
           <Route path="marketplace" element={<ErrorBoundary pageName="Marketplace"><MarketplacePage /></ErrorBoundary>} />
+
+          <Route path="plugin-security" element={<ErrorBoundary pageName="Plugin Security"><PluginSecurityPage /></ErrorBoundary>} />
 
           {/* MCP Routes */}
           <Route
