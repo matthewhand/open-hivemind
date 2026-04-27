@@ -293,6 +293,7 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, configurable }) => {
                     variant="ghost"
                     size="sm"
                     onClick={() => handleRemoveMcpServer(index)}
+                    aria-label={`Remove MCP server ${server.name}`}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
