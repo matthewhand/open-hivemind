@@ -90,6 +90,11 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
 
   const selectedPersona = personas.find(p => p.id === selectedPersonaId) || DEFAULT_PERSONA;
 
+  // Performance optimization: Pre-compute category color map
+  const categoryColorMap = useMemo(() => {
+    return new Map(categories.map(c => [c.value, c.color]));
+  }, [categories]);
+
   const handlePersonaClick = (personaId: string) => {
     onPersonaSelect(personaId);
     if (size === 'compact') {
@@ -192,7 +197,7 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
                           <div
                             className={`
                               w-2 h-2 rounded-full
-                              ${getCategoryDotClass(categories.find(c => c.value === persona.category)?.color || 'neutral')}
+                              ${getCategoryDotClass(categoryColorMap.get(persona.category) || 'neutral')}
                             `}
                           />
                           <span className="font-medium text-sm">{persona.name}</span>
@@ -337,7 +342,7 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
                       <div
                         className={`
                           w-3 h-3 rounded-full
-                          ${getCategoryDotClass(categories.find(c => c.value === persona.category)?.color || 'neutral')}
+                          ${getCategoryDotClass(categoryColorMap.get(persona.category) || 'neutral')}
                         `}
                       />
                       <h4 className="font-semibold">{persona.name}</h4>
