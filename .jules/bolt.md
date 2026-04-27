@@ -35,3 +35,6 @@
 ## 2026-04-25 - Optimize MCPServers array lookup
 **Learning:** React component renders often contain hidden O(N^2) complexity when checking for array duplicates using `.find()` inside `.forEach()` or `.map()` loops.
 **Action:** Replace nested array `.find()` operations during bulk processing with a pre-computed `Set` to achieve O(1) membership testing and linear overall time complexity.
+## 2026-04-27 - Pre-compute Map lookups in rendering loops
+**Learning:** React component renders often contain hidden O(N^2) complexity when using array `.find()` inside `.map()` loops (e.g., `stats.componentUsage.find`, `recentlyUsed.find`).
+**Action:** Replace nested array `.find()` operations during rendering with a pre-computed `Map` wrapped in `useMemo` to achieve O(1) membership testing and linear overall time complexity.
