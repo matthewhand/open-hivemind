@@ -1,4 +1,3 @@
-import { Umzug } from 'umzug';
 import { IDatabase } from './types';
 import Debug from 'debug';
 
@@ -34,6 +33,9 @@ export class CustomDbStorage {
 
 export const runMigrations = async (db: IDatabase, isPostgres: boolean): Promise<void> => {
   debug('Initializing migrator...');
+
+  // Lazy load Umzug to avoid crashing tests that mock fs
+  const { Umzug } = await import('umzug');
 
   const migrations = [
     {

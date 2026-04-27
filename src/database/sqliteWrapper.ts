@@ -40,14 +40,9 @@ export class SQLiteWrapper implements IDatabase {
   }
 
   async run(sql: string, params: any[] = []): Promise<{ lastID: number; changes: number }> {
-    try {
-      const stmt = this.db.prepare(sql);
-      const info = params.length > 0 ? stmt.run(...params) : stmt.run();
-      return { lastID: info.lastInsertRowid as number, changes: info.changes };
-    } catch (err) {
-      console.error('SQLiteWrapper.run ERROR!', err, 'sql:', sql);
-      throw err;
-    }
+    const stmt = this.db.prepare(sql);
+    const info = params.length > 0 ? stmt.run(...params) : stmt.run();
+    return { lastID: info.lastInsertRowid as number, changes: info.changes };
   }
 
   async all<T = any>(sql: string, params: any[] = []): Promise<T[]> {
