@@ -21,30 +21,33 @@ export function useInactivity({
   onWake,
 }: UseInactivityOptions = {}) {
   const [isIdle, setIsIdle] = useState(false);
+  const isIdleRef = useRef(false);
   const timerRef = useRef<number | null>(null);
   const lastActiveRef = useRef<number>(Date.now());
 
-  const clearTimer = () => {
+  const clearTimer = useCallback(() => {
     if (timerRef.current) {
       window.clearTimeout(timerRef.current);
       timerRef.current = null;
     }
-  };
+  }, []);
 
   const goIdle = useCallback(() => {
     setIsIdle(true);
+    isIdleRef.current = true;
     onIdle?.();
   }, [onIdle]);
 
   const reset = useCallback(() => {
     lastActiveRef.current = Date.now();
-    if (isIdle) {
-      setIsIdle(false);
+    if (isIdleRef.current) {
       onWake?.();
     }
+    setIsIdle(false);
+    isIdleRef.current = false;
     clearTimer();
     timerRef.current = window.setTimeout(goIdle, timeoutMs);
-  }, [goIdle, isIdle, onWake, timeoutMs]);
+  }, [clearTimer, goIdle, onWake, timeoutMs]);
 
   useEffect(() => {
     // Initialize timer
