@@ -1340,3 +1340,52 @@ body.robot-ui-enabled .btn-accent {
     transform: translate(0, 0);
   }
 }
+
+/* ============================================================
+ * Mobile floating action buttons (FABs)
+ * Reusable pattern for surfacing primary page actions on small
+ * viewports. Pages opt in by rendering a `.fab-mobile` element
+ * with `md:hidden` so the FAB never appears on desktop.
+ * ============================================================ */
+.fab-mobile {
+  position: fixed;
+  bottom: calc(1.5rem * var(--density-scale, 1));
+  width: calc(3.5rem * var(--density-scale, 1));
+  height: calc(3.5rem * var(--density-scale, 1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background-color: oklch(var(--b2));
+  border: 2px solid oklch(var(--p));
+  color: oklch(var(--bc));
+  box-shadow:
+    0 8px 24px oklch(var(--bc) / 0.25),
+    0 2px 8px oklch(var(--bc) / 0.15);
+  z-index: 40;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease, transform 150ms ease;
+}
+
+.fab-mobile:hover,
+.fab-mobile:active,
+.fab-mobile:focus-visible {
+  background-color: oklch(var(--p));
+  color: oklch(var(--pc));
+  transform: scale(1.06);
+  outline: none;
+}
+
+.fab-mobile:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.fab-mobile-left {
+  left: 3rem;
+}
+
+.fab-mobile-right {
+  right: 3rem;
+}
