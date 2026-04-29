@@ -299,6 +299,7 @@ export const useUIStore = create<UIState & UIActions>((set, get) => ({
   setCompactDensity: (compactDensity) => {
     set({ compactDensity });
     localStorage.setItem('compactDensity', compactDensity.toString());
+    document.documentElement.setAttribute('data-compact-density', compactDensity.toString());
   },
 
   setShowDescriptions: (showDescriptions) => {
@@ -412,6 +413,7 @@ export const useUIStore = create<UIState & UIActions>((set, get) => ({
     document.documentElement.setAttribute('data-theme', state.theme === 'auto' ? 'light' : (state.theme as string));
     document.documentElement.setAttribute('lang', state.language);
     document.documentElement.setAttribute('data-density', state.density);
+    document.documentElement.setAttribute('data-compact-density', state.compactDensity.toString());
   },
 
   handleResize: (viewport) => {

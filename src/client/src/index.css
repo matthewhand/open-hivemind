@@ -11,7 +11,17 @@
 /* Base styles - let DaisyUI handle theming */
 html {
   scroll-behavior: smooth;
+  /* Density scale — multiplied into card/main padding via calc().
+     Driven by <html data-density="..."> set by uiStore.setDensity,
+     and <html data-compact-density="true"> from setCompactDensity. */
+  --density-scale: 1;
 }
+
+html[data-density="compact"] { --density-scale: 0.7; }
+html[data-density="comfortable"] { --density-scale: 1; }
+html[data-density="spacious"] { --density-scale: 1.25; }
+
+html[data-compact-density="true"] { --density-scale: calc(var(--density-scale) * 0.85); }
 
 body {
   margin: 0;
@@ -78,7 +88,7 @@ textarea {
 }
 
 .card-body {
-  padding: 1.5rem;
+  padding: calc(1.5rem * var(--density-scale, 1));
 }
 
 .card-title {
@@ -97,7 +107,7 @@ textarea {
 
 /* Stat cards with gradient backgrounds */
 .stat {
-  padding: 1.25rem 1.5rem;
+  padding: calc(1.25rem * var(--density-scale, 1)) calc(1.5rem * var(--density-scale, 1));
   border-color: hsl(var(--bc) / 0.1);
   transition: all 0.2s ease;
 }
