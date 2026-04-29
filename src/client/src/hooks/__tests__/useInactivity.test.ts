@@ -27,7 +27,7 @@ function runHook<T, R>(hookFn: () => R) {
   };
 }
 
-describe.skip('useInactivity Hook', () => {
+describe('useInactivity Hook', () => {
   beforeEach(() => {
     vi.useFakeTimers();
   });

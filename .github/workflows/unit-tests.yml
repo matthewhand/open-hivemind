@@ -40,7 +40,8 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=8192
         run: |
           NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config ./node_modules/jest/bin/jest.js \
-            tests/unit/ \
+            tests/database/ \
+            tests/common/ \
             --verbose \
             --ci \
             --forceExit \
@@ -74,9 +75,7 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=8192
         run: |
           NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config ./node_modules/jest/bin/jest.js \
-            tests/integrations/ \
-            tests/llm/ \
-            tests/managers/ \
+            packages/ \
             --verbose \
             --ci \
             --forceExit \
@@ -110,12 +109,7 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=8192
         run: |
           NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config ./node_modules/jest/bin/jest.js \
-            tests/config/ \
-            tests/services/ \
-            tests/utils/ \
-            tests/auth/ \
-            tests/commands/ \
-            tests/common/ \
+            tests/integration/ \
             --verbose \
             --ci \
             --forceExit \

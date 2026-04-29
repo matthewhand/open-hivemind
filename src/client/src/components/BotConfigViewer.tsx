@@ -44,12 +44,7 @@ const BotConfigViewer: React.FC<BotConfigViewerProps> = ({
   };
 
   const renderTerminalView = () => (
-    <div
-      id="terminal-view"
-      role="tabpanel"
-      aria-labelledby="tab-terminal"
-      className="mockup-code bg-base-300"
-    >
+    <div className="mockup-code bg-base-300">
       <pre data-prefix="$" className="text-primary">
         <code>hivemind inspect --bot {bot.name}</code>
       </pre>
@@ -123,12 +118,7 @@ const BotConfigViewer: React.FC<BotConfigViewerProps> = ({
   );
 
   const renderJsonView = () => (
-    <div
-      id="json-view"
-      role="tabpanel"
-      aria-labelledby="tab-json"
-      className="mockup-code bg-base-300"
-    >
+    <div className="mockup-code bg-base-300">
       <pre data-prefix="$" className="text-primary">
         <code>cat config/bots/{bot.name}.json</code>
       </pre>
@@ -178,26 +168,14 @@ const BotConfigViewer: React.FC<BotConfigViewerProps> = ({
             </div>
             
             {showJson && (
-              <div
-                className="btn-group"
-                role="tablist"
-                aria-label="Configuration View Modes"
-              >
+              <div className="btn-group">
                 <button 
-                  id="tab-terminal"
-                  role="tab"
-                  aria-selected={viewMode === 'terminal'}
-                  aria-controls="terminal-view"
                   className={`btn btn-xs ${viewMode === 'terminal' ? 'btn-active' : 'btn-ghost'}`}
                   onClick={() => setViewMode('terminal')}
                 >
                   Terminal
                 </button>
                 <button 
-                  id="tab-json"
-                  role="tab"
-                  aria-selected={viewMode === 'json'}
-                  aria-controls="json-view"
                   className={`btn btn-xs ${viewMode === 'json' ? 'btn-active' : 'btn-ghost'}`}
                   onClick={() => setViewMode('json')}
                 >
