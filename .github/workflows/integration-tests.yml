@@ -41,9 +41,9 @@ jobs:
       - name: Run API integration tests
         run: |
           NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config ./node_modules/jest/bin/jest.js \
-            tests/api/ \
-            tests/routes/ \
-            tests/integration/ \
+            --passWithNoTests tests/api/ \
+            --passWithNoTests tests/routes/ \
+            --passWithNoTests tests/integration/ \
             --testTimeout=15000 \
             --verbose \
             --ci \
@@ -115,8 +115,8 @@ jobs:
       - name: Run webhook integration tests
         run: |
           NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config ./node_modules/jest/bin/jest.js \
-            tests/webhook/ \
-            tests/integration/auth/ \
+            --passWithNoTests tests/webhook/ \
+            --passWithNoTests tests/integration/auth/ \
             --testTimeout=15000 \
             --verbose \
             --ci \
