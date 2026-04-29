@@ -25,6 +25,21 @@ interface PersonaSelectorProps {
   size?: 'compact' | 'full';
 }
 
+const CATEGORIES: Array<{ value: PersonaCategory | 'all'; label: string; color: string }> = [
+  { value: 'all', label: 'All Personas', color: 'neutral' },
+  { value: 'general', label: 'General', color: 'neutral' },
+  { value: 'customer_service', label: 'Customer Service', color: 'primary' },
+  { value: 'creative', label: 'Creative', color: 'secondary' },
+  { value: 'technical', label: 'Technical', color: 'accent' },
+  { value: 'educational', label: 'Educational', color: 'info' },
+  { value: 'entertainment', label: 'Entertainment', color: 'warning' },
+  { value: 'professional', label: 'Professional', color: 'success' },
+];
+
+const CATEGORY_COLOR_MAP: Record<string, string> = Object.fromEntries(
+  CATEGORIES.map(c => [c.value, c.color])
+);
+
 const PersonaSelector: React.FC<PersonaSelectorProps> = ({
   personas,
   selectedPersonaId,
@@ -38,17 +53,6 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<PersonaCategory | 'all'>('all');
   const [isExpanded, setIsExpanded] = useState(false);
-
-  const categories: Array<{ value: PersonaCategory | 'all'; label: string; color: string }> = [
-    { value: 'all', label: 'All Personas', color: 'neutral' },
-    { value: 'general', label: 'General', color: 'neutral' },
-    { value: 'customer_service', label: 'Customer Service', color: 'primary' },
-    { value: 'creative', label: 'Creative', color: 'secondary' },
-    { value: 'technical', label: 'Technical', color: 'accent' },
-    { value: 'educational', label: 'Educational', color: 'info' },
-    { value: 'entertainment', label: 'Entertainment', color: 'warning' },
-    { value: 'professional', label: 'Professional', color: 'success' },
-  ];
 
   // Static class lookup maps (Tailwind JIT-safe — avoids dynamic `bg-${color}` anti-pattern)
   const COLOR_BTN_CLASSES: Record<string, { active: string; dot: string }> = {
@@ -151,7 +155,7 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
 
               {/* Category filter */}
               <div className="flex flex-wrap gap-1 mb-3">
-                {categories.map(category => (
+                {CATEGORIES.map(category => (
                   <button
                     key={category.value}
                     onClick={() => setSelectedCategory(category.value)}
@@ -192,7 +196,7 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
                           <div
                             className={`
                               w-2 h-2 rounded-full
-                              ${getCategoryDotClass(categories.find(c => c.value === persona.category)?.color || 'neutral')}
+                              ${getCategoryDotClass(CATEGORY_COLOR_MAP[persona.category] || 'neutral')}
                             `}
                           />
                           <span className="font-medium text-sm">{persona.name}</span>
@@ -293,7 +297,7 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
 
         {/* Category filter */}
         <div className="flex flex-wrap gap-2 mb-4">
-          {categories.map(category => (
+          {CATEGORIES.map(category => (
             <button
               key={category.value}
               onClick={() => setSelectedCategory(category.value)}
@@ -337,7 +341,7 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
                       <div
                         className={`
                           w-3 h-3 rounded-full
-                          ${getCategoryDotClass(categories.find(c => c.value === persona.category)?.color || 'neutral')}
+                          ${getCategoryDotClass(CATEGORY_COLOR_MAP[persona.category] || 'neutral')}
                         `}
                       />
                       <h4 className="font-semibold">{persona.name}</h4>
