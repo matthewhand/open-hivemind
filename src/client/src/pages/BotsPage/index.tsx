@@ -487,6 +487,30 @@ const BotsPage: React.FC = () => {
         }}
       />
       </div>
+
+      {/* Mobile FABs — primary page actions for small viewports.
+          Desktop uses the inline header buttons; FABs are hidden via md:hidden. */}
+      {isMobile && (
+        <>
+          <button
+            type="button"
+            className="fab-mobile fab-mobile-left md:hidden"
+            onClick={() => setIsCreateModalOpen(true)}
+            aria-label="Create bot"
+          >
+            <Plus className="w-6 h-6" />
+          </button>
+          <button
+            type="button"
+            className="fab-mobile fab-mobile-right md:hidden"
+            onClick={fetchBots}
+            disabled={botsLoading}
+            aria-label="Refresh bots"
+          >
+            <RefreshCw className={`w-6 h-6 ${botsLoading ? 'animate-spin' : ''}`} />
+          </button>
+        </>
+      )}
     </div>
   );
 };
