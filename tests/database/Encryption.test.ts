@@ -7,6 +7,14 @@ describe('Database At-Rest Encryption', () => {
   let repository: BotConfigRepository;
   let mockDb: jest.Mocked<IDatabase>;
 
+  beforeAll(() => {
+    (encryptionService as any).encryptionKey = Buffer.alloc(32, 'test-key');
+  });
+
+  afterAll(() => {
+    (encryptionService as any).encryptionKey = null;
+  });
+
   beforeEach(() => {
     mockDb = {
       run: jest.fn().mockResolvedValue({ lastID: 1, changes: 1 }),
