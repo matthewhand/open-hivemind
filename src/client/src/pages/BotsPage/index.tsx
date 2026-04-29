@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Bot as BotIcon, Download, LayoutGrid, List, Pause, Play, Plus, RefreshCw, Settings, Trash2, Upload as UploadIcon } from 'lucide-react';
+import { Bot as BotIcon, Check, Download, LayoutGrid, List, Pause, Play, Plus, RefreshCw, Settings, Trash2, Upload as UploadIcon } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import Tabs from '../../components/DaisyUI/Tabs';
@@ -11,6 +11,7 @@ import BulkActionBar from '../../components/BulkActionBar';
 import Button from '../../components/DaisyUI/Button';
 import DetailDrawer from '../../components/DaisyUI/DetailDrawer';
 import { SkeletonPage } from '../../components/DaisyUI/Skeleton';
+import Dropdown from '../../components/DaisyUI/Dropdown';
 import Swap from '../../components/DaisyUI/Swap';
 import { useErrorToast, useSuccessToast } from '../../components/DaisyUI/ToastNotification';
 import SearchFilterBar from '../../components/SearchFilterBar';
@@ -184,34 +185,49 @@ const BotsPage: React.FC = () => {
               <option value="active">Active Only</option>
               <option value="inactive">Inactive Only</option>
             </Select>
-            <Tooltip content={
-              viewMode === 'swarm3d' ? 'Switch to grid view'
-                : viewMode === 'compact' ? 'Switch to 3D swarm view'
-                : 'Switch to compact view'
-            }>
-              <div
-                className="btn btn-ghost btn-sm btn-square"
-                role="button"
-                tabIndex={0}
-                onClick={() => setViewMode(
-                  viewMode === 'default' ? 'compact'
-                    : viewMode === 'compact' ? 'swarm3d'
-                    : 'default'
-                )}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault();
-                  setViewMode(viewMode === 'default' ? 'compact' : viewMode === 'compact' ? 'swarm3d' : 'default');
-                }}}
-                aria-label="Switch view"
-              >
-                {viewMode === 'swarm3d' ? (
-                  <LayoutGrid className="w-4 h-4" />
+            <Dropdown
+              trigger={
+                viewMode === 'swarm3d' ? (
+                  <BotIcon className="w-4 h-4" aria-hidden="true" />
                 ) : viewMode === 'compact' ? (
-                  <BotIcon className="w-4 h-4" />
+                  <List className="w-4 h-4" aria-hidden="true" />
                 ) : (
-                  <List className="w-4 h-4" />
-                )}
-              </div>
-            </Tooltip>
+                  <LayoutGrid className="w-4 h-4" aria-hidden="true" />
+                )
+              }
+              position="bottom"
+              color="ghost"
+              size="sm"
+              className="dropdown-end"
+              triggerClassName="btn-square"
+              contentClassName="shadow-lg w-44 z-20"
+              hideArrow
+              aria-label={`Change view (current: ${
+                viewMode === 'swarm3d' ? '3D Swarm' : viewMode === 'compact' ? 'Compact' : 'Grid'
+              })`}
+            >
+              {([
+                { value: 'default', label: 'Grid', icon: <LayoutGrid className="w-4 h-4" aria-hidden="true" /> },
+                { value: 'compact', label: 'Compact', icon: <List className="w-4 h-4" aria-hidden="true" /> },
+                { value: 'swarm3d', label: '3D Swarm', icon: <BotIcon className="w-4 h-4" aria-hidden="true" /> },
+              ] as const).map((opt) => {
+                const isActive = viewMode === opt.value;
+                return (
+                  <li key={opt.value}>
+                    <a
+                      onClick={(e) => { e.stopPropagation(); setViewMode(opt.value); }}
+                      className={`flex items-center gap-2 ${isActive ? 'active font-semibold' : ''}`}
+                      role="menuitemradio"
+                      aria-checked={isActive}
+                    >
+                      {opt.icon}
+                      <span className="flex-1">{opt.label}</span>
+                      {isActive && <Check className="w-4 h-4 text-primary" aria-hidden="true" />}
+                    </a>
+                  </li>
+                );
+              })}
+            </Dropdown>
             <Tooltip content="Refresh list">
               <Button
                 variant="ghost"
