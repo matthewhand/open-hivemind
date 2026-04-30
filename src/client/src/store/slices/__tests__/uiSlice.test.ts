@@ -1,7 +1,7 @@
 /**
  * Tests for uiStore (Zustand) — migrated from the old Redux uiSlice tests.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useUIStore } from '../../uiStore';
 
 // Reset Zustand store state between tests
@@ -179,6 +179,64 @@ describe('uiStore', () => {
     it('should set active section', () => {
       useUIStore.getState().setActiveSection('dashboard');
       expect(useUIStore.getState().activeSection).toBe('dashboard');
+    });
+  });
+
+  /**
+   * Regression coverage for PR #2659 — density settings used to be "dead":
+   * the JS state was set, but no DOM/CSS effect happened. These tests lock
+   * in the contract that setDensity / setCompactDensity / initializeFromLocalStorage
+   * each apply data-* attributes to <html>, which CSS variables key off of.
+   */
+  describe('density DOM side effects (PR #2659 regression)', () => {
+    afterEach(() => {
+      document.documentElement.removeAttribute('data-density');
+      document.documentElement.removeAttribute('data-compact-density');
+    });
+
+    it('setDensity("compact") writes data-density="compact" to <html>', () => {
+      useUIStore.getState().setDensity('compact');
+      expect(document.documentElement.getAttribute('data-density')).toBe('compact');
+    });
+
+    it('setDensity("comfortable") writes data-density="comfortable" to <html>', () => {
+      useUIStore.getState().setDensity('comfortable');
+      expect(document.documentElement.getAttribute('data-density')).toBe('comfortable');
+    });
+
+    it('setDensity("spacious") writes data-density="spacious" to <html>', () => {
+      useUIStore.getState().setDensity('spacious');
+      expect(document.documentElement.getAttribute('data-density')).toBe('spacious');
+    });
+
+    it('setCompactDensity(true) writes data-compact-density="true" to <html>', () => {
+      useUIStore.getState().setCompactDensity(true);
+      expect(document.documentElement.getAttribute('data-compact-density')).toBe('true');
+    });
+
+    it('setCompactDensity(false) writes data-compact-density="false" to <html>', () => {
+      useUIStore.getState().setCompactDensity(true);
+      useUIStore.getState().setCompactDensity(false);
+      expect(document.documentElement.getAttribute('data-compact-density')).toBe('false');
+    });
+
+    it('initializeFromLocalStorage applies persisted density and compactDensity to <html>', () => {
+      // setupTests.ts replaces localStorage with vi.fn() mocks, so we drive
+      // getItem directly. This still exercises the real initializeFromLocalStorage
+      // path (string-vs-bool parsing + setAttribute calls).
+      const getItemSpy = vi.spyOn(localStorage, 'getItem').mockImplementation((key: string) => {
+        if (key === 'density') return 'spacious';
+        if (key === 'compactDensity') return 'true';
+        return null;
+      });
+
+      try {
+        useUIStore.getState().initializeFromLocalStorage();
+        expect(document.documentElement.getAttribute('data-density')).toBe('spacious');
+        expect(document.documentElement.getAttribute('data-compact-density')).toBe('true');
+      } finally {
+        getItemSpy.mockRestore();
+      }
     });
   });
 });
