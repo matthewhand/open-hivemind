@@ -30,6 +30,7 @@ import {
   Rows2,
   Rows3,
   Rows4,
+  ShieldAlert,
 } from 'lucide-react';
 
 type Density = 'compact' | 'comfortable' | 'spacious';
