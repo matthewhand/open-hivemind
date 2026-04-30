@@ -49,6 +49,24 @@ export default class DuplicateMessageDetector {
   }
 
   /**
+   * Optimized early-break filter for sliding window history.
+   * Leverages the fact that history is chronologically ordered (oldest first).
+   */
+  private filterRecentMessages(
+    history: MessageRecord[],
+    windowMs: number,
+    now: number
+  ): MessageRecord[] {
+    const threshold = now - windowMs;
+    let keepCount = 0;
+    for (let i = history.length - 1; i >= 0; i--) {
+      if (history[i].timestamp <= threshold) break;
+      keepCount++;
+    }
+    return keepCount === history.length ? history : history.slice(history.length - keepCount);
+  }
+
+  /**
    * Check if a message is a duplicate
    * @param channelId The channel ID
    * @param content The message content to check
@@ -75,7 +93,7 @@ export default class DuplicateMessageDetector {
       const history = this.recentMessages.get(channelId) || [];
 
       // Clean up old messages outside the time window
-      const recentHistory = history.filter((msg) => now - msg.timestamp < windowMs);
+      const recentHistory = this.filterRecentMessages(history, windowMs, now);
 
       // Normalize content for comparison (trim, lowercase, remove extra whitespace)
       const normalizedContent = this.normalizeContent(content);
@@ -192,7 +210,7 @@ export default class DuplicateMessageDetector {
       let history = this.recentMessages.get(channelId) || [];
 
       // Clean up old messages
-      history = history.filter((msg) => now - msg.timestamp < windowMs);
+      history = this.filterRecentMessages(history, windowMs, now);
 
       // Add new message
       history.push({
@@ -238,9 +256,7 @@ export default class DuplicateMessageDetector {
 
       const now = Date.now();
       const history = this.recentMessages.get(channelId) || [];
-      const recentHistory = history
-        .filter((msg) => now - msg.timestamp < windowMs)
-        .slice(-historySize);
+      const recentHistory = this.filterRecentMessages(history, windowMs, now).slice(-historySize);
 
       if (recentHistory.length < minHistory) {
         return 0;
@@ -400,7 +416,7 @@ export default class DuplicateMessageDetector {
 
     // Remove expired messages from each channel
     for (const [channelId, history] of this.recentMessages) {
-      const filtered = history.filter((msg) => now - msg.timestamp < windowMs);
+      const filtered = this.filterRecentMessages(history, windowMs, now);
       if (filtered.length === 0) {
         this.recentMessages.delete(channelId);
         cleaned++;

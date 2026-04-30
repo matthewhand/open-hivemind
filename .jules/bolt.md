@@ -35,3 +35,6 @@
 ## 2026-04-25 - Optimize MCPServers array lookup
 **Learning:** React component renders often contain hidden O(N^2) complexity when checking for array duplicates using `.find()` inside `.forEach()` or `.map()` loops.
 **Action:** Replace nested array `.find()` operations during bulk processing with a pre-computed `Set` to achieve O(1) membership testing and linear overall time complexity.
+## 2024-05-23 - Sliding Window Optimization Helper
+**Learning:** While replacing `.filter()` with a reverse `for` loop improves performance in sliding window calculations, doing it inline multiple times severely degrades readability and maintainability.
+**Action:** Extract the repetitive early-break loop logic into a private helper method (e.g., `filterRecentMessages`). This provides the performance benefit of O(K) complexity and reduced memory allocation without violating DRY principles.
