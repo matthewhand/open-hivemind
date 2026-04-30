@@ -27,7 +27,20 @@ import {
   Play,
   Square,
   SearchCode,
+  Rows2,
+  Rows3,
+  Rows4,
 } from 'lucide-react';
+
+type Density = 'compact' | 'comfortable' | 'spacious';
+
+const DENSITY_ORDER: Density[] = ['compact', 'comfortable', 'spacious'];
+
+const DENSITY_META: Record<Density, { label: string; icon: typeof Rows2; description: string }> = {
+  compact:    { label: 'Compact',    icon: Rows4, description: 'Tighter spacing, more content per screen' },
+  comfortable:{ label: 'Comfortable',icon: Rows3, description: 'Balanced spacing (default)' },
+  spacious:   { label: 'Spacious',   icon: Rows2, description: 'Generous spacing, easier to scan' },
+};
 
 interface NavItem {
   id: string;
@@ -271,6 +284,17 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
 
   const uiTheme = useUIStore((s) => s.theme);
   const setUiTheme = useUIStore((s) => s.setTheme);
+
+  const density = useUIStore((s) => s.density);
+  const setDensity = useUIStore((s) => s.setDensity);
+
+  const densityMeta = DENSITY_META[density];
+  const DensityIcon = densityMeta.icon;
+  const cycleDensity = () => {
+    const idx = DENSITY_ORDER.indexOf(density);
+    const next = DENSITY_ORDER[(idx + 1) % DENSITY_ORDER.length];
+    setDensity(next);
+  };
 
   return (
     <>
@@ -516,6 +540,22 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
         </div>
 
         <Divider vertical className="h-6 mx-0 hidden sm:flex" />
+
+        {/* Density Quick Toggle — cycles compact -> comfortable -> spacious. Same store as Settings page slider. */}
+        <Tooltip
+          content={`Density: ${densityMeta.label}. Click to cycle to ${DENSITY_META[DENSITY_ORDER[(DENSITY_ORDER.indexOf(density) + 1) % DENSITY_ORDER.length]].label}.`}
+          position="bottom"
+        >
+          <button
+            type="button"
+            className="btn btn-ghost btn-circle btn-sm hidden sm:inline-flex"
+            onClick={cycleDensity}
+            aria-label={`UI density: ${densityMeta.label}. Activate to switch density.`}
+            data-density={density}
+          >
+            <DensityIcon className="w-5 h-5" />
+          </button>
+        </Tooltip>
 
         {/* Improved Theme Switcher integration */}
         <div className="hidden sm:flex">
