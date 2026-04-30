@@ -35,7 +35,3 @@
 ## 2026-04-25 - Optimize MCPServers array lookup
 **Learning:** React component renders often contain hidden O(N^2) complexity when checking for array duplicates using `.find()` inside `.forEach()` or `.map()` loops.
 **Action:** Replace nested array `.find()` operations during bulk processing with a pre-computed `Set` to achieve O(1) membership testing and linear overall time complexity.
-
-## 2026-04-30 - Optimizing nested list component tracking
-**Learning:** In `DaisyUIComponentTracker`, performing a `.find()` inside a `.map()` to correlate usage stats creates an O(N*M) lookup that scales poorly as the number of tracked components increases. This is a common React anti-pattern when rendering stats or complex lists.
-**Action:** Use `useMemo` to pre-calculate a lookup Map (e.g., `new Map(items.map(i => [i.key, i]))`) before the mapping loop, bringing the complexity down to O(N + M). This ensures O(1) lookups during the render cycle.
