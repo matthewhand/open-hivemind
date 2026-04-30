@@ -1,10 +1,16 @@
-import React, { ReactNode } from 'react';
+import React, { memo, ReactNode } from 'react';
 import { RefreshCw } from 'lucide-react';
 
 export interface MobileFABProps {
   /** Which side of the viewport to anchor the FAB to. */
   position: 'left' | 'right';
-  /** Icon node rendered inside the FAB. Replaced by a spinner when `loading` is true. */
+  /**
+   * Icon node rendered inside the FAB.
+   *
+   * NOTE: When `loading` is `true`, this prop is **ignored** and replaced by a
+   * hardcoded `RefreshCw` spinner with `animate-spin`. The caller's `icon` is
+   * not preserved during the loading state.
+   */
   icon: ReactNode;
   /** Click handler. */
   onClick: () => void;
@@ -12,7 +18,11 @@ export interface MobileFABProps {
   ariaLabel: string;
   /** Disables the button. */
   disabled?: boolean;
-  /** When true, the icon is replaced by an animated spinner. */
+  /**
+   * When `true`, the supplied `icon` is replaced by a hardcoded animated
+   * `RefreshCw` spinner. The caller's `icon` value is discarded for the
+   * duration of the loading state.
+   */
   loading?: boolean;
   /** Additional Tailwind classes (appended after the FAB classes). */
   className?: string;
@@ -51,4 +61,4 @@ const MobileFAB: React.FC<MobileFABProps> = ({
   );
 };
 
-export default MobileFAB;
+export default memo(MobileFAB);
