@@ -6,6 +6,16 @@ import { IDatabase } from '../../src/database/types';
 describe('Database At-Rest Encryption', () => {
   let repository: BotConfigRepository;
   let mockDb: jest.Mocked<IDatabase>;
+  let originalKey: any;
+
+  beforeAll(() => {
+    originalKey = (encryptionService as any).encryptionKey;
+    (encryptionService as any).encryptionKey = Buffer.alloc(32, 'a');
+  });
+
+  afterAll(() => {
+    (encryptionService as any).encryptionKey = originalKey;
+  });
 
   beforeEach(() => {
     mockDb = {
