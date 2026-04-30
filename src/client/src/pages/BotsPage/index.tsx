@@ -14,6 +14,7 @@ import { SkeletonPage } from '../../components/DaisyUI/Skeleton';
 import Dropdown from '../../components/DaisyUI/Dropdown';
 import Swap from '../../components/DaisyUI/Swap';
 import { useErrorToast, useSuccessToast } from '../../components/DaisyUI/ToastNotification';
+import MobileFAB from '../../components/MobileFAB';
 import SearchFilterBar from '../../components/SearchFilterBar';
 import Tooltip from '../../components/DaisyUI/Tooltip';
 import { PROVIDER_CATEGORIES } from '../../config/providers';
@@ -492,23 +493,20 @@ const BotsPage: React.FC = () => {
           Desktop uses the inline header buttons; FABs are hidden via md:hidden. */}
       {isMobile && (
         <>
-          <button
-            type="button"
-            className="fab-mobile fab-mobile-left md:hidden"
+          <MobileFAB
+            position="left"
+            icon={<Plus className="w-6 h-6" />}
             onClick={() => setIsCreateModalOpen(true)}
-            aria-label="Create bot"
-          >
-            <Plus className="w-6 h-6" />
-          </button>
-          <button
-            type="button"
-            className="fab-mobile fab-mobile-right md:hidden"
+            ariaLabel="Create bot"
+          />
+          <MobileFAB
+            position="right"
+            icon={<RefreshCw className="w-6 h-6" />}
             onClick={fetchBots}
             disabled={botsLoading}
-            aria-label="Refresh bots"
-          >
-            <RefreshCw className={`w-6 h-6 ${botsLoading ? 'animate-spin' : ''}`} />
-          </button>
+            loading={botsLoading}
+            ariaLabel="Refresh bots"
+          />
         </>
       )}
     </div>
