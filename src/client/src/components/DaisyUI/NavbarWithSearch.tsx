@@ -291,10 +291,10 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
 
   const densityMeta = DENSITY_META[density];
   const DensityIcon = densityMeta.icon;
+  const nextDensity = DENSITY_ORDER[(DENSITY_ORDER.indexOf(density) + 1) % DENSITY_ORDER.length];
+  const nextDensityMeta = DENSITY_META[nextDensity];
   const cycleDensity = () => {
-    const idx = DENSITY_ORDER.indexOf(density);
-    const next = DENSITY_ORDER[(idx + 1) % DENSITY_ORDER.length];
-    setDensity(next);
+    setDensity(nextDensity);
   };
 
   return (
@@ -544,7 +544,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
 
         {/* Density Quick Toggle — cycles compact -> comfortable -> spacious. Same store as Settings page slider. */}
         <Tooltip
-          content={`Density: ${densityMeta.label}. Click to cycle to ${DENSITY_META[DENSITY_ORDER[(DENSITY_ORDER.indexOf(density) + 1) % DENSITY_ORDER.length]].label}.`}
+          content={`Density: ${densityMeta.label}. Click to cycle to ${nextDensityMeta.label}.`}
           position="bottom"
         >
           <button
