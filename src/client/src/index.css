@@ -215,6 +215,7 @@ textarea {
 .menu li>a,
 .menu li>button {
   transition: all 0.15s ease;
+  padding: calc(0.5rem * var(--density-scale, 1)) calc(1rem * var(--density-scale, 1));
 }
 
 .menu li>a:hover,
@@ -248,12 +249,12 @@ textarea {
   text-transform: uppercase;
   font-size: 0.75rem;
   color: hsl(var(--bc) / 0.8);
-  padding: 1rem 1.25rem;
+  padding: calc(1rem * var(--density-scale, 1)) calc(1.25rem * var(--density-scale, 1));
   border-bottom: 2px solid hsl(var(--bc) / 0.1);
 }
 
 .table td {
-  padding: 0.875rem 1.25rem;
+  padding: calc(0.875rem * var(--density-scale, 1)) calc(1.25rem * var(--density-scale, 1));
   border-bottom: 1px solid hsl(var(--bc) / 0.05);
 }
 
@@ -345,6 +346,7 @@ dialog.modal:not([open]) {
   box-shadow:
     0 25px 50px rgba(0, 0, 0, 0.4),
     0 0 1px rgba(255, 255, 255, 0.1);
+  padding: calc(1.5rem * var(--density-scale, 1));
 }
 
 @keyframes modalScale {
