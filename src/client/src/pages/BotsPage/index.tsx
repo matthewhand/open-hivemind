@@ -200,12 +200,12 @@ const BotsPage: React.FC = () => {
               color="ghost"
               size="sm"
               className="dropdown-end"
-              triggerClassName="btn-square focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none"
+              triggerClassName="btn-square focus-visible:ring-2 ring-base-content focus-visible:ring-offset-2 ring-offset-base-100 focus-visible:outline-none"
               contentClassName="shadow-lg w-44 z-20"
               hideArrow
               aria-label={`View mode: ${
                 viewMode === 'swarm3d' ? '3D Swarm' : viewMode === 'compact' ? 'Compact' : 'Grid'
-              } (click to change)`}
+              }`}
             >
               {([
                 { value: 'default', label: 'Grid', icon: <LayoutGrid className="w-4 h-4" aria-hidden="true" /> },
@@ -217,7 +217,7 @@ const BotsPage: React.FC = () => {
                   <li key={opt.value}>
                     <a
                       onClick={(e) => { e.stopPropagation(); setViewMode(opt.value); }}
-                      className={`flex items-center gap-2 ${isActive ? 'active font-semibold bg-base-200' : ''}`}
+                      className={`flex items-center gap-2 ${isActive ? 'active font-semibold bg-base-200 border-l-2 border-primary pl-2' : ''}`}
                       role="menuitemradio"
                       aria-checked={isActive}
                     >
