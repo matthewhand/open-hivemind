@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Bot as BotIcon, Check, Download, LayoutGrid, List, Pause, Play, Plus, RefreshCw, Settings, Trash2, Upload as UploadIcon } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import Tabs from '../../components/DaisyUI/Tabs';
 import BotSettingsTab from './BotSettingsTab';
@@ -37,6 +37,12 @@ import { useSavedStamp } from '../../contexts/SavedStampContext';
 import Select from '../../components/DaisyUI/Select';
 import { BotDetailContent } from './BotDetailContent';
 
+// Hoisted icon constants — passed as the `icon` prop to React.memo(MobileFAB).
+// Inlining `<Plus className="..." />` at the call site allocates a new React
+// element on every render, defeating MobileFAB's shallow-compare memoization.
+const PLUS_ICON = <Plus className="w-6 h-6" />;
+const REFRESH_ICON = <RefreshCw className="w-6 h-6" />;
+
 const BotsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const { values: urlParams, setValue: setUrlParam } = useUrlParams({
@@ -45,11 +51,22 @@ const BotsPage: React.FC = () => {
     view: { type: 'string', default: 'default' },
   });
   const searchQuery = urlParams.search;
-  const setSearchQuery = (v: string) => setUrlParam('search', v);
+  // Wrap setters in useCallback so they're stable across renders. Without this,
+  // these inline arrow functions are recreated every render and would invalidate
+  // any downstream memoization (e.g. instancesContent useMemo) that depends on
+  // them. setUrlParam is stable (memoized inside useUrlParams), so [setUrlParam]
+  // is a sufficient dep list.
+  const setSearchQuery = useCallback((v: string) => setUrlParam('search', v), [setUrlParam]);
   const filterType = urlParams.status as 'all' | 'active' | 'inactive';
-  const setFilterType = (v: 'all' | 'active' | 'inactive') => setUrlParam('status', v);
+  const setFilterType = useCallback(
+    (v: 'all' | 'active' | 'inactive') => setUrlParam('status', v),
+    [setUrlParam],
+  );
   const viewMode = urlParams.view as 'default' | 'compact' | 'swarm3d';
-  const setViewMode = (v: 'default' | 'compact' | 'swarm3d') => setUrlParam('view', v);
+  const setViewMode = useCallback(
+    (v: 'default' | 'compact' | 'swarm3d') => setUrlParam('view', v),
+    [setUrlParam],
+  );
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingBot, setEditingBot] = useState<BotConfig | null>(null);
@@ -494,13 +511,13 @@ const BotsPage: React.FC = () => {
         <>
           <MobileFAB
             position="left"
-            icon={<Plus className="w-6 h-6" />}
+            icon={PLUS_ICON}
             onClick={() => setIsCreateModalOpen(true)}
             ariaLabel="Create bot"
           />
           <MobileFAB
             position="right"
-            icon={<RefreshCw className="w-6 h-6" />}
+            icon={REFRESH_ICON}
             onClick={fetchBots}
             disabled={botsLoading}
             loading={botsLoading}
