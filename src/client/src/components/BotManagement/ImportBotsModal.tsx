@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   FileJson, AlertTriangle, CheckCircle, XCircle,
   RefreshCw, X, ArrowRight,
@@ -137,6 +137,17 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
   const newCount = conflicts.filter((c) => !c.isConflict).length;
   const conflictCount = conflicts.filter((c) => c.isConflict).length;
 
+  // Pre-index bundle.bots by name so the conflict-table render loop is
+  // O(N) instead of O(N²) (was: `bundle.bots.find(b => b.name === c.name)`
+  // inside `conflicts.map`).
+  const botsByName = useMemo(() => {
+    const map = new Map<string, (typeof bundle)['bots'][number]>();
+    if (bundle?.bots) {
+      for (const b of bundle.bots) map.set(b.name, b);
+    }
+    return map;
+  }, [bundle]);
+
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Import Bot Configurations" size="lg">
       <div className="space-y-4">
@@ -173,7 +184,7 @@ const ImportBotsModal: React.FC<ImportBotsModalProps> = ({
                 <thead><tr><th>Name</th><th>Message Provider</th><th>LLM Provider</th><th>Status</th></tr></thead>
                 <tbody>
                   {conflicts.map((c) => {
-                    const bot = bundle.bots.find((b) => b.name === c.name);
+                    const bot = botsByName.get(c.name);
                     return (
                       <tr key={c.name}>
                         <td className="font-medium">{c.name}</td>
