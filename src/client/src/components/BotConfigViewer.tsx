@@ -172,12 +172,14 @@ const BotConfigViewer: React.FC<BotConfigViewerProps> = ({
                 <button 
                   className={`btn btn-xs ${viewMode === 'terminal' ? 'btn-active' : 'btn-ghost'}`}
                   onClick={() => setViewMode('terminal')}
+                  aria-pressed={viewMode === 'terminal'}
                 >
                   Terminal
                 </button>
                 <button 
                   className={`btn btn-xs ${viewMode === 'json' ? 'btn-active' : 'btn-ghost'}`}
                   onClick={() => setViewMode('json')}
+                  aria-pressed={viewMode === 'json'}
                 >
                   JSON
                 </button>
