@@ -1,33 +1,33 @@
-import { Router, Request, Response } from 'express';
+import { Router, type Request, type Response } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { createLogger } from '../../common/StructuredLogger';
+import { DatabaseManager } from '../../database/DatabaseManager';
 import { BotManager } from '../../managers/BotManager';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { ERROR_CODES, HTTP_STATUS } from '../../types/constants';
 import {
   BotActivityQuerySchema,
+  BotGenerateConfigSchema,
   BotHistoryQuerySchema,
   BotIdParamSchema,
+  BotImportSchema,
+  BotTaskCreateSchema,
+  BotTestChatSchema,
   BotVersionParamSchema,
   CloneBotSchema,
   CreateBotSchema,
   UpdateBotSchema,
-  BotImportSchema,
-  BotGenerateConfigSchema,
-  BotTestChatSchema,
-  BotTaskCreateSchema,
 } from '../../validation/schemas/botsSchema';
 import { ReorderSchema } from '../../validation/schemas/commonSchema';
 import { validateRequest } from '../../validation/validateRequest';
-import { BotRouteService } from '../services/BotRouteService';
-import { WebSocketService } from '../services/WebSocketService';
-import { DatabaseManager } from '../../database/DatabaseManager';
-import { ConfigurationVersionService } from '../services/ConfigurationVersionService';
 import { ActivityLogger } from '../services/ActivityLogger';
-import { BotInsightsService } from '../services/BotInsightsService';
 import { BotBenchmarkService } from '../services/BotBenchmarkService';
+import { BotInsightsService } from '../services/BotInsightsService';
+import { BotRouteService } from '../services/BotRouteService';
 import { BotStressTestService } from '../services/BotStressTestService';
 import { BotTaskScheduler } from '../services/BotTaskScheduler';
+import { ConfigurationVersionService } from '../services/ConfigurationVersionService';
+import { WebSocketService } from '../services/WebSocketService';
 
 const router = Router();
 const logger = createLogger('botsRouter');
@@ -111,18 +111,21 @@ router.put(
  *     summary: Export all bots (sensitive fields redacted)
  *     tags: [Bots]
  */
-router.get('/export', asyncErrorHandler(async (_req: Request, res: Response) => {
-  const manager = await managerPromise;
-  const bots = await manager.getAllBots();
-  const sanitized = bots.map((bot) => botRouteService.sanitizeBotForExport(bot));
-  return res.json(
-    ApiResponse.success({
-      schemaVersion: EXPORT_SCHEMA_VERSION,
-      exportedAt: new Date().toISOString(),
-      bots: sanitized,
-    })
-  );
-}));
+router.get(
+  '/export',
+  asyncErrorHandler(async (_req: Request, res: Response) => {
+    const manager = await managerPromise;
+    const bots = await manager.getAllBots();
+    const sanitized = bots.map((bot) => botRouteService.sanitizeBotForExport(bot));
+    return res.json(
+      ApiResponse.success({
+        schemaVersion: EXPORT_SCHEMA_VERSION,
+        exportedAt: new Date().toISOString(),
+        bots: sanitized,
+      })
+    );
+  })
+);
 
 /**
  * @openapi
@@ -163,7 +166,9 @@ router.get(
     const { id } = req.params;
     const bot = await manager.getBot(id);
     if (!bot) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
     }
 
     const statuses = await manager.getBotsStatus();
@@ -305,10 +310,12 @@ router.post(
   asyncErrorHandler(async (req: Request, res: Response) => {
     const manager = await managerPromise;
     const { id } = req.params;
-    
+
     const bot = await manager.getBot(id);
     if (!bot) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
     }
 
     await manager.startBot(id);
@@ -329,10 +336,12 @@ router.post(
   asyncErrorHandler(async (req: Request, res: Response) => {
     const manager = await managerPromise;
     const { id } = req.params;
-    
+
     const bot = await manager.getBot(id);
     if (!bot) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
     }
 
     await manager.stopBot(id);
@@ -357,7 +366,9 @@ router.get(
 
     const bot = await manager.getBot(id);
     if (!bot) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
     }
 
     let parsedLimit = limit ? parseInt(limit as string, 10) : 20;
@@ -387,7 +398,9 @@ router.get(
 
     const bot = await manager.getBot(id);
     if (!bot) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
     }
 
     const events = await ActivityLogger.getInstance().getEvents({
@@ -435,7 +448,9 @@ router.get(
     const { id } = req.params;
     const bot = await manager.getBot(id);
     if (!bot) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
     }
 
     const dbManager = DatabaseManager.getInstance();
@@ -466,13 +481,17 @@ router.post(
     const { id, versionId } = req.params;
     const bot = await manager.getBot(id);
     if (!bot) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
     }
 
     const dbManager = DatabaseManager.getInstance();
     const config = await dbManager.getBotConfigurationByName(bot.name);
     if (!config || !config.id) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Bot configuration not found'));
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Bot configuration not found'));
     }
 
     await ConfigurationVersionService.getInstance().restoreVersion(config.id, versionId, 'system');
@@ -496,7 +515,9 @@ router.get(
     const manager = await managerPromise;
     const bot = await manager.getBot(req.params.id);
     if (!bot) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
     }
     const sanitized = botRouteService.sanitizeBotForExport(bot);
     return res.json(
@@ -525,7 +546,9 @@ router.post(
       const generated = await botRouteService.generateConfig(description);
       return res.json(ApiResponse.success(generated));
     } catch (error: any) {
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error(error.message || 'Generation failed'));
+      return res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error(error.message || 'Generation failed'));
     }
   })
 );
@@ -545,7 +568,10 @@ router.get(
       const results = await botRouteService.runDiagnostic(req.params.id);
       return res.json(ApiResponse.success(results));
     } catch (error: any) {
-      const status = error.message === 'Bot not found' ? HTTP_STATUS.NOT_FOUND : HTTP_STATUS.INTERNAL_SERVER_ERROR;
+      const status =
+        error.message === 'Bot not found'
+          ? HTTP_STATUS.NOT_FOUND
+          : HTTP_STATUS.INTERNAL_SERVER_ERROR;
       return res.status(status).json(ApiResponse.error(error.message || 'Diagnostic failed'));
     }
   })
@@ -567,7 +593,9 @@ router.post(
       const response = await botRouteService.testChat(botConfig, message, history);
       return res.json(ApiResponse.success({ response }));
     } catch (error: any) {
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(ApiResponse.error(error.message || 'Test chat failed'));
+      return res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error(error.message || 'Test chat failed'));
     }
   })
 );
@@ -586,7 +614,9 @@ router.get(
     const manager = await managerPromise;
     const bot = await manager.getBot(req.params.id);
     if (!bot) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
     }
 
     const insights = await BotInsightsService.getInstance().generateInsights(bot);
@@ -608,7 +638,9 @@ router.post(
     const manager = await managerPromise;
     const bot = await manager.getBot(req.params.id);
     if (!bot) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
     }
 
     const summary = await BotBenchmarkService.getInstance().runBenchmark(bot);
@@ -630,7 +662,9 @@ router.post(
     const manager = await managerPromise;
     const bot = await manager.getBot(req.params.id);
     if (!bot) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
     }
 
     const report = await BotStressTestService.getInstance().runStressTest(bot);
@@ -655,10 +689,17 @@ router.post(
     const manager = await managerPromise;
     const bot = await manager.getBot(id);
     if (!bot) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
     }
 
-    const task = await BotTaskScheduler.getInstance().scheduleTask(bot.id, bot.name, prompt, intervalMinutes);
+    const task = await BotTaskScheduler.getInstance().scheduleTask(
+      bot.id,
+      bot.name,
+      prompt,
+      intervalMinutes
+    );
     return res.json(ApiResponse.success(task));
   })
 );

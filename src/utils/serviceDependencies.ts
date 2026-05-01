@@ -1,15 +1,13 @@
-import { container, TOKENS } from '../di/container';
-import type { IServiceDependencies } from '@hivemind/shared-types';
+import {
+  ApiError,
+  BaseError,
+  ConfigurationError,
+  NetworkError,
+  ValidationError,
+  type IServiceDependencies,
+} from '@hivemind/shared-types';
 import Logger from '../common/logger';
 import { DatabaseManager } from '../database/DatabaseManager';
-import { getLlmProvider } from '../llm/getLlmProvider';
-import { 
-  BaseError, 
-  ValidationError, 
-  NetworkError, 
-  ApiError, 
-  ConfigurationError 
-} from '@hivemind/shared-types';
 
 /**
  * Construct IServiceDependencies from the DI container and system services.
@@ -38,8 +36,8 @@ export function getServiceDependencies(context: string): IServiceDependencies {
       return [];
     },
     isBotDisabled: (name: string) => {
-       const { BotConfigurationManager } = require('../config/BotConfigurationManager');
-       return !BotConfigurationManager.getInstance().getBotConfig(name)?.isActive;
-    }
+      const { BotConfigurationManager } = require('../config/BotConfigurationManager');
+      return !BotConfigurationManager.getInstance().getBotConfig(name)?.isActive;
+    },
   };
 }

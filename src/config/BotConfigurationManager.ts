@@ -124,7 +124,7 @@ export class BotConfigurationManager {
         const dbBots = await dbManager.getAllBotConfigurations();
         for (const dbBot of dbBots) {
           // Database wins over files/env
-          this.bots.set(dbBot.name, dbBot as any);
+          this.bots.set(dbBot.name, dbBot as BotConfig);
         }
         debug(`Loaded ${dbBots.length} bots from database`);
       } catch (error) {

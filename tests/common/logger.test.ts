@@ -10,12 +10,12 @@ describe('Logger Persistence', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     dbManagerMock = {
       isConnected: jest.fn().mockReturnValue(true),
       saveLog: jest.fn().mockResolvedValue(undefined),
     };
-    
+
     (DatabaseManager.getInstance as jest.Mock).mockReturnValue(dbManagerMock);
   });
 
@@ -27,10 +27,12 @@ describe('Logger Persistence', () => {
 
     Logger.info('Test persistent log');
 
-    expect(dbManagerMock.saveLog).toHaveBeenCalledWith(expect.objectContaining({
-      level: 'info',
-      message: expect.stringContaining('Test persistent log'),
-    }));
+    expect(dbManagerMock.saveLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        level: 'info',
+        message: expect.stringContaining('Test persistent log'),
+      })
+    );
   });
 
   it('should not call dbManager.saveLog when LOG_TO_DATABASE is false', () => {

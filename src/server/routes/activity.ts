@@ -1,11 +1,11 @@
 import crypto from 'crypto';
 import Debug from 'debug';
-import { Router, Request, Response } from 'express';
+import { Router, type Request, type Response } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { HTTP_STATUS } from '../../types/constants';
-import { LogActivitySchema, ActivityFilterSchema } from '../../validation/schemas/activitySchema';
+import { ActivityFilterSchema, LogActivitySchema } from '../../validation/schemas/activitySchema';
 import { validateRequest } from '../../validation/validateRequest';
 
 const debug = Debug('app:webui:activity');
@@ -132,8 +132,7 @@ router.get(
       messagesByProvider: stats.providers,
       messagesByAgent: {},
       llmUsageByProvider: {},
-      timeRangeStart:
-        startDate || new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+      timeRangeStart: startDate || new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
       timeRangeEnd: endDate || new Date().toISOString(),
     };
 
@@ -146,7 +145,13 @@ router.get(
   '/chart-data',
   validateRequest(ActivityFilterSchema),
   asyncErrorHandler(async (req: Request, res: Response) => {
-    const { messageProvider, llmProvider, startDate, endDate, interval = 'hour' } = req.query as any;
+    const {
+      messageProvider,
+      llmProvider,
+      startDate,
+      endDate,
+      interval = 'hour',
+    } = req.query as any;
 
     const dbManager = DatabaseManager.getInstance();
     if (!dbManager.isConnected()) {
@@ -156,7 +161,9 @@ router.get(
     }
 
     const now = new Date();
-    const startTime = startDate ? new Date(startDate) : new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const startTime = startDate
+      ? new Date(startDate)
+      : new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const endTime = endDate ? new Date(endDate) : now;
 
     const messageActivityData: { timestamp: string; count: number; provider?: string }[] = [];

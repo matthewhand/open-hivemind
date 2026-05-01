@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { IDatabase, MemoryRecord } from '../types';
+import { type IDatabase, type MemoryRecord } from '../types';
 
 const debug = Debug('app:MemoryRepository');
 
@@ -22,9 +22,11 @@ export class MemoryRepository {
         (content, metadata, userId, agentId, sessionId, embedding) 
         VALUES (?, ?, ?, ?, ?, ${isPg ? '?::vector' : '?'})
       `;
-      
-      const embeddingValue = record.embedding 
-        ? (isPg ? `[${record.embedding.join(',')}]` : JSON.stringify(record.embedding))
+
+      const embeddingValue = record.embedding
+        ? isPg
+          ? `[${record.embedding.join(',')}]`
+          : JSON.stringify(record.embedding)
         : null;
 
       const params = [
@@ -33,7 +35,7 @@ export class MemoryRepository {
         record.userId || null,
         record.agentId || null,
         record.sessionId || null,
-        embeddingValue
+        embeddingValue,
       ];
 
       const result = await db.run(sql, params);
@@ -45,7 +47,7 @@ export class MemoryRepository {
   }
 
   async searchMemories(
-    embedding: number[], 
+    embedding: number[],
     options: { limit?: number; userId?: string; agentId?: string } = {}
   ): Promise<(MemoryRecord & { score: number })[]> {
     if (!this.isConnected()) return [];
@@ -64,33 +66,46 @@ export class MemoryRepository {
           WHERE 1=1
         `;
         const params: any[] = [vectorStr];
-        if (options.userId) { sql += ` AND userId = ?`; params.push(options.userId); }
-        if (options.agentId) { sql += ` AND agentId = ?`; params.push(options.agentId); }
+        if (options.userId) {
+          sql += ` AND userId = ?`;
+          params.push(options.userId);
+        }
+        if (options.agentId) {
+          sql += ` AND agentId = ?`;
+          params.push(options.agentId);
+        }
         sql += ` ORDER BY embedding <=> ?::vector LIMIT ?`;
         params.push(vectorStr);
         params.push(limit);
 
         const rows = await db.all(sql, params);
-        return rows.map(row => ({
+        return rows.map((row) => ({
           ...row,
           metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
-          score: parseFloat(row.score)
+          score: parseFloat(row.score),
         }));
       } else {
         // Fallback for SQLite: JS-side similarity
         debug('Performing JS-side vector similarity search for SQLite');
         let sql = `SELECT * FROM memories WHERE 1=1`;
         const params: any[] = [];
-        if (options.userId) { sql += ` AND userId = ?`; params.push(options.userId); }
-        if (options.agentId) { sql += ` AND agentId = ?`; params.push(options.agentId); }
-        
+        if (options.userId) {
+          sql += ` AND userId = ?`;
+          params.push(options.userId);
+        }
+        if (options.agentId) {
+          sql += ` AND agentId = ?`;
+          params.push(options.agentId);
+        }
+
         const rows = await db.all(sql, params);
-        
+
         const scored = rows
-          .map(row => {
-            const rowEmbedding = typeof row.embedding === 'string' ? JSON.parse(row.embedding) : row.embedding;
+          .map((row) => {
+            const rowEmbedding =
+              typeof row.embedding === 'string' ? JSON.parse(row.embedding) : row.embedding;
             if (!rowEmbedding || !Array.isArray(rowEmbedding)) return null;
-            
+
             // Cosine Similarity
             let dotProduct = 0;
             let normA = 0;
@@ -101,14 +116,14 @@ export class MemoryRepository {
               normB += rowEmbedding[i] * rowEmbedding[i];
             }
             const score = dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
-            
+
             return {
               ...row,
               metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
-              score
+              score,
             };
           })
-          .filter(r => r !== null)
+          .filter((r) => r !== null)
           .sort((a, b) => b!.score - a!.score)
           .slice(0, limit);
 
@@ -120,7 +135,9 @@ export class MemoryRepository {
     }
   }
 
-  async getMemories(options: { limit?: number; userId?: string; agentId?: string } = {}): Promise<MemoryRecord[]> {
+  async getMemories(
+    options: { limit?: number; userId?: string; agentId?: string } = {}
+  ): Promise<MemoryRecord[]> {
     if (!this.isConnected()) return [];
     const db = this.getDb();
     if (!db) return [];
@@ -143,9 +160,9 @@ export class MemoryRepository {
       params.push(limit);
 
       const rows = await db.all(sql, params);
-      return rows.map(row => ({
+      return rows.map((row) => ({
         ...row,
-        metadata: row.metadata ? JSON.parse(row.metadata) : undefined
+        metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
       }));
     } catch (error) {
       debug('Error getting memories:', error);

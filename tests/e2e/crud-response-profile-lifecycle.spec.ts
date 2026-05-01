@@ -31,7 +31,13 @@ test.describe('Swarm Orchestration Mode', () => {
         return route.fulfill({
           status: 200,
           json: {
-            user: { id: 'admin', username: 'admin', email: 'admin@open-hivemind.com', role: 'owner', permissions: ['*'] },
+            user: {
+              id: 'admin',
+              username: 'admin',
+              email: 'admin@open-hivemind.com',
+              role: 'owner',
+              permissions: ['*'],
+            },
           },
         });
       }),

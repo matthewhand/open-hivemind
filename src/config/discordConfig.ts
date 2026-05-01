@@ -104,7 +104,7 @@ const discordConfig = {
   get: (key: keyof DiscordConfig): any => config[key],
   getProperties: (): DiscordConfig => config,
   getSchema: (): any => zodToJsonSchema(DiscordSchema as any),
-  validate: (options: { allowed: 'strict' | 'warn' }): void => {
+  validate: (_options: { allowed: 'strict' | 'warn' }): void => {
     DiscordSchema.parse(config);
   }
 };

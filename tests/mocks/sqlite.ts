@@ -68,10 +68,10 @@ export class Database {
         if (args.length === 1 && Array.isArray(args[0])) {
           args = args[0];
         }
-        
+
         // Mocking better-sqlite3 style
         mockRun(sql, ...args);
-        
+
         const id = this.lastId++;
         globalLastId = id;
 
@@ -163,26 +163,26 @@ export class Database {
             createdAt: new Date(),
           });
         } else if (sql.includes('UPDATE approval_requests SET ')) {
-           const requests = this.data.get('approval_requests') || [];
-           const targetId = args[args.length - 1];
-           const req = requests.find(r => r.id === targetId);
-           if (req) {
-             if (sql.includes('status = ?')) req.status = args[0];
-             if (sql.includes('reviewedBy = ?')) req.reviewedBy = args[1];
-             if (sql.includes('reviewedAt = ?')) req.reviewedAt = normalizeDate(args[2]);
-             if (sql.includes('reviewComments = ?')) req.reviewComments = args[3];
-             return { lastInsertRowid: targetId, changes: 1 };
-           }
-           return { lastInsertRowid: targetId, changes: 0 };
+          const requests = this.data.get('approval_requests') || [];
+          const targetId = args[args.length - 1];
+          const req = requests.find((r) => r.id === targetId);
+          if (req) {
+            if (sql.includes('status = ?')) req.status = args[0];
+            if (sql.includes('reviewedBy = ?')) req.reviewedBy = args[1];
+            if (sql.includes('reviewedAt = ?')) req.reviewedAt = normalizeDate(args[2]);
+            if (sql.includes('reviewComments = ?')) req.reviewComments = args[3];
+            return { lastInsertRowid: targetId, changes: 1 };
+          }
+          return { lastInsertRowid: targetId, changes: 0 };
         } else if (sql.includes('DELETE FROM approval_requests WHERE id = ?')) {
-           const requests = this.data.get('approval_requests') || [];
-           const targetId = args[0];
-           const index = requests.findIndex(r => r.id === targetId);
-           if (index !== -1) {
-             requests.splice(index, 1);
-             return { lastInsertRowid: targetId, changes: 1 };
-           }
-           return { lastInsertRowid: targetId, changes: 0 };
+          const requests = this.data.get('approval_requests') || [];
+          const targetId = args[0];
+          const index = requests.findIndex((r) => r.id === targetId);
+          if (index !== -1) {
+            requests.splice(index, 1);
+            return { lastInsertRowid: targetId, changes: 1 };
+          }
+          return { lastInsertRowid: targetId, changes: 0 };
         }
 
         return { lastInsertRowid: id, changes: 1 };
@@ -192,14 +192,14 @@ export class Database {
           args = args[0];
         }
         mockAll(sql, ...args);
-        
+
         if (sql.includes('FROM bot_configuration_versions')) {
           const versions = this.data.get('bot_configuration_versions') || [];
           if (args.length > 0) {
             // Handle bulk query (IN clause)
             if (sql.includes(' IN ')) {
-               const ids = new Set(args);
-               return versions.filter((v: any) => ids.has(v.botConfigurationId));
+              const ids = new Set(args);
+              return versions.filter((v: any) => ids.has(v.botConfigurationId));
             }
             return versions.filter((v: any) => v.botConfigurationId === args[0]);
           }
@@ -208,11 +208,11 @@ export class Database {
         if (sql.includes('FROM bot_configuration_audit')) {
           const audits = this.data.get('bot_configuration_audit') || [];
           if (args.length > 0) {
-             // Handle bulk query (IN clause)
-             if (sql.includes(' IN ')) {
-                const ids = new Set(args);
-                return audits.filter((a: any) => ids.has(a.botConfigurationId));
-             }
+            // Handle bulk query (IN clause)
+            if (sql.includes(' IN ')) {
+              const ids = new Set(args);
+              return audits.filter((a: any) => ids.has(a.botConfigurationId));
+            }
             return audits.filter((a: any) => a.botConfigurationId === args[0]);
           }
           return audits;
@@ -221,11 +221,11 @@ export class Database {
           return this.data.get('bot_configurations') || [];
         }
         if (sql.includes('FROM approval_requests')) {
-           let results = this.data.get('approval_requests') || [];
-           if (sql.includes('resourceType = ?')) {
-             results = results.filter(r => r.resourceType === args[0]);
-           }
-           return results;
+          let results = this.data.get('approval_requests') || [];
+          if (sql.includes('resourceType = ?')) {
+            results = results.filter((r) => r.resourceType === args[0]);
+          }
+          return results;
         }
         return [];
       },
@@ -234,20 +234,20 @@ export class Database {
           args = args[0];
         }
         mockGet(sql, ...args);
-        
+
         if (sql.includes('FROM bot_configurations')) {
           const configs = this.data.get('bot_configurations') || [];
           if (args.length > 0) {
-             return configs.find((c: any) => c.id === args[0]);
+            return configs.find((c: any) => c.id === args[0]);
           }
           return configs[0];
         }
         if (sql.includes('FROM approval_requests')) {
-           const requests = this.data.get('approval_requests') || [];
-           return requests.find(r => r.id === args[0]);
+          const requests = this.data.get('approval_requests') || [];
+          return requests.find((r) => r.id === args[0]);
         }
         return undefined;
-      }
+      },
     };
   }
 

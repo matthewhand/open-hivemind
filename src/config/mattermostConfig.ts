@@ -66,10 +66,10 @@ function loadMattermostConfig(): MattermostConfig {
 const config = loadMattermostConfig();
 
 const mattermostConfig = {
-  get: (key: keyof MattermostConfig) => config[key],
-  getProperties: () => config,
-  getSchema: () => zodToJsonSchema(MattermostSchema as any),
-  validate: (options: { allowed: 'strict' | 'warn' }) => {
+  get: (key: keyof MattermostConfig): any => config[key],
+  getProperties: (): MattermostConfig => config,
+  getSchema: (): any => zodToJsonSchema(MattermostSchema as any),
+  validate: (options: { allowed: 'strict' | 'warn' }): void => {
     MattermostSchema.parse(config);
   }
 };

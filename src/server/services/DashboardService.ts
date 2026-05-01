@@ -1,13 +1,11 @@
 import fs from 'fs';
 import path from 'path';
-import { DatabaseManager } from '@src/database/DatabaseManager';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
-import { AnalyticsService } from '../../services/AnalyticsService';
-import DemoModeService from '../../services/DemoModeService';
-import { container } from '../../di/container';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
-import WebSocketService, { type MessageFlowEvent } from './WebSocketService';
+import { container } from '../../di/container';
+import DemoModeService from '../../services/DemoModeService';
 import { ActivityLogger } from './ActivityLogger';
+import WebSocketService, { type MessageFlowEvent } from './WebSocketService';
 
 export interface BehaviorPattern {
   id: string;
@@ -103,23 +101,6 @@ export class DashboardService {
     }
   }
 
-  public async getAnnouncement(): Promise<{ hasAnnouncement: boolean; content: string | null }> {
-    try {
-      const announcementPath = path.join(process.cwd(), 'ANNOUNCEMENT.md');
-      try {
-        await fs.promises.access(announcementPath);
-      } catch {
-        return { hasAnnouncement: false, content: null };
-      }
-      const content = (await fs.promises.readFile(announcementPath, 'utf8')).trim();
-      if (!content) {
-        return { hasAnnouncement: false, content: null };
-      }
-      return { hasAnnouncement: true, content };
-    } catch {
-      return { hasAnnouncement: false, content: null };
-    }
-  }
 
   public getConfigStatus() {
     const manager = BotConfigurationManager.getInstance();
@@ -236,8 +217,10 @@ export class DashboardService {
     const fromTime = query.from?.getTime();
     const toTime = query.to?.getTime();
 
-    const limit = typeof query.limit === 'number' ? query.limit : (parseInt(query.limit as any, 10) || 200);
-    const offset = typeof query.offset === 'number' ? query.offset : (parseInt(query.offset as any, 10) || 0);
+    const limit =
+      typeof query.limit === 'number' ? query.limit : parseInt(query.limit as any, 10) || 200;
+    const offset =
+      typeof query.offset === 'number' ? query.offset : parseInt(query.offset as any, 10) || 0;
 
     const storedEvents = await ActivityLogger.getInstance().getEvents({
       startTime: query.from,
