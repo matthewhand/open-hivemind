@@ -4,8 +4,5 @@
 # repo's prepare script sets core.hooksPath=.githooks, bypassing husky.
 set -e
 ROOT="$(git rev-parse --show-toplevel)"
-if [ -x "$ROOT/node_modules/.bin/lint-staged" ]; then
-  exec "$ROOT/node_modules/.bin/lint-staged"
-else
-  exec npx --no-install lint-staged
-fi
+export PATH="$ROOT/node_modules/.bin:$PATH"
+exec lint-staged
