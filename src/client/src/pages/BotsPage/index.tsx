@@ -217,7 +217,7 @@ const BotsPage: React.FC = () => {
                   <li key={opt.value}>
                     <a
                       onClick={(e) => { e.stopPropagation(); setViewMode(opt.value); }}
-                      className={`flex items-center gap-2 ${isActive ? 'active font-semibold bg-base-200 border-l-2 border-primary pl-2' : ''}`}
+                      className={`flex items-center gap-2 ${isActive ? 'active border-l-2 border-primary pl-2' : ''}`}
                       role="menuitemradio"
                       aria-checked={isActive}
                     >
