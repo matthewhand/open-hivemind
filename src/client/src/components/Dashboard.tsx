@@ -7,11 +7,12 @@ import Hero from './DaisyUI/Hero';
 import RadialProgress from './DaisyUI/RadialProgress';
 import { SkeletonCard } from './DaisyUI/Skeleton';
 import { Stat, Stats } from './DaisyUI/Stat';
+import Badge from './DaisyUI/Badge';
 import DashboardBotCard from './DashboardBotCard';
 import AgentGrid from './Dashboard/AgentGrid';
 import CommandCenterStream from './Monitoring/CommandCenterStream';
 import { useSuccessToast, useErrorToast } from './DaisyUI/ToastNotification';
-import { ArrowUp, ArrowDown, Save, Settings2 } from 'lucide-react';
+import { ArrowUp, ArrowDown, RefreshCw, Save, Settings2 } from 'lucide-react';
 
 const getStatusColor = (botStatus: string) => {
   switch (botStatus.toLowerCase()) {
@@ -140,13 +141,14 @@ const Dashboard: React.FC = () => {
   }, [status]);
 
   // ⚡ Bolt Optimization: Combined multiple O(N) filtering and reduce passes into a single pass.
-  const { activeBots, totalMessages, uptimeHours, uptimeMinutes } = useMemo(() => {
+  const { activeBots, totalMessages, uptimeHours, uptimeMinutes, totalProviders } = useMemo(() => {
     if (!status) {
-      return { activeBots: 0, totalMessages: 0, uptimeHours: 0, uptimeMinutes: 0 };
+      return { activeBots: 0, totalMessages: 0, uptimeHours: 0, uptimeMinutes: 0, totalProviders: 0 };
     }
 
     let activeCount = 0;
     let messageSum = 0;
+    const providerSet = new Set<string>();
 
     if (status.bots) {
       for (let i = 0; i < status.bots.length; i++) {
@@ -155,6 +157,8 @@ const Dashboard: React.FC = () => {
           activeCount++;
         }
         messageSum += (bot.messageCount || 0);
+        if (bot.provider) providerSet.add(bot.provider);
+        if (bot.llmProvider) providerSet.add(bot.llmProvider);
       }
     }
 
@@ -163,8 +167,11 @@ const Dashboard: React.FC = () => {
       totalMessages: messageSum,
       uptimeHours: Math.floor((status.uptime ?? 0) / 3600),
       uptimeMinutes: Math.floor(((status.uptime ?? 0) % 3600) / 60),
+      totalProviders: providerSet.size,
     };
   }, [status]);
+
+  const totalBots = bots.length;
 
   if (loading) {
     return (
@@ -372,7 +379,7 @@ const Dashboard: React.FC = () => {
           <Card title="🖥️ System Information" className="bg-base-100 border border-base-300 mt-12">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Stat title="Uptime" value={<>{uptimeHours}h {uptimeMinutes}m</>} valueClassName="text-lg" description="System running smoothly" />
-              <Stat title="Environment" value={status.environment.toUpperCase()} valueClassName="text-lg" description="Mode" />
+              <Stat title="Environment" value={(status.environment ?? 'unknown').toUpperCase()} valueClassName="text-lg" description="Mode" />
               <Stat title="Version" value={status.version} valueClassName="text-lg" description="Current build" />
             </div>
           </Card>

@@ -12,12 +12,13 @@ const LLMUsageChart = lazy(() => import('../Dashboard/LLMUsageChart'));
 const MessageVolumeChart = lazy(() => import('../Dashboard/MessageVolumeChart'));
 import {
   Activity,
-  RotateCcw,
-  Heart,
-  Cpu,
-  Clock,
-  ChartBar,
   AlertTriangle,
+  ChartBar,
+  Clock,
+  Cpu,
+  Heart,
+  RotateCcw,
+  Server,
 } from 'lucide-react';
 import SystemHealth from '../SystemHealth';
 import { LoadingSpinner } from '../DaisyUI/Loading';
