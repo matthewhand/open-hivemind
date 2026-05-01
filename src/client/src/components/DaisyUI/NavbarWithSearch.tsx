@@ -31,6 +31,7 @@ import {
   Rows3,
   Rows4,
   ShieldAlert,
+  ShieldOff,
 } from 'lucide-react';
 
 type Density = 'compact' | 'comfortable' | 'spacious';
@@ -287,9 +288,9 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
     <>
       {isPanicMode && (
         <div className="bg-error text-error-content px-4 py-2 text-center text-sm font-bold uppercase tracking-widest flex items-center justify-center gap-2 animate-pulse shadow-inner">
-          <ShieldAlert className="w-4 h-4" />
+          <ShieldOff className="w-4 h-4" />
           SYSTEM PANIC MODE ACTIVE: ALL BOT MESSAGES REJECTED
-          <ShieldAlert className="w-4 h-4" />
+          <ShieldOff className="w-4 h-4" />
         </div>
       )}
     <nav className="navbar bg-base-100 shadow-lg border-b border-base-200 px-4" aria-label="Main navigation">
@@ -458,7 +459,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
         {/* Kill Switch */}
         <Tooltip content={isPanicMode ? "Deactivate Kill Switch" : "Global Kill Switch (PANIC)"} position="bottom">
           <button 
-            className={`btn btn-sm btn-circle ${isPanicMode ? 'btn-error animate-pulse shadow-[0_0_15px_rgba(220,38,38,0.8)]' : 'btn-ghost text-error/60 hover:bg-error hover:text-error-content'}`}
+            className={`btn btn-sm btn-circle ${isPanicMode ? 'btn-error animate-pulse shadow-[0_0_15px_rgba(220,38,38,0.8)]' : 'btn-ghost text-error hover:bg-error hover:text-error-content'}`}
             onClick={handleTogglePanicMode}
             aria-label="Toggle Global Kill Switch"
           >
