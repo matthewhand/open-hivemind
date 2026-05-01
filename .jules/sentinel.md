@@ -1,3 +1,48 @@
+## 2025-02-26 - Add SSRF Protection to Outbound Requests
+
+**Vulnerability:** External APIs calls to configurable or dynamic endpoints were made via `axios` without validating the URL, potentially leading to Server-Side Request Forgery (SSRF).
+**Learning:** Although primary parameters like `baseUrl` come from server configurations, the absence of verification for out-bound requests exposes the internal network if configuration falls back to external payloads or is manipulated. Defense in depth matters.
+**Prevention:** Every outbound request (using `axios` or similar) must validate its target destination by running it through the custom `isSafeUrl` function to check for valid protocols and ensure no routing to private/loopback IPs.
+## 2024-03-08 - Path Traversal in File Operations
+**Vulnerability:** A path traversal vulnerability existed in `src/server/routes/specs.ts` where unvalidated user inputs (`id` and `version`) were directly passed to `path.join` to determine file system paths for both creating directories/files and reading directories.
+**Learning:** `z.string()` in Zod does not protect against directory traversal payloads (like `../`). It strictly validates type, not content semantics. Furthermore, constructing file paths from user inputs without subsequent `path.resolve` boundary verification breaks defense-in-depth, allowing an attacker to escape the intended directory.
+**Prevention:**
+1. Always apply strict regex patterns (e.g., `/^[a-zA-Z0-9_-]+$/`) to any user input that will be used as a filename or path segment.
+2. After constructing a path with `path.join`, always resolve it and verify it starts with the resolved expected base directory (`resolvedPath.startsWith(resolvedBase + path.sep)`).
+## 2025-03-09 - Client-Level SSRF Bypass via Axios Redirects and Method Invocation
+**Vulnerability:** A static SSRF check at initialization or within a `connect` method is insufficient for Axios clients configured with a user-supplied server URL. Attackers can bypass the check by invoking other API methods directly or by providing an external domain that redirects to an internal/loopback IP address.
+**Learning:** Checking the base URL only covers the first request's initial destination. Because Axios automatically follows redirects (up to 5 by default), subsequent hops can route to unsafe internal network locations.
+**Prevention:** Rather than checking the base URL statically, implement an Axios request interceptor (`axios.interceptors.request.use()`) that intercepts every outbound request, constructs the full URL (`reqConfig.baseURL + reqConfig.url`), and validates it against `isSafeUrl()`. This guarantees all API interactions are protected, including redirect flows and direct method invocations.
+## 2025-03-10 - Missing SSRF Guard in Axios Instantiation
+**Vulnerability:** The `MattermostClient` created an Axios instance with a user-provided `serverUrl` without using the existing `isSafeUrl` protection guard.
+**Learning:** The rest of the codebase has a standard pattern of wrapping out-bound API calls with `isSafeUrl` from `@src/utils/ssrfGuard`. A newly introduced client or one missed during a previous audit can expose the server to SSRF if the configuration is altered.
+**Prevention:** Apply the `isSafeUrl` verification check during the initial connection or before making HTTP calls with configured URLs.
+## 2026-03-11 - SSRF Prevention in LLM Packages
+**Vulnerability:** Multiple LLM provider packages (e.g., openwebui, flowise, openswarm, openai) were vulnerable to Server-Side Request Forgery (SSRF) because they used configured or dynamically generated URLs for `axios` requests without validating if those URLs pointed to private or reserved IP ranges.
+**Learning:** Security utilities like `isSafeUrl` must be placed in globally accessible workspace packages (e.g., `@hivemind/shared-types` or a dedicated `utils` package) rather than main `src/` directories so that all child packages can access them without creating dependency cycles or relative import nightmares.
+**Prevention:** Always wrap dynamically generated external HTTP requests (via axios, fetch) with `isSafeUrl` validation checks. Enforce this via a custom ESLint rule if possible.
+## 2025-03-11 - URL Encoding Bypass in URL Validation
+**Vulnerability:** The `validateRepoUrl` function in `PluginManager.ts` validated URLs using the raw `parsedUrl.hostname` and `parsedUrl.href`, which left characters like `%20` or `%3B` encoded. This allowed attackers to bypass validation checks (e.g., `.includes(" ")` and shell metacharacters checks) by URL-encoding those characters in the payload.
+**Learning:** Checking the raw `parsedUrl` properties for specific characters is insufficient because it does not decode URL components. `decodeURIComponent` must be used to decode the components before checking. Also, validating the entire `href` against shell metacharacters can cause false positives with legitimate query parameters (like `&`). Validating `hostname` and `pathname` separately is necessary.
+**Prevention:** Always use `decodeURIComponent()` for security checks, and always wrap `decodeURIComponent()` in a `try-catch` block to handle potential `URIError` exceptions resulting from malformed sequences, preventing Denial of Service (DoS) crashes.
+## 2025-02-28 - SSRF Vulnerability via Provider Configuration
+**Vulnerability:** Found `MattermostProvider.ts` making HTTP `fetch` requests using dynamically configured `serverUrl` (e.g. `inst.serverUrl` from `messengers.json`) without any validation. Since this configuration can be modified or provided externally, it poses a Server-Side Request Forgery (SSRF) risk where the backend might be tricked into communicating with internal resources or bypassing firewalls.
+**Learning:** Configurations providing base URLs or dynamically generated target URLs for outgoing requests are high-risk vectors for SSRF if unvalidated.
+**Prevention:** Always use the `isSafeUrl` function from `src/utils/ssrfGuard` to validate external URLs or user/configuration-supplied URLs *before* executing HTTP requests (`fetch` or `axios`).
+## 2025-02-14 - [Authorization Bypass via Host Header Spoofing]
+**Vulnerability:** The custom `isLocalhostRequest` implementation in `src/auth/middleware.ts` used a logical OR (`||`) to check if the request came from localhost by examining the IP address, Host header, or Origin header. When `ALLOW_LOCALHOST_ADMIN=true` was enabled, an external attacker could completely bypass authentication by simply adding `Host: localhost` or `Origin: http://localhost` to their HTTP request headers.
+**Learning:** Security checks that rely on client-provided headers (like `Host` or `Origin`) MUST NOT be used in an OR condition alongside stronger identity factors like source IP address for establishing trust. The intention was to check all properties to protect against DNS rebinding and CSRF, but the OR implementation actually expanded the trust domain to any request containing the spoofed headers.
+**Prevention:** Always use strict AND conditions when layering defense-in-depth header checks on top of a foundational trust signal like source IP. Verify that the IP address itself is correct FIRST, and then only reject (not authorize) the request if the provided headers do not match expectations.
+
+## 2026-04-17 - Path Traversal in Plugin Name
+**Vulnerability:** Malicious plugin repository could define_relative path sequence in `package.json` "name" field (e.g., `../../../tmp/pwned`), causing arbitrary file write during plugin directory rename.
+**Learning:** Always validate extracted strings from external configuration files before filesystem operations. The `package.json` name field is user-controlled and should never be trusted.
+**Prevention:** Reject plugin names containing `..`, `/`, or `\` path separators. Throw `PluginValidationError` if detected.
+## 2025-02-27 - OTLP Exporters and SSRF Protection
+**Vulnerability:** SSRF checks applied to internal infrastructure.
+**Learning:** OTLP collectors and telemetry components are routinely deployed as internal sidecars (e.g., localhost:4318) or within private VPC networks. Applying SSRF protections like `isSafeUrl` that block private or loopback IP addresses to these exporters will break legitimate observability pipelines.
+**Prevention:** Do not apply external SSRF protections to internal observability components like trace exporters unless explicitly instructed to protect against user-supplied endpoint configuration.
+
 ## 2025-02-28 - Removed DangerouslySetInnerHTML from JSON Highlighter
 **Vulnerability:** XSS risk via `dangerouslySetInnerHTML` in `jsonHighlighter.tsx` due to manual string escaping used for JSON syntax highlighting.
 **Learning:** React 19 test errors (`Cannot read properties of null (reading 'useState')`) can occur if testing components globally; but more importantly, manually building HTML strings and using `dangerouslySetInnerHTML` is an anti-pattern. React can natively escape text and prevent XSS when we construct React element trees directly (e.g., using Arrays or Fragments with mapped elements).
