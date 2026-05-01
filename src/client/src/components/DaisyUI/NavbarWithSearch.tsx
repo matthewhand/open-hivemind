@@ -53,6 +53,10 @@ interface NavItem {
 }
 
 interface NavbarWithSearchProps {
+  /**
+   * Page title. Currently unused inside the component (kept in the public
+   * props so callers don't break), but reserved for a future title slot.
+   */
   title?: string;
   navItems?: NavItem[];
   onSearch?: (query: string) => void;
@@ -66,7 +70,6 @@ interface NavbarWithSearchProps {
 }
 
 const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
-  title: _title = 'Open-Hivemind',
   navItems = [],
   onSearch,
   onNotificationClick,
@@ -94,7 +97,9 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
 
   const handleTogglePanicMode = async () => {
     try {
-      const response: any = await apiService.post('/api/admin/panic-mode');
+      const response = await apiService.post<{ success: boolean; data: { enabled: boolean } }>(
+        '/api/admin/panic-mode'
+      );
       if (response.success) {
         const enabled = response.data.enabled;
         setIsPanicMode(enabled);
@@ -104,15 +109,9 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
            successToast('Kill Switch Deactivated', 'Bot message processing resumed.');
         }
       }
-    } catch (e: any) {
-      errorToast('Action Failed', e.message || 'Failed to toggle Panic Mode');
-    }
-  };
-
-  const _handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (onSearch && searchQuery.trim()) {
-      onSearch(searchQuery.trim());
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Failed to toggle Panic Mode';
+      errorToast('Action Failed', message);
     }
   };
 
@@ -140,8 +139,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
 
     if (query.startsWith('>')) {
       setIsCommandMode(true);
-      const commandQuery = query.slice(1).trim().toLowerCase();
-      
+
       const commands: string[] = [];
       bots.forEach(bot => {
         commands.push(`> Start ${bot.name}`);
@@ -197,8 +195,9 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
           } else {
             errorToast('Unknown Command', `Action "${action}" is not recognized.`);
           }
-        } catch (err: any) {
-          errorToast('Action Failed', err.message || `Failed to ${action} ${bot.name}`);
+        } catch (err) {
+          const message = err instanceof Error ? err.message : `Failed to ${action} ${bot.name}`;
+          errorToast('Action Failed', message);
         }
         
         setSearchQuery('');
@@ -269,19 +268,6 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
       window.removeEventListener('keydown', handleUseHotKey);
     };
   }, [handleUseHotKey]);
-
-  const themeOptions = [
-    { value: 'light', label: 'Light', emoji: '☀️' },
-    { value: 'dark', label: 'Dark', emoji: '🌙' },
-    { value: 'cupcake', label: 'Cupcake', emoji: '🧁' },
-    { value: 'cyberpunk', label: 'Cyberpunk', emoji: '🌆' },
-    { value: 'synthwave', label: 'Synthwave', emoji: '🌸' },
-    { value: 'dracula', label: 'Dracula', emoji: '🧛' },
-    { value: 'forest', label: 'Forest', emoji: '🌲' },
-    { value: 'aqua', label: 'Aqua', emoji: '💧' },
-    { value: 'corporate', label: 'Corporate', emoji: '🏢' },
-    { value: 'retro', label: 'Retro', emoji: '📺' },
-  ];
 
   const uiTheme = useUIStore((s) => s.theme);
   const setUiTheme = useUIStore((s) => s.setTheme);
