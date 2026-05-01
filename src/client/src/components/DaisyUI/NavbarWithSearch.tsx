@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useId, useRef, useCallback } from 'react';
 import Divider from './Divider';
+import Dropdown from './Dropdown';
 import Logo from '../Logo';
 import Avatar from './Avatar';
 import AdvancedThemeSwitcher from './AdvancedThemeSwitcher';
@@ -32,6 +33,7 @@ import {
   Rows4,
   ShieldAlert,
   ShieldOff,
+  Check,
 } from 'lucide-react';
 
 type Density = 'compact' | 'comfortable' | 'spacious';
@@ -278,11 +280,53 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
 
   const densityMeta = DENSITY_META[density];
   const DensityIcon = densityMeta.icon;
-  const nextDensity = DENSITY_ORDER[(DENSITY_ORDER.indexOf(density) + 1) % DENSITY_ORDER.length];
-  const nextDensityMeta = DENSITY_META[nextDensity];
-  const cycleDensity = () => {
-    setDensity(nextDensity);
-  };
+
+  // ---------------------------------------------------------------------------
+  // Density dropdown a11y: WAI-ARIA "menu" pattern keyboard support.
+  // Mirrors the BotsPage view-mode dropdown pattern (#2660 + #2706): items are
+  // <button role="menuitemradio"> with roving tabindex; arrow keys, Home, End,
+  // and Escape behave per APG. The Dropdown wrapper handles open/close on
+  // Enter/Space/Esc on the trigger; this only handles focus-traversal once an
+  // item has focus. https://www.w3.org/WAI/ARIA/apg/patterns/menu/
+  // ---------------------------------------------------------------------------
+  const densityMenuId = useId();
+  const densityMenuItemsRef = useRef<Array<HTMLButtonElement | null>>([]);
+  const densityTriggerRef = useRef<HTMLDivElement | null>(null);
+  const handleDensityMenuKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLButtonElement>, index: number, count: number) => {
+      const focusItem = (i: number) => {
+        const next = ((i % count) + count) % count;
+        densityMenuItemsRef.current[next]?.focus();
+      };
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          focusItem(index + 1);
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          focusItem(index - 1);
+          break;
+        case 'Home':
+          e.preventDefault();
+          focusItem(0);
+          break;
+        case 'End':
+          e.preventDefault();
+          focusItem(count - 1);
+          break;
+        case 'Escape': {
+          e.preventDefault();
+          const triggerButton = densityTriggerRef.current?.querySelector<HTMLElement>('[role="button"]');
+          triggerButton?.focus();
+          break;
+        }
+        default:
+          break;
+      }
+    },
+    []
+  );
 
   return (
     <>
@@ -527,19 +571,73 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
 
         <Divider vertical className="h-6 mx-0 hidden sm:flex" />
 
-        {/* Density Quick Toggle — cycles compact -> comfortable -> spacious. Same store as Settings page slider. */}
+        {/* Density Dropdown — pick compact / comfortable / spacious. Same store
+            as Settings page slider. WAI-ARIA menu pattern with roving tabindex
+            (matches BotsPage view-mode dropdown from #2660 + #2706). Visible at
+            all breakpoints; icon-only on mobile, icon + "Density" label on md+. */}
         <Tooltip
-          content={`Density: ${densityMeta.label}. Click to cycle to ${nextDensityMeta.label}.`}
+          content={`Density: ${densityMeta.label}. ${densityMeta.description}.`}
           position="bottom"
         >
-          <button
-            type="button"
-            className="btn btn-ghost btn-circle btn-sm"
-            onClick={cycleDensity}
-            aria-label={`UI density: ${densityMeta.label}. Activate to switch density.`}
-          >
-            <DensityIcon className="w-5 h-5" />
-          </button>
+          <div ref={densityTriggerRef} className="contents">
+            <Dropdown
+              trigger={
+                <span className="flex items-center gap-1.5">
+                  <DensityIcon className="w-5 h-5" aria-hidden="true" />
+                  <span className="hidden md:inline text-xs font-medium">Density</span>
+                </span>
+              }
+              position="bottom"
+              color="ghost"
+              size="sm"
+              className="dropdown-end"
+              triggerClassName="gap-1 focus-visible:ring-2 ring-base-content focus-visible:ring-offset-2 ring-offset-base-100 focus-visible:outline-none"
+              contentClassName="shadow-lg w-56 z-20"
+              hideArrow
+              aria-label={`UI density: ${densityMeta.label}. Activate to choose density.`}
+              aria-haspopup="menu"
+              menuId={densityMenuId}
+              triggerAriaControls={densityMenuId}
+            >
+              {(() => {
+                // Reset ref array each render so removed items don't linger.
+                densityMenuItemsRef.current = [];
+                return DENSITY_ORDER.map((value, idx) => {
+                  const meta = DENSITY_META[value];
+                  const ItemIcon = meta.icon;
+                  const isActive = density === value;
+                  return (
+                    <li key={value}>
+                      <button
+                        type="button"
+                        ref={(el) => {
+                          densityMenuItemsRef.current[idx] = el;
+                        }}
+                        role="menuitemradio"
+                        aria-checked={isActive}
+                        tabIndex={isActive ? 0 : -1}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDensity(value);
+                        }}
+                        onKeyDown={(e) => handleDensityMenuKeyDown(e, idx, DENSITY_ORDER.length)}
+                        className={`flex items-start gap-2 w-full text-left ${
+                          isActive ? 'active border-l-2 border-primary pl-2' : ''
+                        }`}
+                      >
+                        <ItemIcon className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
+                        <span className="flex-1 flex flex-col">
+                          <span className="text-sm">{meta.label}</span>
+                          <span className="text-[11px] opacity-60">{meta.description}</span>
+                        </span>
+                        {isActive && <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" aria-hidden="true" />}
+                      </button>
+                    </li>
+                  );
+                });
+              })()}
+            </Dropdown>
+          </div>
         </Tooltip>
         {/* Polite live region: announces the new density value to screen readers when state changes. */}
         <span aria-live="polite" aria-atomic="true" className="sr-only">{`Density: ${densityMeta.label}`}</span>
