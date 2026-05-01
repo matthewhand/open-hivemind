@@ -456,10 +456,20 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
 
       {/* Navbar End */}
       <div className="navbar-end gap-1 sm:gap-3">
-        {/* Kill Switch */}
+        {/*
+          Kill Switch.
+
+          The trigger uses filled `btn-error` so the icon is rendered in
+          `--color-error-content` against `--color-error` — a pairing that
+          DaisyUI guarantees meets WCAG SC 1.4.11 (>= 3:1) in every theme.
+          The previous `btn-ghost text-error` styling failed 3:1 against
+          `--color-base-100` on the `light`, `corporate`, `cyberpunk`, and
+          `business` themes (see scripts/a11y/contrast-audit.mjs).
+          Active vs trigger is distinguished by animation + shadow, not color.
+        */}
         <Tooltip content={isPanicMode ? "Deactivate Kill Switch" : "Global Kill Switch (PANIC)"} position="bottom">
-          <button 
-            className={`btn btn-sm btn-circle ${isPanicMode ? 'btn-error animate-pulse shadow-[0_0_15px_rgba(220,38,38,0.8)]' : 'btn-ghost text-error hover:bg-error hover:text-error-content'}`}
+          <button
+            className={`btn btn-sm btn-circle btn-error ${isPanicMode ? 'animate-pulse shadow-[0_0_15px_rgba(220,38,38,0.8)]' : ''}`}
             onClick={handleTogglePanicMode}
             aria-label="Toggle Global Kill Switch"
           >
