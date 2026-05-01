@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Verify TypeScript types before pushing.
+# Mirrors the previous .husky/pre-push which never executed because the
+# repo's prepare script sets core.hooksPath=.githooks, bypassing husky.
+set -e
+if command -v pnpm >/dev/null 2>&1; then
+  exec pnpm run check-types
+else
+  exec npm run check-types
+fi
