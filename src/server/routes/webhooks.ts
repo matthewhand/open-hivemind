@@ -60,7 +60,7 @@ router.get('/scheduled/:id', configLimiter, authenticateToken, (req, res) => {
  * POST /api/webhooks/scheduled
  * Create a scheduled message
  */
-router.post('/scheduled', configLimiter, requireRole('admin'), (req, res) => {
+router.post('/scheduled', configLimiter, authenticateToken, requireRole('admin'), (req, res) => {
   const { botId, channelId, message, scheduledTime } = req.body;
   if (!botId || !channelId || !message || !scheduledTime) {
     return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Missing required fields'));
@@ -84,7 +84,7 @@ router.post('/scheduled', configLimiter, requireRole('admin'), (req, res) => {
  * DELETE /api/webhooks/scheduled/:id
  * Delete a scheduled message
  */
-router.delete('/scheduled/:id', configLimiter, requireRole('admin'), (req, res) => {
+router.delete('/scheduled/:id', configLimiter, authenticateToken, requireRole('admin'), (req, res) => {
   const deleted = scheduledMessages.delete(req.params.id);
   if (!deleted) {
     return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('Scheduled message not found'));
