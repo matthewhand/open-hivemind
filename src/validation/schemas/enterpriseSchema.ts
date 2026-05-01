@@ -26,3 +26,13 @@ export const PerformanceOptimizeSchema = z.object({
     type: z.string().optional(),
   }),
 });
+
+/** Schema for POST /api/enterprise/compliance/check */
+export const ComplianceCheckSchema = z.object({
+  body: z
+    .object({
+      framework: z.enum(['soc2', 'hipaa', 'gdpr', 'iso27001']).optional(),
+      scope: z.array(z.string()).optional(),
+    })
+    .strict(),
+});
