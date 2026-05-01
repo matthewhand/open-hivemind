@@ -2,7 +2,6 @@ import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { store } from './store/store';
 import ReduxProvider from './components/ReduxProvider';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -17,6 +16,15 @@ import { IntegrationProvider } from './components/IntegrationLoader';
 import KeyboardShortcutsProvider from './components/KeyboardShortcutsProvider';
 import { useTheme } from './hooks/useTheme';
 import SavedStampProvider from './contexts/SavedStampContext';
+
+// Lazy-load React Query devtools so the bundle isn't shipped to production
+// users. Vite tree-shakes the import out entirely when DEV is false.
+const ReactQueryDevtools =
+  import.meta.env.DEV && import.meta.env.VITE_SHOW_DEVTOOLS === 'true'
+    ? React.lazy(() =>
+        import('@tanstack/react-query-devtools').then((m) => ({ default: m.ReactQueryDevtools }))
+      )
+    : null;
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -66,7 +74,11 @@ function App() {
               </ThemeSync>
             </ReduxProvider>
           </Provider>
-          {import.meta.env.DEV && import.meta.env.VITE_SHOW_DEVTOOLS === 'true' && <ReactQueryDevtools initialIsOpen={false} />}
+          {ReactQueryDevtools && (
+            <React.Suspense fallback={null}>
+              <ReactQueryDevtools initialIsOpen={false} />
+            </React.Suspense>
+          )}
         </QueryClientProvider>
       </HydrationErrorBoundary>
     </ErrorBoundary>
