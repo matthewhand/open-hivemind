@@ -2,6 +2,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Mockup from '../components/DaisyUI/Mockup';
 import { Alert } from '../components/DaisyUI/Alert';
+import Button from '../components/DaisyUI/Button';
 import Divider from '../components/DaisyUI/Divider';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import { Badge } from '../components/DaisyUI/Badge';

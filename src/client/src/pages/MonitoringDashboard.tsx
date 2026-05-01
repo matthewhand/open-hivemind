@@ -1,10 +1,12 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
+import { Bell, Server, Wifi, Zap } from 'lucide-react';
 import { useWebSocket } from '../contexts/WebSocketContext';
 const MetricChart = lazy(() => import('../components/Monitoring/MetricChart'));
 import AlertPanel from '../components/Monitoring/AlertPanel';
 import EventStream from '../components/Monitoring/EventStream';
 import PerformanceMonitor from '../components/PerformanceMonitor';
 import Select from '../components/DaisyUI/Select';
+import { SkeletonPage } from '../components/DaisyUI/Skeleton';
 import Debug from 'debug';
 const debug = Debug('app:client:pages:MonitoringDashboard');
 
