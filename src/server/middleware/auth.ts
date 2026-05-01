@@ -27,6 +27,14 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
   // Activate by setting ALLOW_TEST_BYPASS=true (never in production).
   // When enabled, any request is treated as an authenticated admin request.
   if (process.env.ALLOW_TEST_BYPASS === 'true') {
+    if (process.env.NODE_ENV === 'production') {
+      // Defense-in-depth: should never happen because module-level guards
+      // exist elsewhere, but if a hostile env reaches us, refuse to bypass.
+      res.status(500).json({
+        error: 'Server misconfiguration: ALLOW_TEST_BYPASS cannot be used in production',
+      });
+      return;
+    }
     req.user = TEST_BYPASS_USER;
     return next();
   }

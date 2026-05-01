@@ -25,9 +25,23 @@ const debug = Debug('app:webui:admin');
 const isTestEnv = process.env.NODE_ENV === 'test';
 const skipAuth = process.env.SKIP_AUTH === 'true';
 
+// Refuse to start in production with auth disabled — a misconfigured .env
+// would otherwise make every /api/admin/* endpoint public.
+if (skipAuth && process.env.NODE_ENV === 'production') {
+  throw new Error(
+    '[SECURITY] SKIP_AUTH=true is not permitted when NODE_ENV=production. ' +
+      'Remove SKIP_AUTH from production env or set NODE_ENV to a non-production value.'
+  );
+}
+
 // Apply authentication middleware to all admin routes (unless SKIP_AUTH is set)
 if (!skipAuth) {
   router.use(authenticate, requireAdmin);
+} else {
+  // eslint-disable-next-line no-console
+  console.warn(
+    '[SECURITY] SKIP_AUTH=true — /api/admin/* is unauthenticated. Never use in production.'
+  );
 }
 
 // Apply rate limiting to configuration endpoints
