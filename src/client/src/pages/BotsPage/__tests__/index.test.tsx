@@ -151,9 +151,10 @@ describe('BotsPage', () => {
     const active = items.find((el) => el.getAttribute('aria-checked') === 'true');
     expect(active).toBeTruthy();
     expect(active!.textContent).toContain('Compact');
-    expect(active!.className).toContain('bg-base-200');
     expect(active!.className).toContain('border-l-2');
     expect(active!.className).toContain('border-primary');
+    expect(active!.className).not.toContain('font-semibold');
+    expect(active!.className).not.toContain('bg-base-200');
   });
 
   it('renders the MobileFAB pair only when isMobile is true', () => {
