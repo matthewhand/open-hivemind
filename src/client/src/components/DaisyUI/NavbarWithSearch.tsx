@@ -549,7 +549,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
         >
           <button
             type="button"
-            className="btn btn-ghost btn-circle btn-sm hidden sm:inline-flex"
+            className="btn btn-ghost btn-circle btn-sm"
             onClick={cycleDensity}
             aria-label={`UI density: ${densityMeta.label}. Activate to switch density.`}
             data-density={density}
