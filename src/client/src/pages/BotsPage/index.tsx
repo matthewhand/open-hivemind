@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Bot as BotIcon, Check, Download, LayoutGrid, List, Pause, Play, Plus, RefreshCw, Settings, Trash2, Upload as UploadIcon } from 'lucide-react';
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import Tabs from '../../components/DaisyUI/Tabs';
 import BotSettingsTab from './BotSettingsTab';
 import { CreateBotWizard } from '../../components/BotManagement/CreateBotWizard';
@@ -12,7 +12,6 @@ import Button from '../../components/DaisyUI/Button';
 import DetailDrawer from '../../components/DaisyUI/DetailDrawer';
 import { SkeletonPage } from '../../components/DaisyUI/Skeleton';
 import Dropdown from '../../components/DaisyUI/Dropdown';
-import Swap from '../../components/DaisyUI/Swap';
 import { useErrorToast, useSuccessToast } from '../../components/DaisyUI/ToastNotification';
 import MobileFAB from '../../components/MobileFAB';
 import SearchFilterBar from '../../components/SearchFilterBar';
@@ -128,7 +127,6 @@ const BotsPage: React.FC = () => {
   const toastError = useErrorToast();
   const { showStamp } = useSavedStamp();
   const location = useLocation();
-  const navigate = useNavigate();
   const isMobile = useIsBelowBreakpoint('md');
 
   const { personas, llmProfiles, globalConfig, configLoading } = useBotsPageData(setError);
