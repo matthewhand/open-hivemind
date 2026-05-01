@@ -127,6 +127,41 @@ describe('BotsPage', () => {
     expect(trigger).toBeTruthy();
   });
 
+  it('exposes WAI-ARIA menu semantics on the trigger (haspopup=menu, aria-controls)', () => {
+    renderPage();
+    const trigger = screen.getByRole('button', { name: /^View mode:/ });
+    expect(trigger.getAttribute('aria-haspopup')).toBe('menu');
+    const controls = trigger.getAttribute('aria-controls');
+    expect(controls).toBeTruthy();
+    fireEvent.click(trigger);
+    const menu = document.getElementById(controls!);
+    expect(menu).toBeTruthy();
+    expect(menu!.getAttribute('role')).toBe('menu');
+  });
+
+  it('renders dropdown items as <button role="menuitemradio"> with roving tabindex', () => {
+    currentView = 'compact';
+    renderPage();
+    fireEvent.click(screen.getByRole('button', { name: /^View mode:/ }));
+    const items = screen.getAllByRole('menuitemradio');
+    // Every item must be a real <button> so Enter/Space activate it.
+    items.forEach((el) => expect(el.tagName).toBe('BUTTON'));
+    // Roving tabindex: exactly one item is in the tab sequence (the active one).
+    const tabbable = items.filter((el) => el.getAttribute('tabindex') === '0');
+    expect(tabbable).toHaveLength(1);
+    expect(tabbable[0].textContent).toContain('Compact');
+  });
+
+  it('moves focus to the next item on ArrowDown', () => {
+    renderPage();
+    fireEvent.click(screen.getByRole('button', { name: /^View mode:/ }));
+    const items = screen.getAllByRole('menuitemradio') as HTMLButtonElement[];
+    items[0].focus();
+    expect(document.activeElement).toBe(items[0]);
+    fireEvent.keyDown(items[0], { key: 'ArrowDown' });
+    expect(document.activeElement).toBe(items[1]);
+  });
+
   it('reflects the current viewMode in the trigger aria-label', () => {
     currentView = 'compact';
     renderPage();
