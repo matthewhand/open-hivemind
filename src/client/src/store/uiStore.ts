@@ -153,6 +153,26 @@ const getInitialState = (): UIState => ({
   },
 });
 
+/**
+ * Briefly mark <html data-density-transitioning="true"> so the CSS rules
+ * scoped behind that selector (.card-body / .modal-box / .table th td /
+ * .fab-mobile padding+min-height transitions) actually fire when density
+ * changes. The attribute is removed ~300ms later so unrelated layout
+ * changes on those surfaces remain instant — leaving the transitions
+ * permanently active was visibly janky on dense pages with many cards
+ * or table cells.
+ */
+function flashDensityTransition(): void {
+  if (typeof document === 'undefined' || typeof window === 'undefined') return;
+  const el = document.documentElement;
+  el.setAttribute('data-density-transitioning', 'true');
+  const t = (flashDensityTransition as any)._t;
+  if (t !== undefined) window.clearTimeout(t);
+  (flashDensityTransition as any)._t = window.setTimeout(() => {
+    el.removeAttribute('data-density-transitioning');
+  }, 300);
+}
+
 export const useUIStore = create<UIState & UIActions>((set, get) => ({
   ...getInitialState(),
 
@@ -297,6 +317,7 @@ export const useUIStore = create<UIState & UIActions>((set, get) => ({
   },
 
   setCompactDensity: (compactDensity) => {
+    flashDensityTransition();
     set({ compactDensity });
     localStorage.setItem('compactDensity', compactDensity.toString());
     document.documentElement.setAttribute('data-compact-density', compactDensity.toString());
@@ -324,6 +345,7 @@ export const useUIStore = create<UIState & UIActions>((set, get) => ({
   },
 
   setDensity: (density) => {
+    flashDensityTransition();
     set({ density });
     localStorage.setItem('density', density);
     document.documentElement.setAttribute('data-density', density);
