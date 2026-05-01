@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Bot, User, Shield, Check, AlertCircle, Wand2, Sparkles, Send } from 'lucide-react';
+import { Bot, User, Shield, Check, AlertCircle, Wand2, Sparkles, Send, MessageSquare } from 'lucide-react';
 import Button from '../DaisyUI/Button';
 import Divider from '../DaisyUI/Divider';
 import Input from '../DaisyUI/Input';
