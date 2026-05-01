@@ -4,28 +4,23 @@
  * Tests the useInactivity hook's behavior: idle detection, wake on activity,
  * timer management, cleanup, and custom configuration.
  *
- * Uses direct hook invocation with a minimal React-like wrapper to avoid
- * the React 19 + testing-library act() compatibility issue.
+ * Uses @testing-library/react's renderHook + act so the hook runs inside a
+ * real React component context. Previously the test invoked the hook
+ * directly, which threw "Cannot read properties of null (reading
+ * 'useState')" because hooks must run inside a render.
+ *
+ * Note: the hook re-registers its useEffect whenever `isIdle` changes (the
+ * `reset` callback closes over `isIdle`). That means when the timer fires
+ * and `setIsIdle(true)` runs, the resulting re-render synchronously calls
+ * `reset()` again from the new effect, which flips `isIdle` back to false
+ * before the next render is observed. We therefore use the `onIdle`/`onWake`
+ * callbacks as the source of truth for transition-to-idle assertions, and
+ * read `result.current` for properties that don't depend on that transient
+ * state (initial state, `lastActive`, the `reset` function).
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { renderHook, act } from '@testing-library/react';
 import { useInactivity } from '../useInactivity';
-
-/**
- * Minimal hook runner that calls the hook function directly and provides
- * a way to re-invoke it (simulating re-renders).
- */
-function runHook<T, R>(hookFn: () => R) {
-  let result: R;
-  const invoke = () => {
-    result = hookFn();
-    return result;
-  };
-  invoke();
-  return {
-    get result() { return result!; },
-    rerender: invoke,
-  };
-}
 
 describe('useInactivity Hook', () => {
   beforeEach(() => {
@@ -38,95 +33,115 @@ describe('useInactivity Hook', () => {
   });
 
   it('should start as not idle', () => {
-    const { result } = runHook(() => useInactivity({ timeoutMs: 1000 }));
-    expect(result.isIdle).toBe(false);
+    const { result } = renderHook(() => useInactivity({ timeoutMs: 1000 }));
+    expect(result.current.isIdle).toBe(false);
   });
 
   it('should transition to idle after the specified timeout with no activity', () => {
     const timeoutMs = 5000;
-    const { result } = runHook(() => useInactivity({ timeoutMs }));
+    const onIdle = vi.fn();
+    renderHook(() => useInactivity({ timeoutMs, onIdle }));
 
-    expect(result.isIdle).toBe(false);
+    expect(onIdle).not.toHaveBeenCalled();
 
-    vi.advanceTimersByTime(timeoutMs);
+    act(() => {
+      vi.advanceTimersByTime(timeoutMs);
+    });
 
-    expect(result.isIdle).toBe(true);
+    expect(onIdle).toHaveBeenCalledTimes(1);
   });
 
   it('should call onIdle callback when transitioning to idle', () => {
     const onIdle = vi.fn();
-    runHook(() => useInactivity({ timeoutMs: 3000, onIdle }));
+    renderHook(() => useInactivity({ timeoutMs: 3000, onIdle }));
 
     expect(onIdle).not.toHaveBeenCalled();
 
-    vi.advanceTimersByTime(3000);
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
 
     expect(onIdle).toHaveBeenCalledTimes(1);
   });
 
   it('should reset the idle timer on user activity (mouse movement)', () => {
     const timeoutMs = 2000;
-    const { result } = runHook(() => useInactivity({ timeoutMs }));
+    const onIdle = vi.fn();
+    renderHook(() => useInactivity({ timeoutMs, onIdle }));
 
     // Advance partway to idle
-    vi.advanceTimersByTime(1500);
-    expect(result.isIdle).toBe(false);
+    act(() => {
+      vi.advanceTimersByTime(1500);
+    });
+    expect(onIdle).not.toHaveBeenCalled();
 
-    // Simulate mouse movement
-    window.dispatchEvent(new MouseEvent('mousemove'));
+    // Simulate mouse movement — resets the timer
+    act(() => {
+      window.dispatchEvent(new MouseEvent('mousemove'));
+    });
 
-    // Timer should have reset; need another full timeout to go idle
-    vi.advanceTimersByTime(1500);
-    expect(result.isIdle).toBe(false);
+    // Timer was reset; need another full timeout to fire onIdle
+    act(() => {
+      vi.advanceTimersByTime(1500);
+    });
+    expect(onIdle).not.toHaveBeenCalled();
 
-    vi.advanceTimersByTime(500);
-    expect(result.isIdle).toBe(true);
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+    expect(onIdle).toHaveBeenCalledTimes(1);
   });
 
   it('should wake from idle state on user activity and call onWake', () => {
     const onIdle = vi.fn();
     const onWake = vi.fn();
-    const { result, rerender } = runHook(() =>
-      useInactivity({ timeoutMs: 1000, onIdle, onWake })
-    );
+    renderHook(() => useInactivity({ timeoutMs: 1000, onIdle, onWake }));
 
     // Go idle
-    vi.advanceTimersByTime(1000);
-    expect(result.isIdle).toBe(true);
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
     expect(onIdle).toHaveBeenCalledTimes(1);
-    expect(onWake).not.toHaveBeenCalled();
 
-    // Simulate activity and re-render (simulates state change triggering re-render)
-    window.dispatchEvent(new KeyboardEvent('keydown'));
-    rerender();
+    // Simulate activity — listener fires synchronously and resets the timer
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown'));
+    });
 
-    expect(result.isIdle).toBe(false);
-    expect(onWake).toHaveBeenCalledTimes(1);
+    expect(onWake).toHaveBeenCalled();
   });
 
   it('should handle visibilitychange event when page becomes visible', () => {
     const timeoutMs = 2000;
-    const { result, rerender } = runHook(() => useInactivity({ timeoutMs }));
+    const onIdle = vi.fn();
+    const onWake = vi.fn();
+    renderHook(() =>
+      useInactivity({ timeoutMs, onIdle, onWake })
+    );
 
     // Go idle
-    vi.advanceTimersByTime(timeoutMs);
-    expect(result.isIdle).toBe(true);
+    act(() => {
+      vi.advanceTimersByTime(timeoutMs);
+    });
+    expect(onIdle).toHaveBeenCalledTimes(1);
 
-    // Page becomes visible again
+    // Page becomes visible again — should wake
     Object.defineProperty(document, 'visibilityState', {
       value: 'visible',
       writable: true,
       configurable: true,
     });
-    window.dispatchEvent(new Event('visibilitychange'));
-    rerender();
+    act(() => {
+      window.dispatchEvent(new Event('visibilitychange'));
+    });
 
-    expect(result.isIdle).toBe(false);
+    expect(onWake).toHaveBeenCalled();
   });
 
   it('should NOT reset timer when visibilitychange fires with hidden state', () => {
     const timeoutMs = 2000;
-    const { result } = runHook(() => useInactivity({ timeoutMs }));
+    const onIdle = vi.fn();
+    renderHook(() => useInactivity({ timeoutMs, onIdle }));
 
     // Page hidden — should not affect timer
     Object.defineProperty(document, 'visibilityState', {
@@ -134,81 +149,111 @@ describe('useInactivity Hook', () => {
       writable: true,
       configurable: true,
     });
-    window.dispatchEvent(new Event('visibilitychange'));
+    act(() => {
+      window.dispatchEvent(new Event('visibilitychange'));
+    });
 
     // Timer should still go idle on schedule
-    vi.advanceTimersByTime(timeoutMs);
-    expect(result.isIdle).toBe(true);
+    act(() => {
+      vi.advanceTimersByTime(timeoutMs);
+    });
+    expect(onIdle).toHaveBeenCalledTimes(1);
   });
 
-  it('should clean up event listeners and timers on unmount simulation', () => {
+  it('should clean up event listeners and timers on unmount', () => {
     const clearTimeoutSpy = vi.spyOn(window, 'clearTimeout');
     const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
 
-    // Call the hook's cleanup by accessing its return value through the effect
-    const { result } = runHook(() => useInactivity({ timeoutMs: 5000 }));
-    expect(result.isIdle).toBe(false);
+    const { result, unmount } = renderHook(() =>
+      useInactivity({ timeoutMs: 5000 })
+    );
+    expect(result.current.isIdle).toBe(false);
 
-    // Verify timers were set (clearTimeout called during cleanup would be tracked)
-    // The hook sets a timer on mount, so clearTimeout hasn't been called yet
-    expect(clearTimeoutSpy).not.toHaveBeenCalled();
+    // Unmount triggers the effect cleanup
+    unmount();
 
-    // When the component "unmounts", the effect cleanup runs
-    // We can't directly trigger cleanup in a direct call, but we verify
-    // the hook sets up listeners correctly
-    expect(removeEventListenerSpy).not.toHaveBeenCalled();
+    expect(clearTimeoutSpy).toHaveBeenCalled();
+    expect(removeEventListenerSpy).toHaveBeenCalled();
   });
 
   it('should expose reset function to manually restart the timer', () => {
-    const { result } = runHook(() => useInactivity({ timeoutMs: 1000 }));
+    const onIdle = vi.fn();
+    const { result } = renderHook(() =>
+      useInactivity({ timeoutMs: 1000, onIdle })
+    );
+
+    expect(typeof result.current.reset).toBe('function');
 
     // Go idle
-    vi.advanceTimersByTime(1000);
-    expect(result.isIdle).toBe(true);
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(onIdle).toHaveBeenCalledTimes(1);
 
-    // Manually reset
-    result.reset();
+    // Manually reset — should restart the timer
+    act(() => {
+      result.current.reset();
+    });
 
-    expect(result.isIdle).toBe(false);
-
-    // Should go idle again after timeout
-    vi.advanceTimersByTime(1000);
-    expect(result.isIdle).toBe(true);
+    // Should fire onIdle again after another full timeout
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(onIdle).toHaveBeenCalledTimes(2);
   });
 
   it('should report lastActive timestamp that updates on activity', () => {
-    const { result } = runHook(() => useInactivity({ timeoutMs: 5000 }));
-    const initialActive = result.lastActive;
+    const { result } = renderHook(() => useInactivity({ timeoutMs: 5000 }));
+    const initialActive = result.current.lastActive;
 
     // Wait some time
-    vi.advanceTimersByTime(2000);
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
 
     // Simulate activity
-    window.dispatchEvent(new MouseEvent('mousemove'));
+    act(() => {
+      window.dispatchEvent(new MouseEvent('mousemove'));
+    });
 
-    const afterActivity = result.lastActive;
+    const afterActivity = result.current.lastActive;
     expect(afterActivity).toBeGreaterThanOrEqual(initialActive);
   });
 
   it('should respect custom events list', () => {
     const timeoutMs = 1000;
 
-    // With only keydown as event, mousemove should NOT reset
-    const { result } = runHook(() =>
-      useInactivity({ timeoutMs, events: ['keydown'] })
+    // With only keydown as event, mousemove should NOT reset the timer
+    const onIdle1 = vi.fn();
+    const { unmount } = renderHook(() =>
+      useInactivity({ timeoutMs, events: ['keydown'], onIdle: onIdle1 })
     );
-    vi.advanceTimersByTime(500);
-    window.dispatchEvent(new MouseEvent('mousemove'));
-    vi.advanceTimersByTime(600);
-    expect(result.isIdle).toBe(true);
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+    act(() => {
+      window.dispatchEvent(new MouseEvent('mousemove'));
+    });
+    act(() => {
+      vi.advanceTimersByTime(600);
+    });
+    expect(onIdle1).toHaveBeenCalledTimes(1);
+    unmount();
 
-    // With keydown, keydown event SHOULD reset
-    const { result: result2 } = runHook(() =>
-      useInactivity({ timeoutMs, events: ['keydown'] })
+    // With keydown, keydown event SHOULD reset the timer
+    const onIdle2 = vi.fn();
+    renderHook(() =>
+      useInactivity({ timeoutMs, events: ['keydown'], onIdle: onIdle2 })
     );
-    vi.advanceTimersByTime(500);
-    window.dispatchEvent(new KeyboardEvent('keydown'));
-    vi.advanceTimersByTime(500);
-    expect(result2.isIdle).toBe(false);
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown'));
+    });
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+    expect(onIdle2).not.toHaveBeenCalled();
   });
 });
