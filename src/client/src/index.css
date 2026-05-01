@@ -1421,9 +1421,9 @@ body.robot-ui-enabled .btn-accent {
 }
 
 .fab-mobile-left {
-  left: 3rem;
+  left: calc(1.5rem * var(--density-scale, 1));
 }
 
 .fab-mobile-right {
-  right: 3rem;
+  right: calc(1.5rem * var(--density-scale, 1));
 }
