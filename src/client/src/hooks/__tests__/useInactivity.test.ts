@@ -5,18 +5,11 @@
  * timer management, cleanup, and custom configuration.
  *
  * Uses @testing-library/react's renderHook + act so the hook runs inside a
- * real React component context. Previously the test invoked the hook
- * directly, which threw "Cannot read properties of null (reading
- * 'useState')" because hooks must run inside a render.
+ * real React component context.
  *
- * Note: the hook re-registers its useEffect whenever `isIdle` changes (the
- * `reset` callback closes over `isIdle`). That means when the timer fires
- * and `setIsIdle(true)` runs, the resulting re-render synchronously calls
- * `reset()` again from the new effect, which flips `isIdle` back to false
- * before the next render is observed. We therefore use the `onIdle`/`onWake`
- * callbacks as the source of truth for transition-to-idle assertions, and
- * read `result.current` for properties that don't depend on that transient
- * state (initial state, `lastActive`, the `reset` function).
+ * Both `result.current.isIdle` (the rendered state) AND the `onIdle` /
+ * `onWake` callbacks are asserted on, so a regression that breaks either the
+ * external state or the callbacks will fail this suite.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
@@ -40,20 +33,22 @@ describe('useInactivity Hook', () => {
   it('should transition to idle after the specified timeout with no activity', () => {
     const timeoutMs = 5000;
     const onIdle = vi.fn();
-    renderHook(() => useInactivity({ timeoutMs, onIdle }));
+    const { result } = renderHook(() => useInactivity({ timeoutMs, onIdle }));
 
     expect(onIdle).not.toHaveBeenCalled();
+    expect(result.current.isIdle).toBe(false);
 
     act(() => {
       vi.advanceTimersByTime(timeoutMs);
     });
 
     expect(onIdle).toHaveBeenCalledTimes(1);
+    expect(result.current.isIdle).toBe(true);
   });
 
   it('should call onIdle callback when transitioning to idle', () => {
     const onIdle = vi.fn();
-    renderHook(() => useInactivity({ timeoutMs: 3000, onIdle }));
+    const { result } = renderHook(() => useInactivity({ timeoutMs: 3000, onIdle }));
 
     expect(onIdle).not.toHaveBeenCalled();
 
@@ -62,18 +57,20 @@ describe('useInactivity Hook', () => {
     });
 
     expect(onIdle).toHaveBeenCalledTimes(1);
+    expect(result.current.isIdle).toBe(true);
   });
 
   it('should reset the idle timer on user activity (mouse movement)', () => {
     const timeoutMs = 2000;
     const onIdle = vi.fn();
-    renderHook(() => useInactivity({ timeoutMs, onIdle }));
+    const { result } = renderHook(() => useInactivity({ timeoutMs, onIdle }));
 
     // Advance partway to idle
     act(() => {
       vi.advanceTimersByTime(1500);
     });
     expect(onIdle).not.toHaveBeenCalled();
+    expect(result.current.isIdle).toBe(false);
 
     // Simulate mouse movement — resets the timer
     act(() => {
@@ -85,23 +82,26 @@ describe('useInactivity Hook', () => {
       vi.advanceTimersByTime(1500);
     });
     expect(onIdle).not.toHaveBeenCalled();
+    expect(result.current.isIdle).toBe(false);
 
     act(() => {
       vi.advanceTimersByTime(500);
     });
     expect(onIdle).toHaveBeenCalledTimes(1);
+    expect(result.current.isIdle).toBe(true);
   });
 
   it('should wake from idle state on user activity and call onWake', () => {
     const onIdle = vi.fn();
     const onWake = vi.fn();
-    renderHook(() => useInactivity({ timeoutMs: 1000, onIdle, onWake }));
+    const { result } = renderHook(() => useInactivity({ timeoutMs: 1000, onIdle, onWake }));
 
     // Go idle
     act(() => {
       vi.advanceTimersByTime(1000);
     });
     expect(onIdle).toHaveBeenCalledTimes(1);
+    expect(result.current.isIdle).toBe(true);
 
     // Simulate activity — listener fires synchronously and resets the timer
     act(() => {
@@ -109,13 +109,14 @@ describe('useInactivity Hook', () => {
     });
 
     expect(onWake).toHaveBeenCalled();
+    expect(result.current.isIdle).toBe(false);
   });
 
   it('should handle visibilitychange event when page becomes visible', () => {
     const timeoutMs = 2000;
     const onIdle = vi.fn();
     const onWake = vi.fn();
-    renderHook(() =>
+    const { result } = renderHook(() =>
       useInactivity({ timeoutMs, onIdle, onWake })
     );
 
@@ -124,6 +125,7 @@ describe('useInactivity Hook', () => {
       vi.advanceTimersByTime(timeoutMs);
     });
     expect(onIdle).toHaveBeenCalledTimes(1);
+    expect(result.current.isIdle).toBe(true);
 
     // Page becomes visible again — should wake
     Object.defineProperty(document, 'visibilityState', {
@@ -136,12 +138,13 @@ describe('useInactivity Hook', () => {
     });
 
     expect(onWake).toHaveBeenCalled();
+    expect(result.current.isIdle).toBe(false);
   });
 
   it('should NOT reset timer when visibilitychange fires with hidden state', () => {
     const timeoutMs = 2000;
     const onIdle = vi.fn();
-    renderHook(() => useInactivity({ timeoutMs, onIdle }));
+    const { result } = renderHook(() => useInactivity({ timeoutMs, onIdle }));
 
     // Page hidden — should not affect timer
     Object.defineProperty(document, 'visibilityState', {
@@ -158,6 +161,7 @@ describe('useInactivity Hook', () => {
       vi.advanceTimersByTime(timeoutMs);
     });
     expect(onIdle).toHaveBeenCalledTimes(1);
+    expect(result.current.isIdle).toBe(true);
   });
 
   it('should clean up event listeners and timers on unmount', () => {
@@ -189,17 +193,20 @@ describe('useInactivity Hook', () => {
       vi.advanceTimersByTime(1000);
     });
     expect(onIdle).toHaveBeenCalledTimes(1);
+    expect(result.current.isIdle).toBe(true);
 
-    // Manually reset — should restart the timer
+    // Manually reset — should restart the timer and clear idle state
     act(() => {
       result.current.reset();
     });
+    expect(result.current.isIdle).toBe(false);
 
     // Should fire onIdle again after another full timeout
     act(() => {
       vi.advanceTimersByTime(1000);
     });
     expect(onIdle).toHaveBeenCalledTimes(2);
+    expect(result.current.isIdle).toBe(true);
   });
 
   it('should report lastActive timestamp that updates on activity', () => {
