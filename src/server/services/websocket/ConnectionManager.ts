@@ -1,9 +1,10 @@
 import { type Server as HttpServer } from 'http';
 import Debug from 'debug';
 import { createClient } from 'redis';
-import { Server as SocketIOServer } from 'socket.io';
+import { Server as SocketIOServer, type Socket } from 'socket.io';
 import { injectable, singleton } from 'tsyringe';
 import { createAdapter } from '@socket.io/redis-adapter';
+import { AuthManager } from '../../../auth/AuthManager';
 
 const debug = Debug('app:WebSocketService:ConnectionManager');
 
@@ -23,6 +24,12 @@ export class ConnectionManager {
 
     this.io = new SocketIOServer(server, {
       path: '/webui/socket.io',
+      // Hardening: cap payload size and tighten ping/connect timeouts so a
+      // hostile peer cannot pin memory via giant frames or stalled handshakes.
+      maxHttpBufferSize: 1_000_000, // 1MB
+      pingTimeout: 20_000,
+      pingInterval: 25_000,
+      connectTimeout: 10_000,
       cors: {
         origin: [
           /^https?:\/\/localhost(:\d+)?/,
@@ -43,6 +50,48 @@ export class ConnectionManager {
           'X-CSRF-Token',
         ],
       },
+    });
+
+    // Authenticate every WebSocket connection. The client already sends
+    // `auth: { token }` in WebSocketContext.tsx — previously the server
+    // never read it, so any peer reachable via CORS could connect and
+    // consume bot-status / pipeline / audit broadcasts (cross-tenant leak).
+    //
+    // Mirrors the HTTP `authenticateToken` middleware: verifies a JWT via
+    // AuthManager and attaches user info to `socket.data.user`. Refuses
+    // the connection (Socket.IO surfaces this as `connect_error` on the
+    // client) if the token is missing, malformed, or expired.
+    this.io.use((socket: Socket, next) => {
+      // Test-only bypass: matches the HTTP-side ALLOW_TEST_BYPASS gate
+      // that's already refused in production by middleware/auth.ts.
+      if (
+        process.env.ALLOW_TEST_BYPASS === 'true' &&
+        process.env.NODE_ENV !== 'production'
+      ) {
+        socket.data.user = { id: 'test-bypass', role: 'admin', permissions: ['*'] };
+        return next();
+      }
+
+      const token =
+        (socket.handshake.auth?.token as string | undefined) ||
+        (socket.handshake.headers.authorization?.startsWith('Bearer ')
+          ? socket.handshake.headers.authorization.slice(7)
+          : undefined);
+
+      if (!token) {
+        debug('WebSocket connect refused: no token');
+        return next(new Error('Authentication required'));
+      }
+
+      try {
+        const authManager = AuthManager.getInstance();
+        const payload = authManager.verifyAccessToken(token);
+        socket.data.user = payload;
+        return next();
+      } catch (err) {
+        debug('WebSocket connect refused: invalid token', err);
+        return next(new Error('Invalid or expired token'));
+      }
     });
 
     if (process.env.NODE_ENV === 'production' && process.env.REDIS_URL) {
