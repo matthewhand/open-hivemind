@@ -86,12 +86,20 @@ Rules of thumb:
 
 ## UX entry points
 
-- The Settings page has a `<select>` driving `setDensity`
-  (`src/client/src/components/Settings.tsx`). The `compactDensity` toggle is
-  wired through the same component via `setCompactDensity`.
-- A navbar quick-toggle (PR #2666) cycles
+- The navbar quick-toggle (PR #2666) cycles
   `compact → comfortable → spacious` from the global header. It writes to the
-  same Zustand slice, so both UIs stay in sync automatically.
+  Zustand slice via `setDensity`. **This is currently the only working UI
+  control for density.**
+- `src/client/src/components/Settings.tsx` contains a `<select>` wired to
+  `setDensity`, but it is orphaned — the live `/admin/settings` route renders
+  `src/client/src/pages/SystemSettings.tsx` (see
+  `src/client/src/router/AppRouter.tsx`), which does not include the density
+  control. The orphan component is not mounted anywhere in the router.
+- `compactDensity` has **no UI control** at all today. It is currently
+  programmatic-only — the value is read by `src/client/src/components/DaisyUI/Card.tsx`
+  to apply `card-compact`, and `setCompactDensity` exists in the store but
+  no component invokes it. Toggling it requires editing `localStorage`
+  directly or wiring a new control.
 
 ## Known constraints
 

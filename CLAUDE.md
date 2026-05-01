@@ -4,8 +4,8 @@
 
 - **Always use `npm run dev`** to start the server. This runs TypeScript directly via `tsx` with Vite hot-reloading for the frontend — no build step required.
 - **Do NOT run `npm run build`** or `npm start`. The `dist/` directory is not maintained and should not be relied upon.
-- Workspace packages (`packages/*`) do not need compiled `dist/` output; `tsx` resolves their source via tsconfig path aliases at runtime.
-- To verify the server starts correctly: `timeout 30 npm run dev` — look for `🎉 Open Hivemind Unified Server startup complete!` in the output.
+- Workspace packages (`packages/*`) do not need compiled `dist/` output; `tsx` resolves them via pnpm workspace symlinks (`node_modules/@hivemind/*`); falls back to package `src/` since `dist/` is absent.
+- To verify the server starts correctly: `timeout 30 npm run dev` — look for `🎉 Open Hivemind Server startup complete!` in the output.
 
 ## Feature Flags
 
@@ -15,10 +15,10 @@
 | `SKIP_MESSENGERS` | `false` | Skip messenger service initialization |
 | `WEBHOOK_ENABLED` | `false` | Enable the webhook service |
 | `USE_LEGACY_HANDLER` | `false` | Revert to the legacy monolithic `handleMessage()` instead of the 5-stage pipeline. The pipeline is the default message processing path. |
-| `ENABLE_VITE_DEV` | `false` | Enable Vite dev middleware (hot reload) inside the server process |
+| `ENABLE_VITE_DEV` | `true` | Enable Vite dev middleware (hot reload) inside the server process. Defaults to `true` when `NODE_ENV=development`; set to `false` to opt out. |
 | `ENABLE_WELCOME_MESSAGE` | `false` | Send a welcome message to the default channel on bot startup |
 | `WELCOME_MESSAGE_TEXT` | `''` | Text of the startup welcome message (requires `ENABLE_WELCOME_MESSAGE=true`) |
-| `DATABASE_PATH` | `./data/hivemind.db` | Path to the SQLite database file |
+| `DATABASE_PATH` | `data/hivemind.db` | Path to the SQLite database file |
 
 ## Screenshot Convention
 
