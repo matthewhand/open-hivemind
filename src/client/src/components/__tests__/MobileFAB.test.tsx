@@ -33,7 +33,7 @@ describe('MobileFAB', () => {
     expect(screen.getByText('CUSTOM')).toBeInTheDocument();
   });
 
-  it('renders an animate-spin spinner instead of the icon when loading is true', () => {
+  it('overlays an animate-spin spinner while preserving the caller icon when loading is true', () => {
     const { container } = render(
       <MobileFAB
         position="left"
@@ -43,8 +43,32 @@ describe('MobileFAB', () => {
         loading
       />
     );
-    expect(screen.queryByTestId('custom-icon')).not.toBeInTheDocument();
+    // Caller's icon must still be in the DOM so the FAB visually communicates the action.
+    expect(screen.getByTestId('custom-icon')).toBeInTheDocument();
+    // A spinner is overlaid on top.
     expect(container.querySelector('.animate-spin')).toBeInTheDocument();
+  });
+
+  it('sets aria-busy="true" on the button while loading', () => {
+    render(
+      <MobileFAB
+        position="left"
+        icon={<span>i</span>}
+        onClick={() => {}}
+        ariaLabel="fab"
+        loading
+      />
+    );
+    const btn = screen.getByRole('button', { name: 'fab' });
+    expect(btn).toHaveAttribute('aria-busy', 'true');
+    expect(btn).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  it('sets aria-busy="false" when not loading', () => {
+    render(
+      <MobileFAB position="left" icon={<span>i</span>} onClick={() => {}} ariaLabel="fab" />
+    );
+    expect(screen.getByRole('button', { name: 'fab' })).toHaveAttribute('aria-busy', 'false');
   });
 
   it('calls onClick exactly once when clicked', () => {
