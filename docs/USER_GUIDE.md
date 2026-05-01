@@ -270,6 +270,16 @@ Manage configuration, alerts, and system health.
 *   **Backup History**: Create and restore manual backups, and view automatic backup logs.
 *   **Performance Tuning**: Analyze real-time API endpoint status and view system environment details.
 
+### [Response Profiles](/admin/config/response-profiles)
+Manage bot response behaviors and probabilities across different scenarios to create distinct personalities or functions for your bots.
+
+![Response Profiles List](screenshots/response-profiles-list.png)
+![Add Response Profile Modal](screenshots/response-profile-add-modal.png)
+
+*   **Custom Profiles**: Create specialized behaviors dictating when and how bots engage in conversations.
+*   **Swarm Modes**: Configure how bots operate within groups (e.g., Exclusive, Broadcast, Collaborative).
+*   **Conditional Triggers**: Fine-tune base probabilities and bonuses based on context, like direct mentions or group activity.
+
 ### [Global Defaults](/admin/configuration)
 Manage system and provider settings (convict configs) for your application and perform hot-reloads of configurations.
 
