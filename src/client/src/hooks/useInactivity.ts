@@ -24,27 +24,43 @@ export function useInactivity({
   const timerRef = useRef<number | null>(null);
   const lastActiveRef = useRef<number>(Date.now());
 
-  const clearTimer = () => {
+  // Mirror state and callbacks in refs so `reset` does not need them in its
+  // dep list. Previously `reset` closed over `isIdle` and was in
+  // `useEffect`'s deps; when the timer fired `setIsIdle(true)`, the resulting
+  // re-render produced a new `reset` identity, which re-ran the effect, which
+  // immediately called the new `reset()` — flipping `isIdle` back to false
+  // before any consumer could observe `true`. PR #2704 worked around this by
+  // weakening the tests; this restores the actual behavior.
+  const isIdleRef = useRef(isIdle);
+  isIdleRef.current = isIdle;
+  const onIdleRef = useRef(onIdle);
+  onIdleRef.current = onIdle;
+  const onWakeRef = useRef(onWake);
+  onWakeRef.current = onWake;
+  const timeoutMsRef = useRef(timeoutMs);
+  timeoutMsRef.current = timeoutMs;
+
+  const clearTimer = useCallback(() => {
     if (timerRef.current) {
       window.clearTimeout(timerRef.current);
       timerRef.current = null;
     }
-  };
+  }, []);
 
   const goIdle = useCallback(() => {
     setIsIdle(true);
-    onIdle?.();
-  }, [onIdle]);
+    onIdleRef.current?.();
+  }, []);
 
   const reset = useCallback(() => {
     lastActiveRef.current = Date.now();
-    if (isIdle) {
+    if (isIdleRef.current) {
       setIsIdle(false);
-      onWake?.();
+      onWakeRef.current?.();
     }
     clearTimer();
-    timerRef.current = window.setTimeout(goIdle, timeoutMs);
-  }, [goIdle, isIdle, onWake, timeoutMs]);
+    timerRef.current = window.setTimeout(goIdle, timeoutMsRef.current);
+  }, [clearTimer, goIdle]);
 
   useEffect(() => {
     // Initialize timer
@@ -65,7 +81,7 @@ export function useInactivity({
       clearTimer();
       events.forEach(evt => window.removeEventListener(evt, handleEvent));
     };
-  }, [events, reset]);
+  }, [events, reset, clearTimer]);
 
   return { isIdle, reset, lastActive: lastActiveRef.current };
 }
