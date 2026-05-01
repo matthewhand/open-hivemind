@@ -13,15 +13,23 @@ html {
   scroll-behavior: smooth;
   /* Density scale — multiplied into card/main padding via calc().
      Driven by <html data-density="..."> set by uiStore.setDensity,
-     and <html data-compact-density="true"> from setCompactDensity. */
-  --density-scale: 1;
+     and <html data-compact-density="true"> from setCompactDensity.
+
+     Two-axis composition: data-density picks the base scale via
+     --density-base; --density-scale then composes that base with the
+     optional compact-density multiplier. The base/scale split is
+     required because a custom property cannot reference itself in
+     its own declaration (per CSS spec the value would be invalid),
+     which would silently no-op the compact-density axis. */
+  --density-base: 1;
+  --density-scale: var(--density-base);
 }
 
-html[data-density="compact"] { --density-scale: 0.7; }
-html[data-density="comfortable"] { --density-scale: 1; }
-html[data-density="spacious"] { --density-scale: 1.25; }
+html[data-density="compact"] { --density-base: 0.7; }
+html[data-density="comfortable"] { --density-base: 1; }
+html[data-density="spacious"] { --density-base: 1.25; }
 
-html[data-compact-density="true"] { --density-scale: calc(var(--density-scale) * 0.85); }
+html[data-compact-density="true"] { --density-scale: calc(var(--density-base) * 0.85); }
 
 /* Smooth out density-driven padding/min-height changes so toggling
    the slider or navbar density button doesn't snap-jump. Wrapped in
