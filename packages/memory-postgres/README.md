@@ -4,12 +4,14 @@ Memory provider backed by the host application's Postgres `DatabaseManager` and 
 
 ## Exports
 
-This package re-exports everything from `PostgresMemoryProvider`:
+This package re-exports everything from `PostgresMemoryProvider` via `src/index.ts` (`export * from './PostgresMemoryProvider'`):
 
 - `PostgresMemoryProvider` — class implementing `IMemoryProvider`
 - `PostgresMemoryConfig` — `{ embeddingProfile?: string }`
+- `create(config, dependencies)` — plugin factory that returns a new `PostgresMemoryProvider`
+- `manifest` — `{ displayName, description, type: 'memory' }` plugin metadata
 
-There is no `manifest` / `create()` in this package — it is wired in directly by the main app rather than through the generic PluginLoader because it depends on the host's `DatabaseManager`.
+The package is PluginLoader-compatible (it exposes both `create` and `manifest`). It still depends on the host's `DatabaseManager`, which must be supplied via `dependencies.getDatabaseManager()`.
 
 ## Environment variables
 
