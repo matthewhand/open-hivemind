@@ -56,11 +56,9 @@ test.describe('Memory profiles CRUD (API)', () => {
     expect(found).toMatchObject({ name: profile.name, provider: profile.provider });
   });
 
-  // Documents a known data-loss bug: POST /api/config/memory-profiles returns
-  // a profile with `type` set, but the subsequent GET strips it. This test is
-  // marked `.fail()` so the suite stays green; flip back to `.fixme()` or
-  // remove the `.fail` once the GET response shape is corrected.
-  test.fail('GET response should preserve `type` field set on create', async ({ request }) => {
+  // Regression guard for the `type` round-trip: previously stripped by the
+  // server-side MemoryProfileSchema not declaring `type`. Fixed in this PR.
+  test('GET response preserves `type` field set on create', async ({ request }) => {
     const profile = newProfile('type-roundtrip');
     await request.post(ROUTE, { data: profile });
     try {
