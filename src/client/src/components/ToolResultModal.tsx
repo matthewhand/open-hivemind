@@ -135,7 +135,7 @@ const ToolResultModal: React.FC<ToolResultModalProps> = ({ isOpen, onClose, resu
             </button>
           </div>
           <Mockup type="code" content={
-            <span dangerouslySetInnerHTML={{ __html: renderJsonWithHighlighting(result.arguments) }} />
+            <>{renderJsonWithHighlighting(result.arguments)}</>
           } className="bg-base-300 max-h-48 overflow-auto" />
         </div>
 
@@ -203,7 +203,7 @@ const ToolResultModal: React.FC<ToolResultModalProps> = ({ isOpen, onClose, resu
               </button>
             </div>
             <Mockup type="code" content={
-              <span dangerouslySetInnerHTML={{ __html: renderJsonWithHighlighting(result.result) }} />
+              <>{renderJsonWithHighlighting(result.result)}</>
             } className="bg-base-300 max-h-96 overflow-auto" />
           </div>
         )}
