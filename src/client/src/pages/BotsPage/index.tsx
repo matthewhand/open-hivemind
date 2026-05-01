@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Bot as BotIcon, Check, Download, LayoutGrid, List, Pause, Play, Plus, RefreshCw, Settings, Trash2, Upload as UploadIcon } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import Tabs from '../../components/DaisyUI/Tabs';
 import BotSettingsTab from './BotSettingsTab';
@@ -66,6 +66,56 @@ const BotsPage: React.FC = () => {
   const setViewMode = useCallback(
     (v: 'default' | 'compact' | 'swarm3d') => setUrlParam('view', v),
     [setUrlParam],
+  );
+
+  // ---------------------------------------------------------------------------
+  // View-mode dropdown a11y: WAI-ARIA "menu" pattern keyboard support.
+  // Items are <button role="menuitemradio"> with roving tabindex; arrow keys,
+  // Home, End, and Escape behave per APG. The Dropdown wrapper handles
+  // open/close on Enter/Space/Esc on the trigger; this only handles
+  // focus-traversal once an item has focus. See:
+  // https://www.w3.org/WAI/ARIA/apg/patterns/menu/
+  // ---------------------------------------------------------------------------
+  const viewMenuId = useId();
+  const viewMenuItemsRef = useRef<Array<HTMLButtonElement | null>>([]);
+  const viewTriggerRef = useRef<HTMLDivElement | null>(null);
+  const handleViewMenuKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLButtonElement>, index: number, count: number) => {
+      const focusItem = (i: number) => {
+        const next = ((i % count) + count) % count;
+        viewMenuItemsRef.current[next]?.focus();
+      };
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          focusItem(index + 1);
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          focusItem(index - 1);
+          break;
+        case 'Home':
+          e.preventDefault();
+          focusItem(0);
+          break;
+        case 'End':
+          e.preventDefault();
+          focusItem(count - 1);
+          break;
+        case 'Escape': {
+          e.preventDefault();
+          // Closing is handled by Dropdown's outside-click + its own trigger Escape.
+          // Move focus back to the trigger button so the menu collapses on blur
+          // and the user lands somewhere predictable.
+          const triggerButton = viewTriggerRef.current?.querySelector<HTMLElement>('[role="button"]');
+          triggerButton?.focus();
+          break;
+        }
+        default:
+          break;
+      }
+    },
+    []
   );
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -203,48 +253,69 @@ const BotsPage: React.FC = () => {
               <option value="active">Active Only</option>
               <option value="inactive">Inactive Only</option>
             </Select>
-            <Dropdown
-              trigger={
-                viewMode === 'swarm3d' ? (
-                  <BotIcon className="w-4 h-4" aria-hidden="true" />
-                ) : viewMode === 'compact' ? (
-                  <List className="w-4 h-4" aria-hidden="true" />
-                ) : (
-                  <LayoutGrid className="w-4 h-4" aria-hidden="true" />
-                )
-              }
-              position="bottom"
-              color="ghost"
-              size="sm"
-              className="dropdown-end"
-              triggerClassName="gap-1 focus-visible:ring-2 ring-base-content focus-visible:ring-offset-2 ring-offset-base-100 focus-visible:outline-none"
-              contentClassName="shadow-lg w-44 z-20"
-              aria-label={`View mode: ${
-                viewMode === 'swarm3d' ? '3D Swarm' : viewMode === 'compact' ? 'Compact' : 'Grid'
-              }`}
-            >
-              {([
-                { value: 'default', label: 'Grid', icon: <LayoutGrid className="w-4 h-4" aria-hidden="true" /> },
-                { value: 'compact', label: 'Compact', icon: <List className="w-4 h-4" aria-hidden="true" /> },
-                { value: 'swarm3d', label: '3D Swarm', icon: <BotIcon className="w-4 h-4" aria-hidden="true" /> },
-              ] as const).map((opt) => {
-                const isActive = viewMode === opt.value;
-                return (
-                  <li key={opt.value}>
-                    <a
-                      onClick={(e) => { e.stopPropagation(); setViewMode(opt.value); }}
-                      className={`flex items-center gap-2 ${isActive ? 'active border-l-2 border-primary pl-2' : ''}`}
-                      role="menuitemradio"
-                      aria-checked={isActive}
-                    >
-                      {opt.icon}
-                      <span className="flex-1">{opt.label}</span>
-                      {isActive && <Check className="w-4 h-4 text-primary" aria-hidden="true" />}
-                    </a>
-                  </li>
-                );
-              })}
-            </Dropdown>
+            <div ref={viewTriggerRef} className="contents">
+              <Dropdown
+                trigger={
+                  viewMode === 'swarm3d' ? (
+                    <BotIcon className="w-4 h-4" aria-hidden="true" />
+                  ) : viewMode === 'compact' ? (
+                    <List className="w-4 h-4" aria-hidden="true" />
+                  ) : (
+                    <LayoutGrid className="w-4 h-4" aria-hidden="true" />
+                  )
+                }
+                position="bottom"
+                color="ghost"
+                size="sm"
+                className="dropdown-end"
+                triggerClassName="gap-1 focus-visible:ring-2 ring-base-content focus-visible:ring-offset-2 ring-offset-base-100 focus-visible:outline-none"
+                contentClassName="shadow-lg w-44 z-20"
+                aria-label={`View mode: ${
+                  viewMode === 'swarm3d' ? '3D Swarm' : viewMode === 'compact' ? 'Compact' : 'Grid'
+                }`}
+                aria-haspopup="menu"
+                menuId={viewMenuId}
+                triggerAriaControls={viewMenuId}
+              >
+                {(() => {
+                  const items = [
+                    { value: 'default', label: 'Grid', icon: <LayoutGrid className="w-4 h-4" aria-hidden="true" /> },
+                    { value: 'compact', label: 'Compact', icon: <List className="w-4 h-4" aria-hidden="true" /> },
+                    { value: 'swarm3d', label: '3D Swarm', icon: <BotIcon className="w-4 h-4" aria-hidden="true" /> },
+                  ] as const;
+                  // Reset the ref array each render so removed items don't linger.
+                  viewMenuItemsRef.current = [];
+                  return items.map((opt, idx) => {
+                    const isActive = viewMode === opt.value;
+                    return (
+                      <li key={opt.value}>
+                        <button
+                          type="button"
+                          ref={(el) => {
+                            viewMenuItemsRef.current[idx] = el;
+                          }}
+                          role="menuitemradio"
+                          aria-checked={isActive}
+                          tabIndex={isActive ? 0 : -1}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setViewMode(opt.value);
+                          }}
+                          onKeyDown={(e) => handleViewMenuKeyDown(e, idx, items.length)}
+                          className={`flex items-center gap-2 w-full text-left ${
+                            isActive ? 'active border-l-2 border-primary pl-2' : ''
+                          }`}
+                        >
+                          {opt.icon}
+                          <span className="flex-1">{opt.label}</span>
+                          {isActive && <Check className="w-4 h-4 text-primary" aria-hidden="true" />}
+                        </button>
+                      </li>
+                    );
+                  });
+                })()}
+              </Dropdown>
+            </div>
             <Tooltip content="Refresh list">
               <Button
                 variant="ghost"
