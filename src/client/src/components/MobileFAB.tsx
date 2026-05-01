@@ -1,5 +1,5 @@
 import React, { memo, ReactNode } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 export interface MobileFABProps {
   /** Which side of the viewport to anchor the FAB to. */
@@ -7,9 +7,9 @@ export interface MobileFABProps {
   /**
    * Icon node rendered inside the FAB.
    *
-   * NOTE: When `loading` is `true`, this prop is **ignored** and replaced by a
-   * hardcoded `RefreshCw` spinner with `animate-spin`. The caller's `icon` is
-   * not preserved during the loading state.
+   * The caller's `icon` is always rendered. When `loading` is `true`, the icon
+   * is dimmed (via `opacity-30`) and a `Loader2` spinner is overlaid on top —
+   * so the FAB still visually communicates which action it represents.
    */
   icon: ReactNode;
   /** Click handler. */
@@ -19,9 +19,9 @@ export interface MobileFABProps {
   /** Disables the button. */
   disabled?: boolean;
   /**
-   * When `true`, the supplied `icon` is replaced by a hardcoded animated
-   * `RefreshCw` spinner. The caller's `icon` value is discarded for the
-   * duration of the loading state.
+   * When `true`, the caller's `icon` is rendered at reduced opacity with a
+   * `Loader2` spinner overlay. The button also receives `aria-busy="true"`
+   * and `aria-disabled="true"` for assistive tech.
    */
   loading?: boolean;
   /** Additional Tailwind classes (appended after the FAB classes). */
@@ -46,7 +46,7 @@ const MobileFAB: React.FC<MobileFABProps> = ({
   className = '',
 }) => {
   const positionClass = position === 'left' ? 'fab-mobile-left' : 'fab-mobile-right';
-  const composed = `fab-mobile ${positionClass} md:hidden${className ? ` ${className}` : ''}`;
+  const composed = `fab-mobile ${positionClass} md:hidden relative${className ? ` ${className}` : ''}`;
 
   return (
     <button
@@ -55,8 +55,16 @@ const MobileFAB: React.FC<MobileFABProps> = ({
       onClick={onClick}
       disabled={disabled}
       aria-label={ariaLabel}
+      aria-busy={loading}
+      aria-disabled={loading || disabled}
     >
-      {loading ? <RefreshCw className="w-6 h-6 animate-spin" /> : icon}
+      <span className={loading ? 'opacity-30' : undefined}>{icon}</span>
+      {loading && (
+        <Loader2
+          className="absolute inset-0 m-auto w-5 h-5 animate-spin"
+          aria-hidden="true"
+        />
+      )}
     </button>
   );
 };
