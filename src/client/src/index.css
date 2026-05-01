@@ -1387,7 +1387,10 @@ body.robot-ui-enabled .btn-accent {
  * ============================================================ */
 .fab-mobile {
   position: fixed;
-  bottom: calc(1.5rem * var(--density-scale, 1));
+  /* Add iOS safe-area inset so the FAB sits above the home-indicator
+   * gesture bar at compact density (where 1.5rem * scale collapses to
+   * ~14px and would otherwise overlap the indicator). */
+  bottom: calc(1.5rem * var(--density-scale, 1) + env(safe-area-inset-bottom, 0px));
   width: calc(3.5rem * var(--density-scale, 1));
   height: calc(3.5rem * var(--density-scale, 1));
   display: flex;
@@ -1406,12 +1409,30 @@ body.robot-ui-enabled .btn-accent {
 }
 
 .fab-mobile:hover,
-.fab-mobile:active,
 .fab-mobile:focus-visible {
   background-color: oklch(var(--p));
   color: oklch(var(--pc));
-  transform: scale(1.06);
   outline: none;
+}
+
+.fab-mobile:active {
+  background-color: oklch(var(--p));
+  color: oklch(var(--pc));
+  outline: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .fab-mobile:hover,
+  .fab-mobile:focus-visible {
+    transform: scale(1.06);
+  }
+
+  .fab-mobile:active {
+    /* Press-down feedback (HIG/Material convention) — previous rule
+     * applied scale(1.06) on :active, which grew the button under the
+     * finger instead of acknowledging the press. */
+    transform: scale(0.96);
+  }
 }
 
 .fab-mobile:disabled {
