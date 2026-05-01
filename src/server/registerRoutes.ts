@@ -123,19 +123,19 @@ export function registerRoutes(app: import('express').Application, ctx: RouteCon
 
   // 3. Resource routers (specific paths, no catch-all conflict)
   app.use('/api/activity', authenticateToken, activityRouter);
-  app.use('/api/agents', agentsRouter);
-  app.use('/api/dashboard', dashboardRouter);
-  app.use('/api/config', webuiConfigRouter);
-  app.use('/api/bots', botsRouter);
+  app.use('/api/agents', authenticateToken, agentsRouter);
+  app.use('/api/dashboard', authenticateToken, dashboardRouter);
+  app.use('/api/config', authenticateToken, webuiConfigRouter);
+  app.use('/api/bots', authenticateToken, botsRouter);
   app.use('/api/bot-config', botConfigRouter);
   app.use('/api/validation', validationRouter);
-  app.use('/api/hot-reload', hotReloadRouter);
+  app.use('/api/hot-reload', authenticateToken, hotReloadRouter);
   app.use('/api/ci', ciRouter);
-  app.use('/api/enterprise', enterpriseRouter);
-  app.use('/api/secure-config', secureConfigRouter);
+  app.use('/api/enterprise', authenticateToken, enterpriseRouter);
+  app.use('/api/secure-config', authenticateToken, secureConfigRouter);
   app.use('/api/admin', adminApiRouter);
   app.use('/api/integrations', integrationsRouter);
-  app.use('/api/letta', lettaRouter);
+  app.use('/api/letta', authenticateToken, lettaRouter);
   app.use('/api/marketplace', marketplaceRouter);
   app.use('/api/mcp', mcpRouter);
   app.use('/api/mcp-tools', mcpToolsRouter);
