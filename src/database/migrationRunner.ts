@@ -47,6 +47,17 @@ export const runMigrations = async (db: IDatabase, isPostgres: boolean): Promise
       down: async () => {
         // Not implemented for baseline
       }
+    },
+    {
+      name: '001_add_missing_indexes.ts',
+      up: async ({ context }: { context: { db: IDatabase, isPostgres: boolean } }) => {
+        const { up } = await import('./migrations/001_add_missing_indexes');
+        await up(context);
+      },
+      down: async ({ context }: { context: { db: IDatabase, isPostgres: boolean } }) => {
+        const { down } = await import('./migrations/001_add_missing_indexes');
+        await down(context);
+      }
     }
   ];
 
