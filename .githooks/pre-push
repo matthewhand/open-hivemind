@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Placeholder pre-push hook. The previous .husky/pre-push ran
+# `pnpm run check-types` but it never actually executed because the
+# repo's prepare script sets core.hooksPath=.githooks, bypassing husky.
+# Restoring that as a real gate is deferred to a follow-up PR (it needs
+# a PATH/launcher fix and a tolerance plan for in-flight type errors).
+exit 0
