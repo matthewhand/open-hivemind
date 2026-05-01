@@ -502,8 +502,6 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
           <ul tabIndex={0} className="dropdown-content z-[40] menu p-3 shadow-2xl bg-base-100 rounded-box w-64 border border-base-200 mt-2">
             <li className="menu-title text-xs opacity-40 uppercase tracking-widest font-bold mb-2">Live Infrastructure</li>
             <li><a className="flex justify-between py-2 font-medium"><span>🟢 System Status</span> <Badge variant="success" size="xs">Healthy</Badge></a></li>
-            <li><a className="flex justify-between py-2"><span>🤖 Active Bots</span> <span className="font-mono text-xs">3</span></a></li>
-            <li><a className="flex justify-between py-2"><span>📡 MCP Nodes</span> <span className="font-mono text-xs">5</span></a></li>
             <Divider className="my-1" />
             <li><a href="/admin/monitoring" className="btn btn-xs btn-primary btn-outline mt-2">View Health Dashboard</a></li>
           </ul>
