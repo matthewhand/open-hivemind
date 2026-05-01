@@ -190,11 +190,11 @@ validate_git_hooks() {
 
     cd "$PROJECT_ROOT"
 
-    # Check if husky is configured
-    if [[ -d ".husky" ]]; then
-        log_success "Husky hooks configured"
+    # Check if git hooks are configured (we use .githooks/, not husky)
+    if [[ -x ".githooks/pre-commit" ]]; then
+        log_success "Git hooks configured (.githooks/)"
     else
-        log_warning "Husky hooks not configured"
+        log_warning "Git hooks not configured — pre-commit checks will not run"
     fi
 }
 
