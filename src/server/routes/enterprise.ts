@@ -4,6 +4,7 @@ import { ApiResponse } from '@src/server/utils/apiResponse';
 import { AuditLogger } from '../../common/auditLogger';
 import { HTTP_STATUS } from '../../types/constants';
 import {
+  ComplianceCheckSchema,
   CreateCloudProviderSchema,
   CreateEnterpriseIntegrationSchema,
   PerformanceOptimizeSchema,
@@ -337,7 +338,7 @@ router.get('/performance', (req, res) => {
 });
 
 // Run compliance check
-router.post('/compliance/check', (req, res) => {
+router.post('/compliance/check', validateRequest(ComplianceCheckSchema), (req, res) => {
   try {
     // In a real implementation, this would run compliance checks
     // For now, simulate compliance check
