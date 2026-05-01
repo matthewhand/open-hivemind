@@ -552,11 +552,12 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
             className="btn btn-ghost btn-circle btn-sm hidden sm:inline-flex"
             onClick={cycleDensity}
             aria-label={`UI density: ${densityMeta.label}. Activate to switch density.`}
-            data-density={density}
           >
             <DensityIcon className="w-5 h-5" />
           </button>
         </Tooltip>
+        {/* Polite live region: announces the new density value to screen readers when state changes. */}
+        <span aria-live="polite" aria-atomic="true" className="sr-only">{`Density: ${densityMeta.label}`}</span>
 
         {/* Improved Theme Switcher integration */}
         <div className="hidden sm:flex">
