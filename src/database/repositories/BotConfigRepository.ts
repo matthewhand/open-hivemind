@@ -231,6 +231,17 @@ export class BotConfigRepository {
     }
   }
 
+  // Allow-list of column names that may be UPDATE'd. Anything outside this
+  // list is dropped silently. Defense against SQL identifier injection from
+  // any caller that passes user-supplied keys via `Partial<BotConfiguration>`
+  // (e.g. ConfigImporter). The TypeScript type alone is not enough — `as any`
+  // casts elsewhere can smuggle arbitrary keys through.
+  private static readonly UPDATABLE_COLUMNS = new Set<string>([
+    'name', 'messageProvider', 'llmProvider', 'persona', 'systemInstruction',
+    'mcpServers', 'mcpGuard', 'discord', 'slack', 'mattermost', 'openai',
+    'flowise', 'openwebui', 'openswarm', 'isActive', 'updatedAt',
+  ]);
+
   async updateBotConfiguration(id: number, config: Partial<BotConfiguration>): Promise<void> {
     this.ensureConnected();
 
@@ -243,6 +254,10 @@ export class BotConfigRepository {
 
       Object.entries(config).forEach(([key, value]) => {
         if (key === 'id' || value === undefined) return;
+        if (!BotConfigRepository.UPDATABLE_COLUMNS.has(key)) {
+          debug(`updateBotConfiguration: dropping non-allowlisted column "${key}"`);
+          return;
+        }
 
         updateFields.push(`${key} = ?`);
         if (this.sensitiveFields.includes(key)) {
