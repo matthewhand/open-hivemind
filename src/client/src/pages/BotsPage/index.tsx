@@ -200,9 +200,8 @@ const BotsPage: React.FC = () => {
               color="ghost"
               size="sm"
               className="dropdown-end"
-              triggerClassName="btn-square focus-visible:ring-2 ring-base-content focus-visible:ring-offset-2 ring-offset-base-100 focus-visible:outline-none"
+              triggerClassName="gap-1 focus-visible:ring-2 ring-base-content focus-visible:ring-offset-2 ring-offset-base-100 focus-visible:outline-none"
               contentClassName="shadow-lg w-44 z-20"
-              hideArrow
               aria-label={`View mode: ${
                 viewMode === 'swarm3d' ? '3D Swarm' : viewMode === 'compact' ? 'Compact' : 'Grid'
               }`}
