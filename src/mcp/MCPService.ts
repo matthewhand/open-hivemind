@@ -318,9 +318,12 @@ export class MCPService {
     }
   ): Promise<unknown> {
     try {
-      if (context?.botName) {
-        await this.assertGuardAllowsExecution(context);
-      }
+      // Guard MUST run on every execution. Previously this was gated on
+      // `context?.botName` being present, which let any caller skip the
+      // entire MCPGuard by simply omitting botName (e.g. /api/mcp tool
+      // playground requests). assertGuardAllowsExecution still throws on
+      // missing botName — that's the safe failure mode.
+      await this.assertGuardAllowsExecution(context ?? {});
 
       const client = this.clients.get(serverName);
       if (!client) {
@@ -392,7 +395,9 @@ export class MCPService {
     const { botName, messageProvider, forumId, forumOwnerId, userId } = context;
 
     if (!botName) {
-      return;
+      // Refuse instead of silently allowing — every execution path must
+      // identify the bot so guard config can be looked up.
+      throw new Error('MCP tool access denied: botName is required for guard evaluation.');
     }
 
     const manager = BotConfigurationManager.getInstance();
