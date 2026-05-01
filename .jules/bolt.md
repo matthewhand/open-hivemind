@@ -35,3 +35,7 @@
 ## 2026-04-25 - Optimize MCPServers array lookup
 **Learning:** React component renders often contain hidden O(N^2) complexity when checking for array duplicates using `.find()` inside `.forEach()` or `.map()` loops.
 **Action:** Replace nested array `.find()` operations during bulk processing with a pre-computed `Set` to achieve O(1) membership testing and linear overall time complexity.
+
+## 2025-05-01 - Replace O(N) array search with O(1) map lookup in PersonaSelector render loop
+**Learning:** In React components like `PersonaSelector`, performing array `.find()` lookups inside `.map()` render loops (to match categories/attributes with items) degrades rendering performance to O(N * M), which is especially noticeable when lists grow long or are filtered frequently.
+**Action:** Always pre-compute a lookup map using `useMemo` (e.g., `Object.fromEntries(categories.map(c => [c.value, c.color]))`) and use O(1) object key lookups (`categoryColorMap[persona.category]`) inside render loops instead of array searches. Make sure static data referenced by useMemo is moved outside the component or the optimization is defeated.
