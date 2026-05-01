@@ -14,7 +14,7 @@ const debug = Debug('app:enterpriseRoutes');
 const router = Router();
 
 // Get compliance status
-router.get('/api/compliance', (req, res) => {
+router.get('/compliance', (req, res) => {
   try {
     // In a real implementation, this would check compliance rules
     // For now, return mock data
@@ -59,7 +59,7 @@ router.get('/api/compliance', (req, res) => {
 });
 
 // Get cloud providers
-router.get('/api/cloud-providers', (req, res) => {
+router.get('/cloud-providers', (req, res) => {
   try {
     // In a real implementation, this would fetch cloud provider status
     // For now, return mock data
@@ -99,7 +99,7 @@ router.get('/api/cloud-providers', (req, res) => {
 });
 
 // Add cloud provider
-router.post('/api/cloud-providers', validateRequest(CreateCloudProviderSchema), (req, res) => {
+router.post('/cloud-providers', validateRequest(CreateCloudProviderSchema), (req, res) => {
   try {
     const { name, type, region, _credentials } = req.body;
 
@@ -125,7 +125,7 @@ router.post('/api/cloud-providers', validateRequest(CreateCloudProviderSchema), 
 });
 
 // Get integrations
-router.get('/api/integrations', (req, res) => {
+router.get('/integrations', (req, res) => {
   try {
     // In a real implementation, this would fetch integration status
     // For now, return mock data
@@ -169,7 +169,7 @@ router.get('/api/integrations', (req, res) => {
 });
 
 // Add integration
-router.post('/api/integrations', validateRequest(CreateEnterpriseIntegrationSchema), (req, res) => {
+router.post('/integrations', validateRequest(CreateEnterpriseIntegrationSchema), (req, res) => {
   try {
     const { name, type, provider, config } = req.body;
 
@@ -196,7 +196,7 @@ router.post('/api/integrations', validateRequest(CreateEnterpriseIntegrationSche
 });
 
 // Get audit events — supports composable query-param filters
-router.get('/api/audit', async (req, res) => {
+router.get('/audit', async (req, res) => {
   try {
     const {
       limit = '200',
@@ -232,7 +232,7 @@ router.get('/api/audit', async (req, res) => {
 });
 
 // Export audit events as CSV (no pagination cap)
-router.get('/api/audit/export', async (req, res) => {
+router.get('/audit/export', async (req, res) => {
   try {
     const { search, action, resource, user, dateFrom, dateTo } = req.query as Record<
       string,
@@ -293,7 +293,7 @@ router.get('/api/audit/export', async (req, res) => {
 });
 
 // Get performance metrics
-router.get('/api/performance', (req, res) => {
+router.get('/performance', (req, res) => {
   try {
     // In a real implementation, this would fetch performance metrics
     // For now, return mock data
@@ -337,7 +337,7 @@ router.get('/api/performance', (req, res) => {
 });
 
 // Run compliance check
-router.post('/api/compliance/check', (req, res) => {
+router.post('/compliance/check', (req, res) => {
   try {
     // In a real implementation, this would run compliance checks
     // For now, simulate compliance check
@@ -360,7 +360,7 @@ router.post('/api/compliance/check', (req, res) => {
 });
 
 // Get security alerts
-router.get('/api/security/alerts', (req, res) => {
+router.get('/security/alerts', (req, res) => {
   try {
     // In a real implementation, this would fetch security alerts
     // For now, return mock data
@@ -395,7 +395,7 @@ router.get('/api/security/alerts', (req, res) => {
 });
 
 // Get governance policies
-router.get('/api/governance/policies', (req, res) => {
+router.get('/governance/policies', (req, res) => {
   try {
     // In a real implementation, this would fetch governance policies
     // For now, return mock data
@@ -430,7 +430,7 @@ router.get('/api/governance/policies', (req, res) => {
 });
 
 // Optimize performance
-router.post('/api/performance/optimize', validateRequest(PerformanceOptimizeSchema), (req, res) => {
+router.post('/performance/optimize', validateRequest(PerformanceOptimizeSchema), (req, res) => {
   try {
     const { target, type } = req.body;
 
