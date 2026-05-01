@@ -1,5 +1,5 @@
-import { redactSensitiveInfo } from './redactSensitiveInfo';
 import databaseConfig from '../config/databaseConfig';
+import { redactSensitiveInfo } from './redactSensitiveInfo';
 
 type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error';
 
@@ -209,7 +209,7 @@ function logInternal(level: LogLevel, ...args: unknown[]): void {
           details: details ? sanitizeValue(undefined, details, new WeakSet()) : undefined,
         });
       }
-    } catch (e) {
+    } catch (_e) {
       // Ignore errors in database logging to avoid infinite loops
     }
   }

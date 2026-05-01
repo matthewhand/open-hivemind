@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { IDatabase, InferenceLog } from '../types';
+import { type IDatabase, type InferenceLog } from '../types';
 
 const debug = Debug('app:InferenceRepository');
 
@@ -20,7 +20,7 @@ export class InferenceRepository {
         (botName, prompt, response, tokensUsed, latencyMs, provider, status, errorMessage) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `;
-      
+
       const params = [
         log.botName,
         log.prompt,
@@ -29,7 +29,7 @@ export class InferenceRepository {
         log.latencyMs || null,
         log.provider || null,
         log.status,
-        log.errorMessage || null
+        log.errorMessage || null,
       ];
 
       const result = await db.run(sql, params);

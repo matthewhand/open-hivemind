@@ -1,6 +1,5 @@
 import { Logger } from '@common/logger';
-import type { IDatabase as Database } from '../types';
-import type { BotConfiguration as TypesBotConfiguration } from '../types';
+import type { IDatabase as Database, BotConfiguration as TypesBotConfiguration } from '../types';
 
 // We map our type loosely for type flexibility (allowing parsed objects or stringified variants)
 export type BotConfiguration = TypesBotConfiguration;

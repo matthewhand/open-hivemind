@@ -1,8 +1,27 @@
-import { Pool, PoolConfig } from 'pg';
 import Debug from 'debug';
+import type { Pool, PoolConfig } from 'pg';
 import { IDatabase } from './types';
 
 const debug = Debug('app:PostgresWrapper');
+
+/**
+ * Lazily resolve the `pg` module at runtime so that environments running the
+ * default SQLite backend do not require `pg` to be installed. Postgres support
+ * is opt-in (see `DATABASE_TYPE=postgres`); only consumers that actually
+ * instantiate `PostgresWrapper` need the optional `pg` dependency present.
+ */
+function loadPgPool(): typeof import('pg').Pool {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const pg = require('pg') as typeof import('pg');
+    return pg.Pool;
+  } catch (err) {
+    const message =
+      "The 'pg' module is required to use the Postgres database backend but is not installed. " +
+      'Install it with `npm install pg` (and `@types/pg` for TypeScript) or set DATABASE_TYPE=sqlite.';
+    throw new Error(message + ` Original error: ${(err as Error).message}`);
+  }
+}
 
 /**
  * Wrapper around pg providing an async/promise-based API
@@ -13,10 +32,11 @@ export class PostgresWrapper implements IDatabase {
 
   constructor(config: string | PoolConfig) {
     debug('POSTGRES_WRAPPER: constructor called');
+    const PoolCtor = loadPgPool();
     if (typeof config === 'string') {
-      this.pool = new Pool({ connectionString: config });
+      this.pool = new PoolCtor({ connectionString: config });
     } else {
-      this.pool = new Pool(config);
+      this.pool = new PoolCtor(config);
     }
   }
 

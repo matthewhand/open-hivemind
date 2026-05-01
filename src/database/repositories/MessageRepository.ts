@@ -1,7 +1,11 @@
 import * as crypto from 'crypto';
 import Debug from 'debug';
-import type { IDatabase as Database } from '../types';
-import type { BotMetrics, ConversationSummary, MessageRecord } from '../types';
+import type {
+  BotMetrics,
+  ConversationSummary,
+  IDatabase as Database,
+  MessageRecord,
+} from '../types';
 
 const debug = Debug('app:MessageRepository');
 

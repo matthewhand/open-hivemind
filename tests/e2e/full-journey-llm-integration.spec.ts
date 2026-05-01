@@ -40,10 +40,10 @@ test.describe('Full Journey: LLM Provider Integration', () => {
           response.url().includes('/api/llm/providers') && response.request().method() === 'POST',
         { timeout: 10000 }
       );
-      
+
       const saveBtn = page.locator('button:has-text("Save")').first();
       await saveBtn.click();
-      
+
       const saveResponse = await saveResponsePromise;
       expect(saveResponse.status()).toBe(201);
       const responseBody = await saveResponse.json();
@@ -58,24 +58,24 @@ test.describe('Full Journey: LLM Provider Integration', () => {
     await createBtn.click();
     await page.locator('input[name="name"]').fill('Provider Test Bot');
     await page.locator('select[name="messageProvider"]').selectOption('discord');
-    
+
     // Wait for the provider to be available in the dropdown
     const llmSelect = page.locator('select[name="llmProvider"]');
     await expect(llmSelect).toBeVisible({ timeout: 5000 });
     await llmSelect.selectOption({ label: 'E2E OpenAI' });
-    
+
     // Save bot and wait for real API response
     const botSavePromise = page.waitForResponse(
       (response) => response.url().includes('/api/bots') && response.request().method() === 'POST',
       { timeout: 10000 }
     );
-    
+
     await page.locator('button:has-text("Save")').first().click();
-    
+
     const botResponse = await botSavePromise;
     expect(botResponse.status()).toBe(201);
     const botData = await botResponse.json();
-    
+
     // Some APIs might return the bot nested in a data property
     const bot = botData.data?.bot || botData;
     expect(bot.llmProvider).toBe('E2E OpenAI');
@@ -97,7 +97,7 @@ test.describe('Full Journey: LLM Provider Integration', () => {
       await page.locator('select[name="providerType"]').selectOption('openai');
       await page.locator('input[name="name"]').fill('Provider OpenAI');
       await page.locator('input[name="apiKey"]').fill('sk-openai-mock');
-      
+
       const savePromise1 = page.waitForResponse(
         (response) =>
           response.url().includes('/api/llm/providers') && response.request().method() === 'POST',
@@ -113,7 +113,7 @@ test.describe('Full Journey: LLM Provider Integration', () => {
       await page.locator('select[name="providerType"]').selectOption('anthropic');
       await page.locator('input[name="name"]').fill('Provider Anthropic');
       await page.locator('input[name="apiKey"]').fill('sk-ant-mock');
-      
+
       const savePromise2 = page.waitForResponse(
         (response) =>
           response.url().includes('/api/llm/providers') && response.request().method() === 'POST',
@@ -143,7 +143,7 @@ test.describe('Full Journey: LLM Provider Integration', () => {
       await page.locator('select[name="providerType"]').selectOption('openai');
       await page.locator('input[name="name"]').fill('Dropdown Test Provider');
       await page.locator('input[name="apiKey"]').fill('sk-dropdown-test');
-      
+
       const savePromise = page.waitForResponse(
         (response) =>
           response.url().includes('/api/llm/providers') && response.request().method() === 'POST',
@@ -162,7 +162,7 @@ test.describe('Full Journey: LLM Provider Integration', () => {
     // Verify the new provider appears in the LLM provider dropdown
     const llmSelect = page.locator('select[name="llmProvider"]');
     await expect(llmSelect).toBeVisible({ timeout: 5000 });
-    
+
     // Check if the option exists
     const options = await llmSelect.locator('option').allTextContents();
     expect(options).toContain('Dropdown Test Provider');

@@ -13,7 +13,15 @@ import {
 const debug = Debug('app:webhookRoutes');
 
 // Webhook request body schema validation
-function validateWebhookBody(body: any): { valid: boolean; errors: string[] } {
+interface WebhookBody {
+  id?: string;
+  status?: string;
+  output?: unknown[];
+  urls?: unknown[];
+  [key: string]: unknown;
+}
+
+function validateWebhookBody(body: WebhookBody): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
 
   if (!body || typeof body !== 'object') {
@@ -111,110 +119,8 @@ export function configureWebhookRoutes(
         const channelId = targetChannel || messageService.getDefaultChannel?.() || '';
         await messageService.sendPublicAnnouncement(channelId, resultMessage);
         debug('Successfully sent webhook message to channel:', channelId);
-      } catch (error: unknown) {
-        debug(
-          'Failed to send webhook message:',
-          error instanceof Error ? error.message : String(error)
-        );
+      } catch (error) {
+        debug('Failed to send webhook message:', error instanceof Error ? error.message : String(error));
         return res.status(500).json({ error: 'Failed to process webhook' });
       }
 
-      predictionImageMap.delete(predictionId);
-      res.setHeader('Content-Type', 'application/json');
-      return res.status(200).json({ success: true, processed: predictionId });
-    }
-  );
-
-  /**
-   * Simple text endpoint for generic messaging.
-   * Format: { "text": "Hello bot" } or { "message": "Hello bot" }
-   */
-  app.post(
-    '/webhook/message',
-    verifyWebhookToken,
-    verifyIpWhitelist,
-    async (req: Request, res: Response) => {
-      const { text, message, content } = req.body;
-      const input = text || message || content;
-
-      if (!input) {
-        return res
-          .status(400)
-          .json({ error: 'Missing message content (text, message, or content)' });
-      }
-
-      debug('Received generic webhook message:', input);
-
-      try {
-        // If the service has a direct handler for incoming webhooks, use it
-        if (typeof (messageService as any).handleIncomingWebhook === 'function') {
-          const result = await (messageService as any).handleIncomingWebhook(
-            req.body,
-            targetChannel
-          );
-          return res.status(200).json({ success: true, result });
-        }
-
-        // Fallback: Just broadcast it as an announcement
-        const channelId = targetChannel || messageService.getDefaultChannel?.() || '';
-        await messageService.sendPublicAnnouncement(channelId, input);
-        return res.status(200).json({ success: true, mode: 'announcement' });
-      } catch (error: unknown) {
-        const msg = error instanceof Error ? error.message : String(error);
-        debug('Failed to process generic webhook message:', msg);
-        return res.status(500).json({ error: 'Failed to process message', details: msg });
-      }
-    }
-  );
-
-  /**
-   * Slack-compatible webhook endpoint.
-   * Format: { "text": "...", "username": "...", "icon_emoji": "...", "attachments": [...] }
-   */
-  app.post(
-    '/webhook/slack',
-    verifyWebhookToken,
-    verifyIpWhitelist,
-    verifySlackSignature,
-    async (req: Request, res: Response) => {
-      debug('Received Slack-compatible webhook message:', req.body);
-
-      try {
-        // If the service has a direct handler for incoming webhooks, use it
-        if (typeof (messageService as any).handleIncomingWebhook === 'function') {
-          const result = await (messageService as any).handleIncomingWebhook(
-            req.body,
-            targetChannel
-          );
-          return res.status(200).json({ success: true, result });
-        }
-
-        // Fallback: Generic processing (if service doesn't handle webhooks directly)
-        const { text, username, attachments } = req.body;
-        let content = text || '';
-
-        if (!content && attachments && Array.isArray(attachments)) {
-          content = attachments
-            .map((a: any) => a.text || a.fallback || '')
-            .filter(Boolean)
-            .join('\n');
-        }
-
-        if (!content) {
-          return res
-            .status(400)
-            .json({ error: 'Missing Slack message content (text or attachments)' });
-        }
-
-        const channelId = targetChannel || messageService.getDefaultChannel?.() || '';
-        const author = username || 'Slack Webhook';
-        await messageService.sendPublicAnnouncement(channelId, `[${author}] ${content}`);
-        return res.status(200).json({ success: true, mode: 'announcement' });
-      } catch (error: unknown) {
-        const msg = error instanceof Error ? error.message : String(error);
-        debug('Failed to process Slack webhook message:', msg);
-        return res.status(500).json({ error: 'Failed to process Slack message', details: msg });
-      }
-    }
-  );
-}

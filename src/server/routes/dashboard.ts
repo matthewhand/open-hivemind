@@ -1,24 +1,24 @@
-import { Router, Request, Response } from 'express';
+import { Router, type Request, type Response } from 'express';
 import { DatabaseManager } from '@src/database/DatabaseManager';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import { createLogger } from '../../common/StructuredLogger';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { AnalyticsService } from '../../services/AnalyticsService';
 import { HTTP_STATUS } from '../../types/constants';
+import {
+  DashboardActivityQuerySchema,
+  DashboardAnnouncementQuerySchema,
+  DashboardQuerySchema,
+} from '../../validation/schemas/dashboardSchema';
 import {
   AlertIdParamSchema,
   DashboardConfigSchema,
   DashboardFeedbackSchema,
 } from '../../validation/schemas/miscSchema';
-import {
-  DashboardQuerySchema,
-  DashboardAnnouncementQuerySchema,
-  DashboardActivityQuerySchema,
-} from '../../validation/schemas/dashboardSchema';
 import { validateRequest } from '../../validation/validateRequest';
 import { DashboardService } from '../services/DashboardService';
 import { WebSocketService } from '../services/WebSocketService';
-import { asyncErrorHandler } from '../../middleware/errorHandler';
 
 const router = Router();
 const logger = createLogger('dashboardRouter');
@@ -183,18 +183,24 @@ router.post(
 /**
  * GET /api/dashboard/tips
  */
-router.get('/tips', asyncErrorHandler(async (_req: Request, res: Response) => {
-  const tips = await dashboardService.getTips();
-  return res.json(ApiResponse.success({ tips }));
-}));
+router.get(
+  '/tips',
+  asyncErrorHandler(async (_req: Request, res: Response) => {
+    const tips = await dashboardService.getTips();
+    return res.json(ApiResponse.success({ tips }));
+  })
+);
 
 /**
  * GET /api/dashboard/config-status
  */
-router.get('/config-status', asyncErrorHandler(async (_req: Request, res: Response) => {
-  const status = dashboardService.getConfigStatus();
-  return res.json(ApiResponse.success(status));
-}));
+router.get(
+  '/config-status',
+  asyncErrorHandler(async (_req: Request, res: Response) => {
+    const status = dashboardService.getConfigStatus();
+    return res.json(ApiResponse.success(status));
+  })
+);
 
 /**
  * GET /api/dashboard/announcement
@@ -213,18 +219,23 @@ router.get(
       });
     }
 
-    const result = await dashboardService.getAnnouncement();
-    return res.json(ApiResponse.success(result));
+    // Redirect to GitHub releases page
+    res.redirect('https://github.com/matthewhand/open-hivemind/releases/latest');
   })
 );
 
 /**
  * GET /api/dashboard/status
  */
-router.get('/status', authenticate, requireAdmin, asyncErrorHandler(async (req: Request, res: Response) => {
-  const status = dashboardService.getStatus();
-  res.json(ApiResponse.success(status));
-}));
+router.get(
+  '/status',
+  authenticate,
+  requireAdmin,
+  asyncErrorHandler(async (req: Request, res: Response) => {
+    const status = dashboardService.getStatus();
+    res.json(ApiResponse.success(status));
+  })
+);
 
 /**
  * GET /api/dashboard/activity
@@ -245,7 +256,9 @@ router.get(
 
     const result = await dashboardService.getActivity({
       bot: Array.isArray(bot) ? bot : bot?.split(','),
-      messageProvider: Array.isArray(messageProvider) ? messageProvider : messageProvider?.split(','),
+      messageProvider: Array.isArray(messageProvider)
+        ? messageProvider
+        : messageProvider?.split(','),
       llmProvider: Array.isArray(llmProvider) ? llmProvider : llmProvider?.split(','),
       from: parseDate(from),
       to: parseDate(to),

@@ -48,6 +48,9 @@ export const verifyWebhookToken = (req: Request, res: Response, next: NextFuncti
     return;
   }
 
+  const providedTokenStr: string = providedToken;
+  const expectedTokenStr: string = expectedToken;
+
   const providedBuffer = Buffer.from(providedToken, 'utf8');
   const expectedBuffer = Buffer.from(expectedToken, 'utf8');
 
@@ -180,7 +183,7 @@ export const verifySlackSignature = (req: Request, res: Response, next: NextFunc
     } else {
       res.status(401).send('Unauthorized: Invalid Slack signature');
     }
-  } catch (error) {
+  } catch (_error) {
     res.status(401).send('Unauthorized: Signature verification error');
   }
 };

@@ -36,8 +36,10 @@ test.describe('Full Journey: Bot Lifecycle End-to-End', () => {
 
     // Fill bot form (Step 1: Basics)
     await page.locator('input[placeholder="e.g. HelpBot"]').fill(botName);
-    await page.locator('div.form-control:has-text("Message Provider") select').selectOption('discord');
-    
+    await page
+      .locator('div.form-control:has-text("Message Provider") select')
+      .selectOption('discord');
+
     // Continue to Step 2
     await page.locator('button:has-text("Next")').click();
 
@@ -61,7 +63,7 @@ test.describe('Full Journey: Bot Lifecycle End-to-End', () => {
     // Step 4: Navigate to bot detail/configuration
     // Clicking the bot opens the DetailDrawer
     await page.locator(`text=${botName}`).first().click();
-    
+
     // Click the "Config" button in the DetailDrawer dock to open BotSettingsModal
     const configBtn = page.locator('button[title="Configuration"]').first();
     await expect(configBtn).toBeVisible({ timeout: 5000 });
@@ -85,15 +87,17 @@ test.describe('Full Journey: Bot Lifecycle End-to-End', () => {
     const createBtn = page.locator('button:has-text("Create Bot")').first();
     await expect(createBtn).toBeVisible();
     await createBtn.click();
-    
+
     // Fill wizard
     await page.locator('input[placeholder="e.g. HelpBot"]').fill(botName);
-    await page.locator('div.form-control:has-text("Message Provider") select').selectOption('discord');
+    await page
+      .locator('div.form-control:has-text("Message Provider") select')
+      .selectOption('discord');
     await page.locator('button:has-text("Next")').click(); // Step 1 -> 2
     await page.locator('button:has-text("Next")').click(); // Step 2 -> 3
     await page.locator('button:has-text("Next")').click(); // Step 3 -> 4
     await page.locator('button:has-text("Complete")').click();
-    
+
     const confirmBtn = page.locator('button:has-text("Confirm & Save")').first();
     await expect(confirmBtn).toBeVisible();
     await confirmBtn.click();
@@ -111,7 +115,7 @@ test.describe('Full Journey: Bot Lifecycle End-to-End', () => {
 
     // Select the bot to verify details
     await botInSidebar.click();
-    
+
     // Verify the bot interface is loaded
     await expect(page.locator(`h1:has-text("Live Chat Monitor")`)).toBeVisible();
     await expect(page.locator(`span:has-text("${botName}")`).first()).toBeVisible();

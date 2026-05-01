@@ -13,7 +13,6 @@
 
 import Debug from 'debug';
 import type { IMemoryProvider, IMessengerService, IToolProvider } from '@hivemind/shared-types';
-import { getServiceDependencies } from '@src/utils/serviceDependencies';
 import {
   instantiateLlmProvider,
   instantiateMemoryProvider,
@@ -22,6 +21,7 @@ import {
   loadPlugin,
   type PluginModule,
 } from '@src/plugins/PluginLoader';
+import { getServiceDependencies } from '@src/utils/serviceDependencies';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 
 const debug = Debug('app:sync-registry');

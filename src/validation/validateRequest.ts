@@ -6,7 +6,8 @@ import { ZodError, type AnyZodObject } from 'zod';
  * @param schema Zod schema to validate against
  */
 export const validateRequest =
-  (schema: AnyZodObject) => (req: Request, res: Response, next: NextFunction) => {
+  (schema: AnyZodObject) =>
+  (req: Request, res: Response, next: NextFunction): void => {
     try {
       // Validate request data against schema
       schema.parse({
@@ -14,10 +15,11 @@ export const validateRequest =
         query: req.query,
         params: req.params,
       });
-      return next();
+      next();
+      return;
     } catch (error) {
       if (error instanceof ZodError) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           code: 'VALIDATION_ERROR',
           error: 'Validation failed',
@@ -25,6 +27,7 @@ export const validateRequest =
           data: error.issues,
           details: error.issues,
         });
+        return;
       }
       next(error);
     }

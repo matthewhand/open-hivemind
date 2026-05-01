@@ -1,4 +1,4 @@
-import { mockRun, mockGet, mockAll, mockExec, mockClose } from './sqlite';
+import { mockAll, mockClose, mockExec, mockGet, mockRun } from './sqlite';
 
 // Helper function to properly convert dates
 function normalizeDate(dateInput: any): Date {
@@ -83,7 +83,10 @@ class MockDatabase {
     return null;
   }
 
-  runSync(sql: string, ...args: any[]): { lastInsertRowid: number; changes: number; lastID: number } {
+  runSync(
+    sql: string,
+    ...args: any[]
+  ): { lastInsertRowid: number; changes: number; lastID: number } {
     const params = this.normalizeArgs(args);
     const tableName = this.getTableName(sql);
     let lastInsertRowid = 0;
@@ -94,23 +97,23 @@ class MockDatabase {
         if (!this.tables.has(tableName)) this.tables.set(tableName, new Map());
         const id = (this.lastIds.get(tableName) || 0) + 1;
         this.lastIds.set(tableName, id);
-        
+
         const data: any = { id, createdAt: new Date() };
-        
+
         // Comprehensive mapping for common tables
         if (tableName === 'approval_requests') {
-           data.resourceType = params[0];
-           data.resourceId = params[1];
-           data.changeType = params[2];
-           data.requestedBy = params[3];
-           data.diff = params[4];
-           data.status = params[5] || 'pending';
-           data.reviewedBy = params[6];
-           data.reviewedAt = params[7];
-           data.reviewComments = params[8];
-           data.tenantId = params[9];
+          data.resourceType = params[0];
+          data.resourceId = params[1];
+          data.changeType = params[2];
+          data.requestedBy = params[3];
+          data.diff = params[4];
+          data.status = params[5] || 'pending';
+          data.reviewedBy = params[6];
+          data.reviewedAt = params[7];
+          data.reviewComments = params[8];
+          data.tenantId = params[9];
         }
-        
+
         this.tables.get(tableName)!.set(id, data);
         lastInsertRowid = id;
         changes = 1;
@@ -118,26 +121,26 @@ class MockDatabase {
     } else if (sql.includes('UPDATE')) {
       changes = 1;
       if (tableName && sql.includes('WHERE id = ?')) {
-          const id = params[params.length - 1];
-          const record = this.tables.get(tableName)?.get(id);
-          if (record) {
-              if (sql.includes('status = ?')) record.status = params[0];
-              if (sql.includes('reviewedBy = ?')) record.reviewedBy = params[1];
-              if (sql.includes('reviewedAt = ?')) record.reviewedAt = params[2];
-              if (sql.includes('reviewComments = ?')) record.reviewComments = params[3];
-          } else {
-              changes = 0;
-          }
+        const id = params[params.length - 1];
+        const record = this.tables.get(tableName)?.get(id);
+        if (record) {
+          if (sql.includes('status = ?')) record.status = params[0];
+          if (sql.includes('reviewedBy = ?')) record.reviewedBy = params[1];
+          if (sql.includes('reviewedAt = ?')) record.reviewedAt = params[2];
+          if (sql.includes('reviewComments = ?')) record.reviewComments = params[3];
+        } else {
+          changes = 0;
+        }
       }
     } else if (sql.includes('DELETE')) {
       changes = 1;
       if (tableName && sql.includes('WHERE id = ?')) {
-          const id = params[0];
-          if (this.tables.get(tableName)?.has(id)) {
-              this.tables.get(tableName)!.delete(id);
-          } else {
-              changes = 0;
-          }
+        const id = params[0];
+        if (this.tables.get(tableName)?.has(id)) {
+          this.tables.get(tableName)!.delete(id);
+        } else {
+          changes = 0;
+        }
       }
     }
 
@@ -147,11 +150,11 @@ class MockDatabase {
   getSync(sql: string, ...args: any[]): any {
     const params = this.normalizeArgs(args);
     const tableName = this.getTableName(sql);
-    
+
     if (sql.includes('SELECT') && tableName) {
-        if (sql.includes('WHERE id = ?')) {
-            return this.tables.get(tableName)?.get(params[0]);
-        }
+      if (sql.includes('WHERE id = ?')) {
+        return this.tables.get(tableName)?.get(params[0]);
+      }
     }
     return undefined;
   }
@@ -159,7 +162,7 @@ class MockDatabase {
   allSync(sql: string, ...args: any[]): any[] {
     const tableName = this.getTableName(sql);
     if (sql.includes('SELECT') && tableName) {
-        return Array.from(this.tables.get(tableName)?.values() || []);
+      return Array.from(this.tables.get(tableName)?.values() || []);
     }
     return [];
   }
