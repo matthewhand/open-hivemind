@@ -37,6 +37,28 @@ export class SQLiteWrapper implements IDatabase {
     }
 
     this.db = new DBConstructor(filename);
+    this.applyPragmas();
+  }
+
+  private applyPragmas(): void {
+    try {
+      // WAL gives concurrent reads alongside a single writer.
+      this.db.pragma('journal_mode = WAL');
+      // synchronous=NORMAL is durable across crashes when paired with WAL and
+      // significantly faster than FULL.
+      this.db.pragma('synchronous = NORMAL');
+      // Without this every FOREIGN KEY constraint declared in migrations is inert.
+      this.db.pragma('foreign_keys = ON');
+      // Wait up to 5s for a competing writer instead of failing immediately.
+      this.db.pragma('busy_timeout = 5000');
+      // Keep temp tables/indexes in memory rather than spilling to disk.
+      this.db.pragma('temp_store = MEMORY');
+      // 64MB page cache (negative value = KB).
+      this.db.pragma('cache_size = -64000');
+      debug('Applied SQLite PRAGMAs: WAL, synchronous=NORMAL, foreign_keys=ON');
+    } catch (e) {
+      debug('Failed to apply one or more PRAGMAs (continuing):', e);
+    }
   }
 
   async run(sql: string, params: any[] = []): Promise<{ lastID: number; changes: number }> {
