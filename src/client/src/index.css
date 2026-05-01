@@ -240,11 +240,18 @@ textarea {
 .menu li>button {
   transition: all 0.15s ease;
   padding: calc(0.5rem * var(--density-scale, 1)) calc(1rem * var(--density-scale, 1));
-  /* WCAG AAA touch-target floor (44px). At default density (scale=1) the
-     natural height already exceeds this, so the floor is a no-op; it only
-     activates under compact × compactDensity (scale=0.595) where items
-     would otherwise shrink to ~25.5px. */
-  min-height: 2.75rem;
+}
+
+/* WCAG AAA touch-target floor (44px) — scoped to coarse-pointer (touch)
+   devices only. Applying it to fine-pointer (mouse) users would pin every
+   sidebar item at 44px regardless of the density setting, neutralizing
+   density on the largest density-affected surface. Touch users still get
+   AAA-compliant targets; mouse users see the density-scaled height. */
+@media (pointer: coarse) {
+  .menu li>a,
+  .menu li>button {
+    min-height: 2.75rem;
+  }
 }
 
 .menu li>a:hover,
