@@ -371,6 +371,9 @@ export interface DetailDrawerProps {
   width?: string;
 }
 
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 export const DetailDrawer: React.FC<DetailDrawerProps> = ({
   isOpen,
   onClose,
@@ -378,18 +381,67 @@ export const DetailDrawer: React.FC<DetailDrawerProps> = ({
   children,
   width = 'max-w-xl',
 }) => {
+  const drawerRef = React.useRef<HTMLDivElement | null>(null);
+  const closeButtonRef = React.useRef<HTMLButtonElement | null>(null);
+  const previousFocusRef = React.useRef<HTMLElement | null>(null);
+
+  // Capture the element that had focus before opening; restore on close.
+  React.useEffect(() => {
+    if (isOpen) {
+      previousFocusRef.current = document.activeElement as HTMLElement | null;
+      requestAnimationFrame(() => closeButtonRef.current?.focus());
+    } else if (previousFocusRef.current) {
+      previousFocusRef.current.focus();
+      previousFocusRef.current = null;
+    }
+  }, [isOpen]);
+
+  // ESC closes; Tab/Shift+Tab cycles within the drawer (focus trap).
+  React.useEffect(() => {
+    if (!isOpen) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      if (e.key !== 'Tab' || !drawerRef.current) return;
+
+      const focusable = Array.from(
+        drawerRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
+      ).filter((el) => !el.hasAttribute('disabled') && el.offsetParent !== null);
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+
+      if (e.shiftKey && active === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isOpen, onClose]);
+
   return (
     <div className={`fixed inset-0 z-50 overflow-hidden ${isOpen ? 'visible' : 'invisible'}`} aria-labelledby="drawer-title" role="dialog" aria-modal="true">
       <div className="absolute inset-0 overflow-hidden">
         {/* Backdrop */}
-        <div 
-          className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'}`} 
+        <div
+          className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'}`}
           onClick={onClose}
           aria-hidden="true"
         ></div>
 
         <div className={`pointer-events-none fixed inset-y-0 right-0 flex pl-10 transition-transform duration-300 transform ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-          <div className={`pointer-events-auto w-screen ${width}`}>
+          <div ref={drawerRef} className={`pointer-events-auto w-screen ${width}`}>
             <div className="flex h-full flex-col overflow-y-scroll bg-base-100 shadow-xl">
               <div className="px-4 py-6 sm:px-6 border-b border-base-300">
                 <div className="flex items-start justify-between">
@@ -398,9 +450,11 @@ export const DetailDrawer: React.FC<DetailDrawerProps> = ({
                   </h2>
                   <div className="ml-3 flex h-7 items-center">
                     <button
+                      ref={closeButtonRef}
                       type="button"
                       className="btn btn-sm btn-circle btn-ghost"
                       onClick={onClose}
+                      aria-label="Close panel"
                     >
                       <span className="sr-only">Close panel</span>
                       ✕
