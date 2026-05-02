@@ -9,10 +9,10 @@ export const up = async ({ db, isPostgres }: { db: IDatabase; isPostgres: boolea
   if (isPostgres) {
     try {
       await db.exec('CREATE EXTENSION IF NOT EXISTS vector');
-    } catch (e) {
+    } catch (_e) {
       console.warn(
         'Failed to enable pgvector extension (might already exist or permission denied):',
-        e
+        _e
       );
     }
   }
@@ -69,7 +69,7 @@ export const up = async ({ db, isPostgres }: { db: IDatabase; isPostgres: boolea
       await db.exec(
         'ALTER TABLE bot_metrics ADD CONSTRAINT bot_metrics_name_unique UNIQUE (botName)'
       );
-    } catch (e) {}
+    } catch {}
   }
 
   await db.exec(`

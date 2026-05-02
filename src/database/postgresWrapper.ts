@@ -1,9 +1,4 @@
 import Debug from 'debug';
-import type { Pool, PoolConfig } from 'pg';
-import { type IDatabase } from './types';
-
-const debug = Debug('app:PostgresWrapper');
-
 /**
  * Lazily resolve the `pg` module at runtime so that environments running the
  * default SQLite backend do not require `pg` to be installed. Postgres support
@@ -11,10 +6,14 @@ const debug = Debug('app:PostgresWrapper');
  * instantiate `PostgresWrapper` need the optional `pg` dependency present.
  */
 
-// eslint-disable-next-line @typescript-eslint/consistent-type-imports
-function loadPgPool(): typeof import('pg').Pool {
+import type { Pool, PoolConfig } from 'pg';
+import { type IDatabase } from './types';
+
+const debug = Debug('app:PostgresWrapper');
+
+function loadPgPool(): typeof Pool {
   try {
-    const pg = require('pg') as typeof import('pg');
+    const pg = require('pg') as any;
     return pg.Pool;
   } catch (err) {
     const message =

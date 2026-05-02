@@ -21,7 +21,7 @@ export class CustomDbStorage {
         'SELECT name FROM umzug_migrations ORDER BY name ASC'
       );
       return rows.map((r) => r.name);
-    } catch (e) {
+    } catch {
       // In case table creation failed or isn't available yet
       return [];
     }

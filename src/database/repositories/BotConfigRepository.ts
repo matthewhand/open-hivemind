@@ -621,8 +621,8 @@ export class BotConfigRepository {
       newValues: decryptVal(row.newValues) ?? undefined,
       performedBy: row.performedBy as string | undefined,
       performedAt: new Date(row.performedAt as string | number | Date),
-      ipAddress: row.ipAddress != null ? (row.ipAddress as string) : undefined,
-      userAgent: row.userAgent != null ? (row.userAgent as string) : undefined,
+      ipAddress: row.ipAddress !== null ? (row.ipAddress as string) : undefined,
+      userAgent: row.userAgent !== null ? (row.userAgent as string) : undefined,
     };
   }
 
