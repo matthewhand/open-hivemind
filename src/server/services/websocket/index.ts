@@ -89,7 +89,7 @@ export class WebSocketService {
           : ApiMonitorService.getInstance();
 
         const demoMode = container.isRegistered('DemoModeService')
-          ? container.resolve<DemoModeService>('DemoModeService')
+          ? container.resolve<InstanceType<typeof DemoModeService>>('DemoModeService')
           : (DemoModeService as any).getInstance
             ? (DemoModeService as any).getInstance()
             : new DemoModeService();

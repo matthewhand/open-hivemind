@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useModal } from '../hooks/useModal';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import Card from '../components/DaisyUI/Card';
 import Button from '../components/DaisyUI/Button';
 import Badge from '../components/DaisyUI/Badge';
@@ -201,7 +202,7 @@ const CommunityTab: React.FC = () => {
 // ---------------------------------------------------------------------------
 
 const SettingsTab: React.FC = () => {
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useLocalStorage('ui.messageProviderSettings.showAdvanced', false);
 
   return (
     <div className="space-y-4">

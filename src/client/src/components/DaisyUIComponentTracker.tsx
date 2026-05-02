@@ -1,7 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useMemo } from 'react';
 import type { DaisyUIComponentStats } from '../utils/DaisyUIComponentTracker';
 import { daisyUITracker } from '../utils/DaisyUIComponentTracker';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import Button from './DaisyUI/Button';
 import Badge from './DaisyUI/Badge';
 import Card from './DaisyUI/Card';
@@ -21,7 +21,7 @@ interface Props {
 const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) => {
   const [stats, setStats] = useState<DaisyUIComponentStats | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('overview');
-  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useLocalStorage('ui.componentTracker.showSuggestions', false);
 
   useEffect(() => {
     const updateStats = () => {

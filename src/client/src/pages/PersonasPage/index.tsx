@@ -1,6 +1,7 @@
 import { Copy, Edit2, Filter, Plus, Settings, Trash2, Users } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { Alert } from '../../components/DaisyUI/Alert';
 import { Badge } from '../../components/DaisyUI/Badge';
 import Button from '../../components/DaisyUI/Button';
@@ -38,7 +39,7 @@ const CATEGORIES = [
 
 /** Persona Settings tab (placeholder — no settings API yet) */
 const PersonaSettingsTab: React.FC<{ personas: Persona[] }> = ({ personas }) => {
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useLocalStorage('ui.personaSettings.showAdvanced', false);
 
   return (
     <div className="space-y-6">
