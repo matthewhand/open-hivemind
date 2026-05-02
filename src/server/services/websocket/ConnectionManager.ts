@@ -13,7 +13,9 @@ const debug = Debug('app:WebSocketService:ConnectionManager');
 export class ConnectionManager {
   private io: SocketIOServer | null = null;
   private connectedClients = 0;
+
   private pubClient: any = null;
+
   private subClient: any = null;
 
   public initialize(server: HttpServer): SocketIOServer {
@@ -64,10 +66,7 @@ export class ConnectionManager {
     this.io.use((socket: Socket, next) => {
       // Test-only bypass: matches the HTTP-side ALLOW_TEST_BYPASS gate
       // that's already refused in production by middleware/auth.ts.
-      if (
-        process.env.ALLOW_TEST_BYPASS === 'true' &&
-        process.env.NODE_ENV !== 'production'
-      ) {
+      if (process.env.ALLOW_TEST_BYPASS === 'true' && process.env.NODE_ENV !== 'production') {
         socket.data.user = { id: 'test-bypass', role: 'admin', permissions: ['*'] };
         return next();
       }
@@ -101,6 +100,7 @@ export class ConnectionManager {
         this.subClient = this.pubClient.duplicate();
 
         this.pubClient.on('error', (err: any) => debug('Redis PubClient error:', err));
+
         this.subClient.on('error', (err: any) => debug('Redis SubClient error:', err));
 
         Promise.all([this.pubClient.connect(), this.subClient.connect()])

@@ -1,7 +1,7 @@
-import { IDatabase } from '../types';
 import { ActivitySchemas } from '../schemas/ActivitySchemas';
+import { type IDatabase } from '../types';
 
-export const up = async ({ db, isPostgres }: { db: IDatabase, isPostgres: boolean }) => {
+export const up = async ({ db, isPostgres }: { db: IDatabase; isPostgres: boolean }) => {
   const pk_auto = isPostgres ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
   const datetime_type = isPostgres ? 'TIMESTAMP' : 'DATETIME';
   const default_now = isPostgres ? 'CURRENT_TIMESTAMP' : 'CURRENT_TIMESTAMP';
@@ -10,7 +10,10 @@ export const up = async ({ db, isPostgres }: { db: IDatabase, isPostgres: boolea
     try {
       await db.exec('CREATE EXTENSION IF NOT EXISTS vector');
     } catch (e) {
-      console.warn('Failed to enable pgvector extension (might already exist or permission denied):', e);
+      console.warn(
+        'Failed to enable pgvector extension (might already exist or permission denied):',
+        e
+      );
     }
   }
 
@@ -62,7 +65,11 @@ export const up = async ({ db, isPostgres }: { db: IDatabase, isPostgres: boolea
   `);
 
   if (isPostgres) {
-    try { await db.exec('ALTER TABLE bot_metrics ADD CONSTRAINT bot_metrics_name_unique UNIQUE (botName)'); } catch(e) {}
+    try {
+      await db.exec(
+        'ALTER TABLE bot_metrics ADD CONSTRAINT bot_metrics_name_unique UNIQUE (botName)'
+      );
+    } catch {}
   }
 
   await db.exec(`
@@ -315,29 +322,57 @@ export const up = async ({ db, isPostgres }: { db: IDatabase, isPostgres: boolea
   await activitySchemas.createIndexes(db);
 
   // Indexes
-  await db.exec(`CREATE INDEX IF NOT EXISTS idx_messages_channel_timestamp ON messages(channelId, timestamp DESC)`);
-  await db.exec(`CREATE INDEX IF NOT EXISTS idx_messages_author ON messages(authorId, timestamp DESC)`);
-  await db.exec(`CREATE INDEX IF NOT EXISTS idx_messages_provider ON messages(provider, timestamp DESC)`);
+  await db.exec(
+    `CREATE INDEX IF NOT EXISTS idx_messages_channel_timestamp ON messages(channelId, timestamp DESC)`
+  );
+  await db.exec(
+    `CREATE INDEX IF NOT EXISTS idx_messages_author ON messages(authorId, timestamp DESC)`
+  );
+  await db.exec(
+    `CREATE INDEX IF NOT EXISTS idx_messages_provider ON messages(provider, timestamp DESC)`
+  );
   await db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_metrics_bot ON bot_metrics(botName, provider)`);
-  await db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_sessions_active ON bot_sessions(isActive, channelId)`);
-  await db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configurations_name ON bot_configurations(name)`);
-  await db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configurations_active ON bot_configurations(isActive)`);
-  await db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configurations_provider ON bot_configurations(messageProvider, llmProvider)`);
-  await db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configurations_updated_at ON bot_configurations(updatedAt DESC)`);
-  await db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configuration_versions_config ON bot_configuration_versions(botConfigurationId, version DESC)`);
-  await db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configuration_versions_created_at ON bot_configuration_versions(createdAt DESC)`);
-  await db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_config ON bot_configuration_audit(botConfigurationId, performedAt DESC)`);
-  await db.exec(`CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_performed_at ON bot_configuration_audit(performedAt DESC)`);
+  await db.exec(
+    `CREATE INDEX IF NOT EXISTS idx_bot_sessions_active ON bot_sessions(isActive, channelId)`
+  );
+  await db.exec(
+    `CREATE INDEX IF NOT EXISTS idx_bot_configurations_name ON bot_configurations(name)`
+  );
+  await db.exec(
+    `CREATE INDEX IF NOT EXISTS idx_bot_configurations_active ON bot_configurations(isActive)`
+  );
+  await db.exec(
+    `CREATE INDEX IF NOT EXISTS idx_bot_configurations_provider ON bot_configurations(messageProvider, llmProvider)`
+  );
+  await db.exec(
+    `CREATE INDEX IF NOT EXISTS idx_bot_configurations_updated_at ON bot_configurations(updatedAt DESC)`
+  );
+  await db.exec(
+    `CREATE INDEX IF NOT EXISTS idx_bot_configuration_versions_config ON bot_configuration_versions(botConfigurationId, version DESC)`
+  );
+  await db.exec(
+    `CREATE INDEX IF NOT EXISTS idx_bot_configuration_versions_created_at ON bot_configuration_versions(createdAt DESC)`
+  );
+  await db.exec(
+    `CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_config ON bot_configuration_audit(botConfigurationId, performedAt DESC)`
+  );
+  await db.exec(
+    `CREATE INDEX IF NOT EXISTS idx_bot_configuration_audit_performed_at ON bot_configuration_audit(performedAt DESC)`
+  );
   await db.exec(`CREATE INDEX IF NOT EXISTS idx_logs_timestamp ON logs(timestamp DESC)`);
   await db.exec(`CREATE INDEX IF NOT EXISTS idx_logs_level ON logs(level)`);
   await db.exec(`CREATE INDEX IF NOT EXISTS idx_inference_bot ON inference_logs(botName)`);
-  await db.exec(`CREATE INDEX IF NOT EXISTS idx_inference_timestamp ON inference_logs(timestamp DESC)`);
+  await db.exec(
+    `CREATE INDEX IF NOT EXISTS idx_inference_timestamp ON inference_logs(timestamp DESC)`
+  );
   await db.exec(`CREATE INDEX IF NOT EXISTS idx_memories_user ON memories(userId)`);
   await db.exec(`CREATE INDEX IF NOT EXISTS idx_memories_agent ON memories(agentId)`);
 
   if (isPostgres) {
     try {
-      await db.exec(`CREATE INDEX IF NOT EXISTS idx_memories_embedding ON memories USING hnsw (embedding vector_cosine_ops)`);
+      await db.exec(
+        `CREATE INDEX IF NOT EXISTS idx_memories_embedding ON memories USING hnsw (embedding vector_cosine_ops)`
+      );
     } catch (e) {
       console.warn('Failed to create HNSW index for vector memory (ignoring):', e);
     }

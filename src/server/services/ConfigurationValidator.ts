@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import convict from 'convict';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
@@ -13,6 +14,7 @@ export interface ValidationResult {
 export interface TestResult {
   success: boolean;
   message: string;
+
   details?: any;
 }
 
@@ -105,6 +107,7 @@ export interface BotConfig {
 
 export class ConfigurationValidator {
   private botConfigManager: typeof BotConfigurationManager;
+
   private botSchema: convict.Schema<any>;
 
   constructor() {
@@ -115,6 +118,7 @@ export class ConfigurationValidator {
   /**
    * Create bot configuration schema using convict
    */
+
   private createBotSchema(): convict.Schema<any> {
     return {
       name: {

@@ -304,6 +304,7 @@ router.get(
 
       // Get stored configuration for additional metadata
       const storedMcps = await webUIStorage.getMcps();
+
       const storedConfig = storedMcps.find((mcp: any) => mcp.name === name);
 
       if (!isConnected && !storedConfig) {
@@ -348,6 +349,7 @@ router.post(
 
       // Get stored configuration
       const storedMcps = await webUIStorage.getMcps();
+
       const storedConfig = storedMcps.find((mcp: any) => mcp.name === name);
 
       if (!storedConfig) {

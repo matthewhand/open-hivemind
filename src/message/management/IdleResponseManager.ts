@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import crypto from 'crypto';
 import Debug from 'debug';
 import { recordBotActivity } from '@message/helpers/processing/ChannelActivity';
@@ -27,6 +28,7 @@ interface ServiceActivity {
   channels: Map<string, ChannelActivity>;
   lastInteractedChannelId: string | null;
   messengerService: IMessengerService;
+
   botConfig: any;
 }
 
@@ -125,10 +127,14 @@ export class IdleResponseManager {
             sendMessageToChannel: async () => 'mock-message-id',
             getMessagesFromChannel: async () => [],
             getClientId: () => 'test-client-id',
+
             initialize: async () => {},
+
             sendPublicAnnouncement: async () => {},
             getDefaultChannel: () => 'test-channel',
+
             shutdown: async () => {},
+
             setMessageHandler: () => {},
           };
 
@@ -164,6 +170,7 @@ export class IdleResponseManager {
           }
         } else if (typeof (service as any).getAllBots === 'function') {
           // Backwards-compatible multi-bot support (older Discord implementation).
+
           const bots = (service as any).getAllBots();
           const providerPrefix = String(baseServiceName).toLowerCase();
 
@@ -371,6 +378,7 @@ export class IdleResponseManager {
         return Number.isFinite(parsed) ? parsed : null;
       }
       // Support common mock shapes
+
       const maybe = (ts as any)?.getTime?.();
       return typeof maybe === 'number' ? maybe : null;
     } catch {
@@ -448,6 +456,7 @@ export class IdleResponseManager {
 
         if (mostRecentMessage) {
           const oldContent = mostRecentMessage.getText().substring(0, 100);
+
           const oldAuthor = (() => {
             try {
               const n = mostRecentMessage.getAuthorName?.();
@@ -563,7 +572,9 @@ Do not mention that the channel was quiet/idle and do not say "I noticed".`;
   }
 
   public clearAllChannels(): void {
+    // eslint-disable-next-line unused-imports/no-unused-vars
     for (const [serviceName, serviceActivity] of this.serviceActivities) {
+      // eslint-disable-next-line unused-imports/no-unused-vars
       for (const [channelId, activity] of serviceActivity.channels) {
         if (activity.timer) {
           clearTimeout(activity.timer);

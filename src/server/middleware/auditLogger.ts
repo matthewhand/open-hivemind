@@ -187,6 +187,7 @@ export const auditMiddleware = (
 ): ((req: Request, res: Response, next: NextFunction) => void) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     const originalSend = res.send;
+    // eslint-disable-next-line unused-imports/no-unused-vars
     const startTime = Date.now();
 
     res.send = function (data: unknown): Response {

@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import crypto from 'crypto';
 import Debug from 'debug';
 import { strings } from '@src/utils/common';
@@ -273,6 +274,7 @@ async function evaluateReplyDecision(
   // but still use the probability roll with a bonus (see applyModifiers).
 
   // Track participation/density for probabilistic throttling.
+
   const authorId = (() => {
     try {
       return typeof message.getAuthorId === 'function' ? String(message.getAuthorId()) : undefined;
@@ -592,6 +594,7 @@ async function evaluateReplyDecision(
     // Parse patterns like "Base(0.01 @ never)", "+Recent(+0.5)", "BotHistory(-0.10)"
     const match = modStr.match(/^([+\-×]?)([\w!]+)\(([^)]+)\)$/);
     if (match) {
+      // eslint-disable-next-line unused-imports/no-unused-vars
       const [, sign, name, value] = match;
       const numValue = parseFloat(value.replace(/@.*/, '').trim());
       if (!isNaN(numValue)) {

@@ -161,7 +161,7 @@ export class ConfigImporter {
       }
 
       const format = detectFormat(filePath);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       let importData: any;
 
       switch (format) {
@@ -289,7 +289,7 @@ export class ConfigImporter {
 
   // ---- Private helpers ----
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   private async importVersions(versions: any[], result: ImportResult): Promise<void> {
     const validConfigIds = new Set<number>();
     const invalidConfigIds = new Set<number>();
@@ -338,7 +338,7 @@ export class ConfigImporter {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   private async importTemplates(templates: any[], result: ImportResult, importedBy?: string): Promise<void> {
     const BATCH_SIZE = 50;
 
@@ -359,12 +359,12 @@ export class ConfigImporter {
       await Promise.all(
         batch
           .filter(
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             (template: any) =>
               !allExistingTemplateIds.has(template.id) &&
               !newlyCreatedTemplateIds.has(template.id)
           )
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+           
           .map(async (template: any) => {
             try {
               await this.templateService.createTemplate({

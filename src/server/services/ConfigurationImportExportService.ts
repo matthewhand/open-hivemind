@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
@@ -351,7 +352,7 @@ export class ConfigurationImportExportService {
               warnings: [`Main configuration for ${env} imported and encrypted`],
             };
           }
-        } catch (parseError) {
+        } catch {
           // Not Secure format, fall back to own decryption
         }
 
@@ -362,6 +363,7 @@ export class ConfigurationImportExportService {
       }
 
       // Parse data based on format
+
       let importData: any;
       const format = detectFormat(filePath);
 
@@ -436,6 +438,7 @@ export class ConfigurationImportExportService {
       }
 
       // Parse data based on format
+
       let importData: any;
       const format = detectFormat(filePath);
 
@@ -469,7 +472,9 @@ export class ConfigurationImportExportService {
 
       // Bulk fetch existing configurations to prevent N+1 queries
       const configIds = importData.configurations
+
         .map((c: any) => c.id)
+
         .filter((id: any) => id !== null && id !== undefined);
 
       const existingConfigsMap = new Map<number, any>();
@@ -633,6 +638,7 @@ export class ConfigurationImportExportService {
                   !allExistingTemplateIds.has(template.id) &&
                   !newlyCreatedTemplateIds.has(template.id)
               )
+
               .map(async (template: any) => {
                 try {
                   await this.templateService.createTemplate({

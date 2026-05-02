@@ -38,7 +38,6 @@ if (skipAuth && process.env.NODE_ENV === 'production') {
 if (!skipAuth) {
   router.use(authenticate, requireAdmin);
 } else {
-  // eslint-disable-next-line no-console
   console.warn(
     '[SECURITY] SKIP_AUTH=true — /api/admin/* is unauthenticated. Never use in production.'
   );

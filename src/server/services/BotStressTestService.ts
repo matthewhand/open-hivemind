@@ -77,9 +77,11 @@ export class BotStressTestService {
       };
 
       bus.once('message:response', onResponse as any);
+
       bus.once('message:error', onError as any);
 
       // Mock context for InferenceStage
+
       const ctx: any = {
         message: {
           getText: () => prompt,
@@ -93,6 +95,7 @@ export class BotStressTestService {
         history: [],
         metadata: {},
         memories: [],
+
         systemPrompt: (bot.config as any).systemInstruction || '',
       };
 
@@ -103,7 +106,9 @@ export class BotStressTestService {
         errorMessage = err instanceof Error ? err.message : String(err);
       } finally {
         // Cleanup listeners
+
         bus.off('message:response', onResponse as any);
+
         bus.off('message:error', onError as any);
       }
 

@@ -15,6 +15,7 @@ export const predictionImageMap = new Map<string, string>();
  * @param imageUrl - The URL of the image to analyze.
  * @returns The prediction result from the API.
  */
+
 export async function createPrediction(imageUrl: string): Promise<any> {
   try {
     const postData: Record<string, any> = {
@@ -48,6 +49,7 @@ export async function createPrediction(imageUrl: string): Promise<any> {
  * @param message - The message object containing the image to analyze.
  * @returns A boolean indicating whether the message was processed.
  */
+
 export async function handleImageMessage(message: any): Promise<boolean> {
   try {
     if (message.channel.id !== process.env.DISCORD_CHAT_CHANNEL_ID) {

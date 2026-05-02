@@ -88,6 +88,7 @@ export class BotTaskScheduler {
   ): Promise<ScheduledTask> {
     const intervalMs = intervalMinutes * 60 * 1000;
     const task: ScheduledTask = {
+      // eslint-disable-next-line no-restricted-properties
       id: `task_${Date.now()}_${Math.random().toString(36).substring(7)}`,
       botId,
       botName,

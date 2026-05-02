@@ -3,6 +3,7 @@ import { HEALTH_THRESHOLDS } from '../../../types/constants';
 export function calculateHealthStatus(
   memoryUsage: NodeJS.MemoryUsage,
   recentErrors: number,
+
   metrics: any
 ) {
   const memoryUsagePercent = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;

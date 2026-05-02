@@ -45,7 +45,7 @@ export interface PluginModule {
   manifest?: PluginManifest;
   create?: (config?: AnyConfig | unknown, dependencies?: IServiceDependencies) => unknown;
   default?: (config?: AnyConfig | unknown, dependencies?: IServiceDependencies) => unknown;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   [key: string]: any;
 }
 
@@ -236,7 +236,6 @@ function instantiateProvider<T>(
   // Fallback: default export
   if (typeof mod.default === 'function') {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return new (mod.default as any)(config) as T;
     } catch {
       return mod.default(config) as T;
@@ -320,7 +319,7 @@ export function instantiateToolProvider(
  * Contract (preferred): module exports `create(config)` → Bot instance
  * Fallback: known Bot class patterns.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 export function instantiateBot(mod: PluginModule, config?: unknown): any {
   // Preferred: explicit factory
   if (typeof mod.create === 'function') {
@@ -333,7 +332,6 @@ export function instantiateBot(mod: PluginModule, config?: unknown): any {
   }
   // Fallback: default export
   if (typeof mod.default === 'function') {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return new (mod.default as any)(config);
   }
   throw new Error('Bot plugin does not export create(), a Bot class, or a default constructor.');
@@ -345,7 +343,7 @@ export function instantiateBot(mod: PluginModule, config?: unknown): any {
  * Contract (preferred): module exports `create(config)` → Guard instance
  * Fallback: known Guard class patterns.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 export function instantiateGuard(mod: PluginModule, config?: unknown): any {
   // Preferred: explicit factory
   if (typeof mod.create === 'function') {
@@ -358,7 +356,6 @@ export function instantiateGuard(mod: PluginModule, config?: unknown): any {
   }
   // Fallback: default export
   if (typeof mod.default === 'function') {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return new (mod.default as any)(config);
   }
   throw new Error(
@@ -372,7 +369,7 @@ export function instantiateGuard(mod: PluginModule, config?: unknown): any {
  * Contract (preferred): module exports `create(config)` → Persona instance
  * Fallback: known Persona class patterns.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 export function instantiatePersona(mod: PluginModule, config?: unknown): any {
   // Preferred: explicit factory
   if (typeof mod.create === 'function') {
@@ -385,7 +382,6 @@ export function instantiatePersona(mod: PluginModule, config?: unknown): any {
   }
   // Fallback: default export
   if (typeof mod.default === 'function') {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return new (mod.default as any)(config);
   }
   throw new Error(

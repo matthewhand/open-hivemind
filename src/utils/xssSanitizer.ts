@@ -9,6 +9,7 @@ import { JSDOM } from 'jsdom';
 
 // Initialize DOMPurify with JSDOM for server-side usage
 const window = new JSDOM('').window;
+
 const dompurify = DOMPurify(window as any);
 
 /**
@@ -143,6 +144,7 @@ export function sanitizeURL(url: string): string {
  * @param obj - The object to sanitize
  * @returns Sanitized object
  */
+
 export function sanitizeObject<T extends Record<string, any>>(obj: T): T {
   if (!obj || typeof obj !== 'object') {
     return obj;
@@ -239,6 +241,7 @@ export function generateCSPNonce(): string {
 /**
  * Create a safe HTML template by escaping all interpolations
  */
+
 export function safeHTMLTemplate(strings: TemplateStringsArray, ...values: any[]): string {
   return strings.reduce((result, string, i) => {
     const value = values[i] !== undefined ? values[i] : '';

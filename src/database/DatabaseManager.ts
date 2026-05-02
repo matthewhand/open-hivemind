@@ -1,23 +1,23 @@
+/* eslint-disable max-lines */
 import 'reflect-metadata';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import Debug from 'debug';
 import { injectable, singleton } from 'tsyringe';
-import { ConfigurationError, DatabaseError } from '@src/types/errorClasses';
 import databaseConfig from '@src/config/databaseConfig';
+import { ConfigurationError, DatabaseError } from '@src/types/errorClasses';
+import { runMigrations } from './migrationRunner';
+import { PostgresWrapper } from './postgresWrapper';
+import { ActivityRepository, type ActivityLog } from './repositories/ActivityRepository';
 import { AIFeedbackRepository } from './repositories/AIFeedbackRepository';
 import { AnomalyRepository } from './repositories/AnomalyRepository';
 import { ApprovalRepository } from './repositories/ApprovalRepository';
 import { BotConfigRepository } from './repositories/BotConfigRepository';
 import { DecisionRepository } from './repositories/DecisionRepository';
-import { MessageRepository } from './repositories/MessageRepository';
-import { ActivityRepository, ActivityLog } from './repositories/ActivityRepository';
 import { InferenceRepository } from './repositories/InferenceRepository';
 import { MemoryRepository } from './repositories/MemoryRepository';
-import { ActivitySchemas } from './schemas/ActivitySchemas';
+import { MessageRepository } from './repositories/MessageRepository';
 import { SQLiteWrapper } from './sqliteWrapper';
-import { PostgresWrapper } from './postgresWrapper';
-import { runMigrations } from './migrationRunner';
 import type {
   Anomaly,
   ApprovalRequest,
@@ -173,7 +173,7 @@ export class DatabaseManager {
 
         this.db = new SQLiteWrapper(dbPath);
         debug('DATABASE_MANAGER: this.db initialized (SQLite)');
-        
+
         await runMigrations(this.db, false);
       } else if (this.config.type === 'postgres') {
         const dbUrl = process.env.DATABASE_URL || databaseConfig.get('DATABASE_URL');
@@ -190,7 +190,7 @@ export class DatabaseManager {
           });
         }
         debug('DATABASE_MANAGER: this.db initialized (Postgres)');
-        
+
         await runMigrations(this.db, true);
       } else {
         throw new ConfigurationError(
@@ -267,7 +267,9 @@ export class DatabaseManager {
     level: string;
     message: string;
     context?: string;
+
     details?: any;
+
     metadata?: any;
   }): Promise<void> {
     if (!this.db || !this.connected) return;
@@ -285,6 +287,7 @@ export class DatabaseManager {
       );
     } catch (error) {
       // Don't throw here to avoid infinite log loops if DB fails
+
       console.error('Failed to save log to database:', error);
     }
   }
@@ -540,13 +543,15 @@ export class DatabaseManager {
   }
 
   async searchMemories(
-    embedding: number[], 
+    embedding: number[],
     options: { limit?: number; userId?: string; agentId?: string } = {}
   ): Promise<(MemoryRecord & { score: number })[]> {
     return this.memoryRepo.searchMemories(embedding, options);
   }
 
-  async getMemories(options: { limit?: number; userId?: string; agentId?: string } = {}): Promise<MemoryRecord[]> {
+  async getMemories(
+    options: { limit?: number; userId?: string; agentId?: string } = {}
+  ): Promise<MemoryRecord[]> {
     return this.memoryRepo.getMemories(options);
   }
 
@@ -588,7 +593,7 @@ export class DatabaseManager {
       'activity_logs',
       'message_logs',
       'bot_audit_logs',
-      'bot_error_logs'
+      'bot_error_logs',
     ];
 
     debug('Starting factory reset (nuke)...');
@@ -621,7 +626,11 @@ export class DatabaseManager {
   // Cleanup operations
   // ---------------------------------------------------------------------------
 
-  async cleanupTableByDate(tableName: string, days: number, dateColumn = 'timestamp'): Promise<number> {
+  async cleanupTableByDate(
+    tableName: string,
+    days: number,
+    dateColumn = 'timestamp'
+  ): Promise<number> {
     if (!this.db || !this.connected) return 0;
 
     const isPostgres = this.config?.type === 'postgres';
@@ -650,11 +659,14 @@ export class DatabaseManager {
     try {
       // Find the cutoff ID using an index-optimized query
       // OFFSET is maxRows, meaning we want the ID of the (maxRows + 1)th newest row
-      const cutoffRow = await this.db.get(`SELECT id FROM ${tableName} ORDER BY id DESC LIMIT 1 OFFSET ?`, [maxRows]);
-      
+      const cutoffRow = await this.db.get(
+        `SELECT id FROM ${tableName} ORDER BY id DESC LIMIT 1 OFFSET ?`,
+        [maxRows]
+      );
+
       // If we have fewer rows than maxRows, or no rows, there's nothing to delete
       if (!cutoffRow || !cutoffRow.id) return 0;
-      
+
       // Execute a fast range deletion
       const result = await this.db.run(`DELETE FROM ${tableName} WHERE id <= ?`, [cutoffRow.id]);
       debug(`Cleaned up ${result.changes} rows from ${tableName} (by row count)`);

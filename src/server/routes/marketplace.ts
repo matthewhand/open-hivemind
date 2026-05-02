@@ -104,6 +104,7 @@ async function searchGitHubPackages(): Promise<MarketplacePackage[]> {
       const repoName = repo.name || '';
       const namePrefix = repoName.split('-')[0];
       const validTypes = ['llm', 'message', 'memory', 'tool'] as const;
+
       const type = validTypes.includes(namePrefix as any)
         ? (namePrefix as MarketplacePackage['type'])
         : 'tool';
@@ -153,6 +154,7 @@ async function scanBuiltInPackages(): Promise<MarketplacePackage[]> {
         // Derive type from directory name prefix (llm-, message-, memory-, tool-)
         const namePrefix = dir.split('-')[0];
         const validTypes = ['llm', 'message', 'memory', 'tool'] as const;
+
         const type = validTypes.includes(namePrefix as any)
           ? (namePrefix as MarketplacePackage['type'])
           : 'tool';
@@ -177,6 +179,7 @@ async function scanBuiltInPackages(): Promise<MarketplacePackage[]> {
         // Even without package.json, list the directory as a package
         const namePrefix = dir.split('-')[0];
         const validTypes = ['llm', 'message', 'memory', 'tool'] as const;
+
         const type = validTypes.includes(namePrefix as any)
           ? (namePrefix as MarketplacePackage['type'])
           : 'tool';
@@ -390,6 +393,7 @@ router.post(
 
       debug('Installing plugin from %s', repoUrl);
 
+      // eslint-disable-next-line unused-imports/no-unused-vars
       const plugin = await installPlugin(repoUrl);
 
       // ⚡ Bolt Optimization: Invalidate cache after install

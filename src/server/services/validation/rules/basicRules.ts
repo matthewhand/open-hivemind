@@ -7,6 +7,7 @@ export const basicRules: ValidationRule[] = [
     description: 'Bot configuration must have a name',
     category: 'required',
     severity: 'error',
+
     validator: (config: Record<string, unknown>) => {
       const errors: ValidationError[] = [];
       if (!config.name || String(config.name).trim() === '') {
@@ -35,6 +36,7 @@ export const basicRules: ValidationRule[] = [
     description: 'Bot must have a message provider configured',
     category: 'required',
     severity: 'error',
+
     validator: (config: Record<string, unknown>) => {
       const errors: ValidationError[] = [];
       if (!config.messageProvider) {
@@ -63,6 +65,7 @@ export const basicRules: ValidationRule[] = [
     description: 'Bot must have an LLM provider configured',
     category: 'required',
     severity: 'error',
+
     validator: (config: Record<string, unknown>) => {
       const errors: ValidationError[] = [];
       if (!config.llmProvider) {

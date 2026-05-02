@@ -72,9 +72,11 @@ export class MessageBus {
    * cannot maintain per-key generics inside a single Map.  Type safety is
    * enforced at the public API boundary instead.
    */
+
   private listeners = new Map<string, ListenerEntry<any>[]>();
 
   /** Private constructor — use `MessageBus.getInstance()`. */
+
   private constructor() {}
 
   // -- Subscribe / unsubscribe ----------------------------------------------
@@ -143,6 +145,7 @@ export class MessageBus {
       try {
         const result = entry.fn(payload);
         // Fire-and-forget for async listeners — but still catch rejections.
+
         if (result && typeof (result as any).catch === 'function') {
           (result as Promise<void>).catch((err) => {
             debug('Async listener error on %s: %O', event, err);

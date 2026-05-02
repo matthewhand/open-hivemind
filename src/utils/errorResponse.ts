@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 /**
  * Error Response Utilities for Open Hivemind
  *

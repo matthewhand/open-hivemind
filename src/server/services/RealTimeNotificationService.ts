@@ -13,6 +13,7 @@ interface NotificationEvent {
   title: string;
   message: string;
   source?: string;
+
   metadata?: Record<string, any>;
 }
 
@@ -64,6 +65,7 @@ export class RealTimeNotificationService extends EventEmitter {
     this.emit('notification', notification);
 
     // Send via WebSocket to connected clients
+
     (this.webSocketService as any).io?.sockets?.emit('notification', notification);
 
     debug(
@@ -178,6 +180,7 @@ export class RealTimeNotificationService extends EventEmitter {
     agentName: string,
     event: 'started' | 'stopped' | 'error' | 'configured',
     details?: string,
+
     metadata?: Record<string, any>
   ): string {
     const severityMap = {
@@ -201,6 +204,7 @@ export class RealTimeNotificationService extends EventEmitter {
     serverName: string,
     event: 'connected' | 'disconnected' | 'error' | 'tool_executed',
     details?: string,
+
     metadata?: Record<string, any>
   ): string {
     const severityMap = {

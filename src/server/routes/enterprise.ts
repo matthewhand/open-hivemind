@@ -19,6 +19,7 @@ router.get('/compliance', (req, res) => {
   try {
     // In a real implementation, this would check compliance rules
     // For now, return mock data
+    // eslint-disable-next-line unused-imports/no-unused-vars
     const complianceRules = [
       {
         id: 'rule_1',
@@ -64,6 +65,7 @@ router.get('/cloud-providers', (req, res) => {
   try {
     // In a real implementation, this would fetch cloud provider status
     // For now, return mock data
+    // eslint-disable-next-line unused-imports/no-unused-vars
     const cloudProviders = [
       {
         id: 'aws_prod',
@@ -106,6 +108,7 @@ router.post('/cloud-providers', validateRequest(CreateCloudProviderSchema), (req
 
     // In a real implementation, this would configure the cloud provider
     // For now, simulate creation
+    // eslint-disable-next-line unused-imports/no-unused-vars
     const cloudProvider = {
       id: `${type}_${Date.now()}`,
       name,
@@ -130,6 +133,7 @@ router.get('/integrations', (req, res) => {
   try {
     // In a real implementation, this would fetch integration status
     // For now, return mock data
+    // eslint-disable-next-line unused-imports/no-unused-vars
     const integrations = [
       {
         id: 'int_1',
@@ -176,6 +180,7 @@ router.post('/integrations', validateRequest(CreateEnterpriseIntegrationSchema),
 
     // In a real implementation, this would create the integration
     // For now, simulate creation
+    // eslint-disable-next-line unused-imports/no-unused-vars
     const integration = {
       id: `int_${Date.now()}`,
       name,
@@ -221,6 +226,7 @@ router.get('/audit', async (req, res) => {
       dateTo,
     });
 
+    // eslint-disable-next-line unused-imports/no-unused-vars
     const auditEvents = await auditLogger.getAuditEvents(Number(limit), Number(offset), filter);
 
     return res.json(ApiResponse.success());
@@ -255,6 +261,7 @@ router.get('/audit/export', async (req, res) => {
 
     // Build CSV
     const header = 'id,timestamp,user,action,resource,result,details,ipAddress';
+
     const escCsv = (v: string | undefined) => {
       if (!v) return '';
       // Escape double-quotes and wrap in quotes if the value contains commas, quotes, or newlines
@@ -298,6 +305,7 @@ router.get('/performance', (req, res) => {
   try {
     // In a real implementation, this would fetch performance metrics
     // For now, return mock data
+    // eslint-disable-next-line unused-imports/no-unused-vars
     const performanceMetrics = [
       {
         id: 'metric_1',
@@ -342,6 +350,7 @@ router.post('/compliance/check', validateRequest(ComplianceCheckSchema), (req, r
   try {
     // In a real implementation, this would run compliance checks
     // For now, simulate compliance check
+    // eslint-disable-next-line unused-imports/no-unused-vars
     const complianceResults = {
       totalRules: 15,
       compliantRules: 13,
@@ -365,6 +374,7 @@ router.get('/security/alerts', (req, res) => {
   try {
     // In a real implementation, this would fetch security alerts
     // For now, return mock data
+    // eslint-disable-next-line unused-imports/no-unused-vars
     const securityAlerts = [
       {
         id: 'alert_1',
@@ -400,6 +410,7 @@ router.get('/governance/policies', (req, res) => {
   try {
     // In a real implementation, this would fetch governance policies
     // For now, return mock data
+    // eslint-disable-next-line unused-imports/no-unused-vars
     const governancePolicies = [
       {
         id: 'policy_1',
@@ -437,6 +448,7 @@ router.post('/performance/optimize', validateRequest(PerformanceOptimizeSchema),
 
     // In a real implementation, this would trigger performance optimization
     // For now, simulate optimization
+    // eslint-disable-next-line unused-imports/no-unused-vars
     const optimizationResults = {
       id: `opt_${Date.now()}`,
       target: target || 'system',

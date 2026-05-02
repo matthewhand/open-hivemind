@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { EventEmitter } from 'events';
 import TimerRegistry from '@src/utils/TimerRegistry';
 import Logger from '@common/logger';
@@ -26,12 +27,14 @@ export interface Alert {
   acknowledged: boolean;
   resolved: boolean;
   resolvedAt?: string;
+
   metadata?: Record<string, any>;
 }
 
 export interface NotificationChannel {
   name: string;
   type: 'email' | 'webhook' | 'slack' | 'console';
+
   config: Record<string, any>;
   send: (alert: Alert) => Promise<boolean>;
 }
@@ -132,6 +135,7 @@ export class AlertManager extends EventEmitter {
     message: string,
     value: number,
     threshold: number,
+
     metadata?: Record<string, any>
   ): Promise<Alert> {
     const alert: Alert = {
@@ -240,9 +244,11 @@ export class AlertManager extends EventEmitter {
       .map(([serviceName, service]) =>
         this.createAlert(
           'response_time',
+
           service.responseTime! > 2000 ? 'critical' : 'warning',
           `High Response Time - ${serviceName}`,
           `${serviceName} response time is ${service.responseTime}ms`,
+
           service.responseTime!,
           this.config.responseTimeThreshold,
           { serviceName, responseTime: service.responseTime }

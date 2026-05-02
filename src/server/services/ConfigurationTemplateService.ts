@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
@@ -13,6 +14,7 @@ export interface ConfigurationTemplate {
   description: string;
   category: 'discord' | 'slack' | 'mattermost' | 'webhook' | 'llm' | 'general';
   tags: string[];
+
   config: any;
   isBuiltIn: boolean;
   createdBy?: string;
@@ -26,6 +28,7 @@ export interface CreateTemplateRequest {
   description: string;
   category: 'discord' | 'slack' | 'mattermost' | 'webhook' | 'llm' | 'general';
   tags: string[];
+
   config: any;
   createdBy?: string;
 }
@@ -35,6 +38,7 @@ export interface UpdateTemplateRequest {
   description?: string;
   category?: 'discord' | 'slack' | 'mattermost' | 'webhook' | 'llm' | 'general';
   tags?: string[];
+
   config?: any;
 }
 

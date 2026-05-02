@@ -10,7 +10,7 @@ router.get('/api/config', (_req, res) => {
     const config = {
       bots: bots.map((bot: Record<string, unknown>) => {
         // Deep clone the bot to avoid modifying the original
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const botClone: any = JSON.parse(JSON.stringify(bot));
 
         // Redact sensitive information

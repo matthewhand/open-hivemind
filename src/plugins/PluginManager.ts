@@ -124,6 +124,7 @@ function validateManifestType(name: string, manifest: PluginManifest): void {
 /**
  * Validates that a loaded module exports a well-formed manifest.
  */
+
 function validateManifest(name: string, mod: any): PluginManifest {
   const manifest: PluginManifest = mod.manifest;
 

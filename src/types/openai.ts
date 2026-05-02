@@ -84,6 +84,7 @@ export interface OpenAIModelsListResponse extends OpenAIBaseResponse {
 export interface OpenAICompletionChoice {
   text: string;
   index: number;
+
   logprobs: any; // Can be null or complex object
   finish_reason: 'stop' | 'length' | 'content_filter' | null;
 }
@@ -213,6 +214,7 @@ export interface OpenAIFineTune {
   fine_tuned_model?: string;
   organization_id: string;
   status: 'pending' | 'running' | 'succeeded' | 'failed' | 'cancelled';
+
   hyperparams: Record<string, any>;
   training_files: OpenAIFile[];
   validation_files: OpenAIFile[];
@@ -239,6 +241,7 @@ export interface OpenAIAssistantTool {
   function?: {
     name: string;
     description?: string;
+
     parameters?: Record<string, any>;
   };
 }

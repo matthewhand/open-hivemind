@@ -31,14 +31,17 @@ export class ToolRegistry {
       let output = '';
       let errorOutput = '';
 
+   
       mcpProcess.stdout?.on('data', (data: any) => {
         output += data.toString();
       });
 
+   
       mcpProcess.stderr?.on('data', (data: any) => {
         errorOutput += data.toString();
       });
 
+   
       mcpProcess.on('close', (code: any) => {
         if (code === 0) {
           // Try to extract version and capabilities from output
@@ -59,6 +62,7 @@ export class ToolRegistry {
         }
       });
 
+   
       mcpProcess.on('configuration', (error: any) => {
         resolve({
           success: false,

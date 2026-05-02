@@ -1,6 +1,6 @@
 import Debug from 'debug';
-import type { Pool, PoolConfig } from 'pg';
-import { IDatabase } from './types';
+import { type Pool, type PoolConfig } from 'pg';
+import { type IDatabase } from './types';
 
 const debug = Debug('app:PostgresWrapper');
 
@@ -10,9 +10,10 @@ const debug = Debug('app:PostgresWrapper');
  * is opt-in (see `DATABASE_TYPE=postgres`); only consumers that actually
  * instantiate `PostgresWrapper` need the optional `pg` dependency present.
  */
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports
 function loadPgPool(): typeof import('pg').Pool {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line @typescript-eslint/consistent-type-imports
     const pg = require('pg') as typeof import('pg');
     return pg.Pool;
   } catch (err) {
@@ -53,17 +54,18 @@ export class PostgresWrapper implements IDatabase {
         translated += char;
       }
     }
-    
+
     // SQLite specific "INSERT OR REPLACE" -> Postgres "INSERT ... ON CONFLICT"
     // This is a naive translation and might need specific handling per query
     // but for simple cases it might work.
     // For now, let's keep it simple and handle specific translations in repositories if needed.
-    
+
     return translated;
   }
 
   private mapRow(row: any): any {
     if (!row) return row;
+
     const mapped: any = {};
     for (const key of Object.keys(row)) {
       // Map known lowercase keys to camelCase
@@ -127,9 +129,13 @@ export class PostgresWrapper implements IDatabase {
     return mapping[key] || key;
   }
 
-  async run(sql: string, params: any[] = []): Promise<{ lastID: number | string; changes: number }> {
+  async run(
+    sql: string,
+
+    params: any[] = []
+  ): Promise<{ lastID: number | string; changes: number }> {
     const translatedSql = this.translateSql(sql);
-    
+
     let finalSql = translatedSql;
     if (sql.trim().toUpperCase().startsWith('INSERT') && !sql.toUpperCase().includes('RETURNING')) {
       // Don't append RETURNING id for umzug_migrations as it doesn't have an id column
@@ -138,18 +144,23 @@ export class PostgresWrapper implements IDatabase {
       }
     }
 
-    const result = await this.pool.query(finalSql, params);
-    
-    return { 
-      lastID: result.rows[0]?.id || 0, 
-      changes: result.rowCount || 0 
-    };
+    try {
+      const result = await this.pool.query(finalSql, params);
+
+      return {
+        lastID: result.rows[0]?.id || 0,
+        changes: result.rowCount || 0,
+      };
+    } catch (err) {
+      console.error('PostgresWrapper.run ERROR:', err, 'SQL:', finalSql);
+      throw err;
+    }
   }
 
   async all<T = any>(sql: string, params: any[] = []): Promise<T[]> {
     const translatedSql = this.translateSql(sql);
     const result = await this.pool.query(translatedSql, params);
-    return result.rows.map(row => this.mapRow(row)) as T[];
+    return result.rows.map((row) => this.mapRow(row)) as T[];
   }
 
   async get<T = any>(sql: string, params: any[] = []): Promise<T | undefined> {

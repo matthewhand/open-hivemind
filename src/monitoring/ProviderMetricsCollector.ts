@@ -175,6 +175,7 @@ export class ProviderMetricsCollector extends EventEmitter {
       try {
         const { ShutdownCoordinator } = require('../server/ShutdownCoordinator');
         ShutdownCoordinator.getInstance().registerService(ProviderMetricsCollector.instance);
+        // eslint-disable-next-line unused-imports/no-unused-vars
       } catch (err) {
         // Fallback
       }

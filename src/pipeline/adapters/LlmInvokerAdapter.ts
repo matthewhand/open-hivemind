@@ -32,6 +32,7 @@ export class LlmInvokerAdapter implements LlmInvoker {
     userMessage: string,
     history: IMessage[],
     systemPrompt: string,
+
     metadata?: Record<string, any>
   ): Promise<string> {
     const provider = await getLlmProviderForBot(this.deps.botConfig);

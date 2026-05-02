@@ -123,6 +123,7 @@ export function createRuleRoutes(): Router {
         // For now, we'll just create a placeholder validator
         const rule = {
           ...req.body,
+
           validator: (_config: unknown) => ({
             isValid: true,
             errors: [],

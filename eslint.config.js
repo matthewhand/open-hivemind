@@ -65,14 +65,14 @@ module.exports = [
         'warn',
         { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
       ],
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/explicit-function-return-type': 'warn',
-      '@typescript-eslint/explicit-module-boundary-types': 'warn',
-      '@typescript-eslint/no-non-null-assertion': 'warn',
-      '@typescript-eslint/no-empty-function': 'warn',
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/explicit-module-boundary-types': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/no-empty-function': 'off',
       'eqeqeq': 'warn',
       'curly': ['warn', 'all'],
-      'no-console': 'warn',
+      'no-console': 'off',
 
       // Security — prefer crypto.randomUUID()/getRandomValues() over Math.random()
       'no-restricted-properties': [

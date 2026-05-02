@@ -12,7 +12,7 @@ import { JSDOM } from 'jsdom';
 
 const debug = Debug('app:inputValidator');
 const window = new JSDOM('').window;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- JSDOM window type incompatibility with DOMPurify
+
 const dompurify = DOMPurify(window as any);
 
 /**

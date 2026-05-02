@@ -44,6 +44,7 @@ export class ReconnectionManager {
       maxDelayMs: config?.maxDelayMs ?? 60000,
       maxRetries: config?.maxRetries ?? 10,
       jitter: config?.jitter ?? true,
+
       healthCheckFn: config?.healthCheckFn ?? (() => Promise.resolve(true)),
       healthCheckIntervalMs: config?.healthCheckIntervalMs ?? 30000, // default 30s
     };

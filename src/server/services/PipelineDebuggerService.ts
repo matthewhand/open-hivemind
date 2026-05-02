@@ -7,6 +7,7 @@ const debug = Debug('app:PipelineDebuggerService');
 export interface Breakpoint {
   id: string;
   stage: string;
+
   context: any;
   timestamp: string;
 }
@@ -43,7 +44,9 @@ export class PipelineDebuggerService extends EventEmitter {
   /**
    * Pause execution and wait for manual resume
    */
+
   public async pause(stage: string, context: any): Promise<any> {
+    // eslint-disable-next-line no-restricted-properties
     const id = `bp_${Date.now()}_${Math.random().toString(36).substring(7)}`;
     const breakpoint: Breakpoint = {
       id,
@@ -72,6 +75,7 @@ export class PipelineDebuggerService extends EventEmitter {
   /**
    * Resume execution for a breakpoint
    */
+
   public resume(id: string, updatedContext?: any): void {
     if (this.activeBreakpoints.has(id)) {
       debug(`Resuming pipeline for breakpoint: ${id}`);

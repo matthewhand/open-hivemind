@@ -12,6 +12,7 @@ function loadMessageConfig(): MessageConfig {
   const configDir = process.env.NODE_CONFIG_DIR || './config/';
   const configPath = path.join(configDir, 'providers/message.json');
 
+   
   let fileConfig: Record<string, any> = {};
 
   try {
@@ -26,21 +27,25 @@ function loadMessageConfig(): MessageConfig {
   }
 
   // Map environment variables
+   
   const envConfig: Record<string, any> = {};
 
   // Basic mapping helper
-  const mapEnv = (envKey: string, configKey: string, parser?: (val: string) => any) => {
+   
+  const mapEnv = (envKey: string, configKey: string, parser?: (val: string) => any): void => {
     if (process.env[envKey] !== undefined) {
+   
       const val = process.env[envKey]!;
       envConfig[configKey] = parser ? parser(val) : val;
     }
   };
 
-  const parseBool = (v: string) => v.toLowerCase() === 'true';
-  const parseIntBase10 = (v: string) => parseInt(v, 10);
-  const parseFloatBase10 = (v: string) => parseFloat(v);
-  const parseCSV = (v: string) => v.split(',').map(s => s.trim()).filter(Boolean);
-  const parseJSONOrCSV = (v: string) => {
+  const parseBool = (v: string): boolean => v.toLowerCase() === 'true';
+  const parseIntBase10 = (v: string): number => parseInt(v, 10);
+  const parseFloatBase10 = (v: string): number => parseFloat(v);
+  const parseCSV = (v: string): string[] => v.split(',').map(s => s.trim()).filter(Boolean);
+   
+  const parseJSONOrCSV = (v: string): any => {
     try {
       if (v.trim().startsWith('{')) {
         return JSON.parse(v);
@@ -61,7 +66,8 @@ function loadMessageConfig(): MessageConfig {
       return undefined;
     }
   };
-  const parseJSON = (v: string) => {
+   
+  const parseJSON = (v: string): any => {
     try {
       return JSON.parse(v);
     } catch {
@@ -154,8 +160,9 @@ function loadMessageConfig(): MessageConfig {
   // Specific handling for DISCORD_MESSAGE_TEMPLATES which must throw on invalid JSON
   if (process.env.DISCORD_MESSAGE_TEMPLATES !== undefined) {
     try {
+   
       envConfig.DISCORD_MESSAGE_TEMPLATES = JSON.parse(process.env.DISCORD_MESSAGE_TEMPLATES!);
-    } catch (e: any) {
+    } catch {
       throw new Error(`Invalid JSON: ${process.env.DISCORD_MESSAGE_TEMPLATES}`);
     }
   }
@@ -181,10 +188,12 @@ const config = loadMessageConfig();
 
 // Bridge back to convict-like getter if needed, though direct access is preferred
 const messageConfig = {
-  get: (key: string) => (config as any)[key],
-  getProperties: () => config,
-  getSchema: () => require('zod-to-json-schema').zodToJsonSchema(MessageSchema as any),
-  validate: (options: { allowed: 'strict' | 'warn' }) => {
+   
+  get: (key: string): any => (config as any)[key],
+  getProperties: (): MessageConfig => config,
+   
+  getSchema: (): any => require('zod-to-json-schema').zodToJsonSchema(MessageSchema as any),
+  validate: (_options: { allowed: 'strict' | 'warn' }): void => {
     MessageSchema.parse(config);
   }
 };

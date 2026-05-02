@@ -170,6 +170,7 @@ export async function getBotRateLimiter(
 /**
  * Middleware to apply rate limiting based on route type
  */
+
 export const applyRateLimiting = async (req: Request, res: Response, next: NextFunction) => {
   if (shouldSkipRateLimit(req)) return next();
 

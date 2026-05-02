@@ -1,3 +1,5 @@
+/* eslint-disable max-lines */
+ 
 import { Router } from 'express';
 import { getLlmDefaultStatus } from '../../../config/llmDefaultStatus';
 import { getLlmProfiles, saveLlmProfiles } from '../../../config/llmProfiles';

@@ -71,7 +71,7 @@ export async function introspectRoutes(app: Application): Promise<RouteGroup[]> 
   const routeInfos: RouteInfo[] = [];
 
   // Walk the Express app stack
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const stack = (app as any)._router?.stack || [];
   for (const layer of stack) {
     if (layer.route) {
@@ -95,6 +95,7 @@ export async function introspectRoutes(app: Application): Promise<RouteGroup[]> 
     if (!groupMap.has(prefix)) {
       groupMap.set(prefix, []);
     }
+
     groupMap.get(prefix)!.push(route);
   }
 
@@ -113,7 +114,6 @@ export async function introspectRoutes(app: Application): Promise<RouteGroup[]> 
   return groups.sort((a, b) => a.prefix.localeCompare(b.prefix));
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function extractMountPath(layer: any): string {
   if (layer.regexp) {
     if (layer.regexp.fast_slash) {
@@ -129,7 +129,6 @@ function extractMountPath(layer: any): string {
 }
 
 function extractRoute(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   layer: any,
   prefix: string,
   routeInfos: RouteInfo[],

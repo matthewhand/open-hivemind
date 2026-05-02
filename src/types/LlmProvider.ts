@@ -5,5 +5,6 @@ export interface LlmProvider {
    * @param history - Optional array of previous messages for multi-turn context.
    * @returns A promise resolving to the generated response.
    */
+
   generateChatCompletion(prompt: string, history?: string[]): Promise<any>;
 }

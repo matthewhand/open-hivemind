@@ -19,6 +19,7 @@ interface BotDisabledState {
   disabledAt?: string;
 }
 
+   
 type GeneralSettings = Record<string, any>;
 
 export class UserConfigStore {

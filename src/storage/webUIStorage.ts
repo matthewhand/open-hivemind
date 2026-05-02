@@ -10,6 +10,7 @@ const logger = Logger.withContext('app:storage:webUIStorage');
 interface WebUIAgent {
   id: string;
   name?: string;
+
   [key: string]: any;
 }
 
@@ -138,6 +139,7 @@ export class WebUIStorage {
         }
 
         const rawData = await fs.promises.readFile(this.configFile, 'utf8');
+
         let parsedData: any;
 
         // Detect if file is encrypted (contains multiple colon-separated segments and doesn't look like JSON)

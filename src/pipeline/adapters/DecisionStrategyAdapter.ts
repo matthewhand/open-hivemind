@@ -48,6 +48,7 @@ export class DecisionStrategyAdapter implements DecisionStrategy {
       botName,
       ctx.history,
       defaultChannelId,
+
       ctx.botConfig as Record<string, any>
     );
 

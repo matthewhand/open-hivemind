@@ -13,6 +13,7 @@ export interface ProviderInstance {
   category: 'message' | 'llm';
   name: string;
   enabled: boolean;
+   
   config: Record<string, any>; // Provider-specific config (token, model, etc.)
 }
 
@@ -57,6 +58,7 @@ class ProviderConfigManager {
   /**
    * Interpolate ${ENV_VAR} patterns in config values with actual environment variables
    */
+   
   private interpolateEnvVars(obj: any): any {
     if (typeof obj === 'string') {
       return obj.replace(/\$\{([^}]+)\}/g, (_, envVar) => {
@@ -69,6 +71,7 @@ class ProviderConfigManager {
       return obj.map(item => this.interpolateEnvVars(item));
     }
     if (typeof obj === 'object' && obj !== null) {
+   
       const result: any = {};
       for (const key of Object.keys(obj)) {
         result[key] = this.interpolateEnvVars(obj[key]);
@@ -469,6 +472,7 @@ class ProviderConfigManager {
     }
 
     // Merge updates but protect immutable fields
+   
     const { id: _id, category: _category, type: _type, ...safeUpdates } = updates as any;
     Object.assign(target, safeUpdates);
 

@@ -1,3 +1,5 @@
+/* eslint-disable max-lines */
+ 
 import { BotConfigurationManager } from './BotConfigurationManager';
 import { UserConfigStore } from './UserConfigStore';
 import { WebSocketService } from '@src/server/services/WebSocketService';

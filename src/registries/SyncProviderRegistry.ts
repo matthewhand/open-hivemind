@@ -286,6 +286,7 @@ export class SyncProviderRegistry {
     const directKey = botConfig.llmProvider as string | undefined;
     if (directKey && this.llmProviders.has(directKey)) {
       debug('Bot "%s": resolved LLM provider via llmProvider key "%s"', botName, directKey);
+
       return this.llmProviders.get(directKey)!;
     }
 
@@ -293,6 +294,7 @@ export class SyncProviderRegistry {
     const profileKey = botConfig.llmProfileKey as string | undefined;
     if (profileKey && this.llmProviders.has(profileKey)) {
       debug('Bot "%s": resolved LLM provider via llmProfileKey "%s"', botName, profileKey);
+
       return this.llmProviders.get(profileKey)!;
     }
 

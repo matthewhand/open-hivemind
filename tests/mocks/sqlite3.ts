@@ -44,6 +44,8 @@ class MockStatement {
 class MockDatabase {
   private tables: Map<string, Map<number, any>> = new Map();
   private lastIds: Map<string, number> = new Map();
+  private inTransaction = false;
+  private savepoint: string | null = null;
 
   constructor(_filename: string, _mode?: number, callback?: (err: Error | null) => void) {
     if (callback) {
@@ -57,6 +59,36 @@ class MockDatabase {
 
   exec(sql: string): void {
     mockExec(sql);
+    const upperSql = sql.trim().toUpperCase();
+    if (upperSql.startsWith('BEGIN')) {
+      this.inTransaction = true;
+      // Simple deep clone for savepoint
+      const backup: any = { tables: {}, lastIds: {} };
+      this.tables.forEach((table, name) => {
+        backup.tables[name] = Array.from(table.entries());
+      });
+      this.lastIds.forEach((id, name) => {
+        backup.lastIds[name] = id;
+      });
+      this.savepoint = JSON.stringify(backup);
+    } else if (upperSql.startsWith('COMMIT')) {
+      this.inTransaction = false;
+      this.savepoint = null;
+    } else if (upperSql.startsWith('ROLLBACK')) {
+      if (this.savepoint) {
+        const backup = JSON.parse(this.savepoint);
+        this.tables.clear();
+        for (const name in backup.tables) {
+          this.tables.set(name, new Map(backup.tables[name]));
+        }
+        this.lastIds.clear();
+        for (const name in backup.lastIds) {
+          this.lastIds.set(name, backup.lastIds[name]);
+        }
+      }
+      this.inTransaction = false;
+      this.savepoint = null;
+    }
   }
 
   close(): void {
@@ -100,8 +132,15 @@ class MockDatabase {
 
         const data: any = { id, createdAt: new Date() };
 
-        // Comprehensive mapping for common tables
-        if (tableName === 'approval_requests') {
+        // Try to extract column names from the INSERT statement to map params correctly
+        const columnMatch = sql.match(/\((.*?)\)\s+VALUES/i);
+        if (columnMatch && columnMatch[1]) {
+          const columns = columnMatch[1].split(',').map((c) => c.trim());
+          columns.forEach((col, i) => {
+            data[col] = params[i];
+          });
+        } else if (tableName === 'approval_requests') {
+          // Fallback for specific table if columns are not listed
           data.resourceType = params[0];
           data.resourceId = params[1];
           data.changeType = params[2];
@@ -152,9 +191,14 @@ class MockDatabase {
     const tableName = this.getTableName(sql);
 
     if (sql.includes('SELECT') && tableName) {
+      const rows = Array.from(this.tables.get(tableName)?.values() || []);
       if (sql.includes('WHERE id = ?')) {
         return this.tables.get(tableName)?.get(params[0]);
       }
+      if (sql.includes('WHERE name = ?')) {
+        return rows.find((r) => r.name === params[0]);
+      }
+      return rows[0];
     }
     return undefined;
   }

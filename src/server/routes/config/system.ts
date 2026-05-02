@@ -1,3 +1,5 @@
+/* eslint-disable max-lines */
+ 
 import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
@@ -48,7 +50,7 @@ router.get('/bots', asyncErrorHandler(async (req, res) => {
     const manager = BotConfigurationManager.getInstance();
 
     // Redact sensitive values before sending to frontend
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const safeBots = bots.map((bot: any) => {
       // Create a merged object that includes top-level props and the config object
       const mergedBot = {
@@ -217,6 +219,7 @@ router.get('/export', asyncErrorHandler(async (req, res) => {
     try {
       const botManager = await BotManager.getInstance();
       const allBots = await botManager.getAllBots();
+   
       exportData.bots = allBots.map((bot: any) => ({
         name: bot.name,
         messageProvider: bot.messageProvider,
@@ -254,6 +257,7 @@ router.get('/global', (req, res) => {
 
         // Get schema and deep clone it - fallback if not a convict object
         const rawSchema = typeof config.getSchema === 'function' ? config.getSchema() : {};
+   
         const schema = deepCloneSchema(rawSchema) as Record<string, any>;
 
         // Check for environment variable overrides and mark as locked
@@ -282,6 +286,7 @@ router.get('/global', (req, res) => {
             }
           }
         } else {
+   
           const redactObjectFallback = (obj: Record<string, unknown>) => {
             for (const k in obj) {
               if (typeof obj[k] === 'object' && obj[k] !== null) {
@@ -469,6 +474,7 @@ router.get('/system-status', async (_req, res) => {
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       memory: { heapUsed: memoryUsage.heapUsed, heapTotal: memoryUsage.heapTotal, rss: memoryUsage.rss },
+   
       providers: providers.map((p: any) => ({ id: p.id, name: p.name, type: p.type })),
       nodeVersion: process.version,
     });

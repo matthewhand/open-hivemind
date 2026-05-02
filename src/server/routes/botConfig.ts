@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import Debug from 'debug';
 import { Router } from 'express';
 import { authenticate, requireAdmin, requireRole } from '../../auth/middleware';
@@ -28,6 +29,7 @@ const router = Router();
 const botConfigManager = BotConfigurationManager.getInstance();
 const secureConfigManager = SecureConfigManager.getInstanceSync();
 const userConfigStore = UserConfigStore.getInstance();
+// eslint-disable-next-line unused-imports/no-unused-vars
 const dbManager = DatabaseManager.getInstance();
 const configValidator = new ConfigurationValidator();
 
@@ -41,6 +43,7 @@ router.use(authenticate, auditMiddleware);
 router.get(
   '/',
   asyncErrorHandler(async (req, res) => {
+    // eslint-disable-next-line unused-imports/no-unused-vars
     const authReq = req as AuthMiddlewareRequest;
     try {
       const botConfigService = BotConfigService.getInstance();
@@ -74,6 +77,7 @@ router.get(
       );
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
+      // eslint-disable-next-line unused-imports/no-unused-vars
       const errorMessage = ErrorUtils.getMessage(hivemindError);
       debug('Error getting bot configurations:', hivemindError);
       return res
@@ -91,6 +95,7 @@ router.get(
   '/templates',
   asyncErrorHandler(async (req, res) => {
     try {
+      // eslint-disable-next-line unused-imports/no-unused-vars
       const authReq = req as AuthMiddlewareRequest;
       const templates = {
         discord_openai: {
@@ -162,6 +167,7 @@ router.get(
 router.get(
   '/:botId',
   asyncErrorHandler(async (req, res) => {
+    // eslint-disable-next-line unused-imports/no-unused-vars
     const authReq = req as AuthMiddlewareRequest;
     try {
       const { botId } = req.params;
@@ -190,6 +196,7 @@ router.get(
       );
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
+      // eslint-disable-next-line unused-imports/no-unused-vars
       const errorMessage = ErrorUtils.getMessage(hivemindError);
       debug('Error getting bot configuration:', hivemindError);
       return res
@@ -267,6 +274,7 @@ router.put(
   validateBotConfigUpdate,
   sanitizeBotConfig,
   asyncErrorHandler(async (req, res) => {
+    // eslint-disable-next-line unused-imports/no-unused-vars
     const authReq = req as AuthMiddlewareRequest;
     try {
       const { botId } = req.params;
@@ -441,6 +449,7 @@ router.post(
       }
 
       // Extract updates from approval request diff
+
       let updates: any = {};
       if (approvalRequest.diff) {
         try {

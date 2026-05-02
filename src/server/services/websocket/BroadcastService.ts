@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import 'reflect-metadata';
 import { randomUUID } from 'crypto';
 import os from 'os';

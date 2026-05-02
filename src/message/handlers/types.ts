@@ -35,7 +35,9 @@ export interface MessageContext {
   botConfig: BotConfiguration;
   safeBotConfig: BotConfiguration;
   activeAgentName: string;
+
   logger: any; // debug.Debugger
+
   pipelineMetrics: any; // PipelineMetrics
 
   // Resolved during processing
@@ -43,8 +45,11 @@ export interface MessageContext {
   providerSenderKey?: string;
   processedMessage?: string;
   platform?: string;
+
   messageProvider?: any;
+
   llmProvider?: any;
+
   resolvedAgentContext?: any;
 
   // State

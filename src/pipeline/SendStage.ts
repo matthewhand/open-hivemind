@@ -39,6 +39,7 @@ export interface MemoryStorer {
     botName: string,
     text: string,
     role: 'user' | 'assistant',
+
     meta?: Record<string, any>
   ): Promise<void>;
 }
@@ -180,6 +181,7 @@ export class SendStage {
       typeof ctx.message.getText === 'function' ? ctx.message.getText() : ctx.message.content;
 
     // Store user message.
+
     this.memoryStorer!.storeMemory(ctx.botName, userText, 'user', {
       channelId: ctx.channelId,
     }).catch((err) => {
@@ -187,6 +189,7 @@ export class SendStage {
     });
 
     // Store bot response.
+
     this.memoryStorer!.storeMemory(ctx.botName, trimmedResponse, 'assistant', {
       channelId: ctx.channelId,
     }).catch((err) => {

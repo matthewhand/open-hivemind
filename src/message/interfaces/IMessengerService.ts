@@ -45,6 +45,7 @@ export interface IMessengerService {
    *
    * Implementations that don't need this can omit it (or return null).
    */
+
   resolveAgentContext?(params: { botConfig: any; agentDisplayName: string }): null | {
     /**
      * Bot/user id for this agent instance (used for mention detection and self-filtering).
@@ -135,6 +136,7 @@ export interface IMessengerService {
    * });
    * ```
    */
+
   sendPublicAnnouncement(channelId: string, announcement: any): Promise<void>;
 
   /**
@@ -184,6 +186,7 @@ export interface IMessengerService {
    * @param metadata  Optional context used for scoring
    * @returns number score for the channel
    */
+
   scoreChannel?(channelId: string, metadata?: Record<string, any>): number;
 
   /**
@@ -230,6 +233,7 @@ export interface IMessengerService {
   getDelegatedServices?(): {
     serviceName: string;
     messengerService: IMessengerService;
+
     botConfig: any;
   }[];
 

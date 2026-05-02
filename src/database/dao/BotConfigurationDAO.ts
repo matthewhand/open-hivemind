@@ -53,7 +53,9 @@ export class BotConfigurationDAO {
 
     try {
       const result = await this.db.run(sql, params);
-      return typeof result.lastID === 'number' ? result.lastID : parseInt(String(result.lastID ?? 0), 10) || 0;
+      return typeof result.lastID === 'number'
+        ? result.lastID
+        : parseInt(String(result.lastID ?? 0), 10) || 0;
     } catch (err) {
       Logger.error('Error creating bot configuration:', err);
       throw err;

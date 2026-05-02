@@ -58,6 +58,7 @@ const resolveFrontendDistPath = (): string => {
 
 export class WebUIServer {
   private app: express.Application;
+
   private server: any;
   private port: number;
   private readonly frontendDistPath: string;

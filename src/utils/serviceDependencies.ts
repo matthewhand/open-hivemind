@@ -18,12 +18,17 @@ export function getServiceDependencies(context: string): IServiceDependencies {
     logger: Logger.withContext(context),
     errorTypes: {
       HivemindError: BaseError as any,
+
       ConfigError: ConfigurationError as any,
+
       NetworkError: NetworkError as any,
+
       ValidationError: ValidationError as any,
+
       AuthenticationError: ApiError as any, // Map to ApiError for now
     },
     getDatabaseManager: () => DatabaseManager.getInstance(),
+
     getLlmProviders: () => {
       // Note: this is sync in the interface but getLlmProvider is async
       // This is a known architectural mismatch being handled via pre-loading
@@ -35,6 +40,7 @@ export function getServiceDependencies(context: string): IServiceDependencies {
       }
       return [];
     },
+
     isBotDisabled: (name: string) => {
       const { BotConfigurationManager } = require('../config/BotConfigurationManager');
       return !BotConfigurationManager.getInstance().getBotConfig(name)?.isActive;

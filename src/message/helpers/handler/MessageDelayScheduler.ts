@@ -27,6 +27,7 @@ class MessageDelayScheduler {
     userId: string,
     sendFn: (text: string, threadId?: string) => Promise<string>,
     useThread: boolean,
+
     botConfig?: Record<string, any>
   ): Promise<void> {
     const minDelayRaw = getMessageSetting('MESSAGE_MIN_DELAY', botConfig) || 1000;

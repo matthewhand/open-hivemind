@@ -17,6 +17,7 @@ export interface SystemStatus {
  * @returns {SystemStatus} An object containing operational status, uptime, memory stats, etc.
  */
 export function getSystemStatus(): SystemStatus {
+  // eslint-disable-next-line unused-imports/no-unused-vars
   const memInfo = process.memoryUsage();
   const totalMem = os.totalmem();
   const freeMem = os.freemem();

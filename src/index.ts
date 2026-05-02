@@ -42,7 +42,7 @@ const frontendDistPath = resolveFrontendDistPath();
 const frontendAssetsPath = path.join(frontendDistPath, 'assets');
 
 // Vite Dev Server Instance (only used in dev)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Vite dev server type is dynamic
+
 const viteServerRef: { current: any } = { current: undefined };
 
 // Check if frontend dist exists (async check will be done in main())

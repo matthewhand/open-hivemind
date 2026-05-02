@@ -7,6 +7,7 @@ export const securityRules: ValidationRule[] = [
     description: 'Configuration should not contain hardcoded secrets or API keys',
     category: 'security',
     severity: 'warning',
+
     validator: (config: Record<string, unknown>) => {
       const warnings: ValidationWarning[] = [];
       const configStr = JSON.stringify(config);
@@ -55,6 +56,7 @@ export const businessRules: ValidationRule[] = [
     description: 'Bot name must be unique across all configurations',
     category: 'business',
     severity: 'error',
+
     validator: (_config: Record<string, unknown>) => {
       return {
         isValid: true,
@@ -74,6 +76,7 @@ export const performanceRules: ValidationRule[] = [
     description: 'Check if selected LLM model is appropriate for the use case',
     category: 'performance',
     severity: 'info',
+
     validator: (config: Record<string, unknown>) => {
       const info: ValidationInfo[] = [];
 

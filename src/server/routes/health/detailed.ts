@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import os from 'os';
 import process from 'process';
 import { Router, type NextFunction, type Request, type Response } from 'express';
@@ -112,6 +113,7 @@ router.get('/detailed', optionalAuth, (req: Request, res: Response) => {
     if (tracer) {
       const stats = tracer.getStats();
       const recentTraces = tracer.getCompletedTraces(5);
+
       (healthData as any).pipeline = {
         totalTraces: stats.totalTraces,
         avgDurationMs: stats.avgDurationMs,
@@ -167,6 +169,7 @@ router.get('/detailed/services', optionalAuth, async (_req: Request, res: Respon
     const { ProviderRegistry } = require('../../../registries/providerRegistry');
     const registry = ProviderRegistry.getInstance();
     const llmProviders = registry.getLlmProviders?.() || [];
+
     const activeLlm = llmProviders.filter((p: any) => p.status === 'active' || p.connected);
     const llmCount = llmProviders.length;
     const activeCount = activeLlm.length;
@@ -204,6 +207,7 @@ router.get('/detailed/services', optionalAuth, async (_req: Request, res: Respon
     const { ProviderRegistry } = require('../../../registries/providerRegistry');
     const registry = ProviderRegistry.getInstance();
     const msgProviders = registry.getMessageProviders?.() || [];
+
     const activeMsg = msgProviders.filter((p: any) => p.status === 'active' || p.connected);
     const msgCount = msgProviders.length;
     const activeMsgCount = activeMsg.length;
@@ -241,6 +245,7 @@ router.get('/detailed/services', optionalAuth, async (_req: Request, res: Respon
     const { ProviderRegistry } = require('../../../registries/providerRegistry');
     const registry = ProviderRegistry.getInstance();
     const memProviders = registry.getMemoryProviders?.() || [];
+
     const activeMem = memProviders.filter((p: any) => p.status === 'active' || p.connected);
     const memStatus =
       memProviders.length === 0 ? 'down' : activeMem.length > 0 ? 'healthy' : 'down';

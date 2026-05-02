@@ -30,7 +30,11 @@ export interface ImportMetadata {
  * @param payload  The raw parsed import data (configurations, versions, etc.)
  * @returns        The (possibly transformed) payload ready for import.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
+   
+ 
+ 
+ 
 export function migrateImportPayload(payload: any): any {
   const version = payload?.metadata?.version;
 

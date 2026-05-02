@@ -13,6 +13,7 @@ export class SQLiteWrapper implements IDatabase {
 
   constructor(filename: string) {
     debug('SQLITE_WRAPPER: constructor called for', filename);
+
     let DBConstructor: any;
 
     // Try different ways better-sqlite3 might be exported/imported
@@ -62,9 +63,14 @@ export class SQLiteWrapper implements IDatabase {
   }
 
   async run(sql: string, params: any[] = []): Promise<{ lastID: number; changes: number }> {
-    const stmt = this.db.prepare(sql);
-    const info = params.length > 0 ? stmt.run(...params) : stmt.run();
-    return { lastID: info.lastInsertRowid as number, changes: info.changes };
+    try {
+      const stmt = this.db.prepare(sql);
+      const info = params.length > 0 ? stmt.run(...params) : stmt.run();
+      return { lastID: info.lastInsertRowid as number, changes: info.changes };
+    } catch (err) {
+      console.error('SQLiteWrapper.run ERROR:', err, 'SQL:', sql);
+      throw err;
+    }
   }
 
   async all<T = any>(sql: string, params: any[] = []): Promise<T[]> {

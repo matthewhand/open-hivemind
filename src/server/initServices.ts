@@ -49,23 +49,28 @@ interface MessengerService {
   providerName?: string;
   botId?: string;
   initialize(): Promise<void>;
+  // eslint-disable-next-line @typescript-eslint/consistent-type-imports
   setApp?(app: import('express').Application): void;
   setMessageHandler(
     handler: (
-      message: any,
-      historyMessages?: any[],
-      botConfig?: Record<string, any>
+      message: IMessage,
+      historyMessages?: IMessage[],
+      botConfig?: Record<string, unknown>
     ) => Promise<string | null>
   ): void;
   getAgentStartupSummaries?(): Array<Record<string, string>>;
   getDefaultChannel?(): string | null;
   getChannels?(): string[];
-  sendMessageToChannel?(channelId: string, text: string): Promise<any>;
-  sendMessage?(channelId: string, text: string): Promise<any>;
+  sendMessageToChannel?(channelId: string, text: string): Promise<unknown>;
+  sendMessage?(channelId: string, text: string): Promise<unknown>;
   constructor?: { name?: string };
 }
 
-async function startBot(app: import('express').Application, messengerService: any) {
+async function startBot(
+  // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+  app: import('express').Application,
+  messengerService: MessengerService
+): Promise<void> {
   const providerType =
     messengerService.providerName || messengerService.constructor?.name || 'Unknown';
 
@@ -90,9 +95,13 @@ async function startBot(app: import('express').Application, messengerService: an
       const { MessageBus } = await import('@src/events/MessageBus');
       const bus = MessageBus.getInstance();
       messengerService.setMessageHandler(
-        async (message: any, historyMessages?: any[], botConfig?: Record<string, any>) => {
-          const msg = message as IMessage;
-          const history = (historyMessages as IMessage[]) || [];
+        async (
+          message: IMessage,
+          historyMessages?: IMessage[],
+          botConfig?: Record<string, unknown>
+        ) => {
+          const msg = message;
+          const history = historyMessages || [];
           const config = botConfig || {};
 
           await bus.emitAsync('message:incoming', {
@@ -109,8 +118,9 @@ async function startBot(app: import('express').Application, messengerService: an
       );
     } else {
       // Legacy mode: call handleMessage() directly
-      messengerService.setMessageHandler((...args: any[]) =>
-        messageHandlerModule.handleMessage(args[0], args[1], args[2])
+      messengerService.setMessageHandler(
+        (...args: any[]): Promise<string | null> =>
+          messageHandlerModule.handleMessage(args[0], args[1], args[2])
       );
     }
     indexLog('[DEBUG] Message handler set up successfully.');
@@ -126,7 +136,14 @@ async function startBot(app: import('express').Application, messengerService: an
           ? messengerService.getAgentStartupSummaries()
           : [];
 
-      const renderPrompt = (p: string | undefined) => {
+      const renderPrompt = (
+        p: string | undefined
+      ): {
+        systemPromptMode: string;
+        systemPromptPreview?: string;
+        systemPrompt?: string;
+        systemPromptLength: number;
+      } => {
         const text = String(p || '').trim();
         if (!text) {
           return { systemPromptMode: 'off', systemPromptPreview: '', systemPromptLength: 0 };
@@ -218,6 +235,7 @@ export interface InitServicesResult {
  * Returns the messenger services array so the caller can pass it to HTTP/webhook setup.
  */
 export async function initServices(
+  // eslint-disable-next-line @typescript-eslint/consistent-type-imports
   app: import('express').Application
 ): Promise<InitServicesResult> {
   const shutdownCoordinator = ShutdownCoordinator.getInstance();
@@ -348,6 +366,7 @@ export async function initServices(
   appLogger.info('\ud83d\udd0d Anomaly Detection Service initialized');
 
   // Prepare messenger services collection for optional webhook registration later
+
   let messengerServices: any[] = [];
 
   // In demo mode, skip messenger initialization if no real providers configured
@@ -454,6 +473,7 @@ export async function initServices(
  * Register webhook routes if WEBHOOK_ENABLED is set.
  */
 export async function initWebhooks(
+  // eslint-disable-next-line @typescript-eslint/consistent-type-imports
   app: import('express').Application,
   messengerServices: MessengerService[]
 ): Promise<void> {

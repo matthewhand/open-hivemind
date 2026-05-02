@@ -191,6 +191,7 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
           `mattermost-${nameToUse}`,
           async () => {
             // Initialize bot instance
+            // eslint-disable-next-line unused-imports/no-unused-vars
             const botConfig = {
               name: nameToUse,
               messageProvider: 'mattermost',

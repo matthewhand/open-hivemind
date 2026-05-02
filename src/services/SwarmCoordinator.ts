@@ -112,12 +112,14 @@ export class SwarmCoordinator extends EventEmitter {
     if (!this.activeBots.has(channel)) {
       this.activeBots.set(channel, new Set());
     }
+
     this.activeBots.get(channel)!.add(botId);
 
     const counter = this.rotatingCounter.get(channel) || 0;
     this.rotatingCounter.set(channel, counter + 1);
 
     const botCount = this.activeBots.get(channel)!.size;
+
     const botArray = Array.from(this.activeBots.get(channel)!);
     const turnIndex = counter % botCount;
     const isMyTurn = botArray[turnIndex] === botId;
@@ -170,6 +172,7 @@ export class SwarmCoordinator extends EventEmitter {
     if (!this.collaborators.has(messageId)) {
       this.collaborators.set(messageId, new Set());
     }
+
     this.collaborators.get(messageId)!.add(botId);
 
     const claim: SwarmClaim = { messageId, botId, channel, timestamp: Date.now() };

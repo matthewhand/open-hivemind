@@ -1,5 +1,4 @@
 import Debug from 'debug';
-import databaseConfig from '../../config/databaseConfig';
 import type { IDatabase as Database } from '../types';
 
 const debug = Debug('app:ActivityRepository');
@@ -26,7 +25,6 @@ export class ActivityRepository {
     }
 
     try {
-      const isPg = databaseConfig.get('DATABASE_TYPE') === 'postgres';
       const result = await db.run(
         `INSERT INTO activity_logs (bot_id, action, details, metadata) VALUES (?, ?, ?, ?)`,
         [
@@ -56,7 +54,6 @@ export class ActivityRepository {
     }
 
     try {
-      const isPg = databaseConfig.get('DATABASE_TYPE') === 'postgres';
       const result = await db.run(
         `INSERT INTO message_logs (bot_id, channel_id, user_id, message, response) VALUES (?, ?, ?, ?, ?)`,
         [log.bot_id || null, log.channel_id, log.user_id, log.message, log.response || null]
@@ -81,7 +78,6 @@ export class ActivityRepository {
     }
 
     try {
-      const isPg = databaseConfig.get('DATABASE_TYPE') === 'postgres';
       const result = await db.run(
         `INSERT INTO bot_audit_logs (bot_id, action, user_id, old_values, new_values) VALUES (?, ?, ?, ?, ?)`,
         [

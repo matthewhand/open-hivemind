@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import * as fs from 'fs';
 import * as path from 'path';
 import * as v8 from 'v8';
@@ -516,7 +517,7 @@ export class PerformanceProfiler {
 /**
  * Decorator for profiling method execution
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- decorator target is inherently untyped
+
 export function Profile(target: any, propertyName: string, descriptor: PropertyDescriptor): void {
   const method = descriptor.value;
   const className = target.constructor.name;

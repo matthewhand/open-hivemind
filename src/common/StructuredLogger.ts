@@ -168,7 +168,7 @@ export class StructuredLogger {
    */
   info(message: string, context?: Record<string, unknown>): void {
     const entry = this.formatEntry('info', message, context);
-    // eslint-disable-next-line no-console
+
     console.info(JSON.stringify(entry));
   }
 
@@ -177,7 +177,7 @@ export class StructuredLogger {
    */
   warn(message: string, context?: Record<string, unknown>): void {
     const entry = this.formatEntry('warn', message, context);
-    // eslint-disable-next-line no-console
+
     console.warn(JSON.stringify(entry));
   }
 
@@ -193,7 +193,7 @@ export class StructuredLogger {
       : context;
 
     const entry = this.formatEntry('error', message, errorContext);
-    // eslint-disable-next-line no-console
+
     console.error(JSON.stringify(entry));
   }
 
@@ -209,7 +209,7 @@ export class StructuredLogger {
       : context;
 
     const entry = this.formatEntry('fatal', message, errorContext);
-    // eslint-disable-next-line no-console
+
     console.error(JSON.stringify(entry));
   }
 

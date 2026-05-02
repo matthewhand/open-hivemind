@@ -21,6 +21,7 @@ interface ProviderStatus {
   type: string;
   configured: boolean;
   connected: boolean;
+
   details?: any;
 }
 
@@ -332,6 +333,7 @@ export class StartupDiagnostics {
   /**
    * Check authentication configuration status
    */
+
   private checkAuthenticationStatus() {
     const status = {
       enabled: false,
@@ -493,6 +495,7 @@ export class StartupDiagnostics {
   /**
    * Log successful provider initialization
    */
+
   public logProviderInitialized(providerType: string, details?: any): void {
     startupLog.info('🤖 Provider Initialized', {
       type: providerType,
@@ -503,6 +506,7 @@ export class StartupDiagnostics {
   /**
    * Log provider initialization failure
    */
+
   public logProviderInitializationFailed(providerType: string, error: any): void {
     startupLog.error('❌ Provider Initialization Failed', {
       type: providerType,
@@ -513,6 +517,7 @@ export class StartupDiagnostics {
   /**
    * Sanitize provider details for logging
    */
+
   private sanitizeDetails(details: any): any {
     if (typeof details !== 'object' || details === null) {
       return details;

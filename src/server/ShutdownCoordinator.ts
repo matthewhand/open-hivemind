@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import type { Server as HttpServer } from 'http';
 import Debug from 'debug';
 import type { IMessengerService } from '@message/interfaces/IMessengerService';

@@ -189,6 +189,7 @@ export function isIPInCIDR(ip: string, cidr: string): boolean {
     if (isNaN(prefixLen)) return false;
 
     // Check if both are simple IPv4
+
     const isRawIPv4 = (addr: string) => addr.includes('.') && !addr.includes(':');
     const ipIsV4 = isRawIPv4(validatedIp);
     const rangeIsV4 = isRawIPv4(validatedRange);
@@ -264,6 +265,7 @@ export function isTrustedProxy(ip: string): boolean {
  */
 export function getClientKey(req: Request): string {
   // Use .get() for headers to support various ways they might be defined in tests
+
   const getHeader = (name: string) => {
     if (typeof req.get === 'function') return req.get(name);
     if (req.headers) return req.headers[name.toLowerCase()];
@@ -271,6 +273,7 @@ export function getClientKey(req: Request): string {
   };
 
   // CONNECTION IP: The address of the machine directly connecting to us
+
   const connectionIP = validateIP(req.socket?.remoteAddress || (req as any).ip || '') || 'unknown';
 
   // If the direct connection is NOT from a trusted proxy, use it as the client IP (ignores headers)
@@ -347,12 +350,15 @@ export function createRateLimitHandler(type: string) {
 
 // Store initialization
 export let redisAvailable = false;
+
 export let RedisStore: any = null;
+
 export let redisClient: any = null;
 
 /**
  * Create a rate limit store (Redis or Memory)
  */
+
 export function createStore(prefix: string, windowMs: number) {
   if (redisAvailable && RedisStore && redisClient) {
     debug(`Using Redis store for rate limit prefix: ${prefix}`);

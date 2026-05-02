@@ -16,6 +16,7 @@ router.get(
     try {
       // In a real implementation, this would fetch from a database
       // For now, return mock data
+      // eslint-disable-next-line unused-imports/no-unused-vars
       const deployments = [
         {
           id: 'deploy_001',
@@ -84,6 +85,7 @@ router.post(
 
       // In a real implementation, this would trigger a CI/CD pipeline
       // For now, simulate deployment creation
+      // eslint-disable-next-line unused-imports/no-unused-vars
       const deployment = {
         id: `deploy_${Date.now()}`,
         name,
@@ -124,6 +126,7 @@ router.get(
 
       // In a real implementation, this would fetch from database
       // For now, return mock data
+      // eslint-disable-next-line unused-imports/no-unused-vars
       const deployment = {
         id,
         name: 'Mock Deployment',
@@ -182,6 +185,7 @@ router.get(
     try {
       // In a real implementation, this would check for configuration drift
       // For now, return mock data
+      // eslint-disable-next-line unused-imports/no-unused-vars
       const drifts = [
         {
           environment: 'production',
@@ -224,6 +228,7 @@ router.post(
 
       // In a real implementation, this would validate the configuration
       // For now, simulate validation
+      // eslint-disable-next-line unused-imports/no-unused-vars
       const validation = {
         valid: true,
         warnings: [],
@@ -251,6 +256,7 @@ router.get(
     try {
       // In a real implementation, this would get pipeline status
       // For now, return mock data
+      // eslint-disable-next-line unused-imports/no-unused-vars
       const status = {
         active: true,
         lastRun: '2024-01-15T14:00:00Z',
@@ -280,6 +286,7 @@ router.post(
 
       // In a real implementation, this would trigger automated tests
       // For now, simulate test execution
+      // eslint-disable-next-line unused-imports/no-unused-vars
       const testRun = {
         id: `test_${Date.now()}`,
         type: type || 'integration',
@@ -312,6 +319,7 @@ router.get(
 
       // In a real implementation, this would fetch test results
       // For now, return mock data
+      // eslint-disable-next-line unused-imports/no-unused-vars
       const results = {
         id,
         status: 'completed',

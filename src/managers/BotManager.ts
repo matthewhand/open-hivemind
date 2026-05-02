@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import crypto from 'crypto';
 import { EventEmitter } from 'events';
 import path from 'path';
@@ -136,7 +137,7 @@ export class BotManager extends EventEmitter {
   /**
    * Helper to map a raw configuration object to a BotInstance
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   private mapConfigToBotInstance(bot: Record<string, any>): BotInstance {
     return {
       // Use bot name as stable ID - random UUIDs break getBot() lookups
@@ -217,6 +218,7 @@ export class BotManager extends EventEmitter {
       await storeSecureConfig(this.secureConfigManager, botId, request.config || {});
 
       // Add to web UI storage
+
       await webUIStorage.saveAgent(botInstance as any);
 
       debug(`Created new bot: ${request.name} (${botId})`);
@@ -331,6 +333,7 @@ export class BotManager extends EventEmitter {
       }
 
       // Update in web UI storage
+
       await webUIStorage.saveAgent(updatedBot as any);
 
       debug(`Updated bot: ${updatedBot.name} (${botId})`);

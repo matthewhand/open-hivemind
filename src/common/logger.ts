@@ -209,7 +209,7 @@ function logInternal(level: LogLevel, ...args: unknown[]): void {
           details: details ? sanitizeValue(undefined, details, new WeakSet()) : undefined,
         });
       }
-    } catch (_e) {
+    } catch {
       // Ignore errors in database logging to avoid infinite loops
     }
   }

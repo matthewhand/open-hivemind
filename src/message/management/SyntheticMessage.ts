@@ -35,6 +35,7 @@ export class SyntheticMessage extends IMessage {
    * Original message data preserved from the source message.
    * @type {any}
    */
+
   public data: any;
 
   /**
@@ -48,6 +49,7 @@ export class SyntheticMessage extends IMessage {
    * @type {any}
    * @optional
    */
+
   public metadata?: any;
 
   /**
@@ -62,6 +64,7 @@ export class SyntheticMessage extends IMessage {
    * @type {any[]}
    * @optional
    */
+
   public tool_calls?: any[];
 
   /**

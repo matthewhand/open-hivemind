@@ -38,7 +38,6 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
     const slack = this.slackService;
     const botNames = slack.getBotNames();
     const bots = botNames.map((name: string) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const cfg: Record<string, any> = (slack.getBotConfig(name) as Record<string, any>) || {};
       const reconManager = this.reconManagers.get(name);
       return {
@@ -88,7 +87,6 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
     // adminRoutes used: process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config')
     // We will use process.cwd() based path which is safer.
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let cfg: Record<string, any> = { slack: { instances: [] } };
     try {
       const fileContent = await fs.promises.readFile(messengersPath, 'utf8');
@@ -127,18 +125,15 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
       llm,
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((slack as any).addBot) {
       const reconManager = new ReconnectionManager(
         `slack-${name}`,
         async () => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           await (slack as any).addBot(instanceCfg);
         },
         {
           healthCheckFn: async () => {
             try {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const cfg: Record<string, any> =
                 (slack.getBotConfig(name) as Record<string, any>) || {};
               const token = cfg?.slack?.botToken || botToken;
@@ -173,7 +168,7 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
   async reload(): Promise<{ added: number }> {
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const messengersPath = path.join(configDir, 'providers', 'messengers.json');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     let cfg: Record<string, any>;
     try {
       const content = await fs.promises.readFile(messengersPath, 'utf8');
@@ -202,12 +197,11 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
           },
           llm: inst.llm,
         };
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         if ((slack as any).addBot) {
           const reconManager = new ReconnectionManager(
             `slack-${nameToUse}`,
             async () => {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               await (slack as any).addBot(instanceCfg);
             },
             {
@@ -246,9 +240,8 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
 
   async sendMessage(channelId: string, message: string, senderName?: string): Promise<string> {
     const slack = this.slackService;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     if (typeof (slack as any).sendMessageToChannel === 'function') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return await (slack as any).sendMessageToChannel(channelId, message, senderName);
     }
 
@@ -260,14 +253,12 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
 
   async getMessages(channelId: string, limit?: number): Promise<unknown[]> {
     const slack = this.slackService;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     if (typeof (slack as any).fetchMessages === 'function') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return await (slack as any).fetchMessages(channelId, limit);
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     if (typeof (slack as any).getMessages === 'function') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return await (slack as any).getMessages(channelId, limit);
     }
 
@@ -286,9 +277,8 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
 
   getClientId(): string {
     const slack = this.slackService;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     if (typeof (slack as any).getClientId === 'function') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return (slack as any).getClientId();
     }
 
@@ -300,22 +290,19 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
     const slack = this.slackService;
 
     // Try new getChannelOwnerId method
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     if (typeof (slack as any).getChannelOwnerId === 'function') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const ownerId = await (slack as any).getChannelOwnerId(forumId);
       return ownerId || '';
     }
 
     // Legacy method names
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     if (typeof (slack as any).getForumOwner === 'function') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return await (slack as any).getForumOwner(forumId);
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     if (typeof (slack as any).getChannelOwner === 'function') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return await (slack as any).getChannelOwner(forumId);
     }
 
@@ -356,7 +343,6 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
       // Check each bot's connection status
       const botStatuses = await Promise.allSettled(
         botNames.map(async (name: string) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const cfg: Record<string, any> = (slack.getBotConfig(name) as Record<string, any>) || {};
           const botToken = cfg?.slack?.botToken;
 

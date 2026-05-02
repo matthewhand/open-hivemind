@@ -14,6 +14,7 @@ function loadDiscordConfig(): DiscordConfig {
   const configDir = process.env.NODE_CONFIG_DIR || './config/';
   const configPath = path.join(configDir, 'providers/discord.json');
   
+   
   let fileConfig: Record<string, any> = {};
   
   try {
@@ -28,7 +29,9 @@ function loadDiscordConfig(): DiscordConfig {
   }
 
   // Map environment variables
+   
   const envConfig: Record<string, any> = {};
+   
   const mapEnv = (envKey: string, configKey: string, parser?: (val: string) => any): void => {
     const val = process.env[envKey];
     if (val !== undefined) {
@@ -101,8 +104,10 @@ function loadDiscordConfig(): DiscordConfig {
 const config = loadDiscordConfig();
 
 const discordConfig = {
+   
   get: (key: keyof DiscordConfig): any => config[key],
   getProperties: (): DiscordConfig => config,
+   
   getSchema: (): any => zodToJsonSchema(DiscordSchema as any),
   validate: (_options: { allowed: 'strict' | 'warn' }): void => {
     DiscordSchema.parse(config);

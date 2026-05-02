@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { Router, type Request, type Response } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { createLogger } from '../../common/StructuredLogger';
@@ -35,6 +36,7 @@ const managerPromise = BotManager.getInstance();
 const botRouteService = BotRouteService.getInstance();
 
 let _wsService: WebSocketService | null = null;
+
 const getWsService = () => {
   if (!_wsService) {
     try {
@@ -362,6 +364,7 @@ router.get(
   asyncErrorHandler(async (req: Request, res: Response) => {
     const manager = await managerPromise;
     const { id } = req.params;
+
     const { limit, channelId } = req.query as any;
 
     const bot = await manager.getBot(id);
@@ -394,6 +397,7 @@ router.get(
   asyncErrorHandler(async (req: Request, res: Response) => {
     const manager = await managerPromise;
     const { id } = req.params;
+
     const { limit } = req.query as any;
 
     const bot = await manager.getBot(id);

@@ -62,6 +62,7 @@ export class ReceiveStage {
         debug('GLOBAL KILL SWITCH ACTIVE: Rejecting incoming message');
         return null;
       }
+      // eslint-disable-next-line unused-imports/no-unused-vars
     } catch (e) {
       // Ignore DI errors during test/setup
     }

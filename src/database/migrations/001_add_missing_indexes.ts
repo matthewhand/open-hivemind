@@ -14,9 +14,7 @@ interface MigrationContext {
 
 export async function up({ db }: MigrationContext): Promise<void> {
   // DecisionRepository.ts:68 — `ORDER BY timestamp DESC LIMIT ?`
-  await db.exec(
-    `CREATE INDEX IF NOT EXISTS idx_decisions_timestamp ON decisions(timestamp DESC)`
-  );
+  await db.exec(`CREATE INDEX IF NOT EXISTS idx_decisions_timestamp ON decisions(timestamp DESC)`);
 
   // ApprovalRepository.ts:91-109 — filter by status, order by createdAt DESC
   await db.exec(
@@ -30,18 +28,14 @@ export async function up({ db }: MigrationContext): Promise<void> {
   );
 
   // AnomalyRepository.ts:85,111 — order by timestamp DESC; line 103: filter resolved
-  await db.exec(
-    `CREATE INDEX IF NOT EXISTS idx_anomalies_timestamp ON anomalies(timestamp DESC)`
-  );
+  await db.exec(`CREATE INDEX IF NOT EXISTS idx_anomalies_timestamp ON anomalies(timestamp DESC)`);
   await db.exec(
     `CREATE INDEX IF NOT EXISTS idx_anomalies_resolved_timestamp
      ON anomalies(resolved, timestamp DESC)`
   );
 
   // MemoryRepository.ts:147-160 — `getMemories` orders by created_at DESC
-  await db.exec(
-    `CREATE INDEX IF NOT EXISTS idx_memories_created_at ON memories(created_at DESC)`
-  );
+  await db.exec(`CREATE INDEX IF NOT EXISTS idx_memories_created_at ON memories(created_at DESC)`);
 
   // MessageRepository.ts:266-274 — bot_metrics ORDER BY updated_at DESC
   await db.exec(

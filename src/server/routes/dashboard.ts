@@ -55,6 +55,7 @@ router.get(
   validateRequest(DashboardQuerySchema),
   asyncErrorHandler(async (req: Request, res: Response) => {
     const analytics = AnalyticsService.getInstance();
+
     const { from, to } = req.query as any;
 
     const parseDate = (d: any): Date | undefined => {
@@ -93,6 +94,7 @@ router.get(
   validateRequest(DashboardQuerySchema),
   asyncErrorHandler(async (req: Request, res: Response) => {
     const analytics = AnalyticsService.getInstance();
+
     const { from, to } = req.query as any;
 
     const parseDate = (d: any): Date | undefined => {
@@ -120,6 +122,7 @@ router.get(
   validateRequest(DashboardQuerySchema),
   asyncErrorHandler(async (req: Request, res: Response) => {
     const analytics = AnalyticsService.getInstance();
+
     const { from, to } = req.query as any;
 
     const parseDate = (d: any): Date | undefined => {
@@ -147,6 +150,7 @@ router.get(
   validateRequest(DashboardQuerySchema),
   asyncErrorHandler(async (req: Request, res: Response) => {
     const analytics = AnalyticsService.getInstance();
+
     const { from, to } = req.query as any;
 
     const parseDate = (d: any): Date | undefined => {

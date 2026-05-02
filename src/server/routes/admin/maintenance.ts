@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { Router, type Request, type Response } from 'express';
 import { ErrorUtils } from '../../../common/ErrorUtils';
 import { getTrustedMcpReposConfig } from '../../../config/trustedMcpRepos';
@@ -305,6 +306,7 @@ router.get(
 
       // Get stored configuration for additional metadata
       const storedMcps = await webUIStorage.getMcps();
+
       const storedConfig = storedMcps.find((mcp: any) => mcp.name === name);
 
       if (!isConnected && !storedConfig) {
@@ -349,6 +351,7 @@ router.post(
 
       // Get stored configuration
       const storedMcps = await webUIStorage.getMcps();
+
       const storedConfig = storedMcps.find((mcp: any) => mcp.name === name);
 
       if (!storedConfig) {

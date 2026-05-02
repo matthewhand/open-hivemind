@@ -1,6 +1,7 @@
 import Debug from 'debug';
 import { InputSanitizer } from '@src/utils/InputSanitizer';
 
+// eslint-disable-next-line unused-imports/no-unused-vars
 const debug = Debug('app:LineByLineSender');
 
 /**

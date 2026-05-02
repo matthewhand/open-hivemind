@@ -41,6 +41,7 @@ export class EncryptionService {
         if (process.env.NODE_ENV === 'production') {
           throw new Error('FATAL: DATABASE_ENCRYPTION_KEY is required in production environment.');
         }
+
         console.warn(
           '[SECURITY] DATABASE_ENCRYPTION_KEY not configured — sensitive fields will be stored in plaintext. Set DATABASE_ENCRYPTION_KEY to enable at-rest encryption.'
         );

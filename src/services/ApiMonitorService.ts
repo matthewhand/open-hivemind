@@ -30,6 +30,7 @@ export interface EndpointConfig {
   url: string;
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'HEAD';
   headers?: Record<string, string>;
+
   body?: any;
   expectedStatusCodes?: number[];
   timeout?: number;

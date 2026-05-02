@@ -77,6 +77,7 @@ export class BotHeartbeatService {
           if (!service) continue;
 
           // Heuristic check
+
           const isActuallyConnected = await (service as any).isConnected(botStatus.name);
 
           if (!isActuallyConnected) {

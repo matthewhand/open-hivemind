@@ -124,7 +124,7 @@ export class BotConfigurationManager {
         const dbBots = await dbManager.getAllBotConfigurations();
         for (const dbBot of dbBots) {
           // Database wins over files/env
-          this.bots.set(dbBot.name, dbBot as BotConfig);
+          this.bots.set(dbBot.name, dbBot as unknown as BotConfig);
         }
         debug(`Loaded ${dbBots.length} bots from database`);
       } catch (error) {
@@ -143,6 +143,7 @@ export class BotConfigurationManager {
         const existing = await dbManager.getBotConfigurationByName(name);
         if (!existing) {
           debug(`Syncing bot "${name}" to database...`);
+   
           await dbManager.createBotConfiguration(config as any);
         }
       } catch (error) {

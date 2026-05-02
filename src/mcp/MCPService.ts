@@ -22,7 +22,7 @@ export interface MCPTool {
 
 export class MCPService {
   private static instance: MCPService;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- MCP SDK client type is dynamically loaded
+
   private clients = new Map<string, any>();
   private tools = new Map<string, MCPTool[]>();
 
@@ -265,6 +265,7 @@ export class MCPService {
   }> {
     const servers = [];
 
+    // eslint-disable-next-line unused-imports/no-unused-vars
     for (const [serverName, client] of this.clients.entries()) {
       const tools = this.tools.get(serverName) || [];
       servers.push({

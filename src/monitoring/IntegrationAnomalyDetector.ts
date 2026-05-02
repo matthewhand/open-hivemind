@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { EventEmitter } from 'events';
 import { ProviderMetricsCollector, type ProviderType } from './ProviderMetricsCollector';
 
@@ -40,6 +41,7 @@ export interface IntegrationAnomaly {
   value: number;
   expectedValue: number;
   deviation: number;
+
   metadata?: Record<string, any>;
 }
 

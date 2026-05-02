@@ -32,7 +32,7 @@ function withTokenCounting(provider: ILlmProvider, _instanceId: string): ILlmPro
     generateChatCompletion: async (
       userMessage: string,
       historyMessages: IMessage[],
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       metadata?: Record<string, any>
     ): Promise<string> => {
       const response = await provider.generateChatCompletion(

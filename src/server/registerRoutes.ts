@@ -53,14 +53,17 @@ import * as healthRouteModule from './routes/health';
 const appLogger = Logger.withContext('app:index');
 const httpLogger = Logger.withContext('http');
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports
 const healthRoute = (healthRouteModule.default || healthRouteModule) as import('express').Router;
 
 export interface RouteContext {
   frontendDistPath: string;
   /** Mutable ref so Vite dev server can be assigned later and used by route handlers. */
+
   viteServerRef: { current: any };
 }
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports
 export function registerRoutes(app: import('express').Application, ctx: RouteContext): void {
   const { frontendDistPath, viteServerRef } = ctx;
 

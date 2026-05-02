@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { Readable } from 'stream';
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
@@ -22,6 +23,7 @@ interface SitemapUrl {
 // Define all routes with metadata
 const getRouteDefinitions = (): SitemapUrl[] => {
   // Try to determine the base URL dynamically, fallback to localhost
+  // eslint-disable-next-line unused-imports/no-unused-vars
   const baseUrl = process.env.BASE_URL || 'http://localhost:3028';
   const now = new Date().toISOString();
 

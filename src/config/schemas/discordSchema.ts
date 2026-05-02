@@ -12,6 +12,7 @@ export const DiscordSchema = z.object({
   DISCORD_MESSAGE_HISTORY_LIMIT: z.number().int().default(10),
   DISCORD_CHANNEL_ID: z.string().default(''),
   DISCORD_DEFAULT_CHANNEL_ID: z.string().default(''),
+   
   DISCORD_CHANNEL_BONUSES: z.preprocess((val: any) => {
     if (typeof val !== 'object' || val === null) return val;
     const clamped: Record<string, number> = {};

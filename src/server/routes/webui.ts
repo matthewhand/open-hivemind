@@ -14,6 +14,7 @@ router.get('/config', async (_req, res) => {
   try {
     const config = await webUIStorage.loadConfig();
     return res.json(config);
+    // eslint-disable-next-line unused-imports/no-unused-vars
   } catch (_error) {
     return res.status(500).json({ error: 'Failed to load configuration' });
   }
@@ -30,6 +31,7 @@ router.post('/config', validateRequest(WebuiConfigUpdateSchema), async (req, res
     }
     await webUIStorage.saveConfig(newConfig);
     return res.json({ success: true, config: newConfig });
+    // eslint-disable-next-line unused-imports/no-unused-vars
   } catch (_error) {
     return res.status(500).json({ error: 'Failed to save configuration' });
   }

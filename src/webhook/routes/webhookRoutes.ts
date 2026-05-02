@@ -4,11 +4,7 @@ import type express from 'express';
 import { predictionImageMap } from '@src/message/helpers/processing/handleImageMessage';
 import type { IMessengerService } from '@message/interfaces/IMessengerService';
 // Import after jest.doMock of config to allow per-test overrides
-import {
-  verifyIpWhitelist,
-  verifySlackSignature,
-  verifyWebhookToken,
-} from '@webhook/security/webhookSecurity';
+import { verifyIpWhitelist, verifyWebhookToken } from '@webhook/security/webhookSecurity';
 
 const debug = Debug('app:webhookRoutes');
 
@@ -120,7 +116,14 @@ export function configureWebhookRoutes(
         await messageService.sendPublicAnnouncement(channelId, resultMessage);
         debug('Successfully sent webhook message to channel:', channelId);
       } catch (error) {
-        debug('Failed to send webhook message:', error instanceof Error ? error.message : String(error));
+        debug(
+          'Failed to send webhook message:',
+          error instanceof Error ? error.message : String(error)
+        );
         return res.status(500).json({ error: 'Failed to process webhook' });
       }
 
+      return res.status(200).json({ success: true });
+    }
+  );
+}

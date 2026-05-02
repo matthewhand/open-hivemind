@@ -35,6 +35,7 @@ export abstract class IMessage {
    * This can contain the original message object from the platform SDK.
    * @type {any}
    */
+
   public data: any;
 
   /**
@@ -57,6 +58,7 @@ export abstract class IMessage {
    * @type {any}
    * @optional
    */
+
   public metadata?: any;
 
   /**
@@ -73,6 +75,7 @@ export abstract class IMessage {
    * @type {any[]}
    * @optional
    */
+
   public tool_calls?: any[];
 
   /**
@@ -86,6 +89,7 @@ export abstract class IMessage {
    *
    * @throws {TypeError} If attempting to instantiate IMessage directly
    */
+
   constructor(data: any, role: string, metadata?: any, tool_call_id?: string, tool_calls?: any[]) {
     if (new.target === IMessage) {
       throw new TypeError('Cannot construct IMessage instances directly');

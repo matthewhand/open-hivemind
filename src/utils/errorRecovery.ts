@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 /**
  * Error Recovery System for Open Hivemind
  *
@@ -332,6 +333,7 @@ export class FallbackManager {
     if (!this.fallbacks.has(operationKey)) {
       this.fallbacks.set(operationKey, []);
     }
+
     this.fallbacks.get(operationKey)!.push(fallback);
   }
 
@@ -518,6 +520,7 @@ export class AdaptiveRecoveryManager {
       const mergedConfig = { ...this.defaultRetryConfig, ...config };
       this.retryHandlers.set(operationKey, new RetryHandler(mergedConfig));
     }
+
     return this.retryHandlers.get(operationKey)!;
   }
 
@@ -532,6 +535,7 @@ export class AdaptiveRecoveryManager {
       const mergedConfig = { ...this.defaultCircuitBreakerConfig, ...config };
       this.circuitBreakers.set(operationKey, new CircuitBreaker(mergedConfig));
     }
+
     return this.circuitBreakers.get(operationKey)!;
   }
 
@@ -542,6 +546,7 @@ export class AdaptiveRecoveryManager {
     if (!this.fallbackManagers.has(operationKey)) {
       this.fallbackManagers.set(operationKey, new FallbackManager());
     }
+
     return this.fallbackManagers.get(operationKey)!;
   }
 
@@ -627,13 +632,16 @@ export const globalRecoveryManager = new AdaptiveRecoveryManager(
 export const errorRecovery = {
   withRetry: (fn: () => Promise<unknown>, config?: Partial<RetryConfig>) =>
     globalRecoveryManager.getRetryHandler('default', config).executeWithRetry(fn),
+
   withFallback: async (primary: () => Promise<unknown>, fallback: () => Promise<unknown>) => {
     const fallbackManager = globalRecoveryManager.getFallbackManager('default');
     fallbackManager.registerFallback('default', fallback);
     return fallbackManager.executeWithFallback('default', primary, {});
   },
+
   withCircuitBreaker: (fn: () => Promise<unknown>, config?: Partial<CircuitBreakerConfig>) =>
     globalRecoveryManager.getCircuitBreaker('default', config).execute(fn),
+
   withTimeout: async (fn: () => Promise<unknown>, timeoutMs: number) => {
     const startTime = Date.now();
     try {

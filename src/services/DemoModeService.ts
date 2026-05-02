@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 /**
  * DemoModeService - Manages demo/simulation mode
  *
@@ -439,6 +440,7 @@ export class DemoModeService {
     const hasRealCredentials = bots.some((bot) => {
       if (bot.discord?.token && bot.discord.token.length > 10) return true;
       if (bot.slack?.botToken && bot.slack.botToken.length > 10) return true;
+
       if ((bot as any).mattermost?.accessToken && (bot as any).mattermost.accessToken.length > 10)
         return true;
       if (bot.openai?.apiKey && bot.openai.apiKey.length > 10) return true;
@@ -571,12 +573,17 @@ export class DemoModeService {
         name: b.name,
         messageProvider: (b.messageProvider || 'discord') as DemoBot['messageProvider'],
         llmProvider: (b.llmProvider || 'openai') as DemoBot['llmProvider'],
+
         persona: (b as any).persona || 'default',
+
         systemInstruction: (b as any).systemInstruction || '',
         status: 'active' as const,
+
         connected: (b as any).isActive ?? true,
         isDemo: true,
+
         discord: (b as any).discord,
+
         slack: (b as any).slack,
       }));
       debug('Using %d existing bots for demo activity simulation', this.demoBots.length);
@@ -602,7 +609,9 @@ export class DemoModeService {
     this.seedHistoricalData();
 
     // Generate message flow events every 2-8 seconds
+
     const messageInterval = () => this.randomFloat() * 6000 + 2000;
+
     const tick = () => {
       this.generateAndRecordMessageEvent();
       this.simulationInterval = setTimeout(tick, messageInterval());
@@ -681,6 +690,7 @@ export class DemoModeService {
         updatedAt: new Date().toISOString(),
       });
     }
+
     return this.conversations.get(key)!;
   }
 
@@ -854,6 +864,7 @@ export class DemoModeService {
     // Continue existing thread
     const activeThreadKeys = Array.from(this.activeThreads.keys());
     const channelKey = activeThreadKeys[this.randomInt(0, activeThreadKeys.length - 1)];
+
     const threadState = this.activeThreads.get(channelKey)!;
     const thread = CONVERSATION_THREADS[threadState.threadIndex];
 

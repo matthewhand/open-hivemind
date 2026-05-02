@@ -23,9 +23,11 @@ export function detectFormat(filePath: string): 'json' | 'yaml' | 'csv' {
 /**
  * Convert data to YAML (simplified implementation)
  */
+
 export function convertToYAML(data: any): string {
   // This is a simplified YAML converter
   // In production, use a proper YAML library like js-yaml
+
   const convert = (obj: any, indent = 0): string => {
     const spaces = ' '.repeat(indent);
     let result = '';
@@ -57,6 +59,7 @@ export function convertToYAML(data: any): string {
 /**
  * Convert data to CSV (simplified implementation)
  */
+
 export function convertToCSV(data: any): string {
   // This is a simplified CSV converter for configurations
   // In production, use a proper CSV library
@@ -92,6 +95,7 @@ export function convertToCSV(data: any): string {
 /**
  * Parse YAML (simplified implementation)
  */
+
 export function parseYAML(_yamlString: string): any {
   // This is a simplified YAML parser
   // In production, use a proper YAML library like js-yaml
@@ -101,6 +105,7 @@ export function parseYAML(_yamlString: string): any {
 /**
  * Parse CSV (simplified implementation)
  */
+
 export function parseCSV(csvString: string): any {
   // This is a simplified CSV parser
   // In production, use a proper CSV library

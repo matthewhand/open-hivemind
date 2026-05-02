@@ -64,7 +64,9 @@ export const logConfigChange = (
   details: string,
   options: {
     oldValue?: any;
+
     newValue?: any;
+
     metadata?: Record<string, any>;
   } = {}
 ): void => {
@@ -87,7 +89,9 @@ export const logBotAction = (
   details: string,
   options: {
     oldValue?: any;
+
     newValue?: any;
+
     metadata?: Record<string, any>;
   } = {}
 ): void => {

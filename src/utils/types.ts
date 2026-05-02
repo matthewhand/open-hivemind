@@ -81,6 +81,7 @@ export interface HealthCheck {
   service: string;
   status: 'healthy' | 'unhealthy' | 'unknown';
   timestamp: Date;
+
   details?: Record<string, any>;
 }
 

@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import Debug from 'debug';
 import {
   DEFAULT_PAGE_LIMIT,
@@ -276,8 +277,6 @@ export class AnalyticsService {
       limit: options.limit || DEFAULT_PAGE_LIMIT,
     });
     const patterns = await this.getBehaviorPatterns(options, events);
-    // getUserSegments currently also takes events, lets pass them
-    const segments = await this.getUserSegments(options, events);
 
     const recommendations: DashboardRecommendation[] = [];
 
@@ -643,7 +642,6 @@ export class AnalyticsService {
     const activities = Array.from(userActivity.entries());
     const sorted = activities.sort((a, b) => b[1] - a[1]);
 
-    const totalUsers = sorted.length;
     const highThreshold = Math.max(10, sorted[0]?.[1] || 0);
     const lowThreshold = Math.max(2, Math.floor(highThreshold * 0.2));
 

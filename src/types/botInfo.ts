@@ -1,7 +1,9 @@
 export interface IBotInfo {
   botUserId?: string;
   botUserName?: string;
+
   webClient?: any; // Used by Slack
+
   client?: any; // Used by Discord
   config?: {
     name?: string;
@@ -9,6 +11,7 @@ export interface IBotInfo {
     slack?: { botToken?: string; appToken?: string; signingSecret?: string; mode?: string };
     token?: string;
     BOT_ID?: string;
+
     [key: string]: any;
   };
 }

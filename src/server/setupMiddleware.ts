@@ -19,6 +19,7 @@ export interface MiddlewareContext {
   frontendDistPath: string;
   frontendAssetsPath: string;
   /** Mutable ref so Vite dev server can be assigned later and used by middleware. */
+
   viteServerRef: { current: any };
 }
 
@@ -120,6 +121,7 @@ export function setupMiddleware(app: express.Application, ctx: MiddlewareContext
     });
   } else {
     // Development Mode Handlers - Proxy to Vite
+
     const serveDevHtml = async (req: Request, res: Response) => {
       try {
         const url = req.originalUrl;

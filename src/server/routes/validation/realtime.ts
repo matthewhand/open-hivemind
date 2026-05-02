@@ -44,6 +44,7 @@ export function createRealtimeRoutes(): Router {
         return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
           success: false,
           message: 'Failed to validate configuration',
+
           error: ErrorUtils.getMessage(error as any),
         });
       }

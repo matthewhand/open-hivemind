@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import { type Command } from 'commander';
+import Logger from '@common/logger';
 import { type CommandHandler } from './CommandHandler';
 
 interface StartServerOptions {
@@ -9,6 +10,8 @@ interface StartServerOptions {
 }
 
 export class ServerCommandHandler implements CommandHandler {
+  private logger = Logger.withContext('ServerCommandHandler');
+
   public setup(program: Command): void {
     program
       .command('start')
@@ -20,7 +23,7 @@ export class ServerCommandHandler implements CommandHandler {
         try {
           await this.startServer(options);
         } catch (error) {
-          console.error(chalk.red('Error starting server:'), error);
+          this.logger.error(chalk.red('Error starting server:'), error);
         }
       });
 
@@ -31,7 +34,7 @@ export class ServerCommandHandler implements CommandHandler {
         try {
           await this.stopServer();
         } catch (error) {
-          console.error(chalk.red('Error stopping server:'), error);
+          this.logger.error(chalk.red('Error stopping server:'), error);
         }
       });
 
@@ -42,7 +45,7 @@ export class ServerCommandHandler implements CommandHandler {
         try {
           await this.restartServer();
         } catch (error) {
-          console.error(chalk.red('Error restarting server:'), error);
+          this.logger.error(chalk.red('Error restarting server:'), error);
         }
       });
 
@@ -55,34 +58,34 @@ export class ServerCommandHandler implements CommandHandler {
   }
 
   private async startServer(options: StartServerOptions): Promise<void> {
-    console.log(chalk.blue(`Starting Hivemind server on port ${options.port}...`));
+    this.logger.log(chalk.blue(`Starting Hivemind server on port ${options.port}...`));
 
     if (options.daemon) {
-      console.log(chalk.green('✓ Server started as daemon'));
+      this.logger.log(chalk.green('✓ Server started as daemon'));
     } else {
-      console.log(chalk.green('✓ Server started'));
-      console.log(`  Port: ${options.port}`);
-      console.log(`  Config: ${options.config || 'default'}`);
+      this.logger.log(chalk.green('✓ Server started'));
+      this.logger.log(`  Port: ${options.port}`);
+      this.logger.log(`  Config: ${options.config || 'default'}`);
     }
   }
 
   private async stopServer(): Promise<void> {
-    console.log(chalk.blue('Stopping Hivemind server...'));
+    this.logger.log(chalk.blue('Stopping Hivemind server...'));
     // Here you would implement server stop logic
-    console.log(chalk.green('✓ Server stopped'));
+    this.logger.log(chalk.green('✓ Server stopped'));
   }
 
   private async restartServer(): Promise<void> {
-    console.log(chalk.blue('Restarting Hivemind server...'));
+    this.logger.log(chalk.blue('Restarting Hivemind server...'));
     await this.stopServer();
     await this.startServer({ port: '3000' });
   }
 
   private showServerStatus(): void {
-    console.log(chalk.blue('Server Status:'));
-    console.log(`  Status: ${chalk.green('Running')}`); // This would be dynamic
-    console.log(`  Port: ${chalk.green('3000')}`); // This would be dynamic
-    console.log(`  Uptime: ${chalk.green('5h 42m')}`); // This would be dynamic
-    console.log(`  Memory: ${chalk.green('156 MB')}`); // This would be dynamic
+    this.logger.log(chalk.blue('Server Status:'));
+    this.logger.log(`  Status: ${chalk.green('Running')}`); // This would be dynamic
+    this.logger.log(`  Port: ${chalk.green('3000')}`); // This would be dynamic
+    this.logger.log(`  Uptime: ${chalk.green('5h 42m')}`); // This would be dynamic
+    this.logger.log(`  Memory: ${chalk.green('156 MB')}`); // This would be dynamic
   }
 }

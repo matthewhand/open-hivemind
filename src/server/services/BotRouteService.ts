@@ -4,6 +4,7 @@ import { createLogger } from '../../common/StructuredLogger';
 import { getLlmProvider } from '../../llm/getLlmProvider';
 import { BotManager, type BotInstance, type CreateBotRequest } from '../../managers/BotManager';
 
+// eslint-disable-next-line unused-imports/no-unused-vars
 const logger = createLogger('BotRouteService');
 
 export interface ImportReport {
@@ -105,6 +106,7 @@ Respond ONLY with valid JSON. No preamble or explanation.`;
     const results: any = {
       messageProvider: { status: 'pending', details: '' },
       llm: { status: 'pending', details: '' },
+
       mcp: [] as any[],
       timestamp: new Date().toISOString(),
     };

@@ -139,6 +139,7 @@ export interface MCPProviderEvent {
     | 'provider_test_completed';
   providerId: string;
   timestamp: Date;
+
   data?: any;
 }
 

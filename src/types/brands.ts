@@ -13,6 +13,9 @@ export type ProviderId = Brand<string, 'ProviderId'>;
  * Utility functions to cast strings to branded types.
  * Use these sparingly and only at boundaries where data is validated.
  */
+
 export const asBotId = (id: string) => id as BotId;
+
 export const asPersonaId = (id: string) => id as PersonaId;
+
 export const asProviderId = (id: string) => id as ProviderId;

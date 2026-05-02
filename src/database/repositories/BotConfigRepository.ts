@@ -1,7 +1,12 @@
+/* eslint-disable max-lines */
 import Debug from 'debug';
-import type { IDatabase as Database } from '../types';
-import type { BotConfiguration, BotConfigurationAudit, BotConfigurationVersion } from '../types';
 import { encryptionService } from '../EncryptionService';
+import type {
+  BotConfiguration,
+  BotConfigurationAudit,
+  BotConfigurationVersion,
+  IDatabase as Database,
+} from '../types';
 
 const debug = Debug('app:BotConfigRepository');
 
@@ -18,7 +23,15 @@ export class BotConfigRepository {
   // Helpers
   // ---------------------------------------------------------------------------
 
-  private readonly sensitiveFields = ['discord', 'slack', 'mattermost', 'openai', 'flowise', 'openwebui', 'openswarm'];
+  private readonly sensitiveFields = [
+    'discord',
+    'slack',
+    'mattermost',
+    'openai',
+    'flowise',
+    'openwebui',
+    'openswarm',
+  ];
 
   private encryptField(val: any): any {
     if (val && typeof val === 'object') {
@@ -90,6 +103,7 @@ export class BotConfigRepository {
 
   private mapRowToBotConfiguration(row: Record<string, unknown>): BotConfiguration {
     // Hydrate JSON strings into objects if necessary (SQLite strings vs Postgres JSON)
+
     const parseIfString = (val: unknown): any => (typeof val === 'string' ? JSON.parse(val) : val);
 
     return {
@@ -237,9 +251,22 @@ export class BotConfigRepository {
   // (e.g. ConfigImporter). The TypeScript type alone is not enough — `as any`
   // casts elsewhere can smuggle arbitrary keys through.
   private static readonly UPDATABLE_COLUMNS = new Set<string>([
-    'name', 'messageProvider', 'llmProvider', 'persona', 'systemInstruction',
-    'mcpServers', 'mcpGuard', 'discord', 'slack', 'mattermost', 'openai',
-    'flowise', 'openwebui', 'openswarm', 'isActive', 'updatedAt',
+    'name',
+    'messageProvider',
+    'llmProvider',
+    'persona',
+    'systemInstruction',
+    'mcpServers',
+    'mcpGuard',
+    'discord',
+    'slack',
+    'mattermost',
+    'openai',
+    'flowise',
+    'openwebui',
+    'openswarm',
+    'isActive',
+    'updatedAt',
   ]);
 
   async updateBotConfiguration(id: number, config: Partial<BotConfiguration>): Promise<void> {
@@ -250,6 +277,7 @@ export class BotConfigRepository {
       if (!db) throw new Error('Database not available');
 
       const updateFields: string[] = [];
+
       const values: any[] = [];
 
       Object.entries(config).forEach(([key, value]) => {
@@ -386,7 +414,9 @@ export class BotConfigRepository {
     };
   }
 
-  async getBotConfigurationVersions(botConfigurationId: number): Promise<BotConfigurationVersion[]> {
+  async getBotConfigurationVersions(
+    botConfigurationId: number
+  ): Promise<BotConfigurationVersion[]> {
     this.ensureConnected();
 
     try {
@@ -443,7 +473,10 @@ export class BotConfigRepository {
     }
   }
 
-  async deleteBotConfigurationVersion(botConfigurationId: number, version: string): Promise<boolean> {
+  async deleteBotConfigurationVersion(
+    botConfigurationId: number,
+    version: string
+  ): Promise<boolean> {
     this.ensureConnected();
 
     try {
@@ -474,7 +507,8 @@ export class BotConfigRepository {
       if (!db) throw new Error('Database not available');
 
       // Audit logs contain full JSON snaps of config - encrypt them!
-      const encryptVal = (val: any) => val ? encryptionService.encrypt(val) : val;
+
+      const encryptVal = (val: any) => (val ? encryptionService.encrypt(val) : val);
 
       const result = await db.run(
         `

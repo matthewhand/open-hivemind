@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import Debug from 'debug';
 import type { NextFunction, Request, Response } from 'express';
 import { body, matchedData, validationResult } from 'express-validator';
@@ -202,6 +203,7 @@ export const validateBotConfigCreation = [
   body('isActive').optional().isBoolean().withMessage('isActive must be a boolean'),
 
   // Handle validation results
+
   (req: Request, res: Response, next: NextFunction) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -412,6 +414,7 @@ export const validateBotConfigUpdate = [
   body('isActive').optional().isBoolean().withMessage('isActive must be a boolean'),
 
   // Handle validation results
+
   (req: Request, res: Response, next: NextFunction) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -429,6 +432,7 @@ export const validateBotConfigUpdate = [
 /**
  * Sanitization middleware for bot configuration
  */
+
 export const sanitizeBotConfig = (req: Request, res: Response, next: NextFunction) => {
   try {
     // Get matched data from validation

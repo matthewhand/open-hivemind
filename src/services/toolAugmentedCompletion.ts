@@ -138,6 +138,7 @@ async function callLLMWithTools(
   _llmProvider: ILlmProvider,
   messages: ChatMessage[],
   tools: OpenAITool[],
+
   metadata: Record<string, any>
 ): Promise<ChatMessage> {
   // Strategy: Try to use the OpenAI SDK directly. We load it dynamically

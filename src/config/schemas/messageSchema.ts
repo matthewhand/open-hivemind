@@ -80,6 +80,7 @@ export const MessageSchema = z.object({
   MESSAGE_STRIP_BOT_ID: z.boolean().default(true),
   MESSAGE_USERNAME_OVERRIDE: z.string().default('Bot'),
   MESSAGE_CHANNEL_ROUTER_ENABLED: z.boolean().default(false),
+   
   CHANNEL_BONUSES: z.preprocess((val: any) => {
     if (typeof val !== 'object' || val === null) return val;
     const clamped: Record<string, number> = {};
@@ -89,6 +90,7 @@ export const MessageSchema = z.object({
     }
     return clamped;
   }, z.record(z.number())).default({}),
+   
   CHANNEL_PRIORITIES: z.preprocess((val: any) => {
     if (typeof val !== 'object' || val === null) return val;
     const clamped: Record<string, number> = {};

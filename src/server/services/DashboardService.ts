@@ -101,7 +101,6 @@ export class DashboardService {
     }
   }
 
-
   public getConfigStatus() {
     const manager = BotConfigurationManager.getInstance();
     const llmStatus = getLlmDefaultStatus();
@@ -135,7 +134,7 @@ export class DashboardService {
     let bots: Array<{ name: string; messageProvider: string; llmProvider: string }> = [];
     try {
       bots = manager.getAllBots();
-    } catch (e) {
+    } catch {
       bots = [];
     }
 

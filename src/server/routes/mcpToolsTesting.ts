@@ -50,6 +50,7 @@ router.get(
         data: {
           tools,
           totalServers: servers.length || 0,
+
           connectedServers: updatedServers.filter((s: any) => s.connected).length || 0,
         },
       });

@@ -6,6 +6,7 @@ import { providerRegistry } from '../../registries/ProviderRegistry';
 import { HTTP_STATUS } from '../../types/constants';
 import { ApiResponse } from '../utils/apiResponse';
 
+// eslint-disable-next-line unused-imports/no-unused-vars
 const debug = Debug('app:providers-route');
 const router = Router();
 
@@ -87,7 +88,9 @@ router.get(
 
         results.push({
           name,
+
           id: (provider as any).id,
+
           label: (provider as any).label,
           status,
           details,
@@ -284,9 +287,11 @@ router.get(
   asyncErrorHandler(async (req, res) => {
     try {
       const toolProviders = providerRegistry.getToolProviders();
+
       const results: any[] = [];
       for (const [name, provider] of toolProviders) {
         let status = 'active';
+
         let details: any;
         if (typeof provider.healthCheck === 'function') {
           try {
@@ -299,7 +304,9 @@ router.get(
         }
         results.push({
           name,
+
           id: (provider as any).id,
+
           label: (provider as any).label,
           status,
           details,

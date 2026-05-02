@@ -29,6 +29,7 @@ let initialized = false;
 /**
  * Type guard to check if a module export is a valid IMessengerService factory.
  */
+
 function isValidServiceFactory(obj: any): obj is { getInstance: () => IMessengerService } {
   return obj && typeof obj === 'function' && typeof obj.getInstance === 'function';
 }
@@ -36,6 +37,7 @@ function isValidServiceFactory(obj: any): obj is { getInstance: () => IMessenger
 /**
  * Type guard to check if an instance implements IMessengerService.
  */
+
 function isMessengerService(obj: any): obj is IMessengerService {
   return (
     obj &&
@@ -62,6 +64,7 @@ async function discoverProviders(): Promise<void> {
   }
 
   // Start initialization
+
   initializationPromise = (async () => {
     initialized = true;
 

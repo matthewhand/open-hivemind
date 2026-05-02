@@ -143,7 +143,6 @@ export class ToolManager {
 
       // Handle built-in swarm routing
       if (toolName === 'transfer_to_bot') {
-        const { MessageBus } = await import('@src/events/MessageBus');
         const targetBotName = args.targetBotName as string;
 
         debug(`[${botName}] Initiating handoff to ${targetBotName}...`);

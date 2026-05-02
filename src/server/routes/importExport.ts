@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import fs from 'fs/promises';
 import * as path from 'path';
 import { Router, type Request, type Response } from 'express';
@@ -27,6 +28,7 @@ type MulterFile = {
   size: number;
 };
 
+// eslint-disable-next-line unused-imports/no-unused-vars
 type AuthMulterRequest = AuthMiddlewareRequest & { file?: MulterFile };
 
 const router = Router();
@@ -190,6 +192,7 @@ const validateBackupRestore = [
 /**
  * Error handler middleware
  */
+
 const handleValidationErrors = (req: Request, res: Response, next: (err?: unknown) => void) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {

@@ -4,6 +4,7 @@ import { ErrorUtils } from '../../types/errors';
 export const handleRouteError = (
   error: unknown,
   res: Response,
+
   debugInstance: any,
   debugMessage: string,
   defaultErrorCode: string,

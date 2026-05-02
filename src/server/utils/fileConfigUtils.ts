@@ -6,6 +6,7 @@ import { ErrorUtils } from '../../types/errors';
 const debug = Debug('app:fileConfigUtils');
 
 // Ensure data directory exists
+
 export const ensureDataDir = async () => {
   const dataDir = join(process.cwd(), 'data');
   try {

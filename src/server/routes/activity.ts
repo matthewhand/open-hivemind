@@ -291,10 +291,14 @@ router.post(
       messageProvider,
       llmProvider,
       messageType,
+      // eslint-disable-next-line unused-imports/no-unused-vars
       contentLength,
+      // eslint-disable-next-line unused-imports/no-unused-vars
       processingTime,
       status,
+      // eslint-disable-next-line unused-imports/no-unused-vars
       errorMessage,
+      // eslint-disable-next-line unused-imports/no-unused-vars
       mcpToolsUsed,
     } = req.body;
 

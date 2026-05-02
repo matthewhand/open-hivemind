@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 /**
  * Error Logging System for Open Hivemind
  *
@@ -219,10 +220,13 @@ export class ErrorLogger {
           ? {
               canRecover: (error as { getRecoveryStrategy: () => any }).getRecoveryStrategy()
                 .canRecover,
+
               retryDelay: (error as { getRecoveryStrategy: () => any }).getRecoveryStrategy()
                 .retryDelay,
+
               maxRetries: (error as { getRecoveryStrategy: () => any }).getRecoveryStrategy()
                 .maxRetries,
+
               steps: (error as { getRecoveryStrategy: () => any }).getRecoveryStrategy()
                 .recoverySteps,
             }
@@ -358,7 +362,7 @@ export class ErrorLogger {
     }
 
     // Emit structured log for monitoring systems
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- custom process event for monitoring
+
     (process as any).emit('hivemind:log', {
       type: 'error',
       level,
@@ -409,7 +413,6 @@ export class ErrorLogger {
     if (count > 10 && count % 10 === 0) {
       this.debug(`Error spike detected for type ${errorType}: ${count} occurrences`);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- custom process event for monitoring
       (process as any).emit('hivemind:alert', {
         type: 'error_spike',
         errorType,
@@ -426,7 +429,6 @@ export class ErrorLogger {
     if (recentErrors > 5) {
       this.debug(`High error rate detected: ${recentErrors} errors in last minute`);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- custom process event for monitoring
       (process as any).emit('hivemind:alert', {
         type: 'high_error_rate',
         count: recentErrors,
@@ -596,6 +598,7 @@ export function createErrorContext(req: Request): ErrorContext {
  */
 export function errorLoggingMiddleware(req: Request, _res: unknown, next: () => void): void {
   // Add error logger to request object
+
   (req as any).errorLogger = errorLogger;
   next();
 }

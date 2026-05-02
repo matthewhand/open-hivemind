@@ -151,6 +151,7 @@ export const validateSubscription = [
 /**
  * Error handler middleware
  */
+
 export const handleValidationErrors = (req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
