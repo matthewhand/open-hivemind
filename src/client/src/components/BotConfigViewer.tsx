@@ -168,18 +168,24 @@ const BotConfigViewer: React.FC<BotConfigViewerProps> = ({
             </div>
             
             {showJson && (
-              <div className="btn-group">
+              <div className="btn-group" role="tablist" aria-label="View mode">
                 <button 
+                  id="tab-terminal"
+                  role="tab"
                   className={`btn btn-xs ${viewMode === 'terminal' ? 'btn-active' : 'btn-ghost'}`}
                   onClick={() => setViewMode('terminal')}
-                  aria-pressed={viewMode === 'terminal'}
+                  aria-selected={viewMode === 'terminal'}
+                  aria-controls="panel-terminal"
                 >
                   Terminal
                 </button>
                 <button 
+                  id="tab-json"
+                  role="tab"
                   className={`btn btn-xs ${viewMode === 'json' ? 'btn-active' : 'btn-ghost'}`}
                   onClick={() => setViewMode('json')}
-                  aria-pressed={viewMode === 'json'}
+                  aria-selected={viewMode === 'json'}
+                  aria-controls="panel-json"
                 >
                   JSON
                 </button>
@@ -190,7 +196,13 @@ const BotConfigViewer: React.FC<BotConfigViewerProps> = ({
       </div>
       
       <div className="card-body p-6">
-        {viewMode === 'terminal' ? renderTerminalView() : renderJsonView()}
+        <div
+          role="tabpanel"
+          id={`panel-${viewMode}`}
+          aria-labelledby={`tab-${viewMode}`}
+        >
+          {viewMode === 'terminal' ? renderTerminalView() : renderJsonView()}
+        </div>
         
         <div className="flex items-center justify-between mt-4 text-xs text-base-content/60">
           <span>Configuration loaded from: config/bots/{bot.name}.json</span>
