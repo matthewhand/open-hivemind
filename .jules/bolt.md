@@ -39,3 +39,7 @@
 ## 2025-05-01 - Replace O(N) array search with O(1) map lookup in PersonaSelector render loop
 **Learning:** In React components like `PersonaSelector`, performing array `.find()` lookups inside `.map()` render loops (to match categories/attributes with items) degrades rendering performance to O(N * M), which is especially noticeable when lists grow long or are filtered frequently.
 **Action:** Always pre-compute a lookup map using `useMemo` (e.g., `Object.fromEntries(categories.map(c => [c.value, c.color]))`) and use O(1) object key lookups (`categoryColorMap[persona.category]`) inside render loops instead of array searches. Make sure static data referenced by useMemo is moved outside the component or the optimization is defeated.
+
+## 2026-05-02 - ProviderConfigForm Re-rendering
+**Learning:** The form components re-render frequently (e.g., on every keystroke). Using `.reduce()` and `.filter()` on potentially large arrays within the component body without memoization leads to O(N) recalculations on every render, which can cause typing lag on complex configuration forms.
+**Action:** Use `useMemo` to wrap expensive array transformations inside React components, especially forms.

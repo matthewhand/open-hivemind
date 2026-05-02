@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import type { ProviderConfigFormProps, ProviderConfigField } from '../provider-configs/types';
 import Avatar from './DaisyUI/Avatar';
 import Input from './DaisyUI/Input';
@@ -40,38 +40,41 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
+  // ⚡ Bolt Optimization: Wrap computationally expensive schema field filtering and grouping in useMemo.
+  // This prevents O(N) recalculations on every render when the user types in the form inputs.
+  // Expected Impact: Reduces main-thread blocking during rapid keystrokes in complex provider configurations.
   // Separate mandatory and advanced fields
-  const mandatoryFields = schema.fields.filter(field => field.required);
-  const advancedFields = schema.fields.filter(field => !field.required);
+  const mandatoryFields = useMemo(() => schema.fields.filter(field => field.required), [schema.fields]);
+  const advancedFields = useMemo(() => schema.fields.filter(field => !field.required), [schema.fields]);
 
   // Group fields by their group property
-  const groupedFields = schema.fields.reduce((groups, field) => {
+  const groupedFields = useMemo(() => schema.fields.reduce((groups, field) => {
     const groupName = field.group || 'General';
     if (!groups[groupName]) {
       groups[groupName] = [];
     }
     groups[groupName].push(field);
     return groups;
-  }, {} as Record<string, ProviderConfigField[]>);
+  }, {} as Record<string, ProviderConfigField[]>), [schema.fields]);
 
   // Group mandatory and advanced fields separately
-  const groupedMandatoryFields = mandatoryFields.reduce((groups, field) => {
+  const groupedMandatoryFields = useMemo(() => mandatoryFields.reduce((groups, field) => {
     const groupName = field.group || 'General';
     if (!groups[groupName]) {
       groups[groupName] = [];
     }
     groups[groupName].push(field);
     return groups;
-  }, {} as Record<string, ProviderConfigField[]>);
+  }, {} as Record<string, ProviderConfigField[]>), [mandatoryFields]);
 
-  const groupedAdvancedFields = advancedFields.reduce((groups, field) => {
+  const groupedAdvancedFields = useMemo(() => advancedFields.reduce((groups, field) => {
     const groupName = field.group || 'General';
     if (!groups[groupName]) {
       groups[groupName] = [];
     }
     groups[groupName].push(field);
     return groups;
-  }, {} as Record<string, ProviderConfigField[]>);
+  }, {} as Record<string, ProviderConfigField[]>), [advancedFields]);
 
   const validateField = (field: ProviderConfigField, value: any): string | null => {
     if (field.required && (!value || (typeof value === 'string' && value.trim() === ''))) {
