@@ -86,7 +86,6 @@ export default defineConfig({
     ['junit', { outputFile: 'test-results/junit.xml' }],
     ['line'],
     ['github'],
-    ['./tests/e2e/reporters/ScreenshotReporter.ts'],
   ] : [
     ['html', {
       outputFolder: 'playwright-report', 

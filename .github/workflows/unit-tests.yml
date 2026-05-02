@@ -38,6 +38,7 @@ jobs:
       - name: Run core unit tests
         env:
           NODE_OPTIONS: --max-old-space-size=8192
+          DATABASE_ENCRYPTION_KEY: ci-test-encryption-key-32chars!
         run: |
           NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config ./node_modules/jest/bin/jest.js \
             tests/unit/ \

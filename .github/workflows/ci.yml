@@ -39,6 +39,7 @@ jobs:
         id: unit-test
         env:
           NODE_OPTIONS: --max-old-space-size=8192
+          DATABASE_ENCRYPTION_KEY: ci-test-encryption-key-32chars!
         run: |
           NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config ./node_modules/jest/bin/jest.js --passWithNoTests --forceExit --maxWorkers=2 --testPathPattern=tests/unit 2>&1 | tee unit-test-output.txt
           # Extract passing unit test count from output
