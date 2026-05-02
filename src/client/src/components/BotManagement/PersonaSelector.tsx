@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useLocalStorage } from '../../hooks/useLocalStorage';
 import type { Persona, PersonaCategory } from '../../types/bot';
 import { DEFAULT_PERSONA } from '../../types/bot';
 import Card from '../DaisyUI/Card';
@@ -48,7 +49,7 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<PersonaCategory | 'all'>('all');
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useLocalStorage('ui.personaSelector.isExpanded', false);
 
   // Performance optimization: pre-compute map for O(1) category color lookups instead of calling .find() inside .map() loops
   const categoryColorMap = useMemo(() => {

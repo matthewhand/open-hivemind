@@ -388,7 +388,7 @@ const MessageProvidersPage: React.FC = () => {
   const errorToast = useErrorToast();
   const { showStamp } = useSavedStamp();
   const [profiles, setProfiles] = useState<any[]>([]);
-  const [expandedProfile, setExpandedProfile] = useState<string | null>(null);
+  const [expandedProfile, setExpandedProfile] = useLocalStorage<string | null>('ui.messageProviders.expandedProfile', null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { values: urlParams, setValue: setUrlParam } = useUrlParams({

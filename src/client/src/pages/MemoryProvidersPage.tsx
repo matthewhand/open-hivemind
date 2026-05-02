@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useSearchParams } from 'react-router-dom';
 import Card from '../components/DaisyUI/Card';
 import Button from '../components/DaisyUI/Button';
@@ -93,7 +94,7 @@ const MemoryProvidersPage: React.FC = () => {
   const errorToast = useErrorToast();
   const { showStamp } = useSavedStamp();
   const [profiles, setProfiles] = useState<any[]>([]);
-  const [expandedProfile, setExpandedProfile] = useState<string | null>(null);
+  const [expandedProfile, setExpandedProfile] = useLocalStorage<string | null>('ui.memoryProviders.expandedProfile', null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { values: urlParams, setValue: setUrlParam } = useUrlParams({
