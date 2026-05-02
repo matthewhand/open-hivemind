@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { singleton } from 'tsyringe';
+import { injectable, singleton } from 'tsyringe';
 import type {
   AlertEvent,
   MessageFlowEvent,
@@ -9,6 +9,7 @@ import type { DemoBot, DemoConversation, DemoMessage } from './demo/DemoConstant
 import { type DemoStateService } from './demo/DemoStateService';
 
 @singleton()
+@injectable()
 export class DemoModeService {
   constructor(private stateService: DemoStateService) {}
 

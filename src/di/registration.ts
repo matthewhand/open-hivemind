@@ -97,7 +97,19 @@ export function registerServices(): void {
 
   logger.debug('Registering DemoModeService');
   const { default: DemoModeServiceClass } = require('../services/DemoModeService');
-  container.registerSingleton('DemoModeService', DemoModeServiceClass);
+  const { DemoStateService: DemoStateServiceClass } = require('../services/demo/DemoStateService');
+  // Register DemoStateService first so it can be constructed
+  if (!container.isRegistered(DemoStateServiceClass)) {
+    container.registerSingleton(DemoStateServiceClass, DemoStateServiceClass);
+  }
+  // Use factory registration to bypass emitDecoratorMetadata limitation with tsx
+  container.register('DemoModeService', {
+    useFactory: () => {
+      const stateService = container.resolve(DemoStateServiceClass);
+      return new DemoModeServiceClass(stateService);
+    },
+  });
+  container.register(DemoModeServiceClass, { useToken: 'DemoModeService' });
 
   logger.debug('Registering GreetingStateManager');
   const {

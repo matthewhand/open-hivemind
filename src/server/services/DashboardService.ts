@@ -3,7 +3,7 @@ import path from 'path';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 import { container } from '../../di/container';
-import DemoModeService from '../../services/DemoModeService';
+import type DemoModeService from '../../services/DemoModeService';
 import { ActivityLogger } from './ActivityLogger';
 import WebSocketService, { type MessageFlowEvent } from './WebSocketService';
 
@@ -155,7 +155,7 @@ export class DashboardService {
 
     let demoMode = false;
     try {
-      const demoService = container.resolve(DemoModeService);
+      const demoService = container.resolve<DemoModeService>('DemoModeService');
       demoMode = demoService.isInDemoMode();
     } catch {
       /* ignore */

@@ -18,7 +18,7 @@ import { BotTaskScheduler } from '@src/server/services/BotTaskScheduler';
 import { DatabaseMaintenanceService } from '@src/server/services/DatabaseMaintenanceService';
 import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
 import AnomalyDetectionService from '@src/services/AnomalyDetectionService';
-import DemoModeService from '@src/services/DemoModeService';
+import type DemoModeService from '@src/services/DemoModeService';
 import StartupGreetingService from '@src/services/StartupGreetingService';
 import { validateRequiredEnvVars } from '@src/utils/envValidation';
 import * as debugEnvVarsModule from '@config/debugEnvVars';
@@ -316,7 +316,7 @@ export async function initServices(
   await startupDiagnostics.logStartupDiagnostics();
 
   // Initialize Demo Mode Service
-  const demoService = container.resolve(DemoModeService);
+  const demoService = container.resolve<DemoModeService>('DemoModeService');
   await demoService.initialize();
 
   if (demoService.isInDemoMode()) {

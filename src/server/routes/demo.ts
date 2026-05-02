@@ -10,7 +10,7 @@ import { ApiResponse } from '@src/server/utils/apiResponse';
 import { Logger } from '@common/logger';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
-import DemoModeService from '../../services/DemoModeService';
+import type DemoModeService from '../../services/DemoModeService';
 import { HTTP_STATUS } from '../../types/constants';
 import { ErrorUtils } from '../../types/errors';
 import { ChatGenerateSchema, EmptySchema } from '../../validation/schemas/miscSchema';
@@ -30,7 +30,7 @@ router.get(
   '/status',
   asyncErrorHandler(async (req, res) => {
     try {
-      const demoService = container.resolve(DemoModeService);
+      const demoService = container.resolve<DemoModeService>('DemoModeService');
       const status = demoService.getDemoStatus();
 
       res.json(
@@ -59,7 +59,7 @@ router.post(
   '/toggle',
   asyncErrorHandler(async (req, res) => {
     try {
-      const demoService = container.resolve(DemoModeService);
+      const demoService = container.resolve<DemoModeService>('DemoModeService');
       const wasEnabled = demoService.isInDemoMode();
       demoService.setDemoMode(!wasEnabled);
       const isNowEnabled = demoService.isInDemoMode();
@@ -100,7 +100,7 @@ router.get(
   '/bots',
   asyncErrorHandler(async (req, res) => {
     try {
-      const demoService = container.resolve(DemoModeService);
+      const demoService = container.resolve<DemoModeService>('DemoModeService');
       const bots = demoService.getDemoBots();
 
       res.json(
@@ -141,7 +141,7 @@ router.post(
         return;
       }
 
-      const demoService = container.resolve(DemoModeService);
+      const demoService = container.resolve<DemoModeService>('DemoModeService');
 
       if (!demoService.isInDemoMode()) {
         res
@@ -204,7 +204,7 @@ router.get(
   '/conversations',
   asyncErrorHandler(async (req, res) => {
     try {
-      const demoService = container.resolve(DemoModeService);
+      const demoService = container.resolve<DemoModeService>('DemoModeService');
       const conversations = demoService.getAllConversations();
 
       res.json(
@@ -232,7 +232,7 @@ router.get(
   asyncErrorHandler(async (req, res) => {
     try {
       const { channelId, botName } = req.params;
-      const demoService = container.resolve(DemoModeService);
+      const demoService = container.resolve<DemoModeService>('DemoModeService');
       const messages = demoService.getConversationHistory(channelId, botName);
 
       res.json(
@@ -264,7 +264,7 @@ router.post(
   validateRequest(EmptySchema),
   asyncErrorHandler(async (req, res) => {
     try {
-      const demoService = container.resolve(DemoModeService);
+      const demoService = container.resolve<DemoModeService>('DemoModeService');
       demoService.reset();
 
       res.json(ApiResponse.success());
