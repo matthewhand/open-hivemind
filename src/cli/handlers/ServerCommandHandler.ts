@@ -58,34 +58,34 @@ export class ServerCommandHandler implements CommandHandler {
   }
 
   private async startServer(options: StartServerOptions): Promise<void> {
-    this.logger.log(chalk.blue(`Starting Hivemind server on port ${options.port}...`));
+    this.logger.info(chalk.blue(`Starting Hivemind server on port ${options.port}...`));
 
     if (options.daemon) {
-      this.logger.log(chalk.green('✓ Server started as daemon'));
+      this.logger.info(chalk.green('✓ Server started as daemon'));
     } else {
-      this.logger.log(chalk.green('✓ Server started'));
-      this.logger.log(`  Port: ${options.port}`);
-      this.logger.log(`  Config: ${options.config || 'default'}`);
+      this.logger.info(chalk.green('✓ Server started'));
+      this.logger.info(`  Port: ${options.port}`);
+      this.logger.info(`  Config: ${options.config || 'default'}`);
     }
   }
 
   private async stopServer(): Promise<void> {
-    this.logger.log(chalk.blue('Stopping Hivemind server...'));
+    this.logger.info(chalk.blue('Stopping Hivemind server...'));
     // Here you would implement server stop logic
-    this.logger.log(chalk.green('✓ Server stopped'));
+    this.logger.info(chalk.green('✓ Server stopped'));
   }
 
   private async restartServer(): Promise<void> {
-    this.logger.log(chalk.blue('Restarting Hivemind server...'));
+    this.logger.info(chalk.blue('Restarting Hivemind server...'));
     await this.stopServer();
     await this.startServer({ port: '3000' });
   }
 
   private showServerStatus(): void {
-    this.logger.log(chalk.blue('Server Status:'));
-    this.logger.log(`  Status: ${chalk.green('Running')}`); // This would be dynamic
-    this.logger.log(`  Port: ${chalk.green('3000')}`); // This would be dynamic
-    this.logger.log(`  Uptime: ${chalk.green('5h 42m')}`); // This would be dynamic
-    this.logger.log(`  Memory: ${chalk.green('156 MB')}`); // This would be dynamic
+    this.logger.info(chalk.blue('Server Status:'));
+    this.logger.info(`  Status: ${chalk.green('Running')}`); // This would be dynamic
+    this.logger.info(`  Port: ${chalk.green('3000')}`); // This would be dynamic
+    this.logger.info(`  Uptime: ${chalk.green('5h 42m')}`); // This would be dynamic
+    this.logger.info(`  Memory: ${chalk.green('156 MB')}`); // This would be dynamic
   }
 }

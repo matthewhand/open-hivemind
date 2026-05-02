@@ -100,7 +100,7 @@ export class BotCommandHandler implements CommandHandler {
   }
 
   private async addBot(options: AddBotOptions): Promise<void> {
-    this.logger.log(chalk.blue('Adding new bot...'));
+    this.logger.info(chalk.blue('Adding new bot...'));
 
     if (!options.name || !options.provider || !options.llm) {
       this.logger.error(chalk.red('Missing required options. Use --name, --provider, and --llm'));
@@ -108,12 +108,12 @@ export class BotCommandHandler implements CommandHandler {
     }
 
     // Here you would save to configuration
-    this.logger.log(chalk.green(`✓ Bot '${options.name}' added successfully`));
-    this.logger.log(`  Provider: ${options.provider} → ${options.llm}`);
+    this.logger.info(chalk.green(`✓ Bot '${options.name}' added successfully`));
+    this.logger.info(`  Provider: ${options.provider} → ${options.llm}`);
   }
 
   private async addBotInteractive(): Promise<void> {
-    this.logger.log(chalk.blue('Interactive Bot Setup'));
+    this.logger.info(chalk.blue('Interactive Bot Setup'));
 
     const answers = await inquirer.prompt([
       {
@@ -149,22 +149,22 @@ export class BotCommandHandler implements CommandHandler {
     const bots = this.configManager.getAllBots();
 
     if (bots.length === 0) {
-      this.logger.log(chalk.yellow('No bots configured'));
+      this.logger.info(chalk.yellow('No bots configured'));
       return;
     }
 
-    this.logger.log(chalk.blue(`Found ${bots.length} bot(s):`));
+    this.logger.info(chalk.blue(`Found ${bots.length} bot(s):`));
 
     bots.forEach((bot, index) => {
-      this.logger.log(`${index + 1}. ${chalk.green(bot.name)}`);
-      this.logger.log(`   Provider: ${bot.messageProvider} → ${bot.llmProvider}`);
+      this.logger.info(`${index + 1}. ${chalk.green(bot.name)}`);
+      this.logger.info(`   Provider: ${bot.messageProvider} → ${bot.llmProvider}`);
 
       if (verbose) {
-        this.logger.log(`   Enabled: ${bot.enabled ? chalk.green('Yes') : chalk.red('No')}`);
+        this.logger.info(`   Enabled: ${bot.enabled ? chalk.green('Yes') : chalk.red('No')}`);
         const createdAt = typeof bot.createdAt === 'string' ? bot.createdAt : 'Unknown';
-        this.logger.log(`   Created: ${createdAt}`);
+        this.logger.info(`   Created: ${createdAt}`);
       }
-      this.logger.log();
+      this.logger.info('');
     });
   }
 
@@ -188,25 +188,25 @@ export class BotCommandHandler implements CommandHandler {
       ]);
 
       if (!confirm) {
-        this.logger.log(chalk.yellow('Operation cancelled'));
+        this.logger.info(chalk.yellow('Operation cancelled'));
         return;
       }
     }
 
     // Here you would remove from configuration
-    this.logger.log(chalk.green(`✓ Bot '${name}' removed successfully`));
+    this.logger.info(chalk.green(`✓ Bot '${name}' removed successfully`));
   }
 
   private async startBot(name: string): Promise<void> {
-    this.logger.log(chalk.blue(`Starting bot '${name}'...`));
+    this.logger.info(chalk.blue(`Starting bot '${name}'...`));
     // Here you would start the specific bot
-    this.logger.log(chalk.green(`✓ Bot '${name}' started`));
+    this.logger.info(chalk.green(`✓ Bot '${name}' started`));
   }
 
   private async stopBot(name: string): Promise<void> {
-    this.logger.log(chalk.blue(`Stopping bot '${name}'...`));
+    this.logger.info(chalk.blue(`Stopping bot '${name}'...`));
     // Here you would stop the specific bot
-    this.logger.log(chalk.green(`✓ Bot '${name}' stopped`));
+    this.logger.info(chalk.green(`✓ Bot '${name}' stopped`));
   }
 
   private showBotStatus(name?: string): void {
@@ -219,20 +219,20 @@ export class BotCommandHandler implements CommandHandler {
         return;
       }
 
-      this.logger.log(chalk.blue(`Status for bot '${name}':`));
-      this.logger.log(`  Status: ${chalk.green('Running')}`); // This would be dynamic
-      this.logger.log(`  Provider: ${bot.messageProvider} → ${bot.llmProvider}`);
-      this.logger.log(`  Uptime: ${chalk.green('2h 30m')}`); // This would be dynamic
+      this.logger.info(chalk.blue(`Status for bot '${name}':`));
+      this.logger.info(`  Status: ${chalk.green('Running')}`); // This would be dynamic
+      this.logger.info(`  Provider: ${bot.messageProvider} → ${bot.llmProvider}`);
+      this.logger.info(`  Uptime: ${chalk.green('2h 30m')}`); // This would be dynamic
     } else {
-      this.logger.log(chalk.blue('System Status:'));
-      this.logger.log(`Active bots: ${chalk.green(bots.length)}`);
+      this.logger.info(chalk.blue('System Status:'));
+      this.logger.info(`Active bots: ${chalk.green(bots.length)}`);
       const databaseStatus = !this.dbManager.isConfigured()
         ? chalk.yellow('Not configured')
         : this.dbManager.isConnected()
           ? chalk.green('Connected')
           : chalk.red('Disconnected');
-      this.logger.log(`Database: ${databaseStatus}`);
-      this.logger.log(`Server: ${chalk.green('Running')}`); // This would be dynamic
+      this.logger.info(`Database: ${databaseStatus}`);
+      this.logger.info(`Server: ${chalk.green('Running')}`); // This would be dynamic
     }
   }
 }
