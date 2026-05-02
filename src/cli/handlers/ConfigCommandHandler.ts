@@ -62,32 +62,32 @@ export class ConfigCommandHandler implements CommandHandler {
   }
 
   private validateConfiguration(): void {
-    this.logger.log(chalk.blue('Validating configuration...'));
+    this.logger.info(chalk.blue('Validating configuration...'));
 
     const warnings = this.configManager.getWarnings();
     const bots = this.configManager.getAllBots();
 
     if (warnings.length === 0 && bots.length > 0) {
-      this.logger.log(chalk.green('✓ Configuration is valid'));
+      this.logger.info(chalk.green('✓ Configuration is valid'));
     } else {
       if (bots.length === 0) {
-        this.logger.log(chalk.yellow('⚠ No bots configured'));
+        this.logger.info(chalk.yellow('⚠ No bots configured'));
       }
 
       warnings.forEach((warning) => {
-        this.logger.log(chalk.yellow(`⚠ ${warning}`));
+        this.logger.info(chalk.yellow(`⚠ ${warning}`));
       });
     }
   }
 
   private async reloadConfiguration(): Promise<void> {
-    this.logger.log(chalk.blue('Reloading configuration...'));
+    this.logger.info(chalk.blue('Reloading configuration...'));
     // Here you would implement configuration reload logic
-    this.logger.log(chalk.green('✓ Configuration reloaded'));
+    this.logger.info(chalk.green('✓ Configuration reloaded'));
   }
 
   private async exportConfiguration(path: string): Promise<void> {
-    this.logger.log(chalk.blue(`Exporting configuration to ${path}...`));
+    this.logger.info(chalk.blue(`Exporting configuration to ${path}...`));
 
     const config = {
       bots: this.configManager.getAllBots(),
@@ -96,7 +96,7 @@ export class ConfigCommandHandler implements CommandHandler {
     };
 
     await fs.writeFile(path, JSON.stringify(config, null, 2));
-    this.logger.log(chalk.green('✓ Configuration exported'));
+    this.logger.info(chalk.green('✓ Configuration exported'));
   }
 
   private async importConfiguration(path: string, force: boolean): Promise<void> {
@@ -115,14 +115,14 @@ export class ConfigCommandHandler implements CommandHandler {
         ]);
 
         if (!confirm) {
-          this.logger.log(chalk.yellow('Import cancelled'));
+          this.logger.info(chalk.yellow('Import cancelled'));
           return;
         }
       }
 
-      this.logger.log(chalk.blue(`Importing configuration from ${path}...`));
+      this.logger.info(chalk.blue(`Importing configuration from ${path}...`));
       // Here you would implement configuration import logic
-      this.logger.log(chalk.green('✓ Configuration imported'));
+      this.logger.info(chalk.green('✓ Configuration imported'));
     } catch (error) {
       throw new Error(`Failed to import configuration: ${error}`);
     }

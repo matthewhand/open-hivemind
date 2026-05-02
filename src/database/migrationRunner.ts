@@ -77,7 +77,7 @@ export const runMigrations = async (db: IDatabase, isPostgres: boolean): Promise
   try {
     const executed = await umzug.up();
     if (executed.length > 0) {
-      debug(`Successfully applied migrations: ${executed.map((m) => m.name).join(', ')}`);
+      debug(`Successfully applied migrations: ${executed.map((m: any) => m.name).join(', ')}`);
     } else {
       debug('Database is up to date.');
     }

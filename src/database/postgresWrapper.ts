@@ -153,7 +153,7 @@ export class PostgresWrapper implements IDatabase {
   async all<T = any>(sql: string, params: any[] = []): Promise<T[]> {
     const translatedSql = this.translateSql(sql);
     const result = await this.pool.query(translatedSql, params);
-    return result.rows.map((row) => this.mapRow(row)) as T[];
+    return result.rows.map((row: any) => this.mapRow(row)) as T[];
   }
 
   async get<T = any>(sql: string, params: any[] = []): Promise<T | undefined> {
