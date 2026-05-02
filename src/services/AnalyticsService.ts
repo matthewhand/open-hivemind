@@ -1,4 +1,3 @@
-import Debug from 'debug';
 import { DEFAULT_PAGE_LIMIT } from '@common/constants/time';
 import { BotConfigurationManager } from '../config/BotConfigurationManager';
 import { ActivityLogger, type ActivityFilter } from '../server/services/ActivityLogger';
@@ -14,8 +13,6 @@ import { PatternAnalyzer } from './analytics/PatternAnalyzer';
 import { RecommendationEngine } from './analytics/RecommendationEngine';
 import { SegmentClassifier } from './analytics/SegmentClassifier';
 import { TimeSeriesAggregator } from './analytics/TimeSeriesAggregator';
-
-const debug = Debug('app:AnalyticsService');
 
 export class AnalyticsService {
   private static instance: AnalyticsService;

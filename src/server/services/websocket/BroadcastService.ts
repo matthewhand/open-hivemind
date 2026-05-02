@@ -1,5 +1,4 @@
 import 'reflect-metadata';
-import Debug from 'debug';
 import type { Socket } from 'socket.io';
 import { inject, injectable, singleton } from 'tsyringe';
 import { AuditLogger, type AuditEvent } from '../../../common/auditLogger';
@@ -22,8 +21,6 @@ import { MessageTracker } from './broadcast/MessageTracker';
 import { MetricCalculator } from './broadcast/MetricCalculator';
 import { ConnectionManager } from './ConnectionManager';
 import type { AlertEvent, MessageFlowEvent, PerformanceMetric } from './types';
-
-const debug = Debug('app:WebSocketService:BroadcastService');
 
 @singleton()
 @injectable()
