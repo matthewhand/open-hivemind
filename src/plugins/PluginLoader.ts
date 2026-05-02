@@ -234,6 +234,7 @@ function instantiateProvider<T>(
     return new mod[ctor](config) as T;
   }
   // Fallback: default export
+
   if (typeof mod.default === 'function') {
     try {
       return new (mod.default as any)(config) as T;
@@ -317,6 +318,7 @@ export function instantiateToolProvider(
  * Instantiate a bot from a loaded module.
  *
  * Contract (preferred): module exports `create(config)` → Bot instance
+ // eslint-disable-next-line @typescript-eslint/no-explicit-any
  * Fallback: known Bot class patterns.
  */
 
@@ -339,6 +341,7 @@ export function instantiateBot(mod: PluginModule, config?: unknown): any {
 
 /**
  * Instantiate a guard from a loaded module.
+ // eslint-disable-next-line @typescript-eslint/no-explicit-any
  *
  * Contract (preferred): module exports `create(config)` → Guard instance
  * Fallback: known Guard class patterns.
@@ -350,6 +353,7 @@ export function instantiateGuard(mod: PluginModule, config?: unknown): any {
     return mod.create(config);
   }
   // Fallback: Guard constructor
+
   const ctor = Object.keys(mod).find((k) => k.includes('Guard') && typeof mod[k] === 'function');
   if (ctor) {
     return new mod[ctor](config);

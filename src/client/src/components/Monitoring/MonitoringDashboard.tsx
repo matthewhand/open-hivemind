@@ -247,7 +247,6 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     if (lastConfigUpdate.current === 0 && !isConfigLoading) {
       fetchConfig();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchStatus, fetchConfig]); // purposefully omit loading flags to avoid retry loops
 
   // Fallback poll with independent per-endpoint staleness tracking

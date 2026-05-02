@@ -430,6 +430,7 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
+
       const { isActive } = req.body;
 
       const providers = await webUIStorage.getMessengerProviders();

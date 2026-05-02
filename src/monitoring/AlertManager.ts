@@ -28,14 +28,14 @@ export interface Alert {
   resolved: boolean;
   resolvedAt?: string;
 
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface NotificationChannel {
   name: string;
   type: 'email' | 'webhook' | 'slack' | 'console';
 
-  config: Record<string, any>;
+  config: Record<string, unknown>;
   send: (alert: Alert) => Promise<boolean>;
 }
 
@@ -136,7 +136,7 @@ export class AlertManager extends EventEmitter {
     value: number,
     threshold: number,
 
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ): Promise<Alert> {
     const alert: Alert = {
       id: `alert_${++this.alertIdCounter}_${Date.now()}`,
@@ -245,11 +245,11 @@ export class AlertManager extends EventEmitter {
         this.createAlert(
           'response_time',
 
-          service.responseTime! > 2000 ? 'critical' : 'warning',
+          (service.responseTime || 0) > 2000 ? 'critical' : 'warning',
           `High Response Time - ${serviceName}`,
           `${serviceName} response time is ${service.responseTime}ms`,
 
-          service.responseTime!,
+          service.responseTime || 0,
           this.config.responseTimeThreshold,
           { serviceName, responseTime: service.responseTime }
         )

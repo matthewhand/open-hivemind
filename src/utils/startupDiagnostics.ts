@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 /**
  * @fileoverview Enhanced startup diagnostics and visibility module
  * @module utils/startupDiagnostics
@@ -22,7 +23,7 @@ interface ProviderStatus {
   configured: boolean;
   connected: boolean;
 
-  details?: any;
+  details?: unknown;
 }
 
 interface SystemResources {
@@ -30,6 +31,17 @@ interface SystemResources {
   freeDiskSpace: number;
   nodeVersion: string;
   platform: string;
+}
+
+interface AuthStatus {
+  enabled: boolean;
+  method: string;
+  securityLevel: string;
+  webuiProtected: boolean;
+  apiProtected: boolean;
+  jwtSecret: boolean;
+  defaultAdmin: boolean;
+  secureConfigUsers: number;
 }
 
 export class StartupDiagnostics {
@@ -333,9 +345,8 @@ export class StartupDiagnostics {
   /**
    * Check authentication configuration status
    */
-
-  private checkAuthenticationStatus() {
-    const status = {
+  private checkAuthenticationStatus(): AuthStatus {
+    const status: AuthStatus = {
       enabled: false,
       method: 'none',
       securityLevel: 'none',
@@ -439,7 +450,7 @@ export class StartupDiagnostics {
         const drive = cwd.charAt(0).toUpperCase();
         const result = execSync(`wmic logicaldisk get size,freespace,caption`, {
           encoding: 'utf8',
-        });
+        }) as string;
         const lines = result.split('\n').filter((line: string) => line.trim());
         for (const line of lines) {
           if (line.startsWith(drive)) {
@@ -449,7 +460,7 @@ export class StartupDiagnostics {
         }
       } else {
         // Unix-like: use df command
-        const result = execSync(`df -k "${cwd}" | tail -1`, { encoding: 'utf8' });
+        const result = execSync(`df -k "${cwd}" | tail -1`, { encoding: 'utf8' }) as string;
         const parts = result.split(/\s+/).filter(Boolean);
         // df -k outputs: Filesystem, 1K-blocks, Used, Available, Use%, Mounted on
         const availableKB = parseInt(parts[3], 10);
@@ -486,6 +497,7 @@ export class StartupDiagnostics {
 
     flags.forEach((flag) => {
       const value = process.env[flag.key] || flag.default;
+
       const isActive = value === 'true' || value === '1';
       const icon = isActive ? '✅' : '➖';
       startupLog.debug(`   ${icon} ${flag.key}: ${value} (${flag.description})`);
@@ -495,8 +507,7 @@ export class StartupDiagnostics {
   /**
    * Log successful provider initialization
    */
-
-  public logProviderInitialized(providerType: string, details?: any): void {
+  public logProviderInitialized(providerType: string, details?: unknown): void {
     startupLog.info('🤖 Provider Initialized', {
       type: providerType,
       details: details ? this.sanitizeDetails(details) : undefined,
@@ -506,25 +517,25 @@ export class StartupDiagnostics {
   /**
    * Log provider initialization failure
    */
-
-  public logProviderInitializationFailed(providerType: string, error: any): void {
+  public logProviderInitializationFailed(providerType: string, error: unknown): void {
     startupLog.error('❌ Provider Initialization Failed', {
       type: providerType,
+
       error: error instanceof Error ? error.message : String(error),
     });
   }
 
   /**
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
    * Sanitize provider details for logging
    */
-
-  private sanitizeDetails(details: any): any {
+  private sanitizeDetails(details: unknown): unknown {
     if (typeof details !== 'object' || details === null) {
       return details;
     }
 
-    const sanitized: any = {};
-    for (const [key, value] of Object.entries(details)) {
+    const sanitized: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(details as Record<string, unknown>)) {
       if (typeof value === 'string' && this.isSensitiveKey(key)) {
         sanitized[key] = redactSensitiveInfo(key, value);
       } else {

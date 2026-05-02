@@ -44,6 +44,7 @@ export interface MessageContext {
   resolvedBotId?: string;
   providerSenderKey?: string;
   processedMessage?: string;
+
   platform?: string;
 
   messageProvider?: any;

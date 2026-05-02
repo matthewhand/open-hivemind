@@ -123,16 +123,16 @@ export class MessageRepository {
       );
 
       const messages: MessageRecord[] = rows.map((row) => ({
-        id: row.id,
-        messageId: row.messageId,
-        channelId: row.channelId,
-        content: row.content,
-        authorId: row.authorId,
-        authorName: row.authorName,
-        timestamp: new Date(row.timestamp),
-        provider: row.provider,
+        id: row.id as number,
+        messageId: row.messageId as string,
+        channelId: row.channelId as string,
+        content: row.content as string,
+        authorId: row.authorId as string,
+        authorName: row.authorName as string,
+        timestamp: new Date(row.timestamp as string),
+        provider: row.provider as string,
         direction: row.direction as 'incoming' | 'outgoing' | undefined,
-        metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
+        metadata: row.metadata ? JSON.parse(row.metadata as string) : undefined,
       }));
 
       debug(`Retrieved ${messages.length} messages for channel: ${channelId}`);
@@ -157,16 +157,16 @@ export class MessageRepository {
       );
 
       return rows.map((row) => ({
-        id: row.id,
-        messageId: row.messageId,
-        channelId: row.channelId,
-        content: row.content,
-        authorId: row.authorId,
-        authorName: row.authorName,
-        timestamp: new Date(row.timestamp),
-        provider: row.provider,
+        id: row.id as number,
+        messageId: row.messageId as string,
+        channelId: row.channelId as string,
+        content: row.content as string,
+        authorId: row.authorId as string,
+        authorName: row.authorName as string,
+        timestamp: new Date(row.timestamp as string),
+        provider: row.provider as string,
         direction: row.direction as 'incoming' | 'outgoing' | undefined,
-        metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
+        metadata: row.metadata ? JSON.parse(row.metadata as string) : undefined,
       }));
     } catch (error) {
       debug('Error retrieving messages with offset:', error);
@@ -178,7 +178,11 @@ export class MessageRepository {
     this.ensureConnected();
 
     try {
-      const db = this.getDb()!;
+      const db = this.getDb();
+      if (!db) {
+        throw new Error('Database not available');
+      }
+
       const result = await db.run(
         `
         INSERT INTO conversation_summaries (channelId, summary, messageCount, startTimestamp, endTimestamp, provider)
@@ -232,7 +236,11 @@ export class MessageRepository {
     }
 
     try {
-      const db = this.getDb()!;
+      const db = this.getDb();
+      if (!db) {
+        throw new Error('Database not available');
+      }
+
       await db.run(
         `
         INSERT OR REPLACE INTO bot_metrics (
@@ -262,7 +270,11 @@ export class MessageRepository {
     this.ensureConnected();
 
     try {
-      const db = this.getDb()!;
+      const db = this.getDb();
+      if (!db) {
+        throw new Error('Database not available');
+      }
+
       let query = `SELECT * FROM bot_metrics`;
       const params: (string | number | boolean | null)[] = [];
 
@@ -276,14 +288,14 @@ export class MessageRepository {
       const rows = await db.all(query, params);
 
       return rows.map((row) => ({
-        id: row.id,
-        botName: row.botName,
-        messagesSent: row.messagesSent,
-        messagesReceived: row.messagesReceived,
-        conversationsHandled: row.conversationsHandled,
-        averageResponseTime: row.averageResponseTime,
-        lastActivity: new Date(row.lastActivity),
-        provider: row.provider,
+        id: row.id as number,
+        botName: row.botName as string,
+        messagesSent: row.messagesSent as number,
+        messagesReceived: row.messagesReceived as number,
+        conversationsHandled: row.conversationsHandled as number,
+        averageResponseTime: row.averageResponseTime as number,
+        lastActivity: new Date(row.lastActivity as string),
+        provider: row.provider as string,
       }));
     } catch (error) {
       debug('Error retrieving bot metrics:', error);
@@ -300,7 +312,11 @@ export class MessageRepository {
     this.ensureConnected();
 
     try {
-      const db = this.getDb()!;
+      const db = this.getDb();
+      if (!db) {
+        throw new Error('Database not available');
+      }
+
       const [totalMessages, totalChannels, totalAuthors, providerStats] = await Promise.all([
         db.get('SELECT COUNT(*) as count FROM messages'),
         db.get('SELECT COUNT(DISTINCT channelId) as count FROM messages'),
@@ -314,9 +330,9 @@ export class MessageRepository {
       });
 
       return {
-        totalMessages: totalMessages.count,
-        totalChannels: totalChannels.count,
-        totalAuthors: totalAuthors.count,
+        totalMessages: (totalMessages as { count: number }).count,
+        totalChannels: (totalChannels as { count: number }).count,
+        totalAuthors: (totalAuthors as { count: number }).count,
         providers,
       };
     } catch (error) {

@@ -85,8 +85,10 @@ export const logBotAction = (
   req: AuditedRequest,
   action: 'CREATE' | 'UPDATE' | 'DELETE' | 'START' | 'STOP' | 'CLONE',
   botName: string,
+
   result: 'success' | 'failure',
   details: string,
+
   options: {
     oldValue?: any;
 

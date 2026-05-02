@@ -173,6 +173,7 @@ export class DashboardService {
       if (bot.messageProvider === 'slack') {
         const svc = require('@hivemind/message-slack').SlackService as any;
         const instance = svc?.getInstance?.();
+
         const mgr = instance?.getBotManager?.(bot.name) || instance?.getBotManager?.();
         const bots = mgr?.getAllBots?.() || [];
         return Array.isArray(bots) && bots.length > 0;
@@ -184,6 +185,7 @@ export class DashboardService {
         const bots = instance?.getAllBots?.() || [];
         return Array.isArray(bots) && bots.length > 0;
       }
+
       return true;
     } catch {
       return true;
@@ -210,6 +212,7 @@ export class DashboardService {
     const llmFilterSet = new Set(query.llmProvider || []);
 
     const hasBotFilter = botFilterSet.size > 0;
+
     const hasProviderFilter = providerFilterSet.size > 0;
     const hasLlmFilter = llmFilterSet.size > 0;
 

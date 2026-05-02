@@ -284,18 +284,22 @@ export class SyncProviderRegistry {
 
     // Try direct provider key
     const directKey = botConfig.llmProvider as string | undefined;
-    if (directKey && this.llmProviders.has(directKey)) {
-      debug('Bot "%s": resolved LLM provider via llmProvider key "%s"', botName, directKey);
-
-      return this.llmProviders.get(directKey)!;
+    if (directKey) {
+      const provider = this.llmProviders.get(directKey);
+      if (provider) {
+        debug('Bot "%s": resolved LLM provider via llmProvider key "%s"', botName, directKey);
+        return provider;
+      }
     }
 
     // Try profile key alias
     const profileKey = botConfig.llmProfileKey as string | undefined;
-    if (profileKey && this.llmProviders.has(profileKey)) {
-      debug('Bot "%s": resolved LLM provider via llmProfileKey "%s"', botName, profileKey);
-
-      return this.llmProviders.get(profileKey)!;
+    if (profileKey) {
+      const provider = this.llmProviders.get(profileKey);
+      if (provider) {
+        debug('Bot "%s": resolved LLM provider via llmProfileKey "%s"', botName, profileKey);
+        return provider;
+      }
     }
 
     // Fallback to default

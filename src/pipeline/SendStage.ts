@@ -177,23 +177,30 @@ export class SendStage {
     ctx: MessageContext & { responseText: string },
     trimmedResponse: string
   ): void {
+    const storer = this.memoryStorer;
+    if (!storer) {
+      return;
+    }
+
     const userText =
       typeof ctx.message.getText === 'function' ? ctx.message.getText() : ctx.message.content;
 
     // Store user message.
-
-    this.memoryStorer!.storeMemory(ctx.botName, userText, 'user', {
-      channelId: ctx.channelId,
-    }).catch((err) => {
-      debug('SendStage: memory store error (user): %O', err);
-    });
+    storer
+      .storeMemory(ctx.botName, userText, 'user', {
+        channelId: ctx.channelId,
+      })
+      .catch((err) => {
+        debug('SendStage: memory store error (user): %O', err);
+      });
 
     // Store bot response.
-
-    this.memoryStorer!.storeMemory(ctx.botName, trimmedResponse, 'assistant', {
-      channelId: ctx.channelId,
-    }).catch((err) => {
-      debug('SendStage: memory store error (assistant): %O', err);
-    });
+    storer
+      .storeMemory(ctx.botName, trimmedResponse, 'assistant', {
+        channelId: ctx.channelId,
+      })
+      .catch((err) => {
+        debug('SendStage: memory store error (assistant): %O', err);
+      });
   }
 }

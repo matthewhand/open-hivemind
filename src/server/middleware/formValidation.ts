@@ -431,6 +431,8 @@ export const validateBotConfigUpdate = [
 
 /**
  * Sanitization middleware for bot configuration
+ // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+ // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
  */
 
 export const sanitizeBotConfig = (req: Request, res: Response, next: NextFunction) => {

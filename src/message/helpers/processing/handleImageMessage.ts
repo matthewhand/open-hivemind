@@ -48,6 +48,8 @@ export async function createPrediction(imageUrl: string): Promise<any> {
  *
  * @param message - The message object containing the image to analyze.
  * @returns A boolean indicating whether the message was processed.
+ // eslint-disable-next-line @typescript-eslint/no-explicit-any
+ // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
  */
 
 export async function handleImageMessage(message: any): Promise<boolean> {

@@ -25,6 +25,18 @@ const logger = createLogger('dashboardRouter');
 const dashboardService = DashboardService.getInstance();
 
 /**
+ * Helper to parse date from query parameters
+ */
+
+const parseDate = (d: any): Date | undefined => {
+  if (!d) {
+    return undefined;
+  }
+  const date = new Date(d);
+  return isNaN(date.getTime()) ? undefined : date;
+};
+
+/**
  * GET /api/dashboard/ai/config
  */
 router.get('/ai/config', authenticate, requireAdmin, (req: Request, res: Response) => {
@@ -56,13 +68,7 @@ router.get(
   asyncErrorHandler(async (req: Request, res: Response) => {
     const analytics = AnalyticsService.getInstance();
 
-    const { from, to } = req.query as any;
-
-    const parseDate = (d: any): Date | undefined => {
-      if (!d) return undefined;
-      const date = new Date(d);
-      return isNaN(date.getTime()) ? undefined : date;
-    };
+    const { from, to } = req.query;
 
     const stats = await analytics.getStats({
       startTime: parseDate(from),
@@ -95,13 +101,7 @@ router.get(
   asyncErrorHandler(async (req: Request, res: Response) => {
     const analytics = AnalyticsService.getInstance();
 
-    const { from, to } = req.query as any;
-
-    const parseDate = (d: any): Date | undefined => {
-      if (!d) return undefined;
-      const date = new Date(d);
-      return isNaN(date.getTime()) ? undefined : date;
-    };
+    const { from, to } = req.query;
 
     const segments = await analytics.getUserSegments({
       startTime: parseDate(from),
@@ -123,13 +123,7 @@ router.get(
   asyncErrorHandler(async (req: Request, res: Response) => {
     const analytics = AnalyticsService.getInstance();
 
-    const { from, to } = req.query as any;
-
-    const parseDate = (d: any): Date | undefined => {
-      if (!d) return undefined;
-      const date = new Date(d);
-      return isNaN(date.getTime()) ? undefined : date;
-    };
+    const { from, to } = req.query;
 
     const patterns = await analytics.getBehaviorPatterns({
       startTime: parseDate(from),
@@ -151,13 +145,7 @@ router.get(
   asyncErrorHandler(async (req: Request, res: Response) => {
     const analytics = AnalyticsService.getInstance();
 
-    const { from, to } = req.query as any;
-
-    const parseDate = (d: any): Date | undefined => {
-      if (!d) return undefined;
-      const date = new Date(d);
-      return isNaN(date.getTime()) ? undefined : date;
-    };
+    const { from, to } = req.query;
 
     const recommendations = await analytics.getRecommendations({
       startTime: parseDate(from),
@@ -250,20 +238,16 @@ router.get(
   requireAdmin,
   validateRequest(DashboardActivityQuerySchema),
   asyncErrorHandler(async (req: Request, res: Response) => {
-    const { bot, messageProvider, llmProvider, from, to, limit, offset } = req.query as any;
-
-    const parseDate = (d: any): Date | undefined => {
-      if (!d) return undefined;
-      const date = new Date(d);
-      return isNaN(date.getTime()) ? undefined : date;
-    };
+    const { bot, messageProvider, llmProvider, from, to, limit, offset } = req.query;
 
     const result = await dashboardService.getActivity({
-      bot: Array.isArray(bot) ? bot : bot?.split(','),
+      bot: Array.isArray(bot) ? (bot as string[]) : (bot as string | undefined)?.split(','),
       messageProvider: Array.isArray(messageProvider)
-        ? messageProvider
-        : messageProvider?.split(','),
-      llmProvider: Array.isArray(llmProvider) ? llmProvider : llmProvider?.split(','),
+        ? (messageProvider as string[])
+        : (messageProvider as string | undefined)?.split(','),
+      llmProvider: Array.isArray(llmProvider)
+        ? (llmProvider as string[])
+        : (llmProvider as string | undefined)?.split(','),
       from: parseDate(from),
       to: parseDate(to),
       limit: limit ? parseInt(limit as string, 10) : undefined,

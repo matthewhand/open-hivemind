@@ -61,6 +61,7 @@ const loadJsonConfig = async <T>(filePath: string, defaultValue: T): Promise<T> 
   try {
     const data = await fs.readFile(filePath, 'utf8');
     return JSON.parse(data);
+
     // eslint-disable-next-line unused-imports/no-unused-vars
   } catch (error: unknown) {
     debug(`Config file ${filePath} not found, using defaults`);

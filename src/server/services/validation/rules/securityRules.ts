@@ -75,6 +75,7 @@ export const performanceRules: ValidationRule[] = [
     name: 'Model Performance',
     description: 'Check if selected LLM model is appropriate for the use case',
     category: 'performance',
+
     severity: 'info',
 
     validator: (config: Record<string, unknown>) => {

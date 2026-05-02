@@ -106,6 +106,7 @@ export function getRecoveryHealthStatus(
   ) {
     return 'degraded';
   }
+
   return 'healthy';
 }
 

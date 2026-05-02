@@ -206,6 +206,7 @@ router.get('/detailed/services', optionalAuth, async (_req: Request, res: Respon
   try {
     const { ProviderRegistry } = require('../../../registries/providerRegistry');
     const registry = ProviderRegistry.getInstance();
+
     const msgProviders = registry.getMessageProviders?.() || [];
 
     const activeMsg = msgProviders.filter((p: any) => p.status === 'active' || p.connected);
@@ -243,6 +244,7 @@ router.get('/detailed/services', optionalAuth, async (_req: Request, res: Respon
   const memStart = Date.now();
   try {
     const { ProviderRegistry } = require('../../../registries/providerRegistry');
+
     const registry = ProviderRegistry.getInstance();
     const memProviders = registry.getMemoryProviders?.() || [];
 
@@ -464,6 +466,7 @@ router.post('/api-endpoints/stop', validateRequest(CleanupConfigSchema), (req, r
 
   return res.json({
     message: 'Stopped monitoring all endpoints',
+
     timestamp: new Date().toISOString(),
   });
 });

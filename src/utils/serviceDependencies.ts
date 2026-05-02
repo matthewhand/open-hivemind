@@ -35,6 +35,7 @@ export function getServiceDependencies(context: string): IServiceDependencies {
       // or lazy resolution.
       const { SyncProviderRegistry } = require('../registries/SyncProviderRegistry');
       const registry = SyncProviderRegistry.getInstance();
+
       if (registry.isInitialized()) {
         return registry.getLlmProviders();
       }

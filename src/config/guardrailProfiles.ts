@@ -16,6 +16,8 @@ export interface GuardrailProfile {
   name: string;
   description?: string;
    
+   
+   
   guards: any | {
     mcpGuard: McpGuardConfig;
     rateLimit?: {
@@ -158,7 +160,9 @@ export const loadGuardrailProfiles = (): GuardrailProfile[] => {
       }
 
       // Migrate old format if necessary (key -> id, mcpGuard -> guards.mcpGuard)
+    
    
+       
       return parsed.map((p: any) => {
         if (p.key && !p.id) {
           // Migration logic - validate required fields

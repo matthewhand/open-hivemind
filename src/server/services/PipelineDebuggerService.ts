@@ -46,8 +46,7 @@ export class PipelineDebuggerService extends EventEmitter {
    */
 
   public async pause(stage: string, context: any): Promise<any> {
-    // eslint-disable-next-line no-restricted-properties
-    const id = `bp_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const id = `bp_${Date.now()}_${crypto.randomUUID()}`;
     const breakpoint: Breakpoint = {
       id,
       stage,
@@ -73,6 +72,8 @@ export class PipelineDebuggerService extends EventEmitter {
   }
 
   /**
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
    * Resume execution for a breakpoint
    */
 

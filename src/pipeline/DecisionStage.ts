@@ -91,8 +91,9 @@ export class DecisionStage {
           ctx = await debuggerService.pause('validated', ctx);
           debug(`[Debugger] Resuming pipeline for bot ${ctx.botName}`);
         }
+
         // eslint-disable-next-line unused-imports/no-unused-vars
-      } catch (e) {
+      } catch (_e) {
         // Ignore DI errors
       }
 

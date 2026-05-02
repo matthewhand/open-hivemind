@@ -10,6 +10,8 @@ const debug = Debug('app:PostgresWrapper');
  * is opt-in (see `DATABASE_TYPE=postgres`); only consumers that actually
  * instantiate `PostgresWrapper` need the optional `pg` dependency present.
  */
+
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports
 function loadPgPool(): typeof import('pg').Pool {
   try {
     const pg = require('pg') as typeof import('pg');

@@ -40,6 +40,7 @@ function isValidMessageChannel(obj: unknown): obj is MessageChannel {
  *
  * @param error - The error object to be handled.
  * @param messageChannel - The message channel to send the error message to.
+ // eslint-disable-next-line @typescript-eslint/no-explicit-any
  */
 
 export function handleError(error: unknown, messageChannel: any = null): void {

@@ -12,6 +12,8 @@ export interface OpenAIConfig {
   OPENAI_ORGANIZATION: string;
   OPENAI_MODEL: string;
    
+   
+   
   OPENAI_STOP: any[];
   OPENAI_TOP_P: number;
   OPENAI_SYSTEM_PROMPT: string;

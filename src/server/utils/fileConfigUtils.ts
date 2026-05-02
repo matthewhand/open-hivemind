@@ -25,6 +25,7 @@ export const loadJsonConfig = async <T>(
 ): Promise<T> => {
   try {
     const data = await fs.readFile(filePath, 'utf8');
+
     return JSON.parse(data);
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;

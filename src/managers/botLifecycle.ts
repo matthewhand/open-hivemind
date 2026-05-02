@@ -218,6 +218,7 @@ export async function sendShutdownMessage(bot: BotInstance): Promise<void> {
 /**
  * Send an error alert message when a bot encounters a critical error.
  */
+
 export async function sendErrorAlertMessage(bot: BotInstance, error: unknown): Promise<void> {
   const enableAlerts =
     process.env.ENABLE_ERROR_ALERTS === 'true' || (bot.config as any)?.enableErrorAlerts;
@@ -244,6 +245,7 @@ export async function sendErrorAlertMessage(bot: BotInstance, error: unknown): P
 
 /**
  * Send a status report with current metrics for the bot.
+ // eslint-disable-next-line @typescript-eslint/no-explicit-any
  */
 export async function sendDailyStatusReport(bot: BotInstance): Promise<void> {
   const enableReport =

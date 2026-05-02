@@ -144,6 +144,7 @@ export class MessageBus {
     for (const entry of entries) {
       try {
         const result = entry.fn(payload);
+
         // Fire-and-forget for async listeners — but still catch rejections.
 
         if (result && typeof (result as any).catch === 'function') {

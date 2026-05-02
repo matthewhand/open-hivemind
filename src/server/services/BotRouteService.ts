@@ -14,6 +14,20 @@ export interface ImportReport {
   errors: string[];
 }
 
+export interface DiagnosticResult {
+  messageProvider: { status: string; details: string };
+  llm: { status: string; details: string };
+  mcp: Array<{ name: string; status: string; details?: string }>;
+  timestamp: string;
+}
+
+export interface GeneratedBotConfig {
+  name: string;
+  personaName: string;
+  systemInstruction: string;
+  suggestedMcpTools: string[];
+}
+
 export class BotRouteService {
   private static instance: BotRouteService;
 
@@ -33,7 +47,7 @@ export class BotRouteService {
     await fs.promises.writeFile(orderFilePath, JSON.stringify(ids, null, 2));
   }
 
-  public async importBots(incoming: any[]): Promise<ImportReport> {
+  public async importBots(incoming: unknown[]): Promise<ImportReport> {
     const manager = await BotManager.getInstance();
     const existingBots = await manager.getAllBots();
     const existingByName = new Map(existingBots.map((b) => [b.name.toLowerCase(), b]));
@@ -47,29 +61,37 @@ export class BotRouteService {
 
     for (const bot of incoming) {
       try {
-        if (!bot.name) {
+        const botObj = bot as any;
+        if (!botObj.name) {
           report.errors.push('Skipped bot with no name');
           continue;
         }
-        const { id: _id, status: _status, messageCount: _mc, errorCount: _ec, ...importData } = bot;
+        const {
+          id: _id,
+          status: _status,
+          messageCount: _mc,
+          errorCount: _ec,
+          ...importData
+        } = botObj;
 
-        const existing = existingByName.get(bot.name.toLowerCase());
+        const existing = existingByName.get(String(botObj.name).toLowerCase());
         if (existing) {
           await manager.updateBot(existing.id, importData);
-          report.updated.push(bot.name);
+          report.updated.push(String(botObj.name));
         } else {
           await manager.createBot(importData as CreateBotRequest);
-          report.created.push(bot.name);
+          report.created.push(String(botObj.name));
         }
       } catch (err: unknown) {
+        const name = (bot as any)?.name || 'unknown';
         const msg = err instanceof Error ? err.message : String(err);
-        report.errors.push(`${bot.name || 'unknown'}: ${msg}`);
+        report.errors.push(`${name}: ${msg}`);
       }
     }
     return report;
   }
 
-  public async generateConfig(description: string): Promise<any> {
+  public async generateConfig(description: string): Promise<GeneratedBotConfig> {
     const providers = await getLlmProvider();
     const provider = providers[0];
 
@@ -93,21 +115,20 @@ Respond ONLY with valid JSON. No preamble or explanation.`;
     const responseText = await provider.generateChatCompletion(systemPrompt, []);
     // Clean up markdown code blocks if the LLM included them
     const cleanJson = responseText.replace(/```json\n?|```/g, '').trim();
-    return JSON.parse(cleanJson);
+    return JSON.parse(cleanJson) as GeneratedBotConfig;
   }
 
-  public async runDiagnostic(botId: string): Promise<any> {
+  public async runDiagnostic(botId: string): Promise<DiagnosticResult> {
     const manager = await BotManager.getInstance();
     const bot = await manager.getBot(botId);
     if (!bot) {
       throw new Error('Bot not found');
     }
 
-    const results: any = {
+    const results: DiagnosticResult = {
       messageProvider: { status: 'pending', details: '' },
       llm: { status: 'pending', details: '' },
-
-      mcp: [] as any[],
+      mcp: [],
       timestamp: new Date().toISOString(),
     };
 
@@ -161,21 +182,26 @@ Respond ONLY with valid JSON. No preamble or explanation.`;
     return results;
   }
 
-  public async testChat(botConfig: any, message: string, history: any[] = []): Promise<string> {
+  public async testChat(
+    botConfig: Record<string, unknown>,
+    message: string,
+    history: unknown[] = []
+  ): Promise<string> {
     const providers = await getLlmProvider();
-    const provider = providers.find((p) => p.name === botConfig.llmProvider) || providers[0];
+    const provider =
+      providers.find((p) => p.name === (botConfig.llmProvider as string)) || providers[0];
 
     if (!provider) {
       throw new Error('No LLM available');
     }
 
-    return await provider.generateChatCompletion(message, history, {
-      systemPrompt: botConfig.systemInstruction || '',
+    return await provider.generateChatCompletion(message, history as any[], {
+      systemPrompt: (botConfig.systemInstruction as string) || '',
     });
   }
 
   public sanitizeBotForExport(bot: Record<string, unknown> | BotInstance): Record<string, unknown> {
-    const { envOverrides: _envOverrides, ...rest } = bot;
+    const { envOverrides: _envOverrides, ...rest } = bot as any;
     const sensitiveKeys = [
       'token',
       'apikey',

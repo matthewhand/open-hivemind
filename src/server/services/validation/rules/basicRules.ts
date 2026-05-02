@@ -64,6 +64,7 @@ export const basicRules: ValidationRule[] = [
     name: 'LLM Provider Required',
     description: 'Bot must have an LLM provider configured',
     category: 'required',
+
     severity: 'error',
 
     validator: (config: Record<string, unknown>) => {

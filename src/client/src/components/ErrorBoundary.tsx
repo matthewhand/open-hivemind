@@ -68,7 +68,6 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   renderHomeLink() {
     try {
       // Dynamic require so the module is only resolved at render time.
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { Link } = require('react-router-dom');
       return (
         <Link to="/dashboard" className="btn btn-outline">

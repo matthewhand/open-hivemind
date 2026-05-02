@@ -97,6 +97,7 @@ export class ConnectionManager {
       try {
         debug('Setting up Redis adapter for socket.io');
         this.pubClient = createClient({ url: process.env.REDIS_URL });
+
         this.subClient = this.pubClient.duplicate();
 
         this.pubClient.on('error', (err: any) => debug('Redis PubClient error:', err));
@@ -105,7 +106,7 @@ export class ConnectionManager {
 
         Promise.all([this.pubClient.connect(), this.subClient.connect()])
           .then(() => {
-            this.io!.adapter(createAdapter(this.pubClient, this.subClient));
+            this.io?.adapter(createAdapter(this.pubClient, this.subClient));
             debug('Redis adapter configured successfully');
           })
           .catch((err: unknown) => {

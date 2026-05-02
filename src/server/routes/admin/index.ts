@@ -45,6 +45,7 @@ if (!skipAuth) {
 
 // Apply rate limiting to configuration endpoints
 const rateLimit = require('express-rate-limit').default;
+
 const configRateLimit = isTestEnv
   ? (_req: Request, _res: Response, next: any) => next()
   : rateLimit({

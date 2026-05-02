@@ -29,22 +29,27 @@ let initialized = false;
 /**
  * Type guard to check if a module export is a valid IMessengerService factory.
  */
-
-function isValidServiceFactory(obj: any): obj is { getInstance: () => IMessengerService } {
-  return obj && typeof obj === 'function' && typeof obj.getInstance === 'function';
+function isValidServiceFactory(obj: unknown): obj is { getInstance: () => IMessengerService } {
+  return (
+    typeof obj === 'function' &&
+    'getInstance' in (obj as Record<string, unknown>) &&
+    typeof (obj as any).getInstance === 'function'
+  );
 }
 
 /**
  * Type guard to check if an instance implements IMessengerService.
  */
-
-function isMessengerService(obj: any): obj is IMessengerService {
+function isMessengerService(obj: unknown): obj is IMessengerService {
+  if (!obj || typeof obj !== 'object') {
+    return false;
+  }
+  const o = obj as Record<string, unknown>;
   return (
-    obj &&
-    typeof obj.initialize === 'function' &&
-    typeof obj.sendMessageToChannel === 'function' &&
-    typeof obj.getMessagesFromChannel === 'function' &&
-    typeof obj.shutdown === 'function'
+    typeof o.initialize === 'function' &&
+    typeof o.sendMessageToChannel === 'function' &&
+    typeof o.getMessagesFromChannel === 'function' &&
+    typeof o.shutdown === 'function'
   );
 }
 
@@ -56,7 +61,9 @@ function isMessengerService(obj: any): obj is IMessengerService {
 let initializationPromise: Promise<void> | null = null;
 
 async function discoverProviders(): Promise<void> {
-  if (initialized) return;
+  if (initialized) {
+    return;
+  }
 
   // If initialization is already in progress, wait for it
   if (initializationPromise) {
@@ -83,7 +90,9 @@ async function discoverProviders(): Promise<void> {
     const entries = await fs.promises.readdir(integrationsDir, { withFileTypes: true });
 
     for (const entry of entries) {
-      if (!entry.isDirectory()) continue;
+      if (!entry.isDirectory()) {
+        continue;
+      }
 
       const providerName = entry.name.toLowerCase();
       const pascalName = providerName.charAt(0).toUpperCase() + providerName.slice(1);
@@ -130,8 +139,9 @@ export async function getMessengerServiceByProvider(
   const normalizedName = providerName.toLowerCase();
 
   // Check cache first
-  if (loadedProviders.has(normalizedName)) {
-    return loadedProviders.get(normalizedName)!;
+  const cachedProvider = loadedProviders.get(normalizedName);
+  if (cachedProvider) {
+    return cachedProvider;
   }
 
   const providerMeta = discoveredProviders.get(normalizedName);
@@ -145,7 +155,7 @@ export async function getMessengerServiceByProvider(
 
     // Dynamic import
     const module = await import(providerMeta.modulePath);
-    const ServiceClass = module[providerMeta.serviceExport];
+    const ServiceClass = module[providerMeta.serviceExport] as unknown;
 
     // Validate factory pattern
     if (!isValidServiceFactory(ServiceClass)) {

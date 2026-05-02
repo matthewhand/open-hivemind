@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import Database, { type Database as BetterSqliteDatabase } from 'better-sqlite3';
 import Debug from 'debug';
 import { type IDatabase } from './types';
 
@@ -9,7 +9,7 @@ const debug = Debug('app:SQLiteWrapper');
  * compatible with the previous sqlite package usage.
  */
 export class SQLiteWrapper implements IDatabase {
-  private db: any;
+  private db: BetterSqliteDatabase;
 
   constructor(filename: string) {
     debug('SQLITE_WRAPPER: constructor called for', filename);
@@ -24,6 +24,7 @@ export class SQLiteWrapper implements IDatabase {
     } else {
       try {
         // Direct require as fallback
+
         const BetterSqlite3 = require('better-sqlite3');
         DBConstructor = typeof BetterSqlite3 === 'function' ? BetterSqlite3 : BetterSqlite3.default;
       } catch (e) {
@@ -62,7 +63,7 @@ export class SQLiteWrapper implements IDatabase {
     }
   }
 
-  async run(sql: string, params: any[] = []): Promise<{ lastID: number; changes: number }> {
+  async run(sql: string, params: unknown[] = []): Promise<{ lastID: number; changes: number }> {
     try {
       const stmt = this.db.prepare(sql);
       const info = params.length > 0 ? stmt.run(...params) : stmt.run();
@@ -73,12 +74,12 @@ export class SQLiteWrapper implements IDatabase {
     }
   }
 
-  async all<T = any>(sql: string, params: any[] = []): Promise<T[]> {
+  async all<T = unknown>(sql: string, params: unknown[] = []): Promise<T[]> {
     const stmt = this.db.prepare(sql);
     return (params.length > 0 ? stmt.all(...params) : stmt.all()) as T[];
   }
 
-  async get<T = any>(sql: string, params: any[] = []): Promise<T | undefined> {
+  async get<T = unknown>(sql: string, params: unknown[] = []): Promise<T | undefined> {
     const stmt = this.db.prepare(sql);
     return (params.length > 0 ? stmt.get(...params) : stmt.get()) as T | undefined;
   }

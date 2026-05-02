@@ -240,6 +240,7 @@ export interface OpenAIAssistantTool {
   type: 'code_interpreter' | 'retrieval' | 'function';
   function?: {
     name: string;
+
     description?: string;
 
     parameters?: Record<string, any>;

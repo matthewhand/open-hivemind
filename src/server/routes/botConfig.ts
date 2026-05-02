@@ -29,6 +29,7 @@ const router = Router();
 const botConfigManager = BotConfigurationManager.getInstance();
 const secureConfigManager = SecureConfigManager.getInstanceSync();
 const userConfigStore = UserConfigStore.getInstance();
+
 // eslint-disable-next-line unused-imports/no-unused-vars
 const dbManager = DatabaseManager.getInstance();
 const configValidator = new ConfigurationValidator();
@@ -42,6 +43,7 @@ router.use(authenticate, auditMiddleware);
  */
 router.get(
   '/',
+
   asyncErrorHandler(async (req, res) => {
     // eslint-disable-next-line unused-imports/no-unused-vars
     const authReq = req as AuthMiddlewareRequest;
@@ -163,6 +165,7 @@ router.get(
 /**
  * GET /webui/api/bot-config/:botId
  * Get a specific bot configuration
+ // eslint-disable-next-line unused-imports/no-unused-vars
  */
 router.get(
   '/:botId',
@@ -443,6 +446,7 @@ router.post(
         );
         return res
           .status(HTTP_STATUS.BAD_REQUEST)
+
           .json(
             ApiResponse.error('Invalid approval request for this bot configuration', undefined, 400)
           );

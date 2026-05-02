@@ -109,18 +109,19 @@ export class SwarmCoordinator extends EventEmitter {
 
   private decideRotating(messageId: string, botId: string, channel: string): SwarmDecision {
     // Track active bots for this channel
-    if (!this.activeBots.has(channel)) {
-      this.activeBots.set(channel, new Set());
+    let bots = this.activeBots.get(channel);
+    if (!bots) {
+      bots = new Set();
+      this.activeBots.set(channel, bots);
     }
 
-    this.activeBots.get(channel)!.add(botId);
+    bots.add(botId);
 
     const counter = this.rotatingCounter.get(channel) || 0;
     this.rotatingCounter.set(channel, counter + 1);
 
-    const botCount = this.activeBots.get(channel)!.size;
-
-    const botArray = Array.from(this.activeBots.get(channel)!);
+    const botCount = bots.size;
+    const botArray = Array.from(bots);
     const turnIndex = counter % botCount;
     const isMyTurn = botArray[turnIndex] === botId;
 
@@ -169,11 +170,13 @@ export class SwarmCoordinator extends EventEmitter {
 
   private decideCollaborative(messageId: string, botId: string, channel: string): SwarmDecision {
     // Track contributors per message
-    if (!this.collaborators.has(messageId)) {
-      this.collaborators.set(messageId, new Set());
+    let collaboratorsSet = this.collaborators.get(messageId);
+    if (!collaboratorsSet) {
+      collaboratorsSet = new Set();
+      this.collaborators.set(messageId, collaboratorsSet);
     }
 
-    this.collaborators.get(messageId)!.add(botId);
+    collaboratorsSet.add(botId);
 
     const claim: SwarmClaim = { messageId, botId, channel, timestamp: Date.now() };
     this.cache.set(messageId, claim);

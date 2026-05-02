@@ -130,7 +130,6 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
         setErrors({});
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modalState.isOpen, modalState.provider, modalState.isEdit, modalState.providerType]);
 
   // Snapshot the original config after modal initializes
@@ -138,7 +137,6 @@ const ProviderConfigModal: React.FC<ProviderConfigModalProps> = ({
     if (modalState.isOpen && Object.keys(formData).length > 0) {
       setOriginalConfig(formData as Record<string, unknown>);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modalState.isOpen]);
 
   useEffect(() => {

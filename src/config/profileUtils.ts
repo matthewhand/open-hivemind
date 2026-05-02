@@ -8,6 +8,8 @@ export interface ProfileLoaderOptions<T> {
   filename: string;
   defaultData: T;
    
+   
+   
   validateAndMigrate: (parsed: any) => T;
   profileType: string;
 }

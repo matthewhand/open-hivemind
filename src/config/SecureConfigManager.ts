@@ -344,6 +344,8 @@ export class SecureConfigManager {
    * Create a full backup of all secure configurations
    */
    
+   
+   
   public async listBackups(): Promise<any[]> {
     try {
       await fs.promises.access(this.backupDir);
@@ -552,6 +554,8 @@ export class SecureConfigManager {
       .digest('hex');
   }
 
+    
+   
    
   private verifyChecksum(config: SecureConfig | any): boolean {
     const { checksum, ...data } = config;

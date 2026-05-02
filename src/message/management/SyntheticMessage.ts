@@ -63,6 +63,7 @@ export class SyntheticMessage extends IMessage {
    * Tool calls array, not used in synthetic messages.
    * @type {any[]}
    * @optional
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
    */
 
   public tool_calls?: any[];

@@ -17,20 +17,26 @@ const schema = convict({
   NODE_ENV: {
     doc: 'The application environment.',
    
+     
+     
     format: (val: any) => validateEnum('NODE_ENV', val, ['production', 'development', 'test']),
     default: 'development',
     env: 'NODE_ENV',
   },
   VITE_API_BASE_URL: {
     doc: 'API base URL for Vite frontend',
+    
    
+     
     format: (val: any) => validateUrl('VITE_API_BASE_URL', val),
     default: 'http://localhost:3000/api',
     env: 'VITE_API_BASE_URL',
   },
   PLAYWRIGHT_BASE_URL: {
+     
     doc: 'Base URL for Playwright E2E tests',
    
+     
     format: (val: any) => validateUrl('PLAYWRIGHT_BASE_URL', val),
     default: 'http://localhost:3000',
     env: 'PLAYWRIGHT_BASE_URL',
@@ -62,8 +68,10 @@ const schema = convict({
  */
 @singleton()
 @injectable()
+ 
 export class ConfigurationManager implements IConfigurationManager {
   private static instance: ConfigurationManager | null = null;
+   
    
   private configs: Record<string, convict.Config<any>> = {};
   private sessionStore: Record<string, Record<string, string>> = {};
@@ -116,9 +124,11 @@ export class ConfigurationManager implements IConfigurationManager {
      * @param {string} configName - Name of the configuration to retrieve
      * @returns {convict.Config<any>|null} Requested configuration or null if not found
      * @throws {TypeError} If configName is not a string
+     // eslint-disable-next-line @typescript-eslint/no-explicit-any
      * @example
      * const dbConfig = configManager.getConfig('database');
      */
+   
    
   public getConfig(configName: string): convict.Config<any> | null {
     if (typeof configName !== 'string') {

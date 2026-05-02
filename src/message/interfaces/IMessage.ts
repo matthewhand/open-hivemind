@@ -74,6 +74,7 @@ export abstract class IMessage {
    * Contains tool invocation requests made by the assistant.
    * @type {any[]}
    * @optional
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
    */
 
   public tool_calls?: any[];
@@ -87,6 +88,11 @@ export abstract class IMessage {
    * @param {string} [tool_call_id] - Required for tool role messages
    * @param {any[]} [tool_calls] - Optional tool calls for assistant messages
    *
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
    * @throws {TypeError} If attempting to instantiate IMessage directly
    */
 

@@ -20,6 +20,8 @@ interface BotDisabledState {
 }
 
    
+ 
+ 
 type GeneralSettings = Record<string, any>;
 
 export class UserConfigStore {

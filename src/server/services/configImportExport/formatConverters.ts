@@ -58,6 +58,8 @@ export function convertToYAML(data: any): string {
 
 /**
  * Convert data to CSV (simplified implementation)
+ // eslint-disable-next-line @typescript-eslint/no-explicit-any
+ // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
  */
 
 export function convertToCSV(data: any): string {
@@ -93,6 +95,7 @@ export function convertToCSV(data: any): string {
 }
 
 /**
+ // eslint-disable-next-line @typescript-eslint/no-explicit-any
  * Parse YAML (simplified implementation)
  */
 

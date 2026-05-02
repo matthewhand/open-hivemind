@@ -28,8 +28,13 @@ interface ServiceActivity {
   channels: Map<string, ChannelActivity>;
   lastInteractedChannelId: string | null;
   messengerService: IMessengerService;
+  botConfig: Record<string, unknown>;
+}
 
-  botConfig: any;
+interface DelegatedService {
+  serviceName: string;
+  messengerService: IMessengerService;
+  botConfig?: Record<string, unknown>;
 }
 
 export class IdleResponseManager {
@@ -131,6 +136,7 @@ export class IdleResponseManager {
             initialize: async () => {},
 
             sendPublicAnnouncement: async () => {},
+
             getDefaultChannel: () => 'test-channel',
 
             shutdown: async () => {},
@@ -154,8 +160,9 @@ export class IdleResponseManager {
         const baseServiceName = (service as any).providerName || 'generic';
 
         // Check if the service supports delegation (e.g. multi-bot Discord)
-        if (typeof service.getDelegatedServices === 'function') {
-          const delegates = service.getDelegatedServices();
+
+        if (typeof (service as any).getDelegatedServices === 'function') {
+          const delegates = (service as any).getDelegatedServices() as DelegatedService[];
 
           for (const delegate of delegates) {
             if (!this.serviceActivities.has(delegate.serviceName)) {
@@ -171,7 +178,7 @@ export class IdleResponseManager {
         } else if (typeof (service as any).getAllBots === 'function') {
           // Backwards-compatible multi-bot support (older Discord implementation).
 
-          const bots = (service as any).getAllBots();
+          const bots = (service as any).getAllBots() as any[];
           const providerPrefix = String(baseServiceName).toLowerCase();
 
           if (Array.isArray(bots) && bots.length > 0) {
@@ -214,7 +221,7 @@ export class IdleResponseManager {
     }
   }
 
-  private getBotConfig(serviceName: string): any {
+  private getBotConfig(serviceName: string): Record<string, unknown> {
     try {
       const messageConfig = require('@config/messageConfig');
       return messageConfig.get(serviceName) || {};
@@ -246,7 +253,11 @@ export class IdleResponseManager {
       });
     }
 
-    const activity = serviceActivity.channels.get(channelId)!;
+    const activity = serviceActivity.channels.get(channelId);
+    if (!activity) {
+      return;
+    }
+
     activity.lastInteractionTime = now;
     activity.interactionCount++;
     if (messageId) {
@@ -339,7 +350,7 @@ export class IdleResponseManager {
     return getRandomInt(this.minDelay, this.maxDelay);
   }
 
-  private getBotDisplayName(serviceName: string, botConfig: any): string {
+  private getBotDisplayName(serviceName: string, botConfig: Record<string, unknown>): string {
     const override = botConfig?.MESSAGE_USERNAME_OVERRIDE;
     if (override && typeof override === 'string' && override.trim()) {
       return override.trim();
@@ -363,7 +374,7 @@ export class IdleResponseManager {
 
   private getTimestampMs(msg: IMessage): number | null {
     try {
-      const ts = (msg as any)?.getTimestamp?.();
+      const ts = (msg as any)?.getTimestamp?.() as unknown;
       if (!ts) {
         return null;
       }
@@ -379,7 +390,7 @@ export class IdleResponseManager {
       }
       // Support common mock shapes
 
-      const maybe = (ts as any)?.getTime?.();
+      const maybe = (ts as any)?.getTime?.() as unknown;
       return typeof maybe === 'number' ? maybe : null;
     } catch {
       return null;
@@ -431,7 +442,8 @@ export class IdleResponseManager {
       }
 
       // Ensure we don't have an active timer already running
-      if (activity.timer && activity.timer.hasRef && activity.timer.hasRef()) {
+
+      if (activity.timer && (activity.timer as any).hasRef && (activity.timer as any).hasRef()) {
         log(`Timer already active for ${serviceName}:${channelId}, skipping duplicate trigger`);
         return;
       }
@@ -451,6 +463,7 @@ export class IdleResponseManager {
         });
 
         // Get the most recent one (history is oldest-first, so last element is most recent)
+
         const mostRecentMessage =
           nonSelfMessages.length > 0 ? nonSelfMessages[nonSelfMessages.length - 1] : null;
 
@@ -533,7 +546,9 @@ Do not mention that the channel was quiet/idle and do not say "I noticed".`;
   }
 
   private getRandomIdlePrompt(): string {
-    if (this.idlePrompts.length === 0) return '';
+    if (this.idlePrompts.length === 0) {
+      return '';
+    }
     return this.idlePrompts[getRandomInt(0, this.idlePrompts.length - 1)];
   }
 
@@ -572,10 +587,8 @@ Do not mention that the channel was quiet/idle and do not say "I noticed".`;
   }
 
   public clearAllChannels(): void {
-    // eslint-disable-next-line unused-imports/no-unused-vars
-    for (const [serviceName, serviceActivity] of this.serviceActivities) {
-      // eslint-disable-next-line unused-imports/no-unused-vars
-      for (const [channelId, activity] of serviceActivity.channels) {
+    for (const [, serviceActivity] of this.serviceActivities) {
+      for (const [, activity] of serviceActivity.channels) {
         if (activity.timer) {
           clearTimeout(activity.timer);
         }

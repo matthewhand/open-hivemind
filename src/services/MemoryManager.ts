@@ -100,8 +100,9 @@ export class MemoryManager {
    */
   private async resolveProvider(profileKey: string): Promise<IMemoryProvider | null> {
     // Return cached provider.
-    if (this.providers.has(profileKey)) {
-      return this.providers.get(profileKey)!;
+    const cachedProvider = this.providers.get(profileKey);
+    if (cachedProvider) {
+      return cachedProvider;
     }
 
     // Skip profiles that already failed.

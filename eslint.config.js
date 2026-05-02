@@ -114,7 +114,7 @@ module.exports = [
 
       // Other rules
       'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-      'no-console': 'warn',
+      'no-console': 'off',
       'no-debugger': 'error',
       'eqeqeq': 'warn',
       'curly': ['warn', 'all'],

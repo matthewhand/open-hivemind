@@ -148,6 +148,7 @@ export class ShutdownCoordinator {
    */
   public registerMessengerService(service: IMessengerService): void {
     this.messengerServices.push(service);
+
     debug(
       `Messenger service registered: ${(service as any).providerName || service.constructor?.name || 'unknown'}`
     );
@@ -584,6 +585,7 @@ export class ShutdownCoordinator {
     this.logger.info('Phase 4: Disconnect external services');
 
     // Disconnect messenger services in parallel
+
     const messengerShutdowns = this.messengerServices.map(async (service) => {
       try {
         if (typeof (service as any).shutdown === 'function') {

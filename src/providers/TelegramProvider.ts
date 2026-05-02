@@ -303,6 +303,7 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
             throw new Error(`Telegram connection failed for ${name}`);
           }
         },
+
         {
           healthCheckFn: async () => {
             try {

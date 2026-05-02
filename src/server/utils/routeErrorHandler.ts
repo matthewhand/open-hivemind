@@ -8,6 +8,7 @@ export const handleRouteError = (
   debugInstance: any,
   debugMessage: string,
   defaultErrorCode: string,
+
   includeSuccess = false
 ) => {
   const hivemindError = ErrorUtils.toHivemindError(error) as any;
@@ -16,6 +17,7 @@ export const handleRouteError = (
   debugInstance(debugMessage, {
     message: hivemindError.message,
     code: hivemindError.code,
+
     type: errorInfo.type,
     severity: errorInfo.severity,
   });

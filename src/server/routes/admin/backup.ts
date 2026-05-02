@@ -4,8 +4,8 @@ const router = Router();
 
 const isTestEnv = process.env.NODE_ENV === 'test';
 const rateLimit = require('express-rate-limit').default;
-// eslint-disable-next-line unused-imports/no-unused-vars
-const configRateLimit = isTestEnv
+
+const _configRateLimit = isTestEnv
   ? (_req: Request, _res: Response, next: any) => next()
   : rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutes

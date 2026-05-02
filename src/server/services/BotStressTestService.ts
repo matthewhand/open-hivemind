@@ -93,6 +93,7 @@ export class BotStressTestService {
         botName: bot.name,
         botConfig: bot.config,
         history: [],
+
         metadata: {},
         memories: [],
 
@@ -103,6 +104,7 @@ export class BotStressTestService {
         await inference.process(ctx);
       } catch (err) {
         isError = true;
+
         errorMessage = err instanceof Error ? err.message : String(err);
       } finally {
         // Cleanup listeners

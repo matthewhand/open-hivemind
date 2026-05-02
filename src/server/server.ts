@@ -146,6 +146,7 @@ export class WebUIServer {
     this.app.use('/api', csrfProtection);
 
     // Error handler for malformed JSON in health API endpoints
+
     this.app.use(
       (err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
         const isParseError = err instanceof SyntaxError || err?.type === 'entity.parse.failed';
@@ -293,6 +294,7 @@ export class WebUIServer {
     return new Promise((resolve, reject) => {
       if (!this.server) {
         resolve();
+
         return;
       }
 

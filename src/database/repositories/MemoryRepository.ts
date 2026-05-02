@@ -125,9 +125,8 @@ export class MemoryRepository {
               score,
             };
           })
-          .filter((r) => r !== null)
-
-          .sort((a, b) => b!.score - a!.score)
+          .filter((r): r is MemoryRecord & { score: number } => r !== null)
+          .sort((a, b) => b.score - a.score)
           .slice(0, limit);
 
         return scored as (MemoryRecord & { score: number })[];
@@ -147,6 +146,7 @@ export class MemoryRepository {
 
     try {
       const limit = options.limit || 50;
+
       let sql = `SELECT * FROM memories WHERE 1=1`;
 
       const params: any[] = [];

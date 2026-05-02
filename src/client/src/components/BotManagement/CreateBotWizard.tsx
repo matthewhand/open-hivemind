@@ -119,7 +119,6 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
 
     useEffect(() => {
         setOriginalConfig(initialFormData as unknown as Record<string, unknown>);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {

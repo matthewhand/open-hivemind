@@ -103,6 +103,7 @@ async function searchGitHubPackages(): Promise<MarketplacePackage[]> {
       // Guess package type from repo name prefix
       const repoName = repo.name || '';
       const namePrefix = repoName.split('-')[0];
+
       const validTypes = ['llm', 'message', 'memory', 'tool'] as const;
 
       const type = validTypes.includes(namePrefix as any)
@@ -152,6 +153,7 @@ async function scanBuiltInPackages(): Promise<MarketplacePackage[]> {
         const pkgJson = JSON.parse(pkgJsonContent);
 
         // Derive type from directory name prefix (llm-, message-, memory-, tool-)
+
         const namePrefix = dir.split('-')[0];
         const validTypes = ['llm', 'message', 'memory', 'tool'] as const;
 
@@ -388,6 +390,7 @@ router.post(
       if (!repoUrl || typeof repoUrl !== 'string') {
         return res
           .status(HTTP_STATUS.BAD_REQUEST)
+
           .json(ApiResponse.error('Missing or invalid repoUrl'));
       }
 

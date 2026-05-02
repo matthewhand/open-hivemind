@@ -14,6 +14,8 @@ export interface ProviderInstance {
   name: string;
   enabled: boolean;
    
+   
+   
   config: Record<string, any>; // Provider-specific config (token, model, etc.)
 }
 
@@ -58,6 +60,9 @@ class ProviderConfigManager {
   /**
    * Interpolate ${ENV_VAR} patterns in config values with actual environment variables
    */
+    
+    
+   
    
   private interpolateEnvVars(obj: any): any {
     if (typeof obj === 'string') {
@@ -70,8 +75,10 @@ class ProviderConfigManager {
     if (Array.isArray(obj)) {
       return obj.map(item => this.interpolateEnvVars(item));
     }
+     
     if (typeof obj === 'object' && obj !== null) {
    
+       
       const result: any = {};
       for (const key of Object.keys(obj)) {
         result[key] = this.interpolateEnvVars(obj[key]);
@@ -470,9 +477,11 @@ class ProviderConfigManager {
     if (!target) {
       return null;
     }
+ 
 
     // Merge updates but protect immutable fields
    
+     
     const { id: _id, category: _category, type: _type, ...safeUpdates } = updates as any;
     Object.assign(target, safeUpdates);
 

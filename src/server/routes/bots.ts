@@ -240,6 +240,7 @@ router.put(
     const updates = req.body;
     try {
       await manager.updateBot(id, updates);
+
       return res.json(ApiResponse.success());
     } catch (error: any) {
       const status = error.message?.includes(ERROR_CODES.NOT_FOUND)
@@ -363,6 +364,7 @@ router.get(
   validateRequest(BotHistoryQuerySchema),
   asyncErrorHandler(async (req: Request, res: Response) => {
     const manager = await managerPromise;
+
     const { id } = req.params;
 
     const { limit, channelId } = req.query as any;
@@ -566,6 +568,7 @@ router.post(
  */
 router.get(
   '/:id/diagnose',
+
   validateRequest(BotIdParamSchema),
   asyncErrorHandler(async (req: Request, res: Response) => {
     try {
@@ -590,6 +593,7 @@ router.get(
  */
 router.post(
   '/test-chat',
+
   validateRequest(BotTestChatSchema),
   asyncErrorHandler(async (req: Request, res: Response) => {
     const { botConfig, message, history } = req.body;

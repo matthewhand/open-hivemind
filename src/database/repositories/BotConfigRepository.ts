@@ -32,15 +32,17 @@ export class BotConfigRepository {
     'openswarm',
   ];
 
-  private encryptField(val: any): any {
+  private encryptField(val: unknown): string | null {
     if (val && typeof val === 'object') {
       return encryptionService.encrypt(JSON.stringify(val));
     }
-    return val;
+    return val ? String(val) : null;
   }
 
-  private decryptField(val: any): any {
-    if (!val || typeof val !== 'string') return val;
+  private decryptField(val: unknown): unknown {
+    if (!val || typeof val !== 'string') {
+      return val;
+    }
     const decrypted = encryptionService.decrypt(val);
     try {
       return JSON.parse(decrypted);
@@ -58,7 +60,9 @@ export class BotConfigRepository {
 
     try {
       const db = this.getDb();
-      if (!db) throw new Error('Database not available');
+      if (!db) {
+        throw new Error('Database not available');
+      }
 
       const result = await db.run(
         `
@@ -102,7 +106,9 @@ export class BotConfigRepository {
 
   private mapRowToBotConfiguration(row: Record<string, unknown>): BotConfiguration {
     // Hydrate JSON strings into objects if necessary (SQLite strings vs Postgres JSON)
-    const parseIfString = (val: unknown): any => (typeof val === 'string' ? JSON.parse(val) : val);
+
+    const parseIfString = (val: unknown): unknown =>
+      typeof val === 'string' ? JSON.parse(val) : val;
 
     return {
       id: row.id as number,
@@ -111,15 +117,24 @@ export class BotConfigRepository {
       llmProvider: row.llmProvider as string,
       persona: row.persona as string | undefined,
       systemInstruction: row.systemInstruction as string | undefined,
-      mcpServers: row.mcpServers ? parseIfString(row.mcpServers) : undefined,
-      mcpGuard: row.mcpGuard ? parseIfString(row.mcpGuard) : undefined,
-      discord: this.decryptField(row.discord),
-      slack: this.decryptField(row.slack),
-      mattermost: this.decryptField(row.mattermost),
-      openai: this.decryptField(row.openai),
-      flowise: this.decryptField(row.flowise),
-      openwebui: this.decryptField(row.openwebui),
-      openswarm: this.decryptField(row.openswarm),
+
+      mcpServers: row.mcpServers ? (parseIfString(row.mcpServers) as any) : undefined,
+
+      mcpGuard: row.mcpGuard ? (parseIfString(row.mcpGuard) as any) : undefined,
+
+      discord: this.decryptField(row.discord) as any,
+
+      slack: this.decryptField(row.slack) as any,
+
+      mattermost: this.decryptField(row.mattermost) as any,
+
+      openai: this.decryptField(row.openai) as any,
+
+      flowise: this.decryptField(row.flowise) as any,
+
+      openwebui: this.decryptField(row.openwebui) as any,
+
+      openswarm: this.decryptField(row.openswarm) as any,
       isActive: Number(row.isActive) === 1,
       createdAt: new Date(row.createdAt as string | number | Date),
       updatedAt: new Date(row.updatedAt as string | number | Date),
@@ -133,11 +148,15 @@ export class BotConfigRepository {
 
     try {
       const db = this.getDb();
-      if (!db) throw new Error('Database not available');
+      if (!db) {
+        throw new Error('Database not available');
+      }
 
       const row = await db.get('SELECT * FROM bot_configurations WHERE id = ?', [id]);
 
-      if (!row) return null;
+      if (!row) {
+        return null;
+      }
 
       return this.mapRowToBotConfiguration(row);
     } catch (error) {
@@ -155,7 +174,9 @@ export class BotConfigRepository {
 
     try {
       const db = this.getDb();
-      if (!db) throw new Error('Database not available');
+      if (!db) {
+        throw new Error('Database not available');
+      }
 
       const placeholders = ids.map(() => '?').join(',');
       const rows = await db.all(
@@ -175,11 +196,15 @@ export class BotConfigRepository {
 
     try {
       const db = this.getDb();
-      if (!db) throw new Error('Database not available');
+      if (!db) {
+        throw new Error('Database not available');
+      }
 
       const row = await db.get('SELECT * FROM bot_configurations WHERE name = ?', [name]);
 
-      if (!row) return null;
+      if (!row) {
+        return null;
+      }
 
       return this.mapRowToBotConfiguration(row);
     } catch (error) {
@@ -193,7 +218,9 @@ export class BotConfigRepository {
 
     try {
       const db = this.getDb();
-      if (!db) throw new Error('Database not available');
+      if (!db) {
+        throw new Error('Database not available');
+      }
 
       const rows = await db.all('SELECT * FROM bot_configurations ORDER BY updatedAt DESC');
 
@@ -214,7 +241,9 @@ export class BotConfigRepository {
 
     try {
       const db = this.getDb();
-      if (!db) throw new Error('Database not available');
+      if (!db) {
+        throw new Error('Database not available');
+      }
 
       const configs = await db.all('SELECT * FROM bot_configurations ORDER BY updatedAt DESC');
 
@@ -272,13 +301,18 @@ export class BotConfigRepository {
 
     try {
       const db = this.getDb();
-      if (!db) throw new Error('Database not available');
+      if (!db) {
+        throw new Error('Database not available');
+      }
 
       const updateFields: string[] = [];
-      const values: any[] = [];
+
+      const values: unknown[] = [];
 
       Object.entries(config).forEach(([key, value]) => {
-        if (key === 'id' || value === undefined) return;
+        if (key === 'id' || value === undefined) {
+          return;
+        }
         if (!BotConfigRepository.UPDATABLE_COLUMNS.has(key)) {
           debug(`updateBotConfiguration: dropping non-allowlisted column "${key}"`);
           return;
@@ -298,7 +332,9 @@ export class BotConfigRepository {
         }
       });
 
-      if (updateFields.length === 0) return;
+      if (updateFields.length === 0) {
+        return;
+      }
 
       values.push(id);
       await db.run(`UPDATE bot_configurations SET ${updateFields.join(', ')} WHERE id = ?`, values);
@@ -315,7 +351,9 @@ export class BotConfigRepository {
 
     try {
       const db = this.getDb();
-      if (!db) throw new Error('Database not available');
+      if (!db) {
+        throw new Error('Database not available');
+      }
 
       const result = await db.run('DELETE FROM bot_configurations WHERE id = ?', [id]);
       const deleted = (result.changes ?? 0) > 0;
@@ -340,7 +378,9 @@ export class BotConfigRepository {
 
     try {
       const db = this.getDb();
-      if (!db) throw new Error('Database not available');
+      if (!db) {
+        throw new Error('Database not available');
+      }
 
       const result = await db.run(
         `
@@ -384,26 +424,43 @@ export class BotConfigRepository {
   }
 
   private mapRowToBotConfigurationVersion(row: Record<string, unknown>): BotConfigurationVersion {
-    const parseIfString = (val: unknown): any => (typeof val === 'string' ? JSON.parse(val) : val);
+    const parseIfString = (val: unknown): unknown =>
+      typeof val === 'string' ? JSON.parse(val) : val;
 
     return {
       id: row.id as number,
+
       botConfigurationId: row.botConfigurationId as number,
+
       version: row.version as string,
+
       name: row.name as string,
+
       messageProvider: row.messageProvider as string,
+
       llmProvider: row.llmProvider as string,
+
       persona: row.persona as string | undefined,
+
       systemInstruction: row.systemInstruction as string | undefined,
-      mcpServers: row.mcpServers ? parseIfString(row.mcpServers) : undefined,
-      mcpGuard: row.mcpGuard ? parseIfString(row.mcpGuard) : undefined,
-      discord: this.decryptField(row.discord),
-      slack: this.decryptField(row.slack),
-      mattermost: this.decryptField(row.mattermost),
-      openai: this.decryptField(row.openai),
-      flowise: this.decryptField(row.flowise),
-      openwebui: this.decryptField(row.openwebui),
-      openswarm: this.decryptField(row.openswarm),
+
+      mcpServers: row.mcpServers ? (parseIfString(row.mcpServers) as any) : undefined,
+
+      mcpGuard: row.mcpGuard ? (parseIfString(row.mcpGuard) as any) : undefined,
+
+      discord: this.decryptField(row.discord) as any,
+
+      slack: this.decryptField(row.slack) as any,
+
+      mattermost: this.decryptField(row.mattermost) as any,
+
+      openai: this.decryptField(row.openai) as any,
+
+      flowise: this.decryptField(row.flowise) as any,
+
+      openwebui: this.decryptField(row.openwebui) as any,
+
+      openswarm: this.decryptField(row.openswarm) as any,
       isActive: Number(row.isActive) === 1,
       createdAt: new Date(row.createdAt as string | number | Date),
       createdBy: row.createdBy as string | undefined,
@@ -418,7 +475,9 @@ export class BotConfigRepository {
 
     try {
       const db = this.getDb();
-      if (!db) throw new Error('Database not available');
+      if (!db) {
+        throw new Error('Database not available');
+      }
 
       const rows = await db.all(
         'SELECT * FROM bot_configuration_versions WHERE botConfigurationId = ? ORDER BY version DESC',
@@ -443,7 +502,9 @@ export class BotConfigRepository {
 
     try {
       const db = this.getDb();
-      if (!db) throw new Error('Database not available');
+      if (!db) {
+        throw new Error('Database not available');
+      }
 
       const placeholders = botConfigurationIds.map(() => '?').join(',');
       const rows = await db.all(
@@ -454,7 +515,7 @@ export class BotConfigRepository {
       const versionsMap = new Map<number, BotConfigurationVersion[]>();
 
       rows.forEach((row) => {
-        const configId = row.botConfigurationId;
+        const configId = row.botConfigurationId as number;
         const version = this.mapRowToBotConfigurationVersion(row);
 
         if (!versionsMap.has(configId)) {
@@ -478,7 +539,9 @@ export class BotConfigRepository {
 
     try {
       const db = this.getDb();
-      if (!db) throw new Error('Database not available');
+      if (!db) {
+        throw new Error('Database not available');
+      }
 
       const result = await db.run(
         'DELETE FROM bot_configuration_versions WHERE botConfigurationId = ? AND version = ?',
@@ -501,10 +564,14 @@ export class BotConfigRepository {
 
     try {
       const db = this.getDb();
-      if (!db) throw new Error('Database not available');
+      if (!db) {
+        throw new Error('Database not available');
+      }
 
       // Audit logs contain full JSON snaps of config - encrypt them!
-      const encryptVal = (val: any) => (val ? encryptionService.encrypt(val) : val);
+
+      const encryptVal = (val: unknown): string | null =>
+        val ? encryptionService.encrypt(String(val)) : null;
 
       const result = await db.run(
         `
@@ -534,8 +601,10 @@ export class BotConfigRepository {
   }
 
   private mapRowToBotConfigurationAudit(row: Record<string, unknown>): BotConfigurationAudit {
-    const decryptVal = (val: any) => {
-      if (!val) return val;
+    const decryptVal = (val: unknown): string | null => {
+      if (!val) {
+        return null;
+      }
       try {
         return encryptionService.decrypt(String(val));
       } catch (error) {
@@ -562,7 +631,9 @@ export class BotConfigRepository {
 
     try {
       const db = this.getDb();
-      if (!db) throw new Error('Database not available');
+      if (!db) {
+        throw new Error('Database not available');
+      }
 
       const rows = await db.all(
         'SELECT * FROM bot_configuration_audit WHERE botConfigurationId = ? ORDER BY performedAt DESC',
@@ -587,7 +658,9 @@ export class BotConfigRepository {
 
     try {
       const db = this.getDb();
-      if (!db) throw new Error('Database not available');
+      if (!db) {
+        throw new Error('Database not available');
+      }
 
       const placeholders = botConfigurationIds.map(() => '?').join(',');
       const rows = await db.all(
@@ -598,7 +671,7 @@ export class BotConfigRepository {
       const auditMap = new Map<number, BotConfigurationAudit[]>();
 
       rows.forEach((row) => {
-        const configId = row.botConfigurationId;
+        const configId = row.botConfigurationId as number;
         const audit = this.mapRowToBotConfigurationAudit(row);
 
         if (!auditMap.has(configId)) {

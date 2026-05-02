@@ -431,20 +431,35 @@ export class DemoModeService {
    * Auto-detects when no bots have real credentials.
    */
   public detectDemoMode(): boolean {
-    if (process.env.DEMO_MODE === 'true') return true;
-    if (process.env.DEMO_MODE === 'false') return false;
+    if (process.env.DEMO_MODE === 'true') {
+      return true;
+    }
+    if (process.env.DEMO_MODE === 'false') {
+      return false;
+    }
 
     const bots = this.botManager.getAllBots();
-    if (bots.length === 0) return true;
+    if (bots.length === 0) {
+      return true;
+    }
 
     const hasRealCredentials = bots.some((bot) => {
-      if (bot.discord?.token && bot.discord.token.length > 10) return true;
-      if (bot.slack?.botToken && bot.slack.botToken.length > 10) return true;
-
-      if ((bot as any).mattermost?.accessToken && (bot as any).mattermost.accessToken.length > 10)
+      if (bot.discord?.token && bot.discord.token.length > 10) {
         return true;
-      if (bot.openai?.apiKey && bot.openai.apiKey.length > 10) return true;
-      if (bot.flowise?.apiKey && bot.flowise.apiKey.length > 10) return true;
+      }
+      if (bot.slack?.botToken && bot.slack.botToken.length > 10) {
+        return true;
+      }
+
+      if ((bot as any).mattermost?.accessToken && (bot as any).mattermost.accessToken.length > 10) {
+        return true;
+      }
+      if (bot.openai?.apiKey && bot.openai.apiKey.length > 10) {
+        return true;
+      }
+      if (bot.flowise?.apiKey && bot.flowise.apiKey.length > 10) {
+        return true;
+      }
       return false;
     });
 
@@ -598,8 +613,12 @@ export class DemoModeService {
    * This makes dashboards show real, increasing metrics.
    */
   public startActivitySimulation(): void {
-    if (!this.isDemoMode || this.activitySimulator.isRunning) return;
-    if (this.demoBots.length === 0) return;
+    if (!this.isDemoMode || this.activitySimulator.isRunning) {
+      return;
+    }
+    if (this.demoBots.length === 0) {
+      return;
+    }
 
     this.activitySimulator.isRunning = true;
     this.activitySimulator.simulationStartTime = Date.now();
@@ -610,9 +629,9 @@ export class DemoModeService {
 
     // Generate message flow events every 2-8 seconds
 
-    const messageInterval = () => this.randomFloat() * 6000 + 2000;
+    const messageInterval = (): number => this.randomFloat() * 6000 + 2000;
 
-    const tick = () => {
+    const tick = (): void => {
       this.generateAndRecordMessageEvent();
       this.simulationInterval = setTimeout(tick, messageInterval());
     };
@@ -680,18 +699,20 @@ export class DemoModeService {
 
   public getOrCreateConversation(channelId: string, botName: string): DemoConversation {
     const key = `${botName}:${channelId}`;
-    if (!this.conversations.has(key)) {
-      this.conversations.set(key, {
+    let conversation = this.conversations.get(key);
+    if (!conversation) {
+      conversation = {
         id: `conv-${Date.now()}-${crypto.randomUUID()}`,
         channelId,
         botName,
         messages: [],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-      });
+      };
+      this.conversations.set(key, conversation);
     }
 
-    return this.conversations.get(key)!;
+    return conversation;
   }
 
   public addMessage(
@@ -865,7 +886,10 @@ export class DemoModeService {
     const activeThreadKeys = Array.from(this.activeThreads.keys());
     const channelKey = activeThreadKeys[this.randomInt(0, activeThreadKeys.length - 1)];
 
-    const threadState = this.activeThreads.get(channelKey)!;
+    const threadState = this.activeThreads.get(channelKey);
+    if (!threadState) {
+      return this.generateThreadContent();
+    }
     const thread = CONVERSATION_THREADS[threadState.threadIndex];
 
     // Clean up old threads (older than 5 minutes)
@@ -985,15 +1009,23 @@ export class DemoModeService {
 
   private generateProcessingTime(): number {
     const r = this.randomFloat();
-    if (r < 0.6) return this.randomFloat() * 400 + 100; // 60% fast
-    if (r < 0.9) return this.randomFloat() * 1000 + 500; // 30% medium
+    if (r < 0.6) {
+      return this.randomFloat() * 400 + 100; // 60% fast
+    }
+    if (r < 0.9) {
+      return this.randomFloat() * 1000 + 500; // 30% medium
+    }
     return this.randomFloat() * 1500 + 1500; // 10% slow
   }
 
   private getTimeOfDayMultiplier(hour: number): number {
     // Business hours (9-17) = higher activity
-    if (hour >= 9 && hour <= 17) return 1.2 + Math.sin(((hour - 9) / 8) * Math.PI) * 0.3;
-    if (hour >= 7 && hour <= 20) return 0.8;
+    if (hour >= 9 && hour <= 17) {
+      return 1.2 + Math.sin(((hour - 9) / 8) * Math.PI) * 0.3;
+    }
+    if (hour >= 7 && hour <= 20) {
+      return 0.8;
+    }
     return 0.3;
   }
 }

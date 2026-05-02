@@ -15,6 +15,8 @@ function loadMattermostConfig(): MattermostConfig {
   const configPath = path.join(configDir, 'providers/mattermost.json');
   
    
+   
+   
   let fileConfig: Record<string, any> = {};
   
   try {
@@ -29,20 +31,27 @@ function loadMattermostConfig(): MattermostConfig {
   }
 
   // Map environment variables
+    
+   
    
   const envConfig: Record<string, any> = {};
+   
+   
+    
+    
    
    
    
    
   const mapEnv = (envKey: string, configKey: string, parser?: (val: string) => any) => {
     if (process.env[envKey] !== undefined) {
-   
-      const val = process.env[envKey]!;
+      const val = process.env[envKey] as string;
       envConfig[configKey] = parser ? parser(val) : val;
+     
     }
   };
 
+   
    
   const parseIntBase10 = (v: string) => parseInt(v, 10);
 
@@ -70,13 +79,18 @@ function loadMattermostConfig(): MattermostConfig {
 
   return result.data;
 }
+ 
 
 const config = loadMattermostConfig();
 
+ 
+ 
 const mattermostConfig = {
+   
    
   get: (key: keyof MattermostConfig): any => config[key],
   getProperties: (): MattermostConfig => config,
+   
    
   getSchema: (): any => zodToJsonSchema(MattermostSchema as any),
   validate: (_options: { allowed: 'strict' | 'warn' }): void => {

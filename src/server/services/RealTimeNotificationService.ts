@@ -145,6 +145,7 @@ export class RealTimeNotificationService extends EventEmitter {
 
   public subscribe(
     callback: (notification: NotificationEvent) => void,
+
     filter?: SubscriptionFilter
   ): () => void {
     const listener = (notification: NotificationEvent) => {
@@ -178,6 +179,7 @@ export class RealTimeNotificationService extends EventEmitter {
   // Convenience methods for common notification types
   public notifyAgentEvent(
     agentName: string,
+
     event: 'started' | 'stopped' | 'error' | 'configured',
     details?: string,
 

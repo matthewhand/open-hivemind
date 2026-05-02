@@ -49,6 +49,7 @@ interface MessengerService {
   providerName?: string;
   botId?: string;
   initialize(): Promise<void>;
+
   // eslint-disable-next-line @typescript-eslint/consistent-type-imports
   setApp?(app: import('express').Application): void;
   setMessageHandler(
@@ -231,6 +232,7 @@ export interface InitServicesResult {
 }
 
 /**
+ // eslint-disable-next-line @typescript-eslint/consistent-type-imports
  * Initialize all backend services: DI, database, providers, messengers, pipeline, etc.
  * Returns the messenger services array so the caller can pass it to HTTP/webhook setup.
  */
@@ -362,6 +364,7 @@ export async function initServices(
   });
 
   // Initialize AnomalyDetectionService
+
   AnomalyDetectionService.getInstance();
   appLogger.info('\ud83d\udd0d Anomaly Detection Service initialized');
 

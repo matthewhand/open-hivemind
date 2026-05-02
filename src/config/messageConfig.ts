@@ -12,30 +12,34 @@ function loadMessageConfig(): MessageConfig {
   const configDir = process.env.NODE_CONFIG_DIR || './config/';
   const configPath = path.join(configDir, 'providers/message.json');
 
-   
-  let fileConfig: Record<string, any> = {};
+  let fileConfig: Record<string, unknown> = {};
 
   try {
     if (fs.existsSync(configPath)) {
       const data = fs.readFileSync(configPath, 'utf8');
-      fileConfig = JSON.parse(data);
+      fileConfig = JSON.parse(data) as Record<string, unknown>;
     } else {
-      debug(`Message config file not found at ${configPath}, using environment variables and defaults`);
+      debug(
+        `Message config file not found at ${configPath}, using environment variables and defaults`
+      );
     }
   } catch (error) {
     debug(`Error reading message config from ${configPath}:`, error);
   }
 
   // Map environment variables
-   
-  const envConfig: Record<string, any> = {};
+
+  const envConfig: Record<string, unknown> = {};
 
   // Basic mapping helper
-   
-  const mapEnv = (envKey: string, configKey: string, parser?: (val: string) => any): void => {
+
+  const mapEnv = (
+    envKey: string,
+    configKey: string,
+    parser?: (val: string) => unknown
+  ): void => {
     if (process.env[envKey] !== undefined) {
-   
-      const val = process.env[envKey]!;
+      const val = process.env[envKey] as string;
       envConfig[configKey] = parser ? parser(val) : val;
     }
   };
@@ -43,17 +47,21 @@ function loadMessageConfig(): MessageConfig {
   const parseBool = (v: string): boolean => v.toLowerCase() === 'true';
   const parseIntBase10 = (v: string): number => parseInt(v, 10);
   const parseFloatBase10 = (v: string): number => parseFloat(v);
-  const parseCSV = (v: string): string[] => v.split(',').map(s => s.trim()).filter(Boolean);
-   
-  const parseJSONOrCSV = (v: string): any => {
+  const parseCSV = (v: string): string[] =>
+    v
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+  const parseJSONOrCSV = (v: string): unknown => {
     try {
       if (v.trim().startsWith('{')) {
         return JSON.parse(v);
       }
       // Simple CSV parser for "Key: Value, Key2: Value2"
       const result: Record<string, number> = {};
-      v.split(',').forEach(part => {
-        const [key, val] = part.split(':').map(s => s.trim());
+      v.split(',').forEach((part) => {
+        const [key, val] = part.split(':').map((s) => s.trim());
         if (key && val !== undefined) {
           const num = parseFloat(val);
           if (!isNaN(num)) {
@@ -66,8 +74,8 @@ function loadMessageConfig(): MessageConfig {
       return undefined;
     }
   };
-   
-  const parseJSON = (v: string): any => {
+
+  const parseJSON = (v: string): unknown => {
     try {
       return JSON.parse(v);
     } catch {
@@ -78,7 +86,11 @@ function loadMessageConfig(): MessageConfig {
   // Map all known env vars
   mapEnv('MESSAGE_PROVIDER', 'MESSAGE_PROVIDER');
   mapEnv('MESSAGE_IGNORE_BOTS', 'MESSAGE_IGNORE_BOTS', parseBool);
-  mapEnv('MESSAGE_BOT_REPLIES_LIMIT_TO_DEFAULT_CHANNEL', 'MESSAGE_BOT_REPLIES_LIMIT_TO_DEFAULT_CHANNEL', parseBool);
+  mapEnv(
+    'MESSAGE_BOT_REPLIES_LIMIT_TO_DEFAULT_CHANNEL',
+    'MESSAGE_BOT_REPLIES_LIMIT_TO_DEFAULT_CHANNEL',
+    parseBool
+  );
   mapEnv('MESSAGE_SEMANTIC_RELEVANCE_ENABLED', 'MESSAGE_SEMANTIC_RELEVANCE_ENABLED', parseBool);
   mapEnv('MESSAGE_SEMANTIC_RELEVANCE_BONUS', 'MESSAGE_SEMANTIC_RELEVANCE_BONUS', parseFloatBase10);
   mapEnv('MESSAGE_ALLOW_SELF_MENTION', 'MESSAGE_ALLOW_SELF_MENTION', parseBool);
@@ -99,31 +111,75 @@ function loadMessageConfig(): MessageConfig {
   mapEnv('MESSAGE_COMPOUNDING_DELAY_MAX_MS', 'MESSAGE_COMPOUNDING_DELAY_MAX_MS', parseIntBase10);
   mapEnv('MESSAGE_DELAY_MULTIPLIER', 'MESSAGE_DELAY_MULTIPLIER', parseFloatBase10);
   mapEnv('MESSAGE_UNSOLICITED_BASE_CHANCE', 'MESSAGE_UNSOLICITED_BASE_CHANCE', parseFloatBase10);
-  mapEnv('MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_WINDOW_MS', 'MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_WINDOW_MS', parseIntBase10);
-  mapEnv('MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_REFERENCE', 'MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_REFERENCE', parseIntBase10);
-  mapEnv('MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_MIN_FACTOR', 'MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_MIN_FACTOR', parseFloatBase10);
-  mapEnv('MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_MAX_FACTOR', 'MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_MAX_FACTOR', parseFloatBase10);
-  mapEnv('MESSAGE_TEMPERATURE_REPETITION_MAX_BOOST', 'MESSAGE_TEMPERATURE_REPETITION_MAX_BOOST', parseFloatBase10);
-  mapEnv('MESSAGE_TEMPERATURE_REPETITION_MIN_HISTORY', 'MESSAGE_TEMPERATURE_REPETITION_MIN_HISTORY', parseIntBase10);
-  mapEnv('MESSAGE_TEMPERATURE_REPETITION_RATIO_THRESHOLD', 'MESSAGE_TEMPERATURE_REPETITION_RATIO_THRESHOLD', parseFloatBase10);
-  mapEnv('MESSAGE_TEMPERATURE_REPETITION_MIN_DOC_FREQ', 'MESSAGE_TEMPERATURE_REPETITION_MIN_DOC_FREQ', parseIntBase10);
+  mapEnv(
+    'MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_WINDOW_MS',
+    'MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_WINDOW_MS',
+    parseIntBase10
+  );
+  mapEnv(
+    'MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_REFERENCE',
+    'MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_REFERENCE',
+    parseIntBase10
+  );
+  mapEnv(
+    'MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_MIN_FACTOR',
+    'MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_MIN_FACTOR',
+    parseFloatBase10
+  );
+  mapEnv(
+    'MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_MAX_FACTOR',
+    'MESSAGE_UNSOLICITED_SILENCE_PARTICIPANT_MAX_FACTOR',
+    parseFloatBase10
+  );
+  mapEnv(
+    'MESSAGE_TEMPERATURE_REPETITION_MAX_BOOST',
+    'MESSAGE_TEMPERATURE_REPETITION_MAX_BOOST',
+    parseFloatBase10
+  );
+  mapEnv(
+    'MESSAGE_TEMPERATURE_REPETITION_MIN_HISTORY',
+    'MESSAGE_TEMPERATURE_REPETITION_MIN_HISTORY',
+    parseIntBase10
+  );
+  mapEnv(
+    'MESSAGE_TEMPERATURE_REPETITION_RATIO_THRESHOLD',
+    'MESSAGE_TEMPERATURE_REPETITION_RATIO_THRESHOLD',
+    parseFloatBase10
+  );
+  mapEnv(
+    'MESSAGE_TEMPERATURE_REPETITION_MIN_DOC_FREQ',
+    'MESSAGE_TEMPERATURE_REPETITION_MIN_DOC_FREQ',
+    parseIntBase10
+  );
   mapEnv('MESSAGE_OTHERS_TYPING_WINDOW_MS', 'MESSAGE_OTHERS_TYPING_WINDOW_MS', parseIntBase10);
   mapEnv('MESSAGE_OTHERS_TYPING_MAX_WAIT_MS', 'MESSAGE_OTHERS_TYPING_MAX_WAIT_MS', parseIntBase10);
   mapEnv('MESSAGE_ACTIVITY_TIME_WINDOW', 'MESSAGE_ACTIVITY_TIME_WINDOW', parseIntBase10);
   mapEnv('MESSAGE_WAKEWORDS', 'MESSAGE_WAKEWORDS', parseCSV);
   mapEnv('MESSAGE_ONLY_WHEN_SPOKEN_TO', 'MESSAGE_ONLY_WHEN_SPOKEN_TO', parseBool);
-  mapEnv('MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS', 'MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS', parseIntBase10);
+  mapEnv(
+    'MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS',
+    'MESSAGE_ONLY_WHEN_SPOKEN_TO_GRACE_WINDOW_MS',
+    parseIntBase10
+  );
   mapEnv('MESSAGE_INTERACTIVE_FOLLOWUPS', 'MESSAGE_INTERACTIVE_FOLLOWUPS', parseBool);
   mapEnv('MESSAGE_UNSOLICITED_ADDRESSED', 'MESSAGE_UNSOLICITED_ADDRESSED', parseBool);
   mapEnv('MESSAGE_UNSOLICITED_UNADDRESSED', 'MESSAGE_UNSOLICITED_UNADDRESSED', parseBool);
   mapEnv('MESSAGE_RESPOND_IN_THREAD', 'MESSAGE_RESPOND_IN_THREAD', parseBool);
   mapEnv('MESSAGE_THREAD_RELATION_WINDOW', 'MESSAGE_THREAD_RELATION_WINDOW', parseIntBase10);
-  mapEnv('MESSAGE_RECENT_ACTIVITY_DECAY_RATE', 'MESSAGE_RECENT_ACTIVITY_DECAY_RATE', parseFloatBase10);
+  mapEnv(
+    'MESSAGE_RECENT_ACTIVITY_DECAY_RATE',
+    'MESSAGE_RECENT_ACTIVITY_DECAY_RATE',
+    parseFloatBase10
+  );
   mapEnv('MESSAGE_INTERROBANG_BONUS', 'MESSAGE_INTERROBANG_BONUS', parseFloatBase10);
   mapEnv('MESSAGE_BOT_RESPONSE_MODIFIER', 'MESSAGE_BOT_RESPONSE_MODIFIER', parseFloatBase10);
   mapEnv('MESSAGE_SEND_ANYWAY_ON_BAD_GENERATION', 'MESSAGE_SEND_ANYWAY_ON_BAD_GENERATION', parseBool);
   mapEnv('MESSAGE_MAX_GENERATION_RETRIES', 'MESSAGE_MAX_GENERATION_RETRIES', parseIntBase10);
-  mapEnv('MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED', 'MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED', parseBool);
+  mapEnv(
+    'MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED',
+    'MESSAGE_ALLOW_BOT_TO_BOT_UNADDRESSED',
+    parseBool
+  );
   mapEnv('MESSAGE_COMMAND_INLINE', 'MESSAGE_COMMAND_INLINE', parseBool);
   mapEnv('MESSAGE_COMMAND_AUTHORISED_USERS', 'MESSAGE_COMMAND_AUTHORISED_USERS');
   mapEnv('MESSAGE_LLM_FOLLOW_UP', 'MESSAGE_LLM_FOLLOW_UP', parseBool);
@@ -140,9 +196,17 @@ function loadMessageConfig(): MessageConfig {
   mapEnv('MESSAGE_HISTORY_ADAPTIVE_MIN_LIMIT', 'MESSAGE_HISTORY_ADAPTIVE_MIN_LIMIT', parseIntBase10);
   mapEnv('MESSAGE_HISTORY_ADAPTIVE_MAX_LIMIT', 'MESSAGE_HISTORY_ADAPTIVE_MAX_LIMIT', parseIntBase10);
   mapEnv('MESSAGE_HISTORY_ADAPTIVE_STEP', 'MESSAGE_HISTORY_ADAPTIVE_STEP', parseIntBase10);
-  mapEnv('MESSAGE_HISTORY_ADAPTIVE_TARGET_UTILIZATION', 'MESSAGE_HISTORY_ADAPTIVE_TARGET_UTILIZATION', parseFloatBase10);
+  mapEnv(
+    'MESSAGE_HISTORY_ADAPTIVE_TARGET_UTILIZATION',
+    'MESSAGE_HISTORY_ADAPTIVE_TARGET_UTILIZATION',
+    parseFloatBase10
+  );
   mapEnv('MESSAGE_LLM_CONTEXT_WINDOW_TOKENS', 'MESSAGE_LLM_CONTEXT_WINDOW_TOKENS', parseIntBase10);
-  mapEnv('MESSAGE_LLM_CONTEXT_SAFETY_MARGIN_TOKENS', 'MESSAGE_LLM_CONTEXT_SAFETY_MARGIN_TOKENS', parseIntBase10);
+  mapEnv(
+    'MESSAGE_LLM_CONTEXT_SAFETY_MARGIN_TOKENS',
+    'MESSAGE_LLM_CONTEXT_SAFETY_MARGIN_TOKENS',
+    parseIntBase10
+  );
   mapEnv('MESSAGE_DECAY_RATE', 'MESSAGE_DECAY_RATE', parseFloatBase10);
   mapEnv('MESSAGE_CALM_WINDOW', 'MESSAGE_CALM_WINDOW', parseIntBase10);
   mapEnv('PLATFORM', 'PLATFORM');
@@ -156,12 +220,13 @@ function loadMessageConfig(): MessageConfig {
   mapEnv('CHANNEL_PRIORITIES', 'CHANNEL_PRIORITIES', parseJSONOrCSV);
   mapEnv('MESSAGE_RESPONSE_PROFILES', 'MESSAGE_RESPONSE_PROFILES', parseJSON);
   mapEnv('GREETING', 'greeting', parseJSON);
-  
+
   // Specific handling for DISCORD_MESSAGE_TEMPLATES which must throw on invalid JSON
   if (process.env.DISCORD_MESSAGE_TEMPLATES !== undefined) {
     try {
-   
-      envConfig.DISCORD_MESSAGE_TEMPLATES = JSON.parse(process.env.DISCORD_MESSAGE_TEMPLATES!);
+      envConfig.DISCORD_MESSAGE_TEMPLATES = JSON.parse(
+        process.env.DISCORD_MESSAGE_TEMPLATES as string
+      );
     } catch {
       throw new Error(`Invalid JSON: ${process.env.DISCORD_MESSAGE_TEMPLATES}`);
     }
@@ -170,7 +235,7 @@ function loadMessageConfig(): MessageConfig {
   // Merge: Defaults < File < Env
   const combinedConfig = {
     ...fileConfig,
-    ...envConfig
+    ...envConfig,
   };
 
   const result = MessageSchema.safeParse(combinedConfig);
@@ -189,13 +254,15 @@ const config = loadMessageConfig();
 // Bridge back to convict-like getter if needed, though direct access is preferred
 const messageConfig = {
    
-  get: (key: string): any => (config as any)[key],
+  get: (key: keyof MessageConfig | string): any => (config as any)[key],
   getProperties: (): MessageConfig => config,
-   
-  getSchema: (): any => require('zod-to-json-schema').zodToJsonSchema(MessageSchema as any),
+
+  getSchema: (): unknown =>
+     
+    require('zod-to-json-schema').zodToJsonSchema(MessageSchema),
   validate: (_options: { allowed: 'strict' | 'warn' }): void => {
     MessageSchema.parse(config);
-  }
+  },
 };
 
 export default messageConfig;

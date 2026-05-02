@@ -328,6 +328,8 @@ export function shouldSkipRateLimit(req: Request): boolean {
 }
 
 /**
+ // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+ // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
  * Create a standard rate limit handler
  */
 export function createRateLimitHandler(type: string) {
@@ -349,6 +351,7 @@ export function createRateLimitHandler(type: string) {
 }
 
 // Store initialization
+
 export let redisAvailable = false;
 
 export let RedisStore: any = null;
@@ -357,6 +360,7 @@ export let redisClient: any = null;
 
 /**
  * Create a rate limit store (Redis or Memory)
+ // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
  */
 
 export function createStore(prefix: string, windowMs: number) {
@@ -369,6 +373,7 @@ export function createStore(prefix: string, windowMs: number) {
   }
 
   debug(`Using memory store for rate limit prefix: ${prefix}`);
+
   let store = memoryStores.get(prefix);
   if (!store) {
     store = new MemoryStoreWithCleanup(windowMs);

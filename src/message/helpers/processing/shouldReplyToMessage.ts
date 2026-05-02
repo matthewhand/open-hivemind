@@ -592,6 +592,7 @@ async function evaluateReplyDecision(
   const modsObject: Record<string, number | string> = {};
   for (const modStr of allModStrings) {
     // Parse patterns like "Base(0.01 @ never)", "+Recent(+0.5)", "BotHistory(-0.10)"
+
     const match = modStr.match(/^([+\-×]?)([\w!]+)\(([^)]+)\)$/);
     if (match) {
       // eslint-disable-next-line unused-imports/no-unused-vars

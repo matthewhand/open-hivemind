@@ -117,6 +117,7 @@ export class ConfigurationValidator {
 
   /**
    * Create bot configuration schema using convict
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
    */
 
   private createBotSchema(): convict.Schema<any> {

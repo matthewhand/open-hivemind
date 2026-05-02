@@ -633,6 +633,7 @@ export class ConfigurationImportExportService {
           // Create new templates concurrently within the batch
           await Promise.all(
             batch
+
               .filter(
                 (template: any) =>
                   !allExistingTemplateIds.has(template.id) &&

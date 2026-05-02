@@ -432,11 +432,11 @@ export class AnalyticsService {
       const bucketStart = Math.floor(timestamp / bucketMs) * bucketMs;
       const bucketKey = new Date(bucketStart).toISOString();
 
-      if (!buckets.has(bucketKey)) {
-        buckets.set(bucketKey, { count: 0, errors: 0, processingTimes: [] });
+      let bucket = buckets.get(bucketKey);
+      if (!bucket) {
+        bucket = { count: 0, errors: 0, processingTimes: [] };
+        buckets.set(bucketKey, bucket);
       }
-
-      const bucket = buckets.get(bucketKey)!;
       bucket.count++;
       if (event.status === 'error' || event.status === 'timeout') {
         bucket.errors++;

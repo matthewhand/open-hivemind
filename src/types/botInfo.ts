@@ -10,6 +10,7 @@ export interface IBotInfo {
     discord?: { token: string; clientId?: string };
     slack?: { botToken?: string; appToken?: string; signingSecret?: string; mode?: string };
     token?: string;
+
     BOT_ID?: string;
 
     [key: string]: any;

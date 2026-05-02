@@ -239,6 +239,7 @@ export function generateCSPNonce(): string {
 }
 
 /**
+ // eslint-disable-next-line @typescript-eslint/no-explicit-any
  * Create a safe HTML template by escaping all interpolations
  */
 

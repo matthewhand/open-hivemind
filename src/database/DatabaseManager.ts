@@ -78,7 +78,8 @@ export class DatabaseManager {
   private connected = false;
   private db: IDatabase | null = null;
 
-  // Repositories
+  // Repositories (Initialized via initRepositories() in constructor)
+
   private messageRepo!: MessageRepository;
   private botConfigRepo!: BotConfigRepository;
   private anomalyRepo!: AnomalyRepository;

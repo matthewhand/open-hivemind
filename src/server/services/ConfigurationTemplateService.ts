@@ -37,6 +37,7 @@ export interface UpdateTemplateRequest {
   name?: string;
   description?: string;
   category?: 'discord' | 'slack' | 'mattermost' | 'webhook' | 'llm' | 'general';
+
   tags?: string[];
 
   config?: any;

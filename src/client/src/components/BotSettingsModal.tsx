@@ -71,7 +71,6 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
         if (isOpen) {
             setOriginalConfig(botConfig);
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen]);
 
     const handleConfigChangeWithConfirm = (key: string, value: any) => {

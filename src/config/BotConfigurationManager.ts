@@ -144,6 +144,8 @@ export class BotConfigurationManager {
         if (!existing) {
           debug(`Syncing bot "${name}" to database...`);
    
+           
+           
           await dbManager.createBotConfiguration(config as any);
         }
       } catch (error) {

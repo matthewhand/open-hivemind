@@ -31,6 +31,8 @@ const flowiseConfig = convict({
   FLOWISE_USE_REST: {
     doc: 'Flag to use REST client instead of SDK',
    
+     
+     
     format: (val: any) => {
       if (val === undefined || val === null) {return true;} // Default
       if (typeof val === 'boolean') {return val;}
@@ -66,18 +68,24 @@ flowiseConfig.validate({ allowed: 'strict' });
 
 // Override the get method to handle undefined keys gracefully
 const originalGet = flowiseConfig.get.bind(flowiseConfig);
+    
    
+ 
 flowiseConfig.get = ((key: any) => {
   if (!key || typeof key !== 'string') {
     return undefined;
   }
+   
   try {
    
+     
     return originalGet(key as any);
   } catch {
+     
     return undefined;
   }
    
+ 
 }) as any;
 
 export default flowiseConfig;

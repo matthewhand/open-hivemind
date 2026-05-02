@@ -19,6 +19,7 @@ router.get('/compliance', (req, res) => {
   try {
     // In a real implementation, this would check compliance rules
     // For now, return mock data
+
     // eslint-disable-next-line unused-imports/no-unused-vars
     const complianceRules = [
       {
@@ -64,6 +65,7 @@ router.get('/compliance', (req, res) => {
 router.get('/cloud-providers', (req, res) => {
   try {
     // In a real implementation, this would fetch cloud provider status
+
     // For now, return mock data
     // eslint-disable-next-line unused-imports/no-unused-vars
     const cloudProviders = [
@@ -221,6 +223,7 @@ router.get('/audit', async (req, res) => {
       search,
       action,
       resource,
+
       user,
       dateFrom,
       dateTo,
@@ -365,6 +368,7 @@ router.post('/compliance/check', validateRequest(ComplianceCheckSchema), (req, r
     debug('Compliance check API error:', error);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+
       .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
   }
 });
@@ -400,6 +404,7 @@ router.get('/security/alerts', (req, res) => {
   } catch (error) {
     debug('Security alerts API error:', error);
     return res
+
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
   }
@@ -437,6 +442,7 @@ router.get('/governance/policies', (req, res) => {
     debug('Governance policies API error:', error);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+
       .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
   }
 });
