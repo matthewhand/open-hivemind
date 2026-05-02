@@ -7,6 +7,7 @@ import type {
   PerformanceMetric,
 } from '../../server/services/websocket/types';
 import type { WebSocketService } from '../../server/services/WebSocketService';
+import { secureRandom } from '../../utils/secureRandom';
 import {
   CONVERSATION_THREADS,
   DEMO_USERS,
@@ -52,7 +53,7 @@ export class DemoActivitySimulatorService {
     // Random message simulation (every 10-30s)
     const runSimulation = () => {
       this.generateAndRecordMessageEvent();
-      const nextInterval = Math.floor(Math.random() * 20000) + 10000;
+      const nextInterval = Math.floor(secureRandom() * 20000) + 10000;
       this.simulationInterval = setTimeout(runSimulation, nextInterval);
     };
     runSimulation();
@@ -85,18 +86,18 @@ export class DemoActivitySimulatorService {
 
     // Pre-seed MetricsCollector with 60 data points
     for (let i = 60; i >= 0; i--) {
-      const cpu = 15 + Math.sin(i * 0.1) * 10 + (Math.random() - 0.5) * 8;
-      const mem = 45 + Math.sin(i * 0.2) * 15 + (Math.random() - 0.5) * 10;
+      const cpu = 15 + Math.sin(i * 0.1) * 10 + (secureRandom() - 0.5) * 8;
+      const mem = 45 + Math.sin(i * 0.2) * 15 + (secureRandom() - 0.5) * 10;
       this.metricsCollector.recordMetric('demo.cpu', Math.max(5, Math.min(60, cpu)), {
         source: 'demo',
       });
       this.metricsCollector.recordMetric('demo.memory', Math.max(20, Math.min(85, mem)), {
         source: 'demo',
       });
-      this.metricsCollector.recordResponseTime(100 + Math.random() * 500);
-      if (Math.random() < 0.3) {
+      this.metricsCollector.recordResponseTime(100 + secureRandom() * 500);
+      if (secureRandom() < 0.3) {
         this.metricsCollector.incrementMessages();
-        this.metricsCollector.recordLlmTokenUsage(Math.floor(Math.random() * 200) + 50);
+        this.metricsCollector.recordLlmTokenUsage(Math.floor(secureRandom() * 200) + 50);
       }
     }
 
@@ -131,7 +132,7 @@ export class DemoActivitySimulatorService {
     if (event.status === 'error') {
       this.metricsCollector.incrementErrors();
     }
-    this.metricsCollector.recordLlmTokenUsage(Math.floor(Math.random() * 300) + 50);
+    this.metricsCollector.recordLlmTokenUsage(Math.floor(secureRandom() * 300) + 50);
 
     try {
       this.activityLogger.log(event);
@@ -158,7 +159,7 @@ export class DemoActivitySimulatorService {
     this.metricsCollector.recordMetric('demo.messageRate', metric.messageRate, { source: 'demo' });
     this.metricsCollector.recordMetric('demo.errorRate', metric.errorRate, { source: 'demo' });
 
-    if (Math.random() < 0.1) {
+    if (secureRandom() < 0.1) {
       const alert = this.createAlertEventForWS();
       this.wsService.recordAlert(alert);
     }
@@ -167,8 +168,8 @@ export class DemoActivitySimulatorService {
   private generateThreadContent(): { content: string; isFromUser: boolean } {
     const now = Date.now();
 
-    if (Math.random() < 0.3 || this.activeThreads.size === 0) {
-      const threadIndex = Math.floor(Math.random() * CONVERSATION_THREADS.length);
+    if (secureRandom() < 0.3 || this.activeThreads.size === 0) {
+      const threadIndex = Math.floor(secureRandom() * CONVERSATION_THREADS.length);
       const channelKey = `thread-${Date.now()}`;
       this.activeThreads.set(channelKey, { threadIndex, stepIndex: 0, lastActivity: now });
 
@@ -177,7 +178,7 @@ export class DemoActivitySimulatorService {
     }
 
     const activeThreadKeys = Array.from(this.activeThreads.keys());
-    const channelKey = activeThreadKeys[Math.floor(Math.random() * activeThreadKeys.length)];
+    const channelKey = activeThreadKeys[Math.floor(secureRandom() * activeThreadKeys.length)];
 
     const threadState = this.activeThreads.get(channelKey);
     if (!threadState) {
@@ -207,10 +208,10 @@ export class DemoActivitySimulatorService {
   }
 
   private createMessageFlowEventForWS(timestamp?: string): MessageFlowEvent {
-    const bot = this.demoBots[Math.floor(Math.random() * this.demoBots.length)];
+    const bot = this.demoBots[Math.floor(secureRandom() * this.demoBots.length)];
     const processingTime = this.generateProcessingTime();
-    const hasError = Math.random() < 0.05;
-    const user = DEMO_USERS[Math.floor(Math.random() * DEMO_USERS.length)];
+    const hasError = secureRandom() < 0.05;
+    const user = DEMO_USERS[Math.floor(secureRandom() * DEMO_USERS.length)];
 
     const threadContent = this.generateThreadContent();
     const isIncoming = threadContent.isFromUser;
@@ -229,20 +230,20 @@ export class DemoActivitySimulatorService {
       processingTime: isIncoming ? undefined : processingTime,
       status: hasError ? 'error' : processingTime > 1500 ? 'timeout' : 'success',
       errorMessage: hasError
-        ? ERROR_MESSAGES[Math.floor(Math.random() * ERROR_MESSAGES.length)]
+        ? ERROR_MESSAGES[Math.floor(secureRandom() * ERROR_MESSAGES.length)]
         : undefined,
     };
   }
 
   private createAlertEventForWS(timestamp?: string): AlertEvent {
-    const bot = this.demoBots[Math.floor(Math.random() * this.demoBots.length)];
+    const bot = this.demoBots[Math.floor(secureRandom() * this.demoBots.length)];
     const levels: Array<'info' | 'warning' | 'error' | 'critical'> = [
       'info',
       'warning',
       'error',
       'critical',
     ];
-    const level = levels[Math.floor(Math.random() * levels.length)];
+    const level = levels[Math.floor(secureRandom() * levels.length)];
 
     const titles: Record<string, string[]> = {
       info: ['Bot connected successfully', 'Configuration reloaded', 'Health check passed'],
@@ -259,8 +260,8 @@ export class DemoActivitySimulatorService {
       id: `demo-alert-${Date.now()}-${crypto.randomUUID()}`,
       timestamp: timestamp || new Date().toISOString(),
       level,
-      title: titles[level][Math.floor(Math.random() * titles[level].length)],
-      message: `Demo alert: ${bot.name} — ${titles[level][Math.floor(Math.random() * titles[level].length)]}`,
+      title: titles[level][Math.floor(secureRandom() * titles[level].length)],
+      message: `Demo alert: ${bot.name} — ${titles[level][Math.floor(secureRandom() * titles[level].length)]}`,
       botName: bot.name,
       channelId: bot.discord?.channelId || bot.slack?.channelId,
       status: 'active',
@@ -273,8 +274,8 @@ export class DemoActivitySimulatorService {
     const cyclePosition = (elapsed / 60000) % 1;
     const hourOfDay = new Date().getHours();
     const todMultiplier = this.getTimeOfDayMultiplier(hourOfDay);
-    const hasSpike = Math.random() < 0.05;
-    const spikeMul = hasSpike ? 1.5 + Math.random() * 0.5 : 1;
+    const hasSpike = secureRandom() < 0.05;
+    const spikeMul = hasSpike ? 1.5 + secureRandom() * 0.5 : 1;
 
     const cpu = (15 + Math.sin(cyclePosition * Math.PI * 2) * 10) * todMultiplier;
     const mem = (45 + Math.sin(cyclePosition * Math.PI * 4) * 15) * (0.8 + todMultiplier * 0.4);
@@ -282,24 +283,24 @@ export class DemoActivitySimulatorService {
 
     return {
       timestamp: timestamp || new Date().toISOString(),
-      responseTime: Math.random() * 500 + 100 + (hasSpike ? 200 : 0),
-      memoryUsage: Math.max(20, Math.min(85, mem + (Math.random() - 0.5) * 10)),
-      cpuUsage: Math.max(5, Math.min(60, cpu * spikeMul + (Math.random() - 0.5) * 8)),
-      activeConnections: Math.floor(3 + msgRate + (Math.random() - 0.5) * 2),
-      messageRate: Math.max(0, msgRate * spikeMul + (Math.random() - 0.5) * 0.5),
-      errorRate: hasSpike ? Math.random() * 0.1 : Math.random() * 0.02,
+      responseTime: secureRandom() * 500 + 100 + (hasSpike ? 200 : 0),
+      memoryUsage: Math.max(20, Math.min(85, mem + (secureRandom() - 0.5) * 10)),
+      cpuUsage: Math.max(5, Math.min(60, cpu * spikeMul + (secureRandom() - 0.5) * 8)),
+      activeConnections: Math.floor(3 + msgRate + (secureRandom() - 0.5) * 2),
+      messageRate: Math.max(0, msgRate * spikeMul + (secureRandom() - 0.5) * 0.5),
+      errorRate: hasSpike ? secureRandom() * 0.1 : secureRandom() * 0.02,
     };
   }
 
   private generateProcessingTime(): number {
-    const r = Math.random();
+    const r = secureRandom();
     if (r < 0.6) {
-      return Math.random() * 400 + 100;
+      return secureRandom() * 400 + 100;
     }
     if (r < 0.9) {
-      return Math.random() * 1000 + 500;
+      return secureRandom() * 1000 + 500;
     }
-    return Math.random() * 1500 + 1500;
+    return secureRandom() * 1500 + 1500;
   }
 
   private getTimeOfDayMultiplier(hour: number): number {

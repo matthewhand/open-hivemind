@@ -1,5 +1,6 @@
 import { DemoActivitySimulatorService } from '../../../src/services/demo/DemoActivitySimulator';
 import type { DemoBot } from '../../../src/services/demo/DemoConstants';
+import * as secureRandomModule from '../../../src/utils/secureRandom';
 
 function makeDemoBot(overrides: Partial<DemoBot> = {}): DemoBot {
   return {
@@ -84,7 +85,7 @@ describe('DemoActivitySimulatorService', () => {
     });
 
     it('should generate message events and performance metrics on timers', () => {
-      jest.spyOn(Math, 'random').mockReturnValue(0.5);
+      jest.spyOn(secureRandomModule, 'secureRandom').mockReturnValue(0.5);
 
       service.startActivitySimulation();
 
@@ -101,7 +102,7 @@ describe('DemoActivitySimulatorService', () => {
     });
 
     it('should record metrics to MetricsCollector every 5s', () => {
-      jest.spyOn(Math, 'random').mockReturnValue(0.1);
+      jest.spyOn(secureRandomModule, 'secureRandom').mockReturnValue(0.1);
 
       service.startActivitySimulation();
 
@@ -116,7 +117,7 @@ describe('DemoActivitySimulatorService', () => {
 
     it('should occasionally generate alerts', () => {
       // Force random < 0.1 to trigger alert generation
-      jest.spyOn(Math, 'random').mockReturnValue(0.05);
+      jest.spyOn(secureRandomModule, 'secureRandom').mockReturnValue(0.05);
 
       service.startActivitySimulation();
 
@@ -146,7 +147,7 @@ describe('DemoActivitySimulatorService', () => {
 
   describe('reset', () => {
     it('should stop simulation and clear threads', () => {
-      jest.spyOn(Math, 'random').mockReturnValue(0.5);
+      jest.spyOn(secureRandomModule, 'secureRandom').mockReturnValue(0.5);
 
       service.startActivitySimulation();
       jest.advanceTimersByTime(10000);

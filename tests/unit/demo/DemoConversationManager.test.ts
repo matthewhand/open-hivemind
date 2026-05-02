@@ -1,5 +1,6 @@
 import type { DemoConversation, DemoMessage } from '../../../src/services/demo/DemoConstants';
 import { DemoConversationManager } from '../../../src/services/demo/DemoConversationManager';
+import * as secureRandomModule from '../../../src/utils/secureRandom';
 
 describe('DemoConversationManager', () => {
   let manager: DemoConversationManager;
@@ -162,7 +163,7 @@ describe('DemoConversationManager', () => {
     });
 
     it('should return a scenario response for non-greeting/non-help messages', () => {
-      jest.spyOn(Math, 'random').mockReturnValue(0);
+      jest.spyOn(secureRandomModule, 'secureRandom').mockReturnValue(0);
       const response = manager.generateDemoResponse('What config options?', 'BotA');
       expect(response.length).toBeGreaterThan(0);
       // The first scenario response
