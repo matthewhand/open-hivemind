@@ -19,14 +19,21 @@ jest.mock('../../../src/managers/BotManager', () => ({
   },
 }));
 
-jest.mock('../../../src/config/BotConfigurationManager', () => ({
-  BotConfigurationManager: {
-    getInstance: () => ({
-      getAllBots: () => [],
-      getWarnings: () => [],
-    }),
-  },
-}));
+jest.mock('../../../src/config/BotConfigurationManager', () => {
+  const bots: any[] = [];
+  return {
+    BotConfigurationManager: {
+      getInstance: () => ({
+        getAllBots: () => bots,
+        getWarnings: () => [],
+        setBots: (b: any[]) => {
+          bots.length = 0;
+          bots.push(...b);
+        },
+      }),
+    },
+  };
+});
 
 jest.mock('../../../src/events/MessageBus', () => ({
   MessageBus: {
@@ -62,9 +69,8 @@ describe('BroadcastService', () => {
   let broadcastService: BroadcastService;
 
   beforeEach(() => {
-    // @ts-ignore - reset singleton
     const { BotConfigurationManager } = require('../../../src/config/BotConfigurationManager');
-    BotConfigurationManager.getInstance().getAllBots = () => [];
+    BotConfigurationManager.getInstance().setBots([]);
 
     connectionManager = {
       getIo: jest.fn().mockReturnValue({ emit: jest.fn() }),
@@ -160,16 +166,20 @@ describe('BroadcastService', () => {
   });
 
   describe('getMessageRateHistory', () => {
-    it('should return a number array', () => {
+    it('should reflect recent message flow rate', () => {
+      broadcastService.recordMessageFlow({
+        botName: 'TestBot',
+        provider: 'discord',
+        channelId: 'ch-1',
+        userId: 'u-1',
+        messageType: 'incoming',
+        contentLength: 100,
+        status: 'success',
+      });
+
       const history = broadcastService.getMessageRateHistory();
       expect(Array.isArray(history)).toBe(true);
-    });
-  });
-
-  describe('getErrorRateHistory', () => {
-    it('should return a number array', () => {
-      const history = broadcastService.getErrorRateHistory();
-      expect(Array.isArray(history)).toBe(true);
+      expect(history[history.length - 1]).toBeGreaterThan(0);
     });
   });
 
@@ -198,9 +208,26 @@ describe('BroadcastService', () => {
   });
 
   describe('getAllBotStats', () => {
-    it('should return stats for all bots', () => {
+    it('should return bot name keys with messageCount and errorCount', () => {
+      const { BotConfigurationManager } = require('../../../src/config/BotConfigurationManager');
+      BotConfigurationManager.getInstance().setBots([{ name: 'BotA' }, { name: 'BotB' }]);
+
+      broadcastService.recordMessageFlow({
+        botName: 'BotA',
+        provider: 'discord',
+        channelId: 'ch-1',
+        userId: 'u-1',
+        messageType: 'incoming',
+        contentLength: 100,
+        status: 'success',
+      });
+
       const stats = broadcastService.getAllBotStats();
-      expect(typeof stats).toBe('object');
+      expect(Object.keys(stats)).toContain('BotA');
+      expect(Object.keys(stats)).toContain('BotB');
+      expect(stats.BotA.messageCount).toBe(1);
+      expect(stats.BotA.errorCount).toBe(0);
+      expect(stats.BotB.messageCount).toBe(0);
     });
   });
 

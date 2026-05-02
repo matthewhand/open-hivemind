@@ -113,17 +113,15 @@ describe('MetricCalculator', () => {
   });
 
   describe('getPerformanceMetrics', () => {
-    it('should respect the limit parameter', () => {
+    it('should respect the limit parameter and default to empty', () => {
+      expect(calculator.getPerformanceMetrics()).toEqual([]);
+
       for (let i = 0; i < 20; i++) {
         calculator.calculateSystemMetric(i);
       }
 
       expect(calculator.getPerformanceMetrics(5).length).toBe(5);
       expect(calculator.getPerformanceMetrics(100).length).toBe(20);
-    });
-
-    it('should return empty array when no metrics have been calculated', () => {
-      expect(calculator.getPerformanceMetrics()).toEqual([]);
     });
   });
 
