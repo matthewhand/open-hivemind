@@ -8,6 +8,7 @@ import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import ProviderConfigManager from '@config/ProviderConfigManager';
 import { SecureConfigManager } from '@config/SecureConfigManager';
 import { UserConfigStore } from '@config/UserConfigStore';
+import type { MCPConfig } from '../mcp/MCPService';
 import { webUIStorage } from '../storage/webUIStorage';
 import { ErrorUtils } from '../types/errors';
 import { checkBotEnvOverrides } from '../utils/envUtils';
@@ -154,7 +155,7 @@ export class BotManager extends EventEmitter {
       persona: (bot.persona as string) || 'default',
 
       systemInstruction: bot.systemInstruction as string,
-      mcpServers: (bot.mcpServers as string[]) || [],
+      mcpServers: (bot.mcpServers as MCPConfig[]) || [],
 
       mcpGuard: (bot.mcpGuard as any) || { enabled: false, type: 'owner' },
       envOverrides: checkBotEnvOverrides(name),

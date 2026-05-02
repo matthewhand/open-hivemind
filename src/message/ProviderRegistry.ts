@@ -32,7 +32,7 @@ let initialized = false;
 function isValidServiceFactory(obj: unknown): obj is { getInstance: () => IMessengerService } {
   return (
     typeof obj === 'function' &&
-    'getInstance' in (obj as Record<string, unknown>) &&
+    'getInstance' in (obj as unknown as Record<string, unknown>) &&
     typeof (obj as any).getInstance === 'function'
   );
 }

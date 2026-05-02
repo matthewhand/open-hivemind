@@ -55,7 +55,7 @@ export class ApprovalRepository {
       id: row.id as number,
       resourceType: row.resourceType as string,
       resourceId: row.resourceId as number,
-      changeType: row.changeType as string,
+      changeType: row.changeType as 'CREATE' | 'UPDATE' | 'DELETE',
       requestedBy: row.requestedBy as string,
       diff: row.diff as string,
       status: row.status as 'pending' | 'approved' | 'rejected',

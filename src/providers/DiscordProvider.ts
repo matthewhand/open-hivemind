@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
 import { DiscordService } from '@hivemind/message-discord';
+import type { IMessage } from '@message/interfaces/IMessage';
 import discordConfig, { type DiscordConfig } from '../config/discordConfig';
 import type { IBotInfo } from '../types/botInfo';
 import { type IMessageProvider } from '../types/IProvider';
@@ -16,9 +17,9 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
   type = 'messenger' as const;
   docsUrl = 'https://discord.com/developers/applications';
   helpText = 'Create a Discord application, add a bot, and copy the bot token from the Bot tab.';
-  private discordService: DiscordService;
+  private discordService: InstanceType<typeof DiscordService>;
 
-  constructor(discordService?: DiscordService) {
+  constructor(discordService?: InstanceType<typeof DiscordService>) {
     this.discordService = discordService || (DiscordService as any).getInstance();
   }
 

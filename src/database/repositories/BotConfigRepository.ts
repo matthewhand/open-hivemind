@@ -617,12 +617,12 @@ export class BotConfigRepository {
       id: row.id as number | undefined,
       botConfigurationId: row.botConfigurationId as number,
       action: row.action as 'CREATE' | 'UPDATE' | 'DELETE' | 'ACTIVATE' | 'DEACTIVATE',
-      oldValues: decryptVal(row.oldValues),
-      newValues: decryptVal(row.newValues),
+      oldValues: decryptVal(row.oldValues) ?? undefined,
+      newValues: decryptVal(row.newValues) ?? undefined,
       performedBy: row.performedBy as string | undefined,
       performedAt: new Date(row.performedAt as string | number | Date),
-      ipAddress: row.ipAddress as string | undefined,
-      userAgent: row.userAgent as string | undefined,
+      ipAddress: row.ipAddress != null ? (row.ipAddress as string) : undefined,
+      userAgent: row.userAgent != null ? (row.userAgent as string) : undefined,
     };
   }
 

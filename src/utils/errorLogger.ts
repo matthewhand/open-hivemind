@@ -378,11 +378,14 @@ export class ErrorLogger {
 
     // Emit structured log for monitoring systems
 
-    process.emit('hivemind:log' as any, {
-      type: 'error',
-      level,
-      entry: logEntry,
-    });
+    process.emit(
+      'hivemind:log' as any,
+      {
+        type: 'error',
+        level,
+        entry: logEntry,
+      } as any
+    );
   }
 
   /**
@@ -428,12 +431,15 @@ export class ErrorLogger {
     if (count > 10 && count % 10 === 0) {
       this.debug(`Error spike detected for type ${errorType}: ${count} occurrences`);
 
-      process.emit('hivemind:alert' as any, {
-        type: 'error_spike',
-        errorType,
-        count,
-        timestamp: new Date().toISOString(),
-      });
+      process.emit(
+        'hivemind:alert' as any,
+        {
+          type: 'error_spike',
+          errorType,
+          count,
+          timestamp: new Date().toISOString(),
+        } as any
+      );
     }
 
     // Check for repeated errors from same correlation ID
@@ -444,12 +450,15 @@ export class ErrorLogger {
     if (recentErrors > 5) {
       this.debug(`High error rate detected: ${recentErrors} errors in last minute`);
 
-      process.emit('hivemind:alert' as any, {
-        type: 'high_error_rate',
-        count: recentErrors,
-        timeframe: '1 minute',
-        timestamp: new Date().toISOString(),
-      });
+      process.emit(
+        'hivemind:alert' as any,
+        {
+          type: 'high_error_rate',
+          count: recentErrors,
+          timeframe: '1 minute',
+          timestamp: new Date().toISOString(),
+        } as any
+      );
     }
   }
 

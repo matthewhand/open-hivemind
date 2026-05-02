@@ -45,9 +45,9 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
   docsUrl = 'https://api.slack.com/apps';
   helpText =
     'Create a Slack app, enable Socket Mode or Events, and generate the bot and app tokens.';
-  private slackService: SlackService;
+  private slackService: InstanceType<typeof SlackService>;
 
-  constructor(slackService?: SlackService) {
+  constructor(slackService?: InstanceType<typeof SlackService>) {
     this.slackService = slackService || SlackService.getInstance();
   }
 
@@ -436,13 +436,14 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
         })
       );
 
-      const checkedBots = botStatuses.map((r) =>
-        r.status === 'fulfilled'
-          ? r.value
-          : { name: 'unknown', connected: false, error: 'Health check failed' }
+      const checkedBots = botStatuses.map(
+        (r: PromiseSettledResult<{ name: string; connected: boolean; error?: string }>) =>
+          r.status === 'fulfilled'
+            ? r.value
+            : { name: 'unknown', connected: false, error: 'Health check failed' }
       );
 
-      const connectedCount = checkedBots.filter((b) => b.connected).length;
+      const connectedCount = checkedBots.filter((b: { connected: boolean }) => b.connected).length;
       const totalCount = botNames.length;
 
       let status: 'healthy' | 'degraded' | 'down';
@@ -455,8 +456,8 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
       }
 
       const errors = checkedBots
-        .filter((b): b is typeof b & { error: string } => !!b.error)
-        .map((b) => b.error);
+        .filter((b: { error?: string }): b is { error: string } & typeof b => !!b.error)
+        .map((b) => b.error as string);
 
       return {
         status,
