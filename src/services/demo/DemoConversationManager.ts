@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { secureRandom } from '../../utils/secureRandom';
 import { MESSAGE_SCENARIOS, type DemoConversation, type DemoMessage } from './DemoConstants';
 
 /**
@@ -68,7 +69,7 @@ export class DemoConversationManager {
     if (lowerMessage.includes('help')) {
       return 'Open-Hivemind offers multi-platform bots, multiple LLM providers, MCP integration, and personas. Configure API keys to unlock full functionality!';
     }
-    const randomIndex = Math.floor(Math.random() * MESSAGE_SCENARIOS.length);
+    const randomIndex = Math.floor(secureRandom() * MESSAGE_SCENARIOS.length);
     const scenario = MESSAGE_SCENARIOS[randomIndex];
     return scenario.response;
   }

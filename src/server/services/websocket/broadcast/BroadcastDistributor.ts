@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import type { Socket } from 'socket.io';
 import { DeliveryStatus, type MessageEnvelope } from '../../../../types/websocket';
 import { type ConnectionManager } from '../ConnectionManager';
@@ -53,7 +54,7 @@ export class BroadcastDistributor {
       deliveryStatus: DeliveryStatus.SENT,
     } as any;
 
-    (envelope as any).id = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    (envelope as any).id = `msg-${Date.now()}-${crypto.randomUUID()}`;
 
     this.messageTracker.trackMessage(envelope);
     this.broadcast(event, envelope);
