@@ -207,6 +207,21 @@ export class DemoActivitySimulatorService {
   }
 
   private createMessageFlowEventForWS(timestamp?: string): MessageFlowEvent {
+    if (this.demoBots.length === 0) {
+      return {
+        id: `demo-msg-${Date.now()}-${crypto.randomUUID()}`,
+        timestamp: timestamp || new Date().toISOString(),
+        botName: 'demo',
+        provider: 'discord',
+        llmProvider: 'openai',
+        channelId: 'demo-channel',
+        userId: 'demo-user',
+        messageType: 'outgoing',
+        contentLength: 0,
+        processingTime: undefined,
+        status: 'success',
+      };
+    }
     const bot = this.demoBots[Math.floor(Math.random() * this.demoBots.length)];
     const processingTime = this.generateProcessingTime();
     const hasError = Math.random() < 0.05;
@@ -235,6 +250,19 @@ export class DemoActivitySimulatorService {
   }
 
   private createAlertEventForWS(timestamp?: string): AlertEvent {
+    if (this.demoBots.length === 0) {
+      return {
+        id: `demo-alert-${Date.now()}-${crypto.randomUUID()}`,
+        timestamp: timestamp || new Date().toISOString(),
+        level: 'info',
+        title: 'Demo Alert',
+        message: 'Demo alert placeholder',
+        botName: 'demo',
+        channelId: 'demo-channel',
+        status: 'active',
+        metadata: { isDemo: true },
+      };
+    }
     const bot = this.demoBots[Math.floor(Math.random() * this.demoBots.length)];
     const levels: Array<'info' | 'warning' | 'error' | 'critical'> = [
       'info',
@@ -269,6 +297,17 @@ export class DemoActivitySimulatorService {
   }
 
   private createPerformanceMetric(timestamp?: string): PerformanceMetric {
+    if (this.demoBots.length === 0) {
+      return {
+        timestamp: timestamp || new Date().toISOString(),
+        responseTime: 0,
+        memoryUsage: 0,
+        cpuUsage: 0,
+        activeConnections: 0,
+        messageRate: 0,
+        errorRate: 0,
+      };
+    }
     const elapsed = Date.now() - (this.activitySimulator.simulationStartTime || Date.now());
     const cyclePosition = (elapsed / 60000) % 1;
     const hourOfDay = new Date().getHours();

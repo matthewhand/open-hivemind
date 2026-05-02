@@ -208,12 +208,7 @@ describe('DemoActivitySimulatorService', () => {
   });
 
   describe('seed with empty bots', () => {
-    it('should not throw with empty bot list', () => {
-      // seedHistoricalData calls createMessageFlowEventForWS which accesses
-      // this.demoBots[Math.floor(Math.random() * this.demoBots.length)]
-      // With empty bots, this accesses undefined. The implementation does NOT
-      // guard against this, so we verify that behavior.
-      // Instead, verify that startActivitySimulation with empty bots early-returns:
+    it('should seed historical data without crashing', () => {
       const emptyService = new DemoActivitySimulatorService(
         [],
         mockMetricsCollector,
@@ -221,10 +216,13 @@ describe('DemoActivitySimulatorService', () => {
         mockWsService
       );
 
-      emptyService.startActivitySimulation();
-      jest.advanceTimersByTime(30000);
-      // No message events should be generated
-      expect(mockWsService.recordMessageFlow).not.toHaveBeenCalled();
+      expect(() => emptyService.seedHistoricalData()).not.toThrow();
+      // Should still seed metrics
+      expect(mockMetricsCollector.recordMetric).toHaveBeenCalled();
+      // Should still generate fallback message events
+      expect(mockWsService.recordMessageFlow).toHaveBeenCalled();
+      // Should still generate fallback alerts
+      expect(mockWsService.recordAlert).toHaveBeenCalled();
     });
   });
 });
