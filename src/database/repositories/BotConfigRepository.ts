@@ -1,4 +1,3 @@
-/* eslint-disable max-lines */
 import Debug from 'debug';
 import { encryptionService } from '../EncryptionService';
 import type {
@@ -103,7 +102,6 @@ export class BotConfigRepository {
 
   private mapRowToBotConfiguration(row: Record<string, unknown>): BotConfiguration {
     // Hydrate JSON strings into objects if necessary (SQLite strings vs Postgres JSON)
-
     const parseIfString = (val: unknown): any => (typeof val === 'string' ? JSON.parse(val) : val);
 
     return {
@@ -277,7 +275,6 @@ export class BotConfigRepository {
       if (!db) throw new Error('Database not available');
 
       const updateFields: string[] = [];
-
       const values: any[] = [];
 
       Object.entries(config).forEach(([key, value]) => {
@@ -507,7 +504,6 @@ export class BotConfigRepository {
       if (!db) throw new Error('Database not available');
 
       // Audit logs contain full JSON snaps of config - encrypt them!
-
       const encryptVal = (val: any) => (val ? encryptionService.encrypt(val) : val);
 
       const result = await db.run(

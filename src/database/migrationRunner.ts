@@ -21,7 +21,7 @@ export class CustomDbStorage {
         'SELECT name FROM umzug_migrations ORDER BY name ASC'
       );
       return rows.map((r) => r.name);
-    } catch {
+    } catch (e) {
       // In case table creation failed or isn't available yet
       return [];
     }
@@ -45,24 +45,20 @@ export const runMigrations = async (db: IDatabase, isPostgres: boolean): Promise
   const migrations = [
     {
       name: '000_initial_schema.ts',
-
       up: async ({ context }: { context: { db: IDatabase; isPostgres: boolean } }) => {
         const { up } = await import('./migrations/000_initial_schema');
         await up(context);
       },
-
       down: async () => {
         // Not implemented for baseline
       },
     },
     {
       name: '001_add_missing_indexes.ts',
-
       up: async ({ context }: { context: { db: IDatabase; isPostgres: boolean } }) => {
         const { up } = await import('./migrations/001_add_missing_indexes');
         await up(context);
       },
-
       down: async ({ context }: { context: { db: IDatabase; isPostgres: boolean } }) => {
         const { down } = await import('./migrations/001_add_missing_indexes');
         await down(context);

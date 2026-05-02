@@ -69,7 +69,7 @@ export const up = async ({ db, isPostgres }: { db: IDatabase; isPostgres: boolea
       await db.exec(
         'ALTER TABLE bot_metrics ADD CONSTRAINT bot_metrics_name_unique UNIQUE (botName)'
       );
-    } catch {}
+    } catch (e) {}
   }
 
   await db.exec(`
