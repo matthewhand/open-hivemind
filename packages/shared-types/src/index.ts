@@ -62,3 +62,11 @@ export { http, createHttpClient, HttpError, isHttpError } from './httpClient';
 export type { RequestOptions, HttpClientInstance } from './httpClient';
 export { randomId, randomUuid, cryptoJitter } from './randomId';
 export { SwarmClaim } from './ISwarmClaim';
+export { logger, SharedLogger, type LoggerInstance } from './logger';
+export {
+  sanitizeHTML,
+  sanitizeText,
+  sanitizeURL,
+  sanitizeObject,
+  SANITIZE_CONFIG,
+} from './xssSanitizer';
