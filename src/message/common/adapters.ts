@@ -1,4 +1,4 @@
-import type { IMessage } from '@src/message/interfaces/IMessage';
+import type { IMessage } from '@hivemind/shared-types';
 import type { ICommonMessage } from './commonTypes';
 
 /**

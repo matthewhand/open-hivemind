@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import type { IMessengerService } from '@hivemind/shared-types';
 import { instantiateMessageService, loadPlugin } from '@src/plugins/PluginLoader';
-import type { IMessengerService } from '../interfaces/IMessengerService';
 
 const gmpDebug = require('debug')('app:getMessengerProvider');
 

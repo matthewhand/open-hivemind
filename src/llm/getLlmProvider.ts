@@ -1,4 +1,5 @@
 import Debug from 'debug';
+import type { ILlmProvider, IMessage } from '@hivemind/shared-types';
 import { getLlmProfileByKey } from '@src/config/llmProfiles';
 import ProviderConfigManager from '@src/config/ProviderConfigManager';
 import { UserConfigStore } from '@src/config/UserConfigStore';
@@ -7,8 +8,6 @@ import { instantiateLlmProvider, loadPlugin } from '@src/plugins/PluginLoader';
 import { SyncProviderRegistry } from '@src/registries/SyncProviderRegistry';
 import type { IConfigAccessor } from '@src/types/configAccessor';
 import llmConfig from '@config/llmConfig';
-import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
-import type { IMessage } from '@message/interfaces/IMessage';
 
 const debug = Debug('app:getLlmProvider');
 

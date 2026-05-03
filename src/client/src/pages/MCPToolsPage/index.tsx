@@ -5,7 +5,9 @@ import ToolResultModal from '../../components/ToolResultModal';
 import { ToolRegistryPanel, ToolExecutionPanel } from '../../components/mcp-tools';
 import ToolResultHistory from '../../components/ToolResultHistory';
 import { useMCPTools } from './hooks/useMCPTools';
-import PageHeader from './components/PageHeader';
+import PageHeader from '../../components/DaisyUI/PageHeader';
+import { Wrench, Clock } from 'lucide-react';
+import Button from '../../components/DaisyUI/Button';
 import ExecutionHistoryModal from './components/ExecutionHistoryModal';
 
 const MCPToolsPage: React.FC = () => {
@@ -23,7 +25,16 @@ const MCPToolsPage: React.FC = () => {
 
   return (
     <div className="p-6">
-      <PageHeader onShowHistory={() => { setShowHistory(true); fetchHistory(); }} />
+      <PageHeader 
+        title="MCP Tools" 
+        description="Browse and manage tools available from your MCP servers"
+        icon={Wrench}
+        actions={
+          <Button variant="outline" size="sm" onClick={() => { setShowHistory(true); fetchHistory(); }}>
+            <Clock className="w-4 h-4 mr-1" /> Execution History
+          </Button>
+        }
+      />
       {alert && <div className="mb-6"><Alert status={alert.type === 'success' ? 'success' : 'error'} message={alert.message} onClose={() => setAlert(null)} /></div>}
       <ToolRegistryPanel
         tools={tools} filteredTools={filteredTools} loading={loading} favorites={favorites} recentlyUsed={recentlyUsed}

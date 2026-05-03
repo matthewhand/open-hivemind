@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
 import express, { type Application } from 'express';
+import type { IMessage, IMessengerService } from '@hivemind/shared-types';
 import type { KnownBlock } from '@slack/web-api';
 import BotConfigurationManager from '@src/config/BotConfigurationManager';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
@@ -19,8 +20,6 @@ import { createErrorResponse } from '@src/utils/errorResponse';
 // Routing
 import messageConfig from '@config/messageConfig';
 import slackConfig from '@config/slackConfig';
-import type { IMessage } from '@message/interfaces/IMessage';
-import type { IMessengerService } from '@message/interfaces/IMessengerService';
 import { computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
 import { Logger } from '@common/logger';
 import { SlackBotFacade, type ISlackBotFacade } from './modules/ISlackBotFacade';

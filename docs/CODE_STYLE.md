@@ -233,7 +233,7 @@ import { type IMessage, type IMessageHandler } from '@message/interfaces/IMessag
 import { config } from '@config/ConfigurationManager';
 
 // Also acceptable
-import type { IMessage } from '@message/interfaces/IMessage';
+import type { IMessage } from '@hivemind/shared-types';
 ```
 
 ## Documentation

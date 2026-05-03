@@ -1,4 +1,4 @@
-import { IMessage } from '@message/interfaces/IMessage';
+import { IMessage } from '@hivemind/shared-types';
 import { InputSanitizer, sanitizeMessageText } from '@common/security/inputSanitizer';
 
 // Define proper Slack message interfaces

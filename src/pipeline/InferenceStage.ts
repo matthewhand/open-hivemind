@@ -17,9 +17,9 @@
  */
 
 import Debug from 'debug';
+import type { IMessage } from '@hivemind/shared-types';
 import { type MessageBus } from '@src/events/MessageBus';
 import type { MessageContext } from '@src/events/types';
-import type { IMessage } from '@message/interfaces/IMessage';
 import { DatabaseManager } from '../database/DatabaseManager';
 import { sendErrorAlertMessage } from '../managers/botLifecycle';
 import { BotManager } from '../managers/BotManager';

@@ -1,9 +1,8 @@
 /* eslint-disable max-lines */
 import crypto from 'crypto';
 import Debug from 'debug';
+import type { IMessage, IMessengerService } from '@hivemind/shared-types';
 import { recordBotActivity } from '@message/helpers/processing/ChannelActivity';
-import type { IMessage } from '@message/interfaces/IMessage';
-import type { IMessengerService } from '@message/interfaces/IMessengerService';
 import { getMessengerProvider } from '@message/management/getMessengerProvider';
 
 const log = Debug('app:idleResponseManager');

@@ -1,7 +1,7 @@
 import type { EventEmitter } from 'events';
 import Debug from 'debug';
+import type { IMessengerService } from '@hivemind/shared-types';
 import type { SecureConfigManager } from '@config/SecureConfigManager';
-import type { IMessengerService } from '../message/interfaces/IMessengerService';
 import { getMessengerServiceByProvider } from '../message/ProviderRegistry';
 import { BotMetricsService } from '../server/services/BotMetricsService';
 import { ErrorUtils } from '../types/errors';

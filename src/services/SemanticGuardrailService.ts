@@ -1,7 +1,7 @@
+import type { ILlmProvider } from '@hivemind/shared-types';
 import type { SemanticGuardrailConfig } from '@src/config/guardrailProfiles';
 import { getLlmProfileByKey } from '@src/config/llmProfiles';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
-import type { ILlmProvider } from '@src/llm/interfaces/ILlmProvider';
 import Logger from '@common/logger';
 
 const logger = Logger.withContext('SemanticGuardrailService');

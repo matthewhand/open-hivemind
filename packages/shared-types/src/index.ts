@@ -28,7 +28,13 @@ export type {
   GetLlmProvidersFn,
 } from './IServiceDependencies';
 export type { IAdapterFactory, IAdapterConfig, IAdapterModule } from './IAdapterFactory';
-export type { ILlmProvider } from './ILlmProvider';
+export type {
+  ILlmProvider,
+  LlmToolCall,
+  LlmChatMessage,
+  LlmToolDefinition,
+  LlmToolCompletionResult,
+} from './ILlmProvider';
 export type {
   IMemoryProvider,
   MemoryEntry,

@@ -1,3 +1,4 @@
+import type { IMessage } from '@hivemind/shared-types';
 import { getQuotaManager } from '@src/middleware/quotaMiddleware';
 import {
   normalizeLlmProviderType,
@@ -6,7 +7,6 @@ import {
 import { MemoryManager } from '@src/services/MemoryManager';
 import { toolAugmentedCompletion } from '@src/services/toolAugmentedCompletion';
 import { generateChatCompletionDirect } from '@integrations/openwebui/directClient';
-import type { IMessage } from '@message/interfaces/IMessage';
 import { trimHistoryToTokenBudget } from '../helpers/processing/HistoryBudgeter';
 import { buildSystemPromptWithBotName } from './messageHandler';
 import type { MessageContext } from './types';

@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { IMessage } from '@message/interfaces/IMessage';
+import { IMessage } from '@hivemind/shared-types';
 
 /**
  * Synthetic message implementation for system-generated responses.

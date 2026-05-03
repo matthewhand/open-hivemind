@@ -7,6 +7,7 @@
  * happy path, skip path, error path, validation rejection, and tracing.
  */
 
+import { IMessage } from '@hivemind/shared-types';
 import { MessageBus } from '@src/events/MessageBus';
 import type { MessageContext, MessageEvents } from '@src/events/types';
 import { PipelineTracer } from '@src/observability/PipelineTracer';
@@ -24,7 +25,6 @@ import {
   type PromptBuilder,
 } from '@src/pipeline';
 import { SwarmCoordinator } from '@src/services/SwarmCoordinator';
-import { IMessage } from '@message/interfaces/IMessage';
 
 // ---------------------------------------------------------------------------
 // StubMessage

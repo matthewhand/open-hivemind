@@ -8,8 +8,8 @@
  * @module pipeline/adapters/MessageSenderAdapter
  */
 
+import type { IMessengerService } from '@hivemind/shared-types';
 import type { MessageSender } from '@src/pipeline/SendStage';
-import type { IMessengerService } from '@message/interfaces/IMessengerService';
 
 /**
  * Dependencies required by the MessageSenderAdapter.

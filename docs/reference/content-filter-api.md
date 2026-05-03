@@ -220,7 +220,7 @@ Pattern matching with obfuscation detection.
 
 ```typescript
 import { ContentFilterService } from '@src/services/ContentFilterService';
-import type { IMessage } from '@src/message/interfaces/IMessage';
+import type { IMessage } from '@hivemind/shared-types';
 
 async function processMessage(message: IMessage, botConfig: any) {
   const contentFilter = ContentFilterService.getInstance();

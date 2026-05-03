@@ -14,7 +14,7 @@
 import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
-import type { IMessengerService } from './interfaces/IMessengerService';
+import type { IMessengerService } from '@hivemind/shared-types';
 
 const debug = Debug('app:ProviderRegistry');
 

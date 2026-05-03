@@ -1,10 +1,9 @@
 import Debug from 'debug';
 import { Router } from 'express';
+import { IMessage, type ILlmProvider } from '@hivemind/shared-types';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { getLlmProfileByKey } from '../../config/llmProfiles';
 import { UserConfigStore } from '../../config/UserConfigStore';
-import type { ILlmProvider } from '../../llm/interfaces/ILlmProvider';
-import { IMessage } from '../../message/interfaces/IMessage';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { instantiateLlmProvider, loadPlugin } from '../../plugins/PluginLoader';
 import { HTTP_STATUS } from '../../types/constants';

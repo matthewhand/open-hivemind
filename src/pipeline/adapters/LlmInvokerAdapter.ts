@@ -9,9 +9,9 @@
  * @module pipeline/adapters/LlmInvokerAdapter
  */
 
+import type { IMessage } from '@hivemind/shared-types';
 import { getLlmProviderForBot } from '@src/llm/getLlmProvider';
 import type { LlmInvoker } from '@src/pipeline/InferenceStage';
-import type { IMessage } from '@message/interfaces/IMessage';
 
 /**
  * Dependencies required by the LlmInvokerAdapter.

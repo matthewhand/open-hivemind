@@ -1,7 +1,7 @@
 // src/message/common/chatHistory.ts
 
 import Debug from 'debug';
-import type { IMessage } from '@src/message/interfaces/IMessage';
+import type { IMessage } from '@hivemind/shared-types';
 import { Logger } from '@common/logger';
 import { takeWithinWindow } from '@common/slidingWindow';
 

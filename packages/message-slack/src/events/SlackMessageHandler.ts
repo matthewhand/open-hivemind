@@ -1,8 +1,8 @@
 import Debug from 'debug';
+import type { IMessage } from '@hivemind/shared-types';
 import type { KnownBlock } from '@slack/web-api';
 import { getLlmProvider } from '@src/llm/getLlmProvider';
 import messageConfig from '@config/messageConfig';
-import type { IMessage } from '@message/interfaces/IMessage';
 import { computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
 import type SlackMessage from '../SlackMessage';
 

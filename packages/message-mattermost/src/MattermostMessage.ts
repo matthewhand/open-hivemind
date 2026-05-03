@@ -1,4 +1,4 @@
-import { IMessage } from '@message/interfaces/IMessage';
+import { IMessage } from '@hivemind/shared-types';
 
 export interface MattermostPost {
   id: string;

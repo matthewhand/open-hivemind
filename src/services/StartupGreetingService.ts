@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import { inject, injectable, singleton } from 'tsyringe';
+import type { IMessengerService } from '@hivemind/shared-types';
 import messageConfig from '@config/messageConfig';
-import type { IMessengerService } from '@message/interfaces/IMessengerService';
 import Logger from '@common/logger';
 import { GreetingStateManager } from './GreetingStateManager';
 

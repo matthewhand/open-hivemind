@@ -7,7 +7,7 @@
 import Debug from 'debug';
 import { OpenAI, type ClientOptions } from 'openai';
 import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
-import type { IMessage } from '@src/message/interfaces/IMessage';
+import type { IMessage } from '@hivemind/shared-types';
 import { ConfigurationError, type BaseHivemindError } from '@src/types/errorClasses';
 import { ErrorUtils, type HivemindError } from '@src/types/errors';
 import {

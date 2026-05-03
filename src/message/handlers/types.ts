@@ -1,5 +1,5 @@
+import type { IMessage } from '@hivemind/shared-types';
 import type { BotConfig } from '@src/types/config';
-import type { IMessage } from '@message/interfaces/IMessage';
 
 /**
  * Extended bot configuration including legacy and platform-specific keys

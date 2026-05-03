@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import type { IMessage } from '@src/message/interfaces/IMessage';
+import type { IMessage } from '@hivemind/shared-types';
 
 const debug = Debug('app:validateMessage');
 

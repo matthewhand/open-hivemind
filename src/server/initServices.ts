@@ -6,6 +6,7 @@
  * demo mode, anomaly detection, and webhook registration.
  */
 import debug from 'debug';
+import type { IMessage } from '@hivemind/shared-types';
 import { loadLlmProfiles } from '@src/config/llmProfiles';
 import { loadMemoryProfiles } from '@src/config/memoryProfiles';
 import { loadToolProfiles } from '@src/config/toolProfiles';
@@ -26,7 +27,6 @@ import * as debugEnvVarsModule from '@config/debugEnvVars';
 import * as messageConfigModule from '@config/messageConfig';
 import * as webhookConfigModule from '@config/webhookConfig';
 import { getLlmProvider } from '@llm/getLlmProvider';
-import type { IMessage } from '@message/interfaces/IMessage';
 import * as messengerProviderModule from '@message/management/getMessengerProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 import Logger from '@common/logger';

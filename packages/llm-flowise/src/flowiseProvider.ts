@@ -1,7 +1,6 @@
 import Debug from 'debug';
+import type { ILlmProvider, IMessage } from '@hivemind/shared-types';
 import flowiseConfig from '@config/flowiseConfig';
-import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
-import type { IMessage } from '@message/interfaces/IMessage';
 import { getFlowiseResponse } from './flowiseRestClient';
 import { getFlowiseSdkResponse } from './flowiseSdkClient';
 
