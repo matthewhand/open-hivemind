@@ -48,6 +48,8 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
   private slackService: InstanceType<typeof SlackService>;
 
   constructor(slackService?: InstanceType<typeof SlackService>) {
+  constructor(slackService?: any) {
+>>>>>>> 14b838258 (security: lock down exposed resource routes and add Discord test endpoint)
     this.slackService = slackService || SlackService.getInstance();
   }
 
@@ -436,6 +438,10 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
         })
       );
 
+<<<<<<< HEAD
+      const checkedBots = botStatuses.map(
+        (r: PromiseSettledResult<{ name: string; connected: boolean; error?: string }>) =>
+          r.status === 'fulfilled'
       const checkedBots = botStatuses.map(
         (r: PromiseSettledResult<{ name: string; connected: boolean; error?: string }>) =>
           r.status === 'fulfilled'
@@ -444,6 +450,8 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
       );
 
       const connectedCount = checkedBots.filter((b: { connected: boolean }) => b.connected).length;
+      const connectedCount = checkedBots.filter((b: any) => b.connected).length;
+>>>>>>> 14b838258 (security: lock down exposed resource routes and add Discord test endpoint)
       const totalCount = botNames.length;
 
       let status: 'healthy' | 'degraded' | 'down';
@@ -456,16 +464,17 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
       }
 
       const errors = checkedBots
+<<<<<<< HEAD
         .filter((b: { error?: string }): b is { error: string } & typeof b => !!b.error)
         .map((b) => b.error as string);
+=======
+        .filter((b: any): b is any & { error: string } => !!b.error)
+        .map((b: any) => b.error);
+>>>>>>> 14b838258 (security: lock down exposed resource routes and add Discord test endpoint)
 
-      return {
-        status,
-        connected: connectedCount > 0,
-        lastPing: new Date(),
-        details: `${connectedCount}/${totalCount} bot(s) connected`,
-        error: errors.length > 0 ? errors.join('; ') : undefined,
-      };
+      const errors = checkedBots
+        .filter((b: { error?: string }): b is { error: string } & typeof b => !!b.error)
+        .map((b) => b.error as string);
     } catch (e: unknown) {
       const errMsg = e instanceof Error ? e.message : String(e);
       debug(`[SlackProvider] Health check failed: ${errMsg}`);

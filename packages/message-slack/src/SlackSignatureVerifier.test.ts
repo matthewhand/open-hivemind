@@ -4,11 +4,7 @@ import { SlackSignatureVerifier } from './SlackSignatureVerifier';
 
 const SIGNING_SECRET = 'test-signing-secret';
 
-const buildSignature = (
-  ts: string,
-  body: string,
-  secret: string = SIGNING_SECRET,
-): string =>
+const buildSignature = (ts: string, body: string, secret: string = SIGNING_SECRET): string =>
   `v0=${crypto.createHmac('sha256', secret).update(`v0:${ts}:${body}`).digest('hex')}`;
 
 const mockRes = () => {
@@ -27,7 +23,7 @@ const mockRes = () => {
 const mockReq = (
   headers: Record<string, string | undefined>,
   body: unknown,
-  rawBody?: string,
+  rawBody?: string
 ): Request => {
   const req = { headers, body } as unknown as Request & { rawBody?: string };
   if (rawBody !== undefined) {
@@ -48,11 +44,7 @@ describe('SlackSignatureVerifier', () => {
   describe('header validation', () => {
     it('rejects with 400 when x-slack-request-timestamp is missing', () => {
       const res = mockRes();
-      verifier.verify(
-        mockReq({ 'x-slack-signature': 'v0=abc' }, {}),
-        res,
-        next,
-      );
+      verifier.verify(mockReq({ 'x-slack-signature': 'v0=abc' }, {}), res, next);
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.send).toHaveBeenCalledWith('Bad Request');
       expect(next).not.toHaveBeenCalled();
@@ -61,11 +53,7 @@ describe('SlackSignatureVerifier', () => {
     it('rejects with 400 when x-slack-signature is missing', () => {
       const res = mockRes();
       const ts = String(Math.floor(Date.now() / 1000));
-      verifier.verify(
-        mockReq({ 'x-slack-request-timestamp': ts }, {}),
-        res,
-        next,
-      );
+      verifier.verify(mockReq({ 'x-slack-request-timestamp': ts }, {}), res, next);
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.send).toHaveBeenCalledWith('Bad Request');
       expect(next).not.toHaveBeenCalled();
@@ -84,10 +72,10 @@ describe('SlackSignatureVerifier', () => {
             'x-slack-signature': buildSignature(staleTs, body),
           },
           {},
-          body,
+          body
         ),
         res,
-        next,
+        next
       );
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.send).toHaveBeenCalledWith('Bad Request: stale timestamp');
@@ -105,10 +93,10 @@ describe('SlackSignatureVerifier', () => {
             'x-slack-signature': buildSignature(futureTs, body),
           },
           {},
-          body,
+          body
         ),
         res,
-        next,
+        next
       );
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.send).toHaveBeenCalledWith('Bad Request: stale timestamp');
@@ -122,10 +110,10 @@ describe('SlackSignatureVerifier', () => {
             'x-slack-request-timestamp': 'not-a-number',
             'x-slack-signature': 'v0=abc',
           },
-          {},
+          {}
         ),
         res,
-        next,
+        next
       );
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.send).toHaveBeenCalledWith('Bad Request: stale timestamp');
@@ -142,10 +130,10 @@ describe('SlackSignatureVerifier', () => {
         mockReq(
           { 'x-slack-request-timestamp': ts, 'x-slack-signature': sig },
           JSON.parse(rawBody),
-          rawBody,
+          rawBody
         ),
         res,
-        next,
+        next
       );
       expect(next).toHaveBeenCalledTimes(1);
       expect(res.status).not.toHaveBeenCalled();
@@ -157,12 +145,9 @@ describe('SlackSignatureVerifier', () => {
       const sig = buildSignature(ts, JSON.stringify(body));
       const res = mockRes();
       verifier.verify(
-        mockReq(
-          { 'x-slack-request-timestamp': ts, 'x-slack-signature': sig },
-          body,
-        ),
+        mockReq({ 'x-slack-request-timestamp': ts, 'x-slack-signature': sig }, body),
         res,
-        next,
+        next
       );
       expect(next).toHaveBeenCalledTimes(1);
     });
@@ -173,13 +158,9 @@ describe('SlackSignatureVerifier', () => {
       const forged = buildSignature(ts, body, 'attacker-secret');
       const res = mockRes();
       verifier.verify(
-        mockReq(
-          { 'x-slack-request-timestamp': ts, 'x-slack-signature': forged },
-          {},
-          body,
-        ),
+        mockReq({ 'x-slack-request-timestamp': ts, 'x-slack-signature': forged }, {}, body),
         res,
-        next,
+        next
       );
       expect(res.status).toHaveBeenCalledWith(403);
       expect(res.send).toHaveBeenCalledWith('Forbidden: Invalid signature');
@@ -193,13 +174,9 @@ describe('SlackSignatureVerifier', () => {
       const sig = buildSignature(ts, signedBody);
       const res = mockRes();
       verifier.verify(
-        mockReq(
-          { 'x-slack-request-timestamp': ts, 'x-slack-signature': sig },
-          {},
-          tamperedBody,
-        ),
+        mockReq({ 'x-slack-request-timestamp': ts, 'x-slack-signature': sig }, {}, tamperedBody),
         res,
-        next,
+        next
       );
       expect(res.status).toHaveBeenCalledWith(403);
     });
@@ -215,10 +192,10 @@ describe('SlackSignatureVerifier', () => {
             'x-slack-signature': 'v0=short',
           },
           {},
-          body,
+          body
         ),
         res,
-        next,
+        next
       );
       expect(res.status).toHaveBeenCalledWith(403);
       expect(next).not.toHaveBeenCalled();
@@ -230,13 +207,9 @@ describe('SlackSignatureVerifier', () => {
       const body = JSON.stringify({ ok: true });
       const sig = buildSignature(ts, body);
       verifier.verify(
-        mockReq(
-          { 'x-slack-request-timestamp': ts, 'x-slack-signature': sig },
-          {},
-          body,
-        ),
+        mockReq({ 'x-slack-request-timestamp': ts, 'x-slack-signature': sig }, {}, body),
         mockRes(),
-        next,
+        next
       );
       expect(spy).toHaveBeenCalledTimes(1);
       const [a, b] = spy.mock.calls[0] as [Buffer, Buffer];

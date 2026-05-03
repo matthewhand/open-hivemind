@@ -50,11 +50,11 @@ const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) =>
     setStats(daisyUITracker.getStats());
   };
 
+  const componentUsageMap = useMemo(() => new Map(stats.componentUsage.map(u => [u.component, u])), [stats.componentUsage]);
   if (!stats) {return null;}
 
   const usagePercentage = Math.round((stats.usedComponents / stats.totalComponents) * 100);
   const suggestions = daisyUITracker.getSuggestions();
-  const componentUsageMap = useMemo(() => new Map(stats.componentUsage.map(u => [u.component, u])), [stats.componentUsage]);
 
 
   return (

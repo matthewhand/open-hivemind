@@ -1,4 +1,3 @@
-/* eslint-disable max-lines */
 /**
  * Error Logging System for Open Hivemind
  *
@@ -12,7 +11,6 @@ import { MetricsCollector } from '../monitoring/MetricsCollector';
 import { BaseHivemindError } from '../types/errorClasses';
 import { ErrorUtils, type HivemindError } from '../types/errors';
 
-// eslint-disable-next-line unused-imports/no-unused-vars
 const debug = Debug('app:utils:errorLogger');
 
 /**
@@ -298,13 +296,10 @@ export class ErrorLogger {
   private getErrorType(error: HivemindError): string {
     if (error && typeof error === 'object') {
       // Check for source property first (for frontend errors)
-
       if ('source' in error && (error as any).source === 'frontend') {
         return 'frontend';
       }
-
       // Check for type property
-
       if ('type' in error && (error as any).type) {
         return String((error as any).type);
       }
@@ -377,8 +372,6 @@ export class ErrorLogger {
     }
 
     // Emit structured log for monitoring systems
-
-    process.emit(
       'hivemind:log' as any,
       {
         type: 'error',

@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import Debug from 'debug';
 import type {
   BotConfiguration,
@@ -354,6 +355,61 @@ export class BotConfigRepository extends BotConfigRepositoryBase {
 
   async createBotConfigurationAudit(audit: BotConfigurationAudit): Promise<number> {
     return this.auditRepo.createBotConfigurationAudit(audit);
+  }
+        val ? encryptionService.encrypt(String(val)) : null;
+
+      const result = await db.run(
+        `
+        INSERT INTO bot_configuration_audit (
+          botConfigurationId, action, oldValues, newValues, performedBy,
+          performedAt, ipAddress, userAgent
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+        [
+          audit.botConfigurationId,
+          audit.action,
+          encryptVal(audit.oldValues),
+          encryptVal(audit.newValues),
+          audit.performedBy,
+          (audit.performedAt || new Date()).toISOString(),
+          audit.ipAddress,
+          audit.userAgent,
+        ]
+      );
+
+      debug(`Bot configuration audit created with ID: ${result.lastID}`);
+      return Number(result.lastID);
+    } catch (error) {
+      debug('Error creating bot configuration audit:', error);
+      throw new Error(`Failed to create bot configuration audit: ${error}`);
+    }
+  }
+
+  private mapRowToBotConfigurationAudit(row: Record<string, unknown>): BotConfigurationAudit {
+    const decryptVal = (val: unknown): string | null => {
+      if (!val) {
+        return null;
+      }
+      try {
+        return encryptionService.decrypt(String(val));
+      } catch (error) {
+        debug('Failed to decrypt audit row field (id=%s): %O', row.id, error);
+        return null;
+      }
+    };
+
+    return {
+      id: row.id as number | undefined,
+      botConfigurationId: row.botConfigurationId as number,
+      action: row.action as 'CREATE' | 'UPDATE' | 'DELETE' | 'ACTIVATE' | 'DEACTIVATE',
+      oldValues: decryptVal(row.oldValues) as string | undefined,
+      newValues: decryptVal(row.newValues) as string | undefined,
+      performedBy: row.performedBy as string | undefined,
+      performedAt: new Date(row.performedAt as string | number | Date),
+      ipAddress: row.ipAddress as string | undefined,
+      userAgent: row.userAgent as string | undefined,
+    };
+>>>>>>> 14b838258 (security: lock down exposed resource routes and add Discord test endpoint)
   }
 
   async getBotConfigurationAudit(botConfigurationId: number): Promise<BotConfigurationAudit[]> {

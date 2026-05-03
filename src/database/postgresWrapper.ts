@@ -46,7 +46,9 @@ export class PostgresWrapper implements IDatabase {
     let inString = false;
     for (let i = 0; i < sql.length; i++) {
       const char = sql[i];
-      if (char === "'") inString = !inString;
+      if (char === "'") {
+        inString = !inString;
+      }
       if (char === '?' && !inString) {
         translated += '$' + index++;
       } else {
@@ -63,7 +65,10 @@ export class PostgresWrapper implements IDatabase {
   }
 
   private mapRow(row: any): any {
-    if (!row) return row;
+    if (!row) {
+      return row;
+    }
+
     const mapped: any = {};
     for (const key of Object.keys(row)) {
       // Map known lowercase keys to camelCase
@@ -129,7 +134,7 @@ export class PostgresWrapper implements IDatabase {
 
   async run(
     sql: string,
-    params: any[] = []
+    params: unknown[] = []
   ): Promise<{ lastID: number | string; changes: number }> {
     const translatedSql = this.translateSql(sql);
 
@@ -149,13 +154,13 @@ export class PostgresWrapper implements IDatabase {
     };
   }
 
-  async all<T = any>(sql: string, params: any[] = []): Promise<T[]> {
+  async all<T = any>(sql: string, params: unknown[] = []): Promise<T[]> {
     const translatedSql = this.translateSql(sql);
     const result = await this.pool.query(translatedSql, params);
-    return result.rows.map((row: any) => this.mapRow(row)) as T[];
+    return result.rows.map((row) => this.mapRow(row)) as T[];
   }
 
-  async get<T = any>(sql: string, params: any[] = []): Promise<T | undefined> {
+  async get<T = any>(sql: string, params: unknown[] = []): Promise<T | undefined> {
     const translatedSql = this.translateSql(sql);
     const result = await this.pool.query(translatedSql, params);
     return this.mapRow(result.rows[0]) as T | undefined;

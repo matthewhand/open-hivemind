@@ -69,7 +69,7 @@ export const up = async ({ db, isPostgres }: { db: IDatabase; isPostgres: boolea
       await db.exec(
         'ALTER TABLE bot_metrics ADD CONSTRAINT bot_metrics_name_unique UNIQUE (botName)'
       );
-    } catch {}
+    } catch (_e) {}
   }
 
   await db.exec(`
@@ -373,8 +373,8 @@ export const up = async ({ db, isPostgres }: { db: IDatabase; isPostgres: boolea
       await db.exec(
         `CREATE INDEX IF NOT EXISTS idx_memories_embedding ON memories USING hnsw (embedding vector_cosine_ops)`
       );
-    } catch (e) {
-      console.warn('Failed to create HNSW index for vector memory (ignoring):', e);
+    } catch (_e) {
+      console.warn('Failed to create HNSW index for vector memory (ignoring):', _e);
     }
   }
 };
