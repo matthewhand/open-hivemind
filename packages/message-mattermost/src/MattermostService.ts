@@ -629,6 +629,30 @@ export class MattermostService extends EventEmitter implements IMessengerService
     }
   }
 
+  public async getChannels(
+    botName?: string
+  ): Promise<Array<{ id: string; name: string; type?: string }>> {
+    const targetBot = botName || Array.from(this.clients.keys())[0];
+    const client = this.clients.get(targetBot);
+
+    if (!client) {
+      return [];
+    }
+
+    try {
+      // Fetch public and private channels
+      const channels = await client.getChannels();
+      return (channels || []).map((c: any) => ({
+        id: c.id,
+        name: c.display_name || c.name || c.id,
+        type: c.type === 'O' ? 'public' : c.type === 'P' ? 'private' : 'channel',
+      }));
+    } catch (error) {
+      debug(`Failed to fetch Mattermost channels for ${botName}: ${error}`);
+      return [];
+    }
+  }
+
   public getDelegatedServices(): Array<{
     serviceName: string;
     messengerService: IMessengerService;
@@ -679,6 +703,8 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
         sendTyping: async (channelId: string, senderName?: string, threadId?: string) =>
           this.sendTyping(channelId, senderName || name, threadId),
+
+        getChannels: async (botName?: string) => this.getChannels(botName || name),
 
         supportsChannelPrioritization: this.supportsChannelPrioritization,
         scoreChannel: this.scoreChannel ? (cid) => this.scoreChannel!(cid) : undefined,

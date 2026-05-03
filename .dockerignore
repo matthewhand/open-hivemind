@@ -1,3 +1,63 @@
-node_modules
-dist
+# Git history
 .git
+.github
+
+# Tests
+tests/
+**/__tests__/
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+
+# Docs and archives
+docs/
+archive/
+*.md
+!README.md
+
+# Dev tooling
+.claude/
+.jules/
+.qwen/
+.serena/
+.cursor/
+.vscode/
+.idea/
+
+# Dependency directories
+node_modules/
+
+# TypeScript compiled output
+dist/
+
+# Environment files
+.env
+.env.*
+
+# Logs
+*.log
+logs/
+
+# Coverage directory
+coverage/
+.nyc_output
+
+# Temporary and cache files
+.cache/
+.parcel-cache/
+.next/
+out/
+.nuxt/
+.temp/
+.rpt2_cache/
+.eslintcache/
+*.tsbuildinfo
+
+# Test results
+playwright-report/
+test-results/
+
+# Local configuration
+docker-compose.override.yml
+config/

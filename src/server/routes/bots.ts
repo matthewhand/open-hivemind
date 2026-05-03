@@ -12,6 +12,7 @@ import {
   BotHistoryQuerySchema,
   BotIdParamSchema,
   BotImportSchema,
+  BotMessageSchema,
   BotTaskCreateSchema,
   BotTestChatSchema,
   BotVersionParamSchema,
@@ -349,6 +350,75 @@ router.post(
 
     await manager.stopBot(id);
     return res.json(ApiResponse.success());
+  })
+);
+
+/**
+ * @openapi
+ * /api/bots/{id}/channels:
+ *   get:
+ *     summary: Get channels the bot is listening on
+ *     tags: [Bots]
+ */
+router.get(
+  '/:id/channels',
+  validateRequest(BotIdParamSchema),
+  asyncErrorHandler(async (req: Request, res: Response) => {
+    const manager = await managerPromise;
+    const { id } = req.params;
+
+    const bot = await manager.getBot(id);
+    if (!bot) {
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
+    }
+
+    const { getMessengerServiceByProvider } = await import('../../message/ProviderRegistry');
+    const provider = await getMessengerServiceByProvider(bot.messageProvider);
+
+    if (!provider || typeof (provider as any).getChannels !== 'function') {
+      return res.json(ApiResponse.success([]));
+    }
+
+    const channels = await (provider as any).getChannels(bot.name);
+    return res.json(ApiResponse.success(channels));
+  })
+);
+
+/**
+ * @openapi
+ * /api/bots/{id}/message:
+ *   post:
+ *     summary: Send a message as the bot
+ *     tags: [Bots]
+ */
+router.post(
+  '/:id/message',
+  validateRequest(BotMessageSchema),
+  asyncErrorHandler(async (req: Request, res: Response) => {
+    const manager = await managerPromise;
+    const { id } = req.params;
+    const { channelId, message } = req.body;
+
+    const bot = await manager.getBot(id);
+    if (!bot) {
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
+    }
+
+    const { getMessengerServiceByProvider } = await import('../../message/ProviderRegistry');
+    const provider = await getMessengerServiceByProvider(bot.messageProvider);
+
+    if (!provider) {
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json(ApiResponse.error('Message provider not found'));
+    }
+
+    const messageId = await provider.sendMessageToChannel(channelId, message, bot.name);
+    return res.json(ApiResponse.success({ messageId }));
   })
 );
 

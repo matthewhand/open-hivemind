@@ -7,8 +7,8 @@ import { withRetry } from '../../../utils/withRetry';
 export const useBotPreview = (): {
   previewBot: BotConfig | null;
   setPreviewBot: React.Dispatch<React.SetStateAction<BotConfig | null>>;
-  previewTab: 'activity' | 'chat' | 'validation' | 'testdrive';
-  setPreviewTab: React.Dispatch<React.SetStateAction<'activity' | 'chat' | 'validation' | 'testdrive'>>;
+  previewTab: 'activity' | 'chat' | 'validation' | 'testdrive' | 'message';
+  setPreviewTab: React.Dispatch<React.SetStateAction<'activity' | 'chat' | 'validation' | 'testdrive' | 'message'>>;
   activityLogs: any[];
   chatHistory: any[];
   logFilter: string;
@@ -20,7 +20,7 @@ export const useBotPreview = (): {
   handlePreviewBot: (bot: BotConfig) => Promise<void>;
 } => {
   const [previewBot, setPreviewBot] = useState<BotConfig | null>(null);
-  const [previewTab, setPreviewTab] = useState<'activity' | 'chat' | 'validation' | 'testdrive'>('activity');
+  const [previewTab, setPreviewTab] = useState<'activity' | 'chat' | 'validation' | 'testdrive' | 'message'>('activity');
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [logFilter, setLogFilter] = useState('');
