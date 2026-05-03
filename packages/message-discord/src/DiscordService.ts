@@ -106,6 +106,40 @@ export class DiscordService extends EventEmitter implements IMessengerService {
     return this.botManager.getClient(index);
   }
 
+  public async getChannels(
+    botName?: string
+  ): Promise<Array<{ id: string; name: string; type?: string }>> {
+    const bots = botName
+      ? ([this.botManager.getBotByName(botName)].filter(Boolean) as Bot[])
+      : this.botManager.getAllBots();
+
+    const channels: Array<{ id: string; name: string; type?: string }> = [];
+    const seenIds = new Set<string>();
+
+    for (const bot of bots) {
+      if (!bot.client.isReady()) continue;
+
+      const botChannels = bot.client.channels.cache;
+      for (const [id, channel] of botChannels) {
+        if (seenIds.has(id)) continue;
+
+        // Filter for text-like channels the bot can see
+        if (channel.isTextBased()) {
+          const c = channel as any;
+          const name = c.name || c.recipient?.username || id;
+          channels.push({
+            id,
+            name,
+            type: channel.constructor.name.replace('Channel', '').toLowerCase(),
+          });
+          seenIds.add(id);
+        }
+      }
+    }
+
+    return channels;
+  }
+
   public async initialize(): Promise<void> {
     await this.botManager.initializeBots();
     const bots = this.botManager.getAllBots();
@@ -590,6 +624,8 @@ export class DiscordService extends EventEmitter implements IMessengerService {
         },
 
         getMessagesFromChannel: async (channelId: string) => this.getMessagesFromChannel(channelId),
+
+        getChannels: async (botName?: string) => this.getChannels(botName || bot.botUserName),
 
         sendPublicAnnouncement: async (channelId: string, announcement: any) =>
           this.sendPublicAnnouncement(channelId, announcement),

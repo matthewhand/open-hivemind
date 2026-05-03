@@ -1,31 +1,61 @@
-/* eslint-disable max-lines */
 import Debug from 'debug';
+import { encryptionService } from '../EncryptionService';
 import type {
   BotConfiguration,
   BotConfigurationAudit,
   BotConfigurationVersion,
   IDatabase as Database,
 } from '../types';
-import {
-  BotConfigAuditRepository,
-  BotConfigRepositoryBase,
-  BotConfigVersionRepository,
-} from './BotConfigSupportRepository';
+import { BotConfigAuditRepository, BotConfigVersionRepository } from './BotConfigSupportRepository';
 
 const debug = Debug('app:BotConfigRepository');
 
 /**
- * Repository responsible for bot-configuration CRUD operations.
- * Delegating version and audit logic to specialized support repositories.
+ * Repository responsible for bot-configuration, version, and audit CRUD operations.
  */
-export class BotConfigRepository extends BotConfigRepositoryBase {
-  private versionRepo: BotConfigVersionRepository;
+export class BotConfigRepository {
   private auditRepo: BotConfigAuditRepository;
+  private versionRepo: BotConfigVersionRepository;
 
-  constructor(getDb: () => Database | null, ensureConnected: () => void) {
-    super(getDb, ensureConnected);
-    this.versionRepo = new BotConfigVersionRepository(getDb, ensureConnected);
+  constructor(
+    private getDb: () => Database | null,
+    private ensureConnected: () => void
+  ) {
     this.auditRepo = new BotConfigAuditRepository(getDb, ensureConnected);
+    this.versionRepo = new BotConfigVersionRepository(getDb, ensureConnected);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------------
+
+  private readonly sensitiveFields = [
+    'discord',
+    'slack',
+    'mattermost',
+    'openai',
+    'flowise',
+    'openwebui',
+    'openswarm',
+  ];
+
+  private encryptField(val: unknown): string | null {
+    if (val && typeof val === 'object') {
+      return encryptionService.encrypt(JSON.stringify(val));
+    }
+    return val ? String(val) : null;
+  }
+
+  private decryptField(val: unknown): unknown {
+    if (!val || typeof val !== 'string') {
+      return val;
+    }
+    const decrypted = encryptionService.decrypt(val);
+    try {
+      return JSON.parse(decrypted);
+    } catch {
+      return decrypted;
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -82,6 +112,11 @@ export class BotConfigRepository extends BotConfigRepositoryBase {
   }
 
   private mapRowToBotConfiguration(row: Record<string, unknown>): BotConfiguration {
+    // Hydrate JSON strings into objects if necessary (SQLite strings vs Postgres JSON)
+
+    const parseIfString = (val: unknown): unknown =>
+      typeof val === 'string' ? JSON.parse(val) : val;
+
     return {
       id: row.id as number,
       name: row.name as string,
@@ -89,8 +124,8 @@ export class BotConfigRepository extends BotConfigRepositoryBase {
       llmProvider: row.llmProvider as string,
       persona: row.persona as string | undefined,
       systemInstruction: row.systemInstruction as string | undefined,
-      mcpServers: row.mcpServers ? (this.parseIfString(row.mcpServers) as any) : undefined,
-      mcpGuard: row.mcpGuard ? (this.parseIfString(row.mcpGuard) as any) : undefined,
+      mcpServers: row.mcpServers ? (parseIfString(row.mcpServers) as any) : undefined,
+      mcpGuard: row.mcpGuard ? (parseIfString(row.mcpGuard) as any) : undefined,
       discord: this.decryptField(row.discord) as any,
       slack: this.decryptField(row.slack) as any,
       mattermost: this.decryptField(row.mattermost) as any,
@@ -217,8 +252,8 @@ export class BotConfigRepository extends BotConfigRepositoryBase {
       const configIds = configs.map((config) => config.id);
 
       const [versionsMap, auditMap] = await Promise.all([
-        this.versionRepo.getBotConfigurationVersionsBulk(configIds),
-        this.auditRepo.getBotConfigurationAuditBulk(configIds),
+        this.getBotConfigurationVersionsBulk(configIds),
+        this.getBotConfigurationAuditBulk(configIds),
       ]);
 
       return configs.map((row) => {
@@ -235,6 +270,11 @@ export class BotConfigRepository extends BotConfigRepositoryBase {
     }
   }
 
+  // Allow-list of column names that may be UPDATE'd. Anything outside this
+  // list is dropped silently. Defense against SQL identifier injection from
+  // any caller that passes user-supplied keys via `Partial<BotConfiguration>`
+  // (e.g. ConfigImporter). The TypeScript type alone is not enough — `as any`
+  // casts elsewhere can smuggle arbitrary keys through.
   private static readonly UPDATABLE_COLUMNS = new Set<string>([
     'name',
     'messageProvider',
@@ -264,6 +304,7 @@ export class BotConfigRepository extends BotConfigRepositoryBase {
       }
 
       const updateFields: string[] = [];
+
       const values: unknown[] = [];
 
       Object.entries(config).forEach(([key, value]) => {
@@ -327,7 +368,7 @@ export class BotConfigRepository extends BotConfigRepositoryBase {
   }
 
   // ---------------------------------------------------------------------------
-  // Versioning & Audit (Delegated)
+  // Bot Configuration Versions
   // ---------------------------------------------------------------------------
 
   async createBotConfigurationVersion(version: BotConfigurationVersion): Promise<number> {
@@ -353,63 +394,12 @@ export class BotConfigRepository extends BotConfigRepositoryBase {
     return this.versionRepo.deleteBotConfigurationVersion(botConfigurationId, version);
   }
 
+  // ---------------------------------------------------------------------------
+  // Bot Configuration Audit
+  // ---------------------------------------------------------------------------
+
   async createBotConfigurationAudit(audit: BotConfigurationAudit): Promise<number> {
     return this.auditRepo.createBotConfigurationAudit(audit);
-  }
-        val ? encryptionService.encrypt(String(val)) : null;
-
-      const result = await db.run(
-        `
-        INSERT INTO bot_configuration_audit (
-          botConfigurationId, action, oldValues, newValues, performedBy,
-          performedAt, ipAddress, userAgent
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `,
-        [
-          audit.botConfigurationId,
-          audit.action,
-          encryptVal(audit.oldValues),
-          encryptVal(audit.newValues),
-          audit.performedBy,
-          (audit.performedAt || new Date()).toISOString(),
-          audit.ipAddress,
-          audit.userAgent,
-        ]
-      );
-
-      debug(`Bot configuration audit created with ID: ${result.lastID}`);
-      return Number(result.lastID);
-    } catch (error) {
-      debug('Error creating bot configuration audit:', error);
-      throw new Error(`Failed to create bot configuration audit: ${error}`);
-    }
-  }
-
-  private mapRowToBotConfigurationAudit(row: Record<string, unknown>): BotConfigurationAudit {
-    const decryptVal = (val: unknown): string | null => {
-      if (!val) {
-        return null;
-      }
-      try {
-        return encryptionService.decrypt(String(val));
-      } catch (error) {
-        debug('Failed to decrypt audit row field (id=%s): %O', row.id, error);
-        return null;
-      }
-    };
-
-    return {
-      id: row.id as number | undefined,
-      botConfigurationId: row.botConfigurationId as number,
-      action: row.action as 'CREATE' | 'UPDATE' | 'DELETE' | 'ACTIVATE' | 'DEACTIVATE',
-      oldValues: decryptVal(row.oldValues) as string | undefined,
-      newValues: decryptVal(row.newValues) as string | undefined,
-      performedBy: row.performedBy as string | undefined,
-      performedAt: new Date(row.performedAt as string | number | Date),
-      ipAddress: row.ipAddress as string | undefined,
-      userAgent: row.userAgent as string | undefined,
-    };
->>>>>>> 14b838258 (security: lock down exposed resource routes and add Discord test endpoint)
   }
 
   async getBotConfigurationAudit(botConfigurationId: number): Promise<BotConfigurationAudit[]> {

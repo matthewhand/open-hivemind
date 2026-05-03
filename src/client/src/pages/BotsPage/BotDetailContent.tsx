@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Bot, Activity, MessageSquare, AlertCircle, RefreshCw, Globe, Cpu, Download, Play, Pause, Settings, ShieldCheck, FlaskConical
+  Bot, Activity, MessageSquare, AlertCircle, RefreshCw, Globe, Cpu, Download, Play, Pause, Settings, ShieldCheck, FlaskConical, Send
 } from 'lucide-react';
 import type { BotConfig } from '../../types/bot';
 import Button from '../../components/DaisyUI/Button';
@@ -14,11 +14,12 @@ import Input from '../../components/DaisyUI/Input';
 import Join from '../../components/DaisyUI/Join';
 import BotResponseTimeline from '../../components/BotResponseTimeline';
 import BotTestDriveTab from './BotTestDriveTab';
+import BotChannelMessenger from '../../components/BotManagement/BotChannelMessenger';
 
 interface BotDetailContentProps {
   previewBot: BotConfig | null;
-  previewTab: 'activity' | 'chat' | 'validation' | 'testdrive';
-  setPreviewTab: (tab: 'activity' | 'chat' | 'validation' | 'testdrive') => void;
+  previewTab: 'activity' | 'chat' | 'validation' | 'testdrive' | 'message';
+  setPreviewTab: (tab: 'activity' | 'chat' | 'validation' | 'testdrive' | 'message') => void;
   activityLogs: any[];
   chatHistory: any[];
   logFilter: string;
@@ -142,12 +143,13 @@ export const BotDetailContent: React.FC<BotDetailContentProps> = ({
       <Tabs
         tabs={[
           { key: 'activity', label: <span className="text-xs uppercase font-bold">Activity</span>, icon: <Activity className="w-3 h-3" />, color: 'info' as const },
+          { key: 'message', label: <span className="text-xs uppercase font-bold">Message</span>, icon: <Send className="w-3 h-3" />, color: 'secondary' as const },
           { key: 'chat', label: <span className="text-xs uppercase font-bold">Chat</span>, icon: <MessageSquare className="w-3 h-3" />, color: 'primary' as const },
           { key: 'testdrive', label: <span className="text-xs uppercase font-bold">Test Drive</span>, icon: <FlaskConical className="w-3 h-3" />, color: 'warning' as const },
           { key: 'validation', label: <span className="text-xs uppercase font-bold">Validation</span>, icon: <ShieldCheck className="w-3 h-3" />, color: 'success' as const },
         ]}
         activeTab={previewTab}
-        onChange={(key) => setPreviewTab(key as 'activity' | 'chat' | 'validation' | 'testdrive')}
+        onChange={(key) => setPreviewTab(key as any)}
         variant="boxed"
         size="sm"
         className="flex-nowrap"
@@ -217,6 +219,11 @@ export const BotDetailContent: React.FC<BotDetailContentProps> = ({
             </div>
           )}
         </div>
+      )}
+
+      {/* Message Tab */}
+      {previewTab === 'message' && (
+        <BotChannelMessenger botId={previewBot.id} botName={previewBot.name} />
       )}
 
       {/* Validation Panel */}

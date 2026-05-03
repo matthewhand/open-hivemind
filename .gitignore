@@ -180,6 +180,15 @@ test-results/archive/
 # Note: test-results/archive/ is different from repo archive/
 *.archive
 
+# Local scratch files and notes
+.domain
+.domain.*
+.domains.local
+/fix_*.sh
+/patch_*.sh
+/patch*.js
+/fix_minimatch.js
+
 .claude/
 .qwen/
 .vercel

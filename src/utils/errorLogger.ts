@@ -372,6 +372,7 @@ export class ErrorLogger {
     }
 
     // Emit structured log for monitoring systems
+    process.emit(
       'hivemind:log' as any,
       {
         type: 'error',
