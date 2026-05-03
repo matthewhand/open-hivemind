@@ -146,6 +146,34 @@ export default class MattermostClient {
     }
   }
 
+  async getTeams(): Promise<Team[]> {
+    try {
+      if (this.teamsCache && Date.now() - this.teamsCache.timestamp < this.CACHE_TTL) {
+        return this.teamsCache.data;
+      }
+      const teams = await this.api.get<Team[]>('/users/me/teams');
+      this.teamsCache = { data: teams, timestamp: Date.now() };
+      return teams;
+    } catch (error) {
+      logger.error('Failed to fetch teams', { error });
+      return [];
+    }
+  }
+
+  async getChannels(): Promise<Channel[]> {
+    try {
+      const teams = await this.getTeams();
+      const channelPromises = teams.map((team) =>
+        this.api.get<Channel[]>(`/users/me/teams/${team.id}/channels`)
+      );
+      const results = await Promise.all(channelPromises);
+      return results.flat();
+    } catch (error) {
+      logger.error('Failed to fetch channels', { error });
+      return [];
+    }
+  }
+
   private async resolveChannelId(channel: string): Promise<string> {
     if (channel.match(/^[a-z0-9]{26}$/)) {
       return channel;
