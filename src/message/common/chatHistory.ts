@@ -49,10 +49,17 @@ export class ChatHistory {
       debug('ERROR:', '[ChatHistory] Invalid timeframe provided:', timeframe);
       return [];
     }
-    const currentTime = Date.now();
-    const recentMessages = this.history.filter(
-      (msg) => currentTime - msg.getTimestamp().getTime() <= timeframe
-    );
+    const threshold = Date.now() - timeframe;
+    let keepCount = 0;
+    for (let i = this.history.length - 1; i >= 0; i--) {
+      if (this.history[i].getTimestamp().getTime() < threshold) break;
+      keepCount++;
+    }
+    const recentMessages =
+      keepCount === this.history.length
+        ? [...this.history]
+        : this.history.slice(this.history.length - keepCount);
+
     logger.debug('Recent messages retrieved', {
       messageIds: recentMessages.map((m) => m.getMessageId()),
       count: recentMessages.length,
@@ -67,7 +74,18 @@ export class ChatHistory {
   public clearOldMessages(cutoffTime: number): void {
     const cutoffDate = new Date(Date.now() - cutoffTime);
     const initialLength = this.history.length;
-    this.history = this.history.filter((msg) => msg.getTimestamp() > cutoffDate);
+
+    let keepCount = 0;
+    for (let i = this.history.length - 1; i >= 0; i--) {
+      if (this.history[i].getTimestamp() <= cutoffDate) break;
+      keepCount++;
+    }
+
+    this.history =
+      keepCount === this.history.length
+        ? this.history
+        : this.history.slice(this.history.length - keepCount);
+
     const clearedMessages = initialLength - this.history.length;
     logger.debug('Old messages cleared', {
       clearedCount: clearedMessages,
