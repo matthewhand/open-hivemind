@@ -6,18 +6,24 @@ test.describe('Full Journey: Smart Sequence', () => {
 
   test('Execute full system journey and verify dashboard', async ({ page, request }) => {
     console.log('🚀 Starting Smart Sequence E2E (API Setup + UI Verification)');
-    
+
     // 1. Auth Setup
     await setupTestWithErrorDetection(page);
 
     const jwtSecret = process.env.JWT_SECRET || 'open-hivemind-test-secret-123';
     const fakeToken = require('jsonwebtoken').sign(
-      { exp: Math.floor(Date.now() / 1000) + 3600, username: 'admin', userId: 'admin', role: 'admin', permissions: ['*'] },
+      {
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        username: 'admin',
+        userId: 'admin',
+        role: 'admin',
+        permissions: ['*'],
+      },
       jwtSecret
     );
     const authHeaders = {
-      'Authorization': `Bearer ${fakeToken}`,
-      'Content-Type': 'application/json'
+      Authorization: `Bearer ${fakeToken}`,
+      'Content-Type': 'application/json',
     };
 
     // Step 1: Add LLM Provider via API
@@ -28,8 +34,8 @@ test.describe('Full Journey: Smart Sequence', () => {
         name: 'Smart-LLM-E2E',
         type: 'openai',
         modelType: 'chat',
-        config: { apiKey: 'sk-test', model: 'gpt-4o' }
-      }
+        config: { apiKey: 'sk-test', model: 'gpt-4o' },
+      },
     });
     expect(llmRes.ok()).toBeTruthy();
 
@@ -40,8 +46,8 @@ test.describe('Full Journey: Smart Sequence', () => {
       data: {
         name: 'Smart-Msg-E2E',
         type: 'discord',
-        config: { token: 'discord-token', clientId: '12345' }
-      }
+        config: { token: 'discord-token', clientId: '12345' },
+      },
     });
     expect(msgRes.ok()).toBeTruthy();
 
@@ -54,8 +60,8 @@ test.describe('Full Journey: Smart Sequence', () => {
         description: 'E2E persona',
         category: 'professional',
         systemPrompt: 'You are a helpful E2E assistant.',
-        traits: []
-      }
+        traits: [],
+      },
     });
     expect(perRes.ok()).toBeTruthy();
 
@@ -67,8 +73,8 @@ test.describe('Full Journey: Smart Sequence', () => {
         name: 'Smart-Bot-E2E',
         messageProvider: 'discord',
         llmProvider: 'openai',
-        isActive: true
-      }
+        isActive: true,
+      },
     });
     expect(botRes.ok()).toBeTruthy();
 
@@ -79,15 +85,15 @@ test.describe('Full Journey: Smart Sequence', () => {
     console.log('Verifying Dashboard...');
     await page.goto('/admin/overview', { waitUntil: 'domcontentloaded' });
     await expect(page).toHaveURL(/\/admin\/overview/);
-    
+
     // Wait for network to settle so dashboard widgets load
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(5000); // Give React time to render charts
-    
+
     // Final Step: Take full-page screenshot proving the system works
-    await page.screenshot({ 
-      path: 'test-results/smart-sequence-final.png', 
-      fullPage: true 
+    await page.screenshot({
+      path: 'test-results/smart-sequence-final.png',
+      fullPage: true,
     });
 
     console.log('✅ Full journey smart sequence E2E test completed successfully');

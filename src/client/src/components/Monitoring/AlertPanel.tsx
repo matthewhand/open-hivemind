@@ -218,6 +218,7 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
                           className="btn btn-xs btn-ghost"
                           onClick={() => handleAcknowledge(alert.id)}
                           title="Acknowledge"
+                          aria-label={`Acknowledge alert: ${alert.title}`}
                         >
                           ✓
                         </button>
@@ -227,6 +228,7 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
                           className="btn btn-xs btn-ghost"
                           onClick={() => handleResolve(alert.id)}
                           title="Resolve"
+                          aria-label={`Resolve alert: ${alert.title}`}
                         >
                           ✓✓
                         </button>
@@ -235,6 +237,7 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
                         className="btn btn-xs btn-ghost"
                         onClick={() => handleDismiss(alert.id)}
                         title="Dismiss"
+                        aria-label={`Dismiss alert: ${alert.title}`}
                       >
                         ×
                       </button>

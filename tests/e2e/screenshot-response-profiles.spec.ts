@@ -38,7 +38,7 @@ test.describe('Response Profiles Screenshots', () => {
                 baseProbability: 0.5,
                 directMentionBonus: 1.0,
                 botMentionBonus: 0.8,
-              }
+              },
             },
             {
               key: 'aggressive',
@@ -51,7 +51,7 @@ test.describe('Response Profiles Screenshots', () => {
                 baseProbability: 0.9,
                 directMentionBonus: 1.0,
                 botMentionBonus: 1.0,
-              }
+              },
             },
             {
               key: 'shy',
@@ -64,9 +64,9 @@ test.describe('Response Profiles Screenshots', () => {
                 baseProbability: 0.1,
                 directMentionBonus: 1.0,
                 botMentionBonus: 0.2,
-              }
-            }
-          ]
+              },
+            },
+          ],
         }),
       });
     });
@@ -101,7 +101,12 @@ test.describe('Response Profiles Screenshots', () => {
     await expect(addModal).toBeHidden();
 
     // Edit a profile
-    await page.locator('.card').filter({ hasText: 'Aggressive Interrupter' }).locator('button').nth(1).click();
+    await page
+      .locator('.card')
+      .filter({ hasText: 'Aggressive Interrupter' })
+      .locator('button')
+      .nth(1)
+      .click();
 
     // Wait for modal
     const editModal = page.locator('.modal-box').first();

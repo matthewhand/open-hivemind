@@ -1,5 +1,5 @@
-import { expect, test, Page } from '@playwright/test';
-import { setupAuth, navigateAndWaitReady } from './test-utils';
+import { expect, Page, test } from '@playwright/test';
+import { navigateAndWaitReady, setupAuth } from './test-utils';
 
 /**
  * Density Toggle E2E Tests
