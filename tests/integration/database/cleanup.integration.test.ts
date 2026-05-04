@@ -1,6 +1,6 @@
 import 'reflect-metadata';
-import { DatabaseManager } from '../../../src/database/DatabaseManager';
 import databaseConfig from '../../../src/config/databaseConfig';
+import { DatabaseManager } from '../../../src/database/DatabaseManager';
 
 describe('Database Cleanup Integration', () => {
   let dbManager: DatabaseManager;
@@ -17,11 +17,11 @@ describe('Database Cleanup Integration', () => {
   });
 
   const setupDb = async () => {
-    dbManager = DatabaseManager.getInstance({ 
-      type: 'postgres', 
-      url: process.env.DATABASE_URL 
+    dbManager = DatabaseManager.getInstance({
+      type: 'postgres',
+      url: process.env.DATABASE_URL,
     } as any);
-    
+
     // Override the config for this test to have small retention
     jest.spyOn(databaseConfig, 'get').mockImplementation((key: string) => {
       if (key === 'AUTO_RETENTION') return false;
@@ -33,7 +33,7 @@ describe('Database Cleanup Integration', () => {
     });
 
     await dbManager.connect();
-    
+
     // For test cleanliness, wipe the messages table first
     // @ts-ignore
     await dbManager.db.run('DELETE FROM messages');
@@ -42,7 +42,7 @@ describe('Database Cleanup Integration', () => {
   const insertMessages = async (count: number, daysOld = 0) => {
     // @ts-ignore
     const db = dbManager.db;
-    
+
     for (let i = 0; i < count; i++) {
       await db.run(
         `INSERT INTO messages (messageId, channelId, content, authorId, authorName, provider, timestamp) VALUES ($1, $2, $3, $4, $5, $6, NOW() - INTERVAL '${daysOld} days')`,
@@ -65,11 +65,11 @@ describe('Database Cleanup Integration', () => {
     }
     await setupDb();
     await insertMessages(10);
-    
+
     expect(await getMessageCount()).toBe(10);
-    
+
     await dbManager.runFullCleanup();
-    
+
     expect(await getMessageCount()).toBe(5);
   });
 
@@ -78,13 +78,13 @@ describe('Database Cleanup Integration', () => {
       return;
     }
     await setupDb();
-    await insertMessages(3, 0); 
-    await insertMessages(4, 2); 
-    
+    await insertMessages(3, 0);
+    await insertMessages(4, 2);
+
     expect(await getMessageCount()).toBe(7);
-    
+
     await dbManager.runFullCleanup();
-    
+
     expect(await getMessageCount()).toBe(3);
   });
 });
