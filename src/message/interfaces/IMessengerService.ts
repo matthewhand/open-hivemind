@@ -226,6 +226,7 @@ export interface IMessengerService {
    * ```
    */
   getForumOwner?(forumId: string): Promise<string>;
+  getChannels?(botName?: string): Promise<Array<{ id: string; name: string; type?: string }>>;
 
   /**
    * Optional: Returns extended sub-services managed by this provider.
