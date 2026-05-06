@@ -208,6 +208,19 @@ Browse, install, and manage extensions and packages for your application.
 
 ## System
 
+### [Plugin Security](/admin/plugin-security)
+Monitor and manage security settings for all installed plugins.
+
+![Plugin Security Dashboard](screenshots/plugin-security-dashboard.png)
+
+*   **Security Dashboard**: Visual overview of all installed plugins, their trust levels, and signature verification status.
+*   **Filtering**: Easily view plugins by status such as Trusted, Untrusted, Built-in, or Verification Failed.
+
+![Plugin Security Filtered](screenshots/plugin-security-filtered.png)
+
+*   **Capability Management**: Review specific capabilities granted, denied, or required by each plugin (e.g., `network`, `llm`, `filesystem`).
+*   **Actions**: Re-verify plugin signatures or manually trust/revoke trust for community plugins. (Built-in plugins are always trusted).
+
 ### Settings Overview
 General system configuration.
 
