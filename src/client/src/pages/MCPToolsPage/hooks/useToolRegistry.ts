@@ -86,8 +86,16 @@ export function useToolRegistry({ setAlert }: UseToolRegistryProps): {
 
   useEffect(() => {
     let filtered = [...tools];
-    if (urlParams.view === 'favorites') filtered = filtered.filter(t => favorites.includes(t.id));
-    else if (urlParams.view === 'recent') filtered = filtered.filter(t => recentlyUsed.map(r => r.toolId).includes(t.id));
+
+    // Performance optimization: pre-compute sets for O(1) membership testing
+    // instead of O(N) array .includes() or .map() inside the .filter() loop
+    if (urlParams.view === 'favorites') {
+      const favoritesSet = new Set(favorites);
+      filtered = filtered.filter(t => favoritesSet.has(t.id));
+    } else if (urlParams.view === 'recent') {
+      const recentlyUsedSet = new Set(recentlyUsed.map(r => r.toolId));
+      filtered = filtered.filter(t => recentlyUsedSet.has(t.id));
+    }
 
     if (urlParams.search) filtered = filtered.filter(t => t.name.toLowerCase().includes(urlParams.search.toLowerCase()) || t.description.toLowerCase().includes(urlParams.search.toLowerCase()));
     if (urlParams.category !== 'all') filtered = filtered.filter(t => t.category === urlParams.category);
