@@ -9,7 +9,7 @@ export const up = async ({ db, isPostgres }: { db: IDatabase; isPostgres: boolea
   if (isPostgres) {
     try {
       await db.exec('CREATE EXTENSION IF NOT EXISTS vector');
-    } catch (_e) {
+    } catch (_error) {
       console.warn(
         'Failed to enable pgvector extension (might already exist or permission denied):',
         _e
@@ -69,7 +69,7 @@ export const up = async ({ db, isPostgres }: { db: IDatabase; isPostgres: boolea
       await db.exec(
         'ALTER TABLE bot_metrics ADD CONSTRAINT bot_metrics_name_unique UNIQUE (botName)'
       );
-    } catch (_e) {}
+    } catch (_error) {}
   }
 
   await db.exec(`
@@ -373,7 +373,7 @@ export const up = async ({ db, isPostgres }: { db: IDatabase; isPostgres: boolea
       await db.exec(
         `CREATE INDEX IF NOT EXISTS idx_memories_embedding ON memories USING hnsw (embedding vector_cosine_ops)`
       );
-    } catch (_e) {
+    } catch (_error) {
       console.warn('Failed to create HNSW index for vector memory (ignoring):', _e);
     }
   }
