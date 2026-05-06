@@ -500,8 +500,18 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
         <Card className="shadow-sm border border-base-200">
           <Card.Body className="p-6">
             <div 
-              className="flex items-center justify-between cursor-pointer hover:bg-base-200/50 -m-2 p-2 rounded-lg transition-colors"
+              role="button"
+              tabIndex={0}
+              aria-expanded={showAdvanced}
+              aria-controls="advanced-settings-content"
+              className="flex items-center justify-between cursor-pointer hover:bg-base-200/50 -m-2 p-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               onClick={() => setShowAdvanced(!showAdvanced)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setShowAdvanced(!showAdvanced);
+                }
+              }}
             >
               <div className="flex items-center gap-2">
                 <Badge variant="ghost" size="sm">Optional</Badge>
@@ -511,14 +521,14 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
                 </span>
               </div>
               {showAdvanced ? (
-                <ChevronDown className="w-5 h-5 text-base-content/60" />
+                <ChevronDown className="w-5 h-5 text-base-content/60" aria-hidden="true" />
               ) : (
-                <ChevronRight className="w-5 h-5 text-base-content/60" />
+                <ChevronRight className="w-5 h-5 text-base-content/60" aria-hidden="true" />
               )}
             </div>
             
             {showAdvanced && (
-              <div className="mt-4 space-y-6">
+              <div id="advanced-settings-content" className="mt-4 space-y-6">
                 {Object.entries(groupedAdvancedFields).map(([groupName, fields]) => (
                   <div key={groupName}>
                     {Object.keys(groupedAdvancedFields).length > 1 && (
