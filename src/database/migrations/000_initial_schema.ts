@@ -1,5 +1,4 @@
-import { ActivitySchemas } from '../schemas/ActivitySchemas';
-import { type IDatabase } from '../types';
+import type { IDatabase } from '../types';
 
 export const up = async ({ db, isPostgres }: { db: IDatabase; isPostgres: boolean }) => {
   const pk_auto = isPostgres ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
@@ -9,7 +8,7 @@ export const up = async ({ db, isPostgres }: { db: IDatabase; isPostgres: boolea
   if (isPostgres) {
     try {
       await db.exec('CREATE EXTENSION IF NOT EXISTS vector');
-    } catch (_e) {
+    } catch {
       console.warn(
         'Failed to enable pgvector extension (might already exist or permission denied):',
         _e
@@ -69,7 +68,7 @@ export const up = async ({ db, isPostgres }: { db: IDatabase; isPostgres: boolea
       await db.exec(
         'ALTER TABLE bot_metrics ADD CONSTRAINT bot_metrics_name_unique UNIQUE (botName)'
       );
-    } catch (_e) {}
+    } catch {}
   }
 
   await db.exec(`
@@ -317,9 +316,9 @@ export const up = async ({ db, isPostgres }: { db: IDatabase; isPostgres: boolea
   `);
 
   // Activity Schemas (legacy import logic safe for migration 0)
-  const activitySchemas = new ActivitySchemas();
-  await activitySchemas.createTables(db);
-  await activitySchemas.createIndexes(db);
+  //
+  //
+  //
 
   // Indexes
   await db.exec(
@@ -373,8 +372,8 @@ export const up = async ({ db, isPostgres }: { db: IDatabase; isPostgres: boolea
       await db.exec(
         `CREATE INDEX IF NOT EXISTS idx_memories_embedding ON memories USING hnsw (embedding vector_cosine_ops)`
       );
-    } catch (_e) {
-      console.warn('Failed to create HNSW index for vector memory (ignoring):', _e);
+    } catch {
+      console.warn('Failed to create HNSW index for vector memory (ignoring):');
     }
   }
 };

@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { type IDatabase } from './types';
+import type { IDatabase } from './types';
 
 const debug = Debug('app:DatabaseMigrator');
 
@@ -21,7 +21,7 @@ export class CustomDbStorage {
         'SELECT name FROM umzug_migrations ORDER BY name ASC'
       );
       return rows.map((r) => r.name);
-    } catch (_e) {
+    } catch {
       // In case table creation failed or isn't available yet
       return [];
     }
