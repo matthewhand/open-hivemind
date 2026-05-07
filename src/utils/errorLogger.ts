@@ -11,8 +11,6 @@ import { MetricsCollector } from '../monitoring/MetricsCollector';
 import { BaseHivemindError } from '../types/errorClasses';
 import { ErrorUtils, type HivemindError } from '../types/errors';
 
-const debug = Debug('app:utils:errorLogger');
-
 /**
  * Error log entry structure
  */
