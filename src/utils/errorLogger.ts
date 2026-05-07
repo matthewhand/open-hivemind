@@ -8,7 +8,7 @@
 import Debug from 'debug';
 import type { Request } from 'express';
 import { MetricsCollector } from '../monitoring/MetricsCollector';
-import type { BaseHivemindError } from '../types/errorClasses';
+import { BaseHivemindError } from '../types/errorClasses';
 import { ErrorUtils, type HivemindError } from '../types/errors';
 
 /**
