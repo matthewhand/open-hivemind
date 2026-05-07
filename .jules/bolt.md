@@ -43,3 +43,6 @@
 ## 2026-05-02 - ProviderConfigForm Re-rendering
 **Learning:** The form components re-render frequently (e.g., on every keystroke). Using `.reduce()` and `.filter()` on potentially large arrays within the component body without memoization leads to O(N) recalculations on every render, which can cause typing lag on complex configuration forms.
 **Action:** Use `useMemo` to wrap expensive array transformations inside React components, especially forms.
+## 2024-05-23 - Optimize Array filtering nested loops
+**Learning:** Performing `array.map().includes()` inside an `array.filter()` callback creates an O(N * M) performance bottleneck due to repeatedly allocating memory for maps and iterating for inclusion checks. This was seen in `useToolRegistry.ts`.
+**Action:** Replace `array.map().includes()` inside high-frequency or loop contexts with a `Set` pre-computed outside the loop. Use `Set.has()` to achieve O(1) lookups and bring the complexity down to O(N + M).

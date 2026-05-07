@@ -87,7 +87,10 @@ export function useToolRegistry({ setAlert }: UseToolRegistryProps): {
   useEffect(() => {
     let filtered = [...tools];
     if (urlParams.view === 'favorites') filtered = filtered.filter(t => favorites.includes(t.id));
-    else if (urlParams.view === 'recent') filtered = filtered.filter(t => recentlyUsed.map(r => r.toolId).includes(t.id));
+    else if (urlParams.view === 'recent') {
+      const recentIds = new Set(recentlyUsed.map(r => r.toolId));
+      filtered = filtered.filter(t => recentIds.has(t.id));
+    }
 
     if (urlParams.search) filtered = filtered.filter(t => t.name.toLowerCase().includes(urlParams.search.toLowerCase()) || t.description.toLowerCase().includes(urlParams.search.toLowerCase()));
     if (urlParams.category !== 'all') filtered = filtered.filter(t => t.category === urlParams.category);
