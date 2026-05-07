@@ -43,3 +43,7 @@
 ## 2026-05-02 - ProviderConfigForm Re-rendering
 **Learning:** The form components re-render frequently (e.g., on every keystroke). Using `.reduce()` and `.filter()` on potentially large arrays within the component body without memoization leads to O(N) recalculations on every render, which can cause typing lag on complex configuration forms.
 **Action:** Use `useMemo` to wrap expensive array transformations inside React components, especially forms.
+
+## 2024-05-23 - Backend Route List Rendering Optimization
+**Learning:** In backend routes like `/mcp-servers` or `/maintenance`, mapping over an array of `connectedServers` and rendering configuration details directly using `.find()` inside the `.map()` loop creates an O(N*M) time complexity. This can cause significant bottlenecks as the number of connected servers grows.
+**Action:** Always pre-compute a lookup map using `new Map(items.map(i => [i.key, i.value]))` before iterating over the array. This reduces the time complexity from O(N*M) to O(N+M) and prevents synchronous blocking operations.
