@@ -8,8 +8,11 @@ describe('Database At-Rest Encryption', () => {
   let mockDb: jest.Mocked<IDatabase>;
 
   beforeAll(() => {
-    // Mock encryption key because the test suite runs with DISABLE_ENCRYPTION=true
     (encryptionService as any).encryptionKey = Buffer.alloc(32, 'a');
+  });
+
+  afterAll(() => {
+    (encryptionService as any).encryptionKey = null;
   });
 
   beforeEach(() => {
@@ -25,10 +28,6 @@ describe('Database At-Rest Encryption', () => {
       () => mockDb,
       () => {}
     );
-  });
-
-  afterAll(() => {
-    (encryptionService as any).encryptionKey = null;
   });
 
   it('should encrypt sensitive fields on creation', async () => {

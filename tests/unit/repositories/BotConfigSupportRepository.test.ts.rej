@@ -1,9 +1,0 @@
---- tests/unit/repositories/BotConfigSupportRepository.test.ts
-+++ tests/unit/repositories/BotConfigSupportRepository.test.ts
-@@ -1,5 +1,6 @@
- import { Database } from 'sqlite3';
- import { BotConfigRepositoryBase, BotConfigVersionRepository, BotConfigAuditRepository } from '../../../src/database/repositories/BotConfigSupportRepository';
-+import { encryptionService } from '../../../src/database/EncryptionService';
-
- const makeMockDb = () => ({
-   run: jest.fn(),
