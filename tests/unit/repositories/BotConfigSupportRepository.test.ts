@@ -1,3 +1,4 @@
+import { encryptionService } from '../../../src/database/EncryptionService';
 import {
   BotConfigAuditRepository,
   BotConfigRepositoryBase,
@@ -23,6 +24,16 @@ function makeMockDb(extra: Partial<Database> = {}): jest.Mocked<Database> {
 describe('BotConfigRepositoryBase', () => {
   let base: BotConfigRepositoryBase;
   let mockDb: jest.Mocked<Database>;
+
+  beforeAll(() => {
+    (encryptionService as any).encryptionKey = Buffer.alloc(32, 'a');
+    require('../../../src/database/EncryptionService').EncryptionService.instance = undefined;
+    require('../../../src/database/EncryptionService').EncryptionService.getInstance();
+  });
+
+  afterAll(() => {
+    (encryptionService as any).encryptionKey = null;
+  });
 
   beforeEach(() => {
     mockDb = makeMockDb();
@@ -91,6 +102,7 @@ describe('BotConfigVersionRepository', () => {
   let mockDb: jest.Mocked<Database>;
   // @ts-ignore - reset encryption service singleton for controlled tests
   beforeAll(() => {
+    (encryptionService as any).encryptionKey = Buffer.alloc(32, 'a');
     require('../../../src/database/EncryptionService').EncryptionService.instance = undefined;
     require('../../../src/database/EncryptionService').EncryptionService.getInstance();
   });
@@ -101,6 +113,10 @@ describe('BotConfigVersionRepository', () => {
       () => mockDb,
       () => {}
     );
+  });
+
+  afterAll(() => {
+    (encryptionService as any).encryptionKey = null;
   });
 
   describe('createBotConfigurationVersion', () => {
@@ -253,6 +269,7 @@ describe('BotConfigAuditRepository', () => {
   let mockDb: jest.Mocked<Database>;
 
   beforeAll(() => {
+    (encryptionService as any).encryptionKey = Buffer.alloc(32, 'a');
     require('../../../src/database/EncryptionService').EncryptionService.instance = undefined;
     require('../../../src/database/EncryptionService').EncryptionService.getInstance();
   });
@@ -263,6 +280,10 @@ describe('BotConfigAuditRepository', () => {
       () => mockDb,
       () => {}
     );
+  });
+
+  afterAll(() => {
+    (encryptionService as any).encryptionKey = null;
   });
 
   describe('createBotConfigurationAudit', () => {
