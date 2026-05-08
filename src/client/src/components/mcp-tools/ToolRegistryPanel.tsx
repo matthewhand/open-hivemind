@@ -148,6 +148,7 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
                   onRunTool(tool, lastUsage?.arguments);
                 }}
                 disabled={!tool.enabled}
+                aria-label={`Quick run ${tool.name}`}
               >
                 <RunIcon className="w-3 h-3" />
                 Run
@@ -215,6 +216,7 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
             <button
               className={`btn btn-sm ${tool.enabled ? 'btn-error btn-outline' : 'btn-success btn-outline'}`}
               onClick={() => onToggleTool(tool.id)}
+              aria-label={`${tool.enabled ? 'Disable' : 'Enable'} ${tool.name}`}
             >
               {tool.enabled ? 'Disable' : 'Enable'}
             </button>
@@ -222,6 +224,7 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
               className="btn btn-sm btn-primary"
               onClick={() => onRunTool(tool)}
               disabled={!tool.enabled}
+              aria-label={`Run ${tool.name} tool`}
             >
               <RunIcon className="w-4 h-4 mr-1" />
               Run Tool
