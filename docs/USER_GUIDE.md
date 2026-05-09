@@ -25,7 +25,6 @@ Welcome to the Open-Hivemind User Guide. This document provides a detailed walkt
   - [Audit & Governance](#audit--governance)
   - [Webhook](#webhook)
   - [Monitoring](#monitoring)
-  - [Provider Health](#provider-health)
   - [System Management](#system-management)
   - [Global Defaults](#global-defaults)
   - [Demo Mode](#demo-mode)
@@ -240,16 +239,6 @@ The Enterprise Manager provides an interface to monitor security, compliance, mu
 Configure incoming webhooks for external integrations.
 *   **Endpoint Management**: specific URLs to trigger bot actions from external services.
 *   **Security**: Manage webhook secrets and verification.
-
-
-### [Provider Health](/admin/health/providers)
-A comprehensive health dashboard for monitoring the real-time connectivity, latency, and status of all configured backend services, including LLMs, memory stores, message platforms, and tool integrations.
-
-![Provider Health Dashboard](screenshots/provider-health-page.png)
-
-*   **Status Indication**: Quickly view if a provider is healthy, degraded, or offline.
-*   **Latency Metrics**: Track response times to identify potential bottlenecks.
-*   **Detailed Logs**: Hover over or view specific provider entries to see connection details and the last checked timestamp.
 
 ### [Monitoring](/admin/monitoring)
 A comprehensive dashboard for tracking ecosystem status, bot status, and real-time activity.

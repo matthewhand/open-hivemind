@@ -1,3 +1,4 @@
+import { encryptionService } from '../../../src/database/EncryptionService';
 import {
   BotConfigAuditRepository,
   BotConfigRepositoryBase,
@@ -22,6 +23,16 @@ function makeMockDb(extra: Partial<Database> = {}): jest.Mocked<Database> {
 
 describe('BotConfigRepositoryBase', () => {
   let base: BotConfigRepositoryBase;
+  let originalKey: any;
+
+  beforeAll(() => {
+    originalKey = (encryptionService as any).encryptionKey;
+    (encryptionService as any).encryptionKey = Buffer.alloc(32, 'a');
+  });
+
+  afterAll(() => {
+    (encryptionService as any).encryptionKey = originalKey;
+  });
   let mockDb: jest.Mocked<Database>;
 
   beforeEach(() => {
@@ -88,6 +99,16 @@ describe('BotConfigRepositoryBase', () => {
 
 describe('BotConfigVersionRepository', () => {
   let repo: BotConfigVersionRepository;
+  let originalKey: any;
+
+  beforeAll(() => {
+    originalKey = (encryptionService as any).encryptionKey;
+    (encryptionService as any).encryptionKey = Buffer.alloc(32, 'a');
+  });
+
+  afterAll(() => {
+    (encryptionService as any).encryptionKey = originalKey;
+  });
   let mockDb: jest.Mocked<Database>;
   // @ts-ignore - reset encryption service singleton for controlled tests
   beforeAll(() => {
@@ -250,6 +271,16 @@ describe('BotConfigVersionRepository', () => {
 
 describe('BotConfigAuditRepository', () => {
   let repo: BotConfigAuditRepository;
+  let originalKey: any;
+
+  beforeAll(() => {
+    originalKey = (encryptionService as any).encryptionKey;
+    (encryptionService as any).encryptionKey = Buffer.alloc(32, 'a');
+  });
+
+  afterAll(() => {
+    (encryptionService as any).encryptionKey = originalKey;
+  });
   let mockDb: jest.Mocked<Database>;
 
   beforeAll(() => {

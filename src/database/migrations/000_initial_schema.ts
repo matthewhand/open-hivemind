@@ -11,8 +11,7 @@ export const up = async ({ db, isPostgres }: { db: IDatabase; isPostgres: boolea
       await db.exec('CREATE EXTENSION IF NOT EXISTS vector');
     } catch {
       console.warn(
-        'Failed to enable pgvector extension (might already exist or permission denied):',
-        _e
+        'Failed to enable pgvector extension (might already exist or permission denied):'
       );
     }
   }
@@ -371,10 +370,10 @@ export const up = async ({ db, isPostgres }: { db: IDatabase; isPostgres: boolea
   if (isPostgres) {
     try {
       await db.exec(
-        `CREATE INDEX IF NOT EXISTS idx_memories_embedding ON memories USING hnsw (embedding vector_cosine_ops)`
+        `CREATE INDEX IF NOT EXISTS idx_memoriesmbedding ON memories USING hnsw (embedding vector_cosine_ops)`
       );
     } catch {
-      console.warn('Failed to create HNSW index for vector memory (ignoring):', _e);
+      console.warn('Failed to create HNSW index for vector memory (ignoring)');
     }
   }
 };
