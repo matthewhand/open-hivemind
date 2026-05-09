@@ -57,7 +57,7 @@ export const ToolCard: React.FC<ToolCardProps> = memo(({
                 onToggleFavorite(tool.id);
               }}
               title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-              aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              aria-label={isFavorite ? `Remove ${tool.name} from favorites` : `Add ${tool.name} to favorites`}
             >
               {isFavorite ? (
                 <StarSolidIcon className="w-4 h-4 text-warning" />
@@ -71,6 +71,7 @@ export const ToolCard: React.FC<ToolCardProps> = memo(({
               className="btn btn-xs btn-primary flex-1"
               onClick={() => onQuickExecute(tool)}
               disabled={!tool.enabled}
+              aria-label={`Run ${tool.name} tool`}
             >
               <RunIcon className="w-3 h-3" />
               Run
@@ -95,7 +96,7 @@ export const ToolCard: React.FC<ToolCardProps> = memo(({
               className="btn btn-sm btn-ghost btn-circle"
               onClick={() => onToggleFavorite(tool.id)}
               title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-              aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              aria-label={isFavorite ? `Remove ${tool.name} from favorites` : `Add ${tool.name} to favorites`}
             >
               {isFavorite ? (
                 <StarSolidIcon className="w-5 h-5 text-warning" />
@@ -138,6 +139,7 @@ export const ToolCard: React.FC<ToolCardProps> = memo(({
           <button
             className={`btn btn-sm ${tool.enabled ? 'btn-error btn-outline' : 'btn-success btn-outline'}`}
             onClick={() => onToggleTool(tool.id)}
+            aria-label={`${tool.enabled ? 'Disable' : 'Enable'} ${tool.name} tool`}
           >
             {tool.enabled ? 'Disable' : 'Enable'}
           </button>
@@ -145,6 +147,7 @@ export const ToolCard: React.FC<ToolCardProps> = memo(({
             className="btn btn-sm btn-primary"
             onClick={() => onOpenModal(tool)}
             disabled={!tool.enabled}
+            aria-label={`Open ${tool.name} tool modal`}
           >
             <RunIcon className="w-4 h-4 mr-1" />
             Run Tool
