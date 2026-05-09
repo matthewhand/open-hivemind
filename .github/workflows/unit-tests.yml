@@ -45,6 +45,7 @@ jobs:
             --verbose \
             --ci \
             --forceExit \
+            --passWithNoTests \
             --maxWorkers=2
 
   unit-tests-integrations:
@@ -81,6 +82,7 @@ jobs:
             --verbose \
             --ci \
             --forceExit \
+            --passWithNoTests \
             --maxWorkers=2
 
   unit-tests-services:
@@ -120,6 +122,7 @@ jobs:
             --verbose \
             --ci \
             --forceExit \
+            --passWithNoTests \
             --maxWorkers=2
 
   unit-tests-frontend:

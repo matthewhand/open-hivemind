@@ -123,4 +123,5 @@ jobs:
             --testTimeout=15000 \
             --verbose \
             --ci \
+            --passWithNoTests \
             --maxWorkers=2

@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Fetch origin/main so git merge-base doesn't fail
+git fetch origin main || true
 BASE_SHA="${GITHUB_BASE_SHA:-$(git merge-base origin/main HEAD)}"
 HEAD_SHA="${GITHUB_SHA:-$(git rev-parse HEAD)}"
 
