@@ -32,7 +32,7 @@ test.describe('Provider Health Page Screenshots', () => {
               latencyMs: 450,
               lastChecked: new Date().toISOString(),
               details: 'High latency detected',
-            }
+            },
           ],
           memory: [
             {
@@ -43,17 +43,20 @@ test.describe('Provider Health Page Screenshots', () => {
               latencyMs: 5,
               lastChecked: new Date().toISOString(),
               details: 'Database connected',
-            }
-          ]
+            },
+          ],
         },
       })
     );
 
     // Provide default empty routes for other potential API calls to prevent errors
     await page.route('**/api/config/global', (route) => route.fulfill({ status: 200, json: {} }));
-    await page.route('**/api/csrf-token', (route) => route.fulfill({ status: 200, json: { token: 'mock-csrf' } }));
-    await page.route('**/api/demo/status', (route) => route.fulfill({ status: 200, json: { active: false } }));
-
+    await page.route('**/api/csrf-token', (route) =>
+      route.fulfill({ status: 200, json: { token: 'mock-csrf' } })
+    );
+    await page.route('**/api/demo/status', (route) =>
+      route.fulfill({ status: 200, json: { active: false } })
+    );
 
     // Navigate to Provider Health page
     await page.setViewportSize({ width: 1280, height: 1000 });
