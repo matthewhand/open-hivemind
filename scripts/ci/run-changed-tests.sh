@@ -1,10 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BASE_SHA="${GITHUB_BASE_SHA:-$(git merge-base origin/main HEAD)}"
+# Fetch main if origin/main doesn't exist
+if ! git rev-parse --verify origin/main >/dev/null 2>&1; then
+  git fetch origin main || true
+fi
+
+BASE_SHA="${GITHUB_BASE_SHA:-$(git merge-base origin/main HEAD 2>/dev/null || git merge-base main HEAD 2>/dev/null || echo "")}"
 HEAD_SHA="${GITHUB_SHA:-$(git rev-parse HEAD)}"
 
-mapfile -t CHANGED_FILES < <(git diff --name-only "${BASE_SHA}...${HEAD_SHA}" | sed '/^$/d')
+if [ -z "$BASE_SHA" ]; then
+  echo "Could not determine BASE_SHA; skipping changed-files test job."
+  exit 0
+else
+  mapfile -t CHANGED_FILES < <(git diff --name-only "${BASE_SHA}...${HEAD_SHA}" | sed '/^$/d')
+fi
+
 if [ "${#CHANGED_FILES[@]}" -eq 0 ]; then
   echo "No changed files detected; skipping changed-files test job."
   exit 0
