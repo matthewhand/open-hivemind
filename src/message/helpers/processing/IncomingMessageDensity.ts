@@ -27,6 +27,9 @@ export class IncomingMessageDensity {
     let history = this.channelHistory.get(channelId) || [];
 
     // Prune old (use the class-level max window)
+    // ⚡ Bolt Optimization: Replace O(N) array filtering with O(K) sliding window
+    // By iterating backwards and breaking early, we avoid scanning the entire history.
+    // This significantly reduces time complexity and memory allocation overhead.
     const threshold = now - this.WINDOW_MS;
     let keepCount = 0;
     for (let i = history.length - 1; i >= 0; i--) {
@@ -72,6 +75,8 @@ export class IncomingMessageDensity {
     const now = Date.now();
     const history = this.channelHistory.get(channelId) || [];
 
+    // ⚡ Bolt Optimization: Replace O(N) filter/map with O(K) backwards traversal
+    // We only traverse the elements inside the time window.
     const threshold = now - windowMs;
     let userCount = 0;
     let botCount = 0;

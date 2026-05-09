@@ -9,7 +9,7 @@ We use the `debug` package with consistent namespaces. Enable verbose output by 
 Examples:
 - Shell:
   - `DEBUG=app:* npm test`
-  - `DEBUG=app:discordService,app:ChannelRouter node ./dist/index.js`
+  - `DEBUG=app:discordService,app:ChannelRouter node ./dist/src/index.js`
 - Programmatic:
   - `process.env.DEBUG = 'app:*'`
 
