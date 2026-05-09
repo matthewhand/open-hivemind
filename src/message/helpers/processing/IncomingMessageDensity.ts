@@ -27,7 +27,13 @@ export class IncomingMessageDensity {
     let history = this.channelHistory.get(channelId) || [];
 
     // Prune old (use the class-level max window)
-    history = history.filter((item) => now - item.ts < this.WINDOW_MS);
+    const threshold = now - this.WINDOW_MS;
+    let keepCount = 0;
+    for (let i = history.length - 1; i >= 0; i--) {
+      if (history[i].ts <= threshold) break;
+      keepCount++;
+    }
+    history = keepCount === history.length ? history : history.slice(history.length - keepCount);
 
     // Record new
     history.push({ ts: now, isBot });
@@ -65,12 +71,23 @@ export class IncomingMessageDensity {
   ): { userCount: number; botCount: number; total: number } {
     const now = Date.now();
     const history = this.channelHistory.get(channelId) || [];
-    const recent = history.filter((item) => now - item.ts < windowMs);
 
-    const userCount = recent.filter((x) => !x.isBot).length;
-    const botCount = recent.filter((x) => x.isBot).length;
+    const threshold = now - windowMs;
+    let userCount = 0;
+    let botCount = 0;
+    let total = 0;
 
-    return { userCount, botCount, total: recent.length };
+    for (let i = history.length - 1; i >= 0; i--) {
+      if (history[i].ts <= threshold) break;
+      if (history[i].isBot) {
+        botCount++;
+      } else {
+        userCount++;
+      }
+      total++;
+    }
+
+    return { userCount, botCount, total };
   }
 
   /**
