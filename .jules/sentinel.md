@@ -42,3 +42,7 @@
 **Vulnerability:** SSRF checks applied to internal infrastructure.
 **Learning:** OTLP collectors and telemetry components are routinely deployed as internal sidecars (e.g., localhost:4318) or within private VPC networks. Applying SSRF protections like `isSafeUrl` that block private or loopback IP addresses to these exporters will break legitimate observability pipelines.
 **Prevention:** Do not apply external SSRF protections to internal observability components like trace exporters unless explicitly instructed to protect against user-supplied endpoint configuration.
+## 2024-05-10 - Hardcoded Secret Key in FastAPI Settings
+**Vulnerability:** A hardcoded `secret_key = "secret-key"` was present in the `BaseSettings` class in `app/core/config.py`.
+**Learning:** Hardcoded defaults in configuration objects negate the security benefits of environment variables. Furthermore, attempting to "fail securely" by defaulting to a randomly generated key per module load (`secrets.token_urlsafe(32)`) breaks stateful application features in multi-worker scenarios where each process gets a different key.
+**Prevention:** For sensitive Pydantic `BaseSettings` fields, omit the default value entirely (e.g., declare only the type `secret_key: str`). This delegates enforcement to Pydantic, forcing the application to securely fail on startup if the required environment variable is missing.
