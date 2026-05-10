@@ -1082,8 +1082,6 @@ export class SlackService extends EventEmitter implements IMessengerService {
 
         getMessagesFromChannel: async (channelId: string) => this.getMessagesFromChannel(channelId),
 
-        getChannels: async (botName?: string) => this.getChannels(botName || name),
-
         sendPublicAnnouncement: async (channelId: string, announcement: any) =>
           this.sendPublicAnnouncement(channelId, announcement),
 

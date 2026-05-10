@@ -11,6 +11,7 @@ import { MetricsCollector } from '../monitoring/MetricsCollector';
 import { BaseHivemindError } from '../types/errorClasses';
 import { ErrorUtils, type HivemindError } from '../types/errors';
 
+// eslint-disable-next-line unused-imports/no-unused-vars
 const debug = Debug('app:utils:errorLogger');
 
 /**
