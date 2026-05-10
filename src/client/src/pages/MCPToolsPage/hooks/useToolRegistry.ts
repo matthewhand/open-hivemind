@@ -86,10 +86,23 @@ export function useToolRegistry({ setAlert }: UseToolRegistryProps): {
 
   useEffect(() => {
     let filtered = [...tools];
-    if (urlParams.view === 'favorites') filtered = filtered.filter(t => favorites.includes(t.id));
-    else if (urlParams.view === 'recent') filtered = filtered.filter(t => recentlyUsed.map(r => r.toolId).includes(t.id));
 
-    if (urlParams.search) filtered = filtered.filter(t => t.name.toLowerCase().includes(urlParams.search.toLowerCase()) || t.description.toLowerCase().includes(urlParams.search.toLowerCase()));
+    // Performance Optimization: Use O(1) Set lookups instead of O(N) Array.includes inside filter callbacks
+    if (urlParams.view === 'favorites') {
+      const favoritesSet = new Set(favorites);
+      filtered = filtered.filter(t => favoritesSet.has(t.id));
+    } else if (urlParams.view === 'recent') {
+      // Prevent redundant array mapping on every iteration by computing once
+      const recentSet = new Set(recentlyUsed.map(r => r.toolId));
+      filtered = filtered.filter(t => recentSet.has(t.id));
+    }
+
+    if (urlParams.search) {
+      // Prevent redundant toLowerCase() string conversions on every iteration
+      const searchLower = urlParams.search.toLowerCase();
+      filtered = filtered.filter(t => t.name.toLowerCase().includes(searchLower) || t.description.toLowerCase().includes(searchLower));
+    }
+
     if (urlParams.category !== 'all') filtered = filtered.filter(t => t.category === urlParams.category);
     if (urlParams.server !== 'all') filtered = filtered.filter(t => t.serverId === urlParams.server);
 

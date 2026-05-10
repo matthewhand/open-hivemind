@@ -43,3 +43,6 @@
 ## 2026-05-02 - ProviderConfigForm Re-rendering
 **Learning:** The form components re-render frequently (e.g., on every keystroke). Using `.reduce()` and `.filter()` on potentially large arrays within the component body without memoization leads to O(N) recalculations on every render, which can cause typing lag on complex configuration forms.
 **Action:** Use `useMemo` to wrap expensive array transformations inside React components, especially forms.
+## 2024-05-23 - Optimize useToolRegistry Filtering
+**Learning:** `useToolRegistry.ts` was computing derived properties (`recentlyUsed.map`) and string conversions (`urlParams.search.toLowerCase()`) *inside* a `.filter()` callback. In components with large arrays, recreating Maps/Sets and converting strings on every iteration creates severe memory pressure and O(N*M) time complexity bottlenecks that block the main UI thread during typing or interaction.
+**Action:** Always pre-compute loop-invariant values (like mapping arrays to `Sets` for O(1) `.has()` checks, or calling `.toLowerCase()` on search strings) *before* the `.filter()` loop.
