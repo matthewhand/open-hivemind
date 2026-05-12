@@ -26,6 +26,7 @@ Welcome to the Open-Hivemind User Guide. This document provides a detailed walkt
   - [Webhook](#webhook)
   - [Monitoring](#monitoring)
   - [System Management](#system-management)
+  - [Plugin Security](#plugin-security)
   - [Global Defaults](#global-defaults)
   - [Demo Mode](#demo-mode)
   - [Onboarding Wizard](#onboarding-wizard)
@@ -269,6 +270,18 @@ Manage configuration, alerts, and system health.
 *   **System Configuration**: Fine-tune settings like refresh intervals, log levels, and resource thresholds.
 *   **Backup History**: Create and restore manual backups, and view automatic backup logs.
 *   **Performance Tuning**: Analyze real-time API endpoint status and view system environment details.
+
+### [Plugin Security](/admin/plugin-security)
+Monitor and manage security settings and capabilities for all installed plugins in the system.
+
+![Plugin Security Dashboard](screenshots/plugin-security-dashboard.png)
+
+*   **Trust Levels**: Quickly see if plugins are trusted, untrusted, or built-in to the system.
+*   **Capabilities Management**: Review granted, required, and denied capabilities (like `network`, `llm`, or `database` access) for every plugin.
+*   **Signature Verification**: Manage cryptographic verification statuses and identify plugins that failed signature validation.
+*   **Filters**: Use the tabs to easily view plugins categorized by Built-in, Trusted, Untrusted, or Verification Failed.
+
+![Plugin Security Filters](screenshots/plugin-security-filtered.png)
 
 ### [Response Profiles](/admin/config/response-profiles)
 Manage bot response behaviors and probabilities across different scenarios to create distinct personalities or functions for your bots.

@@ -58,7 +58,7 @@ const OnboardingPage = lazy(() => import('../pages/OnboardingPage'));
 const AboutPage = lazy(() => import('../pages/AboutPage'));
 const ApiDocsPage = lazy(() => import('../pages/ApiDocsPage'));
 const HelpPage = lazy(() => import('../pages/HelpPage'));
-
+const PluginSecurityPage = lazy(() => import('../pages/PluginSecurityPage'));
 
 interface LoadingFallbackProps {
   message?: string;
@@ -226,6 +226,7 @@ const AppRouter: React.FC = () => {
           <Route path="specs" element={<Navigate to="/admin/developer?tab=specs" replace />} />
           <Route path="specs/:id" element={<ErrorBoundary pageName="Spec Detail"><SpecDetailPage /></ErrorBoundary>} />
           <Route path="audit" element={<ErrorBoundary pageName="Audit"><AuditPage /></ErrorBoundary>} />
+          <Route path="plugin-security" element={<ErrorBoundary pageName="Plugin Security"><PluginSecurityPage /></ErrorBoundary>} />
           <Route path="health" element={<ErrorBoundary pageName="Health"><AdminHealthPage /></ErrorBoundary>} />
           <Route path="health/providers" element={<ErrorBoundary pageName="Provider Health"><ProviderHealthPage /></ErrorBoundary>} />
 
