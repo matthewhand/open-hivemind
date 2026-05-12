@@ -43,3 +43,6 @@
 ## 2026-05-02 - ProviderConfigForm Re-rendering
 **Learning:** The form components re-render frequently (e.g., on every keystroke). Using `.reduce()` and `.filter()` on potentially large arrays within the component body without memoization leads to O(N) recalculations on every render, which can cause typing lag on complex configuration forms.
 **Action:** Use `useMemo` to wrap expensive array transformations inside React components, especially forms.
+## 2024-05-12 - Replacing Array.filter on Chronological Arrays
+**Learning:** In high-frequency path like `IncomingMessageDensity`, chaining `.filter()` operations on chronologically ordered arrays creates an $O(N)$ overhead with multiple unnecessary intermediate array allocations per call.
+**Action:** When filtering chronological arrays by timestamp, replace `.filter()` with a reverse loop that breaks early once the threshold is crossed. This changes the time complexity from $O(N)$ to $O(K)$ (where $K$ is elements in the window) and avoids memory allocations entirely.
