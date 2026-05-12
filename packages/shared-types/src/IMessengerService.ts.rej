@@ -1,0 +1,10 @@
+--- packages/shared-types/src/IMessengerService.ts
++++ packages/shared-types/src/IMessengerService.ts
+@@ -221,6 +221,7 @@
+    * ```
+    */
+   getForumOwner?(forumId: string): Promise<string>;
++  getChannels?(botName?: string): Promise<Array<{ id: string; name: string; type?: string }>>;
+
+   /**
+    * Optional: Returns extended sub-services managed by this provider.
