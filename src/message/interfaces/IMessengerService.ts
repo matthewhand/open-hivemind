@@ -266,4 +266,6 @@ export interface IMessengerService {
    * @returns {boolean | Promise<boolean>} True if connected, false otherwise
    */
   isConnected?(botName?: string): boolean | Promise<boolean>;
+
+  getChannels?(botName?: string): Promise<Array<{ id: string; name: string; type?: string }>>;
 }
