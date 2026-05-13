@@ -112,12 +112,32 @@ export class SegmentClassifier {
   }
 
   private getTopFeatures(events: MessageFlowEvent[], userIds: string[]): string[] {
-    const userEvents = events.filter((e) => userIds.includes(e.userId));
+    const userIdsSet = new Set(userIds);
     const features = new Set<string>();
-    if (userEvents.some((e) => e.provider === 'discord')) features.add('discord-integration');
-    if (userEvents.some((e) => e.provider === 'slack')) features.add('slack-integration');
-    if (userEvents.some((e) => e.processingTime && e.processingTime > 2000))
-      features.add('complex-llm-tasks');
+
+    let hasDiscord = false;
+    let hasSlack = false;
+    let hasComplexLlm = false;
+
+    for (const e of events) {
+      if (!userIdsSet.has(e.userId)) continue;
+
+      if (!hasDiscord && e.provider === 'discord') {
+        features.add('discord-integration');
+        hasDiscord = true;
+      }
+      if (!hasSlack && e.provider === 'slack') {
+        features.add('slack-integration');
+        hasSlack = true;
+      }
+      if (!hasComplexLlm && e.processingTime && e.processingTime > 2000) {
+        features.add('complex-llm-tasks');
+        hasComplexLlm = true;
+      }
+
+      if (hasDiscord && hasSlack && hasComplexLlm) break;
+    }
+
     return Array.from(features);
   }
 }
