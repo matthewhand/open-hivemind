@@ -5,6 +5,7 @@
  * with context, severity levels, and correlation IDs.
  */
 
+import Debug from 'debug';
 import type { Request } from 'express';
 import { MetricsCollector } from '../monitoring/MetricsCollector';
 import { BaseHivemindError } from '../types/errorClasses';
