@@ -341,6 +341,21 @@ Press **Ctrl + K** (or **⌘ K** on macOS) anywhere in the admin UI to open the 
 
 ---
 
+### [Help & FAQ](/admin/help)
+
+Access answers to common questions and discover helpful shortcuts.
+
+![Help Page Overview](screenshots/help-page.png)
+
+*   **Frequently Asked Questions**: Find quick answers to common queries regarding bot behavior, provider configurations, Guard Profiles, MCP Servers, and more.
+*   **Interactive Answers**: Click on any question in the FAQ section to expand it and read a detailed explanation.
+
+![Help Page Expanded](screenshots/help-page-expanded.png)
+
+*   **Keyboard Shortcuts**: View a comprehensive list of shortcuts categorized by global actions, navigation, and specific actions, streamlining interaction with the WebUI.
+
+---
+
 ## AI & Analytics
 
 ### [AI Dashboard](/admin/ai/dashboard)
