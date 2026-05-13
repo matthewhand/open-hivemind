@@ -5,13 +5,10 @@
  * with context, severity levels, and correlation IDs.
  */
 
-import Debug from 'debug';
 import type { Request } from 'express';
 import { MetricsCollector } from '../monitoring/MetricsCollector';
 import { BaseHivemindError } from '../types/errorClasses';
 import { ErrorUtils, type HivemindError } from '../types/errors';
-
-const debug = Debug('app:utils:errorLogger');
 
 /**
  * Error log entry structure
