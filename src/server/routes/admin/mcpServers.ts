@@ -222,10 +222,13 @@ router.get('/mcp-servers', async (req: Request, res: Response) => {
     // Get stored MCP server configurations
     const storedMcps = await webUIStorage.getMcps();
 
+    // Performance optimization: pre-compute map for O(1) lookups instead of calling .find() inside .map() loop
+    const storedMcpsMap = new Map(storedMcps.map((mcp: any) => [mcp.name, mcp]));
+
     // Enrich connected servers with stored configuration data
 
     const enrichedServers = connectedServers.map((server) => {
-      const storedConfig = storedMcps.find((mcp: any) => mcp.name === server.name);
+      const storedConfig = storedMcpsMap.get(server.name);
       return {
         name: server.name,
         serverUrl: storedConfig?.serverUrl || storedConfig?.url || '',
