@@ -377,9 +377,20 @@ A detailed view of all system integrations and configurations.
 
 ## Developer & Tools
 
+### [About Platform](/admin/about)
+Access platform information and external resources.
+
+![About Page](screenshots/about-page.png)
+
+*   **System Info**: View platform details, node versions, and health status.
+*   **Links**: Easily reach github issues, community package guides, and the project repository.
+
 ### [UI Components](/admin/showcase)
 A reference for developers extending the WebUI.
 *   **Component Library**: View available UI elements (buttons, inputs, cards) and their usage.
+*   **Reference**: Tabbed view showcasing visual component variants directly alongside `daisyUI` class conventions.
+
+![UI Components](screenshots/developer-showcase.png)
 
 ### [API Documentation](/admin/api-docs)
 View dynamic API documentation generated from route introspection.
@@ -409,6 +420,8 @@ View the complete navigation structure of the application.
 *   **Page Hierarchy & Filtering**: See all available pages and find specific ones by URL or description.
 *   **Formats**: Download the sitemap in XML (for SEO) or JSON formats.
 
+![Sitemap Page](screenshots/developer-sitemap.png)
+
 ### [API Docs](/admin/api-docs)
 Access detailed API documentation for programmatic interaction with the system.
 
@@ -431,6 +444,8 @@ Browse and manage persisted specifications and design documents.
 *   **Detailed View**: Read full specifications rendered in Markdown.
 *   **Export**: Download specifications as Markdown, JSON, or YAML.
 
+![Specifications List](screenshots/developer-specs.png)
+
 ### [Static Pages](/admin/static)
 Access a catalog of static HTML pages served by the system, like the Enhanced Homepage or Screensaver.
 
@@ -441,6 +456,8 @@ To view these static pages, navigate to **Developer & Tools > Static Pages** in 
 *   **Enhanced Homepage**: Beautiful landing page with enhanced UI and animations.
 *   **Loading Page**: Elegant loading screen with progress indicators.
 *   **Screensaver**: Interactive screensaver display for idle states.
+
+![Static Pages Tab](screenshots/developer-static-pages.png)
 
 ---
 
