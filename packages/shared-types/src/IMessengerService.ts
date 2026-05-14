@@ -26,7 +26,7 @@ export interface IMessengerService {
    * Optional: return per-instance startup summaries for operator-friendly logging.
    * Implementations that don't support per-instance introspection can omit this.
    */
-  getAgentStartupSummaries?: () => Array<{
+  getAgentStartupSummaries?: () => {
     name: string;
     provider: string;
     botId?: string;
@@ -35,7 +35,7 @@ export interface IMessengerService {
     llmModel?: string;
     llmEndpoint?: string;
     systemPrompt?: string;
-  }>;
+  }[];
 
   /**
    * Optional integration hook: resolve per-agent identity and routing hints.
@@ -45,6 +45,7 @@ export interface IMessengerService {
    *
    * Implementations that don't need this can omit it (or return null).
    */
+
   resolveAgentContext?(params: { botConfig: any; agentDisplayName: string }): null | {
     /**
      * Bot/user id for this agent instance (used for mention detection and self-filtering).
@@ -135,6 +136,7 @@ export interface IMessengerService {
    * });
    * ```
    */
+
   sendPublicAnnouncement(channelId: string, announcement: any): Promise<void>;
 
   /**
@@ -183,7 +185,9 @@ export interface IMessengerService {
    * @param channelId The channel identifier to score
    * @param metadata  Optional context used for scoring
    * @returns number score for the channel
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
    */
+
   scoreChannel?(channelId: string, metadata?: Record<string, any>): number;
 
   /**
@@ -199,6 +203,7 @@ export interface IMessengerService {
    *   const response = await generateResponse(message, history);
    *   return response;
    * });
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
    * ```
    */
   setMessageHandler(
@@ -221,18 +226,19 @@ export interface IMessengerService {
    * ```
    */
   getForumOwner?(forumId: string): Promise<string>;
-  getChannels?(botName?: string): Promise<Array<{ id: string; name: string; type?: string }>>;
 
   /**
    * Optional: Returns extended sub-services managed by this provider.
    * Useful for services like Discord that manage multiple bot instances under one connection.
    * If implemented, consumers like IdleResponseManager can use this to interact with specific bot instances.
    */
-  getDelegatedServices?(): Array<{
+
+  getDelegatedServices?(): {
     serviceName: string;
     messengerService: IMessengerService;
+
     botConfig: any;
-  }>;
+  }[];
 
   /**
    * Optional: Updates the bot's presence/activity status with model info.
