@@ -11,7 +11,14 @@ test.describe('About Page Documentation Screenshots', () => {
       await route.fulfill({ status: 200, json: { authenticated: true, user: { role: 'admin' } } });
     });
     await page.route('/api/health', async (route) =>
-      route.fulfill({ status: 200, json: { version: '1.0.0', status: 'healthy', system: { platform: 'linux', nodeVersion: 'v18.0.0' } } })
+      route.fulfill({
+        status: 200,
+        json: {
+          version: '1.0.0',
+          status: 'healthy',
+          system: { platform: 'linux', nodeVersion: 'v18.0.0' },
+        },
+      })
     );
     await page.route('/api/demo/status', async (route) =>
       route.fulfill({ status: 200, json: { enabled: true } })

@@ -266,4 +266,11 @@ export interface IMessengerService {
    * @returns {boolean | Promise<boolean>} True if connected, false otherwise
    */
   isConnected?(botName?: string): boolean | Promise<boolean>;
+
+  /**
+   * Retrieves available channels from the provider
+   * Note: Optional method as not all providers support this
+   * @param botName Optional specific bot to query channels for
+   */
+  getChannels?(botName?: string): Promise<Array<{ id: string; name: string; type?: string }>>;
 }
