@@ -172,17 +172,17 @@ const TryItPanel: React.FC<{ route: RouteInfo }> = ({ route }) => {
       setResponse(JSON.stringify(res, null, 2));
     } catch (err: unknown) {
       if ((err as any).status) {
-         setStatusCode((err as any).status);
+        setStatusCode((err as any).status);
       } else if ((err instanceof Error ? err.message : String(err)) && (err instanceof Error ? err.message : String(err)).includes('failed (')) {
-         // Try to extract status from ApiService error message: "API request failed (404): ..."
-         const match = (err instanceof Error ? err.message : String(err)).match(/failed \((\d+)\)/);
-         if (match) {
-           setStatusCode(parseInt(match[1], 10));
-         } else {
-           setStatusCode(500); // generic error status
-         }
+        // Try to extract status from ApiService error message: "API request failed (404): ..."
+        const match = (err instanceof Error ? err.message : String(err)).match(/failed \((\d+)\)/);
+        if (match) {
+          setStatusCode(parseInt(match[1], 10));
+        } else {
+          setStatusCode(500); // generic error status
+        }
       } else {
-         setStatusCode(500);
+        setStatusCode(500);
       }
       setResponse(`Error: ${(err instanceof Error ? err.message : String(err))}`);
     } finally {
