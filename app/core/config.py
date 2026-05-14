@@ -8,7 +8,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     app_name: str = "Tenancy API"
     database_url: str = "sqlite:///./test.db"
-    secret_key: str = "secret-key"
+    secret_key: str
     debug: bool = True
 
     class Config:
