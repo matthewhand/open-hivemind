@@ -4,7 +4,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
 import { Logger } from '@common/logger';
-import { isSafeUrl } from '../utils/ssrfGuard';
 import { loadPlugin, PLUGINS_DIR, type PluginManifest } from './PluginLoader';
 import {
   PluginSecurityPolicy,
@@ -194,7 +193,7 @@ function exec(cmd: string, args: string[], cwd: string): void {
 // Public API
 // ---------------------------------------------------------------------------
 
-async function validateRepoUrl(url: string): Promise<void> {
+function validateRepoUrl(url: string): void {
   if (!url || typeof url !== 'string') {
     throw new PluginValidationError('Repository URL is required and must be a string.');
   }
@@ -202,11 +201,6 @@ async function validateRepoUrl(url: string): Promise<void> {
   const trimmed = url.trim();
   if (trimmed.startsWith('-')) {
     throw new PluginValidationError('Invalid repository URL: cannot start with a dash.');
-  }
-
-  const safetyCheck = await isSafeUrl(trimmed);
-  if (!safetyCheck.safe) {
-    throw new PluginValidationError(`Invalid repository URL: ${safetyCheck.reason}`);
   }
 
   let parsedUrl: URL;
@@ -251,7 +245,7 @@ async function validateRepoUrl(url: string): Promise<void> {
  * Install a community plugin from a git repository URL.
  */
 export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
-  await validateRepoUrl(repoUrl);
+  validateRepoUrl(repoUrl);
   await fs.promises.mkdir(PLUGINS_DIR, { recursive: true });
 
   const tempName = `_install_${Date.now()}`;
