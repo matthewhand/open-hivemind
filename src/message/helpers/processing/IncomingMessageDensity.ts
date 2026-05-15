@@ -20,6 +20,24 @@ export class IncomingMessageDensity {
   }
 
   /**
+   * Helper to prune old messages. Scans backwards and breaks early
+   * when it hits a message outside the window.
+   */
+  private filterRecentMessages(
+    history: { ts: number; isBot: boolean }[],
+    windowMs: number,
+    now: number
+  ): { ts: number; isBot: boolean }[] {
+    const threshold = now - windowMs;
+    let keepCount = 0;
+    for (let i = history.length - 1; i >= 0; i--) {
+      if (history[i].ts <= threshold) break;
+      keepCount++;
+    }
+    return keepCount === history.length ? history : history.slice(history.length - keepCount);
+  }
+
+  /**
    * Records an incoming message.
    */
   public recordMessage(channelId: string, authorId: string | undefined, isBot: boolean): void {
@@ -27,7 +45,7 @@ export class IncomingMessageDensity {
     let history = this.channelHistory.get(channelId) || [];
 
     // Prune old (use the class-level max window)
-    history = history.filter((item) => now - item.ts < this.WINDOW_MS);
+    history = this.filterRecentMessages(history, this.WINDOW_MS, now);
 
     // Record new
     history.push({ ts: now, isBot });
@@ -65,12 +83,21 @@ export class IncomingMessageDensity {
   ): { userCount: number; botCount: number; total: number } {
     const now = Date.now();
     const history = this.channelHistory.get(channelId) || [];
-    const recent = history.filter((item) => now - item.ts < windowMs);
 
-    const userCount = recent.filter((x) => !x.isBot).length;
-    const botCount = recent.filter((x) => x.isBot).length;
+    let userCount = 0;
+    let botCount = 0;
+    const threshold = now - windowMs;
 
-    return { userCount, botCount, total: recent.length };
+    for (let i = history.length - 1; i >= 0; i--) {
+      if (history[i].ts <= threshold) break;
+      if (history[i].isBot) {
+        botCount++;
+      } else {
+        userCount++;
+      }
+    }
+
+    return { userCount, botCount, total: userCount + botCount };
   }
 
   /**

@@ -43,3 +43,6 @@
 ## 2026-05-02 - ProviderConfigForm Re-rendering
 **Learning:** The form components re-render frequently (e.g., on every keystroke). Using `.reduce()` and `.filter()` on potentially large arrays within the component body without memoization leads to O(N) recalculations on every render, which can cause typing lag on complex configuration forms.
 **Action:** Use `useMemo` to wrap expensive array transformations inside React components, especially forms.
+## 2026-05-15 - O(N) Array.filter to O(K) early break in sliding window
+**Learning:** High-frequency messaging processors (like `IncomingMessageDensity`) process temporally-ordered arrays. Using `.filter()` traverses the entire array O(N). Because items are appended sequentially, iterating backwards and breaking when the timestamp falls outside the window reduces the time complexity to O(K) where K is the number of valid items in the time window.
+**Action:** When working with chronologically ordered arrays (like logs, message history, timestamps) and applying a time window, use a reverse `for` loop with an early `break` instead of full array scans like `.filter()` or `.some()`.
