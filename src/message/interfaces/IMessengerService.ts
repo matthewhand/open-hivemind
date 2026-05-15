@@ -45,6 +45,7 @@ export interface IMessengerService {
    *
    * Implementations that don't need this can omit it (or return null).
    */
+
   resolveAgentContext?(params: { botConfig: any; agentDisplayName: string }): null | {
     /**
      * Bot/user id for this agent instance (used for mention detection and self-filtering).
@@ -135,6 +136,7 @@ export interface IMessengerService {
    * });
    * ```
    */
+
   sendPublicAnnouncement(channelId: string, announcement: any): Promise<void>;
 
   /**
@@ -183,7 +185,9 @@ export interface IMessengerService {
    * @param channelId The channel identifier to score
    * @param metadata  Optional context used for scoring
    * @returns number score for the channel
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
    */
+
   scoreChannel?(channelId: string, metadata?: Record<string, any>): number;
 
   /**
@@ -199,6 +203,7 @@ export interface IMessengerService {
    *   const response = await generateResponse(message, history);
    *   return response;
    * });
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
    * ```
    */
   setMessageHandler(
@@ -227,9 +232,11 @@ export interface IMessengerService {
    * Useful for services like Discord that manage multiple bot instances under one connection.
    * If implemented, consumers like IdleResponseManager can use this to interact with specific bot instances.
    */
+
   getDelegatedServices?(): {
     serviceName: string;
     messengerService: IMessengerService;
+
     botConfig: any;
   }[];
 

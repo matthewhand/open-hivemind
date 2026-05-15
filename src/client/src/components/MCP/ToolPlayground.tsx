@@ -7,14 +7,15 @@ import Badge from '../DaisyUI/Badge';
 import { LoadingSpinner } from '../DaisyUI/Loading';
 import { Alert } from '../DaisyUI/Alert';
 import {
-  Play,
-  Terminal,
-  Settings,
-  Puzzle,
+  CheckCircle,
   ChevronRight,
+  Code,
+  Play,
+  Puzzle,
   RefreshCw,
   Search,
-  Code,
+  Settings,
+  Terminal,
 } from 'lucide-react';
 import Input from '../DaisyUI/Input';
 

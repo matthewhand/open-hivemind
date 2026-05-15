@@ -43,6 +43,7 @@ import secureConfigRouter from '@src/server/routes/secureConfig';
 import sitemapRouter from '@src/server/routes/sitemap';
 import specsRouter from '@src/server/routes/specs';
 import templatesRouter from '@src/server/routes/templates';
+import testRouter from '@src/server/routes/testRoutes';
 import usageTrackingRouter from '@src/server/routes/usageTracking';
 import validationRouter from '@src/server/routes/validation';
 import webhooksRouter from '@src/server/routes/webhooks';
@@ -53,14 +54,17 @@ import * as healthRouteModule from './routes/health';
 const appLogger = Logger.withContext('app:index');
 const httpLogger = Logger.withContext('http');
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports
 const healthRoute = (healthRouteModule.default || healthRouteModule) as import('express').Router;
 
 export interface RouteContext {
   frontendDistPath: string;
   /** Mutable ref so Vite dev server can be assigned later and used by route handlers. */
+
   viteServerRef: { current: any };
 }
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports
 export function registerRoutes(app: import('express').Application, ctx: RouteContext): void {
   const { frontendDistPath, viteServerRef } = ctx;
 
@@ -123,30 +127,31 @@ export function registerRoutes(app: import('express').Application, ctx: RouteCon
 
   // 3. Resource routers (specific paths, no catch-all conflict)
   app.use('/api/activity', authenticateToken, activityRouter);
-  app.use('/api/agents', agentsRouter);
-  app.use('/api/dashboard', dashboardRouter);
-  app.use('/api/config', webuiConfigRouter);
-  app.use('/api/bots', botsRouter);
+  app.use('/api/agents', authenticateToken, agentsRouter);
+  app.use('/api/dashboard', authenticateToken, dashboardRouter);
+  app.use('/api/config', authenticateToken, webuiConfigRouter);
+  app.use('/api/bots', authenticateToken, botsRouter);
   app.use('/api/bot-config', botConfigRouter);
   app.use('/api/validation', validationRouter);
-  app.use('/api/hot-reload', hotReloadRouter);
+  app.use('/api/hot-reload', authenticateToken, hotReloadRouter);
   app.use('/api/ci', ciRouter);
-  app.use('/api/enterprise', enterpriseRouter);
-  app.use('/api/secure-config', secureConfigRouter);
+  app.use('/api/enterprise', authenticateToken, enterpriseRouter);
+  app.use('/api/secure-config', authenticateToken, secureConfigRouter);
   app.use('/api/admin', adminApiRouter);
   app.use('/api/integrations', integrationsRouter);
-  app.use('/api/letta', lettaRouter);
-  app.use('/api/marketplace', marketplaceRouter);
-  app.use('/api/mcp', mcpRouter);
+  app.use('/api/letta', authenticateToken, lettaRouter);
+  app.use('/api/marketplace', authenticateToken, marketplaceRouter);
+  app.use('/api/mcp', authenticateToken, mcpRouter);
   app.use('/api/mcp-tools', mcpToolsRouter);
   app.use('/api/monitoring', authenticateToken, monitoringRouter);
-  app.use('/api/onboarding', onboardingRouter);
-  app.use('/api/personas', personasRouter);
-  app.use('/api/providers', providersRouter);
-  app.use('/api/templates', templatesRouter);
+  app.use('/api/onboarding', authenticateToken, onboardingRouter);
+  app.use('/api/personas', authenticateToken, personasRouter);
+  app.use('/api/providers', authenticateToken, providersRouter);
+  app.use('/api/templates', authenticateToken, templatesRouter);
   app.use('/api/usage-tracking', usageTrackingRouter);
-  app.use('/api/webhooks', webhooksRouter);
+  app.use('/api/webhooks', authenticateToken, webhooksRouter);
   app.use('/api/webui', authenticateToken, webuiRouter);
+  app.use('/api/test', authenticateToken, testRouter);
   app.use('/api/demo', demoRouter);
   app.use('/api/docs', apiDocsRouter);
   app.use('/api/pluginSecurity', pluginSecurityRouter);

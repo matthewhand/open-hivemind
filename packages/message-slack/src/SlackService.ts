@@ -366,6 +366,32 @@ export class SlackService extends EventEmitter implements IMessengerService {
     return SlackService.instance;
   }
 
+  public async getChannels(
+    botName?: string
+  ): Promise<Array<{ id: string; name: string; type?: string }>> {
+    const mgr = this.getBotManager(botName);
+    const bot = mgr?.getAllBots?.()[0];
+
+    if (!bot?.webClient) {
+      return [];
+    }
+
+    try {
+      const result = await bot.webClient.conversations.list({
+        types: 'public_channel,private_channel,im,mpim',
+      });
+
+      return (result.channels || []).map((c: any) => ({
+        id: c.id,
+        name: c.name || c.user || c.id,
+        type: c.is_im ? 'im' : c.is_mpim ? 'mpim' : c.is_private ? 'private' : 'public',
+      }));
+    } catch (error) {
+      debug(`Failed to fetch Slack channels for ${botName}: ${error}`);
+      return [];
+    }
+  }
+
   public async initialize(): Promise<void> {
     debug('Entering initialize');
     if (!this.app) {
@@ -1055,6 +1081,8 @@ export class SlackService extends EventEmitter implements IMessengerService {
         },
 
         getMessagesFromChannel: async (channelId: string) => this.getMessagesFromChannel(channelId),
+
+        getChannels: async (botName?: string) => this.getChannels(botName || name),
 
         sendPublicAnnouncement: async (channelId: string, announcement: any) =>
           this.sendPublicAnnouncement(channelId, announcement),

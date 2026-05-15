@@ -1,5 +1,9 @@
 import { expect, test } from '@playwright/test';
-import { setupTestWithErrorDetection, waitForPageReady, registerViteSourceBypass } from './test-utils';
+import {
+  registerViteSourceBypass,
+  setupTestWithErrorDetection,
+  waitForPageReady,
+} from './test-utils';
 
 /**
  * Smoke Test - All Pages (Comprehensive)
@@ -250,8 +254,22 @@ async function mockAllApiEndpoints(page: import('@playwright/test').Page) {
         json: {
           success: true,
           data: {
-            llm: [{ key: 'openai', label: 'OpenAI', type: 'llm', fields: { required: [], optional: [], advanced: [] } }],
-            messenger: [{ key: 'discord', label: 'Discord', type: 'messenger', fields: { required: [], optional: [], advanced: [] } }],
+            llm: [
+              {
+                key: 'openai',
+                label: 'OpenAI',
+                type: 'llm',
+                fields: { required: [], optional: [], advanced: [] },
+              },
+            ],
+            messenger: [
+              {
+                key: 'discord',
+                label: 'Discord',
+                type: 'messenger',
+                fields: { required: [], optional: [], advanced: [] },
+              },
+            ],
             memory: [],
           },
         },

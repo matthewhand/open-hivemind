@@ -11,6 +11,61 @@
 /* Base styles - let DaisyUI handle theming */
 html {
   scroll-behavior: smooth;
+  /* Density scale — multiplied into card/main padding via calc().
+     Driven by <html data-density="..."> set by uiStore.setDensity,
+     and <html data-compact-density="true"> from setCompactDensity.
+
+     Two-axis composition: data-density picks the base scale via
+     --density-base; --density-scale then composes that base with the
+     optional compact-density multiplier. The base/scale split is
+     required because a custom property cannot reference itself in
+     its own declaration (per CSS spec the value would be invalid),
+     which would silently no-op the compact-density axis. */
+  --density-base: 1;
+  --density-scale: var(--density-base);
+}
+
+html[data-density="compact"] { --density-base: 0.7; }
+html[data-density="comfortable"] { --density-base: 1; }
+html[data-density="spacious"] { --density-base: 1.25; }
+
+html[data-compact-density="true"] { --density-scale: calc(var(--density-base) * 0.85); }
+
+/* Smooth out density-driven padding/min-height changes so toggling
+   the slider or navbar density button doesn't snap-jump. Wrapped in
+   prefers-reduced-motion: no-preference so vestibular-sensitive users
+   keep the instant snap behavior.
+
+   These transitions are gated behind html[data-density-transitioning]
+   so they only fire briefly while density is actually changing. Leaving
+   them permanently active (the previous behavior) caused unrelated
+   layout-changing operations on every card/cell to animate, producing
+   jank on dense pages (logs, providers, large tables). uiStore's
+   setDensity / setCompactDensity actions toggle the attribute on for
+   ~300ms after each change. */
+@media (prefers-reduced-motion: no-preference) {
+  html[data-density-transitioning] .card-body,
+  html[data-density-transitioning] .modal-box,
+  html[data-density-transitioning] .table th,
+  html[data-density-transitioning] .table td {
+    transition: padding 180ms ease, min-height 180ms ease;
+  }
+
+  .fab-mobile {
+    transition:
+      background-color 150ms ease,
+      color 150ms ease,
+      transform 150ms ease;
+  }
+
+  html[data-density-transitioning] .fab-mobile {
+    transition:
+      background-color 150ms ease,
+      color 150ms ease,
+      transform 150ms ease,
+      padding 180ms ease,
+      min-height 180ms ease;
+  }
 }
 
 body {
@@ -78,7 +133,7 @@ textarea {
 }
 
 .card-body {
-  padding: 1.5rem;
+  padding: calc(1.5rem * var(--density-scale, 1));
 }
 
 .card-title {
@@ -97,9 +152,10 @@ textarea {
 
 /* Stat cards with gradient backgrounds */
 .stat {
-  padding: 1.25rem 1.5rem;
+  padding: calc(1.25rem * var(--density-scale, 1)) calc(1.5rem * var(--density-scale, 1));
   border-color: hsl(var(--bc) / 0.1);
-  transition: all 0.2s ease;
+  /* Hover applies a background-image gradient. */
+  transition: background 0.2s ease, background-color 0.2s ease;
 }
 
 .stat:hover {
@@ -167,7 +223,8 @@ textarea {
    Button Enhancements
    ============================================ */
 .btn {
-  transition: all 0.2s ease;
+  /* Hover changes transform + box-shadow; active resets transform. */
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .btn:not(.btn-disabled):hover {
@@ -204,7 +261,23 @@ textarea {
    ============================================ */
 .menu li>a,
 .menu li>button {
-  transition: all 0.15s ease;
+  /* Hover animates padding-left; active state changes background +
+     border-left. Color/background-color also tween for state changes. */
+  transition: padding-left 0.15s ease, background 0.15s ease,
+    background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  padding: calc(0.5rem * var(--density-scale, 1)) calc(1rem * var(--density-scale, 1));
+}
+
+/* WCAG AAA touch-target floor (44px) — scoped to coarse-pointer (touch)
+   devices only. Applying it to fine-pointer (mouse) users would pin every
+   sidebar item at 44px regardless of the density setting, neutralizing
+   density on the largest density-affected surface. Touch users still get
+   AAA-compliant targets; mouse users see the density-scaled height. */
+@media (pointer: coarse) {
+  .menu li>a,
+  .menu li>button {
+    min-height: 2.75rem;
+  }
 }
 
 .menu li>a:hover,
@@ -238,17 +311,18 @@ textarea {
   text-transform: uppercase;
   font-size: 0.75rem;
   color: hsl(var(--bc) / 0.8);
-  padding: 1rem 1.25rem;
+  padding: calc(1rem * var(--density-scale, 1)) calc(1.25rem * var(--density-scale, 1));
   border-bottom: 2px solid hsl(var(--bc) / 0.1);
 }
 
 .table td {
-  padding: 0.875rem 1.25rem;
+  padding: calc(0.875rem * var(--density-scale, 1)) calc(1.25rem * var(--density-scale, 1));
   border-bottom: 1px solid hsl(var(--bc) / 0.05);
 }
 
 .table tr {
-  transition: all 0.2s ease;
+  /* Hover applies a background gradient + horizontal translate. */
+  transition: background 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
 }
 
 .table tbody tr:hover {
@@ -266,7 +340,8 @@ textarea {
 .input,
 .textarea,
 .select {
-  transition: all 0.2s ease;
+  /* Hover/focus animate border-color, transform, and box-shadow. */
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
   border: 1px solid hsl(var(--bc) / 0.3);
 }
 
@@ -335,6 +410,7 @@ dialog.modal:not([open]) {
   box-shadow:
     0 25px 50px rgba(0, 0, 0, 0.4),
     0 0 1px rgba(255, 255, 255, 0.1);
+  padding: calc(1.5rem * var(--density-scale, 1));
 }
 
 @keyframes modalScale {
@@ -351,7 +427,8 @@ dialog.modal:not([open]) {
 
 /* Modal close button */
 .modal-box .btn-circle.btn-ghost {
-  transition: all 0.15s ease;
+  /* Hover changes background, color, and applies a 90deg rotate. */
+  transition: background 0.15s ease, background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
 }
 
 .modal-box .btn-circle.btn-ghost:hover {
@@ -372,7 +449,8 @@ dialog.modal:not([open]) {
 
 .tabs-boxed .tab {
   border-radius: 0.5rem;
-  transition: all 0.2s ease;
+  /* Hover/active swap background, color, and box-shadow. */
+  transition: background 0.2s ease, background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
   font-weight: 500;
 }
 
@@ -388,7 +466,8 @@ dialog.modal:not([open]) {
 
 /* Bordered/Lifted tabs */
 .tabs-lifted .tab {
-  transition: all 0.2s ease;
+  /* Hover/active swap border-bottom-color and color. */
+  transition: border-bottom-color 0.2s ease, color 0.2s ease;
   border-bottom: 2px solid transparent;
 }
 
@@ -411,7 +490,8 @@ dialog.modal:not([open]) {
   width: 0;
   height: 2px;
   background: hsl(var(--p));
-  transition: all 0.2s ease;
+  /* Hover/active grow the underline width. */
+  transition: width 0.2s ease;
   transform: translateX(-50%);
 }
 
@@ -624,7 +704,8 @@ dialog.modal:not([open]) {
 
 .dropdown-content li>a,
 .dropdown-content li>button {
-  transition: all 0.15s ease;
+  /* Hover applies a background gradient and padding-left shift. */
+  transition: background 0.15s ease, background-color 0.15s ease, padding-left 0.15s ease, color 0.15s ease;
   border-radius: 0.5rem;
   margin: 0.25rem;
 }
@@ -772,7 +853,9 @@ body.robot-ui-enabled {
       hsl(var(--bc) / 0.15) 0%,
       hsl(var(--bc) / 0.08) 50%,
       hsl(var(--bc) / 0.12) 100%);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Hover/active/open states change transform and box-shadow. */
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   isolation: isolate;
   display: flex;
   align-items: center;
@@ -825,7 +908,8 @@ body.robot-ui-enabled {
   height: 0.625rem;
   background: hsl(var(--bc) / 0.4);
   border-radius: 1px;
-  transition: all 0.3s ease;
+  /* Hover/open states change background and add a colored box-shadow. */
+  transition: background 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .robot-hamburger-antenna-left {
@@ -845,7 +929,8 @@ body.robot-ui-enabled {
   background: transparent;
   border: 2px solid hsl(var(--bc) / 0.4);
   border-radius: 50%;
-  transition: all 0.3s ease;
+  /* Hover/open change border-color, background, and box-shadow. */
+  transition: border-color 0.3s ease, background 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .robot-hamburger-antenna-tip-left {
@@ -874,7 +959,11 @@ body.robot-ui-enabled {
   height: 2px;
   background: hsl(var(--bc) / 0.8);
   border-radius: 1px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Hover changes background; open state animates transform + opacity. */
+  transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   transform-origin: center;
 }
 
@@ -887,7 +976,8 @@ body.robot-ui-enabled {
   height: 0.375rem;
   background: hsl(var(--bc) / 0.3);
   border-radius: 50%;
-  transition: all 0.3s ease;
+  /* Open state changes background and box-shadow (LED glow). */
+  transition: background 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
@@ -1185,8 +1275,13 @@ body.robot-ui-enabled {
 body.robot-ui-enabled .btn-primary,
 body.robot-ui-enabled .btn-secondary,
 body.robot-ui-enabled .btn-accent {
-  /* Smooth transition when switching themes */
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Smooth transition when switching themes — only the theme-driven
+     properties need to animate, not every animatable property. */
+  transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ============================================
@@ -1329,4 +1424,74 @@ body.robot-ui-enabled .btn-accent {
   100% {
     transform: translate(0, 0);
   }
+}
+
+/* ============================================================
+ * Mobile floating action buttons (FABs)
+ * Reusable pattern for surfacing primary page actions on small
+ * viewports. Pages opt in by rendering a `.fab-mobile` element
+ * with `md:hidden` so the FAB never appears on desktop.
+ * ============================================================ */
+.fab-mobile {
+  position: fixed;
+  /* Add iOS safe-area inset so the FAB sits above the home-indicator
+   * gesture bar at compact density (where 1.5rem * scale collapses to
+   * ~14px and would otherwise overlap the indicator). */
+  bottom: calc(1.5rem * var(--density-scale, 1) + env(safe-area-inset-bottom, 0px));
+  width: calc(3.5rem * var(--density-scale, 1));
+  height: calc(3.5rem * var(--density-scale, 1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background-color: oklch(var(--b2));
+  border: 2px solid oklch(var(--p));
+  color: oklch(var(--bc));
+  box-shadow:
+    0 8px 24px oklch(var(--bc) / 0.25),
+    0 2px 8px oklch(var(--bc) / 0.15);
+  z-index: 40;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease, transform 150ms ease;
+}
+
+.fab-mobile:hover,
+.fab-mobile:focus-visible {
+  background-color: oklch(var(--p));
+  color: oklch(var(--pc));
+  outline: none;
+}
+
+.fab-mobile:active {
+  background-color: oklch(var(--p));
+  color: oklch(var(--pc));
+  outline: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .fab-mobile:hover,
+  .fab-mobile:focus-visible {
+    transform: scale(1.06);
+  }
+
+  .fab-mobile:active {
+    /* Press-down feedback (HIG/Material convention) — previous rule
+     * applied scale(1.06) on :active, which grew the button under the
+     * finger instead of acknowledging the press. */
+    transform: scale(0.96);
+  }
+}
+
+.fab-mobile:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.fab-mobile-left {
+  left: calc(1.5rem * var(--density-scale, 1));
+}
+
+.fab-mobile-right {
+  right: calc(1.5rem * var(--density-scale, 1));
 }

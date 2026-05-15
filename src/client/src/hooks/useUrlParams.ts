@@ -72,7 +72,6 @@ export function useUrlParams<S extends ParamSchema>(schema: S) {
     }
     return result as InferValues<S>;
     // We intentionally depend on searchParams.toString() to react to URL changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams.toString()]);
 
   // Store latest schema in a ref so we don't need it in deps

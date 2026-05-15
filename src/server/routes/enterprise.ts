@@ -4,6 +4,7 @@ import { ApiResponse } from '@src/server/utils/apiResponse';
 import { AuditLogger } from '../../common/auditLogger';
 import { HTTP_STATUS } from '../../types/constants';
 import {
+  ComplianceCheckSchema,
   CreateCloudProviderSchema,
   CreateEnterpriseIntegrationSchema,
   PerformanceOptimizeSchema,
@@ -14,10 +15,12 @@ const debug = Debug('app:enterpriseRoutes');
 const router = Router();
 
 // Get compliance status
-router.get('/api/compliance', (req, res) => {
+router.get('/compliance', (req, res) => {
   try {
     // In a real implementation, this would check compliance rules
     // For now, return mock data
+
+    // eslint-disable-next-line unused-imports/no-unused-vars
     const complianceRules = [
       {
         id: 'rule_1',
@@ -59,10 +62,12 @@ router.get('/api/compliance', (req, res) => {
 });
 
 // Get cloud providers
-router.get('/api/cloud-providers', (req, res) => {
+router.get('/cloud-providers', (req, res) => {
   try {
     // In a real implementation, this would fetch cloud provider status
+
     // For now, return mock data
+    // eslint-disable-next-line unused-imports/no-unused-vars
     const cloudProviders = [
       {
         id: 'aws_prod',
@@ -99,12 +104,13 @@ router.get('/api/cloud-providers', (req, res) => {
 });
 
 // Add cloud provider
-router.post('/api/cloud-providers', validateRequest(CreateCloudProviderSchema), (req, res) => {
+router.post('/cloud-providers', validateRequest(CreateCloudProviderSchema), (req, res) => {
   try {
     const { name, type, region, _credentials } = req.body;
 
     // In a real implementation, this would configure the cloud provider
     // For now, simulate creation
+    // eslint-disable-next-line unused-imports/no-unused-vars
     const cloudProvider = {
       id: `${type}_${Date.now()}`,
       name,
@@ -125,10 +131,11 @@ router.post('/api/cloud-providers', validateRequest(CreateCloudProviderSchema), 
 });
 
 // Get integrations
-router.get('/api/integrations', (req, res) => {
+router.get('/integrations', (req, res) => {
   try {
     // In a real implementation, this would fetch integration status
     // For now, return mock data
+    // eslint-disable-next-line unused-imports/no-unused-vars
     const integrations = [
       {
         id: 'int_1',
@@ -169,12 +176,13 @@ router.get('/api/integrations', (req, res) => {
 });
 
 // Add integration
-router.post('/api/integrations', validateRequest(CreateEnterpriseIntegrationSchema), (req, res) => {
+router.post('/integrations', validateRequest(CreateEnterpriseIntegrationSchema), (req, res) => {
   try {
     const { name, type, provider, config } = req.body;
 
     // In a real implementation, this would create the integration
     // For now, simulate creation
+    // eslint-disable-next-line unused-imports/no-unused-vars
     const integration = {
       id: `int_${Date.now()}`,
       name,
@@ -196,7 +204,7 @@ router.post('/api/integrations', validateRequest(CreateEnterpriseIntegrationSche
 });
 
 // Get audit events — supports composable query-param filters
-router.get('/api/audit', async (req, res) => {
+router.get('/audit', async (req, res) => {
   try {
     const {
       limit = '200',
@@ -215,11 +223,13 @@ router.get('/api/audit', async (req, res) => {
       search,
       action,
       resource,
+
       user,
       dateFrom,
       dateTo,
     });
 
+    // eslint-disable-next-line unused-imports/no-unused-vars
     const auditEvents = await auditLogger.getAuditEvents(Number(limit), Number(offset), filter);
 
     return res.json(ApiResponse.success());
@@ -232,7 +242,7 @@ router.get('/api/audit', async (req, res) => {
 });
 
 // Export audit events as CSV (no pagination cap)
-router.get('/api/audit/export', async (req, res) => {
+router.get('/audit/export', async (req, res) => {
   try {
     const { search, action, resource, user, dateFrom, dateTo } = req.query as Record<
       string,
@@ -254,6 +264,7 @@ router.get('/api/audit/export', async (req, res) => {
 
     // Build CSV
     const header = 'id,timestamp,user,action,resource,result,details,ipAddress';
+
     const escCsv = (v: string | undefined) => {
       if (!v) return '';
       // Escape double-quotes and wrap in quotes if the value contains commas, quotes, or newlines
@@ -293,10 +304,11 @@ router.get('/api/audit/export', async (req, res) => {
 });
 
 // Get performance metrics
-router.get('/api/performance', (req, res) => {
+router.get('/performance', (req, res) => {
   try {
     // In a real implementation, this would fetch performance metrics
     // For now, return mock data
+    // eslint-disable-next-line unused-imports/no-unused-vars
     const performanceMetrics = [
       {
         id: 'metric_1',
@@ -337,10 +349,11 @@ router.get('/api/performance', (req, res) => {
 });
 
 // Run compliance check
-router.post('/api/compliance/check', (req, res) => {
+router.post('/compliance/check', validateRequest(ComplianceCheckSchema), (req, res) => {
   try {
     // In a real implementation, this would run compliance checks
     // For now, simulate compliance check
+    // eslint-disable-next-line unused-imports/no-unused-vars
     const complianceResults = {
       totalRules: 15,
       compliantRules: 13,
@@ -355,15 +368,17 @@ router.post('/api/compliance/check', (req, res) => {
     debug('Compliance check API error:', error);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+
       .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
   }
 });
 
 // Get security alerts
-router.get('/api/security/alerts', (req, res) => {
+router.get('/security/alerts', (req, res) => {
   try {
     // In a real implementation, this would fetch security alerts
     // For now, return mock data
+    // eslint-disable-next-line unused-imports/no-unused-vars
     const securityAlerts = [
       {
         id: 'alert_1',
@@ -389,16 +404,18 @@ router.get('/api/security/alerts', (req, res) => {
   } catch (error) {
     debug('Security alerts API error:', error);
     return res
+
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
   }
 });
 
 // Get governance policies
-router.get('/api/governance/policies', (req, res) => {
+router.get('/governance/policies', (req, res) => {
   try {
     // In a real implementation, this would fetch governance policies
     // For now, return mock data
+    // eslint-disable-next-line unused-imports/no-unused-vars
     const governancePolicies = [
       {
         id: 'policy_1',
@@ -425,17 +442,19 @@ router.get('/api/governance/policies', (req, res) => {
     debug('Governance policies API error:', error);
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+
       .json(ApiResponse.error(error instanceof Error ? error.message : 'Unknown error'));
   }
 });
 
 // Optimize performance
-router.post('/api/performance/optimize', validateRequest(PerformanceOptimizeSchema), (req, res) => {
+router.post('/performance/optimize', validateRequest(PerformanceOptimizeSchema), (req, res) => {
   try {
     const { target, type } = req.body;
 
     // In a real implementation, this would trigger performance optimization
     // For now, simulate optimization
+    // eslint-disable-next-line unused-imports/no-unused-vars
     const optimizationResults = {
       id: `opt_${Date.now()}`,
       target: target || 'system',

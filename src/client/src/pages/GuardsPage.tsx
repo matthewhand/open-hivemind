@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { authFetch } from '../utils/authFetch';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import { Shield, RefreshCw, AlertTriangle, Plus, Copy, Trash2, Edit2, CheckCircle, XCircle, Settings, Users } from 'lucide-react';
 import { useToast } from '../components/DaisyUI/ToastNotification';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
@@ -153,7 +154,7 @@ const GuardStatusRow: React.FC<{ icon: React.ReactNode; label: string; enabled: 
 
 /** Guard Settings tab (placeholder — no settings API yet) */
 const GuardSettingsTab: React.FC = () => {
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useLocalStorage('ui.guardSettings.showAdvanced', false);
 
   return (
     <div className="space-y-6">

@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
@@ -7,6 +8,34 @@ import { type IMessageProvider } from '../types/IProvider';
 import { ReconnectionManager } from './ReconnectionManager';
 
 const debug = Debug('app:providers:SlackProvider');
+
+interface SlackBotInstance {
+  name: string;
+  slack: {
+    botToken: string;
+    signingSecret: string;
+    appToken?: string;
+    defaultChannelId?: string;
+    joinChannels?: string;
+    mode: string;
+  };
+  llm?: unknown;
+}
+
+interface SlackFileConfig {
+  slack?: {
+    mode?: string;
+    instances?: Array<{
+      name: string;
+      token: string;
+      signingSecret: string;
+      llm?: unknown;
+      appToken?: string;
+      defaultChannelId?: string;
+      joinChannels?: string;
+    }>;
+  };
+}
 
 export class SlackProvider implements IMessageProvider<SlackConfig> {
   private reconManagers: Map<string, ReconnectionManager> = new Map();
@@ -38,8 +67,7 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
     const slack = this.slackService;
     const botNames = slack.getBotNames();
     const bots = botNames.map((name: string) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const cfg: Record<string, any> = (slack.getBotConfig(name) as Record<string, any>) || {};
+      const cfg = (slack.getBotConfig(name) as SlackBotInstance) || {};
       const reconManager = this.reconManagers.get(name);
       return {
         provider: 'slack',
@@ -72,7 +100,7 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
     const signingSecret = config.signingSecret as string | undefined;
     const appToken = config.appToken as string | undefined;
     const defaultChannelId = config.defaultChannelId as string | undefined;
-    const joinChannels = config.joinChannels;
+    const joinChannels = config.joinChannels as string | undefined;
     const mode = config.mode as string | undefined;
     const llm = config.llm;
 
@@ -84,37 +112,40 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const messengersPath = path.join(configDir, 'providers', 'messengers.json');
 
-    // Also try ../../config if process.cwd() is src/admin (unlikely in runtime but handled in adminRoutes)
-    // adminRoutes used: process.env.NODE_CONFIG_DIR || path.join(__dirname, '../../config')
-    // We will use process.cwd() based path which is safer.
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let cfg: Record<string, any> = { slack: { instances: [] } };
+    let cfg: SlackFileConfig = { slack: { instances: [] } };
     try {
       const fileContent = await fs.promises.readFile(messengersPath, 'utf8');
-      cfg = JSON.parse(fileContent);
+      cfg = JSON.parse(fileContent) as SlackFileConfig;
     } catch (e: unknown) {
       if ((e as NodeJS.ErrnoException).code !== 'ENOENT') {
-        // Try fallback location if expected location fails, or just ignore?
-        // adminRoutes had simpler logic.
+        debug('Failed reading messengers.json', e);
       }
     }
 
-    cfg.slack = cfg.slack || {};
-    cfg.slack.mode = cfg.slack.mode || mode || 'socket';
-    cfg.slack.instances = cfg.slack.instances || [];
-    cfg.slack.instances.push({ name, token: botToken, signingSecret, llm });
+    if (cfg.slack) {
+      cfg.slack.mode = cfg.slack.mode || mode || 'socket';
+      cfg.slack.instances = cfg.slack.instances || [];
+      cfg.slack.instances.push({
+        name,
+        token: botToken,
+        signingSecret,
+        llm,
+        appToken,
+        defaultChannelId,
+        joinChannels,
+      });
+    }
 
     try {
       await fs.promises.mkdir(path.dirname(messengersPath), { recursive: true });
       await fs.promises.writeFile(messengersPath, JSON.stringify(cfg, null, 2), 'utf8');
-    } catch (e) {
+    } catch (e: unknown) {
       debug('ERROR:', 'Failed writing messengers.json', e);
     }
 
     // Runtime add
     const slack = this.slackService;
-    const instanceCfg = {
+    const instanceCfg: SlackBotInstance = {
       name,
       slack: {
         botToken,
@@ -127,22 +158,20 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
       llm,
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if ((slack as any).addBot) {
+    if (typeof (slack as any).addBot === 'function') {
       const reconManager = new ReconnectionManager(
         `slack-${name}`,
         async () => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           await (slack as any).addBot(instanceCfg);
         },
         {
           healthCheckFn: async () => {
             try {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const cfg: Record<string, any> =
-                (slack.getBotConfig(name) as Record<string, any>) || {};
-              const token = cfg?.slack?.botToken || botToken;
-              if (!token) return false;
+              const botCfg = (slack.getBotConfig(name) as SlackBotInstance) || {};
+              const token = botCfg?.slack?.botToken || botToken;
+              if (!token) {
+                return false;
+              }
 
               const response = await fetch('https://slack.com/api/auth.test', {
                 method: 'POST',
@@ -152,7 +181,7 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
                 },
               });
 
-              const data = await response.json();
+              const data = (await response.json()) as { ok: boolean };
               return data.ok === true;
             } catch {
               return false;
@@ -164,7 +193,7 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
       this.reconManagers.set(name, reconManager);
 
       // Start the bot connection with reconnection management
-      reconManager.start().catch((err) => {
+      reconManager.start().catch((err: Error) => {
         debug(`Failed to start Slack bot ${name}: ${err.message}`);
       });
     }
@@ -173,11 +202,11 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
   async reload(): Promise<{ added: number }> {
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const messengersPath = path.join(configDir, 'providers', 'messengers.json');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let cfg: Record<string, any>;
+
+    let cfg: SlackFileConfig;
     try {
       const content = await fs.promises.readFile(messengersPath, 'utf8');
-      cfg = JSON.parse(content);
+      cfg = JSON.parse(content) as SlackFileConfig;
     } catch {
       return { added: 0 };
     }
@@ -190,7 +219,7 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
       const nm = inst.name || '';
       if (!nm || !existing.has(nm)) {
         const nameToUse = nm || `Bot${Date.now()}`;
-        const instanceCfg = {
+        const instanceCfg: SlackBotInstance = {
           name: nameToUse,
           slack: {
             botToken: inst.token,
@@ -202,19 +231,20 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
           },
           llm: inst.llm,
         };
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if ((slack as any).addBot) {
+
+        if (typeof (slack as any).addBot === 'function') {
           const reconManager = new ReconnectionManager(
             `slack-${nameToUse}`,
             async () => {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               await (slack as any).addBot(instanceCfg);
             },
             {
               healthCheckFn: async () => {
                 try {
                   const token = inst.token;
-                  if (!token) return false;
+                  if (!token) {
+                    return false;
+                  }
 
                   const response = await fetch('https://slack.com/api/auth.test', {
                     method: 'POST',
@@ -224,7 +254,7 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
                     },
                   });
 
-                  const data = await response.json();
+                  const data = (await response.json()) as { ok: boolean };
                   return data.ok === true;
                 } catch {
                   return false;
@@ -234,7 +264,7 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
             }
           );
           this.reconManagers.set(nameToUse, reconManager);
-          reconManager.start().catch((err) => {
+          reconManager.start().catch((err: Error) => {
             debug(`Failed to start Slack bot ${nameToUse} on reload: ${err.message}`);
           });
           added++;
@@ -246,9 +276,8 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
 
   async sendMessage(channelId: string, message: string, senderName?: string): Promise<string> {
     const slack = this.slackService;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     if (typeof (slack as any).sendMessageToChannel === 'function') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return await (slack as any).sendMessageToChannel(channelId, message, senderName);
     }
 
@@ -260,14 +289,12 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
 
   async getMessages(channelId: string, limit?: number): Promise<unknown[]> {
     const slack = this.slackService;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     if (typeof (slack as any).fetchMessages === 'function') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return await (slack as any).fetchMessages(channelId, limit);
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     if (typeof (slack as any).getMessages === 'function') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return await (slack as any).getMessages(channelId, limit);
     }
 
@@ -286,9 +313,8 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
 
   getClientId(): string {
     const slack = this.slackService;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     if (typeof (slack as any).getClientId === 'function') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return (slack as any).getClientId();
     }
 
@@ -300,22 +326,19 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
     const slack = this.slackService;
 
     // Try new getChannelOwnerId method
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     if (typeof (slack as any).getChannelOwnerId === 'function') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const ownerId = await (slack as any).getChannelOwnerId(forumId);
       return ownerId || '';
     }
 
     // Legacy method names
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     if (typeof (slack as any).getForumOwner === 'function') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return await (slack as any).getForumOwner(forumId);
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     if (typeof (slack as any).getChannelOwner === 'function') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return await (slack as any).getChannelOwner(forumId);
     }
 
@@ -356,8 +379,7 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
       // Check each bot's connection status
       const botStatuses = await Promise.allSettled(
         botNames.map(async (name: string) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const cfg: Record<string, any> = (slack.getBotConfig(name) as Record<string, any>) || {};
+          const cfg: any = (slack.getBotConfig(name) as any) || {};
           const botToken = cfg?.slack?.botToken;
 
           if (!botToken) {
@@ -379,7 +401,12 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
               },
             });
 
-            const data = await response.json();
+            const data = (await response.json()) as {
+              ok: boolean;
+              user_id?: string;
+              team?: string;
+              error?: string;
+            };
             const latency = Date.now() - startTime;
 
             if (data.ok) {
@@ -408,13 +435,14 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
         })
       );
 
-      const checkedBots = botStatuses.map((r) =>
-        r.status === 'fulfilled'
-          ? r.value
-          : { name: 'unknown', connected: false, error: 'Health check failed' }
+      const checkedBots = botStatuses.map(
+        (r: PromiseSettledResult<{ name: string; connected: boolean; error?: string }>) =>
+          r.status === 'fulfilled'
+            ? r.value
+            : { name: 'unknown', connected: false, error: 'Health check failed' }
       );
 
-      const connectedCount = checkedBots.filter((b) => b.connected).length;
+      const connectedCount = checkedBots.filter((b: { connected: boolean }) => b.connected).length;
       const totalCount = botNames.length;
 
       let status: 'healthy' | 'degraded' | 'down';
@@ -426,7 +454,9 @@ export class SlackProvider implements IMessageProvider<SlackConfig> {
         status = 'down';
       }
 
-      const errors = checkedBots.filter((b) => b.error).map((b) => b.error);
+      const errors = checkedBots
+        .filter((b: { error?: string }): b is { error: string } & typeof b => !!b.error)
+        .map((b) => b.error as string);
 
       return {
         status,

@@ -45,7 +45,7 @@ process.env = new Proxy(process.env, {
           if (process.env.ALLOW_REAL_SECRETS === 'true') {
             return target[prop];
           }
-           console.error(
+          console.error(
             `\x1b[31m[SECURITY WARNING]\x1b[0m Accessing protected env var "${prop}" without explicit mock in test. Set ALLOW_REAL_SECRETS=true to allow this.`
           );
           return undefined; // Block access to real secret
@@ -90,10 +90,14 @@ process.env.NODE_CONFIG_DIR = 'config/test/';
 process.env.ALLOW_LOCAL_NETWORK_ACCESS = 'true';
 
 // Global mock for better-sqlite3
-jest.mock('better-sqlite3', () => {
-  const mockSqlite = jest.requireActual('./mocks/sqlite');
-  return mockSqlite.default || mockSqlite;
-}, { virtual: true });
+jest.mock(
+  'better-sqlite3',
+  () => {
+    const mockSqlite = jest.requireActual('./mocks/sqlite');
+    return mockSqlite.default || mockSqlite;
+  },
+  { virtual: true }
+);
 
 // Set default timeout for all tests
 jest.setTimeout(60000);
@@ -131,12 +135,16 @@ afterEach(async () => {
   } catch (err) {}
 
   try {
-    const { GlobalActivityTracker } = require('../src/message/helpers/processing/GlobalActivityTracker');
+    const {
+      GlobalActivityTracker,
+    } = require('../src/message/helpers/processing/GlobalActivityTracker');
     GlobalActivityTracker.getInstance().reset();
   } catch (err) {}
 
   try {
-    const { IncomingMessageDensity } = require('../src/message/helpers/processing/IncomingMessageDensity');
+    const {
+      IncomingMessageDensity,
+    } = require('../src/message/helpers/processing/IncomingMessageDensity');
     IncomingMessageDensity.getInstance().clear();
   } catch (err) {}
 

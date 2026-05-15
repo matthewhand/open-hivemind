@@ -111,6 +111,7 @@ export class InMemoryQuotaStore implements QuotaStore {
  */
 export class RedisQuotaStore implements QuotaStore {
   private prefix: string;
+
   private redis: { sendCommand(args: string[]): Promise<any> };
 
   constructor(redis: { sendCommand(args: string[]): Promise<any> }, prefix = 'quota') {

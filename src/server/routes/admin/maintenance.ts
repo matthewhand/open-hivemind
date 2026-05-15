@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { Router, type Request, type Response } from 'express';
 import { ErrorUtils } from '../../../common/ErrorUtils';
 import { getTrustedMcpReposConfig } from '../../../config/trustedMcpRepos';
@@ -224,6 +225,7 @@ router.get('/mcp-servers', async (req: Request, res: Response) => {
     const storedMcps = await webUIStorage.getMcps();
 
     // Enrich connected servers with stored configuration data
+
     const enrichedServers = connectedServers.map((server) => {
       const storedConfig = storedMcps.find((mcp: any) => mcp.name === server.name);
       return {
@@ -304,7 +306,9 @@ router.get(
       const isConnected = connectedServers.includes(name);
 
       // Get stored configuration for additional metadata
+
       const storedMcps = await webUIStorage.getMcps();
+
       const storedConfig = storedMcps.find((mcp: any) => mcp.name === name);
 
       if (!isConnected && !storedConfig) {
@@ -349,6 +353,7 @@ router.post(
 
       // Get stored configuration
       const storedMcps = await webUIStorage.getMcps();
+
       const storedConfig = storedMcps.find((mcp: any) => mcp.name === name);
 
       if (!storedConfig) {

@@ -19,6 +19,7 @@ export interface MiddlewareContext {
   frontendDistPath: string;
   frontendAssetsPath: string;
   /** Mutable ref so Vite dev server can be assigned later and used by middleware. */
+
   viteServerRef: { current: any };
 }
 
@@ -48,7 +49,7 @@ export function setupMiddleware(app: express.Application, ctx: MiddlewareContext
     const isLocalhost = origin && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
 
     if (isLocalhost) {
-      res.setHeader('Access-Control-Allow-Origin', origin!);
+      res.setHeader('Access-Control-Allow-Origin', origin as string);
       res.setHeader('Access-Control-Allow-Credentials', 'true');
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
       res.setHeader(
@@ -122,6 +123,7 @@ export function setupMiddleware(app: express.Application, ctx: MiddlewareContext
     });
   } else {
     // Development Mode Handlers - Proxy to Vite
+
     const serveDevHtml = async (req: Request, res: Response) => {
       try {
         const url = req.originalUrl;

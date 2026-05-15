@@ -1,8 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
-import { Discord, type DiscordService } from '@hivemind/message-discord';
+import { DiscordService } from '@hivemind/message-discord';
 import discordConfig, { type DiscordConfig } from '../config/discordConfig';
+import type { IMessage } from '../message/interfaces/IMessage';
 import type { IBotInfo } from '../types/botInfo';
 import { type IMessageProvider } from '../types/IProvider';
 import { ReconnectionManager } from './ReconnectionManager';
@@ -19,8 +20,7 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
   private discordService: InstanceType<typeof DiscordService>;
 
   constructor(discordService?: InstanceType<typeof DiscordService>) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    this.discordService = discordService || (Discord as any).DiscordService.getInstance();
+    this.discordService = discordService || (DiscordService as any).getInstance();
   }
 
   getSchema(): Record<string, unknown> {
@@ -36,8 +36,7 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
   }
 
   async getStatus(): Promise<{ ok: boolean; bots: Record<string, unknown>[]; count: number }> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let discordInfo: Record<string, any>[] = [];
+    let discordInfo: Record<string, unknown>[] = [];
     try {
       const ds = this.discordService;
       const bots = (ds.getAllBots?.() || []) as IBotInfo[];
@@ -84,8 +83,7 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const messengersPath = path.join(configDir, 'providers', 'messengers.json');
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let cfg: Record<string, any> = { discord: { instances: [] } };
+    let cfg: any = { discord: { instances: [] } };
     try {
       const fileContent = await fs.promises.readFile(messengersPath, 'utf8');
       cfg = JSON.parse(fileContent);
@@ -120,9 +118,11 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
               const bot = bots.find(
                 (b) => b?.botUserName === name || b?.config?.name === name || b?.config?.name === ''
               );
-              if (!bot) return false;
+              if (!bot) {
+                return false;
+              }
               // Check if the client is ready
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
               const client = bot?.client as any;
               return client?.isReady?.() === true;
             } catch {
@@ -135,7 +135,7 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
       this.reconManagers.set(name || '', reconManager);
 
       // Start the bot connection with reconnection management
-      reconManager.start().catch((err) => {
+      reconManager.start().catch((err: Error) => {
         debug(`Failed to start Discord bot ${name}: ${err.message}`);
       });
     }
@@ -144,8 +144,8 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
   async reload(): Promise<{ added: number }> {
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
     const messengersPath = path.join(configDir, 'providers', 'messengers.json');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let cfg: Record<string, any>;
+
+    let cfg: any;
     try {
       const content = await fs.promises.readFile(messengersPath, 'utf8');
       cfg = JSON.parse(content);
@@ -173,8 +173,10 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
                 try {
                   const bots = (ds.getAllBots?.() || []) as IBotInfo[];
                   const bot = bots.find((b) => b?.config?.discord?.token === inst.token);
-                  if (!bot) return false;
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  if (!bot) {
+                    return false;
+                  }
+
                   const client = bot?.client as any;
                   return client?.isReady?.() === true;
                 } catch {
@@ -185,7 +187,7 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
             }
           );
           this.reconManagers.set(name, reconManager);
-          reconManager.start().catch((err) => {
+          reconManager.start().catch((err: Error) => {
             debug(`Failed to start Discord bot ${name} on reload: ${err.message}`);
           });
           added++;
@@ -197,10 +199,9 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
 
   async sendMessage(channelId: string, message: string, senderName?: string): Promise<string> {
     const ds = this.discordService;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (ds && typeof (ds as any).sendMessage === 'function') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return await (ds as any).sendMessage(channelId, message, senderName);
+
+    if (ds && typeof ds.sendMessage === 'function') {
+      return await ds.sendMessage(channelId, message, senderName);
     }
 
     throw new Error(
@@ -209,17 +210,11 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
     );
   }
 
-  async getMessages(channelId: string, limit?: number): Promise<unknown[]> {
+  async getMessages(channelId: string, limit?: number): Promise<IMessage[]> {
     const ds = this.discordService;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (ds && typeof (ds as any).fetchMessages === 'function') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return await (ds as any).fetchMessages(channelId, limit);
-    }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (ds && typeof (ds as any).getMessages === 'function') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return await (ds as any).getMessages(channelId, limit);
+
+    if (ds && typeof ds.getMessages === 'function') {
+      return await ds.getMessages(channelId, limit);
     }
 
     debug(
@@ -235,10 +230,9 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
   ): Promise<string> {
     // Delegate to DiscordService if it has a sendMessageToChannel method
     const ds = this.discordService;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (ds && typeof (ds as any).sendMessageToChannel === 'function') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return await (ds as any).sendMessageToChannel(channelId, message, active_agent_name);
+
+    if (ds && typeof ds.sendMessageToChannel === 'function') {
+      return await ds.sendMessageToChannel(channelId, message, active_agent_name);
     }
 
     // Fallback to sendMessage
@@ -247,10 +241,9 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
 
   getClientId(): string {
     const ds = this.discordService;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (ds && typeof (ds as any).getClientId === 'function') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return (ds as any).getClientId();
+
+    if (ds && typeof ds.getClientId === 'function') {
+      return ds.getClientId();
     }
 
     // Fallback to generic identifier if service method not available
@@ -261,28 +254,12 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
     const ds = this.discordService;
 
     // Try getChannelOwnerId method (existing in DiscordService)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (ds && typeof (ds as any).getChannelOwnerId === 'function') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const ownerId = await (ds as any).getChannelOwnerId(forumId);
+
+    if (ds && typeof ds.getChannelOwnerId === 'function') {
+      const ownerId = await ds.getChannelOwnerId(forumId);
       return ownerId || '';
     }
 
-    // Legacy method names
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (ds && typeof (ds as any).getForumOwner === 'function') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return await (ds as any).getForumOwner(forumId);
-    }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (ds && typeof (ds as any).getChannelOwner === 'function') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return await (ds as any).getChannelOwner(forumId);
-    }
-
-    debug(
-      'DiscordProvider.getForumOwner: DiscordService does not expose channel owner lookup method'
-    );
     return '';
   }
 
@@ -317,11 +294,13 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
       }
 
       // Check each bot's connection status
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const botStatuses = bots.map((bot: any) => {
+
+      const botStatuses = bots.map((bot) => {
         const client = bot?.client;
-        const isReady = client?.isReady?.() || false;
-        const ping = client?.ws?.ping;
+
+        const isReady = (client as any)?.isReady?.() || false;
+
+        const ping = (client as any)?.ws?.ping;
 
         return {
           name: bot?.botUserName || bot?.config?.name || 'discord',

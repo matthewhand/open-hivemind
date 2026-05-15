@@ -15,6 +15,15 @@ type DropdownProps = {
   disabled?: boolean;
   hideArrow?: boolean;
   'aria-label'?: string;
+  /**
+   * ARIA `aria-haspopup` value for the trigger. Defaults to `"true"` (legacy).
+   * Set to `"menu"` when children render with `role="menu"` items.
+   */
+  'aria-haspopup'?: 'true' | 'menu' | 'listbox' | 'tree' | 'grid' | 'dialog';
+  /** Stable id for the popup `<ul>`; pair with `triggerAriaControls`. */
+  menuId?: string;
+  /** Value applied to the trigger's `aria-controls` attribute. */
+  triggerAriaControls?: string;
 };
 
 const Dropdown: React.FC<DropdownProps> = ({
@@ -31,6 +40,9 @@ const Dropdown: React.FC<DropdownProps> = ({
   disabled = false,
   hideArrow = false,
   'aria-label': ariaLabel,
+  'aria-haspopup': ariaHasPopup = 'true',
+  menuId,
+  triggerAriaControls,
 }) => {
   const [uncontrolledIsOpen, setUncontrolledIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -100,15 +112,16 @@ const Dropdown: React.FC<DropdownProps> = ({
         className={`btn ${sizeClasses[size]} ${colorClasses[color]} ${disabled ? 'btn-disabled opacity-50' : ''} ${triggerClassName}`}
         onClick={handleToggle}
         onKeyDown={handleKeyDown}
-        aria-haspopup="true"
+        aria-haspopup={ariaHasPopup}
         aria-expanded={isOpen}
         aria-label={ariaLabel}
+        aria-controls={triggerAriaControls}
       >
         {trigger}
         {!hideArrow && <ChevronDownIcon className="h-5 w-5" aria-hidden="true" />}
       </div>
       {isOpen && (
-        <ul tabIndex={0} className={`dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-50 ${contentClassName}`} role="menu">
+        <ul id={menuId} tabIndex={0} className={`dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-50 ${contentClassName}`} role="menu">
           {children}
         </ul>
       )}

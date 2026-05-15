@@ -124,7 +124,7 @@ try {
   if (fs.existsSync(configPath)) {
     databaseConfig.loadFile(configPath);
   }
-} catch (e) {
+} catch {
   // Ignore errors reading file
 }
 

@@ -61,14 +61,16 @@ export class DiscordMessage extends IMessage {
    */
   constructor(message: Message<boolean>, repliedMessage: Message<boolean> | null = null) {
     const role = message.author.id === message.client?.user?.id ? 'assistant' : 'user';
-    const metadata = repliedMessage ? {
-      replyTo: {
-        userId: repliedMessage.author?.id || null,
-        username: repliedMessage.author?.username || null,
-        messageId: repliedMessage.id || null,
-        isBot: repliedMessage.author?.bot || false,
-      },
-    } : {};
+    const metadata = repliedMessage
+      ? {
+          replyTo: {
+            userId: repliedMessage.author?.id || null,
+            username: repliedMessage.author?.username || null,
+            messageId: repliedMessage.id || null,
+            isBot: repliedMessage.author?.bot || false,
+          },
+        }
+      : {};
 
     super(message, role, metadata);
 

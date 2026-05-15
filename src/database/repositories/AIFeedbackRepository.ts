@@ -20,7 +20,8 @@ export class AIFeedbackRepository {
     this.ensureConnected();
 
     try {
-      const db = this.getDb()!;
+      const db = this.getDb();
+      if (!db) throw new Error('Database not initialized');
       const result = await db.run(
         `
         INSERT INTO ai_feedback (
@@ -46,7 +47,8 @@ export class AIFeedbackRepository {
     this.ensureConnected();
 
     try {
-      const db = this.getDb()!;
+      const db = this.getDb();
+      if (!db) throw new Error('Database not initialized');
       const result = await db.run('DELETE FROM ai_feedback');
       const deletedCount = result.changes ?? 0;
       debug(`Cleared ${deletedCount} AI feedback records`);

@@ -1,5 +1,5 @@
-import { PostgresMemoryProvider } from '../src/PostgresMemoryProvider';
 import { IServiceDependencies } from '@hivemind/shared-types';
+import { PostgresMemoryProvider } from '../src/PostgresMemoryProvider';
 
 describe('PostgresMemoryProvider (Mocked)', () => {
   let provider: PostgresMemoryProvider;
@@ -10,9 +10,11 @@ describe('PostgresMemoryProvider (Mocked)', () => {
   beforeEach(() => {
     mockDbManager = {
       addMemory: jest.fn().mockResolvedValue(1),
-      searchMemories: jest.fn().mockResolvedValue([
-        { id: 1, content: 'test memory', score: 0.9, metadata: { foo: 'bar' } }
-      ]),
+      searchMemories: jest
+        .fn()
+        .mockResolvedValue([
+          { id: 1, content: 'test memory', score: 0.9, metadata: { foo: 'bar' } },
+        ]),
       getMemories: jest.fn().mockResolvedValue([]),
       deleteMemory: jest.fn().mockResolvedValue(true),
       deleteAllMemories: jest.fn().mockResolvedValue(undefined),
@@ -36,20 +38,25 @@ describe('PostgresMemoryProvider (Mocked)', () => {
 
   it('should add memory with generated embedding', async () => {
     const result = await provider.addMemory('hello world', { foo: 'bar' });
-    
+
     expect(mockEmbeddingProvider.generateEmbedding).toHaveBeenCalledWith('hello world');
-    expect(mockDbManager.addMemory).toHaveBeenCalledWith(expect.objectContaining({
-      content: 'hello world',
-      embedding: expect.any(Array)
-    }));
+    expect(mockDbManager.addMemory).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: 'hello world',
+        embedding: expect.any(Array),
+      })
+    );
     expect(result.content).toBe('hello world');
   });
 
   it('should search memories using embedding', async () => {
     const result = await provider.searchMemories('search query');
-    
+
     expect(mockEmbeddingProvider.generateEmbedding).toHaveBeenCalledWith('search query');
-    expect(mockDbManager.searchMemories).toHaveBeenCalledWith(expect.any(Array), expect.any(Object));
+    expect(mockDbManager.searchMemories).toHaveBeenCalledWith(
+      expect.any(Array),
+      expect.any(Object)
+    );
     expect(result.results[0].metadata).toEqual({ foo: 'bar' });
   });
 });

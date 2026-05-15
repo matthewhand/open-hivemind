@@ -155,12 +155,12 @@ jest.mock('@src/server/routes/auth', () => {
   // Mock /logout endpoint
   router.post('/logout', async (req, res) => {
     const { refreshToken } = req.body;
-    
+
     // Handle ALLOW_LOCALHOST_ADMIN logic
     if (process.env.ALLOW_LOCALHOST_ADMIN === 'false' && !req.headers.authorization) {
       return res.status(401).json({ success: false });
     }
-    
+
     if (!refreshToken) {
       return res.json({ success: true });
     }

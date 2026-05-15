@@ -52,6 +52,7 @@ function withTokenCounting(provider: ILlmProvider, _instanceId: string): ILlmPro
     supportsChatCompletion: provider.supportsChatCompletion,
     supportsCompletion: provider.supportsCompletion,
     supportsHistory: provider.supportsHistory,
+
     generateChatCompletion: async (
       userMessage: string,
       historyMessages: IMessage[],
@@ -67,6 +68,7 @@ function withTokenCounting(provider: ILlmProvider, _instanceId: string): ILlmPro
       }
       return response;
     },
+
     generateCompletion: async (userMessage: string) => {
       const response = await provider.generateCompletion(userMessage);
       if (response) {
@@ -111,6 +113,7 @@ async function createProviderFromInstance(
     switch (type) {
       case 'openai':
         const { OpenAiProvider } = await import('@hivemind/llm-openai');
+
         provider = new OpenAiProvider(cfg as any);
         break;
       case 'flowise':
@@ -177,6 +180,7 @@ async function createProviderFromProfile(profileKey: string): Promise<ILlmProvid
     switch (type) {
       case 'openai':
         const { OpenAiProvider } = await import('@hivemind/llm-openai');
+
         provider = new OpenAiProvider(cfg as any);
         break;
       case 'flowise':

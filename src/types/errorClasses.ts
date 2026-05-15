@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 /**
  * Enhanced error classes for Open Hivemind with recovery strategies
  *
@@ -347,6 +348,7 @@ export class AuthenticationError extends BaseHivemindError {
         canRecover: true,
         maxRetries: 1,
         retryDelay: 0,
+
         fallbackAction: async () => {
           // This would be implemented by the calling code
           throw new Error('Token refresh not implemented');
@@ -546,7 +548,7 @@ export class ErrorFactory {
     const hivemindError = ErrorUtils.toHivemindError(error);
     const classification = ErrorUtils.classifyError(hivemindError);
     // Cast once for dynamic property access on error objects
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const errRecord = hivemindError as Record<string, any>;
     const message = ErrorUtils.getMessage(hivemindError);
 

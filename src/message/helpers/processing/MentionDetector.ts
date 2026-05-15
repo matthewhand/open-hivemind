@@ -96,6 +96,7 @@ export function detectMentions(
       isReplyToBot = true;
     } else {
       // Check if reply is to this bot (via metadata if available)
+
       const replyMetadata = (message as any).metadata?.replyTo;
       if (replyMetadata) {
         replyToUsername = replyMetadata.username;

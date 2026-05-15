@@ -216,7 +216,8 @@ export class OpenAiProvider implements ILlmProvider {
   }
 
   async generateEmbedding(text: string): Promise<number[]> {
-    const apiKey = this.config.apiKey || openaiConfig.get('OPENAI_API_KEY') || process.env.OPENAI_API_KEY;
+    const apiKey =
+      this.config.apiKey || openaiConfig.get('OPENAI_API_KEY') || process.env.OPENAI_API_KEY;
     let baseURL = this.config.baseUrl || openaiConfig.get('OPENAI_BASE_URL') || DEFAULT_BASE_URL;
     const model = 'text-embedding-3-small'; // Standard embedding model
 

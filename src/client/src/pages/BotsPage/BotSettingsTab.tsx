@@ -1,12 +1,13 @@
 import { Info } from 'lucide-react';
 import React, { useState } from 'react';
+import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { Alert } from '../../components/DaisyUI/Alert';
 import Card from '../../components/DaisyUI/Card';
 import Select from '../../components/DaisyUI/Select';
 import Toggle from '../../components/DaisyUI/Toggle';
 
 const BotSettingsTab: React.FC = () => {
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useLocalStorage('ui.botSettings.showAdvanced', false);
 
   return (
     <div className="space-y-6">

@@ -1,10 +1,10 @@
 import Debug from 'debug';
 import {
   IMemoryProvider,
+  IServiceDependencies,
   MemoryEntry,
   MemoryScopeOptions,
   MemorySearchResult,
-  IServiceDependencies
 } from '@hivemind/shared-types';
 
 const debug = Debug('hivemind:memory-postgres');
@@ -28,16 +28,16 @@ export class PostgresMemoryProvider implements IMemoryProvider {
     if (dependencies?.getDatabaseManager) {
       this.dbManager = dependencies.getDatabaseManager();
     }
-    
+
     // Resolve embedding provider
     if (dependencies?.getLlmProviders) {
       const providers = dependencies.getLlmProviders();
       // Use configured profile or fallback to first one that can embed
       if (this.config.embeddingProfile) {
-        this.embeddingProvider = providers.find(p => p.name === this.config.embeddingProfile);
+        this.embeddingProvider = providers.find((p) => p.name === this.config.embeddingProfile);
       }
       if (!this.embeddingProvider) {
-        this.embeddingProvider = providers.find(p => typeof p.generateEmbedding === 'function');
+        this.embeddingProvider = providers.find((p) => typeof p.generateEmbedding === 'function');
       }
     }
   }
@@ -53,7 +53,7 @@ export class PostgresMemoryProvider implements IMemoryProvider {
     }
     if (!this.embeddingProvider && this.dependencies?.getLlmProviders) {
       const providers = this.dependencies.getLlmProviders();
-      this.embeddingProvider = providers.find(p => typeof p.generateEmbedding === 'function');
+      this.embeddingProvider = providers.find((p) => typeof p.generateEmbedding === 'function');
     }
     if (!this.embeddingProvider) {
       throw new Error('PostgresMemoryProvider: Embedding provider not available');
@@ -66,16 +66,16 @@ export class PostgresMemoryProvider implements IMemoryProvider {
     options?: MemoryScopeOptions
   ): Promise<MemoryEntry> {
     this.ensureInitialized();
-    
+
     const embedding = await this.embeddingProvider.generateEmbedding(content);
-    
+
     const id = await this.dbManager.addMemory({
       content,
       metadata,
       userId: options?.userId,
       agentId: options?.agentId,
       sessionId: options?.sessionId,
-      embedding
+      embedding,
     });
 
     return {
@@ -84,7 +84,7 @@ export class PostgresMemoryProvider implements IMemoryProvider {
       metadata,
       userId: options?.userId,
       agentId: options?.agentId,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
   }
 
@@ -93,12 +93,12 @@ export class PostgresMemoryProvider implements IMemoryProvider {
     options?: { limit?: number; threshold?: number } & MemoryScopeOptions
   ): Promise<MemorySearchResult> {
     this.ensureInitialized();
-    
+
     const embedding = await this.embeddingProvider.generateEmbedding(query);
     const results = await this.dbManager.searchMemories(embedding, {
       limit: options?.limit,
       userId: options?.userId,
-      agentId: options?.agentId
+      agentId: options?.agentId,
     });
 
     const entries = results
@@ -109,7 +109,7 @@ export class PostgresMemoryProvider implements IMemoryProvider {
         metadata: r.metadata,
         userId: r.userId,
         agentId: r.agentId,
-        timestamp: r.createdAt ? new Date(r.createdAt).getTime() : undefined
+        timestamp: r.createdAt ? new Date(r.createdAt).getTime() : undefined,
       }))
       .filter((e: any) => options?.threshold == null || e.score >= options.threshold);
 
@@ -121,7 +121,7 @@ export class PostgresMemoryProvider implements IMemoryProvider {
     const results = await this.dbManager.getMemories({
       limit: options?.limit,
       userId: options?.userId,
-      agentId: options?.agentId
+      agentId: options?.agentId,
     });
 
     return results.map((r: any) => ({
@@ -130,7 +130,7 @@ export class PostgresMemoryProvider implements IMemoryProvider {
       metadata: r.metadata,
       userId: r.userId,
       agentId: r.agentId,
-      timestamp: r.createdAt ? new Date(r.createdAt).getTime() : undefined
+      timestamp: r.createdAt ? new Date(r.createdAt).getTime() : undefined,
     }));
   }
 
@@ -141,14 +141,14 @@ export class PostgresMemoryProvider implements IMemoryProvider {
     const memories = await this.dbManager.getMemories({ limit: 1000 });
     const found = memories.find((m: any) => String(m.id) === id);
     if (!found) return null;
-    
+
     return {
       id: String(found.id),
       content: found.content,
       metadata: found.metadata,
       userId: found.userId,
       agentId: found.agentId,
-      timestamp: found.createdAt ? new Date(found.createdAt).getTime() : undefined
+      timestamp: found.createdAt ? new Date(found.createdAt).getTime() : undefined,
     };
   }
 
@@ -169,7 +169,7 @@ export class PostgresMemoryProvider implements IMemoryProvider {
     this.ensureInitialized();
     await this.dbManager.deleteAllMemories({
       userId: options?.userId,
-      agentId: options?.agentId
+      agentId: options?.agentId,
     });
   }
 
@@ -181,7 +181,7 @@ export class PostgresMemoryProvider implements IMemoryProvider {
     } catch (err) {
       return {
         status: 'error',
-        details: { message: err instanceof Error ? err.message : String(err) }
+        details: { message: err instanceof Error ? err.message : String(err) },
       };
     }
   }
@@ -197,5 +197,5 @@ export function create(config: PostgresMemoryConfig, dependencies: IServiceDepen
 export const manifest = {
   displayName: 'Postgres Vector',
   description: 'Native Postgres vector memory storage using pgvector',
-  type: 'memory'
+  type: 'memory',
 };

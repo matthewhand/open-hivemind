@@ -73,10 +73,11 @@ export const openWebUIProvider: ILlmProvider = {
     const client = await createOpenWebUIClient();
 
     try {
-      const data = await client.post<{ choices: Array<{ text: string }> }>(
-        '/completions',
-        { model, prompt, max_tokens: 100 }
-      );
+      const data = await client.post<{ choices: Array<{ text: string }> }>('/completions', {
+        model,
+        prompt,
+        max_tokens: 100,
+      });
       return data.choices[0].text;
     } catch (error) {
       debug('Error generating non-chat completion:', formatError(error));

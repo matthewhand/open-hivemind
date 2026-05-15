@@ -44,6 +44,7 @@ export class ReconnectionManager {
       maxDelayMs: config?.maxDelayMs ?? 60000,
       maxRetries: config?.maxRetries ?? 10,
       jitter: config?.jitter ?? true,
+
       healthCheckFn: config?.healthCheckFn ?? (() => Promise.resolve(true)),
       healthCheckIntervalMs: config?.healthCheckIntervalMs ?? 30000, // default 30s
     };
@@ -164,7 +165,12 @@ export class ReconnectionManager {
       }
 
       try {
-        const isHealthy = await this.healthCheckFn!();
+        const fn = this.healthCheckFn;
+        if (!fn) {
+          return;
+        }
+
+        const isHealthy = await fn();
         if (!isHealthy && !this.stopped && this.state === 'connected') {
           debug(`[${this.providerId}] Health check returned false, triggering disconnect`);
           this.onDisconnected(new Error('Health check failed'));

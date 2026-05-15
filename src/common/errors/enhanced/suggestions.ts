@@ -7,7 +7,7 @@ export function getRetryDelay(error: unknown, errorType: ErrorType): number | un
   // Check for Retry-After header
   const retryAfter =
     error && typeof error === 'object' && 'retryAfter' in error
-      ? Number((error as any).retryAfter)
+      ? Number((error as { retryAfter: unknown }).retryAfter)
       : undefined;
   if (retryAfter) return retryAfter;
 

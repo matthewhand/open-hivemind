@@ -45,7 +45,6 @@ export interface ProviderConfigField {
   defaultValue?: any;
   group?: string;
   // Additional props for custom field types
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   component?: any;
   componentProps?: Record<string, any>;
   dependsOn?: string | { field: string; value: any }; // Field dependency

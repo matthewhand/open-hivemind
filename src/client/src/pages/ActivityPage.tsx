@@ -335,12 +335,11 @@ const ActivityPage: React.FC = () => {
     });
   };
 
-  // Live Orchestration State
+  // Live Orchestration State — WebSocketContext auto-connects on mount, no explicit connect() needed.
   const [orchestrationLogs, setOrchestrationLogs] = useState<any[]>([]);
-  const { socket, connect } = useWebSocket();
+  const { socket } = useWebSocket();
 
   useEffect(() => {
-    connect();
     if (socket) {
       const handleDecision = (decision: any) => {
         setOrchestrationLogs(prev => [
@@ -353,7 +352,7 @@ const ActivityPage: React.FC = () => {
         socket.off('pipeline_decision', handleDecision);
       };
     }
-  }, [socket, connect]);
+  }, [socket]);
 
   // Filter State (URL-persisted)
   const { values: urlParams, setValue: setUrlParam } = useUrlParams({
@@ -418,13 +417,16 @@ const ActivityPage: React.FC = () => {
 
   const [allEvents, setAllEvents] = useState<ActivityEvent[]>([]);
 
-  // Sync into local state
+  // Sync into local state. Guard against APIs returning a malformed body
+  // without an `events` array — observed during slow first paint of /admin/
+  // activity, which used to crash the boundary on filteredEvents.length etc.
   useEffect(() => {
     if (activityResult) {
+      const incoming = activityResult.events ?? [];
       if (offset === 0) {
-        setAllEvents(activityResult.events);
+        setAllEvents(incoming);
       } else {
-        setAllEvents(prev => [...prev, ...activityResult.events]);
+        setAllEvents(prev => [...prev, ...incoming]);
       }
       setData(activityResult);
       if (activityResult.filters) {
@@ -556,10 +558,16 @@ const ActivityPage: React.FC = () => {
     );
   }, [events, searchQuery, eventTypes]);
 
+  // Defensive `?? []`: filteredEvents has been observed as undefined on first
+  // render under some redirect timings (/admin/activity → /admin/overview?tab=
+  // activity), which crashed the OverviewPage error boundary with "Cannot read
+  // properties of undefined (reading 'forEach')". Normalize once, use everywhere.
+  const safeFilteredEvents = filteredEvents ?? [];
+
   // Group events into conversation threads (by channel + user)
   const conversationThreads = useMemo(() => {
     const threads = new Map<string, ActivityEvent[]>();
-    filteredEvents.forEach(event => {
+    safeFilteredEvents.forEach(event => {
       const threadKey = `${event.channelId}-${event.userId}-${event.botName}`;
       if (!threads.has(threadKey)) {
         threads.set(threadKey, []);
@@ -567,9 +575,9 @@ const ActivityPage: React.FC = () => {
       threads.get(threadKey)!.push(event);
     });
     return threads;
-  }, [filteredEvents]);
+  }, [safeFilteredEvents]);
 
-  const timelineEvents = filteredEvents.map(event => ({
+  const timelineEvents = safeFilteredEvents.map(event => ({
     id: event.id || `${event.timestamp}-${event.botName}`,
     timestamp: new Date(event.timestamp),
     title: `${event.botName}: ${event.status}`,
@@ -992,7 +1000,7 @@ const ActivityPage: React.FC = () => {
         <p className="text-sm text-base-content/60">
           {viewMode === 'conversation'
             ? `Grouped into ${conversationThreads.size} conversation${conversationThreads.size !== 1 ? 's' : ''}`
-            : `${filteredEvents.length} event${filteredEvents.length !== 1 ? 's' : ''}`}
+            : `${safeFilteredEvents.length} event${safeFilteredEvents.length !== 1 ? 's' : ''}`}
         </p>
         <Join>
           <Button
@@ -1025,7 +1033,7 @@ const ActivityPage: React.FC = () => {
       {/* Content */}
       {loading && !data ? (
         <SkeletonPage variant="table" statsCount={0} showFilters={false} />
-      ) : filteredEvents.length === 0 ? (
+      ) : safeFilteredEvents.length === 0 ? (
         <EmptyState
           icon={Clock}
           title={events.length === 0 ? "No activity yet" : "No matching events"}
@@ -1037,7 +1045,7 @@ const ActivityPage: React.FC = () => {
         <Card>
           {viewMode === 'table' ? (
             <DataTable
-              data={filteredEvents}
+              data={safeFilteredEvents}
               columns={columns}
               loading={loading}
               pagination={{ pageSize: 25, pageSizeOptions: [10, 25, 50, 100] }}

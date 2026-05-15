@@ -82,7 +82,6 @@ export function useToolRegistry({ setAlert }: UseToolRegistryProps): {
       }
     };
     fetchTools();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usageCounts, recentlyUsed]);
 
   useEffect(() => {

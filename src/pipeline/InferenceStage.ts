@@ -42,6 +42,7 @@ export interface LlmInvoker {
     userMessage: string,
     history: IMessage[],
     systemPrompt: string,
+
     metadata?: Record<string, any>
   ): Promise<string>;
 }
@@ -91,6 +92,7 @@ export class InferenceStage {
 
     try {
       const budgetService = TokenBudgetService.getInstance();
+
       const maxTokens = (ctx.botConfig as any).maxTokensPerDay as number;
 
       // 1. Budget Pre-Check

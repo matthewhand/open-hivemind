@@ -12,12 +12,13 @@ const LLMUsageChart = lazy(() => import('../Dashboard/LLMUsageChart'));
 const MessageVolumeChart = lazy(() => import('../Dashboard/MessageVolumeChart'));
 import {
   Activity,
-  RotateCcw,
-  Heart,
-  Cpu,
-  Clock,
-  ChartBar,
   AlertTriangle,
+  ChartBar,
+  Clock,
+  Cpu,
+  Heart,
+  RotateCcw,
+  Server,
 } from 'lucide-react';
 import SystemHealth from '../SystemHealth';
 import { LoadingSpinner } from '../DaisyUI/Loading';
@@ -246,7 +247,6 @@ const MonitoringDashboard: React.FC<MonitoringDashboardProps> = ({
     if (lastConfigUpdate.current === 0 && !isConfigLoading) {
       fetchConfig();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchStatus, fetchConfig]); // purposefully omit loading flags to avoid retry loops
 
   // Fallback poll with independent per-endpoint staleness tracking

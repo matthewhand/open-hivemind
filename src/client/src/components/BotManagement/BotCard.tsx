@@ -397,7 +397,7 @@ const BotCard: React.FC<BotCardProps> = ({
               size="sm"
               onClick={() => {
                 if (onToggleStatus) { onToggleStatus(bot); return; }
-                canStart ? handleStartBot() : handleStopBot();
+                if (canStart) { handleStartBot(); } else { handleStopBot(); }
               }}
               disabled={!canStart && !canStop}
               className={!hasProviders ? 'btn-disabled' : ''}

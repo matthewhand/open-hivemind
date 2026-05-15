@@ -161,6 +161,7 @@ export class PersonaManager extends EventEmitter {
         // Load user-editable personas from disk (seeded from BUILTIN_PERSONAS on first run)
         const data = await fs.promises.readFile(this.personasFilePath, 'utf8');
         const savedPersonas = JSON.parse(data);
+
         Object.values(savedPersonas).forEach((p: any) => {
           if (p.id) this.personas.set(p.id, p);
         });

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Bot as BotIcon, Download, LayoutGrid, List, Pause, Play, Plus, RefreshCw, Settings, Trash2, Upload as UploadIcon } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Bot as BotIcon, Check, Download, LayoutGrid, List, Pause, Play, Plus, RefreshCw, Settings, Trash2, Upload as UploadIcon } from 'lucide-react';
+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import Tabs from '../../components/DaisyUI/Tabs';
 import BotSettingsTab from './BotSettingsTab';
 import { CreateBotWizard } from '../../components/BotManagement/CreateBotWizard';
@@ -11,8 +11,9 @@ import BulkActionBar from '../../components/BulkActionBar';
 import Button from '../../components/DaisyUI/Button';
 import DetailDrawer from '../../components/DaisyUI/DetailDrawer';
 import { SkeletonPage } from '../../components/DaisyUI/Skeleton';
-import Swap from '../../components/DaisyUI/Swap';
+import Dropdown from '../../components/DaisyUI/Dropdown';
 import { useErrorToast, useSuccessToast } from '../../components/DaisyUI/ToastNotification';
+import MobileFAB from '../../components/MobileFAB';
 import SearchFilterBar from '../../components/SearchFilterBar';
 import Tooltip from '../../components/DaisyUI/Tooltip';
 import { PROVIDER_CATEGORIES } from '../../config/providers';
@@ -35,6 +36,12 @@ import { useSavedStamp } from '../../contexts/SavedStampContext';
 import Select from '../../components/DaisyUI/Select';
 import { BotDetailContent } from './BotDetailContent';
 
+// Hoisted icon constants — passed as the `icon` prop to React.memo(MobileFAB).
+// Inlining `<Plus className="..." />` at the call site allocates a new React
+// element on every render, defeating MobileFAB's shallow-compare memoization.
+const PLUS_ICON = <Plus className="w-6 h-6" />;
+const REFRESH_ICON = <RefreshCw className="w-6 h-6" />;
+
 const BotsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const { values: urlParams, setValue: setUrlParam } = useUrlParams({
@@ -43,11 +50,72 @@ const BotsPage: React.FC = () => {
     view: { type: 'string', default: 'default' },
   });
   const searchQuery = urlParams.search;
-  const setSearchQuery = (v: string) => setUrlParam('search', v);
+  // Wrap setters in useCallback so they're stable across renders. Without this,
+  // these inline arrow functions are recreated every render and would invalidate
+  // any downstream memoization (e.g. instancesContent useMemo) that depends on
+  // them. setUrlParam is stable (memoized inside useUrlParams), so [setUrlParam]
+  // is a sufficient dep list.
+  const setSearchQuery = useCallback((v: string) => setUrlParam('search', v), [setUrlParam]);
   const filterType = urlParams.status as 'all' | 'active' | 'inactive';
-  const setFilterType = (v: 'all' | 'active' | 'inactive') => setUrlParam('status', v);
+  const setFilterType = useCallback(
+    (v: 'all' | 'active' | 'inactive') => setUrlParam('status', v),
+    [setUrlParam],
+  );
   const viewMode = urlParams.view as 'default' | 'compact' | 'swarm3d';
-  const setViewMode = (v: 'default' | 'compact' | 'swarm3d') => setUrlParam('view', v);
+  const setViewMode = useCallback(
+    (v: 'default' | 'compact' | 'swarm3d') => setUrlParam('view', v),
+    [setUrlParam],
+  );
+
+  // ---------------------------------------------------------------------------
+  // View-mode dropdown a11y: WAI-ARIA "menu" pattern keyboard support.
+  // Items are <button role="menuitemradio"> with roving tabindex; arrow keys,
+  // Home, End, and Escape behave per APG. The Dropdown wrapper handles
+  // open/close on Enter/Space/Esc on the trigger; this only handles
+  // focus-traversal once an item has focus. See:
+  // https://www.w3.org/WAI/ARIA/apg/patterns/menu/
+  // ---------------------------------------------------------------------------
+  const viewMenuId = useId();
+  const viewMenuItemsRef = useRef<Array<HTMLButtonElement | null>>([]);
+  const viewTriggerRef = useRef<HTMLDivElement | null>(null);
+  const handleViewMenuKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLButtonElement>, index: number, count: number) => {
+      const focusItem = (i: number) => {
+        const next = ((i % count) + count) % count;
+        viewMenuItemsRef.current[next]?.focus();
+      };
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          focusItem(index + 1);
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          focusItem(index - 1);
+          break;
+        case 'Home':
+          e.preventDefault();
+          focusItem(0);
+          break;
+        case 'End':
+          e.preventDefault();
+          focusItem(count - 1);
+          break;
+        case 'Escape': {
+          e.preventDefault();
+          // Closing is handled by Dropdown's outside-click + its own trigger Escape.
+          // Move focus back to the trigger button so the menu collapses on blur
+          // and the user lands somewhere predictable.
+          const triggerButton = viewTriggerRef.current?.querySelector<HTMLElement>('[role="button"]');
+          triggerButton?.focus();
+          break;
+        }
+        default:
+          break;
+      }
+    },
+    []
+  );
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingBot, setEditingBot] = useState<BotConfig | null>(null);
@@ -59,7 +127,6 @@ const BotsPage: React.FC = () => {
   const toastError = useErrorToast();
   const { showStamp } = useSavedStamp();
   const location = useLocation();
-  const navigate = useNavigate();
   const isMobile = useIsBelowBreakpoint('md');
 
   const { personas, llmProfiles, globalConfig, configLoading } = useBotsPageData(setError);
@@ -184,34 +251,69 @@ const BotsPage: React.FC = () => {
               <option value="active">Active Only</option>
               <option value="inactive">Inactive Only</option>
             </Select>
-            <Tooltip content={
-              viewMode === 'swarm3d' ? 'Switch to grid view'
-                : viewMode === 'compact' ? 'Switch to 3D swarm view'
-                : 'Switch to compact view'
-            }>
-              <div
-                className="btn btn-ghost btn-sm btn-square"
-                role="button"
-                tabIndex={0}
-                onClick={() => setViewMode(
-                  viewMode === 'default' ? 'compact'
-                    : viewMode === 'compact' ? 'swarm3d'
-                    : 'default'
-                )}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault();
-                  setViewMode(viewMode === 'default' ? 'compact' : viewMode === 'compact' ? 'swarm3d' : 'default');
-                }}}
-                aria-label="Switch view"
+            <div ref={viewTriggerRef} className="contents">
+              <Dropdown
+                trigger={
+                  viewMode === 'swarm3d' ? (
+                    <BotIcon className="w-4 h-4" aria-hidden="true" />
+                  ) : viewMode === 'compact' ? (
+                    <List className="w-4 h-4" aria-hidden="true" />
+                  ) : (
+                    <LayoutGrid className="w-4 h-4" aria-hidden="true" />
+                  )
+                }
+                position="bottom"
+                color="ghost"
+                size="sm"
+                className="dropdown-end"
+                triggerClassName="gap-1 focus-visible:ring-2 ring-base-content focus-visible:ring-offset-2 ring-offset-base-100 focus-visible:outline-none"
+                contentClassName="shadow-lg w-44 z-20"
+                aria-label={`View mode: ${
+                  viewMode === 'swarm3d' ? '3D Swarm' : viewMode === 'compact' ? 'Compact' : 'Grid'
+                }`}
+                aria-haspopup="menu"
+                menuId={viewMenuId}
+                triggerAriaControls={viewMenuId}
               >
-                {viewMode === 'swarm3d' ? (
-                  <LayoutGrid className="w-4 h-4" />
-                ) : viewMode === 'compact' ? (
-                  <BotIcon className="w-4 h-4" />
-                ) : (
-                  <List className="w-4 h-4" />
-                )}
-              </div>
-            </Tooltip>
+                {(() => {
+                  const items = [
+                    { value: 'default', label: 'Grid', icon: <LayoutGrid className="w-4 h-4" aria-hidden="true" /> },
+                    { value: 'compact', label: 'Compact', icon: <List className="w-4 h-4" aria-hidden="true" /> },
+                    { value: 'swarm3d', label: '3D Swarm', icon: <BotIcon className="w-4 h-4" aria-hidden="true" /> },
+                  ] as const;
+                  // Reset the ref array each render so removed items don't linger.
+                  viewMenuItemsRef.current = [];
+                  return items.map((opt, idx) => {
+                    const isActive = viewMode === opt.value;
+                    return (
+                      <li key={opt.value}>
+                        <button
+                          type="button"
+                          ref={(el) => {
+                            viewMenuItemsRef.current[idx] = el;
+                          }}
+                          role="menuitemradio"
+                          aria-checked={isActive}
+                          tabIndex={isActive ? 0 : -1}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setViewMode(opt.value);
+                          }}
+                          onKeyDown={(e) => handleViewMenuKeyDown(e, idx, items.length)}
+                          className={`flex items-center gap-2 w-full text-left ${
+                            isActive ? 'active border-l-2 border-primary pl-2' : ''
+                          }`}
+                        >
+                          {opt.icon}
+                          <span className="flex-1">{opt.label}</span>
+                          {isActive && <Check className="w-4 h-4 text-primary" aria-hidden="true" />}
+                        </button>
+                      </li>
+                    );
+                  });
+                })()}
+              </Dropdown>
+            </div>
             <Tooltip content="Refresh list">
               <Button
                 variant="ghost"
@@ -471,6 +573,27 @@ const BotsPage: React.FC = () => {
         }}
       />
       </div>
+
+      {/* Mobile FABs — primary page actions for small viewports.
+          Desktop uses the inline header buttons; FABs are hidden via md:hidden. */}
+      {isMobile && (
+        <>
+          <MobileFAB
+            position="left"
+            icon={PLUS_ICON}
+            onClick={() => setIsCreateModalOpen(true)}
+            ariaLabel="Create bot"
+          />
+          <MobileFAB
+            position="right"
+            icon={REFRESH_ICON}
+            onClick={fetchBots}
+            disabled={botsLoading}
+            loading={botsLoading}
+            ariaLabel="Refresh bots"
+          />
+        </>
+      )}
     </div>
   );
 };

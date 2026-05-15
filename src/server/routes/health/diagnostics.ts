@@ -100,6 +100,7 @@ router.get('/errors/patterns', (req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
     patterns: {
       errorTypes: Object.entries(errorStats)
+
         .sort(([, a]: [string, any], [, b]: [string, any]) => (b as number) - (a as number))
         .map(([type, count]) => {
           return {

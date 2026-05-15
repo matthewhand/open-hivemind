@@ -38,6 +38,7 @@ export const _typingActivity = TypingActivity.getInstance();
 export const _historyTuner = AdaptiveHistoryTuner.getInstance();
 export const contentFilterService = ContentFilterService.getInstance();
 // Lazy: resolved per-call so mocks set in beforeEach are picked up in tests
+
 export const getSemanticGuardrailService = () => SemanticGuardrailService.getInstance();
 
 /**

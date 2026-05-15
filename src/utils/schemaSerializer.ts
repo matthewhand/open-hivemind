@@ -16,6 +16,7 @@ export function serializeSchema(schema: unknown): unknown {
   // If this object looks like a schema leaf node with a function format
   if ('format' in obj && typeof obj.format === 'function') {
     const copy = { ...obj };
+
     const fnName = (obj.format as any).name;
     copy.format = fnName || 'custom';
 

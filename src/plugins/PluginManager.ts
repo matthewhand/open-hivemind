@@ -124,6 +124,7 @@ function validateManifestType(name: string, manifest: PluginManifest): void {
 /**
  * Validates that a loaded module exports a well-formed manifest.
  */
+
 function validateManifest(name: string, mod: any): PluginManifest {
   const manifest: PluginManifest = mod.manifest;
 
@@ -447,7 +448,10 @@ let _securityPolicy: PluginSecurityPolicy | undefined;
  */
 export function getSecurityPolicy(): PluginSecurityPolicy {
   if (!_securityPolicy) {
-    _securityPolicy = new PluginSecurityPolicy(PLUGIN_SIGNING_KEY!);
+    if (!PLUGIN_SIGNING_KEY) {
+      throw new Error('HIVEMIND_PLUGIN_SIGNING_KEY is required but not configured');
+    }
+    _securityPolicy = new PluginSecurityPolicy(PLUGIN_SIGNING_KEY);
   }
   return _securityPolicy;
 }

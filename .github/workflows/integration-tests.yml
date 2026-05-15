@@ -117,6 +117,7 @@ jobs:
           NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config ./node_modules/jest/bin/jest.js \
             tests/webhook/ \
             tests/integration/auth/ \
+            --passWithNoTests \
             --testTimeout=15000 \
             --verbose \
             --ci \

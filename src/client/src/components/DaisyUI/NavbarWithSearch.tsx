@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useId, useRef, useCallback } from 'react';
 import Divider from './Divider';
+import Dropdown from './Dropdown';
 import Logo from '../Logo';
 import Avatar from './Avatar';
 import AdvancedThemeSwitcher from './AdvancedThemeSwitcher';
@@ -27,7 +28,23 @@ import {
   Play,
   Square,
   SearchCode,
+  Rows2,
+  Rows3,
+  Rows4,
+  ShieldAlert,
+  ShieldOff,
+  Check,
 } from 'lucide-react';
+
+type Density = 'compact' | 'comfortable' | 'spacious';
+
+const DENSITY_ORDER: Density[] = ['compact', 'comfortable', 'spacious'];
+
+const DENSITY_META: Record<Density, { label: string; icon: typeof Rows2; description: string }> = {
+  compact:    { label: 'Compact',    icon: Rows4, description: 'Tighter spacing, more content per screen' },
+  comfortable:{ label: 'Comfortable',icon: Rows3, description: 'Balanced spacing (default)' },
+  spacious:   { label: 'Spacious',   icon: Rows2, description: 'Generous spacing, easier to scan' },
+};
 
 interface NavItem {
   id: string;
@@ -39,6 +56,10 @@ interface NavItem {
 }
 
 interface NavbarWithSearchProps {
+  /**
+   * Page title. Currently unused inside the component (kept in the public
+   * props so callers don't break), but reserved for a future title slot.
+   */
   title?: string;
   navItems?: NavItem[];
   onSearch?: (query: string) => void;
@@ -52,7 +73,6 @@ interface NavbarWithSearchProps {
 }
 
 const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
-  title: _title = 'Open-Hivemind',
   navItems = [],
   onSearch,
   onNotificationClick,
@@ -80,7 +100,9 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
 
   const handleTogglePanicMode = async () => {
     try {
-      const response: any = await apiService.post('/api/admin/panic-mode');
+      const response = await apiService.post<{ success: boolean; data: { enabled: boolean } }>(
+        '/api/admin/panic-mode'
+      );
       if (response.success) {
         const enabled = response.data.enabled;
         setIsPanicMode(enabled);
@@ -90,15 +112,9 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
            successToast('Kill Switch Deactivated', 'Bot message processing resumed.');
         }
       }
-    } catch (e: any) {
-      errorToast('Action Failed', e.message || 'Failed to toggle Panic Mode');
-    }
-  };
-
-  const _handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (onSearch && searchQuery.trim()) {
-      onSearch(searchQuery.trim());
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Failed to toggle Panic Mode';
+      errorToast('Action Failed', message);
     }
   };
 
@@ -126,8 +142,7 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
 
     if (query.startsWith('>')) {
       setIsCommandMode(true);
-      const commandQuery = query.slice(1).trim().toLowerCase();
-      
+
       const commands: string[] = [];
       bots.forEach(bot => {
         commands.push(`> Start ${bot.name}`);
@@ -183,8 +198,9 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
           } else {
             errorToast('Unknown Command', `Action "${action}" is not recognized.`);
           }
-        } catch (err: any) {
-          errorToast('Action Failed', err.message || `Failed to ${action} ${bot.name}`);
+        } catch (err) {
+          const message = err instanceof Error ? err.message : `Failed to ${action} ${bot.name}`;
+          errorToast('Action Failed', message);
         }
         
         setSearchQuery('');
@@ -256,29 +272,69 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
     };
   }, [handleUseHotKey]);
 
-  const themeOptions = [
-    { value: 'light', label: 'Light', emoji: '☀️' },
-    { value: 'dark', label: 'Dark', emoji: '🌙' },
-    { value: 'cupcake', label: 'Cupcake', emoji: '🧁' },
-    { value: 'cyberpunk', label: 'Cyberpunk', emoji: '🌆' },
-    { value: 'synthwave', label: 'Synthwave', emoji: '🌸' },
-    { value: 'dracula', label: 'Dracula', emoji: '🧛' },
-    { value: 'forest', label: 'Forest', emoji: '🌲' },
-    { value: 'aqua', label: 'Aqua', emoji: '💧' },
-    { value: 'corporate', label: 'Corporate', emoji: '🏢' },
-    { value: 'retro', label: 'Retro', emoji: '📺' },
-  ];
-
   const uiTheme = useUIStore((s) => s.theme);
   const setUiTheme = useUIStore((s) => s.setTheme);
+
+  const density = useUIStore((s) => s.density);
+  const setDensity = useUIStore((s) => s.setDensity);
+
+  const densityMeta = DENSITY_META[density];
+  const DensityIcon = densityMeta.icon;
+
+  // ---------------------------------------------------------------------------
+  // Density dropdown a11y: WAI-ARIA "menu" pattern keyboard support.
+  // Mirrors the BotsPage view-mode dropdown pattern (#2660 + #2706): items are
+  // <button role="menuitemradio"> with roving tabindex; arrow keys, Home, End,
+  // and Escape behave per APG. The Dropdown wrapper handles open/close on
+  // Enter/Space/Esc on the trigger; this only handles focus-traversal once an
+  // item has focus. https://www.w3.org/WAI/ARIA/apg/patterns/menu/
+  // ---------------------------------------------------------------------------
+  const densityMenuId = useId();
+  const densityMenuItemsRef = useRef<Array<HTMLButtonElement | null>>([]);
+  const densityTriggerRef = useRef<HTMLDivElement | null>(null);
+  const handleDensityMenuKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLButtonElement>, index: number, count: number) => {
+      const focusItem = (i: number) => {
+        const next = ((i % count) + count) % count;
+        densityMenuItemsRef.current[next]?.focus();
+      };
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          focusItem(index + 1);
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          focusItem(index - 1);
+          break;
+        case 'Home':
+          e.preventDefault();
+          focusItem(0);
+          break;
+        case 'End':
+          e.preventDefault();
+          focusItem(count - 1);
+          break;
+        case 'Escape': {
+          e.preventDefault();
+          const triggerButton = densityTriggerRef.current?.querySelector<HTMLElement>('[role="button"]');
+          triggerButton?.focus();
+          break;
+        }
+        default:
+          break;
+      }
+    },
+    []
+  );
 
   return (
     <>
       {isPanicMode && (
         <div className="bg-error text-error-content px-4 py-2 text-center text-sm font-bold uppercase tracking-widest flex items-center justify-center gap-2 animate-pulse shadow-inner">
-          <ShieldAlert className="w-4 h-4" />
+          <ShieldOff className="w-4 h-4" />
           SYSTEM PANIC MODE ACTIVE: ALL BOT MESSAGES REJECTED
-          <ShieldAlert className="w-4 h-4" />
+          <ShieldOff className="w-4 h-4" />
         </div>
       )}
     <nav className="navbar bg-base-100 shadow-lg border-b border-base-200 px-4" aria-label="Main navigation">
@@ -444,10 +500,20 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
 
       {/* Navbar End */}
       <div className="navbar-end gap-1 sm:gap-3">
-        {/* Kill Switch */}
+        {/*
+          Kill Switch.
+
+          The trigger uses filled `btn-error` so the icon is rendered in
+          `--color-error-content` against `--color-error` — a pairing that
+          DaisyUI guarantees meets WCAG SC 1.4.11 (>= 3:1) in every theme.
+          The previous `btn-ghost text-error` styling failed 3:1 against
+          `--color-base-100` on the `light`, `corporate`, `cyberpunk`, and
+          `business` themes (see scripts/a11y/contrast-audit.mjs).
+          Active vs trigger is distinguished by animation + shadow, not color.
+        */}
         <Tooltip content={isPanicMode ? "Deactivate Kill Switch" : "Global Kill Switch (PANIC)"} position="bottom">
-          <button 
-            className={`btn btn-sm btn-circle ${isPanicMode ? 'btn-error animate-pulse shadow-[0_0_15px_rgba(220,38,38,0.8)]' : 'btn-ghost text-error/60 hover:bg-error hover:text-error-content'}`}
+          <button
+            className={`btn btn-sm btn-circle btn-error ${isPanicMode ? 'animate-pulse shadow-[0_0_15px_rgba(220,38,38,0.8)]' : ''}`}
             onClick={handleTogglePanicMode}
             aria-label="Toggle Global Kill Switch"
           >
@@ -477,8 +543,6 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
           <ul tabIndex={0} className="dropdown-content z-[40] menu p-3 shadow-2xl bg-base-100 rounded-box w-64 border border-base-200 mt-2">
             <li className="menu-title text-xs opacity-40 uppercase tracking-widest font-bold mb-2">Live Infrastructure</li>
             <li><a className="flex justify-between py-2 font-medium"><span>🟢 System Status</span> <Badge variant="success" size="xs">Healthy</Badge></a></li>
-            <li><a className="flex justify-between py-2"><span>🤖 Active Bots</span> <span className="font-mono text-xs">3</span></a></li>
-            <li><a className="flex justify-between py-2"><span>📡 MCP Nodes</span> <span className="font-mono text-xs">5</span></a></li>
             <Divider className="my-1" />
             <li><a href="/admin/monitoring" className="btn btn-xs btn-primary btn-outline mt-2">View Health Dashboard</a></li>
           </ul>
@@ -516,6 +580,77 @@ const NavbarWithSearch: React.FC<NavbarWithSearchProps> = ({
         </div>
 
         <Divider vertical className="h-6 mx-0 hidden sm:flex" />
+
+        {/* Density Dropdown — pick compact / comfortable / spacious. Same store
+            as Settings page slider. WAI-ARIA menu pattern with roving tabindex
+            (matches BotsPage view-mode dropdown from #2660 + #2706). Visible at
+            all breakpoints; icon-only on mobile, icon + "Density" label on md+. */}
+        <Tooltip
+          content={`Density: ${densityMeta.label}. ${densityMeta.description}.`}
+          position="bottom"
+        >
+          <div ref={densityTriggerRef} className="contents">
+            <Dropdown
+              trigger={
+                <span className="flex items-center gap-1.5">
+                  <DensityIcon className="w-5 h-5" aria-hidden="true" />
+                  <span className="hidden md:inline text-xs font-medium">Density</span>
+                </span>
+              }
+              position="bottom"
+              color="ghost"
+              size="sm"
+              className="dropdown-end"
+              triggerClassName="gap-1 focus-visible:ring-2 ring-base-content focus-visible:ring-offset-2 ring-offset-base-100 focus-visible:outline-none"
+              contentClassName="shadow-lg w-56 z-20"
+              hideArrow
+              aria-label={`UI density: ${densityMeta.label}. Activate to choose density.`}
+              aria-haspopup="menu"
+              menuId={densityMenuId}
+              triggerAriaControls={densityMenuId}
+            >
+              {(() => {
+                // Reset ref array each render so removed items don't linger.
+                densityMenuItemsRef.current = [];
+                return DENSITY_ORDER.map((value, idx) => {
+                  const meta = DENSITY_META[value];
+                  const ItemIcon = meta.icon;
+                  const isActive = density === value;
+                  return (
+                    <li key={value}>
+                      <button
+                        type="button"
+                        ref={(el) => {
+                          densityMenuItemsRef.current[idx] = el;
+                        }}
+                        role="menuitemradio"
+                        aria-checked={isActive}
+                        tabIndex={isActive ? 0 : -1}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDensity(value);
+                        }}
+                        onKeyDown={(e) => handleDensityMenuKeyDown(e, idx, DENSITY_ORDER.length)}
+                        className={`flex items-start gap-2 w-full text-left ${
+                          isActive ? 'active border-l-2 border-primary pl-2' : ''
+                        }`}
+                      >
+                        <ItemIcon className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
+                        <span className="flex-1 flex flex-col">
+                          <span className="text-sm">{meta.label}</span>
+                          <span className="text-[11px] opacity-60">{meta.description}</span>
+                        </span>
+                        {isActive && <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" aria-hidden="true" />}
+                      </button>
+                    </li>
+                  );
+                });
+              })()}
+            </Dropdown>
+          </div>
+        </Tooltip>
+        {/* Polite live region: announces the new density value to screen readers when state changes. */}
+        <span aria-live="polite" aria-atomic="true" className="sr-only">{`Density: ${densityMeta.label}`}</span>
 
         {/* Improved Theme Switcher integration */}
         <div className="hidden sm:flex">

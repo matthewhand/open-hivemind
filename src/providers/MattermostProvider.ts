@@ -82,6 +82,7 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
         // Implementation for Mattermost connection goes here
         throw new Error('Method not implemented.');
       },
+
       {
         healthCheckFn: async () => false,
         healthCheckIntervalMs: 30000,
@@ -167,6 +168,7 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
     const path = await import('path');
 
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
+
     const messengersPath = path.join(configDir, 'providers', 'messengers.json');
 
     let cfg: any;
@@ -191,6 +193,7 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
           `mattermost-${nameToUse}`,
           async () => {
             // Initialize bot instance
+            // eslint-disable-next-line unused-imports/no-unused-vars
             const botConfig = {
               name: nameToUse,
               messageProvider: 'mattermost',

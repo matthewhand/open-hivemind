@@ -180,7 +180,7 @@ export const verifySlackSignature = (req: Request, res: Response, next: NextFunc
     } else {
       res.status(401).send('Unauthorized: Invalid Slack signature');
     }
-  } catch (error) {
+  } catch {
     res.status(401).send('Unauthorized: Signature verification error');
   }
 };

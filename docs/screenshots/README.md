@@ -20,7 +20,7 @@ To add a new screenshot:
 | ![activity-page-filters](activity-page-filters.png) | Activity page with filter controls applied |
 | ![chat-monitor](chat-monitor.png) | Chat monitoring view for live message tracking |
 | ![monitoring-dashboard](monitoring-dashboard.png) | System monitoring dashboard with health metrics |
-| ![health-dashboard](health-dashboard.png) | Health dashboard page with service status overview |
+| ![admin-health-page](admin-health-page.png) | System health page with service status overview |
 | ![distributed-trace-waterfall](distributed-trace-waterfall.png) | Distributed tracing waterfall view for request debugging |
 
 ## Analytics & Metrics
@@ -93,8 +93,8 @@ To add a new screenshot:
 
 | Screenshot | Description |
 |---|---|
-| ![providers-api-memory](providers-api-memory.png) | Memory providers API listing page |
-| ![providers-api-tool](providers-api-tool.png) | Tool providers API listing page |
+| ![memory-providers-list](memory-providers-list.png) | Memory providers list page (Redis, Pinecone, etc.) |
+| ![tool-providers-list](tool-providers-list.png) | Tool providers list page (GitHub, Jira, Google Search, etc.) |
 
 ## MCP (Model Context Protocol)
 
@@ -159,13 +159,30 @@ To add a new screenshot:
 | ![button-loading-real-app](button-loading-real-app.png) | Button loading state in production context |
 | ![pagination](pagination.png) | Pagination component |
 | ![pagination-accessible](pagination-accessible.png) | Pagination with accessibility enhancements |
-| ![pagination-expanded-scope](pagination-expanded-scope.png) | Pagination with expanded page scope |
+## Demo Mode & Onboarding
+| Screenshot | Description |
+|---|---|
+| ![demo-mode-banner](demo-mode-banner.png) | Demo mode banner indicating the app is running in demonstration mode |
+| ![demo-mode-dashboard](demo-mode-dashboard.png) | Dashboard view while running in demo mode |
+| ![onboarding-page](onboarding-page.png) | First-run onboarding flow for new users |
+
+## Widgets
+| Screenshot | Description |
+|---|---|
+| ![widget-dashboard](widget-dashboard.png) | Widget-driven dashboard layout with rearrangeable tiles |
+
+## API & Specs
+| Screenshot | Description |
+|---|---|
+| ![api-docs-page](api-docs-page.png) | Interactive API documentation page |
+| ![specs-page](specs-page.png) | OpenAPI/spec catalog page |
+
 ## Other Pages
 | Screenshot | Description |
 |---|---|
 | ![export-page](export-page.png) | Data export page |
 | ![showcase-page](showcase-page.png) | DaisyUI component showcase page |
-| ![sitemap-page](sitemap-page.png) | Application sitemap page |
+| ![sitemap-page](sitemap-page.png) | Initial loading splash ("Open-Hivemind / Initializing AI Network Dashboard / 30% Complete") shown before the sitemap renders. **Note:** filename is misleading — this is the splash, not the sitemap itself; image needs re-shooting. |
 | ![static-pages](static-pages.png) | Static pages overview |
 | ![webhook-integration](webhook-integration.png) | Webhook integration configuration |
 | ![verification-bots-search](verification-bots-search.png) | Bot search verification view |

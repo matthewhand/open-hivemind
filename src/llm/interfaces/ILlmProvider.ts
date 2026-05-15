@@ -80,6 +80,7 @@ export interface ILlmProvider {
   generateChatCompletion: (
     userMessage: string,
     historyMessages: IMessage[],
+
     metadata?: Record<string, any>
   ) => Promise<string>;
 
@@ -109,6 +110,7 @@ export interface ILlmProvider {
     userMessage: string,
     historyMessages: IMessage[],
     onChunk: (chunk: string) => void,
+
     metadata?: Record<string, any>
   ) => Promise<string>;
 

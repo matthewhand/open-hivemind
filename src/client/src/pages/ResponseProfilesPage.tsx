@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import Card from '../components/DaisyUI/Card';
 import Button from '../components/DaisyUI/Button';
 import Badge from '../components/DaisyUI/Badge';
@@ -104,7 +105,7 @@ const ResponseProfilesPage: React.FC = () => {
   const errorToast = useErrorToast();
   const { showStamp } = useSavedStamp();
   const [profiles, setProfiles] = useState<ResponseProfile[]>([]);
-  const [expandedProfile, setExpandedProfile] = useState<string | null>(null);
+  const [expandedProfile, setExpandedProfile] = useLocalStorage<string | null>('ui.responseProfiles.expandedProfile', null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { values: urlParams, setValue: setUrlParam } = useUrlParams({

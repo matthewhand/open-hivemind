@@ -17,6 +17,14 @@ import { useSavedStamp } from '../../contexts/SavedStampContext';
 import Textarea from '../DaisyUI/Textarea';
 import { useToast } from '../DaisyUI/ToastNotification';
 import { useDemoModeWarning } from '../../hooks/useDemoModeWarning';
+import { useUIStore } from '../../store/uiStore';
+import type { UIState } from '../../store/uiStore';
+
+const DENSITY_OPTIONS: Array<{ value: UIState['density']; label: string; description: string }> = [
+  { value: 'compact', label: 'Compact', description: 'Tighter spacing, more content per screen' },
+  { value: 'comfortable', label: 'Comfortable', description: 'Balanced spacing (default)' },
+  { value: 'spacious', label: 'Spacious', description: 'Generous spacing, easier to scan' },
+];
 const debug = Debug('app:client:components:Settings:SettingsGeneral');
 
 const generalSettingsSchema = z.object({
@@ -80,6 +88,18 @@ const SettingsGeneral: React.FC = () => {
   const warnIfDemo = useDemoModeWarning(addToast as any);
 
   const enableHealthChecks = watch('enableHealthChecks');
+
+  // Density controls — match the canonical entry-point lost when the
+  // orphan Settings.tsx was deleted in PR #2702. Wires straight into the
+  // existing uiStore actions; no API round-trip needed because the values
+  // are persisted to localStorage and applied to <html data-density="..."> /
+  // <html data-compact-density="..."> by the store itself.
+  const density = useUIStore((s) => s.density);
+  const compactDensity = useUIStore((s) => s.compactDensity);
+  const setDensity = useUIStore((s) => s.setDensity);
+  const setCompactDensity = useUIStore((s) => s.setCompactDensity);
+  const densityDescription =
+    DENSITY_OPTIONS.find((opt) => opt.value === density)?.description ?? '';
 
   // Auto-save functions for individual settings (like LLMProvidersPage pattern)
   const saveGlobalSetting = async (patch: Record<string, any>) => {
@@ -323,6 +343,49 @@ const SettingsGeneral: React.FC = () => {
             />
             <p className="text-xs text-base-content/50 pl-1">
               When enabled, shows the Getting Started tab on the Overview page with setup guides and tips.
+            </p>
+          </div>
+        </Card>
+
+        {/* Display Density */}
+        <Card
+          className="bg-base-100 border border-base-300 shadow-sm p-4 h-full"
+          data-testid="settings-density-card"
+        >
+          <h6 className="text-md font-semibold mb-4 flex items-center gap-2">
+            <span className="w-2 h-2 bg-success rounded-full"></span>
+            Display Density
+          </h6>
+
+          <FormField label="UI Density">
+            <Select
+              size="sm"
+              value={density}
+              onChange={(e) => setDensity(e.target.value as UIState['density'])}
+              options={DENSITY_OPTIONS.map((opt) => ({
+                value: opt.value,
+                label: opt.label,
+              }))}
+              data-testid="settings-density-select"
+            />
+          </FormField>
+          <p className="text-xs text-base-content/50 pl-1 -mt-2 mb-3">
+            {densityDescription}
+          </p>
+
+          <div className="space-y-3">
+            <Toggle
+              label="Extra-compact mode"
+              checked={compactDensity}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setCompactDensity(e.target.checked)
+              }
+              size="sm"
+              data-testid="settings-compact-density-toggle"
+            />
+            <p className="text-xs text-base-content/50 pl-1">
+              Further tightens spacing on top of the selected density. Useful for
+              power users who want maximum information per screen.
             </p>
           </div>
         </Card>

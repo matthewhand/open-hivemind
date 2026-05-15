@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { container } from 'tsyringe';
@@ -73,6 +74,7 @@ router.post(
       let testResult: {
         success: boolean;
         message: string;
+
         details?: any;
       };
 

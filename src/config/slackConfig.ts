@@ -30,9 +30,12 @@ function loadSlackConfig(): SlackConfig {
   // Map environment variables
   const envConfig: Record<string, unknown> = {};
   
+   
+   
+   
   const mapEnv = (envKey: string, configKey: string, parser?: (val: string) => unknown) => {
     if (process.env[envKey] !== undefined) {
-      const val = process.env[envKey]!;
+      const val = process.env[envKey] as string;
       envConfig[configKey] = parser ? parser(val) : val;
     }
   };
@@ -79,9 +82,46 @@ function loadSlackConfig(): SlackConfig {
 const config = loadSlackConfig();
 
 const slackConfig = {
+   
+   
+   
+    
+    
+   
+   
+   
   get: (key: keyof SlackConfig) => config[key],
+   
+    
+    
+   
+   
+   
+   
+   
   getProperties: () => config,
+   
+   
+    
+    
+    
+   
+   
+   
+   
+   
+    
+    
+   
+   
+   
   getSchema: () => zodToJsonSchema(SlackSchema as any),
+   
+   
+   
+   
+   
+   
   validate: (_options: { allowed: 'strict' | 'warn' }) => {
     SlackSchema.parse(config);
   }
