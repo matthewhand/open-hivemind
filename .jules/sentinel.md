@@ -42,3 +42,7 @@
 **Vulnerability:** SSRF checks applied to internal infrastructure.
 **Learning:** OTLP collectors and telemetry components are routinely deployed as internal sidecars (e.g., localhost:4318) or within private VPC networks. Applying SSRF protections like `isSafeUrl` that block private or loopback IP addresses to these exporters will break legitimate observability pipelines.
 **Prevention:** Do not apply external SSRF protections to internal observability components like trace exporters unless explicitly instructed to protect against user-supplied endpoint configuration.
+## 2025-05-16 - Replace exec with execFile to prevent command injection
+**Vulnerability:** The application used `child_process.exec` to run `git` commands. `exec` evaluates commands in a shell, allowing possible command injection through shell metacharacters.
+**Learning:** Even if arguments are partially sanitized, using `exec` to dynamically build string commands is inherently unsafe and brittle.
+**Prevention:** Always use `child_process.execFile` (or similar mechanisms that take an array of arguments) which bypasses the shell and runs the executable directly, eliminating shell injection risks.

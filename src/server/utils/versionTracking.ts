@@ -1,10 +1,10 @@
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
 import Debug from 'debug';
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 const debug = Debug('app:version-tracking');
 
@@ -104,10 +104,10 @@ export async function fetchLatestVersionFromGit(
       if (gitExists) {
         try {
           // ⚡ Bolt Optimization: Converted from execSync to execAsync to prevent event loop blocking.
-          await execAsync('git fetch --tags --quiet', { cwd: pluginPath, timeout: GIT_TIMEOUT_MS });
+          await execFileAsync('git', ['fetch', '--tags', '--quiet'], { cwd: pluginPath, timeout: GIT_TIMEOUT_MS });
 
           // Try to get the latest tag
-          const { stdout: tags } = await execAsync('git tag --sort=-v:refname', {
+          const { stdout: tags } = await execFileAsync('git', ['tag', '--sort=-v:refname'], {
             cwd: pluginPath,
             encoding: 'utf-8',
             timeout: GIT_TIMEOUT_MS,
@@ -124,7 +124,7 @@ export async function fetchLatestVersionFromGit(
           for (const branch of branches) {
             try {
               const safeBranch = sanitizeGitArg(branch, 'branch');
-              const { stdout: pkgJson } = await execAsync(`git show ${safeBranch}:package.json`, {
+              const { stdout: pkgJson } = await execFileAsync('git', ['show', `${safeBranch}:package.json`], {
                 cwd: pluginPath,
                 encoding: 'utf-8',
               });
@@ -173,22 +173,22 @@ export async function fetchChangelog(
 
     // Fetch latest changes
     // ⚡ Bolt Optimization: Converted from execSync to execAsync to prevent event loop blocking.
-    await execAsync('git fetch --quiet', { cwd: pluginPath, timeout: GIT_TIMEOUT_MS });
+    await execFileAsync('git', ['fetch', '--quiet'], { cwd: pluginPath, timeout: GIT_TIMEOUT_MS });
 
     // Get commits since current version tag (if it exists) or recent commits
-    let gitCommand = 'git log --pretty=format:"%H|%ai|%an|%s" -n 10 origin/HEAD';
+    let gitArgs = ['log', '--pretty=format:%H|%ai|%an|%s', '-n', '10', 'origin/HEAD'];
 
     try {
       // Try to find commits since current version
       const safeVersion = sanitizeGitArg(currentVersion, 'currentVersion');
       const currentTag = sanitizeGitArg(`v${safeVersion}`, 'version tag');
-      await execAsync(`git rev-parse ${currentTag}`, { cwd: pluginPath, timeout: GIT_TIMEOUT_MS });
-      gitCommand = `git log --pretty=format:"%H|%ai|%an|%s" ${currentTag}..origin/HEAD`;
+      await execFileAsync('git', ['rev-parse', currentTag], { cwd: pluginPath, timeout: GIT_TIMEOUT_MS });
+      gitArgs = ['log', '--pretty=format:%H|%ai|%an|%s', `${currentTag}..origin/HEAD`];
     } catch {
       // Tag doesn't exist, fall back to recent commits
     }
 
-    const { stdout: output } = await execAsync(gitCommand, {
+    const { stdout: output } = await execFileAsync('git', gitArgs, {
       cwd: pluginPath,
       encoding: 'utf-8',
       timeout: GIT_TIMEOUT_MS,
