@@ -42,3 +42,8 @@
 **Vulnerability:** SSRF checks applied to internal infrastructure.
 **Learning:** OTLP collectors and telemetry components are routinely deployed as internal sidecars (e.g., localhost:4318) or within private VPC networks. Applying SSRF protections like `isSafeUrl` that block private or loopback IP addresses to these exporters will break legitimate observability pipelines.
 **Prevention:** Do not apply external SSRF protections to internal observability components like trace exporters unless explicitly instructed to protect against user-supplied endpoint configuration.
+
+## 2024-05-16 - SSRF Vulnerability in PluginManager
+**Vulnerability:** Server-Side Request Forgery (SSRF) was possible during community plugin installation via `PluginManager.ts` because it fetched from arbitrary Git repository URLs without verifying if they were pointing to safe external addresses or restricted internal IP ranges.
+**Learning:** `validateRepoUrl` only validated format and obvious shell injection, but did not guard against internal routing via DNS resolution or local IPs.
+**Prevention:** Always use `isSafeUrl` before performing network operations with user-supplied URLs (even Git clone) to ensure outbound requests aren't directed internally.
