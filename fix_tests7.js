@@ -1,4 +1,6 @@
-import 'reflect-metadata';
+const fs = require('fs');
+
+const content = `import 'reflect-metadata';
 import { BotConfigRepository } from '../../src/database/repositories/BotConfigRepository';
 import { encryptionService, EncryptionService } from '../../src/database/EncryptionService';
 import { IDatabase } from '../../src/database/types';
@@ -184,3 +186,6 @@ describe('EncryptionService failure modes', () => {
     }
   });
 });
+`
+
+fs.writeFileSync('tests/database/Encryption.test.ts', content, 'utf8');

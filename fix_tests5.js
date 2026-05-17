@@ -1,4 +1,6 @@
-import {
+const fs = require('fs');
+
+const content = `import {
   BotConfigAuditRepository,
   BotConfigRepositoryBase,
   BotConfigVersionRepository,
@@ -381,3 +383,6 @@ describe('BotConfigAuditRepository', () => {
     });
   });
 });
+`
+
+fs.writeFileSync('tests/unit/repositories/BotConfigSupportRepository.test.ts', content, 'utf8');
