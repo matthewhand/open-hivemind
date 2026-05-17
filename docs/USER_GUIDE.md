@@ -325,9 +325,13 @@ The Setup Wizard guides you through the minimum configuration required to run a 
 
 Press **Ctrl + K** (or **⌘ K** on macOS) anywhere in the admin UI to open the Command Palette.
 
+![Command Palette](screenshots/command-palette.png)
+
 *   **Search**: Type any page name, route segment, or section keyword to filter instantly.
 *   **Keyboard navigation**: Use **↑ / ↓** arrow keys to move between results, **Enter** to navigate, **Esc** to close.
 *   **Screen reader support**: The palette announces the result count after each keystroke and traps focus within the dialog.
+
+![Command Palette Search](screenshots/command-palette-search.png)
 
 **Available shortcut keys:**
 
