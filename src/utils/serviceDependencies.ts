@@ -1,6 +1,7 @@
 import type { IServiceDependencies } from '@hivemind/shared-types';
 import Logger from '../common/logger';
 import { DatabaseManager } from '../database/DatabaseManager';
+import { BaseHivemindError, ConfigurationError, NetworkError, ValidationError, ApiError } from '../types/errorClasses';
 
 /**
  * Construct IServiceDependencies from the DI container and system services.
@@ -10,7 +11,7 @@ export function getServiceDependencies(context: string): IServiceDependencies {
   return {
     logger: Logger.withContext(context),
     errorTypes: {
-      HivemindError: BaseError as any,
+      HivemindError: BaseHivemindError as any,
       ConfigError: ConfigurationError as any,
       NetworkError: NetworkError as any,
       ValidationError: ValidationError as any,

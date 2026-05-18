@@ -13,13 +13,10 @@ import { ApprovalRepository } from './repositories/ApprovalRepository';
 import { BotConfigRepository } from './repositories/BotConfigRepository';
 import { DecisionRepository } from './repositories/DecisionRepository';
 import { MessageRepository } from './repositories/MessageRepository';
-import { ActivityRepository, type ActivityLog } from './repositories/ActivityRepository';
-import { InferenceRepository, type InferenceLog } from './repositories/InferenceRepository';
+import { InferenceRepository } from './repositories/InferenceRepository';
 import { MemoryRepository } from './repositories/MemoryRepository';
-import { MessageRepository } from './repositories/MessageRepository';
 import { ActivitySchemas } from './schemas/ActivitySchemas';
 import { SQLiteWrapper } from './sqliteWrapper';
-import { PostgresWrapper } from './postgresWrapper';
 import { runMigrations } from './migrationRunner';
 import type {
   Anomaly,
@@ -32,6 +29,7 @@ import type {
   DatabaseConfig,
   DecisionRecord,
   IDatabase,
+
   InferenceLog,
   MemoryRecord,
   MessageRecord,
