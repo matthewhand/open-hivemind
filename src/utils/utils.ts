@@ -1,6 +1,6 @@
 import { execFile } from 'child_process';
-import * as fs from 'fs';
-import * as util from 'util';
+import fs from 'fs';
+import util from 'util';
 import Debug from 'debug';
 
 const debug = Debug('app:utils');

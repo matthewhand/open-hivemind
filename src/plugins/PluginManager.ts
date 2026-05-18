@@ -1,10 +1,10 @@
+import { execFileSync } from 'child_process';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
 import { Logger } from '@common/logger';
 import { loadPlugin, PLUGINS_DIR, type PluginManifest } from './PluginLoader';
-import { executeCommandSafe } from '../utils/utils';
 import {
   PluginSecurityPolicy,
   type PluginSecurityStatus,
@@ -184,9 +184,9 @@ async function deriveNameFromPath(pluginPath: string): Promise<string> {
   return name;
 }
 
-async function exec(cmd: string, args: string[], cwd: string): Promise<void> {
+function exec(cmd: string, args: string[], cwd: string): void {
   debug('exec: %s %s (cwd: %s)', cmd, args.join(' '), cwd);
-  await executeCommandSafe(cmd, args, { cwd });
+  execFileSync(cmd, args, { cwd, stdio: 'inherit' });
 }
 
 // ---------------------------------------------------------------------------
@@ -253,7 +253,7 @@ export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
 
   try {
     debug('Cloning %s → %s', repoUrl, tempPath);
-    await exec('git', ['clone', '--depth', '1', '--', repoUrl, tempPath], PLUGINS_DIR);
+    exec('git', ['clone', '--depth', '1', repoUrl, tempPath], PLUGINS_DIR);
 
     const name = await deriveNameFromPath(tempPath);
     const pluginPath = path.join(PLUGINS_DIR, name);
@@ -273,7 +273,7 @@ export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
     await fs.promises.rename(tempPath, pluginPath);
 
     debug('Running pnpm install --prod in %s', pluginPath);
-    await exec('pnpm', ['install', '--prod', '--ignore-scripts'], pluginPath);
+    exec('pnpm', ['install', '--prod', '--ignore-scripts'], pluginPath);
 
     const mod = await loadPlugin(name);
     const manifest = validateManifest(name, mod);
@@ -341,8 +341,8 @@ export async function updatePlugin(name: string): Promise<PluginInfo> {
   }
 
   debug('Pulling latest for %s', name);
-  await exec('git', ['pull', '--ff-only'], pluginPath);
-  await exec('pnpm', ['install', '--prod', '--ignore-scripts'], pluginPath);
+  exec('git', ['pull', '--ff-only'], pluginPath);
+  exec('pnpm', ['install', '--prod', '--ignore-scripts'], pluginPath);
 
   evictFromCache(pluginPath);
 
