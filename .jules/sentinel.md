@@ -42,3 +42,7 @@
 **Vulnerability:** SSRF checks applied to internal infrastructure.
 **Learning:** OTLP collectors and telemetry components are routinely deployed as internal sidecars (e.g., localhost:4318) or within private VPC networks. Applying SSRF protections like `isSafeUrl` that block private or loopback IP addresses to these exporters will break legitimate observability pipelines.
 **Prevention:** Do not apply external SSRF protections to internal observability components like trace exporters unless explicitly instructed to protect against user-supplied endpoint configuration.
+## 2025-05-24 - SSRF via git clone in Plugin Manager
+**Vulnerability:** The `installPlugin` function in `src/plugins/PluginManager.ts` validated the structure of a provided `repoUrl` but failed to verify if the URL pointed to a private or loopback IP address before passing it to `git clone` via child process execution. This allowed a Server-Side Request Forgery (SSRF) bypass through system-level tools rather than Node.js HTTP clients.
+**Learning:** SSRF protections must be applied consistently across ALL egress methods, not just Node-native HTTP clients (like `axios` or `fetch`). System shell commands that perform network requests (like `git`, `curl`, or `wget`) are equally susceptible and must have their target URLs validated using standard SSRF guards.
+**Prevention:** Apply `isSafeUrl` validation to all user-supplied or dynamically configured URLs immediately before they are passed as arguments to external shell commands or processes.
