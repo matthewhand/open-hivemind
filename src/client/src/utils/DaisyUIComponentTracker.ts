@@ -105,13 +105,13 @@ class DaisyUIComponentTracker {
   getStats(): DaisyUIComponentStats {
     const allComponents = this.allComponents;
     const usedComponents = Array.from(this.componentUsage.keys());
-    const unusedComponents = allComponents.filter(comp => !usedComponents.includes(comp));
+    const unusedComponents = allComponents.filter(comp => !this.componentUsage.has(comp));
 
     // Categorize used components
     const categories: DaisyUIComponentStats['categories'] = {};
 
     Object.entries(this.daisyUIComponents).forEach(([category, components]) => {
-      const usedInCategory = components.filter(comp => usedComponents.includes(comp));
+      const usedInCategory = components.filter(comp => this.componentUsage.has(comp));
       categories[category] = {
         total: components.length,
         used: usedInCategory.length,
@@ -132,11 +132,10 @@ class DaisyUIComponentTracker {
 
   // Get all unused components with their categories
   getUnusedComponentsByCategory(): { [category: string]: string[] } {
-    const stats = this.getStats();
     const unusedByCategory: { [category: string]: string[] } = {};
 
     Object.entries(this.daisyUIComponents).forEach(([category, components]) => {
-      const unused = components.filter(comp => !stats.componentUsage.some(usage => usage.component === comp));
+      const unused = components.filter(comp => !this.componentUsage.has(comp));
       if (unused.length > 0) {
         unusedByCategory[category] = unused;
       }

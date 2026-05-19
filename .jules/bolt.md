@@ -43,3 +43,7 @@
 ## 2026-05-02 - ProviderConfigForm Re-rendering
 **Learning:** The form components re-render frequently (e.g., on every keystroke). Using `.reduce()` and `.filter()` on potentially large arrays within the component body without memoization leads to O(N) recalculations on every render, which can cause typing lag on complex configuration forms.
 **Action:** Use `useMemo` to wrap expensive array transformations inside React components, especially forms.
+
+## 2025-02-28 - Optimize Array Lookups in Loops
+**Learning:** Checking for elements inside arrays within loops using `.includes()` or calling `.some()` repeatedly can create an O(N * M) time complexity overhead, particularly when iterating over object maps where `.has()` gives O(1) checks.
+**Action:** Replace `array.includes(item)` and `array.some(...)` with `map.has(item)` inside loops like `.filter()` callbacks when a map representation already exists or can be used. This transforms O(N * M) checks into O(N) operations.
