@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
 import { Logger } from '@common/logger';
+import { isSafeUrl } from '../utils/ssrfGuard';
 import { loadPlugin, PLUGINS_DIR, type PluginManifest } from './PluginLoader';
 import {
   PluginSecurityPolicy,
@@ -193,7 +194,7 @@ function exec(cmd: string, args: string[], cwd: string): void {
 // Public API
 // ---------------------------------------------------------------------------
 
-function validateRepoUrl(url: string): void {
+async function validateRepoUrl(url: string): Promise<void> {
   if (!url || typeof url !== 'string') {
     throw new PluginValidationError('Repository URL is required and must be a string.');
   }
@@ -214,6 +215,11 @@ function validateRepoUrl(url: string): void {
     throw new PluginValidationError(
       'Invalid repository URL protocol. Only http: and https: are allowed.'
     );
+  }
+
+  const ssrfCheck = await isSafeUrl(trimmed);
+  if (!ssrfCheck.safe) {
+    throw new PluginValidationError(`Invalid repository URL: ${ssrfCheck.reason}`);
   }
 
   let decodedHostname: string;
@@ -245,7 +251,7 @@ function validateRepoUrl(url: string): void {
  * Install a community plugin from a git repository URL.
  */
 export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
-  validateRepoUrl(repoUrl);
+  await validateRepoUrl(repoUrl);
   await fs.promises.mkdir(PLUGINS_DIR, { recursive: true });
 
   const tempName = `_install_${Date.now()}`;
