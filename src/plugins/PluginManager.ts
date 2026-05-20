@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
 import { Logger } from '@common/logger';
+import { isSafeUrl } from '../utils/ssrfGuard';
 import { loadPlugin, PLUGINS_DIR, type PluginManifest } from './PluginLoader';
 import {
   PluginSecurityPolicy,
@@ -246,6 +247,12 @@ function validateRepoUrl(url: string): void {
  */
 export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
   validateRepoUrl(repoUrl);
+
+  const ssrfCheck = await isSafeUrl(repoUrl);
+  if (!ssrfCheck.safe) {
+    throw new PluginValidationError(`Security violation: Invalid repository URL: ${ssrfCheck.reason}`);
+  }
+
   await fs.promises.mkdir(PLUGINS_DIR, { recursive: true });
 
   const tempName = `_install_${Date.now()}`;
