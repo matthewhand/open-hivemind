@@ -52,6 +52,10 @@ export function useToolRegistry({ setAlert }: UseToolRegistryProps): {
       try {
         const json: any = await apiService.get('/api/mcp/servers');
         const prefsJson: any = await apiService.get('/api/mcp/tools/preferences').catch(() => ({ success: true, data: {} }));
+
+        // Performance optimization: pre-compute map for O(1) lookups instead of calling .find() inside loops
+        const recentUsedMap = new Map(recentlyUsed.map(r => [r.toolId, r.timestamp]));
+
         const allTools: MCPTool[] = [];
         (json.servers || json.data?.servers || []).forEach((server: any) => {
           if (server.tools && Array.isArray(server.tools)) {
@@ -67,7 +71,7 @@ export function useToolRegistry({ setAlert }: UseToolRegistryProps): {
                 inputSchema: t.inputSchema,
                 outputSchema: t.outputSchema || t.output_schema || {},
                 usageCount: usageCounts[toolId] || 0,
-                lastUsed: recentlyUsed.find(r => r.toolId === toolId)?.timestamp,
+                lastUsed: recentUsedMap.get(toolId),
                 enabled: prefsJson.data?.[toolId] ? prefsJson.data[toolId].enabled : server.connected
               });
             });
@@ -86,8 +90,16 @@ export function useToolRegistry({ setAlert }: UseToolRegistryProps): {
 
   useEffect(() => {
     let filtered = [...tools];
-    if (urlParams.view === 'favorites') filtered = filtered.filter(t => favorites.includes(t.id));
-    else if (urlParams.view === 'recent') filtered = filtered.filter(t => recentlyUsed.map(r => r.toolId).includes(t.id));
+    if (urlParams.view === 'favorites') {
+      // Performance optimization: use Set for O(1) lookups
+      const favoritesSet = new Set(favorites);
+      filtered = filtered.filter(t => favoritesSet.has(t.id));
+    }
+    else if (urlParams.view === 'recent') {
+      // Performance optimization: use Set for O(1) lookups instead of mapping and includes inside filter
+      const recentIdsSet = new Set(recentlyUsed.map(r => r.toolId));
+      filtered = filtered.filter(t => recentIdsSet.has(t.id));
+    }
 
     if (urlParams.search) filtered = filtered.filter(t => t.name.toLowerCase().includes(urlParams.search.toLowerCase()) || t.description.toLowerCase().includes(urlParams.search.toLowerCase()));
     if (urlParams.category !== 'all') filtered = filtered.filter(t => t.category === urlParams.category);
