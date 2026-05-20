@@ -43,7 +43,3 @@
 ## 2026-05-02 - ProviderConfigForm Re-rendering
 **Learning:** The form components re-render frequently (e.g., on every keystroke). Using `.reduce()` and `.filter()` on potentially large arrays within the component body without memoization leads to O(N) recalculations on every render, which can cause typing lag on complex configuration forms.
 **Action:** Use `useMemo` to wrap expensive array transformations inside React components, especially forms.
-
-## 2024-05-23 - Analytics Feature Extraction Optimization
-**Learning:** `getTopFeatures` in `SegmentClassifier.ts` was calling `events.filter(e => userIds.includes(e.userId))` and multiple chained `.some()` calls. This resulted in O(N * M) complexity due to the `.includes()` search inside the filter, followed by redundant array iterations for each feature check.
-**Action:** Replace `O(N * M)` `.includes()` inside `.filter()` operations with a pre-computed `Set` for `O(1)` membership lookups. Additionally, replace chained methods with a single `for...of` loop and implement an early exit (`break`) when all required conditions are met, reducing complexity to `O(N + M)` and minimizing allocations.
