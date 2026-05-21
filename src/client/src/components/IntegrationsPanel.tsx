@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import List, { ListRow, ListColGrow, ListColWrap } from './DaisyUI/List';
 import Collapse from './DaisyUI/Collapse';
 import { Alert } from './DaisyUI/Alert';
@@ -148,12 +148,27 @@ const IntegrationsPanel: React.FC = () => {
     return requiredKeys.some(k => values[k] && values[k] !== '***' && values[k] !== '');
   };
 
-  const getConnectedBots = (integrationName: string, category: string) => {
-    return bots.filter(bot => {
-      if (category === 'llm') { return bot.llmProvider === integrationName; }
-      if (category === 'message') { return bot.messageProvider === integrationName; }
-      return bot.messageProvider === integrationName;
+  // Performance optimization: pre-compute map for O(1) lookups instead of calling .filter() inside .map() loops
+  // This reduces the time complexity of getting connected bots from O(N * M) to O(N + M)
+  const connectedBotsMap = useMemo(() => {
+    const map = new Map<string, { llm: any[], message: any[] }>();
+    bots.forEach(bot => {
+      if (bot.llmProvider) {
+        if (!map.has(bot.llmProvider)) map.set(bot.llmProvider, { llm: [], message: [] });
+        map.get(bot.llmProvider)!.llm.push(bot);
+      }
+      if (bot.messageProvider) {
+        if (!map.has(bot.messageProvider)) map.set(bot.messageProvider, { llm: [], message: [] });
+        map.get(bot.messageProvider)!.message.push(bot);
+      }
     });
+    return map;
+  }, [bots]);
+
+  const getConnectedBots = (integrationName: string, category: string) => {
+    const entry = connectedBotsMap.get(integrationName);
+    if (!entry) return [];
+    return category === 'llm' ? entry.llm : entry.message;
   };
 
   const handleSave = async () => {
