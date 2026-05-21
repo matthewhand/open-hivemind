@@ -10,6 +10,7 @@ import {
   type PluginSecurityStatus,
   type SecurePluginManifest,
 } from './PluginSecurity';
+import { isSafeUrl } from '../utils/ssrfGuard';
 
 const debug = Debug('app:pluginManager');
 const logger = Logger.withContext('PluginManager');
@@ -193,7 +194,7 @@ function exec(cmd: string, args: string[], cwd: string): void {
 // Public API
 // ---------------------------------------------------------------------------
 
-function validateRepoUrl(url: string): void {
+async function validateRepoUrl(url: string): Promise<void> {
   if (!url || typeof url !== 'string') {
     throw new PluginValidationError('Repository URL is required and must be a string.');
   }
@@ -239,13 +240,18 @@ function validateRepoUrl(url: string): void {
   if (/[;&|`$()]/.test(decodedHostname)) {
     throw new PluginValidationError('Invalid repository URL: contains shell metacharacters.');
   }
+
+  const ssrfCheck = await isSafeUrl(trimmed);
+  if (!ssrfCheck.safe) {
+    throw new PluginValidationError(`Invalid repository URL: ${ssrfCheck.reason}`);
+  }
 }
 
 /**
  * Install a community plugin from a git repository URL.
  */
 export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
-  validateRepoUrl(repoUrl);
+  await validateRepoUrl(repoUrl);
   await fs.promises.mkdir(PLUGINS_DIR, { recursive: true });
 
   const tempName = `_install_${Date.now()}`;
