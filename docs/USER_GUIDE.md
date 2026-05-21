@@ -30,6 +30,7 @@ Welcome to the Open-Hivemind User Guide. This document provides a detailed walkt
   - [Demo Mode](#demo-mode)
   - [Onboarding Wizard](#onboarding-wizard)
   - [Command Palette](#command-palette)
+  - [Help & FAQ](#help--faq)
 - [AI & Analytics](#ai--analytics)
   - [Integrations](#integrations)
 - [Developer & Tools](#developer--tools)
@@ -338,6 +339,15 @@ Press **Ctrl + K** (or **⌘ K** on macOS) anywhere in the admin UI to open the 
 | `Esc` | Close any open modal or palette |
 | `↑ / ↓` | Navigate Command Palette results |
 | `Enter` | Select highlighted Command Palette item |
+
+### [Help & FAQ](/admin/help)
+A helpful reference for new and advanced users alike.
+
+![Help Page](screenshots/help-page.png)
+
+*   **FAQ**: Find quick answers to common questions about setting up and running bots.
+*   **Keyboard Shortcuts**: View a list of available hotkeys.
+*   **Community Links**: Quick access to Discord, GitHub, and documentation.
 
 ---
 
