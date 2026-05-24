@@ -15,6 +15,7 @@ import {
   UpdateLlmProviderSchema,
 } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
+import { redactProvider } from '../../utils/redactProviderSecrets';
 
 const router = Router();
 const debug = Debug('app:webui:admin:llm-providers');
@@ -31,9 +32,9 @@ const configRateLimit = isTestEnv
     });
 
 // GET /llm-providers - Get all LLM providers
-router.get('/llm-providers', (req: Request, res: Response) => {
+router.get('/llm-providers', async (req: Request, res: Response) => {
   try {
-    const providers = webUIStorage.getLlmProviders();
+    const providers = (await webUIStorage.getLlmProviders()).map(redactProvider);
     return res.json({
       success: true,
       data: { providers },
@@ -77,20 +78,15 @@ router.post(
     try {
       const { name, type, config } = req.body;
 
-      // Sanitize sensitive data
-      const sanitizedConfig = { ...config };
-      if (sanitizedConfig.apiKey) {
-        sanitizedConfig.apiKey = sanitizedConfig.apiKey.substring(0, 3) + '***';
-      }
-      if (sanitizedConfig.botToken) {
-        sanitizedConfig.botToken = sanitizedConfig.botToken.substring(0, 3) + '***';
-      }
-
+      // Store the raw config — webUIStorage encrypts the whole blob at rest
+      // via SecureConfigManager. Do NOT pre-truncate the apiKey here: the
+      // stored copy is what downstream callers (test-stream, ApiMonitor,
+      // provider plugins) actually use. Redaction belongs on the response.
       const newProvider = {
         id: `llm${Date.now()}`,
         name,
         type,
-        config: sanitizedConfig,
+        config,
         isActive: true,
       };
 
@@ -102,7 +98,7 @@ router.post(
 
       return res.json({
         success: true,
-        data: { provider: newProvider },
+        data: { provider: redactProvider(newProvider) },
         message: 'LLM provider created successfully',
       });
     } catch (error: unknown) {
@@ -145,7 +141,7 @@ router.put(
 
       return res.json({
         success: true,
-        data: { provider: updatedProvider },
+        data: { provider: redactProvider(updatedProvider) },
         message: 'LLM provider updated successfully',
       });
     } catch (error: unknown) {
@@ -507,13 +503,13 @@ router.post(
 
     try {
       // Pick the first active provider config of this type for model/baseUrl etc.
-      // The stored apiKey is sanitized to "sk-***" on save, so the plugin will
-      // fall back to process.env.<PROVIDER>_API_KEY for the actual call.
       const providers = await webUIStorage.getLlmProviders();
       const saved = providers.find(
         (p: any) => (p.type || '').toLowerCase() === type && p.isActive !== false
       );
       const config = saved?.config ? { ...saved.config } : {};
+      // Legacy data may contain a "sk-***" truncated key from before the
+      // sanitization bug was fixed — drop it so the plugin falls back to env.
       if (typeof config.apiKey === 'string' && config.apiKey.endsWith('***')) {
         delete config.apiKey;
       }
