@@ -266,3 +266,9 @@ parseFull.js
 .pinokio-terminal.json
 monitoring/
 .ci/eslint-report.json
+
+# TTS model assets (downloaded via npm run tts:download — see ROADMAP.md)
+src/client/public/tts/
+
+# Codex CLI local state
+.codex

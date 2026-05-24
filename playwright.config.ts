@@ -34,7 +34,7 @@ export default defineConfig({
   /* Constant to use with Playwright test hooks. */
   use: {
     /* Base URL to use when running tests locally. */
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3028',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || `http://localhost:${process.env.PORT || '3028'}`,
     /* Collect trace when retrying on CI. */
     trace: process.env.CI ? 'retain-on-failure' : 'on-first-retry',
     /* Capture screenshots for all tests */
@@ -107,7 +107,7 @@ export default defineConfig({
     command: process.env.CI
       ? 'SKIP_MESSENGERS=true NODE_ENV=test ALLOW_LOCALHOST_ADMIN=true node dist/index.js'
       : 'ALLOW_TEST_BYPASS=true ALLOW_LOCALHOST_ADMIN=true npm run start:dev',
-    url: 'http://localhost:3028',
+    url: process.env.PLAYWRIGHT_BASE_URL || `http://localhost:${process.env.PORT || '3028'}`,
     reuseExistingServer: !process.env.CI,
     timeout: 180 * 1000,
   },
