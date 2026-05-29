@@ -11,6 +11,7 @@ interface CollapseProps {
   className?: string;
   icon?: React.ReactNode;
   variant?: 'default' | 'arrow' | 'plus';
+  ariaLabel?: string;
 }
 
 const Collapse: React.FC<CollapseProps> = ({
@@ -19,7 +20,8 @@ const Collapse: React.FC<CollapseProps> = ({
   defaultOpen = false,
   className = '',
   icon,
-  variant = 'default'
+  variant = 'default',
+  ariaLabel
 }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
@@ -41,6 +43,7 @@ const Collapse: React.FC<CollapseProps> = ({
         checked={isOpen}
         onChange={(e) => setIsOpen(e.target.checked)}
         className="collapse-checkbox"
+        aria-label={ariaLabel || `Toggle ${title}`}
       />
       <div className="collapse-title text-xl font-medium flex items-center gap-2">
         {icon && <span>{icon}</span>}

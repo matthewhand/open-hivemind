@@ -273,11 +273,11 @@ const ResponseProfilesPage: React.FC = () => {
                     <ResponseIcon className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-lg flex items-center gap-2">
+                    <h2 className="font-bold text-lg flex items-center gap-2">
                       {profile.name}
                       {profile.isBuiltIn && <Badge variant="secondary" size="xs">Built-in</Badge>}
                       <span className="text-xs font-normal opacity-50 px-2 py-0.5 bg-base-200 rounded-full font-mono">{profile.key}</span>
-                    </h3>
+                    </h2>
                     <div className="flex items-center gap-2 mt-1">
                       <p className="text-sm opacity-60">{profile.description || 'No description provided'}</p>
                       {(() => {
@@ -297,14 +297,33 @@ const ResponseProfilesPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                  <Button size="sm" variant="outline" onClick={() => handleEditProfile(profile)}><EditIcon className="w-4 h-4" /></Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleEditProfile(profile)}
+                    aria-label={`Edit response profile ${profile.name}`}
+                  >
+                    <EditIcon className="w-4 h-4" aria-hidden="true" />
+                  </Button>
                   {!profile.isBuiltIn && (
-                    <Button size="sm" variant="outline" className="text-error hover:bg-error/10" onClick={() => handleDeleteProfile(profile.key)}>
-                      <DeleteIcon className="w-4 h-4" />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-error hover:bg-error/10"
+                      onClick={() => handleDeleteProfile(profile.key)}
+                      aria-label={`Delete response profile ${profile.name}`}
+                    >
+                      <DeleteIcon className="w-4 h-4" aria-hidden="true" />
                     </Button>
                   )}
-                  <Button size="sm" variant="ghost" onClick={() => toggleExpand(profile.key)}>
-                    {expandedProfile === profile.key ? <ExpandIcon className="w-4 h-4" /> : <CollapseIcon className="w-4 h-4" />}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => toggleExpand(profile.key)}
+                    aria-label={`${expandedProfile === profile.key ? 'Collapse' : 'Expand'} settings for response profile ${profile.name}`}
+                    aria-expanded={expandedProfile === profile.key}
+                  >
+                    {expandedProfile === profile.key ? <ExpandIcon className="w-4 h-4" aria-hidden="true" /> : <CollapseIcon className="w-4 h-4" aria-hidden="true" />}
                   </Button>
                 </div>
               </div>

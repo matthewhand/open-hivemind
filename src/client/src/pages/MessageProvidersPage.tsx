@@ -132,7 +132,7 @@ const CommunityTab: React.FC = () => {
                     <MessageIcon className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-semibold">{pkg.displayName}</h3>
+                    <h2 className="font-semibold">{pkg.displayName}</h2>
                     <p className="text-xs text-base-content/50 font-mono">{pkg.name}</p>
                   </div>
                 </div>
@@ -333,10 +333,10 @@ const ProfilesTab: React.FC<ProfilesTabProps> = ({
                       {getProviderIcon(profile.provider)}
                     </div>
                     <div>
-                      <h3 className="font-bold text-lg flex items-center gap-2">
+                      <h2 className="font-bold text-lg flex items-center gap-2">
                         {profile.name}
                         <span className="text-xs font-normal opacity-50 px-2 py-0.5 bg-base-200 rounded-full font-mono">{profile.key}</span>
-                      </h3>
+                      </h2>
                       <Badge variant="secondary" size="sm" style="outline">{profile.provider}</Badge>
                     </div>
                   </div>

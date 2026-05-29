@@ -12,7 +12,8 @@ import DashboardBotCard from './DashboardBotCard';
 import AgentGrid from './Dashboard/AgentGrid';
 import CommandCenterStream from './Monitoring/CommandCenterStream';
 import { useSuccessToast, useErrorToast } from './DaisyUI/ToastNotification';
-import { ArrowUp, ArrowDown, RefreshCw, Save, Settings2 } from 'lucide-react';
+import { ArrowUp, ArrowDown, RefreshCw, Save, Settings2, Plus, Bot as BotIcon } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const getStatusColor = (botStatus: string) => {
   switch (botStatus.toLowerCase()) {
@@ -48,6 +49,7 @@ const getProviderIcon = (provider: string) => {
 const Dashboard: React.FC = () => {
   const [bots, setBots] = useState<Bot[]>([]);
   const [status, setStatus] = useState<StatusResponse | null>(null);
+  const [healthData, setHealthData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [botRatings, setBotRatings] = useState<Record<string, number>>({});
@@ -102,16 +104,19 @@ const Dashboard: React.FC = () => {
   const fetchData = useCallback(async () => {
     try {
       setError(null);
-      const [configResult, statusResult] = await Promise.allSettled([
+      const [configResult, statusResult, healthResult] = await Promise.allSettled([
         apiService.getConfig(),
         apiService.getStatus(),
+        apiService.get('/api/health'),
       ]);
       const configData = configResult.status === 'fulfilled' ? configResult.value : { bots: [] };
       const statusData = statusResult.status === 'fulfilled' ? statusResult.value : { bots: [] };
+      const healthPayload = healthResult.status === 'fulfilled' ? healthResult.value : null;
       // In demo mode, use status bots (which include fake demo data) as the bot list
       const isDemoMode = (statusData as any)?.isDemoMode === true;
       setBots(isDemoMode ? (statusData as any)?.bots ?? [] : configData?.bots ?? []);
       setStatus(statusData);
+      setHealthData(healthPayload);
       setToastMessage('Dashboard refreshed successfully!');
       setShowToast(true);
     } catch (err) {
@@ -141,16 +146,16 @@ const Dashboard: React.FC = () => {
   }, [status]);
 
   // ⚡ Bolt Optimization: Combined multiple O(N) filtering and reduce passes into a single pass.
-  const { activeBots, totalMessages, uptimeHours, uptimeMinutes, totalProviders } = useMemo(() => {
-    if (!status) {
-      return { activeBots: 0, totalMessages: 0, uptimeHours: 0, uptimeMinutes: 0, totalProviders: 0 };
+  const { activeBots, totalMessages, uptimeSeconds, uptimeDays, uptimeHours, uptimeMinutes, totalProviders } = useMemo(() => {
+    if (!status && !healthData) {
+      return { activeBots: 0, totalMessages: 0, uptimeSeconds: 0, uptimeDays: 0, uptimeHours: 0, uptimeMinutes: 0, totalProviders: 0 };
     }
 
     let activeCount = 0;
     let messageSum = 0;
     const providerSet = new Set<string>();
 
-    if (status.bots) {
+    if (status?.bots) {
       for (let i = 0; i < status.bots.length; i++) {
         const bot = status.bots[i];
         if (bot.status === 'active') {
@@ -162,14 +167,35 @@ const Dashboard: React.FC = () => {
       }
     }
 
+    const totalSeconds = healthData?.uptime ?? status?.uptime ?? 0;
     return {
       activeBots: activeCount,
       totalMessages: messageSum,
-      uptimeHours: Math.floor((status.uptime ?? 0) / 3600),
-      uptimeMinutes: Math.floor(((status.uptime ?? 0) % 3600) / 60),
+      uptimeSeconds: totalSeconds,
+      uptimeDays: Math.floor(totalSeconds / 86400),
+      uptimeHours: Math.floor((totalSeconds % 86400) / 3600),
+      uptimeMinutes: Math.floor((totalSeconds % 3600) / 60),
       totalProviders: providerSet.size,
     };
-  }, [status]);
+  }, [status, healthData]);
+
+  const hasUptime = uptimeSeconds > 0;
+  const uptimeDisplay = uptimeDays > 0
+    ? `${uptimeDays}d ${uptimeHours}h ${uptimeMinutes}m`
+    : `${uptimeHours}h ${uptimeMinutes}m`;
+
+  const rawEnvironment = typeof status?.environment === 'string' ? status.environment.trim() : '';
+  const hasEnvironment = rawEnvironment.length > 0;
+  const environmentDisplay = hasEnvironment
+    ? rawEnvironment.charAt(0).toUpperCase() + rawEnvironment.slice(1).toLowerCase()
+    : '—';
+
+  const versionSource = (typeof healthData?.version === 'string' && healthData.version.trim().length > 0)
+    ? healthData.version
+    : (typeof status?.version === 'string' ? status.version : '');
+  const rawVersion = typeof versionSource === 'string' ? versionSource.trim() : '';
+  const hasVersion = rawVersion.length > 0;
+  const versionDisplay = hasVersion ? `v${rawVersion}` : '—';
 
   const totalBots = bots.length;
 
@@ -272,10 +298,57 @@ const Dashboard: React.FC = () => {
           <div key="stats" className="mb-8">
             {controls}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Stat title="Total Bots" value={totalBots} icon="🤖" />
-              <Stat title="Active" value={activeBots} icon="🟢" />
-              <Stat title="Providers" value={totalProviders} icon="📡" />
-              <Stat title="Message Volume" value={totalMessages.toLocaleString()} valueClassName="text-lg" description="processed successfully" />
+              <Stat
+                title="Total Bots"
+                value={totalBots}
+                description={
+                  totalBots === 0 ? (
+                    <Link
+                      to="/admin/bots/create"
+                      className="text-sm text-base-content/60 hover:text-primary hover:underline"
+                    >
+                      No bots yet → Create your first
+                    </Link>
+                  ) : undefined
+                }
+              />
+              <Stat
+                title="Active"
+                value={activeBots}
+                description={
+                  activeBots === 0
+                    ? totalBots === 0
+                      ? <span className="text-sm text-base-content/60">No bots yet</span>
+                      : <span className="text-sm text-base-content/60">All bots offline</span>
+                    : undefined
+                }
+              />
+              <Stat
+                title="Providers"
+                value={totalProviders}
+                description={
+                  totalProviders === 0 ? (
+                    <Link
+                      to="/admin/llm"
+                      className="text-sm text-base-content/60 hover:text-primary hover:underline"
+                    >
+                      No providers configured → Add one
+                    </Link>
+                  ) : undefined
+                }
+              />
+              <Stat
+                title="Message Volume"
+                value={totalMessages.toLocaleString()}
+                valueClassName="text-lg"
+                description={
+                  totalMessages === 0 ? (
+                    <span className="text-sm text-base-content/60">No traffic yet</span>
+                  ) : (
+                    'processed successfully'
+                  )
+                }
+              />
             </div>
           </div>
         );
@@ -284,31 +357,53 @@ const Dashboard: React.FC = () => {
           <div key="agents" className="mb-8">
             {controls}
             <div className="flex items-center justify-between mb-4">
-               <h3 className="text-xl font-bold flex items-center gap-2">
+               <h2 className="text-xl font-bold flex items-center gap-2">
                   Agents
-                  {!isCustomizing && <Badge variant="primary" size="sm">{bots.length}</Badge>}
-               </h3>
-            </div>
-            
-            {/* Bot Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              {bots.map((bot) => (
-                <DashboardBotCard
-                  key={bot.name}
-                  bot={bot}
-                  botStatusData={botStatusMap.get(bot.id)}
-                  rating={botRatings[bot.name] || 0}
-                  onRatingChange={handleRatingChange}
-                  getProviderIcon={getProviderIcon}
-                  getStatusColor={getStatusColor}
-                />
-              ))}
+                  {!isCustomizing && bots.length > 0 && <Badge variant="primary" size="sm">{bots.length}</Badge>}
+               </h2>
             </div>
 
-            <div className="mb-8">
-              <h3 className="text-xl font-bold mb-4">Management Grid</h3>
-              <AgentGrid />
-            </div>
+            {bots.length === 0 ? (
+              <div className="flex flex-col items-center justify-center text-center py-12 px-6 rounded-2xl border border-dashed border-base-content/20 bg-base-200/40 mb-8">
+                <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4">
+                  <BotIcon className="w-7 h-7" />
+                </div>
+                <h3 className="text-lg font-bold mb-1">No agents yet</h3>
+                <p className="text-sm text-base-content/60 mb-5 max-w-sm">
+                  Create your first bot to start seeing it here.
+                </p>
+                <Link
+                  to="/admin/bots/create"
+                  className="btn btn-primary btn-sm gap-2"
+                  aria-label="Create a bot"
+                >
+                  <Plus className="w-4 h-4" />
+                  Create a bot
+                </Link>
+              </div>
+            ) : (
+              <>
+                {/* Bot Cards Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                  {bots.map((bot) => (
+                    <DashboardBotCard
+                      key={bot.name}
+                      bot={bot}
+                      botStatusData={botStatusMap.get(bot.id)}
+                      rating={botRatings[bot.name] || 0}
+                      onRatingChange={handleRatingChange}
+                      getProviderIcon={getProviderIcon}
+                      getStatusColor={getStatusColor}
+                    />
+                  ))}
+                </div>
+
+                <div className="mb-8">
+                  <h3 className="text-xl font-bold mb-4">Management Grid</h3>
+                  <AgentGrid />
+                </div>
+              </>
+            )}
           </div>
         );
       case 'command-stream':
@@ -378,9 +473,24 @@ const Dashboard: React.FC = () => {
         {status && (
           <Card title="🖥️ System Information" className="bg-base-100 border border-base-300 mt-12">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Stat title="Uptime" value={<>{uptimeHours}h {uptimeMinutes}m</>} valueClassName="text-lg" description="System running smoothly" />
-              <Stat title="Environment" value={(status.environment ?? 'unknown').toUpperCase()} valueClassName="text-lg" description="Mode" />
-              <Stat title="Version" value={status.version} valueClassName="text-lg" description="Current build" />
+              <Stat
+                title="Uptime"
+                value={hasUptime ? uptimeDisplay : '—'}
+                valueClassName="text-lg"
+                description={hasUptime ? 'Since last restart' : 'Uptime unavailable'}
+              />
+              <Stat
+                title="Environment"
+                value={environmentDisplay}
+                valueClassName="text-lg"
+                description={hasEnvironment ? 'Runtime mode' : 'Environment unknown'}
+              />
+              <Stat
+                title="Version"
+                value={versionDisplay}
+                valueClassName="text-lg"
+                description={hasVersion ? 'App version' : 'Version unknown'}
+              />
             </div>
           </Card>
         )}

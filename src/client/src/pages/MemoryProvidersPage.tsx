@@ -311,10 +311,10 @@ const MemoryProvidersPage: React.FC = () => {
                         {typeof getProviderIcon(profile.provider) === 'string' ? <span className="text-xl">{getProviderIcon(profile.provider)}</span> : getProviderIcon(profile.provider)}
                       </div>
                       <div>
-                        <h3 className="font-bold text-lg flex items-center gap-2">
+                        <h2 className="font-bold text-lg flex items-center gap-2">
                           {profile.name}
                           <span className="text-xs font-normal opacity-50 px-2 py-0.5 bg-base-200 rounded-full font-mono">{profile.key}</span>
-                        </h3>
+                        </h2>
                         <div className="flex items-center gap-2 mt-1">
                           <Badge variant="secondary" size="sm" className="badge-outline">{profile.provider}</Badge>
                           {profile.config?.baseUrl && (

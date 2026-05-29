@@ -1,4 +1,6 @@
 import { Router, type Request, type Response } from 'express';
+import fs from 'fs/promises';
+import path from 'path';
 import { DatabaseManager } from '@src/database/DatabaseManager';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { authenticate, requireAdmin } from '../../auth/middleware';
@@ -211,8 +213,23 @@ router.get(
       });
     }
 
-    // Redirect to GitHub releases page
-    res.redirect('https://github.com/matthewhand/open-hivemind/releases/latest');
+    // Serve the ANNOUNCEMENT.md content (if present) as JSON so the client
+    // can render it inline. Previously this endpoint 302-redirected to
+    // github.com/.../releases/latest, which the browser then attempted as a
+    // `fetch` follow — but the CSP `connect-src` does not allow github.com,
+    // so the request hung unresolved and prevented Playwright's `networkidle`
+    // from settling on every page that mounts <AnnouncementBanner>.
+    try {
+      const announcementPath = path.resolve(process.cwd(), 'ANNOUNCEMENT.md');
+      const content = (await fs.readFile(announcementPath, 'utf8')).trim();
+      if (content.length > 0) {
+        return res.json(ApiResponse.success({ hasAnnouncement: true, content }));
+      }
+    } catch (err) {
+      // File missing or unreadable — fall through to "no announcement".
+      logger.debug('No ANNOUNCEMENT.md available', { err: (err as Error).message });
+    }
+    return res.json(ApiResponse.success({ hasAnnouncement: false, content: null }));
   })
 );
 

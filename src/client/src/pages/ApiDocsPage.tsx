@@ -209,6 +209,7 @@ const TryItPanel: React.FC<{ route: RouteInfo }> = ({ route }) => {
         size="sm"
         onClick={send}
         disabled={loading}
+        aria-label={`Send ${route.method.toUpperCase()} request to ${route.path}`}
       >
         {loading && <LoadingSpinner />}
         {loading ? 'Sending...' : 'Send Request'}

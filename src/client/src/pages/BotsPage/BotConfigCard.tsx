@@ -68,9 +68,9 @@ const BotConfigCard: React.FC<BotConfigCardProps> = ({
               <div className="p-1.5 rounded bg-primary/10 shrink-0">
                 <Bot className="w-4 h-4 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold truncate break-all min-w-0" title={bot.name}>
+              <h2 className="text-lg font-semibold truncate break-all min-w-0" title={bot.name}>
                 {bot.name}
-              </h3>
+              </h2>
               <Badge variant={badgeVariant} size="sm" className="whitespace-nowrap shrink-0">
                 {statusLabel}
               </Badge>

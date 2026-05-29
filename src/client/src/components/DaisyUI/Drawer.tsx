@@ -19,9 +19,9 @@
  *   - Escape-key and overlay-click dismiss (mobile/overlay)
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { ChevronRight, ChevronDown, Hexagon, Sun, Moon } from 'lucide-react';
+import React, { useEffect, useCallback } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Hexagon, Sun, Moon } from 'lucide-react';
 import ThemeDropdown from './ThemeDropdown';
 
 /* ------------------------------------------------------------------ */
@@ -63,35 +63,8 @@ const Drawer: React.FC<DrawerProps> = ({
   className = '',
   children,
 }) => {
-  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const location = useLocation();
   const navigate = useNavigate();
-
-  /* Auto-expand parent items that contain the active route */
-  useEffect(() => {
-    const findAndExpandParents = (
-      items: DrawerNavItem[],
-      path: string,
-      parentIds: string[] = [],
-    ): string[] => {
-      for (const item of items) {
-        if (item.path === path) return parentIds;
-        if (item.children) {
-          const result = findAndExpandParents(item.children, path, [
-            ...parentIds,
-            item.id,
-          ]);
-          if (result.length > 0) return result;
-        }
-      }
-      return [];
-    };
-
-    const parentsToExpand = findAndExpandParents(navItems, location.pathname);
-    if (parentsToExpand.length > 0) {
-      setExpandedItems(new Set(parentsToExpand));
-    }
-  }, [location.pathname, navItems]);
 
   /* Keyboard dismiss for mobile / overlay variants */
   useEffect(() => {
@@ -107,15 +80,6 @@ const Drawer: React.FC<DrawerProps> = ({
 
   /* ---- helpers ---- */
 
-  const toggleExpanded = useCallback((itemId: string) => {
-    setExpandedItems((prev) => {
-      const next = new Set(prev);
-      if (next.has(itemId)) next.delete(itemId);
-      else next.add(itemId);
-      return next;
-    });
-  }, []);
-
   const handleNavigation = useCallback(
     (path: string) => {
       navigate(path);
@@ -127,13 +91,6 @@ const Drawer: React.FC<DrawerProps> = ({
   /* ---- nav item renderer ---- */
 
   const renderNavItem = (item: DrawerNavItem, depth = 0) => {
-    const isActive =
-      item.path &&
-      (location.pathname === item.path ||
-        (item.path !== '/' && location.pathname.startsWith(item.path + '/')));
-    const isExpanded = expandedItems.has(item.id);
-    const hasChildren = item.children && item.children.length > 0;
-
     if (item.divider) {
       return (
         <div key={item.id} className="pt-4 pb-2 px-4 mt-2">
@@ -146,65 +103,62 @@ const Drawer: React.FC<DrawerProps> = ({
       );
     }
 
+    // Items without a path are not rendered. All hivemind nav items are flat
+    // and link-based; the previous parent-button branch was dead code.
+    if (!item.path) return null;
+
+    const isActive =
+      location.pathname === item.path ||
+      (item.path !== '/' && location.pathname.startsWith(item.path + '/'));
+
+    const sharedClassName = `flex items-center w-full px-3 py-2.5 rounded-lg border-none text-sm font-medium text-left transition-colors duration-150 ease-in-out ${
+      isActive
+        ? 'bg-primary text-primary-content'
+        : 'bg-transparent text-base-content hover:bg-base-content/10'
+    } ${item.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`;
+
+    const innerContent = (
+      <>
+        <span
+          className={`mr-3 ${isActive ? 'text-primary-content' : 'text-base-content/60'}`}
+          aria-hidden="true"
+        >
+          {item.icon}
+        </span>
+        <span className="flex-1">{item.label}</span>
+        {item.badge && (
+          <span
+            className={`text-xs px-1.5 py-0.5 rounded-full ml-2 ${
+              isActive
+                ? 'bg-primary-content/20 text-primary-content'
+                : 'bg-primary text-primary-content'
+            }`}
+          >
+            {item.badge}
+          </span>
+        )}
+      </>
+    );
+
     return (
       <li key={item.id} className={depth > 0 ? 'ml-3' : ''}>
-        <button
-          type="button"
+        <Link
+          to={item.path}
           onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (item.disabled) return;
-            if (item.path && item.path.length > 0) {
-              handleNavigation(item.path);
-            } else if (hasChildren) {
-              toggleExpanded(item.id);
+            if (item.disabled) {
+              e.preventDefault();
+              return;
+            }
+            if (variant === 'mobile' || variant === 'overlay') {
+              onClose();
             }
           }}
-          disabled={item.disabled}
-          aria-expanded={hasChildren ? isExpanded : undefined}
           aria-current={isActive ? 'page' : undefined}
-          role="menuitem"
-          className={`flex items-center w-full px-3 py-2.5 rounded-lg border-none text-sm font-medium text-left transition-colors duration-150 ease-in-out ${
-            isActive
-              ? 'bg-primary text-primary-content'
-              : 'bg-transparent text-base-content hover:bg-base-content/10'
-          } ${item.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+          aria-disabled={item.disabled ? true : undefined}
+          className={sharedClassName}
         >
-          <span
-            className={`mr-3 ${isActive ? 'text-primary-content' : 'text-base-content/60'}`}
-            aria-hidden="true"
-          >
-            {item.icon}
-          </span>
-          <span className="flex-1">{item.label}</span>
-          {item.badge && (
-            <span
-              className={`text-xs px-1.5 py-0.5 rounded-full ml-2 ${
-                isActive
-                  ? 'bg-primary-content/20 text-primary-content'
-                  : 'bg-primary text-primary-content'
-              }`}
-            >
-              {item.badge}
-            </span>
-          )}
-          {hasChildren && (
-            <span
-              className={`ml-2 ${isActive ? 'text-primary-content' : 'text-base-content/60'}`}
-            >
-              {isExpanded ? (
-                <ChevronDown size={16} />
-              ) : (
-                <ChevronRight size={16} />
-              )}
-            </span>
-          )}
-        </button>
-        {hasChildren && isExpanded && (
-          <ul className="list-none m-0 mt-1 p-0">
-            {item.children!.map((child) => renderNavItem(child, depth + 1))}
-          </ul>
-        )}
+          {innerContent}
+        </Link>
       </li>
     );
   };

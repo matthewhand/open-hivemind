@@ -64,6 +64,7 @@ export const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
       <div className="w-full sm:flex-1">
         <Input
           placeholder={searchPlaceholder}
+          aria-label={searchPlaceholder}
           value={localSearch}
           onChange={(e) => setLocalSearch(e.target.value)}
           prefix={<Search className="w-4 h-4 text-base-content/50" aria-hidden="true" />}
