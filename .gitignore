@@ -179,6 +179,8 @@ playwright-report/
 test-results/archive/
 # Note: test-results/archive/ is different from repo archive/
 *.archive
+# Ephemeral Playwright test outputs (specs write here at runtime)
+tests/e2e/screenshots/
 
 # Local scratch files and notes
 .domain
