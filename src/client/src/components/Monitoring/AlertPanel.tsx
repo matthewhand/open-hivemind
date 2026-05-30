@@ -172,6 +172,7 @@ const AlertPanel: React.FC<AlertPanelProps> = ({
             <div className="form-control">
               <Input
                 type="text"
+                aria-label="Search alerts"
                 placeholder="Search alerts..."
                 size="sm"
                 value={searchTerm}

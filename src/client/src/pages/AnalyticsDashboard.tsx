@@ -125,6 +125,7 @@ const AnalyticsDashboard: React.FC = () => {
         actions={
           <div className="flex gap-4">
             <Select
+              aria-label="Time range"
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
               options={[

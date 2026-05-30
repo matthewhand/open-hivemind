@@ -140,6 +140,13 @@ const MarketplacePage: React.FC = () => {
 
   return (
     <div className="p-6">
+      <PageHeader
+        title="Marketplace"
+        description="Discover and install community packages for your bots."
+        icon={StoreIcon}
+        gradient="primary"
+      />
+
       {/* Alert Messages */}
       {actionMessage && (
         <div className={`alert mb-4 ${actionMessage.type === 'success' ? 'alert-success' : 'alert-error'}`}>
@@ -184,6 +191,7 @@ const MarketplacePage: React.FC = () => {
           <Input
             type="text"
             placeholder="Search packages..."
+            aria-label="Search packages"
             className="pl-10"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}

@@ -85,6 +85,7 @@ const SpecsPage: React.FC = () => {
           <Input
             className="pl-10"
             placeholder="Search specifications..."
+            aria-label="Search specifications"
             value={searchTerm}
             onChange={handleSearch}
             data-testid="specs-search-input"
@@ -152,7 +153,7 @@ const SpecsPage: React.FC = () => {
       {filteredSpecs.length === 0 && (
         <div className="text-center py-12" data-testid="specs-empty-state">
           <BookOpen className="w-16 h-16 mx-auto text-primary mb-4 opacity-50" />
-          <h3 className="text-xl font-semibold mb-2">No specifications found</h3>
+          <h2 className="text-xl font-semibold mb-2">No specifications found</h2>
           <p className="opacity-70 mb-4">
             {searchTerm
               ? 'Try adjusting your search terms'

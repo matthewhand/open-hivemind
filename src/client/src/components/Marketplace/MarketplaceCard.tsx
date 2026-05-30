@@ -95,7 +95,7 @@ const MarketplaceCard: React.FC<MarketplaceCardProps> = ({
               <Icon className={`w-5 h-5 text-${color}`} />
             </div>
             <div>
-              <h3 className="font-semibold">{pkg.displayName}</h3>
+              <h2 className="font-semibold">{pkg.displayName}</h2>
               <p className="text-xs text-base-content/50 font-mono">{pkg.name}</p>
             </div>
           </div>

@@ -432,6 +432,7 @@ const ExportPage: React.FC = () => {
             <div className="flex items-center gap-2 mb-4">
               <label className="text-sm font-medium text-base-content/70">Format:</label>
               <Select
+                aria-label="Export format"
                 value={exportFormat}
                 onChange={(e) => setExportFormat(e.target.value as 'json' | 'csv' | 'yaml')}
                 className="select-bordered"

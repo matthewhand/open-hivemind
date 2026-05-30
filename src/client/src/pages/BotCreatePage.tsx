@@ -159,10 +159,10 @@ const BotCreatePage: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-8">
               {/* Bot Identity Section */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold border-b pb-2">Bot Identity</h3>
+                <h2 className="text-lg font-semibold border-b pb-2">Bot Identity</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="form-control w-full">
-                    <label className="label">
+                    <label className="label" htmlFor="bot-create-name">
                       <span className="label-text font-medium">Bot Name <span className="text-error">*</span></span>
                       <AIAssistButton
                         label="Generate Name"
@@ -174,6 +174,7 @@ const BotCreatePage: React.FC = () => {
                     </label>
                     <Validator>
                       <Input
+                        id="bot-create-name"
                         placeholder="e.g. HelpBot"
                         value={formData.name}
                         onChange={(e) => handleInputChange('name', e.target.value)}
@@ -191,7 +192,7 @@ const BotCreatePage: React.FC = () => {
                   </div>
 
                   <div className="form-control w-full">
-                    <label className="label">
+                    <label className="label" htmlFor="bot-create-description">
                       <span className="label-text font-medium">Description</span>
                       <AIAssistButton
                         label="Generate Description"
@@ -202,6 +203,7 @@ const BotCreatePage: React.FC = () => {
                       />
                     </label>
                     <Textarea
+                      id="bot-create-description"
                       placeholder="Describe what this bot will do..."
                       value={formData.description}
                       onChange={(e) => handleInputChange('description', e.target.value)}
@@ -213,7 +215,7 @@ const BotCreatePage: React.FC = () => {
 
               {/* Platform Selection */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold border-b pb-2">Message Platform</h3>
+                <h2 className="text-lg font-semibold border-b pb-2">Message Platform</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {platforms.map((platform) => {
                     const Icon = platform.icon;
@@ -255,14 +257,15 @@ const BotCreatePage: React.FC = () => {
 
               {/* Persona & Intelligence */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold border-b pb-2">Intelligence & Personality</h3>
+                <h2 className="text-lg font-semibold border-b pb-2">Intelligence & Personality</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Persona */}
                   <div className="form-control w-full">
-                    <label className="label">
+                    <label className="label" htmlFor="bot-create-persona">
                       <span className="label-text font-medium">Persona</span>
                     </label>
                     <Select
+                      id="bot-create-persona"
                       value={formData.persona}
                       onChange={(e) => handleInputChange('persona', e.target.value)}
                       className="select-bordered w-full"
@@ -288,7 +291,7 @@ const BotCreatePage: React.FC = () => {
 
                   {/* System Instruction */}
                   <div className="form-control w-full md:col-span-2">
-                    <label className="label">
+                    <label className="label" htmlFor="bot-create-system-instruction">
                       <span className="label-text font-medium">System Instruction</span>
                       <AIAssistButton
                         label="Generate Instruction"
@@ -300,6 +303,7 @@ const BotCreatePage: React.FC = () => {
                       />
                     </label>
                     <Textarea
+                      id="bot-create-system-instruction"
                       placeholder="e.g., You are a helpful and concise assistant."
                       value={formData.systemInstruction}
                       onChange={(e) => handleInputChange('systemInstruction', e.target.value)}
@@ -326,13 +330,14 @@ const BotCreatePage: React.FC = () => {
 
                   {/* LLM Provider */}
                   <div className="form-control w-full">
-                    <label className="label">
+                    <label className="label" htmlFor="bot-create-llm-provider">
                       <span className="label-text font-medium">
                         LLM Provider {defaultLlmConfigured ? '(optional)' : <span className="text-error">*</span>}
                       </span>
                       <Link href="/admin/integrations/llm" target="_blank" rel="noopener noreferrer" color="primary" className="text-xs">Manage Providers</Link>
                     </label>
                     <Select
+                      id="bot-create-llm-provider"
                       value={formData.llmProvider}
                       onChange={(e) => handleInputChange('llmProvider', e.target.value)}
                       className="select-bordered w-full"
@@ -364,7 +369,7 @@ const BotCreatePage: React.FC = () => {
 
               {/* Tools & Capabilities */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold border-b pb-2">Tools & Capabilities</h3>
+                <h2 className="text-lg font-semibold border-b pb-2">Tools & Capabilities</h2>
                 <div className="form-control w-full">
                   <label className="label">
                     <span className="label-text font-medium">MCP Servers</span>

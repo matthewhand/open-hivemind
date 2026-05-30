@@ -182,7 +182,12 @@ export const apiSlice = createApi({
     }),
     
     getPerformanceMetrics: builder.query<PerformanceMetricsResponse, void>({
-      query: () => '/api/performance',
+      // NOTE: `/api/performance` (without `/enterprise`) is not a registered
+      // route. In dev mode that URL falls through to Vite's static-asset
+      // middleware and never resolves, leaving the fetch pending indefinitely
+      // — which in turn blocks Playwright's `networkidle` on the monitoring
+      // tab. Point at the real enterprise route which responds immediately.
+      query: () => '/api/enterprise/performance',
       providesTags: ['Performance'],
       // Polling will be handled by a custom hook
     }),

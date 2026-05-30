@@ -72,9 +72,9 @@ const PerformanceMonitor: React.FC = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold mb-2">
+          <h2 className="text-3xl font-bold mb-2">
             Performance Monitor
-          </h1>
+          </h2>
           <p className="text-base-content/70">
             Real-time metrics for Open-Hivemind services
           </p>

@@ -88,6 +88,7 @@ const MonitoringDashboard: React.FC = () => {
               className="select-bordered"
               value={refreshInterval}
               onChange={(e) => setRefreshInterval(Number(e.target.value))}
+              aria-label="Refresh interval"
             >
               <option value={1000}>1s</option>
               <option value={5000}>5s</option>

@@ -806,6 +806,7 @@ const ActivityPage: React.FC = () => {
               size="sm"
               onClick={fetchActivity}
               disabled={loading} aria-busy={loading}
+              aria-label="Refresh activity"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
@@ -898,6 +899,7 @@ const ActivityPage: React.FC = () => {
             onChange={(e) => setStartDate(e.target.value)}
             className="input-sm w-auto"
             placeholder="Start Date"
+            aria-label="Start date"
           />
           <span className="text-base-content/50">-</span>
           <Input
@@ -906,6 +908,7 @@ const ActivityPage: React.FC = () => {
             onChange={(e) => setEndDate(e.target.value)}
             className="input-sm w-auto"
             placeholder="End Date"
+            aria-label="End date"
           />
           {(selectedBot !== 'all' || selectedProvider !== 'all' || selectedLlmProvider !== 'all' || startDate || endDate || searchQuery) && (
              <Button

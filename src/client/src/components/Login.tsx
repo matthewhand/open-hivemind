@@ -84,10 +84,11 @@ const Login: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="form-control">
-              <label className="label">
+              <label htmlFor="login-username" className="label">
                 <span className="label-text">Username *</span>
               </label>
               <Input
+                id="login-username"
                 name="username"
                 type="text"
                 value={formData.username}
@@ -100,10 +101,11 @@ const Login: React.FC = () => {
             </div>
 
             <div className="form-control">
-              <label className="label">
+              <label htmlFor="login-password" className="label">
                 <span className="label-text">Password *</span>
               </label>
               <Input
+                id="login-password"
                 name="password"
                 type="password"
                 value={formData.password}
