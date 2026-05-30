@@ -201,6 +201,7 @@ const TryItPanel: React.FC<{ route: RouteInfo }> = ({ route }) => {
             rows={4}
             value={requestBody}
             onChange={(e) => setRequestBody(e.target.value)}
+            aria-label={`Request body for ${route.method} ${route.path}`}
           />
         </div>
       )}
@@ -247,7 +248,12 @@ const RouteCard: React.FC<{ route: RouteInfo }> = ({ route }) => {
 
   return (
     <div className="collapse collapse-arrow bg-base-100 border border-base-300 mb-2">
-      <input type="checkbox" checked={expanded} onChange={() => setExpanded(!expanded)} />
+      <input
+        type="checkbox"
+        checked={expanded}
+        onChange={() => setExpanded(!expanded)}
+        aria-label={`Toggle details for ${route.method} ${route.path}`}
+      />
       <div className="collapse-title flex items-center gap-3 py-2 min-h-0">
         <span className={`badge badge-sm font-mono ${getMethodBadgeClass(route.method)}`}>
           {route.method}
@@ -310,7 +316,7 @@ const RouteCard: React.FC<{ route: RouteInfo }> = ({ route }) => {
         </div>
 
         <Divider />
-        <h4 className="font-semibold text-sm mb-2">Live Testing</h4>
+        <h3 className="font-semibold text-sm mb-2">Live Testing</h3>
 
         <TryItPanel route={route} />
       </div>
@@ -412,6 +418,7 @@ const ApiDocsPage: React.FC = () => {
           <Input
             type="text"
             placeholder="Search endpoints..."
+            aria-label="Search endpoints"
             size="sm"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
