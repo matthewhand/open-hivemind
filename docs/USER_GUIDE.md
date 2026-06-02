@@ -409,7 +409,8 @@ Manage system configuration backups and download API documentation.
 
 *   **Backup Overview**: View key metrics including total backups and storage usage.
 *   **System Backups**: Create, restore, and delete full system configuration backups.
-*   **Configuration Export**: Export the current running configuration as a JSON file.
+*   **Configuration Export**: Export the current running configuration as **JSON, YAML, or CSV**. Optional gzip compression and encryption are supported for exports.
+*   **Configuration Import**: Upload a previously exported JSON, YAML, or CSV file (including compressed `.gz` and encrypted `.enc` variants) to restore configuration. Imports can be validated before being applied, giving a full round-trip between formats.
 *   **API Specifications**: Download the OpenAPI specification (JSON/YAML) for development.
 
 ### [Sitemap](/admin/sitemap)
