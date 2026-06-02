@@ -47,7 +47,7 @@ export function registerServices(): void {
 
   logger.debug('Registering UserConfigStore');
   container.register(TOKENS.UserConfigStore, {
-    useValue: UserConfigStore.getInstance(),
+    useValue: UserConfigStore.getInstanceSync(),
   });
 
   logger.debug('Registering SecureConfigManager');
