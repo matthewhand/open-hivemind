@@ -191,6 +191,70 @@ describe('LettaProvider session modes', () => {
     expect(mockConvCreate).not.toHaveBeenCalled();
   });
 
+  it('falls back to default when the SDK lacks the conversations API', async () => {
+    // Simulate an older/stubbed SDK build with no conversations resource.
+    MockLetta.mockImplementationOnce(
+      () =>
+        ({
+          agents: { messages: { create: mockCreate } },
+          // No `conversations` property at all.
+        }) as any
+    );
+    mockCreate.mockResolvedValue({
+      messages: [{ role: 'assistant', content: 'default fallback response' }],
+    });
+
+    const provider = LettaProvider.getInstance({
+      agentId: 'agent-123',
+      sessionMode: 'per-channel',
+    });
+
+    const result = await provider.generateChatCompletion('hello', [], {
+      agentId: 'agent-123',
+      channelId: '456',
+    });
+
+    // Capability gap is handled gracefully: routes through the default agent API.
+    expect(result).toBe('default fallback response');
+    expect(mockCreate).toHaveBeenCalledWith('agent-123', { input: 'hello' });
+    // No attempt to list/create conversations on an unsupported SDK.
+    expect(mockConvList).not.toHaveBeenCalled();
+    expect(mockConvCreate).not.toHaveBeenCalled();
+  });
+
+  it('falls back to default when conversations.create is not a function', async () => {
+    // Partial SDK: list exists but create is missing/non-callable.
+    MockLetta.mockImplementationOnce(
+      () =>
+        ({
+          agents: { messages: { create: mockCreate } },
+          conversations: {
+            list: mockConvList,
+            create: undefined,
+            messages: { create: mockConvMessageCreate },
+          },
+        }) as any
+    );
+    mockCreate.mockResolvedValue({
+      messages: [{ role: 'assistant', content: 'partial fallback response' }],
+    });
+
+    const provider = LettaProvider.getInstance({
+      agentId: 'agent-123',
+      sessionMode: 'per-user',
+    });
+
+    const result = await provider.generateChatCompletion('hello', [], {
+      agentId: 'agent-123',
+      userId: 'user-789',
+    });
+
+    expect(result).toBe('partial fallback response');
+    expect(mockCreate).toHaveBeenCalledWith('agent-123', { input: 'hello' });
+    // Capability check short-circuits before calling list when the API is incomplete.
+    expect(mockConvList).not.toHaveBeenCalled();
+  });
+
   it('cache hit avoids duplicate conversation creation calls', async () => {
     mockConvList.mockResolvedValue([]);
     mockConvCreate.mockResolvedValue({ id: 'conv-cached', summary: 'channel-789' });
