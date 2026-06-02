@@ -9,6 +9,27 @@ import type {
   IDatabase as Database,
 } from '../../../src/database/types';
 
+jest.mock('../../../src/database/EncryptionService', () => {
+  return {
+    EncryptionService: {
+      getInstance: jest.fn().mockReturnThis(),
+    },
+    encryptionService: {
+      encrypt: jest.fn((text: string) => {
+        if (!text) return text;
+        return `enc:mock-iv:mock-tag:${Buffer.from(text).toString('hex')}`;
+      }),
+      decrypt: jest.fn((text: string) => {
+        if (!text || !text.startsWith('enc:')) return text;
+        const parts = text.split(':');
+        if (parts.length !== 4) throw new Error('Malformed encrypted value');
+        return Buffer.from(parts[3], 'hex').toString('utf8');
+      }),
+      isEnabled: jest.fn(() => true),
+    },
+  };
+});
+
 function makeMockDb(extra: Partial<Database> = {}): jest.Mocked<Database> {
   return {
     run: jest.fn().mockResolvedValue({ lastID: 1, changes: 1 }),

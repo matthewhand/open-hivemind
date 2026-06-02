@@ -314,24 +314,18 @@
     "wrangler": "^4.34.0"
   },
   "overrides": {
-    "undici": "^6.24.0",
+    "undici": "7.22.0",
     "uuid": "^11.1.0",
-    "fast-xml-parser": "^4.5.5",
+    "fast-xml-parser": "^5.4.1",
     "tar": "^7.5.11",
     "yaml": "^2.4.2",
     "handlebars": "^4.7.9",
     "path-to-regexp": "^0.1.13",
-    "picomatch": "^4.0.4",
+    "picomatch": "^4.0.2",
     "@modelcontextprotocol/sdk": "^1.25.2",
     "babel-plugin-istanbul": "^8.0.2",
     "minimatch": "^10.2.3",
-    "serialize-javascript": "^7.0.3",
-    "lodash": ">=4.18.0",
-    "ra-ui-materialui>lodash": ">=4.18.0",
-    "follow-redirects": "^1.16.0",
-    "smol-toml": "^1.6.1",
-    "basic-ftp": "^5.3.0",
-    "ajv": "^8.18.0"
+    "serialize-javascript": "^7.0.3"
   },
   "pnpm": {
     "overrides": {

@@ -3,6 +3,27 @@ import { BotConfigRepository } from '../../src/database/repositories/BotConfigRe
 import { encryptionService, EncryptionService } from '../../src/database/EncryptionService';
 import { IDatabase } from '../../src/database/types';
 
+jest.mock('../../src/database/EncryptionService', () => {
+  return {
+    EncryptionService: {
+      getInstance: jest.fn().mockReturnThis(),
+    },
+    encryptionService: {
+      encrypt: jest.fn((text: string) => {
+        if (!text) return text;
+        return `enc:mock-iv:mock-tag:${Buffer.from(text).toString('hex')}`;
+      }),
+      decrypt: jest.fn((text: string) => {
+        if (!text || !text.startsWith('enc:')) return text;
+        const parts = text.split(':');
+        if (parts.length !== 4) throw new Error('Malformed encrypted value');
+        return Buffer.from(parts[3], 'hex').toString('utf8');
+      }),
+      isEnabled: jest.fn(() => true),
+    },
+  };
+});
+
 describe('Database At-Rest Encryption', () => {
   let repository: BotConfigRepository;
   let mockDb: jest.Mocked<IDatabase>;
@@ -75,14 +96,21 @@ describe('Database At-Rest Encryption', () => {
 });
 
 describe('EncryptionService failure modes', () => {
-  const getInstance = (): EncryptionService => {
-    // @ts-ignore - reset singleton for isolated tests
-    EncryptionService.instance = undefined;
-    return EncryptionService.getInstance();
-  };
+  beforeEach(() => {
+    // We unmock it just for this suite to test the actual service's failure modes
+    jest.unmock('../../src/database/EncryptionService');
+    jest.resetModules();
+  });
+
+  afterEach(() => {
+    jest.resetModules();
+  });
 
   it('encrypt throws (does not silently return plaintext) when the cipher fails', () => {
+    const { encryptionService } = require('../../src/database/EncryptionService');
     const service = encryptionService;
+    // Set a dummy encryption key so it thinks it is enabled
+    service.encryptionKey = Buffer.alloc(32, 'a');
     // Sanity-check key is initialized from the test environment's .key file or env var.
     // Force a failure by monkey-patching crypto.createCipheriv.
     const crypto = require('crypto');
@@ -104,11 +132,11 @@ describe('EncryptionService failure modes', () => {
   });
 
   it('decrypt throws when the ciphertext has been tampered with', () => {
+    const { encryptionService } = require('../../src/database/EncryptionService');
     const service = encryptionService;
-    if (!service.isEnabled()) {
-      // Without a key, decrypt is a pass-through; this test is only meaningful when encryption is enabled.
-      return;
-    }
+    jest.spyOn(service, 'isEnabled').mockReturnValue(true);
+    // Inject a dummy key to enable actual encryption for this test
+    service.encryptionKey = Buffer.alloc(32, 'a');
 
     const valid = service.encrypt('hello world');
     // Flip one hex character in the encrypted payload segment to trigger GCM auth-tag failure.
@@ -122,15 +150,15 @@ describe('EncryptionService failure modes', () => {
   });
 
   it('decrypt throws on a malformed enc: value (wrong segment count)', () => {
+    const { encryptionService } = require('../../src/database/EncryptionService');
     const service = encryptionService;
-    if (!service.isEnabled()) {
-      return;
-    }
+    service.encryptionKey = Buffer.alloc(32, 'a');
 
     expect(() => service.decrypt('enc:not-enough-parts')).toThrow(/Malformed encrypted value/);
   });
 
   it('logs a prominent console.warn at init when no encryption key is configured', () => {
+    const { EncryptionService } = require('../../src/database/EncryptionService');
     const path = require('path');
     const fs = require('fs');
     const databaseConfig = require('../../src/config/databaseConfig').default;
