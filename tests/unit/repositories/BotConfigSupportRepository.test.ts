@@ -1,3 +1,4 @@
+import { encryptionService } from '../../../src/database/EncryptionService';
 import {
   BotConfigAuditRepository,
   BotConfigRepositoryBase,
@@ -153,6 +154,14 @@ describe('BotConfigRepositoryBase', () => {
 });
 
 describe('BotConfigVersionRepository', () => {
+  beforeAll(() => {
+    (encryptionService as any).encryptionKey = Buffer.alloc(32, 'a');
+  });
+
+  afterAll(() => {
+    (encryptionService as any).encryptionKey = null;
+  });
+
   let repo: BotConfigVersionRepository;
   let mockDb: jest.Mocked<Database>;
   // @ts-ignore - reset encryption service singleton for controlled tests
@@ -414,6 +423,14 @@ describe('BotConfigVersionRepository', () => {
 });
 
 describe('BotConfigAuditRepository', () => {
+  beforeAll(() => {
+    (encryptionService as any).encryptionKey = Buffer.alloc(32, 'a');
+  });
+
+  afterAll(() => {
+    (encryptionService as any).encryptionKey = null;
+  });
+
   let repo: BotConfigAuditRepository;
   let mockDb: jest.Mocked<Database>;
 
