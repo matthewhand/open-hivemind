@@ -1,3 +1,7 @@
+## 2025-02-24 - Command Injection Risk in Version Tracking
+**Vulnerability:** Shell command injection via string interpolation in child_process `execAsync`. Found in `src/server/utils/versionTracking.ts` where un-sanitized string variables were constructed and passed into `exec` wrapper executing `git` commands (e.g. `git tag --sort=-v:refname` and `git fetch`).
+**Learning:** This codebase incorrectly relies on wrapping `child_process.exec` inside a `promisify` utility instead of using array-based execution like `execFile` or `spawn` to avoid spawning a shell wrapper.
+**Prevention:** Always use the built-in `executeCommandSafe` utility (located in `src/utils/utils.ts`) instead of manual `exec` wrappers. This utility prevents command injection because it configures shell bypass implicitly and accepts arguments strictly as an array.
 ## 2025-02-26 - Add SSRF Protection to Outbound Requests
 
 **Vulnerability:** External APIs calls to configurable or dynamic endpoints were made via `axios` without validating the URL, potentially leading to Server-Side Request Forgery (SSRF).
