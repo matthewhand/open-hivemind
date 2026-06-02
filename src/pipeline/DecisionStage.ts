@@ -92,8 +92,7 @@ export class DecisionStage {
           debug(`[Debugger] Resuming pipeline for bot ${ctx.botName}`);
         }
 
-        // eslint-disable-next-line unused-imports/no-unused-vars
-      } catch (_e) {
+      } catch {
         // Ignore DI errors
       }
 
