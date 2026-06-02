@@ -1,4 +1,3 @@
-/* eslint-disable max-lines */
 import { Router, type Request, type Response } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { createLogger } from '../../common/StructuredLogger';
@@ -36,7 +35,6 @@ const managerPromise = BotManager.getInstance();
 const botRouteService = BotRouteService.getInstance();
 
 let _wsService: WebSocketService | null = null;
-
 const getWsService = () => {
   if (!_wsService) {
     try {
@@ -240,7 +238,6 @@ router.put(
     const updates = req.body;
     try {
       await manager.updateBot(id, updates);
-
       return res.json(ApiResponse.success());
     } catch (error: any) {
       const status = error.message?.includes(ERROR_CODES.NOT_FOUND)
@@ -364,9 +361,7 @@ router.get(
   validateRequest(BotHistoryQuerySchema),
   asyncErrorHandler(async (req: Request, res: Response) => {
     const manager = await managerPromise;
-
     const { id } = req.params;
-
     const { limit, channelId } = req.query as any;
 
     const bot = await manager.getBot(id);
@@ -399,7 +394,6 @@ router.get(
   asyncErrorHandler(async (req: Request, res: Response) => {
     const manager = await managerPromise;
     const { id } = req.params;
-
     const { limit } = req.query as any;
 
     const bot = await manager.getBot(id);
@@ -568,7 +562,6 @@ router.post(
  */
 router.get(
   '/:id/diagnose',
-
   validateRequest(BotIdParamSchema),
   asyncErrorHandler(async (req: Request, res: Response) => {
     try {
@@ -593,7 +586,6 @@ router.get(
  */
 router.post(
   '/test-chat',
-
   validateRequest(BotTestChatSchema),
   asyncErrorHandler(async (req: Request, res: Response) => {
     const { botConfig, message, history } = req.body;

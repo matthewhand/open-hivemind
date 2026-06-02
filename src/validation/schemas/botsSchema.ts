@@ -112,3 +112,13 @@ export const BotTaskCreateSchema = z.object({
     intervalMinutes: z.number().min(1, { message: 'Interval must be at least 1 minute' }),
   }),
 });
+
+export const BotMessageSchema = z.object({
+  params: z.object({
+    id: z.string().min(1),
+  }),
+  body: z.object({
+    channelId: z.string().min(1, { message: 'Channel ID is required' }),
+    message: z.string().min(1, { message: 'Message content is required' }),
+  }),
+});
