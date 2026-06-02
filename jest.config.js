@@ -96,6 +96,7 @@ module.exports = {
         ? '<rootDir>/node_modules/discord.js'
         : '<rootDir>/tests/__mocks__/discord.js.ts',
     '^pg$': '<rootDir>/tests/mocks/pg.js',
+    '^@modelcontextprotocol/sdk/client/.*$': '<rootDir>/tests/mocks/modelcontextprotocol-sdk.ts',
     '^@modelcontextprotocol/sdk$': '<rootDir>/tests/mocks/modelcontextprotocol-sdk.ts',
     '^@socket.io/redis-adapter$': '<rootDir>/tests/mocks/redisAdapter.js',
   },
