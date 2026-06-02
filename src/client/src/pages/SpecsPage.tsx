@@ -17,13 +17,32 @@ import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotif
 import { apiService } from '../services/api';
 
 /** Build a filesystem-safe, path-traversal-free id matching the server regex /^[a-zA-Z0-9_-]+$/. */
-const slugifyTopic = (topic: string): string =>
+export const slugifyTopic = (topic: string): string =>
   topic
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 64) || 'spec';
+
+/**
+ * Produce an id derived from the topic that does not collide with any id in `existingIds`.
+ * Different topics can slugify to the same base (e.g. "My Spec!" and "My___Spec" both -> "my-spec",
+ * and any all-symbol topic -> "spec"), so on collision we append an incrementing suffix.
+ */
+export const buildUniqueSpecId = (topic: string, existingIds: Iterable<string>): string => {
+  const taken = new Set(existingIds);
+  const base = slugifyTopic(topic);
+  if (!taken.has(base)) {
+    return base;
+  }
+  let suffix = 2;
+  // Keep the suffixed id within the same 64-char budget as the base slug.
+  while (taken.has(`${base.slice(0, 64 - `-${suffix}`.length)}-${suffix}`)) {
+    suffix += 1;
+  }
+  return `${base.slice(0, 64 - `-${suffix}`.length)}-${suffix}`;
+};
 
 const SpecsPage: React.FC = () => {
   const successToast = useSuccessToast();
@@ -93,7 +112,7 @@ const SpecsPage: React.FC = () => {
       .filter(Boolean);
 
     const payload = {
-      id: slugifyTopic(topic),
+      id: buildUniqueSpecId(topic, specs.map((s) => s.id)),
       topic,
       author: form.author.trim() || 'Unknown',
       tags,
