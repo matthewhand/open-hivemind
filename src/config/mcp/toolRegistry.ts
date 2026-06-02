@@ -71,7 +71,9 @@ export class ToolRegistry {
 
    
        
-      mcpProcess.on('configuration', (error: any) => {
+      // Spawn failures (e.g. ENOENT when the command is missing) surface as an
+      // 'error' event on the ChildProcess, not 'configuration'.
+      mcpProcess.on('error', (error: any) => {
         resolve({
           success: false,
           error: error.message,
