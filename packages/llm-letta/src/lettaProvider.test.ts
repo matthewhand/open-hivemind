@@ -222,6 +222,60 @@ describe('LettaProvider session modes', () => {
   });
 });
 
+describe('LettaProvider per-bot config isolation', () => {
+  it('create() returns distinct providers honoring each bot config', async () => {
+    const { create } = await import('./index');
+
+    const botA = create({ agentId: 'agent-aaa' });
+    const botB = create({ agentId: 'agent-bbb' });
+
+    // Two different bots must not share one instance.
+    expect(botA).not.toBe(botB);
+
+    mockCreate.mockResolvedValue({
+      messages: [{ role: 'assistant', content: 'ok' }],
+    });
+
+    // Each provider routes to its own configured agentId (no metadata override).
+    await botA.generateChatCompletion('hi', []);
+    expect(mockCreate).toHaveBeenLastCalledWith('agent-aaa', { input: 'hi' });
+
+    await botB.generateChatCompletion('hi', []);
+    expect(mockCreate).toHaveBeenLastCalledWith('agent-bbb', { input: 'hi' });
+  });
+
+  it('isolates session config and conversation caches between bots', async () => {
+    const { create } = await import('./index');
+
+    mockConvList.mockResolvedValue([]);
+    mockConvCreate.mockResolvedValue({ id: 'conv-fixed-A', summary: '' });
+    mockConvMessageCreate.mockResolvedValue({
+      messages: [{ role: 'assistant', content: 'reply' }],
+    });
+
+    const fixedBot = create({
+      agentId: 'agent-fixed',
+      sessionMode: 'fixed',
+      conversationId: 'conv-fixed-A',
+    });
+    const defaultBot = create({ agentId: 'agent-default' });
+
+    await fixedBot.generateChatCompletion('hi', []);
+    // Fixed bot uses its conversation API with its own conversationId.
+    expect(mockConvMessageCreate).toHaveBeenCalledWith('conv-fixed-A', {
+      agent_id: 'agent-fixed',
+      messages: [{ role: 'user', content: 'hi' }],
+    });
+
+    mockCreate.mockResolvedValue({
+      messages: [{ role: 'assistant', content: 'reply' }],
+    });
+    await defaultBot.generateChatCompletion('hi', []);
+    // Default bot is unaffected by the other bot's session config.
+    expect(mockCreate).toHaveBeenCalledWith('agent-default', { input: 'hi' });
+  });
+});
+
 describe('LettaProvider.generateCompletion', () => {
   it('throws unsupported error', async () => {
     const provider = LettaProvider.getInstance();

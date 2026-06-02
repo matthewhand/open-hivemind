@@ -34,6 +34,7 @@ Welcome to the Open-Hivemind User Guide. This document provides a detailed walkt
   - [Integrations](#integrations)
 - [Developer & Tools](#developer--tools)
   - [API Documentation](#api-documentation)
+  - [Help & FAQ](#help--faq)
 - [Documentation Maintenance](#documentation-maintenance)
 
 ---
@@ -376,6 +377,16 @@ A detailed view of all system integrations and configurations.
 *   **Integration Settings**: Manage specific settings for various providers like LLMs.
 
 ## Developer & Tools
+
+### [Help & FAQ](/admin/help)
+Access the comprehensive help guide, frequently asked questions, and keyboard shortcuts reference.
+
+![Help & FAQ Main Page](screenshots/help-page.png)
+![Help & FAQ Expanded](screenshots/help-page-expanded.png)
+
+*   **FAQ**: Find answers to common questions about setting up and using the platform.
+*   **Keyboard Shortcuts**: View global navigation and action shortcuts for power users.
+*   **Getting Started**: Step-by-step guidance for new users configuring their first bot.
 
 ### [UI Components](/admin/showcase)
 A reference for developers extending the WebUI.

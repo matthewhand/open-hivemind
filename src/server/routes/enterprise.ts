@@ -229,10 +229,9 @@ router.get('/audit', async (req, res) => {
       dateTo,
     });
 
-    // eslint-disable-next-line unused-imports/no-unused-vars
     const auditEvents = await auditLogger.getAuditEvents(Number(limit), Number(offset), filter);
 
-    return res.json(ApiResponse.success());
+    return res.json(ApiResponse.success({ auditEvents, total: auditEvents.length }));
   } catch (error) {
     debug('Audit API error:', error);
     return res

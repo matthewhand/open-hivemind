@@ -43,7 +43,13 @@ export interface LlmInvoker {
     history: IMessage[],
     systemPrompt: string,
 
-    metadata?: Record<string, any>
+    metadata?: Record<string, any>,
+    /**
+     * Per-message bot configuration snapshot. Implementations should use this
+     * to resolve the correct LLM provider for the bot handling the message,
+     * rather than relying on a single config captured at construction time.
+     */
+    botConfig?: Record<string, unknown>
   ): Promise<string>;
 }
 
@@ -115,7 +121,8 @@ export class InferenceStage {
         userMessage,
         ctx.history,
         ctx.systemPrompt,
-        ctx.metadata
+        ctx.metadata,
+        ctx.botConfig
       );
 
       const durationMs = Date.now() - startTime;
