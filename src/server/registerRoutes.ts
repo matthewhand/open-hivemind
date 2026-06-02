@@ -46,6 +46,7 @@ import templatesRouter from '@src/server/routes/templates';
 import testRouter from '@src/server/routes/testRoutes';
 import usageTrackingRouter from '@src/server/routes/usageTracking';
 import validationRouter from '@src/server/routes/validation';
+import webhookEventsRouter from '@src/server/routes/webhookEvents';
 import webhooksRouter from '@src/server/routes/webhooks';
 import webuiRouter from '@src/server/routes/webui';
 import Logger from '@common/logger';
@@ -171,6 +172,10 @@ export function registerRoutes(app: import('express').Application, ctx: RouteCon
   app.use('/api/providers', authenticateToken, providersRouter);
   app.use('/api/templates', authenticateToken, templatesRouter);
   app.use('/api/usage-tracking', usageTrackingRouter);
+  // webhookEventsRouter serves /events* (list, detail, retry) with the contract
+  // the WebUI expects; webhooksRouter handles /scheduled*. Order matters so the
+  // events routes are matched first.
+  app.use('/api/webhooks', authenticateToken, webhookEventsRouter);
   app.use('/api/webhooks', authenticateToken, webhooksRouter);
   app.use('/api/webui', authenticateToken, webuiRouter);
   app.use('/api/test', authenticateToken, testRouter);
