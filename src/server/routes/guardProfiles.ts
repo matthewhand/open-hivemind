@@ -8,6 +8,11 @@ import {
   saveGuardrailProfiles,
   type GuardrailProfile,
 } from '../../config/guardrailProfiles';
+import {
+  loadGuardSettings,
+  saveGuardSettings,
+  type GuardSettings,
+} from '../../config/guardSettings';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { HTTP_STATUS } from '../../types/constants';
 import {
@@ -16,6 +21,7 @@ import {
   CreateGuardProfileSchema,
   GuardProfileIdParamSchema,
   UpdateGuardProfileSchema,
+  UpdateGuardSettingsSchema,
 } from '../../validation/schemas/guardProfilesSchema';
 import { validateRequest } from '../../validation/validateRequest';
 
@@ -40,6 +46,48 @@ router.get(
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to load guardrail profiles'));
+    }
+  })
+);
+
+// GET /settings - Get global guard defaults
+// NOTE: Must be registered before '/:id' so 'settings' is not captured as an id.
+router.get(
+  '/settings',
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const settings = loadGuardSettings();
+      return res.json(ApiResponse.success(settings));
+    } catch {
+      return res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error('Failed to load guard settings'));
+    }
+  })
+);
+
+// PUT /settings - Update global guard defaults
+router.put(
+  '/settings',
+  validateRequest(UpdateGuardSettingsSchema),
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const current = loadGuardSettings();
+      const body = req.body as Partial<GuardSettings>;
+      const merged: GuardSettings = {
+        defaultRateLimit: body.defaultRateLimit
+          ? { ...current.defaultRateLimit, ...body.defaultRateLimit }
+          : current.defaultRateLimit,
+        defaultContentFilterStrictness:
+          body.defaultContentFilterStrictness ?? current.defaultContentFilterStrictness,
+        evaluationOrder: body.evaluationOrder ?? current.evaluationOrder,
+      };
+      const saved = saveGuardSettings(merged);
+      return res.json(ApiResponse.success(saved));
+    } catch {
+      return res
+        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+        .json(ApiResponse.error('Failed to update guard settings'));
     }
   })
 );
