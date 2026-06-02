@@ -16,7 +16,12 @@
  */
 
 import type { MessageBus } from '@src/events/MessageBus';
-import { ActivityRecorder, PipelineTracer, setActiveTracer } from '@src/observability';
+import {
+  ActivityRecorder,
+  BusinessKpiRecorder,
+  PipelineTracer,
+  setActiveTracer,
+} from '@src/observability';
 import { ActivityLogger } from '@src/server/services/ActivityLogger';
 import { WebSocketService } from '@src/server/services/WebSocketService';
 import {
@@ -144,6 +149,12 @@ export function createPipeline(bus: MessageBus, deps: PipelineDependencies): boo
     flowSink as ConstructorParameters<typeof ActivityRecorder>[2]
   );
   activityRecorder.register();
+
+  // Feed the BusinessKpiCollector from real pipeline events so the business KPI
+  // dashboard surfaces live engagement/performance/growth metrics instead of
+  // always-zero defaults. Cost/retention KPIs that the bus cannot supply are
+  // left unfed (see BusinessKpiRecorder.DEFERRED_KPI_IDS).
+  new BusinessKpiRecorder(bus).register();
 
   return true;
 }
