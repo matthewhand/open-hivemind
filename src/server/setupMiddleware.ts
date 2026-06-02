@@ -81,13 +81,11 @@ export function setupMiddleware(app: express.Application, ctx: MiddlewareContext
     next();
   });
 
-  const isDevOrTest = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
-
   // Security headers
   app.use(securityHeaders);
 
   // Serve dashboard at root
-  if (!isDevOrTest) {
+  if (process.env.NODE_ENV !== 'development') {
     app.get('/', async (req: Request, res: Response) => {
       const indexPath = path.join(frontendDistPath, 'index.html');
       appLogger.debug('Handling root request for frontend shell', { frontendDistPath, indexPath });
@@ -111,7 +109,7 @@ export function setupMiddleware(app: express.Application, ctx: MiddlewareContext
   }
 
   // Serve static files from webui dist directory (Production Only)
-  if (!isDevOrTest) {
+  if (process.env.NODE_ENV !== 'development') {
     app.use(express.static(frontendDistPath));
     // Global assets static for root-relative asset paths
     app.use('/assets', express.static(frontendAssetsPath));

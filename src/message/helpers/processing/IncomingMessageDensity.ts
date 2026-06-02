@@ -1,5 +1,4 @@
 import Debug from 'debug';
-import { takeWithinWindow } from '@common/slidingWindow';
 
 const debug = Debug('app:IncomingMessageDensity');
 
@@ -21,17 +20,6 @@ export class IncomingMessageDensity {
   }
 
   /**
-   * Trim history to entries within the sliding time window.
-   */
-  private filterRecentMessages(
-    history: { ts: number; isBot: boolean }[],
-    windowMs: number,
-    now: number
-  ): { ts: number; isBot: boolean }[] {
-    return takeWithinWindow(history, (item) => item.ts, now - windowMs);
-  }
-
-  /**
    * Records an incoming message.
    */
   public recordMessage(channelId: string, authorId: string | undefined, isBot: boolean): void {
@@ -39,7 +27,7 @@ export class IncomingMessageDensity {
     let history = this.channelHistory.get(channelId) || [];
 
     // Prune old (use the class-level max window)
-    history = this.filterRecentMessages(history, this.WINDOW_MS, now);
+    history = history.filter((item) => now - item.ts < this.WINDOW_MS);
 
     // Record new
     history.push({ ts: now, isBot });
@@ -77,14 +65,10 @@ export class IncomingMessageDensity {
   ): { userCount: number; botCount: number; total: number } {
     const now = Date.now();
     const history = this.channelHistory.get(channelId) || [];
-    const recent = this.filterRecentMessages(history, windowMs, now);
+    const recent = history.filter((item) => now - item.ts < windowMs);
 
-    let userCount = 0;
-    let botCount = 0;
-    for (const item of recent) {
-      if (item.isBot) botCount++;
-      else userCount++;
-    }
+    const userCount = recent.filter((x) => !x.isBot).length;
+    const botCount = recent.filter((x) => x.isBot).length;
 
     return { userCount, botCount, total: recent.length };
   }

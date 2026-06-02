@@ -23,10 +23,7 @@ test.describe('Factory Reset E2E', () => {
     // 4. Click Maintenance Tab
     // Try multiple ways to find the tab
     console.log('Searching for Maintenance tab...');
-    const maintenanceBtn = page
-      .locator('button.tab, .tab')
-      .filter({ hasText: /Maintenance/i })
-      .first();
+    const maintenanceBtn = page.locator('button.tab, .tab').filter({ hasText: /Maintenance/i }).first();
     await expect(maintenanceBtn).toBeVisible({ timeout: 30000 });
     await maintenanceBtn.click({ force: true });
     console.log('✅ Clicked Maintenance tab');

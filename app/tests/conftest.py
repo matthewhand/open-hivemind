@@ -1,14 +1,6 @@
 """
 Pytest configuration for tenancy tests.
 """
-import os
-
-# ``secret_key`` is a required setting with no default (see app/core/config.py),
-# so it must be present in the environment before any module that instantiates
-# ``Settings`` is imported. Set a strong test value up front so the suite never
-# depends on the developer's ambient environment.
-os.environ.setdefault("SECRET_KEY", "test-secret-key-for-pytest-only-0123456789")
-
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker

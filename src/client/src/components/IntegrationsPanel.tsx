@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
-import { useConnectedBots } from '../hooks/useConnectedBots';
 import List, { ListRow, ListColGrow, ListColWrap } from './DaisyUI/List';
 import Collapse from './DaisyUI/Collapse';
 import { Alert } from './DaisyUI/Alert';
@@ -149,10 +148,13 @@ const IntegrationsPanel: React.FC = () => {
     return requiredKeys.some(k => values[k] && values[k] !== '***' && values[k] !== '');
   };
 
-  // Pre-compute an O(1) provider->bot index so the render loops below never
-  // re-filter `bots` per integration. Extracted into a tested, reusable hook
-  // (useConnectedBots / buildConnectedBotsMap) rather than an inline memo.
-  const { getConnectedBots } = useConnectedBots(bots);
+  const getConnectedBots = (integrationName: string, category: string) => {
+    return bots.filter(bot => {
+      if (category === 'llm') { return bot.llmProvider === integrationName; }
+      if (category === 'message') { return bot.messageProvider === integrationName; }
+      return bot.messageProvider === integrationName;
+    });
+  };
 
   const handleSave = async () => {
     if (!selectedConfigName) { return; }

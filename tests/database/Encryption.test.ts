@@ -1,19 +1,11 @@
 import 'reflect-metadata';
-import { encryptionService, EncryptionService } from '../../src/database/EncryptionService';
 import { BotConfigRepository } from '../../src/database/repositories/BotConfigRepository';
+import { encryptionService, EncryptionService } from '../../src/database/EncryptionService';
 import { IDatabase } from '../../src/database/types';
 
 describe('Database At-Rest Encryption', () => {
   let repository: BotConfigRepository;
   let mockDb: jest.Mocked<IDatabase>;
-
-  beforeAll(() => {
-    (encryptionService as any).encryptionKey = Buffer.alloc(32, 'a');
-  });
-
-  afterAll(() => {
-    (encryptionService as any).encryptionKey = null;
-  });
 
   beforeEach(() => {
     mockDb = {
@@ -24,10 +16,7 @@ describe('Database At-Rest Encryption', () => {
       close: jest.fn(),
     } as any;
 
-    repository = new BotConfigRepository(
-      () => mockDb,
-      () => {}
-    );
+    repository = new BotConfigRepository(() => mockDb, () => {});
   });
 
   it('should encrypt sensitive fields on creation', async () => {
@@ -36,7 +25,7 @@ describe('Database At-Rest Encryption', () => {
       messageProvider: 'slack',
       llmProvider: 'openai',
       openai: { apiKey: 'sk-12345' },
-      isActive: true,
+      isActive: true
     };
 
     await repository.createBotConfiguration(config);
@@ -57,7 +46,7 @@ describe('Database At-Rest Encryption', () => {
       openai: encryptedData,
       isActive: 1,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
 
     // @ts-ignore - access private mapping method
@@ -75,7 +64,7 @@ describe('Database At-Rest Encryption', () => {
       openai: plainData,
       isActive: 1,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
 
     // @ts-ignore

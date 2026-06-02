@@ -12,11 +12,10 @@ import PageHeader from '../components/DaisyUI/PageHeader';
 import { ArrowLeft, Download } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import useSpec from '../hooks/useSpec';
-import { useSuccessToast, useErrorToast } from '../components/DaisyUI/ToastNotification';
+import { useInfoToast } from '../components/DaisyUI/ToastNotification';
 
 const SpecDetailPage: React.FC = () => {
-  const successToast = useSuccessToast();
-  const errorToast = useErrorToast();
+  const infoToast = useInfoToast();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { spec, loading, error } = useSpec(id);
@@ -73,18 +72,8 @@ ${spec.content.replace(/^/gm, '  ')}
     { label: 'YAML', onClick: (): void => handleExport('yaml') },
   ];
 
-  const handleShare = async (): Promise<void> => {
-    const url = window.location.href;
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(url);
-        successToast('Link copied', 'A link to this specification was copied to your clipboard.');
-        return;
-      }
-      throw new Error('Clipboard API unavailable');
-    } catch {
-      errorToast('Could not copy link', url);
-    }
+  const handleNotImplemented = (): void => {
+    infoToast('Coming Soon', 'This feature is currently under development.');
   };
 
   if (loading) {
@@ -159,12 +148,10 @@ ${spec.content.replace(/^/gm, '  ')}
                 Last updated: {new Date(spec.timestamp).toLocaleString()}
               </p>
               <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  className="btn-ghost"
-                  onClick={() => void handleShare()}
-                  data-testid="share-spec-button"
-                >
+                <Button size="sm" className="btn-ghost" onClick={handleNotImplemented}>
+                  Edit
+                </Button>
+                <Button size="sm" className="btn-ghost" onClick={handleNotImplemented}>
                   Share
                 </Button>
               </div>
