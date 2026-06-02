@@ -15,7 +15,7 @@ import {
 } from '../../../validation/schemas/healthSchema';
 import { validateRequest } from '../../../validation/validateRequest';
 import { optionalAuth } from '../../middleware/auth';
-import { calculateErrorRate, calculateHealthStatus } from './helpers';
+import { buildSystemChecks, calculateErrorRate, calculateHealthStatus } from './helpers';
 
 const router = Router();
 
@@ -53,11 +53,7 @@ router.get('/detailed', optionalAuth, (req: Request, res: Response) => {
   const healthData = {
     status: healthStatus.status,
     timestamp: new Date().toISOString(),
-    checks: {
-      database: { status: 'healthy' },
-      configuration: { status: 'healthy' },
-      services: { status: 'healthy' },
-    },
+    checks: buildSystemChecks(),
     maintenanceMode: isMaintenanceMode,
     uptime: uptime,
     memory: {
