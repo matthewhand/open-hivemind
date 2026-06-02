@@ -16,11 +16,40 @@ export class FlowiseProvider implements ILlmProvider {
   }
 
   supportsCompletion(): boolean {
-    return false;
+    // Flowise exposes a single `/prediction/{chatflowId}` endpoint that accepts a
+    // `question` and returns text. This serves single-turn completions as well as
+    // chat, so non-chat completion is supported.
+    return true;
   }
 
   supportsChatCompletion(): boolean {
     return true;
+  }
+
+  /**
+   * Sends a single question to Flowise's prediction endpoint and returns the
+   * text. Shared by both chat and completion paths. The `channelId` keys the
+   * stateful chat session (REST mode) so independent conversations stay
+   * isolated; completion uses a dedicated stateless channel id.
+   */
+  private async predict(channelId: string, question: string): Promise<string> {
+    flowiseDebug(`Sending request to Flowise for channel ${channelId}`);
+
+    const useRest =
+      this.config.useRest !== undefined
+        ? this.config.useRest
+        : flowiseConfig.get('FLOWISE_USE_REST');
+
+    if (useRest) {
+      return getFlowiseResponse(channelId, question);
+    }
+
+    const chatflowId =
+      this.config.chatflowId || flowiseConfig.get('FLOWISE_CONVERSATION_CHATFLOW_ID');
+    if (!chatflowId) {
+      throw new Error('FLOWISE_CONVERSATION_CHATFLOW_ID is not set.');
+    }
+    return getFlowiseSdkResponse(question, chatflowId);
   }
 
   async generateChatCompletion(
@@ -35,34 +64,26 @@ export class FlowiseProvider implements ILlmProvider {
     }
 
     try {
-      flowiseDebug(`Sending request to Flowise for channel ${channelId}`);
-      let response: string;
-
-      const useRest =
-        this.config.useRest !== undefined
-          ? this.config.useRest
-          : flowiseConfig.get('FLOWISE_USE_REST');
-
-      if (useRest) {
-        response = await getFlowiseResponse(channelId, userMessage);
-      } else {
-        const chatflowId =
-          this.config.chatflowId || flowiseConfig.get('FLOWISE_CONVERSATION_CHATFLOW_ID');
-        if (!chatflowId) {
-          throw new Error('FLOWISE_CONVERSATION_CHATFLOW_ID is not set.');
-        }
-        response = await getFlowiseSdkResponse(userMessage, chatflowId);
-      }
-      return response;
+      return await this.predict(channelId, userMessage);
     } catch (error) {
       flowiseDebug('Error getting response from Flowise:', error);
       return 'There was an error communicating with the AI service.';
     }
   }
 
+  /**
+   * Single-turn, stateless text completion. Flowise has no separate completion
+   * endpoint, so this hits the same `/prediction/{chatflowId}` endpoint with a
+   * dedicated channel id that is kept isolated from interactive chat sessions.
+   */
   async generateCompletion(prompt: string): Promise<string> {
-    flowiseDebug('generateCompletion is not supported, redirecting to generateChatCompletion.');
-    return this.generateChatCompletion(prompt, [], { channelId: 'default-completion' });
+    flowiseDebug('generateCompletion: using stateless Flowise prediction.');
+    try {
+      return await this.predict('flowise-completion', prompt);
+    } catch (error) {
+      flowiseDebug('Error getting completion from Flowise:', error);
+      return 'There was an error communicating with the AI service.';
+    }
   }
 
   async validateCredentials(): Promise<boolean> {
