@@ -96,4 +96,83 @@ describe('PostgresMemoryProvider (Mocked)', () => {
     expect(mockDbManager.getMemories).not.toHaveBeenCalled();
     expect(result).toBeNull();
   });
+
+  it('should select a non-OpenAI provider that implements generateEmbedding', async () => {
+    const openWebUiLike = {
+      name: 'openwebui',
+      generateEmbedding: jest.fn().mockResolvedValue(new Array(768).fill(0.2)),
+    };
+    const chatOnly = { name: 'flowise' }; // no generateEmbedding
+
+    const localDeps: IServiceDependencies = {
+      ...deps,
+      getLlmProviders: () => [chatOnly, openWebUiLike] as any,
+    };
+    const localProvider = new PostgresMemoryProvider({}, localDeps);
+
+    await localProvider.addMemory('hello');
+
+    expect(openWebUiLike.generateEmbedding).toHaveBeenCalledWith('hello');
+  });
+
+  it('should use the configured embedding profile when it supports embeddings', async () => {
+    const openai = {
+      name: 'openai',
+      generateEmbedding: jest.fn().mockResolvedValue(new Array(1536).fill(0.3)),
+    };
+    const openwebui = {
+      name: 'openwebui',
+      generateEmbedding: jest.fn().mockResolvedValue(new Array(768).fill(0.4)),
+    };
+
+    const localDeps: IServiceDependencies = {
+      ...deps,
+      getLlmProviders: () => [openai, openwebui] as any,
+    };
+    const localProvider = new PostgresMemoryProvider(
+      { embeddingProfile: 'openwebui' },
+      localDeps
+    );
+
+    await localProvider.addMemory('hi');
+
+    expect(openwebui.generateEmbedding).toHaveBeenCalledWith('hi');
+    expect(openai.generateEmbedding).not.toHaveBeenCalled();
+  });
+
+  it('should throw a clear error when the configured profile cannot embed', () => {
+    const chatOnly = { name: 'flowise' }; // no generateEmbedding
+    const localDeps: IServiceDependencies = {
+      ...deps,
+      getLlmProviders: () => [chatOnly] as any,
+    };
+
+    expect(
+      () => new PostgresMemoryProvider({ embeddingProfile: 'flowise' }, localDeps)
+    ).toThrow(/does not support embeddings/);
+  });
+
+  it('should throw a clear error when the configured profile is missing', () => {
+    const localDeps: IServiceDependencies = {
+      ...deps,
+      getLlmProviders: () => [mockEmbeddingProvider],
+    };
+
+    expect(
+      () => new PostgresMemoryProvider({ embeddingProfile: 'nonexistent' }, localDeps)
+    ).toThrow(/was not found/);
+  });
+
+  it('should throw a clear error when no embedding-capable provider is available', async () => {
+    const chatOnly = { name: 'flowise' };
+    const localDeps: IServiceDependencies = {
+      ...deps,
+      getLlmProviders: () => [chatOnly] as any,
+    };
+    const localProvider = new PostgresMemoryProvider({}, localDeps);
+
+    await expect(localProvider.addMemory('hello')).rejects.toThrow(
+      /No embedding-capable LLM provider available/
+    );
+  });
 });
