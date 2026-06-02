@@ -8,6 +8,8 @@ import {
   BotActivityQuerySchema,
   BotHistoryQuerySchema,
   BotIdParamSchema,
+  BulkActionSchema,
+  BulkDeleteSchema,
   CloneBotSchema,
   CreateBotSchema,
   UpdateBotSchema,
@@ -283,6 +285,44 @@ router.post(
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to import bots'));
+    }
+  })
+);
+
+/**
+ * @openapi
+ * /api/bots:
+ *   delete:
+ *     summary: Bulk delete bots
+ *     tags: [Bots]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               ids:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *             required: [ids]
+ *     responses:
+ *       200:
+ *         description: Bots deleted
+ */
+router.delete(
+  '/',
+  validateRequest(BulkDeleteSchema),
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const manager = await managerPromise;
+      const { ids } = req.body;
+      await manager.deleteBots(ids);
+      return res.json(ApiResponse.success());
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error(msg));
     }
   })
 );
@@ -571,6 +611,82 @@ router.post(
         ? HTTP_STATUS.NOT_FOUND
         : HTTP_STATUS.BAD_REQUEST;
       return res.status(status).json(ApiResponse.error(msg));
+    }
+  })
+);
+
+/**
+ * @openapi
+ * /api/bots/bulk/start:
+ *   post:
+ *     summary: Bulk start bots
+ *     tags: [Bots]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               ids:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *             required: [ids]
+ *     responses:
+ *       200:
+ *         description: Bots started
+ */
+router.post(
+  '/bulk/start',
+  validateRequest(BulkActionSchema),
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const manager = await managerPromise;
+      const { ids } = req.body;
+      await manager.startBots(ids);
+      return res.json(ApiResponse.success());
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error(msg));
+    }
+  })
+);
+
+/**
+ * @openapi
+ * /api/bots/bulk/stop:
+ *   post:
+ *     summary: Bulk stop bots
+ *     tags: [Bots]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               ids:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *             required: [ids]
+ *     responses:
+ *       200:
+ *         description: Bots stopped
+ */
+router.post(
+  '/bulk/stop',
+  validateRequest(BulkActionSchema),
+  asyncErrorHandler(async (req, res) => {
+    try {
+      const manager = await managerPromise;
+      const { ids } = req.body;
+      await manager.stopBots(ids);
+      return res.json(ApiResponse.success());
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error(msg));
     }
   })
 );

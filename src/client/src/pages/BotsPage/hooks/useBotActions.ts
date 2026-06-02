@@ -89,17 +89,27 @@ export const useBotActions = (
 
   const handleBulkDelete = async () => {
     if (bulk.selectedCount === 0) return;
+
+    // Snapshot current state for rollback
+    const originalBots = bots;
+    const originalPreviewBot = previewBot;
+    const selectedIds = Array.from(bulk.selectedIds) as string[];
+
+    // Optimistically update UI
+    setBots((prev) => prev.filter((b) => !bulk.selectedIds.has(b.id)));
+    if (previewBot && bulk.selectedIds.has(previewBot.id)) {
+      setPreviewBot(null);
+    }
+    bulk.clearSelection();
+
     setBulkDeleting(true);
     try {
-      const ids = Array.from(bulk.selectedIds);
-      await Promise.allSettled(ids.map((id) => apiService.delete(`/api/bots/${id as string}`)));
-      setBots((prev) => prev.filter((b) => !bulk.selectedIds.has(b.id)));
-      if (previewBot && bulk.selectedIds.has(previewBot.id)) {
-        setPreviewBot(null);
-      }
-      bulk.clearSelection();
+      await apiService.bulkDeleteBots(selectedIds);
       toastSuccess('Selected bots deleted');
     } catch (err) {
+      // Rollback on failure
+      setBots(originalBots);
+      setPreviewBot(originalPreviewBot);
       toastError('Failed to delete some bots');
     } finally {
       setBulkDeleting(false);

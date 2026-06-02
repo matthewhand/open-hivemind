@@ -3,7 +3,12 @@ import { UserConfigStore } from './UserConfigStore';
 import { discoverBotNamesFromEnv, discoverBotNamesFromFiles } from './botDiscovery';
 import { createBotConfig } from './botConfigFactory';
 import { loadLegacyBots } from './botLegacyConfig';
-import { addBotToFile, updateBotOnFile, deleteBotFromFile } from './botCrudOperations';
+import {
+  addBotToFile,
+  deleteBotFromFile,
+  deleteBotsFromFiles,
+  updateBotOnFile,
+} from './botCrudOperations';
 import { validateBotConfiguration, mergeConfigurations, sanitizeConfiguration } from './botValidation';
 
 import type {
@@ -27,6 +32,16 @@ export class BotConfigurationManager {
 
   public constructor() {
     this.loadConfiguration();
+  }
+
+  /**
+   * Delete multiple bot configurations
+   */
+  public async deleteBots(names: string[]): Promise<void> {
+    await deleteBotsFromFiles(names);
+    this.discordBotsCache = null;
+
+    this.reload();
   }
 
   /**

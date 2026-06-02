@@ -75,3 +75,15 @@ export const UpdateBotStatusSchema = z.object({
     }),
   }),
 });
+
+export const BulkDeleteSchema = z.object({
+  body: z.object({
+    ids: z.array(z.string()).min(1, { message: 'At least one bot ID is required' }),
+  }),
+});
+
+export const BulkActionSchema = z.object({
+  body: z.object({
+    ids: z.array(z.string()).min(1, { message: 'At least one bot ID is required' }),
+  }),
+});

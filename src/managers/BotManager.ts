@@ -39,6 +39,7 @@ export class BotManager extends EventEmitter {
   private customBots = new Map<string, BotInstance>();
   private botsFilePath: string;
   private runningState = new BotRunningState();
+  private allBotsCache: BotInstance[] | null = null;
 
   constructor() {
     super();
@@ -57,6 +58,71 @@ export class BotManager extends EventEmitter {
       await BotManager.instance.loadCustomBots();
     }
     return BotManager.instance;
+  }
+
+  /**
+   * Delete multiple bot instances
+   */
+  public async deleteBots(botIds: string[]): Promise<void> {
+    try {
+      if (!botIds || botIds.length === 0) return;
+
+      const botsToDelete: BotInstance[] = [];
+      for (const id of botIds) {
+        const bot = await this.getBot(id);
+        if (bot) {
+          botsToDelete.push(bot);
+        }
+      }
+
+      if (botsToDelete.length === 0) return;
+
+      const customBots = await webUIStorage.getAgents();
+      const customBotIds = new Set(
+        customBots.map((b: Record<string, unknown>) => b.id as string)
+      );
+
+      const customIdsToDelete: string[] = [];
+      const configuredNamesToDelete: string[] = [];
+
+      for (const bot of botsToDelete) {
+        if (customBotIds.has(bot.id)) {
+          customIdsToDelete.push(bot.id);
+        } else {
+          configuredNamesToDelete.push(bot.id); // For configured bots, id is the name
+        }
+      }
+
+      // Batch delete custom bots
+      if (customIdsToDelete.length > 0) {
+        await webUIStorage.deleteAgents(customIdsToDelete);
+        for (const id of customIdsToDelete) {
+          await this.secureConfigManager.deleteConfig(`bot_${id}`);
+        }
+      }
+
+      // Batch delete configured bots
+      if (configuredNamesToDelete.length > 0) {
+        await this.botConfigManager.deleteBots(configuredNamesToDelete);
+        for (const name of configuredNamesToDelete) {
+          await this.secureConfigManager.deleteConfig(`bot_${name}`);
+        }
+      }
+
+      debug(`Deleted ${botsToDelete.length} bots`);
+      this.invalidateCache();
+
+      // Emit events for each deleted bot
+      for (const bot of botsToDelete) {
+        this.emit('botDeleted', bot);
+      }
+    } catch (error: unknown) {
+      debug('Error deleting bots:', ErrorUtils.getMessage(error));
+      throw ErrorUtils.createError(
+        `Failed to delete bots: ${ErrorUtils.getMessage(error)}`,
+        'configuration'
+      );
+    }
   }
 
   /**
@@ -81,10 +147,23 @@ export class BotManager extends EventEmitter {
   }
 
   /**
+   * Invalidate the bot instances cache
+   */
+  private invalidateCache(): void {
+    this.allBotsCache = null;
+    debug('Bot instances cache invalidated');
+  }
+
+  /**
    * Get all bot instances (both configured and custom)
    */
   public async getAllBots(): Promise<BotInstance[]> {
     try {
+      if (this.allBotsCache) {
+        debug(`Retrieved ${this.allBotsCache.length} bot instances from cache`);
+        return this.allBotsCache;
+      }
+
       const configuredBots = this.botConfigManager.getAllBots();
       const botMap = new Map<string, BotInstance>();
 
@@ -101,7 +180,8 @@ export class BotManager extends EventEmitter {
       }
 
       const botInstances = Array.from(botMap.values());
-      debug(`Retrieved ${botInstances.length} bot instances`);
+      this.allBotsCache = botInstances;
+      debug(`Retrieved ${botInstances.length} bot instances (cache miss)`);
       return botInstances;
     } catch (error: unknown) {
       debug('Error getting all bots:', ErrorUtils.getMessage(error));
@@ -194,6 +274,7 @@ export class BotManager extends EventEmitter {
 
       // Add to web UI storage
       await webUIStorage.saveAgent(botInstance);
+      this.invalidateCache();
 
       debug(`Created new bot: ${request.name} (${botId})`);
 
@@ -308,6 +389,7 @@ export class BotManager extends EventEmitter {
 
       // Update in web UI storage
       await webUIStorage.saveAgent(updatedBot);
+      this.invalidateCache();
 
       debug(`Updated bot: ${updatedBot.name} (${botId})`);
 
@@ -356,6 +438,7 @@ export class BotManager extends EventEmitter {
       }
 
       debug(`Deleted bot: ${bot.name} (${botId})`);
+      this.invalidateCache();
 
       // Emit event for real-time updates
       this.emit('botDeleted', bot);
@@ -392,6 +475,7 @@ export class BotManager extends EventEmitter {
       }
 
       await this.startBotById(botId);
+      this.invalidateCache();
 
       // Send Welcome Message when bot is enabled (if configured)
       await sendWelcomeMessage(bot);
@@ -443,6 +527,7 @@ export class BotManager extends EventEmitter {
 
       // Stop services and connections
       await stopBotServicesAndConnections(bot);
+      this.invalidateCache();
 
       debug(`Stopped bot: ${bot.name} (${botId})`);
 
@@ -456,6 +541,50 @@ export class BotManager extends EventEmitter {
         `Failed to stop bot: ${ErrorUtils.getMessage(error)}`,
         'configuration'
       );
+    }
+  }
+
+  /**
+   * Start multiple bot instances
+   */
+  public async startBots(botIds: string[]): Promise<void> {
+    try {
+      if (!botIds || botIds.length === 0) return;
+      debug(`Starting ${botIds.length} bots...`);
+
+      const results = await Promise.allSettled(
+        botIds.map((id) => this.startBot(id))
+      );
+
+      const failed = results.filter((r) => r.status === 'rejected');
+      if (failed.length > 0) {
+        debug(`${failed.length} bots failed to start`);
+      }
+    } catch (error: unknown) {
+      debug('Error starting multiple bots:', ErrorUtils.getMessage(error));
+      throw error;
+    }
+  }
+
+  /**
+   * Stop multiple bot instances
+   */
+  public async stopBots(botIds: string[]): Promise<void> {
+    try {
+      if (!botIds || botIds.length === 0) return;
+      debug(`Stopping ${botIds.length} bots...`);
+
+      const results = await Promise.allSettled(
+        botIds.map((id) => this.stopBot(id))
+      );
+
+      const failed = results.filter((r) => r.status === 'rejected');
+      if (failed.length > 0) {
+        debug(`${failed.length} bots failed to stop`);
+      }
+    } catch (error: unknown) {
+      debug('Error stopping multiple bots:', ErrorUtils.getMessage(error));
+      throw error;
     }
   }
 
