@@ -9,7 +9,7 @@ import path from 'path';
 import { type NextFunction, type Request, type Response } from 'express';
 import swarmRouter from '@src/admin/swarmRoutes';
 import { authenticateToken } from '@src/server/middleware/auth';
-import { csrfTokenHandler } from '@src/server/middleware/csrf';
+import { csrfProtection, csrfTokenHandler } from '@src/server/middleware/csrf';
 import { ipWhitelist } from '@src/server/middleware/security';
 import activityRouter from '@src/server/routes/activity';
 import adminApiRouter from '@src/server/routes/admin';
@@ -93,8 +93,30 @@ export function registerRoutes(app: import('express').Application, ctx: RouteCon
     return ipWhitelist(req, res, next);
   });
 
-  // CSRF token endpoint
+  // CSRF token endpoint — must be registered BEFORE csrfProtection so the
+  // client can always fetch a token (GET requests are exempt anyway).
   app.get('/api/csrf-token', csrfTokenHandler);
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // CSRF Protection for state-changing /api requests
+  // ─────────────────────────────────────────────────────────────────────────────
+  // csrfProtection only validates unsafe methods (POST/PUT/DELETE/PATCH); safe
+  // methods (GET/HEAD/OPTIONS) pass through untouched, so read APIs are unaffected.
+  // The WebUI client (src/client/src/services/api/core.ts) already fetches a token
+  // from /api/csrf-token and sends it via the X-CSRF-Token header on mutations.
+  //
+  // Exemptions:
+  //   • /api/auth — login/refresh must work before a session/token exists, and
+  //     these endpoints are protected by dedicated auth rate limiters.
+  //   • /api/csrf-token — handled above (GET, already exempt).
+  // External inbound webhooks are mounted at /webhook/* (see webhookService),
+  // NOT under /api, so they are unaffected by this middleware.
+  app.use('/api', (req: Request, res: Response, next: NextFunction) => {
+    if (req.path.startsWith('/auth')) {
+      return next();
+    }
+    return csrfProtection(req, res, next);
+  });
 
   // ─────────────────────────────────────────────────────────────────────────────
   // API Route Registration
