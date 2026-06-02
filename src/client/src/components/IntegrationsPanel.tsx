@@ -80,6 +80,7 @@ const IntegrationsPanel: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deletingKey, setDeletingKey] = useState<string | null>(null);
 
   // Edit/Configure Modal State (For Global Config)
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -231,13 +232,13 @@ const IntegrationsPanel: React.FC = () => {
       onConfirm: async () => {
         setConfirmModal(prev => ({ ...prev, isOpen: false }));
         try {
-          setSaving(true);
+          setDeletingKey(key);
           await apiService.delete(`/api/config/llm-profiles/${key}`);
           await fetchData();
         } catch (err: unknown) {
           errorToast('Delete Failed', `Failed to delete profile: ${(err instanceof Error ? err.message : String(err))}`);
         } finally {
-          setSaving(false);
+          setDeletingKey(null);
         }
       },
     });
@@ -428,6 +429,7 @@ const IntegrationsPanel: React.FC = () => {
                         className="btn-square btn-xs text-error"
                         aria-label={`Delete ${profile.name} provider`}
                         onClick={() => handleDeleteProfile(profile.key)}
+                        loading={deletingKey === profile.key}
                       >
                         <TrashIcon className="w-4 h-4" />
                       </Button>
