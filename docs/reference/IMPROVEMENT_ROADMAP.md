@@ -100,7 +100,7 @@ Low impact, low urgency - Address within 10-12 weeks
 
 **New Memory Provider Packages:**
 - `@hivemind/memory-mem4ai` - Open-source, LLM-friendly memory management with adaptive personalization and flexible metadata tagging
-- `@hivemind/memory-memvault` - Open-source RAG memory server built natively in Node.js with Postgres + pgvector; uses hybrid scoring (vector similarity × 0.8) + (recency decay × 0.2)
+- `@hivemind/memory-memvault` - Native in-process RAG memory implementing hybrid scoring (vector similarity × 0.8) + (recency decay × 0.2). Storage is delegated to a pluggable `MemVaultStore`; the default is dependency-free and in-process. A durable Postgres + pgvector store can implement the same `MemVaultStore` contract (deferred — not yet wired).
 
 **MCP Server Trust System:**
 - Add config file listing trusted MCP server repositories
