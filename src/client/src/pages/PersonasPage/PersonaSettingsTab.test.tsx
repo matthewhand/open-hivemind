@@ -85,6 +85,41 @@ describe('PersonaSettingsTab', () => {
     expect(maxTokens.value).toBe(String(DEFAULT_PERSONA_SETTINGS.maxTokens));
   });
 
+  it('allows clearing the Max Tokens field while typing without forcing a value', () => {
+    render(<PersonaSettingsTab personas={personas} />);
+    const maxTokens = screen.getByLabelText('Max Tokens') as HTMLInputElement;
+
+    fireEvent.change(maxTokens, { target: { value: '' } });
+    // While typing, the field stays empty instead of snapping back to 1.
+    expect(maxTokens.value).toBe('');
+
+    fireEvent.change(maxTokens, { target: { value: '512' } });
+    expect(maxTokens.value).toBe('512');
+  });
+
+  it('validates an empty/invalid Max Tokens to a minimum of 1 on blur', () => {
+    render(<PersonaSettingsTab personas={personas} />);
+    const maxTokens = screen.getByLabelText('Max Tokens') as HTMLInputElement;
+
+    fireEvent.change(maxTokens, { target: { value: '' } });
+    fireEvent.blur(maxTokens);
+    expect(maxTokens.value).toBe('1');
+  });
+
+  it('persists the typed Max Tokens value on save', () => {
+    const onSaved = vi.fn();
+    render(<PersonaSettingsTab personas={personas} onSaved={onSaved} />);
+    const maxTokens = screen.getByLabelText('Max Tokens') as HTMLInputElement;
+
+    fireEvent.change(maxTokens, { target: { value: '4096' } });
+    const saveBtn = screen.getByRole('button', { name: /save settings/i });
+    expect(saveBtn).not.toBeDisabled();
+    fireEvent.click(saveBtn);
+
+    const stored = JSON.parse(store[PERSONA_SETTINGS_STORAGE_KEY] || '{}');
+    expect(stored.maxTokens).toBe(4096);
+  });
+
   it('hydrates saved settings from localStorage on mount', () => {
     store[PERSONA_SETTINGS_STORAGE_KEY] = JSON.stringify({
       ...DEFAULT_PERSONA_SETTINGS,

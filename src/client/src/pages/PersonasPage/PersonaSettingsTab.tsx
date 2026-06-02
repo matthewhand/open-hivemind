@@ -62,21 +62,42 @@ export const PersonaSettingsTab: React.FC<PersonaSettingsTabProps> = ({ personas
     DEFAULT_PERSONA_SETTINGS
   );
   // Working draft so changes can be reverted before saving.
-  const [draft, setDraft] = useState<PersonaSettings>(() => ({ ...DEFAULT_PERSONA_SETTINGS, ...saved }));
+  const [draft, setDraft] = useState<PersonaSettings>(() => saved);
+  // Local string state for the maxTokens input so the field can be cleared
+  // while typing without being forced back to a valid number on every change.
+  const [maxTokensInput, setMaxTokensInput] = useState<string>(() => String(saved.maxTokens));
 
-  const isDirty = JSON.stringify(draft) !== JSON.stringify({ ...DEFAULT_PERSONA_SETTINGS, ...saved });
+  // Dirty when any draft field diverges from the saved state. The maxTokens
+  // input is held as a string while typing, so compare it against the saved
+  // value directly rather than waiting for it to be committed into the draft.
+  const isDirty =
+    JSON.stringify({ ...draft, maxTokens: saved.maxTokens }) !== JSON.stringify(saved) ||
+    maxTokensInput !== String(saved.maxTokens);
 
   const update = useCallback(<K extends keyof PersonaSettings>(key: K, value: PersonaSettings[K]) => {
     setDraft((prev) => ({ ...prev, [key]: value }));
   }, []);
 
+  // Coerce the in-progress maxTokens string to a valid integer (>= 1) and sync
+  // both the draft and the displayed input. Called on blur and before saving.
+  const commitMaxTokens = useCallback(() => {
+    const parsed = Math.floor(Number(maxTokensInput));
+    const next = !Number.isFinite(parsed) || parsed < 1 ? 1 : parsed;
+    setMaxTokensInput(String(next));
+    update('maxTokens', next);
+    return next;
+  }, [maxTokensInput, update]);
+
   const handleSave = useCallback(() => {
-    setSaved(draft);
-    onSaved?.(draft);
-  }, [draft, setSaved, onSaved]);
+    const maxTokens = commitMaxTokens();
+    const next = { ...draft, maxTokens };
+    setSaved(next);
+    onSaved?.(next);
+  }, [draft, commitMaxTokens, setSaved, onSaved]);
 
   const handleReset = useCallback(() => {
-    setDraft({ ...DEFAULT_PERSONA_SETTINGS, ...saved });
+    setDraft(saved);
+    setMaxTokensInput(String(saved.maxTokens));
   }, [saved]);
 
   return (
@@ -141,8 +162,9 @@ export const PersonaSettingsTab: React.FC<PersonaSettingsTabProps> = ({ personas
                 type="number"
                 className="input input-bordered input-sm"
                 min={1}
-                value={draft.maxTokens}
-                onChange={(e) => update('maxTokens', Math.max(1, Number(e.target.value) || 0))}
+                value={maxTokensInput}
+                onChange={(e) => setMaxTokensInput(e.target.value)}
+                onBlur={commitMaxTokens}
               />
             </div>
           </div>
