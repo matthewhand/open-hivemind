@@ -198,7 +198,17 @@ export class LettaProvider implements ILlmProvider {
     }
   }
 
-  async generateCompletion(_prompt: string): Promise<string> {
-    throw new Error('Letta provider does not support non-chat completion.');
+  /**
+   * Letta is a chat-first (stateful agent) provider and has no dedicated
+   * non-chat completion endpoint. Rather than throwing — which breaks any
+   * caller that treats completion as a generic single-turn entry point — we
+   * map a non-chat completion onto a single-turn chat completion with no
+   * history. This mirrors the FlowiseProvider, the other chat-only provider
+   * in this repo. The prompt is sent as the user message; the agent's reply
+   * is returned as the completion text.
+   */
+  async generateCompletion(prompt: string): Promise<string> {
+    debug('generateCompletion is not natively supported; mapping to a single-turn chat completion.');
+    return this.generateChatCompletion(prompt, []);
   }
 }
