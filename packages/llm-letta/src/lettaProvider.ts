@@ -14,12 +14,11 @@ export interface LettaProviderConfig {
 
 export class LettaProvider implements ILlmProvider {
   name = 'letta';
-  private static instance: LettaProvider;
   private client: Letta;
   private config: LettaProviderConfig;
   private conversationCache = new Map<string, string>(); // contextKey → conv-* id
 
-  private constructor(config?: LettaProviderConfig) {
+  constructor(config?: LettaProviderConfig) {
     this.config = config || {};
     // Uses LETTA_SERVER_PASSWORD for both cloud and self-hosted auth
     this.client = new Letta({
@@ -27,11 +26,13 @@ export class LettaProvider implements ILlmProvider {
     });
   }
 
+  /**
+   * Back-compat factory. A new provider is returned for each call so that
+   * multiple bots with different agentId/session configs stay isolated
+   * (the previous singleton honored only the first config supplied).
+   */
   static getInstance(config?: LettaProviderConfig): LettaProvider {
-    if (!LettaProvider.instance) {
-      LettaProvider.instance = new LettaProvider(config);
-    }
-    return LettaProvider.instance;
+    return new LettaProvider(config);
   }
 
   supportsChatCompletion(): boolean {
