@@ -12,6 +12,7 @@ import {
   BotIdParamSchema,
   BotImportSchema,
   BotTaskCreateSchema,
+  BotTaskDeleteSchema,
   BotTestChatSchema,
   BotVersionParamSchema,
   CloneBotSchema,
@@ -734,6 +735,66 @@ router.post(
       intervalMinutes
     );
     return res.json(ApiResponse.success(task));
+  })
+);
+
+/**
+ * @openapi
+ * /api/bots/{id}/tasks:
+ *   get:
+ *     summary: List scheduled tasks for a bot
+ *     tags: [Bots]
+ */
+router.get(
+  '/:id/tasks',
+  validateRequest(BotIdParamSchema),
+  asyncErrorHandler(async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    const manager = await managerPromise;
+    const bot = await manager.getBot(id);
+    if (!bot) {
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
+    }
+
+    const tasks = BotTaskScheduler.getInstance().getTasksForBot(bot.id);
+    return res.json(ApiResponse.success(tasks));
+  })
+);
+
+/**
+ * @openapi
+ * /api/bots/{id}/tasks/{taskId}:
+ *   delete:
+ *     summary: Delete a scheduled task for a bot
+ *     tags: [Bots]
+ */
+router.delete(
+  '/:id/tasks/:taskId',
+  validateRequest(BotTaskDeleteSchema),
+  asyncErrorHandler(async (req: Request, res: Response) => {
+    const { id, taskId } = req.params;
+
+    const manager = await managerPromise;
+    const bot = await manager.getBot(id);
+    if (!bot) {
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
+    }
+
+    const scheduler = BotTaskScheduler.getInstance();
+    const task = scheduler.getTasksForBot(bot.id).find((t) => t.id === taskId);
+    if (!task) {
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Task not found', ERROR_CODES.NOT_FOUND));
+    }
+
+    scheduler.deleteTask(taskId);
+    return res.json(ApiResponse.success({ id: taskId, deleted: true }));
   })
 );
 

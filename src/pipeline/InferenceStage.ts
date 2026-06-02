@@ -23,6 +23,7 @@ import type { IMessage } from '@message/interfaces/IMessage';
 import { DatabaseManager } from '../database/DatabaseManager';
 import { sendErrorAlertMessage } from '../managers/botLifecycle';
 import { BotManager } from '../managers/BotManager';
+import { PersonaManager } from '../managers/PersonaManager';
 import { TokenBudgetService } from '../server/services/TokenBudgetService';
 
 const debug = Debug('app:pipeline:inference');
@@ -177,6 +178,12 @@ export class InferenceStage {
         provider: (ctx.botConfig.llmProvider as string) || 'unknown',
       });
 
+      // Record that the bot's configured persona was actually used to produce a
+      // response. Best-effort: a missing/unknown persona (e.g. the literal
+      // 'default' placeholder) increments nothing, and any failure here must
+      // never abort the pipeline.
+      await this.recordPersonaUsage(ctx.botConfig);
+
       await this.bus.emitAsync('message:response', { ...ctx, responseText });
       debug('Inference complete: bot=%s responseLength=%d', ctx.botName, responseText.length);
     } catch (err) {
@@ -194,6 +201,29 @@ export class InferenceStage {
       });
 
       await this.bus.emitAsync('message:error', { ...ctx, error, stage: 'inference' });
+    }
+  }
+
+  /**
+   * Increment the usage counter for the persona configured on the bot that
+   * just produced a response.
+   *
+   * `botConfig.persona` is a persona ID string. When it is absent, empty, or
+   * does not resolve to a known persona (e.g. the `'default'` placeholder used
+   * by bots with no custom persona), this is a no-op. All errors are swallowed
+   * so persona bookkeeping can never break the message pipeline.
+   */
+  private async recordPersonaUsage(botConfig: Record<string, unknown>): Promise<void> {
+    const personaId = botConfig?.persona;
+    if (typeof personaId !== 'string' || !personaId) {
+      return;
+    }
+
+    try {
+      const manager = await PersonaManager.getInstance();
+      await manager.incrementUsageCount(personaId);
+    } catch (err) {
+      debug('Failed to increment persona usage count for %s: %O', personaId, err);
     }
   }
 }

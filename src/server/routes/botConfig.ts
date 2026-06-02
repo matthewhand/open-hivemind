@@ -3,6 +3,7 @@ import Debug from 'debug';
 import { Router } from 'express';
 import { authenticate, requireAdmin, requireRole } from '../../auth/middleware';
 import { type AuthMiddlewareRequest } from '../../auth/types';
+import { loadBotConfigTemplates } from '../../config/botConfigTemplates';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import { SecureConfigManager } from '../../config/SecureConfigManager';
 import { UserConfigStore } from '../../config/UserConfigStore';
@@ -99,57 +100,7 @@ router.get(
     try {
       // eslint-disable-next-line unused-imports/no-unused-vars
       const authReq = req as AuthMiddlewareRequest;
-      const templates = {
-        discord_openai: {
-          name: 'Discord + OpenAI Bot',
-          description: 'A Discord bot using OpenAI for responses',
-          messageProvider: 'discord',
-          llmProvider: 'openai',
-          config: {
-            discord: {
-              token: '',
-              voiceChannelId: '',
-            },
-            openai: {
-              apiKey: '',
-              model: 'gpt-3.5-turbo',
-            },
-          },
-        },
-        slack_flowise: {
-          name: 'Slack + Flowise Bot',
-          description: 'A Slack bot using Flowise for AI responses',
-          messageProvider: 'slack',
-          llmProvider: 'flowise',
-          config: {
-            slack: {
-              botToken: '',
-              signingSecret: '',
-              appToken: '',
-            },
-            flowise: {
-              apiKey: '',
-              endpoint: '',
-            },
-          },
-        },
-        mattermost_openwebui: {
-          name: 'Mattermost + OpenWebUI Bot',
-          description: 'A Mattermost bot using OpenWebUI for responses',
-          messageProvider: 'mattermost',
-          llmProvider: 'openwebui',
-          config: {
-            mattermost: {
-              serverUrl: '',
-              token: '',
-            },
-            openwebui: {
-              apiKey: '',
-              endpoint: '',
-            },
-          },
-        },
-      };
+      const templates = loadBotConfigTemplates();
 
       res.json(ApiResponse.success(templates));
     } catch (error: unknown) {

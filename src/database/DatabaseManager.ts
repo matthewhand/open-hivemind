@@ -11,6 +11,12 @@ import { ActivityRepository, type ActivityLog } from './repositories/ActivityRep
 import { AIFeedbackRepository } from './repositories/AIFeedbackRepository';
 import { AnomalyRepository } from './repositories/AnomalyRepository';
 import { ApprovalRepository } from './repositories/ApprovalRepository';
+import {
+  AuditEventRepository,
+  type AuditEventQuery,
+  type AuditEventRecord,
+  type AuditEventStats,
+} from './repositories/AuditEventRepository';
 import { BotConfigRepository } from './repositories/BotConfigRepository';
 import { DecisionRepository } from './repositories/DecisionRepository';
 import { InferenceRepository } from './repositories/InferenceRepository';
@@ -64,6 +70,12 @@ export type {
   IDatabase,
 } from './types';
 
+export type {
+  AuditEventRecord,
+  AuditEventQuery,
+  AuditEventStats,
+} from './repositories/AuditEventRepository';
+
 export type { Database } from './sqliteWrapper';
 
 const debug = Debug('app:DatabaseManager');
@@ -82,6 +94,7 @@ export class DatabaseManager {
   private botConfigRepo!: BotConfigRepository;
   private anomalyRepo!: AnomalyRepository;
   private approvalRepo!: ApprovalRepository;
+  private auditEventRepo!: AuditEventRepository;
   private aiFeedbackRepo!: AIFeedbackRepository;
   private decisionRepo!: DecisionRepository;
   private activityRepo!: ActivityRepository;
@@ -249,6 +262,7 @@ export class DatabaseManager {
     this.botConfigRepo = new BotConfigRepository(getDb, ensure);
     this.anomalyRepo = new AnomalyRepository(getDb, isConn);
     this.approvalRepo = new ApprovalRepository(getDb, ensure);
+    this.auditEventRepo = new AuditEventRepository(getDb, isConn);
     this.aiFeedbackRepo = new AIFeedbackRepository(getDb, ensure);
     this.decisionRepo = new DecisionRepository(getDb, isConn);
     this.activityRepo = new ActivityRepository(getDb, isConn);
@@ -469,6 +483,26 @@ export class DatabaseManager {
   }
 
   // ---------------------------------------------------------------------------
+  // Audit event operations -- delegated to AuditEventRepository
+  // ---------------------------------------------------------------------------
+
+  async insertAuditEvent(event: AuditEventRecord): Promise<boolean> {
+    return this.auditEventRepo.insert(event);
+  }
+
+  async queryAuditEvents(filters?: AuditEventQuery): Promise<AuditEventRecord[]> {
+    return this.auditEventRepo.query(filters);
+  }
+
+  async getRecentAuditEvents(limit = 100): Promise<AuditEventRecord[]> {
+    return this.auditEventRepo.getRecent(limit);
+  }
+
+  async getAuditEventStats(startTime?: string, endTime?: string): Promise<AuditEventStats> {
+    return this.auditEventRepo.getStats(startTime, endTime);
+  }
+
+  // ---------------------------------------------------------------------------
   // AI Feedback operations -- delegated to AIFeedbackRepository
   // ---------------------------------------------------------------------------
 
@@ -552,6 +586,10 @@ export class DatabaseManager {
     options: { limit?: number; userId?: string; agentId?: string } = {}
   ): Promise<MemoryRecord[]> {
     return this.memoryRepo.getMemories(options);
+  }
+
+  async getMemoryById(id: string | number): Promise<MemoryRecord | null> {
+    return this.memoryRepo.getMemoryById(id);
   }
 
   async deleteMemory(id: string | number): Promise<boolean> {
