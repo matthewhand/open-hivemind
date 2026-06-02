@@ -563,6 +563,23 @@ export class DatabaseManager {
   }
 
   /**
+   * Evict (prune) stored memories based on a TTL and/or max-count policy.
+   * Opt-in and safe: a no-op when no positive policy is supplied.
+   *
+   * @returns The number of memory rows deleted.
+   */
+  async evictMemories(
+    options: {
+      olderThanDays?: number;
+      maxCount?: number;
+      userId?: string;
+      agentId?: string;
+    } = {}
+  ): Promise<number> {
+    return this.memoryRepo.evictMemories(options);
+  }
+
+  /**
    * Reset the database by clearing all major tables.
    * This is a destructive operation used for "Factory Reset".
    */
@@ -729,5 +746,35 @@ export class DatabaseManager {
         debug(`Failed to cleanup table ${table.name}:`, e);
       }
     }
+
+    // Dedicated, opt-in memory retention pass. Runs only when an explicit
+    // memory policy is configured (both default to 0 = disabled), so default
+    // behaviour is unchanged.
+    try {
+      await this.runMemoryEviction();
+    } catch (e) {
+      console.error('Failed to run memory eviction:', e);
+      debug('Failed to run memory eviction:', e);
+    }
+  }
+
+  /**
+   * Apply the configured memory retention policy (TTL + max-count).
+   *
+   * Controlled by `MEMORY_RETENTION_DAYS` and `MEMORY_MAX_ENTRIES`. Both
+   * default to 0 (disabled), making this a no-op unless explicitly enabled.
+   *
+   * @returns The number of memory rows deleted.
+   */
+  async runMemoryEviction(): Promise<number> {
+    const olderThanDays = Number(databaseConfig.get('MEMORY_RETENTION_DAYS')) || 0;
+    const maxCount = Number(databaseConfig.get('MEMORY_MAX_ENTRIES')) || 0;
+
+    if (olderThanDays <= 0 && maxCount <= 0) {
+      return 0;
+    }
+
+    debug(`Running memory eviction: retentionDays=${olderThanDays}, maxEntries=${maxCount}`);
+    return this.evictMemories({ olderThanDays, maxCount });
   }
 }

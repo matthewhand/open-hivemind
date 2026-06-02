@@ -207,4 +207,98 @@ export class MemoryRepository {
       debug('Error deleting all memories:', error);
     }
   }
+
+  /**
+   * Evict (prune) stored memories based on a retention policy.
+   *
+   * This is opt-in and safe by design: if neither `olderThanDays` nor
+   * `maxCount` is supplied (or both are <= 0), the method is a no-op and
+   * deletes nothing. This prevents accidental data loss when called without
+   * an explicit policy.
+   *
+   * Two independent rules may be applied (both run when provided):
+   *  - TTL: delete memories whose `created_at` is older than `olderThanDays`.
+   *  - Max count: keep only the newest `maxCount` memories, deleting the rest.
+   *
+   * Both rules respect the optional `userId` / `agentId` scope, so a policy
+   * can be applied globally or per-user / per-agent.
+   *
+   * @returns The total number of memory rows deleted.
+   */
+  async evictMemories(
+    options: {
+      olderThanDays?: number;
+      maxCount?: number;
+      userId?: string;
+      agentId?: string;
+    } = {}
+  ): Promise<number> {
+    if (!this.isConnected()) return 0;
+    const db = this.getDb();
+    if (!db) return 0;
+
+    const { olderThanDays, maxCount, userId, agentId } = options;
+
+    const hasTtl = typeof olderThanDays === 'number' && olderThanDays > 0;
+    const hasMaxCount = typeof maxCount === 'number' && maxCount > 0;
+
+    // Safe by default: nothing to do without an explicit, positive policy.
+    if (!hasTtl && !hasMaxCount) {
+      return 0;
+    }
+
+    const isPg = this.isPostgres();
+    let deleted = 0;
+
+    // Build the optional scope filter once.
+    const buildScope = (): { clause: string; params: any[] } => {
+      let clause = '';
+      const params: any[] = [];
+      if (userId) {
+        clause += ` AND userId = ?`;
+        params.push(userId);
+      }
+      if (agentId) {
+        clause += ` AND agentId = ?`;
+        params.push(agentId);
+      }
+      return { clause, params };
+    };
+
+    try {
+      // Rule 1: TTL — delete anything older than the cutoff.
+      if (hasTtl) {
+        const { clause, params } = buildScope();
+        const cutoffExpr = isPg
+          ? `NOW() - INTERVAL '${olderThanDays} days'`
+          : `datetime('now', '-${olderThanDays} days')`;
+        const sql = `DELETE FROM memories WHERE created_at < ${cutoffExpr}${clause}`;
+        const result = await db.run(sql, params);
+        deleted += result.changes ?? 0;
+      }
+
+      // Rule 2: Max count — keep only the newest `maxCount` rows in scope.
+      if (hasMaxCount) {
+        const { clause, params } = buildScope();
+        // Find the id of the (maxCount)th newest row; delete everything older.
+        const cutoffRow = await db.get(
+          `SELECT id FROM memories WHERE 1=1${clause} ORDER BY id DESC LIMIT 1 OFFSET ?`,
+          [...params, maxCount as number]
+        );
+        if (cutoffRow && cutoffRow.id != null) {
+          const result = await db.run(
+            `DELETE FROM memories WHERE id <= ?${clause}`,
+            [cutoffRow.id, ...params]
+          );
+          deleted += result.changes ?? 0;
+        }
+      }
+    } catch (error) {
+      debug('Error evicting memories:', error);
+      return deleted;
+    }
+
+    debug('Evicted %d memories (ttl=%o, maxCount=%o)', deleted, olderThanDays, maxCount);
+    return deleted;
+  }
 }
