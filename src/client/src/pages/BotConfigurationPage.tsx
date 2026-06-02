@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { Settings, Save, RefreshCw, AlertCircle, CheckCircle, History } from 'lucide-react';
 import PageHeader from '../components/DaisyUI/PageHeader';
@@ -40,7 +40,7 @@ interface ConfigSectionFormProps {
 }
 
 const ConfigSectionForm: React.FC<ConfigSectionFormProps> = ({ configName, config, saving, onSave }) => {
-  const values = config?.values || {};
+  const values = useMemo(() => config?.values || {}, [config]);
   const schema = config?.schema?.properties || {};
 
   const {
@@ -56,7 +56,7 @@ const ConfigSectionForm: React.FC<ConfigSectionFormProps> = ({ configName, confi
   // Reset form when config values change (e.g. after save + refetch)
   useEffect(() => {
     reset(values);
-  }, [values, reset]);
+  }, [config, reset, values]);
 
   const onSubmit = async (formValues: FormValues) => {
     await onSave(configName, formValues);
