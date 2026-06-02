@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useDisclosure } from '../hooks/useDisclosure';
 import type { ProviderConfigFormProps, ProviderConfigField } from '../provider-configs/types';
 import Avatar from './DaisyUI/Avatar';
 import Input from './DaisyUI/Input';
@@ -40,6 +41,11 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   const [showAdvanced, setShowAdvanced] = useLocalStorage('ui.providerConfigForm.showAdvanced', false);
+  const advancedDisclosure = useDisclosure({
+    id: 'advanced-settings-content',
+    isOpen: showAdvanced,
+    onOpenChange: setShowAdvanced,
+  });
 
   // Separate mandatory and advanced fields
   const mandatoryFields = useMemo(() => schema.fields.filter(field => field.required), [schema.fields]);
@@ -499,19 +505,9 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
       {Object.keys(groupedAdvancedFields).length > 0 && (
         <Card className="shadow-sm border border-base-200">
           <Card.Body className="p-6">
-            <div 
-              role="button"
-              tabIndex={0}
-              aria-expanded={showAdvanced}
-              aria-controls="advanced-settings-content"
+            <div
+              {...advancedDisclosure.triggerProps}
               className="flex items-center justify-between cursor-pointer hover:bg-base-200/50 -m-2 p-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  setShowAdvanced(!showAdvanced);
-                }
-              }}
             >
               <div className="flex items-center gap-2">
                 <Badge variant="ghost" size="sm">Optional</Badge>
@@ -528,7 +524,7 @@ export const ProviderConfigForm: React.FC<ProviderConfigFormProps> = ({
             </div>
             
             {showAdvanced && (
-              <div id="advanced-settings-content" className="mt-4 space-y-6">
+              <div {...advancedDisclosure.contentProps} className="mt-4 space-y-6">
                 {Object.entries(groupedAdvancedFields).map(([groupName, fields]) => (
                   <div key={groupName}>
                     {Object.keys(groupedAdvancedFields).length > 1 && (
