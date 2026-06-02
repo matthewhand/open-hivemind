@@ -14,6 +14,8 @@ import { MCPProviderManager } from '../config/MCPProviderManager';
 import ProviderConfigManager from '../config/ProviderConfigManager';
 import { SecureConfigManager } from '../config/SecureConfigManager';
 import { UserConfigStore } from '../config/UserConfigStore';
+import { ConnectionManager as DbConnectionManager } from '../database/ConnectionManager';
+import databaseConfig from '../config/databaseConfig';
 import { DatabaseManager } from '../database/DatabaseManager';
 import { SchemaManager } from '../database/SchemaManager';
 import { BotManager } from '../managers/BotManager';
@@ -70,8 +72,27 @@ export function registerServices(): void {
   container.registerInstance(TOKENS.DatabaseManager, DatabaseManager.getInstance());
   container.registerInstance(DatabaseManager, DatabaseManager.getInstance());
 
+  // SchemaManager + its ConnectionManager dependency.
+  //
+  // SchemaManager drives the modular SchemaRegistry (schemas/*) — an
+  // alternate, on-demand schema-creation system that is intentionally NOT on
+  // the live DatabaseManager.connect()/runMigrations() path. It is registered
+  // here so it can be resolved and invoked explicitly (e.g. tooling, future
+  // wiring). ConnectionManager requires a databasePath, which tsyringe cannot
+  // auto-construct, so both are registered via factories.
+  logger.debug('Registering database ConnectionManager');
+  container.register(DbConnectionManager, {
+    useFactory: () =>
+      new DbConnectionManager({
+        databasePath: databaseConfig.get('DATABASE_PATH'),
+      }),
+  });
+
   logger.debug('Registering SchemaManager');
-  container.registerSingleton(TOKENS.SchemaManager, SchemaManager);
+  container.register(TOKENS.SchemaManager, {
+    useFactory: () => new SchemaManager(container.resolve(DbConnectionManager)),
+  });
+  container.register(SchemaManager, { useToken: TOKENS.SchemaManager });
 
   logger.debug('Registering BotManager');
   container.registerSingleton(TOKENS.BotManager, BotManager);
