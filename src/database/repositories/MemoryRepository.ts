@@ -170,6 +170,24 @@ export class MemoryRepository {
     }
   }
 
+  async getMemoryById(id: string | number): Promise<MemoryRecord | null> {
+    if (!this.isConnected()) return null;
+    const db = this.getDb();
+    if (!db) return null;
+
+    try {
+      const row = await db.get('SELECT * FROM memories WHERE id = ?', [id]);
+      if (!row) return null;
+      return {
+        ...row,
+        metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
+      };
+    } catch (error) {
+      debug('Error getting memory by id:', error);
+      return null;
+    }
+  }
+
   async deleteMemory(id: string | number): Promise<boolean> {
     if (!this.isConnected()) return false;
     const db = this.getDb();
