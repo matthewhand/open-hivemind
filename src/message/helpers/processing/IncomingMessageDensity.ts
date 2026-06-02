@@ -1,4 +1,5 @@
 import Debug from 'debug';
+import { takeWithinWindow } from '@common/slidingWindow';
 
 const debug = Debug('app:IncomingMessageDensity');
 
@@ -27,13 +28,7 @@ export class IncomingMessageDensity {
     windowMs: number,
     now: number
   ): { ts: number; isBot: boolean }[] {
-    const threshold = now - windowMs;
-    let keepCount = 0;
-    for (let i = history.length - 1; i >= 0; i--) {
-      if (history[i].ts <= threshold) break;
-      keepCount++;
-    }
-    return keepCount === history.length ? history : history.slice(history.length - keepCount);
+    return takeWithinWindow(history, (item) => item.ts, now - windowMs);
   }
 
   /**

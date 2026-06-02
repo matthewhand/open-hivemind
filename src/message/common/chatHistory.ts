@@ -3,6 +3,7 @@
 import Debug from 'debug';
 import type { IMessage } from '@src/message/interfaces/IMessage';
 import { Logger } from '@common/logger';
+import { takeWithinWindow } from '@common/slidingWindow';
 
 const debug = Debug('app:message:common:chatHistory');
 const logger = Logger.withContext('ChatHistory');
@@ -50,15 +51,14 @@ export class ChatHistory {
       return [];
     }
     const threshold = Date.now() - timeframe;
-    let keepCount = 0;
-    for (let i = this.history.length - 1; i >= 0; i--) {
-      if (this.history[i].getTimestamp().getTime() < threshold) break;
-      keepCount++;
-    }
-    const recentMessages =
-      keepCount === this.history.length
-        ? [...this.history]
-        : this.history.slice(this.history.length - keepCount);
+    const inWindow = takeWithinWindow(
+      this.history,
+      (msg) => msg.getTimestamp().getTime(),
+      threshold
+    );
+    // Always hand callers a defensive copy so they cannot mutate internal state
+    // (takeWithinWindow may return the live array when everything is in-window).
+    const recentMessages = inWindow === this.history ? [...inWindow] : inWindow;
 
     logger.debug('Recent messages retrieved', {
       messageIds: recentMessages.map((m) => m.getMessageId()),
@@ -72,19 +72,14 @@ export class ChatHistory {
    * @param {number} cutoffTime - The time in milliseconds (messages older than this will be removed).
    */
   public clearOldMessages(cutoffTime: number): void {
-    const cutoffDate = new Date(Date.now() - cutoffTime);
+    const threshold = Date.now() - cutoffTime;
     const initialLength = this.history.length;
 
-    let keepCount = 0;
-    for (let i = this.history.length - 1; i >= 0; i--) {
-      if (this.history[i].getTimestamp() <= cutoffDate) break;
-      keepCount++;
-    }
-
-    this.history =
-      keepCount === this.history.length
-        ? this.history
-        : this.history.slice(this.history.length - keepCount);
+    this.history = takeWithinWindow(
+      this.history,
+      (msg) => msg.getTimestamp().getTime(),
+      threshold
+    );
 
     const clearedMessages = initialLength - this.history.length;
     logger.debug('Old messages cleared', {
