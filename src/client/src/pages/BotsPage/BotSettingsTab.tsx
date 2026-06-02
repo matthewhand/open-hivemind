@@ -22,9 +22,9 @@ interface BotDefaults {
   persona: string;
   startupGreeting: string;
   autoReconnect: boolean;
-  maxRetryAttempts: string;
+  maxRetryAttempts: number;
   suppressDuplicates: boolean;
-  dedupWindowSeconds: string;
+  dedupWindowSeconds: number;
 }
 
 const DEFAULTS: BotDefaults = {
@@ -33,9 +33,9 @@ const DEFAULTS: BotDefaults = {
   persona: '',
   startupGreeting: '',
   autoReconnect: false,
-  maxRetryAttempts: '',
+  maxRetryAttempts: 3,
   suppressDuplicates: false,
-  dedupWindowSeconds: '',
+  dedupWindowSeconds: 5,
 };
 
 const KEY_PREFIX = 'botDefaults.';
@@ -71,7 +71,10 @@ const BotSettingsTab: React.FC = () => {
         (Object.keys(DEFAULTS) as Array<keyof BotDefaults>).forEach((field) => {
           const stored = saved[`${KEY_PREFIX}${field}`];
           if (stored !== undefined && stored !== null) {
-            (next as any)[field] = stored;
+            // Coerce to the field's declared type so number inputs receive numbers
+            // even if the API returned the value as a string.
+            (next as any)[field] =
+              typeof DEFAULTS[field] === 'number' ? Number(stored) || 0 : stored;
           }
         });
         setSettings(next);
@@ -107,18 +110,25 @@ const BotSettingsTab: React.FC = () => {
   // via the general-settings path. On failure the previous value is restored and
   // an error toast is shown.
   const saveField = useCallback(
-    async <K extends keyof BotDefaults>(field: K, value: BotDefaults[K]) => {
-      const previous = settings[field];
-      setSettings((prev) => ({ ...prev, [field]: value }));
-      try {
-        await apiService.updateGlobalConfig({ [`${KEY_PREFIX}${field}`]: value });
-        showStamp();
-      } catch {
-        setSettings((prev) => ({ ...prev, [field]: previous }));
-        errorToast('Save failed', 'Could not save bot default. Please try again.');
-      }
+    <K extends keyof BotDefaults>(field: K, value: BotDefaults[K]) => {
+      setSettings((prev) => {
+        const previous = prev[field];
+        // Optimistically update, capturing the up-to-date previous value for rollback.
+        const next = { ...prev, [field]: value };
+
+        // Save in the background; restore the captured value if it fails.
+        apiService
+          .updateGlobalConfig({ [`${KEY_PREFIX}${field}`]: value })
+          .then(() => showStamp())
+          .catch(() => {
+            setSettings((current) => ({ ...current, [field]: previous }));
+            errorToast('Save failed', 'Could not save bot default. Please try again.');
+          });
+
+        return next;
+      });
     },
-    [settings, showStamp, errorToast],
+    [showStamp, errorToast],
   );
 
   return (
@@ -227,9 +237,9 @@ const BotSettingsTab: React.FC = () => {
                   disabled={loading}
                   value={settings.maxRetryAttempts}
                   onChange={(e) =>
-                    setSettings((prev) => ({ ...prev, maxRetryAttempts: e.target.value }))
+                    setSettings((prev) => ({ ...prev, maxRetryAttempts: Number(e.target.value) || 0 }))
                   }
-                  onBlur={(e) => saveField('maxRetryAttempts', e.target.value)}
+                  onBlur={(e) => saveField('maxRetryAttempts', Number(e.target.value) || 0)}
                 />
               </div>
             </div>
@@ -254,9 +264,9 @@ const BotSettingsTab: React.FC = () => {
                   disabled={loading}
                   value={settings.dedupWindowSeconds}
                   onChange={(e) =>
-                    setSettings((prev) => ({ ...prev, dedupWindowSeconds: e.target.value }))
+                    setSettings((prev) => ({ ...prev, dedupWindowSeconds: Number(e.target.value) || 0 }))
                   }
-                  onBlur={(e) => saveField('dedupWindowSeconds', e.target.value)}
+                  onBlur={(e) => saveField('dedupWindowSeconds', Number(e.target.value) || 0)}
                 />
               </div>
             </div>

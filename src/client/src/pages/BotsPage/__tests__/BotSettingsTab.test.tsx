@@ -117,4 +117,92 @@ describe('BotSettingsTab', () => {
     });
     await waitFor(() => expect(autoStart.checked).toBe(true));
   });
+
+  it('saves numeric defaults as numbers, not strings', async () => {
+    render(<BotSettingsTab />);
+
+    // Reveal the advanced section that holds the numeric inputs.
+    const advancedToggle = (await screen.findByRole('switch', {
+      name: /Advanced/i,
+    })) as HTMLInputElement;
+    fireEvent.click(advancedToggle);
+
+    const maxRetry = (await screen.findByPlaceholderText('3')) as HTMLInputElement;
+    fireEvent.change(maxRetry, { target: { value: '7' } });
+    fireEvent.blur(maxRetry);
+
+    await waitFor(() => {
+      expect(updateGlobalConfigMock).toHaveBeenCalledWith({
+        'botDefaults.maxRetryAttempts': 7,
+      });
+    });
+  });
+
+  it('surfaces an error toast when a numeric save fails', async () => {
+    updateGlobalConfigMock.mockRejectedValueOnce(new Error('network'));
+    render(<BotSettingsTab />);
+
+    const advancedToggle = (await screen.findByRole('switch', {
+      name: /Advanced/i,
+    })) as HTMLInputElement;
+    fireEvent.click(advancedToggle);
+
+    const dedup = (await screen.findByPlaceholderText('5')) as HTMLInputElement;
+    fireEvent.change(dedup, { target: { value: '9' } });
+    fireEvent.blur(dedup);
+
+    await waitFor(() => {
+      expect(updateGlobalConfigMock).toHaveBeenCalledWith({ 'botDefaults.dedupWindowSeconds': 9 });
+    });
+    await waitFor(() => expect(errorToastMock).toHaveBeenCalled());
+  });
+
+  it('rolls back to the captured value when a direct save fails (closure freshness)', async () => {
+    // Toggles call saveField directly, so the rollback target is meaningful.
+    // The first save (autoReconnect) fails AFTER a prior successful change,
+    // proving saveField captures the up-to-date previous value, not a stale one.
+    render(<BotSettingsTab />);
+
+    const advancedToggle = (await screen.findByRole('switch', {
+      name: /Advanced/i,
+    })) as HTMLInputElement;
+    fireEvent.click(advancedToggle);
+
+    const autoReconnect = (await screen.findByRole('switch', {
+      name: /Auto-reconnect on disconnect/i,
+    })) as HTMLInputElement;
+    expect(autoReconnect.checked).toBe(false);
+
+    // First toggle succeeds -> now true.
+    fireEvent.click(autoReconnect);
+    await waitFor(() => expect(autoReconnect.checked).toBe(true));
+
+    // Second toggle fails -> must roll back to the freshly-captured true.
+    updateGlobalConfigMock.mockRejectedValueOnce(new Error('network'));
+    fireEvent.click(autoReconnect);
+    await waitFor(() => expect(errorToastMock).toHaveBeenCalled());
+    await waitFor(() => expect(autoReconnect.checked).toBe(true));
+  });
+
+  it('coerces stored numeric defaults that arrive as strings', async () => {
+    getGlobalConfigMock.mockResolvedValueOnce({
+      _userSettings: {
+        values: {
+          'botDefaults.maxRetryAttempts': '8',
+          'botDefaults.dedupWindowSeconds': '12',
+        },
+      },
+    });
+    render(<BotSettingsTab />);
+
+    const advancedToggle = (await screen.findByRole('switch', {
+      name: /Advanced/i,
+    })) as HTMLInputElement;
+    fireEvent.click(advancedToggle);
+
+    const maxRetry = (await screen.findByPlaceholderText('3')) as HTMLInputElement;
+    expect(maxRetry.value).toBe('8');
+    const dedup = (await screen.findByPlaceholderText('5')) as HTMLInputElement;
+    expect(dedup.value).toBe('12');
+  });
 });
