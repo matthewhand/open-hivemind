@@ -3,7 +3,7 @@ import path from 'path';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { getLlmDefaultStatus } from '../../config/llmDefaultStatus';
 import { container } from '../../di/container';
-import type DemoModeService from '../../services/DemoModeService';
+import DemoModeService from '../../services/DemoModeService';
 import { ActivityLogger } from './ActivityLogger';
 import WebSocketService, { type MessageFlowEvent } from './WebSocketService';
 
@@ -101,6 +101,24 @@ export class DashboardService {
     }
   }
 
+  public async getAnnouncement(): Promise<{ hasAnnouncement: boolean; content: string | null }> {
+    try {
+      const announcementPath = path.join(process.cwd(), 'ANNOUNCEMENT.md');
+      try {
+        await fs.promises.access(announcementPath);
+      } catch {
+        return { hasAnnouncement: false, content: null };
+      }
+      const content = (await fs.promises.readFile(announcementPath, 'utf8')).trim();
+      if (!content) {
+        return { hasAnnouncement: false, content: null };
+      }
+      return { hasAnnouncement: true, content };
+    } catch {
+      return { hasAnnouncement: false, content: null };
+    }
+  }
+
   public getConfigStatus() {
     const manager = BotConfigurationManager.getInstance();
     const llmStatus = getLlmDefaultStatus();
@@ -134,7 +152,7 @@ export class DashboardService {
     let bots: Array<{ name: string; messageProvider: string; llmProvider: string }> = [];
     try {
       bots = manager.getAllBots();
-    } catch {
+    } catch (e) {
       bots = [];
     }
 
@@ -155,7 +173,7 @@ export class DashboardService {
 
     let demoMode = false;
     try {
-      const demoService = container.resolve<DemoModeService>('DemoModeService');
+      const demoService = container.resolve(DemoModeService);
       demoMode = demoService.isInDemoMode();
     } catch {
       /* ignore */
@@ -173,7 +191,6 @@ export class DashboardService {
       if (bot.messageProvider === 'slack') {
         const svc = require('@hivemind/message-slack').SlackService as any;
         const instance = svc?.getInstance?.();
-
         const mgr = instance?.getBotManager?.(bot.name) || instance?.getBotManager?.();
         const bots = mgr?.getAllBots?.() || [];
         return Array.isArray(bots) && bots.length > 0;
@@ -185,7 +202,6 @@ export class DashboardService {
         const bots = instance?.getAllBots?.() || [];
         return Array.isArray(bots) && bots.length > 0;
       }
-
       return true;
     } catch {
       return true;
@@ -212,7 +228,6 @@ export class DashboardService {
     const llmFilterSet = new Set(query.llmProvider || []);
 
     const hasBotFilter = botFilterSet.size > 0;
-
     const hasProviderFilter = providerFilterSet.size > 0;
     const hasLlmFilter = llmFilterSet.size > 0;
 
