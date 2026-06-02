@@ -50,6 +50,8 @@ export class ConfigurationTemplateService {
   private dbManager: DatabaseManager;
   private configValidator: ConfigurationValidator;
   private templatesDir: string;
+  private templatesCache: Map<string, ConfigurationTemplate> = new Map();
+  private cacheLoaded = false;
 
   private constructor(templatesDir?: string) {
     this.dbManager = DatabaseManager.getInstance();
@@ -101,10 +103,14 @@ export class ConfigurationTemplateService {
   }
 
   /**
-   * Get all template IDs from the filesystem
+   * Get all template IDs from the filesystem or cache
    * @returns Set of template IDs (filenames without .json)
    */
   public async getAllTemplateIds(): Promise<Set<string>> {
+    if (this.cacheLoaded) {
+      return new Set(this.templatesCache.keys());
+    }
+
     try {
       const files = await fs.readdir(this.templatesDir);
       const ids = files
@@ -378,6 +384,9 @@ export class ConfigurationTemplateService {
       const filePath = join(this.templatesDir, `${templateId}.json`);
       await fs.unlink(filePath);
 
+      // Update cache
+      this.templatesCache.delete(templateId);
+
       debug('Deleted template:', template.name);
       return true;
     } catch (error) {
@@ -391,6 +400,10 @@ export class ConfigurationTemplateService {
    */
   async getTemplateById(templateId: string): Promise<ConfigurationTemplate | null> {
     try {
+      if (this.templatesCache.has(templateId)) {
+        return { ...this.templatesCache.get(templateId)! };
+      }
+
       const filePath = join(this.templatesDir, `${templateId}.json`);
       const data = await fs.readFile(filePath, 'utf-8');
       const template = JSON.parse(data);
@@ -399,7 +412,10 @@ export class ConfigurationTemplateService {
       template.createdAt = new Date(template.createdAt);
       template.updatedAt = new Date(template.updatedAt);
 
-      return template;
+      // Update cache
+      this.templatesCache.set(templateId, template);
+
+      return { ...template };
     } catch (error) {
       if ((error as any).code === 'ENOENT') {
         return null;
@@ -414,6 +430,10 @@ export class ConfigurationTemplateService {
    */
   async getTemplateByName(name: string): Promise<ConfigurationTemplate | null> {
     try {
+      if (this.cacheLoaded) {
+        const template = Array.from(this.templatesCache.values()).find((t) => t.name === name);
+        return template ? { ...template } : null;
+      }
       const templates = await this.getAllTemplates();
       return templates.find((template) => template.name === name) || null;
     } catch (error) {
@@ -427,35 +447,45 @@ export class ConfigurationTemplateService {
    */
   async getAllTemplates(filter?: TemplateFilter): Promise<ConfigurationTemplate[]> {
     try {
-      const files = await fs.readdir(this.templatesDir);
+      if (!this.cacheLoaded) {
+        const files = await fs.readdir(this.templatesDir);
 
-      const templatePromises = files
-        .filter((file) => file.endsWith('.json'))
-        .map(async (file) => {
-          try {
-            const filePath = join(this.templatesDir, file);
-            const data = await fs.readFile(filePath, 'utf-8');
-            const template = JSON.parse(data);
+        const templatePromises = files
+          .filter((file) => file.endsWith('.json'))
+          .map(async (file) => {
+            try {
+              const templateId = file.replace('.json', '');
+              if (this.templatesCache.has(templateId)) {
+                return this.templatesCache.get(templateId)!;
+              }
 
-            // Convert date strings back to Date objects
-            template.createdAt = new Date(template.createdAt);
-            template.updatedAt = new Date(template.updatedAt);
+              const filePath = join(this.templatesDir, file);
+              const data = await fs.readFile(filePath, 'utf-8');
+              const template = JSON.parse(data);
 
-            return template;
-          } catch (error) {
-            debug('Error loading template file:', file, error);
-            return null;
-          }
-        });
+              // Convert date strings back to Date objects
+              template.createdAt = new Date(template.createdAt);
+              template.updatedAt = new Date(template.updatedAt);
 
-      const results = await Promise.allSettled(templatePromises);
+              this.templatesCache.set(template.id, template);
+              return template;
+            } catch (error) {
+              debug('Error loading template file:', file, error);
+              return null;
+            }
+          });
 
-      const templates = results
-        .map((r) => (r.status === 'fulfilled' ? r.value : null))
-        .filter((t): t is ConfigurationTemplate => t !== null)
-        .filter((t) => this.matchesFilter(t, filter));
+        await Promise.allSettled(templatePromises);
+        this.cacheLoaded = true;
+      }
 
-      return templates.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+      const templates = Array.from(this.templatesCache.values()).filter((t) =>
+        this.matchesFilter(t, filter)
+      );
+
+      return templates
+        .map((t) => ({ ...t }))
+        .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
     } catch (error) {
       debug('Error getting all templates:', error);
       throw new Error(`Failed to get templates: ${error}`);
@@ -590,12 +620,15 @@ export class ConfigurationTemplateService {
   }
 
   /**
-   * Save template to file
+   * Save template to file and update cache
    */
   private async saveTemplate(template: ConfigurationTemplate): Promise<void> {
     const filePath = join(this.templatesDir, `${template.id}.json`);
     const data = JSON.stringify(template, null, 2);
     await fs.writeFile(filePath, data, 'utf-8');
+
+    // Update cache
+    this.templatesCache.set(template.id, { ...template });
   }
 
   /**

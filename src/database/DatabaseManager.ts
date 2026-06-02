@@ -702,6 +702,10 @@ export class DatabaseManager {
     return this.botConfigRepo.createBotConfigurationVersion(version);
   }
 
+  async createBotConfigurationVersionsBulk(versions: BotConfigurationVersion[]): Promise<void> {
+    return this.botConfigRepo.createBotConfigurationVersionsBulk(versions);
+  }
+
   async getBotConfigurationVersions(
     botConfigurationId: number
   ): Promise<BotConfigurationVersion[]> {

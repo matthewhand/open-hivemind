@@ -448,6 +448,64 @@ export class BotConfigRepository {
     }
   }
 
+  async createBotConfigurationVersionsBulk(versions: BotConfigurationVersion[]): Promise<void> {
+    this.ensureConnected();
+
+    if (versions.length === 0) return;
+
+    try {
+      const db = this.getDb()!;
+      // Start transaction for better performance and atomicity
+      await db.run('BEGIN TRANSACTION');
+
+      const stmt = await db.prepare(`
+        INSERT INTO bot_configuration_versions (
+          botConfigurationId, version, name, messageProvider, llmProvider,
+          persona, systemInstruction, mcpServers, mcpGuard, discord,
+          slack, mattermost, openai, flowise,
+          openwebui, openswarm, isActive, createdAt, createdBy, changeLog
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      for (const v of versions) {
+        // Ensure createdAt is a Date object (might be a string if from JSON import)
+        const createdAt = v.createdAt instanceof Date ? v.createdAt : new Date(v.createdAt);
+
+        await stmt.run([
+          v.botConfigurationId,
+          v.version,
+          v.name,
+          v.messageProvider,
+          v.llmProvider,
+          v.persona,
+          v.systemInstruction,
+          v.mcpServers,
+          v.mcpGuard,
+          v.discord,
+          v.slack,
+          v.mattermost,
+          v.openai,
+          v.flowise,
+          v.openwebui,
+          v.openswarm,
+          v.isActive ? 1 : 0,
+          createdAt.toISOString(),
+          v.createdBy,
+          v.changeLog,
+        ]);
+      }
+
+      await stmt.finalize();
+      await db.run('COMMIT');
+      debug(`Bulk created ${versions.length} bot configuration versions`);
+    } catch (error) {
+      const db = this.getDb()!;
+      await db.run('ROLLBACK');
+      debug('Error in bulk creating bot configuration versions:', error);
+      throw new Error(`Failed to bulk create bot configuration versions: ${error}`);
+    }
+  }
+
   async getBotConfigurationVersions(
     botConfigurationId: number
   ): Promise<BotConfigurationVersion[]> {

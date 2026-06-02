@@ -119,14 +119,8 @@ export class ConfigurationImportExportService {
       const baseFileName = fileName || `configurations-export-${timestamp}`;
       let filePath = join(this.exportsDir, `${baseFileName}.${options.format}`);
 
-      // Get configurations
-      const configs = [];
-      for (const id of configIds) {
-        const config = await this.dbManager.getBotConfiguration(id);
-        if (config) {
-          configs.push(config);
-        }
-      }
+      // Get configurations in bulk to avoid N+1 queries
+      const configs = await this.dbManager.getBotConfigurationsBulk(configIds);
 
       if (configs.length === 0) {
         return {
@@ -152,13 +146,10 @@ export class ConfigurationImportExportService {
 
       // Include versions if requested
       if (options.includeVersions) {
-        const versionPromises = configs
-          .filter((c) => c.id != null)
-          .map(async (config) => this.dbManager.getBotConfigurationVersions(config.id as number));
-        const versionsNested = await Promise.allSettled(versionPromises);
-        const versions = versionsNested
-          .map((r) => (r.status === 'fulfilled' ? r.value : []))
-          .flat();
+        // Bulk fetch versions to avoid N+1 queries
+        const configIdsToFetch = configs.map((c) => c.id).filter((id): id is number => id != null);
+        const versionsMap = await this.dbManager.getBotConfigurationVersionsBulk(configIdsToFetch);
+        const versions = Array.from(versionsMap.values()).flat();
 
         exportData.versions = versions;
         exportData.metadata.versionCount = versions.length;
@@ -596,13 +587,22 @@ export class ConfigurationImportExportService {
           }
         }
 
-        const BATCH_SIZE = 50;
         const idsArray = Array.from(uniqueIdsToCheck);
-
-        for (let i = 0; i < idsArray.length; i += BATCH_SIZE) {
-          const batch = idsArray.slice(i, i + BATCH_SIZE);
-          await Promise.all(
-            batch.map(async (configId) => {
+        if (idsArray.length > 0) {
+          try {
+            const configs = await this.dbManager.getBotConfigurationsBulk(idsArray);
+            const foundIds = new Set(configs.map((c) => c.id).filter((id): id is number => id != null));
+            for (const id of idsArray) {
+              if (foundIds.has(id)) {
+                validConfigIds.add(id);
+              } else {
+                invalidConfigIds.add(id);
+              }
+            }
+          } catch (error) {
+            debug('Failed to bulk fetch configurations for version import:', error);
+            // Fallback to individual checks if bulk fails
+            for (const configId of idsArray) {
               try {
                 const config = await this.dbManager.getBotConfiguration(configId);
                 if (config) {
@@ -610,27 +610,27 @@ export class ConfigurationImportExportService {
                 } else {
                   invalidConfigIds.add(configId);
                 }
-              } catch (error) {
-                result.warnings?.push(
-                  `Error fetching configuration ${configId}: ${(error as any).message}`
-                );
+              } catch (e) {
                 invalidConfigIds.add(configId);
               }
-            })
-          );
+            }
+          }
         }
 
-        for (const version of importData.versions) {
+        const validVersions = importData.versions.filter((v: any) => v.botConfigurationId && validConfigIds.has(v.botConfigurationId));
+        if (validVersions.length > 0) {
           try {
-            const configId = version.botConfigurationId;
-            if (!configId) continue;
-            const isValid = validConfigIds.has(configId);
-
-            if (isValid) {
-              await this.dbManager.createBotConfigurationVersion(version);
-            }
+            await this.dbManager.createBotConfigurationVersionsBulk(validVersions);
           } catch (error) {
-            result.warnings?.push(`Error processing version: ${(error as any).message}`);
+            result.warnings?.push(`Error in bulk version import: ${(error as any).message}`);
+            // Fallback to individual creation if bulk fails
+            for (const version of validVersions) {
+              try {
+                await this.dbManager.createBotConfigurationVersion(version);
+              } catch (e) {
+                result.warnings?.push(`Error processing version: ${(e as any).message}`);
+              }
+            }
           }
         }
       }
