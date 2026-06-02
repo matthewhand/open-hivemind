@@ -73,7 +73,7 @@ export function sanitizeText(text: string): string {
 }
 
 /**
- * Sanitize URL to prevent javascript: and data: URI schemes
+ * Sanitize URL to allow only safe schemes (http, https, mailto) and valid relative paths
  * @param url - The URL to sanitize
  * @returns Sanitized URL or empty string if dangerous
  */
@@ -82,34 +82,41 @@ export function sanitizeURL(url: string): string {
     return '';
   }
   
-  const trimmed = url.trim().toLowerCase();
+  const trimmed = url.trim();
   
-  // Block dangerous protocols
-  const dangerousProtocols = [
-    'javascript:',
-    'data:',
-    'vbscript:',
-    'file:',
-    'about:',
-    'blob:'
-  ];
-  
-  for (const protocol of dangerousProtocols) {
-    if (trimmed.startsWith(protocol)) {
-      return '';
-    }
+  // Handle valid relative paths and anchor links explicitly
+  if (
+    trimmed.startsWith('/') ||
+    trimmed.startsWith('./') ||
+    trimmed.startsWith('../') ||
+    trimmed.startsWith('#')
+  ) {
+    return trimmed;
   }
-  
-  // Only allow http, https, mailto, and relative URLs
-  if (trimmed.startsWith('http://') || 
-      trimmed.startsWith('https://') || 
-      trimmed.startsWith('mailto:') ||
-      trimmed.startsWith('/') ||
-      trimmed.startsWith('./') ||
-      trimmed.startsWith('../') ||
-      trimmed.startsWith('#') ||
-      !trimmed.includes(':')) {
-    return url.trim();
+
+  // Handle strings with no scheme (treated as relative)
+  if (!trimmed.includes(':')) {
+    return trimmed;
+  }
+
+  try {
+    // Attempt to parse the URL to extract its protocol.
+    // We use a dummy base 'http://dummy' so relative URLs parse correctly,
+    // though most relative URLs are caught by the checks above.
+    const parsedUrl = new URL(trimmed, 'http://dummy');
+
+    // Explicit allowlist of safe protocols
+    const safeProtocols = ['http:', 'https:', 'mailto:'];
+
+    if (safeProtocols.includes(parsedUrl.protocol.toLowerCase())) {
+      return trimmed;
+    }
+  } catch (e) {
+    // URL parsing failed, fall back to basic prefix checks as a last resort
+    const lower = trimmed.toLowerCase();
+    if (lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('mailto:')) {
+      return trimmed;
+    }
   }
   
   return '';
