@@ -31,6 +31,17 @@ describe('BotConfigRepositoryBase', () => {
   let base: BotConfigRepositoryBase;
   let mockDb: jest.Mocked<Database>;
 
+  beforeAll(() => {
+    require('../../../src/database/EncryptionService').EncryptionService.instance = undefined;
+    const { encryptionService } = require('../../../src/database/EncryptionService');
+    (encryptionService as any).encryptionKey = Buffer.alloc(32, 'a');
+  });
+
+  afterAll(() => {
+    const { encryptionService } = require('../../../src/database/EncryptionService');
+    (encryptionService as any).encryptionKey = null;
+  });
+
   beforeEach(() => {
     mockDb = makeMockDb();
     base = new BotConfigRepositoryBase(
@@ -99,7 +110,13 @@ describe('BotConfigVersionRepository', () => {
   // @ts-ignore - reset encryption service singleton for controlled tests
   beforeAll(() => {
     require('../../../src/database/EncryptionService').EncryptionService.instance = undefined;
-    require('../../../src/database/EncryptionService').EncryptionService.getInstance();
+    const { encryptionService } = require('../../../src/database/EncryptionService');
+    (encryptionService as any).encryptionKey = Buffer.alloc(32, 'a');
+  });
+
+  afterAll(() => {
+    const { encryptionService } = require('../../../src/database/EncryptionService');
+    (encryptionService as any).encryptionKey = null;
   });
 
   beforeEach(() => {
@@ -261,7 +278,13 @@ describe('BotConfigAuditRepository', () => {
 
   beforeAll(() => {
     require('../../../src/database/EncryptionService').EncryptionService.instance = undefined;
-    require('../../../src/database/EncryptionService').EncryptionService.getInstance();
+    const { encryptionService } = require('../../../src/database/EncryptionService');
+    (encryptionService as any).encryptionKey = Buffer.alloc(32, 'a');
+  });
+
+  afterAll(() => {
+    const { encryptionService } = require('../../../src/database/EncryptionService');
+    (encryptionService as any).encryptionKey = null;
   });
 
   beforeEach(() => {
