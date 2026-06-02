@@ -160,6 +160,11 @@ export function registerRoutes(app: import('express').Application, ctx: RouteCon
   app.use('/api/ci', ciRouter);
   app.use('/api/enterprise', authenticateToken, enterpriseRouter);
   app.use('/api/secure-config', authenticateToken, secureConfigRouter);
+  // Mount the plugin-security router at /api/admin/plugins BEFORE the catch-all
+  // /api/admin adminApiRouter so its /security, /:name/verify and /:name/trust
+  // routes (consumed by the PluginSecurity dashboard) take precedence. The router
+  // applies its own authenticate/requireAdmin middleware.
+  app.use('/api/admin/plugins', pluginSecurityRouter);
   app.use('/api/admin', adminApiRouter);
   app.use('/api/integrations', integrationsRouter);
   app.use('/api/letta', authenticateToken, lettaRouter);
@@ -181,7 +186,6 @@ export function registerRoutes(app: import('express').Application, ctx: RouteCon
   app.use('/api/test', authenticateToken, testRouter);
   app.use('/api/demo', demoRouter);
   app.use('/api/docs', apiDocsRouter);
-  app.use('/api/pluginSecurity', pluginSecurityRouter);
 
   // 4. Catch-all '/api' router — MUST be last
   //    openapiRouter handles /api/openapi, /api/openapi.json, etc.
