@@ -1,6 +1,7 @@
 import process from 'process';
 import { Router, type Request, type Response } from 'express';
 import { MetricsCollector } from '../../../monitoring/MetricsCollector';
+import { ProviderMetricsCollector } from '../../../monitoring/ProviderMetricsCollector';
 
 const router = Router();
 
@@ -36,10 +37,20 @@ router.get('/', (req, res) => {
 });
 
 // Prometheus metrics endpoint
-router.get('/prometheus', (req, res) => {
+router.get('/prometheus', async (req, res) => {
   const uptime = process.uptime();
   const memoryUsage = process.memoryUsage();
   const cpuUsage = process.cpuUsage();
+
+  // Provider-level metrics are registered against prom-client's default
+  // registry and exported in Prometheus text format. Best-effort: never fail
+  // the endpoint if the collector is unavailable.
+  let providerMetrics = '';
+  try {
+    providerMetrics = await ProviderMetricsCollector.getInstance().getPrometheusFormat();
+  } catch {
+    providerMetrics = '';
+  }
 
   const metrics = `# HELP process_uptime_seconds Process uptime in seconds
 # TYPE process_uptime_seconds gauge
@@ -74,6 +85,7 @@ process_cpu_system_seconds_total ${cpuUsage.system / 1000000}
 nodejs_version_info{version="${process.version}"} 1
 
 ${MetricsCollector.getInstance().getPrometheusFormat()}
+${providerMetrics}
 `;
 
   res.set('Content-Type', 'text/plain; charset=utf-8');
