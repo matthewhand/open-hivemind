@@ -6,7 +6,6 @@ import type {
   BotConfigurationVersion,
   IDatabase as Database,
 } from '../types';
-import { BotConfigAuditRepository, BotConfigVersionRepository } from './BotConfigSupportRepository';
 
 const debug = Debug('app:BotConfigRepository');
 
@@ -14,16 +13,10 @@ const debug = Debug('app:BotConfigRepository');
  * Repository responsible for bot-configuration, version, and audit CRUD operations.
  */
 export class BotConfigRepository {
-  private auditRepo: BotConfigAuditRepository;
-  private versionRepo: BotConfigVersionRepository;
-
   constructor(
     private getDb: () => Database | null,
     private ensureConnected: () => void
-  ) {
-    this.auditRepo = new BotConfigAuditRepository(getDb, ensureConnected);
-    this.versionRepo = new BotConfigVersionRepository(getDb, ensureConnected);
-  }
+  ) {}
 
   // ---------------------------------------------------------------------------
   // Helpers
@@ -39,17 +32,15 @@ export class BotConfigRepository {
     'openswarm',
   ];
 
-  private encryptField(val: unknown): string | null {
+  private encryptField(val: any): any {
     if (val && typeof val === 'object') {
       return encryptionService.encrypt(JSON.stringify(val));
     }
-    return val ? String(val) : null;
+    return val;
   }
 
-  private decryptField(val: unknown): unknown {
-    if (!val || typeof val !== 'string') {
-      return val;
-    }
+  private decryptField(val: any): any {
+    if (!val || typeof val !== 'string') return val;
     const decrypted = encryptionService.decrypt(val);
     try {
       return JSON.parse(decrypted);
@@ -67,9 +58,7 @@ export class BotConfigRepository {
 
     try {
       const db = this.getDb();
-      if (!db) {
-        throw new Error('Database not available');
-      }
+      if (!db) throw new Error('Database not available');
 
       const result = await db.run(
         `
@@ -113,9 +102,7 @@ export class BotConfigRepository {
 
   private mapRowToBotConfiguration(row: Record<string, unknown>): BotConfiguration {
     // Hydrate JSON strings into objects if necessary (SQLite strings vs Postgres JSON)
-
-    const parseIfString = (val: unknown): unknown =>
-      typeof val === 'string' ? JSON.parse(val) : val;
+    const parseIfString = (val: unknown): any => (typeof val === 'string' ? JSON.parse(val) : val);
 
     return {
       id: row.id as number,
@@ -124,15 +111,15 @@ export class BotConfigRepository {
       llmProvider: row.llmProvider as string,
       persona: row.persona as string | undefined,
       systemInstruction: row.systemInstruction as string | undefined,
-      mcpServers: row.mcpServers ? (parseIfString(row.mcpServers) as any) : undefined,
-      mcpGuard: row.mcpGuard ? (parseIfString(row.mcpGuard) as any) : undefined,
-      discord: this.decryptField(row.discord) as any,
-      slack: this.decryptField(row.slack) as any,
-      mattermost: this.decryptField(row.mattermost) as any,
-      openai: this.decryptField(row.openai) as any,
-      flowise: this.decryptField(row.flowise) as any,
-      openwebui: this.decryptField(row.openwebui) as any,
-      openswarm: this.decryptField(row.openswarm) as any,
+      mcpServers: row.mcpServers ? parseIfString(row.mcpServers) : undefined,
+      mcpGuard: row.mcpGuard ? parseIfString(row.mcpGuard) : undefined,
+      discord: this.decryptField(row.discord),
+      slack: this.decryptField(row.slack),
+      mattermost: this.decryptField(row.mattermost),
+      openai: this.decryptField(row.openai),
+      flowise: this.decryptField(row.flowise),
+      openwebui: this.decryptField(row.openwebui),
+      openswarm: this.decryptField(row.openswarm),
       isActive: Number(row.isActive) === 1,
       createdAt: new Date(row.createdAt as string | number | Date),
       updatedAt: new Date(row.updatedAt as string | number | Date),
@@ -146,15 +133,11 @@ export class BotConfigRepository {
 
     try {
       const db = this.getDb();
-      if (!db) {
-        throw new Error('Database not available');
-      }
+      if (!db) throw new Error('Database not available');
 
       const row = await db.get('SELECT * FROM bot_configurations WHERE id = ?', [id]);
 
-      if (!row) {
-        return null;
-      }
+      if (!row) return null;
 
       return this.mapRowToBotConfiguration(row);
     } catch (error) {
@@ -172,9 +155,7 @@ export class BotConfigRepository {
 
     try {
       const db = this.getDb();
-      if (!db) {
-        throw new Error('Database not available');
-      }
+      if (!db) throw new Error('Database not available');
 
       const placeholders = ids.map(() => '?').join(',');
       const rows = await db.all(
@@ -194,15 +175,11 @@ export class BotConfigRepository {
 
     try {
       const db = this.getDb();
-      if (!db) {
-        throw new Error('Database not available');
-      }
+      if (!db) throw new Error('Database not available');
 
       const row = await db.get('SELECT * FROM bot_configurations WHERE name = ?', [name]);
 
-      if (!row) {
-        return null;
-      }
+      if (!row) return null;
 
       return this.mapRowToBotConfiguration(row);
     } catch (error) {
@@ -216,9 +193,7 @@ export class BotConfigRepository {
 
     try {
       const db = this.getDb();
-      if (!db) {
-        throw new Error('Database not available');
-      }
+      if (!db) throw new Error('Database not available');
 
       const rows = await db.all('SELECT * FROM bot_configurations ORDER BY updatedAt DESC');
 
@@ -239,9 +214,7 @@ export class BotConfigRepository {
 
     try {
       const db = this.getDb();
-      if (!db) {
-        throw new Error('Database not available');
-      }
+      if (!db) throw new Error('Database not available');
 
       const configs = await db.all('SELECT * FROM bot_configurations ORDER BY updatedAt DESC');
 
@@ -270,51 +243,18 @@ export class BotConfigRepository {
     }
   }
 
-  // Allow-list of column names that may be UPDATE'd. Anything outside this
-  // list is dropped silently. Defense against SQL identifier injection from
-  // any caller that passes user-supplied keys via `Partial<BotConfiguration>`
-  // (e.g. ConfigImporter). The TypeScript type alone is not enough — `as any`
-  // casts elsewhere can smuggle arbitrary keys through.
-  private static readonly UPDATABLE_COLUMNS = new Set<string>([
-    'name',
-    'messageProvider',
-    'llmProvider',
-    'persona',
-    'systemInstruction',
-    'mcpServers',
-    'mcpGuard',
-    'discord',
-    'slack',
-    'mattermost',
-    'openai',
-    'flowise',
-    'openwebui',
-    'openswarm',
-    'isActive',
-    'updatedAt',
-  ]);
-
   async updateBotConfiguration(id: number, config: Partial<BotConfiguration>): Promise<void> {
     this.ensureConnected();
 
     try {
       const db = this.getDb();
-      if (!db) {
-        throw new Error('Database not available');
-      }
+      if (!db) throw new Error('Database not available');
 
       const updateFields: string[] = [];
-
-      const values: unknown[] = [];
+      const values: any[] = [];
 
       Object.entries(config).forEach(([key, value]) => {
-        if (key === 'id' || value === undefined) {
-          return;
-        }
-        if (!BotConfigRepository.UPDATABLE_COLUMNS.has(key)) {
-          debug(`updateBotConfiguration: dropping non-allowlisted column "${key}"`);
-          return;
-        }
+        if (key === 'id' || value === undefined) return;
 
         updateFields.push(`${key} = ?`);
         if (this.sensitiveFields.includes(key)) {
@@ -330,9 +270,7 @@ export class BotConfigRepository {
         }
       });
 
-      if (updateFields.length === 0) {
-        return;
-      }
+      if (updateFields.length === 0) return;
 
       values.push(id);
       await db.run(`UPDATE bot_configurations SET ${updateFields.join(', ')} WHERE id = ?`, values);
@@ -349,9 +287,7 @@ export class BotConfigRepository {
 
     try {
       const db = this.getDb();
-      if (!db) {
-        throw new Error('Database not available');
-      }
+      if (!db) throw new Error('Database not available');
 
       const result = await db.run('DELETE FROM bot_configurations WHERE id = ?', [id]);
       const deleted = (result.changes ?? 0) > 0;
@@ -372,7 +308,79 @@ export class BotConfigRepository {
   // ---------------------------------------------------------------------------
 
   async createBotConfigurationVersion(version: BotConfigurationVersion): Promise<number> {
-    return this.versionRepo.createBotConfigurationVersion(version);
+    this.ensureConnected();
+
+    try {
+      const db = this.getDb();
+      if (!db) throw new Error('Database not available');
+
+      const result = await db.run(
+        `
+        INSERT INTO bot_configuration_versions (
+          botConfigurationId, version, name, messageProvider, llmProvider,
+          persona, systemInstruction, mcpServers, mcpGuard, discord,
+          slack, mattermost, openai, flowise,
+          openwebui, openswarm, isActive, createdAt, createdBy, changeLog
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+        [
+          version.botConfigurationId,
+          version.version,
+          version.name,
+          version.messageProvider,
+          version.llmProvider,
+          version.persona,
+          version.systemInstruction,
+          version.mcpServers ? JSON.stringify(version.mcpServers) : null,
+          version.mcpGuard ? JSON.stringify(version.mcpGuard) : null,
+          this.encryptField(version.discord),
+          this.encryptField(version.slack),
+          this.encryptField(version.mattermost),
+          this.encryptField(version.openai),
+          this.encryptField(version.flowise),
+          this.encryptField(version.openwebui),
+          this.encryptField(version.openswarm),
+          version.isActive ? 1 : 0,
+          (version.createdAt || new Date()).toISOString(),
+          version.createdBy,
+          version.changeLog,
+        ]
+      );
+
+      debug(`Bot configuration version created with ID: ${result.lastID}`);
+      return Number(result.lastID);
+    } catch (error) {
+      debug('Error creating bot configuration version:', error);
+      throw new Error(`Failed to create bot configuration version: ${error}`);
+    }
+  }
+
+  private mapRowToBotConfigurationVersion(row: Record<string, unknown>): BotConfigurationVersion {
+    const parseIfString = (val: unknown): any => (typeof val === 'string' ? JSON.parse(val) : val);
+
+    return {
+      id: row.id as number,
+      botConfigurationId: row.botConfigurationId as number,
+      version: row.version as string,
+      name: row.name as string,
+      messageProvider: row.messageProvider as string,
+      llmProvider: row.llmProvider as string,
+      persona: row.persona as string | undefined,
+      systemInstruction: row.systemInstruction as string | undefined,
+      mcpServers: row.mcpServers ? parseIfString(row.mcpServers) : undefined,
+      mcpGuard: row.mcpGuard ? parseIfString(row.mcpGuard) : undefined,
+      discord: this.decryptField(row.discord),
+      slack: this.decryptField(row.slack),
+      mattermost: this.decryptField(row.mattermost),
+      openai: this.decryptField(row.openai),
+      flowise: this.decryptField(row.flowise),
+      openwebui: this.decryptField(row.openwebui),
+      openswarm: this.decryptField(row.openswarm),
+      isActive: Number(row.isActive) === 1,
+      createdAt: new Date(row.createdAt as string | number | Date),
+      createdBy: row.createdBy as string | undefined,
+      changeLog: row.changeLog as string | undefined,
+    };
   }
 
   async createBotConfigurationVersionsBulk(versions: BotConfigurationVersion[]): Promise<number[]> {
@@ -382,20 +390,82 @@ export class BotConfigRepository {
   async getBotConfigurationVersions(
     botConfigurationId: number
   ): Promise<BotConfigurationVersion[]> {
-    return this.versionRepo.getBotConfigurationVersions(botConfigurationId);
+    this.ensureConnected();
+
+    try {
+      const db = this.getDb();
+      if (!db) throw new Error('Database not available');
+
+      const rows = await db.all(
+        'SELECT * FROM bot_configuration_versions WHERE botConfigurationId = ? ORDER BY version DESC',
+        [botConfigurationId]
+      );
+
+      return rows.map((row) => this.mapRowToBotConfigurationVersion(row));
+    } catch (error) {
+      debug('Error getting bot configuration versions:', error);
+      throw new Error(`Failed to get bot configuration versions: ${error}`);
+    }
   }
 
   async getBotConfigurationVersionsBulk(
     botConfigurationIds: number[]
   ): Promise<Map<number, BotConfigurationVersion[]>> {
-    return this.versionRepo.getBotConfigurationVersionsBulk(botConfigurationIds);
+    this.ensureConnected();
+
+    if (botConfigurationIds.length === 0) {
+      return new Map();
+    }
+
+    try {
+      const db = this.getDb();
+      if (!db) throw new Error('Database not available');
+
+      const placeholders = botConfigurationIds.map(() => '?').join(',');
+      const rows = await db.all(
+        `SELECT * FROM bot_configuration_versions WHERE botConfigurationId IN (${placeholders}) ORDER BY botConfigurationId, version DESC`,
+        botConfigurationIds
+      );
+
+      const versionsMap = new Map<number, BotConfigurationVersion[]>();
+
+      rows.forEach((row) => {
+        const configId = row.botConfigurationId;
+        const version = this.mapRowToBotConfigurationVersion(row);
+
+        if (!versionsMap.has(configId)) {
+          versionsMap.set(configId, []);
+        }
+        versionsMap.get(configId)?.push(version);
+      });
+
+      return versionsMap;
+    } catch (error) {
+      debug('Error getting bulk bot configuration versions:', error);
+      throw new Error(`Failed to get bulk bot configuration versions: ${error}`);
+    }
   }
 
   async deleteBotConfigurationVersion(
     botConfigurationId: number,
     version: string
   ): Promise<boolean> {
-    return this.versionRepo.deleteBotConfigurationVersion(botConfigurationId, version);
+    this.ensureConnected();
+
+    try {
+      const db = this.getDb();
+      if (!db) throw new Error('Database not available');
+
+      const result = await db.run(
+        'DELETE FROM bot_configuration_versions WHERE botConfigurationId = ? AND version = ?',
+        [botConfigurationId, version]
+      );
+
+      return (result.changes ?? 0) > 0;
+    } catch (error) {
+      debug('Error deleting bot configuration version:', error);
+      throw new Error(`Failed to delete bot configuration version: ${error}`);
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -403,16 +473,120 @@ export class BotConfigRepository {
   // ---------------------------------------------------------------------------
 
   async createBotConfigurationAudit(audit: BotConfigurationAudit): Promise<number> {
-    return this.auditRepo.createBotConfigurationAudit(audit);
+    this.ensureConnected();
+
+    try {
+      const db = this.getDb();
+      if (!db) throw new Error('Database not available');
+
+      // Audit logs contain full JSON snaps of config - encrypt them!
+      const encryptVal = (val: any) => (val ? encryptionService.encrypt(val) : val);
+
+      const result = await db.run(
+        `
+        INSERT INTO bot_configuration_audit (
+          botConfigurationId, action, oldValues, newValues, performedBy,
+          performedAt, ipAddress, userAgent
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+        [
+          audit.botConfigurationId,
+          audit.action,
+          encryptVal(audit.oldValues),
+          encryptVal(audit.newValues),
+          audit.performedBy,
+          (audit.performedAt || new Date()).toISOString(),
+          audit.ipAddress,
+          audit.userAgent,
+        ]
+      );
+
+      debug(`Bot configuration audit created with ID: ${result.lastID}`);
+      return Number(result.lastID);
+    } catch (error) {
+      debug('Error creating bot configuration audit:', error);
+      throw new Error(`Failed to create bot configuration audit: ${error}`);
+    }
+  }
+
+  private mapRowToBotConfigurationAudit(row: Record<string, unknown>): BotConfigurationAudit {
+    const decryptVal = (val: any) => {
+      if (!val) return val;
+      try {
+        return encryptionService.decrypt(String(val));
+      } catch (error) {
+        debug('Failed to decrypt audit row field (id=%s): %O', row.id, error);
+        return null;
+      }
+    };
+
+    return {
+      id: row.id as number | undefined,
+      botConfigurationId: row.botConfigurationId as number,
+      action: row.action as 'CREATE' | 'UPDATE' | 'DELETE' | 'ACTIVATE' | 'DEACTIVATE',
+      oldValues: decryptVal(row.oldValues),
+      newValues: decryptVal(row.newValues),
+      performedBy: row.performedBy as string | undefined,
+      performedAt: new Date(row.performedAt as string | number | Date),
+      ipAddress: row.ipAddress as string | undefined,
+      userAgent: row.userAgent as string | undefined,
+    };
   }
 
   async getBotConfigurationAudit(botConfigurationId: number): Promise<BotConfigurationAudit[]> {
-    return this.auditRepo.getBotConfigurationAudit(botConfigurationId);
+    this.ensureConnected();
+
+    try {
+      const db = this.getDb();
+      if (!db) throw new Error('Database not available');
+
+      const rows = await db.all(
+        'SELECT * FROM bot_configuration_audit WHERE botConfigurationId = ? ORDER BY performedAt DESC',
+        [botConfigurationId]
+      );
+
+      return rows.map((row) => this.mapRowToBotConfigurationAudit(row));
+    } catch (error) {
+      debug('Error getting bot configuration audit:', error);
+      throw new Error(`Failed to get bot configuration audit: ${error}`);
+    }
   }
 
   async getBotConfigurationAuditBulk(
     botConfigurationIds: number[]
   ): Promise<Map<number, BotConfigurationAudit[]>> {
-    return this.auditRepo.getBotConfigurationAuditBulk(botConfigurationIds);
+    this.ensureConnected();
+
+    if (botConfigurationIds.length === 0) {
+      return new Map();
+    }
+
+    try {
+      const db = this.getDb();
+      if (!db) throw new Error('Database not available');
+
+      const placeholders = botConfigurationIds.map(() => '?').join(',');
+      const rows = await db.all(
+        `SELECT * FROM bot_configuration_audit WHERE botConfigurationId IN (${placeholders}) ORDER BY botConfigurationId, performedAt DESC`,
+        botConfigurationIds
+      );
+
+      const auditMap = new Map<number, BotConfigurationAudit[]>();
+
+      rows.forEach((row) => {
+        const configId = row.botConfigurationId;
+        const audit = this.mapRowToBotConfigurationAudit(row);
+
+        if (!auditMap.has(configId)) {
+          auditMap.set(configId, []);
+        }
+        auditMap.get(configId)?.push(audit);
+      });
+
+      return auditMap;
+    } catch (error) {
+      debug('Error getting bulk bot configuration audit:', error);
+      throw new Error(`Failed to get bulk bot configuration audit: ${error}`);
+    }
   }
 }

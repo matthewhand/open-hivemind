@@ -43,3 +43,7 @@
 ## 2026-05-02 - ProviderConfigForm Re-rendering
 **Learning:** The form components re-render frequently (e.g., on every keystroke). Using `.reduce()` and `.filter()` on potentially large arrays within the component body without memoization leads to O(N) recalculations on every render, which can cause typing lag on complex configuration forms.
 **Action:** Use `useMemo` to wrap expensive array transformations inside React components, especially forms.
+
+## 2024-05-23 - Sliding Window Boundary Edges
+**Learning:** When optimizing sliding window time-threshold filters (e.g., `currentTime - msg.time <= timeframe`) using reverse search `for` loops, replacing `<= timeframe` with `timestamp <= threshold` (where `threshold = currentTime - timeframe`) introduces an off-by-one regression. The original allowed messages ON the threshold millisecond, but the exact translation must be `< threshold` to break correctly.
+**Action:** Always test boundary conditions meticulously when refactoring comparison operators in loops.

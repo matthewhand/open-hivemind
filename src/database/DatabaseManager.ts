@@ -1,4 +1,3 @@
-/* eslint-disable max-lines */
 import 'reflect-metadata';
 import { promises as fs } from 'fs';
 import { join } from 'path';
@@ -78,8 +77,7 @@ export class DatabaseManager {
   private connected = false;
   private db: IDatabase | null = null;
 
-  // Repositories (Initialized via initRepositories() in constructor)
-
+  // Repositories
   private messageRepo!: MessageRepository;
   private botConfigRepo!: BotConfigRepository;
   private anomalyRepo!: AnomalyRepository;
@@ -174,7 +172,6 @@ export class DatabaseManager {
 
         this.db = new SQLiteWrapper(dbPath);
         debug('DATABASE_MANAGER: this.db initialized (SQLite)');
-
         await runMigrations(this.db, false);
       } else if (this.config.type === 'postgres') {
         const dbUrl = process.env.DATABASE_URL || databaseConfig.get('DATABASE_URL');
@@ -191,7 +188,6 @@ export class DatabaseManager {
           });
         }
         debug('DATABASE_MANAGER: this.db initialized (Postgres)');
-
         await runMigrations(this.db, true);
       } else {
         throw new ConfigurationError(
@@ -261,6 +257,7 @@ export class DatabaseManager {
   }
 
   // ---------------------------------------------------------------------------
+
   // Log operations
   // ---------------------------------------------------------------------------
 
@@ -268,9 +265,7 @@ export class DatabaseManager {
     level: string;
     message: string;
     context?: string;
-
     details?: any;
-
     metadata?: any;
   }): Promise<void> {
     if (!this.db || !this.connected) return;
@@ -288,7 +283,6 @@ export class DatabaseManager {
       );
     } catch (error) {
       // Don't throw here to avoid infinite log loops if DB fails
-
       console.error('Failed to save log to database:', error);
     }
   }
