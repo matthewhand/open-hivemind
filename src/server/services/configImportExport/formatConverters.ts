@@ -2,6 +2,8 @@
  * Format detection and conversion utilities for configuration import/export.
  */
 
+import { parse as parseYamlString, stringify as stringifyYaml } from 'yaml';
+
 /**
  * Detect file format from extension
  */
@@ -21,39 +23,15 @@ export function detectFormat(filePath: string): 'json' | 'yaml' | 'csv' {
 }
 
 /**
- * Convert data to YAML (simplified implementation)
+ * Serialize an arbitrary data structure to a YAML document.
+ *
+ * Backed by the `yaml` package so that strings, numbers, booleans, nested
+ * objects and arrays are quoted/escaped correctly and round-trip cleanly
+ * through {@link parseYAML}.
  */
 
 export function convertToYAML(data: any): string {
-  // This is a simplified YAML converter
-  // In production, use a proper YAML library like js-yaml
-
-  const convert = (obj: any, indent = 0): string => {
-    const spaces = ' '.repeat(indent);
-    let result = '';
-
-    if (typeof obj === 'object' && obj !== null) {
-      if (Array.isArray(obj)) {
-        for (const item of obj) {
-          result += spaces + '- ' + convert(item, indent + 2).trim() + '\n';
-        }
-      } else {
-        for (const [key, value] of Object.entries(obj)) {
-          if (typeof value === 'object' && value !== null) {
-            result += spaces + key + ':\n' + convert(value, indent + 2);
-          } else {
-            result += spaces + key + ': ' + value + '\n';
-          }
-        }
-      }
-    } else {
-      return String(obj);
-    }
-
-    return result;
-  };
-
-  return convert(data);
+  return stringifyYaml(data);
 }
 
 /**
@@ -95,14 +73,14 @@ export function convertToCSV(data: any): string {
 }
 
 /**
- // eslint-disable-next-line @typescript-eslint/no-explicit-any
- * Parse YAML (simplified implementation)
+ * Parse a YAML document into a JavaScript value.
+ *
+ * Backed by the `yaml` package. Throws on malformed YAML so callers can
+ * surface a useful error to the user.
  */
 
-export function parseYAML(_yamlString: string): any {
-  // This is a simplified YAML parser
-  // In production, use a proper YAML library like js-yaml
-  throw new Error('YAML parsing not implemented in this version');
+export function parseYAML(yamlString: string): any {
+  return parseYamlString(yamlString);
 }
 
 /**
