@@ -2,7 +2,7 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import Debug from 'debug';
 import { ConfigurationError, DatabaseError } from '@src/types/errorClasses';
-import { type IDatabase as Database, type DatabaseConfig } from './types';
+import { IDatabase as Database, type DatabaseConfig } from './types';
 
 const debug = Debug('app:ConnectionPool');
 
