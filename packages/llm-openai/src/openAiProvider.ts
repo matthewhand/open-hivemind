@@ -10,7 +10,13 @@ import {
   TimeoutError,
 } from '@src/types/errorClasses';
 import openaiConfig from '@config/openaiConfig';
-import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
+import type {
+  ILlmProvider,
+  LlmChatMessage,
+  LlmToolCall,
+  LlmToolCompletionResult,
+  LlmToolDefinition,
+} from '@llm/interfaces/ILlmProvider';
 import type { IMessage } from '@message/interfaces/IMessage';
 import { getCircuitBreaker } from '@common/CircuitBreaker';
 import { withTimeout } from '@common/withTimeout';
@@ -278,6 +284,98 @@ export class OpenAiProvider implements ILlmProvider {
         debug('Streaming LLM returned empty content, failing silently');
       }
       return full;
+    });
+  }
+
+  /**
+   * Tool-aware chat completion using OpenAI native function calling.
+   *
+   * Receives a pre-built messages array (system/user/assistant/tool turns)
+   * and tool definitions, and returns the assistant turn — which may contain
+   * tool calls for the caller to execute. Reuses the same config resolution,
+   * URL safety checks, and circuit breaker as the standard chat path.
+   */
+  async generateChatCompletionWithTools(
+    messages: LlmChatMessage[],
+    tools: LlmToolDefinition[],
+    metadata?: Record<string, any>
+  ): Promise<LlmToolCompletionResult> {
+    debug('Starting tool-aware chat completion generation');
+
+    const apiKey =
+      this.config.apiKey || openaiConfig.get('OPENAI_API_KEY') || process.env.OPENAI_API_KEY;
+    let baseURL =
+      this.config.baseUrl ||
+      openaiConfig.get('OPENAI_BASE_URL') ||
+      process.env.OPENAI_BASE_URL ||
+      DEFAULT_BASE_URL;
+    const timeout = this.config.timeout || openaiConfig.get('OPENAI_TIMEOUT') || 10000;
+    const organization =
+      this.config.organization || openaiConfig.get('OPENAI_ORGANIZATION') || undefined;
+    const model =
+      metadata?.modelOverride ||
+      metadata?.model ||
+      this.config.model ||
+      process.env.OPENAI_MODEL ||
+      openaiConfig.get('OPENAI_MODEL') ||
+      'gpt-4o';
+
+    if (!apiKey) {
+      throw new ConfigurationError('OpenAI API key is missing', 'OPENAI_API_KEY_MISSING');
+    }
+
+    try {
+      new URL(baseURL);
+      if (baseURL !== DEFAULT_BASE_URL && !(await isSafeUrl(baseURL))) {
+        throw new Error('Unsafe URL');
+      }
+    } catch {
+      baseURL = DEFAULT_BASE_URL;
+    }
+
+    const openai = new OpenAI({ apiKey, baseURL, timeout, organization });
+
+    const baseTemperature =
+      this.config.temperature || openaiConfig.get('OPENAI_TEMPERATURE') || 0.7;
+    const temperatureBoost = metadata?.temperatureBoost || 0;
+    const effectiveTemperature = Math.min(1.5, baseTemperature + temperatureBoost);
+
+    const maxTokens =
+      metadata?.maxTokensOverride ||
+      this.config.maxTokens ||
+      openaiConfig.get('OPENAI_MAX_TOKENS') ||
+      150;
+
+    const llmTimeoutMs = typeof timeout === 'number' ? timeout : DEFAULT_LLM_TIMEOUT_MS;
+
+    return circuitBreaker.execute(async () => {
+      const requestBody: Record<string, unknown> = {
+        model,
+        messages,
+        max_tokens: maxTokens,
+        temperature: effectiveTemperature,
+      };
+      if (tools.length > 0) {
+        requestBody.tools = tools;
+        requestBody.tool_choice = 'auto';
+      }
+
+      const response = await withTimeout(
+        (signal) =>
+          openai.chat.completions.create(requestBody as any, { signal }),
+        llmTimeoutMs,
+        'OpenAI tool-aware chat completion'
+      );
+
+      const choice = (response as any).choices?.[0];
+      if (!choice) {
+        return { content: '' };
+      }
+
+      return {
+        content: choice.message?.content ?? null,
+        tool_calls: choice.message?.tool_calls as LlmToolCall[] | undefined,
+      };
     });
   }
 
