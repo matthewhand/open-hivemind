@@ -12,6 +12,7 @@ import type { PipelineTracer } from './PipelineTracer';
 
 export { PipelineTracer } from './PipelineTracer';
 export type { PipelineStats, Span, Trace, TraceCompletedCallback } from './PipelineTracer';
+export { ActivityRecorder } from './ActivityRecorder';
 export {
   TraceExportManager,
   ConsoleExporter,

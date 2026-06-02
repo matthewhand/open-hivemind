@@ -16,7 +16,9 @@
  */
 
 import type { MessageBus } from '@src/events/MessageBus';
-import { PipelineTracer, setActiveTracer } from '@src/observability';
+import { ActivityRecorder, PipelineTracer, setActiveTracer } from '@src/observability';
+import { ActivityLogger } from '@src/server/services/ActivityLogger';
+import { WebSocketService } from '@src/server/services/WebSocketService';
 import {
   DecisionStrategyAdapter,
   LlmInvokerAdapter,
@@ -123,6 +125,25 @@ export function createPipeline(bus: MessageBus, deps: PipelineDependencies): boo
   const tracer = new PipelineTracer(bus);
   tracer.register();
   setActiveTracer(tracer);
+
+  // Record real message activity to the persistent ActivityLogger (JSONL) and
+  // the live WebSocket feed so the dashboard ActivityPage / DashboardService
+  // surface real events — not just demo-mode simulations.
+  const activityLogger = ActivityLogger.getInstance();
+  let flowSink: { recordMessageFlow(event: unknown): void } | undefined;
+  try {
+    flowSink = WebSocketService.getInstance();
+  } catch {
+    // WebSocketService may be unavailable (e.g. HTTP disabled); recording to
+    // the persistent log is sufficient and must not break the pipeline.
+    flowSink = undefined;
+  }
+  const activityRecorder = new ActivityRecorder(
+    bus,
+    activityLogger,
+    flowSink as ConstructorParameters<typeof ActivityRecorder>[2]
+  );
+  activityRecorder.register();
 
   return true;
 }
