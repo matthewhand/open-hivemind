@@ -234,6 +234,7 @@ export interface IMessengerService {
    * ```
    */
   getForumOwner?(forumId: string): Promise<string>;
+  getChannels?(botName?: string): Promise<Array<{ id: string; name: string; type?: string }>>;
 
   getChannels?(botName?: string): Promise<Array<{ id: string; name: string; type?: string }>>;
 

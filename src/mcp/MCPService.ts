@@ -49,8 +49,29 @@ export class MCPService {
    * @param clientName - The client identity reported to the server.
    * @returns A connected MCP client.
    */
+  /**
+   * Loads the MCP SDK entry points via dynamic `import()`.
+   *
+   * Extracted as a seam so tests can stub the SDK (the package is ESM-only
+   * with no CJS root export, which makes module-level mocking of the dynamic
+   * imports unreliable in jest); tests spy on this method instead.
+   */
+  protected async loadSdk(): Promise<{
+    Client: typeof import('@modelcontextprotocol/sdk/client/index.js').Client;
+    StreamableHTTPClientTransport: typeof import('@modelcontextprotocol/sdk/client/streamableHttp.js').StreamableHTTPClientTransport;
+    StdioClientTransport: typeof import('@modelcontextprotocol/sdk/client/stdio.js').StdioClientTransport;
+  }> {
+    const [{ Client }, { StreamableHTTPClientTransport }, { StdioClientTransport }] =
+      await Promise.all([
+        import('@modelcontextprotocol/sdk/client/index.js'),
+        import('@modelcontextprotocol/sdk/client/streamableHttp.js'),
+        import('@modelcontextprotocol/sdk/client/stdio.js'),
+      ]);
+    return { Client, StreamableHTTPClientTransport, StdioClientTransport };
+  }
+
   private async createConnectedClient(config: MCPConfig, clientName: string): Promise<Client> {
-    const { Client } = await import('@modelcontextprotocol/sdk/client/index.js');
+    const { Client, StreamableHTTPClientTransport, StdioClientTransport } = await this.loadSdk();
 
     const client = new Client(
       { name: clientName, version: '1.0.0' },
@@ -59,16 +80,12 @@ export class MCPService {
 
     const url = config.serverUrl;
     if (url.startsWith('stdio://')) {
-      const { StdioClientTransport } = await import('@modelcontextprotocol/sdk/client/stdio.js');
       const command = url.replace('stdio://', '');
       const transport = new StdioClientTransport({ command, args: [] });
       await client.connect(transport);
       return client;
     }
 
-    const { StreamableHTTPClientTransport } = await import(
-      '@modelcontextprotocol/sdk/client/streamableHttp.js'
-    );
     const transport = new StreamableHTTPClientTransport(new URL(url), {
       requestInit: config.apiKey
         ? { headers: { Authorization: `Bearer ${config.apiKey}` } }
