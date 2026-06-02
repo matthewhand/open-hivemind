@@ -43,3 +43,6 @@
 ## 2026-05-02 - ProviderConfigForm Re-rendering
 **Learning:** The form components re-render frequently (e.g., on every keystroke). Using `.reduce()` and `.filter()` on potentially large arrays within the component body without memoization leads to O(N) recalculations on every render, which can cause typing lag on complex configuration forms.
 **Action:** Use `useMemo` to wrap expensive array transformations inside React components, especially forms.
+## 2026-05-03 - Concurrent Database Index Creation
+**Learning:** Sequential await calls in loops for database DDL operations (like CREATE INDEX) create an N+1 bottleneck, significantly increasing schema initialization time as the number of tables grows. Node.js applications benefit from parallelizing these independent operations using Promise.all, especially when using asynchronous drivers like Postgres.
+**Action:** Replaced sequential loops with Promise.all across all database schema modules to ensure concurrent index creation.
