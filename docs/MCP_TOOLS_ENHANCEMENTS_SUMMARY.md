@@ -1,5 +1,11 @@
 # MCP Tools Page Enhancements - Summary
 
+> **Status:** Implemented and merged. The favorites, recently-used, usage-count,
+> filter tabs, and usage-based sorting described below are live in the MCP Tools
+> page (`src/client/src/pages/MCPToolsPage/`), backed by the
+> `useToolRegistry` hook with the `localStorage` keys documented under
+> "LocalStorage Persistence".
+
 ## Features Implemented:
 
 ### 1. Favorites Functionality
@@ -86,13 +92,11 @@
 
 ## File Locations:
 
-- **Enhanced Version**: `/home/ubuntu/open-hivemind/MCPToolsPage-enhanced.tsx`
-- **Original Location**: `/home/ubuntu/open-hivemind/src/client/src/pages/MCPToolsPage.tsx`
-- **Implementation Plan**: `/home/ubuntu/open-hivemind/mcp-tools-enhancements.md`
+- **Page**: `src/client/src/pages/MCPToolsPage/index.tsx` (plus `components/` and `hooks/`)
+- **State hook**: `src/client/src/pages/MCPToolsPage/hooks/useToolRegistry.ts` — owns the favorites, recently-used, and usage-count `localStorage` state and the filter/sort logic.
 
-## Next Steps:
+## Follow-ups (potential):
 
-1. Copy the enhanced version to the original location
-2. Test all new features
-3. Ensure localStorage persistence works correctly
-4. Verify UI responsiveness across screen sizes
+1. Server-side persistence of favorites/usage (currently `localStorage`-only, per-browser)
+2. Sync usage counts with the backend execution-history endpoint
+3. Verify UI responsiveness across screen sizes
