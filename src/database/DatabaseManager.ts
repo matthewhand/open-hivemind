@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import Debug from 'debug';
+import { Logger } from '@common/logger';
 import { injectable, singleton } from 'tsyringe';
 import { ConfigurationError, DatabaseError } from '@src/types/errorClasses';
 import databaseConfig from '@src/config/databaseConfig';
@@ -1047,7 +1048,7 @@ export class DatabaseManager {
 
     for (const table of tables) {
       try {
-        console.log(`Clearing ${table}...`);
+        Logger.info(`Clearing ${table}...`);
         await db.run(`DELETE FROM ${table}`);
       } catch (e) {
         debug(`Failed to clear table ${table}:`, e);
@@ -1122,7 +1123,7 @@ export class DatabaseManager {
     try {
       const result = await this.db.run(sql, [maxRows]);
       debug(`Cleaned up ${result.changes} rows from ${tableName} (by row count)`);
-      if (tableName === 'messages') console.log(`cleanupTableByRows [${tableName}]: SQL ${sql.trim()}, maxRows ${maxRows}, changes ${result.changes}`);
+      if (tableName === 'messages') Logger.debug(`cleanupTableByRows [${tableName}]: SQL ${sql.trim()}, maxRows ${maxRows}, changes ${result.changes}`);
       return result.changes;
     } catch (error) {
       console.error(`Error cleaning up table ${tableName}:`, error);
