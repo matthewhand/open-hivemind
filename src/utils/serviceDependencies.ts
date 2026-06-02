@@ -2,11 +2,11 @@ import type { IServiceDependencies } from '@hivemind/shared-types';
 import Logger from '../common/logger';
 import { DatabaseManager } from '../database/DatabaseManager';
 import {
+  ApiError,
   BaseHivemindError as BaseError,
   ConfigurationError,
   NetworkError,
   ValidationError,
-  ApiError,
 } from '../types/errorClasses';
 
 /**
