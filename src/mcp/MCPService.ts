@@ -1,7 +1,14 @@
 import Debug from 'debug';
+import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { SlackMessageProvider } from '@hivemind/message-slack';
 import { BotConfigurationManager } from '@config/BotConfigurationManager';
 import { MCPGuard, type MCPGuardConfig } from './MCPGuard';
+
+// The MCP SDK is published as ESM-only with subpath exports (no CJS root
+// export), so it MUST be loaded via a dynamic `import()` of the real entry
+// points — `require('@modelcontextprotocol/sdk')` throws because that root
+// path has no usable export. This mirrors the pattern in
+// src/server/routes/mcp/shared.ts.
 
 // DiscordMessageProvider imported dynamically to avoid ESM require error
 
@@ -23,10 +30,53 @@ export interface MCPTool {
 export class MCPService {
   private static instance: MCPService;
 
-  private clients = new Map<string, any>();
+  private clients = new Map<string, Client>();
   private tools = new Map<string, MCPTool[]>();
 
   private constructor() {}
+
+  /**
+   * Creates and connects an MCP {@link Client} for the given server config.
+   *
+   * Loads the SDK via dynamic `import()` of its real subpath entry points
+   * (the package has no working CJS root export, so `require()` throws), then
+   * selects the correct transport from the server URL scheme:
+   *  - `http(s)://` -> StreamableHTTPClientTransport (remote servers); the
+   *    optional apiKey is sent as a Bearer Authorization header.
+   *  - `stdio://`   -> StdioClientTransport (local command servers).
+   *
+   * @param config - The MCP server configuration.
+   * @param clientName - The client identity reported to the server.
+   * @returns A connected MCP client.
+   */
+  private async createConnectedClient(config: MCPConfig, clientName: string): Promise<Client> {
+    const { Client } = await import('@modelcontextprotocol/sdk/client/index.js');
+
+    const client = new Client(
+      { name: clientName, version: '1.0.0' },
+      { capabilities: { experimental: {} } }
+    );
+
+    const url = config.serverUrl;
+    if (url.startsWith('stdio://')) {
+      const { StdioClientTransport } = await import('@modelcontextprotocol/sdk/client/stdio.js');
+      const command = url.replace('stdio://', '');
+      const transport = new StdioClientTransport({ command, args: [] });
+      await client.connect(transport);
+      return client;
+    }
+
+    const { StreamableHTTPClientTransport } = await import(
+      '@modelcontextprotocol/sdk/client/streamableHttp.js'
+    );
+    const transport = new StreamableHTTPClientTransport(new URL(url), {
+      requestInit: config.apiKey
+        ? { headers: { Authorization: `Bearer ${config.apiKey}` } }
+        : undefined,
+    });
+    await client.connect(transport);
+    return client;
+  }
 
   /**
    * Gets the singleton instance of MCPService.
@@ -53,27 +103,17 @@ export class MCPService {
     try {
       debug(`Testing connection to MCP server: ${config.name} at ${config.serverUrl}`);
 
-      // Dynamically require the MCP SDK
-      const { Client } = require('@modelcontextprotocol/sdk');
-
-      // Create a new client for this server
-      const client = new Client({
-        name: 'Open-Hivemind-Test',
-        version: '1.0.0',
-      });
-
-      // Connect to the server
-      await client.connect({
-        url: config.serverUrl,
-        apiKey: config.apiKey,
-      });
+      // Establish a client using the real SDK entry points and transport.
+      const client = await this.createConnectedClient(config, 'Open-Hivemind-Test');
 
       // Try to list tools to verify connection works
       const tools = await client.listTools();
 
       // Add server name to each tool for identification
-      const mcpTools: MCPTool[] = tools.tools.map((tool: Record<string, unknown>) => ({
-        ...tool,
+      const mcpTools: MCPTool[] = tools.tools.map((tool) => ({
+        name: tool.name,
+        description: tool.description,
+        inputSchema: tool.inputSchema as Record<string, unknown> | undefined,
         serverName: config.name,
       }));
 
@@ -146,20 +186,8 @@ export class MCPService {
     try {
       debug(`Connecting to MCP server: ${config.name} at ${config.serverUrl}`);
 
-      // Dynamically require the MCP SDK
-      const { Client } = require('@modelcontextprotocol/sdk');
-
-      // Create a new client for this server
-      const client = new Client({
-        name: 'Open-Hivemind',
-        version: '1.0.0',
-      });
-
-      // Connect to the server
-      await client.connect({
-        url: config.serverUrl,
-        apiKey: config.apiKey,
-      });
+      // Establish a client using the real SDK entry points and transport.
+      const client = await this.createConnectedClient(config, 'Open-Hivemind');
 
       // Store the client
       this.clients.set(config.name, client);
@@ -168,8 +196,10 @@ export class MCPService {
       const tools = await client.listTools();
 
       // Add server name to each tool for identification
-      const mcpTools: MCPTool[] = tools.tools.map((tool: Record<string, unknown>) => ({
-        ...tool,
+      const mcpTools: MCPTool[] = tools.tools.map((tool) => ({
+        name: tool.name,
+        description: tool.description,
+        inputSchema: tool.inputSchema as Record<string, unknown> | undefined,
         serverName: config.name,
       }));
 
