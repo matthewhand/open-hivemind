@@ -2,6 +2,7 @@ import process from 'process';
 import { Router, type Request, type Response } from 'express';
 import { MetricsCollector } from '../../../monitoring/MetricsCollector';
 import { ProviderMetricsCollector } from '../../../monitoring/ProviderMetricsCollector';
+import { getRuntimeMetrics } from './runtimeMetrics';
 
 const router = Router();
 
@@ -10,6 +11,7 @@ router.get('/', (req, res) => {
   const uptime = process.uptime();
   const memoryUsage = process.memoryUsage();
   const cpuUsage = process.cpuUsage();
+  const runtime = getRuntimeMetrics();
 
   const metricsData = {
     timestamp: new Date().toISOString(),
@@ -24,12 +26,12 @@ router.get('/', (req, res) => {
       system: Math.round(cpuUsage.system / 1000),
     },
     eventLoop: {
-      delay: 0, // Would need actual event loop delay measurement
-      utilization: 0, // Would need actual utilization calculation
+      delay: runtime.eventLoopDelayMs, // mean event loop delay (ms)
+      utilization: runtime.eventLoopUtilization, // 0..1 since last read
     },
     requests: {
-      total: 0, // Would need to implement request counter
-      rate: 0, // Would need to implement rate calculation
+      total: runtime.requestsTotal, // counted by requestCounterMiddleware
+      rate: runtime.requestsRate, // requests/second since process start
     },
   };
 
