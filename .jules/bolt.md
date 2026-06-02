@@ -43,3 +43,7 @@
 ## 2026-05-02 - ProviderConfigForm Re-rendering
 **Learning:** The form components re-render frequently (e.g., on every keystroke). Using `.reduce()` and `.filter()` on potentially large arrays within the component body without memoization leads to O(N) recalculations on every render, which can cause typing lag on complex configuration forms.
 **Action:** Use `useMemo` to wrap expensive array transformations inside React components, especially forms.
+
+## 2026-05-16 - O(1) Map pre-computation in React renders
+**Learning:** Found several components (`ToolRegistryPanel`, `BotSettingsModal`, `BotCard`, `CreateBotWizard`, `PersonaSelector`, `BotDuel`) that used `array.find()` inside `.map()` rendering loops or async batch operations, creating O(N*M) bottlenecks.
+**Action:** Replaced `.find()` with `React.useMemo` pre-computed Maps for O(1) lookups, dropping time complexity from O(N*M) to O(N+M). This pattern is a critical performance win in large React applications.
