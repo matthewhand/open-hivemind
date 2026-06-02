@@ -454,15 +454,18 @@ export async function initServices(
 
     const bus = MessageBus.getInstance();
 
-    // Create and register a pipeline instance per messenger service.
-    // createPipeline() internally creates a PipelineTracer and stores it
-    // via setActiveTracer() — no need to create a second tracer here.
-    for (const service of messengerServices) {
+    // The pipeline stages subscribe to shared, bus-wide events that carry no
+    // per-service identity, so the pipeline must be wired onto the shared bus
+    // exactly once. createPipeline() is idempotent per bus instance: it returns
+    // true on the first registration and is a no-op for subsequent services.
+    // (It internally creates a PipelineTracer and stores it via setActiveTracer().)
+    const primaryService = messengerServices[0];
+    if (primaryService) {
       createPipeline(bus, {
         botConfig: {},
-        messengerService: service,
-        botId: service.botId,
-        defaultChannelId: service.getDefaultChannel?.() ?? undefined,
+        messengerService: primaryService,
+        botId: primaryService.botId,
+        defaultChannelId: primaryService.getDefaultChannel?.() ?? undefined,
       });
     }
 
