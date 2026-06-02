@@ -4,13 +4,12 @@ Post CRUD endpoints with tenant scoping.
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List
 from uuid import uuid4
-from datetime import datetime
 
 from app.models.post import Post
 from app.db.session import get_tenant_db as get_tenant_db_dep
-from app.db.base_class import get_current_tenant, set_current_tenant
+from app.db.base_class import get_current_tenant
 from app.middleware.tenant_middleware import verify_tenant_id
 
 router = APIRouter()
