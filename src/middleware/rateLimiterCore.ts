@@ -10,7 +10,7 @@ const debug = Debug('app:rateLimiterCore');
  * Used as fallback when Redis is not available
  */
 export class MemoryStoreWithCleanup {
-  private hits = new Map<string, { count: number; resetTime: Date }>();
+  private hits = new Map<string, { count: number; resetTime: number }>();
   private cleanupInterval: NodeJS.Timeout | null = null;
   private windowMs: number;
 
@@ -27,7 +27,7 @@ export class MemoryStoreWithCleanup {
         const now = Date.now();
         let cleaned = 0;
         for (const [key, data] of this.hits.entries()) {
-          if (now > data.resetTime.getTime()) {
+          if (now > data.resetTime) {
             this.hits.delete(key);
             cleaned++;
           }
@@ -48,12 +48,12 @@ export class MemoryStoreWithCleanup {
     const now = Date.now();
     const existing = this.hits.get(key);
 
-    if (existing && now < existing.resetTime.getTime()) {
+    if (existing && now < existing.resetTime) {
       existing.count++;
       return { totalHits: existing.count, resetTime: new Date(existing.resetTime) };
     }
 
-    const resetTime = new Date(now + this.windowMs);
+    const resetTime = now + this.windowMs;
     const newData = { count: 1, resetTime };
     this.hits.set(key, newData);
     return { totalHits: 1, resetTime: new Date(resetTime) };
@@ -320,31 +320,10 @@ export function getClientKey(req: Request): string {
  * Check if rate limiting should be skipped
  */
 export function shouldSkipRateLimit(req: Request): boolean {
-  // Skip entirely in test mode ONLY if explicitly allowed by ALLOW_TEST_BYPASS
-  if (
-    process.env.NODE_ENV === 'test' &&
-    process.env.ALLOW_TEST_BYPASS === 'true' &&
-    process.env.ENABLE_RATE_LIMIT_TESTS !== 'true'
-  )
+  if (process.env.ALLOW_TEST_BYPASS === 'true') return true;
+  if (process.env.NODE_ENV === 'test' && process.env.ENABLE_RATE_LIMIT_TESTS !== 'true')
     return true;
-
-  // Always skip health/metrics endpoints
   if (req.path === '/health' || req.path === '/metrics') return true;
-
-  // Skip Vite dev server asset requests — these are never API calls and would
-  // exhaust limits immediately during parallel E2E test runs.
-  // Covers: /src/**, /@vite/**, /@react-refresh, /node_modules/.vite/**, /node_modules/**
-  const path = req.path;
-  if (
-    path.startsWith('/src/') ||
-    path.startsWith('/@') || // /@vite/client, /@react-refresh, /@fs/
-    path.startsWith('/node_modules/') ||
-    // Static assets with file extensions (js, ts, tsx, css, png, svg, woff…)
-    /\.[a-zA-Z0-9]+(\?.*)?$/.test(path)
-  ) {
-    return true;
-  }
-
   return false;
 }
 

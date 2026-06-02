@@ -65,6 +65,7 @@ export class MemoryRepository {
           FROM memories
           WHERE 1=1
         `;
+
         const params: any[] = [vectorStr];
         if (options.userId) {
           sql += ` AND userId = ?`;
@@ -88,6 +89,7 @@ export class MemoryRepository {
         // Fallback for SQLite: JS-side similarity
         debug('Performing JS-side vector similarity search for SQLite');
         let sql = `SELECT * FROM memories WHERE 1=1`;
+
         const params: any[] = [];
         if (options.userId) {
           sql += ` AND userId = ?`;
@@ -123,8 +125,8 @@ export class MemoryRepository {
               score,
             };
           })
-          .filter((r) => r !== null)
-          .sort((a, b) => b!.score - a!.score)
+          .filter((r): r is MemoryRecord & { score: number } => r !== null)
+          .sort((a, b) => b.score - a.score)
           .slice(0, limit);
 
         return scored as (MemoryRecord & { score: number })[];
@@ -144,7 +146,9 @@ export class MemoryRepository {
 
     try {
       const limit = options.limit || 50;
+
       let sql = `SELECT * FROM memories WHERE 1=1`;
+
       const params: any[] = [];
 
       if (options.userId) {
@@ -191,6 +195,7 @@ export class MemoryRepository {
 
     try {
       let sql = `DELETE FROM memories WHERE 1=1`;
+
       const params: any[] = [];
 
       if (options.userId) {

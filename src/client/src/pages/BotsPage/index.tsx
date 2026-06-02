@@ -169,7 +169,7 @@ const BotsPage: React.FC = () => {
       const matchesSearch =
         !searchQuery ||
         bot.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (bot.description?.toLowerCase() || '').includes(searchQuery.toLowerCase());
+        bot.description?.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus = filterType === 'all' || bot.status === filterType;
       return matchesSearch && matchesStatus;
     });

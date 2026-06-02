@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { Router, type Request, type Response } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { createLogger } from '../../common/StructuredLogger';
@@ -11,6 +12,7 @@ import {
   BotHistoryQuerySchema,
   BotIdParamSchema,
   BotImportSchema,
+  BotMessageSchema,
   BotTaskCreateSchema,
   BotTestChatSchema,
   BotVersionParamSchema,
@@ -35,6 +37,7 @@ const managerPromise = BotManager.getInstance();
 const botRouteService = BotRouteService.getInstance();
 
 let _wsService: WebSocketService | null = null;
+
 const getWsService = () => {
   if (!_wsService) {
     try {
@@ -238,6 +241,7 @@ router.put(
     const updates = req.body;
     try {
       await manager.updateBot(id, updates);
+
       return res.json(ApiResponse.success());
     } catch (error: any) {
       const status = error.message?.includes(ERROR_CODES.NOT_FOUND)
@@ -351,6 +355,75 @@ router.post(
 
 /**
  * @openapi
+ * /api/bots/{id}/channels:
+ *   get:
+ *     summary: Get channels the bot is listening on
+ *     tags: [Bots]
+ */
+router.get(
+  '/:id/channels',
+  validateRequest(BotIdParamSchema),
+  asyncErrorHandler(async (req: Request, res: Response) => {
+    const manager = await managerPromise;
+    const { id } = req.params;
+
+    const bot = await manager.getBot(id);
+    if (!bot) {
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
+    }
+
+    const { getMessengerServiceByProvider } = await import('../../message/ProviderRegistry');
+    const provider = await getMessengerServiceByProvider(bot.messageProvider);
+
+    if (!provider || typeof (provider as any).getChannels !== 'function') {
+      return res.json(ApiResponse.success([]));
+    }
+
+    const channels = await (provider as any).getChannels(bot.name);
+    return res.json(ApiResponse.success(channels));
+  })
+);
+
+/**
+ * @openapi
+ * /api/bots/{id}/message:
+ *   post:
+ *     summary: Send a message as the bot
+ *     tags: [Bots]
+ */
+router.post(
+  '/:id/message',
+  validateRequest(BotMessageSchema),
+  asyncErrorHandler(async (req: Request, res: Response) => {
+    const manager = await managerPromise;
+    const { id } = req.params;
+    const { channelId, message } = req.body;
+
+    const bot = await manager.getBot(id);
+    if (!bot) {
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
+    }
+
+    const { getMessengerServiceByProvider } = await import('../../message/ProviderRegistry');
+    const provider = await getMessengerServiceByProvider(bot.messageProvider);
+
+    if (!provider) {
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json(ApiResponse.error('Message provider not found'));
+    }
+
+    const messageId = await provider.sendMessageToChannel(channelId, message, bot.name);
+    return res.json(ApiResponse.success({ messageId }));
+  })
+);
+
+/**
+ * @openapi
  * /api/bots/{id}/history:
  *   get:
  *     summary: Get chat history
@@ -361,7 +434,9 @@ router.get(
   validateRequest(BotHistoryQuerySchema),
   asyncErrorHandler(async (req: Request, res: Response) => {
     const manager = await managerPromise;
+
     const { id } = req.params;
+
     const { limit, channelId } = req.query as any;
 
     const bot = await manager.getBot(id);
@@ -394,6 +469,7 @@ router.get(
   asyncErrorHandler(async (req: Request, res: Response) => {
     const manager = await managerPromise;
     const { id } = req.params;
+
     const { limit } = req.query as any;
 
     const bot = await manager.getBot(id);
@@ -562,6 +638,7 @@ router.post(
  */
 router.get(
   '/:id/diagnose',
+
   validateRequest(BotIdParamSchema),
   asyncErrorHandler(async (req: Request, res: Response) => {
     try {
@@ -586,6 +663,7 @@ router.get(
  */
 router.post(
   '/test-chat',
+
   validateRequest(BotTestChatSchema),
   asyncErrorHandler(async (req: Request, res: Response) => {
     const { botConfig, message, history } = req.body;
