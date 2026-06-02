@@ -1,6 +1,7 @@
 import {
   CircuitBreaker,
   RetryHandler,
+  FallbackManager,
   type RetryConfig,
   type CircuitBreakerConfig,
 } from '../../../src/utils/errorRecovery';
@@ -108,6 +109,139 @@ describe('CircuitBreaker', () => {
       expect(breaker.getState()).toBe('open');
       breaker.reset();
       expect(breaker.getState()).toBe('closed');
+    });
+  });
+});
+
+describe('FallbackManager', () => {
+  let manager: FallbackManager;
+
+  beforeEach(() => {
+    manager = new FallbackManager();
+  });
+
+  describe('registerFallback and getFallbacks', () => {
+    it('should register and retrieve fallbacks', () => {
+      const fallback = jest.fn().mockResolvedValue('fallback');
+      manager.registerFallback('test-op', fallback);
+
+      const fallbacks = manager.getFallbacks('test-op');
+      expect(fallbacks).toHaveLength(1);
+      expect(fallbacks[0]).toBe(fallback);
+    });
+
+    it('should handle multiple fallbacks for the same key', () => {
+      const f1 = jest.fn().mockResolvedValue('f1');
+      const f2 = jest.fn().mockResolvedValue('f2');
+      manager.registerFallback('test-op', f1);
+      manager.registerFallback('test-op', f2);
+
+      const fallbacks = manager.getFallbacks('test-op');
+      expect(fallbacks).toHaveLength(2);
+      expect(fallbacks[0]).toBe(f1);
+      expect(fallbacks[1]).toBe(f2);
+    });
+
+    it('should return empty array for unregistered key', () => {
+      expect(manager.getFallbacks('non-existent')).toEqual([]);
+    });
+  });
+
+  describe('executeWithFallback', () => {
+    it('should return result from primary operation if it succeeds', async () => {
+      const primary = jest.fn().mockResolvedValue('primary-success');
+      const fallback = jest.fn().mockResolvedValue('fallback');
+      manager.registerFallback('test-op', fallback);
+
+      const result = await manager.executeWithFallback('test-op', primary);
+
+      expect(result.success).toBe(true);
+      expect(result.result).toBe('primary-success');
+      expect(result.strategy).toBe('primary');
+      expect(result.attempts).toBe(1);
+      expect(primary).toHaveBeenCalledTimes(1);
+      expect(fallback).not.toHaveBeenCalled();
+    });
+
+    it('should use first fallback if primary fails', async () => {
+      const primary = jest.fn().mockRejectedValue(new Error('primary-fail'));
+      const fallback = jest.fn().mockResolvedValue('fallback-success');
+      manager.registerFallback('test-op', fallback);
+
+      const result = await manager.executeWithFallback('test-op', primary);
+
+      expect(result.success).toBe(true);
+      expect(result.result).toBe('fallback-success');
+      expect(result.strategy).toBe('fallback_1');
+      expect(result.attempts).toBe(2);
+      expect(primary).toHaveBeenCalledTimes(1);
+      expect(fallback).toHaveBeenCalledTimes(1);
+    });
+
+    it('should try fallbacks in order until one succeeds', async () => {
+      const primary = jest.fn().mockRejectedValue(new Error('primary-fail'));
+      const f1 = jest.fn().mockRejectedValue(new Error('f1-fail'));
+      const f2 = jest.fn().mockResolvedValue('f2-success');
+      const f3 = jest.fn().mockResolvedValue('f3-success');
+
+      manager.registerFallback('test-op', f1);
+      manager.registerFallback('test-op', f2);
+      manager.registerFallback('test-op', f3);
+
+      const result = await manager.executeWithFallback('test-op', primary);
+
+      expect(result.success).toBe(true);
+      expect(result.result).toBe('f2-success');
+      expect(result.strategy).toBe('fallback_2');
+      expect(result.attempts).toBe(3);
+      expect(f1).toHaveBeenCalledTimes(1);
+      expect(f2).toHaveBeenCalledTimes(1);
+      expect(f3).not.toHaveBeenCalled();
+    });
+
+    it('should return failure if primary and all fallbacks fail', async () => {
+      const primary = jest.fn().mockRejectedValue(new Error('primary-fail'));
+      const f1 = jest.fn().mockRejectedValue(new Error('f1-fail'));
+      const f2 = jest.fn().mockRejectedValue(new Error('f2-fail'));
+
+      manager.registerFallback('test-op', f1);
+      manager.registerFallback('test-op', f2);
+
+      const result = await manager.executeWithFallback('test-op', primary);
+
+      expect(result.success).toBe(false);
+      expect(result.error?.message).toBe('primary-fail');
+      expect(result.strategy).toBe('failed');
+      expect(result.attempts).toBe(3); // primary + 2 fallbacks
+    });
+
+    it('should handle primary error that is not an Error object', async () => {
+      const primary = jest.fn().mockRejectedValue('string-error');
+      const result = await manager.executeWithFallback('test-op', primary);
+      expect(result.success).toBe(false);
+      expect(result.error?.message).toBe('string-error');
+    });
+  });
+
+  describe('clearing fallbacks', () => {
+    it('should clear fallbacks for a specific key', () => {
+      manager.registerFallback('op1', async () => 'f1');
+      manager.registerFallback('op2', async () => 'f2');
+
+      manager.clearFallbacks('op1');
+
+      expect(manager.getFallbacks('op1')).toEqual([]);
+      expect(manager.getFallbacks('op2')).toHaveLength(1);
+    });
+
+    it('should clear all fallbacks', () => {
+      manager.registerFallback('op1', async () => 'f1');
+      manager.registerFallback('op2', async () => 'f2');
+
+      manager.clearAllFallbacks();
+
+      expect(manager.getFallbacks('op1')).toEqual([]);
+      expect(manager.getFallbacks('op2')).toEqual([]);
     });
   });
 });
