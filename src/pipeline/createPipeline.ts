@@ -16,7 +16,12 @@
  */
 
 import type { MessageBus } from '@src/events/MessageBus';
-import { ActivityRecorder, PipelineTracer, setActiveTracer } from '@src/observability';
+import {
+  ActivityRecorder,
+  PipelineTracer,
+  attachTraceExporters,
+  setActiveTracer,
+} from '@src/observability';
 import { ActivityLogger } from '@src/server/services/ActivityLogger';
 import { WebSocketService } from '@src/server/services/WebSocketService';
 import {
@@ -125,6 +130,10 @@ export function createPipeline(bus: MessageBus, deps: PipelineDependencies): boo
   const tracer = new PipelineTracer(bus);
   tracer.register();
   setActiveTracer(tracer);
+
+  // Opt-in trace export to external backends (console / NDJSON file / OTLP).
+  // Off by default; enabled via the TRACE_EXPORT env var. No-op when unset.
+  attachTraceExporters(tracer);
 
   // Record real message activity to the persistent ActivityLogger (JSONL) and
   // the live WebSocket feed so the dashboard ActivityPage / DashboardService
