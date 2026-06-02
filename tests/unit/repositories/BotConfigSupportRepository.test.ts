@@ -10,14 +10,19 @@ import type {
 } from '../../../src/database/types';
 
 function makeMockDb(extra: Partial<Database> = {}): jest.Mocked<Database> {
-  return {
+  const db: any = {
     run: jest.fn().mockResolvedValue({ lastID: 1, changes: 1 }),
     get: jest.fn(),
     all: jest.fn().mockResolvedValue([]),
     exec: jest.fn(),
     close: jest.fn(),
+    // Default transaction simply executes the callback against the same db
+    // so that `tx.run` calls are recorded on the same mock and assertions
+    // can inspect them. Tests that need rollback semantics override this.
+    transaction: jest.fn(async (cb: (tx: any) => Promise<any>) => cb(db)),
     ...extra,
-  } as any;
+  };
+  return db as jest.Mocked<Database>;
 }
 
 describe('BotConfigRepositoryBase', () => {
@@ -93,6 +98,56 @@ describe('BotConfigRepositoryBase', () => {
       const obj = { key: 'value' };
       expect((base as any).parseIfString(obj)).toBe(obj);
       expect((base as any).parseIfString(null)).toBeNull();
+    });
+  });
+
+  describe('toIsoString', () => {
+    it('should serialize a Date instance to its ISO string', () => {
+      const date = new Date('2024-03-15T10:30:00.000Z');
+      expect((base as any).toIsoString(date)).toBe('2024-03-15T10:30:00.000Z');
+    });
+
+    it('should normalize a parseable date string to ISO format', () => {
+      // A non-ISO but parseable string should be normalized, not echoed back.
+      const result = (base as any).toIsoString('2024-03-15');
+      expect(result).toBe(new Date('2024-03-15').toISOString());
+      // The result must be a valid round-trippable ISO string.
+      expect(new Date(result).toISOString()).toBe(result);
+    });
+
+    it('should preserve an already-ISO string', () => {
+      const iso = '2024-03-15T10:30:00.000Z';
+      expect((base as any).toIsoString(iso)).toBe(iso);
+    });
+
+    it('should fall back to the current time for an unparseable string', () => {
+      const before = Date.now();
+      const result = (base as any).toIsoString('not-a-date');
+      const after = Date.now();
+      const parsed = Date.parse(result);
+      expect(Number.isNaN(parsed)).toBe(false);
+      expect(parsed).toBeGreaterThanOrEqual(before);
+      expect(parsed).toBeLessThanOrEqual(after);
+    });
+
+    it('should fall back to the current time for null/undefined', () => {
+      for (const val of [null, undefined]) {
+        const before = Date.now();
+        const result = (base as any).toIsoString(val);
+        const after = Date.now();
+        const parsed = Date.parse(result);
+        expect(Number.isNaN(parsed)).toBe(false);
+        expect(parsed).toBeGreaterThanOrEqual(before);
+        expect(parsed).toBeLessThanOrEqual(after);
+      }
+    });
+
+    it('should fall back to the current time for non-date types (number, object)', () => {
+      // Numbers/objects are not handled explicitly, so they hit the fallback.
+      for (const val of [12345, {}, []]) {
+        const result = (base as any).toIsoString(val);
+        expect(Number.isNaN(Date.parse(result))).toBe(false);
+      }
     });
   });
 });
@@ -177,6 +232,99 @@ describe('BotConfigVersionRepository', () => {
       const callArgs = (mockDb.run as jest.Mock).mock.calls[0][1];
       expect(callArgs[7]).toBe(JSON.stringify([{ name: 'server-1' }]));
       expect(callArgs[8]).toBe(JSON.stringify({ enabled: true }));
+    });
+  });
+
+  describe('createBotConfigurationVersionsBulk', () => {
+    const makeVersion = (overrides: Partial<BotConfigurationVersion> = {}): any => ({
+      botConfigurationId: 1,
+      version: '1.0.0',
+      name: 'Bot',
+      messageProvider: 'discord',
+      llmProvider: 'openai',
+      isActive: true,
+      ...overrides,
+    });
+
+    it('should return an empty array without touching the db for no versions', async () => {
+      const ids = await repo.createBotConfigurationVersionsBulk([]);
+      expect(ids).toEqual([]);
+      expect(mockDb.transaction).not.toHaveBeenCalled();
+      expect(mockDb.run).not.toHaveBeenCalled();
+    });
+
+    it('should insert all versions inside a single transaction', async () => {
+      const versions = [
+        makeVersion({ botConfigurationId: 1, version: '1.0.0' }),
+        makeVersion({ botConfigurationId: 2, version: '2.0.0' }),
+        makeVersion({ botConfigurationId: 3, version: '3.0.0' }),
+      ];
+
+      const ids = await repo.createBotConfigurationVersionsBulk(versions);
+
+      // One transaction wrapping one INSERT per version.
+      expect(mockDb.transaction).toHaveBeenCalledTimes(1);
+      expect(mockDb.run).toHaveBeenCalledTimes(3);
+      expect(ids).toHaveLength(3);
+    });
+
+    it('should return the lastID produced for each inserted version in order', async () => {
+      let counter = 10;
+      (mockDb.run as jest.Mock).mockImplementation(async () => ({
+        lastID: counter++,
+        changes: 1,
+      }));
+
+      const ids = await repo.createBotConfigurationVersionsBulk([
+        makeVersion(),
+        makeVersion(),
+      ]);
+
+      expect(ids).toEqual([10, 11]);
+    });
+
+    it('should encrypt sensitive provider fields and stringify mcp config', async () => {
+      await repo.createBotConfigurationVersionsBulk([
+        makeVersion({
+          discord: { token: 'secret-bulk-token' } as any,
+          mcpServers: [{ name: 'srv' }] as any,
+          mcpGuard: { enabled: true } as any,
+        }),
+      ]);
+
+      const callArgs = (mockDb.run as jest.Mock).mock.calls[0][1];
+      // index 7 = mcpServers, 8 = mcpGuard, 9 = discord (encrypted)
+      expect(callArgs[7]).toBe(JSON.stringify([{ name: 'srv' }]));
+      expect(callArgs[8]).toBe(JSON.stringify({ enabled: true }));
+      expect(callArgs[9]).toContain('enc:');
+      expect(callArgs[9]).not.toContain('secret-bulk-token');
+    });
+
+    it('should normalize createdAt via toIsoString (index 17)', async () => {
+      await repo.createBotConfigurationVersionsBulk([
+        makeVersion({ createdAt: new Date('2024-01-02T03:04:05.000Z') as any }),
+      ]);
+
+      const callArgs = (mockDb.run as jest.Mock).mock.calls[0][1];
+      expect(callArgs[17]).toBe('2024-01-02T03:04:05.000Z');
+    });
+
+    it('should propagate a wrapped error when the transaction fails (atomicity)', async () => {
+      (mockDb.transaction as jest.Mock).mockRejectedValue(new Error('tx boom'));
+
+      await expect(
+        repo.createBotConfigurationVersionsBulk([makeVersion()])
+      ).rejects.toThrow('Failed to create bot configuration versions in bulk');
+    });
+
+    it('should throw when the database is not available', async () => {
+      const badRepo = new BotConfigVersionRepository(
+        () => null as any,
+        () => {}
+      );
+      await expect(
+        badRepo.createBotConfigurationVersionsBulk([makeVersion()])
+      ).rejects.toThrow();
     });
   });
 
