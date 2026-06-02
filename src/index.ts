@@ -172,12 +172,17 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   // Security headers
   // SECURITY: See src/server/middleware/security.ts for detailed CSP explanation
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  const workerSrc =
-    process.env.NODE_ENV === 'development' ? "worker-src 'self' blob:;" : "worker-src 'none';";
-  res.setHeader(
-    'Content-Security-Policy',
-    `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; connect-src 'self' ws: wss:; font-src 'self' data: https://fonts.gstatic.com; object-src 'none'; frame-ancestors 'none'; ${workerSrc}`
-  );
+
+  let csp;
+  if (process.env.NODE_ENV === 'development') {
+    csp =
+      "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; connect-src 'self' ws: wss:; font-src 'self' data: https://fonts.gstatic.com; object-src 'none'; frame-ancestors 'none'; worker-src 'self' blob:;";
+  } else {
+    // Strict production CSP: No unsafe-inline or unsafe-eval
+    csp =
+      "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; img-src 'self' data: https:; connect-src 'self' ws: wss:; font-src 'self' https://fonts.gstatic.com; object-src 'none'; frame-ancestors 'none'; worker-src 'none';";
+  }
+  res.setHeader('Content-Security-Policy', csp);
 
   next();
 });

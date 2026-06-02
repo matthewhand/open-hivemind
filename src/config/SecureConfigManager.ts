@@ -471,12 +471,25 @@ export class SecureConfigManager {
   private async getOrCreateEncryptionKey(): Promise<Buffer> {
     try {
       await fs.promises.access(this.keyPath);
-      return await fs.promises.readFile(this.keyPath);
+      const key = await fs.promises.readFile(this.keyPath);
+      if (key.length < 32) {
+        throw new Error('Encryption key at ' + this.keyPath + ' is too short (must be 32 bytes)');
+      }
+      return key;
     } catch (err: any) {
       if (err.code !== 'ENOENT') throw err;
 
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error(
+          'CRITICAL: Secure encryption key missing at ' +
+            this.keyPath +
+            '. Persistent key is required in production.'
+        );
+      }
+
       const key = crypto.randomBytes(32);
       await fs.promises.writeFile(this.keyPath, key);
+      debug('Generated new temporary encryption key for non-production environment');
       return key;
     }
   }

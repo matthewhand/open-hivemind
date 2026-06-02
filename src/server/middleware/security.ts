@@ -46,35 +46,45 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
   // middleware before being stored or rendered. See:
   //   - src/server/middleware/sanitizationMiddleware.ts
   //   - src/common/security/inputSanitizer.ts
-  const cspDirectives = [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:", // Allow inline scripts for WebSocket connections
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "img-src 'self' data: https:",
-    "font-src 'self' https://fonts.gstatic.com",
-    "connect-src 'self' ws: wss: https:", // Allow WebSocket connections
-    "media-src 'self'",
-    "object-src 'none'",
-    "frame-ancestors 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "frame-src 'none'", // Prevent iframes
-    "worker-src 'none'", // Prevent web workers
-    "manifest-src 'self'",
-    "prefetch-src 'self'",
-  ];
+  let cspDirectives: string[];
 
   if (process.env.NODE_ENV === 'development') {
-    // Relax CSP for development
-    cspDirectives.push(
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* https://localhost:*"
-    );
-    cspDirectives.push("connect-src 'self' ws: wss: http://localhost:* https://localhost:*");
-    cspDirectives.push(
-      "style-src 'self' 'unsafe-inline' http://localhost:* https://fonts.googleapis.com"
-    );
-    // Allow blob: workers for Vite HMR in development
-    cspDirectives.push("worker-src 'self' blob:");
+    cspDirectives = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https: http://localhost:* https://localhost:*",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com http://localhost:*",
+      "img-src 'self' data: https:",
+      "font-src 'self' https://fonts.gstatic.com",
+      "connect-src 'self' ws: wss: https: http://localhost:* https://localhost:*",
+      "media-src 'self'",
+      "object-src 'none'",
+      "frame-ancestors 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-src 'none'",
+      "worker-src 'self' blob:",
+      "manifest-src 'self'",
+      "prefetch-src 'self'",
+    ];
+  } else {
+    // Strict production CSP: No unsafe-inline or unsafe-eval
+    cspDirectives = [
+      "default-src 'self'",
+      "script-src 'self' https:",
+      "style-src 'self' https://fonts.googleapis.com",
+      "img-src 'self' data: https:",
+      "font-src 'self' https://fonts.gstatic.com",
+      "connect-src 'self' ws: wss: https:",
+      "media-src 'self'",
+      "object-src 'none'",
+      "frame-ancestors 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-src 'none'",
+      "worker-src 'none'",
+      "manifest-src 'self'",
+      "prefetch-src 'self'",
+    ];
   }
 
   res.setHeader('Content-Security-Policy', cspDirectives.join('; '));
