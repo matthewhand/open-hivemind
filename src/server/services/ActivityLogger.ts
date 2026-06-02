@@ -19,6 +19,8 @@ export interface ActivityFilter {
 export class ActivityLogger {
   private static instance: ActivityLogger;
   private logFile: string;
+  private tailCache: MessageFlowEvent[] = [];
+  private readonly MAX_CACHE_SIZE = 1000;
 
   private constructor() {
     // Store in config/user/activity.jsonl as it is a persistent location for user data
@@ -45,6 +47,12 @@ export class ActivityLogger {
   }
 
   public log(event: MessageFlowEvent): void {
+    // Add to in-memory tail cache
+    this.tailCache.push(event);
+    if (this.tailCache.length > this.MAX_CACHE_SIZE) {
+      this.tailCache.shift();
+    }
+
     const line = JSON.stringify(event) + '\n';
     fs.appendFile(this.logFile, line, 'utf8', (error) => {
       if (error) {
@@ -115,11 +123,17 @@ export class ActivityLogger {
   }
 
   public async getEvents(options: ActivityFilter = {}): Promise<MessageFlowEvent[]> {
+    // Try to satisfy from cache if possible
+    if (this.canSatisfyFromCache(options)) {
+      debug('Satisfying activity request from tail cache');
+      return this.filterEvents(this.tailCache, options);
+    }
+
     try {
       try {
         await fs.promises.access(this.logFile);
       } catch {
-        return [];
+        return this.filterEvents(this.tailCache, options);
       }
 
       const fileStream = fs.createReadStream(this.logFile, { encoding: 'utf8' });
@@ -205,5 +219,55 @@ export class ActivityLogger {
       debug('Failed to read activity log: %O', error);
       return [];
     }
+  }
+
+  private canSatisfyFromCache(options: ActivityFilter): boolean {
+    // If no limit or limit > cache size, we need to read from disk
+    if (!options.limit || options.limit > this.MAX_CACHE_SIZE) {
+      return false;
+    }
+
+    // If offset is provided and limit + offset > cache size, we need to read from disk
+    if (options.offset && options.offset + options.limit > this.MAX_CACHE_SIZE) {
+      return false;
+    }
+
+    // If startTime is provided, we might need older events from disk
+    if (options.startTime) {
+      if (this.tailCache.length === 0) return false;
+      if (this.tailCache[0].timestamp > options.startTime.toISOString()) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private filterEvents(events: MessageFlowEvent[], options: ActivityFilter): MessageFlowEvent[] {
+    const startTimeMs = options.startTime ? options.startTime.getTime() : 0;
+    const endTimeMs = options.endTime ? options.endTime.getTime() : Infinity;
+
+    let filtered = events.filter((event) => {
+      const eventTime = new Date(event.timestamp).getTime();
+
+      if (eventTime > endTimeMs) return false;
+      if (eventTime < startTimeMs) return false;
+      if (options.botName && event.botName !== options.botName) return false;
+      if (options.provider && event.provider !== options.provider) return false;
+      if (options.llmProvider && event.llmProvider !== options.llmProvider) return false;
+
+      return true;
+    });
+
+    if (options.offset) {
+      filtered = filtered.slice(options.offset);
+    }
+
+    if (options.limit) {
+      // Returns the last N events if limited
+      filtered = filtered.slice(-options.limit);
+    }
+
+    return filtered;
   }
 }

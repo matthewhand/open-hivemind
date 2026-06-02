@@ -11,6 +11,7 @@ export interface Migration {
 
 export class MigrationManager {
   private migrations: Migration[] = [];
+  private migrationsMap: Map<string, Migration> = new Map();
   private executedMigrations = new Set<string>();
   private db: Database;
 
@@ -320,6 +321,11 @@ export class MigrationManager {
         },
       },
     ];
+
+    this.migrationsMap.clear();
+    for (const m of this.migrations) {
+      this.migrationsMap.set(m.id, m);
+    }
   }
 
   async createMigrationsTable(): Promise<void> {

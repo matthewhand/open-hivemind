@@ -92,6 +92,11 @@ export class SyncProviderRegistry {
   private readonly toolProviders = new Map<string, IToolProvider>();
   private readonly messengerServices = new Map<string, IMessengerService>();
 
+  // Profile maps for O(1) lookup during reload
+  private readonly llmProfileMap = new Map<string, ProviderProfile>();
+  private readonly memoryProfileMap = new Map<string, ProviderProfile>();
+  private readonly toolProfileMap = new Map<string, ProviderProfile>();
+
   /**
    * Insertion-ordered list of LLM provider keys so we can resolve
    * "first registered" as the default without sorting.
@@ -128,6 +133,7 @@ export class SyncProviderRegistry {
         const mod = await loadPlugin(`llm-${profile.provider.toLowerCase()}`);
         const instance = instantiateLlmProvider(mod, profile.config);
         this.llmProviders.set(profile.key, instance);
+        this.llmProfileMap.set(profile.key, profile);
         this.llmInsertionOrder.push(profile.key);
         debug('Loaded LLM provider: %s (%s)', profile.key, profile.provider);
       } catch (err) {
@@ -143,6 +149,7 @@ export class SyncProviderRegistry {
         const mod = await loadPlugin(`memory-${profile.provider.toLowerCase()}`);
         const instance = instantiateMemoryProvider(mod, profile.config);
         this.memoryProviders.set(profile.key, instance);
+        this.memoryProfileMap.set(profile.key, profile);
         debug('Loaded memory provider: %s (%s)', profile.key, profile.provider);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
@@ -157,6 +164,7 @@ export class SyncProviderRegistry {
         const mod = await loadPlugin(`tool-${profile.provider.toLowerCase()}`);
         const instance = instantiateToolProvider(mod, profile.config);
         this.toolProviders.set(profile.key, instance);
+        this.toolProfileMap.set(profile.key, profile);
         debug('Loaded tool provider: %s (%s)', profile.key, profile.provider);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
@@ -483,31 +491,34 @@ export class SyncProviderRegistry {
 
     switch (type) {
       case 'llm': {
-        const p = profile ?? this._config.llmProfiles?.find((x) => x.key === id);
+        const p = profile ?? this.llmProfileMap.get(id);
         if (!p) throw new Error(`No profile found for LLM provider '${id}'`);
         const mod = await loadPlugin(`llm-${p.provider.toLowerCase()}`);
         const instance = instantiateLlmProvider(mod, p.config);
         const existed = this.llmProviders.has(id);
         this.llmProviders.set(id, instance);
+        this.llmProfileMap.set(id, p);
         if (!existed) this.llmInsertionOrder.push(id);
         debug('Reloaded LLM provider: %s', id);
         break;
       }
       case 'memory': {
-        const p = profile ?? this._config.memoryProfiles?.find((x) => x.key === id);
+        const p = profile ?? this.memoryProfileMap.get(id);
         if (!p) throw new Error(`No profile found for memory provider '${id}'`);
         const mod = await loadPlugin(`memory-${p.provider.toLowerCase()}`);
         const instance = instantiateMemoryProvider(mod, p.config);
         this.memoryProviders.set(id, instance);
+        this.memoryProfileMap.set(id, p);
         debug('Reloaded memory provider: %s', id);
         break;
       }
       case 'tool': {
-        const p = profile ?? this._config.toolProfiles?.find((x) => x.key === id);
+        const p = profile ?? this.toolProfileMap.get(id);
         if (!p) throw new Error(`No profile found for tool provider '${id}'`);
         const mod = await loadPlugin(`tool-${p.provider.toLowerCase()}`);
         const instance = instantiateToolProvider(mod, p.config);
         this.toolProviders.set(id, instance);
+        this.toolProfileMap.set(id, p);
         debug('Reloaded tool provider: %s', id);
         break;
       }
@@ -536,6 +547,9 @@ export class SyncProviderRegistry {
     this.memoryProviders.clear();
     this.toolProviders.clear();
     this.messengerServices.clear();
+    this.llmProfileMap.clear();
+    this.memoryProfileMap.clear();
+    this.toolProfileMap.clear();
     this.llmInsertionOrder.length = 0;
     this._initialized = false;
     this._config = {};

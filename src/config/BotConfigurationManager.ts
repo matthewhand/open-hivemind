@@ -23,6 +23,7 @@ export class BotConfigurationManager {
   private warnings: string[] = [];
   private userConfigStore = UserConfigStore.getInstance();
   private configCache = new TTLCache<string, Record<string, unknown>>(30000, 'BotConfigCache');
+  private discordBotsCache: BotConfig[] | null = null;
 
   public constructor() {
     this.loadConfiguration();
@@ -51,6 +52,7 @@ export class BotConfigurationManager {
    */
   private loadConfiguration(): void {
     this.bots.clear();
+    this.discordBotsCache = null;
     this.warnings = [];
 
     // Check for new BOTS configuration and Auto-Discovery
@@ -145,9 +147,14 @@ export class BotConfigurationManager {
    * Get Discord-specific bot configurations
    */
   public getDiscordBotConfigs(): BotConfig[] {
-    return Array.from(this.bots.values()).filter(bot =>
-      bot.messageProvider === 'discord' && bot.discord?.token,
+    if (this.discordBotsCache) {
+      return this.discordBotsCache;
+    }
+
+    this.discordBotsCache = Array.from(this.bots.values()).filter(
+      (bot) => bot.messageProvider === 'discord' && bot.discord?.token
     );
+    return this.discordBotsCache;
   }
 
   /**
@@ -184,6 +191,7 @@ export class BotConfigurationManager {
 
   public async addBot(config: BotConfig): Promise<void> {
     await addBotToFile(config, this.configCache);
+    this.discordBotsCache = null;
 
     // Reload to pick up new bot
     this.reload();
@@ -231,6 +239,7 @@ export class BotConfigurationManager {
     }
 
     await updateBotOnFile(name, updates, this.configCache);
+    this.discordBotsCache = null;
 
     // Reload to apply changes
     this.reload();
@@ -241,6 +250,7 @@ export class BotConfigurationManager {
    */
   public async deleteBot(name: string): Promise<void> {
     await deleteBotFromFile(name);
+    this.discordBotsCache = null;
 
     this.reload();
   }

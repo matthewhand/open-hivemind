@@ -23,18 +23,9 @@ else
 fi
 
 # 4. Netlify Configuration Files
-echo "🔹 Generating Netlify config files..."
-cat << 'EOF' > dist/client/_redirects
-/api/*  /.netlify/functions/server  200!
-/*      /index.html                 200
-EOF
-
-cat << 'EOF' > dist/client/_headers
-/*
-  X-Frame-Options: DENY
-  X-XSS-Protection: 1; mode=block
-  X-Content-Type-Options: nosniff
-EOF
+# Note: Redirects and headers are now managed centrally in netlify.toml
+# to avoid conflicts during deployment.
+echo "🔹 Skipping generation of _redirects and _headers (using netlify.toml instead)..."
 
 # 5. Compiling Serverless Function
 echo "🔹 Compiling serverless function..."

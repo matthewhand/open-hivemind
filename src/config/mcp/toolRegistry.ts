@@ -7,6 +7,8 @@ import { injectable } from 'tsyringe';
 
 @injectable()
 export class ToolRegistry {
+  private templateMap: Map<string, MCPProviderTemplate> | null = null;
+
   public async executeProviderTest(
     provider: MCPProviderConfig,
     parseArgs: (args: string | string[]) => string[]
@@ -208,7 +210,14 @@ export class ToolRegistry {
   }
 
   createFromTemplate(templateId: string, overrides: Partial<MCPProviderConfig>): MCPProviderConfig {
-    const template = this.getTemplates().find(t => t.id === templateId);
+    if (!this.templateMap) {
+      this.templateMap = new Map();
+      for (const t of this.getTemplates()) {
+        this.templateMap.set(t.id, t);
+      }
+    }
+
+    const template = this.templateMap.get(templateId);
     if (!template) {
       throw ErrorUtils.createError(
         `Template not found: ${templateId}`,

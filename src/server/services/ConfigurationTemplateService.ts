@@ -50,13 +50,32 @@ export class ConfigurationTemplateService {
   private dbManager: DatabaseManager;
   private configValidator: ConfigurationValidator;
   private templatesDir: string;
+  private templateMap: Map<string, ConfigurationTemplate> = new Map();
+  private initialized = false;
 
   private constructor(templatesDir?: string) {
     this.dbManager = DatabaseManager.getInstance();
     this.configValidator = new ConfigurationValidator();
     this.templatesDir = templatesDir || path.join(process.cwd(), 'config', 'templates');
-    this.ensureTemplatesDirectory();
-    this.loadBuiltInTemplates();
+    this.init();
+  }
+
+  private async init(): Promise<void> {
+    await this.ensureTemplatesDirectory();
+    await this.loadBuiltInTemplates();
+    await this.refreshCache();
+    this.initialized = true;
+  }
+
+  /**
+   * Refresh the in-memory cache of templates.
+   */
+  private async refreshCache(): Promise<void> {
+    const templates = await this.getAllTemplatesInternal();
+    this.templateMap.clear();
+    for (const template of templates) {
+      this.templateMap.set(template.id, template);
+    }
   }
 
   public static getInstance(templatesDir?: string): ConfigurationTemplateService {
@@ -305,6 +324,7 @@ export class ConfigurationTemplateService {
       };
 
       await this.saveTemplate(template);
+      this.templateMap.set(template.id, template);
       debug('Created template:', template.name);
 
       return template;
@@ -352,6 +372,7 @@ export class ConfigurationTemplateService {
       };
 
       await this.saveTemplate(updatedTemplate);
+      this.templateMap.set(templateId, updatedTemplate);
       debug('Updated template:', updatedTemplate.name);
 
       return updatedTemplate;
@@ -378,6 +399,7 @@ export class ConfigurationTemplateService {
       const filePath = this.getSafeTemplatePath(templateId);
       await fs.unlink(filePath);
 
+      this.templateMap.delete(templateId);
       debug('Deleted template:', template.name);
       return true;
     } catch (error) {
@@ -390,6 +412,12 @@ export class ConfigurationTemplateService {
    * Get template by ID
    */
   async getTemplateById(templateId: string): Promise<ConfigurationTemplate | null> {
+    // Try cache first
+    const cached = this.templateMap.get(templateId);
+    if (cached) {
+      return cached;
+    }
+
     try {
       const filePath = this.getSafeTemplatePath(templateId);
       const data = await fs.readFile(filePath, 'utf-8');
@@ -398,6 +426,9 @@ export class ConfigurationTemplateService {
       // Convert date strings back to Date objects
       template.createdAt = new Date(template.createdAt);
       template.updatedAt = new Date(template.updatedAt);
+
+      // Update cache
+      this.templateMap.set(templateId, template);
 
       return template;
     } catch (error) {
@@ -413,6 +444,13 @@ export class ConfigurationTemplateService {
    * Get template by name
    */
   async getTemplateByName(name: string): Promise<ConfigurationTemplate | null> {
+    // Try O(1) cache lookup if we had a name map, otherwise O(N) over values
+    for (const template of this.templateMap.values()) {
+      if (template.name === name) {
+        return template;
+      }
+    }
+
     try {
       const templates = await this.getAllTemplates();
       return templates.find((template) => template.name === name) || null;
@@ -426,6 +464,21 @@ export class ConfigurationTemplateService {
    * Get all templates with optional filtering
    */
   async getAllTemplates(filter?: TemplateFilter): Promise<ConfigurationTemplate[]> {
+    if (this.initialized && this.templateMap.size > 0 && !filter) {
+      return Array.from(this.templateMap.values()).sort(
+        (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
+      );
+    }
+
+    const templates = this.initialized
+      ? Array.from(this.templateMap.values())
+      : await this.getAllTemplatesInternal();
+
+    const filtered = templates.filter((t) => this.matchesFilter(t, filter));
+    return filtered.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+  }
+
+  private async getAllTemplatesInternal(): Promise<ConfigurationTemplate[]> {
     try {
       const files = await fs.readdir(this.templatesDir);
 
@@ -450,12 +503,9 @@ export class ConfigurationTemplateService {
 
       const results = await Promise.allSettled(templatePromises);
 
-      const templates = results
+      return results
         .map((r) => (r.status === 'fulfilled' ? r.value : null))
-        .filter((t): t is ConfigurationTemplate => t !== null)
-        .filter((t) => this.matchesFilter(t, filter));
-
-      return templates.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+        .filter((t): t is ConfigurationTemplate => t !== null);
     } catch (error) {
       debug('Error getting all templates:', error);
       throw new Error(`Failed to get templates: ${error}`);
@@ -499,6 +549,7 @@ export class ConfigurationTemplateService {
       template.updatedAt = new Date();
 
       await this.saveTemplate(template);
+      this.templateMap.set(templateId, template);
       debug('Incremented usage count for template:', template.name);
     } catch (error) {
       debug('Error incrementing template usage count:', error);
@@ -532,6 +583,7 @@ export class ConfigurationTemplateService {
       };
 
       await this.saveTemplate(duplicateTemplate);
+      this.templateMap.set(duplicateTemplate.id, duplicateTemplate);
       debug('Duplicated template:', originalTemplate.name, 'as', newName);
 
       return duplicateTemplate;

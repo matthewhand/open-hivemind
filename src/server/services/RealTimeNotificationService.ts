@@ -25,6 +25,7 @@ interface SubscriptionFilter {
 export class RealTimeNotificationService extends EventEmitter {
   private static instance: RealTimeNotificationService | null = null;
   private notifications: NotificationEvent[] = [];
+  private notificationsMap: Map<string, NotificationEvent> = new Map();
   private maxNotifications = 1000;
   private webSocketService: WebSocketService;
 
@@ -49,10 +50,14 @@ export class RealTimeNotificationService extends EventEmitter {
 
     // Add to internal storage
     this.notifications.unshift(notification);
+    this.notificationsMap.set(notification.id, notification);
 
     // Trim if too many
     if (this.notifications.length > this.maxNotifications) {
-      this.notifications = this.notifications.slice(0, this.maxNotifications);
+      const removed = this.notifications.splice(this.maxNotifications);
+      for (const r of removed) {
+        this.notificationsMap.delete(r.id);
+      }
     }
 
     // Emit to local listeners
@@ -94,7 +99,7 @@ export class RealTimeNotificationService extends EventEmitter {
   }
 
   public markAsRead(notificationId: string): boolean {
-    const notification = this.notifications.find((n) => n.id === notificationId);
+    const notification = this.notificationsMap.get(notificationId);
     if (notification && notification.metadata) {
       notification.metadata.read = true;
       return true;
@@ -107,18 +112,27 @@ export class RealTimeNotificationService extends EventEmitter {
 
     if (!filter) {
       this.notifications = [];
+      this.notificationsMap.clear();
       return originalLength;
     }
 
     this.notifications = this.notifications.filter((notification) => {
       // Keep notifications that don't match the filter
+      let shouldRemove = false;
       if (filter.types && filter.types.includes(notification.type)) {
-        return false;
+        shouldRemove = true;
+      } else if (filter.severities && filter.severities.includes(notification.severity)) {
+        shouldRemove = true;
+      } else if (
+        filter.sources &&
+        notification.source &&
+        filter.sources.includes(notification.source)
+      ) {
+        shouldRemove = true;
       }
-      if (filter.severities && filter.severities.includes(notification.severity)) {
-        return false;
-      }
-      if (filter.sources && notification.source && filter.sources.includes(notification.source)) {
+
+      if (shouldRemove) {
+        this.notificationsMap.delete(notification.id);
         return false;
       }
       return true;
