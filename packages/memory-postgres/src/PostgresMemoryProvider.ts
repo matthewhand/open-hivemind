@@ -136,10 +136,9 @@ export class PostgresMemoryProvider implements IMemoryProvider {
 
   async getMemory(id: string): Promise<MemoryEntry | null> {
     this.ensureInitialized();
-    // Implementation for getting single memory from dbManager
-    // For now we use getMemories and find
-    const memories = await this.dbManager.getMemories({ limit: 1000 });
-    const found = memories.find((m: any) => String(m.id) === id);
+    // Direct indexed lookup (SELECT ... WHERE id = $1) — O(1) on the primary
+    // key, instead of fetching up to 1000 rows and scanning them in JS.
+    const found = await this.dbManager.getMemoryById(id);
     if (!found) return null;
 
     return {

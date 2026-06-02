@@ -16,6 +16,7 @@ describe('PostgresMemoryProvider (Mocked)', () => {
           { id: 1, content: 'test memory', score: 0.9, metadata: { foo: 'bar' } },
         ]),
       getMemories: jest.fn().mockResolvedValue([]),
+      getMemoryById: jest.fn().mockResolvedValue(null),
       deleteMemory: jest.fn().mockResolvedValue(true),
       deleteAllMemories: jest.fn().mockResolvedValue(undefined),
       isConnected: jest.fn().mockReturnValue(true),
@@ -58,5 +59,41 @@ describe('PostgresMemoryProvider (Mocked)', () => {
       expect.any(Object)
     );
     expect(result.results[0].metadata).toEqual({ foo: 'bar' });
+  });
+
+  it('should fetch a single memory via a direct indexed lookup, not a full scan', async () => {
+    mockDbManager.getMemoryById.mockResolvedValue({
+      id: 42,
+      content: 'single memory',
+      metadata: { foo: 'bar' },
+      userId: 'u1',
+      agentId: 'a1',
+      createdAt: '2026-01-01T00:00:00.000Z',
+    });
+
+    const result = await provider.getMemory('42');
+
+    // Uses the direct WHERE id = ? query, not getMemories({ limit: 1000 }).
+    expect(mockDbManager.getMemoryById).toHaveBeenCalledWith('42');
+    expect(mockDbManager.getMemories).not.toHaveBeenCalled();
+    expect(result).toEqual(
+      expect.objectContaining({
+        id: '42',
+        content: 'single memory',
+        metadata: { foo: 'bar' },
+        userId: 'u1',
+        agentId: 'a1',
+      })
+    );
+  });
+
+  it('should return null when the memory id is not found', async () => {
+    mockDbManager.getMemoryById.mockResolvedValue(null);
+
+    const result = await provider.getMemory('does-not-exist');
+
+    expect(mockDbManager.getMemoryById).toHaveBeenCalledWith('does-not-exist');
+    expect(mockDbManager.getMemories).not.toHaveBeenCalled();
+    expect(result).toBeNull();
   });
 });

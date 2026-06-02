@@ -554,6 +554,10 @@ export class DatabaseManager {
     return this.memoryRepo.getMemories(options);
   }
 
+  async getMemoryById(id: string | number): Promise<MemoryRecord | null> {
+    return this.memoryRepo.getMemoryById(id);
+  }
+
   async deleteMemory(id: string | number): Promise<boolean> {
     return this.memoryRepo.deleteMemory(id);
   }
