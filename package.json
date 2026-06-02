@@ -344,7 +344,7 @@
       "follow-redirects": "^1.16.0",
       "smol-toml": "^1.6.1",
       "basic-ftp": "^5.3.0",
-      "ajv": "^8.18.0"
+      "ajv": "6.12.6"
     },
     "onlyBuiltDependencies": [
       "better-sqlite3"

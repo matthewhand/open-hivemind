@@ -1,10 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import { createLogger } from '../../common/StructuredLogger';
 import { getLlmProvider } from '../../llm/getLlmProvider';
 import { BotManager, type BotInstance, type CreateBotRequest } from '../../managers/BotManager';
-
-const logger = createLogger('BotRouteService');
 
 export interface ImportReport {
   created: string[];

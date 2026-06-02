@@ -5,22 +5,23 @@ import Debug from 'debug';
 import { injectable, singleton } from 'tsyringe';
 import databaseConfig from '@src/config/databaseConfig';
 import { ConfigurationError, DatabaseError } from '@src/types/errorClasses';
-import { PostgresWrapper } from './postgresWrapper';
-import { ActivityRepository, type ActivityLog } from './repositories/ActivityRepository';
+import { runMigrations } from './migrationRunner';
+import { PostgresWrapper, PostgresWrapper } from './postgresWrapper';
+import {
+  ActivityRepository,
+  ActivityRepository,
+  type ActivityLog,
+  type ActivityLog,
+} from './repositories/ActivityRepository';
 import { AIFeedbackRepository } from './repositories/AIFeedbackRepository';
 import { AnomalyRepository } from './repositories/AnomalyRepository';
 import { ApprovalRepository } from './repositories/ApprovalRepository';
 import { BotConfigRepository } from './repositories/BotConfigRepository';
 import { DecisionRepository } from './repositories/DecisionRepository';
-import { MessageRepository } from './repositories/MessageRepository';
-import { ActivityRepository, type ActivityLog } from './repositories/ActivityRepository';
 import { InferenceRepository, type InferenceLog } from './repositories/InferenceRepository';
 import { MemoryRepository } from './repositories/MemoryRepository';
-import { MessageRepository } from './repositories/MessageRepository';
-import { ActivitySchemas } from './schemas/ActivitySchemas';
+import { MessageRepository, MessageRepository } from './repositories/MessageRepository';
 import { SQLiteWrapper } from './sqliteWrapper';
-import { PostgresWrapper } from './postgresWrapper';
-import { runMigrations } from './migrationRunner';
 import type {
   Anomaly,
   ApprovalRequest,
@@ -658,11 +659,14 @@ export class DatabaseManager {
     try {
       // Find the cutoff ID using an index-optimized query
       // OFFSET is maxRows, meaning we want the ID of the (maxRows + 1)th newest row
-      const cutoffRow = await this.db.get(`SELECT id FROM ${tableName} ORDER BY id DESC LIMIT 1 OFFSET ?`, [maxRows]);
-      
+      const cutoffRow = await this.db.get(
+        `SELECT id FROM ${tableName} ORDER BY id DESC LIMIT 1 OFFSET ?`,
+        [maxRows]
+      );
+
       // If we have fewer rows than maxRows, or no rows, there's nothing to delete
       if (!cutoffRow || !cutoffRow.id) return 0;
-      
+
       // Execute a fast range deletion
       const result = await this.db.run(`DELETE FROM ${tableName} WHERE id <= ?`, [cutoffRow.id]);
       debug(`Cleaned up ${result.changes} rows from ${tableName} (by row count)`);

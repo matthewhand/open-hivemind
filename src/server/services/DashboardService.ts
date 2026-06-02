@@ -152,7 +152,7 @@ export class DashboardService {
     let bots: Array<{ name: string; messageProvider: string; llmProvider: string }> = [];
     try {
       bots = manager.getAllBots();
-    } catch (e) {
+    } catch {
       bots = [];
     }
 

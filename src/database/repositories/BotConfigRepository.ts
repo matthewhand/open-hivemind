@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import Debug from 'debug';
 import { encryptionService } from '../EncryptionService';
 import type {
