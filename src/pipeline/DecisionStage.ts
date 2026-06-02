@@ -109,7 +109,6 @@ export class DecisionStage {
       }
 
       const messageId = ctx.message.getMessageId();
-      const botId = (ctx.botConfig.BOT_ID as string) || (ctx.botConfig.botId as string) || '';
 
       // Record the inbound interaction for idle-response tracking. Mirrors the
       // legacy `replyDecision.ts` recording so idle response works in pipeline
@@ -127,8 +126,13 @@ export class DecisionStage {
       const botName = ctx.botName;
 
       // --- Swarm claim check: skip if another bot already claimed ---
+      // Compare against `botName`, the SAME identity key used when this stage
+      // claims the message below via `swarm.claimMessage(messageId, botName)`
+      // (SwarmCoordinator stores that value as the claim's `botId`). Using the
+      // config `BOT_ID` here instead would mismatch when `BOT_NAME !== BOT_ID`,
+      // causing a bot to fail to recognize its own claim and mis-deduplicate.
       const existingClaim = swarm.getClaim(messageId);
-      const alreadyClaimed = existingClaim !== undefined && existingClaim.botId !== botId;
+      const alreadyClaimed = existingClaim !== undefined && existingClaim.botId !== botName;
       if (alreadyClaimed) {
         const reason = existingClaim
           ? `Message already claimed by bot ${existingClaim.botId} in swarm`
@@ -172,7 +176,7 @@ export class DecisionStage {
       if (decision.shouldReply) {
         // Claim the message for this bot
         swarm.claimMessage(messageId, botName);
-        debug('[DecisionStage] Message %s: claimed by %s', messageId, botId);
+        debug('[DecisionStage] Message %s: claimed by %s', messageId, botName);
 
         // Broadcast decision to WebSocket for Live Orchestration Log
         this.bus.emit('pipeline:decision', {
