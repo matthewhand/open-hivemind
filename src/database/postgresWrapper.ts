@@ -1,27 +1,8 @@
 import Debug from 'debug';
-/**
- * Lazily resolve the `pg` module at runtime so that environments running the
- * default SQLite backend do not require `pg` to be installed. Postgres support
- * is opt-in (see `DATABASE_TYPE=postgres`); only consumers that actually
- * instantiate `PostgresWrapper` need the optional `pg` dependency present.
- */
-
-import type { Pool, PoolConfig } from 'pg';
+import { Pool, type PoolConfig } from 'pg';
 import { type IDatabase } from './types';
 
 const debug = Debug('app:PostgresWrapper');
-
-function loadPgPool(): typeof Pool {
-  try {
-    const pg = require('pg') as any;
-    return pg.Pool;
-  } catch (err) {
-    const message =
-      "The 'pg' module is required to use the Postgres database backend but is not installed. " +
-      'Install it with `npm install pg` (and `@types/pg` for TypeScript) or set DATABASE_TYPE=sqlite.';
-    throw new Error(message + ` Original error: ${(err as Error).message}`);
-  }
-}
 
 /**
  * Wrapper around pg providing an async/promise-based API
@@ -32,11 +13,10 @@ export class PostgresWrapper implements IDatabase {
 
   constructor(config: string | PoolConfig) {
     debug('POSTGRES_WRAPPER: constructor called');
-    const PoolCtor = loadPgPool();
     if (typeof config === 'string') {
-      this.pool = new PoolCtor({ connectionString: config });
+      this.pool = new Pool({ connectionString: config });
     } else {
-      this.pool = new PoolCtor(config);
+      this.pool = new Pool(config);
     }
   }
 
@@ -46,16 +26,13 @@ export class PostgresWrapper implements IDatabase {
     let inString = false;
     for (let i = 0; i < sql.length; i++) {
       const char = sql[i];
-      if (char === "'") {
-        inString = !inString;
-      }
+      if (char === "'") inString = !inString;
       if (char === '?' && !inString) {
         translated += '$' + index++;
       } else {
         translated += char;
       }
     }
-
     // SQLite specific "INSERT OR REPLACE" -> Postgres "INSERT ... ON CONFLICT"
     // This is a naive translation and might need specific handling per query
     // but for simple cases it might work.
@@ -65,10 +42,7 @@ export class PostgresWrapper implements IDatabase {
   }
 
   private mapRow(row: any): any {
-    if (!row) {
-      return row;
-    }
-
+    if (!row) return row;
     const mapped: any = {};
     for (const key of Object.keys(row)) {
       // Map known lowercase keys to camelCase
@@ -134,10 +108,11 @@ export class PostgresWrapper implements IDatabase {
 
   async run(
     sql: string,
-    params: unknown[] = []
+    params: any[] = []
   ): Promise<{ lastID: number | string; changes: number }> {
     const translatedSql = this.translateSql(sql);
-
+    // If it's an INSERT, we might want the ID back.
+    // Postgres requires RETURNING id.
     let finalSql = translatedSql;
     if (sql.trim().toUpperCase().startsWith('INSERT') && !sql.toUpperCase().includes('RETURNING')) {
       // Don't append RETURNING id for umzug_migrations as it doesn't have an id column
@@ -154,13 +129,13 @@ export class PostgresWrapper implements IDatabase {
     };
   }
 
-  async all<T = any>(sql: string, params: unknown[] = []): Promise<T[]> {
+  async all<T = any>(sql: string, params: any[] = []): Promise<T[]> {
     const translatedSql = this.translateSql(sql);
     const result = await this.pool.query(translatedSql, params);
     return result.rows.map((row) => this.mapRow(row)) as T[];
   }
 
-  async get<T = any>(sql: string, params: unknown[] = []): Promise<T | undefined> {
+  async get<T = any>(sql: string, params: any[] = []): Promise<T | undefined> {
     const translatedSql = this.translateSql(sql);
     const result = await this.pool.query(translatedSql, params);
     return this.mapRow(result.rows[0]) as T | undefined;

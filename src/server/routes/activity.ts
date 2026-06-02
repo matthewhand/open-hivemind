@@ -90,7 +90,6 @@ router.get(
 router.get(
   '/llm-usage',
   validateRequest(ActivityFilterSchema),
-
   asyncErrorHandler(async (req: Request, res: Response) => {
     const filter = { ...req.query } as any;
     if (filter.limit) filter.limit = parseInt(filter.limit as string, 10);
@@ -112,7 +111,6 @@ router.get(
 // GET /api/activity/summary - Get activity summary
 router.get(
   '/summary',
-
   validateRequest(ActivityFilterSchema),
   asyncErrorHandler(async (req: Request, res: Response) => {
     const { startDate, endDate } = req.query as any;
@@ -150,7 +148,6 @@ router.get(
     const {
       messageProvider,
       llmProvider,
-
       startDate,
       endDate,
       interval = 'hour',
@@ -208,7 +205,6 @@ router.get(
 );
 
 // GET /api/activity/agents - Get agent activity statistics
-
 router.get(
   '/agents',
   validateRequest(ActivityFilterSchema),
@@ -289,23 +285,16 @@ router.get(
 router.post(
   '/log',
   validateRequest(LogActivitySchema),
-
   asyncErrorHandler(async (req: Request, res: Response) => {
     const {
       agentId,
-
       messageProvider,
-
       llmProvider,
       messageType,
-      // eslint-disable-next-line unused-imports/no-unused-vars
       contentLength,
-      // eslint-disable-next-line unused-imports/no-unused-vars
       processingTime,
       status,
-      // eslint-disable-next-line unused-imports/no-unused-vars
       errorMessage,
-      // eslint-disable-next-line unused-imports/no-unused-vars
       mcpToolsUsed,
     } = req.body;
 
