@@ -1,3 +1,11 @@
+# Usage:
+#   docker compose up                     # baked production image (port 3028)
+#   docker compose --profile dev up       # ALSO starts hot-reload variant (port 3029)
+#
+# The dev variant bind-mounts ./src and ./packages into the container so tsx
+# (with Vite HMR) reloads on host file changes — no rebuild required when
+# editing source. Use port 3029 to avoid colliding with the prod container.
+
 services:
   redis:
     image: redis:7-alpine
@@ -48,6 +56,50 @@ services:
     volumes:
       - ./config:/app/config
       - ./logs:/app/logs
+
+  # Hot-reload variant — only starts with `docker compose --profile dev up`.
+  # Bind-mounts ./src + ./packages so tsx/Vite picks up edits without rebuild.
+  # Runs on port 3029 so it can coexist with the baked `hivemind` container on 3028.
+  hivemind-dev:
+    profiles: ["dev"]
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - '3029:3028'
+    environment:
+      - NODE_ENV=development
+      - REDIS_URL=redis://redis:6379
+      - HTTP_ALLOW_ALL_IPS=true
+      - ALLOW_LOCALHOST_ADMIN=true
+      - FORCE_TRUSTED_LOGIN=true
+      - PORT=3028
+      - SESSION_SECRET=dev-session-secret-for-testing
+      - JWT_SECRET=dev-jwt-secret-for-testing
+      - JWT_REFRESH_SECRET=dev-jwt-refresh-secret-for-testing
+      - ALLOW_TEST_BYPASS=true
+      - AUTH_ENABLED=true
+    env_file:
+      - .env
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3028/health']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    volumes:
+      # Bind-mount source so tsx + Vite HMR reload on host file changes.
+      - ./src:/app/src
+      - ./packages:/app/packages
+      - ./config:/app/config
+      - ./logs:/app/logs
+      - ./data:/app/data
+      # Anonymous volume — keep container's installed node_modules (host has none).
+      - /app/node_modules
 
   prometheus:
     image: prom/prometheus:latest
