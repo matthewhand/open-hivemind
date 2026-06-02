@@ -54,7 +54,12 @@ router.post(
   validate(LoginSchema),
   asyncErrorHandler(async (req, res) => {
     try {
-      const credentials: LoginCredentials = req.body;
+      const credentials: LoginCredentials = {
+        ...req.body,
+        // Scope account-lockout tracking to the requesting IP so an abusive
+        // source cannot lock out a legitimate user logging in elsewhere.
+        ipAddress: req.ip,
+      };
       const authResult = await authManager.login(credentials);
       return res.json(ApiResponse.success(authResult));
     } catch (error: unknown) {
