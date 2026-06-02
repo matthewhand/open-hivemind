@@ -22,9 +22,19 @@ import { container } from 'tsyringe';
 import { type MessageBus } from '@src/events/MessageBus';
 import type { MessageContext, ReplyDecision } from '@src/events/types';
 import { SwarmCoordinator } from '@src/services/SwarmCoordinator';
+import { type ActivityRecorder, DefaultActivityRecorder } from './ActivityRecorder';
 import { PipelineDebuggerService } from '../server/services/PipelineDebuggerService';
 
 const debug = Debug('app:pipeline:decision');
+
+/**
+ * Resolve the idle-response service name from the message context. Mirrors the
+ * legacy `replyDecision.ts` / `outputProcessor.ts` resolution of
+ * `MESSAGE_PROVIDER`, falling back to the platform identifier.
+ */
+function resolveServiceName(ctx: MessageContext): string {
+  return String(ctx.botConfig.MESSAGE_PROVIDER || ctx.platform || 'generic');
+}
 
 // ---------------------------------------------------------------------------
 // Strategy interface
@@ -56,7 +66,8 @@ export interface DecisionStrategy {
 export class DecisionStage {
   constructor(
     private bus: MessageBus,
-    private strategy: DecisionStrategy
+    private strategy: DecisionStrategy,
+    private recorder: ActivityRecorder = new DefaultActivityRecorder()
   ) {}
 
   /**
@@ -99,6 +110,18 @@ export class DecisionStage {
 
       const messageId = ctx.message.getMessageId();
       const botId = (ctx.botConfig.BOT_ID as string) || (ctx.botConfig.botId as string) || '';
+
+      // Record the inbound interaction for idle-response tracking. Mirrors the
+      // legacy `replyDecision.ts` recording so idle response works in pipeline
+      // mode. Only human messages count (skip bot-authored messages).
+      try {
+        if (!ctx.message.isFromBot()) {
+          this.recorder.recordInteraction(resolveServiceName(ctx), ctx.channelId, messageId);
+        }
+      } catch (recordErr) {
+        debug('Failed to record interaction (non-fatal): %O', recordErr);
+      }
+
       const swarm = SwarmCoordinator.getInstance();
       const channelId = ctx.channelId;
       const botName = ctx.botName;

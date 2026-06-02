@@ -25,6 +25,7 @@ import {
   MessageSenderAdapter,
   PromptBuilderAdapter,
 } from '@src/pipeline/adapters';
+import { DefaultActivityRecorder } from '@src/pipeline/ActivityRecorder';
 import { DecisionStage } from '@src/pipeline/DecisionStage';
 import { EnrichStage } from '@src/pipeline/EnrichStage';
 import { InferenceStage } from '@src/pipeline/InferenceStage';
@@ -106,7 +107,9 @@ export function createPipeline(bus: MessageBus, deps: PipelineDependencies): boo
   const send = new SendStage(
     bus,
     new MessageSenderAdapter({ messengerService: deps.messengerService }),
-    new MemoryStorerAdapter()
+    new MemoryStorerAdapter(),
+    new DefaultActivityRecorder(),
+    deps.botId
   );
 
   receive.register();
