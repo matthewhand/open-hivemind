@@ -1,3 +1,4 @@
+import jwt from 'jsonwebtoken';
 import { AuthManager } from '../../src/auth/AuthManager';
 import { User, UserRole } from '../../src/auth/types';
 
@@ -187,6 +188,18 @@ describe('AuthManager', () => {
       expect(() => {
         authManager.verifyAccessToken('invalid-token');
       }).toThrow('Invalid access token');
+    });
+
+    it('should throw "Invalid access token" when jwt.verify fails', () => {
+      const spy = jest.spyOn(jwt, 'verify').mockImplementationOnce(() => {
+        throw new Error('JWT failure');
+      });
+
+      expect(() => {
+        authManager.verifyAccessToken('any-token');
+      }).toThrow('Invalid access token');
+
+      spy.mockRestore();
     });
 
     it('should refresh access token with valid refresh token', async () => {
