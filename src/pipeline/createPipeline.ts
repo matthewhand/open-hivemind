@@ -58,13 +58,37 @@ export interface PipelineDependencies {
 // ---------------------------------------------------------------------------
 
 /**
+ * Tracks which {@link MessageBus} instances already have a pipeline wired.
+ *
+ * The pipeline stages subscribe to shared, bus-wide events (`message:incoming`,
+ * `message:validated`, …) that carry no per-service identity. Registering them
+ * again on the same bus — e.g. once per messenger service — would add duplicate
+ * listeners and cause every message to be processed N times (and sent N times).
+ *
+ * A {@link WeakSet} lets registered buses be garbage-collected (and re-registered
+ * after a `bus.reset()` returns a brand-new instance).
+ */
+const registeredBuses = new WeakSet<MessageBus>();
+
+/**
  * Create and register the full 5-stage message pipeline on the given
  * {@link MessageBus}.
  *
  * After calling this function, emitting a `message:incoming` event on
  * the bus will drive the message through all stages automatically.
+ *
+ * Registration is **idempotent per bus instance**: calling this multiple times
+ * with the same bus (for example, once per messenger service) wires the stages
+ * exactly once. Subsequent calls are no-ops and return `false`.
+ *
+ * @returns `true` if the pipeline was registered, `false` if the bus already had one.
  */
-export function createPipeline(bus: MessageBus, deps: PipelineDependencies): void {
+export function createPipeline(bus: MessageBus, deps: PipelineDependencies): boolean {
+  if (registeredBuses.has(bus)) {
+    return false;
+  }
+  registeredBuses.add(bus);
+
   const receive = new ReceiveStage(bus);
 
   const decision = new DecisionStage(
@@ -96,4 +120,6 @@ export function createPipeline(bus: MessageBus, deps: PipelineDependencies): voi
   const tracer = new PipelineTracer(bus);
   tracer.register();
   setActiveTracer(tracer);
+
+  return true;
 }
