@@ -5,6 +5,18 @@ export const LoginSchema = z.object({
   body: z.object({
     username: z.string().min(1, { message: 'Username is required' }),
     password: z.string().min(1, { message: 'Password is required' }),
+    // Optional TOTP code, only supplied when the account has 2FA enabled.
+    totpCode: z
+      .string()
+      .regex(/^\d{6,8}$/, { message: 'Two-factor code must be 6-8 digits' })
+      .optional(),
+  }),
+});
+
+// Schema for confirming/verifying a TOTP code (enrollment confirmation).
+export const TwoFactorCodeSchema = z.object({
+  body: z.object({
+    code: z.string().regex(/^\d{6,8}$/, { message: 'Two-factor code must be 6-8 digits' }),
   }),
 });
 

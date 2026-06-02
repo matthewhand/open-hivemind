@@ -2,6 +2,7 @@ import Debug from 'debug';
 import { Router, type NextFunction, type Request, type Response } from 'express';
 import { AuthManager } from '../../auth/AuthManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
+import { verifyToken as verifyTotpToken } from '../../auth/TotpService';
 import type { AuthMiddlewareRequest, LoginCredentials, RegisterData } from '../../auth/types';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { apiRateLimiter, authRateLimiter } from '../../middleware/rateLimiters';
@@ -15,6 +16,7 @@ import {
   LogoutSchema,
   RefreshTokenSchema,
   RegisterSchema,
+  TwoFactorCodeSchema,
   UpdateProfileSchema,
   UpdateUserSchema,
   UserIdParamSchema,
@@ -528,4 +530,132 @@ router.get('/permissions', authenticate, (req: Request, res: Response) => {
     })
   );
 });
+
+/**
+ * @openapi
+ * /webui/api/auth/2fa/status:
+ *   get:
+ *     summary: Get current user's two-factor authentication status
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/2fa/status', authenticate, (req: Request, res: Response) => {
+  const authReq = req as AuthMiddlewareRequest;
+  if (!authReq.user) {
+    return res.status(HTTP_STATUS.UNAUTHORIZED).json(ApiResponse.error('Not authenticated'));
+  }
+  const enabled = authManager.isTwoFactorEnabled(authReq.user.id);
+  return res.json(ApiResponse.success({ enabled }));
+});
+
+/**
+ * @openapi
+ * /webui/api/auth/2fa/enroll:
+ *   post:
+ *     summary: Begin TOTP enrollment, returning a secret and otpauth URI
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Enrollment started; scan the otpauth URI then confirm.
+ */
+router.post('/2fa/enroll', authenticate, (req: Request, res: Response) => {
+  const authReq = req as AuthMiddlewareRequest;
+  if (!authReq.user) {
+    return res.status(HTTP_STATUS.UNAUTHORIZED).json(ApiResponse.error('Not authenticated'));
+  }
+  const enrollment = authManager.startTwoFactorEnrollment(authReq.user.id);
+  if (!enrollment) {
+    return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('User not found'));
+  }
+  return res.json(
+    ApiResponse.success({ secret: enrollment.secret, otpauthUri: enrollment.otpauthUri })
+  );
+});
+
+/**
+ * @openapi
+ * /webui/api/auth/2fa/confirm:
+ *   post:
+ *     summary: Confirm TOTP enrollment with a code and activate 2FA
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               code: { type: string }
+ *             required: [code]
+ */
+router.post(
+  '/2fa/confirm',
+  authenticate,
+  validate(TwoFactorCodeSchema),
+  (req: Request, res: Response) => {
+    const authReq = req as AuthMiddlewareRequest;
+    if (!authReq.user) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json(ApiResponse.error('Not authenticated'));
+    }
+    const { code } = req.body;
+    const ok = authManager.confirmTwoFactorEnrollment(authReq.user.id, code);
+    if (!ok) {
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json(ApiResponse.error('Invalid or expired two-factor code', undefined, 400));
+    }
+    return res.json(ApiResponse.success({ enabled: true }));
+  }
+);
+
+/**
+ * @openapi
+ * /webui/api/auth/2fa/disable:
+ *   post:
+ *     summary: Disable two-factor authentication for the current user
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               code: { type: string }
+ *             required: [code]
+ */
+router.post(
+  '/2fa/disable',
+  authenticate,
+  validate(TwoFactorCodeSchema),
+  (req: Request, res: Response) => {
+    const authReq = req as AuthMiddlewareRequest;
+    if (!authReq.user) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json(ApiResponse.error('Not authenticated'));
+    }
+    // Require a valid current TOTP code to disable, so a stolen session cannot
+    // silently strip the second factor.
+    if (!authManager.isTwoFactorEnabled(authReq.user.id)) {
+      return res.json(ApiResponse.success({ enabled: false }));
+    }
+    const userWithSecret = authManager.getUserWithHash(authReq.user.id);
+    const { code } = req.body;
+    const secret = userWithSecret?.twoFactorSecret;
+    if (!secret || !verifyTotpToken(code, secret)) {
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json(ApiResponse.error('Invalid two-factor code', undefined, 400));
+    }
+    authManager.disableTwoFactor(authReq.user.id);
+    return res.json(ApiResponse.success({ enabled: false }));
+  }
+);
+
 export default router;
