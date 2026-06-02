@@ -351,6 +351,39 @@ router.post(
 
 /**
  * @openapi
+ * /api/bots/{id}/toggle:
+ *   post:
+ *     summary: Toggle a bot's active state (start if stopped, stop if running)
+ *     tags: [Bots]
+ */
+router.post(
+  '/:id/toggle',
+  validateRequest(BotIdParamSchema),
+  asyncErrorHandler(async (req: Request, res: Response) => {
+    const manager = await managerPromise;
+    const { id } = req.params;
+
+    const bot = await manager.getBot(id);
+    if (!bot) {
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
+    }
+
+    // Flip the bot's active state, reusing the existing start/stop logic.
+    if (bot.isActive) {
+      await manager.stopBot(id);
+    } else {
+      await manager.startBot(id);
+    }
+
+    const isActive = !bot.isActive;
+    return res.json(ApiResponse.success({ id, isActive, status: isActive ? 'active' : 'disabled' }));
+  })
+);
+
+/**
+ * @openapi
  * /api/bots/{id}/history:
  *   get:
  *     summary: Get chat history

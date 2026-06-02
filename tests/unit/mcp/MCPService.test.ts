@@ -26,22 +26,6 @@ const ClientCtor = jest.fn().mockImplementation(() => ({
 const StreamableHTTPCtor = jest.fn().mockImplementation((url: URL) => ({ __kind: 'http', url }));
 const StdioCtor = jest.fn().mockImplementation((opts: unknown) => ({ __kind: 'stdio', opts }));
 
-jest.mock(
-  '@modelcontextprotocol/sdk/client/index.js',
-  () => ({ Client: ClientCtor }),
-  { virtual: true }
-);
-jest.mock(
-  '@modelcontextprotocol/sdk/client/streamableHttp.js',
-  () => ({ StreamableHTTPClientTransport: StreamableHTTPCtor }),
-  { virtual: true }
-);
-jest.mock(
-  '@modelcontextprotocol/sdk/client/stdio.js',
-  () => ({ StdioClientTransport: StdioCtor }),
-  { virtual: true }
-);
-
 import { MCPService } from '../../../src/mcp/MCPService';
 
 describe('MCPService SDK client construction', () => {
@@ -49,6 +33,18 @@ describe('MCPService SDK client construction', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // The SDK is ESM-only with no CJS root export, so module-level mocking of
+    // the dynamic import() calls is unreliable in jest. Instead we stub the
+    // `loadSdk` seam on MCPService, which is the single place the SDK entry
+    // points are imported. This keeps the regression intent (Client constructs
+    // + connects via the right transport) without ESM module mocking.
+    jest
+      .spyOn(MCPService.prototype as unknown as { loadSdk: () => Promise<unknown> }, 'loadSdk')
+      .mockResolvedValue({
+        Client: ClientCtor,
+        StreamableHTTPClientTransport: StreamableHTTPCtor,
+        StdioClientTransport: StdioCtor,
+      });
     // Fresh singleton each test so connect/disconnect state does not leak.
     // @ts-expect-error - resetting private singleton for isolation
     MCPService.instance = undefined;
