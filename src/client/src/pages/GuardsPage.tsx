@@ -414,8 +414,14 @@ const GuardsPage: React.FC = () => {
                       }
                       type="number"
                       value={editingProfile.guards.rateLimit?.maxRequests || 100}
-                      onChange={e => updateGuard('rateLimit', { maxRequests: parseInt(e.target.value) })}
+                      onChange={e => {
+                        const maxReq = Math.max(1, parseInt(e.target.value) || 1);
+                        updateGuard('rateLimit', { maxRequests: maxReq });
+                      }}
                       disabled={!editingProfile.guards.rateLimit?.enabled}
+                      min={1}
+                      placeholder="100"
+                      helperText="Requests allowed per window"
                       aria-label="Max Requests"
                     />
                   </div>
