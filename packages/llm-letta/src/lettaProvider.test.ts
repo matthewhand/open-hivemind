@@ -277,8 +277,30 @@ describe('LettaProvider per-bot config isolation', () => {
 });
 
 describe('LettaProvider.generateCompletion', () => {
-  it('throws unsupported error', async () => {
+  it('maps a non-chat completion onto a single-turn chat completion', async () => {
+    mockCreate.mockResolvedValue({
+      messages: [{ role: 'assistant', content: 'completion reply' }],
+    });
+    const provider = LettaProvider.getInstance({ agentId: 'agent-123' });
+
+    const result = await provider.generateCompletion('a single-turn prompt');
+
+    expect(result).toBe('completion reply');
+    // Prompt is forwarded as the user input with no history, via the default
+    // (stateful agent) chat path.
+    expect(mockCreate).toHaveBeenCalledWith('agent-123', { input: 'a single-turn prompt' });
+  });
+
+  it('propagates the missing-agent error from the underlying chat path', async () => {
+    delete process.env.LETTA_AGENT_ID;
     const provider = LettaProvider.getInstance();
-    await expect(provider.generateCompletion('prompt')).rejects.toThrow();
+    await expect(provider.generateCompletion('prompt')).rejects.toThrow('No agent ID');
+  });
+
+  it('still reports native non-chat completion as unsupported', () => {
+    const provider = LettaProvider.getInstance();
+    // Letta has no dedicated completion endpoint; the flag must stay false so
+    // callers prefer the chat path (and only fall back to the mapping).
+    expect(provider.supportsCompletion()).toBe(false);
   });
 });
