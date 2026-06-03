@@ -5,22 +5,24 @@ import Debug from 'debug';
 import { injectable, singleton } from 'tsyringe';
 import databaseConfig from '@src/config/databaseConfig';
 import { ConfigurationError, DatabaseError } from '@src/types/errorClasses';
+import { runMigrations } from './migrationRunner';
 import { PostgresWrapper } from './postgresWrapper';
 import { ActivityRepository, type ActivityLog } from './repositories/ActivityRepository';
 import { AIFeedbackRepository } from './repositories/AIFeedbackRepository';
 import { AnomalyRepository } from './repositories/AnomalyRepository';
 import { ApprovalRepository } from './repositories/ApprovalRepository';
+import {
+  AuditEventRepository,
+  type AuditEventQuery,
+  type AuditEventRecord,
+  type AuditEventStats,
+} from './repositories/AuditEventRepository';
 import { BotConfigRepository } from './repositories/BotConfigRepository';
 import { DecisionRepository } from './repositories/DecisionRepository';
-import { MessageRepository } from './repositories/MessageRepository';
-import { ActivityRepository, type ActivityLog } from './repositories/ActivityRepository';
-import { InferenceRepository, type InferenceLog } from './repositories/InferenceRepository';
+import { InferenceRepository } from './repositories/InferenceRepository';
 import { MemoryRepository } from './repositories/MemoryRepository';
 import { MessageRepository } from './repositories/MessageRepository';
-import { ActivitySchemas } from './schemas/ActivitySchemas';
 import { SQLiteWrapper } from './sqliteWrapper';
-import { PostgresWrapper } from './postgresWrapper';
-import { runMigrations } from './migrationRunner';
 import type {
   Anomaly,
   ApprovalRequest,
@@ -68,6 +70,12 @@ export type {
   IDatabase,
 } from './types';
 
+export type {
+  AuditEventRecord,
+  AuditEventQuery,
+  AuditEventStats,
+} from './repositories/AuditEventRepository';
+
 export type { Database } from './sqliteWrapper';
 
 const debug = Debug('app:DatabaseManager');
@@ -86,6 +94,7 @@ export class DatabaseManager {
   private botConfigRepo!: BotConfigRepository;
   private anomalyRepo!: AnomalyRepository;
   private approvalRepo!: ApprovalRepository;
+  private auditEventRepo!: AuditEventRepository;
   private aiFeedbackRepo!: AIFeedbackRepository;
   private decisionRepo!: DecisionRepository;
   private activityRepo!: ActivityRepository;
@@ -253,6 +262,7 @@ export class DatabaseManager {
     this.botConfigRepo = new BotConfigRepository(getDb, ensure);
     this.anomalyRepo = new AnomalyRepository(getDb, isConn);
     this.approvalRepo = new ApprovalRepository(getDb, ensure);
+    this.auditEventRepo = new AuditEventRepository(getDb, isConn);
     this.aiFeedbackRepo = new AIFeedbackRepository(getDb, ensure);
     this.decisionRepo = new DecisionRepository(getDb, isConn);
     this.activityRepo = new ActivityRepository(getDb, isConn);
@@ -382,6 +392,10 @@ export class DatabaseManager {
     return this.botConfigRepo.createBotConfigurationVersion(version);
   }
 
+  async createBotConfigurationVersionsBulk(versions: BotConfigurationVersion[]): Promise<number[]> {
+    return this.botConfigRepo.createBotConfigurationVersionsBulk(versions);
+  }
+
   async getBotConfigurationVersions(
     botConfigurationId: number
   ): Promise<BotConfigurationVersion[]> {
@@ -466,6 +480,26 @@ export class DatabaseManager {
 
   async deleteApprovalRequest(id: number): Promise<boolean> {
     return this.approvalRepo.deleteApprovalRequest(id);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Audit event operations -- delegated to AuditEventRepository
+  // ---------------------------------------------------------------------------
+
+  async insertAuditEvent(event: AuditEventRecord): Promise<boolean> {
+    return this.auditEventRepo.insert(event);
+  }
+
+  async queryAuditEvents(filters?: AuditEventQuery): Promise<AuditEventRecord[]> {
+    return this.auditEventRepo.query(filters);
+  }
+
+  async getRecentAuditEvents(limit = 100): Promise<AuditEventRecord[]> {
+    return this.auditEventRepo.getRecent(limit);
+  }
+
+  async getAuditEventStats(startTime?: string, endTime?: string): Promise<AuditEventStats> {
+    return this.auditEventRepo.getStats(startTime, endTime);
   }
 
   // ---------------------------------------------------------------------------
@@ -554,12 +588,33 @@ export class DatabaseManager {
     return this.memoryRepo.getMemories(options);
   }
 
+  async getMemoryById(id: string | number): Promise<MemoryRecord | null> {
+    return this.memoryRepo.getMemoryById(id);
+  }
+
   async deleteMemory(id: string | number): Promise<boolean> {
     return this.memoryRepo.deleteMemory(id);
   }
 
   async deleteAllMemories(options: { userId?: string; agentId?: string } = {}): Promise<void> {
     return this.memoryRepo.deleteAll(options);
+  }
+
+  /**
+   * Evict (prune) stored memories based on a TTL and/or max-count policy.
+   * Opt-in and safe: a no-op when no positive policy is supplied.
+   *
+   * @returns The number of memory rows deleted.
+   */
+  async evictMemories(
+    options: {
+      olderThanDays?: number;
+      maxCount?: number;
+      userId?: string;
+      agentId?: string;
+    } = {}
+  ): Promise<number> {
+    return this.memoryRepo.evictMemories(options);
   }
 
   /**
@@ -658,11 +713,14 @@ export class DatabaseManager {
     try {
       // Find the cutoff ID using an index-optimized query
       // OFFSET is maxRows, meaning we want the ID of the (maxRows + 1)th newest row
-      const cutoffRow = await this.db.get(`SELECT id FROM ${tableName} ORDER BY id DESC LIMIT 1 OFFSET ?`, [maxRows]);
-      
+      const cutoffRow = await this.db.get(
+        `SELECT id FROM ${tableName} ORDER BY id DESC LIMIT 1 OFFSET ?`,
+        [maxRows]
+      );
+
       // If we have fewer rows than maxRows, or no rows, there's nothing to delete
       if (!cutoffRow || !cutoffRow.id) return 0;
-      
+
       // Execute a fast range deletion
       const result = await this.db.run(`DELETE FROM ${tableName} WHERE id <= ?`, [cutoffRow.id]);
       debug(`Cleaned up ${result.changes} rows from ${tableName} (by row count)`);
@@ -726,5 +784,35 @@ export class DatabaseManager {
         debug(`Failed to cleanup table ${table.name}:`, e);
       }
     }
+
+    // Dedicated, opt-in memory retention pass. Runs only when an explicit
+    // memory policy is configured (both default to 0 = disabled), so default
+    // behaviour is unchanged.
+    try {
+      await this.runMemoryEviction();
+    } catch (e) {
+      console.error('Failed to run memory eviction:', e);
+      debug('Failed to run memory eviction:', e);
+    }
+  }
+
+  /**
+   * Apply the configured memory retention policy (TTL + max-count).
+   *
+   * Controlled by `MEMORY_RETENTION_DAYS` and `MEMORY_MAX_ENTRIES`. Both
+   * default to 0 (disabled), making this a no-op unless explicitly enabled.
+   *
+   * @returns The number of memory rows deleted.
+   */
+  async runMemoryEviction(): Promise<number> {
+    const olderThanDays = Number(databaseConfig.get('MEMORY_RETENTION_DAYS')) || 0;
+    const maxCount = Number(databaseConfig.get('MEMORY_MAX_ENTRIES')) || 0;
+
+    if (olderThanDays <= 0 && maxCount <= 0) {
+      return 0;
+    }
+
+    debug(`Running memory eviction: retentionDays=${olderThanDays}, maxEntries=${maxCount}`);
+    return this.evictMemories({ olderThanDays, maxCount });
   }
 }

@@ -1,9 +1,3 @@
-// TODO(lint-hygiene): the dynamic shapes returned by `apiService.{get,post}`
-// in this wizard (personas, llmProfiles, guardProfiles, AI generation result)
-// are not strongly typed yet. Pre-existing technical debt — disabling
-// `no-explicit-any` here so the file passes `--max-warnings 0` while the
-// types are tightened in a follow-up PR.
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useMemo } from 'react';
 import { User, Check, AlertCircle, Wand2, Sparkles, Send, MessageSquare } from 'lucide-react';
 import Button from '../DaisyUI/Button';
@@ -25,12 +19,76 @@ import Mockup from '../DaisyUI/Mockup';
 import LlmTestChat from '../LlmTestChat';
 const debug = Debug('app:client:components:BotManagement:CreateBotWizard');
 
+/**
+ * Minimal shapes of the dynamic data this wizard consumes from `apiService`.
+ * These intentionally describe only the fields the wizard reads, so the
+ * component is decoupled from the full backend payloads while still being
+ * type-checked instead of relying on `any`.
+ */
+interface WizardPersona {
+    id: string;
+    name: string;
+    description?: string;
+}
+
+interface WizardLlmProfile {
+    id: string;
+    name: string;
+    provider?: string;
+    key?: string;
+}
+
+interface WizardGuardProfile {
+    id: string;
+    name: string;
+}
+
+interface AiGeneratedConfig {
+    name?: string;
+    personaName?: string;
+    systemInstruction?: string;
+    suggestedMcpTools?: string[];
+}
+
+/** Common `{ success, data }` envelope returned by several admin/config endpoints. */
+interface ApiEnvelope<T> {
+    success?: boolean;
+    data?: T;
+}
+
+/** Response shape of `GET /api/config/llm-profiles` (several historical shapes supported). */
+interface LlmProfilesResponse {
+    llm?: WizardLlmProfile[];
+    profiles?: { llm?: WizardLlmProfile[] };
+    data?: WizardLlmProfile[];
+}
+
+/** Response shape of `GET /api/config/llm-status`. */
+interface LlmStatusResponse {
+    defaultConfigured?: boolean;
+}
+
+interface BotSubmitPayload {
+    name: string;
+    description: string;
+    messageProvider: string;
+    llmProvider?: string;
+    persona: string;
+    mcpGuardProfile: string;
+    maxTokensPerDay?: number;
+    config: {
+        mcpGuard: { enabled: boolean };
+        rateLimit: { enabled: boolean };
+        contentFilter: { enabled: boolean };
+    };
+}
+
 interface CreateBotWizardProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit?: (data: any) => void;
-    personas?: any[];
-    llmProfiles?: any[];
+    onSubmit?: (data: BotSubmitPayload) => void | Promise<void>;
+    personas?: WizardPersona[];
+    llmProfiles?: WizardLlmProfile[];
     defaultLlmConfigured?: boolean;
 }
 
@@ -46,9 +104,9 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [guardProfiles, setGuardProfiles] = useState<any[]>([]);
-    const [fetchedPersonas, setFetchedPersonas] = useState<any[]>([]);
-    const [fetchedLlmProfiles, setFetchedLlmProfiles] = useState<any[]>([]);
+    const [guardProfiles, setGuardProfiles] = useState<WizardGuardProfile[]>([]);
+    const [fetchedPersonas, setFetchedPersonas] = useState<WizardPersona[]>([]);
+    const [fetchedLlmProfiles, setFetchedLlmProfiles] = useState<WizardLlmProfile[]>([]);
     const [fetchedDefaultLlmConfigured, setFetchedDefaultLlmConfigured] = useState(true);
 
     const personas = propsPersonas ?? fetchedPersonas;
@@ -62,6 +120,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
         llmProvider: '',
         persona: 'default',
         mcpGuardProfile: '',
+        maxTokensPerDay: 0,
         guards: {
             accessControl: false,
             rateLimit: false,
@@ -76,7 +135,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
     const [isAiModalOpen, setIsAiModalOpen] = useState(false);
     const [aiDescription, setAiDescription] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
-    const [aiGeneratedResult, setAiGeneratedResult] = useState<any>(null);
+    const [aiGeneratedResult, setAiGeneratedResult] = useState<AiGeneratedConfig | null>(null);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
     const handleAiGenerate = async () => {
@@ -84,8 +143,8 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
         setIsGenerating(true);
         setAiGeneratedResult(null);
         try {
-            const result: any = await apiService.post('/api/bots/generate-config', { 
-                description: aiDescription 
+            const result: ApiEnvelope<AiGeneratedConfig> = await apiService.post('/api/bots/generate-config', {
+                description: aiDescription
             });
             if (result.success && result.data) {
                 setAiGeneratedResult(result.data);
@@ -124,7 +183,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
     useEffect(() => {
         const fetchGuardProfiles = async () => {
             try {
-                const data: any = await apiService.get('/api/admin/guard-profiles');
+                const data: ApiEnvelope<WizardGuardProfile[]> = await apiService.get('/api/admin/guard-profiles');
                 setGuardProfiles(Array.isArray(data.data) ? data.data : []);
             } catch (e) {
                 debug('ERROR:', 'Failed to fetch guard profiles', e);
@@ -136,7 +195,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
         if (!propsPersonas) {
             const fetchPersonas = async () => {
                 try {
-                    const data: any = await apiService.getPersonas();
+                    const data = await apiService.getPersonas();
                     setFetchedPersonas(Array.isArray(data) ? data : []);
                 } catch (e) {
                     debug('ERROR:', 'Failed to fetch personas', e);
@@ -149,7 +208,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
         if (!propsLlmProfiles) {
             const fetchLlmProfiles = async () => {
                 try {
-                    const data: any = await apiService.getLlmProfiles();
+                    const data = await apiService.getLlmProfiles() as LlmProfilesResponse;
                     setFetchedLlmProfiles(data?.llm || data?.profiles?.llm || data?.data || []);
                 } catch (e) {
                     debug('ERROR:', 'Failed to fetch LLM profiles', e);
@@ -162,7 +221,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
         if (propsDefaultLlmConfigured === undefined) {
             const fetchLlmStatus = async () => {
                 try {
-                    const data: any = await apiService.get('/api/config/llm-status');
+                    const data: LlmStatusResponse = await apiService.get('/api/config/llm-status');
                     setFetchedDefaultLlmConfigured(data?.defaultConfigured ?? true);
                 } catch (e) {
                     debug('ERROR:', 'Failed to fetch LLM status', e);
@@ -216,7 +275,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
         setLoading(true);
         setError(null);
         try {
-            const payload = {
+            const payload: BotSubmitPayload = {
                 name: formData.name,
                 description: formData.description,
                 messageProvider: formData.messageProvider,
@@ -449,7 +508,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                         <Select
                             className="select-bordered"
                             value={formData.mcpGuardProfile || ''}
-                            onChange={e => setFormData({ ...formData, mcpGuardProfile: e.target.value || null })}
+                            onChange={e => setFormData({ ...formData, mcpGuardProfile: e.target.value })}
                         >
                             <option value="">No Profile (Use Manual Config)</option>
                             {guardProfiles.map(p => (

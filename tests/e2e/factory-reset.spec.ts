@@ -7,15 +7,15 @@ test.describe('Factory Reset E2E', () => {
   test('Should perform a full factory reset through the UI', async ({ page }) => {
     // Set a large viewport to ensure all tabs are visible
     await page.setViewportSize({ width: 1920, height: 1080 });
-    
+
     console.log('🚀 Starting ultra-robust Factory Reset E2E');
-    
+
     // 1. Setup Auth and Error collection
     await setupTestWithErrorDetection(page);
 
     // 2. Navigate to System Management
     await page.goto('/admin/system-management', { waitUntil: 'networkidle' });
-    
+
     // 3. Wait for hydration
     await page.waitForTimeout(10000);
     console.log('✅ Page loaded, current URL:', page.url());
@@ -23,7 +23,10 @@ test.describe('Factory Reset E2E', () => {
     // 4. Click Maintenance Tab
     // Try multiple ways to find the tab
     console.log('Searching for Maintenance tab...');
-    const maintenanceBtn = page.locator('button.tab, .tab').filter({ hasText: /Maintenance/i }).first();
+    const maintenanceBtn = page
+      .locator('button.tab, .tab')
+      .filter({ hasText: /Maintenance/i })
+      .first();
     await expect(maintenanceBtn).toBeVisible({ timeout: 30000 });
     await maintenanceBtn.click({ force: true });
     console.log('✅ Clicked Maintenance tab');
@@ -35,7 +38,7 @@ test.describe('Factory Reset E2E', () => {
     // 6. Type confirmation phrase
     const confirmInput = page.getByPlaceholder(/type the confirmation phrase/i);
     await confirmInput.fill('confirm-factory-reset');
-    
+
     // 7. Click Reset
     const resetBtn = page.getByRole('button', { name: /perform factory reset/i });
     await resetBtn.click({ force: true });
