@@ -99,3 +99,17 @@ When adding or renaming a screenshot, update both READMEs accordingly.
 - The same filename **will** exist in both `docs/` and `archive/` — that is intentional (current vs previous version).
 - Root `*.png` files are gitignored; delete them after use.
 - Screenshots in any other location (`docs/images/`, `.jules/`, repo root, `src/`) should not be committed.
+
+### Reviewing screenshots
+
+When asked to review a screenshot — whether new, updated, or as part of a periodic audit — **do not stop at "does the image match the README caption."** The README caption is the *intended* demonstration; the image may match the caption while still revealing real UI defects. Always do **two passes**:
+
+1. **Caption-match pass.** Confirm the image shows the feature/state the README describes.
+2. **Defect pass.** Scrutinise the image itself for issues. Specifically check:
+   - **Internal contradictions on the same page** (e.g. a service marked `Down` in one card while another card on the same page reports "all systems operational").
+   - **Uninitialised / empty-state KPIs in screenshots that are supposed to demonstrate a feature** (a tracing waterfall surrounded by `0 bots / 0ms / status: unknown` undercuts the screenshot's point).
+   - **Visual rendering bugs** (radial-progress rings invisible against the theme, sidebar overlapping the title, truncated text where the page should clearly fit).
+   - **Sloppy demo fixtures** (chat timestamps out of chronological order, stats that don't add up, dates in the future, lorem ipsum where real-looking content is expected).
+   - **Layout drift between screenshots** (different sidebars, theme inconsistency where parity is expected) — flag for re-shoot if you can't tell whether it's intentional.
+
+Report findings as a table per batch: `file | README claim | match? | defects found`. Don't claim "all match" without having looked for defects — that masks bugs we're paying screenshot-storage costs to surface.
