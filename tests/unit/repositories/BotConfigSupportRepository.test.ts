@@ -9,6 +9,8 @@ import type {
   IDatabase as Database,
 } from '../../../src/database/types';
 
+import { EncryptionService } from '../../../src/database/EncryptionService';
+
 function makeMockDb(extra: Partial<Database> = {}): jest.Mocked<Database> {
   return {
     run: jest.fn().mockResolvedValue({ lastID: 1, changes: 1 }),
@@ -23,6 +25,15 @@ function makeMockDb(extra: Partial<Database> = {}): jest.Mocked<Database> {
 describe('BotConfigRepositoryBase', () => {
   let base: BotConfigRepositoryBase;
   let mockDb: jest.Mocked<Database>;
+
+  beforeAll(() => {
+    process.env.DATABASE_ENCRYPTION_KEY = 'test-key-for-encryption-32-chars!!';
+    const databaseConfig = require('../../../src/config/databaseConfig').default;
+    databaseConfig.set('ENCRYPTION_KEY', 'test-key-for-encryption-32-chars!!');
+    // @ts-ignore
+    EncryptionService.instance = undefined;
+    EncryptionService.getInstance();
+  });
 
   beforeEach(() => {
     mockDb = makeMockDb();
@@ -91,8 +102,12 @@ describe('BotConfigVersionRepository', () => {
   let mockDb: jest.Mocked<Database>;
   // @ts-ignore - reset encryption service singleton for controlled tests
   beforeAll(() => {
-    require('../../../src/database/EncryptionService').EncryptionService.instance = undefined;
-    require('../../../src/database/EncryptionService').EncryptionService.getInstance();
+    process.env.DATABASE_ENCRYPTION_KEY = 'test-key-for-encryption-32-chars!!';
+    const databaseConfig = require('../../../src/config/databaseConfig').default;
+    databaseConfig.set('ENCRYPTION_KEY', 'test-key-for-encryption-32-chars!!');
+    // @ts-ignore
+    EncryptionService.instance = undefined;
+    EncryptionService.getInstance();
   });
 
   beforeEach(() => {
@@ -253,8 +268,12 @@ describe('BotConfigAuditRepository', () => {
   let mockDb: jest.Mocked<Database>;
 
   beforeAll(() => {
-    require('../../../src/database/EncryptionService').EncryptionService.instance = undefined;
-    require('../../../src/database/EncryptionService').EncryptionService.getInstance();
+    process.env.DATABASE_ENCRYPTION_KEY = 'test-key-for-encryption-32-chars!!';
+    const databaseConfig = require('../../../src/config/databaseConfig').default;
+    databaseConfig.set('ENCRYPTION_KEY', 'test-key-for-encryption-32-chars!!');
+    // @ts-ignore
+    EncryptionService.instance = undefined;
+    EncryptionService.getInstance();
   });
 
   beforeEach(() => {

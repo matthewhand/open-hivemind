@@ -34,7 +34,8 @@ export class BotConfigRepository {
 
   private encryptField(val: any): any {
     if (val && typeof val === 'object') {
-      return encryptionService.encrypt(JSON.stringify(val));
+      const { EncryptionService } = require('../EncryptionService');
+      return EncryptionService.getInstance().encrypt(JSON.stringify(val));
     }
     return val;
   }

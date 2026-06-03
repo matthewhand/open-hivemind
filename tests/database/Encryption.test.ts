@@ -7,6 +7,15 @@ describe('Database At-Rest Encryption', () => {
   let repository: BotConfigRepository;
   let mockDb: jest.Mocked<IDatabase>;
 
+  beforeAll(() => {
+    process.env.DATABASE_ENCRYPTION_KEY = 'test-key-for-encryption-32-chars!!';
+    const databaseConfig = require('../../src/config/databaseConfig').default;
+    databaseConfig.set('ENCRYPTION_KEY', 'test-key-for-encryption-32-chars!!');
+    // @ts-ignore
+    EncryptionService.instance = undefined;
+    EncryptionService.getInstance();
+  });
+
   beforeEach(() => {
     mockDb = {
       run: jest.fn().mockResolvedValue({ lastID: 1, changes: 1 }),

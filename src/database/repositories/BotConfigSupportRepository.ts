@@ -29,7 +29,8 @@ export class BotConfigRepositoryBase {
 
   protected encryptField(val: unknown): string | null {
     if (val && typeof val === 'object') {
-      return encryptionService.encrypt(JSON.stringify(val));
+      const { EncryptionService } = require('../EncryptionService');
+      return EncryptionService.getInstance().encrypt(JSON.stringify(val));
     }
     return val ? String(val) : null;
   }
@@ -39,7 +40,8 @@ export class BotConfigRepositoryBase {
       return val;
     }
     try {
-      const decrypted = encryptionService.decrypt(val);
+      const { EncryptionService } = require('../EncryptionService');
+      const decrypted = EncryptionService.getInstance().decrypt(val);
       try {
         return JSON.parse(decrypted);
       } catch {
@@ -237,8 +239,11 @@ export class BotConfigAuditRepository extends BotConfigRepositoryBase {
         throw new Error('Database not available');
       }
 
-      const encryptVal = (val: unknown): string | null =>
-        val ? encryptionService.encrypt(String(val)) : null;
+      const encryptVal = (val: unknown): string | null => {
+        if (!val) return null;
+        const { EncryptionService } = require('../EncryptionService');
+        return EncryptionService.getInstance().encrypt(String(val));
+      };
 
       const result = await db.run(
         `
