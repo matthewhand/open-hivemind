@@ -1,5 +1,4 @@
 import { Logger } from '@common/logger';
-import { encryptionService } from '../EncryptionService';
 import type { IDatabase as Database, BotConfiguration as TypesBotConfiguration } from '../types';
 
 // We map our type loosely for type flexibility (allowing parsed objects or stringified variants)
@@ -33,13 +32,13 @@ export class BotConfigurationDAO {
       config.systemInstruction || null,
       config.mcpServers ? JSON.stringify(config.mcpServers) : null,
       config.mcpGuard ? JSON.stringify(config.mcpGuard) : null,
-      this.encryptField(config.discord),
-      this.encryptField(config.slack),
-      this.encryptField(config.mattermost),
-      this.encryptField(config.openai),
-      this.encryptField(config.flowise),
-      this.encryptField(config.openwebui),
-      this.encryptField(config.openswarm),
+      config.discord ? JSON.stringify(config.discord) : null,
+      config.slack ? JSON.stringify(config.slack) : null,
+      config.mattermost ? JSON.stringify(config.mattermost) : null,
+      config.openai ? JSON.stringify(config.openai) : null,
+      config.flowise ? JSON.stringify(config.flowise) : null,
+      config.openwebui ? JSON.stringify(config.openwebui) : null,
+      config.openswarm ? JSON.stringify(config.openswarm) : null,
       config.perplexity ? JSON.stringify(config.perplexity) : null,
       config.replicate ? JSON.stringify(config.replicate) : null,
       config.n8n ? JSON.stringify(config.n8n) : null,
@@ -295,13 +294,13 @@ export class BotConfigurationDAO {
       systemInstruction: row.systemInstruction as string | undefined,
       mcpServers: row.mcpServers ? JSON.parse(row.mcpServers as string) : undefined,
       mcpGuard: row.mcpGuard ? JSON.parse(row.mcpGuard as string) : undefined,
-      discord: this.decryptField(row.discord),
-      slack: this.decryptField(row.slack),
-      mattermost: this.decryptField(row.mattermost),
-      openai: this.decryptField(row.openai),
-      flowise: this.decryptField(row.flowise),
-      openwebui: this.decryptField(row.openwebui),
-      openswarm: this.decryptField(row.openswarm),
+      discord: row.discord ? JSON.parse(row.discord as string) : undefined,
+      slack: row.slack ? JSON.parse(row.slack as string) : undefined,
+      mattermost: row.mattermost ? JSON.parse(row.mattermost as string) : undefined,
+      openai: row.openai ? JSON.parse(row.openai as string) : undefined,
+      flowise: row.flowise ? JSON.parse(row.flowise as string) : undefined,
+      openwebui: row.openwebui ? JSON.parse(row.openwebui as string) : undefined,
+      openswarm: row.openswarm ? JSON.parse(row.openswarm as string) : undefined,
       perplexity: row.perplexity ? JSON.parse(row.perplexity as string) : undefined,
       replicate: row.replicate ? JSON.parse(row.replicate as string) : undefined,
       n8n: row.n8n ? JSON.parse(row.n8n as string) : undefined,
@@ -312,21 +311,5 @@ export class BotConfigurationDAO {
       createdBy: row.createdBy as string | undefined,
       updatedBy: row.updatedBy as string | undefined,
     };
-  }
-  private encryptField(val: any): any {
-    if (val && typeof val === 'object') {
-      return encryptionService.encrypt(JSON.stringify(val));
-    }
-    return val;
-  }
-
-  private decryptField(val: any): any {
-    if (!val || typeof val !== 'string') return val;
-    const decrypted = encryptionService.decrypt(val);
-    try {
-      return JSON.parse(decrypted);
-    } catch {
-      return decrypted;
-    }
   }
 }
