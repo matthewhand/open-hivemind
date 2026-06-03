@@ -7,6 +7,7 @@ import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { HTTP_STATUS } from '../../types/constants';
 import { ActivityFilterSchema, LogActivitySchema } from '../../validation/schemas/activitySchema';
 import { validateRequest } from '../../validation/validateRequest';
+import { ActivityLogger } from '../services/ActivityLogger';
 
 const debug = Debug('app:webui:activity');
 const router = Router();
@@ -90,7 +91,6 @@ router.get(
 router.get(
   '/llm-usage',
   validateRequest(ActivityFilterSchema),
-
   asyncErrorHandler(async (req: Request, res: Response) => {
     const filter = { ...req.query } as any;
     if (filter.limit) filter.limit = parseInt(filter.limit as string, 10);
@@ -112,7 +112,6 @@ router.get(
 // GET /api/activity/summary - Get activity summary
 router.get(
   '/summary',
-
   validateRequest(ActivityFilterSchema),
   asyncErrorHandler(async (req: Request, res: Response) => {
     const { startDate, endDate } = req.query as any;
@@ -126,16 +125,57 @@ router.get(
 
     const stats = await dbManager.getStats();
 
+    const timeRangeStart =
+      startDate || new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const timeRangeEnd = endDate || new Date().toISOString();
+
+    // Derive response-time, error-rate, per-agent and per-LLM-provider metrics
+    // from the recorded activity events for the requested time range.
+    const events = await ActivityLogger.getInstance().getEvents({
+      startTime: new Date(timeRangeStart),
+      endTime: new Date(timeRangeEnd),
+      limit: Number.MAX_SAFE_INTEGER,
+    });
+
+    const messagesByAgent: Record<string, number> = {};
+    const llmUsageByProvider: Record<string, number> = {};
+    let processingTimeTotal = 0;
+    let processingTimeSamples = 0;
+    let errorCount = 0;
+
+    for (const event of events) {
+      if (event.botName) {
+        messagesByAgent[event.botName] = (messagesByAgent[event.botName] || 0) + 1;
+      }
+      if (event.llmProvider) {
+        llmUsageByProvider[event.llmProvider] =
+          (llmUsageByProvider[event.llmProvider] || 0) + 1;
+      }
+      if (typeof event.processingTime === 'number') {
+        processingTimeTotal += event.processingTime;
+        processingTimeSamples += 1;
+      }
+      if (event.status === 'error' || event.status === 'timeout') {
+        errorCount += 1;
+      }
+    }
+
+    const averageResponseTime =
+      processingTimeSamples > 0
+        ? Math.round(processingTimeTotal / processingTimeSamples)
+        : 0;
+    const errorRate = events.length > 0 ? errorCount / events.length : 0;
+
     const summary: ActivitySummary = {
       totalMessages: stats.totalMessages,
       totalAgents: stats.totalChannels,
-      averageResponseTime: 250,
-      errorRate: 0.02,
+      averageResponseTime,
+      errorRate,
       messagesByProvider: stats.providers,
-      messagesByAgent: {},
-      llmUsageByProvider: {},
-      timeRangeStart: startDate || new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-      timeRangeEnd: endDate || new Date().toISOString(),
+      messagesByAgent,
+      llmUsageByProvider,
+      timeRangeStart,
+      timeRangeEnd,
     };
 
     return res.json(ApiResponse.success({ summary }));
@@ -150,7 +190,6 @@ router.get(
     const {
       messageProvider,
       llmProvider,
-
       startDate,
       endDate,
       interval = 'hour',
@@ -208,7 +247,6 @@ router.get(
 );
 
 // GET /api/activity/agents - Get agent activity statistics
-
 router.get(
   '/agents',
   validateRequest(ActivityFilterSchema),
@@ -289,23 +327,16 @@ router.get(
 router.post(
   '/log',
   validateRequest(LogActivitySchema),
-
   asyncErrorHandler(async (req: Request, res: Response) => {
     const {
       agentId,
-
       messageProvider,
-
       llmProvider,
       messageType,
-      // eslint-disable-next-line unused-imports/no-unused-vars
       contentLength,
-      // eslint-disable-next-line unused-imports/no-unused-vars
       processingTime,
       status,
-      // eslint-disable-next-line unused-imports/no-unused-vars
       errorMessage,
-      // eslint-disable-next-line unused-imports/no-unused-vars
       mcpToolsUsed,
     } = req.body;
 

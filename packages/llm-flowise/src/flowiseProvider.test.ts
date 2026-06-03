@@ -50,6 +50,30 @@ describe('FlowiseProvider', () => {
     expect(result).toMatch(/error communicating/);
   });
 
+  it('reports completion support accurately', () => {
+    expect(provider.supportsCompletion()).toBe(true);
+    expect(provider.supportsChatCompletion()).toBe(true);
+  });
+
+  it('generateCompletion uses the SDK prediction endpoint when useRest is false', async () => {
+    const result = await provider.generateCompletion('write a haiku');
+    expect(getFlowiseSdkResponse).toHaveBeenCalledWith('write a haiku', 'flow-123');
+    expect(result).toBe('sdk response');
+  });
+
+  it('generateCompletion uses a dedicated stateless channel in REST mode', async () => {
+    provider = new FlowiseProvider({ useRest: true });
+    const result = await provider.generateCompletion('write a haiku');
+    expect(getFlowiseResponse).toHaveBeenCalledWith('flowise-completion', 'write a haiku');
+    expect(result).toBe('rest response');
+  });
+
+  it('generateCompletion returns error string when the client throws', async () => {
+    (getFlowiseSdkResponse as jest.Mock).mockRejectedValueOnce(new Error('timeout'));
+    const result = await provider.generateCompletion('write a haiku');
+    expect(result).toMatch(/error communicating/);
+  });
+
   it('validateCredentials returns true for REST mode', async () => {
     provider = new FlowiseProvider({ useRest: true });
     expect(await provider.validateCredentials()).toBe(true);
