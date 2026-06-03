@@ -2,6 +2,7 @@ import React, { memo, useState } from 'react';
 import PersonaAvatar from './PersonaAvatar';
 import Badge from './DaisyUI/Badge';
 import Card from './DaisyUI/Card';
+import Tooltip from './DaisyUI/Tooltip';
 import Button from './DaisyUI/Button';
 import Tooltip from './DaisyUI/Tooltip';
 import type { Bot, StatusResponse } from '../services/api';
