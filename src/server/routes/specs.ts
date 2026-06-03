@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { HTTP_STATUS } from '../../types/constants';
+import { PathSecurityUtils } from '../../utils/PathSecurityUtils';
 import { SpecSchema } from '../../validation/schemas/miscSchema';
 import { validateRequest } from '../../validation/validateRequest';
 
@@ -62,10 +63,7 @@ router.post(
       }
 
       const specDir = path.join(specsDirectory, id, version);
-      const resolvedSpecDir = path.resolve(specDir);
-      const resolvedSpecsDirectory = path.resolve(specsDirectory);
-
-      if (!resolvedSpecDir.startsWith(resolvedSpecsDirectory + path.sep)) {
+      if (!PathSecurityUtils.isPathWithinDirectory(specDir, specsDirectory)) {
         return res
           .status(HTTP_STATUS.BAD_REQUEST)
           .json(ApiResponse.error('Invalid spec ID or version: Path traversal detected'));
@@ -76,7 +74,7 @@ router.post(
       await saveSpecsIndex(index);
 
       await fs.mkdir(specDir, { recursive: true });
-      await fs.writeFile(path.join(specDir, 'spec.md'), content);
+      await fs.writeFile(PathSecurityUtils.getSafePath(specDir, 'spec.md'), content);
 
       return res.status(HTTP_STATUS.CREATED).json(ApiResponse.success(newSpec));
     } catch (error) {
@@ -106,14 +104,10 @@ router.get('/:id', async (req, res) => {
     return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('Invalid spec ID format'));
   }
 
-  const targetPath = path.join(specsDirectory, id);
-  const resolvedTargetPath = path.resolve(targetPath);
-  const resolvedSpecsDirectory = path.resolve(specsDirectory);
-
-  if (
-    !resolvedTargetPath.startsWith(resolvedSpecsDirectory + path.sep) &&
-    resolvedTargetPath !== resolvedSpecsDirectory
-  ) {
+  let targetPath: string;
+  try {
+    targetPath = PathSecurityUtils.getSafePath(specsDirectory, id);
+  } catch (error) {
     return res
       .status(HTTP_STATUS.BAD_REQUEST)
       .json(ApiResponse.error('Invalid spec ID: Path traversal detected'));
