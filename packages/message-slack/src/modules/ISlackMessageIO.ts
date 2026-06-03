@@ -25,6 +25,14 @@ export interface ISlackMessageIO {
 
   sendTypingPlaceholder?(channelId: string, botName?: string, threadId?: string): Promise<void>;
 
+  /**
+   * Attempts to set Slack's native Assistant typing/status indicator via
+   * `assistant.threads.setStatus`. Returns true when the native indicator was
+   * sent, false when it is unavailable (no thread, missing scope/API) so the
+   * caller can fall back to the placeholder message.
+   */
+  sendNativeTypingStatus?(channelId: string, threadId?: string, botName?: string): Promise<boolean>;
+
   fetchMessages(channelId: string, limit?: number, botName?: string): Promise<IMessage[]>;
 }
 
@@ -271,7 +279,7 @@ export class SlackMessageIO implements ISlackMessageIO {
 
     const options: any = {
       channel: channelId,
-      text: '_is typing..._',
+      text: process.env.SLACK_TYPING_PLACEHOLDER_TEXT || '_is typing..._',
       username: botInfo.botUserName || 'SlackBot',
       icon_emoji: ':robot_face:',
       unfurl_links: false,
@@ -294,6 +302,47 @@ export class SlackMessageIO implements ISlackMessageIO {
       }
     } catch (error) {
       debug(`Failed to send typing placeholder: ${error}`);
+    }
+  }
+
+  /**
+   * Uses Slack's native Assistant typing indicator (`assistant.threads.setStatus`).
+   * This renders a real "is typing..." status in the assistant pane without
+   * posting a placeholder message, but it only applies to assistant threads, so
+   * a `threadId` is required and the bot token must hold the `assistant:write`
+   * scope. Returns false (rather than throwing) when unavailable so the caller
+   * can fall back to the placeholder message.
+   */
+  public async sendNativeTypingStatus(
+    channelId: string,
+    threadId?: string,
+    botName?: string
+  ): Promise<boolean> {
+    if (!channelId || !threadId) {
+      return false;
+    }
+
+    const targetBot = botName || this.getDefaultBotName();
+    const botManager = this.getBotManager(targetBot);
+    const botInfo = botManager?.getAllBots()[0];
+    const setStatus = (botInfo?.webClient as any)?.assistant?.threads?.setStatus;
+    if (!botInfo || typeof setStatus !== 'function') {
+      return false;
+    }
+
+    const status = process.env.SLACK_TYPING_STATUS_TEXT || 'is typing...';
+    try {
+      await this.withQueue(targetBot, () =>
+        botInfo.webClient.assistant.threads.setStatus({
+          channel_id: channelId,
+          thread_ts: threadId,
+          status,
+        })
+      );
+      return true;
+    } catch (error) {
+      debug(`Native assistant typing status unavailable, falling back: ${error}`);
+      return false;
     }
   }
 
