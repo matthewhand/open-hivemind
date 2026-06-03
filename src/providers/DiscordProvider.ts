@@ -2,7 +2,6 @@ import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
 import { DiscordService } from '@hivemind/message-discord';
-import type { IMessage } from '@message/interfaces/IMessage';
 import discordConfig, { type DiscordConfig } from '../config/discordConfig';
 import type { IMessage } from '../message/interfaces/IMessage';
 import type { IBotInfo } from '../types/botInfo';
@@ -21,8 +20,6 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
   private discordService: InstanceType<typeof DiscordService>;
 
   constructor(discordService?: InstanceType<typeof DiscordService>) {
-  constructor(discordService?: any) {
->>>>>>> 14b838258 (security: lock down exposed resource routes and add Discord test endpoint)
     this.discordService = discordService || (DiscordService as any).getInstance();
   }
 
@@ -171,7 +168,6 @@ export class DiscordProvider implements IMessageProvider<DiscordConfig> {
             async () => {
               await ds.addBot(instanceCfg);
             },
-
             {
               healthCheckFn: async () => {
                 try {
