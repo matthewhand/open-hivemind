@@ -47,6 +47,10 @@ describe('BotConfigRepositoryBase', () => {
       () => mockDb,
       () => {}
     );
+
+    // Force encryption to be enabled for tests
+    const { encryptionService } = require('../../../src/database/EncryptionService');
+    encryptionService.encryptionKey = Buffer.from('12345678901234567890123456789012');
   });
 
   describe('encryptField', () => {
@@ -182,6 +186,10 @@ describe('BotConfigVersionRepository', () => {
       () => mockDb,
       () => {}
     );
+
+    // Force encryption to be enabled for tests
+    const { encryptionService } = require('../../../src/database/EncryptionService');
+    encryptionService.encryptionKey = Buffer.from('12345678901234567890123456789012');
   });
 
   describe('createBotConfigurationVersion', () => {
@@ -451,6 +459,10 @@ describe('BotConfigAuditRepository', () => {
       () => mockDb,
       () => {}
     );
+
+    // Force encryption to be enabled for tests
+    const { encryptionService } = require('../../../src/database/EncryptionService');
+    encryptionService.encryptionKey = Buffer.from('12345678901234567890123456789012');
   });
 
   describe('createBotConfigurationAudit', () => {
