@@ -78,10 +78,14 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
 }) => {
   const parentRef = useRef<HTMLDivElement>(null);
 
+  // Pre-compute a Set for O(1) favorite lookups (avoids O(N*M) array scans)
+  const favoritesSet = useMemo(() => new Set(favorites), [favorites]);
+
   // Get recently used tools (last 5)
   const recentTools = useMemo(() => {
     const recentIds = recentlyUsed.slice(0, 5).map(r => r.toolId);
-    return tools.filter(tool => recentIds.includes(tool.id))
+    const recentIdsSet = new Set(recentIds);
+    return tools.filter(tool => recentIdsSet.has(tool.id))
       .sort((a, b) => {
         const aIndex = recentIds.indexOf(a.id);
         const bIndex = recentIds.indexOf(b.id);
@@ -91,8 +95,8 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
 
   // Get favorite tools
   const favoriteTools = useMemo(() => {
-    return tools.filter(tool => favorites.includes(tool.id));
-  }, [tools, favorites]);
+    return tools.filter(tool => favoritesSet.has(tool.id));
+  }, [tools, favoritesSet]);
 
   // Performance optimization: pre-compute map for O(1) lookups instead of calling .find() inside .map() loops
   const recentlyUsedMap = useMemo(() => {
@@ -115,7 +119,7 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
   });
 
   const renderToolCard = (tool: MCPTool, compact = false) => {
-    const isFavorite = favorites.includes(tool.id);
+    const isFavorite = favoritesSet.has(tool.id);
 
     if (compact) {
       return (
