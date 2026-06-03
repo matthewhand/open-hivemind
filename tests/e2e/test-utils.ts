@@ -75,9 +75,6 @@ const IGNORED_ERROR_PATTERNS = [
   // Benign component crashes caught by error boundaries (mocked data scenarios)
   /Cannot read properties of undefined \(reading 'map'\)/i,
   /Cannot read properties of undefined \(reading 'length'\)/i,
-  /filteredGroups is not iterable/i,
-  /defaultValues.*is not a function/i,
-  /_resetDefaultValues.*is not a function/i,
   // Production build ReferenceErrors caught by React error boundaries
   /ReferenceError:.*is not defined/i,
   /TypeError:.*is not a function/i,

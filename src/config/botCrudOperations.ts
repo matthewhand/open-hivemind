@@ -6,6 +6,7 @@
 import Debug from 'debug';
 import * as path from 'path';
 import * as fs from 'fs';
+import { PathSecurityUtils } from '../utils/PathSecurityUtils';
 import { discoverBotNamesFromEnv } from './botDiscovery';
 import { type TTLCache } from '../utils/TTLCache';
 
@@ -25,7 +26,7 @@ export async function addBotToFile(
 
   // Ensure unique name/ID
   const safeName = config.name.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
-  const filePath = path.join(botsDir, `${safeName}.json`);
+  const filePath = PathSecurityUtils.getSafePath(botsDir, `${safeName}.json`);
 
   try {
     await fs.promises.access(filePath);
@@ -56,7 +57,7 @@ export async function updateBotOnFile(
   const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
   const botsDir = path.join(configDir, 'bots');
   const safeName = name.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
-  const filePath = path.join(botsDir, `${safeName}.json`);
+  const filePath = PathSecurityUtils.getSafePath(botsDir, `${safeName}.json`);
 
   // For env-var configured bots, we store overrides in a JSON file
   // These overrides take precedence over env vars
@@ -103,7 +104,7 @@ export async function deleteBotFromFile(name: string): Promise<void> {
   const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
   const botsDir = path.join(configDir, 'bots');
   const safeName = name.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
-  const filePath = path.join(botsDir, `${safeName}.json`);
+  const filePath = PathSecurityUtils.getSafePath(botsDir, `${safeName}.json`);
 
   try {
     await fs.promises.access(filePath);
@@ -128,5 +129,49 @@ export async function deleteBotFromFile(name: string): Promise<void> {
     } else {
       throw e;
     }
+  }
+}
+
+/**
+ * Delete multiple bot configurations from disk.
+ */
+export async function deleteBotsFromFiles(names: string[]): Promise<void> {
+  if (!names || names.length === 0) return;
+
+  const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
+  const botsDir = path.join(configDir, 'bots');
+  const envBotNames = discoverBotNamesFromEnv();
+  const canonical = (n: string): string =>
+    String(n || '').trim().toLowerCase().replace(/[_\s]+/g, '-');
+
+  const errors: string[] = [];
+
+  for (const name of names) {
+    const safeName = name.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+    const filePath = path.join(botsDir, `${safeName}.json`);
+
+    try {
+      await fs.promises.access(filePath);
+      await fs.promises.unlink(filePath);
+      debug(`Deleted bot config for ${name} at ${filePath}`);
+    } catch (e: unknown) {
+      if ((e as NodeJS.ErrnoException).code === 'ENOENT') {
+        const canonicalName = canonical(name);
+        const foundInEnv = envBotNames.some((n) => canonical(n) === canonicalName);
+
+        if (foundInEnv) {
+          errors.push(
+            `Cannot delete bot "${name}" defined by environment variables. Please remove the environment variables starting with BOTS_${name.toUpperCase().replace(/[^A-Z0-9]/g, '_')}_...`
+          );
+        }
+        // If not found in file and not in env, we ignore it (idempotent)
+      } else {
+        errors.push(`Failed to delete bot "${name}": ${(e as Error).message}`);
+      }
+    }
+  }
+
+  if (errors.length > 0) {
+    throw new Error(errors.join('; '));
   }
 }

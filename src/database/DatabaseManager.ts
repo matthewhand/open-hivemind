@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import Debug from 'debug';
+import { Logger } from '@common/logger';
 import { injectable, singleton } from 'tsyringe';
 import databaseConfig from '@src/config/databaseConfig';
 import { ConfigurationError, DatabaseError } from '@src/types/errorClasses';
@@ -661,7 +662,7 @@ export class DatabaseManager {
 
     for (const table of tables) {
       try {
-        console.log(`Clearing ${table}...`);
+        Logger.info(`Clearing ${table}...`);
         await db.run(`DELETE FROM ${table}`);
       } catch (e) {
         debug(`Failed to clear table ${table}:`, e);
