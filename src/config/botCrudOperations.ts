@@ -6,6 +6,7 @@
 import Debug from 'debug';
 import * as path from 'path';
 import * as fs from 'fs';
+import { PathSecurityUtils } from '../utils/PathSecurityUtils';
 import { discoverBotNamesFromEnv } from './botDiscovery';
 import { type TTLCache } from '../utils/TTLCache';
 
@@ -25,7 +26,7 @@ export async function addBotToFile(
 
   // Ensure unique name/ID
   const safeName = config.name.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
-  const filePath = path.join(botsDir, `${safeName}.json`);
+  const filePath = PathSecurityUtils.getSafePath(botsDir, `${safeName}.json`);
 
   try {
     await fs.promises.access(filePath);
@@ -56,7 +57,7 @@ export async function updateBotOnFile(
   const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
   const botsDir = path.join(configDir, 'bots');
   const safeName = name.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
-  const filePath = path.join(botsDir, `${safeName}.json`);
+  const filePath = PathSecurityUtils.getSafePath(botsDir, `${safeName}.json`);
 
   // For env-var configured bots, we store overrides in a JSON file
   // These overrides take precedence over env vars
@@ -103,7 +104,7 @@ export async function deleteBotFromFile(name: string): Promise<void> {
   const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
   const botsDir = path.join(configDir, 'bots');
   const safeName = name.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
-  const filePath = path.join(botsDir, `${safeName}.json`);
+  const filePath = PathSecurityUtils.getSafePath(botsDir, `${safeName}.json`);
 
   try {
     await fs.promises.access(filePath);
