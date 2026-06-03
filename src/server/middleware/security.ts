@@ -61,7 +61,6 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
       "frame-src 'none'",
       "worker-src 'self' blob:",
       "manifest-src 'self'",
-      "prefetch-src 'self'",
     ];
   } else {
     // Strict production CSP: No unsafe-inline or unsafe-eval
@@ -80,7 +79,6 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
       "frame-src 'none'",
       "worker-src 'none'",
       "manifest-src 'self'",
-      "prefetch-src 'self'",
     ];
   }
 
