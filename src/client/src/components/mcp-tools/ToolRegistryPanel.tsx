@@ -9,10 +9,12 @@ import {
 import { Search } from 'lucide-react';
 import { ToolFilters } from '../tools/ToolFilters';
 
+import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
 // For the filled star, use the same Star icon with fill prop
 const StarSolidIcon = (props: any) => <StarOutlineIcon {...props} fill="currentColor" />;
 import Card from '../DaisyUI/Card';
 import EmptyState from '../DaisyUI/EmptyState';
+import Tooltip from '../DaisyUI/Tooltip';
 import { SkeletonGrid } from '../DaisyUI/Skeleton';
 import { Badge } from '../DaisyUI/Badge';
 import Tabs from '../DaisyUI/Tabs';
@@ -124,24 +126,30 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
                   )}
                 </div>
               </div>
-              <button
-                className="btn btn-xs btn-ghost btn-circle"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggleFavorite(tool.id);
-                }}
-                title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-                aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              <Tooltip
+                content={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                position="top"
               >
-                {isFavorite ? (
-                  <StarSolidIcon className="w-4 h-4 text-warning" />
-                ) : (
-                  <StarOutlineIcon className="w-4 h-4" />
-                )}
-              </button>
+                <button
+                  type="button"
+                  className="btn btn-xs btn-ghost btn-circle"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleFavorite(tool.id);
+                  }}
+                  aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                >
+                  {isFavorite ? (
+                    <StarSolidIcon className="w-4 h-4 text-warning" />
+                  ) : (
+                    <StarOutlineIcon className="w-4 h-4" />
+                  )}
+                </button>
+              </Tooltip>
             </div>
             <div className="flex gap-2 mt-2">
               <button
+                type="button"
                 className="btn btn-xs btn-primary flex-1"
                 onClick={() => {
                   const lastUsage = recentlyUsed.find(r => r.toolId === tool.id);
@@ -168,18 +176,23 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
               </Card.Title>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                className="btn btn-sm btn-ghost btn-circle"
-                onClick={() => onToggleFavorite(tool.id)}
-                title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-                aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              <Tooltip
+                content={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                position="top"
               >
-                {isFavorite ? (
-                  <StarSolidIcon className="w-5 h-5 text-warning" />
-                ) : (
-                  <StarOutlineIcon className="w-5 h-5" />
-                )}
-              </button>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-ghost btn-circle"
+                  onClick={() => onToggleFavorite(tool.id)}
+                  aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                >
+                  {isFavorite ? (
+                    <StarSolidIcon className="w-5 h-5 text-warning" />
+                  ) : (
+                    <StarOutlineIcon className="w-5 h-5" />
+                  )}
+                </button>
+              </Tooltip>
               <div className={`badge ${tool.enabled ? 'badge-success' : 'badge-ghost'}`}>
                 {tool.enabled ? 'Enabled' : 'Disabled'}
               </div>
@@ -213,12 +226,14 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
 
           <Card.Actions className="justify-between mt-auto">
             <button
+              type="button"
               className={`btn btn-sm ${tool.enabled ? 'btn-error btn-outline' : 'btn-success btn-outline'}`}
               onClick={() => onToggleTool(tool.id)}
             >
               {tool.enabled ? 'Disable' : 'Enable'}
             </button>
             <button
+              type="button"
               className="btn btn-sm btn-primary"
               onClick={() => onRunTool(tool)}
               disabled={!tool.enabled}
