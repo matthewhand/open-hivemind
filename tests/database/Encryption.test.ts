@@ -16,6 +16,9 @@ describe('Database At-Rest Encryption', () => {
       close: jest.fn(),
     } as any;
 
+    // Force encryption to be enabled for tests
+    (encryptionService as any).encryptionKey = Buffer.from('12345678901234567890123456789012');
+
     repository = new BotConfigRepository(() => mockDb, () => {});
   });
 
