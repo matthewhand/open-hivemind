@@ -1,3 +1,4 @@
+import { encryptionService } from '../../../src/database/EncryptionService';
 import {
   BotConfigAuditRepository,
   BotConfigRepositoryBase,
@@ -20,15 +21,17 @@ function makeMockDb(extra: Partial<Database> = {}): jest.Mocked<Database> {
   } as any;
 }
 
-import { encryptionService } from "../../../src/database/EncryptionService";
-
 describe('BotConfigRepositoryBase', () => {
   let base: BotConfigRepositoryBase;
   let mockDb: jest.Mocked<Database>;
 
-  beforeAll(() => { (encryptionService as any).encryptionKey = Buffer.alloc(32, 1); });
+  beforeAll(() => {
+    (encryptionService as any).encryptionKey = Buffer.alloc(32, 1);
+  });
 
-  afterAll(() => { (encryptionService as any).encryptionKey = null; });
+  afterAll(() => {
+    (encryptionService as any).encryptionKey = null;
+  });
 
   beforeEach(() => {
     mockDb = makeMockDb();
@@ -101,9 +104,13 @@ describe('BotConfigVersionRepository', () => {
     require('../../../src/database/EncryptionService').EncryptionService.getInstance();
   });
 
-  beforeAll(() => { (encryptionService as any).encryptionKey = Buffer.alloc(32, 1); });
+  beforeAll(() => {
+    (encryptionService as any).encryptionKey = Buffer.alloc(32, 1);
+  });
 
-  afterAll(() => { (encryptionService as any).encryptionKey = null; });
+  afterAll(() => {
+    (encryptionService as any).encryptionKey = null;
+  });
 
   beforeEach(() => {
     mockDb = makeMockDb();
@@ -267,9 +274,13 @@ describe('BotConfigAuditRepository', () => {
     require('../../../src/database/EncryptionService').EncryptionService.getInstance();
   });
 
-  beforeAll(() => { (encryptionService as any).encryptionKey = Buffer.alloc(32, 1); });
+  beforeAll(() => {
+    (encryptionService as any).encryptionKey = Buffer.alloc(32, 1);
+  });
 
-  afterAll(() => { (encryptionService as any).encryptionKey = null; });
+  afterAll(() => {
+    (encryptionService as any).encryptionKey = null;
+  });
 
   beforeEach(() => {
     mockDb = makeMockDb();
