@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     X, Save, MessageSquare, Cpu, Info, Edit2, Plus,
     Trash2, Copy, Shield, Eye, Settings
@@ -57,6 +57,10 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
     onDelete,
     onViewDetails
 }) => {
+    // ⚡ Bolt Optimization: Pre-compute maps for O(1) lookups instead of calling .find() on every render
+    const personaMap = useMemo(() => new Map(personas.map(p => [p.id, p])), [personas]);
+    const llmProfileMap = useMemo(() => new Map(llmProfiles.map(p => [p.key, p])), [llmProfiles]);
+
     const botConfig = {
         messageProvider: (bot as any).messageProvider || bot.provider || '',
         llmProvider: bot.llmProvider || '',
@@ -176,7 +180,7 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                                 trigger={
                                     <>
                                         {bot.llmProvider ? (
-                                            llmProfiles.find(p => p.key === bot.llmProvider)?.name || bot.llmProvider
+                                            llmProfileMap.get(bot.llmProvider)?.name || bot.llmProvider
                                         ) : <span className="opacity-50 italic">System Default</span>}
                                         <Edit2 className="w-4 h-4 opacity-50" />
                                     </>
@@ -232,7 +236,7 @@ export const BotSettingsModal: React.FC<BotSettingsModalProps> = ({
                             <Dropdown
                                 trigger={
                                     <>
-                                        {personas.find(p => p.id === bot.persona)?.name || bot.persona || 'default'} <Edit2 className="w-4 h-4 opacity-50" />
+                                        {personaMap.get(bot.persona as string)?.name || bot.persona || 'default'} <Edit2 className="w-4 h-4 opacity-50" />
                                     </>
                                 }
                                 position="bottom"

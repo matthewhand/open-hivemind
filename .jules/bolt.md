@@ -43,3 +43,6 @@
 ## 2026-05-02 - ProviderConfigForm Re-rendering
 **Learning:** The form components re-render frequently (e.g., on every keystroke). Using `.reduce()` and `.filter()` on potentially large arrays within the component body without memoization leads to O(N) recalculations on every render, which can cause typing lag on complex configuration forms.
 **Action:** Use `useMemo` to wrap expensive array transformations inside React components, especially forms.
+## 2024-05-24 - Pre-compute Maps for O(N) Array Operations in Modals
+**Learning:** Components like `BotSettingsModal.tsx` often perform inline array searches using `.find()` for related records (e.g., personas and LLM profiles) directly in the JSX render body. Since these modals are complex and interactive, avoiding these O(N) operations during renders reduces the possibility of interaction lag.
+**Action:** Use `useMemo` to build a `Map` of keys to items out of the static dependency array prior to returning the JSX. Replace the inline `.find()` lookups with O(1) `Map.get()`.
