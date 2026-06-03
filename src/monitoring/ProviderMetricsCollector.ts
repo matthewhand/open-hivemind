@@ -22,6 +22,41 @@ export interface ProviderMonitoringConfig {
   historySize: number;
 }
 
+const MESSAGE_PROVIDER_TYPES: readonly ProviderType[] = ['discord', 'slack', 'mattermost'];
+const LLM_PROVIDER_TYPES: readonly ProviderType[] = [
+  'openai',
+  'flowise',
+  'openwebui',
+  'openswarm',
+  'letta',
+];
+
+/**
+ * Normalize an arbitrary provider/platform string into a known message
+ * {@link ProviderType}, or `undefined` if it is not a tracked message provider.
+ * Used by wiring code so unknown/generic providers never create stray metric
+ * labels.
+ */
+export function normalizeMessageProviderType(value: unknown): ProviderType | undefined {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim().toLowerCase();
+  return (MESSAGE_PROVIDER_TYPES as readonly string[]).includes(normalized)
+    ? (normalized as ProviderType)
+    : undefined;
+}
+
+/**
+ * Normalize an arbitrary provider string into a known LLM {@link ProviderType},
+ * or `undefined` if it is not a tracked LLM provider.
+ */
+export function normalizeLlmProviderType(value: unknown): ProviderType | undefined {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim().toLowerCase();
+  return (LLM_PROVIDER_TYPES as readonly string[]).includes(normalized)
+    ? (normalized as ProviderType)
+    : undefined;
+}
+
 export interface MessageProviderMetrics {
   provider: ProviderType;
   messagesReceived: number;
@@ -515,6 +550,20 @@ export class ProviderMetricsCollector extends EventEmitter {
    * Reset all metrics
    */
   resetAllMetrics(): void {
+    // Reset prom-client counters/gauges so exported metrics stay consistent
+    // with the in-memory snapshot after a reset.
+    this.messagesReceived.reset();
+    this.messagesSent.reset();
+    this.messagesFailed.reset();
+    this.messageLatency.reset();
+    this.messageStatus.reset();
+    this.llmRequests.reset();
+    this.llmTokens.reset();
+    this.llmLatency.reset();
+    this.llmLatencyP95.reset();
+    this.llmCost.reset();
+    this.llmStatus.reset();
+
     this.initializeProviders();
     this.responseTimes.clear();
     this.latencyHistory.clear();

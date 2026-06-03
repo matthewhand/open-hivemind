@@ -3,6 +3,7 @@ import net from 'net';
 import type { NextFunction, Request, Response } from 'express';
 import webhookConfig from '@config/webhookConfig';
 import Logger from '@common/logger';
+import { getClientKey, isIPInCIDR } from '@src/middleware/rateLimiterCore';
 
 export const verifyWebhookToken = (req: Request, res: Response, next: NextFunction): void => {
   // Handle case-insensitive header names; Express normally lowercases, but unit tests pass raw objects
@@ -105,7 +106,12 @@ export const verifyIpWhitelist = (req: Request, res: Response, next: NextFunctio
     return;
   }
 
-  let requestIp: string = req.ip ?? '';
+  // Resolve the real client IP in a proxy-aware way (honours TRUSTED_PROXIES and
+  // X-Forwarded-For / X-Real-IP only when the direct connection is a trusted proxy).
+  let requestIp: string = getClientKey(req);
+  if (requestIp === 'unknown') {
+    requestIp = req.ip ?? '';
+  }
   const ipv4Match = requestIp.match(/^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/);
   if (ipv4Match) {
     requestIp = ipv4Match[1];
@@ -123,7 +129,12 @@ export const verifyIpWhitelist = (req: Request, res: Response, next: NextFunctio
     return;
   }
 
-  if (!whitelistedIps.includes(requestIp)) {
+  // An entry may be a single IP (exact match) or a CIDR range (e.g. 10.0.0.0/8).
+  const isWhitelisted = whitelistedIps.some((entry) =>
+    entry.includes('/') ? isIPInCIDR(requestIp, entry) : entry === requestIp
+  );
+
+  if (!isWhitelisted) {
     res.status(403).send('Forbidden: Unauthorized IP address');
     return;
   }
