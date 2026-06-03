@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
 import { Logger } from '@common/logger';
+import { PathSecurityUtils } from '../utils/PathSecurityUtils';
 import { loadPlugin, PLUGINS_DIR, type PluginManifest } from './PluginLoader';
 import {
   PluginSecurityPolicy,
@@ -306,6 +307,10 @@ export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
 export async function uninstallPlugin(name: string): Promise<void> {
   const pluginPath = path.join(PLUGINS_DIR, name);
 
+  if (!PathSecurityUtils.isPathWithinDirectory(pluginPath, PLUGINS_DIR)) {
+    throw new Error('Invalid path: Path traversal detected');
+  }
+
   try {
     await fs.promises.access(pluginPath);
   } catch (e: unknown) {
@@ -330,6 +335,10 @@ export async function uninstallPlugin(name: string): Promise<void> {
  */
 export async function updatePlugin(name: string): Promise<PluginInfo> {
   const pluginPath = path.join(PLUGINS_DIR, name);
+
+  if (!PathSecurityUtils.isPathWithinDirectory(pluginPath, PLUGINS_DIR)) {
+    throw new Error('Invalid path: Path traversal detected');
+  }
 
   try {
     await fs.promises.access(pluginPath);
