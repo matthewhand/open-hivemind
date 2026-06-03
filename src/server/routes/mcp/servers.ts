@@ -13,6 +13,7 @@ import {
   connectedClients,
   connectToMCPServer,
   disconnectFromMCPServer,
+  isToolGuardedAsSensitive,
   loadMCPServers,
   saveMCPServers,
   type MCPServer,
@@ -314,6 +315,21 @@ router.post(
       const mcpClient = connectedClients.get(name);
       if (!mcpClient) {
         return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'MCP server not connected' });
+      }
+
+      // Guard parity with the LLM tool path: tools an operator flagged as
+      // sensitive (mcpGuard.sensitiveTools) require human-in-the-loop approval
+      // and must NOT be executable via the unattended admin direct-call route.
+      // Owner/custom user guards are intentionally not applied here — they need
+      // a bot/forum context this admin route does not have, and this router is
+      // already gated by authenticate + requireAdmin (see ./shared docs).
+      if (isToolGuardedAsSensitive(toolName)) {
+        debug(`Refusing direct admin call of sensitive MCP tool: ${toolName}`);
+        return res.status(HTTP_STATUS.FORBIDDEN).json({
+          error: `Tool "${toolName}" is marked sensitive and requires administrator approval; it cannot be invoked directly.`,
+          code: 'MCP_TOOL_SENSITIVE',
+          timestamp: new Date().toISOString(),
+        });
       }
 
       const result = await mcpClient.client.callTool({
