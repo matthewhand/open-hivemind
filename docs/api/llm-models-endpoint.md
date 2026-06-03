@@ -34,14 +34,19 @@ Returns a list of available models for the specified provider with comprehensive
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `modelType` | string | No | Filter by model type: `chat`, `embedding` |
+| `live` | boolean | No | When `true` (or `1`), query the provider's live model list instead of the curated static catalog. Supported for `openai` and `openwebui` only; ignored when combined with `modelType`. Falls back to the static list when the provider is unconfigured or the request fails. |
 
 #### Response Format
+
+The `source` field indicates whether the models came from a live provider
+query (`"live"`) or the curated static catalog (`"static"`).
 
 ```json
 {
   "success": true,
   "provider": "openai",
   "modelType": "all",
+  "source": "static",
   "count": 15,
   "models": [
     {
@@ -167,6 +172,43 @@ curl http://localhost:3000/api/admin/llm-providers/openai/models?modelType=embed
   ]
 }
 ```
+
+### Fetch Live Models (OpenAI / OpenWebUI)
+
+Opt into a live provider query with `?live=true`. The server uses the configured
+credentials (`OPENAI_API_KEY` / `OPENAI_BASE_URL` for OpenAI, the `OPEN_WEBUI_*`
+settings for OpenWebUI) to call the provider's OpenAI-compatible `GET /models`
+endpoint. If the provider is unconfigured, returns no models, or the request
+fails, the response transparently falls back to the static catalog with
+`"source": "static"`.
+
+```bash
+curl "http://localhost:3000/api/admin/llm-providers/openai/models?live=true"
+```
+
+**Response (live):**
+```json
+{
+  "success": true,
+  "provider": "openai",
+  "modelType": "all",
+  "source": "live",
+  "count": 42,
+  "models": [
+    {
+      "id": "gpt-4o",
+      "name": "GPT-4o",
+      "type": "chat",
+      ...
+    }
+  ]
+}
+```
+
+Live model ids that are not present in the static catalog are returned as
+minimal records (`id`/`name` only, `type: "chat"`); known ids are enriched with
+the curated metadata. The `live` flag is ignored when a `modelType` filter is
+supplied, since live ids do not carry reliable chat/embedding tags.
 
 ### Get Anthropic Models
 
@@ -314,6 +356,12 @@ function ModelSelector({ providerType }: { providerType: string }) {
 - Vision support available in GPT-4o and GPT-4 Turbo
 - Embedding models return 0 for output pricing
 - Context windows range from 8K to 128K tokens
+- Supports live model fetching via `?live=true` (queries the OpenAI `GET /models` endpoint)
+
+### OpenWebUI
+- Not in the curated static catalog, but supports live model fetching via `?live=true`
+  using its OpenAI-compatible `GET /v1/models` endpoint
+- Credentials resolved from `OPEN_WEBUI_API_URL` and `OPEN_WEBUI_PASSWORD`/`OPEN_WEBUI_API_KEY`
 
 ### Anthropic
 - Claude 3.5 Sonnet is the most capable model
@@ -333,11 +381,17 @@ function ModelSelector({ providerType }: { providerType: string }) {
 
 ## Data Source
 
-Model data is maintained in `/src/server/data/llmModels.ts` and includes:
+The curated static catalog is maintained in `/src/server/data/llmModels.ts`
+(providers: `openai`, `anthropic`, `google`, `perplexity`) and includes:
 - Current pricing (as of implementation date)
 - Context window limits
 - Capability flags (vision, function calling, streaming)
 - Deprecation status
+
+Live model fetching (`?live=true`) is implemented in
+`/src/server/services/LiveModelService.ts`, which calls the provider's
+OpenAI-compatible model-list endpoint and falls back to the static catalog on
+any failure.
 
 **Note:** Pricing and availability may change. Verify with provider documentation for latest information.
 

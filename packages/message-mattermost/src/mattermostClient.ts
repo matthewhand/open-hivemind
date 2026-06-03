@@ -12,7 +12,27 @@ const logger = Logger.withContext('MattermostClient');
 interface MattermostClientOptions {
   serverUrl: string;
   token: string;
+  /**
+   * Optional WebSocket constructor injection (primarily for testing). Defaults
+   * to the global `WebSocket` available in Node 22+.
+   */
+  webSocketFactory?: WebSocketFactory;
 }
+
+/** Minimal structural subset of the WHATWG WebSocket we rely on. */
+export interface MinimalWebSocket {
+  send(data: string): void;
+  close(): void;
+  onopen: ((this: unknown, ev: unknown) => unknown) | null;
+  onmessage: ((this: unknown, ev: { data: unknown }) => unknown) | null;
+  onerror: ((this: unknown, ev: unknown) => unknown) | null;
+  onclose: ((this: unknown, ev: unknown) => unknown) | null;
+}
+
+export type WebSocketFactory = (url: string) => MinimalWebSocket;
+
+/** Callback invoked for each incoming `posted` event on the WebSocket. */
+export type PostEventHandler = (post: MattermostPost, channelType?: string) => void;
 
 interface PostMessageOptions {
   channel: string;
@@ -57,9 +77,16 @@ export default class MattermostClient {
   private readonly CACHE_TTL = 5 * 60 * 1000;
   private readonly MAX_CACHE_SIZE = 1000;
 
+  private webSocketFactory?: WebSocketFactory;
+  private ws: MinimalWebSocket | null = null;
+  private wsSeq = 1;
+  private postHandlers: Set<PostEventHandler> = new Set();
+  private wsClosedByUser = false;
+
   constructor(options: MattermostClientOptions) {
     this.serverUrl = options.serverUrl.replace(/\/$/, '');
     this.token = options.token;
+    this.webSocketFactory = options.webSocketFactory;
 
     this.api = http.create(`${this.serverUrl}/api/v4`, {
       Authorization: `Bearer ${this.token}`,
@@ -75,6 +102,134 @@ export default class MattermostClient {
     } catch (error: any) {
       logger.error('Failed to connect to Mattermost', { error: error.message });
       throw new Error(`Mattermost connection failed: ${error.message}`);
+    }
+
+    // Open the realtime event stream so the bot can *receive* messages.
+    // Failure here is non-fatal: REST send/fetch still work and we never
+    // want a transient WS issue to crash bot startup.
+    if (this.postHandlers.size > 0) {
+      this.openWebSocket();
+    }
+  }
+
+  /**
+   * Registers a handler invoked for every incoming `posted` event delivered
+   * over the Mattermost WebSocket. Registering the first handler will lazily
+   * open the WebSocket if the client is already connected.
+   *
+   * @returns An unsubscribe function.
+   */
+  onPost(handler: PostEventHandler): () => void {
+    this.postHandlers.add(handler);
+    if (this.connected && !this.ws) {
+      this.openWebSocket();
+    }
+    return () => {
+      this.postHandlers.delete(handler);
+    };
+  }
+
+  /**
+   * Opens (or re-opens) the Mattermost WebSocket and authenticates with the
+   * bot token. Incoming `posted` events are parsed and dispatched to all
+   * registered post handlers. All errors are caught and logged so they can
+   * never propagate into startup.
+   */
+  private openWebSocket(): void {
+    if (this.ws) {
+      return;
+    }
+    this.wsClosedByUser = false;
+
+    const factory: WebSocketFactory =
+      this.webSocketFactory ||
+      ((url: string) => new (globalThis as any).WebSocket(url) as MinimalWebSocket);
+
+    const wsUrl = `${this.serverUrl.replace(/^http/, 'ws')}/api/v4/websocket`;
+
+    let ws: MinimalWebSocket;
+    try {
+      ws = factory(wsUrl);
+    } catch (error: unknown) {
+      logger.error('Failed to open Mattermost WebSocket', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return;
+    }
+    this.ws = ws;
+
+    ws.onopen = () => {
+      try {
+        ws.send(
+          JSON.stringify({
+            seq: this.wsSeq++,
+            action: 'authentication_challenge',
+            data: { token: this.token },
+          })
+        );
+        logger.info('Mattermost WebSocket connected', { url: wsUrl });
+      } catch (error: unknown) {
+        logger.error('Failed to authenticate Mattermost WebSocket', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    };
+
+    ws.onmessage = (ev: { data: unknown }) => {
+      try {
+        this.handleWsMessage(ev.data);
+      } catch (error: unknown) {
+        logger.debug('Failed to handle Mattermost WebSocket message', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    };
+
+    ws.onerror = (ev: unknown) => {
+      logger.error('Mattermost WebSocket error', {
+        error: (ev as any)?.message ?? 'unknown',
+      });
+    };
+
+    ws.onclose = () => {
+      this.ws = null;
+      if (!this.wsClosedByUser) {
+        logger.info('Mattermost WebSocket closed');
+      }
+    };
+  }
+
+  /**
+   * Parses a raw WebSocket frame and, when it is a `posted` event, dispatches
+   * the embedded post to all registered handlers.
+   */
+  private handleWsMessage(raw: unknown): void {
+    if (typeof raw !== 'string') {
+      return;
+    }
+    const event = JSON.parse(raw) as {
+      event?: string;
+      data?: { post?: string; channel_type?: string };
+    };
+    if (event.event !== 'posted' || !event.data?.post) {
+      return;
+    }
+
+    let post: MattermostPost;
+    try {
+      post = JSON.parse(event.data.post) as MattermostPost;
+    } catch {
+      return;
+    }
+
+    for (const handler of this.postHandlers) {
+      try {
+        handler(post, event.data.channel_type);
+      } catch (error: unknown) {
+        logger.debug('Mattermost post handler threw', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
     }
   }
 
@@ -235,6 +390,15 @@ export default class MattermostClient {
     this.teamsCache = null;
     this.channelIdCache.clear();
     this.pendingLookups.clear();
+    this.wsClosedByUser = true;
+    if (this.ws) {
+      try {
+        this.ws.close();
+      } catch {
+        /* ignore */
+      }
+      this.ws = null;
+    }
   }
 
   getCurrentUserId(): string | null {
