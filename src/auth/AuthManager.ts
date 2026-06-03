@@ -9,6 +9,7 @@ import {
   generateSecret as generateTotpSecretValue,
   verifyToken as verifyTotpToken,
 } from './TotpService';
+import { LoginAttemptTracker } from './LoginAttemptTracker';
 import { UserRepository } from './UserRepository';
 import type {
   AuthToken,
@@ -34,6 +35,9 @@ export class AuthManager {
   private readonly jwtSecret: string;
   private readonly jwtRefreshSecret: string;
   private readonly bcryptRounds = 12;
+
+  /** Account-lockout tracker (see {@link LoginAttemptTracker}). */
+  private readonly loginAttempts = new LoginAttemptTracker();
 
   // RBAC Permissions
   private readonly rolePermissions: Record<UserRole, string[]> = {
@@ -363,15 +367,29 @@ export class AuthManager {
    * accounts can never be locked out by this feature.
    */
   public async login(credentials: LoginCredentials): Promise<AuthToken> {
+    const lockoutKey = LoginAttemptTracker.buildKey(credentials.username, credentials.ipAddress);
+
+    // Reject early if locked, before any credential check, so a locked attacker
+    // cannot continue probing passwords.
+    const lockMs = this.loginAttempts.getLockRemainingMs(lockoutKey);
+    if (lockMs > 0) {
+      throw new AuthenticationError(
+        `Account temporarily locked due to too many failed login attempts. Try again in ${Math.ceil(lockMs / 1000)} seconds.`,
+        'ACCOUNT_LOCKED'
+      );
+    }
+
     const userId = this.usernameMap.get(credentials.username);
     const user = userId ? this.users.get(userId) : undefined;
 
     if (!user || !user.isActive || !user.passwordHash) {
+      this.loginAttempts.recordFailure(lockoutKey);
       throw new AuthenticationError('Invalid credentials', 'INVALID_CREDENTIALS');
     }
 
     const isValidPassword = await this.verifyPassword(credentials.password, user.passwordHash);
     if (!isValidPassword) {
+      this.loginAttempts.recordFailure(lockoutKey);
       throw new AuthenticationError('Invalid credentials', 'INVALID_CREDENTIALS');
     }
 
@@ -387,15 +405,15 @@ export class AuthManager {
     }
 
     // Update last login
+    // Successful authentication — clear any accumulated failure state.
+    this.loginAttempts.clear(lockoutKey);
+
     user.lastLogin = new Date().toISOString();
     this.users.set(user.id, user);
     this.persistUser(user);
 
-    // Generate tokens
     const accessToken = this.generateAccessToken(user);
     const refreshToken = this.generateRefreshToken(user);
-
-    // Store refresh token
     this.refreshTokens.add(refreshToken);
 
     debug(`User logged in: ${user.username}`);
@@ -406,6 +424,17 @@ export class AuthManager {
       user: this.sanitizeUser(user),
       expiresIn: 3600, // 1 hour
     };
+  }
+
+  /** Whether a username (optionally scoped to an IP) is currently locked out. */
+  public isLockedOut(username: string, ipAddress?: string): boolean {
+    const key = LoginAttemptTracker.buildKey(username, ipAddress);
+    return this.loginAttempts.getLockRemainingMs(key) > 0;
+  }
+
+  /** Admin override to clear a lockout (support flows / never permanently stuck). */
+  public resetLockout(username: string, ipAddress?: string): void {
+    this.loginAttempts.clear(LoginAttemptTracker.buildKey(username, ipAddress));
   }
 
   /**
@@ -483,6 +512,10 @@ export class AuthManager {
         username: user.username,
         role: user.role,
         permissions: this.getUserPermissions(user.role),
+        // Unique token id so two tokens minted within the same second (e.g.
+        // login immediately followed by session rotation) are never byte
+        // identical. Required for session rotation to produce a distinct token.
+        jti: crypto.randomBytes(16).toString('hex'),
       },
       this.jwtSecret,
       { expiresIn: '1h' }

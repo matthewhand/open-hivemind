@@ -4,8 +4,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
 import { Logger } from '@common/logger';
-import { loadPlugin, PLUGINS_DIR, type PluginManifest } from './PluginLoader';
+import { PathSecurityUtils } from '../utils/PathSecurityUtils';
 import { isSafeUrl } from '../utils/ssrfGuard';
+import { loadPlugin, PLUGINS_DIR, type PluginManifest } from './PluginLoader';
 import {
   PluginSecurityPolicy,
   type PluginSecurityStatus,
@@ -256,14 +257,14 @@ export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
   await fs.promises.mkdir(PLUGINS_DIR, { recursive: true });
 
   const tempName = `_install_${Date.now()}`;
-  const tempPath = path.join(PLUGINS_DIR, tempName);
+  const tempPath = PathSecurityUtils.getSafePath(PLUGINS_DIR, tempName);
 
   try {
     debug('Cloning %s → %s', repoUrl, tempPath);
     exec('git', ['clone', '--depth', '1', repoUrl, tempPath], PLUGINS_DIR);
 
     const name = await deriveNameFromPath(tempPath);
-    const pluginPath = path.join(PLUGINS_DIR, name);
+    const pluginPath = PathSecurityUtils.getSafePath(PLUGINS_DIR, name);
 
     try {
       await fs.promises.access(pluginPath);
@@ -311,7 +312,7 @@ export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
  * Uninstall a community plugin by name.
  */
 export async function uninstallPlugin(name: string): Promise<void> {
-  const pluginPath = path.join(PLUGINS_DIR, name);
+  const pluginPath = PathSecurityUtils.getSafePath(PLUGINS_DIR, name);
 
   try {
     await fs.promises.access(pluginPath);
@@ -336,7 +337,7 @@ export async function uninstallPlugin(name: string): Promise<void> {
  * Update a community plugin to its latest commit.
  */
 export async function updatePlugin(name: string): Promise<PluginInfo> {
-  const pluginPath = path.join(PLUGINS_DIR, name);
+  const pluginPath = PathSecurityUtils.getSafePath(PLUGINS_DIR, name);
 
   try {
     await fs.promises.access(pluginPath);
@@ -399,7 +400,7 @@ export async function listInstalledPlugins(): Promise<PluginInfo[]> {
     .map((d) => d.name);
 
   for (const name of dirs) {
-    const pluginPath = path.join(PLUGINS_DIR, name);
+    const pluginPath = PathSecurityUtils.getSafePath(PLUGINS_DIR, name);
     try {
       const mod = await loadPlugin(name);
       const manifest = mod.manifest as PluginManifest;

@@ -73,57 +73,22 @@ export class ActivitySchemas implements ISchemaModule {
   }
 
   async createIndexes(db: Database): Promise<void> {
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_activity_logs_bot_id ON activity_logs(bot_id)'
-    );
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_activity_logs_timestamp ON activity_logs(timestamp)'
-    );
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_activity_logs_action ON activity_logs(action)'
-    );
+    const indexes = [
+      'CREATE INDEX IF NOT EXISTS idx_activity_logs_bot_id ON activity_logs(bot_id)',
+      'CREATE INDEX IF NOT EXISTS idx_activity_logs_timestamp ON activity_logs(timestamp)',
+      'CREATE INDEX IF NOT EXISTS idx_activity_logs_action ON activity_logs(action)',
+      'CREATE INDEX IF NOT EXISTS idx_message_logs_bot_id ON message_logs(bot_id)',
+      'CREATE INDEX IF NOT EXISTS idx_message_logs_user_id ON message_logs(user_id)',
+      'CREATE INDEX IF NOT EXISTS idx_message_logs_timestamp ON message_logs(timestamp)',
+      'CREATE INDEX IF NOT EXISTS idx_bot_audit_logs_bot_id ON bot_audit_logs(bot_id)',
+      'CREATE INDEX IF NOT EXISTS idx_bot_audit_logs_user_id ON bot_audit_logs(user_id)',
+      'CREATE INDEX IF NOT EXISTS idx_bot_audit_logs_timestamp ON bot_audit_logs(timestamp)',
+      'CREATE INDEX IF NOT EXISTS idx_bot_error_logs_bot_id ON bot_error_logs(bot_id)',
+      'CREATE INDEX IF NOT EXISTS idx_bot_error_logs_severity ON bot_error_logs(severity)',
+      'CREATE INDEX IF NOT EXISTS idx_bot_error_logs_timestamp ON bot_error_logs(timestamp)',
+    ];
 
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_message_logs_bot_id ON message_logs(bot_id)'
-    );
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_message_logs_user_id ON message_logs(user_id)'
-    );
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_message_logs_timestamp ON message_logs(timestamp)'
-    );
-
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_bot_audit_logs_bot_id ON bot_audit_logs(bot_id)'
-    );
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_bot_audit_logs_user_id ON bot_audit_logs(user_id)'
-    );
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_bot_audit_logs_timestamp ON bot_audit_logs(timestamp)'
-    );
-
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_bot_error_logs_bot_id ON bot_error_logs(bot_id)'
-    );
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_bot_error_logs_severity ON bot_error_logs(severity)'
-    );
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_bot_error_logs_timestamp ON bot_error_logs(timestamp)'
-    );
+    await Promise.all(indexes.map((sql) => this.createIndex(db, sql)));
   }
 
   getTableNames(): string[] {

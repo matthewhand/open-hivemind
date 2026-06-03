@@ -44,6 +44,12 @@ export interface LoginCredentials {
    * Optional so existing password-only logins are unaffected.
    */
   totpCode?: string;
+  /**
+   * Optional client IP address. When supplied, account-lockout tracking is
+   * keyed on the username + IP pair so a single abusive source cannot lock out
+   * a legitimate user logging in from a different network.
+   */
+  ipAddress?: string;
 }
 
 export interface RegisterData {

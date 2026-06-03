@@ -3,6 +3,7 @@ import { Router, type NextFunction, type Request, type Response } from 'express'
 import { AuthManager } from '../../auth/AuthManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import { verifyToken as verifyTotpToken } from '../../auth/TotpService';
+import { SessionManager } from '../../auth/SessionManager';
 import type { AuthMiddlewareRequest, LoginCredentials, RegisterData } from '../../auth/types';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { apiRateLimiter, authRateLimiter } from '../../middleware/rateLimiters';
@@ -56,8 +57,32 @@ router.post(
   validate(LoginSchema),
   asyncErrorHandler(async (req, res) => {
     try {
-      const credentials: LoginCredentials = req.body;
+      const credentials: LoginCredentials = {
+        ...req.body,
+        // Scope account-lockout tracking to the requesting IP so an abusive
+        // source cannot lock out a legitimate user logging in elsewhere.
+        ipAddress: req.ip,
+      };
       const authResult = await authManager.login(credentials);
+
+      // SECURITY: Opt-in server-side session tracking with token rotation.
+      // When SESSION_MANAGER_ENABLED=true, issue a session-tracked access token
+      // and return it to the client in place of the stateless one. This is
+      // purely additive — when disabled the original behaviour is unchanged.
+      if (SessionManager.isEnabled() && authResult.user?.id) {
+        try {
+          const sessionToken = await SessionManager.getInstance().createSession(
+            authResult.user.id,
+            authResult.user.role
+          );
+          authResult.accessToken = sessionToken;
+        } catch (sessionError) {
+          // Never fail login because of session bookkeeping — fall back to the
+          // stateless token that login() already produced.
+          debug('Session creation failed, falling back to stateless token:', sessionError);
+        }
+      }
+
       return res.json(ApiResponse.success(authResult));
     } catch (error: unknown) {
       const errMsg = error instanceof Error ? error.message : String(error);
@@ -171,11 +196,86 @@ router.post(
       if (refreshToken) {
         await authManager.logout(refreshToken);
       }
+
+      // When session tracking is enabled, also invalidate the session-tracked
+      // access token presented in the Authorization header so it can no longer
+      // be replayed. Best-effort: never fail logout on session bookkeeping.
+      if (SessionManager.isEnabled()) {
+        try {
+          const authHeader = Array.isArray(req.headers.authorization)
+            ? req.headers.authorization[0]
+            : req.headers.authorization;
+          const accessToken = authHeader?.startsWith('Bearer ')
+            ? authHeader.substring(7)
+            : undefined;
+          if (accessToken) {
+            await SessionManager.getInstance().getStore().invalidateToken(accessToken);
+          }
+        } catch (sessionError) {
+          debug('Session invalidation on logout failed:', sessionError);
+        }
+      }
+
       return res.json(ApiResponse.success());
     } catch (error: unknown) {
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error(ErrorUtils.getMessage(error)));
+    }
+  })
+);
+
+/**
+ * @openapi
+ * /webui/api/auth/rotate:
+ *   post:
+ *     summary: Rotate the current session access token
+ *     description: >
+ *       Issues a fresh access token and invalidates the presented one.
+ *       Only available when server-side session management is enabled
+ *       (SESSION_MANAGER_ENABLED=true). Requires a valid Bearer token.
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: New access token issued
+ *       401:
+ *         description: Invalid or missing token
+ *       404:
+ *         description: Session management is not enabled
+ */
+router.post(
+  '/rotate',
+  apiRateLimiter,
+  authenticate,
+  asyncErrorHandler(async (req: Request, res: Response) => {
+    if (!SessionManager.isEnabled()) {
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Session management is not enabled', undefined, 404));
+    }
+
+    const authHeader = Array.isArray(req.headers.authorization)
+      ? req.headers.authorization[0]
+      : req.headers.authorization;
+    const oldToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined;
+
+    if (!oldToken) {
+      return res
+        .status(HTTP_STATUS.UNAUTHORIZED)
+        .json(ApiResponse.error('Bearer token required', undefined, 401));
+    }
+
+    try {
+      const newToken = await SessionManager.getInstance().rotateToken(oldToken);
+      return res.json(ApiResponse.success({ accessToken: newToken, expiresIn: 3600 }));
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      debug('Token rotation error:', errMsg);
+      return res
+        .status(HTTP_STATUS.UNAUTHORIZED)
+        .json(ApiResponse.error('Token rotation failed', undefined, 401));
     }
   })
 );
