@@ -6,27 +6,15 @@ import Logger from '@common/logger';
 
 const logger = Logger.withContext('OpenSwarmProvider');
 
-/**
- * Per-bot configuration for the OpenSwarm provider. Any field omitted falls
- * back to the corresponding environment variable, then to a built-in default.
- */
-export interface OpenSwarmConfig {
-  baseUrl?: string;
-  apiKey?: string;
-  team?: string;
-}
-
 export class OpenSwarmProvider implements ILlmProvider {
   name = 'openswarm';
 
   private baseUrl: string;
   private apiKey: string;
-  private team?: string;
 
-  constructor(config: OpenSwarmConfig = {}) {
-    this.baseUrl = config.baseUrl || process.env.OPENSWARM_BASE_URL || 'http://localhost:8000/v1';
-    this.apiKey = config.apiKey || process.env.OPENSWARM_API_KEY || 'dummy-key';
-    this.team = config.team || process.env.OPENSWARM_TEAM || undefined;
+  constructor() {
+    this.baseUrl = process.env.OPENSWARM_BASE_URL || 'http://localhost:8000/v1';
+    this.apiKey = process.env.OPENSWARM_API_KEY || 'dummy-key';
   }
 
   supportsChatCompletion(): boolean {
@@ -43,7 +31,7 @@ export class OpenSwarmProvider implements ILlmProvider {
     metadata?: Record<string, any>
   ): Promise<string> {
     try {
-      const teamName = metadata?.team || metadata?.model || this.team || 'default-team';
+      const teamName = metadata?.team || metadata?.model || 'default-team';
       const targetUrl = `${this.baseUrl}/chat/completions`;
 
       const data = await http.post<{ choices: Array<{ message: { content: string } }> }>(

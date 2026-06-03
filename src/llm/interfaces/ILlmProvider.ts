@@ -1,43 +1,5 @@
 import type { IMessage } from '@src/message/interfaces/IMessage';
 
-/** A single tool call as returned by an LLM during function calling. */
-export interface LlmToolCall {
-  id: string;
-  type: 'function';
-  function: {
-    name: string;
-    arguments: string;
-  };
-}
-
-/**
- * Minimal chat message shape used for multi-turn tool conversations.
- * This mirrors the OpenAI chat message structure but stays provider-neutral.
- */
-export interface LlmChatMessage {
-  role: 'system' | 'user' | 'assistant' | 'tool';
-  content: string | null;
-  tool_calls?: LlmToolCall[];
-  tool_call_id?: string;
-  name?: string;
-}
-
-/** Provider-neutral tool definition (OpenAI function-calling shape). */
-export interface LlmToolDefinition {
-  type: 'function';
-  function: {
-    name: string;
-    description: string;
-    parameters: Record<string, unknown>;
-  };
-}
-
-/** The assistant turn returned from a tool-aware completion. */
-export interface LlmToolCompletionResult {
-  content: string | null;
-  tool_calls?: LlmToolCall[];
-}
-
 /**
  * Interface for Large Language Model (LLM) providers.
  *
@@ -153,29 +115,6 @@ export interface ILlmProvider {
   ) => Promise<string>;
 
   /**
-   * Generates a tool-aware chat completion using native function calling.
-   *
-   * Providers that support OpenAI-compatible function calling can implement
-   * this to receive a fully-built messages array plus tool definitions and
-   * return the assistant turn (which may contain tool calls). The caller
-   * (toolAugmentedCompletion) drives the multi-turn tool loop.
-   *
-   * Providers that do not implement this method are routed through the
-   * caller's direct fallback path, preserving existing behavior.
-   *
-   * @param {LlmChatMessage[]} messages - The full conversation so far
-   * @param {LlmToolDefinition[]} tools - Tool definitions; empty for a final text turn
-   * @param {Record<string, any>} [metadata] - Optional metadata for additional context
-   * @returns {Promise<LlmToolCompletionResult>} The assistant turn
-   */
-  generateChatCompletionWithTools?: (
-    messages: LlmChatMessage[],
-    tools: LlmToolDefinition[],
-
-    metadata?: Record<string, any>
-  ) => Promise<LlmToolCompletionResult>;
-
-  /**
    * Generates a non-chat text completion.
    *
    * This method performs single-turn text generation based solely on
@@ -192,16 +131,4 @@ export interface ILlmProvider {
    * ```
    */
   generateCompletion: (prompt: string) => Promise<string>;
-
-  /**
-   * Generates an embedding vector for the given text.
-   *
-   * Optional. Providers that support embeddings (e.g. OpenAI, OpenWebUI/Ollama)
-   * implement this so they can back vector memory stores such as
-   * PostgresMemoryProvider. Providers without embedding support omit it.
-   *
-   * @param {string} text - The text to embed
-   * @returns {Promise<number[]>} A promise that resolves to the embedding vector
-   */
-  generateEmbedding?: (text: string) => Promise<number[]>;
 }

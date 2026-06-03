@@ -2,44 +2,20 @@
 
 This document provides a comprehensive overview of the security measures implemented in Open-Hivemind, along with implementation details, configuration options, and best practices.
 
-> **Note on scope.** Several subsections below (Secret Vault Integration, the Redis-backed Session Management and Rate Limiting examples) describe *target architectures / reference patterns* for enterprise deployments. They do not all correspond 1:1 to the current code. The **Implementation Status** table immediately below is the authoritative record of what ships today versus what is still pending or in review — treat it as the source of truth when the prose and the code disagree.
-
-## Implementation Status
-
-| Area | Status | Where |
-|------|--------|-------|
-| CSRF protection (synchronizer token) | **Implemented** | `src/server/middleware/csrf.ts`, mounted in `src/server/registerRoutes.ts` and `src/server/server.ts` |
-| Durable audit log (SQLite/Postgres-backed) | **Implemented** | `src/server/middleware/auditLogger.ts`, `src/database/repositories/AuditEventRepository.ts` |
-| Durable user persistence (registrations, password changes, lastLogin survive restart) | **Implemented** | `src/auth/UserRepository.ts`, wired in `src/auth/AuthManager.ts` |
-| Webhook IP allow-list (exact-match IPv4/IPv6) | **Implemented** | `src/webhook/security/webhookSecurity.ts` (`verifyIpWhitelist`) |
-| Admin trusted-IP guard (exact IP **and** CIDR ranges) | **Implemented** | `src/server/middleware/security.ts` (`isTrustedAdminIP` / `adminIPGuard`) |
-| Encryption-at-rest for stored secrets (AES-256-GCM) | **Implemented** | `src/config/SecureConfigManager.ts` |
-| Security response headers (CSP, HSTS, X-Frame-Options, etc.) | **Implemented** | `src/server/middleware/security.ts` (`securityHeaders`) |
-| Webhook token + Slack signature verification (timing-safe) | **Implemented** | `src/webhook/security/webhookSecurity.ts` |
-| Two-factor authentication (2FA) | **In review** | Settings UI fields exist (`SettingsSecurity.tsx`); enforcement lives in a held `[SECURITY-REVIEW]` PR |
-| Account lockout after failed logins | **In review** | Settings UI fields exist; enforcement lives in a held `[SECURITY-REVIEW]` PR |
-| Durable / Redis-backed session manager | **In review** | `src/auth/SessionManager.ts` exists but is not yet wired into the request path; held in a `[SECURITY-REVIEW]` PR |
-
-Legend: **Implemented** = present and active on `main`. **In review** = code or UI scaffolding exists but the enforcing path is intentionally not wired in yet (held in a security-review PR).
-
 ## Table of Contents
 
-1. [Credential Management & Encryption at Rest](#1-credential-management--encryption-at-rest)
+1. [Credential Management](#1-credential-management)
 2. [Secret Vault Integration](#2-secret-vault-integration)
 3. [WebUI Sanitization](#3-webui-sanitization)
 4. [CORS Configuration](#4-cors-configuration)
 5. [Session Management](#5-session-management)
 6. [Input Validation](#6-input-validation)
 7. [Rate Limiting](#7-rate-limiting)
-8. [CSRF Protection](#8-csrf-protection)
-9. [Durable Audit Log](#9-durable-audit-log)
-10. [Durable User Persistence](#10-durable-user-persistence)
-11. [Webhook & Admin IP Allow-Lists](#11-webhook--admin-ip-allow-lists)
-12. [Testing Security Measures](#12-testing-security-measures)
+8. [Testing Security Measures](#8-testing-security-measures)
 
 ---
 
-## 1. Credential Management & Encryption at Rest
+## 1. Credential Management
 
 ### Overview
 Hardcoded credentials have been removed from the codebase. The [`debugEnvVars.ts`](src/config/debugEnvVars.ts) file has been sanitized to prevent accidental exposure of sensitive information.
@@ -51,17 +27,14 @@ Hardcoded credentials have been removed from the codebase. The [`debugEnvVars.ts
 - Environment variables are now the only source for sensitive configuration
 - Debug utilities use placeholder values that are clearly marked
 
-#### Secure Configuration Manager (Encryption at Rest)
+#### Secure Configuration Manager
 Location: [`src/config/SecureConfigManager.ts`](src/config/SecureConfigManager.ts)
 
-Stored secrets (bot tokens, provider API keys, etc.) are encrypted at rest. As implemented today:
-
-- **AES-256-GCM authenticated encryption** for stored configurations. Each record is serialized as `iv:authTag:ciphertext`, where `iv` is a fresh random 16-byte initialization vector and `authTag` is the GCM authentication tag (tamper detection is provided by GCM itself).
-- **Auto-managed encryption key.** On first use the manager generates a random 32-byte key with `crypto.randomBytes(32)` and persists it to `config/.key` (created if absent, reused thereafter). The key is **not** read from an environment variable in the current implementation.
-- **On-disk layout.** Encrypted configs live under `config/secure/`, backups under `config/backups/`.
-- Configuration records carry a `checksum` and `updatedAt`/`createdAt` metadata and can be grouped by `type` (e.g. `bot`).
-
-> **Operational note.** Because the encryption key lives in `config/.key`, that file must be protected with filesystem permissions and included in your backup/secret-rotation strategy. Losing `config/.key` makes existing encrypted configs unrecoverable; leaking it defeats encryption at rest.
+Features:
+- AES-256-GCM encryption for stored configurations
+- Integrity verification with HMAC-SHA256
+- Secure key derivation using PBKDF2
+- Configuration isolation by type (bot, user, system)
 
 ```typescript
 // Example usage
@@ -94,26 +67,17 @@ Automatically redacts sensitive values in logs and error messages:
 
 ### Configuration
 
-The `SecureConfigManager` does **not** currently require an `ENCRYPTION_KEY`/`MASTER_KEY` environment variable — it self-manages its key in `config/.key` (see above). The security-relevant environment variables that *are* honored today are documented in `.env.sample`; the most relevant ones for this guide:
-
 ```bash
-# Session signing secret (used by the session middleware)
-SESSION_SECRET=your-secure-session-secret
-
-# Trusted admin login network controls (supports exact IPs and CIDR ranges)
-ALLOW_LOCALHOST_ADMIN=true
-ADMIN_IP_WHITELIST=127.0.0.1,::1,::ffff:127.0.0.1
-
-# Webhook inbound IP allow-list (exact IPs only — see §11)
-WEBHOOK_IP_WHITELIST=203.0.113.10,203.0.113.11
+# Required environment variables
+ENCRYPTION_KEY=<32-byte hex string>  # For SecureConfigManager
+MASTER_KEY=<derived-key-password>     # For key derivation
 ```
 
 ### Best Practices
-1. Never commit `.env` files or `config/.key` to version control.
-2. Back up `config/.key` securely; rotation requires re-encrypting existing configs.
-3. Use different keys/secrets for development and production.
-4. Restrict filesystem permissions on `config/.key`, `config/secure/`, and the SQLite database file.
-5. Monitor access to secure configurations via the durable audit log (§9).
+1. Never commit `.env` files to version control
+2. Rotate encryption keys periodically
+3. Use different keys for development and production
+4. Monitor access to secure configurations
 
 ---
 
@@ -430,14 +394,12 @@ app.use(helmet({
 
 ## 5. Session Management
 
-> **Status: partially implemented / hardening in review.** A session signing secret (`SESSION_SECRET`) and a session middleware (`src/middleware/sessionMiddleware.ts`) exist today. The richer **durable session manager** described below — `src/auth/SessionManager.ts`, idle/absolute timeouts, store-backed invalidation and rotation — is **in review**: the class exists in the tree but is **not yet wired into the request path**, and ships in a held `[SECURITY-REVIEW]` PR. The Redis/`connect-redis` example below is a **reference target architecture**, not the current runtime (the project does not require Redis to run). Treat this section as design guidance until the held PR lands.
-
 ### Overview
 Secure session management with proper storage, cookie configuration, and rotation mechanisms.
 
 ### Implementation Details
 
-Location: [`src/middleware/sessionMiddleware.ts`](src/middleware/sessionMiddleware.ts) (active), `src/auth/SessionManager.ts` (in review — see status note above)
+Location: [`src/middleware/sessionMiddleware.ts`](src/middleware/sessionMiddleware.ts)
 
 ```typescript
 import session from 'express-session';
@@ -685,10 +647,8 @@ export const customValidators = {
 
 ## 7. Rate Limiting
 
-> **Status note.** Rate limiting is active on sensitive endpoints (e.g. the auth and admin/config routers use `express-rate-limit`; see `src/server/routes/admin/audit.ts` and the auth routers). The **Redis-backed** profiles shown below are a **reference/target architecture** — the current default runtime uses in-process `express-rate-limit` and does not require Redis.
-
 ### Overview
-Redis-backed rate limiting with configurable profiles for different endpoint types (target architecture).
+Redis-backed rate limiting with configurable profiles for different endpoint types.
 
 ### Implementation Details
 
@@ -827,106 +787,7 @@ const customHandler = (req: Request, res: Response) => {
 
 ---
 
-## 8. CSRF Protection
-
-**Status: Implemented and active.**
-
-A synchronizer-token CSRF defense protects state-changing requests under `/api`.
-
-Location: [`src/server/middleware/csrf.ts`](src/server/middleware/csrf.ts). Mounted on the active server entrypoint in [`src/server/registerRoutes.ts`](src/server/registerRoutes.ts) (and also referenced in `src/server/server.ts`).
-
-### How it works
-
-1. The client fetches a token from `GET /api/csrf-token`. This endpoint is registered **before** the protection middleware so it is always reachable, and it sets a per-session id cookie (`_csrf_sid`, `httpOnly`, `sameSite=strict`, `secure` in production).
-2. Tokens are cryptographically random (`crypto.randomBytes(32)`, base64url-encoded) and bound to the session id, with a 24-hour expiry. Expired tokens are pruned by an hourly cleanup interval.
-3. For unsafe methods (`POST`/`PUT`/`DELETE`/`PATCH`), the client must send the token in the `X-CSRF-Token` header (or `_csrf` in the body). Validation uses a constant-time comparison (`crypto.timingSafeEqual`).
-4. Safe methods (`GET`/`HEAD`/`OPTIONS`) pass through untouched, so read APIs are unaffected.
-
-The WebUI client (`src/client/src/services/api/core.ts`) already fetches the token and attaches the `X-CSRF-Token` header on mutations.
-
-### Scope and exemptions
-
-- Applied as `app.use('/api', …)` to all `/api` routes **except**:
-  - `/api/auth/*` — login/refresh must work before a token/session exists; these are protected by dedicated auth rate limiters instead.
-  - `GET /api/csrf-token` — the token-issuing endpoint (a safe method, already exempt).
-- External inbound webhooks are mounted at `/webhook/*` (not under `/api`) and are therefore not affected by CSRF middleware; they are protected by the webhook token and IP allow-list (§11) instead.
-- In tests, CSRF can be skipped by setting `NODE_ENV=test` **and** `CSRF_SKIP_IN_TEST=true`.
-
-> **Token store note.** The token store is an in-process `Map`. In a multi-instance deployment this should be backed by a shared store (e.g. Redis) so tokens issued by one instance validate on another. A `csrfDoubleSubmit` (stateless double-submit cookie) variant is also exported for stateless deployments.
-
----
-
-## 9. Durable Audit Log
-
-**Status: Implemented.** Audit events are persisted to the database and survive process restarts.
-
-### Architecture
-
-There are two audit subsystems in the codebase:
-
-| Logger | Location | Backing store | Use |
-|--------|----------|---------------|-----|
-| `auditLogger` (service) | `src/server/middleware/auditLogger.ts` | **Durable** — SQLite/Postgres via `DatabaseManager` → `AuditEventRepository` | Request/security audit trail used by admin audit routes |
-| `AuditLogger` (singleton) | `src/common/auditLogger.ts` | Append-only **rotating file** (`config/audit.log`, 10 MB × 5 rotations) | Config/bot/admin action logging with CSV export |
-
-The durable service path (`src/server/middleware/auditLogger.ts`):
-
-- Keeps a bounded in-memory cache (last 1000 entries) **and** writes each entry through to a durable store (fire-and-forget, so it never blocks the request path).
-- The default store lazily resolves `DatabaseManager` and calls `insertAuditEvent` / `queryAuditEvents` / `getAuditEventStats` / `getRecentAuditEvents`. When no database is configured the calls degrade gracefully (no throw) and the in-memory cache remains the source of truth.
-- On first read it can `hydrate()` the in-memory cache from persisted history so events logged before a restart remain visible.
-- `queryPersisted()` and `getStatsPersisted()` read from the durable store first, falling back to the in-memory cache.
-
-### Persistence layer
-
-[`src/database/repositories/AuditEventRepository.ts`](src/database/repositories/AuditEventRepository.ts) provides best-effort durable storage against the `audit_events` table (schema in `src/database/schemas/LoggingSchemas.ts`, with indexes on `timestamp`, `action`, `resource`, `user_id`, and `status`). It supports filtered queries (time range, action/resource lists, status, free-text search), pagination, recent-N retrieval, and aggregate stats. All methods degrade gracefully when the database is unavailable.
-
-### Middleware helpers
-
-`auditMiddleware(action, resource)` wraps the response to capture status and log automatically; `auditMiddlewareWithChanges(...)` additionally records before/after values; `logAuditEvent(...)` allows manual logging from within handlers. Each entry records action, resource, resourceId, userId, IP, user-agent, status, and optional error message.
-
----
-
-## 10. Durable User Persistence
-
-**Status: Implemented.** Registered users, password changes, and `lastLogin` timestamps survive restarts (previously they lived only in in-memory maps).
-
-Location: [`src/auth/UserRepository.ts`](src/auth/UserRepository.ts), wired into [`src/auth/AuthManager.ts`](src/auth/AuthManager.ts).
-
-- `AuthManager` constructs a `UserRepository` and, on startup, **loads** all persisted users into its in-memory maps. On register/update/delete/change-password it **persists** the change back via `upsert()` / `delete()`.
-- Storage is a synchronous `better-sqlite3` table, `auth_users`, with columns: `id`, `username` (unique), `email` (unique), `role`, `is_active`, `created_at`, `last_login`, `password_hash`, `tenant_id`. The synchronous API is used deliberately so the existing synchronous auth code paths are unchanged.
-- WAL journaling and foreign-key enforcement are enabled. The database path defaults to the configured `DATABASE_PATH`; tests can inject an in-memory database.
-- Only password **hashes** are stored — never plaintext passwords.
-
-> A separate `users` table (auto-increment id, `passwordHash`, `roleId`, `tenantId`) also exists in the main migration (`src/database/migrations/000_initial_schema.ts`) for the multi-tenant/RBAC data model. The active `AuthManager` persistence path uses the `auth_users` table described above.
-
----
-
-## 11. Webhook & Admin IP Allow-Lists
-
-**Status: Implemented.** Two independent IP-restriction mechanisms exist; note the difference in matching semantics.
-
-### Webhook inbound allow-list (exact match)
-
-Location: [`src/webhook/security/webhookSecurity.ts`](src/webhook/security/webhookSecurity.ts) (`verifyIpWhitelist`), applied to `POST /webhook` and `POST /webhook/receive` (after `verifyWebhookToken`).
-
-- Driven by `WEBHOOK_IP_WHITELIST` — a comma-separated list of **literal IPv4/IPv6 addresses**.
-- **Exact-match only.** The request IP must appear verbatim in the list; **CIDR ranges are not supported on this path.** IPv4-mapped IPv6 addresses (`::ffff:1.2.3.4`) are normalized to their IPv4 form before comparison.
-- **Fail-closed.** If `WEBHOOK_IP_WHITELIST` is empty/unset, all webhook requests are rejected with `403`. Malformed request IPs are also rejected.
-- Webhook requests must additionally pass `verifyWebhookToken` (timing-safe comparison of `X-Webhook-Token` or `Authorization: Bearer`), and the `/webhook/slack` route verifies the Slack signature (`X-Slack-Signature`) with a 5-minute replay window.
-
-### Admin trusted-IP guard (exact match **and** CIDR)
-
-Location: [`src/server/middleware/security.ts`](src/server/middleware/security.ts) (`isTrustedAdminIP` / `adminIPGuard`).
-
-- Driven by `ADMIN_IP_WHITELIST` (defaults to loopback: `127.0.0.1`, `::1`, `::ffff:127.0.0.1`), and gated by `ALLOW_LOCALHOST_ADMIN=true`.
-- Supports **both** exact IPs and **CIDR ranges** (entries containing `/` are matched via `isIPInCIDR`).
-- `FORCE_TRUSTED_LOGIN=true` bypasses the check (intended for controlled environments only).
-
-> The distinct matching semantics are intentional: the admin guard accepts CIDR ranges, the webhook allow-list requires exact addresses. Configure `WEBHOOK_IP_WHITELIST` with explicit IPs accordingly.
-
----
-
-## 12. Testing Security Measures
+## 8. Testing Security Measures
 
 ### Test Structure
 
@@ -1040,21 +901,17 @@ describe('Input Validation', () => {
 - [ ] Rate limiting enabled on all endpoints
 - [ ] Input validation on all API endpoints
 - [ ] Session cookies configured with secure flags
-- [ ] Security response headers enabled (`securityHeaders` middleware)
-- [ ] CSRF protection active on `/api` (verify client sends `X-CSRF-Token`)
-- [ ] `WEBHOOK_IP_WHITELIST` set (fail-closed; webhooks rejected if empty)
-- [ ] `config/.key`, `config/secure/`, and the SQLite DB file have restricted filesystem permissions and are backed up
+- [ ] Security headers (Helmet) enabled
 - [ ] All security tests passing
 - [ ] Penetration testing completed
 
 ### Ongoing Monitoring
 
 - [ ] Monitor rate limit violations
-- [ ] Review the durable audit log (§9) for unauthorized access
-- [ ] Secret rotation schedule (including `config/.key`)
+- [ ] Audit log review for unauthorized access
+- [ ] Secret rotation schedule
 - [ ] Security dependency updates
 - [ ] CORS policy review on domain changes
-- [ ] Track the held `[SECURITY-REVIEW]` PRs (2FA, account lockout, durable session manager) for landing
 
 ---
 

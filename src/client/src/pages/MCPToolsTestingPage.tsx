@@ -13,7 +13,7 @@ import {
 import PageHeader from '../components/DaisyUI/PageHeader';
 import { SkeletonGrid } from '../components/DaisyUI/Skeleton';
 import { Alert } from '../components/DaisyUI/Alert';
-import { Card, Badge, Divider, Mockup, Input, Select, Button, LoadingSpinner, Textarea } from '../components/DaisyUI';
+import { Card, Badge, Divider, Mockup, Input, Select, Button, LoadingSpinner } from '../components/DaisyUI';
 import Debug from 'debug';
 
 const debug = Debug('app:client:pages:MCPToolsTestingPage');
@@ -51,8 +51,7 @@ const MCPToolsTestingPage: React.FC = () => {
         const res = await authFetch('/api/mcp/servers');
         if (res.ok) {
           const json = await res.json();
-          // GET /api/mcp/servers responds with { success, data: { servers } }
-          const serverList = json.data?.servers || json.servers || [];
+          const serverList = json.servers || [];
           setServers(serverList);
 
           // Flatten tools from all servers

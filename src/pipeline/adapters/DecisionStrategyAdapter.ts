@@ -49,11 +49,7 @@ export class DecisionStrategyAdapter implements DecisionStrategy {
       ctx.history,
       defaultChannelId,
 
-      ctx.botConfig as Record<string, any>,
-      // Suppress the broadcast here: DecisionStage owns the single
-      // `pipeline:decision` emit for the pipeline path (avoids a duplicate
-      // event in the live Orchestration Log).
-      { suppressBroadcast: true }
+      ctx.botConfig as Record<string, any>
     );
 
     // The legacy ReplyDecision shape matches the pipeline's ReplyDecision,

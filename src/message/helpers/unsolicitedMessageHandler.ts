@@ -8,13 +8,8 @@ const logger = Logger.withContext('unsolicitedMessageHandler');
  *
  * Design goals:
  * - If MESSAGE_ONLY_WHEN_SPOKEN_TO is enabled (default), only reply when directly addressed.
- *   (That gate lives in `shouldReplyToMessage`; this helper is only reached for messages that
- *   are NOT directly addressed.)
- * - When MESSAGE_UNSOLICITED_REQUIRE_OPPORTUNITY is enabled, restrict unsolicited replies to
- *   messages that look like an "opportunity" (question/help/request) via `looksLikeOpportunity`.
- *   The actual reply probability is still handled downstream.
- * - When that flag is disabled (the default), preserve the existing behaviour of allowing the
- *   pipeline to proceed to probability calculation for every unsolicited message.
+ * - Otherwise, allow selective unsolicited replies only when the message looks like an
+ *   "opportunity" (question/help/request). The actual probability is handled elsewhere.
  *
  * @param {any} msg - The message object.
  * @param {string} botId - The ID of the bot.
@@ -26,9 +21,11 @@ export function shouldReplyToUnsolicitedMessage(
   botId: string,
   _integration: string
 ): boolean {
-  // Decisions are primarily handled by probability modifiers in `shouldReplyToMessage`.
-  // Optionally, a configurable hard gate restricts unsolicited replies to "opportunities".
+  // Logic Refactor: All hard blocks removed.
+  // Decisions are now handled by probability modifiers in `shouldReplyToMessage`.
+  // We return true to allow the pipeline to proceed to probability calculation.
 
+  // Basic logging of direct queries is still useful for debugging
   const text = String(msg.getText?.() || '').trim();
   const wakewordsRaw = messageConfig.get('MESSAGE_WAKEWORDS');
   const wakewords = Array.isArray(wakewordsRaw)
@@ -52,25 +49,13 @@ export function shouldReplyToUnsolicitedMessage(
     (word: string) => word && text.toLowerCase().startsWith(String(word).toLowerCase())
   );
 
-  const isDirectQuery = isDirectMention || isReplyToBot || isWakeword;
-  if (isDirectQuery) {
+  if (isDirectMention || isReplyToBot || isWakeword) {
     logger.debug('Direct query detected', {
       botId,
       isDirectMention,
       isReplyToBot,
       isWakeword,
     });
-  }
-
-  // Configurable hard gate: when enabled, only allow unsolicited replies for messages
-  // that look like an opportunity (or that are themselves a direct query). Defaults to
-  // false so existing deployments keep deferring the decision to probability modifiers.
-  const requireOpportunity = Boolean(messageConfig.get('MESSAGE_UNSOLICITED_REQUIRE_OPPORTUNITY'));
-  if (requireOpportunity && !isDirectQuery && !looksLikeOpportunity(text)) {
-    logger.debug('Unsolicited message does not look like an opportunity; gating reply', {
-      botId,
-    });
-    return false;
   }
 
   return true;

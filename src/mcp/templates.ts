@@ -1,13 +1,6 @@
 /**
  * Registry of common MCP server templates for quick installation.
- *
- * This file is the single source of truth for the built-in MCP templates that
- * both the WebUI gallery and the server-side API (`GET /api/mcp/providers/templates`,
- * via `ToolRegistry.getTemplates()`) surface. The server consumes these via
- * {@link toMCPProviderTemplates}, so the two registries never drift apart.
  */
-
-import type { MCPProviderTemplate } from '../types/mcp';
 
 export interface MCPTemplate {
   id: string;
@@ -81,43 +74,3 @@ export const MCP_TEMPLATES: MCPTemplate[] = [
     docsUrl: 'https://docs.mem0.ai',
   },
 ];
-
-/**
- * Map a single quick-install {@link MCPTemplate} onto the richer
- * {@link MCPProviderTemplate} shape consumed by the provider API and admin UI.
- *
- * The quick-install templates describe network-reachable MCP servers (they
- * carry a `defaultUrl`), so they map to the `cloud` provider type. The default
- * URL is preserved as the `command` and each required config field becomes an
- * environment variable, keeping the existing single source of truth intact.
- */
-export function toMCPProviderTemplate(template: MCPTemplate): MCPProviderTemplate {
-  return {
-    id: template.id,
-    name: template.name,
-    type: 'cloud',
-    description: template.description,
-    category: 'General',
-    command: template.defaultUrl,
-    args: [],
-    envVars: template.requiredConfigFields.map((field) => ({
-      name: field.key,
-      description: field.description ?? field.label,
-      required: true,
-      defaultValue: '',
-    })),
-    enabledByDefault: false,
-    documentation: template.docsUrl,
-  };
-}
-
-/**
- * The built-in MCP templates expressed in the provider-template shape used by
- * the server API. This is what unifies the previously-disconnected static
- * registry with the server-side `getTemplates()` source.
- */
-export function toMCPProviderTemplates(
-  templates: MCPTemplate[] = MCP_TEMPLATES,
-): MCPProviderTemplate[] {
-  return templates.map(toMCPProviderTemplate);
-}

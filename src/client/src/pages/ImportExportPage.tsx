@@ -73,10 +73,7 @@ const ImportExportPage: React.FC = () => {
   const handleExport = useCallback(async () => {
     setIsExporting(true);
     try {
-      const response = await apiService.post<{ success: boolean; data: any }>(
-        '/api/admin/export',
-        exportOptions
-      );
+      const response = await apiService.post('/api/admin/export', exportOptions);
       const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -100,16 +97,16 @@ const ImportExportPage: React.FC = () => {
     setIsImporting(true);
     setImportResult(null);
 
-    try {
-      const content = await selectedFile.text();
-      const ext = selectedFile.name.split('.').pop()?.toLowerCase();
-      const format = ext === 'yaml' || ext === 'yml' ? 'yaml' : ext === 'csv' ? 'csv' : 'json';
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('overwrite', String(importOptions.overwrite));
+    formData.append('dryRun', String(importOptions.dryRun));
 
-      const response = await apiService.post<{ success: boolean; data: any }>('/api/admin/import', {
-        content,
-        format,
-        overwrite: importOptions.overwrite,
-        dryRun: importOptions.dryRun,
+    try {
+      const response = await apiService.post('/api/admin/import', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
       setImportResult({
         success: true,

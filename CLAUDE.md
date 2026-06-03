@@ -20,38 +20,6 @@
 | `WELCOME_MESSAGE_TEXT` | `''` | Text of the startup welcome message (requires `ENABLE_WELCOME_MESSAGE=true`) |
 | `DATABASE_PATH` | `data/hivemind.db` | Path to the SQLite database file |
 
-## Session & Auth Env Vars
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `SESSION_SECRET` | _(none)_ | Secret used to sign session cookies. **Required in production** (must be ≥32 chars); a short value logs a warning and the app refuses to start without it in production. |
-| `SESSION_COOKIE_NAME` | `hivemind.sid` | Name of the session cookie. |
-| `SESSION_MAX_AGE` | `86400000` (24h) | Session cookie lifetime, in milliseconds. |
-| `SESSION_IDLE_TIMEOUT` | `1800000` (30m) | Idle timeout, in milliseconds; sessions are invalidated after this much inactivity. |
-| `SESSION_STORE_MAX_SESSIONS` | `10000` | Max sessions retained in the in-memory store. |
-| `SESSION_STORE_CLEANUP_INTERVAL_MS` | `300000` (5m) | Interval, in milliseconds, for purging expired sessions. |
-
-## Slack Typing Env Vars
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `SLACK_FAKE_TYPING` | `true` | When RTM is unavailable (Socket Mode / Web API), post a transient "is typing..." placeholder message to simulate typing. Set to `false` to disable. No effect when an RTM client (native typing indicator) is available. |
-
-## Tracing / Span Export Env Vars
-
-A console span exporter is always active. The following enable additional exporters; each is opt-in and activated only when set.
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `TRACE_LOG_FILE` | _(unset)_ | Path to a file that trace spans are appended to as JSON lines; enables the JSON file span exporter. |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | _(unset)_ | OTLP collector endpoint; enables the OTLP span exporter. |
-
-## Webhook Env Vars
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `WEBHOOK_IP_WHITELIST` | _(empty → default-deny)_ | Comma-separated list of **exact** IPv4/IPv6 addresses allowed to call webhook endpoints (matched by exact string equality — CIDR notation and ranges are not supported). An empty value **blocks all** requests. IPv4-mapped IPv6 (`::ffff:a.b.c.d`) is normalized to its IPv4 form before matching. |
-
 ## Screenshot Convention
 
 ### Directory roles

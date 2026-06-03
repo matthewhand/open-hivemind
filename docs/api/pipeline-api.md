@@ -2,11 +2,6 @@
 
 Endpoints added as part of the 5-stage pipeline refactor. These provide config source introspection, extended health observability, and pipeline trace statistics.
 
-The 5-stage pipeline (`receive → decision → enrich → inference → send`) is the
-**default** message-processing path; set `USE_LEGACY_HANDLER=true` to revert to the
-monolithic `handleMessage()`. Pipeline registration is idempotent per `MessageBus`
-instance (`createPipeline()` is a no-op on a bus that already has a pipeline wired).
-
 ## Config Source Introspection
 
 ### GET /api/config/sources
@@ -132,56 +127,12 @@ The authenticated response includes an optional `pipeline` object with trace sta
 
 ---
 
-## Pipeline Activity Recording
-
-When the pipeline runs, two collaborators feed real activity signals — replacing
-the previous behaviour where these signals were either dead or only produced by the
-demo simulator:
-
-1. **`observability/ActivityRecorder`** subscribes to the `MessageBus` lifecycle
-   events (`message:incoming`, `message:sent`, `message:error`) and writes a
-   `MessageFlowEvent` to both:
-   - the persistent `ActivityLogger` (JSONL on disk), which backs
-     `DashboardService.getActivity` and the WebUI Activity page; and
-   - the live `WebSocketService` feed (when HTTP is enabled) so the dashboard
-     updates in real time.
-
-   This is why `/api/bots/{id}/activity` and the Activity page now surface real
-   pipeline traffic rather than only demo events.
-
-2. **`pipeline/ActivityRecorder` (DefaultActivityRecorder)** is invoked by the
-   `DecisionStage` / `SendStage` to feed the response-scoring subsystems that the
-   legacy handler fed:
-   - `GlobalActivityTracker.recordActivity` — the global "fatigue" penalty;
-   - `recordBotActivity` — per-channel grace-window / crosstalk signals;
-   - `IdleResponseManager.recordInteraction` / `recordBotResponse` — idle-response
-     scheduling.
-
-   All recordings are best-effort and never block message delivery.
-
----
-
-## Trace Export
-
-When the pipeline is created, a `PipelineTracer` is registered and exposed via the
-observability singleton (consumed by `GET /api/health/detailed`). Completed traces
-are routed through a `TraceExportManager` to a set of exporters built by
-`createExporters()`:
-
-| Exporter | Enabled when | Output |
-|----------|--------------|--------|
-| `ConsoleExporter` | always | `debug('app:trace-export')` tree-format logs |
-| `JsonFileExporter` | `TRACE_LOG_FILE` is set | NDJSON appended to that file path |
-| `OtlpExporter` | `OTEL_EXPORTER_OTLP_ENDPOINT` is set | OTLP JSON `POST`ed to `<endpoint>/v1/traces` |
-
----
-
 ## Feature Flags
 
 These flags control pipeline and observability behavior:
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `USE_LEGACY_HANDLER` | `false` | Revert to the monolithic `handleMessage()` instead of the 5-stage pipeline (the pipeline is the default) |
-| `TRACE_LOG_FILE` | unset | File path for NDJSON trace log output (enables `JsonFileExporter`) |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | unset | OTLP HTTP endpoint for OpenTelemetry trace export (enables `OtlpExporter`) |
+| `USE_LEGACY_HANDLER` | `false` | Revert to the monolithic `handleMessage()` instead of the 5-stage pipeline |
+| `TRACE_LOG_FILE` | unset | File path for NDJSON trace log output |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | unset | OTLP HTTP endpoint for OpenTelemetry trace export |

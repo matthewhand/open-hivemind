@@ -102,20 +102,6 @@ FLOWISE_BASE_URL=http://localhost:3000
    - **System Instructions**: Behavior guidelines
 4. Save and assign to a bot
 
-Personas track a usage count so you can see how many bots reference each one.
-
-### How do I export or import my configuration?
-
-Open-Hivemind can export the running configuration to **JSON, YAML, or CSV**:
-
-- In the WebUI, go to **Developer & Tools → System Backups & Export**.
-- Via the API, `POST /api/import-export/export` accepts a `format` of `json`,
-  `yaml`, or `csv`, with optional gzip compression and encryption.
-
-Importing accepts the same formats (including compressed `.gz` and encrypted
-`.enc` files) and supports a full round-trip between them. Imports can be
-validated before they are applied so you can preview the changes safely.
-
 ---
 
 ## LLM Providers

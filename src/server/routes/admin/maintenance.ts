@@ -15,7 +15,6 @@ import {
   ServerNameParamSchema,
 } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
-import { enrichConnectedMcpServers } from './enrichMcpServers';
 
 const router = Router();
 
@@ -225,9 +224,20 @@ router.get('/mcp-servers', async (req: Request, res: Response) => {
     // Get stored MCP server configurations
     const storedMcps = await webUIStorage.getMcps();
 
-    // Enrich connected servers with stored configuration data.
-    // Uses a name-indexed Map for O(n + m) lookups (see enrichConnectedMcpServers).
-    const enrichedServers = enrichConnectedMcpServers(connectedServers, storedMcps);
+    // Enrich connected servers with stored configuration data
+
+    const enrichedServers = connectedServers.map((server) => {
+      const storedConfig = storedMcps.find((mcp: any) => mcp.name === server.name);
+      return {
+        name: server.name,
+        serverUrl: storedConfig?.serverUrl || storedConfig?.url || '',
+        connected: server.connected,
+        tools: server.tools,
+        toolCount: server.toolCount,
+        lastConnected: server.lastConnected,
+        description: storedConfig?.description || '',
+      };
+    });
 
     return res.json({
       success: true,

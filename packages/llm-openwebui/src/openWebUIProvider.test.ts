@@ -13,7 +13,6 @@ jest.mock('convict', () => {
     get: jest.fn((key: string) => {
       if (key === 'apiUrl') return 'https://openwebui.example.com';
       if (key === 'model') return 'test-model';
-      if (key === 'embeddingModel') return 'test-embed-model';
       return '';
     }),
     set: jest.fn(),
@@ -85,26 +84,6 @@ describe('openWebUIProvider', () => {
     mockFetch({ error: 'fail' }, 500);
     await expect(openWebUIProvider.generateCompletion('prompt')).rejects.toThrow(
       'Non-chat completion failed'
-    );
-  });
-
-  it('generateEmbedding returns the embedding vector', async () => {
-    const vector = [0.1, 0.2, 0.3];
-    mockFetch({ data: [{ embedding: vector }] });
-    expect(await openWebUIProvider.generateEmbedding!('embed me')).toEqual(vector);
-  });
-
-  it('generateEmbedding throws when the response has no embedding', async () => {
-    mockFetch({ data: [{}] });
-    await expect(openWebUIProvider.generateEmbedding!('embed me')).rejects.toThrow(
-      'Embedding generation failed'
-    );
-  });
-
-  it('generateEmbedding throws on HTTP error', async () => {
-    mockFetch({ error: 'fail' }, 500);
-    await expect(openWebUIProvider.generateEmbedding!('embed me')).rejects.toThrow(
-      'Embedding generation failed'
     );
   });
 });

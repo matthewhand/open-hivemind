@@ -191,70 +191,6 @@ describe('LettaProvider session modes', () => {
     expect(mockConvCreate).not.toHaveBeenCalled();
   });
 
-  it('falls back to default when the SDK lacks the conversations API', async () => {
-    // Simulate an older/stubbed SDK build with no conversations resource.
-    MockLetta.mockImplementationOnce(
-      () =>
-        ({
-          agents: { messages: { create: mockCreate } },
-          // No `conversations` property at all.
-        }) as any
-    );
-    mockCreate.mockResolvedValue({
-      messages: [{ role: 'assistant', content: 'default fallback response' }],
-    });
-
-    const provider = LettaProvider.getInstance({
-      agentId: 'agent-123',
-      sessionMode: 'per-channel',
-    });
-
-    const result = await provider.generateChatCompletion('hello', [], {
-      agentId: 'agent-123',
-      channelId: '456',
-    });
-
-    // Capability gap is handled gracefully: routes through the default agent API.
-    expect(result).toBe('default fallback response');
-    expect(mockCreate).toHaveBeenCalledWith('agent-123', { input: 'hello' });
-    // No attempt to list/create conversations on an unsupported SDK.
-    expect(mockConvList).not.toHaveBeenCalled();
-    expect(mockConvCreate).not.toHaveBeenCalled();
-  });
-
-  it('falls back to default when conversations.create is not a function', async () => {
-    // Partial SDK: list exists but create is missing/non-callable.
-    MockLetta.mockImplementationOnce(
-      () =>
-        ({
-          agents: { messages: { create: mockCreate } },
-          conversations: {
-            list: mockConvList,
-            create: undefined,
-            messages: { create: mockConvMessageCreate },
-          },
-        }) as any
-    );
-    mockCreate.mockResolvedValue({
-      messages: [{ role: 'assistant', content: 'partial fallback response' }],
-    });
-
-    const provider = LettaProvider.getInstance({
-      agentId: 'agent-123',
-      sessionMode: 'per-user',
-    });
-
-    const result = await provider.generateChatCompletion('hello', [], {
-      agentId: 'agent-123',
-      userId: 'user-789',
-    });
-
-    expect(result).toBe('partial fallback response');
-    expect(mockCreate).toHaveBeenCalledWith('agent-123', { input: 'hello' });
-    // Capability check short-circuits before calling list when the API is incomplete.
-    expect(mockConvList).not.toHaveBeenCalled();
-  });
-
   it('cache hit avoids duplicate conversation creation calls', async () => {
     mockConvList.mockResolvedValue([]);
     mockConvCreate.mockResolvedValue({ id: 'conv-cached', summary: 'channel-789' });
@@ -286,85 +222,9 @@ describe('LettaProvider session modes', () => {
   });
 });
 
-describe('LettaProvider per-bot config isolation', () => {
-  it('create() returns distinct providers honoring each bot config', async () => {
-    const { create } = await import('./index');
-
-    const botA = create({ agentId: 'agent-aaa' });
-    const botB = create({ agentId: 'agent-bbb' });
-
-    // Two different bots must not share one instance.
-    expect(botA).not.toBe(botB);
-
-    mockCreate.mockResolvedValue({
-      messages: [{ role: 'assistant', content: 'ok' }],
-    });
-
-    // Each provider routes to its own configured agentId (no metadata override).
-    await botA.generateChatCompletion('hi', []);
-    expect(mockCreate).toHaveBeenLastCalledWith('agent-aaa', { input: 'hi' });
-
-    await botB.generateChatCompletion('hi', []);
-    expect(mockCreate).toHaveBeenLastCalledWith('agent-bbb', { input: 'hi' });
-  });
-
-  it('isolates session config and conversation caches between bots', async () => {
-    const { create } = await import('./index');
-
-    mockConvList.mockResolvedValue([]);
-    mockConvCreate.mockResolvedValue({ id: 'conv-fixed-A', summary: '' });
-    mockConvMessageCreate.mockResolvedValue({
-      messages: [{ role: 'assistant', content: 'reply' }],
-    });
-
-    const fixedBot = create({
-      agentId: 'agent-fixed',
-      sessionMode: 'fixed',
-      conversationId: 'conv-fixed-A',
-    });
-    const defaultBot = create({ agentId: 'agent-default' });
-
-    await fixedBot.generateChatCompletion('hi', []);
-    // Fixed bot uses its conversation API with its own conversationId.
-    expect(mockConvMessageCreate).toHaveBeenCalledWith('conv-fixed-A', {
-      agent_id: 'agent-fixed',
-      messages: [{ role: 'user', content: 'hi' }],
-    });
-
-    mockCreate.mockResolvedValue({
-      messages: [{ role: 'assistant', content: 'reply' }],
-    });
-    await defaultBot.generateChatCompletion('hi', []);
-    // Default bot is unaffected by the other bot's session config.
-    expect(mockCreate).toHaveBeenCalledWith('agent-default', { input: 'hi' });
-  });
-});
-
 describe('LettaProvider.generateCompletion', () => {
-  it('maps a non-chat completion onto a single-turn chat completion', async () => {
-    mockCreate.mockResolvedValue({
-      messages: [{ role: 'assistant', content: 'completion reply' }],
-    });
-    const provider = LettaProvider.getInstance({ agentId: 'agent-123' });
-
-    const result = await provider.generateCompletion('a single-turn prompt');
-
-    expect(result).toBe('completion reply');
-    // Prompt is forwarded as the user input with no history, via the default
-    // (stateful agent) chat path.
-    expect(mockCreate).toHaveBeenCalledWith('agent-123', { input: 'a single-turn prompt' });
-  });
-
-  it('propagates the missing-agent error from the underlying chat path', async () => {
-    delete process.env.LETTA_AGENT_ID;
+  it('throws unsupported error', async () => {
     const provider = LettaProvider.getInstance();
-    await expect(provider.generateCompletion('prompt')).rejects.toThrow('No agent ID');
-  });
-
-  it('still reports native non-chat completion as unsupported', () => {
-    const provider = LettaProvider.getInstance();
-    // Letta has no dedicated completion endpoint; the flag must stay false so
-    // callers prefer the chat path (and only fall back to the mapping).
-    expect(provider.supportsCompletion()).toBe(false);
+    await expect(provider.generateCompletion('prompt')).rejects.toThrow();
   });
 });

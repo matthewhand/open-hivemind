@@ -1,7 +1,5 @@
 # TODO Completion Summary
 
-> **Scope note:** This document is a historical record of a specific test-suite TODO cleanup. For the current, code-verified status of product features (messaging, LLM providers, memory, MCP, pipeline, monitoring, auth, persistence, WebUI), see `docs/FEATURE_STATUS.md`, which is regenerated against `main`.
-
 ## Completed TODO Items (95% Complete)
 
 ### 1. Fixed OpenAI Provider Test

@@ -9,16 +9,9 @@ Navigation: [Docs Index](../README.md) | [Configuration Overview](overview.md) |
 
 | Provider | Config Key | Required Env Vars | Supports Chat | Supports Text | Notes |
 |----------|------------|-------------------|---------------|---------------|--------|
-| **OpenAI** | `openai` | `OPENAI_API_KEY` | ✅ | ✅ | Full OpenAI API support; native function calling and a streaming completion method (`generateStreamingChatCompletion`) |
+| **OpenAI** | `openai` | `OPENAI_API_KEY` | ✅ | ✅ | Full OpenAI API support |
 | **Flowise** | `flowise` | `FLOWISE_BASE_URL` | ✅ | ❌ | Requires `channelId` in metadata |
-| **OpenWebUI** | `openwebui` | `OPEN_WEBUI_API_URL` | ✅ | ❌ | Local instance; OpenAI-compatible API |
-| **Letta** | `letta` | `LETTA_SERVER_PASSWORD` (auth) | ✅ | ❌ | Stateful agent backend; agent via `LETTA_AGENT_ID`; base URL/API key set through the LLM profile / Providers UI (`LETTA_BASE_URL`, `LETTA_API_KEY` schema fields) |
-| **OpenSwarm** | `openswarm` | `OPENSWARM_BASE_URL` | ✅ | ❌ | Multi-agent team backend; `OPENSWARM_TEAM` selects the team/model |
-
-> **Live model listing:** the admin endpoint `GET /api/admin/llm-providers/:type/models`
-> serves a curated catalog for `openai`, `anthropic`, `google`, and `perplexity`,
-> and supports live provider queries with `?live=true` for `openai` and
-> `openwebui`. See [LLM Provider Models API](../api/llm-models-endpoint.md).
+| **OpenWebUI** | `openwebui` | `OPENWEBUI_BASE_URL` | ✅ | ❌ | Local instance only |
 
 ### Platform Services
 
@@ -26,7 +19,7 @@ Navigation: [Docs Index](../README.md) | [Configuration Overview](overview.md) |
 |----------|---------------|---------------|-----------|--------|
 | **Discord** | `DiscordService` | `DISCORD_BOT_TOKEN` | ✅ | Comma-separated tokens |
 | **Slack** | `SlackService` | Slack tokens | ✅ | OAuth setup required |
-| **Mattermost** | `MattermostService` | Mattermost config | ✅ | Receives messages over WebSocket; shows typing indicator |
+| **Mattermost** | `MattermostService` | Mattermost config | ✅ | Webhook-based |
 
 ## Environment Variable Quick Setup
 
@@ -75,41 +68,8 @@ FLOWISE_CONVERSATION_CHATFLOW_ID=your-chatflow-id
 
 ### OpenWebUI Provider
 ```bash
-# Required (note: OPEN_WEBUI_*, underscore-separated)
-OPEN_WEBUI_API_URL=http://localhost:3000/api/
-
-# Auth — password (default) or apiKey
-OPEN_WEBUI_AUTH_METHOD=password
-OPEN_WEBUI_USERNAME=admin
-OPEN_WEBUI_PASSWORD=your-password
-
-# Optional
-OPEN_WEBUI_MODEL=llama3.2
-```
-
-### Letta Provider
-```bash
-# Auth (read directly from env by the provider client)
-LETTA_SERVER_PASSWORD=your-server-password   # used for cloud and self-hosted auth
-
-# Default agent when none is supplied in message metadata
-LETTA_AGENT_ID=agent-uuid
-```
-
-Base URL and API key are configured through the LLM profile / Providers UI
-(schema fields `LETTA_BASE_URL`, `LETTA_API_KEY`), not as raw process env vars.
-The provider also supports a per-bot session mode (`default`, `per-channel`,
-`per-user`, `fixed`) so a bot can maintain isolated Letta conversations per
-channel or per user.
-
-### OpenSwarm Provider
-```bash
 # Required
-OPENSWARM_BASE_URL=http://localhost:8000/v1
-
-# Optional
-OPENSWARM_API_KEY=your-key
-OPENSWARM_TEAM=default-team      # team name used as the model identifier
+OPENWEBUI_BASE_URL=http://localhost:8080
 ```
 
 ## Common Configuration Patterns

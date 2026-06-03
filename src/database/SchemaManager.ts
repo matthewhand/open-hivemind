@@ -13,7 +13,7 @@ export class SchemaManager {
   }
 
   async initializeSchema(): Promise<void> {
-    const db = this.connectionManager.getSchemaDatabase();
+    const db = this.connectionManager.getDatabase();
     if (!db) {
       throw new Error('Database connection not established');
     }

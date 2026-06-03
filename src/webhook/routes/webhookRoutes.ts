@@ -21,24 +21,6 @@ interface WebhookBody {
   [key: string]: unknown;
 }
 
-/**
- * Messenger services that accept inbound webhook payloads (e.g. the
- * `@hivemind/message-webhook` adapter) expose `handleIncomingWebhook`. The base
- * IMessengerService interface does not declare it, so we narrow structurally.
- */
-interface IInboundWebhookReceiver {
-  handleIncomingWebhook(payload: unknown, channelId?: string): Promise<string>;
-}
-
-function supportsIncomingWebhook(
-  service: IMessengerService | null | undefined
-): service is IMessengerService & IInboundWebhookReceiver {
-  return (
-    !!service &&
-    typeof (service as Partial<IInboundWebhookReceiver>).handleIncomingWebhook === 'function'
-  );
-}
-
 function validateWebhookBody(body: WebhookBody): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
 
@@ -149,55 +131,8 @@ export function configureWebhookRoutes(
     }
   );
 
-  // Inbound webhook ingress: deliver the payload to the messenger service's
-  // registered message handler (via handleIncomingWebhook) when the service
-  // supports it. This is what makes externally-pushed messages reach the
-  // pipeline rather than being silently dropped.
-  app.post(
-    '/webhook/receive',
-    verifyWebhookToken,
-    verifyIpWhitelist,
-    async (req: Request, res: Response) => {
-      debug('Received inbound webhook payload:', { bodyKeys: Object.keys(req.body || {}) });
-
-      if (!supportsIncomingWebhook(messageService)) {
-        debug('Messenger service does not support inbound webhooks');
-        return res.status(501).json({
-          error: 'Inbound webhooks are not supported by the configured messenger service',
-        });
-      }
-
-      try {
-        const reply = await messageService.handleIncomingWebhook(req.body, targetChannel);
-        return res.status(200).json({ success: true, reply });
-      } catch (error) {
-        debug(
-          'Failed to process inbound webhook:',
-          error instanceof Error ? error.message : String(error)
-        );
-        return res.status(500).json({ error: 'Failed to process inbound webhook' });
-      }
-    }
-  );
-
   app.post('/webhook/slack', verifySlackSignature, async (req: Request, res: Response) => {
     debug('Received Slack webhook:', req.body);
-
-    // Slack-formatted payloads are also handled by handleIncomingWebhook
-    // (it understands attachments/username). Forward when supported.
-    if (supportsIncomingWebhook(messageService)) {
-      try {
-        const reply = await messageService.handleIncomingWebhook(req.body, targetChannel);
-        return res.status(200).json({ success: true, reply });
-      } catch (error) {
-        debug(
-          'Failed to process Slack webhook:',
-          error instanceof Error ? error.message : String(error)
-        );
-        return res.status(500).json({ error: 'Failed to process Slack webhook' });
-      }
-    }
-
     return res.status(200).json({ success: true });
   });
 }

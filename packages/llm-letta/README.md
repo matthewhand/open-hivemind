@@ -8,7 +8,7 @@ LLM provider for [Letta](https://letta.com) (formerly MemGPT) — stateful agent
 - `listAgents`, `getAgent`, `AgentSummary` — helpers in `agentBrowser` for picking an agent ID at config time
 - `schema` — UI/config schema descriptor
 - `manifest` — `{ displayName: 'Letta', type: 'llm', ... }`
-- `create(config?)` — factory returning a fresh provider per call, so each bot keeps its own `agentId`/session config isolated
+- `create(config?)` — factory returning the singleton instance
 
 ## Environment variables
 

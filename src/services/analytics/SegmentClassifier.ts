@@ -111,36 +111,13 @@ export class SegmentClassifier {
     return { powerUsers, regularUsers, casualUsers };
   }
 
-  /**
-   * Derives the distinctive feature-usage tags for a group of users.
-   *
-   * Performance: the previous implementation filtered the entire event array
-   * (`O(N * M)` because of `Array.prototype.includes` per event) and then ran
-   * three independent `.some()` scans over that filtered slice. This version
-   * does a single `O(N + M)` pass: it builds a `Set` of the target user ids
-   * for `O(1)` membership lookups and short-circuits as soon as all three
-   * features have been detected, so large event streams no longer require
-   * multiple full traversals.
-   */
   private getTopFeatures(events: MessageFlowEvent[], userIds: string[]): string[] {
-    const targetUsers = new Set(userIds);
+    const userEvents = events.filter((e) => userIds.includes(e.userId));
     const features = new Set<string>();
-    const MAX_FEATURES = 3;
-
-    for (const event of events) {
-      if (!targetUsers.has(event.userId)) continue;
-
-      if (event.provider === 'discord') features.add('discord-integration');
-      else if (event.provider === 'slack') features.add('slack-integration');
-
-      if (event.processingTime !== undefined && event.processingTime > 2000) {
-        features.add('complex-llm-tasks');
-      }
-
-      // Early exit: nothing left to discover once every feature is present.
-      if (features.size === MAX_FEATURES) break;
-    }
-
+    if (userEvents.some((e) => e.provider === 'discord')) features.add('discord-integration');
+    if (userEvents.some((e) => e.provider === 'slack')) features.add('slack-integration');
+    if (userEvents.some((e) => e.processingTime && e.processingTime > 2000))
+      features.add('complex-llm-tasks');
     return Array.from(features);
   }
 }

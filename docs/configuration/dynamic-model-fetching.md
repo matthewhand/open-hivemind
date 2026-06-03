@@ -80,23 +80,11 @@ All LLM provider schemas now include:
 
 ### 3. Model Fetching Endpoints
 
-Two complementary sources back model selection:
+The system automatically fetches models from:
 
-- **Curated static catalog** — served from the admin endpoint
-  `GET /api/admin/llm-providers/:type/models` (providers `openai`, `anthropic`,
-  `google`, `perplexity`), with full metadata (pricing, context window,
-  vision/function-calling/streaming flags). See
-  [LLM Provider Models API](../api/llm-models-endpoint.md).
-- **Live model fetching** — opt in with `?live=true` on the same endpoint.
-  Implemented server-side in `LiveModelService` for providers that expose an
-  OpenAI-compatible `GET /models` endpoint:
-  - **OpenAI**: `GET /v1/models` — all available models for the configured key.
-  - **OpenWebUI**: `GET /v1/models` — models available on the local instance.
-  Live results fall back to the static catalog when the provider is
-  unconfigured, returns nothing, or the request fails.
-- **Ollama**: `GET /api/tags` — locally installed models (client-side fetch via
-  `ModelAutocomplete`).
-- **Anthropic**: static list of Claude models (no public list endpoint).
+- **OpenAI**: `/v1/models` - Returns all available GPT models
+- **Ollama**: `/api/tags` - Returns locally installed models
+- **Anthropic**: Static list of Claude models (no public endpoint)
 
 ### 4. Validation System
 
@@ -270,26 +258,19 @@ Enable console logging to see:
 - Validation warnings
 - Network error details
 
-## Implemented & Planned
+## Future Enhancements
 
-### Implemented
-- **Model Metadata**: Pricing, context length, and capability flags
-  (vision / function-calling / streaming) are served from the static catalog —
-  see [LLM Provider Models API](../api/llm-models-endpoint.md).
-- **Live Model Fetching**: `?live=true` queries OpenAI / OpenWebUI directly and
-  falls back to the static catalog on failure.
-- **Google (Gemini)**: Gemini models are included in the static catalog.
-- **Import/Export**: Configuration import/export (YAML + CSV round-trip) is
-  available via the admin configuration tooling.
+### Planned Features
+- **Model Caching**: Local storage of fetched models
+- **Model Metadata**: Pricing, context length, capability information
+- **Provider Health Checks**: Automatic endpoint validation
+- **Batch Configuration**: Setup multiple providers simultaneously
+- **Import/Export**: Configuration sharing between environments
 
-### Still Planned
-- **Model Caching**: Local storage of fetched models.
-- **Provider Health Checks**: Automatic endpoint validation.
-- **Batch Configuration**: Setup multiple providers simultaneously.
-
-### Provider Extensions (not yet in the static catalog)
-- **Cohere**: Command and Embed models.
-- **Mistral AI**: Mistral and Mixtral models.
+### Provider Extensions
+- **Google AI Platform**: Gemini model support
+- **Cohere**: Command and Embed models
+- **Mistral AI**: Mistral and Mixtral models
 - **Local Providers**: LM Studio, LocalAI, etc.
 
 ## API Reference

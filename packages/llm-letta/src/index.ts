@@ -5,13 +5,9 @@ export { LettaProvider, LettaProviderConfig } from './lettaProvider';
 export { listAgents, getAgent, type AgentSummary } from './agentBrowser';
 export { schema } from './schema';
 
-/**
- * Standard factory — preferred entry point for PluginLoader.
- * Returns a fresh provider per call so each bot keeps its own config
- * (agentId, session mode, conversation cache) isolated.
- */
+/** Standard factory — preferred entry point for PluginLoader */
 export function create(config?: any): LettaProvider {
-  return new LettaProvider(config);
+  return LettaProvider.getInstance(config);
 }
 
 export const manifest: PluginManifest = {

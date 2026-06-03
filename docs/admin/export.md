@@ -30,18 +30,6 @@ You can export the current running configuration as a raw JSON file. This is use
 2.  Click **Export Config**.
 3.  The `config-export-*.json` file will be downloaded.
 
-### Formats & Round-Trip
-
-The underlying import/export service (`/api/import-export/*`) supports full
-round-trip in **JSON, YAML, and CSV**, with optional gzip compression and AES
-encryption. Selected configuration IDs are exported via
-`POST /api/import-export/export`, and a previously exported file is re-imported via
-`POST /api/import-export/import` (multipart upload). Uploads accept `.json`,
-`.yaml`/`.yml`, `.csv`, `.gz`, and `.enc` files up to 50 MB. Use
-`POST /api/import-export/validate` to validate a file without importing it. See
-[Bot, Audit, Import/Export & Webhook API Reference](../api/bot-and-system-endpoints.md)
-for the full endpoint list.
-
 ## API Specifications
 
 For developers integrating with Open Hivemind, the OpenAPI specification is available for download.

@@ -3,7 +3,6 @@ import Debug from 'debug';
 import { Router } from 'express';
 import { authenticate, requireAdmin, requireRole } from '../../auth/middleware';
 import { type AuthMiddlewareRequest } from '../../auth/types';
-import { loadBotConfigTemplates } from '../../config/botConfigTemplates';
 import { BotConfigurationManager } from '../../config/BotConfigurationManager';
 import { SecureConfigManager } from '../../config/SecureConfigManager';
 import { UserConfigStore } from '../../config/UserConfigStore';
@@ -100,7 +99,57 @@ router.get(
     try {
       // eslint-disable-next-line unused-imports/no-unused-vars
       const authReq = req as AuthMiddlewareRequest;
-      const templates = loadBotConfigTemplates();
+      const templates = {
+        discord_openai: {
+          name: 'Discord + OpenAI Bot',
+          description: 'A Discord bot using OpenAI for responses',
+          messageProvider: 'discord',
+          llmProvider: 'openai',
+          config: {
+            discord: {
+              token: '',
+              voiceChannelId: '',
+            },
+            openai: {
+              apiKey: '',
+              model: 'gpt-3.5-turbo',
+            },
+          },
+        },
+        slack_flowise: {
+          name: 'Slack + Flowise Bot',
+          description: 'A Slack bot using Flowise for AI responses',
+          messageProvider: 'slack',
+          llmProvider: 'flowise',
+          config: {
+            slack: {
+              botToken: '',
+              signingSecret: '',
+              appToken: '',
+            },
+            flowise: {
+              apiKey: '',
+              endpoint: '',
+            },
+          },
+        },
+        mattermost_openwebui: {
+          name: 'Mattermost + OpenWebUI Bot',
+          description: 'A Mattermost bot using OpenWebUI for responses',
+          messageProvider: 'mattermost',
+          llmProvider: 'openwebui',
+          config: {
+            mattermost: {
+              serverUrl: '',
+              token: '',
+            },
+            openwebui: {
+              apiKey: '',
+              endpoint: '',
+            },
+          },
+        },
+      };
 
       res.json(ApiResponse.success(templates));
     } catch (error: unknown) {
@@ -109,194 +158,6 @@ router.get(
       res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error('Failed to fetch templates', undefined, 500));
-    }
-  })
-);
-
-/**
- * GET /webui/api/bot-config/approvals
- * List bot-configuration approval requests (admin only).
- * Optional query param `status` filters by 'pending' | 'approved' | 'rejected'
- * (or 'all'). Defaults to listing pending requests so the WebUI can render an
- * approval queue. Registered BEFORE `/:botId` so it is not shadowed by the
- * single-segment param route.
- */
-router.get(
-  '/approvals',
-  requireRole('admin'),
-  asyncErrorHandler(async (req, res) => {
-    try {
-      const dbManager = DatabaseManager.getInstance();
-      if (!dbManager.isConnected()) {
-        return res
-          .status(HTTP_STATUS.SERVICE_UNAVAILABLE)
-          .json(ApiResponse.error('Database not connected', undefined, 503));
-      }
-
-      const statusParam = typeof req.query.status === 'string' ? req.query.status : 'pending';
-      const allowedStatuses = ['pending', 'approved', 'rejected', 'all'];
-      if (!allowedStatuses.includes(statusParam)) {
-        return res
-          .status(HTTP_STATUS.BAD_REQUEST)
-          .json(ApiResponse.error('Invalid status filter', undefined, 400));
-      }
-
-      const statusFilter = statusParam === 'all' ? undefined : statusParam;
-      const approvals = await dbManager.getApprovalRequests(
-        'BotConfiguration',
-        undefined,
-        statusFilter
-      );
-
-      return res.json(ApiResponse.success({ approvals, total: approvals.length }));
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
-      debug('Error listing approval requests:', hivemindError);
-      return res
-        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error('Failed to list approval requests', undefined, 500));
-    }
-  })
-);
-
-/**
- * POST /webui/api/bot-config/approvals/:approvalId/approve
- * Approve a pending bot-configuration change request (admin only).
- * Transitions status pending -> approved so it can be applied via apply-update.
- */
-router.post(
-  '/approvals/:approvalId/approve',
-  configLimiter,
-  requireRole('admin'),
-  asyncErrorHandler(async (req, res) => {
-    const { approvalId } = req.params;
-    try {
-      const dbManager = DatabaseManager.getInstance();
-      if (!dbManager.isConnected()) {
-        return res
-          .status(HTTP_STATUS.SERVICE_UNAVAILABLE)
-          .json(ApiResponse.error('Database not connected', undefined, 503));
-      }
-
-      const id = parseInt(approvalId, 10);
-      if (Number.isNaN(id)) {
-        return res
-          .status(HTTP_STATUS.BAD_REQUEST)
-          .json(ApiResponse.error('Invalid approval request id', undefined, 400));
-      }
-
-      const approvalRequest = await dbManager.getApprovalRequest(id);
-      if (!approvalRequest) {
-        return res
-          .status(HTTP_STATUS.NOT_FOUND)
-          .json(ApiResponse.error('Approval request not found', undefined, 404));
-      }
-
-      if (approvalRequest.status !== 'pending') {
-        return res
-          .status(HTTP_STATUS.BAD_REQUEST)
-          .json(
-            ApiResponse.error(
-              `Approval request is not pending (status: ${approvalRequest.status})`,
-              undefined,
-              400
-            )
-          );
-      }
-
-      await dbManager.updateApprovalRequest(id, {
-        status: 'approved',
-        reviewedBy: req.user?.username,
-        reviewedAt: new Date(),
-        reviewComments: typeof req.body?.comments === 'string' ? req.body.comments : undefined,
-      });
-
-      logConfigChange(
-        req,
-        'UPDATE',
-        String(approvalRequest.resourceId),
-        'success',
-        'Bot configuration change approved'
-      );
-
-      return res.json(ApiResponse.success({ approvalId: id, status: 'approved' }));
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
-      debug('Error approving approval request:', hivemindError);
-      return res
-        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error('Failed to approve approval request', undefined, 500));
-    }
-  })
-);
-
-/**
- * POST /webui/api/bot-config/approvals/:approvalId/reject
- * Reject a pending bot-configuration change request (admin only).
- * Transitions status pending -> rejected; the change is never applied.
- */
-router.post(
-  '/approvals/:approvalId/reject',
-  configLimiter,
-  requireRole('admin'),
-  asyncErrorHandler(async (req, res) => {
-    const { approvalId } = req.params;
-    try {
-      const dbManager = DatabaseManager.getInstance();
-      if (!dbManager.isConnected()) {
-        return res
-          .status(HTTP_STATUS.SERVICE_UNAVAILABLE)
-          .json(ApiResponse.error('Database not connected', undefined, 503));
-      }
-
-      const id = parseInt(approvalId, 10);
-      if (Number.isNaN(id)) {
-        return res
-          .status(HTTP_STATUS.BAD_REQUEST)
-          .json(ApiResponse.error('Invalid approval request id', undefined, 400));
-      }
-
-      const approvalRequest = await dbManager.getApprovalRequest(id);
-      if (!approvalRequest) {
-        return res
-          .status(HTTP_STATUS.NOT_FOUND)
-          .json(ApiResponse.error('Approval request not found', undefined, 404));
-      }
-
-      if (approvalRequest.status !== 'pending') {
-        return res
-          .status(HTTP_STATUS.BAD_REQUEST)
-          .json(
-            ApiResponse.error(
-              `Approval request is not pending (status: ${approvalRequest.status})`,
-              undefined,
-              400
-            )
-          );
-      }
-
-      await dbManager.updateApprovalRequest(id, {
-        status: 'rejected',
-        reviewedBy: req.user?.username,
-        reviewedAt: new Date(),
-        reviewComments: typeof req.body?.comments === 'string' ? req.body.comments : undefined,
-      });
-
-      logConfigChange(
-        req,
-        'UPDATE',
-        String(approvalRequest.resourceId),
-        'success',
-        'Bot configuration change rejected'
-      );
-
-      return res.json(ApiResponse.success({ approvalId: id, status: 'rejected' }));
-    } catch (error: unknown) {
-      const hivemindError = ErrorUtils.toHivemindError(error);
-      debug('Error rejecting approval request:', hivemindError);
-      return res
-        .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(ApiResponse.error('Failed to reject approval request', undefined, 500));
     }
   })
 );

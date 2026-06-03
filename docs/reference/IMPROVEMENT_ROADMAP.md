@@ -37,25 +37,18 @@ Low impact, low urgency - Address within 10-12 weeks
 **Effort:** Medium (2-3 days)
 **Risk Level:** High
 
-**Status update (verified against `main`):** Most of this section is now addressed.
-- ✅ Production refuses to boot without `JWT_SECRET`/`ADMIN_PASSWORD` (no hardcoded admin credential in prod); secrets persisted via `SecureConfigManager` (AES-256-GCM).
-- ✅ Command injection hardened — `SwarmInstaller`/`PluginManager` use argument-array `execFile`/`spawn` (no shell) with validated inputs.
-- ✅ Localhost auth bypass is gated behind `ALLOW_LOCALHOST_ADMIN` with DNS-rebind/host-injection hardened IP+Host+Origin checks.
-- ✅ Security headers + strict prod CSP + HSTS, and the 5-tier rate limiter, are wired globally in `setupMiddleware`.
-- ✅ CSRF protection is now mounted on the active entrypoint (`registerRoutes`).
-- 🟡 Remaining: the standalone XSS sanitization middleware (`sanitizationMiddleware.ts`) is written but still not wired into the active request pipeline; `validateRepoUrl` does not yet block internal/loopback hosts.
-
-**Original issues / plan (for reference):**
+**Issues Identified:**
 - Hardcoded default admin password in `src/auth/AuthManager.ts`
 - Command injection vulnerabilities in `packages/llm-openswarm/src/SwarmInstaller.ts`
 - Insecure localhost authentication bypass
 - Missing input sanitization middleware
 
-1. Remove hardcoded credentials and implement secure secret management — done
-2. Add comprehensive input validation and sanitization — partially done (sanitization middleware unwired)
-3. Implement proper authentication flows for all environments — done
-4. Add command injection protection using parameterized execution — done
-5. Implement security headers and rate limiting — done
+**Implementation Plan:**
+1. Remove hardcoded credentials and implement secure secret management
+2. Add comprehensive input validation and sanitization
+3. Implement proper authentication flows for all environments
+4. Add command injection protection using parameterized execution
+5. Implement security headers and rate limiting
 
 ### 2. Type Safety Improvements
 **Impact:** Reduces runtime errors and improves maintainability
@@ -100,16 +93,14 @@ Low impact, low urgency - Address within 10-12 weeks
 **Effort:** Medium (1-2 weeks)
 **Risk Level:** Medium
 
-**Current State (verified against `main`):**
-- The canonical memory provider contract is `packages/shared-types/src/IMemoryProvider.ts`
-- `@hivemind/memory-mem0`, `@hivemind/memory-mem4ai`, and `@hivemind/memory-postgres` (pgvector) providers are implemented and wired
-- Memory profiles management via `src/config/memoryProfiles.ts` + REST routes
-- Memory **eviction/retention** is now implemented (`MemoryRepository.evictMemories` — TTL + size-cap), though no automatic scheduler invokes it yet
-- A DB-backed **conversation summarization** service exists (`src/memory/ConversationSummaryService.ts`) but is not yet wired into the live pipeline
-- **MemVault is NOT implemented**: there is no `packages/memory-memvault` package; the type is referenced only as a config option. The hybrid-scoring backend described below remains aspirational.
+**Current State:**
+- Basic memory provider interface exists in `src/memory/IMemoryProvider.ts`
+- Mem0, Mem4ai, and MemVault providers implemented
+- Memory profiles management via `src/server/routes/memoryProfiles.ts`
 
-**Planned Memory Provider Packages:**
-- `@hivemind/memory-memvault` - (NOT YET BUILT) Open-source RAG memory server in Node.js with Postgres + pgvector; intended hybrid scoring (vector similarity × 0.8) + (recency decay × 0.2)
+**New Memory Provider Packages:**
+- `@hivemind/memory-mem4ai` - Open-source, LLM-friendly memory management with adaptive personalization and flexible metadata tagging
+- `@hivemind/memory-memvault` - Open-source RAG memory server built natively in Node.js with Postgres + pgvector; uses hybrid scoring (vector similarity × 0.8) + (recency decay × 0.2)
 
 **MCP Server Trust System:**
 - Add config file listing trusted MCP server repositories
@@ -129,22 +120,17 @@ Low impact, low urgency - Address within 10-12 weeks
 **Effort:** High (2-4 weeks)
 **Risk Level:** High
 
-**Status update (verified against `main`):** Largely implemented.
-- ✅ SQLite (better-sqlite3) and PostgreSQL (pg Pool) backends via `DatabaseManager`, with Umzug-based schema migrations (~20 tables + indexes, incl. pgvector `memories`).
-- ✅ ~10 repositories with real SQL CRUD; AES-256-GCM at-rest field encryption; retention/cleanup + factory reset.
-- ✅ Durable persistence now covers users (`UserRepository`) and the file-based audit log, plus DB-backed config audit/version trail.
-- 🟡 Remaining gaps: the Postgres SQL translation in `postgresWrapper` is still naive; per-operation DB-level transactions around restore are not yet wrapped.
-
-**Original issues / plan (for reference):**
+**Issues Identified:**
 - In-memory operations without proper persistence
 - Missing database schema and migrations
 - No transaction management or connection pooling
 
-1. Implement full PostgreSQL/MySQL integration — Postgres + SQLite done (no MySQL)
-2. Create database schema with proper indexing — done
-3. Add data migration system for schema updates — done (Umzug)
-4. Implement connection pooling and health monitoring — done
-5. Add proper transaction management for data consistency — partial
+**Implementation Plan:**
+1. Implement full PostgreSQL/MySQL integration
+2. Create database schema with proper indexing
+3. Add data migration system for schema updates
+4. Implement connection pooling and health monitoring
+5. Add proper transaction management for data consistency
 
 ### 6. Auto-Scaling & Load Balancing
 **Impact:** Enables handling increased load and improves availability
@@ -397,8 +383,6 @@ Low impact, low urgency - Address within 10-12 weeks
 
 ### Overview
 The following AI-powered features are planned for a future release. They have been removed from the current UI to avoid confusion with mock/placeholder implementations.
-
-> **Status note (verified against `main`):** Several of these are now partly or fully real. AI behavior-pattern/segment/recommendation analytics (`/api/dashboard/ai/*`), AI performance insights, and **z-score statistical anomaly detection** (`AnomalyDetectionService`, persisted to SQLite + WS alerts; `IntegrationAnomalyDetector` now started in `initServices`) are implemented. The remaining items below (predictive forecasting, natural-language/voice interface, bot training dashboard) are still planned. Note: `AnomalyDetectionService` is instantiated but its periodic `.start()` loop is not auto-started.
 
 ### Planned Features
 

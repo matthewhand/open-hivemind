@@ -18,10 +18,21 @@ const router = Router();
 
 const scheduledMessages = new Map<string, any>();
 
-// Note: /events, /events/:id and /events/:id/retry are served by
-// webhookEventsRouter (src/server/routes/webhookEvents.ts), which is mounted at
-// /api/webhooks ahead of this router. It returns the { success, data } contract
-// the WebUI (WebhookEventsPage) expects.
+/**
+ * GET /api/webhooks/events
+ * List webhook events
+ */
+router.get('/events', (_req, res) => {
+  res.json({ events: [], count: 0 });
+});
+
+/**
+ * GET /api/webhooks/events/:id
+ * Get a specific webhook event by ID
+ */
+router.get('/events/:id', (req, res) => {
+  res.json({ event: null, id: req.params.id, message: 'Event not found' });
+});
 
 // ─── Scheduled Messages ───────────────────────────────────────────────
 

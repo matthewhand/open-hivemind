@@ -521,18 +521,6 @@ export class ShutdownCoordinator {
       debug('Error shutting down ToolPreferencesService:', error);
     }
 
-    // Stop MCPFavoritesService
-    try {
-      const { MCPFavoritesService } = require('@server/services/MCPFavoritesService');
-      const mcpFavorites = MCPFavoritesService.getInstance();
-      if (mcpFavorites && typeof mcpFavorites.shutdown === 'function') {
-        await mcpFavorites.shutdown();
-        debug('MCPFavoritesService shut down');
-      }
-    } catch (error) {
-      debug('Error shutting down MCPFavoritesService:', error);
-    }
-
     // Stop PerformanceProfiler
     try {
       const { PerformanceProfiler } = require('@utils/PerformanceProfiler');

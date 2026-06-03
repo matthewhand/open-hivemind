@@ -14,19 +14,19 @@ interface PaletteItem {
   section?: string;
 }
 
-export const PALETTE_ITEMS: PaletteItem[] = [
+const PALETTE_ITEMS: PaletteItem[] = [
   { id: 'overview', label: 'Overview', path: '/admin/overview', icon: <LayoutDashboard className="w-4 h-4" />, section: 'Pages' },
   { id: 'bots', label: 'Bots', path: '/admin/bots', icon: <Bot className="w-4 h-4" />, section: 'Pages' },
   { id: 'create-bot', label: 'Create New Bot', path: '/admin/bots/create', icon: <Bot className="w-4 h-4" />, section: 'Actions' },
   { id: 'personas', label: 'Personas', path: '/admin/personas', icon: <Users className="w-4 h-4" />, section: 'Pages' },
   { id: 'guards', label: 'Guards', path: '/admin/guards', icon: <Shield className="w-4 h-4" />, section: 'Pages' },
-  { id: 'llm-providers', label: 'LLM Providers', path: '/admin/llm', icon: <Brain className="w-4 h-4" />, section: 'Pages' },
-  { id: 'message-providers', label: 'Message Providers', path: '/admin/message', icon: <MessageSquare className="w-4 h-4" />, section: 'Pages' },
-  { id: 'monitoring', label: 'Monitoring', path: '/admin/overview?tab=monitoring', icon: <Activity className="w-4 h-4" />, section: 'Pages' },
+  { id: 'llm-providers', label: 'LLM Providers', path: '/admin/providers/llm', icon: <Brain className="w-4 h-4" />, section: 'Pages' },
+  { id: 'message-providers', label: 'Message Providers', path: '/admin/providers/message', icon: <MessageSquare className="w-4 h-4" />, section: 'Pages' },
+  { id: 'monitoring', label: 'Monitoring', path: '/admin/monitoring', icon: <Activity className="w-4 h-4" />, section: 'Pages' },
   { id: 'settings', label: 'Settings', path: '/admin/settings', icon: <Settings className="w-4 h-4" />, section: 'Pages' },
   { id: 'configuration', label: 'Global Defaults', path: '/admin/configuration', icon: <Settings className="w-4 h-4" />, section: 'Pages' },
-  { id: 'showcase', label: 'UI Components', path: '/admin/developer?tab=showcase', icon: <Component className="w-4 h-4" />, section: 'Developer' },
-  { id: 'sitemap', label: 'Sitemap', path: '/admin/developer?tab=sitemap', icon: <Map className="w-4 h-4" />, section: 'Developer' },
+  { id: 'showcase', label: 'UI Components', path: '/admin/showcase', icon: <Component className="w-4 h-4" />, section: 'Developer' },
+  { id: 'sitemap', label: 'Sitemap', path: '/admin/sitemap', icon: <Map className="w-4 h-4" />, section: 'Developer' },
 ];
 
 interface CommandPaletteProps {

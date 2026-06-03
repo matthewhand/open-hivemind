@@ -73,44 +73,4 @@ describe('OpenSwarmProvider', () => {
     const msg = { getText: () => 'hi', metadata: {} } as any;
     expect(await new OpenSwarmProvider().generateResponse(msg, [])).toBe('response');
   });
-
-  it('create() wires per-bot baseUrl and apiKey through to requests', async () => {
-    const fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ choices: [{ message: { content: 'ok' } }] }), {
-        status: 200,
-        headers: { 'content-type': 'application/json' },
-      })
-    );
-
-    const provider = create({
-      baseUrl: 'http://custom-host:9000/v1',
-      apiKey: 'bot-specific-key',
-      team: 'bot-team',
-    });
-    await provider.generateChatCompletion('hello', [], {});
-
-    const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe('http://custom-host:9000/v1/chat/completions');
-    expect((init.headers as Record<string, string>).Authorization).toBe('Bearer bot-specific-key');
-    expect(JSON.parse(init.body as string).model).toBe('bot-team');
-  });
-
-  it('create() accepts raw schema env-var keys', async () => {
-    const fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ choices: [{ message: { content: 'ok' } }] }), {
-        status: 200,
-        headers: { 'content-type': 'application/json' },
-      })
-    );
-
-    const provider = create({
-      OPENSWARM_BASE_URL: 'http://env-style:7000/v1',
-      OPENSWARM_API_KEY: 'env-style-key',
-    } as any);
-    await provider.generateChatCompletion('hello', [], {});
-
-    const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe('http://env-style:7000/v1/chat/completions');
-    expect((init.headers as Record<string, string>).Authorization).toBe('Bearer env-style-key');
-  });
 });

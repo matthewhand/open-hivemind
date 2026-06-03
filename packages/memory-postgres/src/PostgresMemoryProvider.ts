@@ -31,34 +31,15 @@ export class PostgresMemoryProvider implements IMemoryProvider {
 
     // Resolve embedding provider
     if (dependencies?.getLlmProviders) {
-      this.embeddingProvider = this.resolveEmbeddingProvider(dependencies.getLlmProviders());
-    }
-  }
-
-  /**
-   * Resolves an embedding-capable LLM provider.
-   *
-   * When `embeddingProfile` is configured, the named provider must exist AND
-   * implement `generateEmbedding` — otherwise a clear error is thrown rather
-   * than silently falling back to a different provider. When no profile is
-   * configured, the first provider that supports embeddings is used.
-   */
-  private resolveEmbeddingProvider(providers: any[]): any {
-    if (this.config.embeddingProfile) {
-      const named = providers.find((p) => p.name === this.config.embeddingProfile);
-      if (!named) {
-        throw new Error(
-          `PostgresMemoryProvider: Configured embedding profile "${this.config.embeddingProfile}" was not found among LLM providers`
-        );
+      const providers = dependencies.getLlmProviders();
+      // Use configured profile or fallback to first one that can embed
+      if (this.config.embeddingProfile) {
+        this.embeddingProvider = providers.find((p) => p.name === this.config.embeddingProfile);
       }
-      if (typeof named.generateEmbedding !== 'function') {
-        throw new Error(
-          `PostgresMemoryProvider: Configured embedding profile "${this.config.embeddingProfile}" does not support embeddings (no generateEmbedding). Use a provider such as OpenAI or OpenWebUI/Ollama.`
-        );
+      if (!this.embeddingProvider) {
+        this.embeddingProvider = providers.find((p) => typeof p.generateEmbedding === 'function');
       }
-      return named;
     }
-    return providers.find((p) => typeof p.generateEmbedding === 'function');
   }
 
   private ensureInitialized() {
@@ -71,12 +52,11 @@ export class PostgresMemoryProvider implements IMemoryProvider {
       throw new Error('PostgresMemoryProvider: DatabaseManager not available');
     }
     if (!this.embeddingProvider && this.dependencies?.getLlmProviders) {
-      this.embeddingProvider = this.resolveEmbeddingProvider(this.dependencies.getLlmProviders());
+      const providers = this.dependencies.getLlmProviders();
+      this.embeddingProvider = providers.find((p) => typeof p.generateEmbedding === 'function');
     }
     if (!this.embeddingProvider) {
-      throw new Error(
-        'PostgresMemoryProvider: No embedding-capable LLM provider available. Configure a provider that implements generateEmbedding (e.g. OpenAI or OpenWebUI/Ollama).'
-      );
+      throw new Error('PostgresMemoryProvider: Embedding provider not available');
     }
   }
 
@@ -156,9 +136,10 @@ export class PostgresMemoryProvider implements IMemoryProvider {
 
   async getMemory(id: string): Promise<MemoryEntry | null> {
     this.ensureInitialized();
-    // Direct indexed lookup (SELECT ... WHERE id = $1) — O(1) on the primary
-    // key, instead of fetching up to 1000 rows and scanning them in JS.
-    const found = await this.dbManager.getMemoryById(id);
+    // Implementation for getting single memory from dbManager
+    // For now we use getMemories and find
+    const memories = await this.dbManager.getMemories({ limit: 1000 });
+    const found = memories.find((m: any) => String(m.id) === id);
     if (!found) return null;
 
     return {

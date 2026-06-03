@@ -44,11 +44,6 @@ export const MessageSchema = z.object({
   MESSAGE_INTERACTIVE_FOLLOWUPS: z.boolean().default(false),
   MESSAGE_UNSOLICITED_ADDRESSED: z.boolean().default(false),
   MESSAGE_UNSOLICITED_UNADDRESSED: z.boolean().default(false),
-  // When true, unsolicited (not directly addressed) messages are only eligible
-  // for a reply if the text looks like an opportunity (question/help/request).
-  // Defaults to false to preserve the existing behaviour of deferring the
-  // decision entirely to the downstream probability modifiers.
-  MESSAGE_UNSOLICITED_REQUIRE_OPPORTUNITY: z.boolean().default(false),
   MESSAGE_RESPOND_IN_THREAD: z.boolean().default(false),
   MESSAGE_THREAD_RELATION_WINDOW: z.number().int().default(300000),
   MESSAGE_RECENT_ACTIVITY_DECAY_RATE: z.number().default(0.5),

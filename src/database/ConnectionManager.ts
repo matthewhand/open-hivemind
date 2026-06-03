@@ -1,6 +1,5 @@
 import { EventEmitter } from 'events';
 import { Logger } from '@common/logger';
-import type { IDatabase } from './types';
 
 import Database = require('better-sqlite3');
 
@@ -71,79 +70,12 @@ export class ConnectionManager extends EventEmitter {
     }
   }
 
-  /**
-   * Returns the raw underlying better-sqlite3 database handle (or null).
-   *
-   * Prefer {@link getSchemaDatabase} for schema-creation work — the raw handle
-   * exposes a synchronous API (`run`/`get` live on prepared statements, not the
-   * database object) that is NOT compatible with the {@link IDatabase} contract
-   * expected by the schema modules.
-   */
-  getRawDatabase(): Database.Database | null {
+  getDatabase(): any {
+    // This used to return a sqlite Database promise wrapper.
+    // It's currently only used by SchemaManager, so it must return something that has exec(), run()
+    // To make it compatible without changing SchemaManager immediately, we return a mocked version
+    // or just the db instance if the schema manager is also updated.
     return this.db;
-  }
-
-  /**
-   * Returns an {@link IDatabase}-compatible adapter over the raw connection, or
-   * `null` when not connected.
-   *
-   * The schema modules in `schemas/*` are written against the async
-   * `IDatabase` contract (`run`/`exec`/`all`/`get` return promises). The raw
-   * better-sqlite3 handle does not satisfy that contract, so this adapter
-   * bridges the two. This keeps {@link SchemaManager} usable on demand without
-   * coupling it to a specific wrapper implementation.
-   */
-  getSchemaDatabase(): IDatabase | null {
-    const db = this.db;
-    if (!db) {
-      return null;
-    }
-
-    const adapter: IDatabase = {
-      async run(sql: string, params: unknown[] = []) {
-        const stmt = db.prepare(sql);
-        const info = params.length > 0 ? stmt.run(...(params as SqlParam[])) : stmt.run();
-        return { lastID: info.lastInsertRowid as number, changes: info.changes };
-      },
-      async all<T = unknown>(sql: string, params: unknown[] = []): Promise<T[]> {
-        const stmt = db.prepare(sql);
-        return (params.length > 0 ? stmt.all(...(params as SqlParam[])) : stmt.all()) as T[];
-      },
-      async get<T = unknown>(sql: string, params: unknown[] = []): Promise<T | undefined> {
-        const stmt = db.prepare(sql);
-        return (params.length > 0 ? stmt.get(...(params as SqlParam[])) : stmt.get()) as
-          | T
-          | undefined;
-      },
-      async exec(sql: string) {
-        db.exec(sql);
-      },
-      async transaction<T>(callback: (txnDb: IDatabase) => Promise<T>): Promise<T> {
-        await adapter.exec('BEGIN TRANSACTION');
-        try {
-          const result = await callback(adapter);
-          await adapter.exec('COMMIT');
-          return result;
-        } catch (e) {
-          await adapter.exec('ROLLBACK');
-          throw e;
-        }
-      },
-      async close() {
-        db.close();
-      },
-    };
-
-    return adapter;
-  }
-
-  /**
-   * @deprecated Use {@link getSchemaDatabase} (IDatabase-compatible) or
-   * {@link getRawDatabase} (raw handle) instead. Retained for backwards
-   * compatibility; returns the IDatabase adapter.
-   */
-  getDatabase(): IDatabase | null {
-    return this.getSchemaDatabase();
   }
 
   isConnectedToDatabase(): boolean {

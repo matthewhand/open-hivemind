@@ -124,58 +124,13 @@ export class McpToolProvider implements IToolProvider {
     }
   }
 
-  /**
-   * Build the appropriate MCP transport for the configured protocol.
-   *
-   * Each transport is imported lazily from its dedicated SDK subpath so the
-   * heavy SDK is only loaded when a connection is actually established. The
-   * optional API key is forwarded as a Bearer `Authorization` header for the
-   * HTTP-based transports (`sse` / `streamable-http`).
-   */
-  private async createTransport(): Promise<unknown> {
-    const transport = this.config.transport ?? 'sse';
-
-    const authHeaders = this.config.apiKey
-      ? { Authorization: `Bearer ${this.config.apiKey}` }
-      : undefined;
-
-    if (transport === 'stdio') {
-      if (!this.config.command) {
-        throw new Error(
-          `MCP server ${this.name} uses stdio transport but no command was configured`
-        );
-      }
-      const { StdioClientTransport } = await import(
-        '@modelcontextprotocol/sdk/client/stdio.js'
-      );
-      return new StdioClientTransport({ command: this.config.command, args: [] });
-    }
-
-    const serverUrl = new URL(this.config.serverUrl);
-
-    if (transport === 'streamable-http') {
-      const { StreamableHTTPClientTransport } = await import(
-        '@modelcontextprotocol/sdk/client/streamableHttp.js'
-      );
-      return new StreamableHTTPClientTransport(serverUrl, {
-        requestInit: authHeaders ? { headers: authHeaders } : undefined,
-      });
-    }
-
-    // Default / 'sse'
-    const { SSEClientTransport } = await import('@modelcontextprotocol/sdk/client/sse.js');
-    return new SSEClientTransport(serverUrl, {
-      requestInit: authHeaders ? { headers: authHeaders } : undefined,
-    });
-  }
-
   private async ensureConnected(): Promise<void> {
     if (this.client) {
       return;
     }
 
     try {
-      const { Client } = await import('@modelcontextprotocol/sdk/client/index.js');
+      const { Client } = require('@modelcontextprotocol/sdk');
 
       this.client = new Client({
         name: `Open-Hivemind-${this.name}`,
@@ -186,8 +141,10 @@ export class McpToolProvider implements IToolProvider {
         `Connecting to MCP server ${this.name} at ${this.config.serverUrl} (${this.config.transport})`
       );
 
-      const transport = await this.createTransport();
-      await this.client.connect(transport);
+      await this.client.connect({
+        url: this.config.serverUrl,
+        apiKey: this.config.apiKey,
+      });
 
       debug(`Connected to MCP server ${this.name}`);
     } catch (error) {

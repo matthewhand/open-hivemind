@@ -20,19 +20,17 @@ The MCP Tools Testing UI provides an interactive interface for testing Model Con
 - **src/server/routes/mcpToolsTesting.ts** - API endpoints for listing tools and executing tests
 
 ### Tests
-- **src/client/src/pages/MCPToolsTestingPage.test.tsx** - Unit tests for form generation and display
+- **tests/unit/client/pages/MCPToolsTestingPage.test.tsx** - Unit tests for form generation and display
 - **tests/e2e/screenshot-mcp-tools-testing.spec.ts** - End-to-end tests with screenshot capture
 
 ## Routes
 
-### Frontend Component
-- `MCPToolsTestingPage` (`src/client/src/pages/MCPToolsTestingPage.tsx`) - testing interface component. The page calls the existing `/api/mcp/servers` discovery endpoint and `/api/mcp/servers/:name/call-tool` for execution (see Integration Points). It is not currently wired into the app router as a standalone page.
+### Frontend Route
+- `/admin/mcp/tools/testing` - Main testing interface
 
 ### API Endpoints
 
-> The dedicated testing router (`src/server/routes/mcpToolsTesting.ts`) is mounted at `/api/mcp-tools`, so its endpoints are `/api/mcp-tools/list` and `/api/mcp-tools/test`.
-
-#### GET /api/mcp-tools/list
+#### GET /api/admin/mcp-tools/list
 List all available MCP tools from connected servers.
 
 **Response:**
@@ -57,7 +55,7 @@ List all available MCP tools from connected servers.
 }
 ```
 
-#### POST /api/mcp-tools/test
+#### POST /api/admin/mcp-tools/test
 Execute a tool with provided parameters.
 
 **Request Body:**
@@ -120,7 +118,7 @@ Comprehensive error handling includes:
 
 ## Usage Example
 
-1. Open the MCP Tools Testing page (`MCPToolsTestingPage`)
+1. Navigate to `/admin/mcp/tools/testing`
 2. Select a tool from the "Available Tools" sidebar
 3. View the tool's schema and description
 4. Fill in the parameter form with test values
@@ -146,7 +144,7 @@ Run `npm run generate-docs` to capture the screenshot.
 ### Unit Tests
 Run unit tests with:
 ```bash
-npm test -- src/client/src/pages/MCPToolsTestingPage.test.tsx
+npm test -- tests/unit/client/pages/MCPToolsTestingPage.test.tsx
 ```
 
 Tests cover:

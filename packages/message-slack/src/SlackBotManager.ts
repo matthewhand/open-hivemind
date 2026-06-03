@@ -196,58 +196,6 @@ export class SlackBotManager {
             reject(networkError);
           }
         }
-      } else if (this.mode === 'rtm' && primaryBot.rtmClient) {
-        primaryBot.rtmClient.on('message', async (event: any) => {
-          debug(`RTM message event received: ${JSON.stringify(event)}`);
-          // RTM emits the raw event with a `ts` field (socket mode uses `event_ts`).
-          const eventId = event.ts;
-          if (this.processedEvents.has(eventId)) {
-            debug(`Duplicate message event skipped: event_id=${eventId}`);
-            return;
-          }
-
-          if (!event.text || event.subtype === 'bot_message' || allBotUserIds.includes(event.user)) {
-            debug('Message event filtered out: no text, bot message, or self-message');
-            return;
-          }
-
-          const channel = event.channel || 'unknown';
-          const lastTs = this.lastEventTsByChannel.get(channel);
-          if (lastTs === event.ts) {
-            debug(`Duplicate message TS detected in channel ${channel}: ${event.ts}`);
-            return;
-          }
-          this.lastEventTsByChannel.set(channel, event.ts);
-          this.processedEvents.add(eventId);
-
-          debug(`Primary bot received channel message: ${event.text}`);
-          if (this.messageHandler) {
-            const slackMessage = new SlackMessage(event.text, event.channel, event as any);
-            const history = this.includeHistory
-              ? await this.fetchMessagesForBot(primaryBot, event.channel, 10)
-              : [];
-            await this.messageHandler(slackMessage, history, primaryBot.config);
-          } else {
-            debug('No message handler set for message event');
-          }
-        });
-
-        try {
-          debug('Starting primary RTM client');
-          await primaryBot.rtmClient.start();
-          debug('Primary RTM client started for channels');
-          resolve();
-        } catch (error: unknown) {
-          const hivemindError = ErrorUtils.toHivemindError(error) as any;
-          const errorInfo = ErrorUtils.classifyError(hivemindError);
-          debug('Failed to start primary RTM client:', {
-            error: hivemindError.message,
-            errorCode: hivemindError.code,
-            errorType: errorInfo.type,
-            severity: errorInfo.severity,
-          });
-          reject(hivemindError);
-        }
       }
 
       for (const botInfo of this.slackBots) {
@@ -339,40 +287,6 @@ export class SlackBotManager {
             }
           }
         } else if (this.mode === 'rtm' && botInfo.rtmClient) {
-          botInfo.rtmClient.on('message', async (event: any) => {
-            debug(`RTM message event received: ${JSON.stringify(event)}`);
-            const eventId = event.ts;
-            if (this.processedEvents.has(eventId)) {
-              debug(`Duplicate message event skipped: event_id=${eventId}`);
-              return;
-            }
-
-            if (
-              event.channel_type !== 'im' ||
-              !event.text ||
-              event.subtype === 'bot_message' ||
-              event.user === botInfo.botUserId
-            ) {
-              debug('Message event filtered out');
-              return;
-            }
-
-            const channel = event.channel || 'unknown';
-            const lastTs = this.lastEventTsByChannel.get(channel);
-            if (lastTs === event.ts) {
-              debug(`Duplicate message TS detected in channel ${channel}: ${event.ts}`);
-              return;
-            }
-            this.lastEventTsByChannel.set(channel, event.ts);
-            this.processedEvents.add(eventId);
-
-            debug(`${botInfo.botUserName} received: ${event.text}`);
-            if (this.messageHandler) {
-              const slackMessage = new SlackMessage(event.text, event.channel, event as any);
-              await this.messageHandler(slackMessage, [], botInfo.config);
-            }
-          });
-
           try {
             debug(`Starting RTM client for ${botInfo.botUserName}`);
             await botInfo.rtmClient.start();

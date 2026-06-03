@@ -129,40 +129,19 @@ export async function toolAugmentedCompletion(opts: {
 // ---------------------------------------------------------------------------
 
 /**
- * Calls the LLM with tool definitions.
- *
- * Routes through the provider abstraction (`generateChatCompletionWithTools`)
- * when the provider implements native function calling, so non-OpenAI
- * providers can participate. Providers that do not implement it fall through
- * to the direct OpenAI-SDK path below, preserving the original behavior.
+ * Calls the LLM using the OpenAI SDK (via the provider's existing OpenAI
+ * client configuration). Because ILlmProvider doesn't expose tool calling,
+ * we dynamically detect if the provider is OpenAI-compatible and reconstruct
+ * the call.
  */
 async function callLLMWithTools(
-  llmProvider: ILlmProvider,
+  _llmProvider: ILlmProvider,
   messages: ChatMessage[],
   tools: OpenAITool[],
 
   metadata: Record<string, any>
 ): Promise<ChatMessage> {
-  // Preferred path: route through the provider abstraction when supported.
-  if (typeof llmProvider.generateChatCompletionWithTools === 'function') {
-    try {
-      const result = await llmProvider.generateChatCompletionWithTools(
-        messages,
-        tools,
-        metadata
-      );
-      return {
-        role: 'assistant',
-        content: result.content ?? null,
-        tool_calls: result.tool_calls as LLMToolCall[] | undefined,
-      };
-    } catch (error) {
-      debug('Provider tool-aware completion failed, falling back to direct path:', error);
-      // Fall through to the direct OpenAI path below.
-    }
-  }
-
-  // Fallback path: use the OpenAI SDK directly. We load it dynamically
+  // Strategy: Try to use the OpenAI SDK directly. We load it dynamically
   // to avoid hard coupling. The provider's config tells us the API key
   // and base URL.
   try {

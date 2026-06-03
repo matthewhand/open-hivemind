@@ -3,7 +3,6 @@ import { getLlmProfileByKey } from '@src/config/llmProfiles';
 import ProviderConfigManager, { type ProviderInstance } from '@src/config/ProviderConfigManager';
 import { UserConfigStore } from '@src/config/UserConfigStore';
 import { MetricsCollector } from '@src/monitoring/MetricsCollector';
-import { instantiateLlmProvider, loadPlugin } from '@src/plugins/PluginLoader';
 import llmTaskConfig from '@config/llmTaskConfig';
 import { FlowiseProvider } from '@integrations/flowise/flowiseProvider';
 import * as openWebUIImport from '@integrations/openwebui/runInference';
@@ -101,36 +100,6 @@ const openWebUI: ILlmProvider = {
   },
 };
 
-/**
- * Resolve a provider type to an ILlmProvider.
- *
- * The few types with bespoke wiring in this module (a shared `openwebui`
- * singleton, the direct `flowise`/`openai` constructors) keep their fast
- * paths; every other wired type (`letta`, `openswarm`, …) is resolved
- * through the same plugin loader that `getLlmProvider` uses, so task-based
- * routing supports all wired provider types rather than a hardcoded subset.
- */
-async function buildProviderForType(
-  type: string,
-  cfg: Record<string, unknown>
-): Promise<ILlmProvider | undefined> {
-  switch (type) {
-    case 'openai': {
-      const { OpenAiProvider } = await import('@hivemind/llm-openai');
-
-      return new OpenAiProvider(cfg as any);
-    }
-    case 'flowise':
-      return new FlowiseProvider(cfg);
-    case 'openwebui':
-      return openWebUI;
-    default: {
-      const mod = await loadPlugin(`llm-${type}`);
-      return instantiateLlmProvider(mod, cfg);
-    }
-  }
-}
-
 async function createProviderFromInstance(
   instance: ProviderInstance,
   modelOverride?: string
@@ -140,9 +109,21 @@ async function createProviderFromInstance(
     const baseConfig = instance.config || {};
     const cfg = modelOverride ? { ...baseConfig, model: modelOverride } : baseConfig;
 
-    const provider = await buildProviderForType(type, cfg as Record<string, unknown>);
-    if (!provider) {
-      return null;
+    let provider: ILlmProvider | undefined;
+    switch (type) {
+      case 'openai':
+        const { OpenAiProvider } = await import('@hivemind/llm-openai');
+
+        provider = new OpenAiProvider(cfg as any);
+        break;
+      case 'flowise':
+        provider = new FlowiseProvider(cfg);
+        break;
+      case 'openwebui':
+        provider = openWebUI;
+        break;
+      default:
+        return null;
     }
 
     return withTokenCounting(provider, instance.id);
@@ -196,17 +177,21 @@ async function createProviderFromProfile(profileKey: string): Promise<ILlmProvid
     const cfg = profile.config || {};
 
     let provider: ILlmProvider | undefined;
-    try {
-      provider = await buildProviderForType(type, cfg as Record<string, unknown>);
-    } catch (err) {
-      debug(
-        `Profile "${profileKey}" provider type "${type}" failed to load: ${err instanceof Error ? err.message : String(err)}`
-      );
-      return null;
-    }
-    if (!provider) {
-      debug(`Profile "${profileKey}" has unsupported provider type "${type}"`);
-      return null;
+    switch (type) {
+      case 'openai':
+        const { OpenAiProvider } = await import('@hivemind/llm-openai');
+
+        provider = new OpenAiProvider(cfg as any);
+        break;
+      case 'flowise':
+        provider = new FlowiseProvider(cfg);
+        break;
+      case 'openwebui':
+        provider = openWebUI;
+        break;
+      default:
+        debug(`Profile "${profileKey}" has unsupported provider type "${type}"`);
+        return null;
     }
 
     return withTokenCounting(provider, `profile:${profileKey}`);

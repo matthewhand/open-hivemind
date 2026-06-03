@@ -1,10 +1,6 @@
 import { getQuotaManager } from '@src/middleware/quotaMiddleware';
 import { MemoryManager } from '@src/services/MemoryManager';
 import { toolAugmentedCompletion } from '@src/services/toolAugmentedCompletion';
-import {
-  ProviderMetricsCollector,
-  normalizeLlmProviderType,
-} from '@src/monitoring/ProviderMetricsCollector';
 import { generateChatCompletionDirect } from '@integrations/openwebui/directClient';
 import type { IMessage } from '@message/interfaces/IMessage';
 import { trimHistoryToTokenBudget } from '../helpers/processing/HistoryBudgeter';
@@ -105,62 +101,40 @@ export async function processInference(ctx: MessageContext): Promise<boolean> {
 
     // Inference
     ctx.pipelineMetrics.startStage('llm_inference');
-    let llmResponse: {
-      text: string;
-      usage?: { total_tokens?: number; prompt_tokens?: number; completion_tokens?: number };
-    } | null = null;
+    let llmResponse: { text: string; usage?: { total_tokens?: number } } | null = null;
 
-    // Resolve the provider type for metrics (no-op for untracked providers).
-    const llmProviderType = normalizeLlmProviderType(
-      ctx.botConfig.llmProvider ||
-        ctx.botConfig.LLM_PROVIDER ||
-        (ctx.llmProvider && ctx.llmProvider.name)
-    );
-    const llmStartedAt = Date.now();
-
-    try {
-      if (ctx.botConfig.MESSAGE_LLM_DIRECT) {
-        const directResult = await generateChatCompletionDirect(
-          ctx.botConfig as unknown as Parameters<typeof generateChatCompletionDirect>[0],
-          ctx.processedMessage || '',
-          trimmedHistory.trimmed,
-          systemPrompt
-        );
-        llmResponse = typeof directResult === 'string' ? { text: directResult } : directResult;
-      } else {
-        const botNameForTools = String(ctx.botConfig.name || ctx.botConfig.BOT_ID || '');
-        const toolResult = await toolAugmentedCompletion({
-          botName: botNameForTools,
-          llmProvider: ctx.llmProvider,
-          userMessage: ctx.processedMessage || '',
-          historyMessages: trimmedHistory.trimmed,
-          metadata: {
-            systemPrompt,
-            maxTokens: Number(ctx.botConfig.LLM_MAX_TOKENS || 150),
-            temperature: Number(ctx.botConfig.LLM_TEMPERATURE || 0.7),
-            channelId,
-            userId,
-          },
+    if (ctx.botConfig.MESSAGE_LLM_DIRECT) {
+      const directResult = await generateChatCompletionDirect(
+        ctx.botConfig as unknown as Parameters<typeof generateChatCompletionDirect>[0],
+        ctx.processedMessage || '',
+        trimmedHistory.trimmed,
+        systemPrompt
+      );
+      llmResponse = typeof directResult === 'string' ? { text: directResult } : directResult;
+    } else {
+      const botNameForTools = String(ctx.botConfig.name || ctx.botConfig.BOT_ID || '');
+      const toolResult = await toolAugmentedCompletion({
+        botName: botNameForTools,
+        llmProvider: ctx.llmProvider,
+        userMessage: ctx.processedMessage || '',
+        historyMessages: trimmedHistory.trimmed,
+        metadata: {
           systemPrompt,
-          toolContext: {
-            userId,
-            channelId,
-            messageProvider: String(ctx.botConfig.MESSAGE_PROVIDER || 'generic'),
-          },
-        });
-        llmResponse = typeof toolResult === 'string' ? { text: toolResult } : toolResult;
-      }
-    } catch (llmErr) {
-      if (llmProviderType) {
-        recordLlmMetric(llmProviderType, Date.now() - llmStartedAt, null, false);
-      }
-      throw llmErr;
+          maxTokens: Number(ctx.botConfig.LLM_MAX_TOKENS || 150),
+          temperature: Number(ctx.botConfig.LLM_TEMPERATURE || 0.7),
+          channelId,
+          userId,
+        },
+        systemPrompt,
+        toolContext: {
+          userId,
+          channelId,
+          messageProvider: String(ctx.botConfig.MESSAGE_PROVIDER || 'generic'),
+        },
+      });
+      llmResponse = typeof toolResult === 'string' ? { text: toolResult } : toolResult;
     }
     ctx.llmResponse = llmResponse;
-
-    if (llmProviderType) {
-      recordLlmMetric(llmProviderType, Date.now() - llmStartedAt, llmResponse?.usage, true);
-    }
 
     ctx.pipelineMetrics.endStage('llm_inference', {
       hasResponse: !!(llmResponse && llmResponse.text),
@@ -185,33 +159,5 @@ export async function processInference(ctx: MessageContext): Promise<boolean> {
     stopTyping = true;
     if (typingInterval) clearInterval(typingInterval);
     if (typingTimeout) clearTimeout(typingTimeout);
-  }
-}
-
-/**
- * Record a single LLM invocation against the provider metrics collector.
- * Failures here are swallowed so metrics never disrupt the message pipeline.
- */
-function recordLlmMetric(
-  provider: ReturnType<typeof normalizeLlmProviderType>,
-  latencyMs: number,
-  usage: { total_tokens?: number; prompt_tokens?: number; completion_tokens?: number } | null | undefined,
-  success: boolean
-): void {
-  if (!provider) return;
-  try {
-    ProviderMetricsCollector.getInstance().recordLlmRequest(
-      provider,
-      latencyMs,
-      {
-        prompt: usage?.prompt_tokens,
-        completion: usage?.completion_tokens,
-        total: usage?.total_tokens,
-      },
-      undefined,
-      success
-    );
-  } catch {
-    // Metrics are best-effort; never let them break inference.
   }
 }

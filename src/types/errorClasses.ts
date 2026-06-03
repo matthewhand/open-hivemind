@@ -96,53 +96,6 @@ export interface ErrorRecoveryStrategy {
 }
 
 /**
- * Callback that performs an actual token refresh.
- *
- * This is supplied by the calling code (for example a route handler that has
- * access to {@link AuthManager.refreshToken}). It resolves with the refreshed
- * credential on success and rejects/throws on failure.
- *
- * The error-class layer deliberately does not import any auth service so that
- * `src/types` stays free of higher-level dependencies; instead the concrete
- * refresh mechanism is injected at the call site.
- */
-export type TokenRefreshHandler = () => Promise<unknown>;
-
-/**
- * Thrown by an {@link AuthenticationError} recovery `fallbackAction` when an
- * expired token is encountered but no token-refresh handler was supplied.
- *
- * This is a properly-typed, documented signal (rather than a bare
- * `new Error('...not implemented')`) so callers can distinguish "refresh is not
- * wired up for this provider" from a genuine refresh failure and degrade
- * gracefully — typically by forcing a full re-authentication.
- */
-export class TokenRefreshNotSupportedError extends BaseHivemindError {
-  public readonly provider?: string;
-
-  constructor(provider?: string, context?: Record<string, unknown>) {
-    super(
-      provider
-        ? `Token refresh is not supported for provider "${provider}". Re-authentication is required.`
-        : 'Token refresh is not supported. Re-authentication is required.',
-      'authentication',
-      'TOKEN_REFRESH_NOT_SUPPORTED',
-      401,
-      { provider },
-      context
-    );
-    this.provider = provider;
-  }
-
-  getRecoveryStrategy(): ErrorRecoveryStrategy {
-    return {
-      canRecover: false,
-      recoverySteps: ['Re-authenticate with the provider to obtain a new token'],
-    };
-  }
-}
-
-/**
  * Network error with retry capabilities
  */
 export class NetworkError extends BaseHivemindError {
@@ -377,46 +330,28 @@ export class AuthenticationError extends BaseHivemindError {
     | 'missing_token'
     | 'invalid_format';
 
-  /**
-   * Optional token-refresh callback injected by the calling code. When the
-   * error represents an expired token and a handler is present, the recovery
-   * strategy's `fallbackAction` delegates to it. When absent, the
-   * `fallbackAction` rejects with a {@link TokenRefreshNotSupportedError}.
-   */
-  private readonly tokenRefreshHandler?: TokenRefreshHandler;
-
   constructor(
     message: string,
     provider?: string,
     reason?: 'invalid_credentials' | 'expired_token' | 'missing_token' | 'invalid_format',
-    context?: Record<string, unknown>,
-    tokenRefreshHandler?: TokenRefreshHandler
+    context?: Record<string, unknown>
   ) {
     super(message, 'authentication', 'AUTH_ERROR', 401, { provider, reason }, context);
     this.provider = provider;
     this.reason = reason;
-    this.tokenRefreshHandler = tokenRefreshHandler;
   }
 
   getRecoveryStrategy(): ErrorRecoveryStrategy {
     // Allow token refresh for expired tokens
     if (this.reason === 'expired_token') {
-      const handler = this.tokenRefreshHandler;
-      const provider = this.provider;
       return {
         canRecover: true,
         maxRetries: 1,
         retryDelay: 0,
 
         fallbackAction: async () => {
-          // The concrete refresh mechanism is injected by the calling code
-          // (e.g. AuthManager.refreshToken). When none is provided we surface a
-          // typed, documented error so callers can fall back to a full
-          // re-authentication instead of receiving an opaque generic Error.
-          if (!handler) {
-            throw new TokenRefreshNotSupportedError(provider);
-          }
-          return handler();
+          // This would be implemented by the calling code
+          throw new Error('Token refresh not implemented');
         },
         recoverySteps: ['Attempt to refresh authentication token', 'Re-authenticate with provider'],
       };

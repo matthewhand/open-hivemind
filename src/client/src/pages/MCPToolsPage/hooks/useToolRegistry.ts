@@ -1,15 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import useUrlParams from '../../../hooks/useUrlParams';
 import { useLocalStorage } from '../../../hooks/useLocalStorage';
 import { apiService } from '../../../services/api';
 import type { MCPTool, RecentToolUsage, AlertState } from '../types';
-
-interface MCPFavoritesPayload {
-  favorites?: string[];
-  recentlyUsed?: RecentToolUsage[];
-  usageCounts?: Record<string, number>;
-}
 
 interface UseToolRegistryProps {
   setAlert: (alert: AlertState | null) => void;
@@ -52,46 +46,6 @@ export function useToolRegistry({ setAlert }: UseToolRegistryProps): {
   const [favorites, setFavorites] = useLocalStorage<string[]>('mcp-tools-favorites', []);
   const [recentlyUsed, setRecentlyUsed] = useLocalStorage<RecentToolUsage[]>('mcp-tools-recently-used', []);
   const [usageCounts, setUsageCounts] = useLocalStorage<Record<string, number>>('mcp-tools-usage-counts', {});
-
-  // Server-side persistence so favorites / recents / usage-counts survive across
-  // devices and sessions. We hydrate from the server on mount (falling back to
-  // the localStorage values when the request fails) and persist changes back.
-  // `hydratedRef` guards against the initial-state save overwriting server data.
-  const hydratedRef = useRef(false);
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const resp: any = await apiService.get('/api/mcp/tools/favorites');
-        const data: MCPFavoritesPayload = resp?.data ?? {};
-        if (cancelled) return;
-        if (Array.isArray(data.favorites)) setFavorites(data.favorites);
-        if (Array.isArray(data.recentlyUsed)) setRecentlyUsed(data.recentlyUsed);
-        if (data.usageCounts && typeof data.usageCounts === 'object') setUsageCounts(data.usageCounts);
-      } catch {
-        // Server unavailable — keep the localStorage-backed values as fallback.
-      } finally {
-        if (!cancelled) hydratedRef.current = true;
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  // Persist registry preferences back to the server whenever they change
-  // (after the initial hydration). Debounced to coalesce rapid updates.
-  useEffect(() => {
-    if (!hydratedRef.current) return;
-    const handle = setTimeout(() => {
-      apiService
-        .put('/api/mcp/tools/favorites', { favorites, recentlyUsed, usageCounts })
-        .catch(() => {
-          // Ignore persistence errors — localStorage still holds the values.
-        });
-    }, 500);
-    return () => clearTimeout(handle);
-  }, [favorites, recentlyUsed, usageCounts]);
 
   useEffect(() => {
     const fetchTools = async () => {

@@ -35,13 +35,10 @@ jest.mock('../../../src/config/BotConfigurationManager', () => {
   };
 });
 
-const busHandlers: Record<string, (event: any) => void> = {};
 jest.mock('../../../src/events/MessageBus', () => ({
   MessageBus: {
     getInstance: () => ({
-      on: (event: string, fn: (e: any) => void) => {
-        busHandlers[event] = fn;
-      },
+      on: jest.fn(),
     }),
   },
 }));
@@ -72,9 +69,6 @@ describe('BroadcastService', () => {
   let broadcastService: BroadcastService;
 
   beforeEach(() => {
-    for (const key of Object.keys(busHandlers)) {
-      delete busHandlers[key];
-    }
     const { BotConfigurationManager } = require('../../../src/config/BotConfigurationManager');
     BotConfigurationManager.getInstance().setBots([]);
 
@@ -104,52 +98,6 @@ describe('BroadcastService', () => {
       const flow = broadcastService.getMessageFlow();
       expect(flow).toHaveLength(1);
       expect(flow[0].botName).toBe('TestBot');
-    });
-  });
-
-  describe('MessageBus integration', () => {
-    it('subscribes to the message:sent event emitted by the pipeline', () => {
-      expect(typeof busHandlers['message:sent']).toBe('function');
-    });
-
-    it('records an outgoing message flow when message:sent fires', () => {
-      busHandlers['message:sent']({
-        botName: 'PipelineBot',
-        platform: 'discord',
-        channelId: 'ch-42',
-        botConfig: { LLM_PROVIDER: 'openai' },
-        responseText: 'hello world',
-        message: { getAuthorId: () => 'author-9' },
-        metadata: { startTime: Date.now() - 5 },
-      });
-
-      const flow = broadcastService.getMessageFlow();
-      expect(flow).toHaveLength(1);
-      expect(flow[0].botName).toBe('PipelineBot');
-      expect(flow[0].provider).toBe('discord');
-      expect(flow[0].llmProvider).toBe('openai');
-      expect(flow[0].channelId).toBe('ch-42');
-      expect(flow[0].userId).toBe('author-9');
-      expect(flow[0].messageType).toBe('outgoing');
-      expect(flow[0].contentLength).toBe('hello world'.length);
-      expect(flow[0].status).toBe('success');
-    });
-
-    it('records an alert when message:error fires', () => {
-      expect(typeof busHandlers['message:error']).toBe('function');
-
-      busHandlers['message:error']({
-        botName: 'PipelineBot',
-        channelId: 'ch-42',
-        stage: 'send',
-        error: new Error('boom'),
-      });
-
-      const alerts = broadcastService.getAlerts();
-      expect(alerts).toHaveLength(1);
-      expect(alerts[0].level).toBe('error');
-      expect(alerts[0].message).toBe('boom');
-      expect(alerts[0].botName).toBe('PipelineBot');
     });
   });
 

@@ -187,35 +187,6 @@ export const TestGuardProfileSchema = z.object({
   }),
 });
 
-/** Schema for PUT /settings — update global guard defaults */
-export const UpdateGuardSettingsSchema = z.object({
-  body: z.object({
-    defaultRateLimit: z
-      .object({
-        maxRequests: z
-          .number()
-          .int({ message: 'maxRequests must be an integer' })
-          .min(1, { message: 'maxRequests must be at least 1' })
-          .max(1000000, { message: 'maxRequests must not exceed 1,000,000' }),
-        windowMs: z
-          .number()
-          .int({ message: 'windowMs must be an integer' })
-          .min(1000, { message: 'windowMs must be at least 1000' }),
-      })
-      .optional(),
-    defaultContentFilterStrictness: z
-      .enum(['low', 'medium', 'high'], {
-        message: 'strictness must be low, medium, or high',
-      })
-      .optional(),
-    evaluationOrder: z
-      .enum(['sequential', 'parallel', 'fail-fast'], {
-        message: 'evaluationOrder must be sequential, parallel, or fail-fast',
-      })
-      .optional(),
-  }),
-});
-
 /** Schema for POST /bulk/toggle — bulk toggle guard profiles */
 export const BulkToggleGuardProfilesSchema = z.object({
   body: z.object({

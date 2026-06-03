@@ -23,9 +23,8 @@ Mattermost.
 ├─────────────────────────────────────────────────────────────┤
 │                    Messaging Connectors                     │
 │  ├─ DiscordService (solo & swarm)                          │
-│  ├─ SlackService (Socket Mode + RTM receive, native typing) │
-│  ├─ MattermostService (REST send + WebSocket receive, typing) │
-│  └─ WebhookService (inbound ingress, opt-in)               │
+│  ├─ SlackService (Socket Mode)                             │
+│  └─ MattermostService (REST, experimental)                 │
 ├─────────────────────────────────────────────────────────────┤
 │                     Intelligence Providers                  │
 │  ├─ OpenAIProvider                                         │
@@ -50,18 +49,6 @@ Mattermost.
   limiter, and health checks while sharing configuration via the orchestrator.
 - **Consistent voice** – outbound responses are formatted as `*AgentName*: message`
   to present a single persona regardless of the responding instance.
-
-## Message Processing Pipeline
-- Inbound messages flow through a 5-stage pipeline — `receive → decision → enrich →
-  inference → send` — which is the **default** processing path. Set
-  `USE_LEGACY_HANDLER=true` to revert to the monolithic `handleMessage()`.
-- The pipeline records real activity to the persistent `ActivityLogger` and the live
-  WebSocket feed (via `observability/ActivityRecorder`), and feeds response-scoring
-  signals — global fatigue, per-channel grace window, and idle-response scheduling —
-  via `pipeline/ActivityRecorder`.
-- A `PipelineTracer` captures per-stage timing; trace stats are surfaced at
-  `GET /api/health/detailed`, and completed traces can be exported to console, an
-  NDJSON file (`TRACE_LOG_FILE`), or an OTLP endpoint (`OTEL_EXPORTER_OTLP_ENDPOINT`).
 
 ## Context Sharing & Memory
 - Up to ten recent messages per channel are cached in the `ContextCache` and

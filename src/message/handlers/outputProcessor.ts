@@ -1,9 +1,5 @@
 import { AuditLogger } from '@src/common/auditLogger';
 import { getGuardrailProfileByKey } from '@src/config/guardrailProfiles';
-import {
-  ProviderMetricsCollector,
-  normalizeMessageProviderType,
-} from '@src/monitoring/ProviderMetricsCollector';
 import { MemoryManager } from '@src/services/MemoryManager';
 import type { ContentFilterConfig } from '@src/types/config';
 import { recordBotActivity } from '../helpers/processing/ChannelActivity';
@@ -147,31 +143,18 @@ export async function processOutput(ctx: MessageContext): Promise<string | null>
 
   if (responseText) {
     ctx.pipelineMetrics.startStage('send');
-    const messageProviderType = normalizeMessageProviderType(ctx.platform || serviceName);
-    const providerMetrics = messageProviderType ? ProviderMetricsCollector.getInstance() : null;
     for (const part of parts) {
       const finalReplyId = ctx.botConfig.MESSAGE_REPLY_IN_THREAD
         ? ctx.message.getMessageId()
         : undefined;
 
-      const sendStartedAt = Date.now();
-      try {
-        await ctx.messageProvider.sendMessageToChannel(
-          channelId,
-          part,
-          ctx.providerSenderKey,
-          undefined,
-          finalReplyId
-        );
-        if (providerMetrics && messageProviderType) {
-          providerMetrics.recordMessageSent(messageProviderType, Date.now() - sendStartedAt);
-        }
-      } catch (sendErr) {
-        if (providerMetrics && messageProviderType) {
-          providerMetrics.recordMessageFailure(messageProviderType);
-        }
-        throw sendErr;
-      }
+      await ctx.messageProvider.sendMessageToChannel(
+        channelId,
+        part,
+        ctx.providerSenderKey,
+        undefined,
+        finalReplyId
+      );
 
       duplicateDetector.recordMessage(channelId, part);
       outgoingRateLimiter.recordSend(channelId);

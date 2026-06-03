@@ -4,9 +4,6 @@ import type { ISchemaModule } from './ISchemaModule';
 
 export class LoggingSchemas implements ISchemaModule {
   async createTables(db: Database): Promise<void> {
-    const isPostgres = (db as any).constructor.name === 'PostgresWrapper' || !!(db as any).pool;
-    const pkAuto = isPostgres ? 'SERIAL PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
-
     // Activity logs table
     await this.createTable(
       db,
@@ -52,27 +49,6 @@ export class LoggingSchemas implements ISchemaModule {
         new_values TEXT,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (bot_id) REFERENCES bots (id) ON DELETE CASCADE
-      )
-    `
-    );
-
-    // Audit events table (durable persistence for the request/security audit trail)
-    await this.createTable(
-      db,
-      `
-      CREATE TABLE IF NOT EXISTS audit_events (
-        id ${pkAuto},
-        timestamp TEXT NOT NULL,
-        action TEXT NOT NULL,
-        resource TEXT NOT NULL,
-        resource_id TEXT,
-        user_id TEXT,
-        ip TEXT,
-        user_agent TEXT,
-        before_value TEXT,
-        after_value TEXT,
-        status TEXT NOT NULL,
-        error_message TEXT
       )
     `
     );
@@ -244,13 +220,6 @@ export class LoggingSchemas implements ISchemaModule {
       'CREATE INDEX IF NOT EXISTS idx_bot_audit_logs_bot_id ON bot_audit_logs(bot_id)',
       'CREATE INDEX IF NOT EXISTS idx_bot_audit_logs_user_id ON bot_audit_logs(user_id)',
       'CREATE INDEX IF NOT EXISTS idx_bot_audit_logs_timestamp ON bot_audit_logs(timestamp)',
-
-      // Audit events indexes
-      'CREATE INDEX IF NOT EXISTS idx_audit_events_timestamp ON audit_events(timestamp)',
-      'CREATE INDEX IF NOT EXISTS idx_audit_events_action ON audit_events(action)',
-      'CREATE INDEX IF NOT EXISTS idx_audit_events_resource ON audit_events(resource)',
-      'CREATE INDEX IF NOT EXISTS idx_audit_events_user_id ON audit_events(user_id)',
-      'CREATE INDEX IF NOT EXISTS idx_audit_events_status ON audit_events(status)',
 
       // Bot error logs indexes
       'CREATE INDEX IF NOT EXISTS idx_bot_error_logs_bot_id ON bot_error_logs(bot_id)',

@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
-import { useConnectedBots } from '../hooks/useConnectedBots';
 import List, { ListRow, ListColGrow, ListColWrap } from './DaisyUI/List';
 import Collapse from './DaisyUI/Collapse';
 import { Alert } from './DaisyUI/Alert';
@@ -81,7 +80,6 @@ const IntegrationsPanel: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [deletingKey, setDeletingKey] = useState<string | null>(null);
 
   // Edit/Configure Modal State (For Global Config)
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -150,10 +148,13 @@ const IntegrationsPanel: React.FC = () => {
     return requiredKeys.some(k => values[k] && values[k] !== '***' && values[k] !== '');
   };
 
-  // Pre-compute an O(1) provider->bot index so the render loops below never
-  // re-filter `bots` per integration. Extracted into a tested, reusable hook
-  // (useConnectedBots / buildConnectedBotsMap) rather than an inline memo.
-  const { getConnectedBots } = useConnectedBots(bots);
+  const getConnectedBots = (integrationName: string, category: string) => {
+    return bots.filter(bot => {
+      if (category === 'llm') { return bot.llmProvider === integrationName; }
+      if (category === 'message') { return bot.messageProvider === integrationName; }
+      return bot.messageProvider === integrationName;
+    });
+  };
 
   const handleSave = async () => {
     if (!selectedConfigName) { return; }
@@ -230,13 +231,13 @@ const IntegrationsPanel: React.FC = () => {
       onConfirm: async () => {
         setConfirmModal(prev => ({ ...prev, isOpen: false }));
         try {
-          setDeletingKey(key);
+          setSaving(true);
           await apiService.delete(`/api/config/llm-profiles/${key}`);
           await fetchData();
         } catch (err: unknown) {
           errorToast('Delete Failed', `Failed to delete profile: ${(err instanceof Error ? err.message : String(err))}`);
         } finally {
-          setDeletingKey(null);
+          setSaving(false);
         }
       },
     });
@@ -427,7 +428,6 @@ const IntegrationsPanel: React.FC = () => {
                         className="btn-square btn-xs text-error"
                         aria-label={`Delete ${profile.name} provider`}
                         onClick={() => handleDeleteProfile(profile.key)}
-                        loading={deletingKey === profile.key}
                       >
                         <TrashIcon className="w-4 h-4" />
                       </Button>

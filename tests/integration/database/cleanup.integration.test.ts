@@ -1,6 +1,6 @@
 import 'reflect-metadata';
-import databaseConfig from '../../../src/config/databaseConfig';
 import { DatabaseManager } from '../../../src/database/DatabaseManager';
+import databaseConfig from '../../../src/config/databaseConfig';
 
 describe('Database Cleanup Integration', () => {
   let dbManager: DatabaseManager;
@@ -19,7 +19,7 @@ describe('Database Cleanup Integration', () => {
   const setupDb = async () => {
     dbManager = DatabaseManager.getInstance({
       type: 'postgres',
-      url: process.env.DATABASE_URL,
+      url: process.env.DATABASE_URL
     } as any);
 
     // Override the config for this test to have small retention

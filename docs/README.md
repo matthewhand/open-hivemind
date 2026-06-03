@@ -23,8 +23,7 @@ This directory contains all documentation for Open Hivemind, organized by topic.
 - [Security Incident Response](operations/security.md)
 
 ## API Reference
-- [Bot, Audit, Import/Export & Webhook API](api/bot-and-system-endpoints.md) - Bot lifecycle (toggle, scheduled tasks), durable audit log, config import/export, inbound webhook ingress
-- [Pipeline & Config API](api/pipeline-api.md) - Config source introspection, health observability, pipeline activity recording, and trace export
+- [Pipeline & Config API](api/pipeline-api.md) - Config source introspection, health observability, and pipeline trace endpoints
 - [LLM Models API](api/llm-models-endpoint.md) - LLM provider model listing with pricing and capabilities
 
 ## 📚 Reference & Planning

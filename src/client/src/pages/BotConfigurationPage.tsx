@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { Settings, Save, RefreshCw, AlertCircle, CheckCircle, History } from 'lucide-react';
 import PageHeader from '../components/DaisyUI/PageHeader';
@@ -40,7 +40,7 @@ interface ConfigSectionFormProps {
 }
 
 const ConfigSectionForm: React.FC<ConfigSectionFormProps> = ({ configName, config, saving, onSave }) => {
-  const values = useMemo(() => config?.values || {}, [config]);
+  const values = config?.values || {};
   const schema = config?.schema?.properties || {};
 
   const {
@@ -53,13 +53,10 @@ const ConfigSectionForm: React.FC<ConfigSectionFormProps> = ({ configName, confi
     defaultValues: values,
   });
 
-  // Reset form when config values change (e.g. after save + refetch).
-  // Depends on `config` identity rather than `values` so a fresh inline
-  // `config?.values || {}` object literal each render doesn't re-fire the
-  // effect → infinite reset loop.
+  // Reset form when config values change (e.g. after save + refetch)
   useEffect(() => {
     reset(values);
-  }, [config, reset, values]);
+  }, [values, reset]);
 
   const onSubmit = async (formValues: FormValues) => {
     await onSave(configName, formValues);

@@ -711,24 +711,13 @@ export class SlackService extends EventEmitter implements IMessengerService {
         return;
       }
 
-      const messageIO = this.messageIO as any;
-
-      // Prefer Slack's native Assistant typing indicator when available
-      // (real status, no placeholder message). Requires an assistant thread.
-      if (typeof messageIO?.sendNativeTypingStatus === 'function') {
-        const nativeSent = await messageIO.sendNativeTypingStatus(channelId, threadId, botName);
-        if (nativeSent) {
-          return;
-        }
-      }
-
-      // Default to fake typing when RTM/native indicator isn't available
-      // (Socket Mode/Web API without an assistant thread).
+      // Default to fake typing when RTM isn't available (Socket Mode/Web API).
       if (process.env.SLACK_FAKE_TYPING === 'false') {
         debug(`sendTyping skipped (fake typing disabled). bot=${botName} channel=${channelId}`);
         return;
       }
 
+      const messageIO = this.messageIO as any;
       if (typeof messageIO?.sendTypingPlaceholder === 'function') {
         await messageIO.sendTypingPlaceholder(channelId, botName, threadId);
       }

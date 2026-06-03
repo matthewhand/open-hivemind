@@ -45,8 +45,7 @@ jobs:
             --verbose \
             --ci \
             --forceExit \
-            --maxWorkers=2 \
-            --passWithNoTests
+            --maxWorkers=2
 
   unit-tests-integrations:
     runs-on: ubuntu-latest
@@ -82,8 +81,7 @@ jobs:
             --verbose \
             --ci \
             --forceExit \
-            --maxWorkers=2 \
-            --passWithNoTests
+            --maxWorkers=2
 
   unit-tests-services:
     runs-on: ubuntu-latest
@@ -122,8 +120,7 @@ jobs:
             --verbose \
             --ci \
             --forceExit \
-            --maxWorkers=2 \
-            --passWithNoTests
+            --maxWorkers=2
 
   unit-tests-frontend:
     runs-on: ubuntu-latest

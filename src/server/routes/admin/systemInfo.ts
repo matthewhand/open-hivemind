@@ -11,7 +11,6 @@ import {
   getModelsForProvider,
   getSupportedProviders,
 } from '../../data/llmModels';
-import { getLiveModelsForProvider, supportsLiveModels } from '../../services/LiveModelService';
 import { PanicModeService } from '../../services/PanicModeService';
 
 const router = Router();
@@ -180,11 +179,10 @@ router.get('/system-info', async (req: Request, res: Response) => {
  *       200:
  *         description: List of available models with metadata
  */
-router.get('/llm-providers/:type/models', async (req: Request, res: Response) => {
+router.get('/llm-providers/:type/models', (req: Request, res: Response) => {
   try {
     const { type } = req.params;
     const { modelType } = req.query;
-    const live = req.query.live === 'true' || req.query.live === '1';
 
     // Validate provider type
     const supportedProviders = getSupportedProviders();
@@ -192,22 +190,6 @@ router.get('/llm-providers/:type/models', async (req: Request, res: Response) =>
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: `Unsupported provider type '${type}'. Supported providers: ${supportedProviders.join(', ')}`,
         code: 'INVALID_PROVIDER_TYPE',
-      });
-    }
-
-    // Live query (opt-in via ?live=true) for providers that expose a model list
-    // endpoint (e.g. OpenAI, OpenWebUI). Falls back to the static list on
-    // failure or for unsupported providers. The type filter is only applied to
-    // the static list, since live ids do not carry reliable chat/embedding tags.
-    if (live && !modelType && supportsLiveModels(type)) {
-      const { models, source } = await getLiveModelsForProvider(type);
-      return res.json({
-        success: true,
-        provider: type,
-        modelType: 'all',
-        source,
-        count: models.length,
-        models,
       });
     }
 
@@ -225,7 +207,6 @@ router.get('/llm-providers/:type/models', async (req: Request, res: Response) =>
       success: true,
       provider: type,
       modelType: (modelType as string) || 'all',
-      source: 'static',
       count: models.length,
       models,
     });
