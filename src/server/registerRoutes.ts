@@ -8,6 +8,7 @@ import fs from 'fs';
 import path from 'path';
 import { type NextFunction, type Request, type Response } from 'express';
 import swarmRouter from '@src/admin/swarmRoutes';
+import { SessionManager } from '@src/auth/SessionManager';
 import { authenticateToken } from '@src/server/middleware/auth';
 import { csrfProtection, csrfTokenHandler } from '@src/server/middleware/csrf';
 import { ipWhitelist } from '@src/server/middleware/security';
@@ -140,6 +141,13 @@ export function registerRoutes(app: import('express').Application, ctx: RouteCon
   // 1. Auth & error handling (no token required)
   app.use('/api/auth', authRouter);
   app.use('/api/errors', errorsRouter);
+
+  // Opt-in server-side session validation. This is a no-op unless
+  // SESSION_MANAGER_ENABLED=true, and even then only enforces validity for
+  // tokens that were issued through the session flow — unknown/legacy tokens
+  // pass through to the existing JWT auth gate below. Mounted after the auth
+  // routes so login/refresh remain reachable before a session exists.
+  app.use('/api', SessionManager.getInstance().sessionMiddleware());
 
   // 2. Protected routes (authenticateToken required)
   app.use('/api/swarm', authenticateToken, swarmRouter);

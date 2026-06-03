@@ -1,6 +1,7 @@
 import React from 'react';
 import { MCPTool } from './types';
 import { CodeBracketIcon, ListBulletIcon } from '@heroicons/react/24/outline';
+import Tooltip from '../DaisyUI/Tooltip';
 
 interface ToolConfigPanelProps {
   tool: MCPTool;
@@ -103,22 +104,26 @@ const ToolConfigPanel: React.FC<ToolConfigPanelProps> = ({
         </p>
 
         <Join>
-          <button
-            className={`join-item btn btn-sm ${mode === 'form' ? 'btn-primary' : 'btn-ghost'}`}
-            onClick={() => setMode('form')}
-            title="Form Builder"
-            aria-label="Form Builder"
-          >
-            <ListBulletIcon className="w-4 h-4" />
-          </button>
-          <button
-            className={`join-item btn btn-sm ${mode === 'json' ? 'btn-primary' : 'btn-ghost'}`}
-            onClick={() => setMode('json')}
-            title="Raw JSON"
-            aria-label="Raw JSON"
-          >
-            <CodeBracketIcon className="w-4 h-4" />
-          </button>
+          <Tooltip content="Form Builder" position="top">
+            <button
+              type="button"
+              className={`join-item btn btn-sm ${mode === 'form' ? 'btn-primary' : 'btn-ghost'}`}
+              onClick={() => setMode('form')}
+              aria-label="Form Builder"
+            >
+              <ListBulletIcon className="w-4 h-4" />
+            </button>
+          </Tooltip>
+          <Tooltip content="Raw JSON" position="top">
+            <button
+              type="button"
+              className={`join-item btn btn-sm ${mode === 'json' ? 'btn-primary' : 'btn-ghost'}`}
+              onClick={() => setMode('json')}
+              aria-label="Raw JSON"
+            >
+              <CodeBracketIcon className="w-4 h-4" />
+            </button>
+          </Tooltip>
         </Join>
       </div>
 

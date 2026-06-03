@@ -55,7 +55,7 @@ export const useBotPreview = (): {
     }
   }, []);
 
-  const handlePreviewBot = async (bot: BotConfig) => {
+  const handlePreviewBot = useCallback(async (bot: BotConfig) => {
     setPreviewBot(bot);
     setPreviewTab('activity');
     setActivityLogs([]);
@@ -64,7 +64,7 @@ export const useBotPreview = (): {
     setChatError(null);
 
     await Promise.allSettled([fetchPreviewActivity(bot.id), fetchPreviewChat(bot.id)]);
-  };
+  }, [fetchPreviewActivity, fetchPreviewChat]);
 
   return {
     previewBot,

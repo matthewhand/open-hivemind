@@ -231,19 +231,44 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
         }
     }, [propsPersonas, propsLlmProfiles, propsDefaultLlmConfigured]);
 
+    // Performance optimization: pre-compute maps for O(1) lookups instead of calling .find() inside components/loops
+    const personasMap = React.useMemo(() => {
+        const map = new Map<string, any>();
+        for (const p of personas) map.set(p.id, p);
+        return map;
+    }, [personas]);
+
+    const llmProfilesMap = React.useMemo(() => {
+        const map = new Map<string, any>();
+        for (const p of llmProfiles) map.set(p.key, p);
+        return map;
+    }, [llmProfiles]);
+
+    const guardProfilesMap = React.useMemo(() => {
+        const map = new Map<string, any>();
+        for (const p of guardProfiles) map.set(p.id, p);
+        return map;
+    }, [guardProfiles]);
+
+    const fetchedPersonasMap = React.useMemo(() => {
+        const map = new Map<string, any>();
+        for (const p of fetchedPersonas) map.set(p.id, p);
+        return map;
+    }, [fetchedPersonas]);
+
     const getPersonaName = () => {
         if (formData.persona === 'default') return 'Default Assistant';
-        return personas.find(p => p.id === formData.persona)?.name || 'Custom';
+        return personasMap.get(formData.persona)?.name || 'Custom';
     };
 
     const getLlmProviderName = () => {
         if (!formData.llmProvider) return 'System Default';
-        return llmProfiles.find(p => p.key === formData.llmProvider)?.name || formData.llmProvider;
+        return llmProfilesMap.get(formData.llmProvider)?.name || formData.llmProvider;
     };
 
     const getGuardProfileName = () => {
         if (!formData.mcpGuardProfile) return 'None (Manual Config)';
-        return guardProfiles.find(p => p.id === formData.mcpGuardProfile)?.name || formData.mcpGuardProfile;
+        return guardProfilesMap.get(formData.mcpGuardProfile)?.name || formData.mcpGuardProfile;
     };
 
     const handleSubmit = async () => {
@@ -452,7 +477,7 @@ export const CreateBotWizard: React.FC<CreateBotWizardProps> = (props) => {
                             <Card.Body className="p-4">
                                 <Card.Title tag="h3" className="text-sm opacity-70">Agent Preview</Card.Title>
                                 <p className="text-sm">
-                                    {fetchedPersonas.find(p => p.id === formData.persona)?.description || 'No description available.'}
+                                    {fetchedPersonasMap.get(formData.persona)?.description || 'No description available.'}
                                 </p>
                             </Card.Body>
                         </Card>

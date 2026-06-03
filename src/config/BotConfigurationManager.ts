@@ -3,7 +3,12 @@ import { UserConfigStore } from './UserConfigStore';
 import { discoverBotNamesFromEnv, discoverBotNamesFromFiles } from './botDiscovery';
 import { createBotConfig } from './botConfigFactory';
 import { loadLegacyBots } from './botLegacyConfig';
-import { addBotToFile, updateBotOnFile, deleteBotFromFile } from './botCrudOperations';
+import {
+  addBotToFile,
+  deleteBotFromFile,
+  deleteBotsFromFiles,
+  updateBotOnFile,
+} from './botCrudOperations';
 import { validateBotConfiguration, mergeConfigurations, sanitizeConfiguration } from './botValidation';
 import { DatabaseManager } from '../database/DatabaseManager';
 
@@ -30,6 +35,16 @@ export class BotConfigurationManager {
     // Note: async loading happens via explicit call or lazy init if needed
     // but for now we do bootstrap sync load and expect initServices to call async load
     this.loadConfigurationSync();
+  }
+
+  /**
+   * Delete multiple bot configurations
+   */
+  public async deleteBots(names: string[]): Promise<void> {
+    await deleteBotsFromFiles(names);
+    this.discordBotsCache = null;
+
+    this.reload();
   }
 
   /**

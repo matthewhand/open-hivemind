@@ -2,6 +2,7 @@
 import { Router, type Request, type Response } from 'express';
 import { ErrorUtils } from '../../../common/ErrorUtils';
 import { getTrustedMcpReposConfig } from '../../../config/trustedMcpRepos';
+import { AuthManager } from '../../../auth/AuthManager';
 import { DatabaseManager } from '../../../database/DatabaseManager';
 import { MCPService } from '../../../mcp/MCPService';
 import { webUIStorage } from '../../../storage/webUIStorage';
@@ -468,12 +469,36 @@ router.post(
 // Factory Reset endpoint
 router.post('/system/reset', async (req: Request, res: Response) => {
   try {
-    const { confirmation } = req.body;
+    const { confirmation, password } = req.body;
 
     if (confirmation !== 'confirm-factory-reset') {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: 'Validation error',
         message: 'Incorrect confirmation phrase',
+      });
+    }
+
+    if (!password) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        error: 'Validation error',
+        message: 'Admin password is required for factory reset',
+      });
+    }
+
+    const authManager = AuthManager.getInstance();
+    const user = authManager.getUserWithHash(req.user.userId || req.user.id);
+    if (!user || !user.passwordHash) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+        error: 'Authentication error',
+        message: 'User not found',
+      });
+    }
+
+    const isValidPassword = await authManager.verifyPassword(password, user.passwordHash);
+    if (!isValidPassword) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+        error: 'Authentication error',
+        message: 'Incorrect password',
       });
     }
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BASE_SHA="${GITHUB_BASE_SHA:-$(git merge-base origin/main HEAD)}"
+BASE_SHA="${GITHUB_BASE_SHA:-$(git merge-base origin/main HEAD 2>/dev/null || git rev-parse HEAD~1 2>/dev/null || echo HEAD)}"
 HEAD_SHA="${GITHUB_SHA:-$(git rev-parse HEAD)}"
 
 mapfile -t CHANGED_FILES < <(git diff --name-only "${BASE_SHA}...${HEAD_SHA}" | sed '/^$/d')
