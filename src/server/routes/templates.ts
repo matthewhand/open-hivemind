@@ -2,6 +2,7 @@ import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
 import { authenticate, requireAdmin } from '../../auth/middleware';
 import { ErrorUtils } from '../../common/ErrorUtils';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 import {
   ApplyTemplateSchema,
   CreateTemplateSchema,
@@ -45,36 +46,36 @@ if (!isTestEnv) {
  *       200:
  *         description: List of templates
  */
-router.get('/', async (req: Request, res: Response) => {
-  try {
-    const templateService = ConfigurationTemplateService.getInstance();
-    const { category, search, tags } = req.query;
+router.get(
+  '/',
+  asyncErrorHandler(async (req: Request, res: Response) => {
+    try {
+      const templateService = ConfigurationTemplateService.getInstance();
+      const { category, search, tags } = req.query;
 
-    const filter: any = {};
-    if (category) filter.category = category;
-    if (search) filter.search = String(search);
-    if (tags)
-      filter.tags = String(tags)
-        .split(',')
-        .map((t) => t.trim());
+      const filter: any = {};
+      if (category) filter.category = category;
+      if (search) filter.search = String(search);
+      if (tags)
+        filter.tags = String(tags)
+          .split(',')
+          .map((t) => t.trim());
 
-    const templates = await templateService.getAllTemplates(filter);
+      const templates = await templateService.getAllTemplates(filter);
 
-    return res.json({
-      success: true,
-      data: { templates },
-      message: 'Templates retrieved successfully',
-    });
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
-    debug('Error fetching templates:', hivemindError);
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to retrieve templates',
-      message: hivemindError.message || 'An error occurred while retrieving templates',
-    });
-  }
-});
+      return res.json({
+        success: true,
+        data: { templates },
+        message: 'Templates retrieved successfully',
+      });
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      hivemindError.statusCode = 500;
+      debug('Error fetching templates:', hivemindError);
+      throw hivemindError;
+    }
+  })
+);
 
 /**
  * @openapi
@@ -94,36 +95,36 @@ router.get('/', async (req: Request, res: Response) => {
  *       404:
  *         description: Template not found
  */
-router.get('/:id', async (req: Request, res: Response) => {
-  try {
-    const templateService = ConfigurationTemplateService.getInstance();
-    const { id } = req.params;
+router.get(
+  '/:id',
+  asyncErrorHandler(async (req: Request, res: Response) => {
+    try {
+      const templateService = ConfigurationTemplateService.getInstance();
+      const { id } = req.params;
 
-    const template = await templateService.getTemplateById(id);
+      const template = await templateService.getTemplateById(id);
 
-    if (!template) {
-      return res.status(404).json({
-        success: false,
-        error: 'Template not found',
-        message: `Template with ID '${id}' does not exist`,
+      if (!template) {
+        return res.status(404).json({
+          success: false,
+          error: 'Template not found',
+          message: `Template with ID '${id}' does not exist`,
+        });
+      }
+
+      return res.json({
+        success: true,
+        data: { template },
+        message: 'Template retrieved successfully',
       });
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      hivemindError.statusCode = 500;
+      debug('Error fetching template:', hivemindError);
+      throw hivemindError;
     }
-
-    return res.json({
-      success: true,
-      data: { template },
-      message: 'Template retrieved successfully',
-    });
-  } catch (error: unknown) {
-    const hivemindError = ErrorUtils.toHivemindError(error);
-    debug('Error fetching template:', hivemindError);
-    return res.status(500).json({
-      success: false,
-      error: 'Failed to retrieve template',
-      message: hivemindError.message || 'An error occurred while retrieving template',
-    });
-  }
-});
+  })
+);
 
 /**
  * @openapi
@@ -162,7 +163,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.post(
   '/:id/apply',
   validateRequest(ApplyTemplateSchema),
-  async (req: Request, res: Response) => {
+  asyncErrorHandler(async (req: Request, res: Response) => {
     try {
       const templateService = ConfigurationTemplateService.getInstance();
       const botConfigService = BotConfigService.getInstance();
@@ -236,14 +237,11 @@ router.post(
       });
     } catch (error: unknown) {
       const hivemindError = ErrorUtils.toHivemindError(error);
+      hivemindError.statusCode = 500;
       debug('Error applying template:', hivemindError);
-      return res.status(500).json({
-        success: false,
-        error: 'Failed to apply template',
-        message: hivemindError.message || 'An error occurred while applying template',
-      });
+      throw hivemindError;
     }
-  }
+  })
 );
 
 /**

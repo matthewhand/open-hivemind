@@ -1,6 +1,7 @@
 import os from 'os';
 import process from 'process';
 import { Router } from 'express';
+import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { MetricsCollector } from '../../monitoring/MetricsCollector';
 import { providerRegistry } from '../../registries/ProviderRegistry';
 import { webUIStorage } from '../../storage/webUIStorage';
@@ -10,20 +11,19 @@ import { validateRequest } from '../../validation/validateRequest';
 const router = Router();
 
 // GET /config - Get the WebUI configuration
-router.get('/config', async (_req, res) => {
-  try {
+router.get(
+  '/config',
+  asyncErrorHandler(async (_req, res) => {
     const config = await webUIStorage.loadConfig();
     return res.json(config);
-
-    // eslint-disable-next-line unused-imports/no-unused-vars
-  } catch (error) {
-    return res.status(500).json({ error: 'Failed to load configuration' });
-  }
-});
+  })
+);
 
 // POST /config - Update the WebUI configuration (dashboard layout / user preferences only)
-router.post('/config', validateRequest(WebuiConfigUpdateSchema), async (req, res) => {
-  try {
+router.post(
+  '/config',
+  validateRequest(WebuiConfigUpdateSchema),
+  asyncErrorHandler(async (req, res) => {
     const { layout } = req.body as { layout?: string[] };
     const currentConfig = await webUIStorage.loadConfig();
     const newConfig = { ...currentConfig };
@@ -33,11 +33,8 @@ router.post('/config', validateRequest(WebuiConfigUpdateSchema), async (req, res
     await webUIStorage.saveConfig(newConfig);
 
     return res.json({ success: true, config: newConfig });
-    // eslint-disable-next-line unused-imports/no-unused-vars
-  } catch (error) {
-    return res.status(500).json({ error: 'Failed to save configuration' });
-  }
-});
+  })
+);
 
 // GET /system-status - Overall system status for the WebUI
 router.get('/system-status', (_req, res) => {
