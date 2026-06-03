@@ -33,10 +33,22 @@ The **Bots** page (`/admin/bots`) lists all configured agents.
     *   **Disconnected** (Yellow): Bot is active but lost connection.
     *   **Disabled** (Gray): Bot is stopped.
 *   **Actions**:
-    *   **Toggle**: Start/Stop the bot.
+    *   **Toggle**: Start/Stop the bot. Backed by `POST /api/bots/{id}/toggle`, which flips the active state (start if stopped, stop if running) and returns the new state.
     *   **Edit**: Modify configuration (Provider, Persona, etc.).
     *   **Clone**: Create a copy of the bot's configuration.
     *   **Delete**: Remove the bot (unless defined by environment variables).
+
+## Scheduled Tasks
+
+Each bot can run recurring prompts on a fixed interval via the `BotTaskScheduler`.
+Tasks are managed through:
+
+*   `POST /api/bots/{id}/tasks` — schedule a task with a `prompt` and `intervalMinutes`.
+*   `GET /api/bots/{id}/tasks` — list scheduled tasks for the bot.
+*   `DELETE /api/bots/{id}/tasks/{taskId}` — remove a scheduled task.
+
+See the [Bot, Audit, Import/Export & Webhook API Reference](../api/bot-and-system-endpoints.md)
+for request/response shapes and the full bot endpoint list.
 
 ### WebUI Previews
 
