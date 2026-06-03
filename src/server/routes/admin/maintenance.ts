@@ -16,6 +16,7 @@ import {
   ServerNameParamSchema,
 } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
+import { enrichConnectedMcpServers } from './enrichMcpServers';
 
 const router = Router();
 
@@ -225,20 +226,9 @@ router.get('/mcp-servers', async (req: Request, res: Response) => {
     // Get stored MCP server configurations
     const storedMcps = await webUIStorage.getMcps();
 
-    // Enrich connected servers with stored configuration data
-
-    const enrichedServers = connectedServers.map((server) => {
-      const storedConfig = storedMcps.find((mcp: any) => mcp.name === server.name);
-      return {
-        name: server.name,
-        serverUrl: storedConfig?.serverUrl || storedConfig?.url || '',
-        connected: server.connected,
-        tools: server.tools,
-        toolCount: server.toolCount,
-        lastConnected: server.lastConnected,
-        description: storedConfig?.description || '',
-      };
-    });
+    // Enrich connected servers with stored configuration data.
+    // Uses a name-indexed Map for O(n + m) lookups (see enrichConnectedMcpServers).
+    const enrichedServers = enrichConnectedMcpServers(connectedServers, storedMcps);
 
     return res.json({
       success: true,
@@ -497,7 +487,7 @@ router.post('/system/reset', async (req: Request, res: Response) => {
 
     const authManager = AuthManager.getInstance();
     const user = authManager.getUserWithHash(req.user.userId || req.user.id);
-    if (!user) {
+    if (!user || !user.passwordHash) {
       return res.status(HTTP_STATUS.UNAUTHORIZED).json({
         error: 'Authentication error',
         message: 'User not found',

@@ -100,8 +100,12 @@ export async function fetchLatestVersionFromGit(
 
       if (gitExists) {
         try {
-          // ⚡ Bolt Optimization: Converted from execSync to executeCommandSafe to prevent event loop blocking and injection vulnerabilities.
-          await executeCommandSafe('git', ['fetch', '--tags', '--quiet'], { cwd: pluginPath, timeout: GIT_TIMEOUT_MS });
+          // ⚡ Bolt Optimization: Converted from execSync to execAsync to prevent event loop blocking.
+          // 🛡️ Sentinel Security: Used executeCommandSafe to prevent command injection
+          await executeCommandSafe('git', ['fetch', '--tags', '--quiet'], {
+            cwd: pluginPath,
+            timeout: GIT_TIMEOUT_MS,
+          });
 
           // Try to get the latest tag
           const tags = await executeCommandSafe('git', ['tag', '--sort=-v:refname'], {
@@ -120,9 +124,13 @@ export async function fetchLatestVersionFromGit(
           for (const branch of branches) {
             try {
               const safeBranch = sanitizeGitArg(branch, 'branch');
-              const pkgJson = await executeCommandSafe('git', ['show', `${safeBranch}:package.json`], {
-                cwd: pluginPath,
-              });
+              const pkgJson = await executeCommandSafe(
+                'git',
+                ['show', `${safeBranch}:package.json`],
+                {
+                  cwd: pluginPath,
+                }
+              );
               const pkg = JSON.parse(pkgJson);
               if (pkg.version) {
                 debug('Latest version from %s package.json: %s', branch, pkg.version);
@@ -167,8 +175,12 @@ export async function fetchChangelog(
     }
 
     // Fetch latest changes
-    // ⚡ Bolt Optimization: Converted from execSync to executeCommandSafe to prevent event loop blocking and injection vulnerabilities.
-    await executeCommandSafe('git', ['fetch', '--quiet'], { cwd: pluginPath, timeout: GIT_TIMEOUT_MS });
+    // ⚡ Bolt Optimization: Converted from execSync to execAsync to prevent event loop blocking.
+    // 🛡️ Sentinel Security: Used executeCommandSafe to prevent command injection
+    await executeCommandSafe('git', ['fetch', '--quiet'], {
+      cwd: pluginPath,
+      timeout: GIT_TIMEOUT_MS,
+    });
 
     // Get commits since current version tag (if it exists) or recent commits
     let gitArgs = ['log', '--pretty=format:%H|%ai|%an|%s', '-n', '10', 'origin/HEAD'];
@@ -177,7 +189,10 @@ export async function fetchChangelog(
       // Try to find commits since current version
       const safeVersion = sanitizeGitArg(currentVersion, 'currentVersion');
       const currentTag = sanitizeGitArg(`v${safeVersion}`, 'version tag');
-      await executeCommandSafe('git', ['rev-parse', currentTag], { cwd: pluginPath, timeout: GIT_TIMEOUT_MS });
+      await executeCommandSafe('git', ['rev-parse', currentTag], {
+        cwd: pluginPath,
+        timeout: GIT_TIMEOUT_MS,
+      });
       gitArgs = ['log', '--pretty=format:%H|%ai|%an|%s', `${currentTag}..origin/HEAD`];
     } catch {
       // Tag doesn't exist, fall back to recent commits
