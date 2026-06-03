@@ -39,7 +39,7 @@ interface BotStatusCardProps {
   onRefresh?: () => void;
 }
 
-const BotStatusCard: React.FC<BotStatusCardProps> = ({
+const BotStatusCard: React.FC<BotStatusCardProps> = React.memo(({
   bot,
   statusData,
   onRefresh,
@@ -403,5 +403,7 @@ const BotStatusCard: React.FC<BotStatusCardProps> = ({
     </>
   );
 };
+
+BotStatusCard.displayName = 'BotStatusCard';
 
 export default BotStatusCard;
