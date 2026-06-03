@@ -3,6 +3,7 @@
 import Debug from 'debug';
 import type { IMessage } from '@src/message/interfaces/IMessage';
 import { Logger } from '@common/logger';
+import { takeWithinWindow } from '@common/slidingWindow';
 
 const debug = Debug('app:message:common:chatHistory');
 const logger = Logger.withContext('ChatHistory');
@@ -49,10 +50,16 @@ export class ChatHistory {
       debug('ERROR:', '[ChatHistory] Invalid timeframe provided:', timeframe);
       return [];
     }
-    const currentTime = Date.now();
-    const recentMessages = this.history.filter(
-      (msg) => currentTime - msg.getTimestamp().getTime() <= timeframe
+    const threshold = Date.now() - timeframe;
+    const inWindow = takeWithinWindow(
+      this.history,
+      (msg) => msg.getTimestamp().getTime(),
+      threshold
     );
+    // Always hand callers a defensive copy so they cannot mutate internal state
+    // (takeWithinWindow may return the live array when everything is in-window).
+    const recentMessages = inWindow === this.history ? [...inWindow] : inWindow;
+
     logger.debug('Recent messages retrieved', {
       messageIds: recentMessages.map((m) => m.getMessageId()),
       count: recentMessages.length,
@@ -65,9 +72,15 @@ export class ChatHistory {
    * @param {number} cutoffTime - The time in milliseconds (messages older than this will be removed).
    */
   public clearOldMessages(cutoffTime: number): void {
-    const cutoffDate = new Date(Date.now() - cutoffTime);
+    const threshold = Date.now() - cutoffTime;
     const initialLength = this.history.length;
-    this.history = this.history.filter((msg) => msg.getTimestamp() > cutoffDate);
+
+    this.history = takeWithinWindow(
+      this.history,
+      (msg) => msg.getTimestamp().getTime(),
+      threshold
+    );
+
     const clearedMessages = initialLength - this.history.length;
     logger.debug('Old messages cleared', {
       clearedCount: clearedMessages,
