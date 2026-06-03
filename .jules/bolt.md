@@ -43,3 +43,7 @@
 ## 2026-05-02 - ProviderConfigForm Re-rendering
 **Learning:** The form components re-render frequently (e.g., on every keystroke). Using `.reduce()` and `.filter()` on potentially large arrays within the component body without memoization leads to O(N) recalculations on every render, which can cause typing lag on complex configuration forms.
 **Action:** Use `useMemo` to wrap expensive array transformations inside React components, especially forms.
+
+## 2026-06-03 - Memoize Bot Cards in Dashboard
+**Learning:** In the Dashboard, components rendering lists of bots (`DashboardBotCard` and `BotStatusCard`) were not memoized. Any state change in the parent `Dashboard.tsx` component (like switching tabs or toggling layout customization) would force a full re-render of all bot cards, resulting in O(N) re-renders where N is the number of bots.
+**Action:** Always apply `React.memo` to complex components that are mapped over in lists, especially in parent components that manage complex state. Ensure props passed to these memoized children (like formatting or icon helper functions) are also memoized using `useCallback` to maintain reference equality and avoid breaking the memoization.
