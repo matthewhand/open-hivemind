@@ -1,4 +1,3 @@
-/* eslint-disable max-lines */
 import { Router, type Request, type Response } from 'express';
 import { ApiResponse } from '@src/server/utils/apiResponse';
 import { createLogger } from '../../common/StructuredLogger';
@@ -12,8 +11,8 @@ import {
   BotHistoryQuerySchema,
   BotIdParamSchema,
   BotImportSchema,
-  BotMessageSchema,
   BotTaskCreateSchema,
+  BotTaskDeleteSchema,
   BotTestChatSchema,
   BotVersionParamSchema,
   CloneBotSchema,
@@ -37,7 +36,6 @@ const managerPromise = BotManager.getInstance();
 const botRouteService = BotRouteService.getInstance();
 
 let _wsService: WebSocketService | null = null;
-
 const getWsService = () => {
   if (!_wsService) {
     try {
@@ -241,7 +239,6 @@ router.put(
     const updates = req.body;
     try {
       await manager.updateBot(id, updates);
-
       return res.json(ApiResponse.success());
     } catch (error: any) {
       const status = error.message?.includes(ERROR_CODES.NOT_FOUND)
@@ -355,13 +352,13 @@ router.post(
 
 /**
  * @openapi
- * /api/bots/{id}/channels:
- *   get:
- *     summary: Get channels the bot is listening on
+ * /api/bots/{id}/toggle:
+ *   post:
+ *     summary: Toggle a bot's active state (start if stopped, stop if running)
  *     tags: [Bots]
  */
-router.get(
-  '/:id/channels',
+router.post(
+  '/:id/toggle',
   validateRequest(BotIdParamSchema),
   asyncErrorHandler(async (req: Request, res: Response) => {
     const manager = await managerPromise;
@@ -374,51 +371,15 @@ router.get(
         .json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
     }
 
-    const { getMessengerServiceByProvider } = await import('../../message/ProviderRegistry');
-    const provider = await getMessengerServiceByProvider(bot.messageProvider);
-
-    if (!provider || typeof (provider as any).getChannels !== 'function') {
-      return res.json(ApiResponse.success([]));
+    // Flip the bot's active state, reusing the existing start/stop logic.
+    if (bot.isActive) {
+      await manager.stopBot(id);
+    } else {
+      await manager.startBot(id);
     }
 
-    const channels = await (provider as any).getChannels(bot.name);
-    return res.json(ApiResponse.success(channels));
-  })
-);
-
-/**
- * @openapi
- * /api/bots/{id}/message:
- *   post:
- *     summary: Send a message as the bot
- *     tags: [Bots]
- */
-router.post(
-  '/:id/message',
-  validateRequest(BotMessageSchema),
-  asyncErrorHandler(async (req: Request, res: Response) => {
-    const manager = await managerPromise;
-    const { id } = req.params;
-    const { channelId, message } = req.body;
-
-    const bot = await manager.getBot(id);
-    if (!bot) {
-      return res
-        .status(HTTP_STATUS.NOT_FOUND)
-        .json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
-    }
-
-    const { getMessengerServiceByProvider } = await import('../../message/ProviderRegistry');
-    const provider = await getMessengerServiceByProvider(bot.messageProvider);
-
-    if (!provider) {
-      return res
-        .status(HTTP_STATUS.BAD_REQUEST)
-        .json(ApiResponse.error('Message provider not found'));
-    }
-
-    const messageId = await provider.sendMessageToChannel(channelId, message, bot.name);
-    return res.json(ApiResponse.success({ messageId }));
+    const isActive = !bot.isActive;
+    return res.json(ApiResponse.success({ id, isActive, status: isActive ? 'active' : 'disabled' }));
   })
 );
 
@@ -434,9 +395,7 @@ router.get(
   validateRequest(BotHistoryQuerySchema),
   asyncErrorHandler(async (req: Request, res: Response) => {
     const manager = await managerPromise;
-
     const { id } = req.params;
-
     const { limit, channelId } = req.query as any;
 
     const bot = await manager.getBot(id);
@@ -469,7 +428,6 @@ router.get(
   asyncErrorHandler(async (req: Request, res: Response) => {
     const manager = await managerPromise;
     const { id } = req.params;
-
     const { limit } = req.query as any;
 
     const bot = await manager.getBot(id);
@@ -638,7 +596,6 @@ router.post(
  */
 router.get(
   '/:id/diagnose',
-
   validateRequest(BotIdParamSchema),
   asyncErrorHandler(async (req: Request, res: Response) => {
     try {
@@ -663,7 +620,6 @@ router.get(
  */
 router.post(
   '/test-chat',
-
   validateRequest(BotTestChatSchema),
   asyncErrorHandler(async (req: Request, res: Response) => {
     const { botConfig, message, history } = req.body;
@@ -779,6 +735,66 @@ router.post(
       intervalMinutes
     );
     return res.json(ApiResponse.success(task));
+  })
+);
+
+/**
+ * @openapi
+ * /api/bots/{id}/tasks:
+ *   get:
+ *     summary: List scheduled tasks for a bot
+ *     tags: [Bots]
+ */
+router.get(
+  '/:id/tasks',
+  validateRequest(BotIdParamSchema),
+  asyncErrorHandler(async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    const manager = await managerPromise;
+    const bot = await manager.getBot(id);
+    if (!bot) {
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
+    }
+
+    const tasks = BotTaskScheduler.getInstance().getTasksForBot(bot.id);
+    return res.json(ApiResponse.success(tasks));
+  })
+);
+
+/**
+ * @openapi
+ * /api/bots/{id}/tasks/{taskId}:
+ *   delete:
+ *     summary: Delete a scheduled task for a bot
+ *     tags: [Bots]
+ */
+router.delete(
+  '/:id/tasks/:taskId',
+  validateRequest(BotTaskDeleteSchema),
+  asyncErrorHandler(async (req: Request, res: Response) => {
+    const { id, taskId } = req.params;
+
+    const manager = await managerPromise;
+    const bot = await manager.getBot(id);
+    if (!bot) {
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Bot not found', ERROR_CODES.NOT_FOUND));
+    }
+
+    const scheduler = BotTaskScheduler.getInstance();
+    const task = scheduler.getTasksForBot(bot.id).find((t) => t.id === taskId);
+    if (!task) {
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Task not found', ERROR_CODES.NOT_FOUND));
+    }
+
+    scheduler.deleteTask(taskId);
+    return res.json(ApiResponse.success({ id: taskId, deleted: true }));
   })
 );
 
