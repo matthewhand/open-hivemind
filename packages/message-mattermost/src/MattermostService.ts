@@ -17,6 +17,7 @@ import type { IMessage } from '@message/interfaces/IMessage';
 import type { IMessengerService } from '@message/interfaces/IMessengerService';
 import { computeScore as channelComputeScore } from '@message/routing/ChannelRouter';
 import MattermostClient from './mattermostClient';
+import { MattermostMessage, type MattermostPost } from './MattermostMessage';
 
 const debug = Debug('app:MattermostService:verbose');
 
@@ -28,6 +29,12 @@ export class MattermostService extends EventEmitter implements IMessengerService
   private channels = new Map<string, string>();
   private botConfigs = new Map<string, any>();
   private app?: Application;
+  private messageHandler?: (
+    message: IMessage,
+    historyMessages: IMessage[],
+    botConfig: any
+  ) => Promise<string | null>;
+  private subscribedBots = new Set<string>();
 
   public supportsChannelPrioritization: boolean = true;
 
@@ -103,6 +110,9 @@ export class MattermostService extends EventEmitter implements IMessengerService
           userId: client.getCurrentUserId?.() || botConfig.userId,
           username: client.getCurrentUsername?.() || botConfig.username,
         });
+        // If a handler was registered before connect(), wire the incoming
+        // subscription now that the client (and its WebSocket) is live.
+        this.subscribeBot(botName);
       } catch (error) {
         debug(`Failed to connect to Mattermost for bot ${botName}:`, error);
         throw error;
@@ -116,8 +126,98 @@ export class MattermostService extends EventEmitter implements IMessengerService
     this.app = app;
   }
 
-  public setMessageHandler(): void {
+  public setMessageHandler(
+    handler: (
+      message: IMessage,
+      historyMessages: IMessage[],
+      botConfig: any
+    ) => Promise<string | null>
+  ): void {
     debug('Setting message handler for Mattermost bots');
+    if (typeof handler !== 'function') {
+      throw new Error('Message handler must be a function');
+    }
+    this.messageHandler = handler;
+    for (const botName of this.clients.keys()) {
+      this.subscribeBot(botName);
+    }
+  }
+
+  /**
+   * Subscribes a single bot's client to incoming `posted` WebSocket events and
+   * routes each (non-self) post through the registered message handler.
+   * Idempotent per bot so it can be called from both setMessageHandler() and
+   * initialize() regardless of ordering.
+   */
+  private subscribeBot(botName: string): void {
+    if (!this.messageHandler || this.subscribedBots.has(botName)) {
+      return;
+    }
+    const client = this.clients.get(botName);
+    if (!client || typeof client.onPost !== 'function') {
+      return;
+    }
+
+    this.subscribedBots.add(botName);
+    client.onPost((post) => {
+      void this.handleIncomingPost(botName, post);
+    });
+  }
+
+  private async handleIncomingPost(botName: string, post: MattermostPost): Promise<void> {
+    if (!this.messageHandler) {
+      return;
+    }
+    const botConfig = this.botConfigs.get(botName) || {};
+
+    // Ignore the bot's own posts to avoid feedback loops.
+    const selfUserId = this.clients.get(botName)?.getCurrentUserId?.() || botConfig.userId;
+    if (selfUserId && post.user_id === selfUserId) {
+      return;
+    }
+
+    try {
+      const client = this.clients.get(botName);
+      let username = 'Unknown';
+      let isBot = false;
+      try {
+        const user = post.user_id ? await client?.getUser(post.user_id) : null;
+        if (user) {
+          username =
+            `${user.first_name || ''} ${user.last_name || ''}`.trim() ||
+            user.username ||
+            'Unknown';
+          isBot = Boolean(user.is_bot);
+        }
+      } catch (err: any) {
+        debug(`Failed to resolve Mattermost user ${post.user_id}: ${err?.message}`);
+      }
+
+      const message = new MattermostMessage(post, username, {
+        isBot,
+        botUsername: botConfig.username,
+        botUserId: selfUserId,
+      });
+
+      try {
+        const ws = require('@src/server/services/WebSocketService')
+          .default as typeof import('@src/server/services/WebSocketService').default;
+        ws.getInstance().recordMessageFlow({
+          botName,
+          provider: 'mattermost',
+          llmProvider: botConfig.llmProvider,
+          channelId: post.channel_id,
+          userId: post.user_id,
+          messageType: 'incoming',
+          contentLength: (post.message || '').length,
+          status: 'success',
+        });
+      } catch {}
+
+      await this.messageHandler(message, [], { ...botConfig, BOT_NAME: botName });
+    } catch (error: any) {
+      debug(`Error handling incoming Mattermost post for ${botName}: ${error?.message}`);
+    }
   }
 
   public async sendMessage(channelId: string, text: string, senderName?: string): Promise<string> {
@@ -571,7 +671,11 @@ export class MattermostService extends EventEmitter implements IMessengerService
         return;
       }
       await client.sendTyping(channelId, threadId);
-    } catch {}
+    } catch (error: unknown) {
+      // Typing indicators are best-effort; surface the failure via debug
+      // logging rather than swallowing it silently so issues are diagnosable.
+      debug('sendTyping failed: %s', error instanceof Error ? error.message : String(error));
+    }
   }
 
   public async setModelActivity(modelId: string, senderKey?: string): Promise<void> {
@@ -582,6 +686,15 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
   public async shutdown(): Promise<void> {
     debug('Shutting down MattermostService...');
+    for (const client of this.clients.values()) {
+      try {
+        client.disconnect?.();
+      } catch {
+        /* ignore */
+      }
+    }
+    this.subscribedBots.clear();
+    this.messageHandler = undefined;
     MattermostService.instance = undefined;
   }
 
@@ -626,6 +739,30 @@ export class MattermostService extends EventEmitter implements IMessengerService
     } catch (error) {
       debug(`Failed to get channel owner for ${channelId}:`, error);
       return '';
+    }
+  }
+
+  public async getChannels(
+    botName?: string
+  ): Promise<Array<{ id: string; name: string; type?: string }>> {
+    const targetBot = botName || Array.from(this.clients.keys())[0];
+    const client = this.clients.get(targetBot);
+
+    if (!client) {
+      return [];
+    }
+
+    try {
+      // Fetch public and private channels
+      const channels = await client.getChannels();
+      return (channels || []).map((c: any) => ({
+        id: c.id,
+        name: c.display_name || c.name || c.id,
+        type: c.type === 'O' ? 'public' : c.type === 'P' ? 'private' : 'channel',
+      }));
+    } catch (error) {
+      debug(`Failed to fetch Mattermost channels for ${botName}: ${error}`);
+      return [];
     }
   }
 
@@ -679,6 +816,8 @@ export class MattermostService extends EventEmitter implements IMessengerService
 
         sendTyping: async (channelId: string, senderName?: string, threadId?: string) =>
           this.sendTyping(channelId, senderName || name, threadId),
+
+        getChannels: async (botName?: string) => this.getChannels(botName || name),
 
         supportsChannelPrioritization: this.supportsChannelPrioritization,
         scoreChannel: this.scoreChannel ? (cid) => this.scoreChannel!(cid) : undefined,
