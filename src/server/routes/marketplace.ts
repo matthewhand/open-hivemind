@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
-import { configLimiter } from '@src/middleware/rateLimiter';
+import { apiLimiter, configLimiter } from '@src/middleware/rateLimiter';
 import {
   installPlugin,
   listInstalledPlugins,
@@ -331,6 +331,7 @@ function invalidateCache(): void {
  */
 router.get(
   '/packages',
+  apiLimiter,
   asyncErrorHandler(async (req, res) => {
     try {
       const packages = await getPackages();
@@ -352,6 +353,7 @@ router.get(
  */
 router.get(
   '/packages/:name',
+  apiLimiter,
   asyncErrorHandler(async (req, res) => {
     try {
       const name = req.params.name;

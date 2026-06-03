@@ -15,10 +15,18 @@ const envSchema = z
     MATTERMOST_TOKEN: z.string().trim().min(1, 'MATTERMOST_TOKEN must not be empty').optional(),
     HIVEMIND_PLUGIN_SIGNING_KEY: z.string().optional(),
     ADMIN_PASSWORD: z.string().optional(),
+    OPENAI_API_KEY: z.string().optional(),
   })
   .passthrough() // Allow other environment variables
   .superRefine((env, ctx) => {
     if (env.NODE_ENV === 'production') {
+      if (!env.OPENAI_API_KEY || env.OPENAI_API_KEY.trim().length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'OPENAI_API_KEY is required in production',
+          path: ['OPENAI_API_KEY'],
+        });
+      }
       if (!env.HIVEMIND_PLUGIN_SIGNING_KEY || env.HIVEMIND_PLUGIN_SIGNING_KEY.trim().length < 32) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,

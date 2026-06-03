@@ -23,6 +23,7 @@
     "lint:fix": "node ./node_modules/eslint/bin/eslint.js src/ --fix",
     "format": "node ./node_modules/prettier/bin/prettier.cjs --write \"src/**/*.ts\" \"src/**/*.tsx\" \"tests/**/*.ts\" \"packages/**/*.ts\"",
     "format:check": "node ./node_modules/prettier/bin/prettier.cjs --check \"src/**/*.ts\" \"src/**/*.tsx\" \"tests/**/*.ts\" \"packages/**/*.ts\"",
+    "gallery": "tsx scripts/build-screenshot-gallery.ts",
     "check-types": "tsc --noEmit",
     "version": "tsc -v",
     "build": "bash scripts/build-all.sh",
@@ -313,20 +314,6 @@
     "vite": "^7.3.2",
     "wrangler": "^4.34.0"
   },
-  "overrides": {
-    "undici": "7.22.0",
-    "uuid": "^11.1.0",
-    "fast-xml-parser": "^5.4.1",
-    "tar": "^7.5.11",
-    "yaml": "^2.4.2",
-    "handlebars": "^4.7.9",
-    "path-to-regexp": "^0.1.13",
-    "picomatch": "^4.0.2",
-    "@modelcontextprotocol/sdk": "^1.25.2",
-    "babel-plugin-istanbul": "^8.0.2",
-    "minimatch": "^10.2.3",
-    "serialize-javascript": "^7.0.3"
-  },
   "pnpm": {
     "overrides": {
       "handlebars": "^4.7.9",
@@ -344,7 +331,9 @@
       "follow-redirects": "^1.16.0",
       "smol-toml": "^1.6.1",
       "basic-ftp": "^5.3.0",
-      "ajv": "^8.18.0"
+      "ajv": "^8.18.0",
+      "eslint>ajv": "^6.14.0",
+      "@eslint/eslintrc>ajv": "^6.14.0"
     },
     "onlyBuiltDependencies": [
       "better-sqlite3"

@@ -143,7 +143,7 @@ const DiagnosticModal: React.FC<DiagnosticModalProps> = ({ botId, botName, isOpe
              <div className="pt-4 border-t border-base-300 flex justify-between items-center">
                 <div className="text-[10px] opacity-30 font-mono">ID: {botId}</div>
                 <div className="flex gap-2">
-                   <button onClick={onClose} className="btn btn-sm btn-ghost">Close</button>
+                   <button onClick={onClose} className="btn btn-sm btn-ghost" aria-label="Close modal">Close</button>
                    <button onClick={runDiagnostic} className="btn btn-sm btn-primary gap-2" disabled={loading}>
                       <Activity className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                       {loading ? 'Testing...' : 'Run Again'}
