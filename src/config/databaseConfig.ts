@@ -88,6 +88,18 @@ const databaseConfig = convict({
     default: true,
     env: 'DATABASE_AUTO_CLEANUP_STARTUP',
   },
+  MEMORY_RETENTION_DAYS: {
+    doc: 'Delete stored memories older than this many days during cleanup. 0 disables memory TTL eviction (opt-in).',
+    format: 'int',
+    default: 0,
+    env: 'MEMORY_RETENTION_DAYS',
+  },
+  MEMORY_MAX_ENTRIES: {
+    doc: 'Keep at most this many of the newest memories during cleanup. 0 disables memory max-count eviction (opt-in).',
+    format: 'int',
+    default: 0,
+    env: 'MEMORY_MAX_ENTRIES',
+  },
   PERSIST_CONFIG: {
     doc: 'Whether to persist bot configurations to the database',
     format: Boolean,

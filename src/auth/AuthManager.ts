@@ -4,6 +4,7 @@ import Debug from 'debug';
 import jwt from 'jsonwebtoken';
 import { AuthenticationError, ValidationError } from '@src/types/errorClasses';
 import { SecureConfigManager } from '@config/SecureConfigManager';
+import { UserRepository } from './UserRepository';
 import type {
   AuthToken,
   JWTPayload,
@@ -22,6 +23,9 @@ export class AuthManager {
   private emailMap = new Map<string, string>();
   private generatedPassword: string | null = null;
   private refreshTokens = new Set<string>();
+  // Durable backing store for the user maps. Null in the test environment,
+  // where persistence is intentionally skipped (mirrors the bcrypt skips).
+  private userRepo: UserRepository | null = null;
   private readonly jwtSecret: string;
   private readonly jwtRefreshSecret: string;
   private readonly bcryptRounds = 12;
@@ -95,6 +99,19 @@ export class AuthManager {
         envJwtRefreshSecret || secureJwtRefreshSecret || this.generateSecureSecret('jwt_refresh');
     }
 
+    // Open the durable user store and hydrate the in-memory maps from it so
+    // registered users, password changes, and lastLogin survive restarts.
+    // Skipped under test (kept fully in-memory, as elsewhere in this class).
+    if (process.env.NODE_ENV !== 'test') {
+      try {
+        this.userRepo = new UserRepository();
+        this.loadUsersFromStore();
+      } catch (err) {
+        debug('WARN:', 'Failed to initialize durable user store; using in-memory only:', err);
+        this.userRepo = null;
+      }
+    }
+
     // Create default admin user synchronously
     this.initializeDefaultAdminSync();
 
@@ -106,6 +123,47 @@ export class AuthManager {
       AuthManager.instance = new AuthManager();
     }
     return AuthManager.instance;
+  }
+
+  /**
+   * Hydrate the in-memory maps from the durable store. No-op when the store
+   * is unavailable (test env or initialization failure).
+   */
+  private loadUsersFromStore(): void {
+    if (!this.userRepo) return;
+    const persisted = this.userRepo.getAll();
+    for (const user of persisted) {
+      this.users.set(user.id, user);
+      this.usernameMap.set(user.username, user.id);
+      this.emailMap.set(user.email, user.id);
+    }
+    debug('Loaded %d user(s) from durable store', persisted.length);
+  }
+
+  /**
+   * Write a single user through to the durable store. Persistence failures are
+   * logged but never surfaced to callers — auth must keep working even if the
+   * store is momentarily unavailable.
+   */
+  private persistUser(user: User): void {
+    if (!this.userRepo) return;
+    try {
+      this.userRepo.upsert(user);
+    } catch (err) {
+      debug('WARN:', 'Failed to persist user %s:', user.id, err);
+    }
+  }
+
+  /**
+   * Remove a user from the durable store. Failures are logged, not thrown.
+   */
+  private removeUserFromStore(userId: string): void {
+    if (!this.userRepo) return;
+    try {
+      this.userRepo.delete(userId);
+    } catch (err) {
+      debug('WARN:', 'Failed to delete user %s from store:', userId, err);
+    }
   }
 
   /**
@@ -156,6 +214,13 @@ export class AuthManager {
       return;
     }
 
+    // If a default admin was already loaded from the durable store, keep it as
+    // is (preserves any changed password / lastLogin across restarts).
+    if (this.usernameMap.has('admin')) {
+      debug('Default admin user loaded from durable store');
+      return;
+    }
+
     let password = process.env.ADMIN_PASSWORD;
 
     if (!password) {
@@ -186,6 +251,7 @@ export class AuthManager {
     this.users.set('admin', defaultAdmin);
     this.usernameMap.set(defaultAdmin.username, defaultAdmin.id);
     this.emailMap.set(defaultAdmin.email, defaultAdmin.id);
+    this.persistUser(defaultAdmin);
     debug('Default admin user created');
   }
 
@@ -261,6 +327,7 @@ export class AuthManager {
     this.users.set(user.id, user);
     this.usernameMap.set(user.username, user.id);
     this.emailMap.set(user.email, user.id);
+    this.persistUser(user);
     debug(`User registered: ${user.username}`);
 
     // Destructure to omit passwordHash — setting it to undefined leaves the
@@ -289,6 +356,7 @@ export class AuthManager {
     // Update last login
     user.lastLogin = new Date().toISOString();
     this.users.set(user.id, user);
+    this.persistUser(user);
 
     // Generate tokens
     const accessToken = this.generateAccessToken(user);
@@ -321,6 +389,7 @@ export class AuthManager {
     if (user.role !== 'admin') throw new AuthenticationError('User is not an admin', 'NOT_ADMIN');
     user.lastLogin = new Date().toISOString();
     this.users.set(user.id, user);
+    this.persistUser(user);
     const accessToken = this.generateAccessToken(user);
     const refreshToken = this.generateRefreshToken(user);
     this.refreshTokens.add(refreshToken);
@@ -500,6 +569,7 @@ export class AuthManager {
 
     const updatedUser = { ...user, ...updates };
     this.users.set(userId, updatedUser);
+    this.persistUser(updatedUser);
 
     const { passwordHash: _ph, ...safeUser } = updatedUser;
     return safeUser;
@@ -514,6 +584,7 @@ export class AuthManager {
       this.usernameMap.delete(user.username);
       this.emailMap.delete(user.email);
     }
+    this.removeUserFromStore(userId);
     return this.users.delete(userId);
   }
 
@@ -528,6 +599,7 @@ export class AuthManager {
 
     user.passwordHash = await this.hashPassword(newPassword);
     this.users.set(userId, user);
+    this.persistUser(user);
 
     return true;
   }

@@ -20,6 +20,38 @@
 | `WELCOME_MESSAGE_TEXT` | `''` | Text of the startup welcome message (requires `ENABLE_WELCOME_MESSAGE=true`) |
 | `DATABASE_PATH` | `data/hivemind.db` | Path to the SQLite database file |
 
+## Session & Auth Env Vars
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SESSION_SECRET` | _(none)_ | Secret used to sign session cookies. **Required in production** (must be ≥32 chars); a short value logs a warning and the app refuses to start without it in production. |
+| `SESSION_COOKIE_NAME` | `hivemind.sid` | Name of the session cookie. |
+| `SESSION_MAX_AGE` | `86400000` (24h) | Session cookie lifetime, in milliseconds. |
+| `SESSION_IDLE_TIMEOUT` | `1800000` (30m) | Idle timeout, in milliseconds; sessions are invalidated after this much inactivity. |
+| `SESSION_STORE_MAX_SESSIONS` | `10000` | Max sessions retained in the in-memory store. |
+| `SESSION_STORE_CLEANUP_INTERVAL_MS` | `300000` (5m) | Interval, in milliseconds, for purging expired sessions. |
+
+## Slack Typing Env Vars
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SLACK_FAKE_TYPING` | `true` | When RTM is unavailable (Socket Mode / Web API), post a transient "is typing..." placeholder message to simulate typing. Set to `false` to disable. No effect when an RTM client (native typing indicator) is available. |
+
+## Tracing / Span Export Env Vars
+
+A console span exporter is always active. The following enable additional exporters; each is opt-in and activated only when set.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `TRACE_LOG_FILE` | _(unset)_ | Path to a file that trace spans are appended to as JSON lines; enables the JSON file span exporter. |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | _(unset)_ | OTLP collector endpoint; enables the OTLP span exporter. |
+
+## Webhook Env Vars
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `WEBHOOK_IP_WHITELIST` | _(empty → default-deny)_ | Comma-separated list of **exact** IPv4/IPv6 addresses allowed to call webhook endpoints (matched by exact string equality — CIDR notation and ranges are not supported). An empty value **blocks all** requests. IPv4-mapped IPv6 (`::ffff:a.b.c.d`) is normalized to its IPv4 form before matching. |
+
 ## Screenshot Convention
 
 ### Directory roles
@@ -67,3 +99,17 @@ When adding or renaming a screenshot, update both READMEs accordingly.
 - The same filename **will** exist in both `docs/` and `archive/` — that is intentional (current vs previous version).
 - Root `*.png` files are gitignored; delete them after use.
 - Screenshots in any other location (`docs/images/`, `.jules/`, repo root, `src/`) should not be committed.
+
+### Reviewing screenshots
+
+When asked to review a screenshot — whether new, updated, or as part of a periodic audit — **do not stop at "does the image match the README caption."** The README caption is the *intended* demonstration; the image may match the caption while still revealing real UI defects. Always do **two passes**:
+
+1. **Caption-match pass.** Confirm the image shows the feature/state the README describes.
+2. **Defect pass.** Scrutinise the image itself for issues. Specifically check:
+   - **Internal contradictions on the same page** (e.g. a service marked `Down` in one card while another card on the same page reports "all systems operational").
+   - **Uninitialised / empty-state KPIs in screenshots that are supposed to demonstrate a feature** (a tracing waterfall surrounded by `0 bots / 0ms / status: unknown` undercuts the screenshot's point).
+   - **Visual rendering bugs** (radial-progress rings invisible against the theme, sidebar overlapping the title, truncated text where the page should clearly fit).
+   - **Sloppy demo fixtures** (chat timestamps out of chronological order, stats that don't add up, dates in the future, lorem ipsum where real-looking content is expected).
+   - **Layout drift between screenshots** (different sidebars, theme inconsistency where parity is expected) — flag for re-shoot if you can't tell whether it's intentional.
+
+Report findings as a table per batch: `file | README claim | match? | defects found`. Don't claim "all match" without having looked for defects — that masks bugs we're paying screenshot-storage costs to surface.
