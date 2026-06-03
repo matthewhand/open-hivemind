@@ -13,6 +13,7 @@ import type { PipelineTracer } from './PipelineTracer';
 export { PipelineTracer } from './PipelineTracer';
 export type { PipelineStats, Span, Trace, TraceCompletedCallback } from './PipelineTracer';
 export { ActivityRecorder } from './ActivityRecorder';
+export { BusinessKpiRecorder, DEFERRED_KPI_IDS } from './BusinessKpiRecorder';
 export {
   TraceExportManager,
   ConsoleExporter,
