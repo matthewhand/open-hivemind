@@ -1,8 +1,11 @@
+import Debug from 'debug';
 import { MattermostService } from '@hivemind/message-mattermost';
 import mattermostConfig, { type MattermostConfig } from '../config/mattermostConfig';
 import { type IMessageProvider } from '../types/IProvider';
 import { isSafeUrl } from '../utils/ssrfGuard';
 import { ReconnectionManager } from './ReconnectionManager';
+
+const debug = Debug('app:providers:MattermostProvider');
 
 export class MattermostProvider implements IMessageProvider<MattermostConfig> {
   private reconManagers: Map<string, ReconnectionManager> = new Map();
@@ -68,35 +71,106 @@ export class MattermostProvider implements IMessageProvider<MattermostConfig> {
     return (status.bots as Record<string, unknown>[]) ?? [];
   }
 
+  /**
+   * Adds (or registers) a Mattermost bot instance.
+   *
+   * This persists the bot configuration to `config/providers/messengers.json`
+   * (matching the pattern used by the other messenger providers) and wires a
+   * {@link ReconnectionManager} that establishes a real connection via the
+   * existing {@link MattermostService} client. The connection attempt runs
+   * asynchronously under the reconnection manager, so a transient failure to
+   * reach the Mattermost server never throws synchronously out of this method
+   * and therefore cannot crash bot startup or affect other providers.
+   *
+   * @param config - Bot configuration. Requires `name`, `serverUrl` and `token`.
+   * @throws If required fields (`name`, `serverUrl`, `token`) are missing.
+   */
   async addBot(config: Record<string, unknown>): Promise<void> {
-    const name = String(config.name ?? '');
+    const name = String(config.name ?? '').trim();
+    const serverUrl = config.serverUrl as string | undefined;
+    const token = config.token as string | undefined;
+    const channel = (config.channel as string | undefined) || 'town-square';
+    const userId = (config.userId as string | undefined) || '';
+    const username = (config.username as string | undefined) || '';
+    const llm = config.llm;
 
-    // Since MattermostProvider does not fully implement addBot yet, we
-    // set up the foundation for the ReconnectionManager integration here.
-    // When addBot is fully implemented, this manager should be initialized
-    // and its `start` method called.
+    if (!name || !serverUrl || !token) {
+      throw new Error('name, serverUrl, and token are required');
+    }
 
+    // Persist to config/providers/messengers.json so the instance survives
+    // restarts and can be picked up by reload(), mirroring SlackProvider.
+    const fs = await import('fs');
+    const path = await import('path');
+    const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
+    const messengersPath = path.join(configDir, 'providers', 'messengers.json');
+
+    let cfg: any = { mattermost: { instances: [] } };
+    try {
+      const content = await fs.promises.readFile(messengersPath, 'utf8');
+      cfg = JSON.parse(content);
+    } catch (e: unknown) {
+      if ((e as NodeJS.ErrnoException).code !== 'ENOENT') {
+        debug('Failed reading messengers.json', e);
+      }
+    }
+
+    cfg.mattermost = cfg.mattermost || { instances: [] };
+    cfg.mattermost.instances = cfg.mattermost.instances || [];
+    if (!cfg.mattermost.instances.some((i: any) => i.name === name)) {
+      cfg.mattermost.instances.push({ name, serverUrl, token, channel, userId, username, llm });
+    }
+
+    try {
+      await fs.promises.mkdir(path.dirname(messengersPath), { recursive: true });
+      await fs.promises.writeFile(messengersPath, JSON.stringify(cfg, null, 2), 'utf8');
+    } catch (e: unknown) {
+      debug('Failed writing messengers.json', e);
+    }
+
+    // Establish a real connection via the existing MattermostService client,
+    // managed (with exponential backoff + health checks) by ReconnectionManager.
+    const mattermost = this.mattermostService;
     const reconManager = new ReconnectionManager(
-      `mattermost-${name || 'unnamed'}`,
+      `mattermost-${name}`,
       async () => {
-        // Implementation for Mattermost connection goes here
-        throw new Error('Method not implemented.');
+        // MattermostService.initialize() connects every configured client.
+        // It is idempotent enough for our needs: calling connect() simply
+        // re-validates the token against /users/me.
+        await mattermost.initialize();
       },
-
       {
-        healthCheckFn: async () => false,
+        healthCheckFn: async () => {
+          try {
+            if (!serverUrl || !token) return false;
+
+            const targetUrl = `${serverUrl.replace(/\/$/, '')}/api/v4/users/me`;
+            const check = await isSafeUrl(targetUrl);
+            if (!check.safe) return false;
+
+            const response = await fetch(targetUrl, {
+              method: 'GET',
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+            });
+            return response.ok;
+          } catch {
+            return false;
+          }
+        },
         healthCheckIntervalMs: 30000,
       }
     );
-    this.reconManagers.set(name || 'unnamed', reconManager);
+    this.reconManagers.set(name, reconManager);
 
-    // This will immediately fail until the underlying implementation is written,
-    // but fulfills the ReconnectionManager interface requirements.
-    reconManager.start().catch((_err) => {
-      // debug(`Failed to start Mattermost bot ${name}: ${err.message}`);
+    // Start asynchronously. Any connection failure is handled by the
+    // ReconnectionManager (backoff/retry) and never propagates here, so
+    // startup and other providers are unaffected.
+    reconManager.start().catch((err: Error) => {
+      debug(`Failed to start Mattermost bot ${name}: ${err.message}`);
     });
-
-    throw new Error('Method not implemented.');
   }
 
   /**

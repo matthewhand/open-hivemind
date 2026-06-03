@@ -6,6 +6,7 @@ import Debug from 'debug';
 import { Logger } from '@common/logger';
 import { PathSecurityUtils } from '../utils/PathSecurityUtils';
 import { loadPlugin, PLUGINS_DIR, type PluginManifest } from './PluginLoader';
+import { isSafeUrl } from '../utils/ssrfGuard';
 import {
   PluginSecurityPolicy,
   type PluginSecurityStatus,
@@ -247,6 +248,12 @@ function validateRepoUrl(url: string): void {
  */
 export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
   validateRepoUrl(repoUrl);
+
+  const check = await isSafeUrl(repoUrl);
+  if (!check.safe) {
+    throw new PluginValidationError(`Security policy violation: ${check.reason}`);
+  }
+
   await fs.promises.mkdir(PLUGINS_DIR, { recursive: true });
 
   const tempName = `_install_${Date.now()}`;
