@@ -704,6 +704,7 @@ export class MattermostService extends EventEmitter implements IMessengerService
         sendTyping: async (channelId: string, senderName?: string, threadId?: string) =>
           this.sendTyping(channelId, senderName || name, threadId),
 
+        // @ts-ignore
         getChannels: async (botName?: string) => this.getChannels(botName || name),
 
         supportsChannelPrioritization: this.supportsChannelPrioritization,
