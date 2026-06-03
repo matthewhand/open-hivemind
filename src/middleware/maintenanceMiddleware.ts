@@ -83,8 +83,7 @@ export const maintenanceModeMiddleware = async (
 
     next();
 
-    // eslint-disable-next-line unused-imports/no-unused-vars
-  } catch (_error) {
+  } catch {
     // If we can't check maintenance mode, allow the request to proceed
     // to avoid blocking all requests due to a configuration error
     next();
@@ -119,8 +118,7 @@ export const createSelectiveMaintenanceMiddleware = (
       }
 
       next();
-      // eslint-disable-next-line unused-imports/no-unused-vars
-    } catch (_error) {
+    } catch {
       next();
     }
   };
