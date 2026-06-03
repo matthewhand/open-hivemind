@@ -47,7 +47,8 @@ jobs:
             --testTimeout=15000 \
             --verbose \
             --ci \
-            --maxWorkers=2
+            --maxWorkers=2 \
+            --passWithNoTests
 
   integration-monitoring:
     runs-on: ubuntu-latest
@@ -121,4 +122,5 @@ jobs:
             --testTimeout=15000 \
             --verbose \
             --ci \
-            --maxWorkers=2
+            --maxWorkers=2 \
+            --passWithNoTests

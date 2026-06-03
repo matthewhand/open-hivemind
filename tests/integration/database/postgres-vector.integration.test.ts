@@ -33,10 +33,7 @@ describe('Postgres Native Vector Memory Integration', () => {
       registry.reset();
 
       const openai = new OpenAiProvider();
-      // @ts-ignore - hacking it into the registry for the test
-      registry.llmProviders.set('openai', openai);
-      // @ts-ignore
-      registry._initialized = true;
+      registry.registerLlmProvider('openai', openai);
 
       const deps = getServiceDependencies('test-vector');
       memoryProvider = new PostgresMemoryProvider({}, deps);
