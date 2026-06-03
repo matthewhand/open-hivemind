@@ -94,6 +94,17 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
     return tools.filter(tool => favorites.includes(tool.id));
   }, [tools, favorites]);
 
+  // Performance optimization: pre-compute map for O(1) lookups instead of calling .find() inside .map() loops
+  const recentlyUsedMap = useMemo(() => {
+    const map = new Map<string, RecentToolUsage>();
+    for (const r of recentlyUsed) {
+      if (!map.has(r.toolId)) {
+        map.set(r.toolId, r);
+      }
+    }
+    return map;
+  }, [recentlyUsed]);
+
   const shouldVirtualize = filteredTools.length > 50;
   const gridRowVirtualizer = useVirtualizer({
     count: Math.ceil(filteredTools.length / 3), // 3 columns
@@ -144,7 +155,7 @@ const ToolRegistryPanel: React.FC<ToolRegistryPanelProps> = ({
               <button
                 className="btn btn-xs btn-primary flex-1 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none focus-visible:ring-offset-1 focus-visible:ring-offset-base-100"
                 onClick={() => {
-                  const lastUsage = recentlyUsed.find(r => r.toolId === tool.id);
+                  const lastUsage = recentlyUsedMap.get(tool.id);
                   onRunTool(tool, lastUsage?.arguments);
                 }}
                 disabled={!tool.enabled}
