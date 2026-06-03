@@ -453,6 +453,10 @@ export class AuthManager {
         username: user.username,
         role: user.role,
         permissions: this.getUserPermissions(user.role),
+        // Unique token id so two tokens minted within the same second (e.g.
+        // login immediately followed by session rotation) are never byte
+        // identical. Required for session rotation to produce a distinct token.
+        jti: crypto.randomBytes(16).toString('hex'),
       },
       this.jwtSecret,
       { expiresIn: '1h' }
