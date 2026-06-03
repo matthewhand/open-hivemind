@@ -49,7 +49,7 @@ const InsightsModal: React.FC<InsightsModalProps> = ({ botId, botName, isOpen, o
       ariaLabelledBy={`insights-title-${botId}`}
     >
       <div className="space-y-4 p-4 sm:p-6" role="region" aria-label="Insights content">
-        {loading ? (
+        {loading && !insights ? (
           <div className="py-20 text-center space-y-4">
             <div className="flex justify-center">
               <Sparkles className="w-12 h-12 text-primary animate-pulse" />
@@ -66,9 +66,9 @@ const InsightsModal: React.FC<InsightsModalProps> = ({ botId, botName, isOpen, o
               <h3 className="font-bold">Error</h3>
               <div className="text-xs">{error}</div>
             </div>
-            <button onClick={fetchInsights} className="btn btn-sm btn-ghost">
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Retry
+            <button onClick={fetchInsights} className="btn btn-sm btn-ghost" disabled={loading}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              {loading ? 'Retrying...' : 'Retry'}
             </button>
           </div>
         ) : insights ? (
@@ -79,9 +79,10 @@ const InsightsModal: React.FC<InsightsModalProps> = ({ botId, botName, isOpen, o
               <button 
                 onClick={fetchInsights}
                 className="hover:opacity-100 transition-opacity flex items-center gap-1"
+                disabled={loading}
               >
-                <RefreshCw className="w-3 h-3" />
-                Regenerate
+                <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
+                {loading ? 'Regenerating...' : 'Regenerate'}
               </button>
             </div>
           </div>
