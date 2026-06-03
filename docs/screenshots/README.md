@@ -116,6 +116,8 @@ To add a new screenshot:
 | ![guards-modal-enhanced](guards-modal-enhanced.png) | Enhanced guards modal with additional options |
 | ![guard-profiles-coverage](guard-profiles-coverage.png) | Guard profiles coverage report |
 | ![api-rate-limit](api-rate-limit.png) | API rate limiting configuration |
+| ![plugin-security-dashboard](plugin-security-dashboard.png) | Plugin security dashboard |
+| ![plugin-security-filtered](plugin-security-filtered.png) | Plugin security dashboard with filters applied |
 
 ## Personas
 
