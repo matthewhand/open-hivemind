@@ -12,14 +12,48 @@ export interface LettaProviderConfig {
   conversationId?: string;
 }
 
+/**
+ * Minimal structural type for a Letta conversation. The SDK ships a richer
+ * `Conversation` type, but we only depend on `id` and `summary`; declaring our
+ * own surface keeps the provider resilient to non-breaking SDK shape changes.
+ */
+interface LettaConversation {
+  id: string;
+  summary?: string | null;
+}
+
+/**
+ * The conversations sub-API we rely on for non-default session modes. Older
+ * SDK versions (or stubbed/self-hosted servers) may not expose `list`/`create`.
+ * We detect this at runtime via {@link getConversationsApi} rather than assuming
+ * the methods exist.
+ */
+interface LettaConversationsApi {
+  list?: (query: { agent_id: string }) => Promise<LettaConversation[] | undefined>;
+  create?: (body: { agent_id: string; summary: string }) => Promise<LettaConversation | undefined>;
+}
+
+/**
+ * Runtime capability check: returns the typed conversations API only when both
+ * `list` and `create` are callable. Returns null when the SDK build in use does
+ * not support session modes, so callers can surface (debug) the degradation
+ * instead of silently behaving as if creation merely "failed".
+ */
+function getConversationsApi(client: Letta): LettaConversationsApi | null {
+  const api = (client as unknown as { conversations?: LettaConversationsApi }).conversations;
+  if (api && typeof api.list === 'function' && typeof api.create === 'function') {
+    return api;
+  }
+  return null;
+}
+
 export class LettaProvider implements ILlmProvider {
   name = 'letta';
-  private static instance: LettaProvider;
   private client: Letta;
   private config: LettaProviderConfig;
   private conversationCache = new Map<string, string>(); // contextKey → conv-* id
 
-  private constructor(config?: LettaProviderConfig) {
+  constructor(config?: LettaProviderConfig) {
     this.config = config || {};
     // Uses LETTA_SERVER_PASSWORD for both cloud and self-hosted auth
     this.client = new Letta({
@@ -27,11 +61,13 @@ export class LettaProvider implements ILlmProvider {
     });
   }
 
+  /**
+   * Back-compat factory. A new provider is returned for each call so that
+   * multiple bots with different agentId/session configs stay isolated
+   * (the previous singleton honored only the first config supplied).
+   */
   static getInstance(config?: LettaProviderConfig): LettaProvider {
-    if (!LettaProvider.instance) {
-      LettaProvider.instance = new LettaProvider(config);
-    }
-    return LettaProvider.instance;
+    return new LettaProvider(config);
   }
 
   supportsChatCompletion(): boolean {
@@ -100,13 +136,25 @@ export class LettaProvider implements ILlmProvider {
       return cached;
     }
 
-    try {
-      const clientAny = this.client as any;
+    // Detect whether the installed SDK exposes the conversations API. When it
+    // does not, surface (debug) the capability gap explicitly instead of
+    // treating it as an ordinary create failure — the two are different and a
+    // missing API is a deployment/version issue worth diagnosing.
+    const conversations = getConversationsApi(this.client);
+    if (!conversations) {
+      debug(
+        'Letta SDK does not expose conversations.list/create; session mode unavailable, ' +
+          'falling back to default conversation for key %s',
+        cacheKey
+      );
+      return 'default';
+    }
 
+    try {
       // Try to list existing conversations and find by summary
-      const existing = await clientAny.conversations?.list?.({ agent_id: agentId });
+      const existing = await conversations.list?.({ agent_id: agentId });
       if (existing && Array.isArray(existing)) {
-        const match = existing.find((conv: any) => conv.summary === summary);
+        const match = existing.find((conv) => conv.summary === summary);
         if (match?.id) {
           debug('Found existing conversation for key %s: %s', cacheKey, match.id);
           this.conversationCache.set(cacheKey, match.id);
@@ -115,7 +163,7 @@ export class LettaProvider implements ILlmProvider {
       }
 
       // Create new conversation with human-readable summary
-      const created = await clientAny.conversations?.create?.({
+      const created = await conversations.create?.({
         agent_id: agentId,
         summary,
       });
@@ -197,7 +245,17 @@ export class LettaProvider implements ILlmProvider {
     }
   }
 
-  async generateCompletion(_prompt: string): Promise<string> {
-    throw new Error('Letta provider does not support non-chat completion.');
+  /**
+   * Letta is a chat-first (stateful agent) provider and has no dedicated
+   * non-chat completion endpoint. Rather than throwing — which breaks any
+   * caller that treats completion as a generic single-turn entry point — we
+   * map a non-chat completion onto a single-turn chat completion with no
+   * history. This mirrors the FlowiseProvider, the other chat-only provider
+   * in this repo. The prompt is sent as the user message; the agent's reply
+   * is returned as the completion text.
+   */
+  async generateCompletion(prompt: string): Promise<string> {
+    debug('generateCompletion is not natively supported; mapping to a single-turn chat completion.');
+    return this.generateChatCompletion(prompt, []);
   }
 }

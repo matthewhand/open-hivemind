@@ -155,6 +155,14 @@ export interface IMessengerService {
   getChannelTopic?(channelId: string): Promise<string | null>;
 
   /**
+   * Optional: list the channels available to this service (or a specific bot).
+   *
+   * @param {string} [botName] - Optional bot name to scope the channel listing
+   * @returns {Promise<any[]>} A promise resolving to the available channels
+   */
+  getChannels?(botName?: string): Promise<any[]>;
+
+  /**
    * Gets the default channel identifier for this service.
    *
    * @returns {string} The default channel ID
@@ -226,6 +234,9 @@ export interface IMessengerService {
    * ```
    */
   getForumOwner?(forumId: string): Promise<string>;
+  getChannels?(botName?: string): Promise<Array<{ id: string; name: string; type?: string }>>;
+
+  getChannels?(botName?: string): Promise<Array<{ id: string; name: string; type?: string }>>;
 
   /**
    * Optional: gets the channels
@@ -272,4 +283,6 @@ export interface IMessengerService {
    * @returns {boolean | Promise<boolean>} True if connected, false otherwise
    */
   isConnected?(botName?: string): boolean | Promise<boolean>;
+
+  getChannels?(botName?: string): Promise<Array<{ id: string; name: string; type?: string }>>;
 }
