@@ -12,7 +12,7 @@ import express from 'express';
 import request from 'supertest';
 import type { Request, Response, NextFunction } from 'express';
 import { buildSystemChecks } from '../../../../src/server/routes/health/helpers';
-import { ProviderRegistry } from '../../../../src/registries/providerRegistry';
+import { ProviderRegistry } from '../../../../src/registries/ProviderRegistry';
 import detailedRouter from '../../../../src/server/routes/health/detailed';
 
 // Mount the router behind a middleware that injects an authenticated user so

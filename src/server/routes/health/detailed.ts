@@ -162,7 +162,7 @@ router.get('/detailed/services', optionalAuth, async (_req: Request, res: Respon
   // Check LLM providers
   const llmStart = Date.now();
   try {
-    const { ProviderRegistry } = require('../../../registries/providerRegistry');
+    const { ProviderRegistry } = require('../../../registries/ProviderRegistry');
     const registry = ProviderRegistry.getInstance();
     const llmProviders = registry.getLlmProviders?.() || [];
 
@@ -200,7 +200,7 @@ router.get('/detailed/services', optionalAuth, async (_req: Request, res: Respon
   // Check Message providers
   const msgStart = Date.now();
   try {
-    const { ProviderRegistry } = require('../../../registries/providerRegistry');
+    const { ProviderRegistry } = require('../../../registries/ProviderRegistry');
     const registry = ProviderRegistry.getInstance();
 
     const msgProviders = registry.getMessageProviders?.() || [];
@@ -239,7 +239,7 @@ router.get('/detailed/services', optionalAuth, async (_req: Request, res: Respon
   // Check Memory provider
   const memStart = Date.now();
   try {
-    const { ProviderRegistry } = require('../../../registries/providerRegistry');
+    const { ProviderRegistry } = require('../../../registries/ProviderRegistry');
 
     const registry = ProviderRegistry.getInstance();
     const memProviders = registry.getMemoryProviders?.() || [];

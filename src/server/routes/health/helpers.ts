@@ -69,7 +69,7 @@ function checkConfiguration(): SystemCheck {
 
 function checkServices(): SystemCheck {
   try {
-    const { ProviderRegistry } = require('../../../registries/providerRegistry');
+    const { ProviderRegistry } = require('../../../registries/ProviderRegistry');
     const registry = ProviderRegistry.getInstance();
     const messageProviders: unknown[] = registry.getMessageProviders?.() ?? [];
     const llmProviders: unknown[] = registry.getLLMProviders?.() ?? [];
