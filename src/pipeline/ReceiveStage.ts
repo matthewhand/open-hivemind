@@ -63,8 +63,7 @@ export class ReceiveStage {
         return null;
       }
 
-      // eslint-disable-next-line unused-imports/no-unused-vars
-    } catch (_e) {
+    } catch {
       // Ignore DI errors during test/setup
     }
 

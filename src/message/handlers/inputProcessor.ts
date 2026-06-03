@@ -3,6 +3,10 @@ import { getGuardrailProfileByKey } from '@src/config/guardrailProfiles';
 import { UserConfigStore } from '@src/config/UserConfigStore';
 import { MessageBus } from '@src/events/MessageBus';
 import { getLlmProviderForBot } from '@src/llm/getLlmProvider';
+import {
+  ProviderMetricsCollector,
+  normalizeMessageProviderType,
+} from '@src/monitoring/ProviderMetricsCollector';
 import { SyncProviderRegistry } from '@src/registries/SyncProviderRegistry';
 import type { ContentFilterConfig } from '@src/types/config';
 import { InputSanitizer } from '@src/utils/InputSanitizer';
@@ -110,6 +114,17 @@ export async function validateAndResolveContext(ctx: MessageContext): Promise<bo
       'generic'
   );
   ctx.platform = providerType.toLowerCase();
+
+  // Record an inbound message against the provider metrics (no-op for
+  // providers outside the tracked message set, e.g. 'generic').
+  const messageProviderType = normalizeMessageProviderType(ctx.platform);
+  if (messageProviderType) {
+    try {
+      ProviderMetricsCollector.getInstance().recordMessageReceived(messageProviderType);
+    } catch (metricsErr) {
+      ctx.logger('Failed to record received message metric (non-fatal):', metricsErr);
+    }
+  }
 
   // Resolve agent context
   const mpUnknown = ctx.messageProvider as unknown as Record<string, unknown>;
