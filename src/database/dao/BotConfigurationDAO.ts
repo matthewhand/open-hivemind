@@ -1,4 +1,5 @@
 import { Logger } from '@common/logger';
+import { encryptionService } from '../EncryptionService';
 import type { IDatabase as Database, BotConfiguration as TypesBotConfiguration } from '../types';
 
 // We map our type loosely for type flexibility (allowing parsed objects or stringified variants)
@@ -9,7 +10,6 @@ export type BotConfiguration = TypesBotConfiguration;
  */
 export class BotConfigurationDAO {
   private db: Database;
-  private readonly tableName = 'bot_configurations';
 
   constructor(db: Database) {
     this.db = db;
@@ -17,7 +17,7 @@ export class BotConfigurationDAO {
 
   async create(config: BotConfiguration): Promise<number> {
     const sql = `
-      INSERT INTO ${this.tableName} (
+      INSERT INTO bot_configurations (
         name, messageProvider, llmProvider, persona, systemInstruction,
         mcpServers, mcpGuard, discord, slack, mattermost, openai, flowise,
         openwebui, openswarm, perplexity, replicate, n8n, tenantId, isActive,
@@ -33,13 +33,13 @@ export class BotConfigurationDAO {
       config.systemInstruction || null,
       config.mcpServers ? JSON.stringify(config.mcpServers) : null,
       config.mcpGuard ? JSON.stringify(config.mcpGuard) : null,
-      config.discord ? JSON.stringify(config.discord) : null,
-      config.slack ? JSON.stringify(config.slack) : null,
-      config.mattermost ? JSON.stringify(config.mattermost) : null,
-      config.openai ? JSON.stringify(config.openai) : null,
-      config.flowise ? JSON.stringify(config.flowise) : null,
-      config.openwebui ? JSON.stringify(config.openwebui) : null,
-      config.openswarm ? JSON.stringify(config.openswarm) : null,
+      this.encryptField(config.discord),
+      this.encryptField(config.slack),
+      this.encryptField(config.mattermost),
+      this.encryptField(config.openai),
+      this.encryptField(config.flowise),
+      this.encryptField(config.openwebui),
+      this.encryptField(config.openswarm),
       config.perplexity ? JSON.stringify(config.perplexity) : null,
       config.replicate ? JSON.stringify(config.replicate) : null,
       config.n8n ? JSON.stringify(config.n8n) : null,
@@ -63,7 +63,7 @@ export class BotConfigurationDAO {
   }
 
   async findById(id: number): Promise<BotConfiguration | null> {
-    const sql = `SELECT * FROM ${this.tableName} WHERE id = ?`;
+    const sql = `SELECT * FROM bot_configurations WHERE id = ?`;
 
     try {
       const row = await this.db.get(sql, [id]);
@@ -75,7 +75,7 @@ export class BotConfigurationDAO {
   }
 
   async findByName(name: string): Promise<BotConfiguration | null> {
-    const sql = `SELECT * FROM ${this.tableName} WHERE name = ?`;
+    const sql = `SELECT * FROM bot_configurations WHERE name = ?`;
 
     try {
       const row = await this.db.get(sql, [name]);
@@ -87,7 +87,7 @@ export class BotConfigurationDAO {
   }
 
   async findAll(tenantId?: string): Promise<BotConfiguration[]> {
-    let sql = `SELECT * FROM ${this.tableName}`;
+    let sql = `SELECT * FROM bot_configurations`;
     const params: (string | number | boolean | null)[] = [];
 
     if (tenantId) {
@@ -107,7 +107,7 @@ export class BotConfigurationDAO {
   }
 
   async findActive(tenantId?: string): Promise<BotConfiguration[]> {
-    let sql = `SELECT * FROM ${this.tableName} WHERE isActive = 1`;
+    let sql = `SELECT * FROM bot_configurations WHERE isActive = 1`;
     const params: (string | number | boolean | null)[] = [];
 
     if (tenantId) {
@@ -196,7 +196,7 @@ export class BotConfigurationDAO {
     updates.push('updatedAt = ?');
     params.push(new Date().toISOString());
 
-    const sql = `UPDATE ${this.tableName} SET ${updates.join(', ')} WHERE id = ?`;
+    const sql = `UPDATE bot_configurations SET ${updates.join(', ')} WHERE id = ?`;
     params.push(id);
 
     try {
@@ -208,7 +208,7 @@ export class BotConfigurationDAO {
   }
 
   async delete(id: number): Promise<boolean> {
-    const sql = `DELETE FROM ${this.tableName} WHERE id = ?`;
+    const sql = `DELETE FROM bot_configurations WHERE id = ?`;
 
     try {
       const result = await this.db.run(sql, [id]);
@@ -220,7 +220,7 @@ export class BotConfigurationDAO {
   }
 
   async activate(id: number): Promise<void> {
-    const sql = `UPDATE ${this.tableName} SET isActive = 1, updatedAt = ? WHERE id = ?`;
+    const sql = `UPDATE bot_configurations SET isActive = 1, updatedAt = ? WHERE id = ?`;
 
     try {
       await this.db.run(sql, [new Date().toISOString(), id]);
@@ -231,7 +231,7 @@ export class BotConfigurationDAO {
   }
 
   async deactivate(id: number): Promise<void> {
-    const sql = `UPDATE ${this.tableName} SET isActive = 0, updatedAt = ? WHERE id = ?`;
+    const sql = `UPDATE bot_configurations SET isActive = 0, updatedAt = ? WHERE id = ?`;
 
     try {
       await this.db.run(sql, [new Date().toISOString(), id]);
@@ -248,24 +248,17 @@ export class BotConfigurationDAO {
     byTenant: Record<string, number>;
   }> {
     try {
-      // SECURITY: SQL injection safe - this.tableName is a hardcoded constant
-      // ('bot_configurations'), not user input. String concatenation is used here
-      // for table names which cannot be parameterized in SQL.
-      const totalRow = (await this.db.get('SELECT COUNT(*) as total FROM ' + this.tableName)) as
+      const totalRow = (await this.db.get('SELECT COUNT(*) as total FROM bot_configurations')) as
         | { total: number }
         | undefined;
       const activeRow = (await this.db.get(
-        'SELECT COUNT(*) as active FROM ' + this.tableName + ' WHERE isActive = 1'
+        'SELECT COUNT(*) as active FROM bot_configurations WHERE isActive = 1'
       )) as { active: number } | undefined;
       const providerRows = (await this.db.all(
-        'SELECT messageProvider, COUNT(*) as count FROM ' +
-          this.tableName +
-          ' GROUP BY messageProvider'
+        'SELECT messageProvider, COUNT(*) as count FROM bot_configurations GROUP BY messageProvider'
       )) as { messageProvider: string; count: number }[];
       const tenantRows = (await this.db.all(
-        'SELECT COALESCE(tenantId, "default") as tenant, COUNT(*) as count FROM ' +
-          this.tableName +
-          ' GROUP BY tenantId'
+        'SELECT COALESCE(tenantId, "default") as tenant, COUNT(*) as count FROM bot_configurations GROUP BY tenantId'
       )) as { tenant: string; count: number }[];
 
       return {
@@ -302,13 +295,13 @@ export class BotConfigurationDAO {
       systemInstruction: row.systemInstruction as string | undefined,
       mcpServers: row.mcpServers ? JSON.parse(row.mcpServers as string) : undefined,
       mcpGuard: row.mcpGuard ? JSON.parse(row.mcpGuard as string) : undefined,
-      discord: row.discord ? JSON.parse(row.discord as string) : undefined,
-      slack: row.slack ? JSON.parse(row.slack as string) : undefined,
-      mattermost: row.mattermost ? JSON.parse(row.mattermost as string) : undefined,
-      openai: row.openai ? JSON.parse(row.openai as string) : undefined,
-      flowise: row.flowise ? JSON.parse(row.flowise as string) : undefined,
-      openwebui: row.openwebui ? JSON.parse(row.openwebui as string) : undefined,
-      openswarm: row.openswarm ? JSON.parse(row.openswarm as string) : undefined,
+      discord: this.decryptField(row.discord),
+      slack: this.decryptField(row.slack),
+      mattermost: this.decryptField(row.mattermost),
+      openai: this.decryptField(row.openai),
+      flowise: this.decryptField(row.flowise),
+      openwebui: this.decryptField(row.openwebui),
+      openswarm: this.decryptField(row.openswarm),
       perplexity: row.perplexity ? JSON.parse(row.perplexity as string) : undefined,
       replicate: row.replicate ? JSON.parse(row.replicate as string) : undefined,
       n8n: row.n8n ? JSON.parse(row.n8n as string) : undefined,
@@ -319,5 +312,21 @@ export class BotConfigurationDAO {
       createdBy: row.createdBy as string | undefined,
       updatedBy: row.updatedBy as string | undefined,
     };
+  }
+  private encryptField(val: any): any {
+    if (val && typeof val === 'object') {
+      return encryptionService.encrypt(JSON.stringify(val));
+    }
+    return val;
+  }
+
+  private decryptField(val: any): any {
+    if (!val || typeof val !== 'string') return val;
+    const decrypted = encryptionService.decrypt(val);
+    try {
+      return JSON.parse(decrypted);
+    } catch {
+      return decrypted;
+    }
   }
 }
