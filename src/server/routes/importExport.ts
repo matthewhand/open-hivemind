@@ -288,6 +288,18 @@ router.post(
         return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('No file uploaded'));
       }
 
+      const uploadedExt = path.extname(req.file.originalname).toLowerCase();
+      const isGz = req.file.originalname.toLowerCase().endsWith('.gz');
+      const isEnc =
+        req.file.originalname.toLowerCase().endsWith('.enc') ||
+        req.file.originalname.toLowerCase().endsWith('.enc.gz');
+
+      if (req.body.format && !isGz && !isEnc && uploadedExt !== `.${req.body.format}`) {
+        return res
+          .status(HTTP_STATUS.BAD_REQUEST)
+          .json(ApiResponse.error('Uploaded file extension does not match the requested format'));
+      }
+
       const importedBy = req.user?.username || 'unknown';
 
       const result = await ConfigurationImportExportService.getInstance().importConfigurations(
@@ -528,6 +540,18 @@ router.post(
     try {
       if (!req.file) {
         return res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.error('No file uploaded'));
+      }
+
+      const uploadedExt = path.extname(req.file.originalname).toLowerCase();
+      const isGz = req.file.originalname.toLowerCase().endsWith('.gz');
+      const isEnc =
+        req.file.originalname.toLowerCase().endsWith('.enc') ||
+        req.file.originalname.toLowerCase().endsWith('.enc.gz');
+
+      if (req.body.format && !isGz && !isEnc && uploadedExt !== `.${req.body.format}`) {
+        return res
+          .status(HTTP_STATUS.BAD_REQUEST)
+          .json(ApiResponse.error('Uploaded file extension does not match the requested format'));
       }
 
       const result = await ConfigurationImportExportService.getInstance().importConfigurations(
