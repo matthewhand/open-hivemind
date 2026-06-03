@@ -52,6 +52,12 @@ const openWebUIConfig = convict({
     default: 'llama3.2',
     env: 'OPEN_WEBUI_MODEL',
   },
+  embeddingModel: {
+    doc: 'The model to use for generating embeddings (used by vector memory providers)',
+    format: String,
+    default: 'nomic-embed-text',
+    env: 'OPEN_WEBUI_EMBEDDING_MODEL',
+  },
 });
 
 /**

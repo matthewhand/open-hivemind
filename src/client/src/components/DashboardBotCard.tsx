@@ -3,6 +3,7 @@ import PersonaAvatar from './PersonaAvatar';
 import Badge from './DaisyUI/Badge';
 import Card from './DaisyUI/Card';
 import Button from './DaisyUI/Button';
+import Tooltip from './DaisyUI/Tooltip';
 import type { Bot, StatusResponse } from '../services/api';
 import { Activity, Sparkles, History, Trophy } from 'lucide-react';
 import DiagnosticModal from './BotManagement/DiagnosticModal';
@@ -54,38 +55,46 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
               </h2>
             </div>
             <div className="flex items-center gap-2">
-               <button
-                 onClick={() => setIsBenchmarkOpen(true)}
-                 className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity text-warning"
-                 title="Run Performance Benchmark"
-                 aria-label={`Run performance benchmark for ${bot.name}`}
-               >
-                  <Trophy className="w-4 h-4" />
-               </button>
-               <button
-                 onClick={() => setIsHistoryOpen(true)}
-                 className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity text-secondary"
-                 title="Version History"
-                 aria-label={`View version history for ${bot.name}`}
-               >
-                  <History className="w-4 h-4" />
-               </button>
-               <button
-                 onClick={() => setIsInsightsOpen(true)}
-                 className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity text-primary"
-                 title="AI Performance Insights"
-                 aria-label={`View AI performance insights for ${bot.name}`}
-               >
-                  <Sparkles className="w-4 h-4" />
-               </button>
-               <button
-                 onClick={() => setIsDiagnosticOpen(true)}
-                 className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity"
-                 title="Run Diagnostic"
-                 aria-label={`Run diagnostic for ${bot.name}`}
-               >
-                  <Activity className="w-4 h-4" />
-               </button>
+               <Tooltip content="Run Performance Benchmark" position="top">
+                 <button
+                   type="button"
+                   onClick={() => setIsBenchmarkOpen(true)}
+                   className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity text-warning"
+                   aria-label={`Run performance benchmark for ${bot.name}`}
+                 >
+                    <Trophy className="w-4 h-4" />
+                 </button>
+               </Tooltip>
+               <Tooltip content="Version History" position="top">
+                 <button
+                   type="button"
+                   onClick={() => setIsHistoryOpen(true)}
+                   className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity text-secondary"
+                   aria-label={`View version history for ${bot.name}`}
+                 >
+                    <History className="w-4 h-4" />
+                 </button>
+               </Tooltip>
+               <Tooltip content="AI Performance Insights" position="top">
+                 <button
+                   type="button"
+                   onClick={() => setIsInsightsOpen(true)}
+                   className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity text-primary"
+                   aria-label={`View AI performance insights for ${bot.name}`}
+                 >
+                    <Sparkles className="w-4 h-4" />
+                 </button>
+               </Tooltip>
+               <Tooltip content="Run Diagnostic" position="top">
+                 <button
+                   type="button"
+                   onClick={() => setIsDiagnosticOpen(true)}
+                   className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity"
+                   aria-label={`Run diagnostic for ${bot.name}`}
+                 >
+                    <Activity className="w-4 h-4" />
+                 </button>
+               </Tooltip>
                <Badge
                 variant={toBadgeVariant(getStatusColor(botStatus))}
                 size="small"
