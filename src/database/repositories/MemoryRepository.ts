@@ -188,6 +188,58 @@ export class MemoryRepository {
     }
   }
 
+  /**
+   * Update an existing memory row in place, preserving its id and created_at.
+   *
+   * Only the fields present in `fields` are written, so callers can update the
+   * content (and its re-computed embedding) without clobbering metadata, or
+   * vice-versa. Embeddings are encoded the same way as in {@link addMemory}
+   * (pgvector literal for Postgres, JSON string for SQLite).
+   *
+   * @returns true when a row was updated, false when no row matched or no
+   *          updatable field was supplied.
+   */
+  async updateMemory(
+    id: string | number,
+    fields: { content?: string; metadata?: Record<string, unknown>; embedding?: number[] }
+  ): Promise<boolean> {
+    if (!this.isConnected()) return false;
+    const db = this.getDb();
+    if (!db) return false;
+
+    try {
+      const isPg = this.isPostgres();
+      const sets: string[] = [];
+      const params: any[] = [];
+
+      if (fields.content !== undefined) {
+        sets.push('content = ?');
+        params.push(fields.content);
+      }
+      if (fields.metadata !== undefined) {
+        sets.push('metadata = ?');
+        params.push(fields.metadata ? JSON.stringify(fields.metadata) : null);
+      }
+      if (fields.embedding !== undefined) {
+        sets.push(`embedding = ${isPg ? '?::vector' : '?'}`);
+        params.push(isPg ? `[${fields.embedding.join(',')}]` : JSON.stringify(fields.embedding));
+      }
+
+      // Nothing to update — avoid issuing an empty SET clause.
+      if (sets.length === 0) return false;
+
+      params.push(id);
+      const result = await db.run(
+        `UPDATE memories SET ${sets.join(', ')} WHERE id = ?`,
+        params
+      );
+      return (result.changes ?? 0) > 0;
+    } catch (error) {
+      debug('Error updating memory:', error);
+      throw error;
+    }
+  }
+
   async deleteMemory(id: string | number): Promise<boolean> {
     if (!this.isConnected()) return false;
     const db = this.getDb();
