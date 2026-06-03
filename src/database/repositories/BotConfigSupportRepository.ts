@@ -54,6 +54,19 @@ export class BotConfigRepositoryBase {
   protected parseIfString(val: unknown): unknown {
     return typeof val === 'string' ? JSON.parse(val) : val;
   }
+
+  protected toIsoString(val: unknown): string {
+    if (val instanceof Date) {
+      return val.toISOString();
+    }
+    if (typeof val === 'string') {
+      // Basic check to see if it's already an ISO string or similar
+      if (!isNaN(Date.parse(val))) {
+        return new Date(val).toISOString();
+      }
+    }
+    return new Date().toISOString();
+  }
 }
 
 /**
@@ -96,7 +109,7 @@ export class BotConfigVersionRepository extends BotConfigRepositoryBase {
           this.encryptField(version.openwebui),
           this.encryptField(version.openswarm),
           version.isActive ? 1 : 0,
-          (version.createdAt || new Date()).toISOString(),
+          this.toIsoString(version.createdAt),
           version.createdBy,
           version.changeLog,
         ]
@@ -107,6 +120,64 @@ export class BotConfigVersionRepository extends BotConfigRepositoryBase {
     } catch (error) {
       debug('Error creating bot configuration version:', error);
       throw new Error(`Failed to create bot configuration version: ${error}`);
+    }
+  }
+
+  async createBotConfigurationVersionsBulk(versions: BotConfigurationVersion[]): Promise<number[]> {
+    this.ensureConnected();
+
+    if (versions.length === 0) {
+      return [];
+    }
+
+    try {
+      const db = this.getDb();
+      if (!db) {
+        throw new Error('Database not available');
+      }
+
+      return await db.transaction(async (tx) => {
+        const ids: number[] = [];
+        for (const version of versions) {
+          const result = await tx.run(
+            `
+            INSERT INTO bot_configuration_versions (
+              botConfigurationId, version, name, messageProvider, llmProvider,
+              persona, systemInstruction, mcpServers, mcpGuard, discord,
+              slack, mattermost, openai, flowise,
+              openwebui, openswarm, isActive, createdAt, createdBy, changeLog
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `,
+            [
+              version.botConfigurationId,
+              version.version,
+              version.name,
+              version.messageProvider,
+              version.llmProvider,
+              version.persona,
+              version.systemInstruction,
+              version.mcpServers ? JSON.stringify(version.mcpServers) : null,
+              version.mcpGuard ? JSON.stringify(version.mcpGuard) : null,
+              this.encryptField(version.discord),
+              this.encryptField(version.slack),
+              this.encryptField(version.mattermost),
+              this.encryptField(version.openai),
+              this.encryptField(version.flowise),
+              this.encryptField(version.openwebui),
+              this.encryptField(version.openswarm),
+              version.isActive ? 1 : 0,
+              this.toIsoString(version.createdAt),
+              version.createdBy,
+              version.changeLog,
+            ]
+          );
+          ids.push(Number(result.lastID));
+        }
+        return ids;
+      });
+    } catch (error) {
+      debug('Error creating bot configuration versions in bulk:', error);
+      throw new Error(`Failed to create bot configuration versions in bulk: ${error}`);
     }
   }
 
