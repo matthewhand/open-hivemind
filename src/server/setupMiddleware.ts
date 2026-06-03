@@ -19,6 +19,7 @@ export interface MiddlewareContext {
   frontendDistPath: string;
   frontendAssetsPath: string;
   /** Mutable ref so Vite dev server can be assigned later and used by middleware. */
+
   viteServerRef: { current: any };
 }
 
@@ -48,7 +49,7 @@ export function setupMiddleware(app: express.Application, ctx: MiddlewareContext
     const isLocalhost = origin && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
 
     if (isLocalhost) {
-      res.setHeader('Access-Control-Allow-Origin', origin!);
+      res.setHeader('Access-Control-Allow-Origin', origin as string);
       res.setHeader('Access-Control-Allow-Credentials', 'true');
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
       res.setHeader(
@@ -80,11 +81,13 @@ export function setupMiddleware(app: express.Application, ctx: MiddlewareContext
     next();
   });
 
+  const isDevOrTest = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+
   // Security headers
   app.use(securityHeaders);
 
   // Serve dashboard at root
-  if (process.env.NODE_ENV !== 'development') {
+  if (!isDevOrTest) {
     app.get('/', async (req: Request, res: Response) => {
       const indexPath = path.join(frontendDistPath, 'index.html');
       appLogger.debug('Handling root request for frontend shell', { frontendDistPath, indexPath });
@@ -108,7 +111,7 @@ export function setupMiddleware(app: express.Application, ctx: MiddlewareContext
   }
 
   // Serve static files from webui dist directory (Production Only)
-  if (process.env.NODE_ENV !== 'development') {
+  if (!isDevOrTest) {
     app.use(express.static(frontendDistPath));
     // Global assets static for root-relative asset paths
     app.use('/assets', express.static(frontendAssetsPath));
@@ -120,6 +123,7 @@ export function setupMiddleware(app: express.Application, ctx: MiddlewareContext
     });
   } else {
     // Development Mode Handlers - Proxy to Vite
+
     const serveDevHtml = async (req: Request, res: Response) => {
       try {
         const url = req.originalUrl;

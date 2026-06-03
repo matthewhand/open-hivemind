@@ -62,6 +62,7 @@ export interface PluginSecurityAuditEvent {
     | 'capability_denied'
     | 'capability_request';
   pluginName: string;
+
   details: Record<string, any>;
 }
 
@@ -168,6 +169,7 @@ export class PluginSecurityPolicy extends EventEmitter {
   private emitAudit(
     event: PluginSecurityAuditEvent['event'],
     pluginName: string,
+
     details: Record<string, any> = {}
   ): void {
     const auditEvent: PluginSecurityAuditEvent = {

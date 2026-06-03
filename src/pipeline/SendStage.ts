@@ -17,6 +17,7 @@
 import Debug from 'debug';
 import { type MessageBus } from '@src/events/MessageBus';
 import type { MessageContext } from '@src/events/types';
+import { type ActivityRecorder, DefaultActivityRecorder } from './ActivityRecorder';
 
 const debug = Debug('app:pipeline:send');
 
@@ -39,6 +40,7 @@ export interface MemoryStorer {
     botName: string,
     text: string,
     role: 'user' | 'assistant',
+
     meta?: Record<string, any>
   ): Promise<void>;
 }
@@ -63,7 +65,9 @@ export class SendStage {
   constructor(
     private bus: MessageBus,
     private sender: MessageSender,
-    private memoryStorer?: MemoryStorer
+    private memoryStorer?: MemoryStorer,
+    private recorder: ActivityRecorder = new DefaultActivityRecorder(),
+    private botId?: string
   ) {}
 
   /**
@@ -101,6 +105,23 @@ export class SendStage {
         totalLength: trimmed.length,
         status: 'sent',
       };
+
+      // Record response-scoring signals (fatigue, grace window, idle response).
+      // Mirrors the legacy `outputProcessor.ts` recordings so these signals are
+      // live in pipeline mode. Best-effort: never block delivery.
+      try {
+        const serviceName = String(
+          ctx.botConfig.MESSAGE_PROVIDER || ctx.platform || 'generic'
+        );
+        const botId =
+          this.botId ||
+          (ctx.botConfig.BOT_ID as string) ||
+          (ctx.botConfig.botId as string) ||
+          '';
+        this.recorder.recordBotResponse(serviceName, ctx.channelId, botId);
+      } catch (recordErr) {
+        debug('SendStage: failed to record bot activity (non-fatal): %O', recordErr);
+      }
 
       await this.bus.emitAsync('message:sent', {
         ...ctx,
@@ -176,21 +197,30 @@ export class SendStage {
     ctx: MessageContext & { responseText: string },
     trimmedResponse: string
   ): void {
+    const storer = this.memoryStorer;
+    if (!storer) {
+      return;
+    }
+
     const userText =
       typeof ctx.message.getText === 'function' ? ctx.message.getText() : ctx.message.content;
 
     // Store user message.
-    this.memoryStorer!.storeMemory(ctx.botName, userText, 'user', {
-      channelId: ctx.channelId,
-    }).catch((err) => {
-      debug('SendStage: memory store error (user): %O', err);
-    });
+    storer
+      .storeMemory(ctx.botName, userText, 'user', {
+        channelId: ctx.channelId,
+      })
+      .catch((err) => {
+        debug('SendStage: memory store error (user): %O', err);
+      });
 
     // Store bot response.
-    this.memoryStorer!.storeMemory(ctx.botName, trimmedResponse, 'assistant', {
-      channelId: ctx.channelId,
-    }).catch((err) => {
-      debug('SendStage: memory store error (assistant): %O', err);
-    });
+    storer
+      .storeMemory(ctx.botName, trimmedResponse, 'assistant', {
+        channelId: ctx.channelId,
+      })
+      .catch((err) => {
+        debug('SendStage: memory store error (assistant): %O', err);
+      });
   }
 }

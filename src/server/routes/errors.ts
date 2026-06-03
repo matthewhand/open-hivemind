@@ -28,6 +28,7 @@ router.post('/frontend', validateRequest(ErrorLogSchema), async (req: Request, r
       stack?: string;
       status?: number;
       code?: string;
+
       details?: Record<string, any>;
       correlationId?: string;
       severity?: 'low' | 'medium' | 'high' | 'critical';
@@ -37,6 +38,7 @@ router.post('/frontend', validateRequest(ErrorLogSchema), async (req: Request, r
       url?: string;
       localStorage?: Record<string, string>;
       sessionStorage?: Record<string, string>;
+
       performance?: any;
     };
 

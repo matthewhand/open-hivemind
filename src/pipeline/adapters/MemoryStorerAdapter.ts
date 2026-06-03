@@ -31,6 +31,7 @@ export class MemoryStorerAdapter implements MemoryStorer {
     botName: string,
     text: string,
     role: 'user' | 'assistant',
+
     meta?: Record<string, any>
   ): Promise<void> {
     await this.memoryManager.storeConversationMemory(botName, text, role, meta);

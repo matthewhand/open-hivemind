@@ -6,6 +6,7 @@ import { ErrorUtils } from '../../types/errors';
 const debug = Debug('app:fileConfigUtils');
 
 // Ensure data directory exists
+
 export const ensureDataDir = async () => {
   const dataDir = join(process.cwd(), 'data');
   try {
@@ -24,6 +25,7 @@ export const loadJsonConfig = async <T>(
 ): Promise<T> => {
   try {
     const data = await fs.readFile(filePath, 'utf8');
+
     return JSON.parse(data);
   } catch (error: unknown) {
     const hivemindError = ErrorUtils.toHivemindError(error) as any;

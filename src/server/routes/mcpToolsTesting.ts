@@ -50,6 +50,7 @@ router.get(
         data: {
           tools,
           totalServers: servers.length || 0,
+
           connectedServers: updatedServers.filter((s: any) => s.connected).length || 0,
         },
       });
@@ -125,6 +126,7 @@ router.post(
         success: true,
         data: {
           result,
+
           executionTime,
           timestamp: new Date().toISOString(),
         },

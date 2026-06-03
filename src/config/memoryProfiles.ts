@@ -63,13 +63,23 @@ const MemoryProfileConfigSchema = z.object({
  *  - `description` is optional
  *  - `config` holds provider-specific settings
  */
-export const MemoryProfileSchema = z.object({
-  key: z.string().min(1, 'Profile key is required'),
-  name: z.string().min(1, 'Profile name is required'),
-  description: z.string().optional(),
-  provider: z.string().min(1, 'Provider is required'),
-  config: MemoryProfileConfigSchema.default({}),
-});
+export const MemoryProfileSchema = z
+  .object({
+    key: z.string().min(1, 'Profile key is required'),
+    name: z.string().min(1, 'Profile name is required'),
+    description: z.string().optional(),
+    provider: z.string().min(1, 'Provider is required'),
+    /** Memory backend type (redis, pinecone, sqlite, …). Surfaced in UI. */
+    type: z.string().optional(),
+    /** Whether this profile is the default for new bots. */
+    isDefault: z.boolean().optional(),
+    /** Cross-reference: bots currently using this profile (read-only echo). */
+    inUseBy: z.array(z.string()).optional(),
+    config: MemoryProfileConfigSchema.default({}),
+  })
+  // Forward-compat: tolerate fields added to the wire format before the
+  // schema catches up, instead of silently stripping them on round-trip.
+  .passthrough();
 
 export type MemoryProfile = z.infer<typeof MemoryProfileSchema>;
 

@@ -1,6 +1,5 @@
 import Debug from 'debug';
-import type { IDatabase as Database } from '../types';
-import type { Anomaly } from '../types';
+import type { Anomaly, IDatabase as Database } from '../types';
 
 const debug = Debug('app:AnomalyRepository');
 

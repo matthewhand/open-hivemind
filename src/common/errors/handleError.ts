@@ -7,23 +7,32 @@ const debug = Debug('app:handleError');
  * Interface for message channel objects that can send messages
  */
 interface MessageChannel {
-  send(message: string): Promise<any> | any;
+  send(message: string): Promise<unknown> | unknown;
 }
 
 /**
  * Type guard to check if an object is an Error instance
  */
-function isError(obj: any): obj is Error {
+function isError(obj: unknown): obj is Error {
   return (
-    obj instanceof Error || (obj && typeof obj === 'object' && typeof obj.message === 'string')
+    obj instanceof Error ||
+    (!!obj &&
+      typeof obj === 'object' &&
+      'message' in obj &&
+      typeof (obj as any).message === 'string')
   );
 }
 
 /**
  * Type guard to check if an object has a valid send method
  */
-function isValidMessageChannel(obj: any): obj is MessageChannel {
-  return obj && typeof obj.send === 'function';
+function isValidMessageChannel(obj: unknown): obj is MessageChannel {
+  return !!(
+    obj &&
+    typeof obj === 'object' &&
+    'send' in obj &&
+    typeof (obj as any).send === 'function'
+  );
 }
 
 /**
@@ -31,7 +40,9 @@ function isValidMessageChannel(obj: any): obj is MessageChannel {
  *
  * @param error - The error object to be handled.
  * @param messageChannel - The message channel to send the error message to.
+ // eslint-disable-next-line @typescript-eslint/no-explicit-any
  */
+
 export function handleError(error: unknown, messageChannel: any = null): void {
   // Validate error parameter
   if (!isError(error)) {

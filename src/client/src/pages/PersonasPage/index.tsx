@@ -1,23 +1,17 @@
-import { Copy, Edit2, Filter, Plus, Settings, Trash2, Users } from 'lucide-react';
+import { Copy, Edit2, Settings, Trash2, Users } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Alert } from '../../components/DaisyUI/Alert';
 import { Badge } from '../../components/DaisyUI/Badge';
-import Button from '../../components/DaisyUI/Button';
-import Select from '../../components/DaisyUI/Select';
-import PageHeader from '../../components/DaisyUI/PageHeader';
 import { SkeletonPage } from '../../components/DaisyUI/Skeleton';
 import { useSuccessToast, useErrorToast, useInfoToast } from '../../components/DaisyUI/ToastNotification';
 import SearchFilterBar from '../../components/SearchFilterBar';
-import Tooltip from '../../components/DaisyUI/Tooltip';
-import Join from '../../components/DaisyUI/Join';
 import Card from '../../components/DaisyUI/Card';
 import DetailDrawer from '../../components/DaisyUI/DetailDrawer';
-import Divider from '../../components/DaisyUI/Divider';
 import { ConfirmModal } from '../../components/DaisyUI/Modal';
 import Tabs from '../../components/DaisyUI/Tabs';
-import Toggle from '../../components/DaisyUI/Toggle';
 import { PersonaModal } from '../../components/Personas/PersonaModal';
+import { PersonaSettingsTab } from './PersonaSettingsTab';
 import { useIsBelowBreakpoint } from '../../hooks/useBreakpoint';
 import { useBulkSelection } from '../../hooks/useBulkSelection';
 import { useDragAndDrop } from '../../hooks/useDragAndDrop';
@@ -35,124 +29,6 @@ const CATEGORIES = [
   { id: 'analysis', label: 'Data Analysis' },
   { id: 'support', label: 'Customer Support' },
 ];
-
-/** Persona Settings tab (placeholder — no settings API yet) */
-const PersonaSettingsTab: React.FC<{ personas: Persona[] }> = ({ personas }) => {
-  const [showAdvanced, setShowAdvanced] = useState(false);
-
-  return (
-    <div className="space-y-6">
-      <Card className="shadow-md border border-base-200">
-        <div className="flex items-center gap-2 mb-4">
-          <Settings className="w-5 h-5 text-primary" />
-          <h3 className="text-lg font-semibold">Persona Defaults</h3>
-        </div>
-
-        <div className="space-y-4">
-          {/* Default persona selection */}
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text font-medium">Default Persona</span>
-            </label>
-            <Select
-              disabled
-              value=""
-              options={[
-                { value: '', label: 'Select a default persona...' },
-                ...personas.map((p) => ({ value: p.id, label: p.name })),
-              ]}
-            />
-            <label className="label">
-              <span className="label-text-alt text-base-content/50">
-                The persona assigned to new bots by default.
-              </span>
-            </label>
-          </div>
-
-          {/* Response behavior defaults */}
-          <Divider>Response Behavior</Divider>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 opacity-50 pointer-events-none">
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Temperature</span>
-              </label>
-              <input
-                type="range"
-                className="range range-primary range-sm"
-                min={0}
-                max={100}
-                value={70}
-                readOnly
-              />
-              <span className="text-xs text-base-content/50 mt-1">0.7</span>
-            </div>
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Max Tokens</span>
-              </label>
-              <input
-                type="number"
-                className="input input-bordered input-sm"
-                value={2048}
-                readOnly
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-6 p-4 bg-info/10 rounded-lg text-info text-sm">
-          Persona settings coming soon. These controls will be connected in a future release.
-        </div>
-      </Card>
-
-      {/* Advanced toggle */}
-      <Card className="shadow-md border border-base-200">
-        <Toggle
-          label="Advanced"
-          checked={showAdvanced}
-          onChange={() => setShowAdvanced((v) => !v)}
-          color="primary"
-        />
-        {showAdvanced && (
-          <div className="mt-4 space-y-4 animate-fadeIn">
-            <Divider>Advanced Persona Settings</Divider>
-            <div className="form-control opacity-50 pointer-events-none">
-              <label className="label">
-                <span className="label-text">Persona Ordering</span>
-              </label>
-              <Select
-                disabled
-                value="alphabetical"
-                options={[
-                  { value: 'alphabetical', label: 'Alphabetical' },
-                  { value: 'custom', label: 'Custom Order' },
-                  { value: 'most-used', label: 'Most Used First' },
-                ]}
-              />
-            </div>
-            <div className="form-control opacity-50 pointer-events-none">
-              <label className="label">
-                <span className="label-text">Auto-Assignment Rules</span>
-              </label>
-              <Select
-                disabled
-                value="none"
-                options={[
-                  { value: 'none', label: 'No Auto-Assignment' },
-                  { value: 'round-robin', label: 'Round Robin' },
-                  { value: 'category-match', label: 'Category Match' },
-                ]}
-              />
-            </div>
-            <div className="p-4 bg-info/10 rounded-lg text-info text-sm">
-              Advanced persona settings coming soon.
-            </div>
-          </div>
-        )}
-      </Card>
-    </div>
-  );
-};
 
 const PersonasPage: React.FC = () => {
   const successToast = useSuccessToast();
@@ -305,7 +181,12 @@ const PersonasPage: React.FC = () => {
             id: 'settings',
             label: 'Settings',
             icon: <Settings className="w-4 h-4" />,
-            content: <PersonaSettingsTab personas={personas} />,
+            content: (
+              <PersonaSettingsTab
+                personas={personas}
+                onSaved={() => successToast('Persona settings saved')}
+              />
+            ),
           },
         ]}
       />

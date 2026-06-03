@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import * as fs from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
@@ -302,6 +303,7 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
             throw new Error(`Telegram connection failed for ${name}`);
           }
         },
+
         {
           healthCheckFn: async () => {
             try {

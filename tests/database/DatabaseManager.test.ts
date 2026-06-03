@@ -1,8 +1,8 @@
-import { DatabaseManager } from '../../src/database/DatabaseManager';
-import { DatabaseError } from '../../src/types/errorClasses';
-import { SQLiteWrapper } from '../../src/database/sqliteWrapper';
-import { PostgresWrapper } from '../../src/database/postgresWrapper';
 import databaseConfig from '../../src/config/databaseConfig';
+import { DatabaseManager } from '../../src/database/DatabaseManager';
+import { PostgresWrapper } from '../../src/database/postgresWrapper';
+import { SQLiteWrapper } from '../../src/database/sqliteWrapper';
+import { DatabaseError } from '../../src/types/errorClasses';
 
 // Spies on the mocked Database
 let runSpy: jest.SpyInstance;
@@ -22,8 +22,10 @@ describe('DatabaseManager', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
-    runSpy = jest.spyOn(SQLiteWrapper.prototype, 'run').mockResolvedValue({ lastID: 1, changes: 1 });
+
+    runSpy = jest
+      .spyOn(SQLiteWrapper.prototype, 'run')
+      .mockResolvedValue({ lastID: 1, changes: 1 });
     getSpy = jest.spyOn(SQLiteWrapper.prototype, 'get').mockResolvedValue(undefined);
     allSpy = jest.spyOn(SQLiteWrapper.prototype, 'all').mockResolvedValue([]);
     execSpy = jest.spyOn(SQLiteWrapper.prototype, 'exec').mockResolvedValue(undefined);
@@ -53,7 +55,7 @@ describe('DatabaseManager', () => {
         if (key === 'DATABASE_TYPE') return 'postgres';
         return '';
       });
-      
+
       // @ts-ignore
       DatabaseManager.instance = null;
       const pgManager = DatabaseManager.getInstance();
@@ -64,7 +66,7 @@ describe('DatabaseManager', () => {
     it('should use DATABASE_URL if provided for Postgres', async () => {
       const url = 'postgres://user:pass@host:5432/db';
       process.env.DATABASE_URL = url;
-      
+
       jest.spyOn(databaseConfig, 'get').mockImplementation((key: string) => {
         if (key === 'DATABASE_TYPE') return 'postgres';
         if (key === 'DATABASE_URL') return url;
@@ -75,7 +77,7 @@ describe('DatabaseManager', () => {
       DatabaseManager.instance = null;
       const pgManager = DatabaseManager.getInstance();
       await pgManager.connect();
-      
+
       expect(PostgresWrapper).toHaveBeenCalledWith(url);
       delete process.env.DATABASE_URL;
     });
@@ -106,7 +108,7 @@ describe('DatabaseManager', () => {
         level: 'info',
         message: 'Test log',
         context: 'test',
-        details: { foo: 'bar' }
+        details: { foo: 'bar' },
       });
 
       expect(runSpy).toHaveBeenCalledWith(

@@ -48,7 +48,6 @@ const MarketplacePage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const data: any = await apiService.get('/api/marketplace/packages');
       setPackages(data?.data || data || []);
     } catch (err: unknown) {
@@ -85,7 +84,6 @@ const MarketplacePage: React.FC = () => {
     setActionMessage(null);
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result: any = await apiService.post('/api/marketplace/install', { repoUrl: githubUrl.trim() });
       const data = result?.data || result;
       setActionMessage({ type: 'success', text: `Installed ${data?.package?.displayName || 'package'} successfully!` });
@@ -111,7 +109,6 @@ const MarketplacePage: React.FC = () => {
     setActionMessage(null);
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result: any = await apiService.post(`/api/marketplace/update/${name}`, {});
       const data = result?.data || result;
       setActionMessage({ type: 'success', text: `Updated ${data?.package?.displayName || name} successfully!` });

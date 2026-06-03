@@ -1,6 +1,5 @@
 import Debug from 'debug';
-import type { IDatabase as Database } from '../types';
-import type { ApprovalRequest } from '../types';
+import type { ApprovalRequest, IDatabase as Database } from '../types';
 
 const debug = Debug('app:ApprovalRepository');
 
@@ -17,7 +16,11 @@ export class ApprovalRepository {
     this.ensureConnected();
 
     try {
-      const db = this.getDb()!;
+      const db = this.getDb();
+      if (!db) {
+        throw new Error('Database not available');
+      }
+
       const result = await db.run(
         `
         INSERT INTO approval_requests (
@@ -47,20 +50,20 @@ export class ApprovalRepository {
     }
   }
 
-  private mapRowToApprovalRequest(row: Record<string, any>): ApprovalRequest {
+  private mapRowToApprovalRequest(row: Record<string, unknown>): ApprovalRequest {
     return {
-      id: row.id,
-      resourceType: row.resourceType,
-      resourceId: row.resourceId,
-      changeType: row.changeType,
-      requestedBy: row.requestedBy,
-      diff: row.diff,
-      status: row.status,
-      reviewedBy: row.reviewedBy,
-      reviewedAt: row.reviewedAt ? new Date(row.reviewedAt) : undefined,
-      reviewComments: row.reviewComments,
-      createdAt: new Date(row.createdAt),
-      tenantId: row.tenantId,
+      id: row.id as number,
+      resourceType: row.resourceType as string,
+      resourceId: row.resourceId as number,
+      changeType: row.changeType as 'CREATE' | 'UPDATE' | 'DELETE',
+      requestedBy: row.requestedBy as string,
+      diff: row.diff as string,
+      status: row.status as 'pending' | 'approved' | 'rejected',
+      reviewedBy: row.reviewedBy as string | undefined,
+      reviewedAt: row.reviewedAt ? new Date(row.reviewedAt as string) : undefined,
+      reviewComments: row.reviewComments as string | undefined,
+      createdAt: new Date(row.createdAt as string),
+      tenantId: row.tenantId as string | undefined,
     };
   }
 
@@ -68,10 +71,16 @@ export class ApprovalRepository {
     this.ensureConnected();
 
     try {
-      const db = this.getDb()!;
+      const db = this.getDb();
+      if (!db) {
+        throw new Error('Database not available');
+      }
+
       const row = await db.get('SELECT * FROM approval_requests WHERE id = ?', [id]);
 
-      if (!row) return null;
+      if (!row) {
+        return null;
+      }
 
       return this.mapRowToApprovalRequest(row);
     } catch (error) {
@@ -88,7 +97,11 @@ export class ApprovalRepository {
     this.ensureConnected();
 
     try {
-      const db = this.getDb()!;
+      const db = this.getDb();
+      if (!db) {
+        throw new Error('Database not available');
+      }
+
       let query = `SELECT * FROM approval_requests WHERE 1=1`;
       const params: (string | number | boolean | null)[] = [];
 
@@ -127,7 +140,11 @@ export class ApprovalRepository {
     this.ensureConnected();
 
     try {
-      const db = this.getDb()!;
+      const db = this.getDb();
+      if (!db) {
+        throw new Error('Database not available');
+      }
+
       const updateFields = [];
       const values = [];
 
@@ -179,7 +196,11 @@ export class ApprovalRepository {
     this.ensureConnected();
 
     try {
-      const db = this.getDb()!;
+      const db = this.getDb();
+      if (!db) {
+        throw new Error('Database not available');
+      }
+
       const result = await db.run('DELETE FROM approval_requests WHERE id = ?', [id]);
       const deleted = (result.changes ?? 0) > 0;
 

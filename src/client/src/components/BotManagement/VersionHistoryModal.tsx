@@ -4,7 +4,7 @@ import { LoadingSpinner } from '../DaisyUI/Loading';
 import Timeline from '../DaisyUI/Timeline';
 import Badge from '../DaisyUI/Badge';
 import { Alert } from '../DaisyUI/Alert';
-import { History, RotateCcw, Clock, Check } from 'lucide-react';
+import { Check, Clock, History, RotateCcw, User } from 'lucide-react';
 import { apiService } from '../../services/api';
 
 interface Version {
@@ -148,7 +148,7 @@ const VersionHistoryModal: React.FC<VersionHistoryModalProps> = ({ botId, botNam
         )}
 
         <div className="flex justify-end pt-2">
-           <button onClick={onClose} className="btn btn-ghost">Close</button>
+           <button onClick={onClose} className="btn btn-ghost" aria-label="Close modal">Close</button>
         </div>
       </div>
     </Modal>

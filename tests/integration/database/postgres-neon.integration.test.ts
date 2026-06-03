@@ -1,7 +1,7 @@
 import 'reflect-metadata';
-import { DatabaseManager } from '../../../src/database/DatabaseManager';
 import * as crypto from 'crypto';
 import dotenv from 'dotenv';
+import { DatabaseManager } from '../../../src/database/DatabaseManager';
 
 // Load .env to pick up DATABASE_URL
 dotenv.config();
@@ -10,7 +10,7 @@ console.log('DATABASE_URL present:', !!process.env.DATABASE_URL);
 
 describe('Postgres Real Integration (Neon.tech)', () => {
   const dbUrl = process.env.DATABASE_URL;
-  
+
   // Only run if DATABASE_URL is present
   const describeIfUrl = dbUrl ? describe : describe.skip;
 
@@ -22,11 +22,11 @@ describe('Postgres Real Integration (Neon.tech)', () => {
     beforeAll(async () => {
       // Reset singleton
       (DatabaseManager as any).instance = undefined;
-      
+
       dbManager = DatabaseManager.getInstance({
         type: 'postgres',
       });
-      
+
       await dbManager.connect();
     });
 
@@ -52,7 +52,7 @@ describe('Postgres Real Integration (Neon.tech)', () => {
     it('should perform message CRUD operations', async () => {
       const content = 'Hello Postgres integration test';
       const authorId = 'user-real-test';
-      
+
       // 1. Save message
       const result = await dbManager.saveMessage(testChannelId, authorId, content, 'test-provider');
       expect(result).toBeDefined();
@@ -66,19 +66,19 @@ describe('Postgres Real Integration (Neon.tech)', () => {
 
     it('should perform log persistence', async () => {
       const logMessage = `Integration test log ${crypto.randomUUID()}`;
-      
+
       await dbManager.saveLog({
         level: 'info',
         message: logMessage,
         context: 'integration-test',
-        metadata: { neon: true }
+        metadata: { neon: true },
       });
 
       // Verify log exists - using raw query since we don't have getLogs method yet
       // @ts-ignore
       const db = dbManager.db;
       const rows = await db.all('SELECT * FROM logs WHERE message = ?', [logMessage]);
-      
+
       expect(rows).toHaveLength(1);
       expect(rows[0].level).toBe('info');
     });
@@ -111,7 +111,7 @@ describe('Postgres Real Integration (Neon.tech)', () => {
       // 4. Delete
       const deleted = await dbManager.deleteBotConfiguration(retrieved!.id!);
       expect(deleted).toBe(true);
-      
+
       const gone = await dbManager.getBotConfigurationByName(testBotName);
       expect(gone).toBeNull();
     });
@@ -120,9 +120,9 @@ describe('Postgres Real Integration (Neon.tech)', () => {
       const complexMetadata = {
         nested: { key: 'value' },
         tags: ['a', 'b'],
-        count: 42
+        count: 42,
       };
-      
+
       const messageId = await dbManager.storeMessage({
         messageId: `msg-${crypto.randomUUID()}`,
         channelId: testChannelId,
@@ -131,13 +131,13 @@ describe('Postgres Real Integration (Neon.tech)', () => {
         authorName: 'Complex User',
         timestamp: new Date(),
         provider: 'test',
-        metadata: complexMetadata
+        metadata: complexMetadata,
       });
 
       expect(messageId).toBeDefined();
-      
+
       const history = await dbManager.getMessageHistory(testChannelId, 10);
-      const found = history.find(m => m.metadata && (m.metadata as any).count === 42);
+      const found = history.find((m) => m.metadata && (m.metadata as any).count === 42);
       expect(found).toBeDefined();
       expect(found?.metadata).toEqual(complexMetadata);
     });

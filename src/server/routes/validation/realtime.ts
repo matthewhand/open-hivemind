@@ -44,6 +44,7 @@ export function createRealtimeRoutes(): Router {
         return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
           success: false,
           message: 'Failed to validate configuration',
+
           error: ErrorUtils.getMessage(error as any),
         });
       }
@@ -123,6 +124,7 @@ export function createRealtimeRoutes(): Router {
           success: false,
           error: ErrorUtils.getMessage(hivemindError),
           code: ErrorUtils.getCode(hivemindError) || 'VALIDATION_ERROR',
+
           timestamp:
             hivemindError instanceof Error && 'timestamp' in hivemindError
               ? (hivemindError as any).timestamp
@@ -171,6 +173,7 @@ export function createRealtimeRoutes(): Router {
         return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
           success: false,
           error: ErrorUtils.getMessage(hivemindError),
+
           code: ErrorUtils.getCode(hivemindError) || 'VALIDATION_ERROR',
           timestamp:
             hivemindError instanceof Error && 'timestamp' in hivemindError
@@ -216,6 +219,7 @@ export function createRealtimeRoutes(): Router {
 
         return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
           success: false,
+
           error: ErrorUtils.getMessage(hivemindError),
           code: ErrorUtils.getCode(hivemindError) || 'VALIDATION_ERROR',
           timestamp:

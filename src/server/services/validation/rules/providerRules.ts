@@ -7,6 +7,7 @@ export const providerRules: ValidationRule[] = [
     description: 'OpenAI API key must be provided when using OpenAI as LLM provider',
     category: 'required',
     severity: 'error',
+
     validator: (config: Record<string, unknown>) => {
       const errors: ValidationError[] = [];
       const warnings: ValidationWarning[] = [];

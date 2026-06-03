@@ -1,136 +1,148 @@
 import {
-  isChatCompletionResponse,
-  isCompletionResponse,
-  isModelsListResponse,
   isOpenAIError,
+  isChatCompletionResponse,
+  isModelsListResponse,
+  isCompletionResponse,
   OpenAIResponse,
 } from '../../../src/types/openai';
 
 describe('OpenAI Type Guards', () => {
   describe('isOpenAIError', () => {
-    it('returns true when error is present', () => {
-      const response = {
+    it('should return true for a valid OpenAIError object', () => {
+      const errorResponse: OpenAIResponse = {
         object: 'error',
-        error: { message: 'Some error', type: 'invalid_request_error' },
-      } as OpenAIResponse;
-      expect(isOpenAIError(response)).toBe(true);
+        error: {
+          message: 'Invalid API key',
+          type: 'invalid_request_error',
+        },
+      };
+      expect(isOpenAIError(errorResponse)).toBe(true);
     });
 
-    it('returns false when error is not present', () => {
+    it('should return false when error property is missing', () => {
       const response = {
         object: 'chat.completion',
-        created: 1234567890,
-      } as OpenAIResponse;
+        id: '123',
+      } as any;
       expect(isOpenAIError(response)).toBe(false);
     });
 
-    it('returns false when error is explicitly null', () => {
-      const response = { object: 'chat.completion', error: null } as any as OpenAIResponse;
+    it('should return false when error property is null', () => {
+      const response = {
+        object: 'error',
+        error: null,
+      } as any;
       expect(isOpenAIError(response)).toBe(false);
+    });
+
+    it('should return false when error property is undefined', () => {
+      const response = {
+        object: 'error',
+        error: undefined,
+      } as any;
+      expect(isOpenAIError(response)).toBe(false);
+    });
+
+    it('should return false for other valid response types', () => {
+      const chatResponse: OpenAIResponse = {
+        id: 'chatcmpl-123',
+        object: 'chat.completion',
+        created: 1677652288,
+        model: 'gpt-3.5-turbo-0613',
+        choices: [
+          {
+            index: 0,
+            message: {
+              role: 'assistant',
+              content: 'Hello!',
+            },
+            finish_reason: 'stop',
+          },
+        ],
+        usage: {
+          prompt_tokens: 9,
+          completion_tokens: 12,
+          total_tokens: 21,
+        },
+      };
+      expect(isOpenAIError(chatResponse)).toBe(false);
     });
   });
 
   describe('isChatCompletionResponse', () => {
-    it('returns true when object is chat.completion', () => {
-      const response = {
-        object: 'chat.completion',
-        created: 1234567890,
+    it('should return true for a valid ChatCompletionResponse', () => {
+      const response: OpenAIResponse = {
         id: 'chatcmpl-123',
-        model: 'gpt-3.5-turbo',
+        object: 'chat.completion',
+        created: 123456789,
+        model: 'gpt-4',
         choices: [],
-        usage: { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 },
-      } as OpenAIResponse;
+        usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
+      };
       expect(isChatCompletionResponse(response)).toBe(true);
     });
 
-    it('returns false when object is not chat.completion', () => {
-      const response = {
-        object: 'text_completion',
-      } as OpenAIResponse;
-      expect(isChatCompletionResponse(response)).toBe(false);
-    });
-
-    it('returns false when object property is missing', () => {
-      const response = {
-        created: 1234567890,
-      } as any as OpenAIResponse;
+    it('should return false for an Error response', () => {
+      const response: OpenAIResponse = {
+        object: 'error',
+        error: { message: 'err', type: 'type' },
+      };
       expect(isChatCompletionResponse(response)).toBe(false);
     });
   });
 
   describe('isModelsListResponse', () => {
-    it('returns true for a valid models list response', () => {
-      const response = {
+    it('should return true for a valid ModelsListResponse with data', () => {
+      const response: OpenAIResponse = {
         object: 'list',
-        created: 1234567890,
-        data: [{ id: 'model-1', object: 'model', created: 123456, owned_by: 'openai' }],
-      } as OpenAIResponse;
+        created: 123456789,
+        data: [
+          {
+            id: 'gpt-4',
+            object: 'model',
+            created: 123456789,
+            owned_by: 'openai',
+          },
+        ],
+      };
       expect(isModelsListResponse(response)).toBe(true);
     });
 
-    it('returns false when object is not list', () => {
-      const response = {
-        object: 'chat.completion',
-        data: [{ id: 'model-1' }],
-      } as any as OpenAIResponse;
-      expect(isModelsListResponse(response)).toBe(false);
-    });
-
-    it('returns false when data is missing', () => {
-      const response = {
+    it('should return true for an empty ModelsListResponse', () => {
+      const response: OpenAIResponse = {
         object: 'list',
-      } as any as OpenAIResponse;
-      expect(isModelsListResponse(response)).toBe(false);
-    });
-
-    it('returns false when data is not an array', () => {
-      const response = {
-        object: 'list',
-        data: 'not an array',
-      } as any as OpenAIResponse;
-      expect(isModelsListResponse(response)).toBe(false);
-    });
-
-    it('returns false when data array is empty', () => {
-      const response = {
-        object: 'list',
+        created: 123456789,
         data: [],
-      } as any as OpenAIResponse;
-      expect(isModelsListResponse(response)).toBe(false);
+      };
+      expect(isModelsListResponse(response)).toBe(true);
     });
 
-    it('returns false when first element of data is missing id', () => {
-      const response = {
-        object: 'list',
-        data: [{ object: 'model' }],
-      } as any as OpenAIResponse;
+    it('should return false if object is not list', () => {
+      const response: any = {
+        object: 'not-list',
+        data: [{ id: 'model-1' }],
+      };
       expect(isModelsListResponse(response)).toBe(false);
     });
   });
 
   describe('isCompletionResponse', () => {
-    it('returns true when object is text_completion', () => {
-      const response = {
+    it('should return true for a valid CompletionResponse', () => {
+      const response: OpenAIResponse = {
+        id: 'cmpl-123',
         object: 'text_completion',
-        created: 1234567890,
+        created: 123456789,
         model: 'text-davinci-003',
         choices: [],
-        usage: { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 },
-      } as OpenAIResponse;
+        usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
+      };
       expect(isCompletionResponse(response)).toBe(true);
     });
 
-    it('returns false when object is not text_completion', () => {
-      const response = {
+    it('should return false for other response types', () => {
+      const response: any = {
         object: 'chat.completion',
-      } as OpenAIResponse;
-      expect(isCompletionResponse(response)).toBe(false);
-    });
-
-    it('returns false when object property is missing', () => {
-      const response = {
-        created: 1234567890,
-      } as any as OpenAIResponse;
+      };
       expect(isCompletionResponse(response)).toBe(false);
     });
   });

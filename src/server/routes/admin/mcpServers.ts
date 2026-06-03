@@ -13,6 +13,7 @@ import {
   ServerNameParamSchema,
 } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
+import { enrichConnectedMcpServers } from './enrichMcpServers';
 
 const router = Router();
 
@@ -222,19 +223,9 @@ router.get('/mcp-servers', async (req: Request, res: Response) => {
     // Get stored MCP server configurations
     const storedMcps = await webUIStorage.getMcps();
 
-    // Enrich connected servers with stored configuration data
-    const enrichedServers = connectedServers.map((server) => {
-      const storedConfig = storedMcps.find((mcp: any) => mcp.name === server.name);
-      return {
-        name: server.name,
-        serverUrl: storedConfig?.serverUrl || storedConfig?.url || '',
-        connected: server.connected,
-        tools: server.tools,
-        toolCount: server.toolCount,
-        lastConnected: server.lastConnected,
-        description: storedConfig?.description || '',
-      };
-    });
+    // Enrich connected servers with stored configuration data.
+    // Uses a name-indexed Map for O(n + m) lookups (see enrichConnectedMcpServers).
+    const enrichedServers = enrichConnectedMcpServers(connectedServers, storedMcps);
 
     return res.json({
       success: true,
@@ -303,7 +294,9 @@ router.get(
       const isConnected = connectedServers.includes(name);
 
       // Get stored configuration for additional metadata
+
       const storedMcps = await webUIStorage.getMcps();
+
       const storedConfig = storedMcps.find((mcp: any) => mcp.name === name);
 
       if (!isConnected && !storedConfig) {
@@ -348,6 +341,7 @@ router.post(
 
       // Get stored configuration
       const storedMcps = await webUIStorage.getMcps();
+
       const storedConfig = storedMcps.find((mcp: any) => mcp.name === name);
 
       if (!storedConfig) {

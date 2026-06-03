@@ -33,6 +33,7 @@ async function loadWebhookRoutes(): Promise<void> {
       });
   } catch (error) {
     log('Failed to load webhook routes:', error);
+
     configureWebhookRoutes = (_app: express.Application) => {
       return;
     };

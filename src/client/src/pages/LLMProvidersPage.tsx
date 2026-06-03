@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useSearchParams } from 'react-router-dom';
 import { useModal } from '../hooks/useModal';
 import Card from '../components/DaisyUI/Card';
@@ -643,7 +644,7 @@ const LLMProvidersPage: React.FC = () => {
   const { modalState, openAddModal, openEditModal, closeModal } = useModal();
   const [profiles, setProfiles] = useState<any[]>([]);
   const [defaultStatus, setDefaultStatus] = useState<any>(null);
-  const [expandedProfile, setExpandedProfile] = useState<string | null>(null);
+  const [expandedProfile, setExpandedProfile] = useLocalStorage<string | null>('ui.llmProviders.expandedProfile', null);
   const [libraryStatus, setLibraryStatus] = useState<
     Record<string, { installed: boolean; package: string }>
   >({});

@@ -1,10 +1,10 @@
 import Debug from 'debug';
 import {
   IMemoryProvider,
+  IServiceDependencies,
   MemoryEntry,
   MemoryScopeOptions,
   MemorySearchResult,
-  IServiceDependencies
 } from '@hivemind/shared-types';
 
 const debug = Debug('hivemind:memory-postgres');
@@ -28,18 +28,37 @@ export class PostgresMemoryProvider implements IMemoryProvider {
     if (dependencies?.getDatabaseManager) {
       this.dbManager = dependencies.getDatabaseManager();
     }
-    
+
     // Resolve embedding provider
     if (dependencies?.getLlmProviders) {
-      const providers = dependencies.getLlmProviders();
-      // Use configured profile or fallback to first one that can embed
-      if (this.config.embeddingProfile) {
-        this.embeddingProvider = providers.find(p => p.name === this.config.embeddingProfile);
-      }
-      if (!this.embeddingProvider) {
-        this.embeddingProvider = providers.find(p => typeof p.generateEmbedding === 'function');
-      }
+      this.embeddingProvider = this.resolveEmbeddingProvider(dependencies.getLlmProviders());
     }
+  }
+
+  /**
+   * Resolves an embedding-capable LLM provider.
+   *
+   * When `embeddingProfile` is configured, the named provider must exist AND
+   * implement `generateEmbedding` — otherwise a clear error is thrown rather
+   * than silently falling back to a different provider. When no profile is
+   * configured, the first provider that supports embeddings is used.
+   */
+  private resolveEmbeddingProvider(providers: any[]): any {
+    if (this.config.embeddingProfile) {
+      const named = providers.find((p) => p.name === this.config.embeddingProfile);
+      if (!named) {
+        throw new Error(
+          `PostgresMemoryProvider: Configured embedding profile "${this.config.embeddingProfile}" was not found among LLM providers`
+        );
+      }
+      if (typeof named.generateEmbedding !== 'function') {
+        throw new Error(
+          `PostgresMemoryProvider: Configured embedding profile "${this.config.embeddingProfile}" does not support embeddings (no generateEmbedding). Use a provider such as OpenAI or OpenWebUI/Ollama.`
+        );
+      }
+      return named;
+    }
+    return providers.find((p) => typeof p.generateEmbedding === 'function');
   }
 
   private ensureInitialized() {
@@ -52,11 +71,12 @@ export class PostgresMemoryProvider implements IMemoryProvider {
       throw new Error('PostgresMemoryProvider: DatabaseManager not available');
     }
     if (!this.embeddingProvider && this.dependencies?.getLlmProviders) {
-      const providers = this.dependencies.getLlmProviders();
-      this.embeddingProvider = providers.find(p => typeof p.generateEmbedding === 'function');
+      this.embeddingProvider = this.resolveEmbeddingProvider(this.dependencies.getLlmProviders());
     }
     if (!this.embeddingProvider) {
-      throw new Error('PostgresMemoryProvider: Embedding provider not available');
+      throw new Error(
+        'PostgresMemoryProvider: No embedding-capable LLM provider available. Configure a provider that implements generateEmbedding (e.g. OpenAI or OpenWebUI/Ollama).'
+      );
     }
   }
 
@@ -66,16 +86,16 @@ export class PostgresMemoryProvider implements IMemoryProvider {
     options?: MemoryScopeOptions
   ): Promise<MemoryEntry> {
     this.ensureInitialized();
-    
+
     const embedding = await this.embeddingProvider.generateEmbedding(content);
-    
+
     const id = await this.dbManager.addMemory({
       content,
       metadata,
       userId: options?.userId,
       agentId: options?.agentId,
       sessionId: options?.sessionId,
-      embedding
+      embedding,
     });
 
     return {
@@ -84,7 +104,7 @@ export class PostgresMemoryProvider implements IMemoryProvider {
       metadata,
       userId: options?.userId,
       agentId: options?.agentId,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
   }
 
@@ -93,12 +113,12 @@ export class PostgresMemoryProvider implements IMemoryProvider {
     options?: { limit?: number; threshold?: number } & MemoryScopeOptions
   ): Promise<MemorySearchResult> {
     this.ensureInitialized();
-    
+
     const embedding = await this.embeddingProvider.generateEmbedding(query);
     const results = await this.dbManager.searchMemories(embedding, {
       limit: options?.limit,
       userId: options?.userId,
-      agentId: options?.agentId
+      agentId: options?.agentId,
     });
 
     const entries = results
@@ -109,7 +129,7 @@ export class PostgresMemoryProvider implements IMemoryProvider {
         metadata: r.metadata,
         userId: r.userId,
         agentId: r.agentId,
-        timestamp: r.createdAt ? new Date(r.createdAt).getTime() : undefined
+        timestamp: r.createdAt ? new Date(r.createdAt).getTime() : undefined,
       }))
       .filter((e: any) => options?.threshold == null || e.score >= options.threshold);
 
@@ -121,7 +141,7 @@ export class PostgresMemoryProvider implements IMemoryProvider {
     const results = await this.dbManager.getMemories({
       limit: options?.limit,
       userId: options?.userId,
-      agentId: options?.agentId
+      agentId: options?.agentId,
     });
 
     return results.map((r: any) => ({
@@ -130,25 +150,24 @@ export class PostgresMemoryProvider implements IMemoryProvider {
       metadata: r.metadata,
       userId: r.userId,
       agentId: r.agentId,
-      timestamp: r.createdAt ? new Date(r.createdAt).getTime() : undefined
+      timestamp: r.createdAt ? new Date(r.createdAt).getTime() : undefined,
     }));
   }
 
   async getMemory(id: string): Promise<MemoryEntry | null> {
     this.ensureInitialized();
-    // Implementation for getting single memory from dbManager
-    // For now we use getMemories and find
-    const memories = await this.dbManager.getMemories({ limit: 1000 });
-    const found = memories.find((m: any) => String(m.id) === id);
+    // Direct indexed lookup (SELECT ... WHERE id = $1) — O(1) on the primary
+    // key, instead of fetching up to 1000 rows and scanning them in JS.
+    const found = await this.dbManager.getMemoryById(id);
     if (!found) return null;
-    
+
     return {
       id: String(found.id),
       content: found.content,
       metadata: found.metadata,
       userId: found.userId,
       agentId: found.agentId,
-      timestamp: found.createdAt ? new Date(found.createdAt).getTime() : undefined
+      timestamp: found.createdAt ? new Date(found.createdAt).getTime() : undefined,
     };
   }
 
@@ -169,7 +188,7 @@ export class PostgresMemoryProvider implements IMemoryProvider {
     this.ensureInitialized();
     await this.dbManager.deleteAllMemories({
       userId: options?.userId,
-      agentId: options?.agentId
+      agentId: options?.agentId,
     });
   }
 
@@ -181,7 +200,7 @@ export class PostgresMemoryProvider implements IMemoryProvider {
     } catch (err) {
       return {
         status: 'error',
-        details: { message: err instanceof Error ? err.message : String(err) }
+        details: { message: err instanceof Error ? err.message : String(err) },
       };
     }
   }
@@ -197,5 +216,5 @@ export function create(config: PostgresMemoryConfig, dependencies: IServiceDepen
 export const manifest = {
   displayName: 'Postgres Vector',
   description: 'Native Postgres vector memory storage using pgvector',
-  type: 'memory'
+  type: 'memory',
 };

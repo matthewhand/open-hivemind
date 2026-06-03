@@ -46,6 +46,7 @@ export interface MessageContext {
   /** Channel where the message was received. */
   channelId: string;
   /** Open-ended metadata bag for cross-cutting concerns. */
+
   metadata: Record<string, any>;
 }
 

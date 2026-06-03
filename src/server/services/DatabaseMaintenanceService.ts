@@ -1,8 +1,8 @@
 import Debug from 'debug';
 import { injectable, singleton } from 'tsyringe';
 import Logger from '../../common/logger';
-import { DatabaseManager } from '../../database/DatabaseManager';
 import databaseConfig from '../../config/databaseConfig';
+import { DatabaseManager } from '../../database/DatabaseManager';
 
 const debug = Debug('app:services:DatabaseMaintenanceService');
 const logger = Logger.withContext('DatabaseMaintenance');
@@ -18,7 +18,7 @@ export class DatabaseMaintenanceService {
   private static instance: DatabaseMaintenanceService;
   private maintenanceInterval: NodeJS.Timeout | null = null;
   private cleanupInterval: NodeJS.Timeout | null = null;
-  
+
   // Keep-alive every 4 minutes (Neon scales to zero after 5)
   private readonly keepAliveIntervalMs = 4 * 60 * 1000;
   // Cleanup once every 24 hours
@@ -43,14 +43,14 @@ export class DatabaseMaintenanceService {
 
     // 1. Setup Keep-Alive (Ping)
     this.maintenanceInterval = setInterval(() => {
-      this.pingDatabase().catch(err => {
+      this.pingDatabase().catch((err) => {
         debug('Database keep-alive ping failed:', err);
       });
     }, this.keepAliveIntervalMs);
 
     // 2. Setup Daily Cleanup
     this.cleanupInterval = setInterval(() => {
-      this.performCleanup().catch(err => {
+      this.performCleanup().catch((err) => {
         logger.error('Database daily cleanup failed', err);
       });
     }, this.cleanupIntervalMs);
@@ -59,7 +59,7 @@ export class DatabaseMaintenanceService {
     setTimeout(() => {
       this.pingDatabase();
       if (databaseConfig.get('AUTO_CLEANUP_ON_STARTUP')) {
-         this.performCleanup();
+        this.performCleanup();
       }
     }, 10000);
   }

@@ -7,6 +7,9 @@ const debug = Debug('app:profileUtils');
 export interface ProfileLoaderOptions<T> {
   filename: string;
   defaultData: T;
+   
+   
+   
   validateAndMigrate: (parsed: any) => T;
   profileType: string;
 }

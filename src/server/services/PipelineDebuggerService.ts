@@ -7,6 +7,7 @@ const debug = Debug('app:PipelineDebuggerService');
 export interface Breakpoint {
   id: string;
   stage: string;
+
   context: any;
   timestamp: string;
 }
@@ -43,8 +44,9 @@ export class PipelineDebuggerService extends EventEmitter {
   /**
    * Pause execution and wait for manual resume
    */
+
   public async pause(stage: string, context: any): Promise<any> {
-    const id = `bp_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const id = `bp_${Date.now()}_${crypto.randomUUID()}`;
     const breakpoint: Breakpoint = {
       id,
       stage,
@@ -70,8 +72,11 @@ export class PipelineDebuggerService extends EventEmitter {
   }
 
   /**
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
    * Resume execution for a breakpoint
    */
+
   public resume(id: string, updatedContext?: any): void {
     if (this.activeBreakpoints.has(id)) {
       debug(`Resuming pipeline for breakpoint: ${id}`);

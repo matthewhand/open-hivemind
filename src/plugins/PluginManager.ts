@@ -5,6 +5,7 @@ import * as path from 'path';
 import Debug from 'debug';
 import { Logger } from '@common/logger';
 import { loadPlugin, PLUGINS_DIR, type PluginManifest } from './PluginLoader';
+import { isSafeUrl } from '../utils/ssrfGuard';
 import {
   PluginSecurityPolicy,
   type PluginSecurityStatus,
@@ -124,6 +125,7 @@ function validateManifestType(name: string, manifest: PluginManifest): void {
 /**
  * Validates that a loaded module exports a well-formed manifest.
  */
+
 function validateManifest(name: string, mod: any): PluginManifest {
   const manifest: PluginManifest = mod.manifest;
 
@@ -245,6 +247,12 @@ function validateRepoUrl(url: string): void {
  */
 export async function installPlugin(repoUrl: string): Promise<PluginInfo> {
   validateRepoUrl(repoUrl);
+
+  const check = await isSafeUrl(repoUrl);
+  if (!check.safe) {
+    throw new PluginValidationError(`Security policy violation: ${check.reason}`);
+  }
+
   await fs.promises.mkdir(PLUGINS_DIR, { recursive: true });
 
   const tempName = `_install_${Date.now()}`;
@@ -447,7 +455,10 @@ let _securityPolicy: PluginSecurityPolicy | undefined;
  */
 export function getSecurityPolicy(): PluginSecurityPolicy {
   if (!_securityPolicy) {
-    _securityPolicy = new PluginSecurityPolicy(PLUGIN_SIGNING_KEY!);
+    if (!PLUGIN_SIGNING_KEY) {
+      throw new Error('HIVEMIND_PLUGIN_SIGNING_KEY is required but not configured');
+    }
+    _securityPolicy = new PluginSecurityPolicy(PLUGIN_SIGNING_KEY);
   }
   return _securityPolicy;
 }

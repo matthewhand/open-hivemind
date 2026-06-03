@@ -18,7 +18,7 @@ import { BotTaskScheduler } from '@src/server/services/BotTaskScheduler';
 import { DatabaseMaintenanceService } from '@src/server/services/DatabaseMaintenanceService';
 import { ShutdownCoordinator } from '@src/server/ShutdownCoordinator';
 import AnomalyDetectionService from '@src/services/AnomalyDetectionService';
-import DemoModeService from '@src/services/DemoModeService';
+import type DemoModeService from '@src/services/DemoModeService';
 import StartupGreetingService from '@src/services/StartupGreetingService';
 import { validateRequiredEnvVars } from '@src/utils/envValidation';
 import * as debugEnvVarsModule from '@config/debugEnvVars';
@@ -29,6 +29,7 @@ import type { IMessage } from '@message/interfaces/IMessage';
 import * as messengerProviderModule from '@message/management/getMessengerProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 import Logger from '@common/logger';
+import { UserConfigStore } from '@src/config/UserConfigStore';
 import { initProviders } from '../initProviders';
 import startupDiagnostics from '../utils/startupDiagnostics';
 import { reloadGlobalConfigs } from './routes/config';
@@ -49,23 +50,29 @@ interface MessengerService {
   providerName?: string;
   botId?: string;
   initialize(): Promise<void>;
+
+  // eslint-disable-next-line @typescript-eslint/consistent-type-imports
   setApp?(app: import('express').Application): void;
   setMessageHandler(
     handler: (
-      message: any,
-      historyMessages?: any[],
-      botConfig?: Record<string, any>
+      message: IMessage,
+      historyMessages?: IMessage[],
+      botConfig?: Record<string, unknown>
     ) => Promise<string | null>
   ): void;
   getAgentStartupSummaries?(): Array<Record<string, string>>;
   getDefaultChannel?(): string | null;
   getChannels?(): string[];
-  sendMessageToChannel?(channelId: string, text: string): Promise<any>;
-  sendMessage?(channelId: string, text: string): Promise<any>;
+  sendMessageToChannel?(channelId: string, text: string): Promise<unknown>;
+  sendMessage?(channelId: string, text: string): Promise<unknown>;
   constructor?: { name?: string };
 }
 
-async function startBot(app: import('express').Application, messengerService: any) {
+async function startBot(
+  // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+  app: import('express').Application,
+  messengerService: MessengerService
+): Promise<void> {
   const providerType =
     messengerService.providerName || messengerService.constructor?.name || 'Unknown';
 
@@ -90,9 +97,13 @@ async function startBot(app: import('express').Application, messengerService: an
       const { MessageBus } = await import('@src/events/MessageBus');
       const bus = MessageBus.getInstance();
       messengerService.setMessageHandler(
-        async (message: any, historyMessages?: any[], botConfig?: Record<string, any>) => {
-          const msg = message as IMessage;
-          const history = (historyMessages as IMessage[]) || [];
+        async (
+          message: IMessage,
+          historyMessages?: IMessage[],
+          botConfig?: Record<string, unknown>
+        ) => {
+          const msg = message;
+          const history = historyMessages || [];
           const config = botConfig || {};
 
           await bus.emitAsync('message:incoming', {
@@ -109,8 +120,9 @@ async function startBot(app: import('express').Application, messengerService: an
       );
     } else {
       // Legacy mode: call handleMessage() directly
-      messengerService.setMessageHandler((...args: any[]) =>
-        messageHandlerModule.handleMessage(args[0], args[1], args[2])
+      messengerService.setMessageHandler(
+        (...args: any[]): Promise<string | null> =>
+          messageHandlerModule.handleMessage(args[0], args[1], args[2])
       );
     }
     indexLog('[DEBUG] Message handler set up successfully.');
@@ -126,7 +138,14 @@ async function startBot(app: import('express').Application, messengerService: an
           ? messengerService.getAgentStartupSummaries()
           : [];
 
-      const renderPrompt = (p: string | undefined) => {
+      const renderPrompt = (
+        p: string | undefined
+      ): {
+        systemPromptMode: string;
+        systemPromptPreview?: string;
+        systemPrompt?: string;
+        systemPromptLength: number;
+      } => {
         const text = String(p || '').trim();
         if (!text) {
           return { systemPromptMode: 'off', systemPromptPreview: '', systemPromptLength: 0 };
@@ -214,15 +233,25 @@ export interface InitServicesResult {
 }
 
 /**
+ // eslint-disable-next-line @typescript-eslint/consistent-type-imports
  * Initialize all backend services: DI, database, providers, messengers, pipeline, etc.
  * Returns the messenger services array so the caller can pass it to HTTP/webhook setup.
  */
 export async function initServices(
+  // eslint-disable-next-line @typescript-eslint/consistent-type-imports
   app: import('express').Application
 ): Promise<InitServicesResult> {
   const shutdownCoordinator = ShutdownCoordinator.getInstance();
 
   registerServices();
+
+  // Load user configuration early (async)
+  try {
+    await UserConfigStore.getInstance().loadConfig();
+    appLogger.info('User configuration loaded');
+  } catch (error) {
+    appLogger.warn('Failed to load user configuration', { error });
+  }
 
   // Initialize database connection
   try {
@@ -296,7 +325,7 @@ export async function initServices(
   await startupDiagnostics.logStartupDiagnostics();
 
   // Initialize Demo Mode Service
-  const demoService = container.resolve(DemoModeService);
+  const demoService = container.resolve<DemoModeService>('DemoModeService');
   await demoService.initialize();
 
   if (demoService.isInDemoMode()) {
@@ -344,10 +373,29 @@ export async function initServices(
   });
 
   // Initialize AnomalyDetectionService
+
   AnomalyDetectionService.getInstance();
   appLogger.info('\ud83d\udd0d Anomaly Detection Service initialized');
 
+  // Initialize and start IntegrationAnomalyDetector. It reads live provider
+  // metrics from ProviderMetricsCollector on its own interval, so simply
+  // starting it feeds it the relevant signals. Skip in test runs to avoid
+  // leaking timers. Results are exposed via GET /api/monitoring/anomalies.
+  if (process.env.NODE_ENV !== 'test' && process.env.DISABLE_INTEGRATION_ANOMALY !== 'true') {
+    const { IntegrationAnomalyDetector } = await import(
+      '@src/monitoring/IntegrationAnomalyDetector'
+    );
+    const integrationDetector = IntegrationAnomalyDetector.getInstance();
+    integrationDetector.startDetection();
+    shutdownCoordinator.registerService({
+      name: 'IntegrationAnomalyDetector',
+      shutdown: () => integrationDetector.shutdown(),
+    });
+    appLogger.info('\ud83d\udd0d Integration Anomaly Detector started');
+  }
+
   // Prepare messenger services collection for optional webhook registration later
+
   let messengerServices: any[] = [];
 
   // In demo mode, skip messenger initialization if no real providers configured
@@ -432,15 +480,18 @@ export async function initServices(
 
     const bus = MessageBus.getInstance();
 
-    // Create and register a pipeline instance per messenger service.
-    // createPipeline() internally creates a PipelineTracer and stores it
-    // via setActiveTracer() — no need to create a second tracer here.
-    for (const service of messengerServices) {
+    // The pipeline stages subscribe to shared, bus-wide events that carry no
+    // per-service identity, so the pipeline must be wired onto the shared bus
+    // exactly once. createPipeline() is idempotent per bus instance: it returns
+    // true on the first registration and is a no-op for subsequent services.
+    // (It internally creates a PipelineTracer and stores it via setActiveTracer().)
+    const primaryService = messengerServices[0];
+    if (primaryService) {
       createPipeline(bus, {
         botConfig: {},
-        messengerService: service,
-        botId: service.botId,
-        defaultChannelId: service.getDefaultChannel?.() ?? undefined,
+        messengerService: primaryService,
+        botId: primaryService.botId,
+        defaultChannelId: primaryService.getDefaultChannel?.() ?? undefined,
       });
     }
 
@@ -454,6 +505,7 @@ export async function initServices(
  * Register webhook routes if WEBHOOK_ENABLED is set.
  */
 export async function initWebhooks(
+  // eslint-disable-next-line @typescript-eslint/consistent-type-imports
   app: import('express').Application,
   messengerServices: MessengerService[]
 ): Promise<void> {

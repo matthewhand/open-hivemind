@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import Debug from 'debug';
 import { inject, injectable, singleton } from 'tsyringe';
 import {

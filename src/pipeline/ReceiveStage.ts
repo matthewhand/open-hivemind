@@ -62,7 +62,8 @@ export class ReceiveStage {
         debug('GLOBAL KILL SWITCH ACTIVE: Rejecting incoming message');
         return null;
       }
-    } catch (e) {
+
+    } catch {
       // Ignore DI errors during test/setup
     }
 

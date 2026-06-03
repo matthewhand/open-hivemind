@@ -34,6 +34,7 @@ Welcome to the Open-Hivemind User Guide. This document provides a detailed walkt
   - [Integrations](#integrations)
 - [Developer & Tools](#developer--tools)
   - [API Documentation](#api-documentation)
+  - [Help & FAQ](#help--faq)
 - [Documentation Maintenance](#documentation-maintenance)
 
 ---
@@ -208,6 +209,19 @@ Browse, install, and manage extensions and packages for your application.
 
 ## System
 
+### [Plugin Security](/admin/plugin-security)
+Monitor and manage security settings for all installed plugins.
+
+![Plugin Security Dashboard](screenshots/plugin-security-dashboard.png)
+
+*   **Security Dashboard**: Visual overview of all installed plugins, their trust levels, and signature verification status.
+*   **Filtering**: Easily view plugins by status such as Trusted, Untrusted, Built-in, or Verification Failed.
+
+![Plugin Security Filtered](screenshots/plugin-security-filtered.png)
+
+*   **Capability Management**: Review specific capabilities granted, denied, or required by each plugin (e.g., `network`, `llm`, `filesystem`).
+*   **Actions**: Re-verify plugin signatures or manually trust/revoke trust for community plugins. (Built-in plugins are always trusted).
+
 ### Settings Overview
 General system configuration.
 
@@ -270,6 +284,16 @@ Manage configuration, alerts, and system health.
 *   **Backup History**: Create and restore manual backups, and view automatic backup logs.
 *   **Performance Tuning**: Analyze real-time API endpoint status and view system environment details.
 
+### [Response Profiles](/admin/config/response-profiles)
+Manage bot response behaviors and probabilities across different scenarios to create distinct personalities or functions for your bots.
+
+![Response Profiles List](screenshots/response-profiles-list.png)
+![Add Response Profile Modal](screenshots/response-profile-add-modal.png)
+
+*   **Custom Profiles**: Create specialized behaviors dictating when and how bots engage in conversations.
+*   **Swarm Modes**: Configure how bots operate within groups (e.g., Exclusive, Broadcast, Collaborative).
+*   **Conditional Triggers**: Fine-tune base probabilities and bonuses based on context, like direct mentions or group activity.
+
 ### [Global Defaults](/admin/configuration)
 Manage system and provider settings (convict configs) for your application and perform hot-reloads of configurations.
 
@@ -315,9 +339,13 @@ The Setup Wizard guides you through the minimum configuration required to run a 
 
 Press **Ctrl + K** (or **⌘ K** on macOS) anywhere in the admin UI to open the Command Palette.
 
+![Command Palette](screenshots/command-palette.png)
+
 *   **Search**: Type any page name, route segment, or section keyword to filter instantly.
 *   **Keyboard navigation**: Use **↑ / ↓** arrow keys to move between results, **Enter** to navigate, **Esc** to close.
 *   **Screen reader support**: The palette announces the result count after each keystroke and traps focus within the dialog.
+
+![Command Palette Search](screenshots/command-palette-search.png)
 
 **Available shortcut keys:**
 
@@ -367,6 +395,16 @@ A detailed view of all system integrations and configurations.
 
 ## Developer & Tools
 
+### [Help & FAQ](/admin/help)
+Access the comprehensive help guide, frequently asked questions, and keyboard shortcuts reference.
+
+![Help & FAQ Main Page](screenshots/help-page.png)
+![Help & FAQ Expanded](screenshots/help-page-expanded.png)
+
+*   **FAQ**: Find answers to common questions about setting up and using the platform.
+*   **Keyboard Shortcuts**: View global navigation and action shortcuts for power users.
+*   **Getting Started**: Step-by-step guidance for new users configuring their first bot.
+
 ### [UI Components](/admin/showcase)
 A reference for developers extending the WebUI.
 *   **Component Library**: View available UI elements (buttons, inputs, cards) and their usage.
@@ -388,7 +426,8 @@ Manage system configuration backups and download API documentation.
 
 *   **Backup Overview**: View key metrics including total backups and storage usage.
 *   **System Backups**: Create, restore, and delete full system configuration backups.
-*   **Configuration Export**: Export the current running configuration as a JSON file.
+*   **Configuration Export**: Export the current running configuration as **JSON, YAML, or CSV**. Optional gzip compression and encryption are supported for exports.
+*   **Configuration Import**: Upload a previously exported JSON, YAML, or CSV file (including compressed `.gz` and encrypted `.enc` variants) to restore configuration. Imports can be validated before being applied, giving a full round-trip between formats.
 *   **API Specifications**: Download the OpenAPI specification (JSON/YAML) for development.
 
 ### [Sitemap](/admin/sitemap)

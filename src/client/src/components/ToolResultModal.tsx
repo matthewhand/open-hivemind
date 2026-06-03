@@ -9,7 +9,7 @@ import Modal from './DaisyUI/Modal';
 import Mockup from './DaisyUI/Mockup';
 import { Alert } from './DaisyUI/Alert';
 import { logger } from '../utils/logger';
-import { renderJsonWithHighlighting } from '../utils/jsonHighlighter';
+import { HighlightedJson } from '../utils/jsonHighlighter';
 
 interface ToolResult {
   timestamp: string;
@@ -120,6 +120,7 @@ const ToolResultModal: React.FC<ToolResultModalProps> = ({ isOpen, onClose, resu
             <button
               className="btn btn-xs btn-ghost gap-2"
               onClick={() => handleCopy(JSON.stringify(result.arguments, null, 2), 'arguments')}
+              aria-label="Copy arguments to clipboard"
             >
               {copiedSection === 'arguments' ? (
                 <>
@@ -134,9 +135,7 @@ const ToolResultModal: React.FC<ToolResultModalProps> = ({ isOpen, onClose, resu
               )}
             </button>
           </div>
-          <Mockup type="code" content={
-            <span dangerouslySetInnerHTML={{ __html: renderJsonWithHighlighting(result.arguments) }} />
-          } className="bg-base-300 max-h-48 overflow-auto" />
+          <Mockup type="code" content={<HighlightedJson json={result.arguments} />} className="bg-base-300 max-h-48 overflow-auto" />
         </div>
 
         {/* Result or Error */}
@@ -152,6 +151,7 @@ const ToolResultModal: React.FC<ToolResultModalProps> = ({ isOpen, onClose, resu
                     'error'
                   )
                 }
+                aria-label="Copy error to clipboard"
               >
                 {copiedSection === 'error' ? (
                   <>
@@ -188,6 +188,7 @@ const ToolResultModal: React.FC<ToolResultModalProps> = ({ isOpen, onClose, resu
               <button
                 className="btn btn-xs btn-ghost gap-2"
                 onClick={() => handleCopy(JSON.stringify(result.result, null, 2), 'result')}
+                aria-label="Copy result to clipboard"
               >
                 {copiedSection === 'result' ? (
                   <>
@@ -202,9 +203,7 @@ const ToolResultModal: React.FC<ToolResultModalProps> = ({ isOpen, onClose, resu
                 )}
               </button>
             </div>
-            <Mockup type="code" content={
-              <span dangerouslySetInnerHTML={{ __html: renderJsonWithHighlighting(result.result) }} />
-            } className="bg-base-300 max-h-96 overflow-auto" />
+            <Mockup type="code" content={<HighlightedJson json={result.result} />} className="bg-base-300 max-h-96 overflow-auto" />
           </div>
         )}
 

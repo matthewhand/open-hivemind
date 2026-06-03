@@ -302,11 +302,11 @@ export class RealTimeValidationService extends EventEmitter {
   ): ValidationResult {
     // Synchronous validation using internal rules
     const profile = this.getProfile(profileId) || this.getProfile('standard');
-    
+
     const errors: ValidationError[] = [];
     const warnings: ValidationWarning[] = [];
     const info: ValidationInfo[] = [];
-    
+
     if (profile) {
       for (const ruleId of profile.ruleIds) {
         const rule = this.getRule(ruleId);

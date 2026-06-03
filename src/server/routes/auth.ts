@@ -233,7 +233,8 @@ router.post(
           .status(HTTP_STATUS.UNAUTHORIZED)
           .json(ApiResponse.error('User not found', undefined, 401));
       return res.json(ApiResponse.success({ user }));
-    } catch (_: unknown) {
+
+    } catch {
       return res
         .status(HTTP_STATUS.UNAUTHORIZED)
         .json(ApiResponse.error('Invalid token', undefined, 401));
@@ -278,6 +279,7 @@ router.get('/verify', apiRateLimiter, async (req: Request, res: Response) => {
 
 // GET /api/auth/trusted-status — check if request comes from trusted IP
 // Uses apiRateLimiter (not authRateLimiter) — this is a lightweight status check, not a credential endpoint
+
 const safeApiLimiter =
   apiRateLimiter || ((_req: Request, _res: Response, next: NextFunction) => next());
 router.get('/trusted-status', safeApiLimiter, (req: Request, res: Response) => {

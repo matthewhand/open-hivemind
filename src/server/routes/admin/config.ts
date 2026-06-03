@@ -124,6 +124,7 @@ router.put(
 
       // Get existing provider to preserve ID and status if needed, or just overwrite
       const providers = await webUIStorage.getLlmProviders();
+
       const existingProvider = providers.find((p: any) => p.id === id);
 
       const updatedProvider = {
@@ -208,6 +209,7 @@ router.post(
       const { isActive } = req.body;
 
       const providers = await webUIStorage.getLlmProviders();
+
       const provider = providers.find((p: any) => p.id === id);
 
       if (provider) {
@@ -340,6 +342,7 @@ router.put(
 
       // Get existing provider to preserve ID and status if needed
       const providers = await webUIStorage.getMessengerProviders();
+
       const existingProvider = providers.find((p: any) => p.id === id);
 
       // Sanitize sensitive data
@@ -427,9 +430,11 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
+
       const { isActive } = req.body;
 
       const providers = await webUIStorage.getMessengerProviders();
+
       const provider = providers.find((p: any) => p.id === id);
 
       if (provider) {

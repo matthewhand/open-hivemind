@@ -7,9 +7,12 @@
 
 export interface IDatabase {
   run(sql: string, params?: any[]): Promise<{ lastID: number | string; changes: number }>;
+
   all<T = any>(sql: string, params?: any[]): Promise<T[]>;
+
   get<T = any>(sql: string, params?: any[]): Promise<T | undefined>;
   exec(sql: string): Promise<void>;
+  transaction<T>(callback: (db: IDatabase) => Promise<T>): Promise<T>;
   close(): Promise<void>;
 }
 
@@ -334,6 +337,7 @@ export interface InferenceLog {
 export interface MemoryRecord {
   id?: number | string;
   content: string;
+
   metadata?: Record<string, any>;
   userId?: string;
   agentId?: string;
@@ -341,5 +345,3 @@ export interface MemoryRecord {
   embedding?: number[];
   createdAt?: Date;
 }
-
-

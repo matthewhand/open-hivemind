@@ -1,4 +1,4 @@
-import { promises as fs, readFileSync, existsSync } from 'fs';
+import { promises as fs } from 'fs';
 import path from 'path';
 import type { BotConfiguration } from '../database/DatabaseManager';
 import type { BotOverride, MessageProvider, LlmProvider, McpServerConfig, McpGuardConfig } from '@src/types/config';
@@ -19,6 +19,9 @@ interface BotDisabledState {
   disabledAt?: string;
 }
 
+   
+ 
+ 
 type GeneralSettings = Record<string, any>;
 
 export class UserConfigStore {
@@ -36,30 +39,8 @@ export class UserConfigStore {
   private botMap: Map<string, BotConfiguration> = new Map();
 
   public constructor() {
-    // Load config synchronously for now to avoid async issues in constructor
-    try {
-      if (existsSync(this.configPath)) {
-        const rawData = readFileSync(this.configPath, 'utf-8');
-
-        // Detect if file is encrypted (contains multiple colon-separated segments and doesn't look like JSON)
-        const isEncrypted = rawData.includes(':') && !rawData.trim().startsWith('{');
-
-        if (isEncrypted) {
-          const secureManager = SecureConfigManager.getInstanceSync();
-          const decryptedData = secureManager.decrypt(rawData);
-          this.config = JSON.parse(decryptedData);
-        } else {
-          debug('Loading legacy plain-text user configuration');
-          this.config = JSON.parse(rawData);
-          // Migration will happen on next async load or explicit save
-        }
-      } else {
-        this.setDefaultConfig();
-      }
-    } catch (err) {
-      debug('ERROR:', 'Failed to load user config synchronously:', err);
-      this.setDefaultConfig();
-    }
+    // Initialization moved to async loadConfig() to avoid synchronous I/O in constructor
+    this.setDefaultConfig();
     this.initializeBotMap();
   }
 
@@ -92,14 +73,31 @@ export class UserConfigStore {
     return UserConfigStore.instance;
   }
 
-  private async loadConfig(): Promise<void> {
-    try {
-      if (!existsSync(this.configPath)) {
-        this.setDefaultConfig();
-        return;
-      }
+  /**
+   * Get the instance synchronously.
+   * This ensures the instance is created, but it may not be fully loaded
+   * if loadConfig() hasn't been called/awaited yet.
+   */
+  public static getInstanceSync(): UserConfigStore {
+    return UserConfigStore.getInstance();
+  }
 
-      const rawData = await fs.readFile(this.configPath, 'utf-8');
+  /**
+   * Load configuration from disk asynchronously.
+   */
+  public async loadConfig(): Promise<void> {
+    try {
+      let rawData: string;
+      try {
+        rawData = await fs.readFile(this.configPath, 'utf-8');
+      } catch (err: any) {
+        if (err.code === 'ENOENT') {
+          this.setDefaultConfig();
+          this.initializeBotMap();
+          return;
+        }
+        throw err;
+      }
 
       // Detect if file is encrypted (contains multiple colon-separated segments and doesn't look like JSON)
       const isEncrypted = rawData.includes(':') && !rawData.trim().startsWith('{');

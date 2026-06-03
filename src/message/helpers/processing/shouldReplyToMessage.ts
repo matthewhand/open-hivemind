@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import crypto from 'crypto';
 import Debug from 'debug';
 import { strings } from '@src/utils/common';
@@ -66,6 +67,20 @@ export interface ReplyDecision {
   meta?: Record<string, unknown>;
 }
 
+/**
+ * Options controlling side effects of {@link shouldReplyToMessage}.
+ */
+export interface ShouldReplyOptions {
+  /**
+   * When `true`, the `pipeline:decision` WebSocket event is NOT emitted from
+   * this function. Set by the pipeline's {@link DecisionStrategyAdapter} so that
+   * {@link DecisionStage} can own the broadcast (with full swarm/claim context)
+   * and avoid emitting the event twice per message. The legacy non-pipeline
+   * handler leaves this unset so the event is still emitted from here.
+   */
+  suppressBroadcast?: boolean;
+}
+
 export async function shouldReplyToMessage(
   message: MessageLike,
   botId: string,
@@ -73,7 +88,8 @@ export async function shouldReplyToMessage(
   botNameOrNames?: string | string[],
   historyMessages?: HistoryMessageLike[],
   defaultChannelId?: string,
-  botConfig?: Record<string, unknown>
+  botConfig?: Record<string, unknown>,
+  options?: ShouldReplyOptions
 ): Promise<ReplyDecision> {
   const result = await evaluateReplyDecision(
     message,
@@ -82,7 +98,8 @@ export async function shouldReplyToMessage(
     botNameOrNames,
     historyMessages,
     defaultChannelId,
-    botConfig
+    botConfig,
+    options
   );
 
   // Extract bot name for persistence
@@ -133,7 +150,8 @@ async function evaluateReplyDecision(
   botNameOrNames?: string | string[],
   historyMessages?: HistoryMessageLike[],
   defaultChannelId?: string,
-  botConfig?: Record<string, unknown>
+  botConfig?: Record<string, unknown>,
+  options?: ShouldReplyOptions
 ): Promise<ReplyDecision> {
   if (process.env.FORCE_REPLY && process.env.FORCE_REPLY.toLowerCase() === 'true') {
     debug('FORCE_REPLY env var enabled. Forcing reply.');
@@ -273,6 +291,7 @@ async function evaluateReplyDecision(
   // but still use the probability roll with a bonus (see applyModifiers).
 
   // Track participation/density for probabilistic throttling.
+
   const authorId = (() => {
     try {
       return typeof message.getAuthorId === 'function' ? String(message.getAuthorId()) : undefined;
@@ -590,8 +609,10 @@ async function evaluateReplyDecision(
   const modsObject: Record<string, number | string> = {};
   for (const modStr of allModStrings) {
     // Parse patterns like "Base(0.01 @ never)", "+Recent(+0.5)", "BotHistory(-0.10)"
+
     const match = modStr.match(/^([+\-×]?)([\w!]+)\(([^)]+)\)$/);
     if (match) {
+      // eslint-disable-next-line unused-imports/no-unused-vars
       const [, sign, name, value] = match;
       const numValue = parseFloat(value.replace(/@.*/, '').trim());
       if (!isNaN(numValue)) {
@@ -631,20 +652,24 @@ async function evaluateReplyDecision(
     hasPostedRecently
   );
 
-  // Emit orchestration decision for live thinking stream
-  const bus = MessageBus.getInstance();
-  bus.emit('pipeline:decision', {
-    botName: nameCandidates[0] || 'Unknown',
-    messageId: message.getMessageId(),
-    channelId: message.getChannelId(),
-    shouldReply: decision,
-    reason: prose,
-    probabilityRoll: Number(roll.toPrecision(3)),
-    threshold: Number(chance.toPrecision(3)),
-    meta: {
-      ...modsObject,
-    },
-  });
+  // Emit orchestration decision for live thinking stream.
+  // Skipped when invoked through the pipeline (DecisionStage owns the broadcast)
+  // to avoid emitting `pipeline:decision` twice per message.
+  if (!options?.suppressBroadcast) {
+    const bus = MessageBus.getInstance();
+    bus.emit('pipeline:decision', {
+      botName: nameCandidates[0] || 'Unknown',
+      messageId: message.getMessageId(),
+      channelId: message.getChannelId(),
+      shouldReply: decision,
+      reason: prose,
+      probabilityRoll: Number(roll.toPrecision(3)),
+      threshold: Number(chance.toPrecision(3)),
+      meta: {
+        ...modsObject,
+      },
+    });
+  }
 
   return {
     shouldReply: decision,

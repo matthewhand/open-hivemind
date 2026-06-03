@@ -73,14 +73,43 @@ export const openWebUIProvider: ILlmProvider = {
     const client = await createOpenWebUIClient();
 
     try {
-      const data = await client.post<{ choices: Array<{ text: string }> }>(
-        '/completions',
-        { model, prompt, max_tokens: 100 }
-      );
+      const data = await client.post<{ choices: Array<{ text: string }> }>('/completions', {
+        model,
+        prompt,
+        max_tokens: 100,
+      });
       return data.choices[0].text;
     } catch (error) {
       debug('Error generating non-chat completion:', formatError(error));
       throw new Error(`Non-chat completion failed: ${getErrorMessage(error)}`);
+    }
+  },
+
+  /**
+   * Generates an embedding vector for the given text using the OpenAI-compatible
+   * `/embeddings` endpoint exposed by OpenWebUI / Ollama. The embedding model is
+   * configurable via `OPEN_WEBUI_EMBEDDING_MODEL` so this provider can back
+   * vector memory stores (e.g. PostgresMemoryProvider) without OpenAI.
+   */
+  async generateEmbedding(text: string): Promise<number[]> {
+    debug('Generating embedding with OpenWebUI:', { text });
+
+    const client = await createOpenWebUIClient();
+    const embeddingModel = openWebUIConfig.get('embeddingModel');
+
+    try {
+      const data = await client.post<{ data: Array<{ embedding: number[] }> }>('/embeddings', {
+        model: embeddingModel,
+        input: text,
+      });
+      const embedding = data.data?.[0]?.embedding;
+      if (!Array.isArray(embedding)) {
+        throw new Error('OpenWebUI embedding response did not include an embedding vector');
+      }
+      return embedding;
+    } catch (error) {
+      debug('Error generating embedding:', formatError(error));
+      throw new Error(`Embedding generation failed: ${getErrorMessage(error)}`);
     }
   },
 };

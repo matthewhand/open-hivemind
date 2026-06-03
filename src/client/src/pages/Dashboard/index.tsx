@@ -110,7 +110,7 @@ const DashboardPage: React.FC = () => {
     { image: '', title: '🎭 Create a Persona', description: 'Give your bot a unique personality — name, system prompt, response behavior, and avatar.', bgGradient: 'linear-gradient(135deg, #0891b2, #06b6d4)', link: '/admin/personas' },
     { image: '', title: '🛡️ Set Up Guard Profiles', description: 'Add safety rules — access control, rate limiting, and content filtering for your bots.', bgGradient: 'linear-gradient(135deg, #d97706, #f59e0b)', link: '/admin/guards' },
     { image: '', title: '📊 Real-time Monitoring', description: 'Monitor bot performance, message volume, response times, and system health.', bgGradient: 'linear-gradient(135deg, #7c3aed, #a855f7)', link: '/admin/monitoring' },
-    { image: '', title: '📋 Announcements', description: announcementDesc || 'Check out what\'s new and what\'s coming next.', bgGradient: 'linear-gradient(135deg, #1e40af, #3b82f6)', link: 'https://github.com/matthewhand/open-hivemind/blob/main/ANNOUNCEMENT.md' },
+    { image: '', title: '📋 Latest Release', description: 'Check out what\'s new in the latest version. View older releases.', bgGradient: 'linear-gradient(135deg, #1e40af, #3b82f6)', link: 'https://github.com/matthewhand/open-hivemind/releases/latest' },
   ];
 
   const handleSlideClick = (item: { link?: string }) => {

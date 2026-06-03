@@ -10,7 +10,7 @@ const debug = Debug('app:rateLimiterCore');
  * Used as fallback when Redis is not available
  */
 export class MemoryStoreWithCleanup {
-  private hits = new Map<string, { count: number; resetTime: number }>();
+  private hits = new Map<string, { count: number; resetTime: Date }>();
   private cleanupInterval: NodeJS.Timeout | null = null;
   private windowMs: number;
 
@@ -27,7 +27,7 @@ export class MemoryStoreWithCleanup {
         const now = Date.now();
         let cleaned = 0;
         for (const [key, data] of this.hits.entries()) {
-          if (now > data.resetTime) {
+          if (now > data.resetTime.getTime()) {
             this.hits.delete(key);
             cleaned++;
           }
@@ -48,12 +48,12 @@ export class MemoryStoreWithCleanup {
     const now = Date.now();
     const existing = this.hits.get(key);
 
-    if (existing && now < existing.resetTime) {
+    if (existing && now < existing.resetTime.getTime()) {
       existing.count++;
       return { totalHits: existing.count, resetTime: new Date(existing.resetTime) };
     }
 
-    const resetTime = now + this.windowMs;
+    const resetTime = new Date(now + this.windowMs);
     const newData = { count: 1, resetTime };
     this.hits.set(key, newData);
     return { totalHits: 1, resetTime: new Date(resetTime) };
@@ -189,6 +189,7 @@ export function isIPInCIDR(ip: string, cidr: string): boolean {
     if (isNaN(prefixLen)) return false;
 
     // Check if both are simple IPv4
+
     const isRawIPv4 = (addr: string) => addr.includes('.') && !addr.includes(':');
     const ipIsV4 = isRawIPv4(validatedIp);
     const rangeIsV4 = isRawIPv4(validatedRange);
@@ -264,6 +265,7 @@ export function isTrustedProxy(ip: string): boolean {
  */
 export function getClientKey(req: Request): string {
   // Use .get() for headers to support various ways they might be defined in tests
+
   const getHeader = (name: string) => {
     if (typeof req.get === 'function') return req.get(name);
     if (req.headers) return req.headers[name.toLowerCase()];
@@ -271,6 +273,7 @@ export function getClientKey(req: Request): string {
   };
 
   // CONNECTION IP: The address of the machine directly connecting to us
+
   const connectionIP = validateIP(req.socket?.remoteAddress || (req as any).ip || '') || 'unknown';
 
   // If the direct connection is NOT from a trusted proxy, use it as the client IP (ignores headers)
@@ -317,14 +320,37 @@ export function getClientKey(req: Request): string {
  * Check if rate limiting should be skipped
  */
 export function shouldSkipRateLimit(req: Request): boolean {
-  if (process.env.ALLOW_TEST_BYPASS === 'true') return true;
-  if (process.env.NODE_ENV === 'test' && process.env.ENABLE_RATE_LIMIT_TESTS !== 'true')
+  // Skip entirely in test mode ONLY if explicitly allowed by ALLOW_TEST_BYPASS
+  if (
+    process.env.NODE_ENV === 'test' &&
+    process.env.ALLOW_TEST_BYPASS === 'true' &&
+    process.env.ENABLE_RATE_LIMIT_TESTS !== 'true'
+  )
     return true;
+
+  // Always skip health/metrics endpoints
   if (req.path === '/health' || req.path === '/metrics') return true;
+
+  // Skip Vite dev server asset requests — these are never API calls and would
+  // exhaust limits immediately during parallel E2E test runs.
+  // Covers: /src/**, /@vite/**, /@react-refresh, /node_modules/.vite/**, /node_modules/**
+  const path = req.path;
+  if (
+    path.startsWith('/src/') ||
+    path.startsWith('/@') || // /@vite/client, /@react-refresh, /@fs/
+    path.startsWith('/node_modules/') ||
+    // Static assets with file extensions (js, ts, tsx, css, png, svg, woff…)
+    /\.[a-zA-Z0-9]+(\?.*)?$/.test(path)
+  ) {
+    return true;
+  }
+
   return false;
 }
 
 /**
+ // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+ // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
  * Create a standard rate limit handler
  */
 export function createRateLimitHandler(type: string) {
@@ -346,13 +372,18 @@ export function createRateLimitHandler(type: string) {
 }
 
 // Store initialization
+
 export let redisAvailable = false;
+
 export let RedisStore: any = null;
+
 export let redisClient: any = null;
 
 /**
  * Create a rate limit store (Redis or Memory)
+ // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
  */
+
 export function createStore(prefix: string, windowMs: number) {
   if (redisAvailable && RedisStore && redisClient) {
     debug(`Using Redis store for rate limit prefix: ${prefix}`);
@@ -363,6 +394,7 @@ export function createStore(prefix: string, windowMs: number) {
   }
 
   debug(`Using memory store for rate limit prefix: ${prefix}`);
+
   let store = memoryStores.get(prefix);
   if (!store) {
     store = new MemoryStoreWithCleanup(windowMs);

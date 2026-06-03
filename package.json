@@ -23,6 +23,7 @@
     "lint:fix": "node ./node_modules/eslint/bin/eslint.js src/ --fix",
     "format": "node ./node_modules/prettier/bin/prettier.cjs --write \"src/**/*.ts\" \"src/**/*.tsx\" \"tests/**/*.ts\" \"packages/**/*.ts\"",
     "format:check": "node ./node_modules/prettier/bin/prettier.cjs --check \"src/**/*.ts\" \"src/**/*.tsx\" \"tests/**/*.ts\" \"packages/**/*.ts\"",
+    "gallery": "tsx scripts/build-screenshot-gallery.ts",
     "check-types": "tsc --noEmit",
     "version": "tsc -v",
     "build": "bash scripts/build-all.sh",
@@ -32,10 +33,10 @@
     "build:serverless": "npm run build:frontend && mkdir -p api && cp src/api/index.js api/index.js",
     "audit:secrets": "echo 'Secrets audit skipped - implement a real secrets audit command later'",
     "start": "NODE_ENV=production bash scripts/start-runtime.sh",
-    "start:test": "NODE_ENV=test bash scripts/start-runtime.sh",
     "start:headless": "NODE_ENV=production HTTP_ENABLED=false bash scripts/start-runtime.sh",
     "start:dev:headless": "NODE_ENV=development HTTP_ENABLED=false node --import tsx src/index.ts",
     "start:dev": "cross-env NODE_ENV=development DOTENV_CONFIG_PATH=.env.sample node -r dotenv/config --import tsx src/index.ts",
+    "start:test": "cross-env NODE_ENV=test ALLOW_TEST_BYPASS=true SKIP_MESSENGERS=true DOTENV_CONFIG_PATH=.env.sample node -r dotenv/config --import tsx src/index.ts",
     "dev:frontend-only": "cd src/client && ../../node_modules/.bin/vite --port 3028 --host",
     "dev:webui-only": "SKIP_MESSENGERS=true npm run start:dev",
     "dev": "npm run start:dev",
@@ -210,6 +211,7 @@
     "ts-essentials": "^10.0.2",
     "tsyringe": "^4.10.0",
     "typeforce": "^1.18.0",
+    "umzug": "^3.8.2",
     "uuid": "^11.1.0",
     "winston-daily-rotate-file": "^5.0.0",
     "yargs": "^17.7.2",
@@ -312,20 +314,6 @@
     "vite": "^7.3.2",
     "wrangler": "^4.34.0"
   },
-  "overrides": {
-    "undici": "7.22.0",
-    "uuid": "^11.1.0",
-    "fast-xml-parser": "^5.4.1",
-    "tar": "^7.5.11",
-    "yaml": "^2.4.2",
-    "handlebars": "^4.7.9",
-    "path-to-regexp": "^0.1.13",
-    "picomatch": "^4.0.2",
-    "@modelcontextprotocol/sdk": "^1.25.2",
-    "babel-plugin-istanbul": "^8.0.2",
-    "minimatch": "^10.2.3",
-    "serialize-javascript": "^7.0.3"
-  },
   "pnpm": {
     "overrides": {
       "handlebars": "^4.7.9",
@@ -343,7 +331,9 @@
       "follow-redirects": "^1.16.0",
       "smol-toml": "^1.6.1",
       "basic-ftp": "^5.3.0",
-      "ajv": "^8.18.0"
+      "ajv": "^8.18.0",
+      "eslint>ajv": "^6.14.0",
+      "@eslint/eslintrc>ajv": "^6.14.0"
     },
     "onlyBuiltDependencies": [
       "better-sqlite3"

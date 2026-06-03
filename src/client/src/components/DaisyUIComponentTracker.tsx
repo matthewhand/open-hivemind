@@ -1,7 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import type { DaisyUIComponentStats } from '../utils/DaisyUIComponentTracker';
 import { daisyUITracker } from '../utils/DaisyUIComponentTracker';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import Button from './DaisyUI/Button';
 import Badge from './DaisyUI/Badge';
 import Card from './DaisyUI/Card';
@@ -21,7 +21,7 @@ interface Props {
 const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) => {
   const [stats, setStats] = useState<DaisyUIComponentStats | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('overview');
-  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useLocalStorage('ui.componentTracker.showSuggestions', false);
 
   useEffect(() => {
     const updateStats = () => {
@@ -50,10 +50,12 @@ const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) =>
     setStats(daisyUITracker.getStats());
   };
 
+  const componentUsageMap = useMemo(() => new Map(stats.componentUsage.map(u => [u.component, u])), [stats.componentUsage]);
   if (!stats) {return null;}
 
   const usagePercentage = Math.round((stats.usedComponents / stats.totalComponents) * 100);
   const suggestions = daisyUITracker.getSuggestions();
+
 
   return (
     <div className={`${isOpen ? 'block' : 'hidden'}`}>
@@ -213,7 +215,7 @@ const DaisyUIComponentTracker: React.FC<Props> = ({ isOpen = true, onClose }) =>
                     <div className="space-y-2 mt-2">
                       {data.components.length > 0 ? (
                         data.components.map((component) => {
-                          const usage = stats.componentUsage.find((u) => u.component === component);
+                          const usage = componentUsageMap.get(component);
                           return (
                             <div
                               key={component}
