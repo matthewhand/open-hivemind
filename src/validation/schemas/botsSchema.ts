@@ -113,6 +113,13 @@ export const BotTaskCreateSchema = z.object({
   }),
 });
 
+export const BotTaskDeleteSchema = z.object({
+  params: z.object({
+    id: z.string().min(1),
+    taskId: z.string().min(1, { message: 'Task ID is required' }),
+  }),
+});
+
 export const BotMessageSchema = z.object({
   params: z.object({
     id: z.string().min(1),

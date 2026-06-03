@@ -1,0 +1,1209 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Open-Hivemind — Screenshot Gallery</title>
+  <link rel="stylesheet" href="https://unpkg.com/photoswipe@5.4.4/dist/photoswipe.css">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #fafafa;
+      --fg: #1a1a1a;
+      --muted: #555;
+      --subtle: #888;
+      --border: #ddd;
+      --card-bg: #fff;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #141414;
+        --fg: #e4e4e4;
+        --muted: #a8a8a8;
+        --subtle: #6a6a6a;
+        --border: #2a2a2a;
+        --card-bg: #1c1c1c;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 24px;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.5;
+    }
+    header { margin-bottom: 32px; }
+    header h1 { margin: 0 0 8px; font-size: 28px; }
+    header p { margin: 0; color: var(--muted); font-size: 14px; }
+    h2 {
+      margin: 32px 0 12px;
+      font-size: 18px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 6px;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+    h2 .count {
+      font-size: 12px;
+      color: var(--subtle);
+      font-weight: normal;
+    }
+    .note {
+      font-size: 13px;
+      color: var(--muted);
+      margin: 0 0 12px;
+    }
+    .note code {
+      background: var(--card-bg);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 12px;
+    }
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .gallery a {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      text-decoration: none;
+      color: inherit;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      transition: border-color 0.15s ease, transform 0.15s ease;
+    }
+    .gallery a:hover {
+      border-color: var(--subtle);
+      transform: translateY(-1px);
+    }
+    .gallery img {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 16 / 10;
+      object-fit: cover;
+      object-position: top;
+      border-radius: 4px;
+      background: var(--border);
+    }
+    .gallery .caption {
+      font-size: 13px;
+      color: var(--fg);
+      line-height: 1.4;
+    }
+    .gallery .filename {
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 11px;
+      color: var(--subtle);
+    }
+    .toc {
+      margin: 16px 0 32px;
+      padding: 12px 16px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+    }
+    .toc strong { display: block; margin-bottom: 6px; }
+    .toc a {
+      display: inline-block;
+      margin: 2px 12px 2px 0;
+      color: var(--fg);
+      text-decoration: none;
+      border-bottom: 1px dotted var(--subtle);
+    }
+    .toc a:hover { border-bottom-style: solid; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Open-Hivemind — Screenshot Gallery</h1>
+    <p>
+      89 documented screenshots across
+      19 sections, plus 15 undocumented.
+      Click any image to open in lightbox. Source of truth: <code>docs/screenshots/README.md</code>.
+    </p>
+  </header>
+  <nav class="toc">
+    <strong>Jump to:</strong>
+    <a href="#gallery-activity-monitoring">Activity &amp; Monitoring</a><a href="#gallery-analytics-metrics">Analytics &amp; Metrics</a><a href="#gallery-bot-management">Bot Management</a><a href="#gallery-chat">Chat</a><a href="#gallery-configuration">Configuration</a><a href="#gallery-llm-providers">LLM Providers</a><a href="#gallery-message-providers">Message Providers</a><a href="#gallery-providers-api">Providers API</a><a href="#gallery-mcp-model-context-protocol">MCP (Model Context Protocol)</a><a href="#gallery-guards-security">Guards &amp; Security</a><a href="#gallery-personas">Personas</a><a href="#gallery-marketplace">Marketplace</a><a href="#gallery-settings">Settings</a><a href="#gallery-system-management">System Management</a><a href="#gallery-ui-components-accessibility">UI Components &amp; Accessibility</a><a href="#gallery-demo-mode-onboarding">Demo Mode &amp; Onboarding</a><a href="#gallery-widgets">Widgets</a><a href="#gallery-api-specs">API &amp; Specs</a><a href="#gallery-other-pages">Other Pages</a>
+    <a href="#gallery-orphans">Undocumented orphans</a>
+  </nav>
+  
+  <section>
+    <h2>Activity &amp; Monitoring <span class="count">7</span></h2>
+    <div class="gallery" id="gallery-activity-monitoring">
+        <a href="activity-monitor.png"
+           data-pswp-width="1287"
+           data-pswp-height="1470"
+           target="_blank"
+           rel="noreferrer">
+          <img src="activity-monitor.png" alt="activity-monitor" loading="lazy">
+          <span class="caption">Real-time activity monitor showing live system events</span>
+          <span class="filename">activity-monitor.png</span>
+        </a>
+        <a href="activity-page.png"
+           data-pswp-width="1280"
+           data-pswp-height="953"
+           target="_blank"
+           rel="noreferrer">
+          <img src="activity-page.png" alt="activity-page" loading="lazy">
+          <span class="caption">Activity page overview with event timeline</span>
+          <span class="filename">activity-page.png</span>
+        </a>
+        <a href="activity-page-filters.png"
+           data-pswp-width="1280"
+           data-pswp-height="809"
+           target="_blank"
+           rel="noreferrer">
+          <img src="activity-page-filters.png" alt="activity-page-filters" loading="lazy">
+          <span class="caption">Activity page with filter controls applied</span>
+          <span class="filename">activity-page-filters.png</span>
+        </a>
+        <a href="chat-monitor.png"
+           data-pswp-width="1280"
+           data-pswp-height="1213"
+           target="_blank"
+           rel="noreferrer">
+          <img src="chat-monitor.png" alt="chat-monitor" loading="lazy">
+          <span class="caption">Chat monitoring view for live message tracking</span>
+          <span class="filename">chat-monitor.png</span>
+        </a>
+        <a href="monitoring-dashboard.png"
+           data-pswp-width="1280"
+           data-pswp-height="1394"
+           target="_blank"
+           rel="noreferrer">
+          <img src="monitoring-dashboard.png" alt="monitoring-dashboard" loading="lazy">
+          <span class="caption">System monitoring dashboard with health metrics</span>
+          <span class="filename">monitoring-dashboard.png</span>
+        </a>
+        <a href="admin-health-page.png"
+           data-pswp-width="1280"
+           data-pswp-height="1364"
+           target="_blank"
+           rel="noreferrer">
+          <img src="admin-health-page.png" alt="admin-health-page" loading="lazy">
+          <span class="caption">System health page with service status overview</span>
+          <span class="filename">admin-health-page.png</span>
+        </a>
+        <a href="distributed-trace-waterfall.png"
+           data-pswp-width="1280"
+           data-pswp-height="1200"
+           target="_blank"
+           rel="noreferrer">
+          <img src="distributed-trace-waterfall.png" alt="distributed-trace-waterfall" loading="lazy">
+          <span class="caption">Distributed tracing waterfall view for request debugging</span>
+          <span class="filename">distributed-trace-waterfall.png</span>
+        </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Analytics &amp; Metrics <span class="count">3</span></h2>
+    <div class="gallery" id="gallery-analytics-metrics">
+        <a href="analytics-dashboard.png"
+           data-pswp-width="2560"
+           data-pswp-height="2930"
+           target="_blank"
+           rel="noreferrer">
+          <img src="analytics-dashboard.png" alt="analytics-dashboard" loading="lazy">
+          <span class="caption">Analytics dashboard with bot performance metrics</span>
+          <span class="filename">analytics-dashboard.png</span>
+        </a>
+        <a href="audit-governance-initial.png"
+           data-pswp-width="1280"
+           data-pswp-height="720"
+           target="_blank"
+           rel="noreferrer">
+          <img src="audit-governance-initial.png" alt="audit-governance-initial" loading="lazy">
+          <span class="caption">Audit and governance page in initial state</span>
+          <span class="filename">audit-governance-initial.png</span>
+        </a>
+        <a href="audit-governance-filtered.png"
+           data-pswp-width="1280"
+           data-pswp-height="720"
+           target="_blank"
+           rel="noreferrer">
+          <img src="audit-governance-filtered.png" alt="audit-governance-filtered" loading="lazy">
+          <span class="caption">Audit and governance page with filters applied</span>
+          <span class="filename">audit-governance-filtered.png</span>
+        </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Bot Management <span class="count">9</span></h2>
+    <div class="gallery" id="gallery-bot-management">
+        <a href="bots-page.png"
+           data-pswp-width="1280"
+           data-pswp-height="720"
+           target="_blank"
+           rel="noreferrer">
+          <img src="bots-page.png" alt="bots-page" loading="lazy">
+          <span class="caption">Main bots listing page</span>
+          <span class="filename">bots-page.png</span>
+        </a>
+        <a href="bot-create-page.png"
+           data-pswp-width="1280"
+           data-pswp-height="1667"
+           target="_blank"
+           rel="noreferrer">
+          <img src="bot-create-page.png" alt="bot-create-page" loading="lazy">
+          <span class="caption">Bot creation page</span>
+          <span class="filename">bot-create-page.png</span>
+        </a>
+        <a href="bot-create-validation.png"
+           data-pswp-width="1280"
+           data-pswp-height="1230"
+           target="_blank"
+           rel="noreferrer">
+          <img src="bot-create-validation.png" alt="bot-create-validation" loading="lazy">
+          <span class="caption">Bot creation form showing validation errors</span>
+          <span class="filename">bot-create-validation.png</span>
+        </a>
+        <a href="bot-details-modal.png"
+           data-pswp-width="1280"
+           data-pswp-height="992"
+           target="_blank"
+           rel="noreferrer">
+          <img src="bot-details-modal.png" alt="bot-details-modal" loading="lazy">
+          <span class="caption">Bot details modal with configuration summary</span>
+          <span class="filename">bot-details-modal.png</span>
+        </a>
+        <a href="bot-search-filtered.png"
+           data-pswp-width="1280"
+           data-pswp-height="1234"
+           target="_blank"
+           rel="noreferrer">
+          <img src="bot-search-filtered.png" alt="bot-search-filtered" loading="lazy">
+          <span class="caption">Bots page with search filter applied</span>
+          <span class="filename">bot-search-filtered.png</span>
+        </a>
+        <a href="bot-templates-page.png"
+           data-pswp-width="1280"
+           data-pswp-height="1611"
+           target="_blank"
+           rel="noreferrer">
+          <img src="bot-templates-page.png" alt="bot-templates-page" loading="lazy">
+          <span class="caption">Bot templates page for quick bot creation</span>
+          <span class="filename">bot-templates-page.png</span>
+        </a>
+        <a href="bot-wizard-validation.png"
+           data-pswp-width="1280"
+           data-pswp-height="884"
+           target="_blank"
+           rel="noreferrer">
+          <img src="bot-wizard-validation.png" alt="bot-wizard-validation" loading="lazy">
+          <span class="caption">Bot creation wizard showing validation state</span>
+          <span class="filename">bot-wizard-validation.png</span>
+        </a>
+        <a href="clone-bot-modal.png"
+           data-pswp-width="1280"
+           data-pswp-height="720"
+           target="_blank"
+           rel="noreferrer">
+          <img src="clone-bot-modal.png" alt="clone-bot-modal" loading="lazy">
+          <span class="caption">Modal dialog for cloning an existing bot</span>
+          <span class="filename">clone-bot-modal.png</span>
+        </a>
+        <a href="create-bot-modal.png"
+           data-pswp-width="1280"
+           data-pswp-height="720"
+           target="_blank"
+           rel="noreferrer">
+          <img src="create-bot-modal.png" alt="create-bot-modal" loading="lazy">
+          <span class="caption">Modal dialog for creating a new bot</span>
+          <span class="filename">create-bot-modal.png</span>
+        </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Chat <span class="count">4</span></h2>
+    <div class="gallery" id="gallery-chat">
+        <a href="chatpage-latency.png"
+           data-pswp-width="1280"
+           data-pswp-height="800"
+           target="_blank"
+           rel="noreferrer">
+          <img src="chatpage-latency.png" alt="chatpage-latency" loading="lazy">
+          <span class="caption">Chat page showing latency indicators</span>
+          <span class="filename">chatpage-latency.png</span>
+        </a>
+        <a href="chatpage-offline.png"
+           data-pswp-width="1280"
+           data-pswp-height="800"
+           target="_blank"
+           rel="noreferrer">
+          <img src="chatpage-offline.png" alt="chatpage-offline" loading="lazy">
+          <span class="caption">Chat page in offline/disconnected state</span>
+          <span class="filename">chatpage-offline.png</span>
+        </a>
+        <a href="chatpage-optimistic.png"
+           data-pswp-width="1280"
+           data-pswp-height="800"
+           target="_blank"
+           rel="noreferrer">
+          <img src="chatpage-optimistic.png" alt="chatpage-optimistic" loading="lazy">
+          <span class="caption">Chat page with optimistic message sending</span>
+          <span class="filename">chatpage-optimistic.png</span>
+        </a>
+        <a href="chatpage-rollback.png"
+           data-pswp-width="1280"
+           data-pswp-height="800"
+           target="_blank"
+           rel="noreferrer">
+          <img src="chatpage-rollback.png" alt="chatpage-rollback" loading="lazy">
+          <span class="caption">Chat page showing message rollback after failure</span>
+          <span class="filename">chatpage-rollback.png</span>
+        </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Configuration <span class="count">11</span></h2>
+    <div class="gallery" id="gallery-configuration">
+        <a href="configuration.png"
+           data-pswp-width="1280"
+           data-pswp-height="1237"
+           target="_blank"
+           rel="noreferrer">
+          <img src="configuration.png" alt="configuration" loading="lazy">
+          <span class="caption">Main configuration page</span>
+          <span class="filename">configuration.png</span>
+        </a>
+        <a href="config-rollback-available.png"
+           data-pswp-width="1280"
+           data-pswp-height="800"
+           target="_blank"
+           rel="noreferrer">
+          <img src="config-rollback-available.png" alt="config-rollback-available" loading="lazy">
+          <span class="caption">Configuration rollback with available restore points</span>
+          <span class="filename">config-rollback-available.png</span>
+        </a>
+        <a href="config-rollback-empty.png"
+           data-pswp-width="1280"
+           data-pswp-height="800"
+           target="_blank"
+           rel="noreferrer">
+          <img src="config-rollback-empty.png" alt="config-rollback-empty" loading="lazy">
+          <span class="caption">Configuration rollback page with no restore points</span>
+          <span class="filename">config-rollback-empty.png</span>
+        </a>
+        <a href="config-rollback-modal.png"
+           data-pswp-width="1280"
+           data-pswp-height="800"
+           target="_blank"
+           rel="noreferrer">
+          <img src="config-rollback-modal.png" alt="config-rollback-modal" loading="lazy">
+          <span class="caption">Configuration rollback confirmation modal</span>
+          <span class="filename">config-rollback-modal.png</span>
+        </a>
+        <a href="config-rollback-success.png"
+           data-pswp-width="1280"
+           data-pswp-height="800"
+           target="_blank"
+           rel="noreferrer">
+          <img src="config-rollback-success.png" alt="config-rollback-success" loading="lazy">
+          <span class="caption">Configuration rollback success state</span>
+          <span class="filename">config-rollback-success.png</span>
+        </a>
+        <a href="config-test-helper.png"
+           data-pswp-width="1280"
+           data-pswp-height="720"
+           target="_blank"
+           rel="noreferrer">
+          <img src="config-test-helper.png" alt="config-test-helper" loading="lazy">
+          <span class="caption">Configuration test helper utility</span>
+          <span class="filename">config-test-helper.png</span>
+        </a>
+        <a href="backup-retention-baseline.png"
+           data-pswp-width="1280"
+           data-pswp-height="914"
+           target="_blank"
+           rel="noreferrer">
+          <img src="backup-retention-baseline.png" alt="backup-retention-baseline" loading="lazy">
+          <span class="caption">Backup retention settings in baseline state</span>
+          <span class="filename">backup-retention-baseline.png</span>
+        </a>
+        <a href="backup-retention-enforced.png"
+           data-pswp-width="1280"
+           data-pswp-height="1469"
+           target="_blank"
+           rel="noreferrer">
+          <img src="backup-retention-enforced.png" alt="backup-retention-enforced" loading="lazy">
+          <span class="caption">Backup retention with enforcement policy active</span>
+          <span class="filename">backup-retention-enforced.png</span>
+        </a>
+        <a href="create-backup-modal.png"
+           data-pswp-width="1280"
+           data-pswp-height="720"
+           target="_blank"
+           rel="noreferrer">
+          <img src="create-backup-modal.png" alt="create-backup-modal" loading="lazy">
+          <span class="caption">Modal for creating a configuration backup</span>
+          <span class="filename">create-backup-modal.png</span>
+        </a>
+        <a href="env-sample-completeness.png"
+           data-pswp-width="1280"
+           data-pswp-height="720"
+           target="_blank"
+           rel="noreferrer">
+          <img src="env-sample-completeness.png" alt="env-sample-completeness" loading="lazy">
+          <span class="caption">Environment sample file completeness check</span>
+          <span class="filename">env-sample-completeness.png</span>
+        </a>
+        <a href="template-version-diff-viewer.png"
+           data-pswp-width="1280"
+           data-pswp-height="800"
+           target="_blank"
+           rel="noreferrer">
+          <img src="template-version-diff-viewer.png" alt="template-version-diff-viewer" loading="lazy">
+          <span class="caption">Template version diff viewer for comparing configs</span>
+          <span class="filename">template-version-diff-viewer.png</span>
+        </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>LLM Providers <span class="count">7</span></h2>
+    <div class="gallery" id="gallery-llm-providers">
+        <a href="llm-providers-list.png"
+           data-pswp-width="1280"
+           data-pswp-height="1337"
+           target="_blank"
+           rel="noreferrer">
+          <img src="llm-providers-list.png" alt="llm-providers-list" loading="lazy">
+          <span class="caption">LLM providers list page</span>
+          <span class="filename">llm-providers-list.png</span>
+        </a>
+        <a href="llm-add-profile-modal.png"
+           data-pswp-width="1280"
+           data-pswp-height="800"
+           target="_blank"
+           rel="noreferrer">
+          <img src="llm-add-profile-modal.png" alt="llm-add-profile-modal" loading="lazy">
+          <span class="caption">Modal for adding a new LLM profile</span>
+          <span class="filename">llm-add-profile-modal.png</span>
+        </a>
+        <a href="llm-add-profile-ollama-modal.png"
+           data-pswp-width="1280"
+           data-pswp-height="720"
+           target="_blank"
+           rel="noreferrer">
+          <img src="llm-add-profile-ollama-modal.png" alt="llm-add-profile-ollama-modal" loading="lazy">
+          <span class="caption">Modal for adding an Ollama LLM profile</span>
+          <span class="filename">llm-add-profile-ollama-modal.png</span>
+        </a>
+        <a href="letta-provider-list.png"
+           data-pswp-width="1280"
+           data-pswp-height="1161"
+           target="_blank"
+           rel="noreferrer">
+          <img src="letta-provider-list.png" alt="letta-provider-list" loading="lazy">
+          <span class="caption">Letta provider instances list</span>
+          <span class="filename">letta-provider-list.png</span>
+        </a>
+        <a href="letta-provider-selection.png"
+           data-pswp-width="1280"
+           data-pswp-height="900"
+           target="_blank"
+           rel="noreferrer">
+          <img src="letta-provider-selection.png" alt="letta-provider-selection" loading="lazy">
+          <span class="caption">Letta provider selection interface</span>
+          <span class="filename">letta-provider-selection.png</span>
+        </a>
+        <a href="openwebui.png"
+           data-pswp-width="1280"
+           data-pswp-height="1383"
+           target="_blank"
+           rel="noreferrer">
+          <img src="openwebui.png" alt="openwebui" loading="lazy">
+          <span class="caption">OpenWebUI provider configuration</span>
+          <span class="filename">openwebui.png</span>
+        </a>
+        <a href="integrations-llm.png"
+           data-pswp-width="1280"
+           data-pswp-height="769"
+           target="_blank"
+           rel="noreferrer">
+          <img src="integrations-llm.png" alt="integrations-llm" loading="lazy">
+          <span class="caption">LLM integrations overview panel</span>
+          <span class="filename">integrations-llm.png</span>
+        </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Message Providers <span class="count">2</span></h2>
+    <div class="gallery" id="gallery-message-providers">
+        <a href="message-providers-list.png"
+           data-pswp-width="1280"
+           data-pswp-height="2056"
+           target="_blank"
+           rel="noreferrer">
+          <img src="message-providers-list.png" alt="message-providers-list" loading="lazy">
+          <span class="caption">Message providers list page</span>
+          <span class="filename">message-providers-list.png</span>
+        </a>
+        <a href="message-add-provider-modal.png"
+           data-pswp-width="1280"
+           data-pswp-height="800"
+           target="_blank"
+           rel="noreferrer">
+          <img src="message-add-provider-modal.png" alt="message-add-provider-modal" loading="lazy">
+          <span class="caption">Modal for adding a new message provider</span>
+          <span class="filename">message-add-provider-modal.png</span>
+        </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Providers API <span class="count">2</span></h2>
+    <div class="gallery" id="gallery-providers-api">
+        <a href="memory-providers-list.png"
+           data-pswp-width="1280"
+           data-pswp-height="1081"
+           target="_blank"
+           rel="noreferrer">
+          <img src="memory-providers-list.png" alt="memory-providers-list" loading="lazy">
+          <span class="caption">Memory providers list page (Redis, Pinecone, etc.)</span>
+          <span class="filename">memory-providers-list.png</span>
+        </a>
+        <a href="tool-providers-list.png"
+           data-pswp-width="1280"
+           data-pswp-height="1220"
+           target="_blank"
+           rel="noreferrer">
+          <img src="tool-providers-list.png" alt="tool-providers-list" loading="lazy">
+          <span class="caption">Tool providers list page (GitHub, Jira, Google Search, etc.)</span>
+          <span class="filename">tool-providers-list.png</span>
+        </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>MCP (Model Context Protocol) <span class="count">6</span></h2>
+    <div class="gallery" id="gallery-mcp-model-context-protocol">
+        <a href="mcp-servers-list.png"
+           data-pswp-width="1280"
+           data-pswp-height="1004"
+           target="_blank"
+           rel="noreferrer">
+          <img src="mcp-servers-list.png" alt="mcp-servers-list" loading="lazy">
+          <span class="caption">MCP servers list page</span>
+          <span class="filename">mcp-servers-list.png</span>
+        </a>
+        <a href="mcp-add-server-modal.png"
+           data-pswp-width="1280"
+           data-pswp-height="720"
+           target="_blank"
+           rel="noreferrer">
+          <img src="mcp-add-server-modal.png" alt="mcp-add-server-modal" loading="lazy">
+          <span class="caption">Modal for adding a new MCP server</span>
+          <span class="filename">mcp-add-server-modal.png</span>
+        </a>
+        <a href="mcp-tools-list.png"
+           data-pswp-width="1280"
+           data-pswp-height="720"
+           target="_blank"
+           rel="noreferrer">
+          <img src="mcp-tools-list.png" alt="mcp-tools-list" loading="lazy">
+          <span class="caption">MCP tools list view</span>
+          <span class="filename">mcp-tools-list.png</span>
+        </a>
+        <a href="mcp-tools-modal.png"
+           data-pswp-width="1280"
+           data-pswp-height="720"
+           target="_blank"
+           rel="noreferrer">
+          <img src="mcp-tools-modal.png" alt="mcp-tools-modal" loading="lazy">
+          <span class="caption">MCP tools detail modal</span>
+          <span class="filename">mcp-tools-modal.png</span>
+        </a>
+        <a href="mcp-tool-run-modal.png"
+           data-pswp-width="1280"
+           data-pswp-height="720"
+           target="_blank"
+           rel="noreferrer">
+          <img src="mcp-tool-run-modal.png" alt="mcp-tool-run-modal" loading="lazy">
+          <span class="caption">Modal for running an MCP tool</span>
+          <span class="filename">mcp-tool-run-modal.png</span>
+        </a>
+        <a href="mcp-guard-ux.png"
+           data-pswp-width="1280"
+           data-pswp-height="720"
+           target="_blank"
+           rel="noreferrer">
+          <img src="mcp-guard-ux.png" alt="mcp-guard-ux" loading="lazy">
+          <span class="caption">MCP guard UX for tool usage controls</span>
+          <span class="filename">mcp-guard-ux.png</span>
+        </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Guards &amp; Security <span class="count">5</span></h2>
+    <div class="gallery" id="gallery-guards-security">
+        <a href="guards-page.png"
+           data-pswp-width="1280"
+           data-pswp-height="720"
+           target="_blank"
+           rel="noreferrer">
+          <img src="guards-page.png" alt="guards-page" loading="lazy">
+          <span class="caption">Guards page with guardrail profiles</span>
+          <span class="filename">guards-page.png</span>
+        </a>
+        <a href="guards-modal.png"
+           data-pswp-width="1280"
+           data-pswp-height="720"
+           target="_blank"
+           rel="noreferrer">
+          <img src="guards-modal.png" alt="guards-modal" loading="lazy">
+          <span class="caption">Guards configuration modal</span>
+          <span class="filename">guards-modal.png</span>
+        </a>
+        <a href="guards-modal-enhanced.png"
+           data-pswp-width="2560"
+           data-pswp-height="2048"
+           target="_blank"
+           rel="noreferrer">
+          <img src="guards-modal-enhanced.png" alt="guards-modal-enhanced" loading="lazy">
+          <span class="caption">Enhanced guards modal with additional options</span>
+          <span class="filename">guards-modal-enhanced.png</span>
+        </a>
+        <a href="guard-profiles-coverage.png"
+           data-pswp-width="1000"
+           data-pswp-height="600"
+           target="_blank"
+           rel="noreferrer">
+          <img src="guard-profiles-coverage.png" alt="guard-profiles-coverage" loading="lazy">
+          <span class="caption">Guard profiles coverage report</span>
+          <span class="filename">guard-profiles-coverage.png</span>
+        </a>
+        <a href="api-rate-limit.png"
+           data-pswp-width="1280"
+           data-pswp-height="720"
+           target="_blank"
+           rel="noreferrer">
+          <img src="api-rate-limit.png" alt="api-rate-limit" loading="lazy">
+          <span class="caption">API rate limiting configuration</span>
+          <span class="filename">api-rate-limit.png</span>
+        </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Personas <span class="count">3</span></h2>
+    <div class="gallery" id="gallery-personas">
+        <a href="personas-page.png"
+           data-pswp-width="1280"
+           data-pswp-height="1200"
+           target="_blank"
+           rel="noreferrer">
+          <img src="personas-page.png" alt="personas-page" loading="lazy">
+          <span class="caption">Personas management page</span>
+          <span class="filename">personas-page.png</span>
+        </a>
+        <a href="verification-personas.png"
+           data-pswp-width="2560"
+           data-pswp-height="2200"
+           target="_blank"
+           rel="noreferrer">
+          <img src="verification-personas.png" alt="verification-personas" loading="lazy">
+          <span class="caption">Persona verification view</span>
+          <span class="filename">verification-personas.png</span>
+        </a>
+        <a href="verification-personas-copy.png"
+           data-pswp-width="1280"
+           data-pswp-height="982"
+           target="_blank"
+           rel="noreferrer">
+          <img src="verification-personas-copy.png" alt="verification-personas-copy" loading="lazy">
+          <span class="caption">Persona copy verification</span>
+          <span class="filename">verification-personas-copy.png</span>
+        </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Marketplace <span class="count">2</span></h2>
+    <div class="gallery" id="gallery-marketplace">
+        <a href="marketplace-page.png"
+           data-pswp-width="2560"
+           data-pswp-height="1660"
+           target="_blank"
+           rel="noreferrer">
+          <img src="marketplace-page.png" alt="marketplace-page" loading="lazy">
+          <span class="caption">Plugin marketplace page</span>
+          <span class="filename">marketplace-page.png</span>
+        </a>
+        <a href="marketplace-install-modal.png"
+           data-pswp-width="2560"
+           data-pswp-height="1548"
+           target="_blank"
+           rel="noreferrer">
+          <img src="marketplace-install-modal.png" alt="marketplace-install-modal" loading="lazy">
+          <span class="caption">Plugin installation modal</span>
+          <span class="filename">marketplace-install-modal.png</span>
+        </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Settings <span class="count">5</span></h2>
+    <div class="gallery" id="gallery-settings">
+        <a href="settings-general.png"
+           data-pswp-width="1280"
+           data-pswp-height="720"
+           target="_blank"
+           rel="noreferrer">
+          <img src="settings-general.png" alt="settings-general" loading="lazy">
+          <span class="caption">General settings page</span>
+          <span class="filename">settings-general.png</span>
+        </a>
+        <a href="settings-general-loading.png"
+           data-pswp-width="1280"
+           data-pswp-height="720"
+           target="_blank"
+           rel="noreferrer">
+          <img src="settings-general-loading.png" alt="settings-general-loading" loading="lazy">
+          <span class="caption">General settings page in loading state</span>
+          <span class="filename">settings-general-loading.png</span>
+        </a>
+        <a href="settings-messaging.png"
+           data-pswp-width="1619"
+           data-pswp-height="1761"
+           target="_blank"
+           rel="noreferrer">
+          <img src="settings-messaging.png" alt="settings-messaging" loading="lazy">
+          <span class="caption">Messaging settings page</span>
+          <span class="filename">settings-messaging.png</span>
+        </a>
+        <a href="settings-messaging-debug.png"
+           data-pswp-width="1732"
+           data-pswp-height="1472"
+           target="_blank"
+           rel="noreferrer">
+          <img src="settings-messaging-debug.png" alt="settings-messaging-debug" loading="lazy">
+          <span class="caption">Messaging settings with debug mode</span>
+          <span class="filename">settings-messaging-debug.png</span>
+        </a>
+        <a href="settings-security.png"
+           data-pswp-width="1280"
+           data-pswp-height="1703"
+           target="_blank"
+           rel="noreferrer">
+          <img src="settings-security.png" alt="settings-security" loading="lazy">
+          <span class="caption">Security settings page</span>
+          <span class="filename">settings-security.png</span>
+        </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>System Management <span class="count">3</span></h2>
+    <div class="gallery" id="gallery-system-management">
+        <a href="system-management.png"
+           data-pswp-width="1280"
+           data-pswp-height="1950"
+           target="_blank"
+           rel="noreferrer">
+          <img src="system-management.png" alt="system-management" loading="lazy">
+          <span class="caption">System management overview</span>
+          <span class="filename">system-management.png</span>
+        </a>
+        <a href="system-management-page.png"
+           data-pswp-width="1280"
+           data-pswp-height="1950"
+           target="_blank"
+           rel="noreferrer">
+          <img src="system-management-page.png" alt="system-management-page" loading="lazy">
+          <span class="caption">System management full page</span>
+          <span class="filename">system-management-page.png</span>
+        </a>
+        <a href="system-management-config-tab.png"
+           data-pswp-width="1280"
+           data-pswp-height="1314"
+           target="_blank"
+           rel="noreferrer">
+          <img src="system-management-config-tab.png" alt="system-management-config-tab" loading="lazy">
+          <span class="caption">System management configuration tab</span>
+          <span class="filename">system-management-config-tab.png</span>
+        </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>UI Components &amp; Accessibility <span class="count">8</span></h2>
+    <div class="gallery" id="gallery-ui-components-accessibility">
+        <a href="ai-assist-button.png"
+           data-pswp-width="1280"
+           data-pswp-height="720"
+           target="_blank"
+           rel="noreferrer">
+          <img src="ai-assist-button.png" alt="ai-assist-button" loading="lazy">
+          <span class="caption">AI assist button component</span>
+          <span class="filename">ai-assist-button.png</span>
+        </a>
+        <a href="ai-button-hover.png"
+           data-pswp-width="300"
+           data-pswp-height="200"
+           target="_blank"
+           rel="noreferrer">
+          <img src="ai-button-hover.png" alt="ai-button-hover" loading="lazy">
+          <span class="caption">AI button hover state</span>
+          <span class="filename">ai-button-hover.png</span>
+        </a>
+        <a href="ai-button-hover-full.png"
+           data-pswp-width="1280"
+           data-pswp-height="1164"
+           target="_blank"
+           rel="noreferrer">
+          <img src="ai-button-hover-full.png" alt="ai-button-hover-full" loading="lazy">
+          <span class="caption">AI button hover state (full context)</span>
+          <span class="filename">ai-button-hover-full.png</span>
+        </a>
+        <a href="ai-button-loading.png"
+           data-pswp-width="300"
+           data-pswp-height="200"
+           target="_blank"
+           rel="noreferrer">
+          <img src="ai-button-loading.png" alt="ai-button-loading" loading="lazy">
+          <span class="caption">AI button loading/spinner state</span>
+          <span class="filename">ai-button-loading.png</span>
+        </a>
+        <a href="button-loading.png"
+           data-pswp-width="1280"
+           data-pswp-height="720"
+           target="_blank"
+           rel="noreferrer">
+          <img src="button-loading.png" alt="button-loading" loading="lazy">
+          <span class="caption">Generic button loading state</span>
+          <span class="filename">button-loading.png</span>
+        </a>
+        <a href="button-loading-real-app.png"
+           data-pswp-width="1280"
+           data-pswp-height="720"
+           target="_blank"
+           rel="noreferrer">
+          <img src="button-loading-real-app.png" alt="button-loading-real-app" loading="lazy">
+          <span class="caption">Button loading state in production context</span>
+          <span class="filename">button-loading-real-app.png</span>
+        </a>
+        <a href="pagination.png"
+           data-pswp-width="1280"
+           data-pswp-height="720"
+           target="_blank"
+           rel="noreferrer">
+          <img src="pagination.png" alt="pagination" loading="lazy">
+          <span class="caption">Pagination component</span>
+          <span class="filename">pagination.png</span>
+        </a>
+        <a href="pagination-accessible.png"
+           data-pswp-width="1280"
+           data-pswp-height="720"
+           target="_blank"
+           rel="noreferrer">
+          <img src="pagination-accessible.png" alt="pagination-accessible" loading="lazy">
+          <span class="caption">Pagination with accessibility enhancements</span>
+          <span class="filename">pagination-accessible.png</span>
+        </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Demo Mode &amp; Onboarding <span class="count">3</span></h2>
+    <div class="gallery" id="gallery-demo-mode-onboarding">
+        <a href="demo-mode-banner.png"
+           data-pswp-width="1040"
+           data-pswp-height="120"
+           target="_blank"
+           rel="noreferrer">
+          <img src="demo-mode-banner.png" alt="demo-mode-banner" loading="lazy">
+          <span class="caption">Demo mode banner indicating the app is running in demonstration mode</span>
+          <span class="filename">demo-mode-banner.png</span>
+        </a>
+        <a href="demo-mode-dashboard.png"
+           data-pswp-width="1280"
+           data-pswp-height="1725"
+           target="_blank"
+           rel="noreferrer">
+          <img src="demo-mode-dashboard.png" alt="demo-mode-dashboard" loading="lazy">
+          <span class="caption">Dashboard view while running in demo mode</span>
+          <span class="filename">demo-mode-dashboard.png</span>
+        </a>
+        <a href="onboarding-page.png"
+           data-pswp-width="1280"
+           data-pswp-height="870"
+           target="_blank"
+           rel="noreferrer">
+          <img src="onboarding-page.png" alt="onboarding-page" loading="lazy">
+          <span class="caption">First-run onboarding flow for new users</span>
+          <span class="filename">onboarding-page.png</span>
+        </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Widgets <span class="count">1</span></h2>
+    <div class="gallery" id="gallery-widgets">
+        <a href="widget-dashboard.png"
+           data-pswp-width="1404"
+           data-pswp-height="1776"
+           target="_blank"
+           rel="noreferrer">
+          <img src="widget-dashboard.png" alt="widget-dashboard" loading="lazy">
+          <span class="caption">Widget-driven dashboard layout with rearrangeable tiles</span>
+          <span class="filename">widget-dashboard.png</span>
+        </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>API &amp; Specs <span class="count">2</span></h2>
+    <div class="gallery" id="gallery-api-specs">
+        <a href="api-docs-page.png"
+           data-pswp-width="1280"
+           data-pswp-height="728"
+           target="_blank"
+           rel="noreferrer">
+          <img src="api-docs-page.png" alt="api-docs-page" loading="lazy">
+          <span class="caption">Interactive API documentation page</span>
+          <span class="filename">api-docs-page.png</span>
+        </a>
+        <a href="specs-page.png"
+           data-pswp-width="1280"
+           data-pswp-height="1177"
+           target="_blank"
+           rel="noreferrer">
+          <img src="specs-page.png" alt="specs-page" loading="lazy">
+          <span class="caption">OpenAPI/spec catalog page</span>
+          <span class="filename">specs-page.png</span>
+        </a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Other Pages <span class="count">6</span></h2>
+    <div class="gallery" id="gallery-other-pages">
+        <a href="export-page.png"
+           data-pswp-width="1280"
+           data-pswp-height="1433"
+           target="_blank"
+           rel="noreferrer">
+          <img src="export-page.png" alt="export-page" loading="lazy">
+          <span class="caption">Data export page</span>
+          <span class="filename">export-page.png</span>
+        </a>
+        <a href="showcase-page.png"
+           data-pswp-width="1280"
+           data-pswp-height="2245"
+           target="_blank"
+           rel="noreferrer">
+          <img src="showcase-page.png" alt="showcase-page" loading="lazy">
+          <span class="caption">DaisyUI component showcase page</span>
+          <span class="filename">showcase-page.png</span>
+        </a>
+        <a href="sitemap-page.png"
+           data-pswp-width="1280"
+           data-pswp-height="2540"
+           target="_blank"
+           rel="noreferrer">
+          <img src="sitemap-page.png" alt="sitemap-page" loading="lazy">
+          <span class="caption">Initial loading splash (&quot;Open-Hivemind / Initializing AI Network Dashboard / 30% Complete&quot;) shown before the sitemap renders. **Note:** filename is misleading — this is the splash, not the sitemap itself; image needs re-shooting.</span>
+          <span class="filename">sitemap-page.png</span>
+        </a>
+        <a href="static-pages.png"
+           data-pswp-width="1280"
+           data-pswp-height="1607"
+           target="_blank"
+           rel="noreferrer">
+          <img src="static-pages.png" alt="static-pages" loading="lazy">
+          <span class="caption">Static pages overview</span>
+          <span class="filename">static-pages.png</span>
+        </a>
+        <a href="webhook-integration.png"
+           data-pswp-width="1280"
+           data-pswp-height="800"
+           target="_blank"
+           rel="noreferrer">
+          <img src="webhook-integration.png" alt="webhook-integration" loading="lazy">
+          <span class="caption">Webhook integration configuration</span>
+          <span class="filename">webhook-integration.png</span>
+        </a>
+        <a href="verification-bots-search.png"
+           data-pswp-width="1280"
+           data-pswp-height="720"
+           target="_blank"
+           rel="noreferrer">
+          <img src="verification-bots-search.png" alt="verification-bots-search" loading="lazy">
+          <span class="caption">Bot search verification view</span>
+          <span class="filename">verification-bots-search.png</span>
+        </a>
+    </div>
+  </section>
+  
+  <section>
+    <h2>Undocumented orphans <span class="count">15</span></h2>
+    <p class="note">These PNGs exist in <code>docs/screenshots/</code> but are not
+    listed in <code>README.md</code>. Either add an entry or remove the file.</p>
+    <div class="gallery" id="gallery-orphans">
+        <a href="guards-concurrent-test.png"
+           data-pswp-width="1869374565"
+           data-pswp-height="1914725999"
+           target="_blank"
+           rel="noreferrer">
+          <img src="guards-concurrent-test.png" alt="guards-concurrent-test.png" loading="lazy">
+          <span class="caption">⚠️ Not documented in README.md — add or remove</span>
+          <span class="filename">guards-concurrent-test.png</span>
+        </a>
+        <a href="letta-cloud-config.png"
+           data-pswp-width="1280"
+           data-pswp-height="939"
+           target="_blank"
+           rel="noreferrer">
+          <img src="letta-cloud-config.png" alt="letta-cloud-config.png" loading="lazy">
+          <span class="caption">⚠️ Not documented in README.md — add or remove</span>
+          <span class="filename">letta-cloud-config.png</span>
+        </a>
+        <a href="letta-localhost-health.png"
+           data-pswp-width="1280"
+           data-pswp-height="939"
+           target="_blank"
+           rel="noreferrer">
+          <img src="letta-localhost-health.png" alt="letta-localhost-health.png" loading="lazy">
+          <span class="caption">⚠️ Not documented in README.md — add or remove</span>
+          <span class="filename">letta-localhost-health.png</span>
+        </a>
+        <a href="response-profile-add-modal.png"
+           data-pswp-width="1280"
+           data-pswp-height="720"
+           target="_blank"
+           rel="noreferrer">
+          <img src="response-profile-add-modal.png" alt="response-profile-add-modal.png" loading="lazy">
+          <span class="caption">⚠️ Not documented in README.md — add or remove</span>
+          <span class="filename">response-profile-add-modal.png</span>
+        </a>
+        <a href="response-profile-edit-modal.png"
+           data-pswp-width="1280"
+           data-pswp-height="720"
+           target="_blank"
+           rel="noreferrer">
+          <img src="response-profile-edit-modal.png" alt="response-profile-edit-modal.png" loading="lazy">
+          <span class="caption">⚠️ Not documented in README.md — add or remove</span>
+          <span class="filename">response-profile-edit-modal.png</span>
+        </a>
+        <a href="response-profiles-list.png"
+           data-pswp-width="1280"
+           data-pswp-height="1100"
+           target="_blank"
+           rel="noreferrer">
+          <img src="response-profiles-list.png" alt="response-profiles-list.png" loading="lazy">
+          <span class="caption">⚠️ Not documented in README.md — add or remove</span>
+          <span class="filename">response-profiles-list.png</span>
+        </a>
+        <a href="specs-action-clicked.png"
+           data-pswp-width="1280"
+           data-pswp-height="730"
+           target="_blank"
+           rel="noreferrer">
+          <img src="specs-action-clicked.png" alt="specs-action-clicked.png" loading="lazy">
+          <span class="caption">⚠️ Not documented in README.md — add or remove</span>
+          <span class="filename">specs-action-clicked.png</span>
+        </a>
+        <a href="specs-baseline.png"
+           data-pswp-width="1280"
+           data-pswp-height="747"
+           target="_blank"
+           rel="noreferrer">
+          <img src="specs-baseline.png" alt="specs-baseline.png" loading="lazy">
+          <span class="caption">⚠️ Not documented in README.md — add or remove</span>
+          <span class="filename">specs-baseline.png</span>
+        </a>
+        <a href="specs-detail-page.png"
+           data-pswp-width="1280"
+           data-pswp-height="897"
+           target="_blank"
+           rel="noreferrer">
+          <img src="specs-detail-page.png" alt="specs-detail-page.png" loading="lazy">
+          <span class="caption">⚠️ Not documented in README.md — add or remove</span>
+          <span class="filename">specs-detail-page.png</span>
+        </a>
+        <a href="widget-after-removal.png"
+           data-pswp-width="1280"
+           data-pswp-height="1724"
+           target="_blank"
+           rel="noreferrer">
+          <img src="widget-after-removal.png" alt="widget-after-removal.png" loading="lazy">
+          <span class="caption">⚠️ Not documented in README.md — add or remove</span>
+          <span class="filename">widget-after-removal.png</span>
+        </a>
+        <a href="widget-after-reset.png"
+           data-pswp-width="1404"
+           data-pswp-height="1776"
+           target="_blank"
+           rel="noreferrer">
+          <img src="widget-after-reset.png" alt="widget-after-reset.png" loading="lazy">
+          <span class="caption">⚠️ Not documented in README.md — add or remove</span>
+          <span class="filename">widget-after-reset.png</span>
+        </a>
+        <a href="widget-edit-mode.png"
+           data-pswp-width="1280"
+           data-pswp-height="1724"
+           target="_blank"
+           rel="noreferrer">
+          <img src="widget-edit-mode.png" alt="widget-edit-mode.png" loading="lazy">
+          <span class="caption">⚠️ Not documented in README.md — add or remove</span>
+          <span class="filename">widget-edit-mode.png</span>
+        </a>
+        <a href="widget-empty-state.png"
+           data-pswp-width="1280"
+           data-pswp-height="1724"
+           target="_blank"
+           rel="noreferrer">
+          <img src="widget-empty-state.png" alt="widget-empty-state.png" loading="lazy">
+          <span class="caption">⚠️ Not documented in README.md — add or remove</span>
+          <span class="filename">widget-empty-state.png</span>
+        </a>
+        <a href="widget-palette.png"
+           data-pswp-width="1280"
+           data-pswp-height="1724"
+           target="_blank"
+           rel="noreferrer">
+          <img src="widget-palette.png" alt="widget-palette.png" loading="lazy">
+          <span class="caption">⚠️ Not documented in README.md — add or remove</span>
+          <span class="filename">widget-palette.png</span>
+        </a>
+        <a href="widget-three-added.png"
+           data-pswp-width="1404"
+           data-pswp-height="1724"
+           target="_blank"
+           rel="noreferrer">
+          <img src="widget-three-added.png" alt="widget-three-added.png" loading="lazy">
+          <span class="caption">⚠️ Not documented in README.md — add or remove</span>
+          <span class="filename">widget-three-added.png</span>
+        </a>
+    </div>
+  </section>
+  <script type="module">
+    import PhotoSwipeLightbox from 'https://unpkg.com/photoswipe@5.4.4/dist/photoswipe-lightbox.esm.js';
+    const ids = ["gallery-activity-monitoring","gallery-analytics-metrics","gallery-bot-management","gallery-chat","gallery-configuration","gallery-llm-providers","gallery-message-providers","gallery-providers-api","gallery-mcp-model-context-protocol","gallery-guards-security","gallery-personas","gallery-marketplace","gallery-settings","gallery-system-management","gallery-ui-components-accessibility","gallery-demo-mode-onboarding","gallery-widgets","gallery-api-specs","gallery-other-pages","gallery-orphans"];
+    for (const id of ids) {
+      new PhotoSwipeLightbox({
+        gallery: '#' + id,
+        children: 'a',
+        pswpModule: () => import('https://unpkg.com/photoswipe@5.4.4/dist/photoswipe.esm.js'),
+      }).init();
+    }
+  </script>
+</body>
+</html>
