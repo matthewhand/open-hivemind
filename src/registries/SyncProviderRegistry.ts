@@ -241,6 +241,23 @@ export class SyncProviderRegistry {
     return this.llmProviders.get(id);
   }
 
+  /**
+   * Manually register an LLM provider instance.
+   *
+   * Primarily used for testing or when a provider cannot be loaded
+   * via the standard plugin mechanism.
+   *
+   * Note: This also marks the registry as initialized if it wasn't.
+   */
+  public registerLlmProvider(id: string, instance: ILlmProvider): void {
+    this.llmProviders.set(id, instance);
+    if (!this.llmInsertionOrder.includes(id)) {
+      this.llmInsertionOrder.push(id);
+    }
+    this._initialized = true;
+    debug('Manually registered LLM provider: %s', id);
+  }
+
   /** Return all registered LLM providers as an array. */
   public getLlmProviders(): ILlmProvider[] {
     this.assertInitialized();
