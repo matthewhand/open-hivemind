@@ -176,7 +176,25 @@ export class PostgresMemoryProvider implements IMemoryProvider {
     content: string,
     metadata?: Record<string, unknown>
   ): Promise<MemoryEntry> {
-    throw new Error('Update memory not implemented in PostgresMemoryProvider');
+    this.ensureInitialized();
+
+    // Re-embed the new content so semantic search stays consistent with the
+    // updated text, then update the row in place (preserving id / created_at).
+    const embedding = await this.embeddingProvider.generateEmbedding(content);
+    const updated = await this.dbManager.updateMemory(id, { content, metadata, embedding });
+    if (!updated) {
+      throw new Error(`PostgresMemoryProvider: memory ${id} not found`);
+    }
+
+    const row = await this.dbManager.getMemoryById(id);
+    return {
+      id: String(id),
+      content: row?.content ?? content,
+      metadata: row?.metadata ?? metadata,
+      userId: row?.userId,
+      agentId: row?.agentId,
+      timestamp: row?.createdAt ? new Date(row.createdAt).getTime() : Date.now(),
+    };
   }
 
   async deleteMemory(id: string): Promise<void> {

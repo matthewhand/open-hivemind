@@ -593,6 +593,13 @@ export class DatabaseManager {
     return this.memoryRepo.getMemoryById(id);
   }
 
+  async updateMemory(
+    id: string | number,
+    fields: { content?: string; metadata?: Record<string, unknown>; embedding?: number[] }
+  ): Promise<boolean> {
+    return this.memoryRepo.updateMemory(id, fields);
+  }
+
   async deleteMemory(id: string | number): Promise<boolean> {
     return this.memoryRepo.deleteMemory(id);
   }

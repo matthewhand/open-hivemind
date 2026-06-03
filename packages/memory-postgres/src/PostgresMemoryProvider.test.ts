@@ -17,6 +17,7 @@ describe('PostgresMemoryProvider (Mocked)', () => {
         ]),
       getMemories: jest.fn().mockResolvedValue([]),
       getMemoryById: jest.fn().mockResolvedValue(null),
+      updateMemory: jest.fn().mockResolvedValue(true),
       deleteMemory: jest.fn().mockResolvedValue(true),
       deleteAllMemories: jest.fn().mockResolvedValue(undefined),
       isConnected: jest.fn().mockReturnValue(true),
@@ -95,6 +96,40 @@ describe('PostgresMemoryProvider (Mocked)', () => {
     expect(mockDbManager.getMemoryById).toHaveBeenCalledWith('does-not-exist');
     expect(mockDbManager.getMemories).not.toHaveBeenCalled();
     expect(result).toBeNull();
+  });
+
+  it('should update a memory: re-embeds the new content and returns the fresh row', async () => {
+    mockDbManager.updateMemory.mockResolvedValue(true);
+    mockDbManager.getMemoryById.mockResolvedValue({
+      id: 7,
+      content: 'updated content',
+      metadata: { v: 2 },
+      userId: 'u1',
+      agentId: 'a1',
+      createdAt: '2026-01-01T00:00:00.000Z',
+    });
+
+    const result = await provider.updateMemory('7', 'updated content', { v: 2 });
+
+    // New content is re-embedded so semantic search stays consistent.
+    expect(mockEmbeddingProvider.generateEmbedding).toHaveBeenCalledWith('updated content');
+    expect(mockDbManager.updateMemory).toHaveBeenCalledWith(
+      '7',
+      expect.objectContaining({
+        content: 'updated content',
+        metadata: { v: 2 },
+        embedding: expect.any(Array),
+      })
+    );
+    expect(result).toEqual(
+      expect.objectContaining({ id: '7', content: 'updated content', metadata: { v: 2 } })
+    );
+  });
+
+  it('should throw when updating a memory id that does not exist', async () => {
+    mockDbManager.updateMemory.mockResolvedValue(false);
+
+    await expect(provider.updateMemory('missing', 'x')).rejects.toThrow(/not found/);
   });
 
   it('should select a non-OpenAI provider that implements generateEmbedding', async () => {
