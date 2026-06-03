@@ -29,6 +29,7 @@ import type { IMessage } from '@message/interfaces/IMessage';
 import * as messengerProviderModule from '@message/management/getMessengerProvider';
 import { IdleResponseManager } from '@message/management/IdleResponseManager';
 import Logger from '@common/logger';
+import { UserConfigStore } from '@src/config/UserConfigStore';
 import { initProviders } from '../initProviders';
 import startupDiagnostics from '../utils/startupDiagnostics';
 import { reloadGlobalConfigs } from './routes/config';
@@ -243,6 +244,14 @@ export async function initServices(
   const shutdownCoordinator = ShutdownCoordinator.getInstance();
 
   registerServices();
+
+  // Load user configuration early (async)
+  try {
+    await UserConfigStore.getInstance().loadConfig();
+    appLogger.info('User configuration loaded');
+  } catch (error) {
+    appLogger.warn('Failed to load user configuration', { error });
+  }
 
   // Initialize database connection
   try {

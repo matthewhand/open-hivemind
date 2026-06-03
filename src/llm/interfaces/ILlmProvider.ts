@@ -192,4 +192,16 @@ export interface ILlmProvider {
    * ```
    */
   generateCompletion: (prompt: string) => Promise<string>;
+
+  /**
+   * Generates an embedding vector for the given text.
+   *
+   * Optional. Providers that support embeddings (e.g. OpenAI, OpenWebUI/Ollama)
+   * implement this so they can back vector memory stores such as
+   * PostgresMemoryProvider. Providers without embedding support omit it.
+   *
+   * @param {string} text - The text to embed
+   * @returns {Promise<number[]>} A promise that resolves to the embedding vector
+   */
+  generateEmbedding?: (text: string) => Promise<number[]>;
 }

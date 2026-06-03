@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { spawn } from 'child_process';
 import { v4 as uuidv4 } from 'uuid';
 import { ErrorUtils } from '@src/types/errors';
+import { toMCPProviderTemplates } from '@src/mcp/templates';
 import type { MCPProviderConfig, MCPProviderTemplate } from '../../types/mcp';
 
 import { injectable } from 'tsyringe';
@@ -238,93 +239,10 @@ export class ToolRegistry {
   }
 
   getTemplates(): MCPProviderTemplate[] {
-    return [
-      {
-        id: 'filesystem-mcp',
-        name: 'File System MCP',
-        type: 'desktop',
-        description: 'Local file system access for reading and writing files',
-        category: 'File System',
-        command: 'npx',
-        args: ['@modelcontextprotocol/server-filesystem'],
-        envVars: [
-          {
-            name: 'FILESYSTEM_ROOT',
-            description: 'Root directory for file system access',
-            required: true,
-            defaultValue: '/tmp/mcp-files',
-          },
-        ],
-        enabledByDefault: false,
-        documentation: 'https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem',
-      },
-      {
-        id: 'web-scraper-mcp',
-        name: 'Web Scraper MCP',
-        type: 'desktop',
-        description: 'Fetch and extract content from web pages',
-        category: 'Web',
-        command: 'npx',
-        args: ['@modelcontextprotocol/server-web-scraper'],
-        envVars: [],
-        enabledByDefault: false,
-        documentation: 'https://github.com/modelcontextprotocol/servers/tree/main/src/web-scraper',
-      },
-      {
-        id: 'github-mcp',
-        name: 'GitHub MCP',
-        type: 'cloud',
-        description: 'Access GitHub repositories, issues, and pull requests',
-        category: 'Development',
-        command: 'npx',
-        args: ['@modelcontextprotocol/server-github'],
-        envVars: [
-          {
-            name: 'GITHUB_TOKEN',
-            description: 'GitHub personal access token',
-            required: true,
-          },
-        ],
-        enabledByDefault: false,
-        documentation: 'https://github.com/modelcontextprotocol/servers/tree/main/src/github',
-      },
-      {
-        id: 'postgres-mcp',
-        name: 'PostgreSQL MCP',
-        type: 'desktop',
-        description: 'Query PostgreSQL databases safely',
-        category: 'Database',
-        command: 'npx',
-        args: ['@modelcontextprotocol/server-postgres'],
-        envVars: [
-          {
-            name: 'POSTGRES_CONNECTION_STRING',
-            description: 'PostgreSQL connection string',
-            required: true,
-          },
-        ],
-        enabledByDefault: false,
-        documentation: 'https://github.com/modelcontextprotocol/servers/tree/main/src/postgres',
-      },
-      {
-        id: 'slack-mcp',
-        name: 'Slack MCP',
-        type: 'cloud',
-        description: 'Send messages and access Slack workspace data',
-        category: 'Communication',
-        command: 'npx',
-        args: ['@modelcontextprotocol/server-slack'],
-        envVars: [
-          {
-            name: 'SLACK_TOKEN',
-            description: 'Slack bot token',
-            required: true,
-          },
-        ],
-        enabledByDefault: false,
-        documentation: 'https://github.com/modelcontextprotocol/servers/tree/main/src/slack',
-      },
-    ];
+    // Derive the API/UI templates from the single static registry in
+    // `src/mcp/templates.ts` so the previously-disconnected source is no longer
+    // dead and the two registries cannot drift apart.
+    return toMCPProviderTemplates();
   }
 
   createFromTemplate(templateId: string, overrides: Partial<MCPProviderConfig>): MCPProviderConfig {
