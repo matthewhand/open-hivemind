@@ -7,6 +7,7 @@ import { SecureConfigManager } from '../../config/SecureConfigManager';
 import { DatabaseManager } from '../../database/DatabaseManager';
 import { type BotConfiguration, type BotConfigurationVersion } from '../../database/types';
 import { ErrorUtils } from '../../types/errors';
+import { PathSecurityUtils } from '../../utils/PathSecurityUtils';
 import {
   BackupManager,
   calculateChecksum,
@@ -104,7 +105,10 @@ export class ConfigurationImportExportService {
     try {
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const baseFileName = fileName || `configurations-export-${timestamp}`;
-      let filePath = path.join(this.exportsDir, `${baseFileName}.${options.format}`);
+      let filePath = PathSecurityUtils.getSafePath(
+        this.exportsDir,
+        `${baseFileName}.${options.format}`
+      );
 
       // Get configurations
       // ⚡ Bolt Optimization: Replace N+1 queries with a single bulk query
@@ -238,7 +242,10 @@ export class ConfigurationImportExportService {
     try {
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const baseFileName = fileName || `${env}-config-${timestamp}`;
-      let filePath = path.join(this.exportsDir, `${baseFileName}.${options.format}`);
+      let filePath = PathSecurityUtils.getSafePath(
+        this.exportsDir,
+        `${baseFileName}.${options.format}`
+      );
 
       // Get main configuration from SecureConfigManager
       const secureManager = await SecureConfigManager.getInstance();
@@ -615,7 +622,10 @@ export class ConfigurationImportExportService {
           try {
             await this.dbManager.createBotConfigurationVersionsBulk(batch);
           } catch (error) {
-            debug(`Bulk version insert failed for batch starting at ${i}, falling back to individual inserts:`, error);
+            debug(
+              `Bulk version insert failed for batch starting at ${i}, falling back to individual inserts:`,
+              error
+            );
             // Fallback to individual inserts for this batch to maintain resilience
             for (const version of batch) {
               try {

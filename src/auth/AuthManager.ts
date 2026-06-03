@@ -4,6 +4,12 @@ import Debug from 'debug';
 import jwt from 'jsonwebtoken';
 import { AuthenticationError, ValidationError } from '@src/types/errorClasses';
 import { SecureConfigManager } from '@config/SecureConfigManager';
+import {
+  buildOtpAuthUri,
+  generateSecret as generateTotpSecretValue,
+  verifyToken as verifyTotpToken,
+} from './TotpService';
+import { LoginAttemptTracker } from './LoginAttemptTracker';
 import { UserRepository } from './UserRepository';
 import type {
   AuthToken,
@@ -29,6 +35,9 @@ export class AuthManager {
   private readonly jwtSecret: string;
   private readonly jwtRefreshSecret: string;
   private readonly bcryptRounds = 12;
+
+  /** Account-lockout tracker (see {@link LoginAttemptTracker}). */
+  private readonly loginAttempts = new LoginAttemptTracker();
 
   // RBAC Permissions
   private readonly rolePermissions: Record<UserRole, string[]> = {
@@ -256,6 +265,21 @@ export class AuthManager {
   }
 
   /**
+   * Strip all secret/credential fields from a user before returning it to a
+   * client. Removes the password hash plus any TOTP secrets so they never leak
+   * through API responses.
+   */
+  private sanitizeUser(user: User): User {
+    const {
+      passwordHash: _ph,
+      twoFactorSecret: _s,
+      twoFactorPendingSecret: _ps,
+      ...safeUser
+    } = user;
+    return safeUser;
+  }
+
+  /**
    * Hash password using bcrypt
    */
   public async hashPassword(password: string): Promise<string> {
@@ -330,50 +354,87 @@ export class AuthManager {
     this.persistUser(user);
     debug(`User registered: ${user.username}`);
 
-    // Destructure to omit passwordHash — setting it to undefined leaves the
-    // key present in JSON output; omitting via destructuring removes it entirely.
-
-    const { passwordHash: _ph, ...safeUser } = user;
-    return safeUser;
+    // Strip credentials before returning to a client.
+    return this.sanitizeUser(user);
   }
 
   /**
-   * Authenticate user and generate tokens
+   * Authenticate user and generate tokens.
+   *
+   * When the target user has TOTP two-factor authentication enabled, a valid
+   * `totpCode` is required in addition to the password. Users without 2FA
+   * enabled are unaffected — the password-only flow is preserved so existing
+   * accounts can never be locked out by this feature.
    */
   public async login(credentials: LoginCredentials): Promise<AuthToken> {
+    const lockoutKey = LoginAttemptTracker.buildKey(credentials.username, credentials.ipAddress);
+
+    // Reject early if locked, before any credential check, so a locked attacker
+    // cannot continue probing passwords.
+    const lockMs = this.loginAttempts.getLockRemainingMs(lockoutKey);
+    if (lockMs > 0) {
+      throw new AuthenticationError(
+        `Account temporarily locked due to too many failed login attempts. Try again in ${Math.ceil(lockMs / 1000)} seconds.`,
+        'ACCOUNT_LOCKED'
+      );
+    }
+
     const userId = this.usernameMap.get(credentials.username);
     const user = userId ? this.users.get(userId) : undefined;
 
     if (!user || !user.isActive || !user.passwordHash) {
+      this.loginAttempts.recordFailure(lockoutKey);
       throw new AuthenticationError('Invalid credentials', 'INVALID_CREDENTIALS');
     }
 
     const isValidPassword = await this.verifyPassword(credentials.password, user.passwordHash);
     if (!isValidPassword) {
+      this.loginAttempts.recordFailure(lockoutKey);
       throw new AuthenticationError('Invalid credentials', 'INVALID_CREDENTIALS');
     }
 
+    // Second factor: only enforced for users who have opted in and completed
+    // TOTP enrollment. The password has already been verified at this point.
+    if (user.twoFactorEnabled && user.twoFactorSecret) {
+      if (!credentials.totpCode) {
+        throw new AuthenticationError('Two-factor authentication code required', 'TOTP_REQUIRED');
+      }
+      if (!verifyTotpToken(credentials.totpCode, user.twoFactorSecret)) {
+        throw new AuthenticationError('Invalid two-factor code', 'INVALID_TOTP');
+      }
+    }
+
     // Update last login
+    // Successful authentication — clear any accumulated failure state.
+    this.loginAttempts.clear(lockoutKey);
+
     user.lastLogin = new Date().toISOString();
     this.users.set(user.id, user);
     this.persistUser(user);
 
-    // Generate tokens
     const accessToken = this.generateAccessToken(user);
     const refreshToken = this.generateRefreshToken(user);
-
-    // Store refresh token
     this.refreshTokens.add(refreshToken);
 
     debug(`User logged in: ${user.username}`);
 
-    const { passwordHash: _ph, ...safeUser } = user;
     return {
       accessToken,
       refreshToken,
-      user: safeUser,
+      user: this.sanitizeUser(user),
       expiresIn: 3600, // 1 hour
     };
+  }
+
+  /** Whether a username (optionally scoped to an IP) is currently locked out. */
+  public isLockedOut(username: string, ipAddress?: string): boolean {
+    const key = LoginAttemptTracker.buildKey(username, ipAddress);
+    return this.loginAttempts.getLockRemainingMs(key) > 0;
+  }
+
+  /** Admin override to clear a lockout (support flows / never permanently stuck). */
+  public resetLockout(username: string, ipAddress?: string): void {
+    this.loginAttempts.clear(LoginAttemptTracker.buildKey(username, ipAddress));
   }
 
   /**
@@ -394,8 +455,7 @@ export class AuthManager {
     const refreshToken = this.generateRefreshToken(user);
     this.refreshTokens.add(refreshToken);
     debug(`Trusted login for user: ${user.username}`);
-    const { passwordHash: _ph, ...safeUser } = user;
-    return { accessToken, refreshToken, user: safeUser, expiresIn: 3600 };
+    return { accessToken, refreshToken, user: this.sanitizeUser(user), expiresIn: 3600 };
   }
 
   /**
@@ -422,11 +482,10 @@ export class AuthManager {
       this.refreshTokens.delete(refreshToken);
       this.refreshTokens.add(newRefreshToken);
 
-      const { passwordHash: _ph, ...safeUser } = user;
       return {
         accessToken: newAccessToken,
         refreshToken: newRefreshToken,
-        user: safeUser,
+        user: this.sanitizeUser(user),
         expiresIn: 3600,
       };
     } catch {
@@ -453,6 +512,10 @@ export class AuthManager {
         username: user.username,
         role: user.role,
         permissions: this.getUserPermissions(user.role),
+        // Unique token id so two tokens minted within the same second (e.g.
+        // login immediately followed by session rotation) are never byte
+        // identical. Required for session rotation to produce a distinct token.
+        jti: crypto.randomBytes(16).toString('hex'),
       },
       this.jwtSecret,
       { expiresIn: '1h' }
@@ -502,8 +565,7 @@ export class AuthManager {
   public getUser(userId: string): User | null {
     const user = this.users.get(userId);
     if (user) {
-      const { passwordHash: _ph, ...safeUser } = user;
-      return safeUser;
+      return this.sanitizeUser(user);
     }
     return null;
   }
@@ -523,10 +585,7 @@ export class AuthManager {
    * Get all users (admin only)
    */
   public getAllUsers(): User[] {
-    return Array.from(this.users.values()).map((user) => {
-      const { passwordHash: _ph, ...safeUser } = user;
-      return safeUser;
-    });
+    return Array.from(this.users.values()).map((user) => this.sanitizeUser(user));
   }
 
   /**
@@ -567,8 +626,7 @@ export class AuthManager {
     this.users.set(userId, updatedUser);
     this.persistUser(updatedUser);
 
-    const { passwordHash: _ph, ...safeUser } = updatedUser;
-    return safeUser;
+    return this.sanitizeUser(updatedUser);
   }
 
   /**
@@ -607,5 +665,77 @@ export class AuthManager {
     const user = this.users.get(userId);
     if (!user || !user.passwordHash) return false;
     return this.verifyPassword(password, user.passwordHash);
+  }
+
+  /**
+   * Whether the given user currently has 2FA enabled and confirmed.
+   */
+  public isTwoFactorEnabled(userId: string): boolean {
+    const user = this.users.get(userId);
+    return Boolean(user?.twoFactorEnabled && user.twoFactorSecret);
+  }
+
+  /**
+   * Begin TOTP enrollment for a user.
+   *
+   * Generates a fresh secret and stores it as a *pending* secret (it does not
+   * take effect until {@link confirmTwoFactorEnrollment} succeeds with a valid
+   * code). Returns the Base32 secret and an `otpauth://` URI for QR display.
+   *
+   * Re-invoking before confirmation rotates the pending secret, which is safe.
+   */
+  public startTwoFactorEnrollment(userId: string): { secret: string; otpauthUri: string } | null {
+    const user = this.users.get(userId);
+    if (!user) return null;
+
+    const secret = generateTotpSecretValue();
+    user.twoFactorPendingSecret = secret;
+    this.users.set(userId, user);
+
+    const otpauthUri = buildOtpAuthUri(secret, user.email || user.username);
+    debug(`Started 2FA enrollment for user: ${user.username}`);
+    return { secret, otpauthUri };
+  }
+
+  /**
+   * Confirm a pending TOTP enrollment by verifying a code generated from the
+   * pending secret. On success the secret is activated and 2FA becomes
+   * required at login for this user.
+   *
+   * Returns false if there is no pending enrollment or the code is invalid;
+   * the caller should surface that without mutating auth state.
+   */
+  public confirmTwoFactorEnrollment(userId: string, totpCode: string): boolean {
+    const user = this.users.get(userId);
+    if (!user || !user.twoFactorPendingSecret) return false;
+
+    if (!verifyTotpToken(totpCode, user.twoFactorPendingSecret)) {
+      return false;
+    }
+
+    user.twoFactorSecret = user.twoFactorPendingSecret;
+    user.twoFactorPendingSecret = undefined;
+    user.twoFactorEnabled = true;
+    this.users.set(userId, user);
+    debug(`Confirmed 2FA enrollment for user: ${user.username}`);
+    return true;
+  }
+
+  /**
+   * Disable 2FA for a user, clearing all stored TOTP secrets.
+   *
+   * Returns false if the user does not exist. Idempotent for users that never
+   * enrolled.
+   */
+  public disableTwoFactor(userId: string): boolean {
+    const user = this.users.get(userId);
+    if (!user) return false;
+
+    user.twoFactorEnabled = false;
+    user.twoFactorSecret = undefined;
+    user.twoFactorPendingSecret = undefined;
+    this.users.set(userId, user);
+    debug(`Disabled 2FA for user: ${user.username}`);
+    return true;
   }
 }

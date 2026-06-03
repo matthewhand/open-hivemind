@@ -81,6 +81,9 @@ export const useToolsLogic = () => {
       const prefsJson: any = await apiService.get('/api/mcp/tools/preferences').catch(() => ({ success: true, data: {} }));
       const preferences = prefsJson.data || {};
 
+      // Performance optimization: pre-compute map for O(1) lookups instead of calling .find() inside loops
+      const recentUsedMap = new Map(recentlyUsed.map(r => [r.toolId, r.timestamp]));
+
       const allTools: MCPTool[] = [];
       servers.forEach((server: any) => {
         if (server.tools && Array.isArray(server.tools)) {
@@ -98,7 +101,7 @@ export const useToolsLogic = () => {
               inputSchema: t.inputSchema,
               outputSchema: t.outputSchema || t.output_schema || {},
               usageCount: usageCounts[toolId] || 0,
-              lastUsed: recentlyUsed.find(r => r.toolId === toolId)?.timestamp,
+              lastUsed: recentUsedMap.get(toolId),
               enabled: preference ? preference.enabled : server.connected,
             });
           });

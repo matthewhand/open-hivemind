@@ -184,9 +184,7 @@ export class AnalyticsSchemas implements ISchemaModule {
       'CREATE INDEX IF NOT EXISTS idx_bot_user_tags_tag_name ON bot_user_tags(tag_name)',
     ];
 
-    for (const indexSql of indexes) {
-      await this.createIndex(db, indexSql);
-    }
+    await Promise.all(indexes.map((indexSql) => this.createIndex(db, indexSql)));
   }
 
   private async createTable(db: Database, sql: string): Promise<void> {

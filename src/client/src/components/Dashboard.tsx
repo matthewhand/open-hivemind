@@ -14,38 +14,37 @@ import CommandCenterStream from './Monitoring/CommandCenterStream';
 import { useSuccessToast, useErrorToast } from './DaisyUI/ToastNotification';
 import { ArrowUp, ArrowDown, RefreshCw, Save, Settings2 } from 'lucide-react';
 
-const getStatusColor = (botStatus: string) => {
-  switch (botStatus.toLowerCase()) {
-    case 'active':
-      return 'success';
-    case 'connecting':
-      return 'warning';
-    case 'inactive':
-    case 'unavailable':
-      return 'error';
-    case 'error':
-      return 'error';
-    default:
-      return 'info';
-  }
-};
-
-const getProviderIcon = (provider: string) => {
-  switch (provider.toLowerCase()) {
-    case 'discord':
-      return '💬';
-    case 'slack':
-      return '📢';
-    case 'telegram':
-      return '✈️';
-    case 'mattermost':
-      return '💼';
-    default:
-      return '🤖';
-  }
-};
-
 const Dashboard: React.FC = () => {
+  const getStatusColor = useCallback((botStatus: string) => {
+    switch (botStatus.toLowerCase()) {
+      case 'active':
+        return 'success';
+      case 'connecting':
+        return 'warning';
+      case 'inactive':
+      case 'unavailable':
+        return 'error';
+      case 'error':
+        return 'error';
+      default:
+        return 'info';
+    }
+  }, []);
+
+  const getProviderIcon = useCallback((provider: string) => {
+    switch (provider.toLowerCase()) {
+      case 'discord':
+        return '💬';
+      case 'slack':
+        return '📢';
+      case 'telegram':
+        return '✈️';
+      case 'mattermost':
+        return '💼';
+      default:
+        return '🤖';
+    }
+  }, []);
   const [bots, setBots] = useState<Bot[]>([]);
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [loading, setLoading] = useState(true);

@@ -34,6 +34,25 @@ export class SessionManager {
   }
 
   /**
+   * Whether server-side session tracking / rotation is enabled.
+   *
+   * SECURITY: This is strictly opt-in. When disabled (the default), the
+   * existing stateless JWT auth path is used unchanged. Enabling it adds
+   * server-side session tracking on top of the existing token auth — it never
+   * weakens or replaces it. Read lazily so tests / runtime can toggle the flag.
+   */
+  public static isEnabled(): boolean {
+    return process.env.SESSION_MANAGER_ENABLED === 'true';
+  }
+
+  /**
+   * Expose the underlying store (primarily for diagnostics / tests).
+   */
+  public getStore(): SessionStore {
+    return this.sessionStore;
+  }
+
+  /**
    * Create a new session with token rotation
    * @param userId User ID
    * @param role User role
@@ -114,10 +133,21 @@ export class SessionManager {
    */
   public sessionMiddleware(): (req: Request, res: Response, next: NextFunction) => Promise<void> {
     return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      // SECURITY: Strictly opt-in. When session management is disabled this is a
+      // no-op so existing stateless JWT auth is completely unaffected.
+      if (!SessionManager.isEnabled()) {
+        return next();
+      }
+
       const authHeader = req.headers['authorization'];
       const token = authHeader && authHeader.split(' ')[1];
 
-      if (token) {
+      // Only enforce session validity for tokens that were actually issued
+      // through the session flow. Unknown tokens (e.g. legacy tokens, or tokens
+      // that predate session enablement) are passed through to the downstream
+      // JWT auth middleware, which remains the authoritative gate. This keeps
+      // the change additive and avoids locking out otherwise-valid tokens.
+      if (token && this.sessionStore.hasToken(token)) {
         try {
           const isValid = await this.validateSession(token);
           if (!isValid) {
