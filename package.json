@@ -23,6 +23,7 @@
     "lint:fix": "node ./node_modules/eslint/bin/eslint.js src/ --fix",
     "format": "node ./node_modules/prettier/bin/prettier.cjs --write \"src/**/*.ts\" \"src/**/*.tsx\" \"tests/**/*.ts\" \"packages/**/*.ts\"",
     "format:check": "node ./node_modules/prettier/bin/prettier.cjs --check \"src/**/*.ts\" \"src/**/*.tsx\" \"tests/**/*.ts\" \"packages/**/*.ts\"",
+    "gallery": "tsx scripts/build-screenshot-gallery.ts",
     "check-types": "tsc --noEmit",
     "version": "tsc -v",
     "build": "bash scripts/build-all.sh",

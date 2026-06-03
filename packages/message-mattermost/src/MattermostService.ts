@@ -671,7 +671,11 @@ export class MattermostService extends EventEmitter implements IMessengerService
         return;
       }
       await client.sendTyping(channelId, threadId);
-    } catch {}
+    } catch (error: unknown) {
+      // Typing indicators are best-effort; surface the failure via debug
+      // logging rather than swallowing it silently so issues are diagnosable.
+      debug('sendTyping failed: %s', error instanceof Error ? error.message : String(error));
+    }
   }
 
   public async setModelActivity(modelId: string, senderKey?: string): Promise<void> {

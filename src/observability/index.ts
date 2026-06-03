@@ -20,6 +20,8 @@ export {
   JsonFileExporter,
   OtlpExporter,
   createExporters,
+  createExportersFromEnv,
+  attachTraceExporters,
 } from './TraceExporter';
 export type { ITraceExporter } from './TraceExporter';
 

@@ -352,16 +352,25 @@ export type OpenAIResponse =
   | OpenAIError;
 
 // Type guards
+/**
+ * Type guard to check if a response is an OpenAI Error
+ */
 export function isOpenAIError(response: OpenAIResponse): response is OpenAIError {
-  return 'error' in response && response.error !== null && response.error !== undefined;
+  return 'error' in response && response.error != null;
 }
 
+/**
+ * Type guard to check if a response is a Chat Completion response
+ */
 export function isChatCompletionResponse(
   response: OpenAIResponse
 ): response is OpenAIChatCompletionResponse {
   return 'object' in response && response.object === 'chat.completion';
 }
 
+/**
+ * Type guard to check if a response is a Models List response
+ */
 export function isModelsListResponse(
   response: OpenAIResponse
 ): response is OpenAIModelsListResponse {
@@ -369,12 +378,13 @@ export function isModelsListResponse(
     'object' in response &&
     response.object === 'list' &&
     'data' in response &&
-    Array.isArray(response.data) &&
-    response.data.length > 0 &&
-    'id' in response.data[0]
+    Array.isArray(response.data)
   );
 }
 
+/**
+ * Type guard to check if a response is a Completion response
+ */
 export function isCompletionResponse(
   response: OpenAIResponse
 ): response is OpenAICompletionResponse {
