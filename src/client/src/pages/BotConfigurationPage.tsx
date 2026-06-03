@@ -53,7 +53,10 @@ const ConfigSectionForm: React.FC<ConfigSectionFormProps> = ({ configName, confi
     defaultValues: values,
   });
 
-  // Reset form when config values change (e.g. after save + refetch)
+  // Reset form when config values change (e.g. after save + refetch).
+  // Depends on `config` identity rather than `values` so a fresh inline
+  // `config?.values || {}` object literal each render doesn't re-fire the
+  // effect → infinite reset loop.
   useEffect(() => {
     reset(values);
   }, [config, reset, values]);
