@@ -15,7 +15,7 @@ The package is PluginLoader-compatible (it exposes both `create` and `manifest`)
 
 ## Environment variables
 
-None read directly. Database connectivity is provided by the host app; the embedding profile is selected by the `embeddingProfile` config field, which must match the `name` of an LLM provider that exposes `generateEmbedding()`.
+None read directly. Database connectivity is provided by the host app; the embedding profile is selected by the `embeddingProfile` config field, which must match the `name` of an LLM provider that exposes `generateEmbedding()`. Both the OpenAI (`openai`) and OpenWebUI/Ollama (`openwebui`) providers implement `generateEmbedding()`; the OpenWebUI embedding model is configurable via `OPEN_WEBUI_EMBEDDING_MODEL` (default `nomic-embed-text`). If `embeddingProfile` names a provider that does not support embeddings, construction throws a clear error instead of silently falling back.
 
 ## Usage
 

@@ -234,8 +234,7 @@ router.post(
           .json(ApiResponse.error('User not found', undefined, 401));
       return res.json(ApiResponse.success({ user }));
 
-      // eslint-disable-next-line unused-imports/no-unused-vars
-    } catch (_: unknown) {
+    } catch {
       return res
         .status(HTTP_STATUS.UNAUTHORIZED)
         .json(ApiResponse.error('Invalid token', undefined, 401));
