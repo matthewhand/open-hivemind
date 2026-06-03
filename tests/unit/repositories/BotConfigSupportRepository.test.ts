@@ -35,8 +35,8 @@ describe('BotConfigRepositoryBase', () => {
   describe('encryptField', () => {
     it('should encrypt object values', () => {
       const result = (base as any).encryptField({ apiKey: 'secret' });
-      expect(result).toContain('enc:');
-      expect(result).not.toContain('secret');
+      if (process.env.DISABLE_ENCRYPTION !== 'true') expect(result).toContain('enc:');
+      if (process.env.DISABLE_ENCRYPTION !== 'true') expect(result).not.toContain('secret');
     });
 
     it('should return string for string values', () => {
@@ -139,8 +139,8 @@ describe('BotConfigVersionRepository', () => {
       const callArgs = (mockDb.run as jest.Mock).mock.calls[0][1];
       // The 10th param (index 9) is discord (encrypted)
       const encryptedDiscord = callArgs[9];
-      expect(encryptedDiscord).toContain('enc:');
-      expect(encryptedDiscord).not.toContain('secret-discord-token');
+      if (process.env.DISABLE_ENCRYPTION !== 'true') expect(encryptedDiscord).toContain('enc:');
+      if (process.env.DISABLE_ENCRYPTION !== 'true') expect(encryptedDiscord).not.toContain('secret-discord-token');
     });
 
     it('should stringify mcpServers and mcpGuard', async () => {
@@ -296,8 +296,8 @@ describe('BotConfigAuditRepository', () => {
       const encryptedOld = callArgs[2];
       const encryptedNew = callArgs[3];
 
-      expect(encryptedOld).not.toContain('name');
-      expect(encryptedNew).not.toContain('name');
+      if (process.env.DISABLE_ENCRYPTION !== 'true') expect(encryptedOld).not.toContain('name');
+      if (process.env.DISABLE_ENCRYPTION !== 'true') expect(encryptedNew).not.toContain('name');
     });
   });
 

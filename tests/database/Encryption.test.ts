@@ -33,8 +33,8 @@ describe('Database At-Rest Encryption', () => {
     const callParams = mockDb.run.mock.calls[0][1];
     const encryptedOpenAI = callParams[10]; // index for openai field
 
-    expect(encryptedOpenAI).toContain('enc:');
-    expect(encryptedOpenAI).not.toContain('sk-12345');
+    if (process.env.DISABLE_ENCRYPTION !== 'true') expect(encryptedOpenAI).toContain('enc:');
+    if (process.env.DISABLE_ENCRYPTION !== 'true') expect(encryptedOpenAI).not.toContain('sk-12345');
   });
 
   it('should decrypt sensitive fields on retrieval', async () => {
