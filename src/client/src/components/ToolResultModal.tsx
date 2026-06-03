@@ -120,6 +120,7 @@ const ToolResultModal: React.FC<ToolResultModalProps> = ({ isOpen, onClose, resu
             <button
               className="btn btn-xs btn-ghost gap-2"
               onClick={() => handleCopy(JSON.stringify(result.arguments, null, 2), 'arguments')}
+              aria-label="Copy arguments to clipboard"
             >
               {copiedSection === 'arguments' ? (
                 <>
@@ -150,6 +151,7 @@ const ToolResultModal: React.FC<ToolResultModalProps> = ({ isOpen, onClose, resu
                     'error'
                   )
                 }
+                aria-label="Copy error to clipboard"
               >
                 {copiedSection === 'error' ? (
                   <>
@@ -186,6 +188,7 @@ const ToolResultModal: React.FC<ToolResultModalProps> = ({ isOpen, onClose, resu
               <button
                 className="btn btn-xs btn-ghost gap-2"
                 onClick={() => handleCopy(JSON.stringify(result.result, null, 2), 'result')}
+                aria-label="Copy result to clipboard"
               >
                 {copiedSection === 'result' ? (
                   <>

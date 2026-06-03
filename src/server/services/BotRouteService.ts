@@ -4,7 +4,6 @@ import { createLogger } from '../../common/StructuredLogger';
 import { getLlmProvider } from '../../llm/getLlmProvider';
 import { BotManager, type BotInstance, type CreateBotRequest } from '../../managers/BotManager';
 
-// eslint-disable-next-line unused-imports/no-unused-vars
 const logger = createLogger('BotRouteService');
 
 export interface ImportReport {
@@ -12,20 +11,6 @@ export interface ImportReport {
   updated: string[];
   skipped: string[];
   errors: string[];
-}
-
-export interface DiagnosticResult {
-  messageProvider: { status: string; details: string };
-  llm: { status: string; details: string };
-  mcp: Array<{ name: string; status: string; details?: string }>;
-  timestamp: string;
-}
-
-export interface GeneratedBotConfig {
-  name: string;
-  personaName: string;
-  systemInstruction: string;
-  suggestedMcpTools: string[];
 }
 
 export class BotRouteService {
@@ -47,7 +32,7 @@ export class BotRouteService {
     await fs.promises.writeFile(orderFilePath, JSON.stringify(ids, null, 2));
   }
 
-  public async importBots(incoming: unknown[]): Promise<ImportReport> {
+  public async importBots(incoming: any[]): Promise<ImportReport> {
     const manager = await BotManager.getInstance();
     const existingBots = await manager.getAllBots();
     const existingByName = new Map(existingBots.map((b) => [b.name.toLowerCase(), b]));
@@ -61,37 +46,29 @@ export class BotRouteService {
 
     for (const bot of incoming) {
       try {
-        const botObj = bot as any;
-        if (!botObj.name) {
+        if (!bot.name) {
           report.errors.push('Skipped bot with no name');
           continue;
         }
-        const {
-          id: _id,
-          status: _status,
-          messageCount: _mc,
-          errorCount: _ec,
-          ...importData
-        } = botObj;
+        const { id: _id, status: _status, messageCount: _mc, errorCount: _ec, ...importData } = bot;
 
-        const existing = existingByName.get(String(botObj.name).toLowerCase());
+        const existing = existingByName.get(bot.name.toLowerCase());
         if (existing) {
           await manager.updateBot(existing.id, importData);
-          report.updated.push(String(botObj.name));
+          report.updated.push(bot.name);
         } else {
           await manager.createBot(importData as CreateBotRequest);
-          report.created.push(String(botObj.name));
+          report.created.push(bot.name);
         }
       } catch (err: unknown) {
-        const name = (bot as any)?.name || 'unknown';
         const msg = err instanceof Error ? err.message : String(err);
-        report.errors.push(`${name}: ${msg}`);
+        report.errors.push(`${bot.name || 'unknown'}: ${msg}`);
       }
     }
     return report;
   }
 
-  public async generateConfig(description: string): Promise<GeneratedBotConfig> {
+  public async generateConfig(description: string): Promise<any> {
     const providers = await getLlmProvider();
     const provider = providers[0];
 
@@ -115,20 +92,20 @@ Respond ONLY with valid JSON. No preamble or explanation.`;
     const responseText = await provider.generateChatCompletion(systemPrompt, []);
     // Clean up markdown code blocks if the LLM included them
     const cleanJson = responseText.replace(/```json\n?|```/g, '').trim();
-    return JSON.parse(cleanJson) as GeneratedBotConfig;
+    return JSON.parse(cleanJson);
   }
 
-  public async runDiagnostic(botId: string): Promise<DiagnosticResult> {
+  public async runDiagnostic(botId: string): Promise<any> {
     const manager = await BotManager.getInstance();
     const bot = await manager.getBot(botId);
     if (!bot) {
       throw new Error('Bot not found');
     }
 
-    const results: DiagnosticResult = {
+    const results: any = {
       messageProvider: { status: 'pending', details: '' },
       llm: { status: 'pending', details: '' },
-      mcp: [],
+      mcp: [] as any[],
       timestamp: new Date().toISOString(),
     };
 
@@ -182,26 +159,21 @@ Respond ONLY with valid JSON. No preamble or explanation.`;
     return results;
   }
 
-  public async testChat(
-    botConfig: Record<string, unknown>,
-    message: string,
-    history: unknown[] = []
-  ): Promise<string> {
+  public async testChat(botConfig: any, message: string, history: any[] = []): Promise<string> {
     const providers = await getLlmProvider();
-    const provider =
-      providers.find((p) => p.name === (botConfig.llmProvider as string)) || providers[0];
+    const provider = providers.find((p) => p.name === botConfig.llmProvider) || providers[0];
 
     if (!provider) {
       throw new Error('No LLM available');
     }
 
-    return await provider.generateChatCompletion(message, history as any[], {
-      systemPrompt: (botConfig.systemInstruction as string) || '',
+    return await provider.generateChatCompletion(message, history, {
+      systemPrompt: botConfig.systemInstruction || '',
     });
   }
 
   public sanitizeBotForExport(bot: Record<string, unknown> | BotInstance): Record<string, unknown> {
-    const { envOverrides: _envOverrides, ...rest } = bot as any;
+    const { envOverrides: _envOverrides, ...rest } = bot;
     const sensitiveKeys = [
       'token',
       'apikey',

@@ -8,7 +8,7 @@ LLM provider for [OpenSwarm](https://github.com/openai/swarm) — multi-agent or
 - `SwarmInstaller` — helper that installs / launches the local OpenSwarm WebUI
 - `schema` — UI/config schema descriptor
 - `manifest` — `{ displayName: 'OpenSwarm', type: 'llm', ... }`
-- `create(_config?)` — factory used by the PluginLoader (config is currently ignored — env vars drive it)
+- `create(config?)` — factory used by the PluginLoader. Accepts an optional per-bot config (`baseUrl`, `apiKey`, `team`; the raw `OPENSWARM_*` schema keys are also honored). Any omitted field falls back to the matching environment variable, then to a built-in default.
 
 ## Environment variables
 
