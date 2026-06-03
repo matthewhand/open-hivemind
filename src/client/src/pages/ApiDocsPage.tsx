@@ -2,6 +2,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Mockup from '../components/DaisyUI/Mockup';
 import { Alert } from '../components/DaisyUI/Alert';
+import Button from '../components/DaisyUI/Button';
 import Divider from '../components/DaisyUI/Divider';
 import { LoadingSpinner } from '../components/DaisyUI/Loading';
 import { Badge } from '../components/DaisyUI/Badge';
@@ -171,17 +172,17 @@ const TryItPanel: React.FC<{ route: RouteInfo }> = ({ route }) => {
       setResponse(JSON.stringify(res, null, 2));
     } catch (err: unknown) {
       if ((err as any).status) {
-         setStatusCode((err as any).status);
+        setStatusCode((err as any).status);
       } else if ((err instanceof Error ? err.message : String(err)) && (err instanceof Error ? err.message : String(err)).includes('failed (')) {
-         // Try to extract status from ApiService error message: "API request failed (404): ..."
-         const match = (err instanceof Error ? err.message : String(err)).match(/failed \((\d+)\)/);
-         if (match) {
-           setStatusCode(parseInt(match[1], 10));
-         } else {
-           setStatusCode(500); // generic error status
-         }
+        // Try to extract status from ApiService error message: "API request failed (404): ..."
+        const match = (err instanceof Error ? err.message : String(err)).match(/failed \((\d+)\)/);
+        if (match) {
+          setStatusCode(parseInt(match[1], 10));
+        } else {
+          setStatusCode(500); // generic error status
+        }
       } else {
-         setStatusCode(500);
+        setStatusCode(500);
       }
       setResponse(`Error: ${(err instanceof Error ? err.message : String(err))}`);
     } finally {
@@ -241,6 +242,7 @@ const TryItPanel: React.FC<{ route: RouteInfo }> = ({ route }) => {
 
 /** Single route card with expandable details */
 const RouteCard: React.FC<{ route: RouteInfo }> = ({ route }) => {
+  const [expanded, setExpanded] = useState(false);
   return (
     <div className="collapse collapse-arrow bg-base-100 border border-base-300 mb-2">
       <input type="checkbox" checked={expanded} onChange={() => setExpanded(!expanded)} />
@@ -309,12 +311,7 @@ const RouteCard: React.FC<{ route: RouteInfo }> = ({ route }) => {
         <h4 className="font-semibold text-sm mb-2">Live Testing</h4>
 
         <TryItPanel route={route} />
-            </div>
-          ),
-        {']'}
-        {'}'}
-        size="sm"
-      />
+      </div>
     </div>
   );
 };

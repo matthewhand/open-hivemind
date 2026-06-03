@@ -162,6 +162,7 @@ export interface Bot {
     allowedUserIds?: string[];
   };
   isActive?: boolean;
+  maxTokensPerDay?: number;
   envOverrides?: Record<string, any>;
   metadata?: Record<string, any>;
   discord?: {
@@ -313,6 +314,17 @@ export const LLM_PROVIDER_CONFIGS = {
       { name: 'apiKey', label: 'API Key', type: 'password', required: true },
       { name: 'apiUrl', label: 'API URL', type: 'text', required: true },
       { name: 'chatflowId', label: 'Chatflow ID', type: 'text', required: true },
+    ],
+  },
+  openwebui: {
+    type: 'openwebui' as LLMProviderType,
+    displayName: 'Open WebUI',
+    description: 'Local and self-hosted models',
+    icon: '🏠',
+    fields: [
+      { name: 'apiKey', label: 'API Key', type: 'password', required: true },
+      { name: 'apiUrl', label: 'API URL', type: 'text', required: true },
+      { name: 'model', label: 'Model', type: 'text', required: false, placeholder: 'llama3' },
     ],
   },
   perplexity: {

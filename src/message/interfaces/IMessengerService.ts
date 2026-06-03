@@ -45,6 +45,7 @@ export interface IMessengerService {
    *
    * Implementations that don't need this can omit it (or return null).
    */
+
   resolveAgentContext?(params: { botConfig: any; agentDisplayName: string }): null | {
     /**
      * Bot/user id for this agent instance (used for mention detection and self-filtering).
@@ -135,6 +136,7 @@ export interface IMessengerService {
    * });
    * ```
    */
+
   sendPublicAnnouncement(channelId: string, announcement: any): Promise<void>;
 
   /**
@@ -151,6 +153,14 @@ export interface IMessengerService {
    * @returns {Promise<string | null>} The channel topic or null if not available
    */
   getChannelTopic?(channelId: string): Promise<string | null>;
+
+  /**
+   * Optional: list the channels available to this service (or a specific bot).
+   *
+   * @param {string} [botName] - Optional bot name to scope the channel listing
+   * @returns {Promise<any[]>} A promise resolving to the available channels
+   */
+  getChannels?(botName?: string): Promise<any[]>;
 
   /**
    * Gets the default channel identifier for this service.
@@ -183,7 +193,9 @@ export interface IMessengerService {
    * @param channelId The channel identifier to score
    * @param metadata  Optional context used for scoring
    * @returns number score for the channel
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
    */
+
   scoreChannel?(channelId: string, metadata?: Record<string, any>): number;
 
   /**
@@ -199,6 +211,7 @@ export interface IMessengerService {
    *   const response = await generateResponse(message, history);
    *   return response;
    * });
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
    * ```
    */
   setMessageHandler(
@@ -221,15 +234,20 @@ export interface IMessengerService {
    * ```
    */
   getForumOwner?(forumId: string): Promise<string>;
+  getChannels?(botName?: string): Promise<Array<{ id: string; name: string; type?: string }>>;
+
+  getChannels?(botName?: string): Promise<Array<{ id: string; name: string; type?: string }>>;
 
   /**
    * Optional: Returns extended sub-services managed by this provider.
    * Useful for services like Discord that manage multiple bot instances under one connection.
    * If implemented, consumers like IdleResponseManager can use this to interact with specific bot instances.
    */
+
   getDelegatedServices?(): {
     serviceName: string;
     messengerService: IMessengerService;
+
     botConfig: any;
   }[];
 
@@ -251,4 +269,14 @@ export interface IMessengerService {
    * @param {string} [threadId] - Optional thread identifier
    */
   sendTyping?(channelId: string, senderName?: string, threadId?: string): Promise<void>;
+
+  /**
+   * Checks if the service (or a specific bot) is currently connected.
+   *
+   * @param {string} [botName] - Optional bot name to check connectivity for
+   * @returns {boolean | Promise<boolean>} True if connected, false otherwise
+   */
+  isConnected?(botName?: string): boolean | Promise<boolean>;
+
+  getChannels?(botName?: string): Promise<Array<{ id: string; name: string; type?: string }>>;
 }

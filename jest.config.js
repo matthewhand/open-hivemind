@@ -27,7 +27,7 @@ module.exports = {
   testRegex: '(\.|/)(test|integration\.test)\.[tj]sx?$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   moduleNameMapper: {
-    uuid: require.resolve('uuid'),
+    uuid: '<rootDir>/tests/mocks/uuid.js',
     '^@tests/(.*)$': '<rootDir>/tests/$1',
     '^@src/utils/logger$': '<rootDir>/tests/mocks/logger.ts',
     '.*src/client/src/utils/logger$': '<rootDir>/tests/mocks/clientLogger.ts',
@@ -96,6 +96,7 @@ module.exports = {
         ? '<rootDir>/node_modules/discord.js'
         : '<rootDir>/tests/__mocks__/discord.js.ts',
     '^pg$': '<rootDir>/tests/mocks/pg.js',
+    '^@modelcontextprotocol/sdk/client/.*$': '<rootDir>/tests/mocks/modelcontextprotocol-sdk.ts',
     '^@modelcontextprotocol/sdk$': '<rootDir>/tests/mocks/modelcontextprotocol-sdk.ts',
     '^@socket.io/redis-adapter$': '<rootDir>/tests/mocks/redisAdapter.js',
   },

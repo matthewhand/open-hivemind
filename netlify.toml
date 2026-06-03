@@ -4,8 +4,8 @@
   publish = "dist/client"
 
 [build.environment]
-  NODE_VERSION = "20"
-  PNPM_VERSION = "9.15.4"
+  NODE_VERSION = "22"
+  PNPM_VERSION = "10.25.0"
 
 [dev]
   command = "npm run dev"

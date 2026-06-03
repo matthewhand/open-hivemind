@@ -41,7 +41,11 @@ export interface IMCPService {
    * @param args - Tool arguments
    * @returns Tool result
    */
-  executeTool(serverName: string, toolName: string, args: Record<string, any>): Promise<any>;
+  executeTool(
+    serverName: string,
+    toolName: string,
+    args: Record<string, unknown>
+  ): Promise<unknown>;
 
   /**
    * Gets list of connected servers

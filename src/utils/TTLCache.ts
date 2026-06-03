@@ -1,6 +1,6 @@
-import Debug from 'debug';
+import Logger from '../common/logger';
 
-const debug = Debug('app:TTLCache');
+const logger = Logger.withContext('TTLCache');
 
 export class TTLCache<K, V> {
   private cache = new Map<K, { value: V; expiry: number }>();
@@ -17,7 +17,7 @@ export class TTLCache<K, V> {
   set(key: K, value: V, ttl: number = this.defaultTTL): void {
     const expiry = Date.now() + ttl;
     this.cache.set(key, { value, expiry });
-    debug(`[${this.name}] Set key: ${String(key)}, ttl: ${ttl}ms`);
+    logger.debug(`[${this.name}] Set key: ${String(key)}, ttl: ${ttl}ms`);
   }
 
   get(key: K): V | undefined {
@@ -25,7 +25,7 @@ export class TTLCache<K, V> {
 
     if (!item) {
       this.misses++;
-      debug(
+      logger.debug(
         `[${this.name}] Miss key: ${String(key)} (total hits: ${this.hits}, misses: ${this.misses})`
       );
       return undefined;
@@ -34,14 +34,14 @@ export class TTLCache<K, V> {
     if (Date.now() > item.expiry) {
       this.cache.delete(key);
       this.misses++;
-      debug(
+      logger.debug(
         `[${this.name}] Miss (expired) key: ${String(key)} (total hits: ${this.hits}, misses: ${this.misses})`
       );
       return undefined;
     }
 
     this.hits++;
-    debug(
+    logger.debug(
       `[${this.name}] Hit key: ${String(key)} (total hits: ${this.hits}, misses: ${this.misses})`
     );
     return item.value;
@@ -50,16 +50,16 @@ export class TTLCache<K, V> {
   invalidate(key: K): void {
     if (this.cache.has(key)) {
       this.cache.delete(key);
-      debug(`[${this.name}] Invalidated key: ${String(key)}`);
+      logger.debug(`[${this.name}] Invalidated key: ${String(key)}`);
     }
   }
 
   clear(): void {
     this.cache.clear();
-    debug(`[${this.name}] Cleared all keys`);
+    logger.debug(`[${this.name}] Cleared all keys`);
   }
 
-  getStats() {
+  getStats(): { hits: number; misses: number; size: number } {
     return {
       hits: this.hits,
       misses: this.misses,

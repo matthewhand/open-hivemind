@@ -77,7 +77,17 @@ const BotCard: React.FC<BotCardProps> = ({
     mode: 'create',
   });
 
-  const currentPersona = (personas || []).find(p => p.id === bot.personaId) || DEFAULT_PERSONA;
+  // Performance optimization: pre-compute map for O(1) lookups instead of calling .find() inside components/loops
+  const personasMap = React.useMemo(() => {
+    const map = new Map<string, Persona>();
+    for (const p of personas || []) {
+      map.set(p.id, p);
+      map.set(p.name, p); // Map both ID and name since both are checked
+    }
+    return map;
+  }, [personas]);
+
+  const currentPersona = personasMap.get(bot.personaId || '') || DEFAULT_PERSONA;
 
   const getStatusColor = (status: BotStatus) => {
     switch (status) {
@@ -209,7 +219,7 @@ const BotCard: React.FC<BotCardProps> = ({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2 min-w-0">
               {(() => {
-                const p = typeof bot.persona === 'object' ? bot.persona : personas?.find(pp => pp.id === bot.persona || pp.name === bot.persona);
+                const p = typeof bot.persona === 'object' ? bot.persona : personasMap.get(bot.persona || '');
                 return p ? <PersonaAvatar seed={p.name} style={(p as any).avatarStyle || 'bottts'} size={28} className="shrink-0" /> : null;
               })()}
               <Card.Title className="text-lg font-semibold truncate break-all min-w-0" title={bot.name}>{bot.name}</Card.Title>
@@ -241,6 +251,7 @@ const BotCard: React.FC<BotCardProps> = ({
             isOpen={isDropdownOpen}
             onToggle={(open) => setIsDropdownOpen(open)}
             hideArrow
+            aria-label={`Options for ${bot.name}`}
           >
             <li>
               <a onClick={handleConfigureBot} className="flex items-center gap-2" role="menuitem">
@@ -396,7 +407,7 @@ const BotCard: React.FC<BotCardProps> = ({
               size="sm"
               onClick={() => {
                 if (onToggleStatus) { onToggleStatus(bot); return; }
-                canStart ? handleStartBot() : handleStopBot();
+                if (canStart) { handleStartBot(); } else { handleStopBot(); }
               }}
               disabled={!canStart && !canStop}
               className={!hasProviders ? 'btn-disabled' : ''}

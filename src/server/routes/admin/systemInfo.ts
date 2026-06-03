@@ -1,5 +1,6 @@
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
+import { container } from 'tsyringe';
 import { ErrorUtils } from '../../../common/ErrorUtils';
 import { DatabaseManager } from '../../../database/DatabaseManager';
 import { HTTP_STATUS } from '../../../types/constants';
@@ -10,9 +11,30 @@ import {
   getModelsForProvider,
   getSupportedProviders,
 } from '../../data/llmModels';
+import { getLiveModelsForProvider, supportsLiveModels } from '../../services/LiveModelService';
+import { PanicModeService } from '../../services/PanicModeService';
 
 const router = Router();
 const debug = Debug('app:webui:admin:system-info');
+
+// Toggle Panic Mode
+router.post('/panic-mode', (req: Request, res: Response) => {
+  try {
+    const panicService = container.resolve(PanicModeService);
+    const newState = panicService.togglePanicMode();
+    return res.json({
+      success: true,
+      data: { enabled: newState },
+      message: `Panic Mode is now ${newState ? 'ENABLED' : 'DISABLED'}`,
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      error: 'Failed to toggle panic mode',
+      message: hivemindError.message,
+    });
+  }
+});
 
 // Get environment variable overrides
 router.get('/env-overrides', (req: Request, res: Response) => {
@@ -158,10 +180,11 @@ router.get('/system-info', async (req: Request, res: Response) => {
  *       200:
  *         description: List of available models with metadata
  */
-router.get('/llm-providers/:type/models', (req: Request, res: Response) => {
+router.get('/llm-providers/:type/models', async (req: Request, res: Response) => {
   try {
     const { type } = req.params;
     const { modelType } = req.query;
+    const live = req.query.live === 'true' || req.query.live === '1';
 
     // Validate provider type
     const supportedProviders = getSupportedProviders();
@@ -169,6 +192,22 @@ router.get('/llm-providers/:type/models', (req: Request, res: Response) => {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: `Unsupported provider type '${type}'. Supported providers: ${supportedProviders.join(', ')}`,
         code: 'INVALID_PROVIDER_TYPE',
+      });
+    }
+
+    // Live query (opt-in via ?live=true) for providers that expose a model list
+    // endpoint (e.g. OpenAI, OpenWebUI). Falls back to the static list on
+    // failure or for unsupported providers. The type filter is only applied to
+    // the static list, since live ids do not carry reliable chat/embedding tags.
+    if (live && !modelType && supportsLiveModels(type)) {
+      const { models, source } = await getLiveModelsForProvider(type);
+      return res.json({
+        success: true,
+        provider: type,
+        modelType: 'all',
+        source,
+        count: models.length,
+        models,
       });
     }
 
@@ -186,6 +225,7 @@ router.get('/llm-providers/:type/models', (req: Request, res: Response) => {
       success: true,
       provider: type,
       modelType: (modelType as string) || 'all',
+      source: 'static',
       count: models.length,
       models,
     });

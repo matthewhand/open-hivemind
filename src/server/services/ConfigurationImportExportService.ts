@@ -1,11 +1,13 @@
+/* eslint-disable max-lines */
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
 import { Logger } from '@common/logger';
 import { SecureConfigManager } from '../../config/SecureConfigManager';
 import { DatabaseManager } from '../../database/DatabaseManager';
-import { type BotConfigurationVersion } from '../../database/types';
+import { type BotConfiguration, type BotConfigurationVersion } from '../../database/types';
 import { ErrorUtils } from '../../types/errors';
+import { PathSecurityUtils } from '../../utils/PathSecurityUtils';
 import {
   BackupManager,
   calculateChecksum,
@@ -54,7 +56,8 @@ export class ConfigurationImportExportService {
     this.ensureDirectories();
 
     this.backupManager = new BackupManager(this.backupsDir, {
-      getAllBotConfigurations: (): Promise<any[]> => this.dbManager.getAllBotConfigurations(),
+      getAllBotConfigurations: (): Promise<BotConfiguration[]> =>
+        this.dbManager.getAllBotConfigurations(),
       exportConfigurations: (
         configIds: number[],
         options: ExportOptions,
@@ -102,7 +105,10 @@ export class ConfigurationImportExportService {
     try {
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const baseFileName = fileName || `configurations-export-${timestamp}`;
-      let filePath = path.join(this.exportsDir, `${baseFileName}.${options.format}`);
+      let filePath = PathSecurityUtils.getSafePath(
+        this.exportsDir,
+        `${baseFileName}.${options.format}`
+      );
 
       // Get configurations
       // ⚡ Bolt Optimization: Replace N+1 queries with a single bulk query
@@ -236,7 +242,10 @@ export class ConfigurationImportExportService {
     try {
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const baseFileName = fileName || `${env}-config-${timestamp}`;
-      let filePath = path.join(this.exportsDir, `${baseFileName}.${options.format}`);
+      let filePath = PathSecurityUtils.getSafePath(
+        this.exportsDir,
+        `${baseFileName}.${options.format}`
+      );
 
       // Get main configuration from SecureConfigManager
       const secureManager = await SecureConfigManager.getInstance();
@@ -350,7 +359,7 @@ export class ConfigurationImportExportService {
               warnings: [`Main configuration for ${env} imported and encrypted`],
             };
           }
-        } catch (parseError) {
+        } catch {
           // Not Secure format, fall back to own decryption
         }
 
@@ -361,6 +370,7 @@ export class ConfigurationImportExportService {
       }
 
       // Parse data based on format
+
       let importData: any;
       const format = detectFormat(filePath);
 
@@ -435,6 +445,7 @@ export class ConfigurationImportExportService {
       }
 
       // Parse data based on format
+
       let importData: any;
       const format = detectFormat(filePath);
 
@@ -468,7 +479,9 @@ export class ConfigurationImportExportService {
 
       // Bulk fetch existing configurations to prevent N+1 queries
       const configIds = importData.configurations
+
         .map((c: any) => c.id)
+
         .filter((id: any) => id !== null && id !== undefined);
 
       const existingConfigsMap = new Map<number, any>();
@@ -565,41 +578,64 @@ export class ConfigurationImportExportService {
           }
         }
 
-        const BATCH_SIZE = 50;
         const idsArray = Array.from(uniqueIdsToCheck);
+        const VALIDATION_BATCH_SIZE = 50;
 
-        for (let i = 0; i < idsArray.length; i += BATCH_SIZE) {
-          const batch = idsArray.slice(i, i + BATCH_SIZE);
-          await Promise.all(
-            batch.map(async (configId) => {
-              try {
-                const config = await this.dbManager.getBotConfiguration(configId);
-                if (config) {
-                  validConfigIds.add(configId);
-                } else {
-                  invalidConfigIds.add(configId);
-                }
-              } catch (error) {
-                result.warnings?.push(
-                  `Error fetching configuration ${configId}: ${ErrorUtils.getMessage(error)}`
-                );
-                invalidConfigIds.add(configId);
-              }
-            })
-          );
-        }
-
-        for (const version of importData.versions) {
+        for (let i = 0; i < idsArray.length; i += VALIDATION_BATCH_SIZE) {
+          const batch = idsArray.slice(i, i + VALIDATION_BATCH_SIZE);
           try {
-            const configId = version.botConfigurationId;
-            if (!configId) continue;
-            const isValid = validConfigIds.has(configId);
-
-            if (isValid) {
-              await this.dbManager.createBotConfigurationVersion(version);
+            const existingConfigs = await this.dbManager.getBotConfigurationsBulk(batch);
+            for (const config of existingConfigs) {
+              if (config && config.id) {
+                validConfigIds.add(config.id);
+              }
+            }
+            // Any ID in current batch that isn't in validConfigIds is invalid
+            for (const id of batch) {
+              if (!validConfigIds.has(id)) {
+                invalidConfigIds.add(id);
+              }
             }
           } catch (error) {
-            result.warnings?.push(`Error processing version: ${ErrorUtils.getMessage(error)}`);
+            result.warnings?.push(
+              `Error bulk fetching configurations for version validation batch: ${ErrorUtils.getMessage(error)}`
+            );
+            // On error, mark this batch's configurations as invalid to proceed with other batches
+            for (const id of batch) {
+              invalidConfigIds.add(id);
+            }
+          }
+        }
+
+        const versionsToInsert: BotConfigurationVersion[] = [];
+        for (const version of importData.versions) {
+          const configId = version.botConfigurationId;
+          if (!configId) continue;
+          if (validConfigIds.has(configId)) {
+            versionsToInsert.push(version);
+          }
+        }
+
+        const INSERT_BATCH_SIZE = 50;
+        for (let i = 0; i < versionsToInsert.length; i += INSERT_BATCH_SIZE) {
+          const batch = versionsToInsert.slice(i, i + INSERT_BATCH_SIZE);
+          try {
+            await this.dbManager.createBotConfigurationVersionsBulk(batch);
+          } catch (error) {
+            debug(
+              `Bulk version insert failed for batch starting at ${i}, falling back to individual inserts:`,
+              error
+            );
+            // Fallback to individual inserts for this batch to maintain resilience
+            for (const version of batch) {
+              try {
+                await this.dbManager.createBotConfigurationVersion(version);
+              } catch (individualError) {
+                result.warnings?.push(
+                  `Error processing version: ${ErrorUtils.getMessage(individualError)}`
+                );
+              }
+            }
           }
         }
       }
@@ -627,11 +663,13 @@ export class ConfigurationImportExportService {
           // Create new templates concurrently within the batch
           await Promise.all(
             batch
+
               .filter(
                 (template: any) =>
                   !allExistingTemplateIds.has(template.id) &&
                   !newlyCreatedTemplateIds.has(template.id)
               )
+
               .map(async (template: any) => {
                 try {
                   await this.templateService.createTemplate({

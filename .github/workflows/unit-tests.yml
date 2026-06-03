@@ -7,6 +7,10 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+concurrency:
+  group: unit-tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   unit-tests-core:
     runs-on: ubuntu-latest
@@ -25,7 +29,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version-file: '.nvmrc'
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -34,13 +38,15 @@ jobs:
       - name: Run core unit tests
         env:
           NODE_OPTIONS: --max-old-space-size=8192
+          DATABASE_ENCRYPTION_KEY: ci-test-encryption-key-32chars!
         run: |
           NODE_CONFIG_DIR=config/test NODE_ENV=test node -r dotenv/config ./node_modules/jest/bin/jest.js \
             tests/unit/ \
             --verbose \
             --ci \
             --forceExit \
-            --maxWorkers=2
+            --maxWorkers=2 \
+            --passWithNoTests
 
   unit-tests-integrations:
     runs-on: ubuntu-latest
@@ -59,7 +65,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version-file: '.nvmrc'
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -76,7 +82,8 @@ jobs:
             --verbose \
             --ci \
             --forceExit \
-            --maxWorkers=2
+            --maxWorkers=2 \
+            --passWithNoTests
 
   unit-tests-services:
     runs-on: ubuntu-latest
@@ -95,7 +102,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version-file: '.nvmrc'
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -115,7 +122,8 @@ jobs:
             --verbose \
             --ci \
             --forceExit \
-            --maxWorkers=2
+            --maxWorkers=2 \
+            --passWithNoTests
 
   unit-tests-frontend:
     runs-on: ubuntu-latest
@@ -134,7 +142,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version-file: '.nvmrc'
           cache: 'pnpm'
 
       - name: Install dependencies

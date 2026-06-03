@@ -23,7 +23,7 @@ export interface ReplyDecision {
   /** Human-readable explanation for the decision (useful for logging/debugging). */
   reason: string;
   /** Arbitrary decision metadata (e.g. confidence scores, matched rules). */
-  meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
 }
 
 /**
@@ -46,6 +46,7 @@ export interface MessageContext {
   /** Channel where the message was received. */
   channelId: string;
   /** Open-ended metadata bag for cross-cutting concerns. */
+
   metadata: Record<string, any>;
 }
 
@@ -118,7 +119,7 @@ export type MessageEvents = {
     toolName: string;
     args: Record<string, unknown>;
     timestamp: string;
-    context?: any;
+    context?: Record<string, unknown>;
   };
 
   /** HITL: A tool execution was approved or denied by an admin. */

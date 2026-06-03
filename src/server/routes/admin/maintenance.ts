@@ -1,6 +1,9 @@
+/* eslint-disable max-lines */
 import { Router, type Request, type Response } from 'express';
 import { ErrorUtils } from '../../../common/ErrorUtils';
 import { getTrustedMcpReposConfig } from '../../../config/trustedMcpRepos';
+import { AuthManager } from '../../../auth/AuthManager';
+import { DatabaseManager } from '../../../database/DatabaseManager';
 import { MCPService } from '../../../mcp/MCPService';
 import { webUIStorage } from '../../../storage/webUIStorage';
 import { HTTP_STATUS } from '../../../types/constants';
@@ -13,6 +16,7 @@ import {
   ServerNameParamSchema,
 } from '../../../validation/schemas/adminSchema';
 import { validateRequest } from '../../../validation/validateRequest';
+import { enrichConnectedMcpServers } from './enrichMcpServers';
 
 const router = Router();
 
@@ -222,19 +226,9 @@ router.get('/mcp-servers', async (req: Request, res: Response) => {
     // Get stored MCP server configurations
     const storedMcps = await webUIStorage.getMcps();
 
-    // Enrich connected servers with stored configuration data
-    const enrichedServers = connectedServers.map((server) => {
-      const storedConfig = storedMcps.find((mcp: any) => mcp.name === server.name);
-      return {
-        name: server.name,
-        serverUrl: storedConfig?.serverUrl || storedConfig?.url || '',
-        connected: server.connected,
-        tools: server.tools,
-        toolCount: server.toolCount,
-        lastConnected: server.lastConnected,
-        description: storedConfig?.description || '',
-      };
-    });
+    // Enrich connected servers with stored configuration data.
+    // Uses a name-indexed Map for O(n + m) lookups (see enrichConnectedMcpServers).
+    const enrichedServers = enrichConnectedMcpServers(connectedServers, storedMcps);
 
     return res.json({
       success: true,
@@ -303,7 +297,9 @@ router.get(
       const isConnected = connectedServers.includes(name);
 
       // Get stored configuration for additional metadata
+
       const storedMcps = await webUIStorage.getMcps();
+
       const storedConfig = storedMcps.find((mcp: any) => mcp.name === name);
 
       if (!isConnected && !storedConfig) {
@@ -348,6 +344,7 @@ router.post(
 
       // Get stored configuration
       const storedMcps = await webUIStorage.getMcps();
+
       const storedConfig = storedMcps.find((mcp: any) => mcp.name === name);
 
       if (!storedConfig) {
@@ -468,5 +465,57 @@ router.post(
     }
   }
 );
+
+// Factory Reset endpoint
+router.post('/system/reset', async (req: Request, res: Response) => {
+  try {
+    const { confirmation, password } = req.body;
+
+    if (confirmation !== 'confirm-factory-reset') {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        error: 'Validation error',
+        message: 'Incorrect confirmation phrase',
+      });
+    }
+
+    if (!password) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        error: 'Validation error',
+        message: 'Admin password is required for factory reset',
+      });
+    }
+
+    const authManager = AuthManager.getInstance();
+    const user = authManager.getUserWithHash(req.user.userId || req.user.id);
+    if (!user || !user.passwordHash) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+        error: 'Authentication error',
+        message: 'User not found',
+      });
+    }
+
+    const isValidPassword = await authManager.verifyPassword(password, user.passwordHash);
+    if (!isValidPassword) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+        error: 'Authentication error',
+        message: 'Incorrect password',
+      });
+    }
+
+    const dbManager = DatabaseManager.getInstance();
+    await dbManager.resetDatabase();
+
+    return res.json({
+      success: true,
+      message: 'System has been successfully reset to factory settings.',
+    });
+  } catch (error: unknown) {
+    const hivemindError = ErrorUtils.toHivemindError(error);
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      error: 'Failed to reset system',
+      message: hivemindError.message || 'An error occurred during factory reset',
+    });
+  }
+});
 
 export default router;

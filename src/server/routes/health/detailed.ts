@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import os from 'os';
 import process from 'process';
 import { Router, type NextFunction, type Request, type Response } from 'express';
@@ -14,7 +15,7 @@ import {
 } from '../../../validation/schemas/healthSchema';
 import { validateRequest } from '../../../validation/validateRequest';
 import { optionalAuth } from '../../middleware/auth';
-import { calculateErrorRate, calculateHealthStatus } from './helpers';
+import { buildSystemChecks, calculateErrorRate, calculateHealthStatus } from './helpers';
 
 const router = Router();
 
@@ -52,11 +53,7 @@ router.get('/detailed', optionalAuth, (req: Request, res: Response) => {
   const healthData = {
     status: healthStatus.status,
     timestamp: new Date().toISOString(),
-    checks: {
-      database: { status: 'healthy' },
-      configuration: { status: 'healthy' },
-      services: { status: 'healthy' },
-    },
+    checks: buildSystemChecks(),
     maintenanceMode: isMaintenanceMode,
     uptime: uptime,
     memory: {
@@ -112,6 +109,7 @@ router.get('/detailed', optionalAuth, (req: Request, res: Response) => {
     if (tracer) {
       const stats = tracer.getStats();
       const recentTraces = tracer.getCompletedTraces(5);
+
       (healthData as any).pipeline = {
         totalTraces: stats.totalTraces,
         avgDurationMs: stats.avgDurationMs,
@@ -164,9 +162,10 @@ router.get('/detailed/services', optionalAuth, async (_req: Request, res: Respon
   // Check LLM providers
   const llmStart = Date.now();
   try {
-    const { ProviderRegistry } = require('../../../registries/providerRegistry');
+    const { ProviderRegistry } = require('../../../registries/ProviderRegistry');
     const registry = ProviderRegistry.getInstance();
     const llmProviders = registry.getLlmProviders?.() || [];
+
     const activeLlm = llmProviders.filter((p: any) => p.status === 'active' || p.connected);
     const llmCount = llmProviders.length;
     const activeCount = activeLlm.length;
@@ -201,9 +200,11 @@ router.get('/detailed/services', optionalAuth, async (_req: Request, res: Respon
   // Check Message providers
   const msgStart = Date.now();
   try {
-    const { ProviderRegistry } = require('../../../registries/providerRegistry');
+    const { ProviderRegistry } = require('../../../registries/ProviderRegistry');
     const registry = ProviderRegistry.getInstance();
+
     const msgProviders = registry.getMessageProviders?.() || [];
+
     const activeMsg = msgProviders.filter((p: any) => p.status === 'active' || p.connected);
     const msgCount = msgProviders.length;
     const activeMsgCount = activeMsg.length;
@@ -238,9 +239,11 @@ router.get('/detailed/services', optionalAuth, async (_req: Request, res: Respon
   // Check Memory provider
   const memStart = Date.now();
   try {
-    const { ProviderRegistry } = require('../../../registries/providerRegistry');
+    const { ProviderRegistry } = require('../../../registries/ProviderRegistry');
+
     const registry = ProviderRegistry.getInstance();
     const memProviders = registry.getMemoryProviders?.() || [];
+
     const activeMem = memProviders.filter((p: any) => p.status === 'active' || p.connected);
     const memStatus =
       memProviders.length === 0 ? 'down' : activeMem.length > 0 ? 'healthy' : 'down';
@@ -459,6 +462,7 @@ router.post('/api-endpoints/stop', validateRequest(CleanupConfigSchema), (req, r
 
   return res.json({
     message: 'Stopped monitoring all endpoints',
+
     timestamp: new Date().toISOString(),
   });
 });

@@ -366,6 +366,32 @@ export class SlackService extends EventEmitter implements IMessengerService {
     return SlackService.instance;
   }
 
+  public async getChannels(
+    botName?: string
+  ): Promise<Array<{ id: string; name: string; type?: string }>> {
+    const mgr = this.getBotManager(botName);
+    const bot = mgr?.getAllBots?.()[0];
+
+    if (!bot?.webClient) {
+      return [];
+    }
+
+    try {
+      const result = await bot.webClient.conversations.list({
+        types: 'public_channel,private_channel,im,mpim',
+      });
+
+      return (result.channels || []).map((c: any) => ({
+        id: c.id,
+        name: c.name || c.user || c.id,
+        type: c.is_im ? 'im' : c.is_mpim ? 'mpim' : c.is_private ? 'private' : 'public',
+      }));
+    } catch (error) {
+      debug(`Failed to fetch Slack channels for ${botName}: ${error}`);
+      return [];
+    }
+  }
+
   public async initialize(): Promise<void> {
     debug('Entering initialize');
     if (!this.app) {
@@ -685,13 +711,24 @@ export class SlackService extends EventEmitter implements IMessengerService {
         return;
       }
 
-      // Default to fake typing when RTM isn't available (Socket Mode/Web API).
+      const messageIO = this.messageIO as any;
+
+      // Prefer Slack's native Assistant typing indicator when available
+      // (real status, no placeholder message). Requires an assistant thread.
+      if (typeof messageIO?.sendNativeTypingStatus === 'function') {
+        const nativeSent = await messageIO.sendNativeTypingStatus(channelId, threadId, botName);
+        if (nativeSent) {
+          return;
+        }
+      }
+
+      // Default to fake typing when RTM/native indicator isn't available
+      // (Socket Mode/Web API without an assistant thread).
       if (process.env.SLACK_FAKE_TYPING === 'false') {
         debug(`sendTyping skipped (fake typing disabled). bot=${botName} channel=${channelId}`);
         return;
       }
 
-      const messageIO = this.messageIO as any;
       if (typeof messageIO?.sendTypingPlaceholder === 'function') {
         await messageIO.sendTypingPlaceholder(channelId, botName, threadId);
       }
@@ -1056,6 +1093,8 @@ export class SlackService extends EventEmitter implements IMessengerService {
 
         getMessagesFromChannel: async (channelId: string) => this.getMessagesFromChannel(channelId),
 
+        getChannels: async (botName?: string) => this.getChannels(botName || name),
+
         sendPublicAnnouncement: async (channelId: string, announcement: any) =>
           this.sendPublicAnnouncement(channelId, announcement),
 
@@ -1100,6 +1139,21 @@ export class SlackService extends EventEmitter implements IMessengerService {
     debug('Entering shutdown');
     SlackService.instance = undefined;
     debug('SlackService instance cleared');
+  }
+
+  public isConnected(botName?: string): boolean {
+    if (botName) {
+      const botManager = this.getBotManager(botName);
+      if (!botManager) return false;
+      const bot = botManager.getAllBots().find((b) => b.botUserName === botName);
+      if (!bot) return false;
+      if (bot.socketClient) return (bot.socketClient as any).connected;
+      if (bot.rtmClient) return (bot.rtmClient as any).connected;
+      return true; // WebClient only bots are "connected" if they exist
+    }
+
+    if (this.botManagers.size === 0) return false;
+    return Array.from(this.botManagers.keys()).every((name) => this.isConnected(name));
   }
 
   /**

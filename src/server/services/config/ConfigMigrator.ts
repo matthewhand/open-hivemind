@@ -30,7 +30,6 @@ export interface ImportMetadata {
  * @param payload  The raw parsed import data (configurations, versions, etc.)
  * @returns        The (possibly transformed) payload ready for import.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function migrateImportPayload(payload: any): any {
   const version = payload?.metadata?.version;
 
@@ -40,7 +39,5 @@ export function migrateImportPayload(payload: any): any {
   }
 
   debug(`Import payload version: ${version} – no migrations required`);
-  // Future migrations will be applied here, e.g.:
-  //   if (semver.lt(String(version), '2.0.0')) payload = migrateV1toV2(payload);
   return payload;
 }

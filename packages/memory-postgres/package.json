@@ -1,0 +1,13 @@
+{
+  "name": "@hivemind/memory-postgres",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "dependencies": {
+    "@hivemind/shared-types": "workspace:*",
+    "debug": "^4.3.4"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

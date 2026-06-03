@@ -99,7 +99,6 @@ export function usePageLifecycle<T = any>({
         abortControllerRef.current.abort();
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [executeFetch, ...dependencies]);
 
   return { data, loading, error, refetch: executeFetch };

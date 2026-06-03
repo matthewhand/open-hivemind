@@ -1,3 +1,6 @@
+import { manifest } from './index';
+import { openWebUIProvider } from './openWebUIProvider';
+
 // Mock DNS so isSafeUrl always resolves to a public IP in tests
 jest.mock('dns', () => ({
   promises: { lookup: jest.fn().mockResolvedValue({ address: '1.2.3.4', family: 4 }) },
@@ -10,11 +13,19 @@ jest.mock('convict', () => {
     get: jest.fn((key: string) => {
       if (key === 'apiUrl') return 'https://openwebui.example.com';
       if (key === 'model') return 'test-model';
+      if (key === 'embeddingModel') return 'test-embed-model';
       return '';
     }),
     set: jest.fn(),
     validate: jest.fn(),
-    getProperties: jest.fn(() => ({ apiUrl: 'https://openwebui.example.com', model: 'test-model', username: 'u', password: 'p', authMethod: 'apiKey', apiKey: 'fake-key' })),
+    getProperties: jest.fn(() => ({
+      apiUrl: 'https://openwebui.example.com',
+      model: 'test-model',
+      username: 'u',
+      password: 'p',
+      authMethod: 'apiKey',
+      apiKey: 'fake-key',
+    })),
   }));
 });
 
@@ -23,12 +34,12 @@ jest.mock('@hivemind/shared-types', () => {
   return { ...actual, isSafeUrl: jest.fn().mockResolvedValue(true) };
 });
 
-import { manifest } from './index';
-import { openWebUIProvider } from './openWebUIProvider';
-
 function mockFetch(body: unknown, status = 200) {
   jest.spyOn(global, 'fetch').mockResolvedValue(
-    new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { 'content-type': 'application/json' },
+    })
   );
 }
 
@@ -60,7 +71,9 @@ describe('openWebUIProvider', () => {
 
   it('generateChatCompletion throws on HTTP error', async () => {
     mockFetch({ error: 'fail' }, 500);
-    await expect(openWebUIProvider.generateChatCompletion('hello', [])).rejects.toThrow('Chat completion failed');
+    await expect(openWebUIProvider.generateChatCompletion('hello', [])).rejects.toThrow(
+      'Chat completion failed'
+    );
   });
 
   it('generateCompletion returns text string', async () => {
@@ -70,6 +83,28 @@ describe('openWebUIProvider', () => {
 
   it('generateCompletion throws on HTTP error', async () => {
     mockFetch({ error: 'fail' }, 500);
-    await expect(openWebUIProvider.generateCompletion('prompt')).rejects.toThrow('Non-chat completion failed');
+    await expect(openWebUIProvider.generateCompletion('prompt')).rejects.toThrow(
+      'Non-chat completion failed'
+    );
+  });
+
+  it('generateEmbedding returns the embedding vector', async () => {
+    const vector = [0.1, 0.2, 0.3];
+    mockFetch({ data: [{ embedding: vector }] });
+    expect(await openWebUIProvider.generateEmbedding!('embed me')).toEqual(vector);
+  });
+
+  it('generateEmbedding throws when the response has no embedding', async () => {
+    mockFetch({ data: [{}] });
+    await expect(openWebUIProvider.generateEmbedding!('embed me')).rejects.toThrow(
+      'Embedding generation failed'
+    );
+  });
+
+  it('generateEmbedding throws on HTTP error', async () => {
+    mockFetch({ error: 'fail' }, 500);
+    await expect(openWebUIProvider.generateEmbedding!('embed me')).rejects.toThrow(
+      'Embedding generation failed'
+    );
   });
 });

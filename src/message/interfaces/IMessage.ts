@@ -35,6 +35,7 @@ export abstract class IMessage {
    * This can contain the original message object from the platform SDK.
    * @type {any}
    */
+
   public data: any;
 
   /**
@@ -57,6 +58,7 @@ export abstract class IMessage {
    * @type {any}
    * @optional
    */
+
   public metadata?: any;
 
   /**
@@ -72,7 +74,9 @@ export abstract class IMessage {
    * Contains tool invocation requests made by the assistant.
    * @type {any[]}
    * @optional
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
    */
+
   public tool_calls?: any[];
 
   /**
@@ -84,8 +88,14 @@ export abstract class IMessage {
    * @param {string} [tool_call_id] - Required for tool role messages
    * @param {any[]} [tool_calls] - Optional tool calls for assistant messages
    *
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
    * @throws {TypeError} If attempting to instantiate IMessage directly
    */
+
   constructor(data: any, role: string, metadata?: any, tool_call_id?: string, tool_calls?: any[]) {
     if (new.target === IMessage) {
       throw new TypeError('Cannot construct IMessage instances directly');

@@ -13,7 +13,7 @@ export interface IConfigurationManager {
    * @param configName - Name of the configuration to retrieve
    * @returns Requested configuration or null if not found
    */
-  getConfig(configName: string): convict.Config<any> | null;
+  getConfig(configName: string): convict.Config<unknown> | null;
 
   /**
    * Stores a unique session ID for an integration/channel combination

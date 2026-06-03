@@ -1,20 +1,5 @@
 import { SessionStore } from '@src/auth/SessionStore';
 
-/**
- * Tests for SessionStore
- * Mocks TimerRegistry to avoid real intervals during tests.
- */
-
-jest.mock('@src/utils/TimerRegistry', () => ({
-  __esModule: true,
-  default: {
-    getInstance: () => ({
-      registerInterval: jest.fn().mockReturnValue('timer-id'),
-      clear: jest.fn(),
-    }),
-  },
-}));
-
 describe('SessionStore', () => {
   let store: SessionStore;
 
@@ -26,96 +11,63 @@ describe('SessionStore', () => {
     store.shutdown();
   });
 
-  describe('storeSession', () => {
-    it('stores a session and returns a session ID', async () => {
-      const sessionId = await store.storeSession('user1', 'token-abc', 'admin');
-      expect(sessionId).toMatch(/^sess_/);
-    });
-
-    it('tracks session in stats', async () => {
-      await store.storeSession('user1', 'token-1', 'user');
-      const stats = store.getStats();
-      expect(stats.totalSessions).toBe(1);
-      expect(stats.totalUsers).toBe(1);
-    });
+  it('stores a session and validates its token', async () => {
+    await store.storeSession('user-1', 'token-abc', 'admin');
+    await expect(store.validateToken('token-abc')).resolves.toBe(true);
   });
 
-  describe('validateToken', () => {
-    it('returns true for a valid stored token', async () => {
-      await store.storeSession('user1', 'valid-token', 'user');
-      const isValid = await store.validateToken('valid-token');
-      expect(isValid).toBe(true);
-    });
-
-    it('returns false for an unknown token', async () => {
-      const isValid = await store.validateToken('unknown-token');
-      expect(isValid).toBe(false);
-    });
+  it('reports unknown tokens as invalid', async () => {
+    await expect(store.validateToken('nope')).resolves.toBe(false);
   });
 
-  describe('invalidateToken', () => {
-    it('removes a specific token', async () => {
-      await store.storeSession('user1', 'token-to-remove', 'user');
-      await store.invalidateToken('token-to-remove');
-      const isValid = await store.validateToken('token-to-remove');
-      expect(isValid).toBe(false);
-    });
-
-    it('does nothing for a non-existent token', async () => {
-      await expect(store.invalidateToken('nonexistent')).resolves.toBeUndefined();
-    });
+  it('hasToken distinguishes tracked from untracked tokens', async () => {
+    await store.storeSession('user-1', 'token-abc', 'user');
+    expect(store.hasToken('token-abc')).toBe(true);
+    expect(store.hasToken('other-token')).toBe(false);
   });
 
-  describe('invalidateUserSessions', () => {
-    it('removes all sessions for a user', async () => {
-      await store.storeSession('user1', 'token-a', 'user');
-      await store.storeSession('user1', 'token-b', 'user');
-      await store.storeSession('user2', 'token-c', 'user');
+  it('invalidates a specific token without touching others', async () => {
+    await store.storeSession('user-1', 'token-1', 'user');
+    await store.storeSession('user-2', 'token-2', 'user');
 
-      await store.invalidateUserSessions('user1');
+    await store.invalidateToken('token-1');
 
-      expect(await store.validateToken('token-a')).toBe(false);
-      expect(await store.validateToken('token-b')).toBe(false);
-      expect(await store.validateToken('token-c')).toBe(true);
-    });
+    expect(store.hasToken('token-1')).toBe(false);
+    expect(store.hasToken('token-2')).toBe(true);
   });
 
-  describe('cleanExpiredSessions', () => {
-    it('removes expired sessions', async () => {
-      await store.storeSession('user1', 'token-exp', 'user');
+  it('invalidates all sessions for a user', async () => {
+    await store.storeSession('user-1', 'token-a', 'user');
+    await store.storeSession('user-1', 'token-b', 'user');
+    await store.storeSession('user-2', 'token-c', 'user');
 
-      // Manually expire the session by manipulating the internal map
-      // We access via validateToken check
-      const stats = store.getStats();
-      expect(stats.totalSessions).toBe(1);
+    await store.invalidateUserSessions('user-1');
 
-      // Force expiration by moving time forward — we use the validate path
-      // which checks expiry. Instead, call cleanExpiredSessions directly.
-      // Sessions have 24h TTL so they won't be expired yet.
-      await store.cleanExpiredSessions();
-      expect(store.getStats().totalSessions).toBe(1); // Still valid
-    });
+    expect(store.hasToken('token-a')).toBe(false);
+    expect(store.hasToken('token-b')).toBe(false);
+    expect(store.hasToken('token-c')).toBe(true);
   });
 
-  describe('getStats', () => {
-    it('returns correct counts', async () => {
-      await store.storeSession('u1', 't1', 'admin');
-      await store.storeSession('u2', 't2', 'user');
-      await store.storeSession('u2', 't3', 'user');
+  it('treats expired sessions as invalid and removes them', async () => {
+    await store.storeSession('user-1', 'token-exp', 'user');
 
-      const stats = store.getStats();
-      expect(stats.totalSessions).toBe(3);
-      expect(stats.totalUsers).toBe(2);
-      expect(stats.maxSessions).toBeGreaterThan(0);
-    });
+    // Force expiry by reaching into the store via getStats then manual advance.
+    jest.useFakeTimers();
+    jest.setSystemTime(Date.now() + 25 * 60 * 60 * 1000); // +25h (TTL is 24h)
+
+    await expect(store.validateToken('token-exp')).resolves.toBe(false);
+    expect(store.hasToken('token-exp')).toBe(false);
+
+    jest.useRealTimers();
   });
 
-  describe('shutdown', () => {
-    it('clears all sessions', async () => {
-      await store.storeSession('user1', 'token', 'user');
-      store.shutdown();
-      expect(store.getStats().totalSessions).toBe(0);
-      expect(store.getStats().totalUsers).toBe(0);
-    });
+  it('reports stats about tracked sessions and users', async () => {
+    await store.storeSession('user-1', 'token-a', 'user');
+    await store.storeSession('user-2', 'token-b', 'user');
+
+    const stats = store.getStats();
+    expect(stats.totalSessions).toBe(2);
+    expect(stats.totalUsers).toBe(2);
+    expect(stats.maxSessions).toBeGreaterThan(0);
   });
 });

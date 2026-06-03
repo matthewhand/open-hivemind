@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
 import { Router } from 'express';
-import { configLimiter } from '@src/middleware/rateLimiter';
+import { apiLimiter, configLimiter } from '@src/middleware/rateLimiter';
 import {
   installPlugin,
   listInstalledPlugins,
@@ -103,7 +103,9 @@ async function searchGitHubPackages(): Promise<MarketplacePackage[]> {
       // Guess package type from repo name prefix
       const repoName = repo.name || '';
       const namePrefix = repoName.split('-')[0];
+
       const validTypes = ['llm', 'message', 'memory', 'tool'] as const;
+
       const type = validTypes.includes(namePrefix as any)
         ? (namePrefix as MarketplacePackage['type'])
         : 'tool';
@@ -151,8 +153,10 @@ async function scanBuiltInPackages(): Promise<MarketplacePackage[]> {
         const pkgJson = JSON.parse(pkgJsonContent);
 
         // Derive type from directory name prefix (llm-, message-, memory-, tool-)
+
         const namePrefix = dir.split('-')[0];
         const validTypes = ['llm', 'message', 'memory', 'tool'] as const;
+
         const type = validTypes.includes(namePrefix as any)
           ? (namePrefix as MarketplacePackage['type'])
           : 'tool';
@@ -177,6 +181,7 @@ async function scanBuiltInPackages(): Promise<MarketplacePackage[]> {
         // Even without package.json, list the directory as a package
         const namePrefix = dir.split('-')[0];
         const validTypes = ['llm', 'message', 'memory', 'tool'] as const;
+
         const type = validTypes.includes(namePrefix as any)
           ? (namePrefix as MarketplacePackage['type'])
           : 'tool';
@@ -326,6 +331,7 @@ function invalidateCache(): void {
  */
 router.get(
   '/packages',
+  apiLimiter,
   asyncErrorHandler(async (req, res) => {
     try {
       const packages = await getPackages();
@@ -347,6 +353,7 @@ router.get(
  */
 router.get(
   '/packages/:name',
+  apiLimiter,
   asyncErrorHandler(async (req, res) => {
     try {
       const name = req.params.name;
@@ -385,11 +392,13 @@ router.post(
       if (!repoUrl || typeof repoUrl !== 'string') {
         return res
           .status(HTTP_STATUS.BAD_REQUEST)
+
           .json(ApiResponse.error('Missing or invalid repoUrl'));
       }
 
       debug('Installing plugin from %s', repoUrl);
 
+      // eslint-disable-next-line unused-imports/no-unused-vars
       const plugin = await installPlugin(repoUrl);
 
       // ⚡ Bolt Optimization: Invalidate cache after install

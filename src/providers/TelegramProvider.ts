@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import * as fs from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
@@ -12,7 +13,7 @@ const debug = Debug('app:providers:TelegramProvider');
  * Telegram bot token format: <bot_id>:<token_string>
  * bot_id is a sequence of digits; token_string is 35 alphanumeric/underscore/hyphen chars.
  */
-const TELEGRAM_TOKEN_REGEX = /^\d+:[A-Za-z0-9_-]{35 }$/;
+const TELEGRAM_TOKEN_REGEX = /^\d+:[A-Za-z0-9_-]{35,}$/;
 
 /**
  * Masks any Telegram bot token found in a string (e.g. a URL) so that it
@@ -21,7 +22,7 @@ const TELEGRAM_TOKEN_REGEX = /^\d+:[A-Za-z0-9_-]{35 }$/;
  */
 function maskToken(value: string): string {
   // Match the bot<id>:<secret> pattern inside the string
-  return value.replace(/(\d+):[A-Za-z0-9_-]{35 }/g, '$1:****');
+  return value.replace(/(\d+):[A-Za-z0-9_-]{35,}/g, '$1:****');
 }
 
 function validateTelegramToken(token: string): void {
@@ -49,8 +50,8 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
     return telegramConfig.getSchema() as unknown as Record<string, unknown>;
   }
 
-  getConfig(): typeof telegramConfig {
-    return telegramConfig;
+  getConfig(): Record<string, unknown> {
+    return telegramConfig as unknown as Record<string, unknown>;
   }
 
   getSensitiveKeys(): string[] {
@@ -302,6 +303,7 @@ export class TelegramProvider implements IMessageProvider<TelegramConfig> {
             throw new Error(`Telegram connection failed for ${name}`);
           }
         },
+
         {
           healthCheckFn: async () => {
             try {

@@ -44,6 +44,7 @@ export function createRealtimeRoutes(): Router {
         return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
           success: false,
           message: 'Failed to validate configuration',
+
           error: ErrorUtils.getMessage(error as any),
         });
       }
@@ -62,7 +63,7 @@ export function createRealtimeRoutes(): Router {
       try {
         const { configData, profileId = 'standard' } = req.body;
 
-        const result = validationService.validateConfigurationData(configData, profileId);
+        const result = await validationService.validateConfig(configData, profileId);
 
         return res.json({
           success: true,
@@ -103,7 +104,7 @@ export function createRealtimeRoutes(): Router {
       try {
         const { configId, clientId, profileId = 'standard' } = req.body;
 
-        const subscription = validationService.subscribe(configId, clientId, profileId);
+        const subscription = await validationService.subscribe(configId, clientId, profileId);
 
         return res.json({
           success: true,
@@ -123,6 +124,7 @@ export function createRealtimeRoutes(): Router {
           success: false,
           error: ErrorUtils.getMessage(hivemindError),
           code: ErrorUtils.getCode(hivemindError) || 'VALIDATION_ERROR',
+
           timestamp:
             hivemindError instanceof Error && 'timestamp' in hivemindError
               ? (hivemindError as any).timestamp
@@ -171,6 +173,7 @@ export function createRealtimeRoutes(): Router {
         return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
           success: false,
           error: ErrorUtils.getMessage(hivemindError),
+
           code: ErrorUtils.getCode(hivemindError) || 'VALIDATION_ERROR',
           timestamp:
             hivemindError instanceof Error && 'timestamp' in hivemindError
@@ -198,10 +201,7 @@ export function createRealtimeRoutes(): Router {
     handleValidationErrors,
     async (req: AuthMiddlewareRequest, res: Response) => {
       try {
-        const configId = req.query.configId ? parseInt(req.query.configId as string) : undefined;
-        const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
-
-        const history = validationService.getValidationHistory(configId, limit);
+        const history = validationService.getHistory();
 
         return res.json({
           success: true,
@@ -219,6 +219,7 @@ export function createRealtimeRoutes(): Router {
 
         return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
           success: false,
+
           error: ErrorUtils.getMessage(hivemindError),
           code: ErrorUtils.getCode(hivemindError) || 'VALIDATION_ERROR',
           timestamp:
@@ -238,11 +239,14 @@ export function createRealtimeRoutes(): Router {
     '/statistics',
     asyncErrorHandler(async (req, res) => {
       try {
-        const statistics = validationService.getValidationStatistics();
+        const history = validationService.getHistory();
 
         return res.json({
           success: true,
-          data: statistics,
+          data: {
+            totalValidations: history.length,
+            recentReport: history[0] || null,
+          },
         });
       } catch (error: unknown) {
         const hivemindError = ErrorUtils.toHivemindError(

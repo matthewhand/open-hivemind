@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import { apiService } from '../services/api';
 import { useQuery } from '@tanstack/react-query';
 import { useLLMProfiles } from '../hooks/useProvidersCache';
@@ -51,7 +52,7 @@ const ChatPage: React.FC = () => {
   const [swappingProvider, setSwappingProvider] = useState<string | null>(null);
   const [showProviderDropdown, setShowProviderDropdown] = useState<string | null>(null);
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useLocalStorage('ui.chat.sidebarOpen', false);
   const isDesktop = useMediaQuery({ minWidth: 1024 });
 
   const showSuccess = useSuccessToast();

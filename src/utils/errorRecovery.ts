@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 /**
  * Error Recovery System for Open Hivemind
  *
@@ -135,7 +136,12 @@ export class CircuitBreaker {
   /**
    * Get circuit breaker stats
    */
-  getStats() {
+  getStats(): {
+    state: CircuitState;
+    failureCount: number;
+    successCount: number;
+    lastFailureTime: number;
+  } {
     return {
       state: this.state,
       failureCount: this.failureCount,
@@ -280,7 +286,7 @@ export class RetryHandler {
     // Try to extract from error message or properties
     const statusCodeMatch = error.message.match(/status\s*:\s*(\d+)/i);
     if (statusCodeMatch) {
-      return parseInt(statusCodeMatch[1]);
+      return parseInt(statusCodeMatch[1], 10);
     }
 
     return undefined;
@@ -324,10 +330,13 @@ export class FallbackManager {
    * Register fallback for an operation
    */
   registerFallback(operationKey: string, fallback: () => Promise<unknown>): void {
-    if (!this.fallbacks.has(operationKey)) {
-      this.fallbacks.set(operationKey, []);
+    let fallbackList = this.fallbacks.get(operationKey);
+    if (!fallbackList) {
+      fallbackList = [];
+      this.fallbacks.set(operationKey, fallbackList);
     }
-    this.fallbacks.get(operationKey)!.push(fallback);
+
+    fallbackList.push(fallback);
   }
 
   /**
@@ -509,11 +518,14 @@ export class AdaptiveRecoveryManager {
    * Get or create retry handler
    */
   public getRetryHandler(operationKey: string, config: Partial<RetryConfig> = {}): RetryHandler {
-    if (!this.retryHandlers.has(operationKey)) {
+    let handler = this.retryHandlers.get(operationKey);
+    if (!handler) {
       const mergedConfig = { ...this.defaultRetryConfig, ...config };
-      this.retryHandlers.set(operationKey, new RetryHandler(mergedConfig));
+      handler = new RetryHandler(mergedConfig);
+      this.retryHandlers.set(operationKey, handler);
     }
-    return this.retryHandlers.get(operationKey)!;
+
+    return handler;
   }
 
   /**
@@ -523,21 +535,27 @@ export class AdaptiveRecoveryManager {
     operationKey: string,
     config: Partial<CircuitBreakerConfig> = {}
   ): CircuitBreaker {
-    if (!this.circuitBreakers.has(operationKey)) {
+    let breaker = this.circuitBreakers.get(operationKey);
+    if (!breaker) {
       const mergedConfig = { ...this.defaultCircuitBreakerConfig, ...config };
-      this.circuitBreakers.set(operationKey, new CircuitBreaker(mergedConfig));
+      breaker = new CircuitBreaker(mergedConfig);
+      this.circuitBreakers.set(operationKey, breaker);
     }
-    return this.circuitBreakers.get(operationKey)!;
+
+    return breaker;
   }
 
   /**
    * Get or create fallback manager
    */
   public getFallbackManager(operationKey: string): FallbackManager {
-    if (!this.fallbackManagers.has(operationKey)) {
-      this.fallbackManagers.set(operationKey, new FallbackManager());
+    let manager = this.fallbackManagers.get(operationKey);
+    if (!manager) {
+      manager = new FallbackManager();
+      this.fallbackManagers.set(operationKey, manager);
     }
-    return this.fallbackManagers.get(operationKey)!;
+
+    return manager;
   }
 
   /**
@@ -620,16 +638,27 @@ export const globalRecoveryManager = new AdaptiveRecoveryManager(
  * Convenience instance for direct access to recovery methods
  */
 export const errorRecovery = {
-  withRetry: (fn: () => Promise<unknown>, config?: Partial<RetryConfig>) =>
+  withRetry: (fn: () => Promise<unknown>, config?: Partial<RetryConfig>): Promise<RecoveryResult> =>
     globalRecoveryManager.getRetryHandler('default', config).executeWithRetry(fn),
-  withFallback: async (primary: () => Promise<unknown>, fallback: () => Promise<unknown>) => {
+
+  withFallback: async (
+    primary: () => Promise<unknown>,
+    fallback: () => Promise<unknown>
+  ): Promise<RecoveryResult> => {
     const fallbackManager = globalRecoveryManager.getFallbackManager('default');
     fallbackManager.registerFallback('default', fallback);
     return fallbackManager.executeWithFallback('default', primary, {});
   },
-  withCircuitBreaker: (fn: () => Promise<unknown>, config?: Partial<CircuitBreakerConfig>) =>
-    globalRecoveryManager.getCircuitBreaker('default', config).execute(fn),
-  withTimeout: async (fn: () => Promise<unknown>, timeoutMs: number) => {
+
+  withCircuitBreaker: (
+    fn: () => Promise<unknown>,
+    config?: Partial<CircuitBreakerConfig>
+  ): Promise<unknown> => globalRecoveryManager.getCircuitBreaker('default', config).execute(fn),
+
+  withTimeout: async (
+    fn: () => Promise<unknown>,
+    timeoutMs: number
+  ): Promise<RecoveryResult<unknown>> => {
     const startTime = Date.now();
     try {
       const result = await Promise.race([

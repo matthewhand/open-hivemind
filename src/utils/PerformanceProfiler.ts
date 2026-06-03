@@ -1,7 +1,9 @@
+/* eslint-disable max-lines */
 import * as fs from 'fs';
 import * as path from 'path';
 import * as v8 from 'v8';
 import Debug from 'debug';
+import { PathSecurityUtils } from './PathSecurityUtils';
 
 const debug = Debug('app:PerformanceProfiler');
 
@@ -254,7 +256,8 @@ export class PerformanceProfiler {
     };
 
     const fileName = filename || `performance-profile-${this.profileName}-${Date.now()}.json`;
-    const filePath = path.join(process.cwd(), 'logs', fileName);
+    const logsDirectory = path.join(process.cwd(), 'logs');
+    const filePath = PathSecurityUtils.getSafePath(logsDirectory, fileName);
 
     // Ensure logs directory exists
     const logsDir = path.dirname(filePath);
@@ -516,7 +519,7 @@ export class PerformanceProfiler {
 /**
  * Decorator for profiling method execution
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- decorator target is inherently untyped
+
 export function Profile(target: any, propertyName: string, descriptor: PropertyDescriptor): void {
   const method = descriptor.value;
   const className = target.constructor.name;

@@ -1,5 +1,5 @@
 import { Logger } from '@common/logger';
-import type { Database } from '../sqliteWrapper';
+import type { IDatabase as Database } from '../types';
 import { type ISchemaModule } from './ISchemaModule';
 
 /**
@@ -167,9 +167,7 @@ export class ComplianceSchemas implements ISchemaModule {
       'CREATE INDEX IF NOT EXISTS idx_bot_experiment_tracking_variant_name ON bot_experiment_tracking(variant_name)',
     ];
 
-    for (const indexSql of indexes) {
-      await this.createIndex(db, indexSql);
-    }
+    await Promise.all(indexes.map((indexSql) => this.createIndex(db, indexSql)));
   }
 
   private async createTable(db: Database, sql: string): Promise<void> {

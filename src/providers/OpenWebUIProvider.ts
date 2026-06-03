@@ -8,12 +8,12 @@ export class OpenWebUIProvider implements ILLMProvider {
   docsUrl = 'https://docs.openwebui.com/';
   helpText = 'Enable API access in OpenWebUI and copy the token from the administration panel.';
 
-  getSchema() {
-    return openWebUIConfig.getSchema();
+  getSchema(): Record<string, unknown> {
+    return openWebUIConfig.getSchema() as unknown as Record<string, unknown>;
   }
 
-  getConfig() {
-    return openWebUIConfig;
+  getConfig(): Record<string, unknown> {
+    return openWebUIConfig as unknown as Record<string, unknown>;
   }
 
   getSensitiveKeys() {

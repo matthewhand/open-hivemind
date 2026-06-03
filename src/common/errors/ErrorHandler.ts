@@ -71,7 +71,7 @@ export class ErrorHandler {
    * @param context - Context for error reporting
    * @returns Wrapped function that catches errors
    */
-  static createSafeWrapper<T extends any[], R>(
+  static createSafeWrapper<T extends unknown[], R>(
     fn: (...args: T) => R | Promise<R>,
     context: string
   ): (...args: T) => Promise<R | null> {
@@ -79,13 +79,13 @@ export class ErrorHandler {
       try {
         const result = fn(...args);
         if (result instanceof Promise) {
-          return await result.catch((error) => {
+          return await result.catch((error: unknown) => {
             this.handle(error, context);
             return null;
           });
         }
         return result;
-      } catch (error) {
+      } catch (error: unknown) {
         this.handle(error, context);
         return null;
       }

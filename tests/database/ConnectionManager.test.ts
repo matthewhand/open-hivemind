@@ -1,5 +1,5 @@
-import { ConnectionManager } from '../../src/database/ConnectionManager';
 import Database from 'better-sqlite3';
+import { ConnectionManager } from '../../src/database/ConnectionManager';
 
 jest.mock('../../src/common/logger');
 
@@ -14,7 +14,7 @@ describe('ConnectionManager', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // @ts-ignore - Database is mocked and has these methods on prototype
     runSpy = jest.spyOn(Database.prototype, 'prepare');
     // @ts-ignore
@@ -68,7 +68,9 @@ describe('ConnectionManager', () => {
 
     it('should throw if not connected', async () => {
       await connectionManager.disconnect();
-      await expect(connectionManager.executeQuery('SELECT 1')).rejects.toThrow('Database not connected');
+      await expect(connectionManager.executeQuery('SELECT 1')).rejects.toThrow(
+        'Database not connected'
+      );
     });
   });
 });

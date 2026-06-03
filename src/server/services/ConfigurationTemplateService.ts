@@ -1,8 +1,10 @@
+/* eslint-disable max-lines */
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import Debug from 'debug';
-import { injectable, singleton, inject } from 'tsyringe';
+import { inject, injectable, singleton } from 'tsyringe';
 import { DatabaseManager } from '../../database/DatabaseManager';
+import { PathSecurityUtils } from '../../utils/PathSecurityUtils';
 import { ConfigurationValidator } from './ConfigurationValidator';
 
 const debug = Debug('app:ConfigurationTemplateService');
@@ -13,6 +15,7 @@ export interface ConfigurationTemplate {
   description: string;
   category: 'discord' | 'slack' | 'mattermost' | 'webhook' | 'llm' | 'general';
   tags: string[];
+
   config: any;
   isBuiltIn: boolean;
   createdBy?: string;
@@ -26,6 +29,7 @@ export interface CreateTemplateRequest {
   description: string;
   category: 'discord' | 'slack' | 'mattermost' | 'webhook' | 'llm' | 'general';
   tags: string[];
+
   config: any;
   createdBy?: string;
 }
@@ -34,7 +38,9 @@ export interface UpdateTemplateRequest {
   name?: string;
   description?: string;
   category?: 'discord' | 'slack' | 'mattermost' | 'webhook' | 'llm' | 'general';
+
   tags?: string[];
+
   config?: any;
 }
 
@@ -609,16 +615,11 @@ export class ConfigurationTemplateService {
    */
   private getSafeTemplatePath(templateId: string): string {
     const fileName = templateId.endsWith('.json') ? templateId : `${templateId}.json`;
-    const targetPath = path.join(this.templatesDir, path.basename(fileName));
-    const resolvedPath = path.resolve(targetPath);
-    const resolvedTemplatesDir = path.resolve(this.templatesDir);
-    if (
-      !resolvedPath.startsWith(resolvedTemplatesDir + path.sep) &&
-      resolvedPath !== resolvedTemplatesDir
-    ) {
+    try {
+      return PathSecurityUtils.getSafePath(this.templatesDir, fileName);
+    } catch (error) {
       throw new Error('Security Error: Path traversal detected');
     }
-    return targetPath;
   }
 
   /**

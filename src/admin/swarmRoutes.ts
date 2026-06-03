@@ -1,5 +1,6 @@
 import Debug from 'debug';
 import { Router, type Request, type Response } from 'express';
+import { authenticate } from '../auth/middleware';
 import { providerRegistry } from '../registries/ProviderRegistry';
 import type { IToolInstaller } from '../types/IToolInstaller';
 
@@ -15,7 +16,7 @@ const getInstaller = (): IToolInstaller => {
 };
 
 // Check system requirements
-swarmRouter.get('/check', async (_req: Request, res: Response) => {
+swarmRouter.get('/check', authenticate, async (_req: Request, res: Response) => {
   try {
     const installer = getInstaller();
     const pythonAvailable = await installer.checkPrerequisites();

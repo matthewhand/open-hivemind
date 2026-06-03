@@ -8,12 +8,12 @@ export class FlowiseProvider implements ILLMProvider {
   docsUrl = 'https://docs.flowiseai.com/installation/overview';
   helpText = 'Use the Flowise REST endpoint and API key configured in your Flowise instance.';
 
-  getSchema() {
-    return flowiseConfig.getSchema();
+  getSchema(): Record<string, unknown> {
+    return flowiseConfig.getSchema() as unknown as Record<string, unknown>;
   }
 
-  getConfig() {
-    return flowiseConfig;
+  getConfig(): Record<string, unknown> {
+    return flowiseConfig as unknown as Record<string, unknown>;
   }
 
   getSensitiveKeys() {

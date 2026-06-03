@@ -247,5 +247,20 @@ export function monitoringMixin(api: ApiService) {
     }> {
       return api.request('/health/detailed/services');
     },
+
+    getAnomalies(): Promise<{ success: boolean; data: { anomalies: any[] } }> {
+      return api.request('/api/admin/monitoring/anomalies');
+    },
+
+    getCostAnalytics(days: number = 7): Promise<{ 
+      success: boolean; 
+      data: { 
+        historical: any[]; 
+        daily: { date: string, cost: number }[];
+        summary: { totalCost: number, days: number } 
+      } 
+    }> {
+      return api.request(`/api/monitoring/costs?days=${days}`);
+    },
   };
 }

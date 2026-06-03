@@ -106,7 +106,7 @@ adminRouter.post(
 
     const body = req.body as { name?: string; token?: string; llm?: string };
     try {
-      await (provider as IMessageProvider).addBot(req.body);
+      await (provider as IMessageProvider).addBot(req.body as Record<string, unknown>);
 
       logAdminAction(
         req,
@@ -158,7 +158,7 @@ adminRouter.post('/slack-bots', requireAdmin, async (req: AuditedRequest, res: R
   if (!provider) return res.status(404).json({ success: false, error: 'Slack provider not found' });
   const body = req.body as { name?: string; token?: string };
   try {
-    await provider.addBot(req.body);
+    await provider.addBot(req.body as Record<string, unknown>);
     logAdminAction(
       req,
       'CREATE_SLACK_BOT',

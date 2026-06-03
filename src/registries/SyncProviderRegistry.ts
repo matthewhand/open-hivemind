@@ -21,6 +21,7 @@ import {
   loadPlugin,
   type PluginModule,
 } from '@src/plugins/PluginLoader';
+import { getServiceDependencies } from '@src/utils/serviceDependencies';
 import type { ILlmProvider } from '@llm/interfaces/ILlmProvider';
 
 const debug = Debug('app:sync-registry');
@@ -147,7 +148,8 @@ export class SyncProviderRegistry {
     for (const profile of config.memoryProfiles ?? []) {
       try {
         const mod = await loadPlugin(`memory-${profile.provider.toLowerCase()}`);
-        const instance = instantiateMemoryProvider(mod, profile.config);
+        const deps = getServiceDependencies(`memory:${profile.key}`);
+        const instance = instantiateMemoryProvider(mod, profile.config, deps);
         this.memoryProviders.set(profile.key, instance);
         this.memoryProfileMap.set(profile.key, profile);
         debug('Loaded memory provider: %s (%s)', profile.key, profile.provider);
@@ -239,6 +241,23 @@ export class SyncProviderRegistry {
     return this.llmProviders.get(id);
   }
 
+  /**
+   * Manually register an LLM provider instance.
+   *
+   * Primarily used for testing or when a provider cannot be loaded
+   * via the standard plugin mechanism.
+   *
+   * Note: This also marks the registry as initialized if it wasn't.
+   */
+  public registerLlmProvider(id: string, instance: ILlmProvider): void {
+    this.llmProviders.set(id, instance);
+    if (!this.llmInsertionOrder.includes(id)) {
+      this.llmInsertionOrder.push(id);
+    }
+    this._initialized = true;
+    debug('Manually registered LLM provider: %s', id);
+  }
+
   /** Return all registered LLM providers as an array. */
   public getLlmProviders(): ILlmProvider[] {
     this.assertInitialized();
@@ -282,16 +301,22 @@ export class SyncProviderRegistry {
 
     // Try direct provider key
     const directKey = botConfig.llmProvider as string | undefined;
-    if (directKey && this.llmProviders.has(directKey)) {
-      debug('Bot "%s": resolved LLM provider via llmProvider key "%s"', botName, directKey);
-      return this.llmProviders.get(directKey)!;
+    if (directKey) {
+      const provider = this.llmProviders.get(directKey);
+      if (provider) {
+        debug('Bot "%s": resolved LLM provider via llmProvider key "%s"', botName, directKey);
+        return provider;
+      }
     }
 
     // Try profile key alias
     const profileKey = botConfig.llmProfileKey as string | undefined;
-    if (profileKey && this.llmProviders.has(profileKey)) {
-      debug('Bot "%s": resolved LLM provider via llmProfileKey "%s"', botName, profileKey);
-      return this.llmProviders.get(profileKey)!;
+    if (profileKey) {
+      const provider = this.llmProviders.get(profileKey);
+      if (provider) {
+        debug('Bot "%s": resolved LLM provider via llmProfileKey "%s"', botName, profileKey);
+        return provider;
+      }
     }
 
     // Fallback to default
@@ -506,7 +531,8 @@ export class SyncProviderRegistry {
         const p = profile ?? this.memoryProfileMap.get(id);
         if (!p) throw new Error(`No profile found for memory provider '${id}'`);
         const mod = await loadPlugin(`memory-${p.provider.toLowerCase()}`);
-        const instance = instantiateMemoryProvider(mod, p.config);
+        const deps = getServiceDependencies(`memory:${id}`);
+        const instance = instantiateMemoryProvider(mod, p.config, deps);
         this.memoryProviders.set(id, instance);
         this.memoryProfileMap.set(id, p);
         debug('Reloaded memory provider: %s', id);

@@ -250,7 +250,7 @@ export function sanitizeMessageText(text: string | null | undefined): string {
 /**
  * Convenience function for sanitizing user input in interactive actions
  */
-function sanitizeUserInput(input: string | null | undefined): string {
+export function sanitizeUserInput(input: string | null | undefined): string {
   return InputSanitizer.sanitizeText(input, {
     maxLength: 1000,
     allowHtml: false,

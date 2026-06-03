@@ -42,9 +42,18 @@ class TokenTracker {
   public recordTokens(channelId: string, tokenCount: number): void {
     const now = Date.now();
     const records = this.channelTokens.get(channelId) || [];
+    const threshold = now - this.WINDOW_MS;
 
-    // Clean old records
-    const recentRecords = records.filter((r) => now - r.timestamp < this.WINDOW_MS);
+    // Clean old records using reverse search for better performance on large arrays
+    let keepCount = 0;
+    for (let i = records.length - 1; i >= 0; i--) {
+      if (records[i].timestamp <= threshold) break;
+      keepCount++;
+    }
+
+    // Only slice if we actually need to remove items
+    const recentRecords =
+      keepCount === records.length ? records : records.slice(records.length - keepCount);
 
     // Add new record
     recentRecords.push({ tokens: tokenCount, timestamp: now });
@@ -59,10 +68,19 @@ class TokenTracker {
    * Get total tokens in the current window for a channel
    */
   public getTokensInWindow(channelId: string): number {
-    const now = Date.now();
-    const records = this.channelTokens.get(channelId) || [];
-    const recentRecords = records.filter((r) => now - r.timestamp < this.WINDOW_MS);
-    return recentRecords.reduce((sum, r) => sum + r.tokens, 0);
+    const records = this.channelTokens.get(channelId);
+    if (!records || records.length === 0) return 0;
+
+    const threshold = Date.now() - this.WINDOW_MS;
+    let sum = 0;
+
+    // Records are ordered by timestamp (oldest to newest), so we loop backwards
+    for (let i = records.length - 1; i >= 0; i--) {
+      if (records[i].timestamp <= threshold) break;
+      sum += records[i].tokens;
+    }
+
+    return sum;
   }
 
   /**

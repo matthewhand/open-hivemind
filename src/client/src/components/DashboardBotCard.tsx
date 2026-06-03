@@ -1,9 +1,16 @@
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import PersonaAvatar from './PersonaAvatar';
 import Badge from './DaisyUI/Badge';
 import Card from './DaisyUI/Card';
+import Tooltip from './DaisyUI/Tooltip';
 import Button from './DaisyUI/Button';
+import Tooltip from './DaisyUI/Tooltip';
 import type { Bot, StatusResponse } from '../services/api';
+import { Activity, Sparkles, History, Trophy } from 'lucide-react';
+import DiagnosticModal from './BotManagement/DiagnosticModal';
+import InsightsModal from './BotManagement/InsightsModal';
+import VersionHistoryModal from './BotManagement/VersionHistoryModal';
+import BenchmarkModal from './BotManagement/BenchmarkModal';
 
 interface DashboardBotCardProps {
   bot: Bot;
@@ -28,28 +35,75 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
   getStatusColor,
 }) => {
   const botStatus = botStatusData?.status || 'unknown';
+  const [isDiagnosticOpen, setIsDiagnosticOpen] = useState(false);
+  const [isInsightsOpen, setIsInsightsOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isBenchmarkOpen, setIsBenchmarkOpen] = useState(false);
 
   return (
-    <Card className="shadow-md hover:shadow-lg transition-shadow duration-200">
-      <div className="card-body p-4">
-        {/* Header: avatar + name + status */}
-        <div className="flex items-center gap-3">
-          <PersonaAvatar
-            seed={bot.persona || bot.name}
-            size={40}
-          />
-          <div className="flex-1 min-w-0">
-            <h2 className="card-title text-base font-semibold truncate">
-              {bot.name}
-            </h2>
+    <>
+      <Card className="shadow-md hover:shadow-lg transition-all duration-200 group">
+        <div className="card-body p-4">
+          {/* Header: avatar + name + status */}
+          <div className="flex items-center gap-3">
+            <PersonaAvatar
+              seed={bot.persona || bot.name}
+              size={40}
+            />
+            <div className="flex-1 min-w-0">
+              <h2 className="card-title text-base font-semibold truncate">
+                {bot.name}
+              </h2>
+            </div>
+            <div className="flex items-center gap-2">
+               <Tooltip content="Run Performance Benchmark" position="top">
+                 <button
+                   type="button"
+                   onClick={() => setIsBenchmarkOpen(true)}
+                   className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity text-warning"
+                   aria-label={`Run performance benchmark for ${bot.name}`}
+                 >
+                    <Trophy className="w-4 h-4" />
+                 </button>
+               </Tooltip>
+               <Tooltip content="Version History" position="top">
+                 <button
+                   type="button"
+                   onClick={() => setIsHistoryOpen(true)}
+                   className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity text-secondary"
+                   aria-label={`View version history for ${bot.name}`}
+                 >
+                    <History className="w-4 h-4" />
+                 </button>
+               </Tooltip>
+               <Tooltip content="AI Performance Insights" position="top">
+                 <button
+                   type="button"
+                   onClick={() => setIsInsightsOpen(true)}
+                   className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity text-primary"
+                   aria-label={`View AI performance insights for ${bot.name}`}
+                 >
+                    <Sparkles className="w-4 h-4" />
+                 </button>
+               </Tooltip>
+               <Tooltip content="Run Diagnostic" position="top">
+                 <button
+                   type="button"
+                   onClick={() => setIsDiagnosticOpen(true)}
+                   className="btn btn-ghost btn-xs btn-square opacity-0 group-hover:opacity-40 hover:opacity-100 transition-opacity"
+                   aria-label={`Run diagnostic for ${bot.name}`}
+                 >
+                    <Activity className="w-4 h-4" />
+                 </button>
+               </Tooltip>
+               <Badge
+                variant={toBadgeVariant(getStatusColor(botStatus))}
+                size="small"
+              >
+                {botStatus.toUpperCase()}
+              </Badge>
+            </div>
           </div>
-          <Badge
-            variant={toBadgeVariant(getStatusColor(botStatus))}
-            size="small"
-          >
-            {botStatus.toUpperCase()}
-          </Badge>
-        </div>
 
         {/* Provider badges */}
         <div className="flex flex-wrap gap-1.5 mt-3">
@@ -75,12 +129,41 @@ const DashboardBotCard: React.FC<DashboardBotCardProps> = memo(({
 
         {/* Actions */}
         <div className="card-actions justify-end mt-3">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" aria-label={`View details for ${bot.name}`}>
             Details
           </Button>
         </div>
       </div>
     </Card>
+
+    <DiagnosticModal 
+       botId={bot.id}
+       botName={bot.name}
+       isOpen={isDiagnosticOpen}
+       onClose={() => setIsDiagnosticOpen(false)}
+    />
+
+    <InsightsModal
+       botId={bot.id}
+       botName={bot.name}
+       isOpen={isInsightsOpen}
+       onClose={() => setIsInsightsOpen(false)}
+    />
+
+    <VersionHistoryModal
+       botId={bot.id}
+       botName={bot.name}
+       isOpen={isHistoryOpen}
+       onClose={() => setIsHistoryOpen(false)}
+    />
+
+    <BenchmarkModal
+       botId={bot.id}
+       botName={bot.name}
+       isOpen={isBenchmarkOpen}
+       onClose={() => setIsBenchmarkOpen(false)}
+    />
+    </>
   );
 });
 

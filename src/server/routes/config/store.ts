@@ -5,6 +5,7 @@ import llmConfig from '../../../config/llmConfig';
 import llmTaskConfig from '../../../config/llmTaskConfig';
 import messageConfig from '../../../config/messageConfig';
 import webhookConfig from '../../../config/webhookConfig';
+import databaseConfig from '../../../config/databaseConfig';
 import { providerRegistry } from '../../../registries/ProviderRegistry';
 import { createLogger } from '../../../common/StructuredLogger';
 
@@ -12,20 +13,38 @@ const debug = Debug('app:server:routes:config:store');
 const logger = createLogger('configStore');
 
 // Core schemas that are always present
+   
+ 
+ 
 export const coreSchemaSources: Record<string, any> = {
   message: messageConfig,
   llm: llmConfig,
   llmTask: llmTaskConfig,
   webhook: webhookConfig,
+  database: databaseConfig,
 };
 
 // Map of base config types to their convict objects (used as schema sources)
+    
+   
+ 
 export let schemaSources: Record<string, any> = { ...coreSchemaSources };
 
+ 
 // Map of all active config instances
+   
+ 
 export let globalConfigs: Record<string, any> = { ...schemaSources };
 
 // Helper to load dynamic configs from files
+   
+    
+    
+   
+ 
+ 
+ 
+ 
 export const loadDynamicConfigs = async () => {
   try {
     const configDir = process.env.NODE_CONFIG_DIR || path.join(process.cwd(), 'config');
@@ -59,10 +78,13 @@ export const loadDynamicConfigs = async () => {
             }
 
             globalConfigs[name] = newConfig;
+           
           }
         }
       });
     } catch (e: unknown) {
+   
+       
       if ((e as any).code !== 'ENOENT') {
         throw e;
       }
@@ -71,8 +93,16 @@ export const loadDynamicConfigs = async () => {
     logger.error('Failed to load dynamic configs:', e);
   }
 };
+ 
+ 
 
 // Initialize configuration from registry
+   
+   
+ 
+ 
+ 
+ 
 export const reloadGlobalConfigs = async () => {
   const providers = providerRegistry.getAll();
   providers.forEach((p) => {

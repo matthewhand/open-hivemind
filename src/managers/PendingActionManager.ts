@@ -12,6 +12,7 @@ export interface PendingAction {
   args: Record<string, unknown>;
   timestamp: string;
   status: 'pending' | 'approved' | 'denied' | 'expired';
+
   context?: any;
 }
 
@@ -48,6 +49,7 @@ export class PendingActionManager extends EventEmitter {
     botName: string,
     toolName: string,
     args: Record<string, unknown>,
+
     context?: any
   ): Promise<boolean> {
     const id = randomUUID();
@@ -74,6 +76,20 @@ export class PendingActionManager extends EventEmitter {
 
       this.promises.set(id, { resolve, timer });
     });
+  }
+
+  /**
+   * Alias for requestApproval to match naming in requirement.
+   */
+  public async create(
+    botName: string,
+    toolName: string,
+
+    args: Record<string, unknown>,
+
+    context?: any
+  ): Promise<boolean> {
+    return this.requestApproval(botName, toolName, args, context);
   }
 
   /**

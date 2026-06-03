@@ -18,11 +18,66 @@
  */
 
 import Debug from 'debug';
+import { container } from 'tsyringe';
 import { type MessageBus } from '@src/events/MessageBus';
-import type { MessageContext, ReplyDecision } from '@src/events/types';
+import type { MessageContext, MessageEvents, ReplyDecision } from '@src/events/types';
 import { SwarmCoordinator } from '@src/services/SwarmCoordinator';
+import { type ActivityRecorder, DefaultActivityRecorder } from './ActivityRecorder';
+import { PipelineDebuggerService } from '../server/services/PipelineDebuggerService';
 
 const debug = Debug('app:pipeline:decision');
+
+/**
+ * Resolve the idle-response service name from the message context. Mirrors the
+ * legacy `replyDecision.ts` / `outputProcessor.ts` resolution of
+ * `MESSAGE_PROVIDER`, falling back to the platform identifier.
+ */
+function resolveServiceName(ctx: MessageContext): string {
+  return String(ctx.botConfig.MESSAGE_PROVIDER || ctx.platform || 'generic');
+}
+
+type DecisionPayload = MessageEvents['pipeline:decision'];
+
+/**
+ * Build the single `pipeline:decision` payload broadcast for the live
+ * Orchestration Log. Promotes the probability `rolled`/`probability` fields out
+ * of the decision `meta` onto the top-level `probabilityRoll`/`threshold` keys
+ * (mirroring the shape the legacy `shouldReplyToMessage` emit produced) so the
+ * UI keeps the richer payload after de-duplicating the event.
+ */
+function buildDecisionPayload(args: {
+  botName: string;
+  messageId: string;
+  channelId: string;
+  shouldReply: boolean;
+  reason?: string;
+  meta?: Record<string, unknown>;
+}): DecisionPayload {
+  const { botName, messageId, channelId, shouldReply, reason, meta } = args;
+
+  const payload: DecisionPayload = {
+    botName,
+    messageId,
+    channelId,
+    shouldReply,
+    reason: reason ?? '',
+    meta: meta ?? {},
+  };
+
+  if (meta) {
+    if (meta.rolled !== undefined && Number.isFinite(Number(meta.rolled))) {
+      payload.probabilityRoll = Number(meta.rolled);
+    }
+    if (meta.probability !== undefined) {
+      const threshold = parseFloat(String(meta.probability).replace(/[<>]/g, ''));
+      if (Number.isFinite(threshold)) {
+        payload.threshold = threshold;
+      }
+    }
+  }
+
+  return payload;
+}
 
 // ---------------------------------------------------------------------------
 // Strategy interface
@@ -54,7 +109,8 @@ export interface DecisionStrategy {
 export class DecisionStage {
   constructor(
     private bus: MessageBus,
-    private strategy: DecisionStrategy
+    private strategy: DecisionStrategy,
+    private recorder: ActivityRecorder = new DefaultActivityRecorder()
   ) {}
 
   /**
@@ -81,21 +137,58 @@ export class DecisionStage {
    */
   async process(ctx: MessageContext): Promise<ReplyDecision> {
     try {
+      // --- Pipeline Debugger Breakpoint Check ---
+      try {
+        const debuggerService = container.resolve(PipelineDebuggerService);
+        if (debuggerService.shouldPause('validated')) {
+          debug(`[Debugger] Pausing pipeline for bot ${ctx.botName} at stage 'validated'`);
+          ctx = await debuggerService.pause('validated', ctx);
+          debug(`[Debugger] Resuming pipeline for bot ${ctx.botName}`);
+        }
+
+      } catch {
+        // Ignore DI errors
+      }
+
       const messageId = ctx.message.getMessageId();
-      const botId = (ctx.botConfig.BOT_ID as string) || (ctx.botConfig.botId as string) || '';
+
+      // Record the inbound interaction for idle-response tracking. Mirrors the
+      // legacy `replyDecision.ts` recording so idle response works in pipeline
+      // mode. Only human messages count (skip bot-authored messages).
+      try {
+        if (!ctx.message.isFromBot()) {
+          this.recorder.recordInteraction(resolveServiceName(ctx), ctx.channelId, messageId);
+        }
+      } catch (recordErr) {
+        debug('Failed to record interaction (non-fatal): %O', recordErr);
+      }
+
       const swarm = SwarmCoordinator.getInstance();
       const channelId = ctx.channelId;
       const botName = ctx.botName;
 
       // --- Swarm claim check: skip if another bot already claimed ---
+      // Compare against `botName`, the SAME identity key used when this stage
+      // claims the message below via `swarm.claimMessage(messageId, botName)`
+      // (SwarmCoordinator stores that value as the claim's `botId`). Using the
+      // config `BOT_ID` here instead would mismatch when `BOT_NAME !== BOT_ID`,
+      // causing a bot to fail to recognize its own claim and mis-deduplicate.
       const existingClaim = swarm.getClaim(messageId);
-      const alreadyClaimed = existingClaim !== undefined && existingClaim.botId !== botId;
+      const alreadyClaimed = existingClaim !== undefined && existingClaim.botId !== botName;
       if (alreadyClaimed) {
         const reason = existingClaim
           ? `Message already claimed by bot ${existingClaim.botId} in swarm`
           : 'Message already claimed by another bot in swarm';
 
         debug('[DecisionStage] Message %s: skipped (claimed)', messageId);
+
+        // Capture metadata
+        ctx.metadata.decision = {
+          alreadyClaimed: true,
+          claimedBy: existingClaim?.botId,
+          reason,
+          shouldReply: false,
+        };
 
         // Broadcast decision to WebSocket for Live Orchestration Log
         this.bus.emit('pipeline:decision', {
@@ -114,33 +207,40 @@ export class DecisionStage {
       // --- Run the decision strategy ---
       const decision = await this.strategy.shouldReply(ctx);
 
+      // Capture metadata
+      ctx.metadata.decision = {
+        alreadyClaimed: false,
+        shouldReply: decision.shouldReply,
+        reason: decision.reason,
+        meta: decision.meta,
+      };
+
+      // Build the single `pipeline:decision` payload for the live Orchestration
+      // Log. DecisionStage is the sole owner of this broadcast for the pipeline
+      // path; `shouldReplyToMessage` suppresses its own emit (via the
+      // DecisionStrategyAdapter) so the event is not emitted twice per message.
+      const decisionPayload = buildDecisionPayload({
+        botName,
+        messageId,
+        channelId,
+        shouldReply: decision.shouldReply,
+        reason: decision.reason,
+        meta: decision.meta,
+      });
+
       if (decision.shouldReply) {
         // Claim the message for this bot
         swarm.claimMessage(messageId, botName);
-        debug('[DecisionStage] Message %s: claimed by %s', messageId, botId);
+        debug('[DecisionStage] Message %s: claimed by %s', messageId, botName);
 
         // Broadcast decision to WebSocket for Live Orchestration Log
-        this.bus.emit('pipeline:decision', {
-          botName,
-          messageId,
-          channelId,
-          shouldReply: true,
-          reason: decision.reason,
-          ...(decision.meta || {}),
-        });
+        this.bus.emit('pipeline:decision', decisionPayload);
 
         await this.bus.emitAsync('message:accepted', { ...ctx, decision });
         debug('Message accepted: bot=%s reason=%s', ctx.botName, decision.reason);
       } else {
         // Broadcast decision to WebSocket for Live Orchestration Log
-        this.bus.emit('pipeline:decision', {
-          botName,
-          messageId,
-          channelId,
-          shouldReply: false,
-          reason: decision.reason,
-          ...(decision.meta || {}),
-        });
+        this.bus.emit('pipeline:decision', decisionPayload);
 
         await this.bus.emitAsync('message:skipped', { ...ctx, reason: decision.reason });
         debug('Message skipped: bot=%s reason=%s', ctx.botName, decision.reason);

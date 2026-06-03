@@ -3,6 +3,8 @@ import path from 'path';
 import type { BotConfiguration } from '../database/DatabaseManager';
 import type { BotOverride, MessageProvider, LlmProvider, McpServerConfig, McpGuardConfig } from '@src/types/config';
 import Debug from 'debug';
+import { SecureConfigManager } from './SecureConfigManager';
+
 const debug = Debug('app:config:UserConfigStore');
 
 interface ToolConfig {
@@ -17,6 +19,9 @@ interface BotDisabledState {
   disabledAt?: string;
 }
 
+   
+ 
+ 
 type GeneralSettings = Record<string, any>;
 
 export class UserConfigStore {
@@ -27,24 +32,24 @@ export class UserConfigStore {
     botDisabledStates?: Record<string, BotDisabledState>;
     generalSettings?: GeneralSettings;
   } = {};
-  private configPath: string;
+  private get configPath(): string {
+    return path.join(process.cwd(), 'config', 'user-config.json');
+  }
+
   private botMap: Map<string, BotConfiguration> = new Map();
 
   public constructor() {
-    this.configPath = path.join(process.cwd(), 'config', 'user-config.json');
-    // Load config synchronously for now to avoid async issues in constructor
-    try {
-      const data = require('fs').readFileSync(this.configPath, 'utf-8');
-      this.config = JSON.parse(data);
-    } catch {
-      // If config file doesn't exist, use default empty config
-      this.config = {
-        toolSettings: {},
-        bots: [],
-        botDisabledStates: {},
-      };
-    }
+    // Initialization moved to async loadConfig() to avoid synchronous I/O in constructor
+    this.setDefaultConfig();
     this.initializeBotMap();
+  }
+
+  private setDefaultConfig(): void {
+    this.config = {
+      toolSettings: {},
+      bots: [],
+      botDisabledStates: {},
+    };
   }
 
   /**
@@ -68,17 +73,51 @@ export class UserConfigStore {
     return UserConfigStore.instance;
   }
 
-  private async loadConfig(): Promise<void> {
+  /**
+   * Get the instance synchronously.
+   * This ensures the instance is created, but it may not be fully loaded
+   * if loadConfig() hasn't been called/awaited yet.
+   */
+  public static getInstanceSync(): UserConfigStore {
+    return UserConfigStore.getInstance();
+  }
+
+  /**
+   * Load configuration from disk asynchronously.
+   */
+  public async loadConfig(): Promise<void> {
     try {
-      const data = await fs.readFile(this.configPath, 'utf-8');
-      this.config = JSON.parse(data);
-    } catch {
-      // If config file doesn't exist, use default empty config
-      this.config = {
-        toolSettings: {},
-        bots: [],
-        botDisabledStates: {},
-      };
+      let rawData: string;
+      try {
+        rawData = await fs.readFile(this.configPath, 'utf-8');
+      } catch (err: any) {
+        if (err.code === 'ENOENT') {
+          this.setDefaultConfig();
+          this.initializeBotMap();
+          return;
+        }
+        throw err;
+      }
+
+      // Detect if file is encrypted (contains multiple colon-separated segments and doesn't look like JSON)
+      const isEncrypted = rawData.includes(':') && !rawData.trim().startsWith('{');
+
+      if (isEncrypted) {
+        const secureManager = await SecureConfigManager.getInstance();
+        const decryptedData = secureManager.decrypt(rawData);
+        this.config = JSON.parse(decryptedData);
+      } else {
+        debug('Loading legacy plain-text user configuration (async)');
+        this.config = JSON.parse(rawData);
+        // Migrate to encrypted format immediately (only if encryption is enabled)
+        const encryptionEnabled = process.env.DISABLE_ENCRYPTION !== 'true';
+        if (encryptionEnabled) {
+          await this.saveConfig();
+        }
+      }
+    } catch (error) {
+      debug('ERROR:', 'Failed to load user config:', error);
+      this.setDefaultConfig();
     }
     this.initializeBotMap();
   }
@@ -91,7 +130,23 @@ export class UserConfigStore {
       const configDir = path.dirname(this.configPath);
       // Ensure directory exists
       await fs.mkdir(configDir, { recursive: true });
-      await fs.writeFile(this.configPath, JSON.stringify(this.config, null, 2), 'utf-8');
+
+      const dataToSave = JSON.stringify(this.config, null, 2);
+      let finalData: string;
+
+      // Allow disabling encryption for tests to simplify them
+      const encryptionEnabled = process.env.DISABLE_ENCRYPTION !== 'true';
+
+      if (encryptionEnabled) {
+        const secureManager = await SecureConfigManager.getInstance();
+        finalData = secureManager.encrypt(dataToSave);
+        debug('User configuration saved (encrypted)');
+      } else {
+        finalData = dataToSave;
+        debug('User configuration saved (plain-text)');
+      }
+
+      await fs.writeFile(this.configPath, finalData, 'utf-8');
     } catch (error) {
       debug('ERROR:', 'Failed to save user config:', error);
       throw error;

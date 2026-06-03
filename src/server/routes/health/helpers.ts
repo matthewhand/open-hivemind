@@ -1,8 +1,96 @@
 import { HEALTH_THRESHOLDS } from '../../../types/constants';
 
+export type CheckStatus = 'healthy' | 'degraded' | 'unhealthy';
+
+export interface SystemCheck {
+  status: CheckStatus;
+  detail: string;
+}
+
+export interface SystemChecks {
+  database: SystemCheck;
+  configuration: SystemCheck;
+  services: SystemCheck;
+}
+
+/**
+ * Build the real `checks` block for the detailed health endpoint.
+ *
+ * Each check probes a live subsystem rather than returning a hardcoded value:
+ *  - database: pings DatabaseManager.isConnected()
+ *  - configuration: validates that at least one bot config is loaded and
+ *    reports degraded when the configuration manager has emitted warnings
+ *  - services: confirms providers are registered in the ProviderRegistry
+ *
+ * All probes are wrapped defensively so a missing/uninitialised subsystem
+ * downgrades the individual check to `unhealthy` instead of throwing.
+ */
+export function buildSystemChecks(): SystemChecks {
+  return {
+    database: checkDatabase(),
+    configuration: checkConfiguration(),
+    services: checkServices(),
+  };
+}
+
+function checkDatabase(): SystemCheck {
+  try {
+    const { DatabaseManager } = require('../../../database/DatabaseManager');
+    const connected = DatabaseManager.getInstance().isConnected();
+    return connected
+      ? { status: 'healthy', detail: 'Connected and responding' }
+      : { status: 'unhealthy', detail: 'Database connection lost' };
+  } catch {
+    return { status: 'unhealthy', detail: 'Database unavailable or not configured' };
+  }
+}
+
+function checkConfiguration(): SystemCheck {
+  try {
+    const { BotConfigurationManager } = require('../../../config/BotConfigurationManager');
+    const manager = BotConfigurationManager.getInstance();
+    const bots: unknown[] = manager.getAllBots?.() ?? [];
+    const warnings: string[] = manager.getWarnings?.() ?? [];
+
+    if (bots.length === 0) {
+      return { status: 'unhealthy', detail: 'No bot configuration loaded' };
+    }
+    if (warnings.length > 0) {
+      return {
+        status: 'degraded',
+        detail: `${bots.length} bot(s) configured with ${warnings.length} warning(s)`,
+      };
+    }
+    return { status: 'healthy', detail: `${bots.length} bot(s) configured` };
+  } catch {
+    return { status: 'unhealthy', detail: 'Configuration unavailable' };
+  }
+}
+
+function checkServices(): SystemCheck {
+  try {
+    const { ProviderRegistry } = require('../../../registries/ProviderRegistry');
+    const registry = ProviderRegistry.getInstance();
+    const messageProviders: unknown[] = registry.getMessageProviders?.() ?? [];
+    const llmProviders: unknown[] = registry.getLLMProviders?.() ?? [];
+    const total = messageProviders.length + llmProviders.length;
+
+    if (total === 0) {
+      return { status: 'unhealthy', detail: 'No providers registered' };
+    }
+    return {
+      status: 'healthy',
+      detail: `${messageProviders.length} messenger and ${llmProviders.length} llm provider(s) registered`,
+    };
+  } catch {
+    return { status: 'unhealthy', detail: 'Service registry unavailable' };
+  }
+}
+
 export function calculateHealthStatus(
   memoryUsage: NodeJS.MemoryUsage,
   recentErrors: number,
+
   metrics: any
 ) {
   const memoryUsagePercent = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;
@@ -105,6 +193,7 @@ export function getRecoveryHealthStatus(
   ) {
     return 'degraded';
   }
+
   return 'healthy';
 }
 

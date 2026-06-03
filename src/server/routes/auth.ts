@@ -2,6 +2,8 @@ import Debug from 'debug';
 import { Router, type NextFunction, type Request, type Response } from 'express';
 import { AuthManager } from '../../auth/AuthManager';
 import { authenticate, requireAdmin } from '../../auth/middleware';
+import { verifyToken as verifyTotpToken } from '../../auth/TotpService';
+import { SessionManager } from '../../auth/SessionManager';
 import type { AuthMiddlewareRequest, LoginCredentials, RegisterData } from '../../auth/types';
 import { asyncErrorHandler } from '../../middleware/errorHandler';
 import { apiRateLimiter, authRateLimiter } from '../../middleware/rateLimiters';
@@ -15,6 +17,7 @@ import {
   LogoutSchema,
   RefreshTokenSchema,
   RegisterSchema,
+  TwoFactorCodeSchema,
   UpdateProfileSchema,
   UpdateUserSchema,
   UserIdParamSchema,
@@ -54,8 +57,32 @@ router.post(
   validate(LoginSchema),
   asyncErrorHandler(async (req, res) => {
     try {
-      const credentials: LoginCredentials = req.body;
+      const credentials: LoginCredentials = {
+        ...req.body,
+        // Scope account-lockout tracking to the requesting IP so an abusive
+        // source cannot lock out a legitimate user logging in elsewhere.
+        ipAddress: req.ip,
+      };
       const authResult = await authManager.login(credentials);
+
+      // SECURITY: Opt-in server-side session tracking with token rotation.
+      // When SESSION_MANAGER_ENABLED=true, issue a session-tracked access token
+      // and return it to the client in place of the stateless one. This is
+      // purely additive — when disabled the original behaviour is unchanged.
+      if (SessionManager.isEnabled() && authResult.user?.id) {
+        try {
+          const sessionToken = await SessionManager.getInstance().createSession(
+            authResult.user.id,
+            authResult.user.role
+          );
+          authResult.accessToken = sessionToken;
+        } catch (sessionError) {
+          // Never fail login because of session bookkeeping — fall back to the
+          // stateless token that login() already produced.
+          debug('Session creation failed, falling back to stateless token:', sessionError);
+        }
+      }
+
       return res.json(ApiResponse.success(authResult));
     } catch (error: unknown) {
       const errMsg = error instanceof Error ? error.message : String(error);
@@ -169,11 +196,86 @@ router.post(
       if (refreshToken) {
         await authManager.logout(refreshToken);
       }
+
+      // When session tracking is enabled, also invalidate the session-tracked
+      // access token presented in the Authorization header so it can no longer
+      // be replayed. Best-effort: never fail logout on session bookkeeping.
+      if (SessionManager.isEnabled()) {
+        try {
+          const authHeader = Array.isArray(req.headers.authorization)
+            ? req.headers.authorization[0]
+            : req.headers.authorization;
+          const accessToken = authHeader?.startsWith('Bearer ')
+            ? authHeader.substring(7)
+            : undefined;
+          if (accessToken) {
+            await SessionManager.getInstance().getStore().invalidateToken(accessToken);
+          }
+        } catch (sessionError) {
+          debug('Session invalidation on logout failed:', sessionError);
+        }
+      }
+
       return res.json(ApiResponse.success());
     } catch (error: unknown) {
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .json(ApiResponse.error(ErrorUtils.getMessage(error)));
+    }
+  })
+);
+
+/**
+ * @openapi
+ * /webui/api/auth/rotate:
+ *   post:
+ *     summary: Rotate the current session access token
+ *     description: >
+ *       Issues a fresh access token and invalidates the presented one.
+ *       Only available when server-side session management is enabled
+ *       (SESSION_MANAGER_ENABLED=true). Requires a valid Bearer token.
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: New access token issued
+ *       401:
+ *         description: Invalid or missing token
+ *       404:
+ *         description: Session management is not enabled
+ */
+router.post(
+  '/rotate',
+  apiRateLimiter,
+  authenticate,
+  asyncErrorHandler(async (req: Request, res: Response) => {
+    if (!SessionManager.isEnabled()) {
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json(ApiResponse.error('Session management is not enabled', undefined, 404));
+    }
+
+    const authHeader = Array.isArray(req.headers.authorization)
+      ? req.headers.authorization[0]
+      : req.headers.authorization;
+    const oldToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined;
+
+    if (!oldToken) {
+      return res
+        .status(HTTP_STATUS.UNAUTHORIZED)
+        .json(ApiResponse.error('Bearer token required', undefined, 401));
+    }
+
+    try {
+      const newToken = await SessionManager.getInstance().rotateToken(oldToken);
+      return res.json(ApiResponse.success({ accessToken: newToken, expiresIn: 3600 }));
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      debug('Token rotation error:', errMsg);
+      return res
+        .status(HTTP_STATUS.UNAUTHORIZED)
+        .json(ApiResponse.error('Token rotation failed', undefined, 401));
     }
   })
 );
@@ -233,7 +335,8 @@ router.post(
           .status(HTTP_STATUS.UNAUTHORIZED)
           .json(ApiResponse.error('User not found', undefined, 401));
       return res.json(ApiResponse.success({ user }));
-    } catch (_: unknown) {
+
+    } catch {
       return res
         .status(HTTP_STATUS.UNAUTHORIZED)
         .json(ApiResponse.error('Invalid token', undefined, 401));
@@ -278,6 +381,7 @@ router.get('/verify', apiRateLimiter, async (req: Request, res: Response) => {
 
 // GET /api/auth/trusted-status — check if request comes from trusted IP
 // Uses apiRateLimiter (not authRateLimiter) — this is a lightweight status check, not a credential endpoint
+
 const safeApiLimiter =
   apiRateLimiter || ((_req: Request, _res: Response, next: NextFunction) => next());
 router.get('/trusted-status', safeApiLimiter, (req: Request, res: Response) => {
@@ -525,4 +629,132 @@ router.get('/permissions', authenticate, (req: Request, res: Response) => {
     })
   );
 });
+
+/**
+ * @openapi
+ * /webui/api/auth/2fa/status:
+ *   get:
+ *     summary: Get current user's two-factor authentication status
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/2fa/status', authenticate, (req: Request, res: Response) => {
+  const authReq = req as AuthMiddlewareRequest;
+  if (!authReq.user) {
+    return res.status(HTTP_STATUS.UNAUTHORIZED).json(ApiResponse.error('Not authenticated'));
+  }
+  const enabled = authManager.isTwoFactorEnabled(authReq.user.id);
+  return res.json(ApiResponse.success({ enabled }));
+});
+
+/**
+ * @openapi
+ * /webui/api/auth/2fa/enroll:
+ *   post:
+ *     summary: Begin TOTP enrollment, returning a secret and otpauth URI
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Enrollment started; scan the otpauth URI then confirm.
+ */
+router.post('/2fa/enroll', authenticate, (req: Request, res: Response) => {
+  const authReq = req as AuthMiddlewareRequest;
+  if (!authReq.user) {
+    return res.status(HTTP_STATUS.UNAUTHORIZED).json(ApiResponse.error('Not authenticated'));
+  }
+  const enrollment = authManager.startTwoFactorEnrollment(authReq.user.id);
+  if (!enrollment) {
+    return res.status(HTTP_STATUS.NOT_FOUND).json(ApiResponse.error('User not found'));
+  }
+  return res.json(
+    ApiResponse.success({ secret: enrollment.secret, otpauthUri: enrollment.otpauthUri })
+  );
+});
+
+/**
+ * @openapi
+ * /webui/api/auth/2fa/confirm:
+ *   post:
+ *     summary: Confirm TOTP enrollment with a code and activate 2FA
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               code: { type: string }
+ *             required: [code]
+ */
+router.post(
+  '/2fa/confirm',
+  authenticate,
+  validate(TwoFactorCodeSchema),
+  (req: Request, res: Response) => {
+    const authReq = req as AuthMiddlewareRequest;
+    if (!authReq.user) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json(ApiResponse.error('Not authenticated'));
+    }
+    const { code } = req.body;
+    const ok = authManager.confirmTwoFactorEnrollment(authReq.user.id, code);
+    if (!ok) {
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json(ApiResponse.error('Invalid or expired two-factor code', undefined, 400));
+    }
+    return res.json(ApiResponse.success({ enabled: true }));
+  }
+);
+
+/**
+ * @openapi
+ * /webui/api/auth/2fa/disable:
+ *   post:
+ *     summary: Disable two-factor authentication for the current user
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               code: { type: string }
+ *             required: [code]
+ */
+router.post(
+  '/2fa/disable',
+  authenticate,
+  validate(TwoFactorCodeSchema),
+  (req: Request, res: Response) => {
+    const authReq = req as AuthMiddlewareRequest;
+    if (!authReq.user) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json(ApiResponse.error('Not authenticated'));
+    }
+    // Require a valid current TOTP code to disable, so a stolen session cannot
+    // silently strip the second factor.
+    if (!authManager.isTwoFactorEnabled(authReq.user.id)) {
+      return res.json(ApiResponse.success({ enabled: false }));
+    }
+    const userWithSecret = authManager.getUserWithHash(authReq.user.id);
+    const { code } = req.body;
+    const secret = userWithSecret?.twoFactorSecret;
+    if (!secret || !verifyTotpToken(code, secret)) {
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json(ApiResponse.error('Invalid two-factor code', undefined, 400));
+    }
+    authManager.disableTwoFactor(authReq.user.id);
+    return res.json(ApiResponse.success({ enabled: false }));
+  }
+);
+
 export default router;

@@ -221,6 +221,7 @@ export interface IMessengerService {
    * ```
    */
   getForumOwner?(forumId: string): Promise<string>;
+  getChannels?(botName?: string): Promise<Array<{ id: string; name: string; type?: string }>>;
 
   /**
    * Optional: Returns extended sub-services managed by this provider.
@@ -251,4 +252,12 @@ export interface IMessengerService {
    * @param {string} [threadId] - Optional thread identifier
    */
   sendTyping?(channelId: string, senderName?: string, threadId?: string): Promise<void>;
+
+  /**
+   * Checks if the service (or a specific bot) is currently connected.
+   *
+   * @param {string} [botName] - Optional bot name to check connectivity for
+   * @returns {boolean | Promise<boolean>} True if connected, false otherwise
+   */
+  isConnected?(botName?: string): boolean | Promise<boolean>;
 }

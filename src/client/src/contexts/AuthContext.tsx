@@ -90,7 +90,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         id: 'dev-user',
         username: 'developer',
         email: 'dev@open-hivemind.local',
-        role: 'owner',
+        role: 'admin',
         permissions: ['*'],
       };
       const devTokens: AuthTokens = {
@@ -278,8 +278,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         id: 'serverless-admin',
         username: 'admin',
         email: 'admin@open-hivemind.com',
-        role: 'owner',
-        permissions: ['all'],
+        role: 'admin',
+        permissions: ['*'],
       };
     }
 

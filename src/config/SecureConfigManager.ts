@@ -1,7 +1,10 @@
+/* eslint-disable max-lines */
+ 
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import Debug from 'debug';
+import { PathSecurityUtils } from '../utils/PathSecurityUtils';
 import { ErrorUtils } from '../types/errors';
 
 const debug = Debug('app:SecureConfigManager');
@@ -86,14 +89,9 @@ export class SecureConfigManager {
       );
     }
 
-    const targetPath = path.join(this.configDir, `${id}.enc`);
-
-    // Resolve both paths to their absolute forms
-    const resolvedConfigDir = path.resolve(this.configDir);
-    const resolvedTargetPath = path.resolve(targetPath);
-
-    // Ensure the resolved target path starts with the resolved config directory
-    if (!resolvedTargetPath.startsWith(resolvedConfigDir + path.sep) && resolvedTargetPath !== resolvedConfigDir) {
+    try {
+      return PathSecurityUtils.getSafePath(this.configDir, `${id}.enc`);
+    } catch (error) {
       throw ErrorUtils.createError(
         'Invalid configuration ID: Path traversal detected',
         'validation',
@@ -101,8 +99,6 @@ export class SecureConfigManager {
         400,
       );
     }
-
-    return targetPath;
   }
 
   /**
@@ -209,9 +205,43 @@ export class SecureConfigManager {
     }
   }
 
+  /**
+   * Retrieve a configuration securely (Synchronous)
+   * This should only be used during application startup when async is not possible.
+   */
+  public getConfigSync(id: string): SecureConfig | null {
+    try {
+      const filePath = this.getSecureFilePath(id);
+      if (!fs.existsSync(filePath)) {
+        return null;
+      }
+
+      const encryptedData = fs.readFileSync(filePath, 'utf8');
+      const decryptedData = this.decrypt(encryptedData);
+      const config: SecureConfig = JSON.parse(decryptedData);
+
+      // Verify integrity
+      const { checksum, ...configWithoutChecksum } = config;
+      if (this.calculateChecksum(configWithoutChecksum) !== checksum) {
+        throw ErrorUtils.createError(
+          'Configuration integrity check failed',
+          'unknown',
+          'SECURE_CONFIG_INTEGRITY_FAILED',
+          500,
+        );
+      }
+
+      return config;
+    } catch (error: unknown) {
+      const hivemindError = ErrorUtils.toHivemindError(error);
+      debug(`Failed to synchronously retrieve configuration ${id}:`, hivemindError.message);
+      return null;
+    }
+  }
+
   public async getDecryptedMainConfig(env: string): Promise<Record<string, unknown> | null> {
     try {
-      const configPath = path.join(this.mainConfigDir, `${env}.json.enc`);
+      const configPath = PathSecurityUtils.getSafePath(this.mainConfigDir, `${env}.json.enc`);
       try {
         await fs.promises.access(configPath);
         const encryptedData = await fs.promises.readFile(configPath, 'utf8');
@@ -235,7 +265,7 @@ export class SecureConfigManager {
    */
   public getDecryptedMainConfigSync(env: string): Record<string, unknown> | null {
     try {
-      const configPath = path.join(this.mainConfigDir, `${env}.json.enc`);
+      const configPath = PathSecurityUtils.getSafePath(this.mainConfigDir, `${env}.json.enc`);
       if (!fs.existsSync(configPath)) {
         return null;
       }
@@ -307,6 +337,9 @@ export class SecureConfigManager {
   /**
    * Create a full backup of all secure configurations
    */
+   
+   
+   
   public async listBackups(): Promise<any[]> {
     try {
       await fs.promises.access(this.backupDir);
@@ -322,7 +355,7 @@ export class SecureConfigManager {
     try {
       const configs = await fs.promises.readdir(this.configDir);
       const backupId = `backup_${new Date().toISOString().replace(/[:.]/g, '-')}`;
-      const backupPath = path.join(this.backupDir, `${backupId}.json`);
+      const backupPath = PathSecurityUtils.getSafePath(this.backupDir, `${backupId}.json`);
 
       const configPromises = configs
         .filter(file => file.endsWith('.enc'))
@@ -389,12 +422,10 @@ export class SecureConfigManager {
    */
   public async restoreBackup(backupId: string): Promise<void> {
     try {
-      const backupPath = path.join(this.backupDir, `${backupId}.json`);
-
-      // Security check to prevent path traversal
-      const resolvedBackupPath = path.resolve(backupPath);
-      const resolvedBackupDir = path.resolve(this.backupDir);
-      if (!resolvedBackupPath.startsWith(resolvedBackupDir + path.sep) && resolvedBackupPath !== resolvedBackupDir) {
+      let backupPath: string;
+      try {
+        backupPath = PathSecurityUtils.getSafePath(this.backupDir, `${backupId}.json`);
+      } catch (error) {
         throw ErrorUtils.createError(
           'Invalid backup ID: Path traversal detected',
           'validation',
@@ -515,6 +546,9 @@ export class SecureConfigManager {
       .digest('hex');
   }
 
+    
+   
+   
   private verifyChecksum(config: SecureConfig | any): boolean {
     const { checksum, ...data } = config;
     return this.calculateChecksum(data) === checksum;

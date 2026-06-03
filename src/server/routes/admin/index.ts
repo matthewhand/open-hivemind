@@ -23,14 +23,29 @@ const router = Router();
 const debug = Debug('app:webui:admin');
 
 const isTestEnv = process.env.NODE_ENV === 'test';
+const skipAuth = process.env.SKIP_AUTH === 'true';
 
-// Apply authentication middleware to all admin routes (skip in tests)
-if (!isTestEnv) {
+// Refuse to start in production with auth disabled — a misconfigured .env
+// would otherwise make every /api/admin/* endpoint public.
+if (skipAuth && process.env.NODE_ENV === 'production') {
+  throw new Error(
+    '[SECURITY] SKIP_AUTH=true is not permitted when NODE_ENV=production. ' +
+      'Remove SKIP_AUTH from production env or set NODE_ENV to a non-production value.'
+  );
+}
+
+// Apply authentication middleware to all admin routes (unless SKIP_AUTH is set)
+if (!skipAuth) {
   router.use(authenticate, requireAdmin);
+} else {
+  console.warn(
+    '[SECURITY] SKIP_AUTH=true — /api/admin/* is unauthenticated. Never use in production.'
+  );
 }
 
 // Apply rate limiting to configuration endpoints
 const rateLimit = require('express-rate-limit').default;
+
 const configRateLimit = isTestEnv
   ? (_req: Request, _res: Response, next: any) => next()
   : rateLimit({

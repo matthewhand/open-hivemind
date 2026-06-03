@@ -1,5 +1,5 @@
 import { Logger } from '@common/logger';
-import type { Database } from '../sqliteWrapper';
+import type { IDatabase as Database } from '../types';
 import { type ISchemaModule } from './ISchemaModule';
 
 /**
@@ -140,94 +140,38 @@ export class SecuritySchemas implements ISchemaModule {
   }
 
   async createIndexes(db: Database): Promise<void> {
-    // User permissions indexes
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_user_permissions_user_id ON user_permissions(user_id)'
-    );
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_user_permissions_permission ON user_permissions(permission)'
-    );
-    // Bot rate limits indexes
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_bot_rate_limits_bot_id ON bot_rate_limits(bot_id)'
-    );
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_bot_rate_limits_user_id ON bot_rate_limits(user_id)'
-    );
-    // Bot security events indexes
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_bot_security_events_bot_id ON bot_security_events(bot_id)'
-    );
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_bot_security_events_event_type ON bot_security_events(event_type)'
-    );
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_bot_security_events_severity ON bot_security_events(severity)'
-    );
-    // Bot API keys indexes
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_bot_api_keys_bot_id ON bot_api_keys(bot_id)'
-    );
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_bot_api_keys_api_key ON bot_api_keys(api_key)'
-    );
-    // Bot privacy compliance indexes
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_bot_privacy_compliance_bot_id ON bot_privacy_compliance(bot_id)'
-    );
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_bot_privacy_compliance_compliance_type ON bot_privacy_compliance(compliance_type)'
-    );
-    // Bot consent management indexes
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_bot_consent_management_bot_id ON bot_consent_management(bot_id)'
-    );
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_bot_consent_management_user_id ON bot_consent_management(user_id)'
-    );
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_bot_consent_management_consent_type ON bot_consent_management(consent_type)'
-    );
-    // Bot data masking rules indexes
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_masking_rules_bot_id ON bot_data_masking_rules(bot_id)'
-    );
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_masking_rules_table_name ON bot_data_masking_rules(table_name)'
-    );
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_masking_rules_column_name ON bot_data_masking_rules(column_name)'
-    );
-    // Bot data classification indexes
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_classification_bot_id ON bot_data_classification(bot_id)'
-    );
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_classification_table_name ON bot_data_classification(table_name)'
-    );
-    await this.createIndex(
-      db,
-      'CREATE INDEX IF NOT EXISTS idx_bot_data_classification_column_name ON bot_data_classification(column_name)'
-    );
+    const indexes = [
+      // User permissions indexes
+      'CREATE INDEX IF NOT EXISTS idx_user_permissions_user_id ON user_permissions(user_id)',
+      'CREATE INDEX IF NOT EXISTS idx_user_permissions_permission ON user_permissions(permission)',
+      // Bot rate limits indexes
+      'CREATE INDEX IF NOT EXISTS idx_bot_rate_limits_bot_id ON bot_rate_limits(bot_id)',
+      'CREATE INDEX IF NOT EXISTS idx_bot_rate_limits_user_id ON bot_rate_limits(user_id)',
+      // Bot security events indexes
+      'CREATE INDEX IF NOT EXISTS idx_bot_security_events_bot_id ON bot_security_events(bot_id)',
+      'CREATE INDEX IF NOT EXISTS idx_bot_security_events_event_type ON bot_security_events(event_type)',
+      'CREATE INDEX IF NOT EXISTS idx_bot_security_events_severity ON bot_security_events(severity)',
+      // Bot API keys indexes
+      'CREATE INDEX IF NOT EXISTS idx_bot_api_keys_bot_id ON bot_api_keys(bot_id)',
+      'CREATE INDEX IF NOT EXISTS idx_bot_api_keys_api_key ON bot_api_keys(api_key)',
+      // Bot privacy compliance indexes
+      'CREATE INDEX IF NOT EXISTS idx_bot_privacy_compliance_bot_id ON bot_privacy_compliance(bot_id)',
+      'CREATE INDEX IF NOT EXISTS idx_bot_privacy_compliance_compliance_type ON bot_privacy_compliance(compliance_type)',
+      // Bot consent management indexes
+      'CREATE INDEX IF NOT EXISTS idx_bot_consent_management_bot_id ON bot_consent_management(bot_id)',
+      'CREATE INDEX IF NOT EXISTS idx_bot_consent_management_user_id ON bot_consent_management(user_id)',
+      'CREATE INDEX IF NOT EXISTS idx_bot_consent_management_consent_type ON bot_consent_management(consent_type)',
+      // Bot data masking rules indexes
+      'CREATE INDEX IF NOT EXISTS idx_bot_data_masking_rules_bot_id ON bot_data_masking_rules(bot_id)',
+      'CREATE INDEX IF NOT EXISTS idx_bot_data_masking_rules_table_name ON bot_data_masking_rules(table_name)',
+      'CREATE INDEX IF NOT EXISTS idx_bot_data_masking_rules_column_name ON bot_data_masking_rules(column_name)',
+      // Bot data classification indexes
+      'CREATE INDEX IF NOT EXISTS idx_bot_data_classification_bot_id ON bot_data_classification(bot_id)',
+      'CREATE INDEX IF NOT EXISTS idx_bot_data_classification_table_name ON bot_data_classification(table_name)',
+      'CREATE INDEX IF NOT EXISTS idx_bot_data_classification_column_name ON bot_data_classification(column_name)',
+    ];
+
+    await Promise.all(indexes.map((sql) => this.createIndex(db, sql)));
   }
 
   getTableNames(): string[] {

@@ -78,6 +78,7 @@ export class EnrichStage {
    * Enrich a single accepted message context with memories and a system prompt.
    */
   async process(ctx: MessageContext & { decision: ReplyDecision }): Promise<void> {
+    const startTime = Date.now();
     let memories: string[] = [];
 
     // 1. Retrieve memories (with timeout and error handling)
@@ -89,6 +90,8 @@ export class EnrichStage {
       memories = [];
     }
 
+    const memoryTime = Date.now();
+
     // 2. Build system prompt
     try {
       const systemPrompt = this.promptBuilder.buildSystemPrompt(
@@ -96,6 +99,14 @@ export class EnrichStage {
         memories,
         ctx.botName
       );
+
+      // Capture metadata
+      ctx.metadata.enrich = {
+        memoryCount: memories.length,
+        systemPromptLength: systemPrompt.length,
+        retrievalDurationMs: memoryTime - startTime,
+        totalDurationMs: Date.now() - startTime,
+      };
 
       // 3. Emit enriched context
       await this.bus.emitAsync('message:enriched', { ...ctx, memories, systemPrompt });
